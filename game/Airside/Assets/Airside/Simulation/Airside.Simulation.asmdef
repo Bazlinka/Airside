@@ -1,0 +1,8 @@
+{
+  "name": "Airside.Simulation",
+  "rootNamespace": "Airside.Simulation",
+  "references": [
+    "Airside.Domain"
+  ],
+  "autoReferenced": true
+}

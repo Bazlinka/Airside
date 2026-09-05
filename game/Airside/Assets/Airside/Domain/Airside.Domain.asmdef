@@ -1,0 +1,5 @@
+{
+  "name": "Airside.Domain",
+  "rootNamespace": "Airside.Domain",
+  "autoReferenced": true
+}

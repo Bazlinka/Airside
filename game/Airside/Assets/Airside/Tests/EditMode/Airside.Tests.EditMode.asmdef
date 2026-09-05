@@ -1,0 +1,11 @@
+{
+  "name": "Airside.Tests.EditMode",
+  "rootNamespace": "Airside.Tests",
+  "references": [
+    "Airside.Domain",
+    "Airside.Simulation"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

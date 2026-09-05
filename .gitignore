@@ -30,3 +30,6 @@ xcuserdata/
 .env
 *.p12
 *.mobileprovision
+
+# Local setup downloads and temporary work
+/work/

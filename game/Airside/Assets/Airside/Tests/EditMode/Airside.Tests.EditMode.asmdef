@@ -2,10 +2,19 @@
   "name": "Airside.Tests.EditMode",
   "rootNamespace": "Airside.Tests",
   "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
     "Airside.Domain",
     "Airside.Simulation"
   ],
-  "optionalUnityReferences": [
-    "TestAssemblies"
+  "includePlatforms": [
+    "Editor"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
   ]
 }

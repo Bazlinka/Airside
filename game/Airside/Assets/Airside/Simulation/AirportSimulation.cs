@@ -44,6 +44,7 @@ namespace Airside.Simulation
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
+            Research = new AirportResearch();
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -66,6 +67,7 @@ namespace Airside.Simulation
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
         public AirportStaffing Staffing { get; }
+        public AirportResearch Research { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -151,9 +153,26 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool StartOperationsResearch()
+        {
+            if (!Research.CanStartOperationsEfficiency)
+                return false;
+            if (!Economy.TrySpend(AirportResearch.OperationsEfficiencyCost))
+                return false;
+            if (!Research.StartOperationsEfficiency(_lastUpdatedAt))
+                return false;
+
+            Record(_lastUpdatedAt, "Research started",
+                $"{AirportResearch.OperationsEfficiencyName} · {AirportResearch.OperationsEfficiencyDurationSeconds}s · -${AirportResearch.OperationsEfficiencyCost:N0}");
+            return true;
+        }
+
         private void AdvanceOneSecond(SimulationTime now)
         {
             Routes.Update(now);
+            if (Research.Update(now))
+                Record(now, "Research complete",
+                    $"{AirportResearch.OperationsEfficiencyName} · daily running cost -${AirportResearch.OperationsEfficiencyDailyDiscount:N0}");
             SettleDaysUpTo(now);
 
             if (ActiveAircraft.IsComplete)
@@ -222,7 +241,8 @@ namespace Airside.Simulation
                 _daysSettled++;
                 var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
                 var weather = Weather.At(closeTime);
-                var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
+                var baseCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount);
+                var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
                 Record(now, $"Day {_daysSettled} closed",
                     $"Running cost -${cost:N0} ({Weather.Describe(weather)}, {Staffing.GroundCrew} crew) · cash ${Economy.Cash:N0}");

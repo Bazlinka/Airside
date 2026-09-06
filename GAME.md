@@ -10,23 +10,19 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
-  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
-  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
-  keep filling phase four safely — a **buildable capacity upgrade** (third stand),
-  **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
-- **Watch out for:** the fleet is deadlock-free *by construction* — the primary
-  flight is never blocked, at most one fleet aircraft holds the corridor lock,
-  and repositioning aircraft never touch a stand. A free corridor goes to the
-  longest-waiting aircraft (fleet order breaks ties). Keep all of that when
-  changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
-  aircraft snaps to its leg start if the primary preempts a segment under it.
-  Decisions 0006–0009.
+- **Last updated:** 2026-09-06 by Cursor (research progression)
+- **Branch / working tree:** `cursor/research-progression-38b9` (PR against `main`)
+- **Do this next:** Confirm Unity edit-mode tests (`scripts/test-unity.sh`) and a
+  short Play soak of research. Then overdue visual soak, concurrent-flights
+  design pass, or remaining fillers (daily report panel; merge capacity /
+  insolvency PRs when ready).
+- **In progress / half-done:** nothing once this PR merges. Operations Efficiency
+  research (2500, 1 sim day) → −100/day base running cost. Command-replayed.
+  65 tests green under local dotnet harness. Parallel open PRs: insolvency #3,
+  third-stand #4.
+- **Watch out for:** research must not alter turnaround/flight timing (seed
+  tests). Do not persist research flags — rebuild via `start-research` + clock.
+  Corridor invariants 0006–0009 still apply when touching ground traffic.
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -87,6 +83,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
@@ -97,4 +94,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-Run a long visual soak of the two-aircraft build. Then replace the second aircraft's fixed shuttle with its own arrival/departure schedule, still governed by the segment reservations, working toward several simultaneous aircraft.
+Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
+open capacity / insolvency PRs. Then the overdue visual soak, or the
+concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
+Remaining phase-four filler: a daily report panel.

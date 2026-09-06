@@ -181,7 +181,7 @@ namespace Airside.Presentation
 
             var timeOfDay = _simulation.TimeOfDay;
 
-            GUI.Box(new Rect(22, 22, 410, 424), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 468), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
@@ -229,7 +229,29 @@ namespace Airside.Presentation
                 _session.ReleaseGroundCrew();
             GUI.enabled = true;
 
-            GUI.Label(new Rect(42, 410, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+            var research = _simulation.Research;
+            if (research.OperationsEfficiencyComplete)
+            {
+                GUI.Label(new Rect(42, 408, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} complete · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day running cost", small);
+            }
+            else if (research.IsResearching)
+            {
+                var pct = (int)(research.Progress01(_clock.Now) * 100);
+                GUI.Label(new Rect(42, 408, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+            }
+            else
+            {
+                GUI.Label(new Rect(42, 408, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
+                GUI.enabled = research.CanStartOperationsEfficiency && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                if (GUI.Button(new Rect(42, 426, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
+                    _session.StartOperationsResearch();
+                GUI.enabled = true;
+            }
+
+            GUI.Label(new Rect(42, 454, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);

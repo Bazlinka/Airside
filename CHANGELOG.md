@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Research progression.** `AirportResearch` — first project Operations Efficiency
+  (2500, one simulated day) permanently cuts base daily running cost by 100.
+  Start is a persisted `start-research` command (replayed on load). Does not
+  change flight timing. HUD shows progress / complete. See
+  `docs/decisions/0017-research-operations-efficiency.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

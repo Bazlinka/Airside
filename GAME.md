@@ -10,8 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch C/E/WLD Integration — no Unity Play)
-- **Branch / working tree:** `cursor/batch-c-e-wld-integration-38b9`
+- **Last updated:** 2026-09-07 by Codex (macOS compiler repair and rebuild)
+- **Branch / working tree:** `fix/unity-mac-build-20260907`; Bailey's pre-existing AGENTS.md edit remains uncommitted
+- **Local verification:** Unity 6000.3.23f1 macOS build succeeded; 107/107 EditMode
+  tests passed, none skipped. Resolved ambiguous Unity Object references and the
+  missing image conversion module. This does not establish live visual verification.
 - **Do this next:** Bailey Unity Play soak to mark Batch C / WLD / Batch E **Verified**. Then Batch D animation/VFX or next GAME.md item.
 - **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.

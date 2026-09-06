@@ -14,6 +14,7 @@ namespace Airside.Simulation
         public static readonly StableId ApronLane = new("APRON-LANE");
         public static readonly StableId StandOne = new("STAND-1");
         public static readonly StableId StandTwo = new("STAND-2");
+        public static readonly StableId StandThree = new("STAND-3");
 
         private readonly ISimulationClock _clock;
         private readonly IRandomSource _random;
@@ -44,6 +45,7 @@ namespace Airside.Simulation
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
+            Capacity = new AirportCapacity();
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -52,7 +54,7 @@ namespace Airside.Simulation
             StartCycle();
             SynchronizeReservations();
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, mayEnterCorridor: true);
+                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, Capacity.StandCount, mayEnterCorridor: true);
         }
 
         public AirportLocation Location { get; }
@@ -66,6 +68,7 @@ namespace Airside.Simulation
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
         public AirportStaffing Staffing { get; }
+        public AirportCapacity Capacity { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -148,6 +151,18 @@ namespace Airside.Simulation
 
             Record(_lastUpdatedAt, "Crew released",
                 $"Ground crew now {Staffing.GroundCrew} · payroll ${Staffing.DailyWage:N0}/day");
+            return true;
+        }
+
+        public bool BuildThirdStand()
+        {
+            if (!Capacity.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportCapacity.ThirdStandCost) || !Capacity.Expand())
+                return false;
+
+            Record(_lastUpdatedAt, "Stand 3 built",
+                $"Capacity now {Capacity.StandCount} stands · -${AirportCapacity.ThirdStandCost:N0}");
             return true;
         }
 
@@ -243,7 +258,7 @@ namespace Airside.Simulation
 
             var grantee = ChooseCorridorGrantee(now);
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(now, TrafficWaits, AssignedStand,
+                aircraft.Reposition(now, TrafficWaits, AssignedStand, Capacity.StandCount,
                     mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
         }
 
@@ -291,12 +306,37 @@ namespace Airside.Simulation
         private void StartCycle()
         {
             var aircraftId = new StableId($"AS-{CompletedCycles + 101:000}");
-            AssignedStand = _random.NextInt(0, 2) == 0 ? StandOne : StandTwo;
+            var standIndex = _random.NextInt(0, Capacity.StandCount);
+            AssignedStand = StandAt(standIndex);
             ActiveTaxiRoute = TaxiNetwork.RouteTo(AssignedStand);
             ActiveAircraft = new AircraftOperation(aircraftId.Value, _cycleStartedAt);
             ActiveTurnaround = null;
             _flightSettled = false;
             Record(_cycleStartedAt, "Flight inbound", $"Assigned {AssignedStand.Value}");
+        }
+
+        public static StableId StandAt(int index) => index switch
+        {
+            0 => StandOne,
+            1 => StandTwo,
+            2 => StandThree,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+        /// <summary>
+        /// The alternate stand a ground-traffic arrival should use while the primary
+        /// flight holds <paramref name="primaryStand"/>. With two stands this is the
+        /// historical other-stand rule (seed-identical). With three, the lowest-index
+        /// free stand.
+        /// </summary>
+        public static StableId AlternateStand(StableId primaryStand, int standCount)
+        {
+            if (standCount < 3)
+                return primaryStand.Equals(StandOne) ? StandTwo : StandOne;
+
+            if (!primaryStand.Equals(StandOne)) return StandOne;
+            if (!primaryStand.Equals(StandTwo)) return StandTwo;
+            return StandThree;
         }
 
         private void SynchronizeReservations()

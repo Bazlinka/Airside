@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Buildable third stand.** `AirportCapacity` — first capacity upgrade. Spend
+  8000 (`build-stand` command, replayed on load) to unlock Stand 3; taxi network
+  gains lead-in geometry; primary flights and ground traffic use the new stand.
+  Two-stand behaviour stays seed-identical. HUD shows stand count and a build
+  button. See `docs/decisions/0016-third-stand-capacity.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

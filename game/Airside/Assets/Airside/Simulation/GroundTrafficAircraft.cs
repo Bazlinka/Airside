@@ -317,10 +317,11 @@ namespace Airside.Simulation
                 };
             }
 
-            var isStandOne = stand.Equals(AirportSimulation.StandOne);
-            var leadIn = isStandOne ? AirportTaxiNetwork.StandOneLeadIn : AirportTaxiNetwork.StandTwoLeadIn;
-            var standPoint = new TaxiPoint(17f, isStandOne ? 14f : 20f);
-            var label = isStandOne ? "Stand 1" : "Stand 2";
+            var leadIn = AirportTaxiNetwork.LeadInFor(stand);
+            var standPoint = new TaxiPoint(17f, AirportTaxiNetwork.StandZ(stand));
+            var label = stand.Equals(AirportSimulation.StandOne) ? "Stand 1"
+                : stand.Equals(AirportSimulation.StandTwo) ? "Stand 2"
+                : "Stand 3";
 
             return new[]
             {

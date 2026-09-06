@@ -259,6 +259,38 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void GroundTraffic_WhenStandsOneAndTwoAreBusy_UsesStandThreeLeadInAndPosition()
+        {
+            var table = new ReservationTable();
+            var monitor = new TrafficWaitMonitor();
+            var groundTraffic = NewArrival(table);
+
+            // Both baseline stands occupied by commercial traffic → fleet takes Stand 3.
+            var busy = new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo };
+            groundTraffic.Reposition(new SimulationTime(1), monitor, busy, true);
+            Assert.That(groundTraffic.TargetStand, Is.EqualTo(AirportSimulation.StandThree));
+
+            var usedStandThreeLeadIn = false;
+            var parkedOnStandThree = false;
+            for (long second = 2; second <= 400; second++)
+            {
+                groundTraffic.Reposition(new SimulationTime(second), monitor, busy, true);
+                if (table.TryGetOwner(AirportTaxiNetwork.StandThreeLeadIn, out var leadOwner) &&
+                    leadOwner.Equals(groundTraffic.Id))
+                    usedStandThreeLeadIn = true;
+                if (groundTraffic.IsAtStand && groundTraffic.TargetStand.Equals(AirportSimulation.StandThree))
+                {
+                    parkedOnStandThree = true;
+                    Assert.That(groundTraffic.Position.Z, Is.EqualTo(AirportTaxiNetwork.StandZ(AirportSimulation.StandThree)).Within(0.01f));
+                    break;
+                }
+            }
+
+            Assert.That(usedStandThreeLeadIn, Is.True, "ground traffic should reserve the Stand 3 lead-in");
+            Assert.That(parkedOnStandThree, Is.True, "and park on Stand 3 at the correct apron Z");
+        }
+
+        [Test]
         public void GroundTraffic_AdaptsAcrossManyCyclesWithoutBlockingOrDeadlock()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

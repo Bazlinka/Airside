@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Fix ground-traffic Stand 3 circuit.** Arrive/depart fleet aircraft mapped any non-Stand-1
+  target onto Stand 2's lead-in and apron Z, so a Stand 3 assignment reserved the wrong
+  taxi segment and parked at Stand 2's position. `BuildCircuit` now uses
+  `AirportTaxiNetwork.LeadInFor` / `StandZ` for all three stands. Regression:
+  `GroundTraffic_WhenStandsOneAndTwoAreBusy_UsesStandThreeLeadInAndPosition`.
+  `scripts/test-domain.sh` 97/97.
 - **Overnight WLD greybox + miniature look polish (presentation only).** Places Approved
   Batch B WLD intent with primitive stand-ins: animated windsock, threshold / hold-short
   markings, taxi edge lights, obstruction lights, cones, barriers, airside sign and

@@ -10,14 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Approve C/E recorded; merging #19–#30)
-- **Branch / working tree:** `main` — merge wave in progress
-- **Do this next:** Finish merge wave. Batch C Integration next. Unity Play soak.
-- **In progress / half-done:** Batch C **Approved**. Batch E UI **Approved** (#19 merging). Overnight polish PRs merging.
+- **Last updated:** 2026-09-06 by Cursor (merge wave: #20–#21 in; continuing)
+- **Branch / working tree:** `main`
+- **Do this next:** Continue merging #22–#30 then #19. Batch C Integration after wave. Unity Play soak.
+- **In progress / half-done:** Batch C/E **Approved**. Overnight polish merge wave on `main`.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Primitives until Batch C Integration is Verified.
 - **Open questions for Bailey:** none on C/E Approve.
-- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved**; Batch E UI **Approved**
+- **Visual assets:** Batch A/B Approved (B Integrated); Batch C **Approved**; Batch E UI **Approved**
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -117,6 +116,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
+1. **Merge open overnight PRs** (#20 polish + Stand 3 ground-traffic lead-in) then continue Batch D look.
 1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
 2. **Bailey review of Batch C** when convenient (not blocking further work).
 3. **Keep building** — remaining Batch D / miniature look polish; no unapproved economy systems.

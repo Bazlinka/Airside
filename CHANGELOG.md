@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Research-complete HUD toast.** When `AirportResearch` finishes a project, the HUD
+  shows a centred Clear Green banner for eight unscaled seconds naming the unlock
+  and its permanent bonus. Presentation only — driven by `LastCompletedProjectId`
+  after each sim tick. `scripts/test-domain.sh` unchanged (Presentation not covered).
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

@@ -10,15 +10,19 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (landed #15/#16/#17; rebasing Batch E UI candidates)
-- **Branch / working tree:** `art/batch-e-ui-candidates` → merge to `main`
-- **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
-  nine-slice previews. Unity Play soak for HUD theming when free.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
-  Batch E UI-ICO-001–004 and UI-PNL-001–003 are Generated candidates (not integrated).
-  Passenger Services shipped. Headless domain harness + HUD palette on main.
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: ops-event toast)
+- **Branch / working tree:** open draft PRs into `main`:
+  - #20–#23 overnight look / Stand3 / insolvency HUD / follow cycle
+  - #24–#27 HUD audio / research toast / status colours / autosave chip
+  - #28 night aerodrome beacon + dual-flight phase HUD
+  - `cursor/ops-event-toast-38b9` — flash latest ops event on the HUD
+- **Do this next:** Merge overnight drafts (any order; #21 is sim). Bailey Batch C/E review.
+  Unity Play soak for HUD polish stack.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD in #20.
+  Batch E UI candidates Generated (not integrated). Passenger Services shipped. Harness green.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
+  Primitives until Batch C Approved+Verified. Batch E not in runtime Assets until Approved.
+  Do not merge #19 without Bailey Approve.
 - **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
 - **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled; Batch E UI Generated — review required
 

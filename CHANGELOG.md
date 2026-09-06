@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Ops-event toast.** When the operational event log gains an entry, a Clear Green
+  chip flashes the latest flight · title for ~4.5s (skips history already present
+  on load). Presentation only. `scripts/test-domain.sh` 96/96.
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

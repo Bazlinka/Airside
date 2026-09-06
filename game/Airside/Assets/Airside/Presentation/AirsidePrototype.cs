@@ -33,6 +33,9 @@ namespace Airside.Presentation
         private int _speed = 1;
         private long _nextAutosaveSecond;
         private bool _showAwaySummary;
+        private int _seenEventCount;
+        private string _opsToast = string.Empty;
+        private float _opsToastUntil;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -50,6 +53,7 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
             _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
             _showAwaySummary = _session.LastAwaySummary.HasReport;
+            _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
             BuildAirfield();
@@ -80,6 +84,7 @@ namespace Airside.Presentation
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
                 _simulation.Update();
+                MaybeShowOpsToast();
             }
 
             if (_clock.Now.ElapsedSeconds >= _nextAutosaveSecond)
@@ -750,6 +755,8 @@ namespace Airside.Presentation
                     $"{rep}  ·  {latest.GroundCrew} crew", small);
             }
 
+            DrawOpsToast(scale, panel, detail, onTime);
+
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             GUI.matrix = previousMatrix;
@@ -789,6 +796,33 @@ namespace Airside.Presentation
             GUI.enabled = true;
             if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline", button))
                 _session.DeclineRoute();
+        }
+
+
+        private void MaybeShowOpsToast()
+        {
+            var events = _simulation.EventLog.Events;
+            if (events.Count <= _seenEventCount)
+                return;
+
+            var latest = events[events.Count - 1];
+            _seenEventCount = events.Count;
+            var flight = string.IsNullOrEmpty(latest.FlightId) ? string.Empty : $"{latest.FlightId} · ";
+            _opsToast = $"{flight}{latest.Title}";
+            _opsToastUntil = Time.unscaledTime + 4.5f;
+        }
+
+        private void DrawOpsToast(float scale, GUIStyle panel, GUIStyle detail, GUIStyle onTime)
+        {
+            if (string.IsNullOrEmpty(_opsToast) || Time.unscaledTime > _opsToastUntil)
+                return;
+
+            var width = 440f;
+            var height = 52f;
+            var left = (Screen.width / scale - width) * 0.5f;
+            var top = Screen.height / scale - height - 28f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 18f, top + 14f, width - 36f, 26f), _opsToast, onTime);
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)

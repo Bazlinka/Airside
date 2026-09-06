@@ -31,6 +31,8 @@ namespace Airside.Persistence
         public const string BuildStandCommand = "build-stand";
         public const string ExpandCheckInCommand = "expand-checkin";
         public const string ExpandGeneralAviationApronCommand = "expand-ga-apron";
+        public const string ExpandCargoWarehouseCommand = "expand-cargo-warehouse";
+        public const string ReserveSecondRunwayLandCommand = "reserve-second-runway-land";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
         private readonly AirsideSaveRepository _repository;
@@ -136,6 +138,12 @@ namespace Airside.Persistence
         public bool ExpandGeneralAviationApron() =>
             RecordCommand(Simulation.ExpandGeneralAviationApron(), ExpandGeneralAviationApronCommand, "ga-apron");
 
+        public bool ExpandCargoWarehouse() =>
+            RecordCommand(Simulation.ExpandCargoWarehouse(), ExpandCargoWarehouseCommand, "cargo");
+
+        public bool ReserveSecondRunwayLand() =>
+            RecordCommand(Simulation.ReserveSecondRunwayLand(), ReserveSecondRunwayLandCommand, "land");
+
         private bool RecordCommand(bool applied, string commandType, string prefix)
         {
             if (!applied)
@@ -228,6 +236,10 @@ namespace Airside.Persistence
                 Simulation.ExpandCheckInHall();
             else if (command.commandType == ExpandGeneralAviationApronCommand)
                 Simulation.ExpandGeneralAviationApron();
+            else if (command.commandType == ExpandCargoWarehouseCommand)
+                Simulation.ExpandCargoWarehouse();
+            else if (command.commandType == ReserveSecondRunwayLandCommand)
+                Simulation.ReserveSecondRunwayLand();
         }
     }
 }

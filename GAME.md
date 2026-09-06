@@ -162,9 +162,15 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
   scheduled flights/day alongside stand count, with a buildable expansion
   (`expand-checkin`, 6000); and a general-aviation daily landing-fee income
   (`AirportGeneralAviation`, decision 0029) settles at every midnight, with a
-  buildable apron expansion (`expand-ga-apron`, 4000). Both follow the
-  third-stand pattern (persisted command, replayed on load, no save-schema
-  change) and ship with new EditMode tests, but no HUD wiring yet.
+  buildable apron expansion (`expand-ga-apron`, 4000); cargo
+  (`AirportCargo`, decision 0030) settles its own daily contract income the
+  same way, with a buildable warehouse expansion (`expand-cargo-warehouse`,
+  5000); and a one-off second-runway land reservation (`AirportLand`,
+  decision 0031, `reserve-second-runway-land`, 10000) with no coupled effect
+  yet. All four follow the third-stand pattern (persisted command, replayed
+  on load, no save-schema change) and ship with new EditMode tests. Terminal
+  and GA have HUD buttons; cargo and land do not (operations-panel height
+  budget — see the layout note above).
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.

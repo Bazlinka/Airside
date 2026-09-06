@@ -20,6 +20,7 @@ namespace Airside.Simulation
         public long TotalDelayCost { get; private set; }
         public long TotalRouteIncome { get; private set; }
         public long TotalGeneralAviationIncome { get; private set; }
+        public long TotalCargoIncome { get; private set; }
         public long TotalOperatingCost { get; private set; }
         public int ConsecutiveNegativeDays { get; private set; }
         public bool IsInsolvent { get; private set; }
@@ -64,6 +65,16 @@ namespace Airside.Simulation
             Cash += amount;
             TotalRevenue += amount;
             TotalGeneralAviationIncome += amount;
+        }
+
+        public void AddCargoIncome(long amount)
+        {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+
+            Cash += amount;
+            TotalRevenue += amount;
+            TotalCargoIncome += amount;
         }
 
         public void CompleteFlight(long delaySeconds)

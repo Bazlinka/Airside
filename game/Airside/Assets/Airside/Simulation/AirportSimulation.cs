@@ -37,6 +37,7 @@ namespace Airside.Simulation
         private long _dayStartDelayCost;
         private int _dayStartReputation;
         private long _dayStartGeneralAviationIncome;
+        private long _dayStartCargoIncome;
         private int _nextAircraftNumber = 101;
         private readonly GroundTrafficAircraft[] _groundTraffic;
         private bool _approachWaitLogged;
@@ -64,6 +65,8 @@ namespace Airside.Simulation
             Capacity = new AirportCapacity();
             Terminal = new AirportTerminal();
             GeneralAviation = new AirportGeneralAviation();
+            Cargo = new AirportCargo();
+            Land = new AirportLand();
             DailyReports = new AirportDailyReports();
             CaptureDayBaseline();
             _groundTraffic = new[]
@@ -98,6 +101,8 @@ namespace Airside.Simulation
         public AirportCapacity Capacity { get; }
         public AirportTerminal Terminal { get; }
         public AirportGeneralAviation GeneralAviation { get; }
+        public AirportCargo Cargo { get; }
+        public AirportLand Land { get; }
         public AirportDailyReports DailyReports { get; }
         public bool IsInsolvent => Economy.IsInsolvent;
         public AirportTaxiNetwork TaxiNetwork { get; }
@@ -162,6 +167,32 @@ namespace Airside.Simulation
 
             Record(_lastUpdatedAt, "GA apron expanded",
                 $"General aviation movements now {GeneralAviation.MovementsPerDay}/day · -${AirportGeneralAviation.ApronExpansionCost:N0}");
+            return true;
+        }
+
+        public bool ExpandCargoWarehouse()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Cargo.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportCargo.WarehouseExpansionCost) || !Cargo.ExpandWarehouse())
+                return false;
+
+            Record(_lastUpdatedAt, "Cargo warehouse expanded",
+                $"Cargo contracts now {Cargo.ContractsPerDay}/day · -${AirportCargo.WarehouseExpansionCost:N0}");
+            return true;
+        }
+
+        public bool ReserveSecondRunwayLand()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Economy.TrySpend(AirportLand.SecondRunwayLandCost) || !Land.ReserveSecondRunwayLand())
+                return false;
+
+            Record(_lastUpdatedAt, "Second-runway land reserved",
+                $"-${AirportLand.SecondRunwayLandCost:N0}");
             return true;
         }
 
@@ -540,16 +571,19 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
                 var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
                 Economy.AddGeneralAviationIncome(GeneralAviation.DailyIncome);
+                Economy.AddCargoIncome(Cargo.DailyIncome);
 
                 var generalAviationIncome = Economy.TotalGeneralAviationIncome - _dayStartGeneralAviationIncome;
+                var cargoIncome = Economy.TotalCargoIncome - _dayStartCargoIncome;
                 var report = new DailyReport(
                     dayNumber: _daysSettled,
                     closingWeather: weather,
                     flightsCompleted: CompletedCycles - _dayStartCycles,
-                    turnaroundRevenue: (Economy.TotalRevenue - Economy.TotalRouteIncome - Economy.TotalGeneralAviationIncome)
-                        - (_dayStartRevenue - _dayStartRouteIncome - _dayStartGeneralAviationIncome),
+                    turnaroundRevenue: (Economy.TotalRevenue - Economy.TotalRouteIncome - Economy.TotalGeneralAviationIncome - Economy.TotalCargoIncome)
+                        - (_dayStartRevenue - _dayStartRouteIncome - _dayStartGeneralAviationIncome - _dayStartCargoIncome),
                     routeIncome: Economy.TotalRouteIncome - _dayStartRouteIncome,
                     generalAviationIncome: generalAviationIncome,
+                    cargoIncome: cargoIncome,
                     delayCost: Economy.TotalDelayCost - _dayStartDelayCost,
                     operatingCost: cost,
                     netCashChange: Economy.Cash - _dayStartCash,
@@ -681,6 +715,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             _dayStartRevenue = Economy.TotalRevenue;
             _dayStartRouteIncome = Economy.TotalRouteIncome;
             _dayStartGeneralAviationIncome = Economy.TotalGeneralAviationIncome;
+            _dayStartCargoIncome = Economy.TotalCargoIncome;
             _dayStartDelayCost = Economy.TotalDelayCost;
             _dayStartReputation = Reputation.Score;
         }

@@ -5,6 +5,18 @@ change it describes.
 
 ## Unreleased
 
+- **Cargo income foundation.** `AirportCargo` — 2 freighter contracts/day at
+  90 each, settled at midnight as `DailyReport.CargoIncome` (folded into
+  `FlightIncome`). Buildable warehouse expansion (`expand-cargo-warehouse`,
+  5000) adds 2 contracts/day up to 6. Economics only, same scoping as general
+  aviation. No HUD button — operations panel is near its height budget (see
+  `GAME.md`). No save-schema change. **Unverified in Unity.** See
+  `docs/decisions/0030-cargo-income-foundation.md`.
+- **Second-runway land reservation.** `AirportLand` — a one-off purchase
+  (`reserve-second-runway-land`, 10000) reserves the adjacent plot; the
+  reservation is the complete feature for now, nothing else reads the flag
+  yet. No HUD button, no save-schema change. **Unverified in Unity.** See
+  `docs/decisions/0031-second-runway-land-reservation.md`.
 - Wired HUD buttons/status lines for check-in hall and GA apron expansion
   (`AirsidePrototype.cs`), following the stand-3 button pattern. The left HUD
   panel grew from a fixed 520 to 616 tall to fit the two new rows. Placed by

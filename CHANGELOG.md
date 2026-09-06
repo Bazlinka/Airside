@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Daily finance brief.** HUD shows a deterministic day estimate: expected
+  operating cost (base + current weather + payroll) versus expected flight
+  income at today's cadence, plus cash runway days when the net is negative.
+  No save-schema change. See `docs/decisions/0021-daily-finance-brief.md`.
 - **Accept-route schedule capacity.** Accepting a route now refuses when
   `ScheduledFlightsPerDay + pending` would exceed `StandCount × 6` (12/day on
   two stands). Offer stays pending; HUD disables Accept with a "Schedule full"

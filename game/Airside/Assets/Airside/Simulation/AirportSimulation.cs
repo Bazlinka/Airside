@@ -146,7 +146,24 @@ namespace Airside.Simulation
             return true;
         }
 
-public void Update()
+        /// <summary>
+        /// Expected daily income and cost under the current weather, staffing and
+        /// route book, assuming today's flight cadence continues with no delays.
+        /// </summary>
+        public DailyFinanceBrief DailyFinance
+        {
+            get
+            {
+                var operatingCost = BaseDailyOperatingCost
+                    + Weather.DailyOperatingCost(CurrentWeather)
+                    + Staffing.DailyWage;
+                var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight;
+                var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds;
+                return new DailyFinanceBrief(operatingCost, expectedIncome, Economy.Cash);
+            }
+        }
+
+        public void Update()
         {
             if (_clock.Now.CompareTo(_lastUpdatedAt) < 0)
                 throw new InvalidOperationException("Simulation time cannot move backwards.");

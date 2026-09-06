@@ -222,8 +222,14 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
             GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {Weather.Describe(_simulation.CurrentWeather)}", small);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
+            var finance = _simulation.DailyFinance;
+            var runway = finance.CashRunwayDays is int days
+                ? $"  ·  ~{days}d runway"
+                : "  ·  cash building";
+            GUI.Label(new Rect(42, 176, 390, 22),
+                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", small);
             if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-                GUI.Label(new Rect(42, 178, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
+                GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
 
             var lineY = 180f;
             if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)

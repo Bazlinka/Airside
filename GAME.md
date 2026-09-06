@@ -10,11 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (accept-route capacity onto main; Bailey approved merge-all)
+- **Last updated:** 2026-09-06 by Cursor (daily P&L brief onto main; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Merge daily P&L, then Unity soak when Bailey can.
+- **Do this next:** Unity visual soak when Bailey can. Optional: renumber duplicate decision 0018 files.
 - **In progress / half-done:** Bailey approved merge-without-review.
-- **Watch out for:** fleet corridor invariants; schedule accept cap uses StandCount × 6.
+- **Watch out for:** fleet corridor invariants.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".

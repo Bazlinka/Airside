@@ -10,18 +10,66 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (merged #15; rebasing playtest HUD #16 onto main)
-
-- **Branch / working tree:** `fix/playtest-hud-and-aircraft-visuals` → merge to `main`
-- **Do this next:** Merge playtest HUD/taxi visual PR after CI/local checks. Bailey Batch C review when free.
-  when free. Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox: night floods, gear/lights,
-  cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
-  touchdown puff, runway edge + taxi centreline. Passenger Services shipped.
-- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Keep primitives until Batch C is Approved and Verified.
+- **Last updated:** 2026-09-06 by Claude (rebasing economics-foundation
+  branch onto Cursor's merged Batch C/D + Passenger Services work)
+- **Branch / working tree:** `claude/game-dev-status-pd3sg4`, rebased onto
+  `main` (which now includes Cursor's merged #15 Batch C/D + Passenger
+  Services, and #16 playtest HUD/taxi visuals). Pushed; **not yet merged to
+  `main`**. **Not Unity-verified** — this session has no Unity executable or
+  `dotnet`/NUnit runner, so `scripts/test-unity.sh` (or Cursor's local
+  Domain/Simulation/Persistence harness) could not be run against it. Compile
+  and run edit-mode tests before trusting this branch or merging it.
+- **Do this next:**
+  1. Open in Unity 6.3 LTS, confirm it compiles, run `scripts/test-unity.sh`.
+     Fix anything that doesn't compile or pass before merging.
+  2. Bailey review of Batch C look (approve or request `_v02`) — separate
+     from this branch, still outstanding on `main`.
+  3. Wire HUD buttons/status lines for `ExpandCheckInHall()` and
+     `ExpandGeneralAviationApron()` into the *current* HUD (mirroring the
+     stand-3 button) — deliberately left undone this pass; hand-tuned `OnGUI`
+     `Rect` layout needs eyes-on verification this session couldn't do, and
+     the panel is near its height budget (see the layout note below).
+  4. Then either continue Batch D animation/VFX polish or Batch B/C follow-up
+     on `main`, independent of this branch.
+  5. Consider step 17's one gap: airline profiles are still flat (name/
+     destination only) — no per-airline service level, price sensitivity or
+     facility requirements yet.
+  6. Maintenance/incidents were deliberately skipped on this branch — any
+     periodic incident cost needs re-running `DailyReportTests`/`StaffingTests`
+     and the soak tests, which this session can't do.
+- **Operations-panel layout budget:** the left HUD box (still the literal
+  `Rect(22, 22, 410, 520)` in the current `AirsidePrototype.cs` — `HudLayout.cs`
+  exists with resolution-independent math but isn't wired into `OnGUI` yet,
+  per `PresentationLayoutTests.cs`) is near its height ceiling. This branch's
+  terminal/GA buttons pushed it to 616 tall against a `Screen.height / 720f`
+  canvas; cargo/land/baggage were left without buttons for the same reason.
+  Whoever wires `HudLayout.Create` into `OnGUI` should fold all five
+  buildable-upgrade rows into that pass rather than stacking more literals.
+- **In progress / half-done:** this branch's terminal-capacity,
+  general-aviation, cargo, land-reservation and baggage foundations
+  (decisions renumbered 0028–0032 after this rebase, since Cursor's Passenger
+  Services research took 0023 on `main` first) are implemented at the
+  domain/simulation layer and unit-tested on paper, but **unverified in
+  Unity**. Terminal and GA have HUD buttons in the pre-rebase HUD; cargo,
+  land and baggage do not. Everything else on `main`: Batch C 3D models and
+  Batch D animation/VFX greybox hooks generated and integrated (primitives
+  still the fallback pending Bailey's approval), Passenger Services research,
+  playtest HUD/taxi-visual fixes.
+- **Watch out for:** fleet corridor invariants (0006–0009). Concurrent
+  commercials: fleet yields to any commercial. `DailyReport`'s constructor
+  signature changed on this branch (added `generalAviationIncome`,
+  `cargoIncome`) — its one call site (`AirportSimulation.SettleDaysUpTo`) was
+  updated in the same change, but double-check no other call site was missed
+  after the rebase. Decision numbering: art pipeline is 0022, Passenger
+  Services research is 0023 (both on `main`); this branch's five foundations
+  are renumbered 0028–0032 to avoid colliding with 0023.
 - **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled
+  (carried from `main`, unrelated to this branch's work)
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces
+  Integrated); Batch C Generated/Modelled, pending Bailey approval; no
+  runtime art from this branch's work (it's economics-only). Batch C task
+  packet this branch wrote is now superseded by Cursor's actual Batch C
+  generation on `main` — safe to disregard.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -103,6 +151,14 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
 - Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). Local harness: 94 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
+- **Unverified in Unity (written this session, not yet compiled/tested there):**
+  a terminal check-in capacity (`AirportTerminal`, decision 0028) gates
+  scheduled flights/day alongside stand count, with a buildable expansion
+  (`expand-checkin`, 6000); and a general-aviation daily landing-fee income
+  (`AirportGeneralAviation`, decision 0029) settles at every midnight, with a
+  buildable apron expansion (`expand-ga-apron`, 4000). Both follow the
+  third-stand pattern (persisted command, replayed on load, no save-schema
+  change) and ship with new EditMode tests, but no HUD wiring yet.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
@@ -114,8 +170,34 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-1. **Merge** `cursor/batch-c-models-38b9` (Batch C + D greybox hooks + Passenger Services).
-2. **Bailey review of Batch C** when convenient (not blocking further work).
-3. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
-5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Bailey review of Batch C** when convenient (not blocking further work).
+2. Get `claude/game-dev-status-pd3sg4` (this branch) compiled and edit-mode
+   tested in Unity 6.3 LTS, then merge — it adds terminal/GA/cargo/land/
+   baggage economic foundations on top of Cursor's Batch C/D + Passenger
+   Services work.
+3. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay
+   fallback), and wire `HudLayout.Create` into `OnGUI` while also adding this
+   branch's cargo/land/baggage buttons in the same pass.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual
+   commercials, and this branch's new systems).
+5. Longer term: airline profiles (service level, price sensitivity, facility
+   requirements) to round out project-plan step 17; maintenance/incidents
+   once someone can re-run the full suite after adding a recurring cost; real
+   per-flight baggage/passenger-flow depth and a visible GA/cargo aircraft
+   loop are the natural next layer on top of the economic foundations landed
+   on this branch (project-plan steps 19–21 continued).
+
+Implement concurrent-flights **slice 1**
+(`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when
+ready. Unity edit-mode + Play soak when Bailey can run the editor again.
+Confirm Unity tests when available. Merge open feature PRs (insolvency, third
+stand, research). Then the concurrent-flights design pass
+(`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.
+Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
+open capacity / insolvency PRs. Then the overdue visual soak, or the
+concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
+Remaining phase-four filler: a daily report panel.
+Keep merging the remaining phase-four stack onto `main`. Visual soak of the
+build in Unity when Bailey can play. Concurrent-flights design/implementation
+PRs are next after research and the daily report.
+Merge open feature PRs (#3–#7), rebase this slice onto `main`, then Unity Play soak of dual commercials. Tune threshold/stagger after Play if needed.

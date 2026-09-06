@@ -29,6 +29,8 @@ namespace Airside.Persistence
         public const string StartResearchCommand = "start-research";
         public const string StartPassengerResearchCommand = "start-research-passenger-services";
         public const string BuildStandCommand = "build-stand";
+        public const string ExpandCheckInCommand = "expand-checkin";
+        public const string ExpandGeneralAviationApronCommand = "expand-ga-apron";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
         private readonly AirsideSaveRepository _repository;
@@ -129,6 +131,11 @@ namespace Airside.Persistence
 
         public bool BuildThirdStand() => RecordCommand(Simulation.BuildThirdStand(), BuildStandCommand, "stand");
 
+        public bool ExpandCheckInHall() => RecordCommand(Simulation.ExpandCheckInHall(), ExpandCheckInCommand, "checkin");
+
+        public bool ExpandGeneralAviationApron() =>
+            RecordCommand(Simulation.ExpandGeneralAviationApron(), ExpandGeneralAviationApronCommand, "ga-apron");
+
         private bool RecordCommand(bool applied, string commandType, string prefix)
         {
             if (!applied)
@@ -217,6 +224,10 @@ namespace Airside.Persistence
                 Simulation.StartPassengerServicesResearch();
             else if (command.commandType == BuildStandCommand)
                 Simulation.BuildThirdStand();
+            else if (command.commandType == ExpandCheckInCommand)
+                Simulation.ExpandCheckInHall();
+            else if (command.commandType == ExpandGeneralAviationApronCommand)
+                Simulation.ExpandGeneralAviationApron();
         }
     }
 }

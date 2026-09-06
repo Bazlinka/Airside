@@ -5,6 +5,28 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal capacity foundation.** `AirportTerminal` — check-in desks (baseline
+  2) cap scheduled flights/day (12), independent of stand count; a buildable
+  expansion (`expand-checkin`, 6000) raises it to 18, matching the three-stand
+  cap. `AcceptPendingRoute` and `MaxScheduledFlightsPerDay` now honour whichever
+  cap (stand or terminal) binds first. Baseline matches the pre-existing
+  two-stand cap, so no current behaviour changes until a third stand is built.
+  No save-schema change. **Written without Unity access this session — not yet
+  compiled or test-run in the editor.** See `docs/decisions/0028-terminal-capacity-foundation.md`.
+- **General-aviation income foundation.** `AirportGeneralAviation` — a
+  deterministic 3 movements/day pay a landing fee, settled at every midnight
+  alongside the daily report as its own `GeneralAviationIncome` line (folded
+  into `FlightIncome`). A buildable apron expansion (`expand-ga-apron`, 4000)
+  raises movements to 6/day. Economics only — no visible aircraft or taxi/stand
+  reservation yet. No save-schema change. **Written without Unity access this
+  session — not yet compiled or test-run in the editor.** See
+  `docs/decisions/0029-general-aviation-foundation.md`.
+- Wrote the Batch C 3D-model task packet (aircraft, terminal, hangar, ops shed,
+  service vehicles) so a contributor with image-generation/Unity access could
+  start modelling without re-deriving scope — since superseded by Cursor's
+  actual Batch C generation below; kept for its acceptance-criteria wording,
+  otherwise safe to disregard.
+  See `docs/art/prompts/batch-c-model-task-packet-2026-09-06.md`.
 - **Playtest HUD and taxi visuals.** HUD scaling uses resolution-aware `HudLayout`
   (Retina-safe). Taxi drawing follows reservation segment windows; yielded ground
   traffic snaps to its hold point instead of lerping through released space.

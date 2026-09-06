@@ -36,6 +36,7 @@ namespace Airside.Simulation
         private long _dayStartRouteIncome;
         private long _dayStartDelayCost;
         private int _dayStartReputation;
+        private long _dayStartGeneralAviationIncome;
         private int _nextAircraftNumber = 101;
         private readonly GroundTrafficAircraft[] _groundTraffic;
         private bool _approachWaitLogged;
@@ -61,6 +62,8 @@ namespace Airside.Simulation
             Staffing = new AirportStaffing();
             Research = new AirportResearch();
             Capacity = new AirportCapacity();
+            Terminal = new AirportTerminal();
+            GeneralAviation = new AirportGeneralAviation();
             DailyReports = new AirportDailyReports();
             CaptureDayBaseline();
             _groundTraffic = new[]
@@ -93,6 +96,8 @@ namespace Airside.Simulation
         public AirportStaffing Staffing { get; }
         public AirportResearch Research { get; }
         public AirportCapacity Capacity { get; }
+        public AirportTerminal Terminal { get; }
+        public AirportGeneralAviation GeneralAviation { get; }
         public AirportDailyReports DailyReports { get; }
         public bool IsInsolvent => Economy.IsInsolvent;
         public AirportTaxiNetwork TaxiNetwork { get; }
@@ -111,7 +116,9 @@ namespace Airside.Simulation
             : string.Empty;
         public SimulationTime CycleStartedAt => Primary.CycleStartedAt;
         public ReservationTable Reservations => _reservations;
-        public int MaxScheduledFlightsPerDay => AirportRoutes.MaxScheduledFlightsPerDay(Capacity.StandCount);
+        public int MaxScheduledFlightsPerDay => Math.Min(
+            AirportRoutes.MaxScheduledFlightsPerDay(Capacity.StandCount),
+            Terminal.PassengerCapacityPerDay);
 
         private CommercialFlight Primary => _flights[0];
 
@@ -127,6 +134,34 @@ namespace Airside.Simulation
 
             Record(_lastUpdatedAt, "Stand 3 built",
                 $"Capacity now {Capacity.StandCount} stands · -${AirportCapacity.ThirdStandCost:N0}");
+            return true;
+        }
+
+        public bool ExpandCheckInHall()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Terminal.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportTerminal.CheckInHallExpansionCost) || !Terminal.ExpandCheckIn())
+                return false;
+
+            Record(_lastUpdatedAt, "Check-in hall expanded",
+                $"Terminal capacity now {Terminal.PassengerCapacityPerDay} flights/day · -${AirportTerminal.CheckInHallExpansionCost:N0}");
+            return true;
+        }
+
+        public bool ExpandGeneralAviationApron()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!GeneralAviation.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportGeneralAviation.ApronExpansionCost) || !GeneralAviation.ExpandApron())
+                return false;
+
+            Record(_lastUpdatedAt, "GA apron expanded",
+                $"General aviation movements now {GeneralAviation.MovementsPerDay}/day · -${AirportGeneralAviation.ApronExpansionCost:N0}");
             return true;
         }
 
@@ -210,7 +245,11 @@ namespace Airside.Simulation
             if (IsInsolvent)
                 return false;
             var proposal = Routes.Pending;
-            if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus, Capacity.StandCount))
+            if (proposal == null)
+                return false;
+            if (Routes.ScheduledFlightsPerDay + proposal.FlightsPerDay > Terminal.PassengerCapacityPerDay)
+                return false;
+            if (!Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus, Capacity.StandCount))
                 return false;
 
             var paid = proposal.IncomePerFlight + Reputation.IncomeBonus;
@@ -500,13 +539,17 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
                 var baseCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount);
                 var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
+                Economy.AddGeneralAviationIncome(GeneralAviation.DailyIncome);
 
+                var generalAviationIncome = Economy.TotalGeneralAviationIncome - _dayStartGeneralAviationIncome;
                 var report = new DailyReport(
                     dayNumber: _daysSettled,
                     closingWeather: weather,
                     flightsCompleted: CompletedCycles - _dayStartCycles,
-                    turnaroundRevenue: (Economy.TotalRevenue - Economy.TotalRouteIncome) - (_dayStartRevenue - _dayStartRouteIncome),
+                    turnaroundRevenue: (Economy.TotalRevenue - Economy.TotalRouteIncome - Economy.TotalGeneralAviationIncome)
+                        - (_dayStartRevenue - _dayStartRouteIncome - _dayStartGeneralAviationIncome),
                     routeIncome: Economy.TotalRouteIncome - _dayStartRouteIncome,
+                    generalAviationIncome: generalAviationIncome,
                     delayCost: Economy.TotalDelayCost - _dayStartDelayCost,
                     operatingCost: cost,
                     netCashChange: Economy.Cash - _dayStartCash,
@@ -637,6 +680,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             _dayStartCash = Economy.Cash;
             _dayStartRevenue = Economy.TotalRevenue;
             _dayStartRouteIncome = Economy.TotalRouteIncome;
+            _dayStartGeneralAviationIncome = Economy.TotalGeneralAviationIncome;
             _dayStartDelayCost = Economy.TotalDelayCost;
             _dayStartReputation = Reputation.Score;
         }

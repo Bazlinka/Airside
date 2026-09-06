@@ -13,6 +13,7 @@ namespace Airside.Simulation
             int flightsCompleted,
             long turnaroundRevenue,
             long routeIncome,
+            long generalAviationIncome,
             long delayCost,
             long operatingCost,
             long netCashChange,
@@ -24,6 +25,7 @@ namespace Airside.Simulation
             FlightsCompleted = flightsCompleted;
             TurnaroundRevenue = turnaroundRevenue;
             RouteIncome = routeIncome;
+            GeneralAviationIncome = generalAviationIncome;
             DelayCost = delayCost;
             OperatingCost = operatingCost;
             NetCashChange = netCashChange;
@@ -36,13 +38,14 @@ namespace Airside.Simulation
         public int FlightsCompleted { get; }
         public long TurnaroundRevenue { get; }
         public long RouteIncome { get; }
+        public long GeneralAviationIncome { get; }
         public long DelayCost { get; }
         public long OperatingCost { get; }
         public long NetCashChange { get; }
         public int ReputationChange { get; }
         public int GroundCrew { get; }
 
-        public long FlightIncome => TurnaroundRevenue + RouteIncome;
+        public long FlightIncome => TurnaroundRevenue + RouteIncome + GeneralAviationIncome;
 
         public string SummaryLine
         {

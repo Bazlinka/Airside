@@ -10,13 +10,16 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (overnight polish + night window glow)
-- **Branch / working tree:** `cursor/overnight-polish-38b9` → PR into `main`
-- **Do this next:** Merge overnight polish PR. Bailey review of Batch C / Batch E when free.
-  Fix ground-traffic Stand 3 lead-in (still maps Stand 3 → Stand 2 lead-in). Unity Play soak.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD props/stand
-  equipment on this branch. Batch E UI candidates Generated on main (not integrated).
-  Passenger Services shipped. Headless domain harness 96/96.
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: look + systems PRs)
+- **Branch / working tree:** open draft PRs into `main`:
+  - #20 `cursor/overnight-polish-38b9` — WLD greybox + miniature look
+  - #21 `cursor/stand3-ground-traffic-38b9` — Stand 3 fleet lead-in/Z
+  - #22 `cursor/insolvency-hud-38b9` — insolvency / cash warning HUD
+  - #23 `cursor/follow-cycle-38b9` — F cycles dual commercials
+- **Do this next:** Merge the four overnight PRs (any order; #21 is sim, others presentation).
+  Bailey review of Batch C / Batch E when free. Unity Play soak for look + HUD.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD polish in #20.
+  Batch E UI candidates Generated (not integrated). Passenger Services shipped. Headless harness green on each tip.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
 - **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?

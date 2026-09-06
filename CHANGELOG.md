@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Add Cloud Agent environment config for the headless domain harness.** New
+  `.cursor/environment.json` installs the .NET 8 SDK (`dotnet-sdk-8.0`) and
+  pre-restores `scripts/dotnet-harness/Harness.csproj` on setup, so a Cloud Agent
+  on Linux (no Mac Unity editor) can run `scripts/test-domain.sh` out of the box.
+  Verified: SDK 8.0.130 installed and `scripts/test-domain.sh` reports 97/97
+  Domain/Simulation/Persistence tests passing. Tooling only; no game code changed.
+  `scripts/test-unity.sh` remains the source of truth before merging behaviour.
+
 - **Merge wave: Approve Batch C/E and land overnight polish + Batch E HUD.** Bailey
   Approve recorded for Batch C models and Batch E UI. Merged draft PRs #19–#30
   (and #31 Approve) onto `main`: WLD greybox, Stand 3 traffic fix, insolvency HUD,

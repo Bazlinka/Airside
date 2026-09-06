@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Integrate Batch C models, WLD kits, and Batch E cleanup.** Runtime
+  `ArtGltfLoader` loads Approved Batch C / WLD / PRP glTF kits from disk with
+  primitive fallbacks (aircraft, buildings, vehicles, service gear, markings,
+  lights, apron props). Regenerated UI-ICO-003 service icon sheet and UI-PNL-002
+  dark panel (~89% mean alpha); HUD draws operation/economy/service icons and
+  prefers the dark panel. Presentation only; `scripts/test-domain.sh` 97/97.
+  Unity Play Verified still Bailey-owned.
+
 - **Merge wave: Approve Batch C/E and land overnight polish + Batch E HUD.** Bailey
   Approve recorded for Batch C models and Batch E UI. Merged draft PRs #19–#30
   (and #31 Approve) onto `main`: WLD greybox, Stand 3 traffic fix, insolvency HUD,

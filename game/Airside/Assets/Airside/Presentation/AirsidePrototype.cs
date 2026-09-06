@@ -84,9 +84,12 @@ namespace Airside.Presentation
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
-            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f));
-            _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f));
-            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f));
+            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
+                "Models/Vehicles/mdl_fuel_truck_small_v01.gltf");
+            _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
+                "Models/Vehicles/mdl_baggage_tug_train_v01.gltf");
+            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
+                "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf");
             _stairs = BuildStairs();
             _chocks = BuildChocks();
             _gpuCart = BuildGpuCart();
@@ -230,9 +233,10 @@ namespace Airside.Presentation
             var night = daylight < 0.35f;
             var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff || (night && !airborne);
 
-            for (var i = 0; i < aircraft.childCount; i++)
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                var child = aircraft.GetChild(i);
+                if (child == aircraft)
+                    continue;
                 if (child.name.StartsWith("Gear", StringComparison.Ordinal))
                     child.gameObject.SetActive(!airborne);
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
@@ -251,10 +255,9 @@ namespace Airside.Presentation
         {
             // Presentation-only: cabin door swings open at stand, closes before pushback.
             var targetY = phase == AircraftPhase.AtStand ? -85f : 0f;
-            for (var i = 0; i < aircraft.childCount; i++)
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                var child = aircraft.GetChild(i);
-                if (!child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                if (child == aircraft || !child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
                     continue;
                 var euler = child.localEulerAngles;
                 var current = euler.y > 180f ? euler.y - 360f : euler.y;
@@ -267,10 +270,9 @@ namespace Airside.Presentation
         {
             // Presentation-only: subtle heat shimmer behind running engines.
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
-            for (var i = 0; i < aircraft.childCount; i++)
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                var child = aircraft.GetChild(i);
-                if (!child.name.StartsWith("EngineHeat", StringComparison.Ordinal))
+                if (child == aircraft || !child.name.StartsWith("EngineHeat", StringComparison.Ordinal))
                     continue;
 
                 child.gameObject.SetActive(enginesOn);
@@ -296,9 +298,10 @@ namespace Airside.Presentation
                 return;
 
             var degrees = Time.unscaledDeltaTime * 720f;
-            for (var i = 0; i < aircraft.childCount; i++)
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                var child = aircraft.GetChild(i);
+                if (child == aircraft)
+                    continue;
                 if (child.name.StartsWith("Propeller", StringComparison.Ordinal))
                     child.Rotate(Vector3.forward, degrees, Space.Self);
             }
@@ -323,7 +326,10 @@ namespace Airside.Presentation
                 var color = index == 0
                     ? new Color(0.12f, 0.43f, 0.76f)
                     : new Color(0.18f, 0.55f, 0.48f);
-                _commercialAircraft[index] = BuildAircraft($"Commercial {flight.AircraftId}", color);
+                var livery = index == 0
+                    ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
+                    : "Textures/Decals/dc_livery_emu_air_v01.png";
+                _commercialAircraft[index] = BuildAircraft($"Commercial {flight.AircraftId}", color, livery);
             }
 
             if (needed > 0)
@@ -503,9 +509,10 @@ namespace Airside.Presentation
             // Presentation-only: wheels roll while the vehicle is on a service task.
             var travel = Vector3.Distance(previous, position);
             var degrees = Time.unscaledDeltaTime * 360f + travel * 40f;
-            for (var i = 0; i < vehicle.childCount; i++)
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
-                var child = vehicle.GetChild(i);
+                if (child == vehicle)
+                    continue;
                 if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
@@ -516,9 +523,10 @@ namespace Airside.Presentation
             if (vehicle == null)
                 return;
 
-            for (var i = 0; i < vehicle.childCount; i++)
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
-                var child = vehicle.GetChild(i);
+                if (child == vehicle)
+                    continue;
                 if (child.name.StartsWith("Hose", StringComparison.Ordinal))
                 {
                     child.localScale = new Vector3(0.12f, 0.12f, 0.4f);
@@ -542,10 +550,9 @@ namespace Airside.Presentation
             if (!active || vehicle == null || !vehicle.gameObject.activeSelf)
                 return;
 
-            for (var i = 0; i < vehicle.childCount; i++)
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
-                var child = vehicle.GetChild(i);
-                if (!child.name.StartsWith(partPrefix, StringComparison.Ordinal))
+                if (child == vehicle || !child.name.StartsWith(partPrefix, StringComparison.Ordinal))
                     continue;
 
                 if (partPrefix == "Hose")
@@ -745,7 +752,16 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
-            GUI.Label(new Rect(42, 104, 380, 25), CommercialPhaseHudLine(), detail);
+            var phaseLineX = 42f;
+            var phaseIcon = _simulation.Flights.Count > 0
+                ? AirsideTheme.OperationIcon(_simulation.Flights[0].Operation.Phase)
+                : null;
+            if (phaseIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 104, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                phaseLineX = 68f;
+            }
+            GUI.Label(new Rect(phaseLineX, 104, 380 - (phaseLineX - 42), 25), CommercialPhaseHudLine(), detail);
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
@@ -761,8 +777,22 @@ namespace Airside.Presentation
                 $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
             var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
             var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
-            GUI.Label(new Rect(42, 156, 200, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
-            GUI.Label(new Rect(242, 156, 190, 22),
+            var cashIcon = AirsideTheme.Icon("economy", "cash");
+            var cashX = 42f;
+            if (cashIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 156, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                cashX = 64f;
+            }
+            GUI.Label(new Rect(cashX, 156, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
+            var repIcon = AirsideTheme.Icon("economy", "reputation");
+            var repX = 242f;
+            if (repIcon != null)
+            {
+                GUI.DrawTexture(new Rect(242, 156, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                repX = 264f;
+            }
+            GUI.Label(new Rect(repX, 156, 190 - (repX - 242), 22),
                 $"Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", reputationStyle);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
@@ -793,7 +823,14 @@ namespace Airside.Presentation
                 {
                     var mark = task.State == TurnaroundTaskState.Complete ? "✓" : task.State == TurnaroundTaskState.Active ? "●" : "○";
                     var time = task.State == TurnaroundTaskState.Complete ? string.Empty : $"  {task.SecondsRemaining}s";
-                    GUI.Label(new Rect(42, lineY, 350, 20), $"{mark} {task.Name}{time}", small);
+                    var taskIcon = AirsideTheme.ServiceIconForTask(task.Name);
+                    var taskX = 42f;
+                    if (taskIcon != null)
+                    {
+                        GUI.DrawTexture(new Rect(42, lineY, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                        taskX = 62f;
+                    }
+                    GUI.Label(new Rect(taskX, lineY, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
                     lineY += 19f;
                 }
 
@@ -836,11 +873,18 @@ namespace Airside.Presentation
             GUI.enabled = true;
 
             var research = _simulation.Research;
+            var researchIcon = AirsideTheme.Icon("economy", "research");
+            var researchLabelX = 42f;
+            if (researchIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 454, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                researchLabelX = 64f;
+            }
             if (research.IsResearching)
             {
                 var progress = (float)research.Progress01(_clock.Now);
                 var pct = (int)(progress * 100);
-                GUI.Label(new Rect(42, 454, 380, 20),
+                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
                     $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
                 AirsideTheme.DrawProgressBar(
                     new Rect(42, 476, 280, 8),
@@ -850,7 +894,7 @@ namespace Airside.Presentation
             }
             else if (research.CanStartOperationsEfficiency)
             {
-                GUI.Label(new Rect(42, 454, 380, 20),
+                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
                 GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
                 if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
@@ -859,7 +903,7 @@ namespace Airside.Presentation
             }
             else if (research.CanStartPassengerServices)
             {
-                GUI.Label(new Rect(42, 454, 380, 20),
+                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
                     $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
                 GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
                 if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
@@ -874,7 +918,7 @@ namespace Airside.Presentation
                 var pax = research.PassengerServicesComplete
                     ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
                     : string.Empty;
-                GUI.Label(new Rect(42, 454, 380, 20),
+                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
@@ -1375,78 +1419,61 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
-            // Batch C building silhouettes (procedural stand-ins for Approved glTF kits).
-            CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
-            CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
-                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(3f, 1.5f));
+            // Batch C buildings (Approved glTF) with primitive silhouette fallback.
+            PlaceBuildingOrFallback(
+                "Models/Buildings/mdl_terminal_regional_small_v01.gltf",
+                new Vector3(26f, 0f, 27f),
+                name => name switch
+                {
+                    "glass_front" => new Color(0.16f, 0.38f, 0.5f),
+                    "end_cap_left" or "end_cap_right" => new Color(0.62f, 0.66f, 0.69f),
+                    "service_wing" => new Color(0.58f, 0.62f, 0.64f),
+                    _ => new Color(0.68f, 0.72f, 0.75f)
+                },
+                () =>
+                {
+                    CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
+                    CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
+                        "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(3f, 1.5f));
+                    CreateBlock("Terminal end L", new Vector3(14.8f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
+                    CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
+                    CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
+                },
+                "Textures/Environment/tx_terminal_glass_mask_v01.png");
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
-            CreateBlock("Terminal end L", new Vector3(14.8f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
-            CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
-            CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
-            CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
-                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
-            CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
-            CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
-                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f));
-            CreateBlock("Edge light L", new Vector3(-30f, 0.2f, -3.4f), new Vector3(0.2f, 0.4f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
-            CreateBlock("Edge light R", new Vector3(-30f, 0.2f, 3.4f), new Vector3(0.2f, 0.4f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            PlaceBuildingOrFallback(
+                "Models/Buildings/mdl_hangar_small_v01.gltf",
+                new Vector3(-20f, 0f, 20f),
+                name => name switch
+                {
+                    "door_opening" => new Color(0.22f, 0.24f, 0.26f),
+                    "roof_ridge" => new Color(0.4f, 0.44f, 0.48f),
+                    _ => new Color(0.45f, 0.5f, 0.54f)
+                },
+                () =>
+                {
+                    CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
+                        "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+                    CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
+                });
+            PlaceBuildingOrFallback(
+                "Models/Buildings/mdl_operations_shed_v01.gltf",
+                new Vector3(-8f, 0f, 26f),
+                _ => new Color(0.55f, 0.58f, 0.52f),
+                () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
+                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)));
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
             CreateDecalQuad("Apron stains", new Vector3(20f, 0.06f, 17f), new Vector3(18f, 1f, 10f),
                 "Textures/Decals/dc_apron_stains_v01.png");
 
-            for (var x = -34; x <= 34; x += 8)
-                CreateBlock("Runway marking", new Vector3(x, 0.02f, 0f), new Vector3(3.5f, 0.03f, 0.28f), Color.white);
-
-            for (var x = -36; x <= 36; x += 6)
-            {
-                CreateBlock("Runway edge L", new Vector3(x, 0.05f, -3.4f), new Vector3(0.25f, 0.1f, 0.25f), new Color(1f, 1f, 0.85f));
-                CreateBlock("Runway edge R", new Vector3(x, 0.05f, 3.4f), new Vector3(0.25f, 0.1f, 0.25f), new Color(1f, 1f, 0.85f));
-            }
-            for (var x = -4; x <= 28; x += 4)
-                CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
-
-            // WLD-001 threshold + hold-short greybox.
-            for (var z = -2.4f; z <= 2.4f; z += 0.8f)
-            {
-                CreateBlock("Threshold W", new Vector3(-36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
-                CreateBlock("Threshold E", new Vector3(36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
-            }
-            CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
-            CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
-
-            // Stylised runway end designators (not real chart typography).
-            CreateBlock("Runway number 09 bar", new Vector3(-34f, 0.04f, -1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
-            CreateBlock("Runway number 09 stem", new Vector3(-34f, 0.04f, 1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
-            CreateBlock("Runway number 27 bar", new Vector3(34f, 0.04f, 1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
-            CreateBlock("Runway number 27 stem", new Vector3(34f, 0.04f, -1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
-
-
-            // WLD-002 taxi edge lights + obstruction markers.
-            for (var x = -8; x <= 28; x += 8)
-            {
-                CreateBlock("Taxi light N", new Vector3(x, 0.18f, 11.1f), new Vector3(0.18f, 0.35f, 0.18f), new Color(0.2f, 0.85f, 0.35f));
-                CreateBlock("Taxi light S", new Vector3(x, 0.18f, 6.9f), new Vector3(0.18f, 0.35f, 0.18f), new Color(0.2f, 0.85f, 0.35f));
-            }
-            CreateBlock("Hangar obstruction", new Vector3(-20f, 5.2f, 20f), new Vector3(0.25f, 0.25f, 0.25f), new Color(0.95f, 0.35f, 0.12f));
-            CreateBlock("Terminal roof light", new Vector3(26f, 4.7f, 27f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.95f, 0.35f, 0.12f));
-
-            // WLD-003 apron props.
-            CreateCone(new Vector3(12.5f, 0.25f, 12.2f));
-            CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
-            CreateCone(new Vector3(23.5f, 0.25f, 12.2f));
-            CreateCone(new Vector3(23.5f, 0.25f, 21.8f));
-            CreateCone(new Vector3(-6f, 0.25f, 11f));
-            CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
-            CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
-            CreateBlock("Airside sign", new Vector3(10f, 1.1f, 22f), new Vector3(0.12f, 2.0f, 1.4f), new Color(0.12f, 0.35f, 0.55f));
-            CreateBlock("Airside sign face", new Vector3(10.08f, 1.35f, 22f), new Vector3(0.04f, 0.9f, 1.1f), new Color(0.95f, 0.95f, 0.92f));
-            CreateBlock("Dolly A", new Vector3(30f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
-            CreateBlock("Dolly B", new Vector3(32.2f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
+            PlaceWorldMarkings();
+            PlaceWorldLighting();
+            PlaceWorldProps();
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
@@ -1464,35 +1491,48 @@ namespace Airside.Presentation
             CreateBlock($"{name} stop", new Vector3(x, 0.08f, z + 1.9f), new Vector3(3.4f, 0.03f, 0.18f), new Color(0.96f, 0.77f, 0.12f));
         }
 
-        private static Transform BuildAircraft(string name, Color accent)
+        private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
-            // Batch C turboprop silhouette with separated props/engines/gear (primitive fallback).
             var root = new GameObject(name).transform;
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Fuselage";
-            body.transform.SetParent(root, false);
-            body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            body.transform.localScale = new Vector3(0.72f, 2.8f, 0.72f);
-            body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
-            // Fictional regional accent stripe (not a real airline mark).
-            ParentBlock(root, "Livery stripe", new Vector3(0f, 0.12f, 0.05f), new Vector3(0.76f, 0.08f, 2.2f), accent);
+            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
+            // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
+            var usedArt = ArtGltfLoader.TryInstantiate(
+                "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf",
+                root,
+                out _,
+                RenameAircraftPart,
+                kitName => AircraftPartColor(kitName, accent),
+                localPosition: new Vector3(0f, -0.7f, 0f));
 
-            ParentBlock(root, "Wing L", new Vector3(-2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
-            ParentBlock(root, "Wing R", new Vector3(2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
-            ParentBlock(root, "Engine L", new Vector3(-1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
-            ParentBlock(root, "Engine R", new Vector3(1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
-            ParentBlock(root, "Propeller L", new Vector3(-1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
-            ParentBlock(root, "Propeller R", new Vector3(1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
-            ParentBlock(root, "Tail", new Vector3(0f, 0.85f, -2.15f), new Vector3(0.14f, 1.5f, 1.0f), accent);
-            ParentBlock(root, "Tailplane", new Vector3(0f, 0.55f, -2.2f), new Vector3(2.2f, 0.1f, 0.7f), accent);
-            ParentBlock(root, "Gear nose", new Vector3(0f, -0.55f, 1.5f), new Vector3(0.12f, 0.45f, 0.28f), new Color(0.25f, 0.25f, 0.28f));
-            ParentBlock(root, "Gear L", new Vector3(-0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
-            ParentBlock(root, "Gear R", new Vector3(0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+            if (!usedArt)
+            {
+                // Batch C turboprop silhouette with separated props/engines/gear (primitive fallback).
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                body.name = "Fuselage";
+                body.transform.SetParent(root, false);
+                body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                body.transform.localScale = new Vector3(0.72f, 2.8f, 0.72f);
+                body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
+                ParentBlock(root, "Livery stripe", new Vector3(0f, 0.12f, 0.05f), new Vector3(0.76f, 0.08f, 2.2f), accent);
+                ParentBlock(root, "Wing L", new Vector3(-2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
+                ParentBlock(root, "Wing R", new Vector3(2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
+                ParentBlock(root, "Engine L", new Vector3(-1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
+                ParentBlock(root, "Engine R", new Vector3(1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
+                ParentBlock(root, "Propeller L", new Vector3(-1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Propeller R", new Vector3(1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Tail", new Vector3(0f, 0.85f, -2.15f), new Vector3(0.14f, 1.5f, 1.0f), accent);
+                ParentBlock(root, "Tailplane", new Vector3(0f, 0.55f, -2.2f), new Vector3(2.2f, 0.1f, 0.7f), accent);
+                ParentBlock(root, "Gear nose", new Vector3(0f, -0.55f, 1.5f), new Vector3(0.12f, 0.45f, 0.28f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear L", new Vector3(-0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear R", new Vector3(0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "CabinDoor", new Vector3(0.55f, 0.05f, 0.35f), new Vector3(0.08f, 0.85f, 0.55f), new Color(0.78f, 0.8f, 0.83f));
+            }
+
+            ApplyLiveryDecal(root, liveryDecalRelativePath);
             ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
             ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
-            ParentBlock(root, "CabinDoor", new Vector3(0.55f, 0.05f, 0.35f), new Vector3(0.08f, 0.85f, 0.55f), new Color(0.78f, 0.8f, 0.83f));
             ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
             ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
 
@@ -1507,6 +1547,56 @@ namespace Airside.Presentation
             return root;
         }
 
+        private static string RenameAircraftPart(string kitName) => kitName switch
+        {
+            "fuselage" => "Fuselage",
+            "nose" => "Nose",
+            "wing_left" => "Wing L",
+            "wing_right" => "Wing R",
+            "engine_left" => "Engine L",
+            "engine_right" => "Engine R",
+            "propeller_left" => "Propeller L",
+            "propeller_right" => "Propeller R",
+            "tail_fin" => "Tail",
+            "tailplane" => "Tailplane",
+            "gear_nose" => "Gear nose",
+            "gear_left" => "Gear L",
+            "gear_right" => "Gear R",
+            "door_fwd" => "CabinDoor",
+            _ => kitName
+        };
+
+        private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
+        {
+            "fuselage" or "nose" => new Color(0.93f, 0.95f, 0.97f),
+            "wing_left" or "wing_right" or "tail_fin" or "tailplane" => accent,
+            "engine_left" or "engine_right" => accent * 0.85f,
+            "propeller_left" or "propeller_right" => new Color(0.2f, 0.2f, 0.22f),
+            "gear_nose" or "gear_left" or "gear_right" => new Color(0.25f, 0.25f, 0.28f),
+            "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
+            _ => null
+        };
+
+        private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
+        {
+            if (string.IsNullOrEmpty(artRelativePath))
+                return;
+            var texture = TryLoadArtTexture(artRelativePath);
+            if (texture == null)
+                return;
+
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name != "Fuselage")
+                    continue;
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                renderer.material.mainTexture = texture;
+                renderer.material.mainTextureScale = new Vector2(1f, 1f);
+            }
+        }
+
         private static void ParentBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
         {
             var block = CreateBlock(name, localPosition, scale, color);
@@ -1516,33 +1606,62 @@ namespace Airside.Presentation
 
         private static Transform BuildGroundTrafficAircraft(string label)
         {
-            var root = BuildAircraft($"Ground traffic {label}", new Color(0.82f, 0.55f, 0.16f));
+            var root = BuildAircraft(
+                $"Ground traffic {label}",
+                new Color(0.82f, 0.55f, 0.16f),
+                "Textures/Decals/dc_livery_airside_traffic_v01.png");
             root.localScale = new Vector3(0.82f, 0.82f, 0.82f);
             root.position = new Vector3(8f, 0.7f, 9f);
             return root;
         }
 
-        private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale)
+        private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale, string artRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            ParentBlock(root, $"{name} body", Vector3.zero, scale, color);
-            ParentBlock(root, $"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f),
-                new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
-            ParentBlock(root, $"{name} wheel FL", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, scale.z * 0.42f),
-                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, $"{name} wheel FR", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, -scale.z * 0.42f),
-                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, $"{name} wheel RL", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, scale.z * 0.42f),
-                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, $"{name} wheel RR", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, -scale.z * 0.42f),
-                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            // Batch D service-loop hooks (presentation only).
-            ParentBlock(root, "Hose", new Vector3(scale.x * 0.45f, 0.15f, 0.2f),
-                new Vector3(0.12f, 0.12f, 0.4f), new Color(0.25f, 0.25f, 0.28f));
-            ParentBlock(root, "Cargo", new Vector3(0f, 0.35f, 0f),
-                new Vector3(0.55f, 0.35f, 0.45f), new Color(0.75f, 0.55f, 0.2f));
-            ParentBlock(root, "Door", new Vector3(scale.x * 0.2f, 0.25f, scale.z * 0.45f),
-                new Vector3(0.08f, 0.7f, 0.45f), new Color(0.2f, 0.22f, 0.25f));
+            var usedArt = !string.IsNullOrEmpty(artRelativePath) && ArtGltfLoader.TryInstantiate(
+                artRelativePath,
+                root,
+                out _,
+                kitName => kitName switch
+                {
+                    "cab" => $"{name} cab",
+                    "tank" or "bus_body" or "tug" => $"{name} body",
+                    "hose_mount" => "Hose",
+                    "door" => "Door",
+                    var n when n.StartsWith("cart_", StringComparison.Ordinal) => "Cargo",
+                    _ => $"{name} {kitName}"
+                },
+                kitName => kitName switch
+                {
+                    "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr" => new Color(0.15f, 0.15f, 0.16f),
+                    "hose_mount" => new Color(0.25f, 0.25f, 0.28f),
+                    "door" => new Color(0.2f, 0.22f, 0.25f),
+                    "cab" => color * 0.82f,
+                    _ => color
+                },
+                localPosition: new Vector3(0f, -0.55f, 0f));
+
+            if (!usedArt)
+            {
+                ParentBlock(root, $"{name} body", Vector3.zero, scale, color);
+                ParentBlock(root, $"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f),
+                    new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
+                ParentBlock(root, $"{name} wheel FL", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, scale.z * 0.42f),
+                    new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, $"{name} wheel FR", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, -scale.z * 0.42f),
+                    new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, $"{name} wheel RL", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, scale.z * 0.42f),
+                    new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, $"{name} wheel RR", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, -scale.z * 0.42f),
+                    new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "Hose", new Vector3(scale.x * 0.45f, 0.15f, 0.2f),
+                    new Vector3(0.12f, 0.12f, 0.4f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Cargo", new Vector3(0f, 0.35f, 0f),
+                    new Vector3(0.55f, 0.35f, 0.45f), new Color(0.75f, 0.55f, 0.2f));
+                ParentBlock(root, "Door", new Vector3(scale.x * 0.2f, 0.25f, scale.z * 0.45f),
+                    new Vector3(0.08f, 0.7f, 0.45f), new Color(0.2f, 0.22f, 0.25f));
+            }
+
             root.gameObject.SetActive(false);
             return root;
         }
@@ -1551,12 +1670,27 @@ namespace Airside.Presentation
         private static Transform BuildStairs()
         {
             var root = new GameObject("Passenger stairs").transform;
-            ParentBlock(root, "Stairs base", Vector3.zero, new Vector3(1.1f, 0.2f, 2.4f), new Color(0.7f, 0.72f, 0.74f));
-            ParentBlock(root, "Stairs rail L", new Vector3(-0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
-            ParentBlock(root, "Stairs rail R", new Vector3(0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
-            for (var i = 0; i < 5; i++)
-                ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
-                    new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
+            if (ArtGltfLoader.TryPlaceNamedMesh(
+                    "Models/Props/mdl_service_equipment_kit_v01.gltf",
+                    "stairs",
+                    Vector3.zero,
+                    Quaternion.identity,
+                    new Color(0.7f, 0.72f, 0.74f),
+                    out var stairs))
+            {
+                stairs.SetParent(root, false);
+                stairs.localPosition = new Vector3(0f, -0.55f, 0f);
+            }
+            else
+            {
+                ParentBlock(root, "Stairs base", Vector3.zero, new Vector3(1.1f, 0.2f, 2.4f), new Color(0.7f, 0.72f, 0.74f));
+                ParentBlock(root, "Stairs rail L", new Vector3(-0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
+                ParentBlock(root, "Stairs rail R", new Vector3(0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
+                for (var i = 0; i < 5; i++)
+                    ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
+                        new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
+            }
+
             root.gameObject.SetActive(false);
             return root;
         }
@@ -1564,8 +1698,22 @@ namespace Airside.Presentation
         private static Transform BuildChocks()
         {
             var root = new GameObject("Wheel chocks").transform;
-            ParentBlock(root, "Chock L", new Vector3(-0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
-            ParentBlock(root, "Chock R", new Vector3(0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
+            var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
+            var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
+                new Color(0.85f, 0.2f, 0.15f), out var a);
+            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_b", new Vector3(0.55f, 0f, 0f), Quaternion.identity,
+                new Color(0.85f, 0.2f, 0.15f), out var b) || placed;
+            if (placed)
+            {
+                if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, -0.55f, 0f); }
+                if (b != null) { b.SetParent(root, false); b.localPosition = new Vector3(0.55f, -0.55f, 0f); }
+            }
+            else
+            {
+                ParentBlock(root, "Chock L", new Vector3(-0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
+                ParentBlock(root, "Chock R", new Vector3(0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
+            }
+
             root.gameObject.SetActive(false);
             return root;
         }
@@ -1573,10 +1721,25 @@ namespace Airside.Presentation
         private static Transform BuildGpuCart()
         {
             var root = new GameObject("GPU cart").transform;
-            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), new Color(0.25f, 0.55f, 0.35f));
-            ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
-            ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
+            if (ArtGltfLoader.TryPlaceNamedMesh(
+                    "Models/Props/mdl_service_equipment_kit_v01.gltf",
+                    "gpu",
+                    Vector3.zero,
+                    Quaternion.identity,
+                    new Color(0.25f, 0.55f, 0.35f),
+                    out var gpu))
+            {
+                gpu.SetParent(root, false);
+                gpu.localPosition = new Vector3(0f, -0.55f, 0f);
+            }
+            else
+            {
+                ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), new Color(0.25f, 0.55f, 0.35f));
+                ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
+            }
+
             root.gameObject.SetActive(false);
             return root;
         }
@@ -1584,22 +1747,39 @@ namespace Airside.Presentation
         private static Transform BuildPushbackTug()
         {
             var root = new GameObject("Pushback tug").transform;
-            ParentBlock(root, "Tug body", Vector3.zero, new Vector3(2.2f, 0.85f, 1.15f), new Color(0.82f, 0.62f, 0.18f));
-            ParentBlock(root, "Tug cab", new Vector3(0.55f, 0.45f, 0f), new Vector3(0.9f, 0.7f, 1.0f), new Color(0.7f, 0.52f, 0.14f));
-            ParentBlock(root, "Tug towbar", new Vector3(-1.4f, 0.05f, 0f), new Vector3(1.2f, 0.12f, 0.12f), new Color(0.3f, 0.3f, 0.32f));
-            ParentBlock(root, "Tug wheel FL", new Vector3(0.6f, -0.35f, 0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, "Tug wheel FR", new Vector3(0.6f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, "Tug wheel RL", new Vector3(-0.55f, -0.35f, 0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
-            ParentBlock(root, "Tug wheel RR", new Vector3(-0.55f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,
+                    new Color(0.82f, 0.62f, 0.18f), out var towbar))
+            {
+                towbar.SetParent(root, false);
+                towbar.localPosition = new Vector3(0f, -0.55f, 0f);
+            }
+            else
+            {
+                ParentBlock(root, "Tug body", Vector3.zero, new Vector3(2.2f, 0.85f, 1.15f), new Color(0.82f, 0.62f, 0.18f));
+                ParentBlock(root, "Tug cab", new Vector3(0.55f, 0.45f, 0f), new Vector3(0.9f, 0.7f, 1.0f), new Color(0.7f, 0.52f, 0.14f));
+                ParentBlock(root, "Tug towbar", new Vector3(-1.4f, 0.05f, 0f), new Vector3(1.2f, 0.12f, 0.12f), new Color(0.3f, 0.3f, 0.32f));
+                ParentBlock(root, "Tug wheel FL", new Vector3(0.6f, -0.35f, 0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "Tug wheel FR", new Vector3(0.6f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "Tug wheel RL", new Vector3(-0.55f, -0.35f, 0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "Tug wheel RR", new Vector3(-0.55f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            }
+
             root.gameObject.SetActive(false);
             return root;
         }
 
         private static Transform BuildWindsock()
         {
-            // WLD-003 windsock greybox — pole + animated sock (UpdateWindsock).
-            CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
-            CreateBlock("Windsock hinge", new Vector3(-12f, 3.15f, 12f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.55f, 0.55f, 0.52f));
+            // WLD-003 windsock — kit pole when available, animated sock always procedural.
+            const string propsKit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
+            if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", new Vector3(-12f, 0f, 12f), Quaternion.identity,
+                    new Color(0.75f, 0.75f, 0.72f), out _))
+            {
+                CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
+                CreateBlock("Windsock hinge", new Vector3(-12f, 3.15f, 12f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.55f, 0.55f, 0.52f));
+            }
+
             var sock = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             sock.name = "Windsock sock";
             Object.Destroy(sock.GetComponent<Collider>());
@@ -1615,6 +1795,15 @@ namespace Airside.Presentation
 
         private static void CreateCone(Vector3 position)
         {
+            if (ArtGltfLoader.TryPlaceNamedMesh(
+                    "Models/Props/mdl_airfield_props_kit_v01.gltf",
+                    "cone",
+                    position + new Vector3(0f, -0.25f, 0f),
+                    Quaternion.identity,
+                    new Color(0.95f, 0.45f, 0.08f),
+                    out _))
+                return;
+
             var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             cone.name = "Safety cone";
             Object.Destroy(cone.GetComponent<Collider>());
@@ -1626,12 +1815,146 @@ namespace Airside.Presentation
 
         private static void CreateBarrier(Vector3 position, float yawDegrees)
         {
+            if (ArtGltfLoader.TryPlaceNamedMesh(
+                    "Models/Props/mdl_airfield_props_kit_v01.gltf",
+                    "barrier",
+                    position + new Vector3(0f, -0.45f, 0f),
+                    Quaternion.Euler(0f, yawDegrees, 0f),
+                    new Color(0.9f, 0.55f, 0.12f),
+                    out _))
+                return;
+
             var root = new GameObject("Barrier").transform;
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
             ParentBlock(root, "Barrier rail", Vector3.zero, new Vector3(2.4f, 0.12f, 0.12f), new Color(0.9f, 0.55f, 0.12f));
             ParentBlock(root, "Barrier leg L", new Vector3(-1.0f, -0.25f, 0f), new Vector3(0.12f, 0.55f, 0.12f), new Color(0.25f, 0.25f, 0.28f));
             ParentBlock(root, "Barrier leg R", new Vector3(1.0f, -0.25f, 0f), new Vector3(0.12f, 0.55f, 0.12f), new Color(0.25f, 0.25f, 0.28f));
+        }
+
+        private static void PlaceBuildingOrFallback(
+            string artRelativePath,
+            Vector3 worldPosition,
+            System.Func<string, Color?> colorFor,
+            System.Action fallback,
+            string glassTextureRelativePath = null)
+        {
+            if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
+            {
+                root.position = worldPosition;
+                if (!string.IsNullOrEmpty(glassTextureRelativePath))
+                {
+                    foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (child.name != "glass_front")
+                            continue;
+                        var renderer = child.GetComponent<Renderer>();
+                        if (renderer == null)
+                            continue;
+                        var texture = TryLoadArtTexture(glassTextureRelativePath);
+                        if (texture != null)
+                        {
+                            renderer.material.mainTexture = texture;
+                            renderer.material.mainTextureScale = new Vector2(3f, 1.5f);
+                        }
+                    }
+                }
+
+                return;
+            }
+
+            fallback();
+        }
+
+        private static void PlaceWorldMarkings()
+        {
+            // WLD-001 centreline: kit strip runs along Z; rotate onto the X runway axis.
+            const string kit = "Models/Props/mdl_airfield_markings_kit_v01.gltf";
+            var usedCentre = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "runway_centreline", Vector3.zero, Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+
+            if (!usedCentre)
+            {
+                for (var x = -34; x <= 34; x += 8)
+                    CreateBlock("Runway marking", new Vector3(x, 0.02f, 0f), new Vector3(3.5f, 0.03f, 0.28f), Color.white);
+            }
+
+            // Threshold bars + hold-short remain greybox-scale to match the 7 m runway.
+            for (var z = -2.4f; z <= 2.4f; z += 0.8f)
+            {
+                CreateBlock("Threshold W", new Vector3(-36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
+                CreateBlock("Threshold E", new Vector3(36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
+            }
+            CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
+            CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
+            CreateBlock("Runway number 09 bar", new Vector3(-34f, 0.04f, -1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
+            CreateBlock("Runway number 09 stem", new Vector3(-34f, 0.04f, 1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
+            CreateBlock("Runway number 27 bar", new Vector3(34f, 0.04f, 1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
+            CreateBlock("Runway number 27 stem", new Vector3(34f, 0.04f, -1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
+
+            for (var x = -4; x <= 28; x += 4)
+                CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+        }
+
+        private static void PlaceWorldLighting()
+        {
+            const string kit = "Models/Props/mdl_airfield_lighting_kit_v01.gltf";
+            var edgeColor = new Color(1f, 1f, 0.85f);
+            var taxiColor = new Color(0.2f, 0.85f, 0.35f);
+            var obstruction = new Color(0.95f, 0.35f, 0.12f);
+
+            for (var x = -36; x <= 36; x += 6)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", new Vector3(x, 0f, -3.4f), Quaternion.identity, edgeColor, out _))
+                    CreateBlock("Runway edge L", new Vector3(x, 0.05f, -3.4f), new Vector3(0.25f, 0.1f, 0.25f), edgeColor);
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", new Vector3(x, 0f, 3.4f), Quaternion.identity, edgeColor, out _))
+                    CreateBlock("Runway edge R", new Vector3(x, 0.05f, 3.4f), new Vector3(0.25f, 0.1f, 0.25f), edgeColor);
+            }
+
+            for (var x = -8; x <= 28; x += 8)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", new Vector3(x, 0f, 11.1f), Quaternion.identity, taxiColor, out _))
+                    CreateBlock("Taxi light N", new Vector3(x, 0.18f, 11.1f), new Vector3(0.18f, 0.35f, 0.18f), taxiColor);
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", new Vector3(x, 0f, 6.9f), Quaternion.identity, taxiColor, out _))
+                    CreateBlock("Taxi light S", new Vector3(x, 0.18f, 6.9f), new Vector3(0.18f, 0.35f, 0.18f), taxiColor);
+            }
+
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(-20f, 5.0f, 20f), Quaternion.identity, obstruction, out _))
+                CreateBlock("Hangar obstruction", new Vector3(-20f, 5.2f, 20f), new Vector3(0.25f, 0.25f, 0.25f), obstruction);
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(26f, 4.5f, 27f), Quaternion.identity, obstruction, out _))
+                CreateBlock("Terminal roof light", new Vector3(26f, 4.7f, 27f), new Vector3(0.22f, 0.22f, 0.22f), obstruction);
+
+            // Corner flood poles on the apron.
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 12f), Quaternion.identity,
+                new Color(0.75f, 0.78f, 0.8f), out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 12f), Quaternion.identity,
+                new Color(0.75f, 0.78f, 0.8f), out _);
+        }
+
+        private static void PlaceWorldProps()
+        {
+            const string kit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
+            CreateCone(new Vector3(12.5f, 0.25f, 12.2f));
+            CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
+            CreateCone(new Vector3(23.5f, 0.25f, 12.2f));
+            CreateCone(new Vector3(23.5f, 0.25f, 21.8f));
+            CreateCone(new Vector3(-6f, 0.25f, 11f));
+            CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
+            CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
+
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_board", new Vector3(10f, 0f, 22f), Quaternion.Euler(0f, 90f, 0f),
+                    new Color(0.12f, 0.35f, 0.55f), out _))
+            {
+                CreateBlock("Airside sign", new Vector3(10f, 1.1f, 22f), new Vector3(0.12f, 2.0f, 1.4f), new Color(0.12f, 0.35f, 0.55f));
+                CreateBlock("Airside sign face", new Vector3(10.08f, 1.35f, 22f), new Vector3(0.04f, 0.9f, 1.1f), new Color(0.95f, 0.95f, 0.92f));
+            }
+
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", new Vector3(30f, 0f, 22f), Quaternion.identity,
+                    new Color(0.55f, 0.35f, 0.18f), out _))
+                CreateBlock("Dolly A", new Vector3(30f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", new Vector3(32.2f, 0f, 22f), Quaternion.identity,
+                    new Color(0.55f, 0.35f, 0.18f), out _))
+                CreateBlock("Dolly B", new Vector3(32.2f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
         }
 
 

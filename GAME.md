@@ -10,6 +10,7 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD status colours)
 - **Last updated:** 2026-09-06 by Cursor (overnight keep-going: research toast)
 - **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD audio + research bar)
 - **Branch / working tree:** open draft PRs into `main`:
@@ -18,8 +19,11 @@ next session can continue without seeing the previous conversation. Keep it shor
   - #22 `cursor/insolvency-hud-38b9` — insolvency / cash warning HUD
   - #23 `cursor/follow-cycle-38b9` — F cycles dual commercials
   - #24 `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
-  - `cursor/research-toast-38b9` — research-complete HUD toast
+  - #25 `cursor/research-toast-38b9` — research-complete HUD toast
+  - `cursor/hud-status-colours-38b9` — cash / reputation / day-est colour cues
 - **Do this next:** Merge overnight PRs (any order; #21 is sim). Bailey review of Batch C /
+  Batch E when free. Unity Play soak for look + HUD + mute + research toast + status colours.
+  - `cursor/research-toast-38b9` — research-complete HUD toast
   Batch E when free. Unity Play soak for look + HUD + mute + research toast.
   - `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
   Batch E when free. Unity Play soak for look + HUD + mute.

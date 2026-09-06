@@ -743,13 +743,19 @@ namespace Airside.Presentation
                 weatherLabel += " · wet apron";
             GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
             var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
-            GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", cashStyle);
+            var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
+            GUI.Label(new Rect(42, 156, 200, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
+            GUI.Label(new Rect(242, 156, 190, 22),
+                $"Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", reputationStyle);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
                 ? $"  ·  ~{days}d runway"
                 : "  ·  cash building";
+            var financeStyle = finance.ExpectedNet < 0 ? delayed
+                : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? caution
+                : onTime;
             GUI.Label(new Rect(42, 176, 390, 22),
-                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", small);
+                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", financeStyle);
             if (_simulation.IsInsolvent)
             {
                 GUI.Label(new Rect(42, 198, 360, 22), "INSOLVENT — operations frozen", delayed);
@@ -1628,6 +1634,19 @@ private static GameObject CreateBlock(
             return texture;
         }
 
+
+
+        private GUIStyle ReputationBandStyle(GUIStyle small, GUIStyle onTime, GUIStyle caution, GUIStyle delayed)
+        {
+            // Presentation only — band names come from AirportReputation.Band.
+            return _simulation.Reputation.Band switch
+            {
+                "Trusted" => onTime,
+                "Established" => small,
+                "Provisional" => caution,
+                _ => delayed
+            };
+        }
 
         private string CommercialFlightHudLine()
         {

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **HUD status colours for cash, reputation and day estimate.** Negative cash and
+  negative day-est. use Signal Red; Trusted reputation and healthy day-est. use
+  Clear Green; Provisional reputation and ≤3-day cash runway use Safety Yellow.
+  Presentation only. `scripts/test-domain.sh` 96/96 (Presentation not covered).
 - **Research-complete HUD toast.** When `AirportResearch` finishes a project, the HUD
   shows a centred Clear Green banner for eight unscaled seconds naming the unlock
   and its permanent bonus. Presentation only — driven by `LastCompletedProjectId`

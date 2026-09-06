@@ -14,6 +14,7 @@ namespace Airside.Simulation
         public static readonly StableId ApronLane = new("APRON-LANE");
         public static readonly StableId StandOne = new("STAND-1");
         public static readonly StableId StandTwo = new("STAND-2");
+        public static readonly StableId StandThree = new("STAND-3");
 
         private readonly ISimulationClock _clock;
         private readonly IRandomSource _random;
@@ -50,6 +51,8 @@ namespace Airside.Simulation
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
+            Research = new AirportResearch();
+            Capacity = new AirportCapacity();
             DailyReports = new AirportDailyReports();
             CaptureDayBaseline();
             _groundTraffic = new[]
@@ -60,7 +63,7 @@ namespace Airside.Simulation
             StartCycle();
             SynchronizeReservations();
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, mayEnterCorridor: true);
+                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, Capacity.StandCount, mayEnterCorridor: true);
         }
 
         public AirportLocation Location { get; }
@@ -74,12 +77,15 @@ namespace Airside.Simulation
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
         public AirportStaffing Staffing { get; }
+        public AirportResearch Research { get; }
+        public AirportCapacity Capacity { get; }
         public AirportDailyReports DailyReports { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
         public IReadOnlyList<GroundTrafficAircraft> GroundTraffic => _groundTraffic;
+        public bool IsInsolvent => Economy.IsInsolvent;
         public StableId CurrentTaxiSegment => SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
@@ -106,6 +112,8 @@ namespace Airside.Simulation
 
         public bool EnablePriorityCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (ActiveAircraft.Phase != AircraftPhase.AtStand || ActiveTurnaround == null || ActiveTurnaround.PriorityCrewEnabled)
                 return false;
             if (!Economy.PurchasePriorityCrew())
@@ -118,6 +126,8 @@ namespace Airside.Simulation
 
         public bool AcceptPendingRoute()
         {
+            if (IsInsolvent)
+                return false;
             var proposal = Routes.Pending;
             if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus))
                 return false;
@@ -130,6 +140,8 @@ namespace Airside.Simulation
 
         public bool DeclinePendingRoute()
         {
+            if (IsInsolvent)
+                return false;
             var proposal = Routes.Pending;
             if (proposal == null || !Routes.Decline())
                 return false;
@@ -140,6 +152,8 @@ namespace Airside.Simulation
 
         public bool HireGroundCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (Staffing.GroundCrew >= AirportStaffing.MaximumGroundCrew)
                 return false;
             if (!Economy.TrySpend(AirportStaffing.HireCost) || !Staffing.Hire())
@@ -152,6 +166,8 @@ namespace Airside.Simulation
 
         public bool ReleaseGroundCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (!Staffing.Release())
                 return false;
 
@@ -160,10 +176,47 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool BuildThirdStand()
+        {
+            if (!Capacity.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportCapacity.ThirdStandCost) || !Capacity.Expand())
+                return false;
+
+            Record(_lastUpdatedAt, "Stand 3 built",
+                $"Capacity now {Capacity.StandCount} stands · -${AirportCapacity.ThirdStandCost:N0}");
+            return true;
+        }
+
+
+        public bool StartOperationsResearch()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Research.CanStartOperationsEfficiency)
+                return false;
+            if (!Economy.TrySpend(AirportResearch.OperationsEfficiencyCost))
+                return false;
+            if (!Research.StartOperationsEfficiency(_lastUpdatedAt))
+                return false;
+
+            Record(_lastUpdatedAt, "Research started",
+                $"{AirportResearch.OperationsEfficiencyName} · {AirportResearch.OperationsEfficiencyDurationSeconds}s · -${AirportResearch.OperationsEfficiencyCost:N0}");
+            return true;
+        }
+
         private void AdvanceOneSecond(SimulationTime now)
         {
+            if (IsInsolvent)
+                return;
+
             Routes.Update(now);
+            if (Research.Update(now))
+                Record(now, "Research complete",
+                    $"{AirportResearch.OperationsEfficiencyName} · daily running cost -${AirportResearch.OperationsEfficiencyDailyDiscount:N0}");
             SettleDaysUpTo(now);
+            if (IsInsolvent)
+                return;
 
             if (ActiveAircraft.IsComplete)
             {
@@ -231,7 +284,8 @@ namespace Airside.Simulation
                 _daysSettled++;
                 var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
                 var weather = Weather.At(closeTime);
-                var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
+                var baseCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount);
+                var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
 
                 var report = new DailyReport(
@@ -249,7 +303,15 @@ namespace Airside.Simulation
                 CaptureDayBaseline();
 
                 Record(now, $"Day {_daysSettled} closed",
-                    $"{report.FlightsCompleted} flight(s) · net {(report.NetCashChange >= 0 ? "+" : "")}${report.NetCashChange:N0} · running -${cost:N0} ({Weather.Describe(weather)}) · cash ${Economy.Cash:N0}");
+$"{report.FlightsCompleted} flight(s) · net {(report.NetCashChange >= 0 ? "+" : "")}${report.NetCashChange:N0} · running -${cost:N0} ({Weather.Describe(weather)}, {Staffing.GroundCrew} crew) · cash ${Economy.Cash:N0}");
+
+                Economy.EvaluateDayEndSolvency();
+                if (IsInsolvent)
+                {
+                    Record(now, "Insolvent",
+                        $"Cash remained negative for {AirportEconomy.InsolvencyConsecutiveDays} consecutive days · cash ${Economy.Cash:N0}");
+                    break;
+                }
             }
         }
 
@@ -267,7 +329,7 @@ namespace Airside.Simulation
 
             var grantee = ChooseCorridorGrantee(now);
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(now, TrafficWaits, AssignedStand,
+                aircraft.Reposition(now, TrafficWaits, AssignedStand, Capacity.StandCount,
                     mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
         }
 
@@ -315,12 +377,37 @@ namespace Airside.Simulation
         private void StartCycle()
         {
             var aircraftId = new StableId($"AS-{CompletedCycles + 101:000}");
-            AssignedStand = _random.NextInt(0, 2) == 0 ? StandOne : StandTwo;
+            var standIndex = _random.NextInt(0, Capacity.StandCount);
+            AssignedStand = StandAt(standIndex);
             ActiveTaxiRoute = TaxiNetwork.RouteTo(AssignedStand);
             ActiveAircraft = new AircraftOperation(aircraftId.Value, _cycleStartedAt);
             ActiveTurnaround = null;
             _flightSettled = false;
             Record(_cycleStartedAt, "Flight inbound", $"Assigned {AssignedStand.Value}");
+        }
+
+        public static StableId StandAt(int index) => index switch
+        {
+            0 => StandOne,
+            1 => StandTwo,
+            2 => StandThree,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+        /// <summary>
+        /// The alternate stand a ground-traffic arrival should use while the primary
+        /// flight holds <paramref name="primaryStand"/>. With two stands this is the
+        /// historical other-stand rule (seed-identical). With three, the lowest-index
+        /// free stand.
+        /// </summary>
+        public static StableId AlternateStand(StableId primaryStand, int standCount)
+        {
+            if (standCount < 3)
+                return primaryStand.Equals(StandOne) ? StandTwo : StandOne;
+
+            if (!primaryStand.Equals(StandOne)) return StandOne;
+            if (!primaryStand.Equals(StandTwo)) return StandTwo;
+            return StandThree;
         }
 
         private void SynchronizeReservations()

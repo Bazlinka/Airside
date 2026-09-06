@@ -10,16 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (daily operations report)
-- **Branch / working tree:** `cursor/daily-report-38b9` (PR against `main`)
-- **Do this next:** Confirm Unity edit-mode tests when available. Merge open
-  feature PRs (#3 insolvency, #4 third stand, #5 research) as ready. Then
-  concurrent-flights design pass or visual soak.
-- **In progress / half-done:** nothing once merged. Midnight daily report card
-  (flights/cash/reputation/weather); last 7 kept; replay-rebuilt. 64 tests green
-  under local dotnet harness.
-- **Watch out for:** report counters reset at each day close — do not persist
-  them. Keep corridor invariants 0006–0009 when touching ground traffic.
+- **Last updated:** 2026-09-06 by Cursor (shipping phase-four stack; Bailey approved merge-all)
+- **Branch / working tree:** merging onto `main`
+- **Do this next:** Finish merging remaining open PRs, then Unity visual soak when Bailey can.
+- **In progress / half-done:** Bailey approved merge-without-review.
+- **Watch out for:** fleet corridor invariants (decisions 0006–0009).
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -38,7 +33,10 @@ proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
 running cost — so the airport now has expenses it must cover, not just income.
 The player employs ground crew: the baseline runs turnarounds normally, extra
-crew speed them up, and understaffing stretches them into delays.
+crew speed them up, and understaffing stretches them into delays. The player can
+buy a third stand for 8000 — the first buildable capacity upgrade. If cash stays
+negative across three consecutive day closes, the airport is declared insolvent
+and the simulation stops.
 
 Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -81,6 +79,9 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
 - Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
+- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
+- A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
+- Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
@@ -94,3 +95,10 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 Confirm Unity tests when available. Merge open feature PRs (insolvency, third
 stand, research). Then the concurrent-flights design pass
 (`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.
+Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
+open capacity / insolvency PRs. Then the overdue visual soak, or the
+concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
+Remaining phase-four filler: a daily report panel.
+Keep merging the remaining phase-four stack onto `main`. Visual soak of the
+build in Unity when Bailey can play. Concurrent-flights design/implementation
+PRs are next after research and the daily report.

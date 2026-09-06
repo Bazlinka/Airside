@@ -1,0 +1,20 @@
+---
+description: Airside shared working rules
+alwaysApply: true
+---
+
+Read `AGENTS.md` and `GAME.md` at the repo root before making changes — they are
+the shared contract for every contributor and override anything else.
+
+Key points:
+- Unity game lives in `game/Airside/` (Unity 6.3 LTS).
+- The git repo is the single source of truth. `git pull --rebase origin main`
+  before work; keep commits narrow; update `GAME.md` and `CHANGELOG.md` in the
+  same commit; push to `origin` straight after.
+- One change, one owner. Use a `feature/<name>` branch or worktree for parallel
+  work with non-overlapping files.
+- Domain/Simulation code stays independent of Unity scenes. Injected clock,
+  seeded random, reserve resources before use, frame rate must not change
+  simulation outcomes, preserve save compatibility.
+- Run `scripts/test-unity.sh` and confirm the project compiles before committing
+  behaviour changes.

@@ -11,9 +11,10 @@ change it describes.
   save-schema field). Daily finance brief includes the route bonus and the Ops
   Efficiency operating-cost discount. See `docs/decisions/0023-passenger-services-research.md`.
 - Batch D greybox hooks: gear retracts when airborne; nav/beacon/landing lights
-  follow phase and night; cabin door opens at stand; service-vehicle wheels spin
-  on task; fuel hose / bag bob / bus door service loops; rain streaks + fog for
-  wet weather; brief touchdown smoke puff; runway edge + taxi centreline markers.
+  follow phase and night (beacon strobes); cabin door opens at stand; service-vehicle
+  wheels spin on task; fuel hose / bag bob / bus door service loops; rain streaks + fog;
+  paved surfaces darken when wet; engine heat shimmer while engines run; brief touchdown
+  smoke puff; runway edge + taxi centreline markers.
 - Added Batch D animation/VFX task packet and night apron flood lights that
   brighten as daylight falls (presentation only).
 - Generated Batch C first-playable 3D kits (turboprop, terminal/hangar/ops shed,

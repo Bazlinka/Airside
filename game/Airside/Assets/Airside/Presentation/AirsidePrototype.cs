@@ -23,6 +23,7 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private float _touchdownSmokeRemaining;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
+        private readonly List<(Renderer Renderer, Color DryColor)> _wetSurfaces = new List<(Renderer, Color)>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -55,6 +56,7 @@ namespace Airside.Presentation
             _apronLights = BuildApronLights();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
+            CollectWetSurfaces();
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -136,6 +138,7 @@ namespace Airside.Presentation
                 SpinPropellers(view, phase);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinDoor(view, phase);
+                UpdateEngineHeat(view, phase);
             }
         }
 
@@ -154,7 +157,10 @@ namespace Airside.Presentation
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
                     child.gameObject.SetActive(enginesOn || night);
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
-                    child.gameObject.SetActive(enginesOn);
+                {
+                    // Presentation-only strobe while engines are running.
+                    child.gameObject.SetActive(enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0));
+                }
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
                     child.gameObject.SetActive(landingLights);
             }
@@ -173,6 +179,32 @@ namespace Airside.Presentation
                 var current = euler.y > 180f ? euler.y - 360f : euler.y;
                 euler.y = Mathf.MoveTowards(current, targetY, Time.unscaledDeltaTime * 120f);
                 child.localEulerAngles = euler;
+            }
+        }
+
+        private static void UpdateEngineHeat(Transform aircraft, AircraftPhase phase)
+        {
+            // Presentation-only: subtle heat shimmer behind running engines.
+            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            for (var i = 0; i < aircraft.childCount; i++)
+            {
+                var child = aircraft.GetChild(i);
+                if (!child.name.StartsWith("EngineHeat", StringComparison.Ordinal))
+                    continue;
+
+                child.gameObject.SetActive(enginesOn);
+                if (!enginesOn)
+                    continue;
+
+                var pulse = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 7f + child.GetInstanceID() * 0.01f);
+                child.localScale = new Vector3(0.35f * pulse, 0.35f * pulse, 0.7f);
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    var color = renderer.material.color;
+                    color.a = 0.12f + 0.1f * pulse;
+                    renderer.material.color = color;
+                }
             }
         }
 
@@ -404,6 +436,16 @@ namespace Airside.Presentation
             {
                 RenderSettings.fog = false;
             }
+
+            // Darken paved surfaces when wet (presentation only — no sim effect).
+            var wetness = wet ? (weather == WeatherKind.Storm ? 0.55f : raining ? 0.4f : 0.28f) : 0f;
+            for (var i = 0; i < _wetSurfaces.Count; i++)
+            {
+                var (renderer, dry) = _wetSurfaces[i];
+                if (renderer == null)
+                    continue;
+                renderer.material.color = Color.Lerp(dry, dry * 0.55f, wetness);
+            }
         }
 
         private void UpdateTouchdownSmoke()
@@ -445,6 +487,21 @@ namespace Airside.Presentation
                 var color = renderer.material.color;
                 color.a = t * 0.45f;
                 renderer.material.color = color;
+            }
+        }
+
+        private void CollectWetSurfaces()
+        {
+            _wetSurfaces.Clear();
+            foreach (var name in new[] { "Runway", "Taxiway A", "Apron" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                var renderer = go.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                _wetSurfaces.Add((renderer, renderer.material.color));
             }
         }
 
@@ -509,7 +566,10 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
-            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {Weather.Describe(_simulation.CurrentWeather)}", small);
+            var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
+            if (Weather.IsAdverse(_simulation.CurrentWeather))
+                weatherLabel += " · wet apron";
+            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
@@ -932,6 +992,8 @@ namespace Airside.Presentation
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
             ParentBlock(root, "CabinDoor", new Vector3(0.55f, 0.05f, 0.35f), new Vector3(0.08f, 0.85f, 0.55f), new Color(0.78f, 0.8f, 0.83f));
+            ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+            ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();
@@ -1092,6 +1154,19 @@ namespace Airside.Presentation
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             var material = new Material(shader) { color = color };
+            if (color.a < 0.99f)
+            {
+                // Presentation translucency for heat shimmer / rain streaks.
+                material.SetFloat("_Surface", 1f);
+                material.SetFloat("_Blend", 0f);
+                material.SetOverrideTag("RenderType", "Transparent");
+                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                material.SetInt("_ZWrite", 0);
+                material.renderQueue = 3000;
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            }
+
             var texture = TryLoadArtTexture(artTextureRelativePath);
             if (texture == null)
                 return material;

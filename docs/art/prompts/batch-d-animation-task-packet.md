@@ -2,7 +2,7 @@
 
 **Status:** Ready for production (task packet; clips/prefabs not yet delivered).
 Greybox prototypes in `AirsidePrototype` cover prop/gear/door/lights, service
-hose/cargo/door loops, rain/fog, and a touchdown puff — presentation only.  
+hose/cargo/door loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe, and a touchdown puff — presentation only.  
 **Date:** 2026-09-06  
 **Decision / contract:** `docs/decisions/0022-art-direction-and-asset-pipeline.md`,
 `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`  

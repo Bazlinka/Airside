@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Pause overlay and speed caution colour.** While paused, a translucent dimmer
+  and centred PAUSED chip appear (hidden under the away summary). 4× speed and
+  pause tint the clock line Safety Yellow. Presentation only.
+  `scripts/test-domain.sh` 96/96.
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

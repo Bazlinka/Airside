@@ -584,7 +584,8 @@ namespace Airside.Presentation
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
-            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
+            var clockStyle = _paused || _speed > 1 ? caution : small;
+            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
@@ -750,6 +751,9 @@ namespace Airside.Presentation
                     $"{rep}  ·  {latest.GroundCrew} crew", small);
             }
 
+            if (_paused && !_showAwaySummary)
+                DrawPauseOverlay(scale, panel, title, caution);
+
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             GUI.matrix = previousMatrix;
@@ -789,6 +793,26 @@ namespace Airside.Presentation
             GUI.enabled = true;
             if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline", button))
                 _session.DeclineRoute();
+        }
+
+
+        private static void DrawPauseOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle caution)
+        {
+            // Presentation-only dimmer while simulation time is paused.
+            var width = Screen.width / scale;
+            var height = Screen.height / scale;
+            var prev = GUI.color;
+            GUI.color = new Color(0.05f, 0.07f, 0.09f, 0.35f);
+            GUI.DrawTexture(new Rect(0f, 0f, width, height), Texture2D.whiteTexture);
+            GUI.color = prev;
+
+            var boxW = 220f;
+            var boxH = 72f;
+            var left = (width - boxW) * 0.5f;
+            var top = (height - boxH) * 0.5f;
+            GUI.Box(new Rect(left, top, boxW, boxH), string.Empty, panel);
+            GUI.Label(new Rect(left + 24f, top + 18f, boxW - 48f, 36f), "PAUSED", title);
+            GUI.Label(new Rect(left + 24f, top + 44f, boxW - 48f, 22f), "Space to resume", caution);
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)

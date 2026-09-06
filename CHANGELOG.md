@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **HUD status colours for cash, reputation and day estimate.** Negative cash and
+  negative day-est. use Signal Red; Trusted reputation and healthy day-est. use
+  Clear Green; Provisional reputation and ≤3-day cash runway use Safety Yellow.
+  Presentation only. `scripts/test-domain.sh` 96/96 (Presentation not covered).
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

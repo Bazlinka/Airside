@@ -7,7 +7,7 @@ Every external asset or dataset must be added here before it enters a distributa
 | Prototype geometry | Airside project | Runway, buildings and aircraft made from Unity primitives | Project-owned configuration | None | Source in `AirsidePrototype.cs` | Approved |
 | Prototype colours and interface copy | Airside project | Greybox visual target and status panel | Project-owned | None | Source in repository | Approved |
 | Prototype engine tone | Airside project | Procedurally generated sine-wave audio | Project-owned generation | None | Source in `AirsidePrototype.cs` | Approved |
-| Art direction and asset specification | Airside project | Canonical visual style, manifest and production rules | Project-owned documentation | None | `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`, decision 0018 | Approved |
+| Art direction and asset specification | Airside project | Canonical visual style, manifest and production rules | Project-owned documentation | None | `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`, decision 0022 | Approved |
 | Batch A approved visual references | OpenAI image generation for Airside | Day/dusk masters, turnaround, HUD and scale/palette references | OpenAI service terms applicable at generation; release review required | None known | `docs/art/prompts/batch-a-reference-generation-2026-09-06.md` | Approved |
 | Unity engine and packages | Unity Technologies | Development and runtime | Unity terms applicable to the installed editor and packages | Review for distribution | Package manifest and Unity installation | Review at release |
 | Real-world airport or map data | Not selected | Later location grounding | Unknown | Unknown | None | Excluded |

@@ -10,18 +10,21 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by ChatGPT (Batch A approved visual references)
-- **Branch / working tree:** `main`, clean
-- **Do this next:** Use the approved Batch A references in `docs/art/reference/`
-  as the visual authority. Begin Batch B world surfaces/markings, or prepare the
-  Batch C model task packet; do not redesign the approved aircraft, buildings,
-  vehicles, palette or HUD language.
-- **In progress / half-done:** nothing. Merged: insolvency, third stand, research, daily report, concurrent flights design+slice1, accept-capacity, daily P&L, ChatGPT art pipeline.
-- **Watch out for:** fleet corridor invariants (0006–0009). Concurrent commercials: fleet yields to any commercial. Two decision files briefly shared 0018 — art pipeline renumbered to 0022 if present.
-- **Open questions for Bailey:** none
-
-
-- **Visual assets:** Batch A approved (five 1280×720 references); no runtime art integrated yet
+- **Last updated:** 2026-09-06 by Cursor (Batch B prep after Batch A lock)
+- **Branch / working tree:** `cursor/batch-b-prep-38b9` (docs only) → merge to `main`
+- **Do this next:** Produce Batch B candidates per
+  `docs/art/prompts/batch-b-surfaces-task-packet.md` (surfaces, decals, markings,
+  lighting, props). Do not redesign approved Batch A aircraft/buildings/vehicles/
+  palette/HUD. Unity Play soak when Bailey can run the editor.
+- **In progress / half-done:** Batch B task packet and Batch A doc cleanup on this
+  branch. Runtime `Art/` folder and Unity integration still Planned.
+- **Watch out for:** fleet corridor invariants (0006–0009). Concurrent commercials:
+  fleet yields to any commercial. Art pipeline is decision **0022** (0018 is daily
+  ops report). Keep procedural primitives as fallback until Batch B is Integrated.
+- **Open questions for Bailey:** none for this packet; approve Batch B candidates
+  before Unity integration.
+- **Visual assets:** Batch A approved (five 1280×720 references); Batch B Planned;
+  no runtime art integrated yet
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -50,7 +53,7 @@ When accepted route demand reaches four flights/day, a second commercial aircraf
 
 The approved visual direction, exact asset paths, animation responsibilities and
 production order live in
-`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0018). The first playable
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0022). The first playable
 moves from procedural primitives to approved art in batches, with primitives kept
 as fallbacks during integration.
 
@@ -112,17 +115,10 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-Implement concurrent-flights **slice 1**
-(`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when
-ready. Unity edit-mode + Play soak when Bailey can run the editor again.
-Confirm Unity tests when available. Merge open feature PRs (insolvency, third
-stand, research). Then the concurrent-flights design pass
-(`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.
-Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
-open capacity / insolvency PRs. Then the overdue visual soak, or the
-concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
-Remaining phase-four filler: a daily report panel.
-Keep merging the remaining phase-four stack onto `main`. Visual soak of the
-build in Unity when Bailey can play. Concurrent-flights design/implementation
-PRs are next after research and the daily report.
-Merge open feature PRs (#3–#7), rebase this slice onto `main`, then Unity Play soak of dual commercials. Tune threshold/stagger after Play if needed.
+1. **Batch B production** — follow
+   `docs/art/prompts/batch-b-surfaces-task-packet.md`; register candidates; Bailey
+   review → Approved → then Unity integrate with primitive fallbacks.
+2. **Unity Play soak** when Bailey can run the editor (dual commercials, HUD,
+   day/night, insolvency path).
+3. **Batch C model packet** after Batch B surfaces are Approved (or in parallel
+   if ownership does not overlap files).

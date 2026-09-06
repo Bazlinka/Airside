@@ -595,7 +595,7 @@ These links record the planning basis. Terms, fees, eligibility thresholds and A
 ## Production art and asset contract
 
 The agreed visual style is implemented through
-`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and decision 0018. That specification
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and decision 0022. That specification
 is the canonical source for palette, image-generation constraints, repository
 paths, asset IDs, 3D requirements, animation ownership, VFX, interface art and the
 ordered first-playable production manifest.

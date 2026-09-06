@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- Prepared Batch B production task packet (world surfaces, decals, markings,
+  lighting, props) and cleaned Batch A doc inconsistencies: art pipeline cites
+  decision 0022, REF-004 delivery size, and the Batch A gate sentence.
 - Added and approved Batch A visual references: daytime and dusk airport masters, turnaround service-zone composition, operations HUD direction, and the shared scale/palette sheet. Recorded prompt/source evidence; these five images are now the production visual authority.
 - **Daily finance brief.** HUD shows a deterministic day estimate: expected
   operating cost (base + current weather + payroll) versus expected flight
@@ -22,7 +25,7 @@ change it describes.
   commercial. Single-flight path stays seed-identical below the threshold. No
   save-schema bump. HUD/world show both aircraft. 57/57 tests. See decision 0019
   and `docs/product/concurrent-flights-slice1-packet.md`.
-- Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0018).
+- Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0022).
 - **Concurrent flights design.** Decision 0019 locks promotion-to-list model,
   commercial FIFO priority, stand-based concurrency cap, schedule cadence
   (`ScheduledFlightsPerDay >= 4` → second flight), and per-flight settlement.

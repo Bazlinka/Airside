@@ -160,16 +160,19 @@ in the same commit as each asset batch.
 | REF-001 | `docs/art/reference/ref_airport_first_playable_day_v01.png` | Reference image | Default Kingscote airfield, elevated three-quarter view, runway, A taxiway, two stands, terminal, hangar, three aircraft and service activity | Approved |
 | REF-002 | `docs/art/reference/ref_airport_first_playable_dusk_v01.png` | Reference image | Same composition and asset design as REF-001 at dusk; apron/runway lighting readable | Approved |
 | REF-003 | `docs/art/reference/ref_turnaround_service_zones_v01.png` | Concept sheet | One fictional regional turboprop at stand with fuel truck, baggage train and passenger bus in safe readable positions; no text baked into final runtime art | Approved |
-| REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay at 2560×1440 | Approved |
+| REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay; approved reference is 1280×720 (runtime HUD targets desktop ~2560×1440) | Approved |
 | REF-005 | `docs/art/reference/ref_asset_scale_and_palette_v01.png` | Style sheet | Aircraft, vehicles, person, terminal module, materials and palette in one consistent scale reference | Approved |
 | BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Transparent wordmark; simple aviation/wayfinding character; no tiny tagline | Planned |
 | UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Planned |
 
-**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Batches B–D may now use them as production targets
-are treated as production targets. REF-002 and UI-ILL-001 must inherit that
-approved design rather than reinvent it.
+**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Batches
+B–D may now use them as production targets. UI-ILL-001 and any later day/dusk
+masters must inherit that approved design rather than reinvent it.
 
 ### Batch B — world surfaces, markings and environment
+
+Production task packet:
+`docs/art/prompts/batch-b-surfaces-task-packet.md`.
 
 | ID | Runtime file | Requirement | Status |
 |---|---|---|---|

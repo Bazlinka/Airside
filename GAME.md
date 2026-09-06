@@ -10,16 +10,18 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
+- **Last updated:** 2026-09-06 by Cursor (changelog testline)
+- **Branch / working tree:** `cursor/changelog-testline-ab91` — testline only in
+  `CHANGELOG.md`; merge when ready, then return to `main`.
 - **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
   Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
   needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
   keep filling phase four safely — a **buildable capacity upgrade** (third stand),
   **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
+- **In progress / half-done:** nothing behaviour-wise — 60/60 edit-mode tests
+  still the baseline. This branch only adds a changelog testline. Save schema
+  **v2** (`locationId`); v1 migrates. `accept-route` is a persisted command.
+  Reputation and route income are rebuilt by replay (no persisted field).
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the

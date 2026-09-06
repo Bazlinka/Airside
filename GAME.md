@@ -11,7 +11,7 @@ This block is the first thing to read and the last thing to update. Any tool
 next session can continue without seeing the previous conversation. Keep it short.
 
 - **Last updated:** 2026-09-07 by Codex (macOS compiler repair and rebuild)
-- **Branch / working tree:** `main`; Bailey's pre-existing AGENTS.md edit remains uncommitted
+- **Branch / working tree:** `fix/unity-mac-build-20260907`; Bailey's pre-existing AGENTS.md edit remains uncommitted
 - **Local verification:** Unity 6000.3.23f1 macOS build succeeded; 107/107 EditMode
   tests passed, none skipped. Resolved ambiguous Unity Object references and the
   missing image conversion module. This does not establish live visual verification.

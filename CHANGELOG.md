@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Headless Domain/Simulation/Persistence test harness.** `scripts/test-domain.sh`
+  runs the 94 EditMode NUnit tests via `dotnet test` against a hand-authored
+  `scripts/dotnet-harness/Harness.csproj` that compiles Domain/Simulation/
+  Persistence straight from the Unity project (a `HarnessSaveRepository.cs`
+  stands in for the one file that needs `UnityEngine.JsonUtility`, using
+  `System.Text.Json` with `IncludeFields = true` instead). Supplementary to
+  `scripts/test-unity.sh`, not a replacement — Presentation and the real Unity
+  compile still need a Mac editor. No simulation code changed; 94/94 pass.
 - **Playtest HUD and taxi visuals.** HUD scaling uses resolution-aware `HudLayout`
   (Retina-safe). Taxi drawing follows reservation segment windows; yielded ground
   traffic snaps to its hold point instead of lerping through released space.

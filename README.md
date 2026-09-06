@@ -26,6 +26,11 @@ The first playable build proves one complete aircraft cycle: land, taxi, occupy 
 Both scripts run under `bash` or `zsh`. They expect Unity 6.3 LTS at the default
 Hub path; set `AIRSIDE_UNITY` to point elsewhere.
 
+Without a Mac Unity editor, `./scripts/test-domain.sh` runs the same
+Domain/Simulation/Persistence EditMode tests headlessly via `dotnet test`
+(.NET 8 SDK required). It's a fast supplementary check, not a replacement for
+`test-unity.sh`, which also covers Presentation and the real Unity compile.
+
 See `GAME.md` for the current milestone, controls, evidence and next work.
 See `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` before creating or integrating any visual asset.
 

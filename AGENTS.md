@@ -44,7 +44,10 @@ Airside/
     art/                     Canonical art direction, manifest, prompts and references
     testing/                 Acceptance checks and fixtures
   scripts/
-    test-unity.sh            Deterministic simulation checks
+    test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
+    test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation/Persistence
+                             tests, for machines without Unity — supplementary, not a replacement
+    dotnet-harness/          Hand-authored csproj backing test-domain.sh
     build-mac.sh             Local macOS application build
   work/                      Local scratch, downloads, builds — git-ignored, never committed
 ```
@@ -62,7 +65,9 @@ note it here in the same commit.
 3. **Keep commits narrow and reviewable** — one acceptance criterion per commit.
 4. **Run the checks** in `scripts/test-unity.sh` and confirm the project compiles
    in Unity 6.3 LTS before committing behaviour changes. No commit rests on an
-   agent's claim alone that a build passed.
+   agent's claim alone that a build passed. Without a Mac Unity editor, run
+   `scripts/test-domain.sh` (needs the .NET 8 SDK) as a fast Domain/Simulation/
+   Persistence pre-check, but still get a Unity run before merging.
 5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change.
 6. **Commit message:** short imperative subject, then what changed and the
    evidence. Push to `origin` immediately so other tools see it.

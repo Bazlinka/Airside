@@ -10,10 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (confirmed #15 and #16 both merged onto `main`; handoff block was one merge-cycle stale)
+- **Last updated:** 2026-09-06 by Claude (confirmed #15/#16 merged onto `main`; added `scripts/test-domain.sh`
+  so Domain/Simulation/Persistence tests are checkable without a Mac; reviewed reservation/corridor
+  logic for determinism, found nothing wrong)
 
 - **Branch / working tree:** `main` — #15 (Batch C + Passenger Services) and #16 (playtest HUD/taxi visuals)
-  are both merged; no branch is waiting to land.
+  are both merged; no branch is waiting to land. `claude/game-git-status-lv6q93` carries the docs
+  refresh and the new headless test harness, not yet merged.
 - **Do this next:** Bailey review of Batch C look (Approve or request `_v02`). Unity Play soak
   when free — not a blocker.
 - **In progress / half-done:** Batch C Generated/Modelled, not yet Approved. Batch D greybox: night floods,
@@ -86,10 +89,13 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 - P: hire a priority turnaround crew while the aircraft is at stand
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
+Without a Mac Unity editor, `scripts/test-domain.sh` runs the same Domain/Simulation/
+Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
+supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- Local harness compiles Domain/Simulation/Persistence and runs 94 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity). Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
+- `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 94 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.

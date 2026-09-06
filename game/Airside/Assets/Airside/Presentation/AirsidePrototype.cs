@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Airside.Domain;
@@ -18,6 +19,10 @@ namespace Airside.Presentation
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light[] _apronLights;
+        private Transform _rainRoot;
+        private Transform _touchdownSmoke;
+        private float _touchdownSmokeRemaining;
+        private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -48,6 +53,8 @@ namespace Airside.Presentation
             BuildLightingAndCamera();
             BuildAirfield();
             _apronLights = BuildApronLights();
+            _rainRoot = BuildRainRoot();
+            _touchdownSmoke = BuildTouchdownSmoke();
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -83,6 +90,8 @@ namespace Airside.Presentation
             UpdateAircraftVisual();
             UpdateGroundTrafficVisual();
             UpdateServiceVehicles();
+            UpdateWeatherPresentation();
+            UpdateTouchdownSmoke();
         }
 
         private void ReadSimulationControls()
@@ -258,9 +267,15 @@ namespace Airside.Presentation
             }
 
             var standZ = servicing.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
-            UpdateVehicle(_fuelTruck, TaskActive(servicing, "Refuel"), new Vector3(13.3f, 0.55f, standZ + 1.8f));
-            UpdateVehicle(_baggageCart, TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags"), new Vector3(20.2f, 0.42f, standZ - 1.8f));
-            UpdateVehicle(_passengerBus, TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers"), new Vector3(13f, 0.68f, standZ - 2.2f));
+            var fuelActive = TaskActive(servicing, "Refuel");
+            var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
+            var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
+            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f));
+            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f));
+            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f));
+            AnimateServiceLoops(_fuelTruck, fuelActive, "Hose");
+            AnimateServiceLoops(_baggageCart, bagActive, "Cargo");
+            AnimateServiceLoops(_passengerBus, paxActive, "Door");
         }
 
         private bool TaskActive(CommercialFlight flight, string name)
@@ -271,10 +286,14 @@ namespace Airside.Presentation
 
         private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
         {
-            vehicle.gameObject.SetActive(active);
             if (!active)
+            {
+                ResetServiceLoopParts(vehicle);
+                vehicle.gameObject.SetActive(false);
                 return;
+            }
 
+            vehicle.gameObject.SetActive(true);
             var previous = vehicle.position;
             vehicle.position = position;
             // Presentation-only: wheels roll while the vehicle is on a service task.
@@ -286,6 +305,186 @@ namespace Airside.Presentation
                 if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
+        }
+
+        private static void ResetServiceLoopParts(Transform vehicle)
+        {
+            if (vehicle == null)
+                return;
+
+            for (var i = 0; i < vehicle.childCount; i++)
+            {
+                var child = vehicle.GetChild(i);
+                if (child.name.StartsWith("Hose", StringComparison.Ordinal))
+                {
+                    child.localScale = new Vector3(0.12f, 0.12f, 0.4f);
+                    child.localPosition = new Vector3(child.localPosition.x, child.localPosition.y, 0.4f);
+                }
+                else if (child.name.StartsWith("Cargo", StringComparison.Ordinal))
+                {
+                    var pos = child.localPosition;
+                    pos.y = 0.35f;
+                    child.localPosition = pos;
+                }
+                else if (child.name.StartsWith("Door", StringComparison.Ordinal))
+                {
+                    child.localEulerAngles = Vector3.zero;
+                }
+            }
+        }
+
+        private static void AnimateServiceLoops(Transform vehicle, bool active, string partPrefix)
+        {
+            if (!active || vehicle == null || !vehicle.gameObject.activeSelf)
+                return;
+
+            for (var i = 0; i < vehicle.childCount; i++)
+            {
+                var child = vehicle.GetChild(i);
+                if (!child.name.StartsWith(partPrefix, StringComparison.Ordinal))
+                    continue;
+
+                if (partPrefix == "Hose")
+                {
+                    var scale = child.localScale;
+                    scale.z = Mathf.MoveTowards(scale.z, 2.4f, Time.unscaledDeltaTime * 1.8f);
+                    child.localScale = scale;
+                    child.localPosition = new Vector3(child.localPosition.x, child.localPosition.y, 0.2f + scale.z * 0.5f);
+                }
+                else if (partPrefix == "Cargo")
+                {
+                    var pos = child.localPosition;
+                    pos.y = 0.35f + Mathf.Sin(Time.unscaledTime * 6f) * 0.08f;
+                    child.localPosition = pos;
+                }
+                else if (partPrefix == "Door")
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, -70f, Time.unscaledDeltaTime * 100f);
+                    child.localEulerAngles = euler;
+                }
+            }
+        }
+
+        private void UpdateWeatherPresentation()
+        {
+            var weather = _simulation.CurrentWeather;
+            var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
+            var foggy = weather == WeatherKind.Fog || weather == WeatherKind.Storm;
+            var wet = Weather.IsAdverse(weather);
+
+            if (_rainRoot != null)
+                _rainRoot.gameObject.SetActive(raining);
+
+            if (raining && _rainRoot != null)
+            {
+                for (var i = 0; i < _rainRoot.childCount; i++)
+                {
+                    var drop = _rainRoot.GetChild(i);
+                    var pos = drop.localPosition;
+                    pos.y -= Time.unscaledDeltaTime * (12f + (i % 5));
+                    if (pos.y < 0.5f)
+                        pos.y = 18f + (i % 7);
+                    pos.x += Time.unscaledDeltaTime * -1.5f;
+                    if (pos.x < -40f)
+                        pos.x += 80f;
+                    drop.localPosition = pos;
+                }
+            }
+
+            if (wet)
+            {
+                RenderSettings.ambientLight *= 0.92f;
+                RenderSettings.fog = foggy || raining;
+                RenderSettings.fogColor = new Color(0.55f, 0.6f, 0.66f);
+                RenderSettings.fogDensity = weather == WeatherKind.Storm ? 0.012f : foggy ? 0.02f : 0.006f;
+            }
+            else
+            {
+                RenderSettings.fog = false;
+            }
+        }
+
+        private void UpdateTouchdownSmoke()
+        {
+            if (_touchdownSmoke == null)
+                return;
+
+            for (var index = 0; index < _simulation.Flights.Count; index++)
+            {
+                var flight = _simulation.Flights[index];
+                var phase = flight.Operation.Phase;
+                var id = flight.AircraftId;
+                if (_previousPhases.TryGetValue(id, out var previous) &&
+                    previous == AircraftPhase.Approach &&
+                    phase == AircraftPhase.Landing &&
+                    index < _commercialAircraft.Length)
+                {
+                    _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.2f;
+                    _touchdownSmoke.localScale = new Vector3(1.2f, 0.4f, 1.2f);
+                    _touchdownSmoke.gameObject.SetActive(true);
+                    _touchdownSmokeRemaining = 0.85f;
+                }
+
+                _previousPhases[id] = phase;
+            }
+
+            if (_touchdownSmokeRemaining <= 0f)
+            {
+                _touchdownSmoke.gameObject.SetActive(false);
+                return;
+            }
+
+            _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
+            var t = Mathf.Clamp01(_touchdownSmokeRemaining / 0.85f);
+            _touchdownSmoke.localScale = Vector3.Lerp(new Vector3(2.4f, 0.2f, 2.4f), new Vector3(1.2f, 0.4f, 1.2f), t);
+            var renderer = _touchdownSmoke.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                var color = renderer.material.color;
+                color.a = t * 0.45f;
+                renderer.material.color = color;
+            }
+        }
+
+        private static Transform BuildRainRoot()
+        {
+            var root = new GameObject("Rain").transform;
+            root.position = new Vector3(0f, 0f, 8f);
+            var rng = new System.Random(42);
+            for (var i = 0; i < 48; i++)
+            {
+                var drop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                drop.name = $"Rain {i}";
+                drop.transform.SetParent(root, false);
+                drop.transform.localPosition = new Vector3(
+                    (float)(rng.NextDouble() * 80f - 40f),
+                    (float)(rng.NextDouble() * 16f + 2f),
+                    (float)(rng.NextDouble() * 50f - 10f));
+                drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
+                drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
+                drop.GetComponent<Renderer>().material = CreateMaterial(new Color(0.7f, 0.78f, 0.88f, 0.35f));
+                var collider = drop.GetComponent<Collider>();
+                if (collider != null)
+                    Object.Destroy(collider);
+            }
+
+            root.gameObject.SetActive(false);
+            return root;
+        }
+
+        private static Transform BuildTouchdownSmoke()
+        {
+            var smoke = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            smoke.name = "Touchdown smoke";
+            smoke.transform.localScale = new Vector3(1.2f, 0.4f, 1.2f);
+            smoke.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
+            var collider = smoke.GetComponent<Collider>();
+            if (collider != null)
+                Object.Destroy(collider);
+            smoke.SetActive(false);
+            return smoke.transform;
         }
 
         private void OnGUI()
@@ -774,6 +973,13 @@ namespace Airside.Presentation
                 new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
             ParentBlock(root, $"{name} wheel RR", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, -scale.z * 0.42f),
                 new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            // Batch D service-loop hooks (presentation only).
+            ParentBlock(root, "Hose", new Vector3(scale.x * 0.45f, 0.15f, 0.2f),
+                new Vector3(0.12f, 0.12f, 0.4f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "Cargo", new Vector3(0f, 0.35f, 0f),
+                new Vector3(0.55f, 0.35f, 0.45f), new Color(0.75f, 0.55f, 0.2f));
+            ParentBlock(root, "Door", new Vector3(scale.x * 0.2f, 0.25f, scale.z * 0.45f),
+                new Vector3(0.08f, 0.7f, 0.45f), new Color(0.2f, 0.22f, 0.25f));
             root.gameObject.SetActive(false);
             return root;
         }

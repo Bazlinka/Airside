@@ -47,6 +47,7 @@ namespace Airside.Presentation
 
             BuildLightingAndCamera();
             BuildAirfield();
+            _apronLights = BuildApronLights();
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -551,6 +552,39 @@ namespace Airside.Presentation
                 new Color(0.12f, 0.15f, 0.24f),
                 new Color(0.46f, 0.53f, 0.61f),
                 daylight);
+
+            // Apron floods come up as daylight falls (presentation only).
+            if (_apronLights != null)
+            {
+                var flood = Mathf.Lerp(1.35f, 0.05f, daylight);
+                foreach (var light in _apronLights)
+                    light.intensity = flood;
+            }
+        }
+
+        private static Light[] BuildApronLights()
+        {
+            var positions = new[]
+            {
+                new Vector3(12f, 5.5f, 12f),
+                new Vector3(28f, 5.5f, 12f),
+                new Vector3(20f, 5.5f, 22f),
+                new Vector3(-18f, 4.5f, 16f)
+            };
+            var lights = new Light[positions.Length];
+            for (var i = 0; i < positions.Length; i++)
+            {
+                var go = new GameObject($"Apron flood {i + 1}");
+                go.transform.position = positions[i];
+                var light = go.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.92f, 0.78f);
+                light.range = 28f;
+                light.intensity = 0.05f;
+                lights[i] = light;
+            }
+
+            return lights;
         }
 
         private static void BuildAirfield()

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
+  seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
+  request repeats the decision-0022 anchor; exact prompts and processing evidence
+  are recorded. Candidates are not approved, imported or used by runtime code.
 - **Apply the approved Airside palette to the runtime HUD.** The REF-004 operations
   HUD reference (ChatGPT-generated, Approved) specified translucent Runway Ink
   panels, Cloud text, Coastal Blue for buttons, Safety Yellow for caution, Clear

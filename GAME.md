@@ -10,25 +10,18 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (confirmed #15/#16 merged onto `main`; added `scripts/test-domain.sh`
-  so Domain/Simulation/Persistence tests are checkable without a Mac; fixed two latent bugs found by
-  code review; wired the approved REF-004 palette into the runtime HUD via new `AirsideTheme`)
-
-- **Branch / working tree:** `main` — #15 (Batch C + Passenger Services) and #16 (playtest HUD/taxi visuals)
-  are both merged; no branch is waiting to land. `claude/game-git-status-lv6q93` carries the docs
-  refresh, the headless test harness, two bug fixes, and the HUD theming — not yet merged.
-- **Do this next:** Bailey review of Batch C look (Approve or request `_v02`). Unity Play soak
-  when free — **now also needs to check the new HUD theming looks right** (Runway
-  Ink panels / Cloud text / Coastal Blue buttons / state colours); it was written without a Unity
-  editor available, so it compiles by inspection only and has not been seen rendered.
-- **In progress / half-done:** Batch C Generated/Modelled, not yet Approved. Batch D greybox: night floods,
-  gear/lights, cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
-  touchdown puff, runway edge + taxi centreline. Remaining Batch D animation/VFX packet items and
-  phase-four polish still open. Passenger Services shipped.
+- **Last updated:** 2026-09-06 by Cursor (landed #15/#16/#17; rebasing Batch E UI candidates)
+- **Branch / working tree:** `art/batch-e-ui-candidates` → merge to `main`
+- **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
+  nine-slice previews. Unity Play soak for HUD theming when free.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
+  Batch E UI-ICO-001–004 and UI-PNL-001–003 are Generated candidates (not integrated).
+  Passenger Services shipped. Headless domain harness + HUD palette on main.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Keep primitives until Batch C is Approved and Verified.
-- **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled
+  Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
+- **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled; Batch E UI Generated — review required
+
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".

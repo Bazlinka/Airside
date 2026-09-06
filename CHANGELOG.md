@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Concurrent flights design.** Decision 0019 locks promotion-to-list model,
+  commercial FIFO priority, stand-based concurrency cap, schedule cadence
+  (`ScheduledFlightsPerDay >= 4` → second flight), and per-flight settlement.
+  First-slice task packet ready. Brief marked designed. No gameplay code in this
+  change.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

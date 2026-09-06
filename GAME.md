@@ -10,24 +10,19 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
-  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
-  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
-  keep filling phase four safely — a **buildable capacity upgrade** (third stand),
-  **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
-- **Watch out for:** the fleet is deadlock-free *by construction* — the primary
-  flight is never blocked, at most one fleet aircraft holds the corridor lock,
-  and repositioning aircraft never touch a stand. A free corridor goes to the
-  longest-waiting aircraft (fleet order breaks ties). Keep all of that when
-  changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
-  aircraft snaps to its leg start if the primary preempts a segment under it.
-  Decisions 0006–0009.
-- **Open questions for Bailey:** none
+- **Last updated:** 2026-09-06 by Cursor (concurrent-flights design)
+- **Branch / working tree:** `cursor/concurrent-flights-design-38b9` (PR against `main`)
+- **Do this next:** Implement slice 1 from
+  `docs/product/concurrent-flights-slice1-packet.md` (two commercials when
+  schedule demand ≥ 4). Merge open feature PRs (#3–#6) as ready. Unity soak when
+  you can play again.
+- **In progress / half-done:** design only — decision 0019 + slice-1 packet.
+  Implementation not started on this branch.
+- **Watch out for:** single-flight path must stay seed-identical until S ≥ 4.
+  Fleet must yield to *any* commercial, not a hard-coded primary. No save-schema
+  bump in slice 1.
+- **Open questions for Bailey:** none — threshold of 4 flights/day and half-cycle
+  stagger can be tuned after Play feedback.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -97,4 +92,6 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-Run a long visual soak of the two-aircraft build. Then replace the second aircraft's fixed shuttle with its own arrival/departure schedule, still governed by the segment reservations, working toward several simultaneous aircraft.
+Implement concurrent-flights **slice 1**
+(`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when
+ready. Unity edit-mode + Play soak when Bailey can run the editor again.

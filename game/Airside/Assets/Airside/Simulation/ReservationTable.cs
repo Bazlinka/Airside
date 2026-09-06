@@ -13,6 +13,19 @@ namespace Airside.Simulation
         public bool TryReplace(StableId owner, IEnumerable<StableId> requestedResources, out StableId blockedResource)
         {
             var requested = requestedResources.Distinct().ToArray();
+            if (!CanReplace(owner, requested, out blockedResource))
+                return false;
+
+            Release(owner);
+            foreach (var resource in requested)
+                _ownersByResource[resource] = owner;
+
+            return true;
+        }
+
+        public bool CanReplace(StableId owner, IEnumerable<StableId> requestedResources, out StableId blockedResource)
+        {
+            var requested = requestedResources.Distinct().ToArray();
             foreach (var resource in requested)
             {
                 if (_ownersByResource.TryGetValue(resource, out var existingOwner) && !existingOwner.Equals(owner))
@@ -22,15 +35,13 @@ namespace Airside.Simulation
                 }
             }
 
-            Release(owner);
-            foreach (var resource in requested)
-                _ownersByResource[resource] = owner;
-
             blockedResource = default;
             return true;
         }
 
         public bool IsReserved(StableId resource) => _ownersByResource.ContainsKey(resource);
+
+        public bool TryGetOwner(StableId resource, out StableId owner) => _ownersByResource.TryGetValue(resource, out owner);
 
         public void Release(StableId owner)
         {

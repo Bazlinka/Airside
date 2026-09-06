@@ -6,7 +6,7 @@ Airside is a real-time, persistent airport management game for Mac. The player d
 
 ## Current milestone
 
-Phase four: make aircraft ground movement and operational history explicit. Each stand now has a named route through shared taxiway segments and its own lead-in. The aircraft follows that route, reservations use the same segment identifiers, and an operations panel records inbound assignment, landing, stand arrival, player intervention, delay and departure.
+Phase five: prepare the airfield for simultaneous traffic. Taxiing aircraft now reserve only the segment they occupy and release it before moving onward. Reservation checks are atomic, and a traffic wait monitor explains any aircraft blocked on the same resource for ten seconds or more.
 
 ## Invariants
 
@@ -34,7 +34,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Current evidence
 
-- Eighteen edit-mode tests pass.
+- Twenty edit-mode tests pass.
 - A fifty-cycle simulation completes without reservation conflicts.
 - Large and one-second time steps reach identical simulation state.
 - Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
@@ -42,8 +42,10 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
+- Taxi movements release shared segments progressively instead of locking the whole route.
+- A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
 - The project compiles in Unity 6.3 LTS on the development Mac.
 
 ## Next work
 
-Run a longer visual soak, add deadlock diagnostics and then introduce a second simultaneous aircraft using the same taxi-segment reservations.
+Introduce a second simultaneous aircraft using the segment reservations, then run a longer visual soak with opposing ground traffic.

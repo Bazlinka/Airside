@@ -159,6 +159,8 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
             GUI.Label(new Rect(42, 132, 320, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Cycles {_simulation.CompletedCycles}", small);
             GUI.Label(new Rect(42, 156, 360, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reserved: {ReservationSummary()}", small);
+            if (_simulation.TrafficWaits.HasWarning(_clock.Now))
+                GUI.Label(new Rect(42, 178, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
 
             var lineY = 180f;
             if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)

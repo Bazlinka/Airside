@@ -126,5 +126,47 @@ namespace Airside.Tests
             Assert.That(titles, Does.Contain("Delayed 6s"));
             Assert.That(titles, Does.Contain("Departed"));
         }
+
+        [Test]
+        public void Taxiing_ReleasesEachSegmentBeforeReservingTheNext()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
+
+            clock.Advance(33);
+            simulation.Update();
+            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaOne), Is.True);
+
+            clock.Advance(9);
+            simulation.Update();
+            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaOne), Is.False);
+            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaTwo), Is.True);
+
+            clock.Advance(8);
+            simulation.Update();
+            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaTwo), Is.False);
+            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.StandOneLeadIn), Is.True);
+        }
+
+        [Test]
+        public void TrafficWaitMonitor_ExplainsAProlongedResourceWait()
+        {
+            var table = new ReservationTable();
+            var first = new StableId("AS-101");
+            var second = new StableId("AS-102");
+            var monitor = new TrafficWaitMonitor();
+            Assert.That(table.TryReplace(first, new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
+            Assert.That(table.TryReplace(second, new[] { AirportTaxiNetwork.AlphaOne }, out var blocked), Is.False);
+            monitor.SetWaiting(second, blocked, new SimulationTime(20));
+
+            Assert.That(monitor.HasWarning(new SimulationTime(29)), Is.False);
+            Assert.That(monitor.HasWarning(new SimulationTime(30)), Is.True);
+            Assert.That(monitor.Describe(new SimulationTime(30)), Is.EqualTo("AS-102 waiting 10s for TAXI-A1"));
+
+            table.Release(first);
+            Assert.That(table.TryReplace(second, new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
+            monitor.Clear(second);
+            Assert.That(monitor.HasWarning(new SimulationTime(31)), Is.False);
+        }
     }
 }

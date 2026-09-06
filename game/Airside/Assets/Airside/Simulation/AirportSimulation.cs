@@ -31,6 +31,7 @@ namespace Airside.Simulation
             Economy = new AirportEconomy();
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
+            TrafficWaits = new TrafficWaitMonitor();
             StartCycle();
             SynchronizeReservations();
         }
@@ -44,6 +45,8 @@ namespace Airside.Simulation
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
+        public TrafficWaitMonitor TrafficWaits { get; }
+        public StableId CurrentTaxiSegment => SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
         public long CurrentDelaySeconds => ActiveAircraft.Phase == AircraftPhase.AtStand && ActiveTurnaround != null
@@ -149,8 +152,15 @@ namespace Airside.Simulation
         private void SynchronizeReservations()
         {
             var owner = new StableId(ActiveAircraft.AircraftId);
-            if (!_reservations.TryReplace(owner, RequiredResources(), out _))
+            if (!_reservations.TryReplace(owner, RequiredResources(), out var blocked))
+            {
                 ReservationConflicts++;
+                TrafficWaits.SetWaiting(owner, blocked, _lastUpdatedAt);
+            }
+            else
+            {
+                TrafficWaits.Clear(owner);
+            }
         }
 
         private IEnumerable<StableId> RequiredResources()
@@ -162,8 +172,7 @@ namespace Airside.Simulation
                     yield return Runway;
                     break;
                 case AircraftPhase.TaxiIn:
-                    foreach (var segment in ActiveTaxiRoute.SegmentIds)
-                        yield return segment;
+                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
                     yield return AssignedStand;
                     break;
                 case AircraftPhase.AtStand:
@@ -174,10 +183,20 @@ namespace Airside.Simulation
                     yield return ApronLane;
                     break;
                 case AircraftPhase.TaxiOut:
-                    foreach (var segment in ActiveTaxiRoute.SegmentIds)
-                        yield return segment;
+                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
                     break;
             }
+        }
+
+        private StableId SegmentFor(AircraftPhase phase, double progress)
+        {
+            if (phase != AircraftPhase.TaxiIn && phase != AircraftPhase.TaxiOut)
+                return default;
+            var count = ActiveTaxiRoute.SegmentIds.Count;
+            var index = Math.Min(count - 1, (int)(Math.Max(0, Math.Min(0.999999, progress)) * count));
+            if (phase == AircraftPhase.TaxiOut)
+                index = count - 1 - index;
+            return ActiveTaxiRoute.SegmentIds[index];
         }
 
         private void Record(SimulationTime time, string title, string detail)

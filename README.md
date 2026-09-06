@@ -19,8 +19,11 @@ The first playable build proves one complete aircraft cycle: land, taxi, occupy 
 
 1. Open `game/Airside` in Unity 6.3 LTS.
 2. Press Play to run the repeating aircraft movement prototype.
-3. Run `scripts/test-unity.sh` for deterministic simulation checks.
-4. Run `scripts/build-mac.sh` for a local macOS application build.
+3. Run `./scripts/test-unity.sh` for deterministic simulation checks.
+4. Run `./scripts/build-mac.sh` for a local macOS application build.
+
+Both scripts run under `bash` or `zsh`. They expect Unity 6.3 LTS at the default
+Hub path; set `AIRSIDE_UNITY` to point elsewhere.
 
 See `GAME.md` for the current milestone, controls, evidence and next work.
 

@@ -10,15 +10,15 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (decline proposals)
+- **Last updated:** 2026-09-06 by Claude (weather + daily running costs)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is overdue** — press Play in Unity or run the
-  Mac build for a few minutes (location, day/night, routes, reputation,
-  3-aircraft fleet all unwatched). Then the big one: **accepted routes add real
-  flights** — this needs a design pass first, see
-  `docs/product/concurrent-flights-brief.md` (paste to ChatGPT with AGENTS.md +
-  GAME.md).
-- **In progress / half-done:** nothing — 51/51 edit-mode tests pass, macOS build ok.
+- **Do this next:** **Visual soak is overdue** — 15 commits of unwatched changes
+  (day/night, weather, 3-aircraft fleet, route/reputation/economy HUD). Press
+  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
+  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
+  keep filling phase four safely — **staffing by role**, a **buildable capacity
+  upgrade** (third stand), or a **daily report panel**.
+- **In progress / half-done:** nothing — 56/56 edit-mode tests pass, macOS build ok.
   Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
   command. Reputation and route income are rebuilt by replay (no persisted field).
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
@@ -39,10 +39,12 @@ Toward the first playable airport. The airport sits at a named location
 (Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
 driving the sun and ambient light and shown on the HUD. Airlines now propose
-scheduled routes on a timer; the player accepts an offer and every completed
-flight then pays a recurring per-flight amount. The airport's reputation (0–100)
-rises with on-time departures and falls with delays; airlines gate their
-proposals on it and pay more when it is high.
+scheduled routes on a timer; the player accepts (or declines) an offer and every
+completed flight then pays a recurring per-flight amount. The airport's reputation
+(0–100) rises with on-time departures and falls with delays; airlines gate their
+proposals on it and pay more when it is high. Deterministic weather changes
+through the day and, with a base fee, is charged as a daily running cost — so the
+airport now has an expense it must cover, not just income.
 
 Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -82,6 +84,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
 - Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight.
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
+- Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost plus a weather surcharge, identical under live play and offline catch-up.
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.

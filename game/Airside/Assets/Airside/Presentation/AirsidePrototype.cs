@@ -186,8 +186,8 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
-            GUI.Label(new Rect(42, 132, 360, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  Cycles {_simulation.CompletedCycles}", small);
-            GUI.Label(new Rect(42, 156, 380, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
+            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {Weather.Describe(_simulation.CurrentWeather)}", small);
+            GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             if (_simulation.TrafficWaits.HasWarning(_clock.Now))
                 GUI.Label(new Rect(42, 178, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
 
@@ -287,7 +287,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 24, top + 94, width - 48, 24), $"Flights completed: {summary.FlightsCompleted}", detail);
             GUI.Label(new Rect(left + 24, top + 122, width - 48, 24), $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}", detail);
             GUI.Label(new Rect(left + 24, top + 150, width - 48, 24), $"Route income: ${summary.RouteIncome:N0}", detail);
-            GUI.Label(new Rect(left + 24, top + 178, width - 48, 24), $"Delay costs: ${summary.DelayCost:N0}", detail);
+            GUI.Label(new Rect(left + 24, top + 178, width - 48, 24), $"Delay + running costs: ${summary.DelayCost + summary.OperatingCost:N0}", detail);
             GUI.Label(new Rect(left + 24, top + 206, width - 48, 24), $"Reputation: {summary.ReputationChange:+0;-0;0}  (now {_simulation.Reputation.Score})", detail);
             if (summary.RecoveredPreviousSave)
                 GUI.Label(new Rect(left + 24, top + 234, width - 48, 20), "Recovered the previous safe copy.", small);

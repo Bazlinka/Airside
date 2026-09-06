@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Simulated weather + daily running costs.** `Weather` (deterministic from the
+  timeline, biased mild) changes every 5 simulated minutes. Each simulated
+  midnight the airport pays `BaseDailyOperatingCost` (400) plus a weather
+  surcharge (0–160) via `AirportEconomy.PayOperatingCosts` — the economy now has
+  a drain, so cash can fall and route income / on-time performance matter for
+  solvency. Weather does not affect flight timing (keeps every seed/timing test
+  green). HUD shows current weather; away summary reports operating cost. 56/56
+  tests; macOS build runs. See `docs/decisions/0013-weather-and-daily-running-costs.md`.
 - Route proposals can now be **declined** (a persisted `decline-route` command).
   The HUD offer panel gains a Decline button; `AirportRoutes` exposes
   `OffersDeclined` and `ScheduledFlightsPerDay` (sum of accepted routes'

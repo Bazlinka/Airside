@@ -8,6 +8,7 @@ namespace Airside.Simulation
     {
         public const long CycleLengthSeconds = 160;
         public const long DepartureResetSeconds = 6;
+        public const long BaseDailyOperatingCost = 400;
 
         public static readonly StableId Runway = new("RUNWAY-09-27");
         public static readonly StableId ApronLane = new("APRON-LANE");
@@ -20,6 +21,7 @@ namespace Airside.Simulation
         private SimulationTime _cycleStartedAt;
         private SimulationTime _lastUpdatedAt;
         private bool _flightSettled;
+        private int _daysSettled;
         private readonly GroundTrafficAircraft[] _groundTraffic;
 
         public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations)
@@ -128,6 +130,7 @@ namespace Airside.Simulation
         private void AdvanceOneSecond(SimulationTime now)
         {
             Routes.Update(now);
+            SettleDaysUpTo(now);
 
             if (ActiveAircraft.IsComplete)
             {
@@ -182,6 +185,23 @@ namespace Airside.Simulation
             }
 
             SynchronizeAllTraffic(now);
+        }
+
+        public WeatherKind CurrentWeather => Weather.At(_lastUpdatedAt);
+
+        private void SettleDaysUpTo(SimulationTime now)
+        {
+            var day = new DayCycle(now).DaysElapsed;
+            while (_daysSettled < day)
+            {
+                _daysSettled++;
+                var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
+                var weather = Weather.At(closeTime);
+                var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather);
+                Economy.PayOperatingCosts(cost);
+                Record(now, $"Day {_daysSettled} closed",
+                    $"Running cost -${cost:N0} ({Weather.Describe(weather)}) · cash ${Economy.Cash:N0}");
+            }
         }
 
         private void SynchronizeAllTraffic(SimulationTime now)

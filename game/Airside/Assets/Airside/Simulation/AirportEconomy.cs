@@ -18,6 +18,7 @@ namespace Airside.Simulation
         public long TotalRevenue { get; private set; }
         public long TotalDelayCost { get; private set; }
         public long TotalRouteIncome { get; private set; }
+        public long TotalOperatingCost { get; private set; }
 
         public bool PurchasePriorityCrew()
         {
@@ -26,6 +27,15 @@ namespace Airside.Simulation
 
             Cash -= PriorityCrewCost;
             return true;
+        }
+
+        public void PayOperatingCosts(long amount)
+        {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+
+            Cash -= amount;
+            TotalOperatingCost += amount;
         }
 
         public void AddRouteIncome(long amount)

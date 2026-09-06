@@ -1,6 +1,6 @@
 # Design brief: accepted routes add real flights
 
-Status: **designed** — see `docs/decisions/0019-concurrent-commercial-flights.md`
+Status: **implemented (slice 1)** — see `docs/decisions/0019-concurrent-commercial-flights.md`
 and first slice packet `docs/product/concurrent-flights-slice1-packet.md`.
 Owner: Cursor (design 2026-09-06); implementation unassigned.
 

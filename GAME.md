@@ -10,11 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (shipping concurrent-flights design; Bailey approved merge-all)
+- **Last updated:** 2026-09-06 by Cursor (concurrent flights slice 1 onto main; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Merge concurrent slice 1, accept-capacity, daily P&L, then art pipeline (#11). Unity soak when Bailey can.
+- **Do this next:** Merge accept-capacity, daily P&L, ChatGPT art pipeline. Unity soak when Bailey can.
 - **In progress / half-done:** Bailey approved merge-without-review.
-- **Watch out for:** fleet corridor invariants (decisions 0006–0009).
+- **Watch out for:** fleet corridor invariants; fleet yields to any commercial.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -37,7 +37,7 @@ buy a third stand for 8000 — the first buildable capacity upgrade. If cash sta
 negative across three consecutive day closes, the airport is declared insolvent
 and the simulation stops.
 
-Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
 ## Invariants
 
@@ -66,9 +66,10 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Current evidence
 
-- Twenty edit-mode tests pass.
-- A fifty-cycle simulation completes without reservation conflicts.
+- Fifty-seven edit-mode tests pass (including concurrent-flight soak and step identity).
+- A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
+- When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
 - Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
@@ -104,3 +105,4 @@ Remaining phase-four filler: a daily report panel.
 Keep merging the remaining phase-four stack onto `main`. Visual soak of the
 build in Unity when Bailey can play. Concurrent-flights design/implementation
 PRs are next after research and the daily report.
+Merge open feature PRs (#3–#7), rebase this slice onto `main`, then Unity Play soak of dual commercials. Tune threshold/stagger after Play if needed.

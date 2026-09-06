@@ -95,6 +95,7 @@ it must not become a general brand colour.
 ```text
 docs/art/
   ART_DIRECTION_AND_ASSET_SPEC.md   this contract
+  candidates/                       generated assets awaiting review/approval
   reference/                        approved visual targets and concept sheets
   prompts/                          exact generation prompts and model/settings notes
 
@@ -250,13 +251,13 @@ simulation timing or resource ownership.
 
 | ID | Runtime file/group | Requirement | Status |
 |---|---|---|---|
-| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Planned |
-| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Planned |
-| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Planned |
-| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Planned |
-| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Planned |
-| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Planned |
-| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Planned |
+| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Generated candidate — review required |
+| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Generated candidate — review required |
+| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Generated candidate — review required |
+| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Generated candidate — review required |
+| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Generated candidate — review required |
+| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Generated candidate — review required |
+| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Generated candidate — review required |
 
 ## Later production backlog
 

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Research progression.** `AirportResearch` — first project Operations Efficiency
+  (2500, one simulated day) permanently cuts base daily running cost by 100.
+  Start is a persisted `start-research` command (replayed on load). Does not
+  change flight timing. HUD shows progress / complete. See
+  `docs/decisions/0017-research-operations-efficiency.md`.
 - **Buildable third stand.** `AirportCapacity` — first capacity upgrade. Spend
   8000 (`build-stand` command, replayed on load) to unlock Stand 3; taxi network
   gains lead-in geometry; primary flights and ground traffic use the new stand.

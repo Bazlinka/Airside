@@ -26,6 +26,7 @@ namespace Airside.Persistence
         public const string DeclineRouteCommand = "decline-route";
         public const string HireCrewCommand = "hire-crew";
         public const string ReleaseCrewCommand = "release-crew";
+        public const string StartResearchCommand = "start-research";
         public const string BuildStandCommand = "build-stand";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
@@ -120,6 +121,8 @@ namespace Airside.Persistence
 
         public bool ReleaseGroundCrew() => RecordCommand(Simulation.ReleaseGroundCrew(), ReleaseCrewCommand, "release");
 
+        public bool StartOperationsResearch() => RecordCommand(Simulation.StartOperationsResearch(), StartResearchCommand, "research");
+
         public bool BuildThirdStand() => RecordCommand(Simulation.BuildThirdStand(), BuildStandCommand, "stand");
 
         private bool RecordCommand(bool applied, string commandType, string prefix)
@@ -204,6 +207,8 @@ namespace Airside.Persistence
                 Simulation.HireGroundCrew();
             else if (command.commandType == ReleaseCrewCommand)
                 Simulation.ReleaseGroundCrew();
+            else if (command.commandType == StartResearchCommand)
+                Simulation.StartOperationsResearch();
             else if (command.commandType == BuildStandCommand)
                 Simulation.BuildThirdStand();
         }

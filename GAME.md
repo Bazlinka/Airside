@@ -10,14 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (merging phase-four stack; Bailey said ship it)
-- **Branch / working tree:** `cursor/third-stand-capacity-38b9` → merging to `main`
-- **Do this next:** Keep merging research → daily report → concurrent flights →
-  accept-capacity → daily P&L. **Visual soak in Unity** when Bailey can play.
-- **In progress / half-done:** insolvency is already on `main`. Third stand landing
-  now. Do not persist `StandCount` or `IsInsolvent` — rebuild via replay.
-- **Watch out for:** fleet corridor invariants (decisions 0006–0009). Two-stand
-  behaviour must stay seed-identical until the third stand is built.
+- **Last updated:** 2026-09-06 by Cursor (shipping phase-four stack; Bailey said merge it all)
+- **Branch / working tree:** merging onto `main`
+- **Do this next:** Continue merging remaining open phase-four PRs. Visual soak in Unity when Bailey can.
+- **In progress / half-done:** Bailey approved merge-without-review. Do not persist rebuilt-by-replay fields.
+- **Watch out for:** fleet corridor invariants (decisions 0006–0009).
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -81,6 +78,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
@@ -93,6 +91,10 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
+Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
+open capacity / insolvency PRs. Then the overdue visual soak, or the
+concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
+Remaining phase-four filler: a daily report panel.
 Keep merging the remaining phase-four stack onto `main`. Visual soak of the
 build in Unity when Bailey can play. Concurrent-flights design/implementation
 PRs are next after research and the daily report.

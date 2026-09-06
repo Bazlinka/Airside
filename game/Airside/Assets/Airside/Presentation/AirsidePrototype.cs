@@ -238,7 +238,30 @@ namespace Airside.Presentation
                 _session.BuildThirdStand();
             GUI.enabled = true;
 
-            GUI.Label(new Rect(42, 452, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+                        var research = _simulation.Research;
+            if (research.OperationsEfficiencyComplete)
+            {
+                GUI.Label(new Rect(42, 452, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} complete · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day running cost", small);
+            }
+            else if (research.IsResearching)
+            {
+                var pct = (int)(research.Progress01(_clock.Now) * 100);
+                GUI.Label(new Rect(42, 452, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+            }
+            else
+            {
+                GUI.Label(new Rect(42, 452, 380, 20),
+                    $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
+                GUI.enabled = research.CanStartOperationsEfficiency && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                if (GUI.Button(new Rect(42, 470, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
+                    _session.StartOperationsResearch();
+                GUI.enabled = true;
+            }
+
+            GUI.Label(new Rect(42, 498, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+
 
             var historyLeft = Screen.width / scale - 362;
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);

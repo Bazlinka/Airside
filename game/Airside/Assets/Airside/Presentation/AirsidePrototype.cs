@@ -81,7 +81,7 @@ namespace Airside.Presentation
             _windsockSock = BuildWindsock();
             EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
-                _cameraController.SetFollowTarget(_commercialAircraft[0]);
+                _cameraController.SetFollowTargets(_commercialAircraft);
         }
 
         private void Update()
@@ -801,7 +801,7 @@ namespace Airside.Presentation
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
-            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow/cycle · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;

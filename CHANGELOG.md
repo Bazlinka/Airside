@@ -5,6 +5,20 @@ change it describes.
 
 ## Unreleased
 
+- **Apply the approved Airside palette to the runtime HUD.** The REF-004 operations
+  HUD reference (ChatGPT-generated, Approved) specified translucent Runway Ink
+  panels, Cloud text, Coastal Blue for buttons, Safety Yellow for caution, Clear
+  Green for on-time and Signal Red reserved for delay — none of which had reached
+  `AirsidePrototype.OnGUI()`, which still rendered on Unity's plain default grey
+  IMGUI skin. Added `AirsideTheme` (the palette from
+  `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`, a themed panel background texture,
+  and themed label/button styles) and wired it through every panel, label and
+  button in the HUD, the route-offer card and the away-summary popup. Delay text
+  is Signal Red, on-schedule/understaffed/caution states use Clear Green/Safety
+  Yellow, buttons use Coastal Blue. Presentation only — no simulation or save
+  behaviour changed; `scripts/test-domain.sh` 96/96 pass (this file has no
+  EditMode coverage, since IMGUI rendering isn't unit-testable without Unity —
+  needs a Play-mode check on the next Unity session).
 - **Fix a zero-seed crash-on-save landmine.** `AirsideSaveData.Validate()` treats
   `randomSeed == 0` as corruption (rejecting the save and falling back to the
   previous snapshot), but `PersistentAirportSession.LoadOrCreate` would happily

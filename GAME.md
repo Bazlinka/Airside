@@ -11,14 +11,16 @@ This block is the first thing to read and the last thing to update. Any tool
 next session can continue without seeing the previous conversation. Keep it short.
 
 - **Last updated:** 2026-09-06 by Claude (confirmed #15/#16 merged onto `main`; added `scripts/test-domain.sh`
-  so Domain/Simulation/Persistence tests are checkable without a Mac; reviewed reservation/corridor
-  logic for determinism, found nothing wrong)
+  so Domain/Simulation/Persistence tests are checkable without a Mac; fixed two latent bugs found by
+  code review; wired the approved REF-004 palette into the runtime HUD via new `AirsideTheme`)
 
 - **Branch / working tree:** `main` — #15 (Batch C + Passenger Services) and #16 (playtest HUD/taxi visuals)
   are both merged; no branch is waiting to land. `claude/game-git-status-lv6q93` carries the docs
-  refresh and the new headless test harness, not yet merged.
+  refresh, the headless test harness, two bug fixes, and the HUD theming — not yet merged.
 - **Do this next:** Bailey review of Batch C look (Approve or request `_v02`). Unity Play soak
-  when free — not a blocker.
+  when free — **now also needs to check the new HUD theming looks right** (Runway
+  Ink panels / Cloud text / Coastal Blue buttons / state colours); it was written without a Unity
+  editor available, so it compiles by inspection only and has not been seen rendered.
 - **In progress / half-done:** Batch C Generated/Modelled, not yet Approved. Batch D greybox: night floods,
   gear/lights, cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
   touchdown puff, runway edge + taxi centreline. Remaining Batch D animation/VFX packet items and
@@ -119,6 +121,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 - A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
 - Fleet aircraft move identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.
+- The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
+  text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
+  **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
 
 ## Next work
 

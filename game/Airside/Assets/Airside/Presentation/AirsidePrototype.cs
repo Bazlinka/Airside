@@ -557,14 +557,22 @@ namespace Airside.Presentation
             var previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
-            var panel = new GUIStyle(GUI.skin.box)
+            // Approved Airside HUD direction (docs/art/ART_DIRECTION_AND_ASSET_SPEC.md,
+            // REF-004): translucent Runway Ink panels, Cloud text, Coastal Blue for
+            // buttons, Safety Yellow for caution, Clear Green for on-time, Signal Red
+            // reserved for delay.
+            var panel = AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
             {
                 alignment = TextAnchor.UpperLeft,
                 padding = new RectOffset(18, 18, 14, 14)
-            };
-            var title = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold };
-            var detail = new GUIStyle(GUI.skin.label) { fontSize = 16 };
-            var small = new GUIStyle(GUI.skin.label) { fontSize = 13 };
+            });
+            var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold });
+            var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 16 });
+            var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 });
+            var caution = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SafetyYellow);
+            var onTime = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.ClearGreen);
+            var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
+            var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
 
             var timeOfDay = _simulation.TimeOfDay;
 
@@ -585,7 +593,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 176, 390, 22),
                 $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", small);
             if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-                GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
+                GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
 
             var lineY = 180f;
             if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)
@@ -599,29 +607,31 @@ namespace Airside.Presentation
                 }
 
                 if (_simulation.CurrentDelaySeconds > 0)
-                    GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", small);
+                    GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
 
                 var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
                 GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
-                if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300"))
+                if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
                     _session.EnablePriorityCrew();
                 GUI.enabled = true;
             }
             else
             {
-                GUI.Label(new Rect(42, 184, 350, 22), _simulation.LastDelaySeconds > 0
-                    ? $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}"
-                    : "Operations running to schedule", small);
+                var onSchedule = _simulation.LastDelaySeconds <= 0;
+                GUI.Label(new Rect(42, 184, 350, 22), onSchedule
+                    ? "Operations running to schedule"
+                    : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}", onSchedule ? onTime : delayed);
             }
 
             var staffing = _simulation.Staffing;
             GUI.Label(new Rect(42, 360, 380, 20),
-                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}", small);
+                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
+                staffing.IsUnderstaffed ? caution : small);
             GUI.enabled = staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
-            if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}"))
+            if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
                 _session.HireGroundCrew();
             GUI.enabled = staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
-            if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew"))
+            if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
                 _session.ReleaseGroundCrew();
             GUI.enabled = true;
 
@@ -630,7 +640,7 @@ namespace Airside.Presentation
                 $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
             GUI.enabled = capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
             if (GUI.Button(new Rect(42, 426, 220, 24),
-                    capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}"))
+                    capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
                 _session.BuildThirdStand();
             GUI.enabled = true;
 
@@ -646,7 +656,7 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
                 GUI.enabled = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
+                if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
                     _session.StartOperationsResearch();
                 GUI.enabled = true;
             }
@@ -655,7 +665,7 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
                 GUI.enabled = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}"))
+                if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
                     _session.StartPassengerServicesResearch();
                 GUI.enabled = true;
             }
@@ -710,7 +720,7 @@ namespace Airside.Presentation
             }
 
             trafficY += 4f;
-            DrawRouteOffer(scale, panel, detail, small, offerTop: 22f + opsHeight + 12f);
+            DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f + opsHeight + 12f);
             foreach (var aircraft in _simulation.GroundTraffic)
             {
                 GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}", small);
@@ -741,11 +751,11 @@ namespace Airside.Presentation
             }
 
             if (_showAwaySummary)
-                DrawAwaySummary(scale, panel, title, detail, small);
+                DrawAwaySummary(scale, panel, title, detail, small, button);
             GUI.matrix = previousMatrix;
         }
 
-        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, float offerTop = 244f)
+        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, GUIStyle caution, GUIStyle button, float offerTop = 244f)
         {
             var proposal = _simulation.Routes.Pending;
             if (proposal == null)
@@ -764,23 +774,24 @@ namespace Airside.Presentation
             var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
             var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount);
             string status;
+            var blocked = !meetsReputation || !fitsCapacity;
             if (!meetsReputation)
                 status = $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})";
             else if (!fitsCapacity)
                 status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
             else
                 status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
-            GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, small);
+            GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, blocked ? caution : small);
 
             GUI.enabled = meetsReputation && fitsCapacity;
-            if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route"))
+            if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route", button))
                 _session.AcceptRoute();
             GUI.enabled = true;
-            if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline"))
+            if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline", button))
                 _session.DeclineRoute();
         }
 
-        private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small)
+        private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
         {
             var summary = _session.LastAwaySummary;
             var width = 430f;
@@ -799,7 +810,7 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(left + 24, top + 234, width - 48, 20), "Recovered the previous safe copy.", small);
             else if (summary.ClockMovedBackwards)
                 GUI.Label(new Rect(left + 24, top + 234, width - 48, 20), "Device clock moved backwards; no time was added.", small);
-            if (GUI.Button(new Rect(left + 125, top + 264, 180, 30), "Continue operations"))
+            if (GUI.Button(new Rect(left + 125, top + 264, 180, 30), "Continue operations", button))
                 _showAwaySummary = false;
         }
 

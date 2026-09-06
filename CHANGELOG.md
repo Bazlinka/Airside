@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Cycle the follow camera across dual commercials.** With two aircraft on the field,
+  pressing F while already following advances to the next commercial (and wraps). First
+  F still enters follow; O returns to overview. Help strip updated. Presentation only;
+  `scripts/test-domain.sh` 96/96.
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

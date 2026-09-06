@@ -10,8 +10,8 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (landed #15/#16/#17; rebasing Batch E UI candidates)
-- **Branch / working tree:** `art/batch-e-ui-candidates` → merge to `main`
+- **Last updated:** 2026-09-06 by Cursor (follow-camera cycle for dual commercials)
+- **Branch / working tree:** `cursor/follow-cycle-38b9` → PR into `main`
 - **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
   nine-slice previews. Unity Play soak for HUD theming when free.
 - **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
@@ -79,7 +79,7 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 - Right-drag: orbit camera
 - Scroll: zoom
 - WASD: pan overview
-- F: follow aircraft
+- F: follow aircraft (press again to cycle commercials)
 - O: return to overview
 - P: hire a priority turnaround crew while the aircraft is at stand
 

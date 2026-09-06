@@ -354,52 +354,63 @@ Record the origin, licence and permitted use of generated or third-party code, i
 
 ## Repository and documentation structure
 
+This layout reflects the actual repository on disk. Earlier drafts referred to
+`mac-game/` and `iphone-companion/`; the real folders are `game/Airside/` and
+`companion/AirsideCompanion/`.
+
 ```text
-Airside/
-  README.md
-  GAME.md
-  CHANGELOG.md
-  LICENSES.md
+Airside/                        Git repository - the single source of truth
+  README.md                     Orientation and first-run steps
+  GAME.md                       Living status board - read before every task
+  CHANGELOG.md                  One line per merged change, newest first
+  LICENSES.md                   Licence status (full register in docs/data/)
+  AGENTS.md                     Shared working contract for every contributor
+  CLAUDE.md                     Pointer for Claude Code
+  .cursor/rules/airside.mdc     Pointer for Cursor
+  .gitattributes                Unity smart-merge and binary asset rules
   docs/
-    product/
-      PROJECT-PLAN.md
-      DESIGN-PILLARS.md
-      MILESTONES.md
-    design/
-      CORE-LOOP.md
-      SIMULATION-RULES.md
-      ECONOMY.md
-      PROGRESSION.md
-      UI-FLOWS.md
-    architecture/
-      SYSTEM-OVERVIEW.md
-      PERSISTENCE.md
-      CLOUDKIT-CONTRACT.md
-      DATA-SCHEMA.md
-      PERFORMANCE-BUDGETS.md
-    decisions/
-      ADR-0001-unity-and-swiftui.md
-    production/
-      BACKLOG.md
-      PLAYTEST-NOTES.md
-      RELEASE-CHECKLIST.md
-      DATA-ASSET-REGISTER.md
-  mac-game/
-    Assets/
-    Packages/
+    product/                    Airside Project Plan.docx, PROJECT_PLAN.md
+    architecture/               Technical decisions and data contracts
+    decisions/                  Numbered decision records (0001, 0002, ...)
+    data/                       ASSET_AND_DATA_REGISTER.md
+    testing/                    Acceptance checks and fixtures
+  game/Airside/                 Unity 6.3 LTS macOS game - open THIS in Unity
+    Assets/Airside/
+      Domain/                   Pure rules: time, ids (no UnityEngine types)
+      Simulation/               Deterministic simulation, injected clock
+      Persistence/              Save schema, load and offline catch-up
+      Presentation/             MonoBehaviours, camera, visuals (Unity-facing)
+      Editor/                   Editor-only startup helpers
+      Tests/EditMode/           Deterministic NUnit tests
+      Scenes/                   AirsidePrototype.unity
     ProjectSettings/
-  iphone-companion/
-    AirsideCompanion.xcodeproj/
-    AirsideCompanion/
-    AirsideCompanionTests/
-  shared/
-    schemas/
-    fixtures/
-  tools/
-  builds/
+  companion/AirsideCompanion/   SwiftUI iPhone companion (after save/sync stable)
+  scripts/
+    test-unity.sh               Deterministic simulation checks
+    build-mac.sh                Local macOS application build
+  work/                         Local scratch and builds - git-ignored
 ```
 
 GAME.md is the short briefing read before every task. It contains the current vision, current milestone, invariants, build instructions, known issues and next approved work. Detailed documents remain in docs so GAME.md stays easy to trust.
+
+### Version control and multi-tool workflow
+
+The repository is the single source of truth for implementation. It is hosted as a
+private GitHub repository named `Airside`, and every participant - Bailey, ChatGPT,
+Cursor, Codex and Claude - works through that remote. Work that is not committed and
+pushed does not exist for the other tools.
+
+- Before a task: `git pull --rebase origin main`.
+- One narrow change per commit, tied to a single acceptance criterion. Run
+  `scripts/test-unity.sh` and confirm the project compiles in Unity 6.3 LTS.
+- Update `GAME.md` and `CHANGELOG.md` in the same commit as any behaviour change,
+  then push straight away.
+- One change has one owner at a time. Parallel work uses a `feature/<name>` branch
+  or a git worktree with explicit, non-overlapping file boundaries.
+- A design change adds a dated record under `docs/decisions/`. New ideas go to a
+  backlog, not straight into the active milestone.
+- `AGENTS.md` carries this contract in full and is the file every tool reads first.
+  `CLAUDE.md` and `.cursor/rules/` redirect their tools to it.
 
 ## Testing strategy
 

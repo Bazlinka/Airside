@@ -193,3 +193,52 @@ without a phase discontinuity. Both mandated colours are retained at 18% alpha.
 All four icon sheets and both textures requiring translucency were inspected for
 an alpha channel. No Unity import, nine-slice preview, 24 px icon check or game
 visual check has been claimed.
+
+## Integration review and findings — 2026-09-06 (Claude)
+
+Verified each candidate against the SHA-256 table above and against its own
+requirements before slicing or wiring anything in. No Unity editor was available
+in this environment, so this is code-level integration and pixel-level
+inspection only — still not a substitute for the Unity/24 px/nine-slice check
+the review notes above call for.
+
+- **All 7 recorded SHA-256 hashes checked.** 6 of 7 matched exactly and opened
+  correctly. **`ui_service_icon_sheet_v01.png` did not**: its bytes don't start
+  with a valid PNG signature and its actual SHA-256
+  (`305de7dda10d3df9240c7d69afef6566d21c55cef85497847800035566dc773b`) doesn't
+  match the recorded one. The file is corrupted as committed — not something
+  introduced downstream. UI-ICO-003 (service icons) needs regeneration.
+- **Weather, operation and economy icon sheets** opened correctly, matched their
+  recorded hashes, and visually read clearly against their spec order (verified
+  by eye). Each has exactly 7 evenly spaced icons on a single row with a real
+  alpha channel (confirmed non-zero opaque ink pixels near Runway Ink
+  `#17242A`, fully transparent background) — sliced automatically by detecting
+  the 7 column runs of non-transparent pixels, cropped to a square per icon
+  with 16px padding, saved to
+  `game/Airside/Assets/Airside/Art/UI/Icons/ui_{category}_{name}_v01.png` (21
+  files). Wired into `AirsideTheme` (`Icon(category, name)`,
+  `WeatherIcon(WeatherKind)`); the HUD currently draws the weather icon live,
+  the rest are loaded and ready for a future HUD pass.
+- **UI-PNL-003 (alert stripe)** verified correct: dominant colours are exact
+  Runway Ink `#17242A` at ~18% alpha and a muted Safety-Yellow-toward-ink blend
+  at ~33% alpha, matching the revision prompt's "muted toward one another, low
+  contrast" intent. Wired as the background of `AirsideTheme.CautionStyle`.
+- **UI-PNL-001 (light panel)** verified correct: fully opaque, centre colour
+  `(238, 239, 235)` essentially exact for Cloud `#EEF1EC`. Copied into Assets;
+  no HUD element uses a light panel yet, so it's available but unused.
+- **UI-PNL-002 (dark panel) does not meet its own spec.** Measured alpha across
+  the 128×128 texture: min 0, max 144/255 (~56%), mean ~23/255 (~9%). The
+  requirement was "translucent... WCAG-aware contrast" behind light text: at a
+  9% average that's not a readable panel, it's close to invisible. This likely
+  traces to the note above that "the revision returned opaque" and the
+  candidate fell back to the initial generation's alpha mask — that mask isn't
+  strong enough. The HUD's existing procedural Runway Ink panel
+  (`AirsideTheme.PanelBackground`, a solid 88%-alpha fill) was kept instead of
+  regressing to this candidate. UI-PNL-002 needs a regeneration explicitly
+  asking for stronger, more uniform opacity (suggest requesting ~80–90% alpha
+  rather than "translucent" unqualified).
+
+Net: 4 of 7 candidates integrated (weather/operation/economy icons, alert
+stripe), 1 available but unused (light panel), 2 need regeneration (service
+icons — corrupted; dark panel — too faint). None of this has been seen
+rendered in Unity; treat it as ready for review, not as verified.

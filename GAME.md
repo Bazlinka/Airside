@@ -10,17 +10,27 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (landed #15/#16/#17; rebasing Batch E UI candidates)
-- **Branch / working tree:** `art/batch-e-ui-candidates` → merge to `main`
-- **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
-  nine-slice previews. Unity Play soak for HUD theming when free.
+- **Last updated:** 2026-09-06 by Claude (Bailey directed integrating Batch E ahead of formal
+  approval; sliced/wired 4 of 7 candidates, found 2 defects — see below)
+- **Branch / working tree:** `main` — no branch waiting to land.
+- **Do this next:** Unity Play soak covering both HUD theming and the new weather icon/caution
+  stripe. Regenerate UI-ICO-003 (service icons — committed file is corrupted) and UI-PNL-002
+  (dark panel — alpha too faint, ~9% average). Bailey review of Batch C look.
 - **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
-  Batch E UI-ICO-001–004 and UI-PNL-001–003 are Generated candidates (not integrated).
+  Batch E: weather/operation/economy icons + alert stripe **Integrated** (sliced into
+  `Art/UI/Icons/`, wired via `AirsideTheme`; only the weather icon is drawn in the HUD so far).
+  Light panel available/unused. Dark panel and service icons need regeneration (see Batch E
+  table in the art spec and the review section in `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`).
   Passenger Services shipped. Headless domain harness + HUD palette on main.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
-- **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled; Batch E UI Generated — review required
+  Keep primitives until Batch C is Approved and Verified. Batch E entered runtime Assets on
+  Bailey's direct instruction, ahead of the usual formal-approval gate — still needs the
+  Unity/visual check that gate exists for.
+- **Open questions for Bailey:** Approve Batch C look. Batch E icons/stripe look right once
+  seen in Unity? Regenerate service icons + dark panel, or drop them from scope?
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C
+  Generated/Modelled; Batch E UI icons + alert stripe Integrated (unverified in Unity), dark
+  panel + service icons need regeneration
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -117,6 +127,12 @@ supplementary check, not a replacement for a real Unity run before merging.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
   **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
+- Batch E weather/operation/economy icons (21 files) and the alert-stripe caution texture are
+  sliced/copied into `Art/UI/Icons/` and `Art/UI/Panels/` and wired into `AirsideTheme`; the
+  HUD draws the weather icon live. UI-ICO-003 (service icons) is corrupted in the repo and
+  UI-PNL-002 (dark panel) measures ~9% average alpha, too faint to use — both need
+  regeneration. **Unverified in Unity**; see the Batch E review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
 
 ## Next work
 

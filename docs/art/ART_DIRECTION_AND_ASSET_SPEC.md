@@ -251,13 +251,13 @@ simulation timing or resource ownership.
 
 | ID | Runtime file/group | Requirement | Status |
 |---|---|---|---|
-| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Generated candidate — review required |
-| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Generated candidate — review required |
-| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Generated candidate — review required |
-| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Generated candidate — review required |
-| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Generated candidate — review required |
-| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Generated candidate — review required |
-| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Generated candidate — review required |
+| UI-ICO-001 | `UI/Icons/ui_weather_{clear,overcast,rain,fog,storm,heat,wind}_v01.png` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | **Integrated** — sliced from the candidate sheet, wired via `AirsideTheme.WeatherIcon`; `clear` renders live in the HUD, others loaded and ready. Delivered as PNG (ChatGPT's image tool is raster-only); decision 0022 still prefers hand-cleaned SVG masters eventually. Unverified in Unity — needs a Play check |
+| UI-ICO-002 | `UI/Icons/ui_operation_{arrival,departure,stand,taxi,hold,turnaround,completed}_v01.png` | Arrival, departure, stand, taxi, hold, turnaround and completed | Sliced and available via `AirsideTheme.Icon("operation", ...)`; not yet drawn anywhere in the HUD. PNG, as above |
+| UI-ICO-003 | `UI/Icons/ui_service_*_v01.png` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | **Corrupted candidate** — `docs/art/candidates/ui_service_icon_sheet_v01.png` has an invalid PNG signature and a SHA-256 that doesn't match the generation record. Needs regeneration; not sliced, not integrated |
+| UI-ICO-004 | `UI/Icons/ui_economy_{cash,cost,income,payroll,reputation,route,research}_v01.png` | Cash, cost, income, payroll, reputation, route and research | Sliced and available via `AirsideTheme.Icon("economy", ...)`; not yet drawn anywhere in the HUD. PNG, as above |
+| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Generated candidate, verified correct (opaque, close match to Cloud `#EEF1EC`) — copied into Assets but not used by any HUD element yet |
+| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | **Not usable as generated** — measured alpha averages ~9% (max 56%), far too faint for readable text contrast. The HUD keeps its existing procedural 88%-opacity Runway Ink panel (`AirsideTheme.PanelBackground`) instead. Needs regeneration with stronger, more uniform opacity |
+| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | **Integrated** — verified correct (muted Safety Yellow/Runway Ink bands as specified), wired as the background of `AirsideTheme.CautionStyle`, used for HUD caution states. Unverified in Unity — needs a Play check |
 
 ## Later production backlog
 

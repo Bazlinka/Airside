@@ -569,7 +569,7 @@ namespace Airside.Presentation
             var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold });
             var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 16 });
             var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 });
-            var caution = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SafetyYellow);
+            var caution = AirsideTheme.CautionStyle(small);
             var onTime = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.ClearGreen);
             var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
             var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
@@ -584,7 +584,15 @@ namespace Airside.Presentation
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
-            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
+            var weatherLineX = 42f;
+            var weatherIcon = AirsideTheme.WeatherIcon(_simulation.CurrentWeather);
+            if (weatherIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 132, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                weatherLineX = 68f;
+            }
+            GUI.Label(new Rect(weatherLineX, 132, 380 - (weatherLineX - 42), 22),
+                $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days

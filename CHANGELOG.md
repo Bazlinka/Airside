@@ -5,6 +5,21 @@ change it describes.
 
 ## Unreleased
 
+- **Integrate Batch E UI candidates into the runtime HUD.** Verified all 7 candidates
+  against their recorded SHA-256 hashes: `ui_service_icon_sheet_v01.png` is corrupted
+  as committed (invalid PNG signature, hash mismatch — needs regeneration) and
+  `ui_panel_9slice_dark_v01.png` measures ~9% average alpha (max 56%), too faint for
+  the "WCAG-aware contrast" it was specified for, so the HUD keeps its existing
+  procedural Runway Ink panel instead of regressing to it. The other 4 verified
+  correct: sliced the weather/operation/economy icon sheets (7 icons each, single row,
+  real alpha) into 21 individual files under `Art/UI/Icons/`, and copied the alert
+  stripe and light panel into `Art/UI/Panels/`. Added `AirsideTheme.Icon`/`WeatherIcon`/
+  `AlertStripeBackground`/`CautionStyle` (all fallback-safe if a file is missing); the
+  HUD now draws the weather icon live and uses the alert stripe behind caution text.
+  Done on Bailey's direct instruction, ahead of the usual formal-approval gate for new
+  runtime art — still needs a Unity Play check. See the integration review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`. Presentation only; no
+  simulation code changed; `scripts/test-domain.sh` 96/96 pass (unaffected).
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

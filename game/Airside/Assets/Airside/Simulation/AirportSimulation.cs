@@ -40,6 +40,7 @@ namespace Airside.Simulation
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
             Routes = new AirportRoutes(clock.Now);
+            Reputation = new AirportReputation();
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -60,6 +61,7 @@ namespace Airside.Simulation
         public TurnaroundWorkflow ActiveTurnaround { get; private set; }
         public AirportEconomy Economy { get; }
         public AirportRoutes Routes { get; }
+        public AirportReputation Reputation { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -104,11 +106,12 @@ namespace Airside.Simulation
         public bool AcceptPendingRoute()
         {
             var proposal = Routes.Pending;
-            if (proposal == null || !Routes.Accept(_lastUpdatedAt))
+            if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus))
                 return false;
 
+            var paid = proposal.IncomePerFlight + Reputation.IncomeBonus;
             Record(_lastUpdatedAt, "Route accepted",
-                $"{proposal.Airline} · {proposal.FlightsPerDay}/day to {proposal.Destination} · +${proposal.IncomePerFlight}/flight");
+                $"{proposal.Airline} · {proposal.FlightsPerDay}/day to {proposal.Destination} · +${paid}/flight");
             return true;
         }
 
@@ -155,6 +158,7 @@ namespace Airside.Simulation
                 if (ActiveAircraft.Phase == AircraftPhase.Departed && !_flightSettled)
                 {
                     Economy.CompleteFlight(LastDelaySeconds);
+                    Reputation.RecordDeparture(LastDelaySeconds);
                     if (Routes.IncomePerFlight > 0)
                     {
                         Economy.AddRouteIncome(Routes.IncomePerFlight);

@@ -10,16 +10,16 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (airline route proposals)
+- **Last updated:** 2026-09-06 by Claude (reputation)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** Visual soak — run the Mac build, accept a route offer, watch
-  the day/night cycle and the three aircraft. Then continue "first playable
-  airport": **reputation** (on-time departures raise it, delays lower it;
-  proposals gate on it and pay more at higher reputation), then make accepted
-  routes actually add flights (cadence is still one primary flight).
-- **In progress / half-done:** nothing — 42/42 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 saves migrate. Route acceptance is a
-  persisted `accept-route` command replayed on load / catch-up.
+- **Do this next:** Visual soak — run the Mac build, watch reputation move with
+  on-time vs delayed departures, accept a route offer. Then: **make accepted
+  routes add real scheduled flights** (cadence is still one primary flight — this
+  is the piece that turns routes into growth), and let the player **decline** a
+  proposal.
+- **In progress / half-done:** nothing — 47/47 edit-mode tests pass, macOS build ok.
+  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
+  command. Reputation and route income are rebuilt by replay (no persisted field).
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the
@@ -39,7 +39,9 @@ Toward the first playable airport. The airport sits at a named location
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
 driving the sun and ambient light and shown on the HUD. Airlines now propose
 scheduled routes on a timer; the player accepts an offer and every completed
-flight then pays a recurring per-flight amount.
+flight then pays a recurring per-flight amount. The airport's reputation (0–100)
+rises with on-time departures and falls with delays; airlines gate their
+proposals on it and pay more when it is high.
 
 Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -78,6 +80,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
 - The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
 - Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight.
+- Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.

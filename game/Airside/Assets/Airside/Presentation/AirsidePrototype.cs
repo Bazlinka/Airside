@@ -187,7 +187,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
             GUI.Label(new Rect(42, 132, 360, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  Cycles {_simulation.CompletedCycles}", small);
-            GUI.Label(new Rect(42, 156, 360, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reserved: {ReservationSummary()}", small);
+            GUI.Label(new Rect(42, 156, 380, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             if (_simulation.TrafficWaits.HasWarning(_clock.Now))
                 GUI.Label(new Rect(42, 178, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
 
@@ -258,12 +258,18 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);
             GUI.Label(new Rect(left + 20, top + 62, 310, 20),
                 $"{proposal.FlightsPerDay}/day to {proposal.Destination}", small);
+            var payout = proposal.IncomePerFlight + _simulation.Reputation.IncomeBonus;
             GUI.Label(new Rect(left + 20, top + 82, 310, 20),
-                $"+${proposal.IncomePerFlight:N0} per completed flight", small);
-            GUI.Label(new Rect(left + 20, top + 102, 310, 20),
-                $"Expires in {proposal.SecondsRemaining(_clock.Now)}s", small);
+                $"+${payout:N0} per completed flight", small);
+            var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
+            GUI.Label(new Rect(left + 20, top + 102, 310, 20), meetsReputation
+                ? $"Expires in {proposal.SecondsRemaining(_clock.Now)}s"
+                : $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})", small);
+
+            GUI.enabled = meetsReputation;
             if (GUI.Button(new Rect(left + 20, top + 122, 150, 24), "Accept route"))
                 _session.AcceptRoute();
+            GUI.enabled = true;
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small)
@@ -324,12 +330,6 @@ namespace Airside.Presentation
             }
 
             return traffic.CurrentPhase;
-        }
-
-        private string ReservationSummary()
-        {
-            var resources = _simulation.Reservations.OccupiedResources.Select(resource => resource.Value).ToArray();
-            return resources.Length == 0 ? "none" : string.Join(", ", resources);
         }
 
         private void BuildLightingAndCamera()

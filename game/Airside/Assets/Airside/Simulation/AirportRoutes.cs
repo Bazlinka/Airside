@@ -7,13 +7,14 @@ namespace Airside.Simulation
     public sealed class RouteProposal
     {
         public RouteProposal(string id, string airline, string destination, int flightsPerDay,
-            long incomePerFlight, SimulationTime offeredAt, SimulationTime expiresAt)
+            long incomePerFlight, int reputationRequired, SimulationTime offeredAt, SimulationTime expiresAt)
         {
             Id = id;
             Airline = airline;
             Destination = destination;
             FlightsPerDay = flightsPerDay;
             IncomePerFlight = incomePerFlight;
+            ReputationRequired = reputationRequired;
             OfferedAt = offeredAt;
             ExpiresAt = expiresAt;
         }
@@ -23,6 +24,7 @@ namespace Airside.Simulation
         public string Destination { get; }
         public int FlightsPerDay { get; }
         public long IncomePerFlight { get; }
+        public int ReputationRequired { get; }
         public SimulationTime OfferedAt { get; }
         public SimulationTime ExpiresAt { get; }
 
@@ -103,14 +105,19 @@ namespace Airside.Simulation
             }
         }
 
-        /// <summary>Accept the standing proposal. Safe to call when there is none, or twice.</summary>
-        public bool Accept(SimulationTime now)
+        /// <summary>
+        /// Accept the standing proposal at the given reputation. Fails when there is
+        /// no proposal, or the airport's reputation is below what the route requires.
+        /// The per-flight payment locks in a reputation bonus at acceptance time.
+        /// </summary>
+        public bool Accept(SimulationTime now, int reputationScore, long reputationBonus = 0)
         {
-            if (Pending == null)
+            if (Pending == null || reputationScore < Pending.ReputationRequired)
                 return false;
 
-            _accepted.Add(new AcceptedRoute(Pending.Airline, Pending.Destination, Pending.FlightsPerDay, Pending.IncomePerFlight));
-            IncomePerFlight += Pending.IncomePerFlight;
+            var income = Pending.IncomePerFlight + Math.Max(0, reputationBonus);
+            _accepted.Add(new AcceptedRoute(Pending.Airline, Pending.Destination, Pending.FlightsPerDay, income));
+            IncomePerFlight += income;
             Pending = null;
             return true;
         }
@@ -123,8 +130,9 @@ namespace Airside.Simulation
             var destination = Destinations[(n * 3 + 1) % Destinations.Length];
             var flightsPerDay = 1 + (n % 3);
             var incomePerFlight = 150 + (n % 5) * 60;
+            var reputationRequired = 25 + (n % 4) * 15; // 25, 40, 55, 70, …
             return new RouteProposal(
-                $"PROP-{n}", airline, destination, flightsPerDay, incomePerFlight,
+                $"PROP-{n}", airline, destination, flightsPerDay, incomePerFlight, reputationRequired,
                 now, now.Advance(OfferWindowSeconds));
         }
     }

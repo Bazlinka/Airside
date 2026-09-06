@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Reputation** (0–100, starts 50). On-time departures raise it, delays lower it
+  in proportion to the delay. `AirportRoutes.Accept` now takes the score and
+  refuses proposals above the airport's reputation; an accepted route locks in a
+  per-flight bonus of `3 × (score − 50)`. Reputation is rebuilt by replay — no
+  persisted field. HUD shows score + band and disables offers the airport can't
+  meet. 47/47 tests; macOS build runs. See `docs/decisions/0012-reputation.md`.
 - **Airline route proposals.** `AirportRoutes` (simulation) offers one scheduled
   service at a time on a timer; it lapses if unaccepted. Accepting is a persisted
   `accept-route` command (replayed on load / offline catch-up); every completed

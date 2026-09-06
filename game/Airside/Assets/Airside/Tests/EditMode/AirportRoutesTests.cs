@@ -35,13 +35,13 @@ namespace Airside.Tests
             routes.Update(new SimulationTime(AirportRoutes.FirstOfferAfterSeconds));
 
             var offered = routes.Pending.IncomePerFlight;
-            Assert.That(routes.Accept(new SimulationTime(30)), Is.True);
+            Assert.That(routes.Accept(new SimulationTime(30), reputationScore: 100), Is.True);
             Assert.That(routes.Pending, Is.Null);
             Assert.That(routes.Accepted, Has.Count.EqualTo(1));
             Assert.That(routes.IncomePerFlight, Is.EqualTo(offered));
 
             // Nothing to accept now.
-            Assert.That(routes.Accept(new SimulationTime(31)), Is.False);
+            Assert.That(routes.Accept(new SimulationTime(31), reputationScore: 100), Is.False);
         }
 
         [Test]

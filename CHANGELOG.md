@@ -5,6 +5,8 @@ change it describes.
 
 ## Unreleased
 
+- Added Batch D animation/VFX task packet and night apron flood lights that
+  brighten as daylight falls (presentation only).
 - Generated Batch C first-playable 3D kits (turboprop, terminal/hangar/ops shed,
   fuel truck, baggage train, apron bus, service equipment) plus livery atlases.
   Presentation uses richer primitive stand-ins with spinning props and dual-flight

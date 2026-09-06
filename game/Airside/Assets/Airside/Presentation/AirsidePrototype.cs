@@ -17,6 +17,7 @@ namespace Airside.Presentation
         private Transform[] _commercialAircraft;
         private Transform[] _groundTraffic;
         private Light _sun;
+        private Light[] _apronLights;
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;

@@ -223,6 +223,9 @@ references but **does not substitute a flat image for a 3D object**.
 
 ### Batch D — animation, feedback and weather
 
+Production task packet:
+`docs/art/prompts/batch-d-animation-task-packet.md`.
+
 Global aircraft movement remains driven by deterministic simulation and the
 existing presentation paths. Animation decorates that state; it must never decide
 simulation timing or resource ownership.

@@ -12,9 +12,11 @@ next session can continue without seeing the previous conversation. Keep it shor
 
 - **Last updated:** 2026-09-06 by Cursor (Batch C models + presentation upgrade)
 - **Branch / working tree:** `cursor/batch-c-models-38b9` → merge to `main`
-- **Do this next:** Review Batch C kits against REF-001/003/005 when able. Meanwhile
+- **Do this next:** Keep shipping from Batch D packet (`docs/art/prompts/batch-d-animation-task-packet.md`)
+  or more systems polish. Bailey reviews Batch C when free. Play soak not a blocker.
   keep shipping (Batch D packet / systems). Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch B Approved+Integrated. Batch C Generated/Modelled
+- **In progress / half-done:** Batch C Generated/Modelled + presentation upgrade. Batch D packet ready.
+  Night apron flood lights in greybox.
   (glTF kits + richer primitive stand-ins, spinning props, dual-flight service vehicles).
 - **Watch out for:** fleet corridor invariants (0006–0009). Art pipeline decision **0022**.
   Keep primitives until Batch C is Approved and Verified.

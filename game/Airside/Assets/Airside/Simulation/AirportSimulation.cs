@@ -23,10 +23,16 @@ namespace Airside.Simulation
         private readonly GroundTrafficAircraft[] _groundTraffic;
 
         public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations)
+            : this(clock, random, reservations, AirportLocation.Default)
+        {
+        }
+
+        public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations, AirportLocation location)
         {
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _random = random ?? throw new ArgumentNullException(nameof(random));
             _reservations = reservations ?? throw new ArgumentNullException(nameof(reservations));
+            Location = location;
             _cycleStartedAt = clock.Now;
             _lastUpdatedAt = clock.Now;
             Economy = new AirportEconomy();
@@ -44,6 +50,8 @@ namespace Airside.Simulation
                 aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, mayEnterCorridor: true);
         }
 
+        public AirportLocation Location { get; }
+        public DayCycle TimeOfDay => new(_clock.Now);
         public AircraftOperation ActiveAircraft { get; private set; }
         public StableId AssignedStand { get; private set; }
         public int CompletedCycles { get; private set; }

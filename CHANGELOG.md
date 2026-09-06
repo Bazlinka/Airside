@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- Airport **location** + **day/night cycle**. `AirportLocation` (domain) carries
+  id/name/region/UTC offset/latitude; ships with Kingscote (default), Port Lincoln
+  and Coober Pedy. `DayCycle` derives local time from the sim clock — one
+  simulated day per 20 real minutes from an 08:00 start — and drives the sun and
+  ambient light and a HUD line (location, day, clock, phase). **Save schema → v2**
+  (adds `locationId`); schema-1 saves migrate on load. 37/37 tests; macOS build
+  runs. See `docs/decisions/0010-location-and-day-cycle.md`.
 - Fair corridor hand-off: when the shared A1/A2 corridor is free and more than one
   fleet aircraft is queued, it goes to the one that has waited longest (fleet
   order breaks ties), instead of fleet order alone. Reuses the traffic monitor's

@@ -15,6 +15,7 @@ namespace Airside.Presentation
         private PersistentAirportSession _session;
         private Transform _aircraft;
         private Transform[] _groundTraffic;
+        private Light _sun;
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -73,6 +74,7 @@ namespace Airside.Presentation
                 _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
             }
 
+            ApplyDayCycle();
             UpdateAircraftVisual();
             UpdateGroundTrafficVisual();
             UpdateServiceVehicles();
@@ -177,11 +179,14 @@ namespace Airside.Presentation
             var detail = new GUIStyle(GUI.skin.label) { fontSize = 16 };
             var small = new GUIStyle(GUI.skin.label) { fontSize = 13 };
 
+            var timeOfDay = _simulation.TimeOfDay;
+
             GUI.Box(new Rect(22, 22, 410, 382), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
+            GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
-            GUI.Label(new Rect(42, 132, 320, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Cycles {_simulation.CompletedCycles}", small);
+            GUI.Label(new Rect(42, 132, 360, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  Cycles {_simulation.CompletedCycles}", small);
             GUI.Label(new Rect(42, 156, 360, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reserved: {ReservationSummary()}", small);
             if (_simulation.TrafficWaits.HasWarning(_clock.Now))
                 GUI.Label(new Rect(42, 178, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", small);
@@ -320,14 +325,32 @@ namespace Airside.Presentation
             if (camera.GetComponent<AudioListener>() == null)
                 camera.gameObject.AddComponent<AudioListener>();
 
-            var light = FindFirstObjectByType<Light>();
-            if (light == null)
-                light = new GameObject("Sun").AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 1.25f;
-            light.color = new Color(1f, 0.93f, 0.82f);
-            light.transform.rotation = Quaternion.Euler(48f, -28f, 0f);
-            RenderSettings.ambientLight = new Color(0.46f, 0.53f, 0.61f);
+            _sun = FindFirstObjectByType<Light>();
+            if (_sun == null)
+                _sun = new GameObject("Sun").AddComponent<Light>();
+            _sun.type = LightType.Directional;
+            ApplyDayCycle();
+        }
+
+        private void ApplyDayCycle()
+        {
+            var cycle = _simulation.TimeOfDay;
+            var daylight = (float)cycle.Daylight;
+
+            var elevation = (float)cycle.SunElevationDegrees;
+            _sun.transform.rotation = Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
+
+            var day = new Color(1f, 0.95f, 0.86f);
+            var goldenHour = new Color(1f, 0.66f, 0.42f);
+            var night = new Color(0.32f, 0.4f, 0.62f);
+            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f); // strong near dawn/dusk
+            _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * daylight);
+            _sun.intensity = Mathf.Lerp(0.12f, 1.3f, daylight);
+
+            RenderSettings.ambientLight = Color.Lerp(
+                new Color(0.12f, 0.15f, 0.24f),
+                new Color(0.46f, 0.53f, 0.61f),
+                daylight);
         }
 
         private static void BuildAirfield()

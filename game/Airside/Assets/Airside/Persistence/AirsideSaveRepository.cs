@@ -81,6 +81,7 @@ namespace Airside.Persistence
             try
             {
                 save = JsonUtility.FromJson<AirsideSaveData>(File.ReadAllText(path));
+                save?.Migrate();
                 save?.Validate();
                 return save != null;
             }

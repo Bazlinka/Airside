@@ -10,14 +10,15 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (fair corridor hand-off)
+- **Last updated:** 2026-09-06 by Claude (location + day/night cycle)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** Visual soak — run the Mac build and watch the primary flight,
-  `GT-201` (to a stand) and `GT-202` (run-up bay) queue for A1/A2; confirm it
-  reads well and nothing stutters or sticks. Then: a third fleet aircraft, or
-  start promoting the primary flight into the same aircraft list (decision 0008),
-  or fix the cosmetic "snap back to leg start on preemption".
-- **In progress / half-done:** nothing — 30/30 edit-mode tests pass, macOS build ok
+- **Do this next:** Visual soak — run the Mac build and watch a full day/night
+  cycle (~20 min real time) plus the three aircraft queueing for A1/A2. Then
+  continue "first playable airport": airline **route proposals** the player
+  accepts (a persisted command like the priority crew), then **reputation**
+  (on-time departures up, delays down; proposals gate on it).
+- **In progress / half-done:** nothing — 37/37 edit-mode tests pass, macOS build ok.
+  Save schema is now **v2** (adds `locationId`); v1 saves migrate on load.
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the
@@ -32,11 +33,17 @@ Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 
 ## Current milestone
 
-Phase five: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+Toward the first playable airport. The airport now sits at a named location
+(Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
+available) and runs a day/night cycle — one simulated day every 20 real minutes,
+driving the sun and ambient light and shown on the HUD.
+
+Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
 ## Invariants
 
 - Domain and simulation rules remain independent of Unity scenes.
+- Any save-schema change ships with an explicit version bump and a migration path (see `AirsideSaveData.Migrate`).
 - Time comes from an injected clock.
 - Random choices come from a seeded source.
 - Runways, taxiways and stands must be reserved before use.
@@ -66,6 +73,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
+- The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.

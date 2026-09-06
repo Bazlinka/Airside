@@ -75,6 +75,25 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void SchemaOneSave_MigratesToTheCurrentSchemaWithTheDefaultLocation()
+        {
+            Directory.CreateDirectory(_directory);
+            File.WriteAllText(_path,
+                "{\"schemaVersion\":1,\"revision\":3,\"simulatedSeconds\":40," +
+                "\"savedUnixSeconds\":1000,\"randomSeed\":42,\"commands\":[]}");
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+
+            Assert.That(restored.Clock.Now.ElapsedSeconds, Is.EqualTo(40), "the migrated save still restores its timeline");
+            Assert.That(restored.Simulation.Location, Is.EqualTo(Airside.Domain.AirportLocation.Default));
+
+            // Saving again writes the current schema, and it reloads cleanly.
+            restored.Save(1000);
+            var reloaded = PersistentAirportSession.LoadOrCreate(_path, 1000, 1);
+            Assert.That(reloaded.Simulation.Location, Is.EqualTo(Airside.Domain.AirportLocation.Default));
+        }
+
+        [Test]
         public void VeryLongAbsence_IsCappedAtThirtyDays()
         {
             var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 42);

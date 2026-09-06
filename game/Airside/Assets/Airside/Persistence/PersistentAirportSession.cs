@@ -29,7 +29,11 @@ namespace Airside.Persistence
             _repository = repository;
             _save = save;
             Clock = new ManualSimulationClock(new SimulationTime(0));
-            Simulation = new AirportSimulation(Clock, new SeededRandomSource(save.randomSeed), new ReservationTable());
+            Simulation = new AirportSimulation(
+                Clock,
+                new SeededRandomSource(save.randomSeed),
+                new ReservationTable(),
+                AirportLocation.FromId(save.locationId));
         }
 
         public ManualSimulationClock Clock { get; }

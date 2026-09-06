@@ -10,9 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch D engine heat + wet surfaces)
-- **Branch / working tree:** `cursor/batch-c-models-38b9` → merge to `main`
-- **Do this next:** Keep shipping remaining Batch D polish or phase-four systems. Bailey reviews Batch C
+- **Last updated:** 2026-09-06 by Cursor (merged #15; rebasing playtest HUD #16 onto main)
+
+- **Branch / working tree:** `fix/playtest-hud-and-aircraft-visuals` → merge to `main`
+- **Do this next:** Merge playtest HUD/taxi visual PR after CI/local checks. Bailey Batch C review when free.
   when free. Unity Play soak when free — not a blocker.
 - **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox: night floods, gear/lights,
   cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,

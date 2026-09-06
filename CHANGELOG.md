@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Playtest HUD and taxi visuals.** HUD scaling uses resolution-aware `HudLayout`
+  (Retina-safe). Taxi drawing follows reservation segment windows; yielded ground
+  traffic snaps to its hold point instead of lerping through released space.
+  EditMode layout/taxi visual regressions added. Simulation rules unchanged.
+
 - **Passenger Services research.** After Operations Efficiency, unlock a second
   project (3500, one sim day) that permanently adds +$75 route income per
   departed commercial. Persisted via `start-research-passenger-services` (no

@@ -254,10 +254,17 @@ namespace Airside.Presentation
             for (var index = 0; index < _groundTraffic.Length; index++)
             {
                 var view = _groundTraffic[index];
-                var point = _simulation.GroundTraffic[index].Position;
+                var traffic = _simulation.GroundTraffic[index];
+                var point = traffic.Position;
                 var target = new Vector3(point.X, 0.7f, point.Z);
                 var previous = view.position;
-                view.position = Vector3.Lerp(previous, target, Time.unscaledDeltaTime * 3f);
+
+                // A yield can snap the sim point back; do not lerp through released space.
+                view.position = TaxiVisualPath.MoveGroundTraffic(
+                    previous,
+                    target,
+                    traffic.IsHolding,
+                    Time.unscaledDeltaTime * 10f);
 
                 var direction = target - previous;
                 if (direction.sqrMagnitude > 0.0004f)
@@ -546,7 +553,7 @@ namespace Airside.Presentation
 
         private void OnGUI()
         {
-            var scale = Mathf.Clamp(Screen.height / 720f, 0.8f, 1.35f);
+            var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
             var previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
@@ -1081,34 +1088,7 @@ namespace Airside.Presentation
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)
         {
-            var points = route.Points;
-            var segmentLengths = new float[points.Count - 1];
-            var totalLength = 0f;
-            for (var index = 0; index < segmentLengths.Length; index++)
-            {
-                var from = points[index];
-                var to = points[index + 1];
-                segmentLengths[index] = Vector2.Distance(new Vector2(from.X, from.Z), new Vector2(to.X, to.Z));
-                totalLength += segmentLengths[index];
-            }
-
-            var distance = Mathf.Clamp01(reverse ? 1f - progress : progress) * totalLength;
-            for (var index = 0; index < segmentLengths.Length; index++)
-            {
-                if (distance > segmentLengths[index])
-                {
-                    distance -= segmentLengths[index];
-                    continue;
-                }
-
-                var from = points[index];
-                var to = points[index + 1];
-                var localProgress = segmentLengths[index] <= 0f ? 1f : distance / segmentLengths[index];
-                return Smooth(new Vector3(from.X, 0.7f, from.Z), new Vector3(to.X, 0.7f, to.Z), localProgress);
-            }
-
-            var last = points[points.Count - 1];
-            return new Vector3(last.X, 0.7f, last.Z);
+            return TaxiVisualPath.PositionAt(route, progress, reverse);
         }
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));

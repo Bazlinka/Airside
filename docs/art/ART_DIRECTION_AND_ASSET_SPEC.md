@@ -160,54 +160,71 @@ in the same commit as each asset batch.
 | REF-001 | `docs/art/reference/ref_airport_first_playable_day_v01.png` | Reference image | Default Kingscote airfield, elevated three-quarter view, runway, A taxiway, two stands, terminal, hangar, three aircraft and service activity | Approved |
 | REF-002 | `docs/art/reference/ref_airport_first_playable_dusk_v01.png` | Reference image | Same composition and asset design as REF-001 at dusk; apron/runway lighting readable | Approved |
 | REF-003 | `docs/art/reference/ref_turnaround_service_zones_v01.png` | Concept sheet | One fictional regional turboprop at stand with fuel truck, baggage train and passenger bus in safe readable positions; no text baked into final runtime art | Approved |
-| REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay at 2560×1440 | Approved |
+| REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay; approved reference is 1280×720 (runtime HUD targets desktop ~2560×1440) | Approved |
 | REF-005 | `docs/art/reference/ref_asset_scale_and_palette_v01.png` | Style sheet | Aircraft, vehicles, person, terminal module, materials and palette in one consistent scale reference | Approved |
 | BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Transparent wordmark; simple aviation/wayfinding character; no tiny tagline | Planned |
 | UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Planned |
 
-**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Batches B–D may now use them as production targets
-are treated as production targets. REF-002 and UI-ILL-001 must inherit that
-approved design rather than reinvent it.
+**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Batches
+B–D may now use them as production targets. UI-ILL-001 and any later day/dusk
+masters must inherit that approved design rather than reinvent it.
 
 ### Batch B — world surfaces, markings and environment
 
+Production task packet:
+`docs/art/prompts/batch-b-surfaces-task-packet.md`.
+Generation evidence:
+`docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
+
 | ID | Runtime file | Requirement | Status |
 |---|---|---|---|
-| TEX-SRF-001 | `Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png` | Seamless, restrained aggregate, no painted markings | Planned |
-| TEX-SRF-002 | `Textures/Surfaces/tx_concrete_apron_basecolor_v01.png` | Seamless large slab variation; joints supplied separately or shader-scaled | Planned |
-| TEX-SRF-003 | `Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png` | Seamless dry-green regional grass, no obvious flowers or objects | Planned |
-| TEX-SRF-004 | `Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png` | Neutral building material that can be tinted | Planned |
-| TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Planned |
-| TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Planned |
-| TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Planned |
-| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Planned |
-| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.fbx` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Planned |
-| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.fbx` | Runway edge, taxiway, apron floodlight and obstruction lights | Planned |
-| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.fbx` | Windsock, cones, barriers, signs and baggage dollies | Planned |
+| TEX-SRF-001 | `Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png` | Seamless, restrained aggregate, no painted markings | Approved · Integrated |
+| TEX-SRF-002 | `Textures/Surfaces/tx_concrete_apron_basecolor_v01.png` | Seamless large slab variation; joints supplied separately or shader-scaled | Approved · Integrated |
+| TEX-SRF-003 | `Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png` | Seamless dry-green regional grass, no obvious flowers or objects | Approved · Integrated |
+| TEX-SRF-004 | `Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png` | Neutral building material that can be tinted | Approved · Integrated |
+| TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Approved · Integrated |
+| TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Approved · Integrated |
+| TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Approved · Integrated |
+| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Planned (Editor .mat optional; prototype loads PNGs) |
+| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.gltf` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Approved |
+| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.gltf` | Runway edge, taxiway, apron floodlight and obstruction lights | Approved |
+| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.gltf` | Windsock, cones, barriers, signs and baggage dollies | Approved |
+
+**Batch B gate:** Bailey approved Batch B on 6 September 2026. Greybox surfaces
+and decals are Integrated in `AirsidePrototype` with solid-colour fallback.
+WLD kits are Approved assets; prefab placement is a follow-up.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.
 
 ### Batch C — first-playable 3D set
 
+Production task packet:
+`docs/art/prompts/batch-c-models-task-packet.md`.
+Generation evidence:
+`docs/art/prompts/batch-c-models-generation-2026-09-06.md`.
+
 These are modelled assets. Image generation supplies approved concept/orthographic
 references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.fbx` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Planned |
-| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Planned |
-| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Planned |
-| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Planned |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.fbx` | Small practical terminal, glass frontage, service side, modular end caps | Planned |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.fbx` | Corrugated metal hangar with readable door opening | Planned |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.fbx` | Compact service/crew building used as visual support, non-interactive initially | Planned |
-| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.fbx` | Cab, wheels and hose connection separated | Planned |
-| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.fbx` | Tug plus three low-detail carts; articulation points defined | Planned |
-| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.fbx` | Compact apron bus with doors and wheels separated | Planned |
-| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.fbx` | Stairs, chocks, cones, towbar, bins and ground-power unit | Planned |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.gltf` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Generated/Modelled |
+| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Generated/Modelled |
+| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Generated/Modelled |
+| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Generated/Modelled |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.gltf` | Small practical terminal, glass frontage, service side, modular end caps | Generated/Modelled |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.gltf` | Corrugated metal hangar with readable door opening | Generated/Modelled |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.gltf` | Compact service/crew building used as visual support, non-interactive initially | Generated/Modelled |
+| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.gltf` | Cab, wheels and hose connection separated | Generated/Modelled |
+| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.gltf` | Tug plus three low-detail carts; articulation points defined | Generated/Modelled |
+| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.gltf` | Compact apron bus with doors and wheels separated | Generated/Modelled |
+| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Generated/Modelled |
 
 ### Batch D — animation, feedback and weather
+
+Production task packet:
+`docs/art/prompts/batch-d-animation-task-packet.md`.
 
 Global aircraft movement remains driven by deterministic simulation and the
 existing presentation paths. Animation decorates that state; it must never decide

@@ -146,6 +146,22 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool StartPassengerServicesResearch()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Research.CanStartPassengerServices)
+                return false;
+            if (!Economy.TrySpend(AirportResearch.PassengerServicesCost))
+                return false;
+            if (!Research.StartPassengerServices(_lastUpdatedAt))
+                return false;
+
+            Record(_lastUpdatedAt, "Research started",
+                $"{AirportResearch.PassengerServicesName} · {AirportResearch.PassengerServicesDurationSeconds}s · -${AirportResearch.PassengerServicesCost:N0}");
+            return true;
+        }
+
         /// <summary>
         /// Expected daily income and cost under the current weather, staffing and
         /// route book, assuming today's flight cadence continues with no delays.
@@ -154,10 +170,10 @@ namespace Airside.Simulation
         {
             get
             {
-                var operatingCost = BaseDailyOperatingCost
+                var operatingCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount)
                     + Weather.DailyOperatingCost(CurrentWeather)
                     + Staffing.DailyWage;
-                var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight;
+                var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight + Research.RouteIncomeBonus;
                 var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds;
                 return new DailyFinanceBrief(operatingCost, expectedIncome, Economy.Cash);
             }
@@ -249,8 +265,13 @@ namespace Airside.Simulation
 
             Routes.Update(now);
             if (Research.Update(now))
-                Record(now, "Research complete",
-                    $"{AirportResearch.OperationsEfficiencyName} · daily running cost -${AirportResearch.OperationsEfficiencyDailyDiscount:N0}");
+            {
+                var detail = Research.LastCompletedProjectId == AirportResearch.PassengerServicesId
+                    ? $"{AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus:N0}/flight route income"
+                    : $"{AirportResearch.OperationsEfficiencyName} · daily running cost -${AirportResearch.OperationsEfficiencyDailyDiscount:N0}";
+                Record(now, "Research complete", detail);
+            }
+
             SettleDaysUpTo(now);
             TrySpawnSecondCommercial(now);
 
@@ -300,11 +321,12 @@ namespace Airside.Simulation
             {
                 Economy.CompleteFlight(flight.LastDelaySeconds);
                 Reputation.RecordDeparture(flight.LastDelaySeconds);
-                if (Routes.IncomePerFlight > 0)
+                if (Routes.IncomePerFlight > 0 || Research.RouteIncomeBonus > 0)
                 {
-                    Economy.AddRouteIncome(Routes.IncomePerFlight);
+                    var paid = Routes.IncomePerFlight + Research.RouteIncomeBonus;
+                    Economy.AddRouteIncome(paid);
                     Record(now, flight.AircraftId, "Route income",
-                        $"+${Routes.IncomePerFlight:N0} from {Routes.Accepted.Count} scheduled route(s)");
+                        $"+${paid:N0} from {Routes.Accepted.Count} scheduled route(s)");
                 }
 
                 flight.FlightSettled = true;

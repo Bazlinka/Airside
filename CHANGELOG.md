@@ -5,6 +5,35 @@ change it describes.
 
 ## Unreleased
 
+- **Passenger Services research.** After Operations Efficiency, unlock a second
+  project (3500, one sim day) that permanently adds +$75 route income per
+  departed commercial. Persisted via `start-research-passenger-services` (no
+  save-schema field). Daily finance brief includes the route bonus and the Ops
+  Efficiency operating-cost discount. See `docs/decisions/0023-passenger-services-research.md`.
+- Batch D greybox hooks: gear retracts when airborne; nav/beacon/landing lights
+  follow phase and night (beacon strobes); cabin door opens at stand; service-vehicle
+  wheels spin on task; fuel hose / bag bob / bus door service loops; rain streaks + fog;
+  paved surfaces darken when wet; engine heat shimmer while engines run; brief touchdown
+  smoke puff; runway edge + taxi centreline markers.
+- Added Batch D animation/VFX task packet and night apron flood lights that
+  brighten as daylight falls (presentation only).
+- Generated Batch C first-playable 3D kits (turboprop, terminal/hangar/ops shed,
+  fuel truck, baggage train, apron bus, service equipment) plus livery atlases.
+  Presentation uses richer primitive stand-ins with spinning props and dual-flight
+  service-vehicle targeting; HUD lists each flight’s phase. Status
+  Generated/Modelled — not yet Approved.
+  Evidence: `docs/art/prompts/batch-c-models-generation-2026-09-06.md`.
+- Bailey approved Batch B. Greybox now loads Batch B surface/decal textures in
+  `AirsidePrototype` (solid-colour fallback if a PNG is missing). Added Batch C
+  model production packet. WLD kits Approved but not yet placed as prefabs.
+- Generated Batch B world-surface candidates: 2048 tileable asphalt, concrete,
+  grass and corrugated metal; glass mask; runway/apron decals; metre-scale glTF
+  markings, lighting and props kits under `game/Airside/Assets/Airside/Art/`.
+  Later Approved and surface-integrated; see bullet above.
+  Evidence: `docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
+- Prepared Batch B production task packet (world surfaces, decals, markings,
+  lighting, props) and cleaned Batch A doc inconsistencies: art pipeline cites
+  decision 0022, REF-004 delivery size, and the Batch A gate sentence.
 - Added and approved Batch A visual references: daytime and dusk airport masters, turnaround service-zone composition, operations HUD direction, and the shared scale/palette sheet. Recorded prompt/source evidence; these five images are now the production visual authority.
 - **Daily finance brief.** HUD shows a deterministic day estimate: expected
   operating cost (base + current weather + payroll) versus expected flight
@@ -22,7 +51,7 @@ change it describes.
   commercial. Single-flight path stays seed-identical below the threshold. No
   save-schema bump. HUD/world show both aircraft. 57/57 tests. See decision 0019
   and `docs/product/concurrent-flights-slice1-packet.md`.
-- Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0018).
+- Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0022).
 - **Concurrent flights design.** Decision 0019 locks promotion-to-list model,
   commercial FIFO priority, stand-based concurrency cap, schedule cadence
   (`ScheduledFlightsPerDay >= 4` → second flight), and per-flight settlement.

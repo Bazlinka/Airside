@@ -25,6 +25,7 @@ namespace Airside.Presentation
         public static readonly Color OpenSky = FromHex("#A7C9D9");
 
         private static Texture2D _panelBackground;
+        private static Texture2D _solidWhite;
 
         /// <summary>Translucent Runway Ink, 1x1 stretched to fill any panel rect.</summary>
         public static Texture2D PanelBackground
@@ -42,6 +43,41 @@ namespace Airside.Presentation
 
                 return _panelBackground;
             }
+        }
+
+        /// <summary>Opaque white 1x1 for tinted progress fills and tracks.</summary>
+        public static Texture2D SolidWhite
+        {
+            get
+            {
+                if (_solidWhite == null)
+                {
+                    _solidWhite = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
+                    _solidWhite.SetPixel(0, 0, Color.white);
+                    _solidWhite.Apply();
+                }
+
+                return _solidWhite;
+            }
+        }
+
+        /// <summary>
+        /// Draws a horizontal progress bar. Presentation only — <paramref name="progress01"/>
+        /// is supplied by the caller from simulation state.
+        /// </summary>
+        public static void DrawProgressBar(Rect rect, float progress01, Color fill, Color track)
+        {
+            var previous = GUI.color;
+            GUI.color = track;
+            GUI.DrawTexture(rect, SolidWhite);
+            var fillWidth = rect.width * Mathf.Clamp01(progress01);
+            if (fillWidth > 0.5f)
+            {
+                GUI.color = fill;
+                GUI.DrawTexture(new Rect(rect.x, rect.y, fillWidth, rect.height), SolidWhite);
+            }
+
+            GUI.color = previous;
         }
 
         /// <summary>A box/panel style on the given basis, themed with the Runway Ink panel and Cloud text.</summary>

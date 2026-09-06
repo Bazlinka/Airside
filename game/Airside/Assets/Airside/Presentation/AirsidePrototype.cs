@@ -30,9 +30,13 @@ namespace Airside.Presentation
         private AirsideCameraController _cameraController;
         private double _preciseTime;
         private bool _paused;
+        private bool _audioMuted;
         private int _speed = 1;
         private long _nextAutosaveSecond;
         private bool _showAwaySummary;
+        private const float EngineVolumeRunning = 0.11f;
+        private const float EngineVolumeIdle = 0.02f;
+        private const float EngineVolumePausedScale = 0.28f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -92,6 +96,7 @@ namespace Airside.Presentation
             UpdateAircraftVisual();
             UpdateGroundTrafficVisual();
             UpdateServiceVehicles();
+            UpdateEngineAudio();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
         }
@@ -115,6 +120,8 @@ namespace Airside.Presentation
                 _speed = _speed == 1 ? 4 : 1;
             if (keyboard.pKey.wasPressedThisFrame)
                 _session.EnablePriorityCrew();
+            if (keyboard.mKey.wasPressedThisFrame)
+                _audioMuted = !_audioMuted;
         }
 
         private void UpdateAircraftVisual()
@@ -124,7 +131,7 @@ namespace Airside.Presentation
             {
                 var flight = _simulation.Flights[index];
                 var view = _commercialAircraft[index];
-                var standZ = flight.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
+                var standZ = AirportTaxiNetwork.StandZ(flight.AssignedStand);
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var position = PositionFor(phase, progress, standZ, flight.TaxiRoute);
@@ -140,6 +147,44 @@ namespace Airside.Presentation
                 UpdateCabinDoor(view, phase);
                 UpdateEngineHeat(view, phase);
             }
+        }
+
+        private void UpdateEngineAudio()
+        {
+            for (var index = 0; index < _simulation.Flights.Count && index < _commercialAircraft.Length; index++)
+            {
+                var phase = _simulation.Flights[index].Operation.Phase;
+                var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+                ApplyEngineAudio(_commercialAircraft[index], enginesOn);
+            }
+
+            for (var index = 0; index < _groundTraffic.Length; index++)
+            {
+                var traffic = _simulation.GroundTraffic[index];
+                // Ground traffic keeps props turning while on the field; quieter when holding.
+                ApplyEngineAudio(_groundTraffic[index], enginesOn: !traffic.IsHolding);
+            }
+        }
+
+        private void ApplyEngineAudio(Transform aircraft, bool enginesOn)
+        {
+            if (aircraft == null)
+                return;
+
+            var source = aircraft.GetComponent<AudioSource>();
+            if (source == null)
+                return;
+
+            if (_audioMuted)
+            {
+                source.volume = 0f;
+                return;
+            }
+
+            var target = enginesOn ? EngineVolumeRunning : EngineVolumeIdle;
+            if (_paused)
+                target *= EngineVolumePausedScale;
+            source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
         }
 
         private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
@@ -305,7 +350,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var standZ = servicing.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
+            var standZ = AirportTaxiNetwork.StandZ(servicing.AssignedStand);
             var fuelActive = TaskActive(servicing, "Refuel");
             var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
             var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
@@ -584,7 +629,7 @@ namespace Airside.Presentation
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
-            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
+            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
@@ -647,9 +692,15 @@ namespace Airside.Presentation
             var research = _simulation.Research;
             if (research.IsResearching)
             {
-                var pct = (int)(research.Progress01(_clock.Now) * 100);
+                var progress = (float)research.Progress01(_clock.Now);
+                var pct = (int)(progress * 100);
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+                AirsideTheme.DrawProgressBar(
+                    new Rect(42, 476, 280, 8),
+                    progress,
+                    AirsideTheme.CoastalBlue,
+                    new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
             }
             else if (research.CanStartOperationsEfficiency)
             {
@@ -681,7 +732,7 @@ namespace Airside.Presentation
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
-            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority · M mute · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;

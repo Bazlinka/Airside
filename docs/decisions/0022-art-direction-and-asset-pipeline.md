@@ -1,4 +1,4 @@
-# 0018 — Art direction and asset pipeline
+# 0022 — Art direction and asset pipeline
 
 **Date:** 2026-09-06  
 **Status:** Accepted  

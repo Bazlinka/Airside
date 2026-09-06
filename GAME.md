@@ -10,11 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (daily P&L brief onto main; Bailey approved merge-all)
-- **Branch / working tree:** merging onto `main`
-- **Do this next:** Unity visual soak when Bailey can. Optional: renumber duplicate decision 0018 files.
-- **In progress / half-done:** Bailey approved merge-without-review.
-- **Watch out for:** fleet corridor invariants.
+- **Last updated:** 2026-09-06 by Cursor (merged phase-four stack; Bailey approved ship-all)
+- **Branch / working tree:** `main`, clean
+- **Do this next:** **Unity visual soak** — a lot landed unwatched. Press Play for a few minutes. Then generate first art using `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` if desired.
+- **In progress / half-done:** nothing. Merged: insolvency, third stand, research, daily report, concurrent flights design+slice1, accept-capacity, daily P&L, ChatGPT art pipeline.
+- **Watch out for:** fleet corridor invariants (0006–0009). Concurrent commercials: fleet yields to any commercial. Two decision files briefly shared 0018 — art pipeline renumbered to 0022 if present.
+- **Open questions for Bailey:** none
+
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".

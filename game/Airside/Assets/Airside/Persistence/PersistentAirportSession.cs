@@ -22,6 +22,7 @@ namespace Airside.Persistence
     {
         public const string PriorityCrewCommand = "priority-crew";
         public const string AcceptRouteCommand = "accept-route";
+        public const string DeclineRouteCommand = "decline-route";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
         private readonly AirsideSaveRepository _repository;
@@ -97,6 +98,20 @@ namespace Airside.Persistence
             return true;
         }
 
+        public bool DeclineRoute()
+        {
+            if (!Simulation.DeclinePendingRoute())
+                return false;
+
+            _save.commands.Add(new AirsideCommandRecord
+            {
+                commandId = $"decline-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
+                commandType = DeclineRouteCommand,
+                simulationSecond = Clock.Now.ElapsedSeconds
+            });
+            return true;
+        }
+
         public void Save(long currentUnixSeconds)
         {
             _save.revision++;
@@ -157,6 +172,8 @@ namespace Airside.Persistence
                 Simulation.EnablePriorityCrew();
             else if (command.commandType == AcceptRouteCommand)
                 Simulation.AcceptPendingRoute();
+            else if (command.commandType == DeclineRouteCommand)
+                Simulation.DeclinePendingRoute();
         }
     }
 }

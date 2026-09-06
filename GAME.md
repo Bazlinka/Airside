@@ -10,15 +10,15 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (away-summary enrichment)
+- **Last updated:** 2026-09-06 by Claude (decline proposals)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is now overdue** — a lot has landed since anyone
-  watched it run (location, day/night, routes, reputation, 3-aircraft fleet).
-  Press Play in Unity or run the Mac build for a few minutes. Then: **make
-  accepted routes add real scheduled flights** (cadence is still one primary
-  flight — this is the piece that turns routes into growth), and let the player
-  **decline** a proposal.
-- **In progress / half-done:** nothing — 48/48 edit-mode tests pass, macOS build ok.
+- **Do this next:** **Visual soak is overdue** — press Play in Unity or run the
+  Mac build for a few minutes (location, day/night, routes, reputation,
+  3-aircraft fleet all unwatched). Then the big one: **accepted routes add real
+  flights** — this needs a design pass first, see
+  `docs/product/concurrent-flights-brief.md` (paste to ChatGPT with AGENTS.md +
+  GAME.md).
+- **In progress / half-done:** nothing — 51/51 edit-mode tests pass, macOS build ok.
   Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
   command. Reputation and route income are rebuilt by replay (no persisted field).
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary

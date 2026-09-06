@@ -86,6 +86,19 @@ namespace Airside.Simulation
         public IReadOnlyList<AcceptedRoute> Accepted => _accepted;
         public long IncomePerFlight { get; private set; }
         public int OffersMade => _generated;
+        public int OffersDeclined { get; private set; }
+
+        /// <summary>Total scheduled flights per day across accepted routes.</summary>
+        public int ScheduledFlightsPerDay
+        {
+            get
+            {
+                var total = 0;
+                foreach (var route in _accepted)
+                    total += route.FlightsPerDay;
+                return total;
+            }
+        }
 
         public void Update(SimulationTime now)
         {
@@ -119,6 +132,17 @@ namespace Airside.Simulation
             _accepted.Add(new AcceptedRoute(Pending.Airline, Pending.Destination, Pending.FlightsPerDay, income));
             IncomePerFlight += income;
             Pending = null;
+            return true;
+        }
+
+        /// <summary>Turn down the standing proposal. Safe to call when there is none.</summary>
+        public bool Decline()
+        {
+            if (Pending == null)
+                return false;
+
+            Pending = null;
+            OffersDeclined++;
             return true;
         }
 

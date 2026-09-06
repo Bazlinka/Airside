@@ -45,6 +45,39 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void DecliningAProposal_ClearsItAndIsCounted()
+        {
+            var routes = new AirportRoutes(new SimulationTime(0));
+            routes.Update(new SimulationTime(AirportRoutes.FirstOfferAfterSeconds));
+            Assert.That(routes.Pending, Is.Not.Null);
+
+            Assert.That(routes.Decline(), Is.True);
+            Assert.That(routes.Pending, Is.Null);
+            Assert.That(routes.OffersDeclined, Is.EqualTo(1));
+            Assert.That(routes.Accepted, Is.Empty);
+
+            Assert.That(routes.Decline(), Is.False);
+        }
+
+        [Test]
+        public void ScheduledFlightsPerDay_SumsAcceptedRoutes()
+        {
+            var routes = new AirportRoutes(new SimulationTime(0));
+            Assert.That(routes.ScheduledFlightsPerDay, Is.Zero);
+
+            var t = AirportRoutes.FirstOfferAfterSeconds;
+            routes.Update(new SimulationTime(t));
+            var first = routes.Pending.FlightsPerDay;
+            routes.Accept(new SimulationTime(t), reputationScore: 100);
+
+            routes.Update(new SimulationTime(t + AirportRoutes.OfferIntervalSeconds));
+            var second = routes.Pending.FlightsPerDay;
+            routes.Accept(new SimulationTime(t + AirportRoutes.OfferIntervalSeconds), reputationScore: 100);
+
+            Assert.That(routes.ScheduledFlightsPerDay, Is.EqualTo(first + second));
+        }
+
+        [Test]
         public void Proposals_AreIdenticalAcrossLargeAndSmallTimeSteps()
         {
             var small = new AirportRoutes(new SimulationTime(0));

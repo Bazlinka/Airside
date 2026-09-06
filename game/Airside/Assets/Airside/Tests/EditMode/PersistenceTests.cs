@@ -75,6 +75,24 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void DeclinedRoute_StaysDeclinedAfterReload()
+        {
+            const long wall = 100000;
+            var session = PersistentAirportSession.LoadOrCreate(_path, wall, 24031996);
+            session.AdvanceTo(28);
+            Assert.That(session.Simulation.Routes.Pending, Is.Not.Null);
+            Assert.That(session.DeclineRoute(), Is.True);
+            session.Save(wall);
+
+            // Reload at a moment after the declined offer but before the next one.
+            var restored = PersistentAirportSession.LoadOrCreate(_path, wall + 60, 1);
+
+            Assert.That(restored.Simulation.Routes.Pending, Is.Null);
+            Assert.That(restored.Simulation.Routes.OffersDeclined, Is.EqualTo(1));
+            Assert.That(restored.Simulation.Routes.Accepted, Is.Empty);
+        }
+
+        [Test]
         public void AwaySummary_ReportsRouteIncomeAndReputationChange()
         {
             const long wall = 100000;

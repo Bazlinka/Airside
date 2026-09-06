@@ -223,8 +223,8 @@ namespace Airside.Presentation
             var historyLeft = Screen.width / scale - 362;
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
-            GUI.Label(new Rect(historyLeft + 20, 62, 300, 20),
-                $"Taxi route: {_simulation.ActiveTaxiRoute.Name}  ·  Routes {_simulation.Routes.Accepted.Count}", small);
+            GUI.Label(new Rect(historyLeft + 20, 62, 320, 20),
+                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight:N0}/flight", small);
             DrawRouteOffer(scale, panel, detail, small);
             var trafficY = 80f;
             foreach (var aircraft in _simulation.GroundTraffic)
@@ -253,7 +253,7 @@ namespace Airside.Presentation
 
             var left = Screen.width / scale - 362;
             var top = 244f;
-            GUI.Box(new Rect(left, top, 340, 150), string.Empty, panel);
+            GUI.Box(new Rect(left, top, 340, 156), string.Empty, panel);
             GUI.Label(new Rect(left + 20, top + 14, 300, 24), "ROUTE OFFER", detail);
             GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);
             GUI.Label(new Rect(left + 20, top + 62, 310, 20),
@@ -267,9 +267,11 @@ namespace Airside.Presentation
                 : $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})", small);
 
             GUI.enabled = meetsReputation;
-            if (GUI.Button(new Rect(left + 20, top + 122, 150, 24), "Accept route"))
+            if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route"))
                 _session.AcceptRoute();
             GUI.enabled = true;
+            if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline"))
+                _session.DeclineRoute();
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small)

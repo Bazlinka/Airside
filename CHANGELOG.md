@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- Route proposals can now be **declined** (a persisted `decline-route` command).
+  The HUD offer panel gains a Decline button; `AirportRoutes` exposes
+  `OffersDeclined` and `ScheduledFlightsPerDay` (sum of accepted routes'
+  flights/day), shown on the HUD. 51/51 tests. Groundwork for
+  `docs/product/concurrent-flights-brief.md`.
 - The "welcome back" away summary now also reports **route income earned** and the
   **reputation change** while the player was away (design pillar: a short visit
   should reveal what changed). `AirportEconomy` tracks `TotalRouteIncome`.

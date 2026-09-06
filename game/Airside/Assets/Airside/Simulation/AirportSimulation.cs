@@ -115,6 +115,16 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool DeclinePendingRoute()
+        {
+            var proposal = Routes.Pending;
+            if (proposal == null || !Routes.Decline())
+                return false;
+
+            Record(_lastUpdatedAt, "Route declined", $"{proposal.Airline} to {proposal.Destination}");
+            return true;
+        }
+
         private void AdvanceOneSecond(SimulationTime now)
         {
             Routes.Update(now);

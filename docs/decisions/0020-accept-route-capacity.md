@@ -1,4 +1,4 @@
-# Decision 0015: stands gate route acceptance
+# Decision 0020: stands gate route acceptance
 
 Date: 2026-09-06
 

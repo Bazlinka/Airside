@@ -14,20 +14,20 @@ namespace Airside.Simulation
     }
 
     /// <summary>
-    /// A scheduled aircraft that shares the airfield with the primary flight and the
+    /// A scheduled aircraft that shares the airfield with the commercial flights and the
     /// rest of the ground-traffic fleet. It reserves every segment and stand it uses
     /// through the shared <see cref="ReservationTable"/>, including a single-file
     /// <see cref="AirportTaxiNetwork.Corridor"/> lock for the whole time it is on the
     /// A1/A2 taxiway, so fleet aircraft queue rather than meet head-on.
     ///
-    /// The primary flight has absolute priority: on every simulated second this
+    /// The commercial flights has absolute priority: on every simulated second this
     /// aircraft releases any resource the flight needs, the flight takes its
     /// reservations, and this aircraft then moves into whatever is left. It holds
     /// its current position until it can reserve the next leg, and a hold beyond ten
     /// seconds is explained by the <see cref="TrafficWaitMonitor"/>.
     ///
     /// Motion is a pure function of the simulated seconds it has spent moving, of the
-    /// reservation table, and of the primary flight's stand assignment, so it is
+    /// reservation table, and of the commercial flights's stand assignment, so it is
     /// deterministic across frame rates and reconstructed exactly on load.
     /// </summary>
     public sealed class GroundTrafficAircraft
@@ -152,7 +152,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Release any resource the primary flight needs this tick. Called before the
+        /// Release any resource the commercial flights needs this tick. Called before the
         /// flight synchronises its own reservations so it never has to wait.
         /// </summary>
         public void Yield(IEnumerable<StableId> primaryResources)
@@ -178,11 +178,36 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Advance one simulated second. Called after the primary flight has taken its
-        /// reservations for this tick. <paramref name="primaryStand"/> is the stand the
-        /// primary flight is currently assigned; a fresh arrival parks on the other one.
+        /// Advance one simulated second. Called after the commercial flights has taken its
+        /// reservations for this tick. <paramref name="commercialStands"/> is the stand the
+        /// commercial flights is currently assigned; a fresh arrival parks on the other one.
         /// </summary>
+
+        /// <summary>Compatibility overload for tests that pass a single commercial stand.</summary>
         public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, bool mayEnterCorridor)
+        {
+            Reposition(now, monitor, new[] { primaryStand }, mayEnterCorridor);
+        }
+
+        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, int standCount, bool mayEnterCorridor)
+        {
+            // Compatibility with capacity tests: treat standCount as the field size and
+            // keep the primary stand occupied so the fleet seeks an alternate.
+            Reposition(now, monitor, new[] { primaryStand }, mayEnterCorridor);
+            if (Role == GroundTrafficRole.ArriveDepart && standCount >= 2)
+            {
+                var away = AirportSimulation.AlternateStand(primaryStand, standCount);
+                if (!away.Equals(default(StableId)) && !away.Equals(_targetStand))
+                {
+                    _targetStand = away;
+                    _circuit = BuildCircuit(Role, _targetStand);
+                }
+            }
+        }
+
+
+        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor,
+            System.Collections.Generic.IReadOnlyList<StableId> commercialStands, bool mayEnterCorridor)
         {
             if (_warmup > 0)
             {
@@ -192,10 +217,8 @@ namespace Airside.Simulation
 
             if (_legIndex == 0 && !_onLeg && Role == GroundTrafficRole.ArriveDepart)
             {
-                var away = primaryStand.Equals(AirportSimulation.StandOne)
-                    ? AirportSimulation.StandTwo
-                    : AirportSimulation.StandOne;
-                if (!away.Equals(_targetStand))
+                var away = AlternateStand(commercialStands);
+                if (!away.Equals(default(StableId)) && !away.Equals(_targetStand))
                 {
                     _targetStand = away;
                     _circuit = BuildCircuit(Role, away);
@@ -242,6 +265,31 @@ namespace Airside.Simulation
                 _legIndex = (_legIndex + 1) % _circuit.Length;
                 _onLeg = false;
             }
+        }
+
+
+        private static StableId AlternateStand(System.Collections.Generic.IReadOnlyList<StableId> commercialStands)
+        {
+            foreach (var candidate in new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo, AirportSimulation.StandThree })
+            {
+                var taken = false;
+                if (commercialStands != null)
+                {
+                    for (var i = 0; i < commercialStands.Count; i++)
+                    {
+                        if (commercialStands[i].Equals(candidate))
+                        {
+                            taken = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!taken)
+                    return candidate;
+            }
+
+            return default;
         }
 
         private static Leg[] BuildCircuit(GroundTrafficRole role, StableId stand)

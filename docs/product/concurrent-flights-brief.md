@@ -1,7 +1,8 @@
 # Design brief: accepted routes add real flights
 
-Status: **not started** — needs a design pass (ChatGPT) before implementation.
-Owner: unassigned.
+Status: **implemented (slice 1)** — see `docs/decisions/0019-concurrent-commercial-flights.md`
+and first slice packet `docs/product/concurrent-flights-slice1-packet.md`.
+Owner: Cursor (design 2026-09-06); implementation unassigned.
 
 ## Why this is a decision, not just a task
 
@@ -11,7 +12,7 @@ raises `Routes.ScheduledFlightsPerDay` but nothing acts on it — the airport do
 not actually get busier. Making routes add flights means **more than one
 commercial flight operating at once**, which is the core architectural step the
 project plan has been building toward and deliberately deferring until the single
-loop was stable. It is now stable (48 edit-mode tests, deadlock-free multi-aircraft
+loop was stable. It is now stable (48+ edit-mode tests, deadlock-free multi-aircraft
 ground traffic, persistence, economy, reputation).
 
 The single flight is currently entangled with: `ActiveTurnaround`,
@@ -36,32 +37,18 @@ assumption breaks with two co-equal commercial flights.
 - Existing guarantees hold: fifty-cycle soak, economy figures, persistence tests
   (some will legitimately change and need re-baselining — call those out).
 
-## Open design questions for the pass
+## Design answers (locked in 0019)
 
-1. **Promotion vs parallel model.** Make the primary flight the first element of a
-   `List<Flight>` and generalise, or keep the primary loop and add a separate
-   "scheduled arrivals" system beside it? The former is cleaner long-term but
-   churns ~15 tests.
-2. **Priority between commercial flights.** First-come-first-served on the runway
-   and taxiway? A slot/schedule? How does the ground-traffic fleet's priority
-   rule change when there is no single "the flight"?
-3. **Capacity.** Two stands today. Does exceeding stand capacity block new route
-   acceptance ("needs another stand"), queue arrivals in a hold, or both? This
-   is the hook for the plan's first buildable upgrade (a third stand).
-4. **Cadence.** How does `ScheduledFlightsPerDay` translate to actual spawn
-   timing without making the airfield visually chaotic at the greybox scale?
-5. **Turnaround / economy per flight.** `TurnaroundWorkflow` and the delay-cost
-   settlement are per-flight already; confirm they compose when several run at
-   once.
+1. **Promotion model** — primary becomes `Flights[0]` in a commercial list.
+2. **Priority** — commercial FIFO by spawn time; fleet yields to any commercial;
+   corridor lock stays fleet-only.
+3. **Capacity** — concurrent commercials capped by stand count; v1 approach-wait
+   if stands busy; hard accept gating deferred.
+4. **Cadence** — second flight when `ScheduledFlightsPerDay >= 4`, half-cycle
+   stagger; always keep one loop when S = 0.
+5. **Economy** — per-flight settlement already composes; call it per departure.
 
-## Suggested first slice (once the design lands)
+## Suggested first slice
 
-A **second** commercial flight only, gated on `ScheduledFlightsPerDay >= N`,
-sharing the reservation system, with a fixed rule (e.g. the earlier-arriving
-flight holds priority). Prove two flights coexist for fifty cycles without
-deadlock or a reservation conflict, then generalise to N and add capacity.
-
-## Hand-off
-
-Paste this brief to ChatGPT with `AGENTS.md` and `GAME.md`, ask for a task packet
-per question 1's chosen model, then bring the packet back to Cursor or Claude.
+See `docs/product/concurrent-flights-slice1-packet.md`: exactly two commercials,
+gated on schedule demand, fifty-cycle soak, single-flight path unchanged.

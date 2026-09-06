@@ -30,6 +30,7 @@ Airside/
       Simulation/            Airport simulation — deterministic, clock-injected
       Persistence/           Save schema, load/catch-up
       Presentation/          MonoBehaviours, camera, visuals — Unity-facing only
+      Art/                   Approved runtime models, textures, UI, animation and VFX
       Editor/                Editor-only startup helpers
       Tests/EditMode/        Deterministic NUnit tests
       Scenes/AirsidePrototype.unity
@@ -40,6 +41,7 @@ Airside/
     architecture/            Technical decisions and data contracts
     decisions/               Numbered decision records (ADRs)
     data/                    Asset and data licence register
+    art/                     Canonical art direction, manifest, prompts and references
     testing/                 Acceptance checks and fixtures
   scripts/
     test-unity.sh            Deterministic simulation checks
@@ -111,6 +113,27 @@ into the handoff block. A messy branch that is pushed beats tidy work that is lo
 | Cursor   | Focused implementation and interactive work inside the codebase |
 | Codex    | Repository inspection, scoped implementation, builds, tests, debugging |
 | Claude   | Independent architecture review, large-context review, second opinions |
+
+## Art and asset workflow
+
+- Read `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` before generating, importing,
+  modelling or integrating any visual asset. It is the canonical style and path
+  contract for ChatGPT, Claude, Cursor and Codex.
+- Generate and approve the reference batch before broad production. Use the exact
+  asset IDs, filenames, versions and folders in its manifest; do not invent a
+  parallel asset tree or silently overwrite an approved candidate.
+- Generated reference/source images belong under `docs/art/`. Approved
+  runtime-ready assets belong under
+  `game/Airside/Assets/Airside/Art/` and ship with Unity `.meta` files.
+- Record generator/source, prompt evidence, licence/terms, cost, attribution and
+  fallback in `docs/data/ASSET_AND_DATA_REGISTER.md` in the same commit that
+  introduces an asset.
+- Do not bake interface text into runtime images. Do not use a 2D concept image as
+  a substitute for a required 3D aircraft, building or vehicle.
+- Simulation controls state and timing. Animation, VFX and audio represent that
+  state but never decide resource reservations, task completion or persistence.
+- Keep the procedural primitive presentation as a fallback until each replacement
+  is integrated and verified at overview/follow cameras and day/dusk/night.
 
 ## Design invariants (do not break)
 

@@ -366,7 +366,7 @@ namespace Airside.Presentation
             }
 
             if (needed > 0)
-                _cameraController.SetFollowTarget(_commercialAircraft[0]);
+                _cameraController.SetFollowTargets(_commercialAircraft);
         }
 
         private void UpdateGroundTrafficVisual()
@@ -1357,8 +1357,17 @@ namespace Airside.Presentation
             if (_apronLights != null)
             {
                 var flood = Mathf.Lerp(1.35f, 0.05f, daylight);
-                foreach (var light in _apronLights)
-                    light.intensity = flood;
+                for (var i = 0; i < _apronLights.Length; i++)
+                {
+                    var light = _apronLights[i];
+                    if (light == null)
+                        continue;
+                    // Tiny phase offset flicker so floods don't feel static at night.
+                    var flicker = daylight < 0.4f
+                        ? 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.1f + i * 1.7f)
+                        : 1f;
+                    light.intensity = flood * flicker;
+                }
             }
 
             UpdateNightGlow(daylight);

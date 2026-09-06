@@ -20,14 +20,16 @@ next session can continue without seeing the previous conversation. Keep it shor
   Domain/Simulation/Persistence harness) could not be run against it. Compile
   and run edit-mode tests before trusting this branch or merging it.
 - **Do this next:**
-  1. Open in Unity 6.3 LTS, confirm it compiles, run `scripts/test-unity.sh`.
-     Fix anything that doesn't compile or pass before merging. **In
-     particular, visually check the HUD** — the left panel box grew from
-     height 520 to 616 and gained two new label+button rows (check-in
-     expansion, GA apron expansion) at fixed pixel `Rect`s in the pre-rebase
-     layout, placed by calculation, not by looking at it render — confirm
-     nothing overlaps or clips off-panel at the default and a couple of other
-     window sizes.
+  1. Open in Unity 6.3 LTS, confirm it compiles, run `scripts/test-unity.sh`
+     (74 edit-mode tests expected on this branch: the existing 57 plus 17
+     new — see `TerminalTests.cs`, `GeneralAviationTests.cs`, `CargoTests.cs`,
+     `LandTests.cs`, `BaggageTests.cs`). Fix anything that doesn't compile or
+     pass before merging. **In particular, visually check the HUD** — the
+     left panel box grew from height 520 to 616 and gained two new
+     label+button rows (check-in expansion, GA apron expansion) at fixed
+     pixel `Rect`s in the pre-rebase layout, placed by calculation, not by
+     looking at it render — confirm nothing overlaps or clips off-panel at
+     the default and a couple of other window sizes.
   2. Bailey review of Batch C look (approve or request `_v02`) — separate
      from this branch, still outstanding on `main`.
   3. Then either continue Batch D animation/VFX polish or Batch B/C follow-up
@@ -167,10 +169,15 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
   same way, with a buildable warehouse expansion (`expand-cargo-warehouse`,
   5000); and a one-off second-runway land reservation (`AirportLand`,
   decision 0031, `reserve-second-runway-land`, 10000) with no coupled effect
-  yet. All four follow the third-stand pattern (persisted command, replayed
-  on load, no save-schema change) and ship with new EditMode tests. Terminal
-  and GA have HUD buttons; cargo and land do not (operations-panel height
-  budget — see the layout note above).
+  yet; and baggage handling (`AirportBaggage`, decision 0032) charges a soft
+  mishandling cost — folded into the existing daily operating cost, not a new
+  report field — only once scheduled flights/day exceed 12, which the
+  terminal's own cap already prevents everywhere in current play; a buildable
+  sortation expansion (`expand-baggage-sortation`, 4500) raises that ceiling.
+  All five follow the third-stand pattern (persisted command, replayed on
+  load, no save-schema change) and ship with new EditMode tests. Terminal and
+  GA have HUD buttons; cargo, land and baggage do not (operations-panel
+  height budget — see the layout note above).
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
@@ -189,7 +196,8 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
    Services work.
 3. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay
    fallback), and wire `HudLayout.Create` into `OnGUI` while also adding this
-   branch's cargo/land/baggage buttons in the same pass.
+   branch's cargo/land/baggage buttons in the same pass rather than stacking
+   more literal `Rect`s.
 4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual
    commercials, and this branch's new systems).
 5. Longer term: airline profiles (service level, price sensitivity, facility
@@ -197,7 +205,8 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
    once someone can re-run the full suite after adding a recurring cost; real
    per-flight baggage/passenger-flow depth and a visible GA/cargo aircraft
    loop are the natural next layer on top of the economic foundations landed
-   on this branch (project-plan steps 19–21 continued).
+   on this branch (project-plan steps 19–21 continued — step 20's economics
+   are now in for all three: baggage, cargo and GA).
 
 Implement concurrent-flights **slice 1**
 (`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when

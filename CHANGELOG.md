@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Baggage handling foundation.** `AirportBaggage` — a per-day handling
+  capacity (baseline 12/day, matching the terminal's own baseline) charges a
+  soft mishandling cost (60/excess scheduled flight/day) folded into the
+  existing daily operating cost, rather than blocking route acceptance the
+  way the terminal cap does. Provably zero under all current play: the
+  terminal already caps scheduled flights at 12/day everywhere, even after a
+  third stand. Buildable sortation expansion (`expand-baggage-sortation`,
+  4500) raises capacity to relieve it. No new `DailyReport` field, no
+  save-schema change. No HUD button (operations panel height budget). Full
+  per-flight/task-level baggage depth remains future work. **Unverified in
+  Unity.** See `docs/decisions/0032-baggage-mishandling-cost-foundation.md`.
 - Folded general-aviation and cargo daily income into the `DailyFinance` "Day
   est." projection (`AirportSimulation.DailyFinance`) — it previously only
   projected turnaround/route income per flight cycle, so the two new income

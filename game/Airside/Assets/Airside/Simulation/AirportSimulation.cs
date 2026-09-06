@@ -67,6 +67,7 @@ namespace Airside.Simulation
             GeneralAviation = new AirportGeneralAviation();
             Cargo = new AirportCargo();
             Land = new AirportLand();
+            Baggage = new AirportBaggage();
             DailyReports = new AirportDailyReports();
             CaptureDayBaseline();
             _groundTraffic = new[]
@@ -103,6 +104,7 @@ namespace Airside.Simulation
         public AirportGeneralAviation GeneralAviation { get; }
         public AirportCargo Cargo { get; }
         public AirportLand Land { get; }
+        public AirportBaggage Baggage { get; }
         public AirportDailyReports DailyReports { get; }
         public bool IsInsolvent => Economy.IsInsolvent;
         public AirportTaxiNetwork TaxiNetwork { get; }
@@ -181,6 +183,20 @@ namespace Airside.Simulation
 
             Record(_lastUpdatedAt, "Cargo warehouse expanded",
                 $"Cargo contracts now {Cargo.ContractsPerDay}/day · -${AirportCargo.WarehouseExpansionCost:N0}");
+            return true;
+        }
+
+        public bool ExpandBaggageSortation()
+        {
+            if (IsInsolvent)
+                return false;
+            if (!Baggage.CanExpand)
+                return false;
+            if (!Economy.TrySpend(AirportBaggage.SortationExpansionCost) || !Baggage.ExpandSortation())
+                return false;
+
+            Record(_lastUpdatedAt, "Baggage sortation expanded",
+                $"Handling capacity now {Baggage.HandlingCapacityPerDay} flights/day · -${AirportBaggage.SortationExpansionCost:N0}");
             return true;
         }
 
@@ -571,7 +587,8 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
                 var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
                 var weather = Weather.At(closeTime);
                 var baseCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount);
-                var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
+                var mishandlingCost = Baggage.MishandlingCostFor(Routes.ScheduledFlightsPerDay);
+                var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage + mishandlingCost;
                 Economy.PayOperatingCosts(cost);
                 Economy.AddGeneralAviationIncome(GeneralAviation.DailyIncome);
                 Economy.AddCargoIncome(Cargo.DailyIncome);

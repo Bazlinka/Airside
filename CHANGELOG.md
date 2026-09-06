@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Fix ground-traffic Stand 3 circuit.** Arrive/depart fleet aircraft mapped any non-Stand-1
+  target onto Stand 2's lead-in and apron Z, so a Stand 3 assignment reserved the wrong
+  taxi segment and parked at Stand 2's position. `BuildCircuit` now uses
+  `AirportTaxiNetwork.LeadInFor` / `StandZ` for all three stands. Regression:
+  `GroundTraffic_WhenStandsOneAndTwoAreBusy_UsesStandThreeLeadInAndPosition`.
+  `scripts/test-domain.sh` 97/97.
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

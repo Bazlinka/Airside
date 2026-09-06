@@ -201,23 +201,25 @@ Paths in this and later tables are relative to
 
 Production task packet:
 `docs/art/prompts/batch-c-models-task-packet.md`.
+Generation evidence:
+`docs/art/prompts/batch-c-models-generation-2026-09-06.md`.
 
 These are modelled assets. Image generation supplies approved concept/orthographic
 references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.fbx` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Planned |
-| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Planned |
-| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Planned |
-| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Planned |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.fbx` | Small practical terminal, glass frontage, service side, modular end caps | Planned |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.fbx` | Corrugated metal hangar with readable door opening | Planned |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.fbx` | Compact service/crew building used as visual support, non-interactive initially | Planned |
-| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.fbx` | Cab, wheels and hose connection separated | Planned |
-| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.fbx` | Tug plus three low-detail carts; articulation points defined | Planned |
-| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.fbx` | Compact apron bus with doors and wheels separated | Planned |
-| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.fbx` | Stairs, chocks, cones, towbar, bins and ground-power unit | Planned |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.gltf` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Generated/Modelled |
+| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Generated/Modelled |
+| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Generated/Modelled |
+| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Generated/Modelled |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.gltf` | Small practical terminal, glass frontage, service side, modular end caps | Generated/Modelled |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.gltf` | Corrugated metal hangar with readable door opening | Generated/Modelled |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.gltf` | Compact service/crew building used as visual support, non-interactive initially | Generated/Modelled |
+| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.gltf` | Cab, wheels and hose connection separated | Generated/Modelled |
+| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.gltf` | Tug plus three low-detail carts; articulation points defined | Generated/Modelled |
+| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.gltf` | Compact apron bus with doors and wheels separated | Generated/Modelled |
+| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Generated/Modelled |
 
 ### Batch D — animation, feedback and weather
 

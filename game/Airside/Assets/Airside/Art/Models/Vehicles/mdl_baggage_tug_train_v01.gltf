@@ -1,0 +1,385 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Airside Batch C procedural kit"
+  },
+  "buffers": [
+    {
+      "uri": "mdl_baggage_tug_train_v01.bin",
+      "byteLength": 2520
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 648,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 720,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1008,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1080,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1368,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1440,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1728,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1800,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2088,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2160,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2448,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        4.400000095367432,
+        1.0,
+        0.550000011920929
+      ],
+      "min": [
+        2.799999952316284,
+        0.10000000149011612,
+        -0.550000011920929
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        2.549999952316284,
+        0.800000011920929,
+        0.5
+      ],
+      "min": [
+        1.0499999523162842,
+        0.10000000149011612,
+        -0.5
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.949999988079071,
+        0.800000011920929,
+        0.5
+      ],
+      "min": [
+        -0.550000011920929,
+        0.10000000149011612,
+        -0.5
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -0.6499999761581421,
+        0.800000011920929,
+        0.5
+      ],
+      "min": [
+        -2.1500000953674316,
+        0.10000000149011612,
+        -0.5
+      ]
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        2.9000000953674316,
+        0.44999998807907104,
+        0.10000000149011612
+      ],
+      "min": [
+        2.5,
+        0.25,
+        -0.10000000149011612
+      ]
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        1.2000000476837158,
+        0.44999998807907104,
+        0.10000000149011612
+      ],
+      "min": [
+        0.800000011920929,
+        0.25,
+        -0.10000000149011612
+      ]
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -0.4000000059604645,
+        0.44999998807907104,
+        0.10000000149011612
+      ],
+      "min": [
+        -0.800000011920929,
+        0.25,
+        -0.10000000149011612
+      ]
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tug",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "cart_1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "cart_2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "cart_3",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 6
+          },
+          "indices": 7,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "hitch_1",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 8
+          },
+          "indices": 9,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "hitch_2",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 10
+          },
+          "indices": 11,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "hitch_3",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 12
+          },
+          "indices": 13,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "tug",
+      "mesh": 0
+    },
+    {
+      "name": "cart_1",
+      "mesh": 1
+    },
+    {
+      "name": "cart_2",
+      "mesh": 2
+    },
+    {
+      "name": "cart_3",
+      "mesh": 3
+    },
+    {
+      "name": "hitch_1",
+      "mesh": 4
+    },
+    {
+      "name": "hitch_2",
+      "mesh": 5
+    },
+    {
+      "name": "hitch_3",
+      "mesh": 6
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mdl_baggage_tug_train_v01",
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  ],
+  "scene": 0
+}

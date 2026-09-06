@@ -121,6 +121,23 @@ namespace Airside.Presentation
                 var direction = next - position;
                 if (direction.sqrMagnitude > 0.001f)
                     view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
+
+                SpinPropellers(view, phase);
+            }
+        }
+
+        private static void SpinPropellers(Transform aircraft, AircraftPhase phase)
+        {
+            // Presentation-only: props spin whenever the aircraft is not parked at stand.
+            if (phase == AircraftPhase.AtStand)
+                return;
+
+            var degrees = Time.unscaledDeltaTime * 720f;
+            for (var i = 0; i < aircraft.childCount; i++)
+            {
+                var child = aircraft.GetChild(i);
+                if (child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    child.Rotate(Vector3.forward, degrees, Space.Self);
             }
         }
 
@@ -180,16 +197,35 @@ namespace Airside.Presentation
 
         private void UpdateServiceVehicles()
         {
-            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
-            var standZ = _simulation.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
-            UpdateVehicle(_fuelTruck, atStand && TaskActive("Refuel"), new Vector3(13.3f, 0.55f, standZ + 1.8f));
-            UpdateVehicle(_baggageCart, atStand && (TaskActive("Unload bags") || TaskActive("Load bags")), new Vector3(20.2f, 0.42f, standZ - 1.8f));
-            UpdateVehicle(_passengerBus, atStand && (TaskActive("Passengers off") || TaskActive("Board passengers")), new Vector3(13f, 0.68f, standZ - 2.2f));
+            // Prefer any commercial currently in turnaround (supports dual flights).
+            CommercialFlight servicing = null;
+            foreach (var flight in _simulation.Flights)
+            {
+                if (flight.Operation.Phase == AircraftPhase.AtStand && flight.Turnaround != null)
+                {
+                    servicing = flight;
+                    break;
+                }
+            }
+
+            if (servicing == null)
+            {
+                UpdateVehicle(_fuelTruck, false, Vector3.zero);
+                UpdateVehicle(_baggageCart, false, Vector3.zero);
+                UpdateVehicle(_passengerBus, false, Vector3.zero);
+                return;
+            }
+
+            var standZ = servicing.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
+            UpdateVehicle(_fuelTruck, TaskActive(servicing, "Refuel"), new Vector3(13.3f, 0.55f, standZ + 1.8f));
+            UpdateVehicle(_baggageCart, TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags"), new Vector3(20.2f, 0.42f, standZ - 1.8f));
+            UpdateVehicle(_passengerBus, TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers"), new Vector3(13f, 0.68f, standZ - 2.2f));
         }
 
-        private bool TaskActive(string name)
+        private bool TaskActive(CommercialFlight flight, string name)
         {
-            return _simulation.ActiveTurnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
+            return flight.Turnaround != null &&
+                   flight.Turnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
         }
 
         private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
@@ -246,7 +282,7 @@ namespace Airside.Presentation
                 if (_simulation.CurrentDelaySeconds > 0)
                     GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", small);
 
-                var alreadyAssigned = _simulation.ActiveTurnaround.PriorityCrewEnabled;
+                var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
                 GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
                 if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300"))
                     _session.EnablePriorityCrew();
@@ -527,11 +563,21 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
+            // Batch C building silhouettes (procedural stand-ins for Approved glTF kits).
             CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
             CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
                 "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(3f, 1.5f));
+            CreateBlock("Terminal end L", new Vector3(14.8f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
+            CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
+            CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
             CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
                 "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+            CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
+            CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
+                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f));
+            CreateBlock("Edge light L", new Vector3(-30f, 0.2f, -3.4f), new Vector3(0.2f, 0.4f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            CreateBlock("Edge light R", new Vector3(-30f, 0.2f, 3.4f), new Vector3(0.2f, 0.4f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -553,6 +599,7 @@ namespace Airside.Presentation
 
         private static Transform BuildAircraft(string name, Color accent)
         {
+            // Batch C turboprop silhouette with separated props/engines/gear (primitive fallback).
             var root = new GameObject(name).transform;
             var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Fuselage";
@@ -561,10 +608,17 @@ namespace Airside.Presentation
             body.transform.localScale = new Vector3(0.72f, 2.8f, 0.72f);
             body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
 
-            var wings = CreateBlock("Wings", Vector3.zero, new Vector3(7f, 0.12f, 2.2f), accent);
-            wings.transform.SetParent(root, false);
-            var tail = CreateBlock("Tail", new Vector3(0f, 0.65f, -2f), new Vector3(0.16f, 1.6f, 1.1f), accent);
-            tail.transform.SetParent(root, false);
+            ParentBlock(root, "Wing L", new Vector3(-2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
+            ParentBlock(root, "Wing R", new Vector3(2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
+            ParentBlock(root, "Engine L", new Vector3(-1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
+            ParentBlock(root, "Engine R", new Vector3(1.35f, -0.05f, 0.85f), new Vector3(0.45f, 0.45f, 1.1f), accent * 0.85f);
+            ParentBlock(root, "Propeller L", new Vector3(-1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
+            ParentBlock(root, "Propeller R", new Vector3(1.35f, -0.05f, 1.45f), new Vector3(0.08f, 1.35f, 0.18f), new Color(0.2f, 0.2f, 0.22f));
+            ParentBlock(root, "Tail", new Vector3(0f, 0.85f, -2.15f), new Vector3(0.14f, 1.5f, 1.0f), accent);
+            ParentBlock(root, "Tailplane", new Vector3(0f, 0.55f, -2.2f), new Vector3(2.2f, 0.1f, 0.7f), accent);
+            ParentBlock(root, "Gear nose", new Vector3(0f, -0.55f, 1.5f), new Vector3(0.12f, 0.45f, 0.28f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "Gear L", new Vector3(-0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "Gear R", new Vector3(0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();
@@ -577,21 +631,17 @@ namespace Airside.Presentation
             return root;
         }
 
+        private static void ParentBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
+        {
+            var block = CreateBlock(name, localPosition, scale, color);
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
+        }
+
         private static Transform BuildGroundTrafficAircraft(string label)
         {
-            var root = new GameObject($"Ground traffic {label}").transform;
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Fuselage";
-            body.transform.SetParent(root, false);
-            body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            body.transform.localScale = new Vector3(0.58f, 2.1f, 0.58f);
-            body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.96f, 0.86f, 0.5f));
-
-            var wings = CreateBlock("Wings", Vector3.zero, new Vector3(5.4f, 0.1f, 1.7f), new Color(0.82f, 0.55f, 0.16f));
-            wings.transform.SetParent(root, false);
-            var tail = CreateBlock("Tail", new Vector3(0f, 0.5f, -1.5f), new Vector3(0.14f, 1.2f, 0.9f), new Color(0.82f, 0.55f, 0.16f));
-            tail.transform.SetParent(root, false);
-
+            var root = BuildAircraft($"Ground traffic {label}", new Color(0.82f, 0.55f, 0.16f));
+            root.localScale = new Vector3(0.82f, 0.82f, 0.82f);
             root.position = new Vector3(8f, 0.7f, 9f);
             return root;
         }
@@ -599,10 +649,17 @@ namespace Airside.Presentation
         private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale)
         {
             var root = new GameObject(name).transform;
-            var body = CreateBlock($"{name} body", Vector3.zero, scale, color);
-            body.transform.SetParent(root, false);
-            var cab = CreateBlock($"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f), new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
-            cab.transform.SetParent(root, false);
+            ParentBlock(root, $"{name} body", Vector3.zero, scale, color);
+            ParentBlock(root, $"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f),
+                new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
+            ParentBlock(root, $"{name} wheel FL", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, scale.z * 0.42f),
+                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            ParentBlock(root, $"{name} wheel FR", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, -scale.z * 0.42f),
+                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            ParentBlock(root, $"{name} wheel RL", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, scale.z * 0.42f),
+                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+            ParentBlock(root, $"{name} wheel RR", new Vector3(-scale.x * 0.28f, -scale.y * 0.35f, -scale.z * 0.42f),
+                new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
             root.gameObject.SetActive(false);
             return root;
         }
@@ -759,7 +816,8 @@ namespace Airside.Presentation
             for (var index = 0; index < _simulation.Flights.Count; index++)
             {
                 var flight = _simulation.Flights[index];
-                parts[index] = $"{flight.AircraftId} @ {flight.AssignedStand.Value}";
+                parts[index] =
+                    $"{flight.AircraftId} @ {flight.AssignedStand.Value} · {FormatPhase(flight.Operation.Phase)}";
             }
 
             return _simulation.Flights.Count == 1

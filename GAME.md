@@ -10,22 +10,16 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch B approved + integrated; Batch C packet)
-- **Branch / working tree:** `cursor/batch-b-prep-38b9` → merge to `main`
-- **Do this next:** Produce Batch C models per
-  `docs/art/prompts/batch-c-models-task-packet.md` (turboprop, terminal, hangar,
-  service vehicles). Unity Play soak to verify textured greybox. Place WLD kits
-  as prefabs when convenient.
-- **In progress / half-done:** Batch B Approved; surfaces/decals Integrated on
-  greybox with colour fallback. WLD kits Approved not placed. Batch C packet
-  ready; models not started. MAT-001 `.mat` still optional.
-- **Watch out for:** fleet corridor invariants (0006–0009). Concurrent commercials:
-  fleet yields to any commercial. Art pipeline is decision **0022**. Keep primitive
-  aircraft/buildings until Batch C is Approved and Integrated.
-- **Open questions for Bailey:** none for Batch B. After Play soak, say if surface
-  tiling/look needs `_v02`.
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated);
-  Batch C Planned
+- **Last updated:** 2026-09-06 by Cursor (Batch C models + presentation upgrade)
+- **Branch / working tree:** `cursor/batch-c-models-38b9` → merge to `main`
+- **Do this next:** Review Batch C kits against REF-001/003/005 when able. Meanwhile
+  keep shipping (Batch D packet / systems). Unity Play soak when free — not a blocker.
+- **In progress / half-done:** Batch B Approved+Integrated. Batch C Generated/Modelled
+  (glTF kits + richer primitive stand-ins, spinning props, dual-flight service vehicles).
+- **Watch out for:** fleet corridor invariants (0006–0009). Art pipeline decision **0022**.
+  Keep primitives until Batch C is Approved and Verified.
+- **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -116,9 +110,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-1. **Batch C production** — follow
-   `docs/art/prompts/batch-c-models-task-packet.md` (aircraft, buildings, vehicles).
-2. **Unity Play soak** — confirm Batch B textured greybox, dual commercials, HUD,
-   day/night.
-3. **WLD kit placement** — optional follow-up prefabs for markings/lights/props.
-4. **Batch D** after Batch C is Approved.
+1. **Bailey review of Batch C** when convenient (not blocking further work).
+2. **Keep building** — Batch D animation packet / more phase-four polish.
+3. **Unity Play soak** whenever Bailey has the editor (textures + new silhouettes).
+4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).

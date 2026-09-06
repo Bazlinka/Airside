@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- Generated Batch C first-playable 3D kits (turboprop, terminal/hangar/ops shed,
+  fuel truck, baggage train, apron bus, service equipment) plus livery atlases.
+  Presentation uses richer primitive stand-ins with spinning props and dual-flight
+  service-vehicle targeting; HUD lists each flight’s phase. Status
+  Generated/Modelled — not yet Approved.
+  Evidence: `docs/art/prompts/batch-c-models-generation-2026-09-06.md`.
 - Bailey approved Batch B. Greybox now loads Batch B surface/decal textures in
   `AirsidePrototype` (solid-colour fallback if a PNG is missing). Added Batch C
   model production packet. WLD kits Approved but not yet placed as prefabs.

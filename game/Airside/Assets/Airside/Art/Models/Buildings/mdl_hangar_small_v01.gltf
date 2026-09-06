@@ -1,0 +1,181 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Airside Batch C procedural kit"
+  },
+  "buffers": [
+    {
+      "uri": "mdl_hangar_small_v01.bin",
+      "byteLength": 1080
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 648,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 720,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1008,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.0,
+        5.0,
+        4.5
+      ],
+      "min": [
+        -7.0,
+        0.0,
+        -4.5
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        4.0,
+        4.0,
+        4.699999809265137
+      ],
+      "min": [
+        -4.0,
+        0.0,
+        4.5
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.099999904632568,
+        5.25,
+        0.6000000238418579
+      ],
+      "min": [
+        -7.099999904632568,
+        4.949999809265137,
+        -0.6000000238418579
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "hangar_shell",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "door_opening",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "roof_ridge",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "hangar_shell",
+      "mesh": 0
+    },
+    {
+      "name": "door_opening",
+      "mesh": 1
+    },
+    {
+      "name": "roof_ridge",
+      "mesh": 2
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mdl_hangar_small_v01",
+      "nodes": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "scene": 0
+}

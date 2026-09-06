@@ -10,23 +10,23 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
-  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
-  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
-  keep filling phase four safely — a **buildable capacity upgrade** (third stand),
-  **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
+- **Last updated:** 2026-09-06 by Cursor (accept-route schedule capacity)
+- **Branch / working tree:** `cursor/accept-route-capacity-38b9` (off `main`)
+- **Do this next:** Merge open phase-four PRs when Bailey can review (insolvency,
+  third stand, research, daily report, concurrent-flights design + slice 1, then
+  this accept-capacity PR). **Visual soak** in Unity is still overdue. Decision
+  numbers 0015+ on parallel branches will need renumbering on merge.
+- **In progress / half-done:** nothing on this branch once tests are green.
+  Accept refuses when schedule would exceed `StandCount × 6` (12/day on two
+  stands). No save-schema change.
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the
   longest-waiting aircraft (fleet order breaks ties). Keep all of that when
   changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
   aircraft snaps to its leg start if the primary preempts a segment under it.
-  Decisions 0006–0009.
+  Decisions 0006–0009. When `AirportCapacity` lands, pass live `StandCount` into
+  `Routes.Accept` instead of the baseline constant.
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -37,9 +37,9 @@ Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 Toward the first playable airport. The airport sits at a named location
 (Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
-driving the sun and ambient light and shown on the HUD. Airlines now propose
-scheduled routes on a timer; the player accepts (or declines) an offer and every
-completed flight then pays a recurring per-flight amount. The airport's reputation
+driving the sun and ambient light and shown on the HUD. Airlines propose scheduled routes on a timer; the player accepts (or declines) an offer and every
+completed flight then pays a recurring per-flight amount. Schedule demand is capped by stand
+capacity (`StandCount × 6` flights/day) so acceptance cannot outrun the airfield. The airport's reputation
 (0–100) rises with on-time departures and falls with delays; airlines gate their
 proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
@@ -83,7 +83,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
 - The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
-- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight.
+- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight. Acceptance also refuses when the projected schedule would exceed stand capacity (12 flights/day on two stands).
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.

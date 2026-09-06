@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Accept-route schedule capacity.** Accepting a route now refuses when
+  `ScheduledFlightsPerDay + pending` would exceed `StandCount × 6` (12/day on
+  two stands). Offer stays pending; HUD disables Accept with a "Schedule full"
+  reason. No save-schema change. See `docs/decisions/0015-accept-route-capacity.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

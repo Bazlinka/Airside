@@ -235,7 +235,7 @@ namespace Airside.Presentation
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
             GUI.Label(new Rect(historyLeft + 20, 62, 320, 20),
-                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight:N0}/flight", small);
+                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight:N0}/flight", small);
             DrawRouteOffer(scale, panel, detail, small);
             var trafficY = 80f;
             foreach (var aircraft in _simulation.GroundTraffic)
@@ -273,11 +273,17 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 20, top + 82, 310, 20),
                 $"+${payout:N0} per completed flight", small);
             var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
-            GUI.Label(new Rect(left + 20, top + 102, 310, 20), meetsReputation
-                ? $"Expires in {proposal.SecondsRemaining(_clock.Now)}s"
-                : $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})", small);
+            var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(AirportSimulation.StandCount);
+            string status;
+            if (!meetsReputation)
+                status = $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})";
+            else if (!fitsCapacity)
+                status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
+            else
+                status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
+            GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, small);
 
-            GUI.enabled = meetsReputation;
+            GUI.enabled = meetsReputation && fitsCapacity;
             if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route"))
                 _session.AcceptRoute();
             GUI.enabled = true;

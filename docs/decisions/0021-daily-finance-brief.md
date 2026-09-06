@@ -1,4 +1,4 @@
-# Decision 0015: daily finance brief
+# Decision 0021: daily finance brief
 
 Date: 2026-09-06
 

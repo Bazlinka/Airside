@@ -8,7 +8,44 @@ change it describes.
 - **Daily finance brief.** HUD shows a deterministic day estimate: expected
   operating cost (base + current weather + payroll) versus expected flight
   income at today's cadence, plus cash runway days when the net is negative.
-  No save-schema change. See `docs/decisions/0015-daily-finance-brief.md`.
+  No save-schema change. See `docs/decisions/0021-daily-finance-brief.md`.
+- **Accept-route schedule capacity.** Accepting a route now refuses when
+  `ScheduledFlightsPerDay + pending` would exceed `StandCount × 6` (12/day on
+  two stands). Offer stays pending; HUD disables Accept with a "Schedule full"
+  reason. Operations panel lists accepted routes (airline, frequency,
+  destination, payout) so the player can see what fills the cap. No save-schema
+  change. See `docs/decisions/0020-accept-route-capacity.md`.
+- **Concurrent commercial flights (slice 1).** Primary loop promoted to
+  `CommercialFlight` list. When `ScheduledFlightsPerDay >= 4`, a second commercial
+  spawns on a half-cycle stagger onto the free stand; fleet yields to any
+  commercial. Single-flight path stays seed-identical below the threshold. No
+  save-schema bump. HUD/world show both aircraft. 57/57 tests. See decision 0019
+  and `docs/product/concurrent-flights-slice1-packet.md`.
+- Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0018).
+- **Concurrent flights design.** Decision 0019 locks promotion-to-list model,
+  commercial FIFO priority, stand-based concurrency cap, schedule cadence
+  (`ScheduledFlightsPerDay >= 4` → second flight), and per-flight settlement.
+  First-slice task packet ready. Brief marked designed. No gameplay code in this
+  change.
+- **Daily operations report.** At each simulated midnight the sim publishes a
+  `DailyReport` (flights, income, delays, running cost, net cash, reputation,
+  weather, crew). Keeps the latest seven; rebuilt by replay. HUD shows the
+  latest card. See `docs/decisions/0018-daily-operations-report.md`.
+- **Research progression.** `AirportResearch` — first project Operations Efficiency
+  (2500, one simulated day) permanently cuts base daily running cost by 100.
+  Start is a persisted `start-research` command (replayed on load). Does not
+  change flight timing. HUD shows progress / complete. See
+  `docs/decisions/0017-research-operations-efficiency.md`.
+- **Buildable third stand.** `AirportCapacity` — first capacity upgrade. Spend
+  8000 (`build-stand` command, replayed on load) to unlock Stand 3; taxi network
+  gains lead-in geometry; primary flights and ground traffic use the new stand.
+  Two-stand behaviour stays seed-identical. HUD shows stand count and a build
+  button. See `docs/decisions/0016-third-stand-capacity.md`.
+- **Insolvency / game-over.** Cash negative at three consecutive simulated day
+  closes declares the airport insolvent: simulation freezes, player commands
+  refuse, and an `"Insolvent"` event is logged. Tracked on `AirportEconomy`
+  (`ConsecutiveNegativeDays`, `IsInsolvent`); rebuilt by replay, no save-schema
+  change. Presentation untouched. See `docs/decisions/0015-insolvency-game-over.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

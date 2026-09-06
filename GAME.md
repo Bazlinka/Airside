@@ -10,21 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (daily finance brief)
-- **Branch / working tree:** `cursor/daily-pnl-brief-38b9` (off `main`)
-- **Do this next:** Merge open phase-four PRs when Bailey can review. **Visual
-  soak** in Unity is still overdue. Decision numbers 0015+ on parallel branches
-  will need renumbering on merge.
-- **In progress / half-done:** nothing on this branch once tests are green.
-  `DailyFinance` projects day P&L + runway; HUD shows it. No save-schema change.
-- **Watch out for:** the fleet is deadlock-free *by construction* — the primary
-  flight is never blocked, at most one fleet aircraft holds the corridor lock,
-  and repositioning aircraft never touch a stand. A free corridor goes to the
-  longest-waiting aircraft (fleet order breaks ties). Keep all of that when
-  changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
-  aircraft snaps to its leg start if the primary preempts a segment under it.
-  Decisions 0006–0009.
-- **Open questions for Bailey:** none
+- **Last updated:** 2026-09-06 by Cursor (daily P&L brief onto main; Bailey approved merge-all)
+- **Branch / working tree:** merging onto `main`
+- **Do this next:** Unity visual soak when Bailey can. Optional: renumber duplicate decision 0018 files.
+- **In progress / half-done:** Bailey approved merge-without-review.
+- **Watch out for:** fleet corridor invariants.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -34,17 +24,33 @@ Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 Toward the first playable airport. The airport sits at a named location
 (Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
-driving the sun and ambient light and shown on the HUD. Airlines now propose
-scheduled routes on a timer; the player accepts (or declines) an offer and every
-completed flight then pays a recurring per-flight amount. The airport's reputation
+driving the sun and ambient light and shown on the HUD. Airlines propose scheduled routes on a timer; the player accepts (or declines) an offer and every
+completed flight then pays a recurring per-flight amount. Schedule demand is capped by stand
+capacity (`StandCount × 6` flights/day) so acceptance cannot outrun the airfield. The airport's reputation
 (0–100) rises with on-time departures and falls with delays; airlines gate their
 proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
 running cost — so the airport now has expenses it must cover, not just income.
 The player employs ground crew: the baseline runs turnarounds normally, extra
-crew speed them up, and understaffing stretches them into delays.
+crew speed them up, and understaffing stretches them into delays. The player can
+buy a third stand for 8000 — the first buildable capacity upgrade. If cash stays
+negative across three consecutive day closes, the airport is declared insolvent
+and the simulation stops.
 
-Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+
+## Visual asset contract
+
+The approved visual direction, exact asset paths, animation responsibilities and
+production order live in
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0018). The first playable
+moves from procedural primitives to approved art in batches, with primitives kept
+as fallbacks during integration.
+
+The immediate visual target is a premium stylised-realism miniature of a regional
+Australian airport. Generated images establish composition, palette, fictional
+liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
+true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 ## Invariants
 
@@ -73,17 +79,22 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Current evidence
 
-- Twenty edit-mode tests pass.
-- A fifty-cycle simulation completes without reservation conflicts.
+- Fifty-seven edit-mode tests pass (including concurrent-flight soak and step identity).
+- A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
+- When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
 - Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
 - The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
-- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight.
+- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight. Acceptance also refuses when the projected schedule would exceed stand capacity (12 flights/day on two stands).
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
+- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
+- A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
+- Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
@@ -94,4 +105,17 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-Run a long visual soak of the two-aircraft build. Then replace the second aircraft's fixed shuttle with its own arrival/departure schedule, still governed by the segment reservations, working toward several simultaneous aircraft.
+Implement concurrent-flights **slice 1**
+(`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when
+ready. Unity edit-mode + Play soak when Bailey can run the editor again.
+Confirm Unity tests when available. Merge open feature PRs (insolvency, third
+stand, research). Then the concurrent-flights design pass
+(`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.
+Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
+open capacity / insolvency PRs. Then the overdue visual soak, or the
+concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).
+Remaining phase-four filler: a daily report panel.
+Keep merging the remaining phase-four stack onto `main`. Visual soak of the
+build in Unity when Bailey can play. Concurrent-flights design/implementation
+PRs are next after research and the daily report.
+Merge open feature PRs (#3–#7), rebase this slice onto `main`, then Unity Play soak of dual commercials. Tune threshold/stagger after Play if needed.

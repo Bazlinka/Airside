@@ -63,6 +63,19 @@ namespace Airside.Simulation
         public const long OfferIntervalSeconds = 130;
         public const long OfferWindowSeconds = 80;
 
+        /// <summary>
+        /// Soft schedule density per stand. Accept refuses when
+        /// <c>ScheduledFlightsPerDay + pending</c> would exceed
+        /// <c>standCount × FlightsPerStandPerDayCap</c>. Two stands → 12/day.
+        /// </summary>
+        public const int FlightsPerStandPerDayCap = 6;
+
+        /// <summary>Baseline stand count until a buildable capacity system lands.</summary>
+        public const int BaselineStandCount = 2;
+
+        public static int MaxScheduledFlightsPerDay(int standCount) =>
+            standCount * FlightsPerStandPerDayCap;
+
         private static readonly string[] Airlines =
         {
             "Coastline Regional", "Emu Air", "Southern Cross Link", "Gulf Connect", "Redgum Air"
@@ -119,13 +132,30 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Accept the standing proposal at the given reputation. Fails when there is
-        /// no proposal, or the airport's reputation is below what the route requires.
-        /// The per-flight payment locks in a reputation bonus at acceptance time.
+        /// True when the standing proposal fits under the schedule cap for
+        /// <paramref name="standCount"/> stands. False when there is no proposal
+        /// or accepting it would push demand over the cap.
         /// </summary>
-        public bool Accept(SimulationTime now, int reputationScore, long reputationBonus = 0)
+        public bool FitsScheduleCapacity(int standCount)
+        {
+            if (Pending == null)
+                return false;
+            return ScheduledFlightsPerDay + Pending.FlightsPerDay
+                <= MaxScheduledFlightsPerDay(standCount);
+        }
+
+        /// <summary>
+        /// Accept the standing proposal at the given reputation. Fails when there is
+        /// no proposal, the airport's reputation is below what the route requires, or
+        /// accepting would exceed stand schedule capacity. The per-flight payment
+        /// locks in a reputation bonus at acceptance time.
+        /// </summary>
+        public bool Accept(SimulationTime now, int reputationScore, long reputationBonus = 0,
+            int standCount = BaselineStandCount)
         {
             if (Pending == null || reputationScore < Pending.ReputationRequired)
+                return false;
+            if (!FitsScheduleCapacity(standCount))
                 return false;
 
             var income = Pending.IncomePerFlight + Math.Max(0, reputationBonus);

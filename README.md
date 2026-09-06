@@ -13,6 +13,7 @@ The first playable build proves one complete aircraft cycle: land, taxi, occupy 
 - `docs/product/` — product plan and agreed scope
 - `docs/architecture/` — technical decisions and data contracts
 - `docs/testing/` — acceptance checks and test fixtures
+- `docs/art/` — approved art direction, asset manifest, prompts and visual references
 - `scripts/` — repeatable project checks and local builds
 
 ## First implementation slice
@@ -26,5 +27,6 @@ Both scripts run under `bash` or `zsh`. They expect Unity 6.3 LTS at the default
 Hub path; set `AIRSIDE_UNITY` to point elsewhere.
 
 See `GAME.md` for the current milestone, controls, evidence and next work.
+See `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` before creating or integrating any visual asset.
 
 The full product plan is in `docs/product/Airside Project Plan.docx`.

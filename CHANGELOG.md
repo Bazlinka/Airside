@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Batch D runtime alive-airport + first-session coach tips.** Phase-based prop RPM,
+  soft gear retract, split landing/taxi lights, dual touchdown smoke, denser storm rain,
+  stronger engine heat on takeoff/approach, ground-traffic props/lights/heat, wet Stand 3
+  apron, route-offer icon, and contextual left-panel tips. Presentation only — Unity
+  .anim/.prefab files remain Planned; runtime behaviour Integrated. `scripts/test-domain.sh` 97/97.
+
 - **Restore Unity macOS compilation.** Qualify Unity Object calls and include the
   built-in image conversion module required by PNG loading. Retain Unity-generated
   metadata for the new UI assets. Unity 6000.3.23f1 macOS build succeeded and all

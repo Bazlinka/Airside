@@ -41,7 +41,12 @@ namespace Airside.Presentation
             ReadInput();
             var desiredCenter = _following && _followTarget != null ? _followTarget.position : _center;
             if (_following)
+            {
                 _center = Vector3.Lerp(_center, desiredCenter, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.5f));
+                // Ease in a little closer when following so the aircraft fills the frame.
+                var followDistance = 28f;
+                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.8f));
+            }
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance, rotation);

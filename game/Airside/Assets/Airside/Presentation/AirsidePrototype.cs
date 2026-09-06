@@ -232,23 +232,33 @@ namespace Airside.Presentation
             var airborne = phase is AircraftPhase.Approach or AircraftPhase.Takeoff or AircraftPhase.Departed;
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
             var night = daylight < 0.35f;
-            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff || (night && !airborne);
+            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff;
+            var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
                     continue;
                 if (child.name.StartsWith("Gear", StringComparison.Ordinal))
-                    child.gameObject.SetActive(!airborne);
+                {
+                    // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
+                    child.gameObject.SetActive(true);
+                    var euler = child.localEulerAngles;
+                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                    var target = airborne ? -80f : 0f;
+                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 140f);
+                    child.localEulerAngles = euler;
+                }
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
                     child.gameObject.SetActive(enginesOn || night);
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    // Presentation-only strobe while engines are running.
                     child.gameObject.SetActive(enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0));
                 }
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
                     child.gameObject.SetActive(landingLights);
+                else if (child.name.StartsWith("TaxiLight", StringComparison.Ordinal))
+                    child.gameObject.SetActive(taxiLights);
             }
         }
 
@@ -271,6 +281,7 @@ namespace Airside.Presentation
         {
             // Presentation-only: subtle heat shimmer behind running engines.
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var intensity = phase is AircraftPhase.Takeoff or AircraftPhase.Approach ? 1.25f : 1f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft || !child.name.StartsWith("EngineHeat", StringComparison.Ordinal))
@@ -281,12 +292,12 @@ namespace Airside.Presentation
                     continue;
 
                 var pulse = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 7f + child.GetInstanceID() * 0.01f);
-                child.localScale = new Vector3(0.35f * pulse, 0.35f * pulse, 0.7f);
+                child.localScale = new Vector3(0.35f * pulse * intensity, 0.35f * pulse * intensity, 0.7f);
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
                     var color = renderer.material.color;
-                    color.a = 0.12f + 0.1f * pulse;
+                    color.a = (0.12f + 0.1f * pulse) * intensity;
                     renderer.material.color = color;
                 }
             }
@@ -294,11 +305,32 @@ namespace Airside.Presentation
 
         private static void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
-            // Presentation-only: props spin whenever the aircraft is not parked at stand.
-            if (phase == AircraftPhase.AtStand)
+            // Presentation-only: RPM follows phase (Batch D ANM-AIR-001).
+            if (phase == AircraftPhase.AtStand || phase == AircraftPhase.Departed)
                 return;
 
-            var degrees = Time.unscaledDeltaTime * 720f;
+            var rpm = phase switch
+            {
+                AircraftPhase.Takeoff => 1400f,
+                AircraftPhase.Approach or AircraftPhase.Landing => 1100f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 420f,
+                _ => 720f
+            };
+            var degrees = Time.unscaledDeltaTime * rpm;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft)
+                    continue;
+                if (child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    child.Rotate(Vector3.forward, degrees, Space.Self);
+            }
+        }
+
+        private static void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
+        {
+            if (!enginesOn)
+                return;
+            var degrees = Time.unscaledDeltaTime * 520f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -334,7 +366,7 @@ namespace Airside.Presentation
             }
 
             if (needed > 0)
-                _cameraController.SetFollowTarget(_commercialAircraft[0]);
+                _cameraController.SetFollowTargets(_commercialAircraft);
         }
 
         private void UpdateGroundTrafficVisual()
@@ -360,6 +392,13 @@ namespace Airside.Presentation
                         view.rotation,
                         Quaternion.LookRotation(direction.normalized),
                         Time.unscaledDeltaTime * 4f);
+
+                SpinGroundTrafficPropellers(view, enginesOn: !traffic.IsHolding);
+                UpdateAircraftLightsAndGear(
+                    view,
+                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
+                    (float)_simulation.TimeOfDay.Daylight);
+                UpdateEngineHeat(view, traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
             }
         }
 
@@ -585,23 +624,29 @@ namespace Airside.Presentation
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var foggy = weather == WeatherKind.Fog || weather == WeatherKind.Storm;
             var wet = Weather.IsAdverse(weather);
+            var storm = weather == WeatherKind.Storm;
 
             if (_rainRoot != null)
                 _rainRoot.gameObject.SetActive(raining);
 
             if (raining && _rainRoot != null)
             {
+                var fallBase = storm ? 20f : 12f;
+                var drift = storm ? -3.2f : -1.5f;
                 for (var i = 0; i < _rainRoot.childCount; i++)
                 {
                     var drop = _rainRoot.GetChild(i);
                     var pos = drop.localPosition;
-                    pos.y -= Time.unscaledDeltaTime * (12f + (i % 5));
+                    pos.y -= Time.unscaledDeltaTime * (fallBase + (i % 5));
                     if (pos.y < 0.5f)
                         pos.y = 18f + (i % 7);
-                    pos.x += Time.unscaledDeltaTime * -1.5f;
+                    pos.x += Time.unscaledDeltaTime * drift;
                     if (pos.x < -40f)
                         pos.x += 80f;
                     drop.localPosition = pos;
+                    var thickness = storm ? 0.07f : 0.04f;
+                    var length = storm ? 0.85f : 0.55f;
+                    drop.localScale = new Vector3(thickness, length, thickness);
                 }
             }
 
@@ -643,10 +688,11 @@ namespace Airside.Presentation
                     phase == AircraftPhase.Landing &&
                     index < _commercialAircraft.Length)
                 {
-                    _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.2f;
-                    _touchdownSmoke.localScale = new Vector3(1.2f, 0.4f, 1.2f);
+                    _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
+                    _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
+                    _touchdownSmoke.localScale = Vector3.one;
                     _touchdownSmoke.gameObject.SetActive(true);
-                    _touchdownSmokeRemaining = 0.85f;
+                    _touchdownSmokeRemaining = 0.95f;
                 }
 
                 _previousPhases[id] = phase;
@@ -659,21 +705,25 @@ namespace Airside.Presentation
             }
 
             _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
-            var t = Mathf.Clamp01(_touchdownSmokeRemaining / 0.85f);
-            _touchdownSmoke.localScale = Vector3.Lerp(new Vector3(2.4f, 0.2f, 2.4f), new Vector3(1.2f, 0.4f, 1.2f), t);
-            var renderer = _touchdownSmoke.GetComponent<Renderer>();
-            if (renderer != null)
+            var t = Mathf.Clamp01(_touchdownSmokeRemaining / 0.95f);
+            for (var i = 0; i < _touchdownSmoke.childCount; i++)
             {
-                var color = renderer.material.color;
-                color.a = t * 0.45f;
-                renderer.material.color = color;
+                var puff = _touchdownSmoke.GetChild(i);
+                puff.localScale = Vector3.Lerp(new Vector3(2.2f, 0.2f, 2.2f), new Vector3(1.0f, 0.35f, 1.0f), t);
+                var renderer = puff.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    var color = renderer.material.color;
+                    color.a = t * 0.45f;
+                    renderer.material.color = color;
+                }
             }
         }
 
         private void CollectWetSurfaces()
         {
             _wetSurfaces.Clear();
-            foreach (var name in new[] { "Runway", "Taxiway A", "Apron" })
+            foreach (var name in new[] { "Runway", "Taxiway A", "Apron", "Stand 3 apron pad" })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
@@ -690,7 +740,7 @@ namespace Airside.Presentation
             var root = new GameObject("Rain").transform;
             root.position = new Vector3(0f, 0f, 8f);
             var rng = new System.Random(42);
-            for (var i = 0; i < 48; i++)
+            for (var i = 0; i < 96; i++)
             {
                 var drop = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 drop.name = $"Rain {i}";
@@ -713,15 +763,22 @@ namespace Airside.Presentation
 
         private static Transform BuildTouchdownSmoke()
         {
-            var smoke = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            smoke.name = "Touchdown smoke";
-            smoke.transform.localScale = new Vector3(1.2f, 0.4f, 1.2f);
-            smoke.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
-            var collider = smoke.GetComponent<Collider>();
-            if (collider != null)
-                Object.Destroy(collider);
-            smoke.SetActive(false);
-            return smoke.transform;
+            var root = new GameObject("Touchdown smoke").transform;
+            for (var i = 0; i < 2; i++)
+            {
+                var smoke = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                smoke.name = i == 0 ? "Smoke L" : "Smoke R";
+                smoke.transform.SetParent(root, false);
+                smoke.transform.localPosition = new Vector3(i == 0 ? -0.7f : 0.7f, 0.15f, 0f);
+                smoke.transform.localScale = new Vector3(1.0f, 0.35f, 1.0f);
+                smoke.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
+                var collider = smoke.GetComponent<Collider>();
+                if (collider != null)
+                    Object.Destroy(collider);
+            }
+
+            root.gameObject.SetActive(false);
+            return root;
         }
 
         private void OnGUI()
@@ -749,7 +806,7 @@ namespace Airside.Presentation
 
             var timeOfDay = _simulation.TimeOfDay;
 
-            GUI.Box(new Rect(22, 22, 410, 520), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 540), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
@@ -923,7 +980,8 @@ namespace Airside.Presentation
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
-            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
+            GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(), small);
+            GUI.Label(new Rect(42, 518, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;
@@ -1046,7 +1104,14 @@ namespace Airside.Presentation
             var left = Screen.width / scale - 362;
             var top = offerTop;
             GUI.Box(new Rect(left, top, 340, 156), string.Empty, panel);
-            GUI.Label(new Rect(left + 20, top + 14, 300, 24), "ROUTE OFFER", detail);
+            var routeIcon = AirsideTheme.Icon("economy", "route");
+            var titleX = left + 20f;
+            if (routeIcon != null)
+            {
+                GUI.DrawTexture(new Rect(left + 20, top + 14, 20, 20), routeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                titleX = left + 46f;
+            }
+            GUI.Label(new Rect(titleX, top + 14, 300, 24), "ROUTE OFFER — decide now", detail);
             GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);
             GUI.Label(new Rect(left + 20, top + 62, 310, 20),
                 $"{proposal.FlightsPerDay}/day to {proposal.Destination}", small);
@@ -1292,8 +1357,17 @@ namespace Airside.Presentation
             if (_apronLights != null)
             {
                 var flood = Mathf.Lerp(1.35f, 0.05f, daylight);
-                foreach (var light in _apronLights)
-                    light.intensity = flood;
+                for (var i = 0; i < _apronLights.Length; i++)
+                {
+                    var light = _apronLights[i];
+                    if (light == null)
+                        continue;
+                    // Tiny phase offset flicker so floods don't feel static at night.
+                    var flicker = daylight < 0.4f
+                        ? 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.1f + i * 1.7f)
+                        : 1f;
+                    light.intensity = flood * flicker;
+                }
             }
 
             UpdateNightGlow(daylight);
@@ -1534,6 +1608,7 @@ namespace Airside.Presentation
             ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
             ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
             ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
 
@@ -2142,6 +2217,21 @@ private static GameObject CreateBlock(
             }
 
             return string.Join("  ·  ", parts);
+        }
+
+        private string FirstSessionCoachLine()
+        {
+            if (_simulation.IsInsolvent)
+                return "Airport insolvent — operations frozen.";
+            if (_simulation.Routes.Pending != null)
+                return "Tip: Accept a route offer to earn recurring flight income.";
+            if (_simulation.Routes.Accepted.Count == 0)
+                return "Tip: Airlines will offer routes soon — watch the right panel.";
+            if (_simulation.Flights.Count == 0)
+                return "Tip: Accepted routes spawn commercial flights automatically.";
+            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand)
+                return "Tip: Hire crew or priority crew to speed turnarounds.";
+            return "Tip: Watch delays — reputation and cash follow on-time ops.";
         }
 
         private static string FormatPhase(AircraftPhase phase) => phase switch

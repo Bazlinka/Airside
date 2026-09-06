@@ -10,17 +10,26 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Codex (macOS compiler repair and rebuild)
-- **Branch / working tree:** `fix/unity-mac-build-20260907`; Bailey's pre-existing AGENTS.md edit remains uncommitted
-- **Local verification:** Unity 6000.3.23f1 macOS build succeeded; 107/107 EditMode
-  tests passed, none skipped. Resolved ambiguous Unity Object references and the
-  missing image conversion module. This does not establish live visual verification.
-- **Do this next:** Bailey Unity Play soak to mark Batch C / WLD / Batch E **Verified**. Then Batch D animation/VFX or next GAME.md item.
+- **Last updated:** 2026-09-07 by Claude (headless suite + fresh build + built-player play-soak)
+- **Branch / working tree:** `chore/record-play-soak-findings-20260907` off `fix/unity-mac-build-20260907`; Bailey's pre-existing AGENTS.md edit remains uncommitted
+- **Local verification:** Unity 6000.3.23f1 — 107/107 EditMode tests pass (none skipped);
+  fresh macOS player build exit 0, clean `Player.log`. Live soak of the **built player**
+  through day→dusk→night→midnight rollover at 1×/4×: sim loop, turnaround dependency
+  graph, delay diagnostics, corridor serialisation, economy/day-close, HUD palette,
+  pause/speed/follow/overview/WASD all confirmed. Greybox presentation Verified.
+- **Do this next:** (1) Fix `ArtGltfLoader` / texture loaders — they read `Application.dataPath/Airside/Art/…`,
+  which only resolves in the **Editor**, so Batch B/C/E/WLD art silently falls back to primitives in every
+  build (see Current evidence + asset register). Until fixed, the art cannot be Verified and cannot ship.
+  (2) Batch C / WLD / Batch E soak must be done **in the Editor (press Play)**, not against a build.
+  (3) Minor: HUD text overlap at Retina fullscreen — "Day est." line collides with "Operations running
+  to schedule" / the turnaround task list.
 - **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer.
-- **Open questions for Bailey:** none on Integration; Play soak still owned by Bailey.
-- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved · Integrated**; Batch E UI **Approved · Integrated**; WLD-001…003 **Approved · Integrated** (unverified in Play)
+  Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer,
+  AND is Editor-only (dataPath resolution — see Do this next).
+- **Open questions for Bailey:** approach for shipping runtime art (StreamingAssets vs Addressables
+  vs proper asset import) — needs a decision before the art pipeline can be Verified.
+- **Visual assets:** Batch A Approved; Batch B Approved (Integrated, **Editor-only**); Batch C **Approved · Integrated (Editor-only)**; Batch E UI **Approved · Integrated (Editor-only)**; WLD-001…003 **Approved · Integrated (Editor-only)** — none render in a build; all unverified in Play
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -113,18 +122,36 @@ supplementary check, not a replacement for a real Unity run before merging.
 - A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
 - A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
 - Fleet aircraft move identically under large and small time steps.
-- The project compiles in Unity 6.3 LTS and builds a macOS player.
+- The project compiles in Unity 6.3 LTS and builds a macOS player (fresh build 2026-09-07, exit 0, clean `Player.log`).
+- A play-soak of the **built player** (2026-09-07, Claude) ran day→dusk→night→midnight rollover at
+  1×/4× over ~3 flight cycles: deterministic sim loop, the turnaround dependency graph (checkmark /
+  active / pending task states), delay diagnostics ("holding for TAXI-A2"), GT-201/GT-202 corridor
+  serialisation, the midnight day-close + daily report, autosave + `.previous` fallback on disk, and
+  the pause / speed / follow / overview / WASD controls. Greybox presentation Verified; camera orbit
+  feel and frame pacing still need Bailey's eye.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
-  **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
-- Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
-  Batch E service icons and dark panel regenerated; operation/economy/service icons draw in the
-  HUD. **Integrated, not Verified** — Bailey Unity Play soak still required. See
-  `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
+  confirmed rendering in the built player (palette is procedural, not asset-backed). Known bug:
+  at Retina fullscreen the "Day est." line overlaps "Operations running to schedule" / the
+  turnaround task list.
+- **Runtime art is Editor-only.** `ArtGltfLoader` and the `AirsideTheme` / `AirsidePrototype`
+  texture loaders read `Path.Combine(Application.dataPath, "Airside", "Art", …)` and
+  `File.ReadAllBytes` it. In a built player `Application.dataPath` is `…/Airside.app/Contents/
+  Resources/Data`, which has no `Airside/Art/` folder, so **every Batch B / C / E / WLD asset
+  silently falls back to primitives in every build** (missing files return false by design — no
+  error logged). The art therefore cannot be Verified from a build and cannot ship until the
+  loaders use a build-safe source (StreamingAssets / Addressables / proper asset import). The
+  Batch C / WLD / Batch E soak must be run **in the Editor (press Play)**. See the asset register.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): Batch C models, WLD props/lights, Batch E HUD icons/panel,
-   overnight look, dual commercials, insolvency.
-2. **Batch D** animation / VFX after Play confirms Integration.
-3. No unapproved economy systems.
+1. **Make runtime art build-safe.** Move the Art kits/textures to a source that survives a build
+   (StreamingAssets or Addressables), or import them as real Unity assets and reference them
+   directly, instead of `File.ReadAllBytes(Application.dataPath/Airside/Art/…)`. Needs a Bailey
+   decision on approach. Until this lands, the art pipeline is Editor-only and unverifiable from a build.
+2. **Editor Play soak** (Bailey): open `game/Airside` in Unity, press Play — Batch C models, WLD
+   props/lights, Batch E HUD icons/panel, overnight look, dual commercials, insolvency. Camera
+   orbit feel and frame pacing at the same time.
+3. **Batch D** animation / VFX after the Editor Play soak confirms Integration.
+4. Minor: fix the Retina-fullscreen HUD text overlap ("Day est." vs "Operations running to schedule").
+5. No unapproved economy systems.

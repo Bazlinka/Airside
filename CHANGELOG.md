@@ -5,6 +5,20 @@ change it describes.
 
 ## Unreleased
 
+- **Record 2026-09-07 play-soak findings (docs only).** Headless: 107/107 EditMode
+  tests pass (none skipped); fresh macOS player build exit 0, clean `Player.log`.
+  Live soak of the **built player** through day→dusk→night→midnight rollover at
+  1×/4× confirmed the sim loop, turnaround dependency graph, delay diagnostics,
+  GT corridor serialisation, day-close/daily report, autosave + `.previous`
+  fallback, and pause/speed/follow/overview/WASD — greybox presentation Verified.
+  Key finding: **runtime art is Editor-only** — `ArtGltfLoader` and the texture
+  loaders read `Application.dataPath/Airside/Art/…`, which does not exist in a
+  build, so all Batch B/C/E/WLD assets silently fall back to primitives in every
+  build and cannot be Verified or shipped until the loaders use a build-safe
+  source. Also logged: HUD text overlap at Retina fullscreen. `GAME.md` handoff
+  block, Current evidence, Next work, and the asset register updated; the stale
+  "soak the build" instruction corrected to "soak in the Editor". No code changed.
+
 - **Restore Unity macOS compilation.** Qualify Unity Object calls and include the
   built-in image conversion module required by PNG loading. Retain Unity-generated
   metadata for the new UI assets. Unity 6000.3.23f1 macOS build succeeded and all

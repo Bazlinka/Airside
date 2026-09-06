@@ -9,17 +9,28 @@ Every external asset or dataset must be added here before it enters a distributa
 | Prototype engine tone | Airside project | Procedurally generated sine-wave audio | Project-owned generation | None | Source in `AirsidePrototype.cs` | Approved |
 | Art direction and asset specification | Airside project | Canonical visual style, manifest and production rules | Project-owned documentation | None | `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`, decision 0022 | Approved |
 | Batch A approved visual references | OpenAI image generation for Airside | Day/dusk masters, turnaround, HUD and scale/palette references | OpenAI service terms applicable at generation; release review required | None known | `docs/art/prompts/batch-a-reference-generation-2026-09-06.md` | Approved |
-| Batch C first-playable 3D kits | Airside procedural generation | Turboprop, terminal/hangar/ops shed, service vehicles, equipment kit, livery atlases | Project-owned procedural; no third-party pack | None | `docs/art/prompts/batch-c-models-generation-2026-09-06.md`; runtime `ArtGltfLoader` | Approved · Integrated (unverified in Unity Play) |
-| Batch B world surfaces and kits | Airside procedural generation | Tileable asphalt/concrete/grass/metal, glass mask, wear decals, markings/lighting/props glTF kits | Project-owned procedural; no third-party pack | None | `docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md` | Approved (surfaces + WLD kits Integrated; Play unverified) |
-| Batch E UI icons and panels | OpenAI + project-owned fix | Weather/operation/economy icons; regenerated service icons + dark panel; alert stripe | Mixed: OpenAI terms for original sheets; service/dark panel project-owned via `scripts/generate-batch-e-ui-fix.py` | None known | `docs/art/prompts/batch-e-ui-generation-2026-09-06.md` | Approved · Integrated (unverified in Unity Play) |
-| Batch E UI-ICO-003 service icon sheet | Airside procedural (fix) | Valid PNG sheet + 7 sliced runtime icons | Project-owned | None | `scripts/generate-batch-e-ui-fix.py` | Integrated |
-| Batch E UI-PNL-002 dark operations panel | Airside procedural (fix) | 128×128 Runway Ink ~89% mean alpha with edge | Project-owned | None | `scripts/generate-batch-e-ui-fix.py` | Integrated |
+| Batch C first-playable 3D kits | Airside procedural generation | Turboprop, terminal/hangar/ops shed, service vehicles, equipment kit, livery atlases | Project-owned procedural; no third-party pack | None | `docs/art/prompts/batch-c-models-generation-2026-09-06.md`; runtime `ArtGltfLoader` | Approved · Integrated **Editor-only** (see note); unverified in Unity Play |
+| Batch B world surfaces and kits | Airside procedural generation | Tileable asphalt/concrete/grass/metal, glass mask, wear decals, markings/lighting/props glTF kits | Project-owned procedural; no third-party pack | None | `docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md` | Approved · surfaces + WLD kits Integrated **Editor-only** (see note); Play unverified |
+| Batch E UI icons and panels | OpenAI + project-owned fix | Weather/operation/economy icons; regenerated service icons + dark panel; alert stripe | Mixed: OpenAI terms for original sheets; service/dark panel project-owned via `scripts/generate-batch-e-ui-fix.py` | None known | `docs/art/prompts/batch-e-ui-generation-2026-09-06.md` | Approved · Integrated **Editor-only** (see note); unverified in Unity Play |
+| Batch E UI-ICO-003 service icon sheet | Airside procedural (fix) | Valid PNG sheet + 7 sliced runtime icons | Project-owned | None | `scripts/generate-batch-e-ui-fix.py` | Integrated **Editor-only** (see note) |
+| Batch E UI-PNL-002 dark operations panel | Airside procedural (fix) | 128×128 Runway Ink ~89% mean alpha with edge | Project-owned | None | `scripts/generate-batch-e-ui-fix.py` | Integrated **Editor-only** (see note) |
 | Batch E UI-PNL-001 light panel texture | OpenAI built-in image generation for Airside | Verified correct (opaque, matches Cloud `#EEF1EC` closely); not currently used by any HUD element | OpenAI service terms applicable at generation; release review required | None known | `docs/art/prompts/batch-e-ui-generation-2026-09-06.md` | Generated — available, unused |
 | Unity engine and packages | Unity Technologies | Development and runtime | Unity terms applicable to the installed editor and packages | Review for distribution | Package manifest and Unity installation | Review at release |
 | Real-world airport or map data | Not selected | Later location grounding | Unknown | Unknown | None | Excluded |
 | Airline names, logos and liveries | Not selected | Possible later content | Unknown | Unknown | None | Excluded |
 
 No third-party art, sound, map, weather or airline data is currently included.
+
+**Editor-only integration note (2026-09-07).** `ArtGltfLoader` and the `AirsideTheme` /
+`AirsidePrototype` texture loaders read runtime art with
+`File.ReadAllBytes(Path.Combine(Application.dataPath, "Airside", "Art", …))`. In a built
+player `Application.dataPath` is `…/Airside.app/Contents/Resources/Data`, which contains no
+`Airside/Art/` folder, so every Batch B / C / E / WLD asset silently falls back to the
+procedural primitive (missing files return false by design — nothing is logged). A
+2026-09-07 play-soak of the built player confirmed only greybox renders. These assets
+cannot be marked Verified, and cannot enter a distributable build, until the loaders draw
+from a build-safe source (StreamingAssets, Addressables, or direct Unity asset references).
+Approval/licence status above is unaffected; only the runtime delivery path is broken.
 
 ## Generated asset evidence
 

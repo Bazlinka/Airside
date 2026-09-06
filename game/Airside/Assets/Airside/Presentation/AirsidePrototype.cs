@@ -189,9 +189,16 @@ namespace Airside.Presentation
 
             GUI.Label(new Rect(42, 368, 370, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
-            GUI.Box(new Rect(Screen.width / scale - 258, 22, 236, 78), string.Empty, panel);
-            GUI.Label(new Rect(Screen.width / scale - 238, 38, 200, 22), "Right-drag orbit", small);
-            GUI.Label(new Rect(Screen.width / scale - 238, 62, 200, 22), "Scroll zoom  ·  WASD pan", small);
+            var historyLeft = Screen.width / scale - 362;
+            GUI.Box(new Rect(historyLeft, 22, 340, 190), string.Empty, panel);
+            GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
+            GUI.Label(new Rect(historyLeft + 20, 62, 300, 20), $"Taxi route: {_simulation.ActiveTaxiRoute.Name}", small);
+            var historyY = 88f;
+            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(5))
+            {
+                GUI.Label(new Rect(historyLeft + 20, historyY, 300, 19), $"T+{entry.OccurredAt.ElapsedSeconds}s  {entry.FlightId}  ·  {entry.Title}", small);
+                historyY += 20f;
+            }
 
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small);
@@ -355,19 +362,53 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private static Vector3 PositionFor(AircraftPhase phase, float progress, float standZ)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ)
         {
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
                 AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
-                AircraftPhase.TaxiIn => Smooth(new Vector3(-24f, 0.7f, 0f), new Vector3(17f, 0.7f, standZ), progress),
+                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(progress, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
                 AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
-                AircraftPhase.TaxiOut => Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(28f, 0.7f, 0f), progress),
+                AircraftPhase.TaxiOut => progress < 0.15f
+                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), progress / 0.15f)
+                    : PositionAlongTaxiRoute((progress - 0.15f) / 0.85f, true),
                 AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
                 _ => new Vector3(52f, 15f, 0f)
             };
+        }
+
+        private Vector3 PositionAlongTaxiRoute(float progress, bool reverse)
+        {
+            var points = _simulation.ActiveTaxiRoute.Points;
+            var segmentLengths = new float[points.Count - 1];
+            var totalLength = 0f;
+            for (var index = 0; index < segmentLengths.Length; index++)
+            {
+                var from = points[index];
+                var to = points[index + 1];
+                segmentLengths[index] = Vector2.Distance(new Vector2(from.X, from.Z), new Vector2(to.X, to.Z));
+                totalLength += segmentLengths[index];
+            }
+
+            var distance = Mathf.Clamp01(reverse ? 1f - progress : progress) * totalLength;
+            for (var index = 0; index < segmentLengths.Length; index++)
+            {
+                if (distance > segmentLengths[index])
+                {
+                    distance -= segmentLengths[index];
+                    continue;
+                }
+
+                var from = points[index];
+                var to = points[index + 1];
+                var localProgress = segmentLengths[index] <= 0f ? 1f : distance / segmentLengths[index];
+                return Smooth(new Vector3(from.X, 0.7f, from.Z), new Vector3(to.X, 0.7f, to.Z), localProgress);
+            }
+
+            var last = points[points.Count - 1];
+            return new Vector3(last.X, 0.7f, last.Z);
         }
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));

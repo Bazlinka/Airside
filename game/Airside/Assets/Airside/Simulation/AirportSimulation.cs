@@ -10,7 +10,6 @@ namespace Airside.Simulation
         public const long DepartureResetSeconds = 6;
 
         public static readonly StableId Runway = new("RUNWAY-09-27");
-        public static readonly StableId Taxiway = new("TAXI-A");
         public static readonly StableId ApronLane = new("APRON-LANE");
         public static readonly StableId StandOne = new("STAND-1");
         public static readonly StableId StandTwo = new("STAND-2");
@@ -30,6 +29,8 @@ namespace Airside.Simulation
             _cycleStartedAt = clock.Now;
             _lastUpdatedAt = clock.Now;
             Economy = new AirportEconomy();
+            TaxiNetwork = new AirportTaxiNetwork();
+            EventLog = new OperationalEventLog();
             StartCycle();
             SynchronizeReservations();
         }
@@ -40,6 +41,9 @@ namespace Airside.Simulation
         public int ReservationConflicts { get; private set; }
         public TurnaroundWorkflow ActiveTurnaround { get; private set; }
         public AirportEconomy Economy { get; }
+        public AirportTaxiNetwork TaxiNetwork { get; }
+        public TaxiRoute ActiveTaxiRoute { get; private set; }
+        public OperationalEventLog EventLog { get; }
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
         public long CurrentDelaySeconds => ActiveAircraft.Phase == AircraftPhase.AtStand && ActiveTurnaround != null
@@ -71,6 +75,7 @@ namespace Airside.Simulation
                 return false;
 
             ActiveTurnaround.EnablePriorityCrew();
+            Record(_lastUpdatedAt, "Priority crew assigned", "$300 schedule recovery decision");
             return true;
         }
 
@@ -96,7 +101,10 @@ namespace Airside.Simulation
             if (previousPhase != ActiveAircraft.Phase)
             {
                 if (ActiveAircraft.Phase == AircraftPhase.AtStand)
+                {
                     ActiveTurnaround = new TurnaroundWorkflow(ActiveAircraft.PhaseStartedAt, _random.NextInt(0, 3) == 0);
+                    Record(now, "On stand", $"Arrived at {AssignedStand.Value}");
+                }
 
                 if (previousPhase == AircraftPhase.AtStand && ActiveTurnaround != null)
                 {
@@ -104,13 +112,19 @@ namespace Airside.Simulation
                     LastDelayCause = LastDelaySeconds > 0 && ActiveTurnaround.HasCleaningDisruption
                         ? "Cabin cleaning disruption"
                         : string.Empty;
+                    if (LastDelaySeconds > 0)
+                        Record(now, $"Delayed {LastDelaySeconds}s", LastDelayCause);
+                    Record(now, "Turnaround complete", "Pushback approved");
                 }
 
                 if (ActiveAircraft.Phase == AircraftPhase.Departed && !_flightSettled)
                 {
                     Economy.CompleteFlight(LastDelaySeconds);
                     _flightSettled = true;
+                    Record(now, "Departed", $"Net flight result ${AirportEconomy.TurnaroundRevenue - LastDelaySeconds * AirportEconomy.DelayCostPerSecond:N0}");
                 }
+                else if (ActiveAircraft.Phase == AircraftPhase.Landing)
+                    Record(now, "Landing", Runway.Value);
             }
 
             SynchronizeReservations();
@@ -125,9 +139,11 @@ namespace Airside.Simulation
         {
             var aircraftId = new StableId($"AS-{CompletedCycles + 101:000}");
             AssignedStand = _random.NextInt(0, 2) == 0 ? StandOne : StandTwo;
+            ActiveTaxiRoute = TaxiNetwork.RouteTo(AssignedStand);
             ActiveAircraft = new AircraftOperation(aircraftId.Value, _cycleStartedAt);
             ActiveTurnaround = null;
             _flightSettled = false;
+            Record(_cycleStartedAt, "Flight inbound", $"Assigned {AssignedStand.Value}");
         }
 
         private void SynchronizeReservations()
@@ -146,7 +162,8 @@ namespace Airside.Simulation
                     yield return Runway;
                     break;
                 case AircraftPhase.TaxiIn:
-                    yield return Taxiway;
+                    foreach (var segment in ActiveTaxiRoute.SegmentIds)
+                        yield return segment;
                     yield return AssignedStand;
                     break;
                 case AircraftPhase.AtStand:
@@ -157,9 +174,15 @@ namespace Airside.Simulation
                     yield return ApronLane;
                     break;
                 case AircraftPhase.TaxiOut:
-                    yield return Taxiway;
+                    foreach (var segment in ActiveTaxiRoute.SegmentIds)
+                        yield return segment;
                     break;
             }
+        }
+
+        private void Record(SimulationTime time, string title, string detail)
+        {
+            EventLog.Add(new OperationalEvent(time, ActiveAircraft?.AircraftId ?? string.Empty, title, detail));
         }
     }
 }

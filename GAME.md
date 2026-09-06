@@ -6,7 +6,7 @@ Airside is a real-time, persistent airport management game for Mac. The player d
 
 ## Current milestone
 
-Phase three: keep the airport operating between sessions. The prototype now writes versioned local saves, records priority-crew decisions, advances the same deterministic simulation for elapsed real time and shows a welcome-back report with completed flights, cash change and delay costs. A corrupt latest save falls back to the previous complete copy.
+Phase four: make aircraft ground movement and operational history explicit. Each stand now has a named route through shared taxiway segments and its own lead-in. The aircraft follows that route, reservations use the same segment identifiers, and an operations panel records inbound assignment, landing, stand arrival, player intervention, delay and departure.
 
 ## Invariants
 
@@ -34,14 +34,16 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Current evidence
 
-- Sixteen edit-mode tests pass.
+- Eighteen edit-mode tests pass.
 - A fifty-cycle simulation completes without reservation conflicts.
 - Large and one-second time steps reach identical simulation state.
 - Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
+- Named taxi routes connect both stands through shared reserved segments.
+- The event history produces an ordered, player-readable account of each flight.
 - The project compiles in Unity 6.3 LTS on the development Mac.
 
 ## Next work
 
-Replace the single visual path with a named taxi graph and record operational transition events. Then run a longer visual soak before introducing a second simultaneous aircraft.
+Run a longer visual soak, add deadlock diagnostics and then introduce a second simultaneous aircraft using the same taxi-segment reservations.

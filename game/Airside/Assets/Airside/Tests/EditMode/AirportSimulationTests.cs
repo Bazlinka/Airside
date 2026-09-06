@@ -82,9 +82,9 @@ namespace Airside.Tests
             var second = new StableId("AS-102");
 
             Assert.That(table.TryReplace(first, new[] { AirportSimulation.Runway }, out _), Is.True);
-            Assert.That(table.TryReplace(second, new[] { AirportSimulation.Runway, AirportSimulation.Taxiway }, out var blocked), Is.False);
+            Assert.That(table.TryReplace(second, new[] { AirportSimulation.Runway, AirportTaxiNetwork.AlphaOne }, out var blocked), Is.False);
             Assert.That(blocked, Is.EqualTo(AirportSimulation.Runway));
-            Assert.That(table.IsReserved(AirportSimulation.Taxiway), Is.False);
+            Assert.That(table.IsReserved(AirportTaxiNetwork.AlphaOne), Is.False);
         }
 
         [Test]
@@ -95,6 +95,36 @@ namespace Airside.Tests
 
             for (var index = 0; index < 100; index++)
                 Assert.That(first.NextInt(0, 10000), Is.EqualTo(second.NextInt(0, 10000)));
+        }
+
+        [Test]
+        public void TaxiRoutes_UseNamedSharedSegmentsAndAStandSpecificLeadIn()
+        {
+            var network = new AirportTaxiNetwork();
+            var standOne = network.RouteTo(AirportSimulation.StandOne);
+            var standTwo = network.RouteTo(AirportSimulation.StandTwo);
+
+            Assert.That(standOne.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.AlphaOne));
+            Assert.That(standOne.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
+            Assert.That(standOne.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
+            Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
+            Assert.That(standOne.Points.Count, Is.EqualTo(standOne.SegmentIds.Count + 1));
+        }
+
+        [Test]
+        public void OperationalHistory_RecordsAnExplainableFlightSequence()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
+            clock.Advance(160);
+            simulation.Update();
+
+            var titles = System.Linq.Enumerable.Select(simulation.EventLog.Events, entry => entry.Title);
+            Assert.That(titles, Does.Contain("Flight inbound"));
+            Assert.That(titles, Does.Contain("Landing"));
+            Assert.That(titles, Does.Contain("On stand"));
+            Assert.That(titles, Does.Contain("Delayed 6s"));
+            Assert.That(titles, Does.Contain("Departed"));
         }
     }
 }

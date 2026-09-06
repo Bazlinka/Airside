@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Fix a zero-seed crash-on-save landmine.** `AirsideSaveData.Validate()` treats
+  `randomSeed == 0` as corruption (rejecting the save and falling back to the
+  previous snapshot), but `PersistentAirportSession.LoadOrCreate` would happily
+  persist a literal 0 if ever called with a zero `newGameSeed` — the very next
+  autosave would then throw `InvalidOperationException` and never recover.
+  Unreachable today (the only call site is a hardcoded non-zero literal), but a
+  real landmine for any future random seed source. Remapped 0 to a fixed
+  non-zero fallback at creation, the same way `SeededRandomSource` already
+  tolerates a zero seed internally. Added
+  `NewGameWithZeroSeed_SavesWithoutThrowingAndPersistsANonZeroSeed`, confirmed
+  it reproduces the crash without the fix. 96/96 tests pass.
 - **Fix dead/confused branch in `AirportResearch.Progress01`.** The `!IsResearching`
   path had an unreachable condition (always evaluated false given the guard above
   it) that only ever mattered if a future caller queried progress outside of

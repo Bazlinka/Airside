@@ -56,10 +56,13 @@ namespace Airside.Persistence
             var loaded = repository.TryLoad(out var save, out var recoveredPrevious);
             if (!loaded)
             {
+                // AirsideSaveData.Validate() treats a zero seed as corruption (never a
+                // legitimate stored value), so a caller-supplied 0 must not reach disk —
+                // remap it the same way SeededRandomSource already tolerates a zero seed.
                 save = new AirsideSaveData
                 {
                     savedUnixSeconds = currentUnixSeconds,
-                    randomSeed = newGameSeed
+                    randomSeed = newGameSeed == 0 ? 1u : newGameSeed
                 };
             }
 

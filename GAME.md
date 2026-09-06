@@ -95,7 +95,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 95 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
+- `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 96 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
@@ -109,7 +109,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
 - Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
 - Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
-- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). `scripts/test-domain.sh`: 95 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
+- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). `scripts/test-domain.sh`: 96 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.

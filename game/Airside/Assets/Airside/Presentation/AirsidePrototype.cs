@@ -127,6 +127,13 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (_simulation.IsInsolvent)
+            {
+                // Simulation is frozen; keep presentation paused and ignore ops hotkeys.
+                _paused = true;
+                return;
+            }
+
             if (keyboard.spaceKey.wasPressedThisFrame)
                 _paused = !_paused;
             if (keyboard.tabKey.wasPressedThisFrame)
@@ -687,14 +694,25 @@ namespace Airside.Presentation
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
             GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", small);
-            GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
+            var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
+            GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", cashStyle);
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
                 ? $"  ·  ~{days}d runway"
                 : "  ·  cash building";
             GUI.Label(new Rect(42, 176, 390, 22),
                 $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", small);
-            if (_simulation.TrafficWaits.HasWarning(_clock.Now))
+            if (_simulation.IsInsolvent)
+            {
+                GUI.Label(new Rect(42, 198, 360, 22), "INSOLVENT — operations frozen", delayed);
+            }
+            else if (_simulation.Economy.ConsecutiveNegativeDays > 0)
+            {
+                var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
+                GUI.Label(new Rect(42, 198, 360, 22),
+                    $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent", caution);
+            }
+            else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
                 GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
 
             var lineY = 180f;
@@ -712,7 +730,7 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
 
                 var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
-                GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
+                GUI.enabled = !_simulation.IsInsolvent && !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
                 if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
                     _session.EnablePriorityCrew();
                 GUI.enabled = true;
@@ -729,10 +747,10 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 360, 380, 20),
                 $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
                 staffing.IsUnderstaffed ? caution : small);
-            GUI.enabled = staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
+            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
             if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
                 _session.HireGroundCrew();
-            GUI.enabled = staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
+            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
             if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
                 _session.ReleaseGroundCrew();
             GUI.enabled = true;
@@ -740,7 +758,7 @@ namespace Airside.Presentation
             var capacity = _simulation.Capacity;
             GUI.Label(new Rect(42, 408, 380, 20),
                 $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
-            GUI.enabled = capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
+            GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
             if (GUI.Button(new Rect(42, 426, 220, 24),
                     capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
                 _session.BuildThirdStand();
@@ -757,7 +775,7 @@ namespace Airside.Presentation
             {
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
-                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
                 if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
                     _session.StartOperationsResearch();
                 GUI.enabled = true;
@@ -766,7 +784,7 @@ namespace Airside.Presentation
             {
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
-                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
+                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
                 if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
                     _session.StartPassengerServicesResearch();
                 GUI.enabled = true;
@@ -854,7 +872,28 @@ namespace Airside.Presentation
 
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
+            if (_simulation.IsInsolvent)
+                DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed);
             GUI.matrix = previousMatrix;
+        }
+
+        private void DrawInsolvencyOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle delayed)
+        {
+            var width = 460f;
+            var height = 260f;
+            var left = (Screen.width / scale - width) * 0.5f;
+            var top = (Screen.height / scale - height) * 0.5f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 24, top + 22, width - 48, 34), "AIRSIDE", title);
+            GUI.Label(new Rect(left + 24, top + 58, width - 48, 28), "Airport declared insolvent", delayed);
+            GUI.Label(new Rect(left + 24, top + 96, width - 48, 44),
+                $"Cash stayed negative across {AirportEconomy.InsolvencyConsecutiveDays} consecutive day closes. Operations have stopped; commands are refused.", detail);
+            GUI.Label(new Rect(left + 24, top + 150, width - 48, 22),
+                $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}", detail);
+            GUI.Label(new Rect(left + 24, top + 180, width - 48, 22),
+                $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
+            GUI.Label(new Rect(left + 24, top + 210, width - 48, 22),
+                "Start a new save to try again.", small);
         }
 
         private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, GUIStyle caution, GUIStyle button, float offerTop = 244f)
@@ -885,7 +924,7 @@ namespace Airside.Presentation
                 status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
             GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, blocked ? caution : small);
 
-            GUI.enabled = meetsReputation && fitsCapacity;
+            GUI.enabled = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
             if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route", button))
                 _session.AcceptRoute();
             GUI.enabled = true;

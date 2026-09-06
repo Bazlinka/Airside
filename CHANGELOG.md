@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Show insolvency on the HUD.** Simulation already froze after three consecutive negative
+  day closes, but the player only saw frozen cash with no explanation. Presentation now
+  turns cash Signal Red when negative, warns on consecutive negative closes, auto-pauses
+  visuals when insolvent, blocks ops hotkeys, and shows a centred AIRSIDE insolvency
+  overlay. Presentation only — `scripts/test-domain.sh` 96/96.
 - **Fix ground-traffic Stand 3 circuit.** Arrive/depart fleet aircraft mapped any non-Stand-1
   target onto Stand 2's lead-in and apron Z, so a Stand 3 assignment reserved the wrong
   taxi segment and parked at Stand 2's position. `BuildCircuit` now uses

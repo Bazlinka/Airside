@@ -10,6 +10,14 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
+- **Last updated:** 2026-09-06 by Cursor (insolvency HUD overlay)
+- **Branch / working tree:** `cursor/insolvency-hud-38b9` → PR into `main`
+  (also open: #20 overnight polish, #21 Stand 3 ground-traffic)
+- **Do this next:** Merge open overnight PRs (#20/#21/#22). Bailey review of Batch C / Batch E when free.
+  Unity Play soak for HUD, insolvency overlay, and miniature look.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox on main; WLD polish in #20.
+  Stand 3 ground-traffic fix in #21. Insolvency HUD on this branch. Batch E UI candidates Generated
+  (not integrated). Passenger Services shipped. Headless harness 96/96 on this tip.
 - **Last updated:** 2026-09-06 by Cursor (merge wave: #20–#21 in; continuing)
 - **Branch / working tree:** `main`
 - **Do this next:** Continue merging #22–#30 then #19. Batch C Integration after wave. Unity Play soak.
@@ -116,9 +124,11 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Merge open overnight PRs** (#20 polish + Stand 3 ground-traffic lead-in) then continue Batch D look.
-1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
+1. **Merge open overnight PRs** (#20 polish, #21 Stand 3 lead-in, #22 insolvency HUD) then continue Batch D look.
 2. **Bailey review of Batch C** when convenient (not blocking further work).
 3. **Keep building** — remaining Batch D / miniature look polish; no unapproved economy systems.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD).
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD, insolvency).
 5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Merge open overnight PRs** (#20 polish + Stand 3 ground-traffic lead-in) then continue Batch D look.
+1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD).

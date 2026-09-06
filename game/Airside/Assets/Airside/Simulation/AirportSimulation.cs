@@ -36,7 +36,7 @@ namespace Airside.Simulation
             _groundTraffic = new GroundTrafficAircraft(_reservations);
             StartCycle();
             SynchronizeReservations();
-            _groundTraffic.Reposition(_clock.Now, TrafficWaits);
+            _groundTraffic.Reposition(_clock.Now, TrafficWaits, AssignedStand);
         }
 
         public AircraftOperation ActiveAircraft { get; private set; }
@@ -144,7 +144,7 @@ namespace Airside.Simulation
             // and ground traffic moves into whatever space is left.
             _groundTraffic.Yield(RequiredResources());
             SynchronizeReservations();
-            _groundTraffic.Reposition(now, TrafficWaits);
+            _groundTraffic.Reposition(now, TrafficWaits, AssignedStand);
         }
 
         private bool CanLeavePhase(AircraftPhase phase)

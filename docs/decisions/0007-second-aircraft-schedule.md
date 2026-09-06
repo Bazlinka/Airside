@@ -33,8 +33,19 @@ control flow.
   Stand 2", "At Stand 2", "Departing", ...) and whether it is holding.
 - Save compatibility is unchanged: the schedule is a pure function of elapsed
   simulated seconds and the reservation table, with no new persisted fields.
-- A future real scheduler will choose the stand (avoiding the primary's
-  assignment) and vary timings; the leg model and the priority rule stay.
-- When the primary flight is assigned Stand 2, the second aircraft yields the
-  stand and holds on the taxiway until the flight departs — visible through the
-  traffic wait monitor.
+- A future real scheduler will vary timings and add more aircraft; the leg model
+  and the priority rule stay.
+- When the primary flight is assigned the same stand the second aircraft is
+  already committed to (its choice was locked in earlier in the arrival), the
+  second aircraft yields the stand and holds on the taxiway until the flight
+  departs — visible through the traffic wait monitor.
+
+## Follow-up (same day)
+
+The second aircraft now chooses its stand at the start of each arrival: it reads
+the primary flight's current assignment and targets the other stand, rebuilding
+its leg list (`BuildCircuit`) for Stand 1 or Stand 2 geometry. The choice is
+locked for that arrival, so a later primary reassignment to the same stand is
+resolved by the yield rule rather than by the second aircraft switching mid-taxi.
+This keeps the two aircraft off each other's stand in the common case while
+staying deterministic (the choice is a pure function of the seeded assignment).

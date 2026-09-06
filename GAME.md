@@ -10,17 +10,20 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (second aircraft schedule)
+- **Last updated:** 2026-09-06 by Claude (second aircraft picks a free stand)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
 - **Do this next:** Visual soak — run the Mac build for a long session and watch
-  the two aircraft contend for A1/A2 and Stand 2; confirm no stutter or stuck
-  traffic. Then move toward a third aircraft, or let the second aircraft pick a
-  stand that avoids the primary flight's assignment (see decision 0007).
-- **In progress / half-done:** nothing — 24/24 edit-mode tests pass, macOS build ok
+  the two aircraft share A1/A2 and use opposite stands; confirm no stutter or
+  stuck traffic. Then move toward a third aircraft (the leg model + priority rule
+  in `GroundTrafficAircraft` should generalise), or vary the second aircraft's
+  schedule timings.
+- **In progress / half-done:** nothing — 26/26 edit-mode tests pass, macOS build ok
 - **Watch out for:** the second aircraft (`GT-201`) always yields to the primary
   flight by design, so `ReservationConflicts` stays zero and only the traffic
-  wait monitor records its waits. Its schedule is a data-driven leg list in
-  `GroundTrafficAircraft.cs` — see decisions 0006 and 0007.
+  wait monitor records its waits. It locks its stand choice at the start of each
+  arrival — a later primary reassignment to that stand is resolved by yielding,
+  not by switching mid-taxi. Schedule is a data-driven leg list — decisions
+  0006 and 0007.
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -28,7 +31,7 @@ Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 
 ## Current milestone
 
-Phase five: simultaneous traffic. A second aircraft (`GT-201`) runs its own repeating arrival, Stand 2 dwell and departure schedule, reserving the shared taxi segments A1 and A2 and the stand through the same reservation table as the primary flight. The primary flight has priority: the second aircraft releases any resource the flight needs and holds position until it is free, and a hold beyond ten seconds is explained by the traffic wait monitor.
+Phase five: simultaneous traffic. A second aircraft (`GT-201`) runs its own repeating arrival, stand dwell and departure schedule, parking on whichever stand the primary flight is not using and reserving the shared taxi segments A1 and A2 and the stand through the same reservation table as the primary flight. The primary flight has priority: the second aircraft releases any resource the flight needs and holds position until it is free, and a hold beyond ten seconds is explained by the traffic wait monitor.
 
 ## Invariants
 
@@ -66,7 +69,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
 - A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
-- A second aircraft runs its own arrival, stand and departure schedule on Stand 2, sharing the taxi segments and the stand through the reservation table without ever blocking the primary flight (24 edit-mode tests, including a fifty-cycle soak with the second aircraft active).
+- A second aircraft runs its own arrival, stand and departure schedule, parking on whichever stand the primary flight is not assigned, sharing the taxi segments and stands through the reservation table without ever blocking the primary flight (26 edit-mode tests, including multi-cycle soaks with the second aircraft active).
 - The second aircraft moves identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.
 

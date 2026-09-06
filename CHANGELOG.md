@@ -6,12 +6,14 @@ change it describes.
 ## Unreleased
 
 - Second aircraft (`GroundTrafficAircraft`, `GT-201`) now runs a repeating
-  schedule — taxi in on A1, taxi in on A2, park on Stand 2 for a dwell, taxi out,
-  depart, gap — as a data-driven leg list, instead of a fixed A1/A2 shuttle. It
-  reserves every segment and stand through the same `ReservationTable` and still
-  yields the whole airfield to the primary flight, so `ReservationConflicts`
-  stays zero. HUD shows its phase and any hold. 24/24 edit-mode tests pass;
-  macOS build succeeds. See `docs/decisions/0007-second-aircraft-schedule.md`.
+  arrival/stand/departure schedule as a data-driven leg list, and **parks on
+  whichever stand the primary flight is not assigned** — it reads the flight's
+  stand at the start of each arrival and targets the other, rebuilding its leg
+  list for that stand's geometry. It reserves every segment and stand through the
+  same `ReservationTable` and still yields the whole airfield to the primary
+  flight, so `ReservationConflicts` stays zero. HUD shows its phase and any hold.
+  26/26 edit-mode tests pass; macOS build succeeds and runs.
+  See `docs/decisions/0007-second-aircraft-schedule.md`.
 - Second aircraft first introduced: shared taxi-segment reservations with the
   primary flight, priority-and-yield rule, per-tick reservation time so segments
   are correct during offline catch-up.

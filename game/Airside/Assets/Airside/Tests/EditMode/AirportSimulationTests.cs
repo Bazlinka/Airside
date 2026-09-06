@@ -199,21 +199,24 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SecondAircraft_RunsAnArrivalStandAndDepartureScheduleOnStandTwo()
+        public void SecondAircraft_RunsAnArrivalStandAndDepartureSchedule()
         {
             var table = new ReservationTable();
             var monitor = new TrafficWaitMonitor();
             var groundTraffic = new GroundTrafficAircraft(table);
+            // Primary flight is on Stand 1, so the second aircraft should take Stand 2.
+            var primaryStand = AirportSimulation.StandOne;
 
             var reachedStand = false;
             var releasedStandOnDeparture = false;
             var departed = false;
             for (long second = 1; second <= 150; second++)
             {
-                groundTraffic.Reposition(new SimulationTime(second), monitor);
+                groundTraffic.Reposition(new SimulationTime(second), monitor, primaryStand);
                 if (groundTraffic.IsAtStand)
                 {
                     reachedStand = true;
+                    Assert.That(groundTraffic.TargetStand, Is.EqualTo(AirportSimulation.StandTwo));
                     Assert.That(table.IsReserved(AirportSimulation.StandTwo), Is.True);
                 }
 
@@ -224,9 +227,42 @@ namespace Airside.Tests
                     departed = true;
             }
 
-            Assert.That(reachedStand, Is.True, "the second aircraft should park on Stand 2");
+            Assert.That(reachedStand, Is.True, "the second aircraft should park on a stand");
             Assert.That(releasedStandOnDeparture, Is.True, "and release the stand as it taxis out");
             Assert.That(departed, Is.True, "and then depart before repeating the schedule");
+        }
+
+        [Test]
+        public void SecondAircraft_ChoosesItsStandFromThePrimaryFlightAssignment()
+        {
+            // At the moment a fresh arrival begins, it must target the other stand.
+            var toStandTwo = new GroundTrafficAircraft(new ReservationTable());
+            toStandTwo.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandOne);
+            Assert.That(toStandTwo.TargetStand, Is.EqualTo(AirportSimulation.StandTwo));
+
+            var toStandOne = new GroundTrafficAircraft(new ReservationTable());
+            toStandOne.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandTwo);
+            Assert.That(toStandOne.TargetStand, Is.EqualTo(AirportSimulation.StandOne));
+        }
+
+        [Test]
+        public void SecondAircraft_AdaptsAcrossManyCyclesWithoutBlockingOrDeadlock()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(7), new ReservationTable());
+
+            var standsVisited = new System.Collections.Generic.HashSet<string>();
+            for (var second = 1; second <= 6000 && simulation.CompletedCycles < 25; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.GroundTraffic.IsAtStand)
+                    standsVisited.Add(simulation.GroundTraffic.TargetStand.Value);
+            }
+
+            Assert.That(simulation.CompletedCycles, Is.EqualTo(25), "the primary flight keeps cycling");
+            Assert.That(simulation.ReservationConflicts, Is.Zero, "and is never blocked by the second aircraft");
+            Assert.That(standsVisited.Count, Is.EqualTo(2), "the second aircraft uses both stands as the primary's assignment changes");
         }
 
         [Test]
@@ -239,7 +275,7 @@ namespace Airside.Tests
             // An arriving flight holds A1 while the second aircraft wants to taxi in on it.
             Assert.That(table.TryReplace(new StableId("AS-101"), new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
             for (long second = 1; second <= 45; second++)
-                groundTraffic.Reposition(new SimulationTime(second), monitor);
+                groundTraffic.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne);
 
             Assert.That(groundTraffic.IsHolding, Is.True);
             Assert.That(groundTraffic.DesiredSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
@@ -247,7 +283,7 @@ namespace Airside.Tests
             Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain(GroundTrafficAircraft.Id.Value));
 
             table.Release(new StableId("AS-101"));
-            groundTraffic.Reposition(new SimulationTime(46), monitor);
+            groundTraffic.Reposition(new SimulationTime(46), monitor, AirportSimulation.StandOne);
             Assert.That(groundTraffic.CurrentSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
             Assert.That(groundTraffic.IsHolding, Is.False);
         }

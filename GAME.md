@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (shipping phase-four stack; Bailey said merge it all)
+- **Last updated:** 2026-09-06 by Cursor (shipping phase-four stack; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Continue merging remaining open phase-four PRs. Visual soak in Unity when Bailey can.
-- **In progress / half-done:** Bailey approved merge-without-review. Do not persist rebuilt-by-replay fields.
+- **Do this next:** Finish merging remaining open PRs, then Unity visual soak when Bailey can.
+- **In progress / half-done:** Bailey approved merge-without-review.
 - **Watch out for:** fleet corridor invariants (decisions 0006–0009).
 - **Open questions for Bailey:** none
 
@@ -78,6 +78,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
 - Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
@@ -91,6 +92,9 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
+Confirm Unity tests when available. Merge open feature PRs (insolvency, third
+stand, research). Then the concurrent-flights design pass
+(`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.
 Confirm Unity edit-mode tests and a short Play soak for research. Merge or soak
 open capacity / insolvency PRs. Then the overdue visual soak, or the
 concurrent-flights design pass (`docs/product/concurrent-flights-brief.md`).

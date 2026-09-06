@@ -283,6 +283,22 @@ namespace Airside.Presentation
                 historyY += 20f;
             }
 
+            var latest = _simulation.DailyReports.Latest;
+            if (latest != null)
+            {
+                var reportTop = historyY + 10f;
+                GUI.Box(new Rect(historyLeft, reportTop, 340, 118), string.Empty, panel);
+                GUI.Label(new Rect(historyLeft + 20, reportTop + 12, 300, 24), "DAILY REPORT", detail);
+                GUI.Label(new Rect(historyLeft + 20, reportTop + 40, 310, 20), latest.SummaryLine, small);
+                GUI.Label(new Rect(historyLeft + 20, reportTop + 60, 310, 20),
+                    $"Income ${latest.FlightIncome:N0}  ·  delays -${latest.DelayCost:N0}  ·  running -${latest.OperatingCost:N0}", small);
+                var rep = latest.ReputationChange == 0 ? "reputation flat"
+                    : latest.ReputationChange > 0 ? $"reputation +{latest.ReputationChange}"
+                    : $"reputation {latest.ReputationChange}";
+                GUI.Label(new Rect(historyLeft + 20, reportTop + 80, 310, 20),
+                    $"{rep}  ·  {latest.GroundCrew} crew", small);
+            }
+
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small);
             GUI.matrix = previousMatrix;

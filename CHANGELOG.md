@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Daily operations report.** At each simulated midnight the sim publishes a
+  `DailyReport` (flights, income, delays, running cost, net cash, reputation,
+  weather, crew). Keeps the latest seven; rebuilt by replay. HUD shows the
+  latest card. See `docs/decisions/0018-daily-operations-report.md`.
 - **Research progression.** `AirportResearch` — first project Operations Efficiency
   (2500, one simulated day) permanently cuts base daily running cost by 100.
   Start is a persisted `start-research` command (replayed on load). Does not

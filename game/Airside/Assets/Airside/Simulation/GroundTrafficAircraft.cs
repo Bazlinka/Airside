@@ -4,29 +4,34 @@ using Airside.Domain;
 
 namespace Airside.Simulation
 {
+    public enum GroundTrafficRole
+    {
+        /// <summary>Taxis in, parks on a stand for a dwell, taxis out and departs.</summary>
+        ArriveDepart,
+
+        /// <summary>Taxis in, holds in a run-up bay, taxis back out — never uses a stand.</summary>
+        Reposition
+    }
+
     /// <summary>
-    /// A second aircraft that runs its own repeating arrival and departure schedule
-    /// while the primary flight runs its cycle. It taxis the shared segments A1 and
-    /// A2 and reserves every segment and stand it uses through the same
-    /// <see cref="ReservationTable"/>, so the two aircraft genuinely contend for the
-    /// airfield.
+    /// A scheduled aircraft that shares the airfield with the primary flight and the
+    /// rest of the ground-traffic fleet. It reserves every segment and stand it uses
+    /// through the shared <see cref="ReservationTable"/>, including a single-file
+    /// <see cref="AirportTaxiNetwork.Corridor"/> lock for the whole time it is on the
+    /// A1/A2 taxiway, so fleet aircraft queue rather than meet head-on.
     ///
-    /// At the start of each arrival it parks on whichever stand the primary flight
-    /// is not assigned. The primary flight still has absolute priority: on every
-    /// simulated second this aircraft releases any resource the flight needs, the
-    /// flight takes its reservations, and this aircraft then moves into whatever is
-    /// left. It holds its current position until it can reserve the next leg, and a
-    /// hold beyond ten seconds is explained by the <see cref="TrafficWaitMonitor"/>.
+    /// The primary flight has absolute priority: on every simulated second this
+    /// aircraft releases any resource the flight needs, the flight takes its
+    /// reservations, and this aircraft then moves into whatever is left. It holds
+    /// its current position until it can reserve the next leg, and a hold beyond ten
+    /// seconds is explained by the <see cref="TrafficWaitMonitor"/>.
     ///
-    /// Motion is a pure function of the simulated seconds it has actually spent
-    /// moving, of the reservation table, and of the primary flight's stand
-    /// assignment, so it is deterministic across frame rates and reconstructed
-    /// exactly on load.
+    /// Motion is a pure function of the simulated seconds it has spent moving, of the
+    /// reservation table, and of the primary flight's stand assignment, so it is
+    /// deterministic across frame rates and reconstructed exactly on load.
     /// </summary>
     public sealed class GroundTrafficAircraft
     {
-        public static readonly StableId Id = new("GT-201");
-
         private readonly struct Leg
         {
             public Leg(string name, StableId[] resources, TaxiPoint from, TaxiPoint to, long seconds, bool parks = false)
@@ -50,6 +55,7 @@ namespace Airside.Simulation
         private static readonly StableId[] None = Array.Empty<StableId>();
 
         private readonly ReservationTable _reservations;
+        private long _warmup;
         private Leg[] _circuit;
         private StableId _targetStand;
         private int _legIndex;
@@ -57,35 +63,58 @@ namespace Airside.Simulation
         private bool _onLeg;
         private StableId[] _held = None;
 
-        public GroundTrafficAircraft(ReservationTable reservations)
+        public GroundTrafficAircraft(StableId id, ReservationTable reservations, GroundTrafficRole role, long startDelaySeconds)
         {
+            if (startDelaySeconds < 0)
+                throw new ArgumentOutOfRangeException(nameof(startDelaySeconds));
+
+            Id = id;
+            Role = role;
             _reservations = reservations ?? throw new ArgumentNullException(nameof(reservations));
+            _warmup = startDelaySeconds;
             _targetStand = AirportSimulation.StandTwo;
-            _circuit = BuildCircuit(_targetStand);
+            _circuit = BuildCircuit(role, _targetStand);
         }
 
+        public StableId Id { get; }
+        public GroundTrafficRole Role { get; }
+
         /// <summary>Human-readable phase, e.g. "Taxi in on A1" or "At Stand 1".</summary>
-        public string CurrentPhase => _circuit[_legIndex].Name;
+        public string CurrentPhase => _warmup > 0 ? "Waiting for a slot" : _circuit[_legIndex].Name;
 
-        /// <summary>The stand this aircraft is arriving at this circuit.</summary>
-        public StableId TargetStand => _targetStand;
+        /// <summary>The stand this aircraft is arriving at this circuit (default for a repositioning aircraft).</summary>
+        public StableId TargetStand => Role == GroundTrafficRole.ArriveDepart ? _targetStand : default;
 
-        /// <summary>The first resource it currently holds, or <c>default</c> when it holds none.</summary>
-        public StableId CurrentSegment => _held.Length > 0 ? _held[0] : default;
+        /// <summary>The taxi segment or stand it currently occupies, or <c>default</c> when it holds none.</summary>
+        public StableId CurrentSegment => _held.Length > 0 ? _held[_held.Length - 1] : default;
 
-        /// <summary>The first resource the current leg needs.</summary>
-        public StableId DesiredSegment => _circuit[_legIndex].Resources.Length > 0
-            ? _circuit[_legIndex].Resources[0]
-            : default;
+        /// <summary>The segment or stand the current leg is heading for (ignoring the corridor lock).</summary>
+        public StableId DesiredSegment => _warmup > 0 || _circuit[_legIndex].Resources.Length == 0
+            ? default
+            : _circuit[_legIndex].Resources[_circuit[_legIndex].Resources.Length - 1];
 
-        /// <summary>True while it is blocked waiting for a resource the flight holds.</summary>
+        /// <summary>True while it is blocked waiting for a resource another aircraft holds.</summary>
         public bool IsHolding { get; private set; }
 
         /// <summary>True while it is parked on its stand.</summary>
-        public bool IsAtStand => _onLeg && _circuit[_legIndex].Parks;
+        public bool IsAtStand => _warmup == 0 && _onLeg && _circuit[_legIndex].Parks;
+
+        /// <summary>True while it holds the shared A1/A2 corridor lock.</summary>
+        public bool OnCorridor
+        {
+            get
+            {
+                foreach (var held in _held)
+                {
+                    if (held.Equals(AirportTaxiNetwork.Corridor))
+                        return true;
+                }
+                return false;
+            }
+        }
 
         /// <summary>0..1 progress along the current leg.</summary>
-        public double Progress => _onLeg
+        public double Progress => _warmup == 0 && _onLeg
             ? Math.Max(0d, Math.Min(1d, _secondsOnLeg / (double)_circuit[_legIndex].Seconds))
             : 0d;
 
@@ -94,6 +123,9 @@ namespace Airside.Simulation
         {
             get
             {
+                if (_warmup > 0)
+                    return new TaxiPoint(-60f, -30f);
+
                 var leg = _circuit[_legIndex];
                 var t = (float)Progress;
                 return new TaxiPoint(
@@ -129,14 +161,19 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Advance one simulated second. Called after the primary flight has taken
-        /// its reservations for this tick. <paramref name="primaryStand"/> is the
-        /// stand the primary flight is currently assigned; a fresh arrival parks on
-        /// the other one.
+        /// Advance one simulated second. Called after the primary flight has taken its
+        /// reservations for this tick. <paramref name="primaryStand"/> is the stand the
+        /// primary flight is currently assigned; a fresh arrival parks on the other one.
         /// </summary>
         public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand)
         {
-            if (_legIndex == 0 && !_onLeg)
+            if (_warmup > 0)
+            {
+                _warmup--;
+                return;
+            }
+
+            if (_legIndex == 0 && !_onLeg && Role == GroundTrafficRole.ArriveDepart)
             {
                 var away = primaryStand.Equals(AirportSimulation.StandOne)
                     ? AirportSimulation.StandTwo
@@ -144,7 +181,7 @@ namespace Airside.Simulation
                 if (!away.Equals(_targetStand))
                 {
                     _targetStand = away;
-                    _circuit = BuildCircuit(away);
+                    _circuit = BuildCircuit(Role, away);
                 }
             }
 
@@ -182,25 +219,46 @@ namespace Airside.Simulation
             }
         }
 
-        private static Leg[] BuildCircuit(StableId stand)
+        private static Leg[] BuildCircuit(GroundTrafficRole role, StableId stand)
         {
+            var corridorA1 = new[] { AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaOne };
+            var corridorA2 = new[] { AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaTwo };
+            var runwayEnd = new TaxiPoint(-24f, 0f);
+            var junction = new TaxiPoint(-12f, 9f);
+            var alphaEnd = new TaxiPoint(8f, 9f);
+            var away = new TaxiPoint(-60f, -30f);
+            var offField = new TaxiPoint(-36f, -4f);
+
+            if (role == GroundTrafficRole.Reposition)
+            {
+                var bay = new TaxiPoint(5f, 9f);
+                return new[]
+                {
+                    new Leg("Taxi in on A1", corridorA1, runwayEnd, junction, 14),
+                    new Leg("Taxi to run-up bay", corridorA2, junction, bay, 12),
+                    new Leg("Run-up hold", corridorA2, bay, bay, 18),
+                    new Leg("Taxi out on A2", corridorA2, bay, junction, 12),
+                    new Leg("Taxi out on A1", corridorA1, junction, runwayEnd, 14),
+                    new Leg("Departing", None, runwayEnd, offField, 8),
+                    new Leg("Away", None, away, away, 45)
+                };
+            }
+
             var isStandOne = stand.Equals(AirportSimulation.StandOne);
             var leadIn = isStandOne ? AirportTaxiNetwork.StandOneLeadIn : AirportTaxiNetwork.StandTwoLeadIn;
             var standPoint = new TaxiPoint(17f, isStandOne ? 14f : 20f);
             var label = isStandOne ? "Stand 1" : "Stand 2";
 
-            // Runway end (-24,0) -> A1/A2 junction (-12,9) -> A2 end (8,9) -> stand,
-            // then back out and away for a gap before the next arrival.
             return new[]
             {
-                new Leg("Taxi in on A1", new[] { AirportTaxiNetwork.AlphaOne }, new TaxiPoint(-24f, 0f), new TaxiPoint(-12f, 9f), 14),
-                new Leg("Taxi in on A2", new[] { AirportTaxiNetwork.AlphaTwo }, new TaxiPoint(-12f, 9f), new TaxiPoint(8f, 9f), 14),
-                new Leg($"Taxi to {label}", new[] { leadIn, stand }, new TaxiPoint(8f, 9f), standPoint, 10),
+                new Leg("Taxi in on A1", corridorA1, runwayEnd, junction, 14),
+                new Leg("Taxi in on A2", corridorA2, junction, alphaEnd, 14),
+                new Leg($"Taxi to {label}", new[] { leadIn, stand }, alphaEnd, standPoint, 10),
                 new Leg($"At {label}", new[] { stand }, standPoint, standPoint, 40, parks: true),
-                new Leg("Taxi out on A2", new[] { AirportTaxiNetwork.AlphaTwo }, standPoint, new TaxiPoint(-12f, 9f), 16),
-                new Leg("Taxi out on A1", new[] { AirportTaxiNetwork.AlphaOne }, new TaxiPoint(-12f, 9f), new TaxiPoint(-24f, 0f), 14),
-                new Leg("Departing", None, new TaxiPoint(-24f, 0f), new TaxiPoint(-36f, -4f), 8),
-                new Leg("Away", None, new TaxiPoint(-60f, -30f), new TaxiPoint(-60f, -30f), 30)
+                new Leg("Taxi out on A2", corridorA2, standPoint, junction, 16),
+                new Leg("Taxi out on A1", corridorA1, junction, runwayEnd, 14),
+                new Leg("Departing", None, runwayEnd, offField, 8),
+                new Leg("Away", None, away, away, 30)
             };
         }
     }

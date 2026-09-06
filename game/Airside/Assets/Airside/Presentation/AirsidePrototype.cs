@@ -14,7 +14,7 @@ namespace Airside.Presentation
         private AirportSimulation _simulation;
         private PersistentAirportSession _session;
         private Transform _aircraft;
-        private Transform _groundTraffic;
+        private Transform[] _groundTraffic;
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -45,7 +45,9 @@ namespace Airside.Presentation
             BuildLightingAndCamera();
             BuildAirfield();
             _aircraft = BuildAircraft();
-            _groundTraffic = BuildGroundTrafficAircraft();
+            _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
+            for (var index = 0; index < _groundTraffic.Length; index++)
+                _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f));
@@ -113,17 +115,21 @@ namespace Airside.Presentation
 
         private void UpdateGroundTrafficVisual()
         {
-            var point = _simulation.GroundTraffic.Position;
-            var target = new Vector3(point.X, 0.7f, point.Z);
-            var previous = _groundTraffic.position;
-            _groundTraffic.position = Vector3.Lerp(previous, target, Time.unscaledDeltaTime * 3f);
+            for (var index = 0; index < _groundTraffic.Length; index++)
+            {
+                var view = _groundTraffic[index];
+                var point = _simulation.GroundTraffic[index].Position;
+                var target = new Vector3(point.X, 0.7f, point.Z);
+                var previous = view.position;
+                view.position = Vector3.Lerp(previous, target, Time.unscaledDeltaTime * 3f);
 
-            var direction = target - previous;
-            if (direction.sqrMagnitude > 0.0004f)
-                _groundTraffic.rotation = Quaternion.Slerp(
-                    _groundTraffic.rotation,
-                    Quaternion.LookRotation(direction.normalized),
-                    Time.unscaledDeltaTime * 4f);
+                var direction = target - previous;
+                if (direction.sqrMagnitude > 0.0004f)
+                    view.rotation = Quaternion.Slerp(
+                        view.rotation,
+                        Quaternion.LookRotation(direction.normalized),
+                        Time.unscaledDeltaTime * 4f);
+            }
         }
 
         private float VisualPhaseProgress(float lookAheadSeconds)
@@ -213,9 +219,15 @@ namespace Airside.Presentation
             GUI.Box(new Rect(historyLeft, 22, 340, 190), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
             GUI.Label(new Rect(historyLeft + 20, 62, 300, 20), $"Taxi route: {_simulation.ActiveTaxiRoute.Name}", small);
-            GUI.Label(new Rect(historyLeft + 20, 80, 300, 20), $"Ground traffic {GroundTrafficAircraft.Id.Value}: {GroundTrafficSummary()}", small);
-            var historyY = 104f;
-            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(5))
+            var trafficY = 80f;
+            foreach (var aircraft in _simulation.GroundTraffic)
+            {
+                GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}", small);
+                trafficY += 18f;
+            }
+
+            var historyY = trafficY + 6f;
+            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(4))
             {
                 GUI.Label(new Rect(historyLeft + 20, historyY, 300, 19), $"T+{entry.OccurredAt.ElapsedSeconds}s  {entry.FlightId}  ·  {entry.Title}", small);
                 historyY += 20f;
@@ -275,9 +287,8 @@ namespace Airside.Presentation
             _session?.Save(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
         }
 
-        private string GroundTrafficSummary()
+        private static string GroundTrafficSummary(GroundTrafficAircraft traffic)
         {
-            var traffic = _simulation.GroundTraffic;
             if (traffic.IsHolding)
             {
                 var waitingFor = string.IsNullOrEmpty(traffic.DesiredSegment.Value) ? "clearance" : traffic.DesiredSegment.Value;
@@ -368,9 +379,9 @@ namespace Airside.Presentation
             return root;
         }
 
-        private static Transform BuildGroundTrafficAircraft()
+        private static Transform BuildGroundTrafficAircraft(string label)
         {
-            var root = new GameObject("Ground traffic GT-201").transform;
+            var root = new GameObject($"Ground traffic {label}").transform;
             var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Fuselage";
             body.transform.SetParent(root, false);

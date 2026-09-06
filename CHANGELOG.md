@@ -5,15 +5,18 @@ change it describes.
 
 ## Unreleased
 
-- Second aircraft (`GroundTrafficAircraft`, `GT-201`) now runs a repeating
-  arrival/stand/departure schedule as a data-driven leg list, and **parks on
-  whichever stand the primary flight is not assigned** — it reads the flight's
-  stand at the start of each arrival and targets the other, rebuilding its leg
-  list for that stand's geometry. It reserves every segment and stand through the
-  same `ReservationTable` and still yields the whole airfield to the primary
-  flight, so `ReservationConflicts` stays zero. HUD shows its phase and any hold.
-  26/26 edit-mode tests pass; macOS build succeeds and runs.
-  See `docs/decisions/0007-second-aircraft-schedule.md`.
+- Ground-traffic **fleet**: `AirportSimulation.GroundTraffic` is now a list.
+  `GT-201` runs an arrival/stand/departure schedule (parking on whichever stand
+  the primary flight is not using); `GT-202` repositions in and out through a
+  run-up bay without a stand, starting 25s later. Every fleet aircraft reserves a
+  single-file `TAXI-CORRIDOR` lock while on A1/A2, so at most one is on the shared
+  taxiway at a time — they queue instead of meeting head-on. The primary flight
+  keeps priority and is never blocked (`ReservationConflicts` stays zero).
+  Deadlock-free by construction. Presentation renders one model per fleet aircraft
+  and lists them in the HUD. 28/28 edit-mode tests; macOS build runs.
+  See `docs/decisions/0008-ground-traffic-fleet-and-corridor-lock.md`.
+- Earlier the same day: single second aircraft — shared segment reservations
+  (`0006`), then an arrival/stand/departure schedule (`0007`).
 - Second aircraft first introduced: shared taxi-segment reservations with the
   primary flight, priority-and-yield rule, per-tick reservation time so segments
   are correct during offline catch-up.

@@ -20,7 +20,7 @@ namespace Airside.Simulation
         private SimulationTime _cycleStartedAt;
         private SimulationTime _lastUpdatedAt;
         private bool _flightSettled;
-        private readonly GroundTrafficAircraft _groundTraffic;
+        private readonly GroundTrafficAircraft[] _groundTraffic;
 
         public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations)
         {
@@ -33,10 +33,15 @@ namespace Airside.Simulation
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
-            _groundTraffic = new GroundTrafficAircraft(_reservations);
+            _groundTraffic = new[]
+            {
+                new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
+                new GroundTrafficAircraft(new StableId("GT-202"), _reservations, GroundTrafficRole.Reposition, 25)
+            };
             StartCycle();
             SynchronizeReservations();
-            _groundTraffic.Reposition(_clock.Now, TrafficWaits, AssignedStand);
+            foreach (var aircraft in _groundTraffic)
+                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand);
         }
 
         public AircraftOperation ActiveAircraft { get; private set; }
@@ -49,7 +54,7 @@ namespace Airside.Simulation
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
-        public GroundTrafficAircraft GroundTraffic => _groundTraffic;
+        public IReadOnlyList<GroundTrafficAircraft> GroundTraffic => _groundTraffic;
         public StableId CurrentTaxiSegment => SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
@@ -139,12 +144,18 @@ namespace Airside.Simulation
 
         private void SynchronizeAllTraffic(SimulationTime now)
         {
-            // The primary flight has priority: ground traffic releases any segment
-            // the flight needs this tick, the flight then takes its reservations,
-            // and ground traffic moves into whatever space is left.
-            _groundTraffic.Yield(RequiredResources());
+            // The primary flight has priority: every ground-traffic aircraft releases
+            // any resource the flight needs this tick, the flight then takes its
+            // reservations, and the fleet moves into whatever space is left. Fleet
+            // aircraft queue behind one another through the shared taxi corridor lock.
+            var required = new List<StableId>(RequiredResources());
+            foreach (var aircraft in _groundTraffic)
+                aircraft.Yield(required);
+
             SynchronizeReservations();
-            _groundTraffic.Reposition(now, TrafficWaits, AssignedStand);
+
+            foreach (var aircraft in _groundTraffic)
+                aircraft.Reposition(now, TrafficWaits, AssignedStand);
         }
 
         private bool CanLeavePhase(AircraftPhase phase)

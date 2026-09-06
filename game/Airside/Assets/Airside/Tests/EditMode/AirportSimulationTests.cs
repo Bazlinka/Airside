@@ -154,8 +154,13 @@ namespace Airside.Tests
                    owner.Value == simulation.ActiveAircraft.AircraftId;
         }
 
+        private static GroundTrafficAircraft NewArrival(ReservationTable table, long startDelay = 0)
+        {
+            return new GroundTrafficAircraft(new StableId("GT-201"), table, GroundTrafficRole.ArriveDepart, startDelay);
+        }
+
         [Test]
-        public void SecondAircraft_SharesTheTaxiwayWithoutBlockingTheArrivingFlight()
+        public void GroundTraffic_SharesTheTaxiwayWithoutBlockingTheArrivingFlight()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
@@ -166,9 +171,12 @@ namespace Airside.Tests
                 clock.Advance(1);
                 simulation.Update();
 
-                var segment = simulation.GroundTraffic.CurrentSegment;
-                if (segment.Equals(AirportTaxiNetwork.AlphaOne) || segment.Equals(AirportTaxiNetwork.AlphaTwo))
-                    groundTrafficUsedAlpha = true;
+                foreach (var aircraft in simulation.GroundTraffic)
+                {
+                    var segment = aircraft.CurrentSegment;
+                    if (segment.Equals(AirportTaxiNetwork.AlphaOne) || segment.Equals(AirportTaxiNetwork.AlphaTwo))
+                        groundTrafficUsedAlpha = true;
+                }
             }
 
             Assert.That(groundTrafficUsedAlpha, Is.True, "ground traffic should occupy the shared segments");
@@ -177,7 +185,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SecondAircraft_MovesIdenticallyUnderLargeAndSmallTimeSteps()
+        public void GroundTraffic_MovesIdenticallyUnderLargeAndSmallTimeSteps()
         {
             var smallClock = new ManualSimulationClock(new SimulationTime(0));
             var small = new AirportSimulation(smallClock, new SeededRandomSource(99), new ReservationTable());
@@ -192,19 +200,22 @@ namespace Airside.Tests
             largeClock.Advance(1234);
             large.Update();
 
-            Assert.That(large.GroundTraffic.CurrentPhase, Is.EqualTo(small.GroundTraffic.CurrentPhase));
-            Assert.That(large.GroundTraffic.CurrentSegment, Is.EqualTo(small.GroundTraffic.CurrentSegment));
-            Assert.That(large.GroundTraffic.Progress, Is.EqualTo(small.GroundTraffic.Progress).Within(0.0001));
-            Assert.That(large.GroundTraffic.IsHolding, Is.EqualTo(small.GroundTraffic.IsHolding));
+            for (var index = 0; index < small.GroundTraffic.Count; index++)
+            {
+                Assert.That(large.GroundTraffic[index].CurrentPhase, Is.EqualTo(small.GroundTraffic[index].CurrentPhase));
+                Assert.That(large.GroundTraffic[index].CurrentSegment, Is.EqualTo(small.GroundTraffic[index].CurrentSegment));
+                Assert.That(large.GroundTraffic[index].Progress, Is.EqualTo(small.GroundTraffic[index].Progress).Within(0.0001));
+                Assert.That(large.GroundTraffic[index].IsHolding, Is.EqualTo(small.GroundTraffic[index].IsHolding));
+            }
         }
 
         [Test]
-        public void SecondAircraft_RunsAnArrivalStandAndDepartureSchedule()
+        public void GroundTraffic_RunsAnArrivalStandAndDepartureSchedule()
         {
             var table = new ReservationTable();
             var monitor = new TrafficWaitMonitor();
-            var groundTraffic = new GroundTrafficAircraft(table);
-            // Primary flight is on Stand 1, so the second aircraft should take Stand 2.
+            var groundTraffic = NewArrival(table);
+            // Primary flight is on Stand 1, so this aircraft should take Stand 2.
             var primaryStand = AirportSimulation.StandOne;
 
             var reachedStand = false;
@@ -227,52 +238,54 @@ namespace Airside.Tests
                     departed = true;
             }
 
-            Assert.That(reachedStand, Is.True, "the second aircraft should park on a stand");
+            Assert.That(reachedStand, Is.True, "the aircraft should park on a stand");
             Assert.That(releasedStandOnDeparture, Is.True, "and release the stand as it taxis out");
             Assert.That(departed, Is.True, "and then depart before repeating the schedule");
         }
 
         [Test]
-        public void SecondAircraft_ChoosesItsStandFromThePrimaryFlightAssignment()
+        public void GroundTraffic_ChoosesItsStandFromThePrimaryFlightAssignment()
         {
-            // At the moment a fresh arrival begins, it must target the other stand.
-            var toStandTwo = new GroundTrafficAircraft(new ReservationTable());
+            var toStandTwo = NewArrival(new ReservationTable());
             toStandTwo.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandOne);
             Assert.That(toStandTwo.TargetStand, Is.EqualTo(AirportSimulation.StandTwo));
 
-            var toStandOne = new GroundTrafficAircraft(new ReservationTable());
+            var toStandOne = NewArrival(new ReservationTable());
             toStandOne.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandTwo);
             Assert.That(toStandOne.TargetStand, Is.EqualTo(AirportSimulation.StandOne));
         }
 
         [Test]
-        public void SecondAircraft_AdaptsAcrossManyCyclesWithoutBlockingOrDeadlock()
+        public void GroundTraffic_AdaptsAcrossManyCyclesWithoutBlockingOrDeadlock()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var simulation = new AirportSimulation(clock, new SeededRandomSource(7), new ReservationTable());
 
             var standsVisited = new System.Collections.Generic.HashSet<string>();
-            for (var second = 1; second <= 6000 && simulation.CompletedCycles < 25; second++)
+            for (var second = 1; second <= 8000 && simulation.CompletedCycles < 30; second++)
             {
                 clock.Advance(1);
                 simulation.Update();
-                if (simulation.GroundTraffic.IsAtStand)
-                    standsVisited.Add(simulation.GroundTraffic.TargetStand.Value);
+                foreach (var aircraft in simulation.GroundTraffic)
+                {
+                    if (aircraft.IsAtStand)
+                        standsVisited.Add(aircraft.TargetStand.Value);
+                }
             }
 
-            Assert.That(simulation.CompletedCycles, Is.EqualTo(25), "the primary flight keeps cycling");
-            Assert.That(simulation.ReservationConflicts, Is.Zero, "and is never blocked by the second aircraft");
-            Assert.That(standsVisited.Count, Is.EqualTo(2), "the second aircraft uses both stands as the primary's assignment changes");
+            Assert.That(simulation.CompletedCycles, Is.EqualTo(30), "the primary flight keeps cycling");
+            Assert.That(simulation.ReservationConflicts, Is.Zero, "and is never blocked by ground traffic");
+            Assert.That(standsVisited.Count, Is.EqualTo(2), "the arriving aircraft uses both stands as the primary's assignment changes");
         }
 
         [Test]
-        public void SecondAircraft_ProlongedYieldIsExplainedByTheTrafficMonitor()
+        public void GroundTraffic_ProlongedYieldIsExplainedByTheTrafficMonitor()
         {
             var table = new ReservationTable();
             var monitor = new TrafficWaitMonitor();
-            var groundTraffic = new GroundTrafficAircraft(table);
+            var groundTraffic = NewArrival(table);
 
-            // An arriving flight holds A1 while the second aircraft wants to taxi in on it.
+            // An arriving flight holds A1 while this aircraft wants to taxi in on it.
             Assert.That(table.TryReplace(new StableId("AS-101"), new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
             for (long second = 1; second <= 45; second++)
                 groundTraffic.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne);
@@ -280,12 +293,70 @@ namespace Airside.Tests
             Assert.That(groundTraffic.IsHolding, Is.True);
             Assert.That(groundTraffic.DesiredSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
             Assert.That(monitor.HasWarning(new SimulationTime(45)), Is.True);
-            Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain(GroundTrafficAircraft.Id.Value));
+            Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain("GT-201"));
+            Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain(AirportTaxiNetwork.AlphaOne.Value));
 
             table.Release(new StableId("AS-101"));
             groundTraffic.Reposition(new SimulationTime(46), monitor, AirportSimulation.StandOne);
             Assert.That(groundTraffic.CurrentSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
+            Assert.That(groundTraffic.OnCorridor, Is.True);
             Assert.That(groundTraffic.IsHolding, Is.False);
+        }
+
+        [Test]
+        public void GroundTrafficFleet_NeverPutsTwoAircraftOnTheCorridorAtOnce()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
+
+            var sawRepositioningAircraftMove = false;
+            for (var second = 1; second <= 6000 && simulation.CompletedCycles < 25; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+
+                var onCorridor = 0;
+                foreach (var aircraft in simulation.GroundTraffic)
+                {
+                    if (aircraft.OnCorridor)
+                        onCorridor++;
+                    if (aircraft.Role == GroundTrafficRole.Reposition && aircraft.OnCorridor)
+                        sawRepositioningAircraftMove = true;
+                }
+
+                Assert.That(onCorridor, Is.LessThanOrEqualTo(1), $"two aircraft on the corridor at T+{second}s");
+            }
+
+            Assert.That(simulation.CompletedCycles, Is.EqualTo(25));
+            Assert.That(simulation.ReservationConflicts, Is.Zero);
+            Assert.That(sawRepositioningAircraftMove, Is.True, "the repositioning aircraft should get its turn on the corridor");
+        }
+
+        [Test]
+        public void RepositioningAircraft_TransitsTheCorridorWithoutUsingAStand()
+        {
+            var table = new ReservationTable();
+            var monitor = new TrafficWaitMonitor();
+            var repositioning = new GroundTrafficAircraft(
+                new StableId("GT-202"), table, GroundTrafficRole.Reposition, 0);
+
+            var everParked = false;
+            var reachedRunUp = false;
+            var departed = false;
+            for (long second = 1; second <= 130; second++)
+            {
+                repositioning.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne);
+                everParked |= repositioning.IsAtStand;
+                reachedRunUp |= repositioning.CurrentPhase == "Run-up hold";
+                departed |= repositioning.CurrentPhase == "Away";
+            }
+
+            Assert.That(everParked, Is.False, "a repositioning aircraft never parks on a stand");
+            Assert.That(repositioning.TargetStand.Value, Is.Null);
+            Assert.That(reachedRunUp, Is.True);
+            Assert.That(departed, Is.True);
+            Assert.That(table.IsReserved(AirportSimulation.StandOne), Is.False);
+            Assert.That(table.IsReserved(AirportSimulation.StandTwo), Is.False);
         }
 
         [Test]

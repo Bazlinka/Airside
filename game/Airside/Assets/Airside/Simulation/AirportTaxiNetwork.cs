@@ -35,6 +35,13 @@ namespace Airside.Simulation
         public static readonly StableId StandOneLeadIn = new("LEAD-IN-1");
         public static readonly StableId StandTwoLeadIn = new("LEAD-IN-2");
 
+        // A single-file corridor covering the shared A1/A2 taxiway. Ground-traffic
+        // aircraft reserve it for the whole time they are on A1 or A2, so only one
+        // of them is ever on the corridor at once and they can never meet head-on.
+        // The primary flight does not use it — it has priority on the segments
+        // themselves.
+        public static readonly StableId Corridor = new("TAXI-CORRIDOR");
+
         public TaxiRoute RouteTo(StableId stand)
         {
             if (stand.Equals(AirportSimulation.StandOne))

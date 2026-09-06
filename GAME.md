@@ -10,6 +10,7 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
+<<<<<<< HEAD
 - **Last updated:** 2026-09-06 by Cursor (third-stand capacity upgrade)
 - **Branch / working tree:** `cursor/third-stand-capacity-38b9` (PR against `main`)
 - **Do this next:** Confirm Unity edit-mode tests (`scripts/test-unity.sh`) and a
@@ -25,6 +26,21 @@ next session can continue without seeing the previous conversation. Keep it shor
   alternate-stand selection stay seed-identical to before. Do not persist
   `StandCount` — rebuild via command replay. Keep corridor invariants
   (decisions 0006–0009).
+=======
+- **Last updated:** 2026-09-06 by Cursor (insolvency / game-over)
+- **Branch / working tree:** `cursor/insolvency-game-over-38b9` (PR against `main`)
+- **Do this next:** Confirm edit-mode tests in Unity 6.3 LTS (`scripts/test-unity.sh`)
+  and a short Play-mode soak. Then either a **HUD insolvency banner** (presentation
+  follow-up) or the overdue visual soak / concurrent-flights fork — see
+  `docs/product/concurrent-flights-brief.md`.
+- **In progress / half-done:** nothing on this branch once merged. Simulation-only
+  insolvency: three consecutive negative day closes → `IsInsolvent`, event log,
+  frozen update. No save-schema change. Presentation intentionally untouched.
+- **Watch out for:** insolvency is rebuilt by replay (like reputation). Do not
+  persist `IsInsolvent`. Day-end check runs after operating-cost settlement; a
+  positive midnight cash balance resets the consecutive counter. Keep the fleet
+  corridor invariants (decisions 0006–0009) when touching ground traffic.
+>>>>>>> origin/main
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -43,8 +59,14 @@ proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
 running cost — so the airport now has expenses it must cover, not just income.
 The player employs ground crew: the baseline runs turnarounds normally, extra
+<<<<<<< HEAD
 crew speed them up, and understaffing stretches them into delays.
 The player can buy a third stand for 8000 — the first buildable capacity upgrade.
+=======
+crew speed them up, and understaffing stretches them into delays. If cash stays
+negative across three consecutive day closes, the airport is declared insolvent
+and the simulation stops.
+>>>>>>> origin/main
 
 Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -86,7 +108,11 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+<<<<<<< HEAD
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
+=======
+- Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
+>>>>>>> origin/main
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
@@ -97,7 +123,14 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
+<<<<<<< HEAD
 Confirm Unity edit-mode tests and a short Play soak for the third stand. Then the
 overdue visual soak of the two-aircraft build, or the concurrent-flights design
 pass (`docs/product/concurrent-flights-brief.md`). Remaining phase-four fillers:
 research, a daily report panel, insolvency presentation follow-up.
+=======
+Confirm Unity edit-mode tests and a short Play soak for insolvency. Optional
+presentation follow-up: a clear HUD banner when `IsInsolvent`. Then the overdue
+visual soak of the two-aircraft build, or the concurrent-flights design pass
+(`docs/product/concurrent-flights-brief.md`).
+>>>>>>> origin/main

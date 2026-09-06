@@ -10,6 +10,11 @@ change it describes.
   gains lead-in geometry; primary flights and ground traffic use the new stand.
   Two-stand behaviour stays seed-identical. HUD shows stand count and a build
   button. See `docs/decisions/0016-third-stand-capacity.md`.
+- **Insolvency / game-over.** Cash negative at three consecutive simulated day
+  closes declares the airport insolvent: simulation freezes, player commands
+  refuse, and an `"Insolvent"` event is logged. Tracked on `AirportEconomy`
+  (`ConsecutiveNegativeDays`, `IsInsolvent`); rebuilt by replay, no save-schema
+  change. Presentation untouched. See `docs/decisions/0015-insolvency-game-over.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Show insolvency on the HUD.** Simulation already froze after three consecutive negative
+  day closes, but the player only saw frozen cash with no explanation. Presentation now
+  turns cash Signal Red when negative, warns on consecutive negative closes, auto-pauses
+  visuals when insolvent, blocks ops hotkeys, and shows a centred AIRSIDE insolvency
+  overlay. Presentation only — `scripts/test-domain.sh` 96/96.
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

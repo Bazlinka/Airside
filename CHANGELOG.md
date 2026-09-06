@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Approve Batch C models and Batch E UI candidates.** Bailey confirmed the
+  Generated/Modelled Batch C set (AIR/BLD/VEH/PRP) and Batch E icon/panel
+  candidates. Status moved to Approved in the art register. Integration
+  (runtime wiring) follows; primitives remain fallback until Integration is
+  Verified. Decision 0022 lifecycle unchanged.
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

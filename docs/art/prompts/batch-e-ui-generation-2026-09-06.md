@@ -18,7 +18,7 @@
 - **Terms:** OpenAI service terms applicable at generation; release review required
 - **Attribution:** none known
 - **Fallback:** existing procedural IMGUI panels and text-only status indicators
-- **Status:** Generated candidates only; not approved or integrated
+- **Status:** Approved by Bailey 2026-09-06 — Integration allowed (runtime wiring via dedicated PR)
 
 The generation anchor below was repeated verbatim inside every request, as
 required by decision 0022.

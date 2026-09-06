@@ -210,17 +210,17 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.gltf` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Generated/Modelled |
-| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Generated/Modelled |
-| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Generated/Modelled |
-| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Generated/Modelled |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.gltf` | Small practical terminal, glass frontage, service side, modular end caps | Generated/Modelled |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.gltf` | Corrugated metal hangar with readable door opening | Generated/Modelled |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.gltf` | Compact service/crew building used as visual support, non-interactive initially | Generated/Modelled |
-| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.gltf` | Cab, wheels and hose connection separated | Generated/Modelled |
-| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.gltf` | Tug plus three low-detail carts; articulation points defined | Generated/Modelled |
-| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.gltf` | Compact apron bus with doors and wheels separated | Generated/Modelled |
-| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Generated/Modelled |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.gltf` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Approved |
+| AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved |
+| AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved |
+| AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.gltf` | Small practical terminal, glass frontage, service side, modular end caps | Approved |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.gltf` | Corrugated metal hangar with readable door opening | Approved |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.gltf` | Compact service/crew building used as visual support, non-interactive initially | Approved |
+| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.gltf` | Cab, wheels and hose connection separated | Approved |
+| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.gltf` | Tug plus three low-detail carts; articulation points defined | Approved |
+| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.gltf` | Compact apron bus with doors and wheels separated | Approved |
+| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Approved |
 
 ### Batch D — animation, feedback and weather
 
@@ -251,13 +251,13 @@ simulation timing or resource ownership.
 
 | ID | Runtime file/group | Requirement | Status |
 |---|---|---|---|
-| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Generated candidate — review required |
-| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Generated candidate — review required |
-| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Generated candidate — review required |
-| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Generated candidate — review required |
-| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Generated candidate — review required |
-| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Generated candidate — review required |
-| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Generated candidate — review required |
+| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Approved |
+| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Approved |
+| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Approved |
+| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Approved |
+| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Approved |
+| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Approved |
+| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Approved |
 
 ## Later production backlog
 

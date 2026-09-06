@@ -1,6 +1,6 @@
 # Batch C — first-playable 3D set
 
-**Status:** Generated/Modelled candidates delivered 2026-09-06 — awaiting Bailey review  
+**Status:** Approved by Bailey 2026-09-06 — Integration next (primitives remain fallback until Verified)  
 **Date:** 2026-09-06  
 **Decision / contract:** `docs/decisions/0022-art-direction-and-asset-pipeline.md`,
 `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`  

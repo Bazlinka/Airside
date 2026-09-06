@@ -21,24 +21,29 @@ next session can continue without seeing the previous conversation. Keep it shor
   and run edit-mode tests before trusting this branch or merging it.
 - **Do this next:**
   1. Open in Unity 6.3 LTS, confirm it compiles, run `scripts/test-unity.sh`.
-     Fix anything that doesn't compile or pass before merging.
+     Fix anything that doesn't compile or pass before merging. **In
+     particular, visually check the HUD** — the left panel box grew from
+     height 520 to 616 and gained two new label+button rows (check-in
+     expansion, GA apron expansion) at fixed pixel `Rect`s in the pre-rebase
+     layout, placed by calculation, not by looking at it render — confirm
+     nothing overlaps or clips off-panel at the default and a couple of other
+     window sizes.
   2. Bailey review of Batch C look (approve or request `_v02`) — separate
      from this branch, still outstanding on `main`.
-  3. Wire HUD buttons/status lines for `ExpandCheckInHall()` and
-     `ExpandGeneralAviationApron()` into the *current* HUD (mirroring the
-     stand-3 button) — deliberately left undone this pass; hand-tuned `OnGUI`
-     `Rect` layout needs eyes-on verification this session couldn't do, and
-     the panel is near its height budget (see the layout note below).
-  4. Then either continue Batch D animation/VFX polish or Batch B/C follow-up
+  3. Then either continue Batch D animation/VFX polish or Batch B/C follow-up
      on `main`, independent of this branch.
-  5. Consider step 17's one gap: airline profiles are still flat (name/
-     destination only) — no per-airline service level, price sensitivity or
-     facility requirements yet.
-  6. Maintenance/incidents were deliberately skipped on this branch — any
+  4. Consider step 17's one remaining gap: airline profiles are still flat
+     (name/destination only) — no per-airline service level, price sensitivity
+     or facility requirements. Deliberately not attempted: the existing
+     route-generation formula and its reputation/income numbers are tightly
+     asserted by several tests (`AirportRoutesTests`, `ReputationTests`) that
+     this session could not run, so a change risked an unverifiable
+     regression for a "nice to have."
+  5. Maintenance/incidents were deliberately skipped on this branch — any
      periodic incident cost needs re-running `DailyReportTests`/`StaffingTests`
      and the soak tests, which this session can't do.
 - **Operations-panel layout budget:** the left HUD box (still the literal
-  `Rect(22, 22, 410, 520)` in the current `AirsidePrototype.cs` — `HudLayout.cs`
+  `Rect(22, 22, 410, 520)` in the pre-rebase `AirsidePrototype.cs` — `HudLayout.cs`
   exists with resolution-independent math but isn't wired into `OnGUI` yet,
   per `PresentationLayoutTests.cs`) is near its height ceiling. This branch's
   terminal/GA buttons pushed it to 616 tall against a `Screen.height / 720f`
@@ -50,11 +55,12 @@ next session can continue without seeing the previous conversation. Keep it shor
   (decisions renumbered 0028–0032 after this rebase, since Cursor's Passenger
   Services research took 0023 on `main` first) are implemented at the
   domain/simulation layer and unit-tested on paper, but **unverified in
-  Unity**. Terminal and GA have HUD buttons in the pre-rebase HUD; cargo,
-  land and baggage do not. Everything else on `main`: Batch C 3D models and
-  Batch D animation/VFX greybox hooks generated and integrated (primitives
-  still the fallback pending Bailey's approval), Passenger Services research,
-  playtest HUD/taxi-visual fixes.
+  Unity** — no compile or edit-mode test run happened this session. Terminal
+  and GA have HUD buttons in the pre-rebase HUD; cargo, land and baggage do
+  not. Everything else on `main`: Batch C 3D models and Batch D
+  animation/VFX greybox hooks generated and integrated (primitives still the
+  fallback pending Bailey's approval), Passenger Services research, playtest
+  HUD/taxi-visual fixes.
 - **Watch out for:** fleet corridor invariants (0006–0009). Concurrent
   commercials: fleet yields to any commercial. `DailyReport`'s constructor
   signature changed on this branch (added `generalAviationIncome`,

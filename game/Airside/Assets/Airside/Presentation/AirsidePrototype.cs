@@ -568,7 +568,7 @@ namespace Airside.Presentation
 
             var timeOfDay = _simulation.TimeOfDay;
 
-            GUI.Box(new Rect(22, 22, 410, 520), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 616), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
@@ -671,7 +671,25 @@ namespace Airside.Presentation
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
-            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+            var terminal = _simulation.Terminal;
+            GUI.Label(new Rect(42, 500, 380, 20),
+                $"Terminal: {terminal.PassengerCapacityPerDay} flights/day capacity", small);
+            GUI.enabled = terminal.CanExpand && _simulation.Economy.Cash >= AirportTerminal.CheckInHallExpansionCost;
+            if (GUI.Button(new Rect(42, 518, 260, 24),
+                    terminal.CanExpand ? $"Expand check-in · ${AirportTerminal.CheckInHallExpansionCost:N0}" : "Check-in maxed"))
+                _session.ExpandCheckInHall();
+            GUI.enabled = true;
+
+            var generalAviation = _simulation.GeneralAviation;
+            GUI.Label(new Rect(42, 546, 380, 20),
+                $"General aviation: {generalAviation.MovementsPerDay}/day · +${generalAviation.DailyIncome:N0}/day", small);
+            GUI.enabled = generalAviation.CanExpand && _simulation.Economy.Cash >= AirportGeneralAviation.ApronExpansionCost;
+            if (GUI.Button(new Rect(42, 564, 260, 24),
+                    generalAviation.CanExpand ? $"Expand GA apron · ${AirportGeneralAviation.ApronExpansionCost:N0}" : "GA apron maxed"))
+                _session.ExpandGeneralAviationApron();
+            GUI.enabled = true;
+
+            GUI.Label(new Rect(42, 592, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;

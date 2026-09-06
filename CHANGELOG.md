@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- Wired HUD buttons/status lines for check-in hall and GA apron expansion
+  (`AirsidePrototype.cs`), following the stand-3 button pattern. The left HUD
+  panel grew from a fixed 520 to 616 tall to fit the two new rows. Placed by
+  calculation from the surrounding rows, not visually verified in the editor —
+  check for overlap/clipping before trusting it.
 - **Terminal capacity foundation.** `AirportTerminal` — check-in desks (baseline
   2) cap scheduled flights/day (12), independent of stand count; a buildable
   expansion (`expand-checkin`, 6000) raises it to 18, matching the three-stand

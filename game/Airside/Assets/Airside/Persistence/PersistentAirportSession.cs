@@ -11,6 +11,8 @@ namespace Airside.Persistence
         public int FlightsCompleted { get; internal set; }
         public long CashChange { get; internal set; }
         public long DelayCost { get; internal set; }
+        public long RouteIncome { get; internal set; }
+        public int ReputationChange { get; internal set; }
         public bool ClockMovedBackwards { get; internal set; }
         public bool RecoveredPreviousSave { get; internal set; }
         public bool HasReport => AwaySeconds >= 5 || RecoveredPreviousSave || ClockMovedBackwards;
@@ -115,6 +117,8 @@ namespace Airside.Persistence
             var cyclesBefore = Simulation.CompletedCycles;
             var cashBefore = Simulation.Economy.Cash;
             var delayCostBefore = Simulation.Economy.TotalDelayCost;
+            var routeIncomeBefore = Simulation.Economy.TotalRouteIncome;
+            var reputationBefore = Simulation.Reputation.Score;
 
             var rawAwaySeconds = currentUnixSeconds - _save.savedUnixSeconds;
             var clockMovedBackwards = rawAwaySeconds < 0;
@@ -127,6 +131,8 @@ namespace Airside.Persistence
                 FlightsCompleted = Simulation.CompletedCycles - cyclesBefore,
                 CashChange = Simulation.Economy.Cash - cashBefore,
                 DelayCost = Simulation.Economy.TotalDelayCost - delayCostBefore,
+                RouteIncome = Simulation.Economy.TotalRouteIncome - routeIncomeBefore,
+                ReputationChange = Simulation.Reputation.Score - reputationBefore,
                 ClockMovedBackwards = clockMovedBackwards,
                 RecoveredPreviousSave = recoveredPrevious
             };

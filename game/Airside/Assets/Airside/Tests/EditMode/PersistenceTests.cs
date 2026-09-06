@@ -75,6 +75,25 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AwaySummary_ReportsRouteIncomeAndReputationChange()
+        {
+            const long wall = 100000;
+            var session = PersistentAirportSession.LoadOrCreate(_path, wall, 24031996);
+            session.AdvanceTo(28);
+            Assert.That(session.AcceptRoute(), Is.True);
+            session.Save(wall);
+
+            // Come back after several flights have completed while away.
+            var restored = PersistentAirportSession.LoadOrCreate(_path, wall + 900, 1);
+            var summary = restored.LastAwaySummary;
+
+            Assert.That(summary.HasReport, Is.True);
+            Assert.That(summary.FlightsCompleted, Is.GreaterThan(0));
+            Assert.That(summary.RouteIncome, Is.GreaterThan(0), "the accepted route paid out while away");
+            Assert.That(summary.ReputationChange, Is.Not.EqualTo(0), "reputation moved with those departures");
+        }
+
+        [Test]
         public void AcceptedRoute_SurvivesSaveAndOfflineCatchUp()
         {
             const long wall = 100000;

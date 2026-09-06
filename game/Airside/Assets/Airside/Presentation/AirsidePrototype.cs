@@ -276,20 +276,22 @@ namespace Airside.Presentation
         {
             var summary = _session.LastAwaySummary;
             var width = 430f;
-            var height = 270f;
+            var height = 316f;
             var left = (Screen.width / scale - width) * 0.5f;
             var top = (Screen.height / scale - height) * 0.5f;
             GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
             GUI.Label(new Rect(left + 24, top + 20, width - 48, 34), "WELCOME BACK", title);
-            GUI.Label(new Rect(left + 24, top + 62, width - 48, 26), $"Airport operated for {FormatDuration(summary.AwaySeconds)}", detail);
-            GUI.Label(new Rect(left + 24, top + 98, width - 48, 24), $"Flights completed: {summary.FlightsCompleted}", detail);
-            GUI.Label(new Rect(left + 24, top + 128, width - 48, 24), $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}", detail);
-            GUI.Label(new Rect(left + 24, top + 158, width - 48, 24), $"Delay costs: ${summary.DelayCost:N0}", detail);
+            GUI.Label(new Rect(left + 24, top + 60, width - 48, 26), $"Airport operated for {FormatDuration(summary.AwaySeconds)}", detail);
+            GUI.Label(new Rect(left + 24, top + 94, width - 48, 24), $"Flights completed: {summary.FlightsCompleted}", detail);
+            GUI.Label(new Rect(left + 24, top + 122, width - 48, 24), $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}", detail);
+            GUI.Label(new Rect(left + 24, top + 150, width - 48, 24), $"Route income: ${summary.RouteIncome:N0}", detail);
+            GUI.Label(new Rect(left + 24, top + 178, width - 48, 24), $"Delay costs: ${summary.DelayCost:N0}", detail);
+            GUI.Label(new Rect(left + 24, top + 206, width - 48, 24), $"Reputation: {summary.ReputationChange:+0;-0;0}  (now {_simulation.Reputation.Score})", detail);
             if (summary.RecoveredPreviousSave)
-                GUI.Label(new Rect(left + 24, top + 188, width - 48, 20), "Recovered the previous safe copy.", small);
+                GUI.Label(new Rect(left + 24, top + 234, width - 48, 20), "Recovered the previous safe copy.", small);
             else if (summary.ClockMovedBackwards)
-                GUI.Label(new Rect(left + 24, top + 188, width - 48, 20), "Device clock moved backwards; no time was added.", small);
-            if (GUI.Button(new Rect(left + 125, top + 220, 180, 30), "Continue operations"))
+                GUI.Label(new Rect(left + 24, top + 234, width - 48, 20), "Device clock moved backwards; no time was added.", small);
+            if (GUI.Button(new Rect(left + 125, top + 264, 180, 30), "Continue operations"))
                 _showAwaySummary = false;
         }
 

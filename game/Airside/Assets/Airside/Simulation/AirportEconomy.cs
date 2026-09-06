@@ -17,6 +17,7 @@ namespace Airside.Simulation
         public long Cash { get; private set; }
         public long TotalRevenue { get; private set; }
         public long TotalDelayCost { get; private set; }
+        public long TotalRouteIncome { get; private set; }
 
         public bool PurchasePriorityCrew()
         {
@@ -34,6 +35,7 @@ namespace Airside.Simulation
 
             Cash += amount;
             TotalRevenue += amount;
+            TotalRouteIncome += amount;
         }
 
         public void CompleteFlight(long delaySeconds)

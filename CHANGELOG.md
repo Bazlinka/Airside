@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- The "welcome back" away summary now also reports **route income earned** and the
+  **reputation change** while the player was away (design pillar: a short visit
+  should reveal what changed). `AirportEconomy` tracks `TotalRouteIncome`.
+  48/48 tests.
 - **Reputation** (0–100, starts 50). On-time departures raise it, delays lower it
   in proportion to the delay. `AirportRoutes.Accept` now takes the score and
   refuses proposals above the airport's reputation; an accepted route locks in a

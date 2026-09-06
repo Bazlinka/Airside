@@ -19,6 +19,7 @@ namespace Airside.Persistence
     public sealed class PersistentAirportSession
     {
         public const string PriorityCrewCommand = "priority-crew";
+        public const string AcceptRouteCommand = "accept-route";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
         private readonly AirsideSaveRepository _repository;
@@ -80,6 +81,20 @@ namespace Airside.Persistence
             return true;
         }
 
+        public bool AcceptRoute()
+        {
+            if (!Simulation.AcceptPendingRoute())
+                return false;
+
+            _save.commands.Add(new AirsideCommandRecord
+            {
+                commandId = $"route-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
+                commandType = AcceptRouteCommand,
+                simulationSecond = Clock.Now.ElapsedSeconds
+            });
+            return true;
+        }
+
         public void Save(long currentUnixSeconds)
         {
             _save.revision++;
@@ -134,6 +149,8 @@ namespace Airside.Persistence
         {
             if (command.commandType == PriorityCrewCommand)
                 Simulation.EnablePriorityCrew();
+            else if (command.commandType == AcceptRouteCommand)
+                Simulation.AcceptPendingRoute();
         }
     }
 }

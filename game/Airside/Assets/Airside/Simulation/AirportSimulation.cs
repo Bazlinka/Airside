@@ -39,6 +39,7 @@ namespace Airside.Simulation
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
+            Routes = new AirportRoutes(clock.Now);
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -58,6 +59,7 @@ namespace Airside.Simulation
         public int ReservationConflicts { get; private set; }
         public TurnaroundWorkflow ActiveTurnaround { get; private set; }
         public AirportEconomy Economy { get; }
+        public AirportRoutes Routes { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -99,8 +101,21 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool AcceptPendingRoute()
+        {
+            var proposal = Routes.Pending;
+            if (proposal == null || !Routes.Accept(_lastUpdatedAt))
+                return false;
+
+            Record(_lastUpdatedAt, "Route accepted",
+                $"{proposal.Airline} · {proposal.FlightsPerDay}/day to {proposal.Destination} · +${proposal.IncomePerFlight}/flight");
+            return true;
+        }
+
         private void AdvanceOneSecond(SimulationTime now)
         {
+            Routes.Update(now);
+
             if (ActiveAircraft.IsComplete)
             {
                 if (now.CompareTo(ActiveAircraft.PhaseStartedAt.Advance(DepartureResetSeconds)) >= 0)
@@ -140,6 +155,11 @@ namespace Airside.Simulation
                 if (ActiveAircraft.Phase == AircraftPhase.Departed && !_flightSettled)
                 {
                     Economy.CompleteFlight(LastDelaySeconds);
+                    if (Routes.IncomePerFlight > 0)
+                    {
+                        Economy.AddRouteIncome(Routes.IncomePerFlight);
+                        Record(now, "Route income", $"+${Routes.IncomePerFlight:N0} from {Routes.Accepted.Count} scheduled route(s)");
+                    }
                     _flightSettled = true;
                     Record(now, "Departed", $"Net flight result ${AirportEconomy.TurnaroundRevenue - LastDelaySeconds * AirportEconomy.DelayCostPerSecond:N0}");
                 }

@@ -27,6 +27,15 @@ namespace Airside.Simulation
             return true;
         }
 
+        public void AddRouteIncome(long amount)
+        {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+
+            Cash += amount;
+            TotalRevenue += amount;
+        }
+
         public void CompleteFlight(long delaySeconds)
         {
             if (delaySeconds < 0)

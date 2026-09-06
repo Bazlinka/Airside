@@ -75,6 +75,26 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AcceptedRoute_SurvivesSaveAndOfflineCatchUp()
+        {
+            const long wall = 100000;
+            var continuous = PersistentAirportSession.LoadOrCreate(_path, wall, 24031996);
+
+            // First proposal is offered at second 25; accept it just after.
+            continuous.AdvanceTo(28);
+            Assert.That(continuous.AcceptRoute(), Is.True);
+            continuous.Save(wall);
+            continuous.AdvanceTo(600);
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, wall + 572, 1);
+
+            Assert.That(restored.Simulation.Routes.Accepted, Has.Count.EqualTo(1));
+            Assert.That(restored.Simulation.Routes.IncomePerFlight,
+                Is.EqualTo(continuous.Simulation.Routes.IncomePerFlight));
+            Assert.That(restored.Simulation.Economy.Cash, Is.EqualTo(continuous.Simulation.Economy.Cash));
+        }
+
+        [Test]
         public void SchemaOneSave_MigratesToTheCurrentSchemaWithTheDefaultLocation()
         {
             Directory.CreateDirectory(_directory);

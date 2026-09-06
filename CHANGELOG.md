@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Airline route proposals.** `AirportRoutes` (simulation) offers one scheduled
+  service at a time on a timer; it lapses if unaccepted. Accepting is a persisted
+  `accept-route` command (replayed on load / offline catch-up); every completed
+  flight then pays `Routes.IncomePerFlight` on top of turnaround revenue.
+  Proposal content comes from the timeline, not the random source, so existing
+  seed-based outcomes are unchanged. HUD shows the offer with an Accept button.
+  42/42 tests; macOS build runs. See `docs/decisions/0011-airline-route-proposals.md`.
 - Airport **location** + **day/night cycle**. `AirportLocation` (domain) carries
   id/name/region/UTC offset/latitude; ships with Kingscote (default), Port Lincoln
   and Coober Pedy. `DayCycle` derives local time from the sim clock — one

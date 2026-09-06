@@ -221,9 +221,11 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 368, 370, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
-            GUI.Box(new Rect(historyLeft, 22, 340, 190), string.Empty, panel);
+            GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
-            GUI.Label(new Rect(historyLeft + 20, 62, 300, 20), $"Taxi route: {_simulation.ActiveTaxiRoute.Name}", small);
+            GUI.Label(new Rect(historyLeft + 20, 62, 300, 20),
+                $"Taxi route: {_simulation.ActiveTaxiRoute.Name}  ·  Routes {_simulation.Routes.Accepted.Count}", small);
+            DrawRouteOffer(scale, panel, detail, small);
             var trafficY = 80f;
             foreach (var aircraft in _simulation.GroundTraffic)
             {
@@ -241,6 +243,27 @@ namespace Airside.Presentation
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small);
             GUI.matrix = previousMatrix;
+        }
+
+        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small)
+        {
+            var proposal = _simulation.Routes.Pending;
+            if (proposal == null)
+                return;
+
+            var left = Screen.width / scale - 362;
+            var top = 244f;
+            GUI.Box(new Rect(left, top, 340, 150), string.Empty, panel);
+            GUI.Label(new Rect(left + 20, top + 14, 300, 24), "ROUTE OFFER", detail);
+            GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);
+            GUI.Label(new Rect(left + 20, top + 62, 310, 20),
+                $"{proposal.FlightsPerDay}/day to {proposal.Destination}", small);
+            GUI.Label(new Rect(left + 20, top + 82, 310, 20),
+                $"+${proposal.IncomePerFlight:N0} per completed flight", small);
+            GUI.Label(new Rect(left + 20, top + 102, 310, 20),
+                $"Expires in {proposal.SecondsRemaining(_clock.Now)}s", small);
+            if (GUI.Button(new Rect(left + 20, top + 122, 150, 24), "Accept route"))
+                _session.AcceptRoute();
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small)

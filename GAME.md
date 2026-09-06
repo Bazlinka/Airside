@@ -10,14 +10,16 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (merged #15; rebasing playtest HUD #16 onto main)
+- **Last updated:** 2026-09-06 by Claude (confirmed #15 and #16 both merged onto `main`; handoff block was one merge-cycle stale)
 
-- **Branch / working tree:** `fix/playtest-hud-and-aircraft-visuals` → merge to `main`
-- **Do this next:** Merge playtest HUD/taxi visual PR after CI/local checks. Bailey Batch C review when free.
-  when free. Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox: night floods, gear/lights,
-  cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
-  touchdown puff, runway edge + taxi centreline. Passenger Services shipped.
+- **Branch / working tree:** `main` — #15 (Batch C + Passenger Services) and #16 (playtest HUD/taxi visuals)
+  are both merged; no branch is waiting to land.
+- **Do this next:** Bailey review of Batch C look (Approve or request `_v02`). Unity Play soak
+  when free — not a blocker.
+- **In progress / half-done:** Batch C Generated/Modelled, not yet Approved. Batch D greybox: night floods,
+  gear/lights, cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
+  touchdown puff, runway edge + taxi centreline. Remaining Batch D animation/VFX packet items and
+  phase-four polish still open. Passenger Services shipped.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified.
 - **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
@@ -114,8 +116,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-1. **Merge** `cursor/batch-c-models-38b9` (Batch C + D greybox hooks + Passenger Services).
-2. **Bailey review of Batch C** when convenient (not blocking further work).
-3. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
-5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Bailey review of Batch C** when convenient (not blocking further work).
+2. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
+3. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
+4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).

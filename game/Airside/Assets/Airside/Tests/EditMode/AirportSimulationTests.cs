@@ -103,12 +103,15 @@ namespace Airside.Tests
             var network = new AirportTaxiNetwork();
             var standOne = network.RouteTo(AirportSimulation.StandOne);
             var standTwo = network.RouteTo(AirportSimulation.StandTwo);
+            var standThree = network.RouteTo(AirportSimulation.StandThree);
 
             Assert.That(standOne.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.AlphaOne));
             Assert.That(standOne.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
             Assert.That(standOne.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
             Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
+            Assert.That(standThree.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
             Assert.That(standOne.Points.Count, Is.EqualTo(standOne.SegmentIds.Count + 1));
+            Assert.That(standThree.Points[standThree.Points.Count - 1].Z, Is.EqualTo(26f));
         }
 
         [Test]
@@ -223,7 +226,7 @@ namespace Airside.Tests
             var departed = false;
             for (long second = 1; second <= 150; second++)
             {
-                groundTraffic.Reposition(new SimulationTime(second), monitor, primaryStand, true);
+                groundTraffic.Reposition(new SimulationTime(second), monitor, primaryStand, AirportCapacity.BaselineStands, true);
                 if (groundTraffic.IsAtStand)
                 {
                     reachedStand = true;
@@ -247,11 +250,11 @@ namespace Airside.Tests
         public void GroundTraffic_ChoosesItsStandFromThePrimaryFlightAssignment()
         {
             var toStandTwo = NewArrival(new ReservationTable());
-            toStandTwo.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandOne, true);
+            toStandTwo.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandOne, AirportCapacity.BaselineStands, true);
             Assert.That(toStandTwo.TargetStand, Is.EqualTo(AirportSimulation.StandTwo));
 
             var toStandOne = NewArrival(new ReservationTable());
-            toStandOne.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandTwo, true);
+            toStandOne.Reposition(new SimulationTime(1), new TrafficWaitMonitor(), AirportSimulation.StandTwo, AirportCapacity.BaselineStands, true);
             Assert.That(toStandOne.TargetStand, Is.EqualTo(AirportSimulation.StandOne));
         }
 
@@ -288,7 +291,7 @@ namespace Airside.Tests
             // An arriving flight holds A1 while this aircraft wants to taxi in on it.
             Assert.That(table.TryReplace(new StableId("AS-101"), new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
             for (long second = 1; second <= 45; second++)
-                groundTraffic.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, true);
+                groundTraffic.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, AirportCapacity.BaselineStands, true);
 
             Assert.That(groundTraffic.IsHolding, Is.True);
             Assert.That(groundTraffic.DesiredSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
@@ -297,7 +300,7 @@ namespace Airside.Tests
             Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain(AirportTaxiNetwork.AlphaOne.Value));
 
             table.Release(new StableId("AS-101"));
-            groundTraffic.Reposition(new SimulationTime(46), monitor, AirportSimulation.StandOne, true);
+            groundTraffic.Reposition(new SimulationTime(46), monitor, AirportSimulation.StandOne, AirportCapacity.BaselineStands, true);
             Assert.That(groundTraffic.CurrentSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
             Assert.That(groundTraffic.OnCorridor, Is.True);
             Assert.That(groundTraffic.IsHolding, Is.False);
@@ -341,7 +344,7 @@ namespace Airside.Tests
 
             // Corridor is free, but the fleet has not granted it to this aircraft.
             for (long second = 1; second <= 20; second++)
-                aircraft.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, mayEnterCorridor: false);
+                aircraft.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, AirportCapacity.BaselineStands, mayEnterCorridor: false);
 
             Assert.That(aircraft.OnCorridor, Is.False);
             Assert.That(aircraft.IsHolding, Is.True);
@@ -350,7 +353,7 @@ namespace Airside.Tests
             Assert.That(since.ElapsedSeconds, Is.EqualTo(1), "the wait is timed from when it first wanted the corridor");
 
             // Once granted, it enters.
-            aircraft.Reposition(new SimulationTime(21), monitor, AirportSimulation.StandOne, mayEnterCorridor: true);
+            aircraft.Reposition(new SimulationTime(21), monitor, AirportSimulation.StandOne, AirportCapacity.BaselineStands, mayEnterCorridor: true);
             Assert.That(aircraft.OnCorridor, Is.True);
             Assert.That(aircraft.IsHolding, Is.False);
         }
@@ -403,7 +406,7 @@ namespace Airside.Tests
             var departed = false;
             for (long second = 1; second <= 130; second++)
             {
-                repositioning.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, true);
+                repositioning.Reposition(new SimulationTime(second), monitor, AirportSimulation.StandOne, AirportCapacity.BaselineStands, true);
                 everParked |= repositioning.IsAtStand;
                 reachedRunUp |= repositioning.CurrentPhase == "Run-up hold";
                 departed |= repositioning.CurrentPhase == "Away";

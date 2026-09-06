@@ -18,6 +18,12 @@ namespace Airside.Simulation
         public static readonly StableId StandTwo = new("STAND-2");
         public static readonly StableId StandThree = new("STAND-3");
 
+        /// <summary>
+        /// Physical stand count until a buildable capacity upgrade lands. Used to
+        /// gate route acceptance against schedule density.
+        /// </summary>
+        public const int StandCount = AirportRoutes.BaselineStandCount;
+
         private readonly ISimulationClock _clock;
         private readonly IRandomSource _random;
         private readonly ReservationTable _reservations;
@@ -105,6 +111,7 @@ namespace Airside.Simulation
             : string.Empty;
         public SimulationTime CycleStartedAt => Primary.CycleStartedAt;
         public ReservationTable Reservations => _reservations;
+        public int MaxScheduledFlightsPerDay => AirportRoutes.MaxScheduledFlightsPerDay(Capacity.StandCount);
 
         private CommercialFlight Primary => _flights[0];
 
@@ -170,7 +177,7 @@ public void Update()
             if (IsInsolvent)
                 return false;
             var proposal = Routes.Pending;
-            if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus))
+            if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus, Capacity.StandCount))
                 return false;
 
             var paid = proposal.IncomePerFlight + Reputation.IncomeBonus;

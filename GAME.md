@@ -10,13 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (concurrent flights + art pipeline on main; Bailey approved merge-all)
+- **Last updated:** 2026-09-06 by Cursor (accept-route capacity onto main; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Merge accept-capacity and daily P&L. Unity soak when Bailey can.
-- **In progress / half-done:** Bailey approved merge-without-review. ChatGPT art pipeline landed on main.
-- **Watch out for:** fleet corridor invariants; fleet yields to any commercial.
+- **Do this next:** Merge daily P&L, then Unity soak when Bailey can.
 - **In progress / half-done:** Bailey approved merge-without-review.
-- **Watch out for:** fleet corridor invariants; fleet yields to any commercial.
+- **Watch out for:** fleet corridor invariants; schedule accept cap uses StandCount × 6.
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -26,9 +24,9 @@ Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 Toward the first playable airport. The airport sits at a named location
 (Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
-driving the sun and ambient light and shown on the HUD. Airlines now propose
-scheduled routes on a timer; the player accepts (or declines) an offer and every
-completed flight then pays a recurring per-flight amount. The airport's reputation
+driving the sun and ambient light and shown on the HUD. Airlines propose scheduled routes on a timer; the player accepts (or declines) an offer and every
+completed flight then pays a recurring per-flight amount. Schedule demand is capped by stand
+capacity (`StandCount × 6` flights/day) so acceptance cannot outrun the airfield. The airport's reputation
 (0–100) rises with on-time departures and falls with delays; airlines gate their
 proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
@@ -89,7 +87,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Continuous play and offline replay produce matching operational and financial state.
 - Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
 - The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
-- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight.
+- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight. Acceptance also refuses when the projected schedule would exceed stand capacity (12 flights/day on two stands).
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.

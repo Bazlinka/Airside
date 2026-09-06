@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Accept-route schedule capacity.** Accepting a route now refuses when
+  `ScheduledFlightsPerDay + pending` would exceed `StandCount × 6` (12/day on
+  two stands). Offer stays pending; HUD disables Accept with a "Schedule full"
+  reason. Operations panel lists accepted routes (airline, frequency,
+  destination, payout) so the player can see what fills the cap. No save-schema
+  change. See `docs/decisions/0020-accept-route-capacity.md`.
 - **Concurrent commercial flights (slice 1).** Primary loop promoted to
   `CommercialFlight` list. When `ScheduledFlightsPerDay >= 4`, a second commercial
   spawns on a half-cycle stagger onto the free stand; fleet yields to any

@@ -40,6 +40,7 @@ namespace Airside.Presentation
         private int _speed = 1;
         private long _nextAutosaveSecond;
         private bool _showAwaySummary;
+        private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -60,6 +61,7 @@ namespace Airside.Presentation
 
             BuildLightingAndCamera();
             BuildAirfield();
+            CollectNightGlowWindows();
             _apronLights = BuildApronLights();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
@@ -1030,6 +1032,39 @@ namespace Airside.Presentation
                 foreach (var light in _apronLights)
                     light.intensity = flood;
             }
+
+            UpdateNightGlow(daylight);
+        }
+
+        
+        
+        private void CollectNightGlowWindows()
+        {
+            _nightGlowRenderers.Clear();
+            foreach (var name in new[] { "Terminal window glow L", "Terminal window glow R", "Hangar window glow" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                var renderer = go.GetComponent<Renderer>();
+                if (renderer != null)
+                    _nightGlowRenderers.Add(renderer);
+            }
+            UpdateNightGlow((float)_simulation.TimeOfDay.Daylight);
+        }
+
+        private void UpdateNightGlow(float daylight)
+        {
+            // Presentation-only: terminal/hangar windows warm up as daylight falls.
+            var glow = Mathf.Lerp(0.95f, 0.08f, daylight);
+            var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.35f + glow);
+            color.a = 1f;
+            foreach (var renderer in _nightGlowRenderers)
+            {
+                if (renderer == null)
+                    continue;
+                renderer.material.color = color;
+            }
         }
 
         private static Light[] BuildApronLights()
@@ -1076,6 +1111,10 @@ namespace Airside.Presentation
             CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
             CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
                 "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(3f, 1.5f));
+            // Warm interior spill at dusk/night (presentation only).
+            CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             CreateBlock("Terminal end L", new Vector3(14.8f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
             CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
             CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
@@ -1136,6 +1175,12 @@ namespace Airside.Presentation
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
+            // Simple painted stand digits (WLD-001 language; not real typography assets).
+            CreateBlock("Stand number 1", new Vector3(14.2f, 0.09f, 14f), new Vector3(0.35f, 0.04f, 1.2f), Color.white);
+            CreateBlock("Stand number 2 stem", new Vector3(14.2f, 0.09f, 20.35f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+            CreateBlock("Stand number 2 mid", new Vector3(14.2f, 0.09f, 20f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+            CreateBlock("Stand number 2 base", new Vector3(14.2f, 0.09f, 19.65f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+
         }
 
         private static void BuildStandMarking(float x, float z, string name)
@@ -1355,7 +1400,9 @@ namespace Airside.Presentation
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
 
-        private static GameObject CreateBlock(
+        
+
+private static GameObject CreateBlock(
             string name,
             Vector3 position,
             Vector3 scale,

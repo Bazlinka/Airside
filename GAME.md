@@ -10,7 +10,7 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (overnight WLD greybox + miniature look polish)
+- **Last updated:** 2026-09-06 by Cursor (overnight polish + night window glow)
 - **Branch / working tree:** `cursor/overnight-polish-38b9` → PR into `main`
 - **Do this next:** Merge overnight polish PR. Bailey review of Batch C / Batch E when free.
   Fix ground-traffic Stand 3 lead-in (still maps Stand 3 → Stand 2 lead-in). Unity Play soak.

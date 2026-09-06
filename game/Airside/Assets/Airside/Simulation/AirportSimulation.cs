@@ -71,6 +71,7 @@ namespace Airside.Simulation
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
         public IReadOnlyList<GroundTrafficAircraft> GroundTraffic => _groundTraffic;
+        public bool IsInsolvent => Economy.IsInsolvent;
         public StableId CurrentTaxiSegment => SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
@@ -97,6 +98,8 @@ namespace Airside.Simulation
 
         public bool EnablePriorityCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (ActiveAircraft.Phase != AircraftPhase.AtStand || ActiveTurnaround == null || ActiveTurnaround.PriorityCrewEnabled)
                 return false;
             if (!Economy.PurchasePriorityCrew())
@@ -109,6 +112,8 @@ namespace Airside.Simulation
 
         public bool AcceptPendingRoute()
         {
+            if (IsInsolvent)
+                return false;
             var proposal = Routes.Pending;
             if (proposal == null || !Routes.Accept(_lastUpdatedAt, Reputation.Score, Reputation.IncomeBonus))
                 return false;
@@ -121,6 +126,8 @@ namespace Airside.Simulation
 
         public bool DeclinePendingRoute()
         {
+            if (IsInsolvent)
+                return false;
             var proposal = Routes.Pending;
             if (proposal == null || !Routes.Decline())
                 return false;
@@ -131,6 +138,8 @@ namespace Airside.Simulation
 
         public bool HireGroundCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (Staffing.GroundCrew >= AirportStaffing.MaximumGroundCrew)
                 return false;
             if (!Economy.TrySpend(AirportStaffing.HireCost) || !Staffing.Hire())
@@ -143,6 +152,8 @@ namespace Airside.Simulation
 
         public bool ReleaseGroundCrew()
         {
+            if (IsInsolvent)
+                return false;
             if (!Staffing.Release())
                 return false;
 
@@ -153,8 +164,13 @@ namespace Airside.Simulation
 
         private void AdvanceOneSecond(SimulationTime now)
         {
+            if (IsInsolvent)
+                return;
+
             Routes.Update(now);
             SettleDaysUpTo(now);
+            if (IsInsolvent)
+                return;
 
             if (ActiveAircraft.IsComplete)
             {
@@ -226,6 +242,14 @@ namespace Airside.Simulation
                 Economy.PayOperatingCosts(cost);
                 Record(now, $"Day {_daysSettled} closed",
                     $"Running cost -${cost:N0} ({Weather.Describe(weather)}, {Staffing.GroundCrew} crew) · cash ${Economy.Cash:N0}");
+
+                Economy.EvaluateDayEndSolvency();
+                if (IsInsolvent)
+                {
+                    Record(now, "Insolvent",
+                        $"Cash remained negative for {AirportEconomy.InsolvencyConsecutiveDays} consecutive days · cash ${Economy.Cash:N0}");
+                    break;
+                }
             }
         }
 

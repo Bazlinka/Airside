@@ -10,23 +10,19 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
-  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
-  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
-  keep filling phase four safely — a **buildable capacity upgrade** (third stand),
-  **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
-- **Watch out for:** the fleet is deadlock-free *by construction* — the primary
-  flight is never blocked, at most one fleet aircraft holds the corridor lock,
-  and repositioning aircraft never touch a stand. A free corridor goes to the
-  longest-waiting aircraft (fleet order breaks ties). Keep all of that when
-  changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
-  aircraft snaps to its leg start if the primary preempts a segment under it.
-  Decisions 0006–0009.
+- **Last updated:** 2026-09-06 by Cursor (insolvency / game-over)
+- **Branch / working tree:** `cursor/insolvency-game-over-38b9` (PR against `main`)
+- **Do this next:** Confirm edit-mode tests in Unity 6.3 LTS (`scripts/test-unity.sh`)
+  and a short Play-mode soak. Then either a **HUD insolvency banner** (presentation
+  follow-up) or the overdue visual soak / concurrent-flights fork — see
+  `docs/product/concurrent-flights-brief.md`.
+- **In progress / half-done:** nothing on this branch once merged. Simulation-only
+  insolvency: three consecutive negative day closes → `IsInsolvent`, event log,
+  frozen update. No save-schema change. Presentation intentionally untouched.
+- **Watch out for:** insolvency is rebuilt by replay (like reputation). Do not
+  persist `IsInsolvent`. Day-end check runs after operating-cost settlement; a
+  positive midnight cash balance resets the consecutive counter. Keep the fleet
+  corridor invariants (decisions 0006–0009) when touching ground traffic.
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -45,7 +41,9 @@ proposals on it and pay more when it is high. Deterministic weather changes
 through the day and, with a base fee and crew payroll, is charged as a daily
 running cost — so the airport now has expenses it must cover, not just income.
 The player employs ground crew: the baseline runs turnarounds normally, extra
-crew speed them up, and understaffing stretches them into delays.
+crew speed them up, and understaffing stretches them into delays. If cash stays
+negative across three consecutive day closes, the airport is declared insolvent
+and the simulation stops.
 
 Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -87,6 +85,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
@@ -97,4 +96,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-Run a long visual soak of the two-aircraft build. Then replace the second aircraft's fixed shuttle with its own arrival/departure schedule, still governed by the segment reservations, working toward several simultaneous aircraft.
+Confirm Unity edit-mode tests and a short Play soak for insolvency. Optional
+presentation follow-up: a clear HUD banner when `IsInsolvent`. Then the overdue
+visual soak of the two-aircraft build, or the concurrent-flights design pass
+(`docs/product/concurrent-flights-brief.md`).

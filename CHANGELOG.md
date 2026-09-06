@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Autosave indicator.** After each autosave (and pause/quit saves), a short
+  Clear Green "Saved" chip appears bottom-right for ~1.6s. Presentation only.
+  `scripts/test-domain.sh` 96/96 (Presentation not covered).
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

@@ -33,6 +33,7 @@ namespace Airside.Presentation
         private int _speed = 1;
         private long _nextAutosaveSecond;
         private bool _showAwaySummary;
+        private float _saveIndicatorUntil;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -750,9 +751,25 @@ namespace Airside.Presentation
                     $"{rep}  ·  {latest.GroundCrew} crew", small);
             }
 
+            DrawSaveIndicator(scale, panel, small, onTime);
+
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             GUI.matrix = previousMatrix;
+        }
+
+
+        private void DrawSaveIndicator(float scale, GUIStyle panel, GUIStyle small, GUIStyle onTime)
+        {
+            if (Time.unscaledTime > _saveIndicatorUntil)
+                return;
+
+            var width = 110f;
+            var height = 36f;
+            var left = Screen.width / scale - width - 24f;
+            var top = Screen.height / scale - height - 24f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 16f, top + 8f, width - 24f, 22f), "Saved", onTime);
         }
 
         private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, GUIStyle caution, GUIStyle button, float offerTop = 244f)
@@ -840,6 +857,7 @@ namespace Airside.Presentation
         private void SaveSession()
         {
             _session?.Save(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            _saveIndicatorUntil = Time.unscaledTime + 1.6f;
         }
 
         private static string GroundTrafficSummary(GroundTrafficAircraft traffic)

@@ -10,21 +10,21 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (ground-traffic fleet + corridor lock)
+- **Last updated:** 2026-09-06 by Claude (fair corridor hand-off)
 - **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** Visual soak — run the Mac build for a long session and watch
-  the primary flight, `GT-201` (to a stand) and `GT-202` (run-up bay) share
-  A1/A2; confirm the queue behaviour reads well and nothing stutters or sticks.
-  Then: a fairer corridor hand-off (fleet order currently wins after a primary
-  preemption), or add a third fleet aircraft, or start promoting the primary
-  flight into the same aircraft list (decision 0008).
-- **In progress / half-done:** nothing — 28/28 edit-mode tests pass, macOS build ok
+- **Do this next:** Visual soak — run the Mac build and watch the primary flight,
+  `GT-201` (to a stand) and `GT-202` (run-up bay) queue for A1/A2; confirm it
+  reads well and nothing stutters or sticks. Then: a third fleet aircraft, or
+  start promoting the primary flight into the same aircraft list (decision 0008),
+  or fix the cosmetic "snap back to leg start on preemption".
+- **In progress / half-done:** nothing — 30/30 edit-mode tests pass, macOS build ok
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
-  and repositioning aircraft never touch a stand. Keep those three properties
-  when changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic:
-  a fleet aircraft snaps to its leg start if the primary preempts a segment
-  under it. Decisions 0006–0008.
+  and repositioning aircraft never touch a stand. A free corridor goes to the
+  longest-waiting aircraft (fleet order breaks ties). Keep all of that when
+  changing `GroundTrafficAircraft` or `SynchronizeAllTraffic`. Cosmetic: a fleet
+  aircraft snaps to its leg start if the primary preempts a segment under it.
+  Decisions 0006–0009.
 - **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -70,7 +70,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
 - A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
-- A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time (28 edit-mode tests, including multi-cycle soaks asserting the corridor invariant and zero primary-flight conflicts).
+- A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
 - Fleet aircraft move identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.
 

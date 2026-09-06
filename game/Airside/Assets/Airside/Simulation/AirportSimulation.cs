@@ -41,7 +41,7 @@ namespace Airside.Simulation
             StartCycle();
             SynchronizeReservations();
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand);
+                aircraft.Reposition(_clock.Now, TrafficWaits, AssignedStand, mayEnterCorridor: true);
         }
 
         public AircraftOperation ActiveAircraft { get; private set; }
@@ -154,8 +154,46 @@ namespace Airside.Simulation
 
             SynchronizeReservations();
 
+            var grantee = ChooseCorridorGrantee(now);
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(now, TrafficWaits, AssignedStand);
+                aircraft.Reposition(now, TrafficWaits, AssignedStand,
+                    mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
+        }
+
+        // The corridor is single-file. If nobody holds it, hand it to the fleet
+        // aircraft that has been waiting for it longest (fleet order breaks ties),
+        // so a preempted aircraft does not always jump back ahead of one that has
+        // been holding short.
+        private GroundTrafficAircraft ChooseCorridorGrantee(SimulationTime now)
+        {
+            if (_reservations.TryGetOwner(AirportTaxiNetwork.Corridor, out var owner))
+            {
+                foreach (var aircraft in _groundTraffic)
+                {
+                    if (aircraft.Id.Equals(owner))
+                        return aircraft;
+                }
+                return null;
+            }
+
+            GroundTrafficAircraft best = null;
+            var bestWaitStart = long.MaxValue;
+            foreach (var aircraft in _groundTraffic)
+            {
+                if (!aircraft.WantsCorridorNow)
+                    continue;
+
+                var waitStart = TrafficWaits.TryGetWaitStart(aircraft.Id, out var startedAt)
+                    ? startedAt.ElapsedSeconds
+                    : now.ElapsedSeconds;
+                if (waitStart < bestWaitStart)
+                {
+                    bestWaitStart = waitStart;
+                    best = aircraft;
+                }
+            }
+
+            return best;
         }
 
         private bool CanLeavePhase(AircraftPhase phase)

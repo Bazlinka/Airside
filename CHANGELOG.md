@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- Fair corridor hand-off: when the shared A1/A2 corridor is free and more than one
+  fleet aircraft is queued, it goes to the one that has waited longest (fleet
+  order breaks ties), instead of fleet order alone. Reuses the traffic monitor's
+  wait timestamps — no new state. A forty-cycle soak asserts neither fleet
+  aircraft is starved. 30/30 edit-mode tests; macOS build runs.
+  See `docs/decisions/0009-fair-corridor-handoff.md`.
 - Ground-traffic **fleet**: `AirportSimulation.GroundTraffic` is now a list.
   `GT-201` runs an arrival/stand/departure schedule (parking on whichever stand
   the primary flight is not using); `GT-202` repositions in and out through a

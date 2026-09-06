@@ -33,6 +33,19 @@ namespace Airside.Simulation
 
         public void Clear(StableId aircraft) => _waits.Remove(aircraft);
 
+        /// <summary>When the given aircraft started waiting, if it is waiting now.</summary>
+        public bool TryGetWaitStart(StableId aircraft, out SimulationTime startedAt)
+        {
+            if (_waits.TryGetValue(aircraft, out var wait))
+            {
+                startedAt = wait.StartedAt;
+                return true;
+            }
+
+            startedAt = default;
+            return false;
+        }
+
         public bool HasWarning(SimulationTime now)
         {
             foreach (var wait in _waits.Values)

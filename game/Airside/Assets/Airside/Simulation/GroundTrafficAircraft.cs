@@ -100,17 +100,34 @@ namespace Airside.Simulation
         public bool IsAtStand => _warmup == 0 && _onLeg && _circuit[_legIndex].Parks;
 
         /// <summary>True while it holds the shared A1/A2 corridor lock.</summary>
-        public bool OnCorridor
+        public bool OnCorridor => Holds(AirportTaxiNetwork.Corridor);
+
+        /// <summary>
+        /// True when it is ready to move onto the corridor this tick but has not
+        /// entered it yet — used by the fleet to hand the free corridor to whichever
+        /// aircraft has waited longest.
+        /// </summary>
+        public bool WantsCorridorNow =>
+            _warmup == 0 && !_onLeg && !OnCorridor && LegNeedsCorridor(_circuit[_legIndex]);
+
+        private bool Holds(StableId resource)
         {
-            get
+            foreach (var held in _held)
             {
-                foreach (var held in _held)
-                {
-                    if (held.Equals(AirportTaxiNetwork.Corridor))
-                        return true;
-                }
-                return false;
+                if (held.Equals(resource))
+                    return true;
             }
+            return false;
+        }
+
+        private static bool LegNeedsCorridor(Leg leg)
+        {
+            foreach (var resource in leg.Resources)
+            {
+                if (resource.Equals(AirportTaxiNetwork.Corridor))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>0..1 progress along the current leg.</summary>
@@ -165,7 +182,7 @@ namespace Airside.Simulation
         /// reservations for this tick. <paramref name="primaryStand"/> is the stand the
         /// primary flight is currently assigned; a fresh arrival parks on the other one.
         /// </summary>
-        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand)
+        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, bool mayEnterCorridor)
         {
             if (_warmup > 0)
             {
@@ -189,6 +206,14 @@ namespace Airside.Simulation
 
             if (!_onLeg)
             {
+                if (LegNeedsCorridor(leg) && !OnCorridor && !mayEnterCorridor)
+                {
+                    // Not this aircraft's turn for the single-file corridor.
+                    IsHolding = true;
+                    monitor.SetWaiting(Id, AirportTaxiNetwork.Corridor, now);
+                    return;
+                }
+
                 if (leg.Resources.Length == 0)
                 {
                     _reservations.Release(Id);

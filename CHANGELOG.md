@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Aerodrome beacon and dual-flight phase HUD.** Night white/green pulsing
+  aerodrome beacon mast (presentation greybox). Dual commercials show per-aircraft
+  phase + countdown on the HUD; FormatPhase covers the full operation cycle.
+  `scripts/test-domain.sh` 96/96 (Presentation not covered).
+
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

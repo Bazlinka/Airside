@@ -47,6 +47,7 @@ namespace Airside.Presentation
         private const float EngineVolumePausedScale = 0.28f;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
+        private float _saveIndicatorUntil;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -931,12 +932,26 @@ namespace Airside.Presentation
             }
 
             DrawResearchToast(scale, panel, onTime);
+            DrawSaveIndicator(scale, panel, small, onTime);
 
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             if (_simulation.IsInsolvent)
                 DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed);
             GUI.matrix = previousMatrix;
+        }
+
+        private void DrawSaveIndicator(float scale, GUIStyle panel, GUIStyle small, GUIStyle onTime)
+        {
+            if (Time.unscaledTime > _saveIndicatorUntil)
+                return;
+
+            var width = 110f;
+            var height = 36f;
+            var left = Screen.width / scale - width - 24f;
+            var top = Screen.height / scale - height - 24f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 16f, top + 8f, width - 24f, 22f), "Saved", onTime);
         }
 
         private void DrawInsolvencyOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle delayed)
@@ -1090,6 +1105,7 @@ namespace Airside.Presentation
         private void SaveSession()
         {
             _session?.Save(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            _saveIndicatorUntil = Time.unscaledTime + 1.6f;
         }
 
         private static string GroundTrafficSummary(GroundTrafficAircraft traffic)

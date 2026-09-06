@@ -11,7 +11,7 @@ change it describes.
   dollies; stand equipment (stairs, chocks, GPU, pushback tug) tracks turnaround /
   pushback; Stand 3 apron pad appears when built; aircraft use `AirportTaxiNetwork.StandZ`
   (fixes Stand 3 drawing on Stand 2); tighter camera FOV / overview framing; dusk sky and
-  ambient; away-summary branded to AIRSIDE with cash colour; night terminal/hangar window; night terminal/hangar window glow; painted stand digits.
+  ambient; away-summary branded to AIRSIDE with cash colour; night terminal/hangar window; night terminal/hangar window glow; painted stand digits; stylised runway end designators.
   glow; painted stand digits. `scripts/test-domain.sh` 96/96. Needs Unity Play soak.
   Does not integrate Batch C/E assets.
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent

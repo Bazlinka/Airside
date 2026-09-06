@@ -5,12 +5,84 @@ change it describes.
 
 ## Unreleased
 
+- **Merge wave: Approve Batch C/E and land overnight polish + Batch E HUD.** Bailey
+  Approve recorded for Batch C models and Batch E UI. Merged draft PRs #19–#30
+  (and #31 Approve) onto `main`: WLD greybox, Stand 3 traffic fix, insolvency HUD,
+  follow cycle, research bar/mute, toasts, status colours, autosave chip, beacon,
+  pause overlay, and Batch E icon/panel runtime wiring. Domain harness should be
+  re-run on `main` after the wave.
+
+- **Integrate Batch E UI candidates into the runtime HUD.** Verified all 7 candidates
+  against their recorded SHA-256 hashes: `ui_service_icon_sheet_v01.png` is corrupted
+  as committed (invalid PNG signature, hash mismatch — needs regeneration) and
+  `ui_panel_9slice_dark_v01.png` measures ~9% average alpha (max 56%), too faint for
+  the "WCAG-aware contrast" it was specified for, so the HUD keeps its existing
+  procedural Runway Ink panel instead of regressing to it. The other 4 verified
+  correct: sliced the weather/operation/economy icon sheets (7 icons each, single row,
+  real alpha) into 21 individual files under `Art/UI/Icons/`, and copied the alert
+  stripe and light panel into `Art/UI/Panels/`. Added `AirsideTheme.Icon`/`WeatherIcon`/
+  `AlertStripeBackground`/`CautionStyle` (all fallback-safe if a file is missing); the
+  HUD now draws the weather icon live and uses the alert stripe behind caution text.
+  Done on Bailey's direct instruction, ahead of the usual formal-approval gate for new
+  runtime art — still needs a Unity Play check. See the integration review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`. Presentation only; no
+  simulation code changed; `scripts/test-domain.sh` 96/96 pass (unaffected).
+- **Pause overlay and speed caution colour.** While paused, a translucent dimmer
+  and centred PAUSED chip appear (hidden under the away summary). 4× speed and
+  pause tint the clock line Safety Yellow. Presentation only.
+  `scripts/test-domain.sh` 96/96.
+- **Ops-event toast.** When the operational event log gains an entry, a Clear Green
+  chip flashes the latest flight · title for ~4.5s (skips history already present
+  on load). Presentation only. `scripts/test-domain.sh` 96/96.
+- **Aerodrome beacon and dual-flight phase HUD.** Night white/green pulsing
+  aerodrome beacon mast (presentation greybox). Dual commercials show per-aircraft
+  phase + countdown on the HUD; FormatPhase covers the full operation cycle.
+  `scripts/test-domain.sh` 96/96 (Presentation not covered).
+- **Autosave indicator.** After each autosave (and pause/quit saves), a short
+  Clear Green "Saved" chip appears bottom-right for ~1.6s. Presentation only.
+- **HUD status colours for cash, reputation and day estimate.** Negative cash and
+  negative day-est. use Signal Red; Trusted reputation and healthy day-est. use
+  Clear Green; Provisional reputation and ≤3-day cash runway use Safety Yellow.
+  Presentation only. `scripts/test-domain.sh` 96/96 (Presentation not covered).
+- **Research-complete HUD toast.** When `AirportResearch` finishes a project, the HUD
+  shows a centred Clear Green banner for eight unscaled seconds naming the unlock
+  and its permanent bonus. Presentation only — driven by `LastCompletedProjectId`
+  after each sim tick. `scripts/test-domain.sh` unchanged (Presentation not covered).
+- **Research progress bar, engine mute, Stand 3 presentation Z.** While a research
+  project is active the HUD draws a Coastal Blue progress bar under the research
+  line (`AirportResearch.Progress01`). Press **M** to mute engine loops; engines
+  also drop to a quiet idle volume when paused or when props are off. Commercial
+  aircraft and service vehicles at Stand 3 now use `AirportTaxiNetwork.StandZ`
+  instead of the old Stand-1/2 ternary (presentation only). Help line lists mute.
+  `scripts/test-domain.sh` unchanged (Presentation not covered); needs Play check.
+- **Cycle the follow camera across dual commercials.** With two aircraft on the field,
+  pressing F while already following advances to the next commercial (and wraps). First
+  F still enters follow; O returns to overview. Help strip updated. Presentation only;
+- **Show insolvency on the HUD.** Simulation already froze after three consecutive negative
+  day closes, but the player only saw frozen cash with no explanation. Presentation now
+  turns cash Signal Red when negative, warns on consecutive negative closes, auto-pauses
+  visuals when insolvent, blocks ops hotkeys, and shows a centred AIRSIDE insolvency
+  overlay. Presentation only — `scripts/test-domain.sh` 96/96.
+- **Fix ground-traffic Stand 3 circuit.** Arrive/depart fleet aircraft mapped any non-Stand-1
+  target onto Stand 2's lead-in and apron Z, so a Stand 3 assignment reserved the wrong
+  taxi segment and parked at Stand 2's position. `BuildCircuit` now uses
+  `AirportTaxiNetwork.LeadInFor` / `StandZ` for all three stands. Regression:
+  `GroundTraffic_WhenStandsOneAndTwoAreBusy_UsesStandThreeLeadInAndPosition`.
+  `scripts/test-domain.sh` 97/97.
+- **Overnight WLD greybox + miniature look polish (presentation only).** Places Approved
+  Batch B WLD intent with primitive stand-ins: animated windsock, threshold / hold-short
+  markings, taxi edge lights, obstruction lights, cones, barriers, airside sign and
+  dollies; stand equipment (stairs, chocks, GPU, pushback tug) tracks turnaround /
+  pushback; Stand 3 apron pad appears when built; aircraft use `AirportTaxiNetwork.StandZ`
+  (fixes Stand 3 drawing on Stand 2); tighter camera FOV / overview framing; dusk sky and
+  ambient; away-summary branded to AIRSIDE with cash colour; night terminal/hangar window; night terminal/hangar window glow; painted stand digits; stylised runway end designators.
+  glow; painted stand digits. `scripts/test-domain.sh` 96/96. Needs Unity Play soak.
+  Does not integrate Batch C/E assets.
 - **Approve Batch C models and Batch E UI candidates.** Bailey confirmed the
   Generated/Modelled Batch C set (AIR/BLD/VEH/PRP) and Batch E icon/panel
   candidates. Status moved to Approved in the art register. Integration
   (runtime wiring) follows; primitives remain fallback until Integration is
   Verified. Decision 0022 lifecycle unchanged.
-
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

@@ -10,14 +10,14 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Bailey Approve Batch C + Batch E; merging open PRs)
-- **Branch / working tree:** `main` — Approve recorded; merging #19–#30
-- **Do this next:** Finish merging open drafts. Then Batch C Integration (wire glTF; primitives stay fallback). Unity Play soak.
-- **In progress / half-done:** Batch C **Approved** (not yet Integrated). Batch E UI **Approved** (runtime wire via #19). Batch D greybox on main / WLD polish in #20.
+- **Last updated:** 2026-09-06 by Cursor (Approve C/E + merged #19–#31 into `main`)
+- **Branch / working tree:** `main` clean after merge wave
+- **Do this next:** Unity Play soak (HUD, Batch E icons, overnight look, dual flights). Batch C Integration (wire glTF; primitives stay fallback until Verified).
+- **In progress / half-done:** Batch C **Approved** (not Integrated yet). Batch E UI **Approved · Integrated** via #19. Overnight polish #20–#30 on main.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Primitives remain until Batch C Integration is Verified. Merge conflicts likely across presentation PRs.
-- **Open questions for Bailey:** none on C/E Approve — recorded.
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C **Approved**; Batch E UI **Approved** — Integration in progress
+  Primitives until Batch C Integration is Verified.
+- **Open questions for Bailey:** none on C/E Approve.
+- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved**; Batch E UI **Approved · Integrated**
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -76,7 +76,7 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 - Right-drag: orbit camera
 - Scroll: zoom
 - WASD: pan overview
-- F: follow aircraft
+- F: follow aircraft (press again to cycle commercials)
 - O: return to overview
 - P: hire a priority turnaround crew while the aircraft is at stand
 
@@ -114,10 +114,20 @@ supplementary check, not a replacement for a real Unity run before merging.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
   **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
+- Batch E weather/operation/economy icons (21 files) and the alert-stripe caution texture are
+  sliced/copied into `Art/UI/Icons/` and `Art/UI/Panels/` and wired into `AirsideTheme`; the
+  HUD draws the weather icon live. UI-ICO-003 (service icons) is corrupted in the repo and
+  UI-PNL-002 (dark panel) measures ~9% average alpha, too faint to use — both need
+  regeneration. **Unverified in Unity**; see the Batch E review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
 
 ## Next work
 
-1. **Bailey review of Batch C** when convenient (not blocking further work).
-2. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
-3. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
-4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Merge open overnight PRs** (#20 polish, #21 Stand 3 lead-in, #22 insolvency HUD) then continue Batch D look.
+2. **Bailey review of Batch C** when convenient (not blocking further work).
+3. **Keep building** — remaining Batch D / miniature look polish; no unapproved economy systems.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD, insolvency).
+5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Merge open overnight PRs** (#20 polish + Stand 3 ground-traffic lead-in) then continue Batch D look.
+1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD).

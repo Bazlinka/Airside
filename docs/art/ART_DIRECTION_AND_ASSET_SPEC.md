@@ -249,15 +249,19 @@ simulation timing or resource ownership.
 
 ### Batch E — operational interface
 
+Bailey Approved 2026-09-06. Runtime Integration landed via PR #19 (partial — see row notes).
+Unverified in Unity Play until Bailey soaks.
+
 | ID | Runtime file/group | Requirement | Status |
 |---|---|---|---|
-| UI-ICO-001 | `UI/Icons/ui_weather_*_v01.svg` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | Approved |
-| UI-ICO-002 | `UI/Icons/ui_operation_*_v01.svg` | Arrival, departure, stand, taxi, hold, turnaround and completed | Approved |
-| UI-ICO-003 | `UI/Icons/ui_service_*_v01.svg` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | Approved |
-| UI-ICO-004 | `UI/Icons/ui_economy_*_v01.svg` | Cash, cost, income, payroll, reputation, route and research | Approved |
-| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | Approved |
-| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | Approved |
-| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | Approved |
+| UI-ICO-001 | `UI/Icons/ui_weather_{clear,overcast,rain,fog,storm,heat,wind}_v01.png` | Clear, overcast, rain, fog, storm, heat and wind; monochrome-capable | **Approved · Integrated** — sliced from the candidate sheet, wired via `AirsideTheme.WeatherIcon`; `clear` renders live in the HUD, others loaded and ready. Delivered as PNG; decision 0022 still prefers hand-cleaned SVG masters eventually. Unverified in Unity — needs a Play check |
+| UI-ICO-002 | `UI/Icons/ui_operation_{arrival,departure,stand,taxi,hold,turnaround,completed}_v01.png` | Arrival, departure, stand, taxi, hold, turnaround and completed | **Approved** — sliced and available via `AirsideTheme.Icon("operation", ...)`; not yet drawn in the HUD |
+| UI-ICO-003 | `UI/Icons/ui_service_*_v01.png` | Fuel, baggage, passengers, cleaning, catering, inspection and priority crew | **Approved · blocked** — candidate sheet corrupted (invalid PNG / hash mismatch). Needs regeneration before Integration |
+| UI-ICO-004 | `UI/Icons/ui_economy_{cash,cost,income,payroll,reputation,route,research}_v01.png` | Cash, cost, income, payroll, reputation, route and research | **Approved** — sliced and available via `AirsideTheme.Icon("economy", ...)`; not yet drawn in the HUD |
+| UI-PNL-001 | `UI/Panels/ui_panel_9slice_light_v01.png` | 64×64 or 128×128 nine-slice, subtle edge and no baked text | **Approved** — copied into Assets; HUD still uses procedural panel until wired |
+| UI-PNL-002 | `UI/Panels/ui_panel_9slice_dark_v01.png` | Dark translucent operations panel, WCAG-aware text contrast | **Approved · blocked** — generated alpha too faint (~9% avg). HUD keeps procedural Runway Ink panel. Needs regeneration |
+| UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | **Approved · Integrated** — wired as `AirsideTheme.CautionStyle` background. Unverified in Unity — needs a Play check |
+
 
 ## Later production backlog
 

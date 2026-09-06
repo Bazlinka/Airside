@@ -5,17 +5,35 @@ namespace Airside.Presentation
 {
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        private readonly Vector3 _overviewCenter = new(5f, 0f, 8f);
+        private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
+        private Transform[] _followTargets = System.Array.Empty<Transform>();
+        private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(5f, 0f, 8f);
-        private float _yaw = 142f;
-        private float _pitch = 36f;
-        private float _distance = 58f;
+        private Vector3 _center = new(5f, 0f, 10f);
+        private float _yaw = 138f;
+        private float _pitch = 38f;
+        private float _distance = 52f;
         private bool _following;
 
         public void SetFollowTarget(Transform target)
         {
+            _followTargets = target != null ? new[] { target } : System.Array.Empty<Transform>();
+            _followIndex = 0;
             _followTarget = target;
+        }
+
+        public void SetFollowTargets(Transform[] targets)
+        {
+            _followTargets = targets ?? System.Array.Empty<Transform>();
+            if (_followTargets.Length == 0)
+            {
+                _followTarget = null;
+                _followIndex = 0;
+                return;
+            }
+
+            _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
+            _followTarget = _followTargets[_followIndex];
         }
 
         private void LateUpdate()
@@ -36,12 +54,12 @@ namespace Airside.Presentation
             if (keyboard != null)
             {
                 if (keyboard.fKey.wasPressedThisFrame)
-                    _following = true;
+                    CycleOrStartFollow();
                 if (keyboard.oKey.wasPressedThisFrame)
                 {
                     _following = false;
                     _center = _overviewCenter;
-                    _distance = 58f;
+                    _distance = 52f;
                 }
 
                 if (!_following)
@@ -70,6 +88,27 @@ namespace Airside.Presentation
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
                 _distance = Mathf.Clamp(_distance - scroll * 0.035f, 14f, 90f);
+        }
+
+        private void CycleOrStartFollow()
+        {
+            if (_followTargets.Length == 0)
+            {
+                _following = _followTarget != null;
+                return;
+            }
+
+            if (!_following)
+            {
+                _following = true;
+                _followIndex = 0;
+                _followTarget = _followTargets[0];
+                return;
+            }
+
+            // Already following: cycle through commercials (and wrap).
+            _followIndex = (_followIndex + 1) % _followTargets.Length;
+            _followTarget = _followTargets[_followIndex];
         }
     }
 }

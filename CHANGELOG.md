@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Focus delivery on the Mac first playable.** Replace the broad product blueprint
+  with a concise execution plan: merge the verified build repair, test the integrated
+  presentation, make one self-explanatory first session, then run an external playtest.
+  Defer new platforms, major systems and further broad asset batches until that loop is proven.
+
 - **Integrate Batch C models, WLD kits, and Batch E cleanup.** Runtime
   `ArtGltfLoader` loads Approved Batch C / WLD / PRP glTF kits from disk with
   primitive fallbacks (aircraft, buildings, vehicles, service gear, markings,

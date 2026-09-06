@@ -10,13 +10,16 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch C/E/WLD Integration — no Unity Play)
-- **Branch / working tree:** `cursor/batch-c-e-wld-integration-38b9`
-- **Do this next:** Bailey Unity Play soak to mark Batch C / WLD / Batch E **Verified**. Then Batch D animation/VFX or next GAME.md item.
+- **Last updated:** 2026-09-07 by Codex (first playable delivery focus)
+- **Branch / working tree:** `docs/simplify-project-plan`
+- **Do this next:** Merge PR 35, pull `main`, run the Unity tests and Mac build, then
+  play the exact packaged app at 1280x720, 1440x900 and Retina resolution. Fix only
+  first-session showstoppers, then build and externally test the 15 to 30 minute
+  first-session slice in `docs/product/PROJECT_PLAN.md`.
 - **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer.
-- **Open questions for Bailey:** none on Integration; Play soak still owned by Bailey.
+- **Open questions for Bailey:** none. The Mac first playable is the only active product target.
 - **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved · Integrated**; Batch E UI **Approved · Integrated**; WLD-001…003 **Approved · Integrated** (unverified in Play)
 
 

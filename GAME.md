@@ -10,12 +10,12 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Passenger Services research + Batch D greybox hooks)
+- **Last updated:** 2026-09-06 by Cursor (cabin door + service wheel spin greybox)
 - **Branch / working tree:** `cursor/batch-c-models-38b9` → merge to `main`
-- **Do this next:** Keep shipping Batch D packet items / phase-four polish. Bailey reviews Batch C
-  when free. Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D: night floods, gear/lights by
-  phase, runway edge + taxi centreline markers. Passenger Services research shipped on this branch.
+- **Do this next:** Keep shipping remaining Batch D packet items (service loops / rain VFX) or
+  phase-four polish. Bailey reviews Batch C when free. Unity Play soak when free — not a blocker.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox: night floods, gear/lights,
+  cabin door at stand, service wheel spin, runway edge + taxi centreline. Passenger Services shipped.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified.
 - **Open questions for Bailey:** Approve Batch C look, or request `_v02`?

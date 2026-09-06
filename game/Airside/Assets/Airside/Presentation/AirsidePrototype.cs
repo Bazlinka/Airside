@@ -126,6 +126,7 @@ namespace Airside.Presentation
 
                 SpinPropellers(view, phase);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
+                UpdateCabinDoor(view, phase);
             }
         }
 
@@ -147,6 +148,22 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(enginesOn);
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
                     child.gameObject.SetActive(landingLights);
+            }
+        }
+
+        private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
+        {
+            // Presentation-only: cabin door swings open at stand, closes before pushback.
+            var targetY = phase == AircraftPhase.AtStand ? -85f : 0f;
+            for (var i = 0; i < aircraft.childCount; i++)
+            {
+                var child = aircraft.GetChild(i);
+                if (!child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                    continue;
+                var euler = child.localEulerAngles;
+                var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                euler.y = Mathf.MoveTowards(current, targetY, Time.unscaledDeltaTime * 120f);
+                child.localEulerAngles = euler;
             }
         }
 
@@ -255,8 +272,20 @@ namespace Airside.Presentation
         private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
         {
             vehicle.gameObject.SetActive(active);
-            if (active)
-                vehicle.position = position;
+            if (!active)
+                return;
+
+            var previous = vehicle.position;
+            vehicle.position = position;
+            // Presentation-only: wheels roll while the vehicle is on a service task.
+            var travel = Vector3.Distance(previous, position);
+            var degrees = Time.unscaledDeltaTime * 360f + travel * 40f;
+            for (var i = 0; i < vehicle.childCount; i++)
+            {
+                var child = vehicle.GetChild(i);
+                if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
+                    child.Rotate(Vector3.right, degrees, Space.Self);
+            }
         }
 
         private void OnGUI()
@@ -703,6 +732,7 @@ namespace Airside.Presentation
             ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            ParentBlock(root, "CabinDoor", new Vector3(0.55f, 0.05f, 0.35f), new Vector3(0.08f, 0.85f, 0.55f), new Color(0.78f, 0.8f, 0.83f));
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();

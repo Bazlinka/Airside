@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Pause overlay and speed caution colour.** While paused, a translucent dimmer
+  and centred PAUSED chip appear (hidden under the away summary). 4× speed and
+  pause tint the clock line Safety Yellow. Presentation only.
+  `scripts/test-domain.sh` 96/96.
 - **Ops-event toast.** When the operational event log gains an entry, a Clear Green
   chip flashes the latest flight · title for ~4.5s (skips history already present
   on load). Presentation only. `scripts/test-domain.sh` 96/96.
@@ -32,7 +36,6 @@ change it describes.
 - **Cycle the follow camera across dual commercials.** With two aircraft on the field,
   pressing F while already following advances to the next commercial (and wraps). First
   F still enters follow; O returns to overview. Help strip updated. Presentation only;
-  `scripts/test-domain.sh` 96/96.
 - **Show insolvency on the HUD.** Simulation already froze after three consecutive negative
   day closes, but the player only saw frozen cash with no explanation. Presentation now
   turns cash Signal Red when negative, warns on consecutive negative closes, auto-pauses

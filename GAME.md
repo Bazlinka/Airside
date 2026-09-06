@@ -10,16 +10,20 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: aerodrome beacon + dual HUD)
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: autosave indicator)
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: ops-event toast)
 - **Branch / working tree:** open draft PRs into `main`:
   - #20–#23 overnight look / Stand3 / insolvency HUD / follow cycle
+  - #24–#27 HUD audio / research toast / status colours / autosave chip
+  - #28 night aerodrome beacon + dual-flight phase HUD
+  - `cursor/ops-event-toast-38b9` — flash latest ops event on the HUD
+- **Do this next:** Merge overnight drafts (any order; #21 is sim). Bailey Batch C/E review.
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: aerodrome beacon + dual HUD)
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: autosave indicator)
   - #24 research bar + mute + StandZ presentation
   - #25 research-complete toast
   - #26 cash / reputation / day-est colour cues
   - #27 autosave Saved chip
   - `cursor/beacon-dual-hud-38b9` — night aerodrome beacon + dual-flight phase line
-- **Do this next:** Merge overnight drafts (any order; #21 is sim). Bailey Batch C/E review.
   Unity Play soak for HUD + night beacon.
   - `cursor/autosave-indicator-38b9` — brief Saved chip after autosave
   Unity Play soak for HUD polish stack.

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Ops-event toast.** When the operational event log gains an entry, a Clear Green
+  chip flashes the latest flight · title for ~4.5s (skips history already present
+  on load). Presentation only. `scripts/test-domain.sh` 96/96.
 - **Aerodrome beacon and dual-flight phase HUD.** Night white/green pulsing
   aerodrome beacon mast (presentation greybox). Dual commercials show per-aircraft
   phase + countdown on the HUD; FormatPhase covers the full operation cycle.

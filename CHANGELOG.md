@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- Folded general-aviation and cargo daily income into the `DailyFinance` "Day
+  est." projection (`AirportSimulation.DailyFinance`) — it previously only
+  projected turnaround/route income per flight cycle, so the two new income
+  streams were invisible in the forward-looking estimate even though they
+  already landed in cash at midnight. Updated the one test that asserted an
+  exact value (`DailyFinanceBriefTests.BaselineAirport_...`) in the same
+  change. **Unverified in Unity.**
 - **Cargo income foundation.** `AirportCargo` — 2 freighter contracts/day at
   90 each, settled at midnight as `DailyReport.CargoIncome` (folded into
   `FlightIncome`). Buildable warehouse expansion (`expand-cargo-warehouse`,

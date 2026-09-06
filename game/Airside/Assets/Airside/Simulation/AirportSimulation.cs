@@ -231,6 +231,8 @@ namespace Airside.Simulation
         /// <summary>
         /// Expected daily income and cost under the current weather, staffing and
         /// route book, assuming today's flight cadence continues with no delays.
+        /// Includes general-aviation and cargo income, which are already fixed
+        /// per-day amounts rather than per-cycle.
         /// </summary>
         public DailyFinanceBrief DailyFinance
         {
@@ -240,7 +242,8 @@ namespace Airside.Simulation
                     + Weather.DailyOperatingCost(CurrentWeather)
                     + Staffing.DailyWage;
                 var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight + Research.RouteIncomeBonus;
-                var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds;
+                var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds
+                    + GeneralAviation.DailyIncome + Cargo.DailyIncome;
                 return new DailyFinanceBrief(operatingCost, expectedIncome, Economy.Cash);
             }
         }

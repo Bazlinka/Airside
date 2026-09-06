@@ -18,7 +18,8 @@ namespace Airside.Tests
                 + simulation.Staffing.DailyWage;
             var expectedIncome = AirportEconomy.TurnaroundRevenue
                 * DayCycle.DaySeconds
-                / AirportSimulation.CycleLengthSeconds;
+                / AirportSimulation.CycleLengthSeconds
+                + simulation.GeneralAviation.DailyIncome + simulation.Cargo.DailyIncome;
 
             Assert.That(brief.ExpectedOperatingCost, Is.EqualTo(expectedCost));
             Assert.That(brief.ExpectedFlightIncome, Is.EqualTo(expectedIncome));

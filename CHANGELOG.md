@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Research progress bar, engine mute, Stand 3 presentation Z.** While a research
+  project is active the HUD draws a Coastal Blue progress bar under the research
+  line (`AirportResearch.Progress01`). Press **M** to mute engine loops; engines
+  also drop to a quiet idle volume when paused or when props are off. Commercial
+  aircraft and service vehicles at Stand 3 now use `AirportTaxiNetwork.StandZ`
+  instead of the old Stand-1/2 ternary (presentation only). Help line lists mute.
+  `scripts/test-domain.sh` unchanged (Presentation not covered); needs Play check.
 - **Cycle the follow camera across dual commercials.** With two aircraft on the field,
   pressing F while already following advances to the next commercial (and wraps). First
   F still enters follow; O returns to overview. Help strip updated. Presentation only;

@@ -10,6 +10,22 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD audio + research bar)
+- **Branch / working tree:** open draft PRs into `main`:
+  - #20 `cursor/overnight-polish-38b9` — WLD greybox + miniature look
+  - #21 `cursor/stand3-ground-traffic-38b9` — Stand 3 fleet lead-in/Z
+  - #22 `cursor/insolvency-hud-38b9` — insolvency / cash warning HUD
+  - #23 `cursor/follow-cycle-38b9` — F cycles dual commercials
+  - `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
+- **Do this next:** Merge overnight PRs (any order; #21 is sim). Bailey review of Batch C /
+  Batch E when free. Unity Play soak for look + HUD + mute.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD polish in #20.
+  Batch E UI candidates Generated (not integrated). Passenger Services shipped. Headless harness green.
+- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
+  Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
+  Do not merge #19 Batch E runtime integration without Bailey Approve.
+- **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled; Batch E UI Generated — review required
 - **Last updated:** 2026-09-06 by Cursor (follow-camera cycle for dual commercials)
 - **Branch / working tree:** `cursor/follow-cycle-38b9` → PR into `main`
 - **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
@@ -29,7 +45,6 @@ next session can continue without seeing the previous conversation. Keep it shor
 - **Branch / working tree:** `main`
 - **Do this next:** Continue merging #22–#30 then #19. Batch C Integration after wave. Unity Play soak.
 - **In progress / half-done:** Batch C/E **Approved**. Overnight polish merge wave on `main`.
-- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
 - **Open questions for Bailey:** none on C/E Approve.
 - **Visual assets:** Batch A/B Approved (B Integrated); Batch C **Approved**; Batch E UI **Approved**
 

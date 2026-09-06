@@ -20,6 +20,7 @@ namespace Airside.Simulation
         private SimulationTime _cycleStartedAt;
         private SimulationTime _lastUpdatedAt;
         private bool _flightSettled;
+        private readonly GroundTrafficAircraft _groundTraffic;
 
         public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations)
         {
@@ -32,8 +33,10 @@ namespace Airside.Simulation
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
+            _groundTraffic = new GroundTrafficAircraft(_reservations);
             StartCycle();
             SynchronizeReservations();
+            _groundTraffic.Reposition(_clock.Now, TrafficWaits);
         }
 
         public AircraftOperation ActiveAircraft { get; private set; }
@@ -46,6 +49,7 @@ namespace Airside.Simulation
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
+        public GroundTrafficAircraft GroundTraffic => _groundTraffic;
         public StableId CurrentTaxiSegment => SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
@@ -94,7 +98,7 @@ namespace Airside.Simulation
                     StartCycle();
                 }
 
-                SynchronizeReservations();
+                SynchronizeAllTraffic(now);
                 return;
             }
 
@@ -130,7 +134,17 @@ namespace Airside.Simulation
                     Record(now, "Landing", Runway.Value);
             }
 
+            SynchronizeAllTraffic(now);
+        }
+
+        private void SynchronizeAllTraffic(SimulationTime now)
+        {
+            // The primary flight has priority: ground traffic releases any segment
+            // the flight needs this tick, the flight then takes its reservations,
+            // and ground traffic moves into whatever space is left.
+            _groundTraffic.Yield(RequiredResources());
             SynchronizeReservations();
+            _groundTraffic.Reposition(now, TrafficWaits);
         }
 
         private bool CanLeavePhase(AircraftPhase phase)
@@ -172,7 +186,7 @@ namespace Airside.Simulation
                     yield return Runway;
                     break;
                 case AircraftPhase.TaxiIn:
-                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
+                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_lastUpdatedAt));
                     yield return AssignedStand;
                     break;
                 case AircraftPhase.AtStand:
@@ -183,7 +197,7 @@ namespace Airside.Simulation
                     yield return ApronLane;
                     break;
                 case AircraftPhase.TaxiOut:
-                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_clock.Now));
+                    yield return SegmentFor(ActiveAircraft.Phase, ActiveAircraft.PhaseProgress(_lastUpdatedAt));
                     break;
             }
         }

@@ -135,17 +135,91 @@ namespace Airside.Tests
 
             clock.Advance(33);
             simulation.Update();
-            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaOne), Is.True);
+            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaOne), Is.True);
 
             clock.Advance(9);
             simulation.Update();
-            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaOne), Is.False);
-            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaTwo), Is.True);
+            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaOne), Is.False);
+            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaTwo), Is.True);
 
             clock.Advance(8);
             simulation.Update();
-            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.AlphaTwo), Is.False);
-            Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.StandOneLeadIn), Is.True);
+            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaTwo), Is.False);
+            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.StandOneLeadIn), Is.True);
+        }
+
+        private static bool FlightOwns(AirportSimulation simulation, StableId segment)
+        {
+            return simulation.Reservations.TryGetOwner(segment, out var owner) &&
+                   owner.Value == simulation.ActiveAircraft.AircraftId;
+        }
+
+        [Test]
+        public void SecondAircraft_SharesTheTaxiwayWithoutBlockingTheArrivingFlight()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
+
+            var groundTrafficUsedAlpha = false;
+            for (var second = 1; second <= 2000 && simulation.CompletedCycles < 8; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+
+                var segment = simulation.GroundTraffic.CurrentSegment;
+                if (segment.Equals(AirportTaxiNetwork.AlphaOne) || segment.Equals(AirportTaxiNetwork.AlphaTwo))
+                    groundTrafficUsedAlpha = true;
+            }
+
+            Assert.That(groundTrafficUsedAlpha, Is.True, "ground traffic should occupy the shared segments");
+            Assert.That(simulation.ReservationConflicts, Is.Zero, "the arriving flight must never be blocked");
+            Assert.That(simulation.CompletedCycles, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void SecondAircraft_MovesIdenticallyUnderLargeAndSmallTimeSteps()
+        {
+            var smallClock = new ManualSimulationClock(new SimulationTime(0));
+            var small = new AirportSimulation(smallClock, new SeededRandomSource(99), new ReservationTable());
+            for (var second = 1; second <= 1234; second++)
+            {
+                smallClock.Advance(1);
+                small.Update();
+            }
+
+            var largeClock = new ManualSimulationClock(new SimulationTime(0));
+            var large = new AirportSimulation(largeClock, new SeededRandomSource(99), new ReservationTable());
+            largeClock.Advance(1234);
+            large.Update();
+
+            Assert.That(large.GroundTraffic.CurrentSegment, Is.EqualTo(small.GroundTraffic.CurrentSegment));
+            Assert.That(large.GroundTraffic.SegmentProgress, Is.EqualTo(small.GroundTraffic.SegmentProgress).Within(0.0001));
+            Assert.That(large.GroundTraffic.IsHolding, Is.EqualTo(small.GroundTraffic.IsHolding));
+        }
+
+        [Test]
+        public void SecondAircraft_ProlongedYieldIsExplainedByTheTrafficMonitor()
+        {
+            var table = new ReservationTable();
+            var monitor = new TrafficWaitMonitor();
+            var groundTraffic = new GroundTrafficAircraft(table);
+
+            groundTraffic.Reposition(new SimulationTime(0), monitor);
+            Assert.That(groundTraffic.CurrentSegment, Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
+
+            // An arriving flight takes A1 and holds it while ground traffic wants to move there.
+            Assert.That(table.TryReplace(new StableId("AS-101"), new[] { AirportTaxiNetwork.AlphaOne }, out _), Is.True);
+            for (long second = 1; second <= 45; second++)
+                groundTraffic.Reposition(new SimulationTime(second), monitor);
+
+            Assert.That(groundTraffic.IsHolding, Is.True);
+            Assert.That(monitor.HasWarning(new SimulationTime(45)), Is.True);
+            Assert.That(monitor.Describe(new SimulationTime(45)), Does.Contain(GroundTrafficAircraft.Id.Value));
+
+            table.Release(new StableId("AS-101"));
+            groundTraffic.Reposition(new SimulationTime(46), monitor);
+            Assert.That(groundTraffic.CurrentSegment, Is.EqualTo(AirportTaxiNetwork.AlphaOne));
+            Assert.That(groundTraffic.IsHolding, Is.False);
         }
 
         [Test]

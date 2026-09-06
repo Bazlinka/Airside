@@ -278,10 +278,13 @@ namespace Airside.Presentation
         private string GroundTrafficSummary()
         {
             var traffic = _simulation.GroundTraffic;
-            var segment = string.IsNullOrEmpty(traffic.CurrentSegment.Value) ? "—" : traffic.CurrentSegment.Value;
-            return traffic.IsHolding
-                ? $"holding at {segment}, waiting for {traffic.DesiredSegment.Value}"
-                : $"rolling along {segment}";
+            if (traffic.IsHolding)
+            {
+                var waitingFor = string.IsNullOrEmpty(traffic.DesiredSegment.Value) ? "clearance" : traffic.DesiredSegment.Value;
+                return $"{traffic.CurrentPhase} — holding for {waitingFor}";
+            }
+
+            return traffic.CurrentPhase;
         }
 
         private string ReservationSummary()

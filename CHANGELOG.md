@@ -5,13 +5,16 @@ change it describes.
 
 ## Unreleased
 
-- Second aircraft (`GroundTrafficAircraft`, `GT-201`) shuttles along shared taxi
-  segments A1/A2 through the same `ReservationTable`. The primary flight has
-  priority — the second aircraft yields any segment the flight needs and a hold
-  beyond ten seconds is explained by the traffic wait monitor. Reservation
-  requirements now use per-tick simulation time so segments are correct during
-  offline catch-up. Rendered as a second aircraft on the taxiway with a HUD line.
-  23/23 edit-mode tests pass, including a fifty-cycle soak with it active.
+- Second aircraft (`GroundTrafficAircraft`, `GT-201`) now runs a repeating
+  schedule — taxi in on A1, taxi in on A2, park on Stand 2 for a dwell, taxi out,
+  depart, gap — as a data-driven leg list, instead of a fixed A1/A2 shuttle. It
+  reserves every segment and stand through the same `ReservationTable` and still
+  yields the whole airfield to the primary flight, so `ReservationConflicts`
+  stays zero. HUD shows its phase and any hold. 24/24 edit-mode tests pass;
+  macOS build succeeds. See `docs/decisions/0007-second-aircraft-schedule.md`.
+- Second aircraft first introduced: shared taxi-segment reservations with the
+  primary flight, priority-and-yield rule, per-tick reservation time so segments
+  are correct during offline catch-up.
   See `docs/decisions/0006-second-aircraft-priority-and-yield.md`.
 - Repo set up for shared work: added `.gitattributes` (Unity merge/binary rules),
   expanded `AGENTS.md` into the shared contract, added `CLAUDE.md` and Cursor

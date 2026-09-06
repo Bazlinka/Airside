@@ -19,6 +19,7 @@ namespace Airside.Presentation
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light[] _apronLights;
+        private Light _aerodromeBeacon;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private float _touchdownSmokeRemaining;
@@ -70,6 +71,7 @@ namespace Airside.Presentation
             BuildAirfield();
             CollectNightGlowWindows();
             _apronLights = BuildApronLights();
+            _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
             CollectWetSurfaces();
@@ -738,7 +740,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
-            GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
+            GUI.Label(new Rect(42, 104, 380, 25), CommercialPhaseHudLine(), detail);
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
@@ -1187,10 +1189,9 @@ namespace Airside.Presentation
             }
 
             UpdateNightGlow(daylight);
+            UpdateAerodromeBeacon(daylight);
         }
 
-        
-        
         private void CollectNightGlowWindows()
         {
             _nightGlowRenderers.Clear();
@@ -1247,6 +1248,57 @@ namespace Airside.Presentation
             }
 
             return lights;
+        }
+
+        private static Light BuildAerodromeBeacon()
+        {
+            // Presentation-only rotating aerodrome beacon (greybox mast + point light).
+            var mast = new GameObject("Aerodrome beacon").transform;
+            mast.position = new Vector3(38f, 0f, 18f);
+            var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pole.name = "Beacon mast";
+            Object.Destroy(pole.GetComponent<Collider>());
+            pole.transform.SetParent(mast, false);
+            pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
+            pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
+            pole.GetComponent<Renderer>().material.color = new Color(0.55f, 0.56f, 0.58f);
+
+            var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Beacon head";
+            Object.Destroy(head.GetComponent<Collider>());
+            head.transform.SetParent(mast, false);
+            head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
+            head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
+            head.GetComponent<Renderer>().material.color = new Color(0.95f, 0.95f, 0.9f);
+
+            var lightGo = new GameObject("Beacon light");
+            lightGo.transform.SetParent(mast, false);
+            lightGo.transform.localPosition = new Vector3(0f, 9.1f, 0f);
+            var light = lightGo.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = new Color(0.85f, 1f, 0.9f);
+            light.range = 42f;
+            light.intensity = 0f;
+            return light;
+        }
+
+        private void UpdateAerodromeBeacon(float daylight)
+        {
+            if (_aerodromeBeacon == null)
+                return;
+
+            // Night-only white/green pulse — presentation decoration, not navigational.
+            if (daylight > 0.38f)
+            {
+                _aerodromeBeacon.intensity = 0f;
+                return;
+            }
+
+            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3.2f));
+            _aerodromeBeacon.intensity = pulse * Mathf.Lerp(2.4f, 0.2f, daylight / 0.38f);
+            _aerodromeBeacon.color = Mathf.FloorToInt(Time.unscaledTime * 1.6f) % 2 == 0
+                ? new Color(0.95f, 0.98f, 1f)
+                : new Color(0.35f, 0.95f, 0.55f);
         }
 
         private static void BuildAirfield()
@@ -1674,7 +1726,7 @@ private static GameObject CreateBlock(
             {
                 var flight = _simulation.Flights[index];
                 parts[index] =
-                    $"{flight.AircraftId} @ {flight.AssignedStand.Value} · {FormatPhase(flight.Operation.Phase)}";
+                    $"{flight.AircraftId} @ {flight.AssignedStand.Value}";
             }
 
             return _simulation.Flights.Count == 1
@@ -1682,12 +1734,41 @@ private static GameObject CreateBlock(
                 : $"Flights {string.Join(" · ", parts)}";
         }
 
+        private string CommercialPhaseHudLine()
+        {
+            if (_simulation.Flights.Count == 0)
+                return "No active phase";
+
+            if (_simulation.Flights.Count == 1)
+            {
+                var op = _simulation.ActiveAircraft;
+                return $"{FormatPhase(op.Phase)}  ·  {op.SecondsRemaining(_clock.Now)}s";
+            }
+
+            var parts = new string[_simulation.Flights.Count];
+            for (var index = 0; index < _simulation.Flights.Count; index++)
+            {
+                var flight = _simulation.Flights[index];
+                var op = flight.Operation;
+                parts[index] =
+                    $"{flight.AircraftId}: {FormatPhase(op.Phase)} {op.SecondsRemaining(_clock.Now)}s";
+            }
+
+            return string.Join("  ·  ", parts);
+        }
+
         private static string FormatPhase(AircraftPhase phase) => phase switch
         {
+            AircraftPhase.Approach => "On approach",
+            AircraftPhase.Landing => "Landing",
             AircraftPhase.TaxiIn => "Taxiing to stand",
             AircraftPhase.AtStand => "Turnaround at stand",
+            AircraftPhase.Pushback => "Pushback",
             AircraftPhase.TaxiOut => "Taxiing to runway",
+            AircraftPhase.Takeoff => "Taking off",
+            AircraftPhase.Departed => "Departed",
             _ => phase.ToString()
         };
+
     }
 }

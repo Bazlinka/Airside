@@ -5,9 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Aerodrome beacon and dual-flight phase HUD.** Night white/green pulsing
+  aerodrome beacon mast (presentation greybox). Dual commercials show per-aircraft
+  phase + countdown on the HUD; FormatPhase covers the full operation cycle.
+  `scripts/test-domain.sh` 96/96 (Presentation not covered).
 - **Autosave indicator.** After each autosave (and pause/quit saves), a short
   Clear Green "Saved" chip appears bottom-right for ~1.6s. Presentation only.
-  `scripts/test-domain.sh` 96/96 (Presentation not covered).
 - **HUD status colours for cash, reputation and day estimate.** Negative cash and
   negative day-est. use Signal Red; Trusted reputation and healthy day-est. use
   Clear Green; Provisional reputation and ≤3-day cash runway use Safety Yellow.

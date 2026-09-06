@@ -5,6 +5,7 @@ change it describes.
 
 ## Unreleased
 
+- Added and approved Batch A visual references: daytime and dusk airport masters, turnaround service-zone composition, operations HUD direction, and the shared scale/palette sheet. Recorded prompt/source evidence; these five images are now the production visual authority.
 - **Daily finance brief.** HUD shows a deterministic day estimate: expected
   operating cost (base + current weather + payroll) versus expected flight
   income at today's cadence, plus cash runway days when the net is negative.

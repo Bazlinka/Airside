@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Restore Unity macOS compilation.** Qualify Unity Object calls and include the
+  built-in image conversion module required by PNG loading. Retain Unity-generated
+  metadata for the new UI assets. Unity 6000.3.23f1 macOS build succeeded and all
+  107 EditMode tests passed on 2026-09-07; live visual verification remains pending.
+
 - **Integrate Batch C models, WLD kits, and Batch E cleanup.** Runtime
   `ArtGltfLoader` loads Approved Batch C / WLD / PRP glTF kits from disk with
   primitive fallbacks (aircraft, buildings, vehicles, service gear, markings,

@@ -7,6 +7,7 @@ using Airside.Persistence;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Object = UnityEngine.Object;
 
 namespace Airside.Presentation
 {

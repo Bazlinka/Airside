@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- Generated Batch B world-surface candidates: 2048 tileable asphalt, concrete,
+  grass and corrugated metal; glass mask; runway/apron decals; metre-scale glTF
+  markings, lighting and props kits under `game/Airside/Assets/Airside/Art/`.
+  MAT-001 deferred to Unity. Status Generated/Modelled — not yet Integrated.
+  Evidence: `docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
 - Prepared Batch B production task packet (world surfaces, decals, markings,
   lighting, props) and cleaned Batch A doc inconsistencies: art pipeline cites
   decision 0022, REF-004 delivery size, and the Batch A gate sentence.

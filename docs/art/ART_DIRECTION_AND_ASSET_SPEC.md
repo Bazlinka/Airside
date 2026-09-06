@@ -173,20 +173,22 @@ masters must inherit that approved design rather than reinvent it.
 
 Production task packet:
 `docs/art/prompts/batch-b-surfaces-task-packet.md`.
+Generation evidence:
+`docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
 
 | ID | Runtime file | Requirement | Status |
 |---|---|---|---|
-| TEX-SRF-001 | `Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png` | Seamless, restrained aggregate, no painted markings | Planned |
-| TEX-SRF-002 | `Textures/Surfaces/tx_concrete_apron_basecolor_v01.png` | Seamless large slab variation; joints supplied separately or shader-scaled | Planned |
-| TEX-SRF-003 | `Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png` | Seamless dry-green regional grass, no obvious flowers or objects | Planned |
-| TEX-SRF-004 | `Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png` | Neutral building material that can be tinted | Planned |
-| TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Planned |
-| TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Planned |
-| TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Planned |
-| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Planned |
-| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.fbx` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Planned |
-| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.fbx` | Runway edge, taxiway, apron floodlight and obstruction lights | Planned |
-| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.fbx` | Windsock, cones, barriers, signs and baggage dollies | Planned |
+| TEX-SRF-001 | `Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png` | Seamless, restrained aggregate, no painted markings | Generated/Modelled |
+| TEX-SRF-002 | `Textures/Surfaces/tx_concrete_apron_basecolor_v01.png` | Seamless large slab variation; joints supplied separately or shader-scaled | Generated/Modelled |
+| TEX-SRF-003 | `Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png` | Seamless dry-green regional grass, no obvious flowers or objects | Generated/Modelled |
+| TEX-SRF-004 | `Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png` | Neutral building material that can be tinted | Generated/Modelled |
+| TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Generated/Modelled |
+| TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Generated/Modelled |
+| TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Generated/Modelled |
+| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Planned (create in Unity after import) |
+| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.gltf` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Generated/Modelled |
+| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.gltf` | Runway edge, taxiway, apron floodlight and obstruction lights | Generated/Modelled |
+| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.gltf` | Windsock, cones, barriers, signs and baggage dollies | Generated/Modelled |
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

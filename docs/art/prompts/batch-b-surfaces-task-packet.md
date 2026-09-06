@@ -1,6 +1,7 @@
 # Batch B — world surfaces, markings and environment
 
-**Status:** Ready for production (docs packet; assets not yet generated)  
+**Status:** Generated/Modelled candidates delivered 2026-09-06 — awaiting Bailey
+review (see `batch-b-surfaces-generation-2026-09-06.md`).  
 **Date:** 2026-09-06  
 **Decision / contract:** `docs/decisions/0022-art-direction-and-asset-pipeline.md`,
 `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`  
@@ -69,9 +70,9 @@ the intended material slots in the generation evidence if the `.mat` is deferred
 
 | ID | Exact path | Requirement |
 |---|---|---|
-| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.fbx` | Runway centre/edge/threshold, taxi centreline, two stand stop bars — **precision meshes**, not AI-painted text |
-| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.fbx` | Runway edge, taxiway, apron floodlight, obstruction lights — readable at dusk (match REF-002) |
-| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.fbx` | Windsock, cones, barriers, signs, baggage dollies — match REF-001 / REF-005 scale |
+| WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.gltf` | Runway centre/edge/threshold, taxi centreline, two stand stop bars — **precision meshes**, not AI-painted text |
+| WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.gltf` | Runway edge, taxiway, apron floodlight, obstruction lights — readable at dusk (match REF-002) |
+| WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.gltf` | Windsock, cones, barriers, signs, baggage dollies — match REF-001 / REF-005 scale |
 
 ## Style and generation rules
 

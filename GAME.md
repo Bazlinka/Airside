@@ -10,17 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Codex (macOS compiler repair and rebuild)
-- **Branch / working tree:** `fix/unity-mac-build-20260907`; Bailey's pre-existing AGENTS.md edit remains uncommitted
-- **Local verification:** Unity 6000.3.23f1 macOS build succeeded; 107/107 EditMode
-  tests passed, none skipped. Resolved ambiguous Unity Object references and the
-  missing image conversion module. This does not establish live visual verification.
-- **Do this next:** Bailey Unity Play soak to mark Batch C / WLD / Batch E **Verified**. Then Batch D animation/VFX or next GAME.md item.
-- **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
+- **Last updated:** 2026-09-07 by Cursor (Batch D runtime alive-airport + first-session tips)
+- **Branch / working tree:** `cursor/batch-d-alive-airport-38b9` (off `main` after #33 + #35)
+- **Do this next:** Bailey Unity Play soak (Batch C/E/WLD + Batch D runtime feel). Optional: produce real .anim/.prefab files later.
+- **In progress / half-done:** Batch D runtime presentation Integrated; Unity clip/prefab assets still Planned.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer.
-- **Open questions for Bailey:** none on Integration; Play soak still owned by Bailey.
-- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved · Integrated**; Batch E UI **Approved · Integrated**; WLD-001…003 **Approved · Integrated** (unverified in Play)
+- **Open questions for Bailey:** none — keep building; Play soak when convenient.
+- **Visual assets:** Batch A–C + E + WLD Integrated; Batch D **runtime Integrated** (clip files Planned)
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -124,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): Batch C models, WLD props/lights, Batch E HUD icons/panel,
-   overnight look, dual commercials, insolvency.
-2. **Batch D** animation / VFX after Play confirms Integration.
-3. No unapproved economy systems.
+1. **Unity Play soak** (Bailey): Batch C models, WLD, Batch E HUD, Batch D alive feel,
+   dual commercials, insolvency, first-session tips.
+2. Optional later: replace runtime Batch D with real Unity .anim/.prefab assets.
+3. No unapproved economy systems. Keep the Mac first-playable focused.

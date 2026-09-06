@@ -10,6 +10,25 @@ change it describes.
   (`ScheduledFlightsPerDay >= 4` → second flight), and per-flight settlement.
   First-slice task packet ready. Brief marked designed. No gameplay code in this
   change.
+- **Daily operations report.** At each simulated midnight the sim publishes a
+  `DailyReport` (flights, income, delays, running cost, net cash, reputation,
+  weather, crew). Keeps the latest seven; rebuilt by replay. HUD shows the
+  latest card. See `docs/decisions/0018-daily-operations-report.md`.
+- **Research progression.** `AirportResearch` — first project Operations Efficiency
+  (2500, one simulated day) permanently cuts base daily running cost by 100.
+  Start is a persisted `start-research` command (replayed on load). Does not
+  change flight timing. HUD shows progress / complete. See
+  `docs/decisions/0017-research-operations-efficiency.md`.
+- **Buildable third stand.** `AirportCapacity` — first capacity upgrade. Spend
+  8000 (`build-stand` command, replayed on load) to unlock Stand 3; taxi network
+  gains lead-in geometry; primary flights and ground traffic use the new stand.
+  Two-stand behaviour stays seed-identical. HUD shows stand count and a build
+  button. See `docs/decisions/0016-third-stand-capacity.md`.
+- **Insolvency / game-over.** Cash negative at three consecutive simulated day
+  closes declares the airport insolvent: simulation freezes, player commands
+  refuse, and an `"Insolvent"` event is logged. Tracked on `AirportEconomy`
+  (`ConsecutiveNegativeDays`, `IsInsolvent`); rebuilt by replay, no save-schema
+  change. Presentation untouched. See `docs/decisions/0015-insolvency-game-over.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

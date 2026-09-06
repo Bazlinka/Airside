@@ -34,6 +34,7 @@ namespace Airside.Simulation
         public static readonly StableId AlphaTwo = new("TAXI-A2");
         public static readonly StableId StandOneLeadIn = new("LEAD-IN-1");
         public static readonly StableId StandTwoLeadIn = new("LEAD-IN-2");
+        public static readonly StableId StandThreeLeadIn = new("LEAD-IN-3");
 
         // A single-file corridor covering the shared A1/A2 taxiway. Ground-traffic
         // aircraft reserve it for the whole time they are on A1 or A2, so only one
@@ -45,10 +46,28 @@ namespace Airside.Simulation
         public TaxiRoute RouteTo(StableId stand)
         {
             if (stand.Equals(AirportSimulation.StandOne))
-                return Create("A1 → A2 → Stand 1", StandOneLeadIn, 14f);
+                return Create("A1 → A2 → Stand 1", StandOneLeadIn, StandZ(stand));
             if (stand.Equals(AirportSimulation.StandTwo))
-                return Create("A1 → A2 → Stand 2", StandTwoLeadIn, 20f);
+                return Create("A1 → A2 → Stand 2", StandTwoLeadIn, StandZ(stand));
+            if (stand.Equals(AirportSimulation.StandThree))
+                return Create("A1 → A2 → Stand 3", StandThreeLeadIn, StandZ(stand));
             throw new ArgumentOutOfRangeException(nameof(stand), "Stand is not connected to the taxi network.");
+        }
+
+        public static float StandZ(StableId stand)
+        {
+            if (stand.Equals(AirportSimulation.StandOne)) return 14f;
+            if (stand.Equals(AirportSimulation.StandTwo)) return 20f;
+            if (stand.Equals(AirportSimulation.StandThree)) return 26f;
+            throw new ArgumentOutOfRangeException(nameof(stand));
+        }
+
+        public static StableId LeadInFor(StableId stand)
+        {
+            if (stand.Equals(AirportSimulation.StandOne)) return StandOneLeadIn;
+            if (stand.Equals(AirportSimulation.StandTwo)) return StandTwoLeadIn;
+            if (stand.Equals(AirportSimulation.StandThree)) return StandThreeLeadIn;
+            throw new ArgumentOutOfRangeException(nameof(stand));
         }
 
         private static TaxiRoute Create(string name, StableId leadIn, float standZ)

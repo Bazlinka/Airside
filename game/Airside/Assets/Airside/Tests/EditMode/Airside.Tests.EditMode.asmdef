@@ -5,7 +5,8 @@
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
     "Airside.Domain",
-    "Airside.Simulation"
+    "Airside.Simulation",
+    "Airside.Persistence"
   ],
   "includePlatforms": [
     "Editor"

@@ -10,6 +10,9 @@
 - Turnaround tasks respect their dependencies and report the cause of a delay.
 - Priority crew can only be bought once per turnaround and changes both time and cash.
 - Flight revenue and delay costs reconcile in the airport economy.
+- Reopening after elapsed real time matches an uninterrupted deterministic run.
+- A damaged latest save recovers from its previous complete snapshot.
+- Backward clock changes cannot reverse the airport, and catch-up is capped at thirty days.
 
 ## Remaining observed-play checks
 
@@ -19,6 +22,7 @@
 - Confirm active fuel, baggage and passenger vehicles make turnaround progress readable.
 - Confirm the priority-crew choice and its $300 cost are understandable at a glance.
 - Add a visual diagnostic for any future deadlock.
+- Confirm the welcome-back report remains readable for short and long absences.
 
 The greybox build passes when:
 

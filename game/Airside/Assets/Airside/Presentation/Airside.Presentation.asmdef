@@ -4,6 +4,7 @@
   "references": [
     "Airside.Domain",
     "Airside.Simulation",
+    "Airside.Persistence",
     "Unity.InputSystem"
   ],
   "autoReferenced": true

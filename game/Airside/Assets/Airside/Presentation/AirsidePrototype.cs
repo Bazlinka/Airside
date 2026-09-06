@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Airside.Domain;
+using Airside.Persistence;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,6 +12,7 @@ namespace Airside.Presentation
     {
         private ManualSimulationClock _clock;
         private AirportSimulation _simulation;
+        private PersistentAirportSession _session;
         private Transform _aircraft;
         private Transform _fuelTruck;
         private Transform _baggageCart;
@@ -19,6 +21,8 @@ namespace Airside.Presentation
         private double _preciseTime;
         private bool _paused;
         private int _speed = 1;
+        private long _nextAutosaveSecond;
+        private bool _showAwaySummary;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -29,8 +33,13 @@ namespace Airside.Presentation
 
         private void Awake()
         {
-            _clock = new ManualSimulationClock(new SimulationTime(0));
-            _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
+            var savePath = System.IO.Path.Combine(Application.persistentDataPath, "airside-save-v1.json");
+            _session = PersistentAirportSession.LoadOrCreate(savePath, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 24031996);
+            _clock = _session.Clock;
+            _simulation = _session.Simulation;
+            _preciseTime = _clock.Now.ElapsedSeconds;
+            _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
+            _showAwaySummary = _session.LastAwaySummary.HasReport;
 
             BuildLightingAndCamera();
             BuildAirfield();
@@ -54,6 +63,12 @@ namespace Airside.Presentation
                 _simulation.Update();
             }
 
+            if (_clock.Now.ElapsedSeconds >= _nextAutosaveSecond)
+            {
+                SaveSession();
+                _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
+            }
+
             UpdateAircraftVisual();
             UpdateServiceVehicles();
         }
@@ -64,12 +79,19 @@ namespace Airside.Presentation
             if (keyboard == null)
                 return;
 
+            if (_showAwaySummary)
+            {
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame)
+                    _showAwaySummary = false;
+                return;
+            }
+
             if (keyboard.spaceKey.wasPressedThisFrame)
                 _paused = !_paused;
             if (keyboard.tabKey.wasPressedThisFrame)
                 _speed = _speed == 1 ? 4 : 1;
             if (keyboard.pKey.wasPressedThisFrame)
-                _simulation.EnablePriorityCrew();
+                _session.EnablePriorityCrew();
         }
 
         private void UpdateAircraftVisual()
@@ -155,7 +177,7 @@ namespace Airside.Presentation
                 var alreadyAssigned = _simulation.ActiveTurnaround.PriorityCrewEnabled;
                 GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
                 if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300"))
-                    _simulation.EnablePriorityCrew();
+                    _session.EnablePriorityCrew();
                 GUI.enabled = true;
             }
             else
@@ -170,7 +192,59 @@ namespace Airside.Presentation
             GUI.Box(new Rect(Screen.width / scale - 258, 22, 236, 78), string.Empty, panel);
             GUI.Label(new Rect(Screen.width / scale - 238, 38, 200, 22), "Right-drag orbit", small);
             GUI.Label(new Rect(Screen.width / scale - 238, 62, 200, 22), "Scroll zoom  ·  WASD pan", small);
+
+            if (_showAwaySummary)
+                DrawAwaySummary(scale, panel, title, detail, small);
             GUI.matrix = previousMatrix;
+        }
+
+        private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small)
+        {
+            var summary = _session.LastAwaySummary;
+            var width = 430f;
+            var height = 270f;
+            var left = (Screen.width / scale - width) * 0.5f;
+            var top = (Screen.height / scale - height) * 0.5f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 24, top + 20, width - 48, 34), "WELCOME BACK", title);
+            GUI.Label(new Rect(left + 24, top + 62, width - 48, 26), $"Airport operated for {FormatDuration(summary.AwaySeconds)}", detail);
+            GUI.Label(new Rect(left + 24, top + 98, width - 48, 24), $"Flights completed: {summary.FlightsCompleted}", detail);
+            GUI.Label(new Rect(left + 24, top + 128, width - 48, 24), $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}", detail);
+            GUI.Label(new Rect(left + 24, top + 158, width - 48, 24), $"Delay costs: ${summary.DelayCost:N0}", detail);
+            if (summary.RecoveredPreviousSave)
+                GUI.Label(new Rect(left + 24, top + 188, width - 48, 20), "Recovered the previous safe copy.", small);
+            else if (summary.ClockMovedBackwards)
+                GUI.Label(new Rect(left + 24, top + 188, width - 48, 20), "Device clock moved backwards; no time was added.", small);
+            if (GUI.Button(new Rect(left + 125, top + 220, 180, 30), "Continue operations"))
+                _showAwaySummary = false;
+        }
+
+        private static string FormatDuration(long seconds)
+        {
+            var span = TimeSpan.FromSeconds(seconds);
+            if (span.TotalDays >= 1)
+                return $"{(int)span.TotalDays}d {span.Hours}h";
+            if (span.TotalHours >= 1)
+                return $"{(int)span.TotalHours}h {span.Minutes}m";
+            if (span.TotalMinutes >= 1)
+                return $"{(int)span.TotalMinutes}m {span.Seconds}s";
+            return $"{span.Seconds}s";
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                SaveSession();
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveSession();
+        }
+
+        private void SaveSession()
+        {
+            _session?.Save(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
         }
 
         private string ReservationSummary()

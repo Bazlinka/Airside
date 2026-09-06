@@ -232,12 +232,43 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 410, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
-            GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);
+            var accepted = _simulation.Routes.Accepted;
+            var listedRoutes = accepted.Count == 0
+                ? 1
+                : Math.Min(4, accepted.Count) + (accepted.Count > 4 ? 1 : 0);
+            // Header through routes summary (~80), schedule lines, fleet (2), event tail (4).
+            var opsHeight = 80f + listedRoutes * 18f + 4f + 2 * 18f + 6f + 4 * 20f + 16f;
+            GUI.Box(new Rect(historyLeft, 22, 340, opsHeight), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
             GUI.Label(new Rect(historyLeft + 20, 62, 320, 20),
                 $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight:N0}/flight", small);
-            DrawRouteOffer(scale, panel, detail, small);
+
             var trafficY = 80f;
+            if (accepted.Count == 0)
+            {
+                GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), "No accepted routes yet", small);
+                trafficY += 18f;
+            }
+            else
+            {
+                var start = Math.Max(0, accepted.Count - 4);
+                for (var i = start; i < accepted.Count; i++)
+                {
+                    var route = accepted[i];
+                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20),
+                        $"{route.Airline} · {route.FlightsPerDay}/d → {route.Destination} · ${route.IncomePerFlight:N0}", small);
+                    trafficY += 18f;
+                }
+
+                if (start > 0)
+                {
+                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"+{start} earlier route(s)", small);
+                    trafficY += 18f;
+                }
+            }
+
+            trafficY += 4f;
+            DrawRouteOffer(scale, panel, detail, small, offerTop: 22f + opsHeight + 12f);
             foreach (var aircraft in _simulation.GroundTraffic)
             {
                 GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}", small);
@@ -256,14 +287,14 @@ namespace Airside.Presentation
             GUI.matrix = previousMatrix;
         }
 
-        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small)
+        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, float offerTop = 244f)
         {
             var proposal = _simulation.Routes.Pending;
             if (proposal == null)
                 return;
 
             var left = Screen.width / scale - 362;
-            var top = 244f;
+            var top = offerTop;
             GUI.Box(new Rect(left, top, 340, 156), string.Empty, panel);
             GUI.Label(new Rect(left + 20, top + 14, 300, 24), "ROUTE OFFER", detail);
             GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);

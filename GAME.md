@@ -18,7 +18,7 @@ next session can continue without seeing the previous conversation. Keep it shor
   numbers 0015+ on parallel branches will need renumbering on merge.
 - **In progress / half-done:** nothing on this branch once tests are green.
   Accept refuses when schedule would exceed `StandCount × 6` (12/day on two
-  stands). No save-schema change.
+  stands). Operations panel lists accepted routes. No save-schema change.
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the

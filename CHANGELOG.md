@@ -5,10 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- Bailey approved Batch B. Greybox now loads Batch B surface/decal textures in
+  `AirsidePrototype` (solid-colour fallback if a PNG is missing). Added Batch C
+  model production packet. WLD kits Approved but not yet placed as prefabs.
 - Generated Batch B world-surface candidates: 2048 tileable asphalt, concrete,
   grass and corrugated metal; glass mask; runway/apron decals; metre-scale glTF
   markings, lighting and props kits under `game/Airside/Assets/Airside/Art/`.
-  MAT-001 deferred to Unity. Status Generated/Modelled — not yet Integrated.
+  Later Approved and surface-integrated; see bullet above.
   Evidence: `docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
 - Prepared Batch B production task packet (world surfaces, decals, markings,
   lighting, props) and cleaned Batch A doc inconsistencies: art pipeline cites

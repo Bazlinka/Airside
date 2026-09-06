@@ -1,7 +1,7 @@
 # Batch B — world surfaces, markings and environment
 
-**Status:** Generated/Modelled candidates delivered 2026-09-06 — awaiting Bailey
-review (see `batch-b-surfaces-generation-2026-09-06.md`).  
+**Status:** Approved by Bailey 2026-09-06 — surfaces/decals Integrated
+(`AirsidePrototype`); WLD kits Approved, placement follow-up.  
 **Date:** 2026-09-06  
 **Decision / contract:** `docs/decisions/0022-art-direction-and-asset-pipeline.md`,
 `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`  

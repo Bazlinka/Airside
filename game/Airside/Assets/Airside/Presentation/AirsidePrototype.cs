@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using Airside.Domain;
 using Airside.Persistence;
@@ -517,13 +518,25 @@ namespace Airside.Presentation
 
         private static void BuildAirfield()
         {
-            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), new Color(0.16f, 0.34f, 0.21f));
-            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f));
-            CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f));
-            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f));
+            // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
+            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), new Color(0.16f, 0.34f, 0.21f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
+            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
+            CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
+            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
             CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
-            CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
-            CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f));
+            CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
+                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(3f, 1.5f));
+            CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
+                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+
+            CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
+                "Textures/Decals/dc_runway_wear_v01.png");
+            CreateDecalQuad("Apron stains", new Vector3(20f, 0.06f, 17f), new Vector3(18f, 1f, 10f),
+                "Textures/Decals/dc_apron_stains_v01.png");
 
             for (var x = -34; x <= 34; x += 8)
                 CreateBlock("Runway marking", new Vector3(x, 0.02f, 0f), new Vector3(3.5f, 0.03f, 0.28f), Color.white);
@@ -661,20 +674,79 @@ namespace Airside.Presentation
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
 
-        private static GameObject CreateBlock(string name, Vector3 position, Vector3 scale, Color color)
+        private static GameObject CreateBlock(
+            string name,
+            Vector3 position,
+            Vector3 scale,
+            Color color,
+            string artTextureRelativePath = null,
+            Vector2? textureTiling = null)
         {
             var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.name = name;
             block.transform.position = position;
             block.transform.localScale = scale;
-            block.GetComponent<Renderer>().material = CreateMaterial(color);
+            block.GetComponent<Renderer>().material = CreateMaterial(color, artTextureRelativePath, textureTiling);
             return block;
         }
 
-        private static Material CreateMaterial(Color color)
+        private static void CreateDecalQuad(string name, Vector3 position, Vector3 scale, string artTextureRelativePath)
+        {
+            var texture = TryLoadArtTexture(artTextureRelativePath);
+            if (texture == null)
+                return;
+
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = name;
+            UnityEngine.Object.Destroy(quad.GetComponent<Collider>());
+            quad.transform.position = position;
+            quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            quad.transform.localScale = scale;
+            var material = CreateMaterial(Color.white, artTextureRelativePath, Vector2.one);
+            material.SetFloat("_Surface", 1f); // URP transparent hint when available
+            if (material.HasProperty("_Mode"))
+                material.SetFloat("_Mode", 3f);
+            material.color = new Color(1f, 1f, 1f, 1f);
+            material.mainTexture = texture;
+            quad.GetComponent<Renderer>().material = material;
+        }
+
+        private static Material CreateMaterial(Color color, string artTextureRelativePath = null, Vector2? textureTiling = null)
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            return new Material(shader) { color = color };
+            var material = new Material(shader) { color = color };
+            var texture = TryLoadArtTexture(artTextureRelativePath);
+            if (texture == null)
+                return material;
+
+            material.mainTexture = texture;
+            var tiling = textureTiling ?? Vector2.one;
+            material.mainTextureScale = tiling;
+            return material;
+        }
+
+        /// <summary>
+        /// Loads Batch B PNGs from the Art folder on disk (Editor / unpacked data).
+        /// Returns null when missing so solid-colour primitives remain the fallback.
+        /// </summary>
+        private static Texture2D TryLoadArtTexture(string artRelativePath)
+        {
+            if (string.IsNullOrEmpty(artRelativePath))
+                return null;
+
+            var fullPath = Path.Combine(Application.dataPath, "Airside", "Art", artRelativePath);
+            if (!File.Exists(fullPath))
+                return null;
+
+            var bytes = File.ReadAllBytes(fullPath);
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true);
+            if (!texture.LoadImage(bytes))
+                return null;
+
+            texture.name = Path.GetFileNameWithoutExtension(artRelativePath);
+            texture.wrapMode = TextureWrapMode.Repeat;
+            texture.filterMode = FilterMode.Bilinear;
+            return texture;
         }
 
 

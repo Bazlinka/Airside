@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-06  
 **Generator:** Airside procedural Python (seeded `20260906`) via numpy + Pillow  
-**Status:** Generated/Modelled — awaiting Bailey review before Approved  
+**Status:** Approved by Bailey 2026-09-06 — surfaces/decals Integrated on greybox  
 **Repository paths:** under `game/Airside/Assets/Airside/Art/`
 
 No third-party texture packs were used. Colours target the approved Airside
@@ -43,5 +43,6 @@ requirement. Fallback until Integrated: Unity primitives in `AirsidePrototype.cs
 
 ## Review ask
 
-Bailey: approve look against REF-001/002/005, or request `_v02` candidates.
-Do not wire into the playable scene until status is Approved.
+Bailey approved Batch B on 2026-09-06. Surfaces/decals are Integrated on the
+greybox. WLD kits remain Approved for later prefab placement. Request `_v02`
+only if Play soak shows tiling or look problems.

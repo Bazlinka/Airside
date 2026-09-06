@@ -10,19 +10,22 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch B candidates generated)
-- **Branch / working tree:** `cursor/batch-b-prep-38b9` → merge to `main` after review
-- **Do this next:** Bailey reviews Batch B candidates under
-  `game/Airside/Assets/Airside/Art/` against REF-001/002/005. On approval, mark
-  manifest Approved, create MAT-001 in Unity, then a narrow Integration PR
-  (primitives stay as fallback). Unity Play soak when the editor is available.
-- **In progress / half-done:** Batch B Generated/Modelled (textures + glTF kits);
-  MAT-001 deferred to Unity Editor; not yet Integrated.
+- **Last updated:** 2026-09-06 by Cursor (Batch B approved + integrated; Batch C packet)
+- **Branch / working tree:** `cursor/batch-b-prep-38b9` → merge to `main`
+- **Do this next:** Produce Batch C models per
+  `docs/art/prompts/batch-c-models-task-packet.md` (turboprop, terminal, hangar,
+  service vehicles). Unity Play soak to verify textured greybox. Place WLD kits
+  as prefabs when convenient.
+- **In progress / half-done:** Batch B Approved; surfaces/decals Integrated on
+  greybox with colour fallback. WLD kits Approved not placed. Batch C packet
+  ready; models not started. MAT-001 `.mat` still optional.
 - **Watch out for:** fleet corridor invariants (0006–0009). Concurrent commercials:
-  fleet yields to any commercial. Art pipeline is decision **0022**. Do not remove
-  procedural primitives until Batch B is Approved and Verified.
-- **Open questions for Bailey:** Approve Batch B look, or request `_v02` revisions?
-- **Visual assets:** Batch A Approved; Batch B Generated/Modelled (not Integrated)
+  fleet yields to any commercial. Art pipeline is decision **0022**. Keep primitive
+  aircraft/buildings until Batch C is Approved and Integrated.
+- **Open questions for Bailey:** none for Batch B. After Play soak, say if surface
+  tiling/look needs `_v02`.
+- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated);
+  Batch C Planned
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -113,10 +116,9 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-1. **Bailey review of Batch B** — approve or request `_v02` against REF-001/002/005
-   (`docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`).
-2. **MAT-001 + Integration** — create materials in Unity; wire Approved assets with
-   primitive fallbacks still present.
-3. **Unity Play soak** when Bailey can run the editor (dual commercials, HUD,
-   day/night).
-4. **Batch C model packet** after Batch B is Approved.
+1. **Batch C production** — follow
+   `docs/art/prompts/batch-c-models-task-packet.md` (aircraft, buildings, vehicles).
+2. **Unity Play soak** — confirm Batch B textured greybox, dual commercials, HUD,
+   day/night.
+3. **WLD kit placement** — optional follow-up prefabs for markings/lights/props.
+4. **Batch D** after Batch C is Approved.

@@ -24,6 +24,8 @@ namespace Airside.Persistence
         public const string PriorityCrewCommand = "priority-crew";
         public const string AcceptRouteCommand = "accept-route";
         public const string DeclineRouteCommand = "decline-route";
+        public const string HireCrewCommand = "hire-crew";
+        public const string ReleaseCrewCommand = "release-crew";
         public const long MaximumCatchUpSeconds = 30L * 24L * 60L * 60L;
 
         private readonly AirsideSaveRepository _repository;
@@ -113,6 +115,24 @@ namespace Airside.Persistence
             return true;
         }
 
+        public bool HireGroundCrew() => RecordCommand(Simulation.HireGroundCrew(), HireCrewCommand, "hire");
+
+        public bool ReleaseGroundCrew() => RecordCommand(Simulation.ReleaseGroundCrew(), ReleaseCrewCommand, "release");
+
+        private bool RecordCommand(bool applied, string commandType, string prefix)
+        {
+            if (!applied)
+                return false;
+
+            _save.commands.Add(new AirsideCommandRecord
+            {
+                commandId = $"{prefix}-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
+                commandType = commandType,
+                simulationSecond = Clock.Now.ElapsedSeconds
+            });
+            return true;
+        }
+
         public void Save(long currentUnixSeconds)
         {
             _save.revision++;
@@ -177,6 +197,10 @@ namespace Airside.Persistence
                 Simulation.AcceptPendingRoute();
             else if (command.commandType == DeclineRouteCommand)
                 Simulation.DeclinePendingRoute();
+            else if (command.commandType == HireCrewCommand)
+                Simulation.HireGroundCrew();
+            else if (command.commandType == ReleaseCrewCommand)
+                Simulation.ReleaseGroundCrew();
         }
     }
 }

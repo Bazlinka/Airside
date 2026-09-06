@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
+  runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional
+  `staffingFactor` that short-circuits at 1.0, so every seed/timing test is
+  byte-identical); extra crew shorten turnarounds, understaffing lengthens them
+  into delays. Hire (120, persisted `hire-crew`/`release-crew` commands) and a
+  daily wage settled with the running costs. `AirportEconomy.TrySpend` generalises
+  the old priority-crew purchase. HUD shows headcount/payroll with hire/release
+  and an understaffed warning. 60/60 tests. See `docs/decisions/0014-staffing-by-role.md`.
 - **Simulated weather + daily running costs.** `Weather` (deterministic from the
   timeline, biased mild) changes every 5 simulated minutes. Each simulated
   midnight the airport pays `BaseDailyOperatingCost` (400) plus a weather

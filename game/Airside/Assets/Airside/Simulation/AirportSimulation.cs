@@ -43,6 +43,7 @@ namespace Airside.Simulation
             TrafficWaits = new TrafficWaitMonitor();
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
+            Staffing = new AirportStaffing();
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -64,6 +65,7 @@ namespace Airside.Simulation
         public AirportEconomy Economy { get; }
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
+        public AirportStaffing Staffing { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -127,6 +129,28 @@ namespace Airside.Simulation
             return true;
         }
 
+        public bool HireGroundCrew()
+        {
+            if (Staffing.GroundCrew >= AirportStaffing.MaximumGroundCrew)
+                return false;
+            if (!Economy.TrySpend(AirportStaffing.HireCost) || !Staffing.Hire())
+                return false;
+
+            Record(_lastUpdatedAt, "Crew hired",
+                $"Ground crew now {Staffing.GroundCrew} · payroll ${Staffing.DailyWage:N0}/day");
+            return true;
+        }
+
+        public bool ReleaseGroundCrew()
+        {
+            if (!Staffing.Release())
+                return false;
+
+            Record(_lastUpdatedAt, "Crew released",
+                $"Ground crew now {Staffing.GroundCrew} · payroll ${Staffing.DailyWage:N0}/day");
+            return true;
+        }
+
         private void AdvanceOneSecond(SimulationTime now)
         {
             Routes.Update(now);
@@ -153,7 +177,8 @@ namespace Airside.Simulation
             {
                 if (ActiveAircraft.Phase == AircraftPhase.AtStand)
                 {
-                    ActiveTurnaround = new TurnaroundWorkflow(ActiveAircraft.PhaseStartedAt, _random.NextInt(0, 3) == 0);
+                    ActiveTurnaround = new TurnaroundWorkflow(
+                        ActiveAircraft.PhaseStartedAt, _random.NextInt(0, 3) == 0, Staffing.TurnaroundSpeedFactor);
                     Record(now, "On stand", $"Arrived at {AssignedStand.Value}");
                 }
 
@@ -197,10 +222,10 @@ namespace Airside.Simulation
                 _daysSettled++;
                 var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
                 var weather = Weather.At(closeTime);
-                var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather);
+                var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
                 Record(now, $"Day {_daysSettled} closed",
-                    $"Running cost -${cost:N0} ({Weather.Describe(weather)}) · cash ${Economy.Cash:N0}");
+                    $"Running cost -${cost:N0} ({Weather.Describe(weather)}, {Staffing.GroundCrew} crew) · cash ${Economy.Cash:N0}");
             }
         }
 

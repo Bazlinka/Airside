@@ -31,11 +31,13 @@ namespace Airside.Simulation
 
         private readonly SimulationTime _startedAt;
         private readonly int _cleaningDisruptionSeconds;
+        private readonly double _staffingFactor;
 
-        public TurnaroundWorkflow(SimulationTime startedAt, bool cleaningDisruption)
+        public TurnaroundWorkflow(SimulationTime startedAt, bool cleaningDisruption, double staffingFactor = 1.0)
         {
             _startedAt = startedAt;
             _cleaningDisruptionSeconds = cleaningDisruption ? 10 : 0;
+            _staffingFactor = staffingFactor > 0 ? staffingFactor : 1.0;
         }
 
         public bool PriorityCrewEnabled { get; private set; }
@@ -110,7 +112,10 @@ namespace Airside.Simulation
 
         private long Duration(long normalSeconds)
         {
-            return PriorityCrewEnabled ? Math.Max(1, (long)Math.Ceiling(normalSeconds * 0.7)) : normalSeconds;
+            var factor = _staffingFactor * (PriorityCrewEnabled ? 0.7 : 1.0);
+            if (factor == 1.0)
+                return normalSeconds;
+            return Math.Max(1, (long)Math.Ceiling(normalSeconds * factor));
         }
 
         private long Elapsed(SimulationTime now) => Math.Max(0, now.ElapsedSeconds - _startedAt.ElapsedSeconds);

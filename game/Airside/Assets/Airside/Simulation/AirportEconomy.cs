@@ -20,12 +20,16 @@ namespace Airside.Simulation
         public long TotalRouteIncome { get; private set; }
         public long TotalOperatingCost { get; private set; }
 
-        public bool PurchasePriorityCrew()
+        public bool PurchasePriorityCrew() => TrySpend(PriorityCrewCost);
+
+        public bool TrySpend(long amount)
         {
-            if (Cash < PriorityCrewCost)
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            if (Cash < amount)
                 return false;
 
-            Cash -= PriorityCrewCost;
+            Cash -= amount;
             return true;
         }
 

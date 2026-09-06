@@ -181,7 +181,7 @@ namespace Airside.Presentation
 
             var timeOfDay = _simulation.TimeOfDay;
 
-            GUI.Box(new Rect(22, 22, 410, 382), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 424), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
@@ -218,7 +218,18 @@ namespace Airside.Presentation
                     : "Operations running to schedule", small);
             }
 
-            GUI.Label(new Rect(42, 368, 370, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
+            var staffing = _simulation.Staffing;
+            GUI.Label(new Rect(42, 360, 380, 20),
+                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}", small);
+            GUI.enabled = staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
+            if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}"))
+                _session.HireGroundCrew();
+            GUI.enabled = staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
+            if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew"))
+                _session.ReleaseGroundCrew();
+            GUI.enabled = true;
+
+            GUI.Label(new Rect(42, 410, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);

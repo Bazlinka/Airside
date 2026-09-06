@@ -56,7 +56,7 @@ namespace Airside.Tests
             clock.Advance(DayCycle.DaySeconds * 2);
             simulation.Update();
 
-            var expected = 2 * AirportSimulation.BaseDailyOperatingCost
+            var expected = 2 * (AirportSimulation.BaseDailyOperatingCost + simulation.Staffing.DailyWage)
                 + Weather.DailyOperatingCost(Weather.At(new SimulationTime(800)))
                 + Weather.DailyOperatingCost(Weather.At(new SimulationTime(2000)));
             Assert.That(simulation.Economy.TotalOperatingCost, Is.EqualTo(expected));

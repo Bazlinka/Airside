@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.IO;
+using Airside.Simulation;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -99,5 +102,80 @@ namespace Airside.Presentation
 
         private static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
+
+        // --- Batch E UI candidates (docs/art/prompts/batch-e-ui-generation-2026-09-06.md) ---
+        // Generated candidates, not yet Bailey-approved; wired here as the documented
+        // fallback-safe pattern requires (a missing or not-yet-drawn file degrades to
+        // the existing procedural/text-only presentation, never to a broken HUD).
+
+        private static readonly Dictionary<string, Texture2D> IconCache = new();
+        private static Texture2D _alertStripe;
+
+        /// <summary>
+        /// A Batch E icon by category/name (e.g. "weather", "clear"), or null if the
+        /// candidate file isn't present — callers must keep working without it.
+        /// </summary>
+        public static Texture2D Icon(string category, string name)
+        {
+            var key = $"{category}/{name}";
+            if (IconCache.TryGetValue(key, out var cached))
+                return cached;
+
+            var texture = LoadArtTexture($"UI/Icons/ui_{category}_{name}_v01.png");
+            IconCache[key] = texture;
+            return texture;
+        }
+
+        /// <summary>The weather icon for this condition, or null (no "cloudy" candidate; falls back to "overcast").</summary>
+        public static Texture2D WeatherIcon(WeatherKind kind) => kind switch
+        {
+            WeatherKind.Clear => Icon("weather", "clear"),
+            WeatherKind.Cloudy => Icon("weather", "overcast"),
+            WeatherKind.Overcast => Icon("weather", "overcast"),
+            WeatherKind.Rain => Icon("weather", "rain"),
+            WeatherKind.Fog => Icon("weather", "fog"),
+            WeatherKind.Storm => Icon("weather", "storm"),
+            _ => null
+        };
+
+        /// <summary>
+        /// UI-PNL-003 caution stripe, or null. NOT the same candidate as the dark panel
+        /// (UI-PNL-002): that one's measured alpha averages ~9%, too faint to serve as a
+        /// readable panel background, so it stays out of runtime use until regenerated.
+        /// </summary>
+        public static Texture2D AlertStripeBackground
+        {
+            get
+            {
+                if (_alertStripe == null)
+                    _alertStripe = LoadArtTexture("UI/Panels/ui_alert_stripe_v01.png");
+                return _alertStripe;
+            }
+        }
+
+        /// <summary>A caution-style label with the alert stripe behind Safety Yellow text, or a flat fallback.</summary>
+        public static GUIStyle CautionStyle(GUIStyle basis)
+        {
+            var style = TextStyle(basis, SafetyYellow);
+            if (AlertStripeBackground != null)
+                style.normal.background = AlertStripeBackground;
+            return style;
+        }
+
+        private static Texture2D LoadArtTexture(string artRelativePath)
+        {
+            var fullPath = Path.Combine(Application.dataPath, "Airside", "Art", artRelativePath);
+            if (!File.Exists(fullPath))
+                return null;
+
+            var bytes = File.ReadAllBytes(fullPath);
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true);
+            if (!texture.LoadImage(bytes))
+                return null;
+
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            return texture;
+        }
     }
 }

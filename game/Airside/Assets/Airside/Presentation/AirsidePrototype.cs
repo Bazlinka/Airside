@@ -734,7 +734,7 @@ namespace Airside.Presentation
             var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold });
             var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 16 });
             var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 });
-            var caution = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SafetyYellow);
+            var caution = AirsideTheme.CautionStyle(small);
             var onTime = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.ClearGreen);
             var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
             var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
@@ -750,7 +750,15 @@ namespace Airside.Presentation
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
             var clockStyle = _paused || _speed > 1 ? caution : small;
-            GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
+            var weatherLineX = 42f;
+            var weatherIcon = AirsideTheme.WeatherIcon(_simulation.CurrentWeather);
+            if (weatherIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 132, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                weatherLineX = 68f;
+            }
+            GUI.Label(new Rect(weatherLineX, 132, 380 - (weatherLineX - 42), 22),
+                $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
             var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
             var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
             GUI.Label(new Rect(42, 156, 200, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);

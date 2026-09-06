@@ -5,6 +5,28 @@ change it describes.
 
 ## Unreleased
 
+- **Merge wave: Approve Batch C/E and land overnight polish + Batch E HUD.** Bailey
+  Approve recorded for Batch C models and Batch E UI. Merged draft PRs #19–#30
+  (and #31 Approve) onto `main`: WLD greybox, Stand 3 traffic fix, insolvency HUD,
+  follow cycle, research bar/mute, toasts, status colours, autosave chip, beacon,
+  pause overlay, and Batch E icon/panel runtime wiring. Domain harness should be
+  re-run on `main` after the wave.
+
+- **Integrate Batch E UI candidates into the runtime HUD.** Verified all 7 candidates
+  against their recorded SHA-256 hashes: `ui_service_icon_sheet_v01.png` is corrupted
+  as committed (invalid PNG signature, hash mismatch — needs regeneration) and
+  `ui_panel_9slice_dark_v01.png` measures ~9% average alpha (max 56%), too faint for
+  the "WCAG-aware contrast" it was specified for, so the HUD keeps its existing
+  procedural Runway Ink panel instead of regressing to it. The other 4 verified
+  correct: sliced the weather/operation/economy icon sheets (7 icons each, single row,
+  real alpha) into 21 individual files under `Art/UI/Icons/`, and copied the alert
+  stripe and light panel into `Art/UI/Panels/`. Added `AirsideTheme.Icon`/`WeatherIcon`/
+  `AlertStripeBackground`/`CautionStyle` (all fallback-safe if a file is missing); the
+  HUD now draws the weather icon live and uses the alert stripe behind caution text.
+  Done on Bailey's direct instruction, ahead of the usual formal-approval gate for new
+  runtime art — still needs a Unity Play check. See the integration review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`. Presentation only; no
+  simulation code changed; `scripts/test-domain.sh` 96/96 pass (unaffected).
 - **Pause overlay and speed caution colour.** While paused, a translucent dimmer
   and centred PAUSED chip appear (hidden under the away summary). 4× speed and
   pause tint the clock line Safety Yellow. Presentation only.

@@ -10,74 +10,14 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: pause/speed HUD)
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: ops-event toast)
-- **Branch / working tree:** open draft PRs into `main`:
-  - #20–#23 overnight look / Stand3 / insolvency HUD / follow cycle
-  - #24–#27 HUD audio / research toast / status colours / autosave chip
-  - #28 night aerodrome beacon + dual-flight phase HUD
-  - #29 ops-event toast
-  - `cursor/pause-speed-hud-38b9` — pause dimmer + 4× caution colour
-- **Do this next:** Merge overnight drafts (any order; #21 is sim). Bailey Batch C/E review.
-  - `cursor/ops-event-toast-38b9` — flash latest ops event on the HUD
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: aerodrome beacon + dual HUD)
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: autosave indicator)
-  - #24 research bar + mute + StandZ presentation
-  - #25 research-complete toast
-  - #26 cash / reputation / day-est colour cues
-  - #27 autosave Saved chip
-  - `cursor/beacon-dual-hud-38b9` — night aerodrome beacon + dual-flight phase line
-  Unity Play soak for HUD + night beacon.
-  - `cursor/autosave-indicator-38b9` — brief Saved chip after autosave
-  Unity Play soak for HUD polish stack.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD in #20.
-  Batch E UI candidates Generated (not integrated). Passenger Services shipped. Harness green.
+- **Last updated:** 2026-09-06 by Cursor (Approve C/E + merged #19–#31 into `main`)
+- **Branch / working tree:** `main` clean after merge wave
+- **Do this next:** Unity Play soak (HUD, Batch E icons, overnight look, dual flights). Batch C Integration (wire glTF; primitives stay fallback until Verified).
+- **In progress / half-done:** Batch C **Approved** (not Integrated yet). Batch E UI **Approved · Integrated** via #19. Overnight polish #20–#30 on main.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Primitives until Batch C Approved+Verified. Batch E not in runtime Assets until Approved.
-  Do not merge #19 without Bailey Approve.
-- **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
-- **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled; Batch E UI Generated — review required
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD status colours)
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: research toast)
-- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD audio + research bar)
-  - #20 `cursor/overnight-polish-38b9` — WLD greybox + miniature look
-  - #21 `cursor/stand3-ground-traffic-38b9` — Stand 3 fleet lead-in/Z
-  - #22 `cursor/insolvency-hud-38b9` — insolvency / cash warning HUD
-  - #23 `cursor/follow-cycle-38b9` — F cycles dual commercials
-  - #24 `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
-  - #25 `cursor/research-toast-38b9` — research-complete HUD toast
-  - `cursor/hud-status-colours-38b9` — cash / reputation / day-est colour cues
-- **Do this next:** Merge overnight PRs (any order; #21 is sim). Bailey review of Batch C /
-  Batch E when free. Unity Play soak for look + HUD + mute + research toast + status colours.
-  - `cursor/research-toast-38b9` — research-complete HUD toast
-  Batch E when free. Unity Play soak for look + HUD + mute + research toast.
-  - `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
-  Batch E when free. Unity Play soak for look + HUD + mute.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD polish in #20.
-  Batch E UI candidates Generated (not integrated). Passenger Services shipped. Headless harness green.
-  Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
-  Do not merge #19 Batch E runtime integration without Bailey Approve.
-- **Last updated:** 2026-09-06 by Cursor (follow-camera cycle for dual commercials)
-- **Branch / working tree:** `cursor/follow-cycle-38b9` → PR into `main`
-- **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
-  nine-slice previews. Unity Play soak for HUD theming when free.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
-  Batch E UI-ICO-001–004 and UI-PNL-001–003 are Generated candidates (not integrated).
-  Passenger Services shipped. Headless domain harness + HUD palette on main.
-- **Last updated:** 2026-09-06 by Cursor (insolvency HUD overlay)
-- **Branch / working tree:** `cursor/insolvency-hud-38b9` → PR into `main`
-  (also open: #20 overnight polish, #21 Stand 3 ground-traffic)
-- **Do this next:** Merge open overnight PRs (#20/#21/#22). Bailey review of Batch C / Batch E when free.
-  Unity Play soak for HUD, insolvency overlay, and miniature look.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox on main; WLD polish in #20.
-  Stand 3 ground-traffic fix in #21. Insolvency HUD on this branch. Batch E UI candidates Generated
-  (not integrated). Passenger Services shipped. Headless harness 96/96 on this tip.
-- **Last updated:** 2026-09-06 by Cursor (merge wave: #20–#21 in; continuing)
-- **Branch / working tree:** `main`
-- **Do this next:** Continue merging #22–#30 then #19. Batch C Integration after wave. Unity Play soak.
-- **In progress / half-done:** Batch C/E **Approved**. Overnight polish merge wave on `main`.
+  Primitives until Batch C Integration is Verified.
 - **Open questions for Bailey:** none on C/E Approve.
-- **Visual assets:** Batch A/B Approved (B Integrated); Batch C **Approved**; Batch E UI **Approved**
+- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved**; Batch E UI **Approved · Integrated**
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -174,6 +114,12 @@ supplementary check, not a replacement for a real Unity run before merging.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
   **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
+- Batch E weather/operation/economy icons (21 files) and the alert-stripe caution texture are
+  sliced/copied into `Art/UI/Icons/` and `Art/UI/Panels/` and wired into `AirsideTheme`; the
+  HUD draws the weather icon live. UI-ICO-003 (service icons) is corrupted in the repo and
+  UI-PNL-002 (dark panel) measures ~9% average alpha, too faint to use — both need
+  regeneration. **Unverified in Unity**; see the Batch E review in
+  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
 
 ## Next work
 

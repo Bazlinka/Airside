@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-06  
 **Generator:** Airside procedural Python (metre-scale box kits + RGBA livery atlases)  
-**Status:** Approved by Bailey 2026-09-06 — ready for Integration  
+**Status:** Approved by Bailey 2026-09-06 — Integrated (runtime `ArtGltfLoader`; Play Verified pending)  
 **Repository paths:** under `game/Airside/Assets/Airside/Art/`
 
 No third-party model packs. Kits follow Batch A REF-001/003/005 proportions and the

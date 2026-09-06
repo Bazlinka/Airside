@@ -29,19 +29,30 @@ namespace Airside.Presentation
 
         private static Texture2D _panelBackground;
         private static Texture2D _solidWhite;
+        private static bool _panelBackgroundResolved;
 
-        /// <summary>Translucent Runway Ink, 1x1 stretched to fill any panel rect.</summary>
+        /// <summary>
+        /// Translucent Runway Ink panel. Prefers UI-PNL-002 dark nine-slice when the
+        /// regenerated asset has usable opacity; otherwise a solid 88%-alpha fill.
+        /// </summary>
         public static Texture2D PanelBackground
         {
             get
             {
-                if (_panelBackground == null)
+                if (!_panelBackgroundResolved)
                 {
-                    var ink = RunwayInk;
-                    ink.a = 0.88f;
-                    _panelBackground = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
-                    _panelBackground.SetPixel(0, 0, ink);
-                    _panelBackground.Apply();
+                    _panelBackgroundResolved = true;
+                    var art = LoadArtTexture("UI/Panels/ui_panel_9slice_dark_v01.png");
+                    if (art != null && MeanAlpha(art) >= 0.5f)
+                        _panelBackground = art;
+                    else
+                    {
+                        var ink = RunwayInk;
+                        ink.a = 0.88f;
+                        _panelBackground = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
+                        _panelBackground.SetPixel(0, 0, ink);
+                        _panelBackground.Apply();
+                    }
                 }
 
                 return _panelBackground;
@@ -103,10 +114,8 @@ namespace Airside.Presentation
         private static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
 
-        // --- Batch E UI candidates (docs/art/prompts/batch-e-ui-generation-2026-09-06.md) ---
-        // Generated candidates, not yet Bailey-approved; wired here as the documented
-        // fallback-safe pattern requires (a missing or not-yet-drawn file degrades to
-        // the existing procedural/text-only presentation, never to a broken HUD).
+        // --- Batch E UI (docs/art/prompts/batch-e-ui-generation-2026-09-06.md) ---
+        // Bailey Approved 2026-09-06. Missing files degrade to procedural/text-only HUD.
 
         private static readonly Dictionary<string, Texture2D> IconCache = new();
         private static Texture2D _alertStripe;
@@ -138,10 +147,43 @@ namespace Airside.Presentation
             _ => null
         };
 
+        /// <summary>Operation-phase icon for the HUD, or null.</summary>
+        public static Texture2D OperationIcon(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Approach or AircraftPhase.Landing => Icon("operation", "arrival"),
+            AircraftPhase.TaxiIn or AircraftPhase.TaxiOut => Icon("operation", "taxi"),
+            AircraftPhase.AtStand => Icon("operation", "turnaround"),
+            AircraftPhase.Pushback => Icon("operation", "hold"),
+            AircraftPhase.Takeoff => Icon("operation", "departure"),
+            AircraftPhase.Departed => Icon("operation", "completed"),
+            _ => Icon("operation", "stand")
+        };
+
+        /// <summary>Maps a turnaround task name to a service icon when available.</summary>
+        public static Texture2D ServiceIconForTask(string taskName)
+        {
+            if (string.IsNullOrEmpty(taskName))
+                return null;
+            var key = taskName.ToLowerInvariant();
+            if (key.Contains("fuel"))
+                return Icon("service", "fuel");
+            if (key.Contains("bag"))
+                return Icon("service", "baggage");
+            if (key.Contains("pass") || key.Contains("board"))
+                return Icon("service", "passengers");
+            if (key.Contains("clean"))
+                return Icon("service", "cleaning");
+            if (key.Contains("cater"))
+                return Icon("service", "catering");
+            if (key.Contains("inspect") || key.Contains("tech"))
+                return Icon("service", "inspection");
+            if (key.Contains("priority"))
+                return Icon("service", "priority");
+            return null;
+        }
+
         /// <summary>
-        /// UI-PNL-003 caution stripe, or null. NOT the same candidate as the dark panel
-        /// (UI-PNL-002): that one's measured alpha averages ~9%, too faint to serve as a
-        /// readable panel background, so it stays out of runtime use until regenerated.
+        /// UI-PNL-003 caution stripe, or null.
         /// </summary>
         public static Texture2D AlertStripeBackground
         {
@@ -160,6 +202,24 @@ namespace Airside.Presentation
             if (AlertStripeBackground != null)
                 style.normal.background = AlertStripeBackground;
             return style;
+        }
+
+        private static float MeanAlpha(Texture2D texture)
+        {
+            try
+            {
+                var pixels = texture.GetPixels32();
+                if (pixels.Length == 0)
+                    return 0f;
+                var sum = 0;
+                for (var i = 0; i < pixels.Length; i++)
+                    sum += pixels[i].a;
+                return sum / (255f * pixels.Length);
+            }
+            catch
+            {
+                return 0f;
+            }
         }
 
         private static Texture2D LoadArtTexture(string artRelativePath)

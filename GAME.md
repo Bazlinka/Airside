@@ -10,14 +10,14 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Approve C/E + merged #19–#31 into `main`)
-- **Branch / working tree:** `main` clean after merge wave
-- **Do this next:** Unity Play soak (HUD, Batch E icons, overnight look, dual flights). Batch C Integration (wire glTF; primitives stay fallback until Verified).
-- **In progress / half-done:** Batch C **Approved** (not Integrated yet). Batch E UI **Approved · Integrated** via #19. Overnight polish #20–#30 on main.
+- **Last updated:** 2026-09-06 by Cursor (Batch C/E/WLD Integration — no Unity Play)
+- **Branch / working tree:** `cursor/batch-c-e-wld-integration-38b9`
+- **Do this next:** Bailey Unity Play soak to mark Batch C / WLD / Batch E **Verified**. Then Batch D animation/VFX or next GAME.md item.
+- **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Primitives until Batch C Integration is Verified.
-- **Open questions for Bailey:** none on C/E Approve.
-- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved**; Batch E UI **Approved · Integrated**
+  Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer.
+- **Open questions for Bailey:** none on Integration; Play soak still owned by Bailey.
+- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved · Integrated**; Batch E UI **Approved · Integrated**; WLD-001…003 **Approved · Integrated** (unverified in Play)
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -114,20 +114,14 @@ supplementary check, not a replacement for a real Unity run before merging.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
   **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
-- Batch E weather/operation/economy icons (21 files) and the alert-stripe caution texture are
-  sliced/copied into `Art/UI/Icons/` and `Art/UI/Panels/` and wired into `AirsideTheme`; the
-  HUD draws the weather icon live. UI-ICO-003 (service icons) is corrupted in the repo and
-  UI-PNL-002 (dark panel) measures ~9% average alpha, too faint to use — both need
-  regeneration. **Unverified in Unity**; see the Batch E review in
-  `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
+- Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
+  Batch E service icons and dark panel regenerated; operation/economy/service icons draw in the
+  HUD. **Integrated, not Verified** — Bailey Unity Play soak still required. See
+  `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
 
 ## Next work
 
-1. **Merge open overnight PRs** (#20 polish, #21 Stand 3 lead-in, #22 insolvency HUD) then continue Batch D look.
-2. **Bailey review of Batch C** when convenient (not blocking further work).
-3. **Keep building** — remaining Batch D / miniature look polish; no unapproved economy systems.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD, insolvency).
-5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
-1. **Merge open overnight PRs** (#20 polish + Stand 3 ground-traffic lead-in) then continue Batch D look.
-1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD).
+1. **Unity Play soak** (Bailey): Batch C models, WLD props/lights, Batch E HUD icons/panel,
+   overnight look, dual commercials, insolvency.
+2. **Batch D** animation / VFX after Play confirms Integration.
+3. No unapproved economy systems.

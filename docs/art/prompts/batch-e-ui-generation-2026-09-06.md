@@ -242,3 +242,22 @@ Net: 4 of 7 candidates integrated (weather/operation/economy icons, alert
 stripe), 1 available but unused (light panel), 2 need regeneration (service
 icons — corrupted; dark panel — too faint). None of this has been seen
 rendered in Unity; treat it as ready for review, not as verified.
+
+## Regeneration / Integration fix — 2026-09-06 (Cursor)
+
+Bailey asked to complete Integration without a Unity Play step.
+
+- **UI-ICO-003:** Replaced the corrupted candidate with a project-owned
+  monochrome line sheet via `scripts/generate-batch-e-ui-fix.py`. Valid PNG
+  2172×724 RGBA; SHA-256
+  `515ec903e0b6dfaa7c8d7784ec1a5b55c797acaf70f58b521f6e2134783483e1`.
+  Sliced into `ui_service_{fuel,baggage,passengers,cleaning,catering,inspection,priority}_v01.png`.
+  HUD turnaround rows draw matching icons via `AirsideTheme.ServiceIconForTask`.
+- **UI-PNL-002:** Regenerated 128×128 Runway Ink panel at ~89% mean alpha
+  (max 240/255) with a subtle brighter edge. SHA-256
+  `8c1e16ab67fac33bcf40279dfeb798f4824a40a266208165c366fb7d874b9ed9`.
+  `AirsideTheme.PanelBackground` prefers this texture when mean alpha ≥ 50%,
+  else the procedural 88% fill.
+- **UI-ICO-002 / UI-ICO-004:** Operation phase, cash, reputation and research
+  icons now draw in the left HUD panel.
+- Still **unverified in Unity Play** — Bailey owns that soak.

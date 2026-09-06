@@ -43,6 +43,25 @@ namespace Airside.Simulation
         public AircraftPhase Phase { get; private set; }
         public SimulationTime PhaseStartedAt { get; private set; }
         public bool IsComplete => Phase == AircraftPhase.Departed;
+        public long PhaseDurationSeconds => PhaseDurationsSeconds[(int)Phase];
+
+        public long SecondsRemaining(SimulationTime now)
+        {
+            if (IsComplete)
+                return 0;
+
+            var elapsed = now.ElapsedSeconds - PhaseStartedAt.ElapsedSeconds;
+            return Math.Max(0, PhaseDurationSeconds - elapsed);
+        }
+
+        public double PhaseProgress(SimulationTime now)
+        {
+            if (IsComplete)
+                return 1;
+
+            var elapsed = now.ElapsedSeconds - PhaseStartedAt.ElapsedSeconds;
+            return Math.Max(0, Math.Min(1, elapsed / (double)PhaseDurationSeconds));
+        }
 
         public bool AdvanceTo(SimulationTime now)
         {

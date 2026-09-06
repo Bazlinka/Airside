@@ -3,7 +3,8 @@
   "rootNamespace": "Airside.Presentation",
   "references": [
     "Airside.Domain",
-    "Airside.Simulation"
+    "Airside.Simulation",
+    "Unity.InputSystem"
   ],
   "autoReferenced": true
 }

@@ -29,5 +29,14 @@ namespace Airside.Tests
             Assert.Throws<System.ArgumentOutOfRangeException>(
                 () => operation.AdvanceTo(new SimulationTime(9)));
         }
+
+        [Test]
+        public void PhaseTiming_ReportsProgressAndRemainingTime()
+        {
+            var operation = new AircraftOperation("AS001", new SimulationTime(10));
+
+            Assert.That(operation.SecondsRemaining(new SimulationTime(15)), Is.EqualTo(15));
+            Assert.That(operation.PhaseProgress(new SimulationTime(15)), Is.EqualTo(0.25).Within(0.0001));
+        }
     }
 }

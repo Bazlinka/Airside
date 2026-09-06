@@ -13,13 +13,15 @@ The first playable build proves one complete aircraft cycle: land, taxi, occupy 
 - `docs/product/` — product plan and agreed scope
 - `docs/architecture/` — technical decisions and data contracts
 - `docs/testing/` — acceptance checks and test fixtures
-- `tools/` — repeatable project utilities
+- `scripts/` — repeatable project checks and local builds
 
 ## First implementation slice
 
 1. Open `game/Airside` in Unity 6.3 LTS.
-2. Build the greybox runway, taxi path and two stands.
-3. Connect the domain clock and aircraft state machine to a scene presenter.
-4. Add deterministic transition tests before expanding the simulation.
+2. Press Play to run the repeating aircraft movement prototype.
+3. Run `scripts/test-unity.sh` for deterministic simulation checks.
+4. Run `scripts/build-mac.sh` for a local macOS application build.
+
+See `GAME.md` for the current milestone, controls, evidence and next work.
 
 The full product plan is in `docs/product/Airside Project Plan.docx`.

@@ -22,6 +22,12 @@ namespace Airside.Simulation
         private SimulationTime _lastUpdatedAt;
         private bool _flightSettled;
         private int _daysSettled;
+        private int _dayStartCycles;
+        private long _dayStartCash;
+        private long _dayStartRevenue;
+        private long _dayStartRouteIncome;
+        private long _dayStartDelayCost;
+        private int _dayStartReputation;
         private readonly GroundTrafficAircraft[] _groundTraffic;
 
         public AirportSimulation(ISimulationClock clock, IRandomSource random, ReservationTable reservations)
@@ -44,6 +50,8 @@ namespace Airside.Simulation
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
+            DailyReports = new AirportDailyReports();
+            CaptureDayBaseline();
             _groundTraffic = new[]
             {
                 new GroundTrafficAircraft(new StableId("GT-201"), _reservations, GroundTrafficRole.ArriveDepart, 0),
@@ -66,6 +74,7 @@ namespace Airside.Simulation
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
         public AirportStaffing Staffing { get; }
+        public AirportDailyReports DailyReports { get; }
         public AirportTaxiNetwork TaxiNetwork { get; }
         public TaxiRoute ActiveTaxiRoute { get; private set; }
         public OperationalEventLog EventLog { get; }
@@ -224,8 +233,23 @@ namespace Airside.Simulation
                 var weather = Weather.At(closeTime);
                 var cost = BaseDailyOperatingCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
                 Economy.PayOperatingCosts(cost);
+
+                var report = new DailyReport(
+                    dayNumber: _daysSettled,
+                    closingWeather: weather,
+                    flightsCompleted: CompletedCycles - _dayStartCycles,
+                    turnaroundRevenue: (Economy.TotalRevenue - Economy.TotalRouteIncome) - (_dayStartRevenue - _dayStartRouteIncome),
+                    routeIncome: Economy.TotalRouteIncome - _dayStartRouteIncome,
+                    delayCost: Economy.TotalDelayCost - _dayStartDelayCost,
+                    operatingCost: cost,
+                    netCashChange: Economy.Cash - _dayStartCash,
+                    reputationChange: Reputation.Score - _dayStartReputation,
+                    groundCrew: Staffing.GroundCrew);
+                DailyReports.Add(report);
+                CaptureDayBaseline();
+
                 Record(now, $"Day {_daysSettled} closed",
-                    $"Running cost -${cost:N0} ({Weather.Describe(weather)}, {Staffing.GroundCrew} crew) · cash ${Economy.Cash:N0}");
+                    $"{report.FlightsCompleted} flight(s) · net {(report.NetCashChange >= 0 ? "+" : "")}${report.NetCashChange:N0} · running -${cost:N0} ({Weather.Describe(weather)}) · cash ${Economy.Cash:N0}");
             }
         }
 
@@ -347,6 +371,17 @@ namespace Airside.Simulation
             if (phase == AircraftPhase.TaxiOut)
                 index = count - 1 - index;
             return ActiveTaxiRoute.SegmentIds[index];
+        }
+
+        
+        private void CaptureDayBaseline()
+        {
+            _dayStartCycles = CompletedCycles;
+            _dayStartCash = Economy.Cash;
+            _dayStartRevenue = Economy.TotalRevenue;
+            _dayStartRouteIncome = Economy.TotalRouteIncome;
+            _dayStartDelayCost = Economy.TotalDelayCost;
+            _dayStartReputation = Reputation.Score;
         }
 
         private void Record(SimulationTime time, string title, string detail)

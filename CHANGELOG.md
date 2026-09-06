@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Daily operations report.** At each simulated midnight the sim publishes a
+  `DailyReport` (flights, income, delays, running cost, net cash, reputation,
+  weather, crew). Keeps the latest seven; rebuilt by replay. HUD shows the
+  latest card. See `docs/decisions/0018-daily-operations-report.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

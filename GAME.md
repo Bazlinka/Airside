@@ -10,12 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (shipping phase-four stack; Bailey approved merge-all)
+- **Last updated:** 2026-09-06 by Cursor (shipping concurrent-flights design; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Finish merging remaining open PRs, then Unity visual soak when Bailey can.
+- **Do this next:** Merge concurrent slice 1, accept-capacity, daily P&L, then art pipeline (#11). Unity soak when Bailey can.
 - **In progress / half-done:** Bailey approved merge-without-review.
 - **Watch out for:** fleet corridor invariants (decisions 0006–0009).
-- **Open questions for Bailey:** none
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
 "Session handoff protocol".
@@ -92,6 +91,9 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
+Implement concurrent-flights **slice 1**
+(`docs/product/concurrent-flights-slice1-packet.md`). Merge open PRs #3–#6 when
+ready. Unity edit-mode + Play soak when Bailey can run the editor again.
 Confirm Unity tests when available. Merge open feature PRs (insolvency, third
 stand, research). Then the concurrent-flights design pass
 (`docs/product/concurrent-flights-brief.md`) or the overdue visual soak.

@@ -4,7 +4,7 @@ Airside is a real-time, persistent airport management game for macOS with a focu
 
 ## Current target
 
-The first playable build proves one complete aircraft cycle: land, taxi, occupy a stand, complete a timed turnaround, push back, taxi out and depart. The loop must remain deterministic, readable and stable for fifty consecutive cycles.
+The first playable build proves one complete aircraft cycle: land, taxi, occupy a stand, coordinate visible ground services, push back, taxi out and depart. The loop remains deterministic, readable and stable for fifty consecutive cycles while delays affect the airport's cash balance.
 
 ## Repository map
 

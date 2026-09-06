@@ -65,8 +65,20 @@ namespace Airside.Simulation
 
         public bool AdvanceTo(SimulationTime now)
         {
+            return AdvanceToInternal(now, _ => true, true);
+        }
+
+        public bool AdvanceTo(SimulationTime now, Func<AircraftPhase, bool> canLeavePhase)
+        {
+            return AdvanceToInternal(now, canLeavePhase, false);
+        }
+
+        private bool AdvanceToInternal(SimulationTime now, Func<AircraftPhase, bool> canLeavePhase, bool preserveSchedule)
+        {
             if (now.CompareTo(PhaseStartedAt) < 0)
                 throw new ArgumentOutOfRangeException(nameof(now), "Simulation time cannot move backwards.");
+            if (canLeavePhase == null)
+                throw new ArgumentNullException(nameof(canLeavePhase));
 
             var changed = false;
             while (!IsComplete)
@@ -75,9 +87,11 @@ namespace Airside.Simulation
                 var nextTransition = PhaseStartedAt.Advance(duration);
                 if (now.CompareTo(nextTransition) < 0)
                     break;
+                if (!canLeavePhase(Phase))
+                    break;
 
                 Phase = (AircraftPhase)((int)Phase + 1);
-                PhaseStartedAt = nextTransition;
+                PhaseStartedAt = preserveSchedule || now.CompareTo(nextTransition) == 0 ? nextTransition : now;
                 changed = true;
             }
 

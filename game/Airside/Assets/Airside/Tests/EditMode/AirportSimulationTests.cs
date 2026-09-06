@@ -12,7 +12,7 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
 
-            for (var second = 1; second <= AirportSimulation.CycleLengthSeconds * 50; second++)
+            for (var second = 1; second <= 10000 && simulation.CompletedCycles < 50; second++)
             {
                 clock.Advance(1);
                 simulation.Update();
@@ -21,6 +21,35 @@ namespace Airside.Tests
             Assert.That(simulation.CompletedCycles, Is.EqualTo(50));
             Assert.That(simulation.ReservationConflicts, Is.Zero);
             Assert.That(simulation.ActiveAircraft.AircraftId, Is.EqualTo("AS-151"));
+        }
+
+        [Test]
+        public void PriorityCrew_CostsOnceAndIsAppliedToTheActiveTurnaround()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
+            clock.Advance(57);
+            simulation.Update();
+
+            Assert.That(simulation.ActiveAircraft.Phase, Is.EqualTo(AircraftPhase.AtStand));
+            Assert.That(simulation.EnablePriorityCrew(), Is.True);
+            Assert.That(simulation.EnablePriorityCrew(), Is.False);
+            Assert.That(simulation.ActiveTurnaround.PriorityCrewEnabled, Is.True);
+            Assert.That(simulation.Economy.Cash, Is.EqualTo(AirportEconomy.StartingCash - AirportEconomy.PriorityCrewCost));
+        }
+
+        [Test]
+        public void DelayedFlight_ReconcilesRevenueAndDelayInTheLiveSimulation()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
+            clock.Advance(160);
+            simulation.Update();
+
+            Assert.That(simulation.ActiveAircraft.Phase, Is.EqualTo(AircraftPhase.Departed));
+            Assert.That(simulation.LastDelaySeconds, Is.EqualTo(6));
+            Assert.That(simulation.LastDelayCause, Is.EqualTo("Cabin cleaning disruption"));
+            Assert.That(simulation.Economy.Cash, Is.EqualTo(25960));
         }
 
         [Test]

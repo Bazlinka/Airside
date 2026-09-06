@@ -12,6 +12,9 @@ namespace Airside.Presentation
         private ManualSimulationClock _clock;
         private AirportSimulation _simulation;
         private Transform _aircraft;
+        private Transform _fuelTruck;
+        private Transform _baggageCart;
+        private Transform _passengerBus;
         private AirsideCameraController _cameraController;
         private double _preciseTime;
         private bool _paused;
@@ -32,6 +35,9 @@ namespace Airside.Presentation
             BuildLightingAndCamera();
             BuildAirfield();
             _aircraft = BuildAircraft();
+            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f));
+            _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f));
+            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f));
             _cameraController.SetFollowTarget(_aircraft);
         }
 
@@ -49,6 +55,7 @@ namespace Airside.Presentation
             }
 
             UpdateAircraftVisual();
+            UpdateServiceVehicles();
         }
 
         private void ReadSimulationControls()
@@ -61,19 +68,52 @@ namespace Airside.Presentation
                 _paused = !_paused;
             if (keyboard.tabKey.wasPressedThisFrame)
                 _speed = _speed == 1 ? 4 : 1;
+            if (keyboard.pKey.wasPressedThisFrame)
+                _simulation.EnablePriorityCrew();
         }
 
         private void UpdateAircraftVisual()
         {
-            var cycleSeconds = (float)(_preciseTime - _simulation.CycleStartedAt.ElapsedSeconds);
             var standZ = _simulation.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
-            var position = PositionFor(cycleSeconds, standZ);
-            var next = PositionFor(cycleSeconds + 0.15f, standZ);
+            var phase = _simulation.ActiveAircraft.Phase;
+            var progress = VisualPhaseProgress(0f);
+            var position = PositionFor(phase, progress, standZ);
+            var next = PositionFor(phase, VisualPhaseProgress(0.15f), standZ);
             _aircraft.position = position;
 
             var direction = next - position;
             if (direction.sqrMagnitude > 0.001f)
                 _aircraft.rotation = Quaternion.Slerp(_aircraft.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
+        }
+
+        private float VisualPhaseProgress(float lookAheadSeconds)
+        {
+            if (_simulation.ActiveAircraft.IsComplete)
+                return 1f;
+
+            var elapsed = _preciseTime + lookAheadSeconds - _simulation.ActiveAircraft.PhaseStartedAt.ElapsedSeconds;
+            return Mathf.Clamp01((float)(elapsed / _simulation.ActiveAircraft.PhaseDurationSeconds));
+        }
+
+        private void UpdateServiceVehicles()
+        {
+            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
+            var standZ = _simulation.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
+            UpdateVehicle(_fuelTruck, atStand && TaskActive("Refuel"), new Vector3(13.3f, 0.55f, standZ + 1.8f));
+            UpdateVehicle(_baggageCart, atStand && (TaskActive("Unload bags") || TaskActive("Load bags")), new Vector3(20.2f, 0.42f, standZ - 1.8f));
+            UpdateVehicle(_passengerBus, atStand && (TaskActive("Passengers off") || TaskActive("Board passengers")), new Vector3(13f, 0.68f, standZ - 2.2f));
+        }
+
+        private bool TaskActive(string name)
+        {
+            return _simulation.ActiveTurnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
+        }
+
+        private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
+        {
+            vehicle.gameObject.SetActive(active);
+            if (active)
+                vehicle.position = position;
         }
 
         private void OnGUI()
@@ -91,13 +131,41 @@ namespace Airside.Presentation
             var detail = new GUIStyle(GUI.skin.label) { fontSize = 16 };
             var small = new GUIStyle(GUI.skin.label) { fontSize = 13 };
 
-            GUI.Box(new Rect(22, 22, 370, 205), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 382), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
             GUI.Label(new Rect(42, 132, 320, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Cycles {_simulation.CompletedCycles}", small);
-            GUI.Label(new Rect(42, 156, 320, 22), $"Reserved: {ReservationSummary()}", small);
-            GUI.Label(new Rect(42, 184, 330, 25), "Space pause  ·  Tab speed  ·  F follow  ·  O overview", small);
+            GUI.Label(new Rect(42, 156, 360, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Reserved: {ReservationSummary()}", small);
+
+            var lineY = 180f;
+            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)
+            {
+                foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
+                {
+                    var mark = task.State == TurnaroundTaskState.Complete ? "✓" : task.State == TurnaroundTaskState.Active ? "●" : "○";
+                    var time = task.State == TurnaroundTaskState.Complete ? string.Empty : $"  {task.SecondsRemaining}s";
+                    GUI.Label(new Rect(42, lineY, 350, 20), $"{mark} {task.Name}{time}", small);
+                    lineY += 19f;
+                }
+
+                if (_simulation.CurrentDelaySeconds > 0)
+                    GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", small);
+
+                var alreadyAssigned = _simulation.ActiveTurnaround.PriorityCrewEnabled;
+                GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
+                if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300"))
+                    _simulation.EnablePriorityCrew();
+                GUI.enabled = true;
+            }
+            else
+            {
+                GUI.Label(new Rect(42, 184, 350, 22), _simulation.LastDelaySeconds > 0
+                    ? $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}"
+                    : "Operations running to schedule", small);
+            }
+
+            GUI.Label(new Rect(42, 368, 370, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             GUI.Box(new Rect(Screen.width / scale - 258, 22, 236, 78), string.Empty, panel);
             GUI.Label(new Rect(Screen.width / scale - 238, 38, 200, 22), "Right-drag orbit", small);
@@ -186,6 +254,17 @@ namespace Airside.Presentation
             return root;
         }
 
+        private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale)
+        {
+            var root = new GameObject(name).transform;
+            var body = CreateBlock($"{name} body", Vector3.zero, scale, color);
+            body.transform.SetParent(root, false);
+            var cab = CreateBlock($"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f), new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
+            cab.transform.SetParent(root, false);
+            root.gameObject.SetActive(false);
+            return root;
+        }
+
         private static AudioClip CreateEngineClip()
         {
             const int sampleRate = 22050;
@@ -202,17 +281,19 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private static Vector3 PositionFor(float second, float standZ)
+        private static Vector3 PositionFor(AircraftPhase phase, float progress, float standZ)
         {
-            second = Mathf.Clamp(second, 0f, AirportSimulation.CycleLengthSeconds);
-            if (second < 20f) return Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), second / 20f);
-            if (second < 32f) return Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), (second - 20f) / 12f);
-            if (second < 57f) return Smooth(new Vector3(-24f, 0.7f, 0f), new Vector3(17f, 0.7f, standZ), (second - 32f) / 25f);
-            if (second < 102f) return new Vector3(17f, 0.7f, standZ);
-            if (second < 114f) return Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), (second - 102f) / 12f);
-            if (second < 139f) return Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(28f, 0.7f, 0f), (second - 114f) / 25f);
-            if (second < 154f) return Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), (second - 139f) / 15f);
-            return new Vector3(52f, 15f, 0f);
+            return phase switch
+            {
+                AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
+                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
+                AircraftPhase.TaxiIn => Smooth(new Vector3(-24f, 0.7f, 0f), new Vector3(17f, 0.7f, standZ), progress),
+                AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
+                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
+                AircraftPhase.TaxiOut => Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(28f, 0.7f, 0f), progress),
+                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
+                _ => new Vector3(52f, 15f, 0f)
+            };
         }
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));

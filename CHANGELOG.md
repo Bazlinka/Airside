@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Concurrent commercial flights (slice 1).** Primary loop promoted to
+  `CommercialFlight` list. When `ScheduledFlightsPerDay >= 4`, a second commercial
+  spawns on a half-cycle stagger onto the free stand; fleet yields to any
+  commercial. Single-flight path stays seed-identical below the threshold. No
+  save-schema bump. HUD/world show both aircraft. 57/57 tests. See decision 0019
+  and `docs/product/concurrent-flights-slice1-packet.md`.
 - Added the approved Airside art direction and production asset contract: exact paths, staged first-playable manifest, image-generation rules, 3D/animation/VFX requirements, licensing workflow and cross-tool integration rules (decision 0018).
 - **Concurrent flights design.** Decision 0019 locks promotion-to-list model,
   commercial FIFO priority, stand-based concurrency cap, schedule cadence

@@ -1,7 +1,7 @@
 # Task packet: concurrent flights — slice 1 (two commercials)
 
 Depends on: `docs/decisions/0019-concurrent-commercial-flights.md`  
-Status: **ready to implement**  
+Status: **implemented** (slice 1 on `cursor/concurrent-flights-slice1-38b9`)  
 Out of scope: N>2, accept-route capacity gating, presentation polish beyond a
 second visible aircraft.
 

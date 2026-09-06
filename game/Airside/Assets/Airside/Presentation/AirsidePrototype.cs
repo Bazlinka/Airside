@@ -13,7 +13,7 @@ namespace Airside.Presentation
         private ManualSimulationClock _clock;
         private AirportSimulation _simulation;
         private PersistentAirportSession _session;
-        private Transform _aircraft;
+        private Transform[] _commercialAircraft;
         private Transform[] _groundTraffic;
         private Light _sun;
         private Transform _fuelTruck;
@@ -45,14 +45,16 @@ namespace Airside.Presentation
 
             BuildLightingAndCamera();
             BuildAirfield();
-            _aircraft = BuildAircraft();
+            _commercialAircraft = Array.Empty<Transform>();
+            SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f));
-            _cameraController.SetFollowTarget(_aircraft);
+            if (_commercialAircraft.Length > 0)
+                _cameraController.SetFollowTarget(_commercialAircraft[0]);
         }
 
         private void Update()
@@ -103,16 +105,48 @@ namespace Airside.Presentation
 
         private void UpdateAircraftVisual()
         {
-            var standZ = AirportTaxiNetwork.StandZ(_simulation.AssignedStand);
-            var phase = _simulation.ActiveAircraft.Phase;
-            var progress = VisualPhaseProgress(0f);
-            var position = PositionFor(phase, progress, standZ);
-            var next = PositionFor(phase, VisualPhaseProgress(0.15f), standZ);
-            _aircraft.position = position;
+            SyncCommercialAircraftViews();
+            for (var index = 0; index < _simulation.Flights.Count; index++)
+            {
+                var flight = _simulation.Flights[index];
+                var view = _commercialAircraft[index];
+                var standZ = flight.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
+                var phase = flight.Operation.Phase;
+                var progress = VisualPhaseProgress(flight, 0f);
+                var position = PositionFor(phase, progress, standZ, flight.TaxiRoute);
+                var next = PositionFor(phase, VisualPhaseProgress(flight, 0.15f), standZ, flight.TaxiRoute);
+                view.position = position;
 
-            var direction = next - position;
-            if (direction.sqrMagnitude > 0.001f)
-                _aircraft.rotation = Quaternion.Slerp(_aircraft.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
+                var direction = next - position;
+                if (direction.sqrMagnitude > 0.001f)
+                    view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
+            }
+        }
+
+        private void SyncCommercialAircraftViews()
+        {
+            var needed = _simulation.Flights.Count;
+            if (_commercialAircraft.Length == needed)
+                return;
+
+            foreach (var existing in _commercialAircraft)
+            {
+                if (existing != null)
+                    Destroy(existing.gameObject);
+            }
+
+            _commercialAircraft = new Transform[needed];
+            for (var index = 0; index < needed; index++)
+            {
+                var flight = _simulation.Flights[index];
+                var color = index == 0
+                    ? new Color(0.12f, 0.43f, 0.76f)
+                    : new Color(0.18f, 0.55f, 0.48f);
+                _commercialAircraft[index] = BuildAircraft($"Commercial {flight.AircraftId}", color);
+            }
+
+            if (needed > 0)
+                _cameraController.SetFollowTarget(_commercialAircraft[0]);
         }
 
         private void UpdateGroundTrafficVisual()
@@ -134,19 +168,19 @@ namespace Airside.Presentation
             }
         }
 
-        private float VisualPhaseProgress(float lookAheadSeconds)
+        private float VisualPhaseProgress(CommercialFlight flight, float lookAheadSeconds)
         {
-            if (_simulation.ActiveAircraft.IsComplete)
+            if (flight.Operation.IsComplete)
                 return 1f;
 
-            var elapsed = _preciseTime + lookAheadSeconds - _simulation.ActiveAircraft.PhaseStartedAt.ElapsedSeconds;
-            return Mathf.Clamp01((float)(elapsed / _simulation.ActiveAircraft.PhaseDurationSeconds));
+            var elapsed = _preciseTime + lookAheadSeconds - flight.Operation.PhaseStartedAt.ElapsedSeconds;
+            return Mathf.Clamp01((float)(elapsed / flight.Operation.PhaseDurationSeconds));
         }
 
         private void UpdateServiceVehicles()
         {
             var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
-            var standZ = AirportTaxiNetwork.StandZ(_simulation.AssignedStand);
+            var standZ = _simulation.AssignedStand.Equals(AirportSimulation.StandOne) ? 14f : 20f;
             UpdateVehicle(_fuelTruck, atStand && TaskActive("Refuel"), new Vector3(13.3f, 0.55f, standZ + 1.8f));
             UpdateVehicle(_baggageCart, atStand && (TaskActive("Unload bags") || TaskActive("Load bags")), new Vector3(20.2f, 0.42f, standZ - 1.8f));
             UpdateVehicle(_passengerBus, atStand && (TaskActive("Passengers off") || TaskActive("Board passengers")), new Vector3(13f, 0.68f, standZ - 2.2f));
@@ -181,10 +215,10 @@ namespace Airside.Presentation
 
             var timeOfDay = _simulation.TimeOfDay;
 
-            GUI.Box(new Rect(22, 22, 410, 456), string.Empty, panel);
+            GUI.Box(new Rect(22, 22, 410, 520), string.Empty, panel);
             GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
             GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
-            GUI.Label(new Rect(42, 76, 320, 25), $"Flight {_simulation.ActiveAircraft.AircraftId}  ·  {_simulation.AssignedStand}", detail);
+            GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
             GUI.Label(new Rect(42, 104, 320, 25), $"{FormatPhase(_simulation.ActiveAircraft.Phase)}  ·  {_simulation.ActiveAircraft.SecondsRemaining(_clock.Now)}s", detail);
             GUI.Label(new Rect(42, 132, 380, 22), $"{(_paused ? "PAUSED" : $"{_speed}× time")}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {Weather.Describe(_simulation.CurrentWeather)}", small);
             GUI.Label(new Rect(42, 156, 390, 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Reputation {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", small);
@@ -238,30 +272,29 @@ namespace Airside.Presentation
                 _session.BuildThirdStand();
             GUI.enabled = true;
 
-                        var research = _simulation.Research;
+            var research = _simulation.Research;
             if (research.OperationsEfficiencyComplete)
             {
-                GUI.Label(new Rect(42, 452, 380, 20),
+                GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} complete · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day running cost", small);
             }
             else if (research.IsResearching)
             {
                 var pct = (int)(research.Progress01(_clock.Now) * 100);
-                GUI.Label(new Rect(42, 452, 380, 20),
+                GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
             }
             else
             {
-                GUI.Label(new Rect(42, 452, 380, 20),
+                GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
                 GUI.enabled = research.CanStartOperationsEfficiency && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                if (GUI.Button(new Rect(42, 470, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
+                if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
                     _session.StartOperationsResearch();
                 GUI.enabled = true;
             }
 
-            GUI.Label(new Rect(42, 498, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
-
+            GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             GUI.Box(new Rect(historyLeft, 22, 340, 210), string.Empty, panel);
@@ -444,9 +477,9 @@ namespace Airside.Presentation
             CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), new Color(0.16f, 0.34f, 0.21f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f));
-            CreateBlock("Apron", new Vector3(20f, 0f, 20f), new Vector3(28f, 0.12f, 20f), new Color(0.34f, 0.36f, 0.37f));
-            CreateBlock("Terminal", new Vector3(26f, 2.2f, 30f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
-            CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 27.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f));
+            CreateBlock("Terminal", new Vector3(26f, 2.2f, 27f), new Vector3(22f, 4.5f, 5f), new Color(0.68f, 0.72f, 0.75f));
+            CreateBlock("Terminal glass", new Vector3(26f, 2.4f, 24.45f), new Vector3(17f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f));
 
             for (var x = -34; x <= 34; x += 8)
@@ -454,7 +487,6 @@ namespace Airside.Presentation
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
-            BuildStandMarking(17f, 26f, "Stand 3");
         }
 
         private static void BuildStandMarking(float x, float z, string name)
@@ -463,9 +495,9 @@ namespace Airside.Presentation
             CreateBlock($"{name} stop", new Vector3(x, 0.08f, z + 1.9f), new Vector3(3.4f, 0.03f, 0.18f), new Color(0.96f, 0.77f, 0.12f));
         }
 
-        private static Transform BuildAircraft()
+        private static Transform BuildAircraft(string name, Color accent)
         {
-            var root = new GameObject("Active flight").transform;
+            var root = new GameObject(name).transform;
             var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Fuselage";
             body.transform.SetParent(root, false);
@@ -473,9 +505,9 @@ namespace Airside.Presentation
             body.transform.localScale = new Vector3(0.72f, 2.8f, 0.72f);
             body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
 
-            var wings = CreateBlock("Wings", Vector3.zero, new Vector3(7f, 0.12f, 2.2f), new Color(0.12f, 0.43f, 0.76f));
+            var wings = CreateBlock("Wings", Vector3.zero, new Vector3(7f, 0.12f, 2.2f), accent);
             wings.transform.SetParent(root, false);
-            var tail = CreateBlock("Tail", new Vector3(0f, 0.65f, -2f), new Vector3(0.16f, 1.6f, 1.1f), new Color(0.12f, 0.43f, 0.76f));
+            var tail = CreateBlock("Tail", new Vector3(0f, 0.65f, -2f), new Vector3(0.16f, 1.6f, 1.1f), accent);
             tail.transform.SetParent(root, false);
 
             var source = root.gameObject.AddComponent<AudioSource>();
@@ -535,26 +567,26 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute)
         {
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
                 AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
-                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(progress, false),
+                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, progress, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
                 AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
                 AircraftPhase.TaxiOut => progress < 0.15f
                     ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), progress / 0.15f)
-                    : PositionAlongTaxiRoute((progress - 0.15f) / 0.85f, true),
+                    : PositionAlongTaxiRoute(taxiRoute, (progress - 0.15f) / 0.85f, true),
                 AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
                 _ => new Vector3(52f, 15f, 0f)
             };
         }
 
-        private Vector3 PositionAlongTaxiRoute(float progress, bool reverse)
+        private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)
         {
-            var points = _simulation.ActiveTaxiRoute.Points;
+            var points = route.Points;
             var segmentLengths = new float[points.Count - 1];
             var totalLength = 0f;
             for (var index = 0; index < segmentLengths.Length; index++)
@@ -600,6 +632,24 @@ namespace Airside.Presentation
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             return new Material(shader) { color = color };
+        }
+
+
+        private string CommercialFlightHudLine()
+        {
+            if (_simulation.Flights.Count == 0)
+                return "No commercial flights";
+
+            var parts = new string[_simulation.Flights.Count];
+            for (var index = 0; index < _simulation.Flights.Count; index++)
+            {
+                var flight = _simulation.Flights[index];
+                parts[index] = $"{flight.AircraftId} @ {flight.AssignedStand.Value}";
+            }
+
+            return _simulation.Flights.Count == 1
+                ? $"Flight {parts[0]}"
+                : $"Flights {string.Join(" · ", parts)}";
         }
 
         private static string FormatPhase(AircraftPhase phase) => phase switch

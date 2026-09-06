@@ -4,6 +4,25 @@
 
 Airside is a real-time, persistent airport management game for Mac. The player designs and manages the system while aircraft, passengers and ground services operate automatically. Watching the airport work should be satisfying, and every delay should have an understandable cause.
 
+## Where to resume — session handoff
+
+This block is the first thing to read and the last thing to update. Any tool
+(Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
+next session can continue without seeing the previous conversation. Keep it short.
+
+- **Last updated:** 2026-09-06 by Claude (repo + collaboration setup)
+- **Branch / working tree:** `main`, clean, everything pushed to `origin`
+- **Do this next:** Introduce a second simultaneous aircraft using the segment
+  reservations, then run a longer visual soak with opposing ground traffic.
+- **In progress / half-done:** nothing — safe to start fresh
+- **Watch out for:** `TrafficWaitMonitor` and the atomic segment reservations
+  landed but the Unity edit-mode tests were not re-run in the setup environment;
+  run `scripts/test-unity.sh` before building on that code.
+- **Open questions for Bailey:** none
+
+Full start-of-session and end-of-session checklists are in `AGENTS.md` →
+"Session handoff protocol".
+
 ## Current milestone
 
 Phase five: prepare the airfield for simultaneous traffic. Taxiing aircraft now reserve only the segment they occupy and release it before moving onward. Reservation checks are atomic, and a traffic wait monitor explains any aircraft blocked on the same resource for ten seconds or more.

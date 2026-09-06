@@ -68,6 +68,40 @@ note it here in the same commit.
    (date, decision, reason, affected systems, migration impact). New ideas go to a
    backlog, not straight into the active milestone.
 
+## Session handoff protocol
+
+Only project state travels between tools — the git repository and the written
+docs. The conversation does not. When you hit a session limit on one tool and
+continue on another, the new session starts cold and rebuilds context from the
+repo. These two checklists keep that reliable.
+
+### Start of session
+
+1. `git pull --rebase origin main`.
+2. Read `GAME.md`, starting with the **"Where to resume — session handoff"**
+   block: current branch, what to do next, anything half-done, what to watch for.
+3. Skim `CHANGELOG.md` and `git log --oneline -10` for what changed recently.
+4. If the handoff block names an unfinished branch, check it out
+   (`git checkout <branch>`) instead of starting on `main`.
+5. Confirm the Unity project compiles / `scripts/test-unity.sh` passes before
+   building on top of unverified work.
+
+### End of session (before you stop, or before a limit cuts you off)
+
+1. Commit everything. If it compiles and tests pass, commit to `main`. If it is
+   half-done or red, commit to a `feature/<name>` branch — never leave
+   uncommitted work in the tree.
+2. `git push origin HEAD` — unpushed work is invisible to the next tool.
+3. Update the **"Where to resume"** block in `GAME.md`: date, your tool name,
+   branch, the exact next step, anything in progress, anything to watch for, any
+   open question for Bailey. Commit and push that too.
+4. Update `CHANGELOG.md` under "Unreleased" if behaviour changed.
+5. If you made a design decision, add a dated record under `docs/decisions/`.
+
+If you are being cut off mid-task with no clean stopping point: commit the WIP to
+a branch with message `WIP: <what you were doing>`, push, and write the state
+into the handoff block. A messy branch that is pushed beats tidy work that is lost.
+
 ## Tool roles (flexible, but one owner per change)
 
 | Participant | Primary role |

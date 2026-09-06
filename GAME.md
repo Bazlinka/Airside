@@ -44,14 +44,15 @@ next session can continue without seeing the previous conversation. Keep it shor
   5. Maintenance/incidents were deliberately skipped on this branch — any
      periodic incident cost needs re-running `DailyReportTests`/`StaffingTests`
      and the soak tests, which this session can't do.
-- **Operations-panel layout budget:** the left HUD box (still the literal
-  `Rect(22, 22, 410, 520)` in the pre-rebase `AirsidePrototype.cs` — `HudLayout.cs`
-  exists with resolution-independent math but isn't wired into `OnGUI` yet,
-  per `PresentationLayoutTests.cs`) is near its height ceiling. This branch's
-  terminal/GA buttons pushed it to 616 tall against a `Screen.height / 720f`
-  canvas; cargo/land/baggage were left without buttons for the same reason.
-  Whoever wires `HudLayout.Create` into `OnGUI` should fold all five
-  buildable-upgrade rows into that pass rather than stacking more literals.
+- **Operations-panel layout budget:** the left HUD box is a literal
+  `Rect(22, 22, 410, ...)` in `AirsidePrototype.cs` — `HudLayout.cs` exists
+  with resolution-independent math but isn't wired into `OnGUI` yet, per
+  `PresentationLayoutTests.cs`. On `main` (before this branch) it's height
+  520; this branch's terminal/GA buttons grew it to 616 against a
+  `Screen.height / 720f` canvas, which is near its height ceiling — cargo,
+  land and baggage were left without buttons for that reason. Whoever wires
+  `HudLayout.Create` into `OnGUI` should fold all five buildable-upgrade rows
+  into that pass rather than stacking more literals.
 - **In progress / half-done:** this branch's terminal-capacity,
   general-aviation, cargo, land-reservation and baggage foundations
   (decisions renumbered 0028–0032 after this rebase, since Cursor's Passenger

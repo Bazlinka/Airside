@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Fix dead/confused branch in `AirportResearch.Progress01`.** The `!IsResearching`
+  path had an unreachable condition (always evaluated false given the guard above
+  it) that only ever mattered if a future caller queried progress outside of
+  `IsResearching` — no current call site does. Simplified to what it actually
+  computed (1.0 only when both projects are complete, 0.0 otherwise) and added
+  `Progress01_WhenIdle_ReflectsOnlyWhetherBothProjectsAreComplete`, the first
+  test coverage for that branch. No behaviour change for any current caller;
+  95/95 tests pass.
 - **Headless Domain/Simulation/Persistence test harness.** `scripts/test-domain.sh`
   runs the 94 EditMode NUnit tests via `dotnet test` against a hand-authored
   `scripts/dotnet-harness/Harness.csproj` that compiles Domain/Simulation/

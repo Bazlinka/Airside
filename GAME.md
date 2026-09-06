@@ -10,9 +10,11 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (concurrent flights slice 1 onto main; Bailey approved merge-all)
+- **Last updated:** 2026-09-06 by Cursor (concurrent flights + art pipeline on main; Bailey approved merge-all)
 - **Branch / working tree:** merging onto `main`
-- **Do this next:** Merge accept-capacity, daily P&L, ChatGPT art pipeline. Unity soak when Bailey can.
+- **Do this next:** Merge accept-capacity and daily P&L. Unity soak when Bailey can.
+- **In progress / half-done:** Bailey approved merge-without-review. ChatGPT art pipeline landed on main.
+- **Watch out for:** fleet corridor invariants; fleet yields to any commercial.
 - **In progress / half-done:** Bailey approved merge-without-review.
 - **Watch out for:** fleet corridor invariants; fleet yields to any commercial.
 
@@ -38,6 +40,19 @@ negative across three consecutive day closes, the airport is declared insolvent
 and the simulation stops.
 
 When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+
+## Visual asset contract
+
+The approved visual direction, exact asset paths, animation responsibilities and
+production order live in
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0018). The first playable
+moves from procedural primitives to approved art in batches, with primitives kept
+as fallbacks during integration.
+
+The immediate visual target is a premium stylised-realism miniature of a regional
+Australian airport. Generated images establish composition, palette, fictional
+liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
+true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 ## Invariants
 

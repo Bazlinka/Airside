@@ -591,3 +591,19 @@ Once this is enjoyable and stable, build the turnaround resource system. Do not 
 - Open-Meteo terms: https://open-meteo.com/en/terms
 
 These links record the planning basis. Terms, fees, eligibility thresholds and API conditions must be checked again before public testing or release.
+
+## Production art and asset contract
+
+The agreed visual style is implemented through
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and decision 0018. That specification
+is the canonical source for palette, image-generation constraints, repository
+paths, asset IDs, 3D requirements, animation ownership, VFX, interface art and the
+ordered first-playable production manifest.
+
+Reference images are approved before broad asset production. Generated imagery may
+supply key art, concepts, textures, decals, UI illustrations and suitable VFX
+sources; it does not replace required 3D aircraft, buildings or service vehicles.
+Presentation animation mirrors simulation state and cannot drive deterministic
+timing, resource reservations, saves or offline catch-up. Existing procedural
+primitives remain as fallbacks until each approved batch is integrated and
+visually verified.

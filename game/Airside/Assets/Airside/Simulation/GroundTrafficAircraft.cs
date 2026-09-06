@@ -182,7 +182,7 @@ namespace Airside.Simulation
         /// reservations for this tick. <paramref name="primaryStand"/> is the stand the
         /// primary flight is currently assigned; a fresh arrival parks on the other one.
         /// </summary>
-        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, bool mayEnterCorridor)
+        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, int standCount, bool mayEnterCorridor)
         {
             if (_warmup > 0)
             {
@@ -192,9 +192,7 @@ namespace Airside.Simulation
 
             if (_legIndex == 0 && !_onLeg && Role == GroundTrafficRole.ArriveDepart)
             {
-                var away = primaryStand.Equals(AirportSimulation.StandOne)
-                    ? AirportSimulation.StandTwo
-                    : AirportSimulation.StandOne;
+                var away = AirportSimulation.AlternateStand(primaryStand, standCount);
                 if (!away.Equals(_targetStand))
                 {
                     _targetStand = away;
@@ -269,10 +267,11 @@ namespace Airside.Simulation
                 };
             }
 
-            var isStandOne = stand.Equals(AirportSimulation.StandOne);
-            var leadIn = isStandOne ? AirportTaxiNetwork.StandOneLeadIn : AirportTaxiNetwork.StandTwoLeadIn;
-            var standPoint = new TaxiPoint(17f, isStandOne ? 14f : 20f);
-            var label = isStandOne ? "Stand 1" : "Stand 2";
+            var leadIn = AirportTaxiNetwork.LeadInFor(stand);
+            var standPoint = new TaxiPoint(17f, AirportTaxiNetwork.StandZ(stand));
+            var label = stand.Equals(AirportSimulation.StandOne) ? "Stand 1"
+                : stand.Equals(AirportSimulation.StandTwo) ? "Stand 2"
+                : "Stand 3";
 
             return new[]
             {

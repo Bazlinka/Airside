@@ -45,6 +45,8 @@ namespace Airside.Presentation
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
         private const float EngineVolumePausedScale = 0.28f;
+        private string _researchToast = string.Empty;
+        private float _researchToastUntil;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -99,6 +101,7 @@ namespace Airside.Presentation
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
                 _simulation.Update();
+                MaybeShowResearchToast();
             }
 
             if (_clock.Now.ElapsedSeconds >= _nextAutosaveSecond)
@@ -921,6 +924,8 @@ namespace Airside.Presentation
                     $"{rep}  ·  {latest.GroundCrew} crew", small);
             }
 
+            DrawResearchToast(scale, panel, onTime);
+
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             if (_simulation.IsInsolvent)
@@ -981,6 +986,39 @@ namespace Airside.Presentation
             GUI.enabled = true;
             if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline", button))
                 _session.DeclineRoute();
+        }
+
+
+        private void MaybeShowResearchToast()
+        {
+            var completedId = _simulation.Research.LastCompletedProjectId;
+            if (string.IsNullOrEmpty(completedId))
+                return;
+
+            if (completedId == AirportResearch.PassengerServicesId)
+            {
+                _researchToast =
+                    $"Research complete — {AirportResearch.PassengerServicesName} (+${AirportResearch.PassengerServicesRouteBonus}/flight)";
+            }
+            else
+            {
+                _researchToast =
+                    $"Research complete — {AirportResearch.OperationsEfficiencyName} (-${AirportResearch.OperationsEfficiencyDailyDiscount}/day)";
+            }
+
+            _researchToastUntil = Time.unscaledTime + 8f;
+        }
+
+        private void DrawResearchToast(float scale, GUIStyle panel, GUIStyle onTime)
+        {
+            if (string.IsNullOrEmpty(_researchToast) || Time.unscaledTime > _researchToastUntil)
+                return;
+
+            var width = 520f;
+            var height = 64f;
+            var left = (Screen.width / scale - width) * 0.5f;
+            GUI.Box(new Rect(left, 18f, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 20f, 34f, width - 40f, 28f), _researchToast, onTime);
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)

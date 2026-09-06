@@ -10,14 +10,18 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
+- **Last updated:** 2026-09-06 by Cursor (overnight keep-going: research toast)
 - **Last updated:** 2026-09-06 by Cursor (overnight keep-going: HUD audio + research bar)
 - **Branch / working tree:** open draft PRs into `main`:
   - #20 `cursor/overnight-polish-38b9` — WLD greybox + miniature look
   - #21 `cursor/stand3-ground-traffic-38b9` — Stand 3 fleet lead-in/Z
   - #22 `cursor/insolvency-hud-38b9` — insolvency / cash warning HUD
   - #23 `cursor/follow-cycle-38b9` — F cycles dual commercials
-  - `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
+  - #24 `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
+  - `cursor/research-toast-38b9` — research-complete HUD toast
 - **Do this next:** Merge overnight PRs (any order; #21 is sim). Bailey review of Batch C /
+  Batch E when free. Unity Play soak for look + HUD + mute + research toast.
+  - `cursor/hud-audio-polish-38b9` — research progress bar, M mute, StandZ presentation
   Batch E when free. Unity Play soak for look + HUD + mute.
 - **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD polish in #20.
   Batch E UI candidates Generated (not integrated). Passenger Services shipped. Headless harness green.

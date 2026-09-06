@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Research-complete HUD toast.** When `AirportResearch` finishes a project, the HUD
+  shows a centred Clear Green banner for eight unscaled seconds naming the unlock
+  and its permanent bonus. Presentation only — driven by `LastCompletedProjectId`
+  after each sim tick. `scripts/test-domain.sh` unchanged (Presentation not covered).
 - **Research progress bar, engine mute, Stand 3 presentation Z.** While a research
   project is active the HUD draws a Coastal Blue progress bar under the research
   line (`AirportResearch.Progress01`). Press **M** to mute engine loops; engines

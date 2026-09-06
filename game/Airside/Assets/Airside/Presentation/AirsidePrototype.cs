@@ -628,7 +628,7 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
 
                 var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
-                GUI.enabled = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
+                GUI.enabled = !_simulation.IsInsolvent && !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
                 if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
                     _session.EnablePriorityCrew();
                 GUI.enabled = true;
@@ -645,10 +645,10 @@ namespace Airside.Presentation
             GUI.Label(new Rect(42, 360, 380, 20),
                 $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
                 staffing.IsUnderstaffed ? caution : small);
-            GUI.enabled = staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
+            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
             if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
                 _session.HireGroundCrew();
-            GUI.enabled = staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
+            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
             if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
                 _session.ReleaseGroundCrew();
             GUI.enabled = true;
@@ -656,7 +656,7 @@ namespace Airside.Presentation
             var capacity = _simulation.Capacity;
             GUI.Label(new Rect(42, 408, 380, 20),
                 $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
-            GUI.enabled = capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
+            GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
             if (GUI.Button(new Rect(42, 426, 220, 24),
                     capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
                 _session.BuildThirdStand();
@@ -673,7 +673,7 @@ namespace Airside.Presentation
             {
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
-                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
                 if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
                     _session.StartOperationsResearch();
                 GUI.enabled = true;
@@ -682,7 +682,7 @@ namespace Airside.Presentation
             {
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
-                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
+                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
                 if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
                     _session.StartPassengerServicesResearch();
                 GUI.enabled = true;
@@ -822,7 +822,7 @@ namespace Airside.Presentation
                 status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
             GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, blocked ? caution : small);
 
-            GUI.enabled = meetsReputation && fitsCapacity;
+            GUI.enabled = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
             if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route", button))
                 _session.AcceptRoute();
             GUI.enabled = true;

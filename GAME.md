@@ -10,15 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (Batch C models + presentation upgrade)
+- **Last updated:** 2026-09-06 by Cursor (Passenger Services research + Batch D greybox hooks)
 - **Branch / working tree:** `cursor/batch-c-models-38b9` → merge to `main`
-- **Do this next:** Keep shipping from Batch D packet (`docs/art/prompts/batch-d-animation-task-packet.md`)
-  or more systems polish. Bailey reviews Batch C when free. Play soak not a blocker.
-  keep shipping (Batch D packet / systems). Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch C Generated/Modelled + presentation upgrade. Batch D packet ready.
-  Night apron flood lights in greybox.
-  (glTF kits + richer primitive stand-ins, spinning props, dual-flight service vehicles).
-- **Watch out for:** fleet corridor invariants (0006–0009). Art pipeline decision **0022**.
+- **Do this next:** Keep shipping Batch D packet items / phase-four polish. Bailey reviews Batch C
+  when free. Unity Play soak when free — not a blocker.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D: night floods, gear/lights by
+  phase, runway edge + taxi centreline markers. Passenger Services research shipped on this branch.
+- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified.
 - **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
 - **Visual assets:** Batch A Approved; Batch B Approved (surfaces Integrated); Batch C Generated/Modelled
@@ -40,9 +38,10 @@ through the day and, with a base fee and crew payroll, is charged as a daily
 running cost — so the airport now has expenses it must cover, not just income.
 The player employs ground crew: the baseline runs turnarounds normally, extra
 crew speed them up, and understaffing stretches them into delays. The player can
-buy a third stand for 8000 — the first buildable capacity upgrade. If cash stays
-negative across three consecutive day closes, the airport is declared insolvent
-and the simulation stops.
+buy a third stand for 8000 — the first buildable capacity upgrade. Research unlocks
+progression: Operations Efficiency (−$100/day running cost), then Passenger Services
+(+$75 route income per departed commercial). If cash stays negative across three
+consecutive day closes, the airport is declared insolvent and the simulation stops.
 
 When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
@@ -86,7 +85,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Current evidence
 
-- Fifty-seven edit-mode tests pass (including concurrent-flight soak and step identity).
+- Local harness compiles Domain/Simulation/Persistence and runs 94 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity). Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
@@ -99,7 +98,8 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
 - Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
-- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed.
+- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
+- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). Local harness: 94 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
@@ -112,7 +112,8 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 
 ## Next work
 
-1. **Bailey review of Batch C** when convenient (not blocking further work).
-2. **Keep building** — Batch D animation packet / more phase-four polish.
-3. **Unity Play soak** whenever Bailey has the editor (textures + new silhouettes).
-4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Merge** `cursor/batch-c-models-38b9` (Batch C + D greybox hooks + Passenger Services).
+2. **Bailey review of Batch C** when convenient (not blocking further work).
+3. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
+5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).

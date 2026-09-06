@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Passenger Services research.** After Operations Efficiency, unlock a second
+  project (3500, one sim day) that permanently adds +$75 route income per
+  departed commercial. Persisted via `start-research-passenger-services` (no
+  save-schema field). Daily finance brief includes the route bonus and the Ops
+  Efficiency operating-cost discount. See `docs/decisions/0023-passenger-services-research.md`.
+- Batch D greybox hooks: gear retracts when airborne; nav/beacon/landing lights
+  follow phase and night; runway edge + taxi centreline markers.
 - Added Batch D animation/VFX task packet and night apron flood lights that
   brighten as daylight falls (presentation only).
 - Generated Batch C first-playable 3D kits (turboprop, terminal/hangar/ops shed,

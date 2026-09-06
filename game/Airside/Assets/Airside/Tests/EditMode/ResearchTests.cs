@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Airside.Domain;
 using Airside.Persistence;
@@ -126,5 +127,77 @@ namespace Airside.Tests
                     Directory.Delete(directory, true);
             }
         }
+        [Test]
+        public void PassengerServices_RequiresOperationsEfficiencyFirst()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(5), new ReservationTable());
+            Assert.That(simulation.StartPassengerServicesResearch(), Is.False);
+            Assert.That(simulation.StartOperationsResearch(), Is.True);
+            clock.Advance(AirportResearch.OperationsEfficiencyDurationSeconds);
+            simulation.Update();
+            Assert.That(simulation.Research.OperationsEfficiencyComplete, Is.True);
+            Assert.That(simulation.StartPassengerServicesResearch(), Is.True);
+            Assert.That(simulation.Research.ActiveProjectId, Is.EqualTo(AirportResearch.PassengerServicesId));
+        }
+
+        [Test]
+        public void PassengerServices_AddsRouteIncomeBonusAfterCompletion()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(6), new ReservationTable());
+            Assert.That(simulation.StartOperationsResearch(), Is.True);
+            clock.Advance(AirportResearch.OperationsEfficiencyDurationSeconds);
+            simulation.Update();
+            Assert.That(simulation.StartPassengerServicesResearch(), Is.True);
+            clock.Advance(AirportResearch.PassengerServicesDurationSeconds);
+            simulation.Update();
+            Assert.That(simulation.Research.PassengerServicesComplete, Is.True);
+            Assert.That(simulation.Research.RouteIncomeBonus,
+                Is.EqualTo(AirportResearch.PassengerServicesRouteBonus));
+            Assert.That(simulation.DailyFinance.ExpectedFlightIncome,
+                Is.EqualTo(
+                    (AirportEconomy.TurnaroundRevenue + simulation.Routes.IncomePerFlight + AirportResearch.PassengerServicesRouteBonus)
+                    * DayCycle.DaySeconds / AirportSimulation.CycleLengthSeconds));
+            Assert.That(simulation.DailyFinance.ExpectedOperatingCost,
+                Is.EqualTo(
+                    Math.Max(0, AirportSimulation.BaseDailyOperatingCost - AirportResearch.OperationsEfficiencyDailyDiscount)
+                    + Weather.DailyOperatingCost(simulation.CurrentWeather)
+                    + simulation.Staffing.DailyWage));
+        }
+
+        [Test]
+        public void PassengerServicesCommand_SurvivesReload()
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"airside-research-pax-{Guid.NewGuid():N}.json");
+            try
+            {
+                var session = PersistentAirportSession.LoadOrCreate(path, 1_000_000, 42);
+                session.AdvanceTo(1);
+                Assert.That(session.StartOperationsResearch(), Is.True);
+                session.Save(1_000_001);
+                session = PersistentAirportSession.LoadOrCreate(
+                    path,
+                    1_000_001 + AirportResearch.OperationsEfficiencyDurationSeconds,
+                    42);
+                Assert.That(session.Simulation.Research.OperationsEfficiencyComplete, Is.True);
+                Assert.That(session.StartPassengerServicesResearch(), Is.True);
+                var afterOpsUnix = 1_000_001 + AirportResearch.OperationsEfficiencyDurationSeconds;
+                session.Save(afterOpsUnix);
+                var restored = PersistentAirportSession.LoadOrCreate(
+                    path,
+                    afterOpsUnix + AirportResearch.PassengerServicesDurationSeconds,
+                    42);
+                Assert.That(restored.Simulation.Research.PassengerServicesComplete, Is.True);
+                Assert.That(restored.Simulation.Research.RouteIncomeBonus,
+                    Is.EqualTo(AirportResearch.PassengerServicesRouteBonus));
+            }
+            finally
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+        }
+
     }
 }

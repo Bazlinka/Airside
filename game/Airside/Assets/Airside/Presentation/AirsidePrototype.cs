@@ -125,6 +125,28 @@ namespace Airside.Presentation
                     view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
 
                 SpinPropellers(view, phase);
+                UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
+            }
+        }
+
+        private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
+        {
+            var airborne = phase is AircraftPhase.Approach or AircraftPhase.Takeoff or AircraftPhase.Departed;
+            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var night = daylight < 0.35f;
+            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff || (night && !airborne);
+
+            for (var i = 0; i < aircraft.childCount; i++)
+            {
+                var child = aircraft.GetChild(i);
+                if (child.name.StartsWith("Gear", StringComparison.Ordinal))
+                    child.gameObject.SetActive(!airborne);
+                else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
+                    child.gameObject.SetActive(enginesOn || night);
+                else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
+                    child.gameObject.SetActive(enginesOn);
+                else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
+                    child.gameObject.SetActive(landingLights);
             }
         }
 
@@ -318,25 +340,40 @@ namespace Airside.Presentation
             GUI.enabled = true;
 
             var research = _simulation.Research;
-            if (research.OperationsEfficiencyComplete)
-            {
-                GUI.Label(new Rect(42, 454, 380, 20),
-                    $"Research: {AirportResearch.OperationsEfficiencyName} complete · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day running cost", small);
-            }
-            else if (research.IsResearching)
+            if (research.IsResearching)
             {
                 var pct = (int)(research.Progress01(_clock.Now) * 100);
                 GUI.Label(new Rect(42, 454, 380, 20),
-                    $"Research: {AirportResearch.OperationsEfficiencyName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+                    $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
             }
-            else
+            else if (research.CanStartOperationsEfficiency)
             {
                 GUI.Label(new Rect(42, 454, 380, 20),
                     $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
-                GUI.enabled = research.CanStartOperationsEfficiency && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
                 if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}"))
                     _session.StartOperationsResearch();
                 GUI.enabled = true;
+            }
+            else if (research.CanStartPassengerServices)
+            {
+                GUI.Label(new Rect(42, 454, 380, 20),
+                    $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
+                GUI.enabled = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
+                if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}"))
+                    _session.StartPassengerServicesResearch();
+                GUI.enabled = true;
+            }
+            else
+            {
+                var ops = research.OperationsEfficiencyComplete
+                    ? $"{AirportResearch.OperationsEfficiencyName} ✓"
+                    : string.Empty;
+                var pax = research.PassengerServicesComplete
+                    ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
+                    : string.Empty;
+                GUI.Label(new Rect(42, 454, 380, 20),
+                    $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
             GUI.Label(new Rect(42, 500, 380, 25), "Space pause · Tab speed · P priority crew · F follow · O overview", small);
@@ -351,7 +388,7 @@ namespace Airside.Presentation
             GUI.Box(new Rect(historyLeft, 22, 340, opsHeight), string.Empty, panel);
             GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
             GUI.Label(new Rect(historyLeft + 20, 62, 320, 20),
-                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight:N0}/flight", small);
+                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight", small);
 
             var trafficY = 80f;
             if (accepted.Count == 0)
@@ -622,6 +659,14 @@ namespace Airside.Presentation
             for (var x = -34; x <= 34; x += 8)
                 CreateBlock("Runway marking", new Vector3(x, 0.02f, 0f), new Vector3(3.5f, 0.03f, 0.28f), Color.white);
 
+            for (var x = -36; x <= 36; x += 6)
+            {
+                CreateBlock("Runway edge L", new Vector3(x, 0.05f, -3.4f), new Vector3(0.25f, 0.1f, 0.25f), new Color(1f, 1f, 0.85f));
+                CreateBlock("Runway edge R", new Vector3(x, 0.05f, 3.4f), new Vector3(0.25f, 0.1f, 0.25f), new Color(1f, 1f, 0.85f));
+            }
+            for (var x = -4; x <= 28; x += 4)
+                CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
         }
@@ -654,6 +699,10 @@ namespace Airside.Presentation
             ParentBlock(root, "Gear nose", new Vector3(0f, -0.55f, 1.5f), new Vector3(0.12f, 0.45f, 0.28f), new Color(0.25f, 0.25f, 0.28f));
             ParentBlock(root, "Gear L", new Vector3(-0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
             ParentBlock(root, "Gear R", new Vector3(0.7f, -0.55f, -0.2f), new Vector3(0.12f, 0.45f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
+            ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
+            ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
+            ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();

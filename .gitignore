@@ -21,6 +21,12 @@
 *.booproj
 *.svd
 
+# scripts/dotnet-harness is a hand-authored project (not Unity/IDE-generated),
+# tracked despite the *.csproj rule above; only its build output is ignored.
+!/scripts/dotnet-harness/*.csproj
+/scripts/dotnet-harness/bin/
+/scripts/dotnet-harness/obj/
+
 # Xcode generated output
 DerivedData/
 xcuserdata/

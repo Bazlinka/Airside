@@ -199,5 +199,26 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void Progress01_WhenIdle_ReflectsOnlyWhetherBothProjectsAreComplete()
+        {
+            var research = new AirportResearch();
+            var start = new SimulationTime(0);
+
+            Assert.That(research.Progress01(start), Is.EqualTo(0.0), "nothing started yet");
+
+            research.StartOperationsEfficiency(start);
+            var afterOps = start.Advance(AirportResearch.OperationsEfficiencyDurationSeconds);
+            research.Update(afterOps);
+            Assert.That(research.OperationsEfficiencyComplete, Is.True);
+            Assert.That(research.Progress01(afterOps), Is.EqualTo(0.0), "one project done, idle, second not started");
+
+            research.StartPassengerServices(afterOps);
+            var afterPax = afterOps.Advance(AirportResearch.PassengerServicesDurationSeconds);
+            research.Update(afterPax);
+            Assert.That(research.PassengerServicesComplete, Is.True);
+            Assert.That(research.Progress01(afterPax), Is.EqualTo(1.0), "both projects complete");
+        }
+
     }
 }

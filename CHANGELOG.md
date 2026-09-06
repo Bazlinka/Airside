@@ -5,6 +5,47 @@ change it describes.
 
 ## Unreleased
 
+- **Apply the approved Airside palette to the runtime HUD.** The REF-004 operations
+  HUD reference (ChatGPT-generated, Approved) specified translucent Runway Ink
+  panels, Cloud text, Coastal Blue for buttons, Safety Yellow for caution, Clear
+  Green for on-time and Signal Red reserved for delay — none of which had reached
+  `AirsidePrototype.OnGUI()`, which still rendered on Unity's plain default grey
+  IMGUI skin. Added `AirsideTheme` (the palette from
+  `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`, a themed panel background texture,
+  and themed label/button styles) and wired it through every panel, label and
+  button in the HUD, the route-offer card and the away-summary popup. Delay text
+  is Signal Red, on-schedule/understaffed/caution states use Clear Green/Safety
+  Yellow, buttons use Coastal Blue. Presentation only — no simulation or save
+  behaviour changed; `scripts/test-domain.sh` 96/96 pass (this file has no
+  EditMode coverage, since IMGUI rendering isn't unit-testable without Unity —
+  needs a Play-mode check on the next Unity session).
+- **Fix a zero-seed crash-on-save landmine.** `AirsideSaveData.Validate()` treats
+  `randomSeed == 0` as corruption (rejecting the save and falling back to the
+  previous snapshot), but `PersistentAirportSession.LoadOrCreate` would happily
+  persist a literal 0 if ever called with a zero `newGameSeed` — the very next
+  autosave would then throw `InvalidOperationException` and never recover.
+  Unreachable today (the only call site is a hardcoded non-zero literal), but a
+  real landmine for any future random seed source. Remapped 0 to a fixed
+  non-zero fallback at creation, the same way `SeededRandomSource` already
+  tolerates a zero seed internally. Added
+  `NewGameWithZeroSeed_SavesWithoutThrowingAndPersistsANonZeroSeed`, confirmed
+  it reproduces the crash without the fix. 96/96 tests pass.
+- **Fix dead/confused branch in `AirportResearch.Progress01`.** The `!IsResearching`
+  path had an unreachable condition (always evaluated false given the guard above
+  it) that only ever mattered if a future caller queried progress outside of
+  `IsResearching` — no current call site does. Simplified to what it actually
+  computed (1.0 only when both projects are complete, 0.0 otherwise) and added
+  `Progress01_WhenIdle_ReflectsOnlyWhetherBothProjectsAreComplete`, the first
+  test coverage for that branch. No behaviour change for any current caller;
+  95/95 tests pass.
+- **Headless Domain/Simulation/Persistence test harness.** `scripts/test-domain.sh`
+  runs the 94 EditMode NUnit tests via `dotnet test` against a hand-authored
+  `scripts/dotnet-harness/Harness.csproj` that compiles Domain/Simulation/
+  Persistence straight from the Unity project (a `HarnessSaveRepository.cs`
+  stands in for the one file that needs `UnityEngine.JsonUtility`, using
+  `System.Text.Json` with `IncludeFields = true` instead). Supplementary to
+  `scripts/test-unity.sh`, not a replacement — Presentation and the real Unity
+  compile still need a Mac editor. No simulation code changed; 94/94 pass.
 - **Playtest HUD and taxi visuals.** HUD scaling uses resolution-aware `HudLayout`
   (Retina-safe). Taxi drawing follows reservation segment windows; yielded ground
   traffic snaps to its hold point instead of lerping through released space.

@@ -164,5 +164,19 @@ namespace Airside.Tests
             Assert.That(restored.LastAwaySummary.AwaySeconds, Is.EqualTo(PersistentAirportSession.MaximumCatchUpSeconds));
             Assert.That(restored.Clock.Now.ElapsedSeconds, Is.EqualTo(PersistentAirportSession.MaximumCatchUpSeconds));
         }
+
+        [Test]
+        public void NewGameWithZeroSeed_SavesWithoutThrowingAndPersistsANonZeroSeed()
+        {
+            // AirsideSaveData.Validate() treats randomSeed == 0 as corruption, so a
+            // caller-supplied 0 must never reach disk (regression: it used to, and the
+            // very next Save() would throw InvalidOperationException).
+            var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 0);
+
+            Assert.DoesNotThrow(() => session.Save(1000));
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, 1000, 0);
+            Assert.That(restored.Clock.Now.ElapsedSeconds, Is.EqualTo(0));
+        }
     }
 }

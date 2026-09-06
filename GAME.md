@@ -10,14 +10,21 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (merged #15; rebasing playtest HUD #16 onto main)
+- **Last updated:** 2026-09-06 by Claude (confirmed #15/#16 merged onto `main`; added `scripts/test-domain.sh`
+  so Domain/Simulation/Persistence tests are checkable without a Mac; fixed two latent bugs found by
+  code review; wired the approved REF-004 palette into the runtime HUD via new `AirsideTheme`)
 
-- **Branch / working tree:** `fix/playtest-hud-and-aircraft-visuals` → merge to `main`
-- **Do this next:** Merge playtest HUD/taxi visual PR after CI/local checks. Bailey Batch C review when free.
-  when free. Unity Play soak when free — not a blocker.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox: night floods, gear/lights,
-  cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
-  touchdown puff, runway edge + taxi centreline. Passenger Services shipped.
+- **Branch / working tree:** `main` — #15 (Batch C + Passenger Services) and #16 (playtest HUD/taxi visuals)
+  are both merged; no branch is waiting to land. `claude/game-git-status-lv6q93` carries the docs
+  refresh, the headless test harness, two bug fixes, and the HUD theming — not yet merged.
+- **Do this next:** Bailey review of Batch C look (Approve or request `_v02`). Unity Play soak
+  when free — **now also needs to check the new HUD theming looks right** (Runway
+  Ink panels / Cloud text / Coastal Blue buttons / state colours); it was written without a Unity
+  editor available, so it compiles by inspection only and has not been seen rendered.
+- **In progress / half-done:** Batch C Generated/Modelled, not yet Approved. Batch D greybox: night floods,
+  gear/lights, cabin door, service loops, rain/fog, wet paved surfaces, engine heat shimmer, beacon strobe,
+  touchdown puff, runway edge + taxi centreline. Remaining Batch D animation/VFX packet items and
+  phase-four polish still open. Passenger Services shipped.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified.
 - **Open questions for Bailey:** Approve Batch C look, or request `_v02`?
@@ -84,10 +91,13 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 - P: hire a priority turnaround crew while the aircraft is at stand
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
+Without a Mac Unity editor, `scripts/test-domain.sh` runs the same Domain/Simulation/
+Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
+supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- Local harness compiles Domain/Simulation/Persistence and runs 94 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity). Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
+- `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 96 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
@@ -101,7 +111,7 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
 - Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
 - Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
-- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). Local harness: 94 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
+- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). `scripts/test-domain.sh`: 96 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
 - A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
 - Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
 - Named taxi routes connect both stands through shared reserved segments.
@@ -111,11 +121,13 @@ Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/b
 - A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
 - Fleet aircraft move identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.
+- The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
+  text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
+  **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
 
 ## Next work
 
-1. **Merge** `cursor/batch-c-models-38b9` (Batch C + D greybox hooks + Passenger Services).
-2. **Bailey review of Batch C** when convenient (not blocking further work).
-3. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
-4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
-5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Bailey review of Batch C** when convenient (not blocking further work).
+2. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
+3. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
+4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).

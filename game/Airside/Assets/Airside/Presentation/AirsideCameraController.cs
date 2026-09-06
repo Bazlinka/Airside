@@ -5,12 +5,12 @@ namespace Airside.Presentation
 {
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        private readonly Vector3 _overviewCenter = new(5f, 0f, 8f);
+        private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
         private Transform _followTarget;
-        private Vector3 _center = new(5f, 0f, 8f);
-        private float _yaw = 142f;
-        private float _pitch = 36f;
-        private float _distance = 58f;
+        private Vector3 _center = new(5f, 0f, 10f);
+        private float _yaw = 138f;
+        private float _pitch = 38f;
+        private float _distance = 52f;
         private bool _following;
 
         public void SetFollowTarget(Transform target)
@@ -41,7 +41,7 @@ namespace Airside.Presentation
                 {
                     _following = false;
                     _center = _overviewCenter;
-                    _distance = 58f;
+                    _distance = 52f;
                 }
 
                 if (!_following)

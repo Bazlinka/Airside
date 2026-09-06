@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Cursor (landed #15/#16/#17; rebasing Batch E UI candidates)
-- **Branch / working tree:** `art/batch-e-ui-candidates` → merge to `main`
-- **Do this next:** Bailey review of Batch C look and Batch E UI candidates at 24 px /
-  nine-slice previews. Unity Play soak for HUD theming when free.
-- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox shipped on main.
-  Batch E UI-ICO-001–004 and UI-PNL-001–003 are Generated candidates (not integrated).
-  Passenger Services shipped. Headless domain harness + HUD palette on main.
+- **Last updated:** 2026-09-06 by Cursor (overnight WLD greybox + miniature look polish)
+- **Branch / working tree:** `cursor/overnight-polish-38b9` → PR into `main`
+- **Do this next:** Merge overnight polish PR. Bailey review of Batch C / Batch E when free.
+  Fix ground-traffic Stand 3 lead-in (still maps Stand 3 → Stand 2 lead-in). Unity Play soak.
+- **In progress / half-done:** Batch C Generated/Modelled. Batch D greybox + WLD props/stand
+  equipment on this branch. Batch E UI candidates Generated on main (not integrated).
+  Passenger Services shipped. Headless domain harness 96/96.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
   Keep primitives until Batch C is Approved and Verified. Batch E must not enter runtime Assets until Approved.
 - **Open questions for Bailey:** Approve Batch C and/or Batch E looks, or request `_v02`?
@@ -120,7 +120,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey review of Batch C** when convenient (not blocking further work).
-2. **Keep building** — remaining Batch D animation/VFX packet items / phase-four polish.
-3. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials).
-4. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).
+1. **Merge overnight polish** (`cursor/overnight-polish-38b9`) then fix Stand 3 ground-traffic lead-in.
+2. **Bailey review of Batch C** when convenient (not blocking further work).
+3. **Keep building** — remaining Batch D / miniature look polish; no unapproved economy systems.
+4. **Unity Play soak** whenever Bailey has the editor (textures, lights, dual commercials, HUD).
+5. **Batch C Integration** after Approve (wire glTF prefabs; primitives stay fallback).

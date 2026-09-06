@@ -10,16 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-06 by Claude (staffing by role)
-- **Branch / working tree:** `main`, clean, pushed to `origin`
-- **Do this next:** **Visual soak is well overdue** — ~16 commits unwatched. Press
-  Play in Unity for a few minutes. Then the fork: (a) **concurrent flights** —
-  needs a design pass, see `docs/product/concurrent-flights-brief.md`; or (b)
-  keep filling phase four safely — a **buildable capacity upgrade** (third stand),
-  **research**, a **daily report panel**, or an **insolvency / game-over** state.
-- **In progress / half-done:** nothing — 60/60 edit-mode tests pass, macOS build ok.
-  Save schema **v2** (`locationId`); v1 migrates. `accept-route` is a persisted
-  command. Reputation and route income are rebuilt by replay (no persisted field).
+- **Last updated:** 2026-09-06 by Cursor (daily finance brief)
+- **Branch / working tree:** `cursor/daily-pnl-brief-38b9` (off `main`)
+- **Do this next:** Merge open phase-four PRs when Bailey can review. **Visual
+  soak** in Unity is still overdue. Decision numbers 0015+ on parallel branches
+  will need renumbering on merge.
+- **In progress / half-done:** nothing on this branch once tests are green.
+  `DailyFinance` projects day P&L + runway; HUD shows it. No save-schema change.
 - **Watch out for:** the fleet is deadlock-free *by construction* — the primary
   flight is never blocked, at most one fleet aircraft holds the corridor lock,
   and repositioning aircraft never touch a stand. A free corridor goes to the

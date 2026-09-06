@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Daily finance brief.** HUD shows a deterministic day estimate: expected
+  operating cost (base + current weather + payroll) versus expected flight
+  income at today's cadence, plus cash runway days when the net is negative.
+  No save-schema change. See `docs/decisions/0015-daily-finance-brief.md`.
 - Test line.
 - **Staffing by role.** `AirportStaffing` — ground crew, baseline 4. The baseline
   runs turnarounds unchanged (`TurnaroundWorkflow` gains an optional

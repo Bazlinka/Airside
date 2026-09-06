@@ -83,6 +83,23 @@ namespace Airside.Simulation
         public SimulationTime CycleStartedAt => _cycleStartedAt;
         public ReservationTable Reservations => _reservations;
 
+        /// <summary>
+        /// Expected daily income and cost under the current weather, staffing and
+        /// route book, assuming today's flight cadence continues with no delays.
+        /// </summary>
+        public DailyFinanceBrief DailyFinance
+        {
+            get
+            {
+                var operatingCost = BaseDailyOperatingCost
+                    + Weather.DailyOperatingCost(CurrentWeather)
+                    + Staffing.DailyWage;
+                var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight;
+                var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds;
+                return new DailyFinanceBrief(operatingCost, expectedIncome, Economy.Cash);
+            }
+        }
+
         public void Update()
         {
             if (_clock.Now.CompareTo(_lastUpdatedAt) < 0)

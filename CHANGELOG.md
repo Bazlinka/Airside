@@ -5,12 +5,20 @@ change it describes.
 
 ## Unreleased
 
+- **Overnight WLD greybox + miniature look polish (presentation only).** Places Approved
+  Batch B WLD intent with primitive stand-ins: animated windsock, threshold / hold-short
+  markings, taxi edge lights, obstruction lights, cones, barriers, airside sign and
+  dollies; stand equipment (stairs, chocks, GPU, pushback tug) tracks turnaround /
+  pushback; Stand 3 apron pad appears when built; aircraft use `AirportTaxiNetwork.StandZ`
+  (fixes Stand 3 drawing on Stand 2); tighter camera FOV / overview framing; dusk sky and
+  ambient; away-summary branded to AIRSIDE with cash colour; night terminal/hangar window; night terminal/hangar window glow; painted stand digits; stylised runway end designators.
+  glow; painted stand digits. `scripts/test-domain.sh` 96/96. Needs Unity Play soak.
+  Does not integrate Batch C/E assets.
 - **Approve Batch C models and Batch E UI candidates.** Bailey confirmed the
   Generated/Modelled Batch C set (AIR/BLD/VEH/PRP) and Batch E icon/panel
   candidates. Status moved to Approved in the art register. Integration
   (runtime wiring) follows; primitives remain fallback until Integration is
   Verified. Decision 0022 lifecycle unchanged.
-
 - Generated Batch E UI candidates under `docs/art/candidates/`: four transparent
   seven-icon sheets plus light/dark nine-slice and caution-stripe textures. Every
   request repeats the decision-0022 anchor; exact prompts and processing evidence

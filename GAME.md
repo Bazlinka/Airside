@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (first Resources prefab + Addressables try)
-- **Branch / working tree:** `cursor/first-prefab-stairs-ddad`
-- **Do this next:** Merge first prefab; Bailey Play soak turnaround stairs; optionally overwrite with authored FBX
-- **In progress / half-done:** `mdl_passenger_stairs_v01.prefab` + Addressables key probe + material binder
-- **Watch out for:** stairs prefab is still greybox cubes — proof of pipeline, not final art
-- **Open questions for Bailey:** replace stairs prefab with authored mesh? terminal vs turboprop next?
-- **Visual assets:** first file under `Resources/Airside/Prefabs/`
+- **Last updated:** 2026-09-07 by Cursor (GSE prefabs + wet puddles)
+- **Branch / working tree:** `cursor/gse-prefabs-puddles-ddad`
+- **Do this next:** Merge GSE prefabs/puddles; Bailey Play soak rain puddles + turnaround GSE
+- **In progress / half-done:** chocks/GPU Resources prefabs; apron wet puddle discs
+- **Watch out for:** prefabs still greybox cubes — pipeline proof, not final art
+- **Open questions for Bailey:** overwrite stairs/chocks/GPU with authored FBX?
+- **Visual assets:** three Resources prefabs + wet puddles
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,8 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play a turnaround.
-2. Confirm passenger stairs load from `Resources/Airside/Prefabs/mdl_passenger_stairs_v01`
-   (greybox proof-of-pipeline); optionally overwrite with authored FBX of the same name.
-3. Next code track: authored prefab for terminal or turboprop; Addressables group when ready.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
+2. Confirm Resources prefabs for stairs/chocks/GPU on turnaround; rain puddles on apron.
+3. Next code track: authored FBX overwrite for terminal or turboprop prefab.
    No new economy systems; no Companion/CloudKit.

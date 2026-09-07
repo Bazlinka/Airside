@@ -19,7 +19,12 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 
 | Key | File | Notes |
 |---|---|---|
-| `mdl_passenger_stairs_v01` | `mdl_passenger_stairs_v01.prefab` | Built-in cube hierarchy + `AirsideRuntimeMaterialBinder`; replaces procedural stairs when present. Regenerate via `scripts/generate-passenger-stairs-prefab.py`. Bailey may overwrite with an authored FBX prefab of the same name. |
+| `mdl_passenger_stairs_v01` | `mdl_passenger_stairs_v01.prefab` | Stairs; regenerate via `scripts/generate-passenger-stairs-prefab.py` |
+| `mdl_wheel_chocks_v01` | `mdl_wheel_chocks_v01.prefab` | Twin chocks; regenerate via `scripts/generate-gse-prefabs.py` |
+| `mdl_gpu_cart_v01` | `mdl_gpu_cart_v01.prefab` | GPU cart; regenerate via `scripts/generate-gse-prefabs.py` |
+
+All use built-in cube meshes + `AirsideRuntimeMaterialBinder`. Bailey may overwrite
+any with an authored FBX prefab of the same name.
 
 ## Workflow (Mac Unity)
 

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **GSE prefabs + wet apron puddles (0025 items 1+4+7).** Resources prefabs for wheel
+  chocks and GPU cart; soft reflective puddle discs appear on wet weather. Presentation only.
+
 - **First Resources prefab + Addressables try (0025 item 1).** `mdl_passenger_stairs_v01`
   lands under `Resources/Airside/Prefabs/` with runtime Lit binder; loader probes
   `airside-prefab/<key>` Addressables before glTF. Presentation only.

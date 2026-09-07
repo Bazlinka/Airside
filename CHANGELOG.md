@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Prop disc blur + tire roll (0025 item 7).** High-RPM takeoff/approach hides
+  blade meshes and shows a translucent prop disc; landing-gear tires roll on
+  ground phases. Presentation only (Batch D motion life).
+
 - **Landside parking life.** Parked cars in the car park, kerbside drop-off/taxi,
   luggage trolleys, bench, extra trees and GA tie-down markers so the terminal
   approach reads as a working regional airfield. Presentation only.

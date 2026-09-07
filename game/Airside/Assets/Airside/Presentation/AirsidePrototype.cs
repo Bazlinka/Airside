@@ -2513,13 +2513,25 @@ namespace Airside.Presentation
                 new Vector3(-24f, 0.07f, 28f),
                 new Vector3(22f, 0.07f, 14f)
             };
-            for (var i = 0; i < spots.Length; i++)
+
+            // Batch F4 VFX-004 — reusable wet accent kit first (presentation only).
+            var hasWetKit = ArtPresentationLoader.TryInstantiatePrefab("vfx_wet_surface_response_v01", out var wetKit);
+            if (hasWetKit)
+            {
+                wetKit.SetParent(root, false);
+                wetKit.localPosition = new Vector3(20f, 0f, 16f);
+                wetKit.name = "Wet surface kit";
+            }
+
+            // Kit owns the wet read — keep a short hero apron/taxi set; full carpet is fallback.
+            var spotCount = hasWetKit ? 10 : spots.Length;
+            for (var i = 0; i < spotCount; i++)
             {
                 // Irregular multi-blob puddles (REF soft damp patches, not toy discs).
                 var cluster = new GameObject($"Puddle {i}").transform;
                 cluster.SetParent(root, false);
                 cluster.position = spots[i];
-                var blobs = 2 + (i % 3);
+                var blobs = hasWetKit ? 1 + (i % 2) : 2 + (i % 3);
                 for (var b = 0; b < blobs; b++)
                 {
                     var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -2543,14 +2555,6 @@ namespace Airside.Presentation
                     puddle.GetComponent<Renderer>().material = material;
                     puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
-            }
-
-            // Batch F4 VFX-004 — reusable wet accent kit (presentation only).
-            if (ArtPresentationLoader.TryInstantiatePrefab("vfx_wet_surface_response_v01", out var wetKit))
-            {
-                wetKit.SetParent(root, false);
-                wetKit.localPosition = new Vector3(20f, 0f, 16f);
-                wetKit.name = "Wet surface kit";
             }
 
             root.gameObject.SetActive(false);
@@ -4108,33 +4112,46 @@ namespace Airside.Presentation
         private static Light[] BuildRunwayEdgePointLights()
         {
             var lights = new System.Collections.Generic.List<Light>();
-            for (var x = -36; x <= 36; x += 8)
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
+            // Kit edge fixtures already stamp geometry — thin PointLights so dusk isn't glitter.
+            var edgeStep = hasLightingKit ? 16 : 8;
+            for (var x = -36; x <= 36; x += edgeStep)
             {
                 lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
                 lights.Add(CreateEdgePointLight($"Runway edge point R {x}", new Vector3(x, 0.55f, 3.4f)));
             }
 
-            // Blue taxi centreline hints along A1 / stand lead-in (REF-002).
-            var lightingKit = PreferArtKit(
-                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
-                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
-                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
-            var taxiStem = new Color(0.35f, 0.36f, 0.38f);
-            var taxiLens = new Color(0.3f, 0.55f, 1f);
-            for (var x = -12; x <= 28; x += 8)
+            // Blue taxi centreline hints — skip z=9 densify when PlaceWorldLighting owns taxi edges.
+            if (!hasLightingKit)
             {
-                lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
-                    new Color(0.3f, 0.55f, 1f), range: 7.5f));
-                // Kit fixtures so the centreline ribbon has geometry, not orphan points.
-                var origin = new Vector3(x, 0f, 9f);
-                if (!ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_stem", origin, Quaternion.identity, taxiStem, out _)
-                    && !ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxiway_light", origin, Quaternion.identity, taxiLens, out _))
+                var taxiStem = new Color(0.35f, 0.36f, 0.38f);
+                var taxiLens = new Color(0.3f, 0.55f, 1f);
+                for (var x = -12; x <= 28; x += 8)
                 {
-                    CreateBlock($"Taxi fixture {x}", new Vector3(x, 0.2f, 9f), new Vector3(0.18f, 0.35f, 0.18f), taxiStem);
-                }
+                    lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
+                        new Color(0.3f, 0.55f, 1f), range: 7.5f));
+                    var origin = new Vector3(x, 0f, 9f);
+                    if (!ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_stem", origin, Quaternion.identity, taxiStem, out _)
+                        && !ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxiway_light", origin, Quaternion.identity, taxiLens, out _))
+                    {
+                        CreateBlock($"Taxi fixture {x}", new Vector3(x, 0.2f, 9f), new Vector3(0.18f, 0.35f, 0.18f), taxiStem);
+                    }
 
-                ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_lens", origin, Quaternion.identity, taxiLens, out _);
-                ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_base", origin, Quaternion.identity, taxiStem, out _);
+                    ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_lens", origin, Quaternion.identity, taxiLens, out _);
+                    ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_base", origin, Quaternion.identity, taxiStem, out _);
+                }
+            }
+            else
+            {
+                // Two hero taxi Points so A1 still has spill without a fixture ribbon.
+                lights.Add(CreateEdgePointLight("Taxi point hero W", new Vector3(-4f, 0.45f, 9f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+                lights.Add(CreateEdgePointLight("Taxi point hero E", new Vector3(20f, 0.45f, 9f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
             }
 
             // REIL-style white flashers just beyond each threshold (blinked later).
@@ -4146,10 +4163,11 @@ namespace Airside.Presentation
                 new Color(1f, 1f, 0.95f), range: 16f));
             lights.Add(CreateEdgePointLight("REIL E R", new Vector3(44f, 1.6f, 2.8f),
                 new Color(1f, 1f, 0.95f), range: 16f));
+            var taxiStemColor = new Color(0.35f, 0.36f, 0.38f);
             void PlaceReilPost(string name, Vector3 origin)
             {
-                var kit = ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", origin, Quaternion.identity, taxiStem, out _)
-                    | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", origin, Quaternion.identity, taxiStem, out _)
+                var kit = ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", origin, Quaternion.identity, taxiStemColor, out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", origin, Quaternion.identity, taxiStemColor, out _)
                     | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_lens", origin, Quaternion.identity, new Color(1f, 1f, 0.9f), out _);
                 if (!kit)
                     CreateBlock(name, origin + new Vector3(0f, 0.8f, 0f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
@@ -4822,12 +4840,20 @@ namespace Airside.Presentation
             }
 
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
-            CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
-            CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            if (!hasForecourtKerbs)
+            {
+                CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+                CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            }
+
             // Turn segment markings so the landside elbow reads as road, not empty asphalt.
             CreateBlock("Access turn centreline", new Vector3(38f, 0.05f, 46f), new Vector3(22f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));
-            CreateBlock("Access turn edge N", new Vector3(38f, 0.05f, 48.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
-            CreateBlock("Access turn edge S", new Vector3(38f, 0.05f, 43.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
+            if (!hasForecourtKerbs)
+            {
+                CreateBlock("Access turn edge N", new Vector3(38f, 0.05f, 48.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
+                CreateBlock("Access turn edge S", new Vector3(38f, 0.05f, 43.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
+            }
+
             CreateBlock("Access turn shoulder N", new Vector3(38f, -0.01f, 49.4f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
             CreateBlock("Access turn shoulder S", new Vector3(38f, -0.01f, 42.6f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
@@ -4844,8 +4870,10 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Access road shoulder R", new Vector3(29.8f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
+            // One zebra when PRP-003 drop-off kerb/bollards already mark the curb.
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
-            CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
+            if (!hasForecourtKerbs)
+                CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
             if (GameObject.Find("Parking sign post") == null)
                 CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
             if (GameObject.Find("Parking sign face") == null)
@@ -4854,10 +4882,13 @@ namespace Airside.Presentation
             // Hangar service lane.
             CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
-            CreateBlock("Service lane centreline", new Vector3(-20f, 0.04f, 28.5f), new Vector3(14f, 0.02f, 0.1f),
-                new Color(0.95f, 0.85f, 0.2f));
-            CreateBlock("Service lane edge N", new Vector3(-20f, 0.04f, 29.9f), new Vector3(16f, 0.02f, 0.08f), Color.white);
-            CreateBlock("Service lane edge S", new Vector3(-20f, 0.04f, 27.1f), new Vector3(16f, 0.02f, 0.08f), Color.white);
+            if (!hasForecourtKerbs)
+            {
+                CreateBlock("Service lane centreline", new Vector3(-20f, 0.04f, 28.5f), new Vector3(14f, 0.02f, 0.1f),
+                    new Color(0.95f, 0.85f, 0.2f));
+                CreateBlock("Service lane edge N", new Vector3(-20f, 0.04f, 29.9f), new Vector3(16f, 0.02f, 0.08f), Color.white);
+                CreateBlock("Service lane edge S", new Vector3(-20f, 0.04f, 27.1f), new Vector3(16f, 0.02f, 0.08f), Color.white);
+            }
 
             BuildPerimeterFence();
             BuildApproachLightBars();
@@ -9175,17 +9206,20 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var hasLightingKit = !string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit);
             var edgeColor = new Color(1f, 1f, 0.85f);
             var taxiColor = new Color(0.25f, 0.55f, 1f);
             var obstruction = new Color(0.95f, 0.35f, 0.12f);
 
-            for (var x = -36; x <= 36; x += 6)
+            var edgeStep = hasLightingKit ? 12 : 6;
+            for (var x = -36; x <= 36; x += edgeStep)
             {
                 PlaceEdgeLamp(kit, new Vector3(x, 0f, -3.4f), edgeColor);
                 PlaceEdgeLamp(kit, new Vector3(x, 0f, 3.4f), edgeColor);
             }
 
-            for (var x = -8; x <= 28; x += 8)
+            var taxiStep = hasLightingKit ? 12 : 8;
+            for (var x = -8; x <= 28; x += taxiStep)
             {
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 6.9f), taxiColor);

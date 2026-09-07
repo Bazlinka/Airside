@@ -46,8 +46,9 @@ change it describes.
   glow PointLights capped to hero + ≤6 panes; parked cars / CHR people / rain
   stamps thinned when kits present; decal SetRendererColor; speed chip ink on
   light chrome; overview framing ~44 m / 48° toward terminal; safety props
-  thinned when kits present; softer night bloom + warmer dusk fill/midtones.
-  Presentation only — simulation unchanged.
+  thinned when kits present; softer night bloom + warmer dusk fill/midtones;
+  lighting kit thins edge Points + taxi densify; wet kit thins puddles; PRP-003
+  thins access/service paint. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

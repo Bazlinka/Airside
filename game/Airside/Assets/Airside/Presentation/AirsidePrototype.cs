@@ -27,6 +27,10 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
         private Transform _cloudRoot;
+        private Transform _birdFlockRoot;
+        private Transform _hangarDoor;
+        private float _hangarDoorClosedX = -20f;
+        private float _touchdownSmokeRemaining;
         private AirsideCanvasHud _canvasHud;
         private bool _canvasHudActive;
         private AudioSource _touchdownAudio;
@@ -210,6 +214,7 @@ namespace Airside.Presentation
             UpdateTouchdownSmoke();
             UpdateTrafficWaitPresentation();
             UpdateCloudDrift();
+            UpdateBirdFlock();
             UpdateHangarDoor();
             SyncCanvasHud();
         }
@@ -2649,6 +2654,7 @@ namespace Airside.Presentation
             dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             dome.GetComponent<Renderer>().receiveShadows = false;
             BuildCloudBands();
+            BuildBirdFlock();
         }
 
         private static void BuildCloudBands()
@@ -2726,6 +2732,60 @@ namespace Airside.Presentation
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
                 tint.a = color.a;
                 renderer.material.color = tint;
+            }
+        }
+
+        private static void BuildBirdFlock()
+        {
+            var root = new GameObject("Bird flock").transform;
+            var rng = new System.Random(4242);
+            for (var i = 0; i < 12; i++)
+            {
+                var bird = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                bird.name = $"Bird {i}";
+                Object.Destroy(bird.GetComponent<Collider>());
+                bird.transform.SetParent(root, false);
+                bird.transform.localScale = new Vector3(0.35f, 0.08f, 0.55f);
+                bird.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    new Color(0.12f, 0.12f, 0.14f),
+                    AirsideMaterialLibrary.SurfaceKind.Plastic);
+                bird.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                // Seed orbit phase in unused euler z for UpdateBirdFlock.
+                bird.transform.localEulerAngles = new Vector3(0f, (float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f);
+            }
+        }
+
+        private void UpdateBirdFlock()
+        {
+            if (_birdFlockRoot == null)
+            {
+                var found = GameObject.Find("Bird flock");
+                if (found != null)
+                    _birdFlockRoot = found.transform;
+            }
+
+            if (_birdFlockRoot == null)
+                return;
+
+            // Wide lazy orbit south of the runway — presentation flock, not wildlife sim.
+            var t = Time.unscaledTime * 0.22f;
+            for (var i = 0; i < _birdFlockRoot.childCount; i++)
+            {
+                var bird = _birdFlockRoot.GetChild(i);
+                var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.4f;
+                var radius = 28f + (i % 4) * 3.5f;
+                var x = Mathf.Cos(phase) * radius;
+                var z = -42f + Mathf.Sin(phase) * radius * 0.45f;
+                var y = 9f + Mathf.Sin(phase * 2.1f + i) * 1.8f + (i % 3);
+                var next = new Vector3(x, y, z);
+                var prev = bird.position;
+                bird.position = next;
+                var dir = next - prev;
+                if (dir.sqrMagnitude > 0.0001f)
+                    bird.rotation = Quaternion.Slerp(bird.rotation, Quaternion.LookRotation(dir.normalized), Time.unscaledDeltaTime * 4f);
+                // Wing flap scale pulse.
+                var flap = 1f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 9f + i));
+                bird.localScale = new Vector3(0.35f * flap, 0.08f, 0.55f);
             }
         }
 

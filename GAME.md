@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ambient wind/rain audio)
-- **Branch / working tree:** `cursor/ambient-wind-audio-ddad`
-- **Do this next:** Merge; Bailey Unity Play soak #73–#74; migrate left Canvas panel next
-- **In progress / half-done:** procedural wind + rain ambience
-- **Watch out for:** Random-based clips are non-deterministic audio (presentation only)
+- **Last updated:** 2026-09-07 by Cursor (birds + hangar field fix)
+- **Branch / working tree:** `cursor/sky-birds-handoff-ddad`
+- **Do this next:** Merge hot-fix for hangar/touchdown fields; Bailey Play soak #73–#75
+- **In progress / half-done:** bird flock + restored missing fields from Canvas wiring
+- **Watch out for:** #73 on main was missing `_hangarDoor` / `_touchdownSmokeRemaining` declarations — fixed here
 - **Open questions for Bailey:** none
-- **Visual assets:** canvas HUD on `main`; ambient audio on this branch
+- **Visual assets:** canvas HUD + ambient audio on `main`; birds/fix on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

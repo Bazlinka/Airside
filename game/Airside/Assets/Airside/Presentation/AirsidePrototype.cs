@@ -883,10 +883,60 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0));
                 }
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
+                {
                     child.gameObject.SetActive(landingLights);
+                    EnsureLandingSpotLight(child, landingLights, night);
+                }
                 else if (child.name.StartsWith("TaxiLight", StringComparison.Ordinal))
+                {
                     child.gameObject.SetActive(taxiLights);
+                    EnsureTaxiSpotLight(child, taxiLights);
+                }
             }
+        }
+
+        /// <summary>
+        /// Decision 0025 items 5+7 — real SpotLights on landing / taxi lamp meshes so
+        /// approach and night taxi cast light on the runway and apron.
+        /// </summary>
+        private static void EnsureLandingSpotLight(Transform lamp, bool on, bool night)
+        {
+            var light = lamp.GetComponent<Light>();
+            if (light == null)
+            {
+                light = lamp.gameObject.AddComponent<Light>();
+                light.type = LightType.Spot;
+                light.color = new Color(1f, 0.97f, 0.88f);
+                light.range = 42f;
+                light.spotAngle = 48f;
+                light.innerSpotAngle = 22f;
+                light.shadows = LightShadows.Soft;
+            }
+
+            light.enabled = on;
+            if (!on)
+                return;
+            light.intensity = night ? 6.5f : 3.2f;
+            // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
+            light.transform.localRotation = Quaternion.identity;
+        }
+
+        private static void EnsureTaxiSpotLight(Transform lamp, bool on)
+        {
+            var light = lamp.GetComponent<Light>();
+            if (light == null)
+            {
+                light = lamp.gameObject.AddComponent<Light>();
+                light.type = LightType.Spot;
+                light.color = new Color(1f, 0.94f, 0.78f);
+                light.range = 18f;
+                light.spotAngle = 55f;
+                light.innerSpotAngle = 28f;
+                light.shadows = LightShadows.None;
+                light.intensity = 2.4f;
+            }
+
+            light.enabled = on;
         }
 
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
@@ -4247,6 +4297,13 @@ namespace Airside.Presentation
 
         private static Transform BuildPushbackTug()
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Pushback tug";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
             var root = new GameObject("Pushback tug").transform;
             var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,
@@ -4264,6 +4321,7 @@ namespace Airside.Presentation
                 ParentBlock(root, "Tug wheel FR", new Vector3(0.6f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
                 ParentBlock(root, "Tug wheel RL", new Vector3(-0.55f, -0.35f, 0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
                 ParentBlock(root, "Tug wheel RR", new Vector3(-0.55f, -0.35f, -0.45f), new Vector3(0.28f, 0.32f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
+                ParentBlock(root, "Tug beacon", new Vector3(0.55f, 0.9f, 0f), new Vector3(0.18f, 0.18f, 0.18f), new Color(0.95f, 0.35f, 0.12f));
             }
 
             root.gameObject.SetActive(false);
@@ -4296,6 +4354,13 @@ namespace Airside.Presentation
 
         private static void CreateCone(Vector3 position)
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_safety_cone_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Safety cone";
+                prefabRoot.position = position;
+                return;
+            }
+
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_airfield_props_kit_v01.gltf",
                     "cone",
@@ -4316,6 +4381,14 @@ namespace Airside.Presentation
 
         private static void CreateBarrier(Vector3 position, float yawDegrees)
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_work_barrier_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Barrier";
+                prefabRoot.position = position;
+                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+                return;
+            }
+
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_airfield_props_kit_v01.gltf",
                     "barrier",
@@ -4481,23 +4554,31 @@ namespace Airside.Presentation
         {
             const string kit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
 
-            // Stand lead-in cones.
+            // Stand lead-in cones (denser apron edge read).
             CreateCone(new Vector3(12.5f, 0.25f, 12.2f));
             CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
             CreateCone(new Vector3(12.5f, 0.25f, 18.2f));
             CreateCone(new Vector3(12.5f, 0.25f, 21.8f));
             CreateCone(new Vector3(23.5f, 0.25f, 12.2f));
+            CreateCone(new Vector3(23.5f, 0.25f, 15.8f));
+            CreateCone(new Vector3(23.5f, 0.25f, 18.2f));
             CreateCone(new Vector3(23.5f, 0.25f, 21.8f));
             CreateCone(new Vector3(-6f, 0.25f, 11f));
             CreateCone(new Vector3(-10f, 0.25f, 11f));
             CreateCone(new Vector3(4f, 0.25f, 7.2f));
             CreateCone(new Vector3(4f, 0.25f, 10.8f));
+            CreateCone(new Vector3(18f, 0.25f, 11.2f));
+            CreateCone(new Vector3(28f, 0.25f, 11.2f));
+            CreateCone(new Vector3(8f, 0.25f, 23.5f));
+            CreateCone(new Vector3(30f, 0.25f, 23.5f));
 
             // Worksite / hangar barriers.
             CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
             CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
             CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
             CreateBarrier(new Vector3(36f, 0.45f, 18f), 90f);
+            CreateBarrier(new Vector3(6f, 0.45f, 24.5f), 0f);
+            CreateBarrier(new Vector3(34f, 0.45f, 24.5f), 0f);
 
             PlaceSignBoard(kit, new Vector3(10f, 0f, 22f), 90f);
             PlaceSignBoard(kit, new Vector3(-4f, 0f, 12f), 0f);

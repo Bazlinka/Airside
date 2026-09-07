@@ -26,12 +26,14 @@ namespace Airside.Presentation
                 var n = renderer.gameObject.name.ToLowerInvariant();
                 Color color;
                 var kind = AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
-                if (n.Contains("rail") || n.Contains("accent"))
+                if (n.Contains("rail") || n.Contains("accent") || n.Contains("beacon")
+                    || n.Contains("collar") || n.Contains("stripe"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("step") || n.Contains("tread"))
+                else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
+                         || n.Contains("leg") || n.Contains("base"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

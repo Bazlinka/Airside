@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Apron GSE prefabs + aircraft landing SpotLights (0025 items 1+5+7).** Resources
+  prefabs for pushback tug, safety cone and work barrier (denser apron placement);
+  approach/landing/takeoff landing lamps and night taxi lamps cast real SpotLights.
+  Presentation only.
+
 - **GSE prefabs + wet apron puddles (0025 items 1+4+7).** Resources prefabs for wheel
   chocks and GPU cart; soft reflective puddle discs appear on wet weather. Presentation only.
 

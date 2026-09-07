@@ -49,9 +49,9 @@ new style authority; the individual runtime icons are the prepared outputs.
 
 ## What is still missing
 
-- Batch F1 authored AIR-001 v05 turboprop (**Integrated** — Mac bake/camera accept pending),
-  then BLD-001 v05 terminal and MAT-001 material family. Current glTF/runtime materials
-  remain fallbacks for unfinished F1 items.
+- Batch F1 authored AIR-001 v05 turboprop (**Integrated** — Mac FBX bake in Resources;
+  Bailey accepted), then BLD-001 v05 terminal and MAT-001 material family. Current
+  glTF/runtime materials remain fallbacks for unfinished F1 items.
 - Batch F2 turnaround vehicle and character replacements.
 - Batch F3 vegetation, fence/gate, terminal forecourt and non-operational context.
 - Batch D's actual `.anim`, controller and VFX prefab deliverables, grouped into

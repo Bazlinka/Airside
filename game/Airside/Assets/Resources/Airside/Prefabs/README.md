@@ -53,24 +53,38 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx` (Batch F1 AIR-001)
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Props/mdl_service_equipment_kit_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Props/mdl_airfield_lighting_kit_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Props/mdl_airfield_props_kit_authored_v01.fbx`
 
 Resources prefabs (Addressables keys live now):
 
 | Key | Regenerator |
 |---|---|
-| `mdl_regional_turboprop_01_v05` | `scripts/generate-air-001-v05-prefab.py` |
-| `mdl_regional_turboprop_01_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
-| `mdl_terminal_regional_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
-| `mdl_hangar_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
-| `mdl_operations_shed_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
+| `mdl_regional_turboprop_01_v05` | Mac bake (`Airside → Art → Bake Authored FBX Prefabs`); generator `scripts/generate-air-001-v05-prefab.py` is the pipeline-proof fallback |
+| `mdl_regional_turboprop_01_authored_v01` | Mac bake; `scripts/generate-authored-resources-prefabs.py` is the pipeline-proof fallback |
+| `mdl_terminal_regional_small_authored_v01` | Mac bake; same generator fallback |
+| `mdl_hangar_small_authored_v01` | Mac bake; same generator fallback |
+| `mdl_operations_shed_authored_v01` | Mac bake; same generator fallback |
+| `mdl_fuel_truck_small_authored_v01` | Mac bake |
+| `mdl_baggage_tug_train_authored_v01` | Mac bake |
+| `mdl_passenger_bus_apron_authored_v01` | Mac bake |
+| `mdl_service_equipment_kit_authored_v01` | Mac bake |
+| `mdl_airfield_lighting_kit_authored_v01` | Mac bake |
+| `mdl_airfield_props_kit_authored_v01` | Mac bake |
 
-Round fuselage/engines use built-in cylinders with motion part names (gear doors,
-props, cabin/cargo doors). Mac menu **Airside → Art → Bake Authored FBX Prefabs**
-can overwrite these with ModelImporter meshes from the `.fbx` files.
+Mac menu **Airside → Art → Bake Authored FBX Prefabs** overwrites these with
+ModelImporter meshes from the `.fbx` files. Done 2026-09-07 for AIR-001 v05
+(Bailey accepted) and the authored kits listed above.
 
-`ArtPresentationLoader.TryInstantiate` yields builtin Cube/Cylinder Resources
-prefabs to a StreamingAssets glTF companion when present, so v05/authored lathed
-meshes show before Mac bake.
+`ArtPresentationLoader.TryInstantiate` still yields builtin Cube/Cylinder
+Resources proofs to a StreamingAssets glTF companion when present. Baked FBX
+prefabs are no longer proofs, so Play uses the imported meshes.
 
 Companion StreamingAssets glTF remains the fallback if a prefab is missing.
 

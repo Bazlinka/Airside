@@ -30,7 +30,7 @@ namespace Airside.Editor
         };
 
         [MenuItem(MenuPath)]
-        private static void BakePrefabs()
+        public static void BakePrefabs()
         {
             var prefabDir = "Assets/Resources/Airside/Prefabs";
             Directory.CreateDirectory(
@@ -63,12 +63,15 @@ namespace Airside.Editor
             Airside.Presentation.AirsidePrefabAddressables.EnsureRegistered();
             var keys = Airside.Presentation.AirsidePrefabAddressables.RegisteredKeyCount;
             Debug.Log($"[Airside] Authored FBX prefab bake: {baked} prefabs. Addressables keys: {keys}\n{log}");
-            EditorUtility.DisplayDialog(
-                "Airside Authored FBX",
-                $"Baked {baked}/{AuthoredFbxPaths.Length} Resources prefabs.\n" +
-                $"Addressables keys now: {keys}\n\n" +
-                "Play will prefer airside-prefab/<key> over StreamingAssets glTF.",
-                "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog(
+                    "Airside Authored FBX",
+                    $"Baked {baked}/{AuthoredFbxPaths.Length} Resources prefabs.\n" +
+                    $"Addressables keys now: {keys}\n\n" +
+                    "Play will prefer airside-prefab/<key> over StreamingAssets glTF.",
+                    "OK");
+            }
         }
     }
 }

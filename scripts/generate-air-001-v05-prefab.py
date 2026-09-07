@@ -12,7 +12,8 @@ import importlib.util
 from pathlib import Path
 
 _SPEC = importlib.util.spec_from_file_location(
-    "authored_prefabs", Path("/workspace/scripts/generate-authored-resources-prefabs.py")
+    "authored_prefabs",
+    Path(__file__).resolve().parents[1] / "scripts/generate-authored-resources-prefabs.py",
 )
 _mod = importlib.util.module_from_spec(_SPEC)
 assert _SPEC.loader is not None
@@ -34,7 +35,7 @@ def main() -> None:
 
     _mod.emit_prefab(
         "mdl_regional_turboprop_01_v05",
-        "c3d4e5f60718293a4b5c6d7e8f901a2b",
+        "4df038a815b5a4c71b79d16c9196b2b7",
         [
             ("Nose", (0.0, 1.08, 5.0), (0.5, 1.0, 0.5), "cylinder", zcyl),
             ("Cockpit", (0.0, 1.35, 3.7), (0.95, 1.1, 0.95), "cylinder", zcyl),

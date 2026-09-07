@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Cloud umbras + building contact shadows (0025 items 3+5).** Soft ground discs drift
+  under cloud bands; terminal/hangar/ops/car-park contact blobs ground Lit surfaces;
+  night film grain on the day Volume. Presentation only.
+
 - **Denser landside vegetation (0025 item 3).** More eucalyptus belts, dual-canopy trees,
   shrub clusters and a tighter coastal scrub strip so overview reads as KI bush, not a
   sparse prop ring. Presentation only.

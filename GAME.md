@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (landside vegetation density)
-- **Branch / working tree:** `cursor/landside-vegetation-ddad`
-- **Do this next:** Merge vegetation densify; Bailey Play soak overview tree belts + coastal scrub
-- **In progress / half-done:** denser eucalyptus belts, shrubs, dual-canopy trees, scrub belt
-- **Watch out for:** still greybox primitives — not authored foliage assets
+- **Last updated:** 2026-09-07 by Cursor (cloud umbra + contact shadows)
+- **Branch / working tree:** `cursor/cloud-umbra-contact-ddad`
+- **Do this next:** Merge shadow ship; Bailey Play soak drifting cloud umbras + building contact
+- **In progress / half-done:** cloud ground umbras, building contact shadows, night film grain
+- **Watch out for:** umbras are soft discs — not real projected shadows
 - **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** PBR + v03 + threshold lights + Canvas chrome on main
+- **Visual assets:** vegetation densify + prior wave on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play overview.
-2. Confirm denser tree belts / coastal scrub without runway clutter; dusk lights + Canvas chrome.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play overview + day cycle.
+2. Confirm drifting cloud umbras, building contact shadows, night film grain; vegetation belts.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2).
    No new economy systems; no Companion/CloudKit.

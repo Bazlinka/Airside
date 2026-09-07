@@ -341,9 +341,13 @@ namespace Airside.Presentation
             _opsPanel = MakePanel("Ops panel", 340f);
             _opsPanel.style.right = 22;
             _opsPanel.pickingMode = PickingMode.Ignore;
+            // Match status panel brand chrome (0025 item 6).
+            _opsPanel.style.borderLeftWidth = 3;
+            _opsPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
 
             var title = MakePanelLabel("Ops title", 16, FontStyle.Bold);
             title.text = "OPERATIONS";
+            title.style.color = AirsideTheme.OpenSky;
             title.style.marginLeft = 14;
             title.style.marginTop = 12;
             title.style.marginRight = 14;

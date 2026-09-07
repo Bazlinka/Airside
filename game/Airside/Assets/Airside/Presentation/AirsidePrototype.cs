@@ -4142,7 +4142,13 @@ namespace Airside.Presentation
                 new Vector3(-40f, 0.2f, 18f),
                 new Vector3(42f, 0.18f, 20f),
                 new Vector3(-22f, 0.12f, -34f),
-                new Vector3(8f, 0.1f, -36f)
+                new Vector3(8f, 0.1f, -36f),
+                new Vector3(-48f, 0.22f, 42f),
+                new Vector3(52f, 0.2f, 52f),
+                new Vector3(-55f, 0.18f, -20f),
+                new Vector3(60f, 0.16f, -18f),
+                new Vector3(0f, 0.14f, 56f),
+                new Vector3(-6f, 0.12f, -40f)
             };
             for (var i = 0; i < mounds.Length; i++)
             {
@@ -4531,10 +4537,14 @@ namespace Airside.Presentation
                 {
                     CreateBlock($"Fence rail W top {z}", new Vector3(-44f, 1.25f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
                     CreateBlock($"Fence rail W mid {z}", new Vector3(-44f, 0.75f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence rail W bot {z}", new Vector3(-44f, 0.28f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
                     CreateBlock($"Fence rail E top {z}", new Vector3(44f, 1.25f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
                     CreateBlock($"Fence rail E mid {z}", new Vector3(44f, 0.75f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
-                    CreateBlock($"Fence mesh W {z}", new Vector3(-44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
-                    CreateBlock($"Fence mesh E {z}", new Vector3(44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence rail E bot {z}", new Vector3(44f, 0.28f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence mesh W a {z}", new Vector3(-44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh W b {z}", new Vector3(-44f, 0.75f, z + 3f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh E a {z}", new Vector3(44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh E b {z}", new Vector3(44f, 0.75f, z + 3f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
                 }
             }
 
@@ -4557,7 +4567,9 @@ namespace Airside.Presentation
                 {
                     CreateBlock($"Fence rail S top {x}", new Vector3(x + 2f, 1.15f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
                     CreateBlock($"Fence rail S mid {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
-                    CreateBlock($"Fence mesh S {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
+                    CreateBlock($"Fence rail S bot {x}", new Vector3(x + 2f, 0.28f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence mesh S a {x}", new Vector3(x + 1f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh S b {x}", new Vector3(x + 3f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
                 }
             }
 

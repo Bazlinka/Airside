@@ -31,6 +31,7 @@ namespace Airside.Presentation
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
         private Light _hangarBayLight;
+        private AirsideDayVolume _dayVolume;
         private float _touchdownSmokeRemaining;
         private AirsideCanvasHud _canvasHud;
         private bool _canvasHudActive;
@@ -105,6 +106,7 @@ namespace Airside.Presentation
             _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
+            _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
             CollectNightGlowWindows();
             _apronLights = BuildApronLights();
@@ -1046,11 +1048,16 @@ namespace Airside.Presentation
                 }
             }
 
+            // Parked GSE stays visible on the apron edge so the field feels staffed.
+            var fuelPark = new Vector3(-4.5f, 0.55f, 12.5f);
+            var bagPark = new Vector3(-1.5f, 0.42f, 11.8f);
+            var busPark = new Vector3(2f, 0.68f, 11.2f);
+
             if (servicing == null)
             {
-                UpdateVehicle(_fuelTruck, false, Vector3.zero);
-                UpdateVehicle(_baggageCart, false, Vector3.zero);
-                UpdateVehicle(_passengerBus, false, Vector3.zero);
+                UpdateVehicle(_fuelTruck, false, fuelPark, fuelPark);
+                UpdateVehicle(_baggageCart, false, bagPark, bagPark);
+                UpdateVehicle(_passengerBus, false, busPark, busPark);
                 return;
             }
 
@@ -1058,12 +1065,15 @@ namespace Airside.Presentation
             var fuelActive = TaskActive(servicing, "Refuel");
             var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
             var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
-            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f));
-            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f));
-            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f));
+            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f), fuelPark);
+            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f), bagPark);
+            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f), busPark);
             AnimateServiceLoops(_fuelTruck, fuelActive, "Hose");
             AnimateServiceLoops(_baggageCart, bagActive, "Cargo");
             AnimateServiceLoops(_passengerBus, paxActive, "Door");
+            PulseServiceBeacon(_fuelTruck, fuelActive);
+            PulseServiceBeacon(_baggageCart, bagActive);
+            PulseServiceBeacon(_passengerBus, paxActive);
         }
 
         private void UpdateStandEquipment()
@@ -1082,15 +1092,22 @@ namespace Airside.Presentation
             if (atStand != null)
             {
                 var z = AirportTaxiNetwork.StandZ(atStand.AssignedStand);
-                PlaceProp(_stairs, true, new Vector3(17.9f, 0.55f, z + 0.15f), Quaternion.Euler(0f, -8f, 0f));
-                PlaceProp(_chocks, true, new Vector3(17f, 0.12f, z + 1.55f), Quaternion.identity);
+                var progress = VisualPhaseProgress(atStand, 0f);
+                // Stairs deploy: pitch up from folded, then settle against the cabin.
+                var stairsPitch = Mathf.Lerp(-38f, -6f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f)));
+                PlaceProp(_stairs, true, new Vector3(17.9f, 0.55f, z + 0.15f), Quaternion.Euler(stairsPitch, -8f, 0f));
+                // Chocks drop into place in the first seconds of the stand call.
+                var chockY = Mathf.Lerp(0.35f, 0.12f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f)));
+                PlaceProp(_chocks, true, new Vector3(17f, chockY, z + 1.55f), Quaternion.identity);
                 PlaceProp(_gpuCart, true, new Vector3(15.2f, 0.35f, z + 2.4f), Quaternion.Euler(0f, 90f, 0f));
+                PulseGpuCart(_gpuCart, true);
             }
             else
             {
                 PlaceProp(_stairs, false, Vector3.zero, Quaternion.identity);
                 PlaceProp(_chocks, false, Vector3.zero, Quaternion.identity);
                 PlaceProp(_gpuCart, false, Vector3.zero, Quaternion.identity);
+                PulseGpuCart(_gpuCart, false);
             }
 
             if (pushing != null)
@@ -1102,6 +1119,7 @@ namespace Airside.Presentation
                     new Vector3(11.2f, 0.4f, z - 2f),
                     Mathf.SmoothStep(0f, 1f, progress));
                 PlaceProp(_pushbackTug, true, tugPos, Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f)));
+                PulseServiceBeacon(_pushbackTug, true);
             }
             else
             {
@@ -1156,21 +1174,39 @@ namespace Airside.Presentation
                    flight.Turnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
         }
 
-        private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
+        private static void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
         {
-            if (!active)
-            {
-                ResetServiceLoopParts(vehicle);
-                vehicle.gameObject.SetActive(false);
+            if (vehicle == null)
                 return;
-            }
 
             vehicle.gameObject.SetActive(true);
+            var target = active ? servicePosition : parkPosition;
+            // First show may still be at origin — start from the park bay.
+            if (vehicle.position.sqrMagnitude < 0.01f)
+                vehicle.position = parkPosition;
+
             var previous = vehicle.position;
-            vehicle.position = position;
-            // Presentation-only: wheels roll while the vehicle is on a service task.
-            var travel = Vector3.Distance(previous, position);
-            var degrees = Time.unscaledDeltaTime * 360f + travel * 40f;
+            var speed = active ? 7.5f : 5.5f;
+            vehicle.position = Vector3.MoveTowards(previous, target, Time.unscaledDeltaTime * speed);
+            var travel = Vector3.Distance(previous, vehicle.position);
+            if (travel > 0.001f)
+            {
+                var flat = target - previous;
+                flat.y = 0f;
+                if (flat.sqrMagnitude > 0.0001f)
+                {
+                    var look = Quaternion.LookRotation(flat.normalized, Vector3.up);
+                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f);
+                }
+            }
+
+            if (!active && Vector3.Distance(vehicle.position, parkPosition) < 0.05f)
+                ResetServiceLoopParts(vehicle);
+
+            // Presentation-only: wheels roll while the vehicle is moving.
+            var degrees = travel * 120f + (active && travel > 0.001f ? Time.unscaledDeltaTime * 180f : 0f);
+            if (degrees <= 0f)
+                return;
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
                 if (child == vehicle)
@@ -1178,6 +1214,57 @@ namespace Airside.Presentation
                 if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
+        }
+
+        private static void PulseServiceBeacon(Transform vehicle, bool active)
+        {
+            if (vehicle == null)
+                return;
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == vehicle)
+                    continue;
+                if (child.name.IndexOf("beacon", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                child.gameObject.SetActive(active);
+                if (!active)
+                    continue;
+                var on = Mathf.FloorToInt(Time.unscaledTime * 3f) % 2 == 0;
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    var color = on ? new Color(1f, 0.35f, 0.08f) : new Color(0.35f, 0.12f, 0.05f);
+                    renderer.material.color = color;
+                    if (renderer.material.HasProperty("_EmissionColor"))
+                    {
+                        renderer.material.EnableKeyword("_EMISSION");
+                        renderer.material.SetColor("_EmissionColor", color * (on ? 2.2f : 0.2f));
+                    }
+                }
+            }
+        }
+
+        private static void PulseGpuCart(Transform gpu, bool active)
+        {
+            if (gpu == null)
+                return;
+            var light = gpu.GetComponentInChildren<Light>();
+            if (light == null && active)
+            {
+                var go = new GameObject("GPU glow");
+                go.transform.SetParent(gpu, false);
+                go.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                light = go.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.range = 4.5f;
+                light.color = new Color(0.55f, 0.85f, 1f);
+            }
+
+            if (light == null)
+                return;
+            light.enabled = active;
+            if (active)
+                light.intensity = 0.35f + 0.2f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5f));
         }
 
         private static void ResetServiceLoopParts(Transform vehicle)
@@ -2360,6 +2447,7 @@ namespace Airside.Presentation
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
             _sun.intensity = Mathf.Lerp(0.08f, 1.5f, daylight);
             _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
+            _dayVolume?.Apply(daylight, warm);
 
             if (_fillLight != null)
             {

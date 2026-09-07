@@ -41,6 +41,7 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 | `mdl_fire_hydrant_v01` | `scripts/generate-apron-safety-prefabs.py` |
 | `mdl_extinguisher_cabinet_v01` | `scripts/generate-apron-safety-prefabs.py` |
 | `mdl_fod_bin_v01` | `scripts/generate-apron-safety-prefabs.py` |
+| `mdl_arff_shed_v01` | `scripts/generate-arff-shed-prefab.py` |
 
 All use built-in cube/cylinder meshes + `AirsideRuntimeMaterialBinder`. Bailey may
 overwrite any with an authored FBX prefab of the same name.

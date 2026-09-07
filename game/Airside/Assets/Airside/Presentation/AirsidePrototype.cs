@@ -17,6 +17,10 @@ namespace Airside.Presentation
         private AirportSimulation _simulation;
         private PersistentAirportSession _session;
         private Transform[] _commercialAircraft;
+        // Which view slot each live flight is drawn by. The simulation re-sorts its
+        // flight list into SpawnedAt order on every respawn, so a plain list index
+        // would swap the two aircraft (and their liveries) mid-cycle.
+        private readonly Dictionary<string, int> _viewSlotByFlightId = new Dictionary<string, int>();
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light _fillLight;
@@ -47,6 +51,15 @@ namespace Airside.Presentation
         private AirsideCameraController _cameraController;
         private double _preciseTime;
         private bool _paused;
+        // Continuous motion that mirrors the simulation — propellers, tires, rain,
+        // dissipating smoke. Freezes on pause and scales with the time multiplier, so a
+        // stopped aircraft is not left with its props turning and a 4x aircraft does not
+        // slide along under 1x propellers.
+        private float _animationDelta;
+        // Convergence toward a pose the simulation state implies — heading, cabin door,
+        // control surfaces, gear. Scales with the multiplier but does not freeze: a paused
+        // frame should still settle into the pose its frozen state calls for.
+        private float _poseDelta;
         private bool _audioMuted;
         private int _speed = 1;
         private long _nextAutosaveSecond;
@@ -138,6 +151,8 @@ namespace Airside.Presentation
         private void Update()
         {
             ReadSimulationControls();
+            _poseDelta = Time.unscaledDeltaTime * _speed;
+            _animationDelta = _paused ? 0f : _poseDelta;
             if (!_paused)
                 _preciseTime += Time.unscaledDeltaTime * _speed;
 
@@ -227,10 +242,11 @@ namespace Airside.Presentation
         private void UpdateAircraftVisual()
         {
             SyncCommercialAircraftViews();
-            for (var index = 0; index < _simulation.Flights.Count; index++)
+            foreach (var flight in _simulation.Flights)
             {
-                var flight = _simulation.Flights[index];
-                var view = _commercialAircraft[index];
+                var view = ViewFor(flight);
+                if (view == null)
+                    continue;
                 var standZ = AirportTaxiNetwork.StandZ(flight.AssignedStand);
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
@@ -245,7 +261,7 @@ namespace Airside.Presentation
                 var pitch = PhasePitchDegrees(phase, progress);
                 var bank = TurnBankDegrees(view, targetRotation, phase);
                 targetRotation *= Quaternion.Euler(pitch, 0f, bank);
-                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 5f);
+                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, _poseDelta * 5f);
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
@@ -282,7 +298,7 @@ namespace Airside.Presentation
             return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
         }
 
-        private static void UpdateControlSurfaces(Transform aircraft, AircraftPhase phase, float progress, float bankDegrees)
+        private void UpdateControlSurfaces(Transform aircraft, AircraftPhase phase, float progress, float bankDegrees)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
             var pitch = PhasePitchDegrees(phase, progress);
@@ -296,7 +312,7 @@ namespace Airside.Presentation
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, rudder, Time.unscaledDeltaTime * 90f);
+                    euler.y = Mathf.MoveTowards(current, rudder, _poseDelta * 90f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -306,7 +322,7 @@ namespace Airside.Presentation
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     var target = child.name.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 80f);
+                    euler.x = Mathf.MoveTowards(current, target, _poseDelta * 80f);
                     child.localEulerAngles = euler;
                 }
             }
@@ -314,11 +330,14 @@ namespace Airside.Presentation
 
         private void UpdateEngineAudio()
         {
-            for (var index = 0; index < _simulation.Flights.Count && index < _commercialAircraft.Length; index++)
+            foreach (var flight in _simulation.Flights)
             {
-                var phase = _simulation.Flights[index].Operation.Phase;
+                var view = ViewFor(flight);
+                if (view == null)
+                    continue;
+                var phase = flight.Operation.Phase;
                 var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
-                ApplyEngineAudio(_commercialAircraft[index], enginesOn);
+                ApplyEngineAudio(view, enginesOn);
             }
 
             for (var index = 0; index < _groundTraffic.Length; index++)
@@ -350,7 +369,7 @@ namespace Airside.Presentation
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
         }
 
-        private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
+        private void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
         {
             var airborne = phase is AircraftPhase.Approach or AircraftPhase.Takeoff or AircraftPhase.Departed;
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
@@ -369,7 +388,7 @@ namespace Airside.Presentation
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     var target = airborne ? -80f : 0f;
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 140f);
+                    euler.x = Mathf.MoveTowards(current, target, _poseDelta * 140f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
@@ -385,7 +404,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
+        private void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: cabin door swings open at stand, closes before pushback.
             var targetY = phase == AircraftPhase.AtStand ? -85f : 0f;
@@ -395,7 +414,7 @@ namespace Airside.Presentation
                     continue;
                 var euler = child.localEulerAngles;
                 var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                euler.y = Mathf.MoveTowards(current, targetY, Time.unscaledDeltaTime * 120f);
+                euler.y = Mathf.MoveTowards(current, targetY, _poseDelta * 120f);
                 child.localEulerAngles = euler;
             }
         }
@@ -426,7 +445,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void SpinPropellers(Transform aircraft, AircraftPhase phase)
+        private void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: RPM follows phase (Batch D ANM-AIR-001).
             if (phase == AircraftPhase.AtStand || phase == AircraftPhase.Departed)
@@ -442,7 +461,7 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 420f,
                 _ => 720f
             };
-            var degrees = Time.unscaledDeltaTime * rpm;
+            var degrees = _animationDelta * rpm;
             var highRpm = rpm >= 1000f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -455,7 +474,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
+        private void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
         {
             if (!enginesOn)
             {
@@ -463,7 +482,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var degrees = Time.unscaledDeltaTime * 520f;
+            var degrees = _animationDelta * 520f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -509,7 +528,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
+        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: tires roll on the ground (Batch D motion life).
             var rolling = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
@@ -524,7 +543,7 @@ namespace Airside.Presentation
                 AircraftPhase.Pushback => 0.55f,
                 _ => 1f
             };
-            var degrees = Time.unscaledDeltaTime * 380f * speed;
+            var degrees = _animationDelta * 380f * speed;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -537,31 +556,81 @@ namespace Airside.Presentation
 
         private void SyncCommercialAircraftViews()
         {
-            var needed = _simulation.Flights.Count;
-            if (_commercialAircraft.Length == needed)
-                return;
+            var flights = _simulation.Flights;
+            var needed = flights.Count;
 
-            foreach (var existing in _commercialAircraft)
+            // Add view slots as the fleet grows. Existing slots are never rebuilt — a
+            // slot keeps its livery for the life of the session, and a flight keeps its
+            // slot for the life of its cycle.
+            if (_commercialAircraft.Length < needed)
             {
-                if (existing != null)
-                    Destroy(existing.gameObject);
-            }
-
-            _commercialAircraft = new Transform[needed];
-            for (var index = 0; index < needed; index++)
-            {
-                var flight = _simulation.Flights[index];
-                var color = index == 0
-                    ? new Color(0.12f, 0.43f, 0.76f)
-                    : new Color(0.18f, 0.55f, 0.48f);
-                var livery = index == 0
-                    ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
-                    : "Textures/Decals/dc_livery_emu_air_v01.png";
-                _commercialAircraft[index] = BuildAircraft($"Commercial {flight.AircraftId}", color, livery);
-            }
-
-            if (needed > 0)
+                var grown = new Transform[needed];
+                Array.Copy(_commercialAircraft, grown, _commercialAircraft.Length);
+                for (var slot = _commercialAircraft.Length; slot < needed; slot++)
+                    grown[slot] = BuildAircraft($"Commercial {slot + 1}", LiveryColorFor(slot), LiveryTextureFor(slot));
+                _commercialAircraft = grown;
                 _cameraController.SetFollowTargets(_commercialAircraft);
+            }
+
+            // Keep every flight on the slot it already had; give newcomers a free one.
+            var claimed = new bool[_commercialAircraft.Length];
+            var unassigned = new List<CommercialFlight>();
+            foreach (var flight in flights)
+            {
+                if (_viewSlotByFlightId.TryGetValue(flight.AircraftId, out var slot) &&
+                    slot < claimed.Length && !claimed[slot])
+                    claimed[slot] = true;
+                else
+                    unassigned.Add(flight);
+            }
+
+            foreach (var flight in unassigned)
+            {
+                for (var slot = 0; slot < claimed.Length; slot++)
+                {
+                    if (claimed[slot])
+                        continue;
+                    claimed[slot] = true;
+                    _viewSlotByFlightId[flight.AircraftId] = slot;
+                    break;
+                }
+            }
+
+            // Drop flights that have finished so their slot can be reused.
+            if (_viewSlotByFlightId.Count > needed)
+            {
+                var live = new HashSet<string>();
+                foreach (var flight in flights)
+                    live.Add(flight.AircraftId);
+                var stale = new List<string>();
+                foreach (var id in _viewSlotByFlightId.Keys)
+                {
+                    if (!live.Contains(id))
+                        stale.Add(id);
+                }
+
+                foreach (var id in stale)
+                {
+                    _viewSlotByFlightId.Remove(id);
+                    _previousPhases.Remove(id);
+                }
+            }
+        }
+
+        private static Color LiveryColorFor(int slot) => slot == 0
+            ? new Color(0.12f, 0.43f, 0.76f)
+            : new Color(0.18f, 0.55f, 0.48f);
+
+        private static string LiveryTextureFor(int slot) => slot == 0
+            ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
+            : "Textures/Decals/dc_livery_emu_air_v01.png";
+
+        /// <summary>The view drawing this flight, or null when it has no slot yet.</summary>
+        private Transform ViewFor(CommercialFlight flight)
+        {
+            if (flight == null || !_viewSlotByFlightId.TryGetValue(flight.AircraftId, out var slot))
+                return null;
+            return slot < _commercialAircraft.Length ? _commercialAircraft[slot] : null;
         }
 
         private void UpdateGroundTrafficVisual()
@@ -579,7 +648,7 @@ namespace Airside.Presentation
                     previous,
                     target,
                     traffic.IsHolding,
-                    Time.unscaledDeltaTime * 10f);
+                    _poseDelta * 10f);
 
                 var direction = target - previous;
                 var targetRotation = direction.sqrMagnitude > 0.0004f
@@ -587,7 +656,7 @@ namespace Airside.Presentation
                     : view.rotation;
                 if (!traffic.IsHolding)
                     targetRotation *= Quaternion.Euler(0f, 0f, TurnBankDegrees(view, targetRotation, AircraftPhase.TaxiIn));
-                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 4f);
+                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, _poseDelta * 4f);
 
                 SpinGroundTrafficPropellers(view, enginesOn: !traffic.IsHolding);
                 RollLandingGearTires(
@@ -725,6 +794,9 @@ namespace Airside.Presentation
             CreateBlock("Stand number 3 mid", new Vector3(14.2f, 0.09f, 26f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
             CreateBlock("Stand number 3 stem", new Vector3(14.55f, 0.09f, 25.7f), new Vector3(0.28f, 0.04f, 1.0f), Color.white);
             _standThreeVisualBuilt = true;
+            // The pad is built after the initial sweep, so re-collect or it alone stays
+            // dry while every other paved surface darkens in the rain.
+            CollectWetSurfaces();
         }
 
         private bool TaskActive(CommercialFlight flight, string name)
@@ -733,7 +805,7 @@ namespace Airside.Presentation
                    flight.Turnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
         }
 
-        private static void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
+        private void UpdateVehicle(Transform vehicle, bool active, Vector3 position)
         {
             if (!active)
             {
@@ -747,7 +819,7 @@ namespace Airside.Presentation
             vehicle.position = position;
             // Presentation-only: wheels roll while the vehicle is on a service task.
             var travel = Vector3.Distance(previous, position);
-            var degrees = Time.unscaledDeltaTime * 360f + travel * 40f;
+            var degrees = _animationDelta * 360f + travel * 40f;
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
                 if (child == vehicle)
@@ -784,7 +856,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void AnimateServiceLoops(Transform vehicle, bool active, string partPrefix)
+        private void AnimateServiceLoops(Transform vehicle, bool active, string partPrefix)
         {
             if (!active || vehicle == null || !vehicle.gameObject.activeSelf)
                 return;
@@ -797,7 +869,7 @@ namespace Airside.Presentation
                 if (partPrefix == "Hose")
                 {
                     var scale = child.localScale;
-                    scale.z = Mathf.MoveTowards(scale.z, 2.4f, Time.unscaledDeltaTime * 1.8f);
+                    scale.z = Mathf.MoveTowards(scale.z, 2.4f, _poseDelta * 1.8f);
                     child.localScale = scale;
                     child.localPosition = new Vector3(child.localPosition.x, child.localPosition.y, 0.2f + scale.z * 0.5f);
                 }
@@ -811,7 +883,7 @@ namespace Airside.Presentation
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, -70f, Time.unscaledDeltaTime * 100f);
+                    euler.y = Mathf.MoveTowards(current, -70f, _poseDelta * 100f);
                     child.localEulerAngles = euler;
                 }
             }
@@ -836,10 +908,10 @@ namespace Airside.Presentation
                 {
                     var drop = _rainRoot.GetChild(i);
                     var pos = drop.localPosition;
-                    pos.y -= Time.unscaledDeltaTime * (fallBase + (i % 5));
+                    pos.y -= _animationDelta * (fallBase + (i % 5));
                     if (pos.y < 0.5f)
                         pos.y = 18f + (i % 7);
-                    pos.x += Time.unscaledDeltaTime * drift;
+                    pos.x += _animationDelta * drift;
                     if (pos.x < -40f)
                         pos.x += 80f;
                     drop.localPosition = pos;
@@ -890,18 +962,18 @@ namespace Airside.Presentation
             if (_touchdownSmoke == null)
                 return;
 
-            for (var index = 0; index < _simulation.Flights.Count; index++)
+            foreach (var flight in _simulation.Flights)
             {
-                var flight = _simulation.Flights[index];
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
+                var view = ViewFor(flight);
                 if (_previousPhases.TryGetValue(id, out var previous) &&
                     previous == AircraftPhase.Approach &&
                     phase == AircraftPhase.Landing &&
-                    index < _commercialAircraft.Length)
+                    view != null)
                 {
-                    _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
-                    _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
+                    _touchdownSmoke.position = view.position + Vector3.up * 0.15f;
+                    _touchdownSmoke.rotation = view.rotation;
                     _touchdownSmoke.localScale = Vector3.one;
                     _touchdownSmoke.gameObject.SetActive(true);
                     _touchdownSmokeRemaining = 0.95f;
@@ -924,7 +996,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
+            _touchdownSmokeRemaining -= _animationDelta;
             var t = Mathf.Clamp01(_touchdownSmokeRemaining / 0.95f);
             for (var i = 0; i < _touchdownSmoke.childCount; i++)
             {
@@ -2500,20 +2572,25 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
-            // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
+            // Batch C AIR-001: metre-scale turboprop kit. Motion roots sit at
+            // AircraftRootHeight, so the kit is offset to put its wheels on the tarmac.
+            // The offset is measured from the kit, not assumed: the fixed -0.7 it used to
+            // carry buried the gear 0.38 below the apron surface.
             var usedArt = ArtGltfLoader.TryInstantiate(
                 PreferArtKit(
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
                 root,
-                out _,
+                out var kitRoot,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
-                localPosition: new Vector3(0f, -0.7f, 0f));
+                localPosition: new Vector3(0f, -AircraftRootHeight, 0f));
 
             if (usedArt)
+            {
+                SitKitOnGround(kitRoot);
                 NestCrossPropellerBlades(root);
+            }
 
             if (!usedArt)
             {
@@ -2558,6 +2635,38 @@ namespace Airside.Presentation
             source.maxDistance = 75f;
             source.Play();
             return root;
+        }
+
+        /// <summary>World height of an aircraft motion root while it is on the ground.</summary>
+        private const float AircraftRootHeight = 0.7f;
+
+        /// <summary>Top surface of the apron slab — where wheels should touch.</summary>
+        private const float TarmacSurfaceY = 0.06f;
+
+        /// <summary>
+        /// Drops a loaded kit so its lowest geometry rests on the tarmac. glTF kits carry
+        /// their own origin height, so the offset has to be measured rather than assumed.
+        /// </summary>
+        private static void SitKitOnGround(Transform kitRoot)
+        {
+            if (kitRoot == null)
+                return;
+
+            var filters = kitRoot.GetComponentsInChildren<MeshFilter>(true);
+            var lowest = float.MaxValue;
+            foreach (var filter in filters)
+            {
+                if (filter.sharedMesh == null)
+                    continue;
+                lowest = Mathf.Min(lowest, filter.sharedMesh.bounds.min.y + filter.transform.localPosition.y);
+            }
+
+            if (lowest == float.MaxValue)
+                return;
+
+            var position = kitRoot.localPosition;
+            position.y = TarmacSurfaceY - AircraftRootHeight - lowest;
+            kitRoot.localPosition = position;
         }
 
         private static string RenameAircraftPart(string kitName) => kitName switch
@@ -3208,9 +3317,15 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, progress, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
                 AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
+                // Blend off the pushback point onto the outbound route. The route runs on
+                // the same 0..1 window the reservation uses, so the model never leads the
+                // segment it holds — and it never taxis back onto the stand it just left.
                 AircraftPhase.TaxiOut => progress < 0.15f
-                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), progress / 0.15f)
-                    : PositionAlongTaxiRoute(taxiRoute, (progress - 0.15f) / 0.85f, true),
+                    ? Vector3.Lerp(
+                        new Vector3(12f, 0.7f, standZ - 2f),
+                        PositionAlongTaxiRoute(taxiRoute, progress, true),
+                        Mathf.SmoothStep(0f, 1f, progress / 0.15f))
+                    : PositionAlongTaxiRoute(taxiRoute, progress, true),
                 AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
                 _ => new Vector3(52f, 15f, 0f)
             };

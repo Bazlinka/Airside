@@ -18,6 +18,12 @@ namespace Airside.Presentation
         private float _distance = OverviewDistance;
         private bool _following;
         private float _touchdownShake;
+        // Scroll while following used to be overwritten by the auto follow distance on
+        // the very next frame, so zoom silently did nothing. The player's scroll now
+        // biases the follow distance and holds until they return to overview.
+        private float _followZoom = 1f;
+        private const float MinFollowZoom = 0.45f;
+        private const float MaxFollowZoom = 2.4f;
 
         public void SetFollowTarget(Transform target)
         {
@@ -61,7 +67,8 @@ namespace Airside.Presentation
                     + Vector3.up * Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
                 _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.8f));
 
-                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / 10f));
+                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / 10f))
+                    * _followZoom;
                 _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2f));
 
                 // Ease yaw toward the aircraft heading without fighting player orbit.
@@ -100,6 +107,7 @@ namespace Airside.Presentation
                     _center = _overviewCenter;
                     _distance = OverviewDistance;
                     _pitch = 38f;
+                    _followZoom = 1f;
                 }
 
                 if (!_following)
@@ -127,7 +135,12 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.035f, 14f, 90f);
+            {
+                if (_following)
+                    _followZoom = Mathf.Clamp(_followZoom - scroll * 0.0016f, MinFollowZoom, MaxFollowZoom);
+                else
+                    _distance = Mathf.Clamp(_distance - scroll * 0.035f, 14f, 90f);
+            }
         }
 
         private void CycleOrStartFollow()

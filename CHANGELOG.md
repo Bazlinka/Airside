@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Presentation fixes (Claude visual review).** Aircraft views are bound to flights
+  by identity, so the two commercials no longer swap positions and liveries every
+  cycle; after pushback an aircraft no longer taxis backwards onto the stand it just
+  left; propellers, tires, rain and service loops freeze on pause and scale with the
+  time multiplier instead of running at 1x forever; scroll-to-zoom works while
+  following (it was overwritten by the auto follow distance every frame); the Stand 3
+  apron pad joins the wet-surface set when built; `runInBackground` is on, so the
+  real-time airport keeps running when the window loses focus; MSAA is 4x on the PC
+  pipeline asset (it was off); and the glTF aircraft kit now sits on the tarmac
+  instead of 0.38 below it. Presentation only.
+
 - **Four simulation correctness fixes (Claude architecture review).** Ground
   traffic no longer taxis to and parks on Stand 3 before the player has built it
   (it now holds off-field when every built stand is occupied); understaffing

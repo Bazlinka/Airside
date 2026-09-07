@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Landside streetlights.** Six poles along the access road and car park with
+  warm point lights that come up at dusk/night. Presentation only.
+
 - **More building night glow.** Ops shed + terminal landside window spill; night
   glow quads now emit so dusk/night interiors punch through. Presentation only.
 

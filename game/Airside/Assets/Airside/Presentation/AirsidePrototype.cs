@@ -21,6 +21,7 @@ namespace Airside.Presentation
         private Light _sun;
         private Light _fillLight;
         private Light[] _apronLights;
+        private Light[] _landsideLights;
         private Light _aerodromeBeacon;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
@@ -95,6 +96,7 @@ namespace Airside.Presentation
             BuildAirfield();
             CollectNightGlowWindows();
             _apronLights = BuildApronLights();
+            _landsideLights = BuildLandsideStreetlights();
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
@@ -1974,6 +1976,19 @@ namespace Airside.Presentation
                 }
             }
 
+            // Landside streetlights along the access road / car park.
+            if (_landsideLights != null)
+            {
+                var street = Mathf.Lerp(1.15f, 0.02f, daylight);
+                for (var i = 0; i < _landsideLights.Length; i++)
+                {
+                    var light = _landsideLights[i];
+                    if (light == null)
+                        continue;
+                    light.intensity = street;
+                }
+            }
+
             UpdateAirfieldNavLights(daylight);
             UpdateNightGlow(daylight);
             UpdateAerodromeBeacon(daylight);
@@ -2068,6 +2083,42 @@ namespace Airside.Presentation
                 light.color = new Color(1f, 0.92f, 0.78f);
                 light.range = 28f;
                 light.intensity = 0.05f;
+                lights[i] = light;
+            }
+
+            return lights;
+        }
+
+        private static Light[] BuildLandsideStreetlights()
+        {
+            // Poles + warm point lights along access road and car park edge.
+            var positions = new[]
+            {
+                new Vector3(23.5f, 0f, 34f),
+                new Vector3(23.5f, 0f, 40f),
+                new Vector3(29f, 0f, 46f),
+                new Vector3(40f, 0f, 46f),
+                new Vector3(52f, 0f, 46f),
+                new Vector3(48f, 0f, 40f)
+            };
+            var lights = new Light[positions.Length];
+            for (var i = 0; i < positions.Length; i++)
+            {
+                var pos = positions[i];
+                CreateBlock($"Streetlight pole {i}", pos + new Vector3(0f, 2.2f, 0f), new Vector3(0.14f, 4.4f, 0.14f),
+                    new Color(0.35f, 0.36f, 0.38f));
+                CreateBlock($"Streetlight head {i}", pos + new Vector3(0.35f, 4.35f, 0f), new Vector3(0.7f, 0.18f, 0.35f),
+                    new Color(0.25f, 0.26f, 0.28f));
+                CreateBlock($"Streetlight lamp {i}", pos + new Vector3(0.55f, 4.2f, 0f), new Vector3(0.28f, 0.16f, 0.28f),
+                    new Color(1f, 0.92f, 0.7f));
+
+                var go = new GameObject($"Landside streetlight {i + 1}");
+                go.transform.position = pos + new Vector3(0.55f, 4.1f, 0f);
+                var light = go.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.9f, 0.7f);
+                light.range = 16f;
+                light.intensity = 0.02f;
                 lights[i] = light;
             }
 

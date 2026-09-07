@@ -6604,9 +6604,13 @@ namespace Airside.Presentation
             // Warm bay spill: brighter when the door is open by day; soft night work-light when closed.
             if (_hangarBayLight != null)
             {
-                var daySpill = openAmount * 1.35f;
-                var nightGlow = (1f - daylight) * 0.55f;
-                _hangarBayLight.intensity = Mathf.Max(0.08f, daySpill + nightGlow);
+                var daySpill = openAmount * 1.55f;
+                var nightGlow = (1f - daylight) * 0.72f;
+                _hangarBayLight.intensity = Mathf.Max(0.1f, daySpill + nightGlow);
+                _hangarBayLight.color = Color.Lerp(
+                    new Color(1f, 0.82f, 0.55f),
+                    new Color(1f, 0.92f, 0.7f),
+                    daylight);
                 _hangarBayLight.color = Color.Lerp(
                     new Color(1f, 0.78f, 0.48f),
                     new Color(1f, 0.92f, 0.72f),

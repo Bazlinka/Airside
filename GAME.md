@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (aircraft attitude + bank)
-- **Branch / working tree:** `cursor/aircraft-attitude-bank-ddad`
-- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave
-- **In progress / half-done:** phase pitch + turn bank on this branch
-- **Watch out for:** pitch is presentation-only and not tied to altitude physics
+- **Last updated:** 2026-09-07 by Cursor (control surfaces + touchdown shake)
+- **Branch / working tree:** `cursor/control-surfaces-touchdown-ddad`
+- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave (#58–#63)
+- **In progress / half-done:** rudder/elevator cue + camera PulseTouchdown
+- **Watch out for:** Tailplane pitch is subtle on kits without a separate elevator mesh
 - **Open questions for Bailey:** none
-- **Visual assets:** first-session UX on `main`; attitude on this branch
+- **Visual assets:** attitude on `main`; control surfaces on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

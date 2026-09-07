@@ -240,14 +240,14 @@ namespace Airside.Presentation
                 var targetRotation = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
-                targetRotation *= Quaternion.Euler(
-                    PhasePitchDegrees(phase, progress),
-                    0f,
-                    TurnBankDegrees(view, targetRotation, phase));
+                var pitch = PhasePitchDegrees(phase, progress);
+                var bank = TurnBankDegrees(view, targetRotation, phase);
+                targetRotation *= Quaternion.Euler(pitch, 0f, bank);
                 view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 5f);
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
+                UpdateControlSurfaces(view, phase, progress, bank);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinDoor(view, phase);
                 UpdateEngineHeat(view, phase);
@@ -278,6 +278,36 @@ namespace Airside.Presentation
                 ? 8f
                 : 16f;
             return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
+        }
+
+        private static void UpdateControlSurfaces(Transform aircraft, AircraftPhase phase, float progress, float bankDegrees)
+        {
+            // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
+            var pitch = PhasePitchDegrees(phase, progress);
+            var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
+            var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft)
+                    continue;
+                if (child.name.StartsWith("Rudder", StringComparison.Ordinal))
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, rudder, Time.unscaledDeltaTime * 90f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                         child.name.StartsWith("Tailplane", StringComparison.Ordinal))
+                {
+                    // Soft elevator cue on the whole tailplane when no separate elevator mesh.
+                    var euler = child.localEulerAngles;
+                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                    var target = child.name.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
+                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 80f);
+                    child.localEulerAngles = euler;
+                }
+            }
         }
 
         private void UpdateEngineAudio()
@@ -878,6 +908,9 @@ namespace Airside.Presentation
                         _touchdownAudio.transform.position = _touchdownSmoke.position;
                         _touchdownAudio.PlayOneShot(_touchdownClip, 0.35f);
                     }
+
+                    if (_cameraController != null)
+                        _cameraController.PulseTouchdown();
                 }
 
                 _previousPhases[id] = phase;

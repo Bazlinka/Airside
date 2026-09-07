@@ -17,6 +17,7 @@ namespace Airside.Presentation
         private float _pitch = 38f;
         private float _distance = OverviewDistance;
         private bool _following;
+        private float _touchdownShake;
 
         public void SetFollowTarget(Transform target)
         {
@@ -71,7 +72,18 @@ namespace Airside.Presentation
             }
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-            transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance, rotation);
+            var shakeOffset = Vector3.zero;
+            if (_touchdownShake > 0f)
+            {
+                var strength = _touchdownShake * 0.55f;
+                shakeOffset = new Vector3(
+                    Mathf.Sin(Time.unscaledTime * 48f) * strength,
+                    Mathf.Sin(Time.unscaledTime * 61f) * strength * 0.6f,
+                    Mathf.Cos(Time.unscaledTime * 53f) * strength * 0.4f);
+                _touchdownShake = Mathf.MoveTowards(_touchdownShake, 0f, Time.unscaledDeltaTime * 2.8f);
+            }
+
+            transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance + shakeOffset, rotation);
         }
 
         private void ReadInput()
@@ -147,6 +159,12 @@ namespace Airside.Presentation
             _following = true;
             _followIndex = 0;
             _followTarget = _followTargets[0];
+        }
+
+        /// <summary>Brief camera shake when a commercial touches down (presentation only).</summary>
+        public void PulseTouchdown()
+        {
+            _touchdownShake = 1f;
         }
     }
 }

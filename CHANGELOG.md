@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Addressables Resources provider + lofted turboprop + env densify (0025 items 1–3+6).**
+  Runtime `airside-prefab/<key>` keys now load via `AirsideResourcesProvider`
+  (`Resources.Load`) instead of the missing LegacyResourcesProvider stub — StreamingAssets
+  glTF and direct Resources fallbacks stay intact. Hero aircraft prefers distinct
+  `mdl_regional_turboprop_01_lofted_v01` (79 stepped-fuselage meshes; does not race
+  `*_v04`). South fence, denser vegetation belt, access-road shoulders; Toolkit HUD
+  early-outs residual IMGUI when active. Evidence: `scripts/test-domain.sh` 105/105;
+  art sync 139 files.
+
 - **Unity 6.3 HUD startup: font + PanelSettings theme.** Editor Play threw
   `ArgumentException: Arial.ttf is no longer a valid built in font` while building
   the Canvas HUD; the packaged player logged `No Theme Style Sheet set to

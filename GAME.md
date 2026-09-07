@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (perimeter fence + ALS + ARFF)
-- **Branch / working tree:** `cursor/perimeter-fence-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak gate/ALS/ARFF; then authored FBX or denser kits
-- **In progress / half-done:** Toolkit full HUD merged; environment greybox denser; authored FBX still open
+- **Last updated:** 2026-09-07 by Cursor (ARFF truck Resources prefab)
+- **Branch / working tree:** `cursor/arff-truck-prefab-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak red ARFF truck at rescue shed
+- **In progress / half-done:** thirteen Resources prefabs; Toolkit full HUD; authored FBX still open
 - **Watch out for:** 0025 visual bar still needs authored aircraft/building meshes + Editor Addressables groups
 - **Open questions for Bailey:** authored turboprop/terminal FBX first, or keep shipping greybox life?
-- **Visual assets:** twelve Resources prefabs; Toolkit full HUD; ALS bars + ARFF shed + denser fence
+- **Visual assets:** thirteen Resources prefabs (incl. ARFF truck); Toolkit full HUD; ALS + ARFF shed
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

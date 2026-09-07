@@ -4150,6 +4150,32 @@ namespace Airside.Presentation
             light.range = 10f;
             light.intensity = 0f;
             light.shadows = LightShadows.None;
+
+            PlaceArffTruck();
+        }
+
+        /// <summary>
+        /// Decision 0025 items 1+3 — Resources ARFF truck parked on the rescue apron.
+        /// </summary>
+        private static void PlaceArffTruck()
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_arff_truck_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "ARFF truck";
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject("ARFF truck").transform;
+                ParentBlock(root, "ARFF chassis", new Vector3(0f, 0.55f, 0f), new Vector3(1.8f, 0.55f, 4.2f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF cab", new Vector3(0f, 1.35f, 1.2f), new Vector3(1.7f, 1.0f, 1.6f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF tank", new Vector3(0f, 1.4f, -0.9f), new Vector3(1.55f, 1.1f, 2.4f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF stripe", new Vector3(0f, 0.85f, 0f), new Vector3(1.85f, 0.18f, 3.6f), AirsideTheme.SafetyYellow);
+            }
+
+            root.position = new Vector3(-28f, 0f, 25.2f);
+            root.rotation = Quaternion.Euler(0f, 180f, 0f);
         }
 
         private static void BuildVegetation()

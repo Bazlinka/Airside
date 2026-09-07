@@ -10,9 +10,9 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (handoff after aircraft skin PBR)
-- **Branch / working tree:** `main`
-- **Do this next:** Bailey `git pull` + Play soak (ARFF shed, hills, flood masts, aircraft skin under follow); then authored turboprop/terminal FBX or Editor Addressables
+- **Last updated:** 2026-09-07 by Claude (render settings, PR 2 of 2)
+- **Branch / working tree:** `fix/render-settings` off `main`
+- **Do this next:** Merge PR 1 (`fix/simulation-correctness`) first — it repairs a CS0246/CS0535/CS1503 set that has been breaking every EditMode run and player build on `main` since PR #97; this branch cannot compile without it. Then Bailey `scripts/test-unity.sh` + Play soak: edges should be clean, and no depth of field / motion blur / lens distortion.
 - **In progress / half-done:** 21 Resources prefabs + WLD/PRP v02 + coast/aircraft skin PBR on main; authored FBX + Editor Addressables still open
 - **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art
 - **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
@@ -55,6 +55,10 @@ The immediate visual target is a premium stylised-realism miniature of a regiona
 Australian airport. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
+
+- Anti-aliasing is on: 4x MSAA on the PC pipeline asset plus SMAA (high) on the runtime camera.
+- The post stack runs a deliberate grade only — the template default profile's depth of field, motion blur, lens distortion, chromatic aberration, lens flare and panini are pinned off.
+- The simulation keeps running when the window loses focus (`runInBackground`).
 
 ## Invariants
 

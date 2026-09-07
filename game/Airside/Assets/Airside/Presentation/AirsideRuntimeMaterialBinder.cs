@@ -56,10 +56,17 @@ namespace Airside.Presentation
                     color = new Color(0.18f, 0.35f, 0.48f, 0.42f);
                     kind = AirsideMaterialLibrary.SurfaceKind.Glass;
                 }
+                else if (n.Contains("headlight") || n.Contains("taillight"))
+                {
+                    color = n.Contains("tail")
+                        ? new Color(0.85f, 0.15f, 0.12f)
+                        : new Color(0.95f, 0.95f, 0.85f);
+                    kind = AirsideMaterialLibrary.SurfaceKind.Metal;
+                }
                 else if (n.Contains("mullion") || n.Contains("transom") || n.Contains("strut")
                          || n.Contains("spinner") || n.Contains("hub") || n.Contains("scissor")
                          || n.Contains("antenna") || n.Contains("pitot") || n.Contains("exhaust")
-                         || n.Contains("fairing"))
+                         || n.Contains("fairing") || n.Contains("grille") || n.Contains("mirror"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

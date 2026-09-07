@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Parked car densify (0025 items 1+3).** `mdl_parked_car_v01` ~32 parts (split glass,
+  mirrors, grille, wheel arches, hood/boot); body tint covers door/hood/arch;
+  headlight/taillight binder colors. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Parked GA densify + fuselage binder fix (0025 items 1–2).** `mdl_parked_ga_v01`
   ~40 parts (canopy glass, struts, spinner, gear scissors/wheels); runtime binder
   maps fuselage/nose to baseColor AircraftSkin; canopy→Glass. Presentation only.

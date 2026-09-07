@@ -4818,13 +4818,16 @@ namespace Airside.Presentation
             {
                 root = new GameObject(name).transform;
                 ParentBlock(root, $"{name} body", new Vector3(0f, 0.45f, 0f), new Vector3(1.7f, 0.55f, 3.6f), body);
-                ParentBlock(root, $"{name} roof", new Vector3(0f, 0.9f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), Shade(body, 0.85f));
-                ParentBlock(root, $"{name} window", new Vector3(0f, 1.0f, -0.1f), new Vector3(1.45f, 0.28f, 1.5f), new Color(0.2f, 0.35f, 0.45f));
+                ParentBlock(root, $"{name} roof", new Vector3(0f, 0.95f, -0.15f), new Vector3(1.5f, 0.42f, 1.7f), Shade(body, 0.85f));
+                ParentBlock(root, $"{name} hood", new Vector3(0f, 0.55f, 1.05f), new Vector3(1.55f, 0.22f, 1.1f), body);
+                ParentBlock(root, $"{name} glass front", new Vector3(0f, 1.05f, 0.65f), new Vector3(1.35f, 0.32f, 0.08f), new Color(0.2f, 0.35f, 0.45f, 0.42f));
+                ParentBlock(root, $"{name} glass side L", new Vector3(-0.78f, 1.0f, -0.1f), new Vector3(0.06f, 0.28f, 1.2f), new Color(0.2f, 0.35f, 0.45f, 0.42f));
+                ParentBlock(root, $"{name} bumper front", new Vector3(0f, 0.32f, 1.88f), new Vector3(1.7f, 0.28f, 0.2f), Shade(body, 0.7f));
                 var wheel = new Color(0.12f, 0.12f, 0.13f);
-                ParentBlock(root, $"{name} wheel FL", new Vector3(-0.7f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-                ParentBlock(root, $"{name} wheel FR", new Vector3(0.7f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-                ParentBlock(root, $"{name} wheel RL", new Vector3(-0.7f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-                ParentBlock(root, $"{name} wheel RR", new Vector3(0.7f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+                ParentBlock(root, $"{name} wheel FL", new Vector3(-0.78f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.22f), wheel);
+                ParentBlock(root, $"{name} wheel FR", new Vector3(0.78f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.22f), wheel);
+                ParentBlock(root, $"{name} wheel RL", new Vector3(-0.78f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.22f), wheel);
+                ParentBlock(root, $"{name} wheel RR", new Vector3(0.78f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.22f), wheel);
             }
 
             root.position = position;
@@ -4838,11 +4841,18 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var n = renderer.gameObject.name.ToLowerInvariant();
-                if (n.Contains("wheel") || n.Contains("window") || n.Contains("headlight") || n.Contains("stripe"))
+                if (n.Contains("wheel") || n.Contains("window") || n.Contains("glass")
+                    || n.Contains("headlight") || n.Contains("taillight") || n.Contains("stripe")
+                    || n.Contains("grille") || n.Contains("mirror") || n.Contains("hub")
+                    || n.Contains("number"))
                     continue;
-                if (n.Contains("body") || n.Contains("roof") || n.Contains("bumper"))
+                if (n.Contains("body") || n.Contains("roof") || n.Contains("bumper")
+                    || n.Contains("hood") || n.Contains("boot") || n.Contains("door")
+                    || n.Contains("arch"))
                 {
-                    var color = n.Contains("roof") ? Shade(body, 0.85f) : body;
+                    var color = n.Contains("roof") ? Shade(body, 0.85f)
+                        : n.Contains("bumper") || n.Contains("arch") ? Shade(body, 0.7f)
+                        : body;
                     renderer.material.color = color;
                 }
             }

@@ -133,6 +133,7 @@ namespace Airside.Presentation
             panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panelSettings.match = 0.5f;
             panelSettings.sortingOrder = 100;
+            panelSettings.themeStyleSheet = ResolveRuntimeTheme();
             _document.panelSettings = panelSettings;
 
             _root = _document.rootVisualElement;
@@ -1011,6 +1012,32 @@ namespace Airside.Presentation
             var offerHeight = _offerVisible ? (_firstDecisionOffer ? 196f : 156f) : 0f;
             var top = 22f + (_offerVisible ? offerHeight + 12f : 0f);
             _opsPanel.style.top = top;
+        }
+
+        /// <summary>
+        /// Runtime-created <see cref="PanelSettings"/> need an explicit Theme Style
+        /// Sheet or the player logs "No Theme Style Sheet set to PanelSettings".
+        /// Ships as <c>Resources/Airside/UI/AirsideRuntimeTheme.tss</c> which imports
+        /// Unity's built-in default theme.
+        /// </summary>
+        private static ThemeStyleSheet ResolveRuntimeTheme()
+        {
+            var theme = Resources.Load<ThemeStyleSheet>("Airside/UI/AirsideRuntimeTheme");
+            if (theme != null)
+                return theme;
+
+#if UNITY_EDITOR
+            theme = UnityEditor.AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(
+                "Assets/Resources/Airside/UI/AirsideRuntimeTheme.tss");
+            if (theme != null)
+                return theme;
+
+            theme = UnityEditor.AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(
+                "Assets/UI Toolkit/UnityThemes/UnityDefaultTheme.tss");
+            if (theme != null)
+                return theme;
+#endif
+            return null;
         }
     }
 }

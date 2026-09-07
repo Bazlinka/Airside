@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Unity 6.3 HUD startup: font + PanelSettings theme.** Editor Play threw
+  `ArgumentException: Arial.ttf is no longer a valid built in font` while building
+  the Canvas HUD; the packaged player logged `No Theme Style Sheet set to
+  PanelSettings` for the runtime Toolkit UIDocument. Canvas text now loads
+  `LegacyRuntime.ttf`, and Toolkit PanelSettings assigns
+  `Resources/Airside/UI/AirsideRuntimeTheme.tss` (imports Unity's default theme).
+  No simulation or art-path changes.
+
 - **Verified decision 0025 packaged-art delivery on a real macOS build.** From clean
   `main` at `33a961a`, the art sync copied 137 files without repository drift,
   Unity 6000.3.23f1 passed 116/116 EditMode tests, and the Mac build succeeded.

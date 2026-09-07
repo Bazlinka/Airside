@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield props densify (0025 item 2).** Props kit dolly bags/posts, windsock fabric
+  segments, barrier braces, sign glyphs (~55 meshes). Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Parked car densify (0025 items 1+3).** `mdl_parked_car_v01` ~32 parts (split glass,
   mirrors, grille, wheel arches, hood/boot); body tint covers door/hood/arch;
   headlight/taillight binder colors. Presentation only.

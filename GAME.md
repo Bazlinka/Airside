@@ -121,8 +121,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): `git pull`, then verify Batch C/E/WLD/D, tips, touchdown,
-   traffic hold-short pulse, dual commercials, insolvency at 1280×720 / 1440×900 / Retina.
-2. **First-session flow** (per delivery plan v2): clean new-game path, opening role tip,
-   visible decision→consequence within a short session, packaged Mac playtest build.
-3. No unapproved economy systems. Companion / CloudKit / extra fleets stay deferred.
+1. **Merge open presentation PRs** in order: #51 environment → #52 Batch C v02 →
+   #53 HUD → #54 kit UVs → #55 follow camera. Resolve `AirsidePrototype` conflicts
+   carefully (keep PreferArtKit, environment helpers, sequential HUD, surface textures).
+2. **Lighting / HUD Toolkit later** (0025 items 5–6) after merges settle.
+3. **Bailey Unity Play soak** when convenient — do not block merges. No new economy
+   systems. Companion / CloudKit / extra fleets stay deferred.

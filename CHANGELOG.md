@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Turboprop + coast/wet/day tip (0025 items 2–5).** Authored turboprop to 102
+  meshes (spoilers, pylons, wicks, gear scissors, denser lathe); coast foam
+  layers, six boats, rock outcrops, runway shoulders, 22 clouds; wet response
+  deeper specular/AO + more puddles; stronger golden-hour day volume. Presentation
+  only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **ALS / ARFF / GA densify (0025 items 3+5).** Approach light fan to 8 stations with
   crossbars + far REIL; ARFF shed gains roof ridge/door ribs/hose/hydrant; five
   denser parked GA with gear/struts and contact shadows. Presentation only.

@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ALS / ARFF / GA densify)
+- **Last updated:** 2026-09-07 by Cursor (turboprop + coast/wet/day tip)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — more env/roads, URP wet/day, HUD/motion, kit fidelity, presentation bugs. No new economy. Do not block on Mac playtest.
-- **In progress / half-done:** Batch C kits densified; denser ALS (8 bars + REIL), ARFF shed detail, 5 parked GA with contact shadows; materials/fence/HUD/wet/day from prior tips. Still far from REF (~20% baseline).
-- **Watch out for:** ALS lamp / flood / star / puddle / figure count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
+- **Do this next:** Continue 0025 — HUD/motion, more kit fidelity (terminal/vehicles), presentation bugs, further URP/env polish. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** Hero turboprop now 102 meshes (spoilers/pylons/wicks/gear scissors); coast foam layers + 6 boats + rocks; runway shoulders; 22 clouds; wet specular deepen + more puddles; stronger golden-hour day volume. Still far from REF (~20% baseline).
+- **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

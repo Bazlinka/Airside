@@ -2204,9 +2204,11 @@ namespace Airside.Presentation
                          "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
                          "Access road", "Access road turn", "Car park", "Service lane",
                          "Fuel pad", "Coast sand", "Coast shallows", "Coast foam",
+                         "Coast foam inner", "Coast foam outer", "Coast water",
                          "Outer paddock N", "Outer paddock S", "Outer paddock E", "Outer paddock W",
                          "Relief berm N", "Relief berm S",
                          "Access road shoulder L", "Access road shoulder R",
+                         "Runway shoulder N", "Runway shoulder S",
                          "Grass"
                      })
             {
@@ -2261,7 +2263,15 @@ namespace Airside.Presentation
                 new Vector3(26f, 0.07f, 38f),
                 new Vector3(-20f, 0.07f, 28.5f),
                 new Vector3(-34f, 0.07f, 22f),
-                new Vector3(0f, 0.07f, 2f)
+                new Vector3(0f, 0.07f, 2f),
+                new Vector3(-6f, 0.07f, 0.5f),
+                new Vector3(6f, 0.07f, -0.5f),
+                new Vector3(18f, 0.07f, 9f),
+                new Vector3(2f, 0.07f, 9f),
+                new Vector3(40f, 0.07f, 46f),
+                new Vector3(52f, 0.07f, 48f),
+                new Vector3(-24f, 0.07f, 28f),
+                new Vector3(22f, 0.07f, 14f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -3888,6 +3898,10 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
+            CreateBlock("Runway shoulder N", new Vector3(0f, -0.1f, 4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
+            CreateBlock("Runway shoulder S", new Vector3(0f, -0.1f, -4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
@@ -4055,6 +4069,12 @@ namespace Airside.Presentation
             CreateBlock("Coast foam", new Vector3(0f, -0.62f, -54.5f), new Vector3(165f, 0.08f, 2.2f),
                 new Color(0.88f, 0.92f, 0.95f, 0.85f),
                 "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(22f, 0.4f));
+            CreateBlock("Coast foam inner", new Vector3(0f, -0.58f, -53.2f), new Vector3(150f, 0.05f, 1.1f),
+                new Color(0.92f, 0.95f, 0.97f, 0.55f),
+                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(18f, 0.25f));
+            CreateBlock("Coast foam outer", new Vector3(0f, -0.68f, -56.2f), new Vector3(170f, 0.04f, 1.4f),
+                new Color(0.78f, 0.86f, 0.92f, 0.45f),
+                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(20f, 0.3f));
             CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f),
                 "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(16f, 1.5f));
             CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f),
@@ -4321,6 +4341,16 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
             PlaceCoastBoat("Coast boat C", new Vector3(55f, -0.45f, -74f), 5f, new Color(0.2f, 0.35f, 0.45f));
             PlaceCoastBoat("Coast boat D", new Vector3(-40f, -0.5f, -70f), -8f, new Color(0.55f, 0.2f, 0.18f));
+            PlaceCoastBoat("Coast boat E", new Vector3(8f, -0.48f, -78f), 28f, new Color(0.92f, 0.9f, 0.82f));
+            PlaceCoastBoat("Coast boat F", new Vector3(-58f, -0.52f, -66f), -15f, new Color(0.15f, 0.28f, 0.22f));
+
+            // Rock outcrops along the sand so the shoreline is not a flat ribbon.
+            var rock = new Color(0.42f, 0.4f, 0.38f);
+            CreateBlock("Coast rock A", new Vector3(-28f, -0.25f, -50f), new Vector3(2.8f, 0.9f, 2.2f), rock);
+            CreateBlock("Coast rock B", new Vector3(18f, -0.2f, -49f), new Vector3(2.2f, 0.7f, 1.8f), Shade(rock, 0.9f));
+            CreateBlock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), new Vector3(3.4f, 1.1f, 2.6f), Shade(rock, 1.1f));
+            CreateBlock("Coast rock D", new Vector3(-52f, -0.22f, -48.5f), new Vector3(2.0f, 0.65f, 1.6f), Shade(rock, 0.85f));
+            CreateBlock("Coast rock E", new Vector3(68f, -0.28f, -53f), new Vector3(2.6f, 0.85f, 2.0f), rock);
         }
 
         /// <summary>
@@ -5100,21 +5130,21 @@ namespace Airside.Presentation
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            for (var i = 0; i < 16; i++)
+            for (var i = 0; i < 22; i++)
             {
                 var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 cloud.name = $"Cloud {i}";
                 Object.Destroy(cloud.GetComponent<Collider>());
-                var x = (float)(rng.NextDouble() * 200f - 100f);
-                var z = (float)(rng.NextDouble() * 180f - 90f);
-                var y = 26f + (float)rng.NextDouble() * 22f;
+                var x = (float)(rng.NextDouble() * 220f - 110f);
+                var z = (float)(rng.NextDouble() * 200f - 100f);
+                var y = 24f + (float)rng.NextDouble() * 26f;
                 cloud.transform.SetParent(cloudRoot, false);
                 cloud.transform.position = new Vector3(x, y, z);
-                var sx = 16f + (float)rng.NextDouble() * 24f;
-                var sy = 3.5f + (float)rng.NextDouble() * 3.5f;
-                var sz = 9f + (float)rng.NextDouble() * 16f;
+                var sx = 14f + (float)rng.NextDouble() * 28f;
+                var sy = 3.2f + (float)rng.NextDouble() * 4.2f;
+                var sz = 8f + (float)rng.NextDouble() * 18f;
                 cloud.transform.localScale = new Vector3(sx, sy, sz);
-                var alpha = 0.16f + (float)rng.NextDouble() * 0.16f;
+                var alpha = 0.14f + (float)rng.NextDouble() * 0.18f;
                 cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.95f, 0.96f, 0.98f, alpha),
                     AirsideMaterialLibrary.SurfaceKind.Glass);
@@ -5206,7 +5236,11 @@ namespace Airside.Presentation
             _coastBoats.Clear();
             _coastFoam = GameObject.Find("Coast foam")?.transform;
             _jettyDeck = GameObject.Find("Jetty deck")?.transform;
-            foreach (var name in new[] { "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D" })
+            foreach (var name in new[]
+                     {
+                         "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D",
+                         "Coast boat E", "Coast boat F"
+                     })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
@@ -5570,13 +5604,21 @@ namespace Airside.Presentation
             "cabin_window_r5" => "Cabin window R5",
             "cabin_window_r6" => "Cabin window R6",
             "cockpit_glare" => "Cockpit glare",
+            "windscreen_pillar_l" => "Windscreen pillar L",
+            "windscreen_pillar_r" => "Windscreen pillar R",
             "livery_stripe" => "Livery stripe",
+            "livery_stripe_lower" => "Livery stripe lower",
+            "door_frame_fwd" => "Door frame",
             "wing_fence_left" => "Wing fence L",
             "wing_fence_right" => "Wing fence R",
             "wing_fence_mid_l" => "Wing fence mid L",
             "wing_fence_mid_r" => "Wing fence mid R",
+            "static_wick_left" => "Static wick L",
+            "static_wick_right" => "Static wick R",
             "prop_hub_left" => "Prop hub L",
             "prop_hub_right" => "Prop hub R",
+            "hub_cap_left" => "Hub cap L",
+            "hub_cap_right" => "Hub cap R",
             "tailplane_tip_l" => "Tailplane tip L",
             "tailplane_tip_r" => "Tailplane tip R",
             "vor_antenna" => "VOR antenna",
@@ -5598,12 +5640,16 @@ namespace Airside.Presentation
             "winglet_right" => "Winglet R",
             "engine_left" => "Engine L",
             "engine_right" => "Engine R",
+            "pylon_left" => "Pylon L",
+            "pylon_right" => "Pylon R",
             "nacelle_left" => "Nacelle L",
             "nacelle_right" => "Nacelle R",
             "intake_left" => "Intake L",
             "intake_right" => "Intake R",
             "exhaust_left" => "Exhaust L",
             "exhaust_right" => "Exhaust R",
+            "exhaust_stack_l" => "Exhaust stack L",
+            "exhaust_stack_r" => "Exhaust stack R",
             "propeller_left" => "Propeller L",
             "propeller_right" => "Propeller R",
             "propeller_left_b" => "PropBlade L",
@@ -5614,12 +5660,17 @@ namespace Airside.Presentation
             "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
             "dorsal_fin" => "Dorsal fin",
+            "hf_antenna" => "HF antenna",
+            "tail_nav_light" => "Tail nav light",
             "elevator_left" => "Elevator L",
             "elevator_right" => "Elevator R",
             "rudder" => "Rudder",
             "gear_nose" => "Gear nose",
             "gear_left" => "Gear L",
             "gear_right" => "Gear R",
+            "gear_scissors_nose" => "Gear scissors nose",
+            "gear_scissors_left" => "Gear scissors L",
+            "gear_scissors_right" => "Gear scissors R",
             "gear_door_nose" => "Gear door nose",
             "gear_door_left" => "Gear door L",
             "gear_door_right" => "Gear door R",
@@ -5631,6 +5682,7 @@ namespace Airside.Presentation
             "antenna" => "Antenna",
             "antenna_aft" => "Antenna aft",
             "pitot" => "Pitot",
+            "pitot_b" => "Pitot B",
             "nav_light_left" => "NavLight L",
             "nav_light_right" => "NavLight R",
             "beacon_top" => "Beacon",
@@ -5645,15 +5697,15 @@ namespace Airside.Presentation
             "fuselage" or "fuselage_mid" or "fuselage_aft"
                 or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
                 or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
-                or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
+                or "belly_fairing" or "cargo_door" or "door_frame_fwd" => new Color(0.93f, 0.95f, 0.97f),
             "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
                 or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
                 or "cabin_window_6"
                 or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
                 or "cabin_window_r6" or "cockpit_glare"
                 => new Color(0.18f, 0.35f, 0.48f),
-            "cockpit_frame" => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" => new Color(0.15f, 0.35f, 0.65f),
+            "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" => new Color(0.75f, 0.78f, 0.82f),
+            "livery_stripe" or "livery_stripe_lower" => new Color(0.15f, 0.35f, 0.65f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
@@ -5663,19 +5715,25 @@ namespace Airside.Presentation
                 or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
                 or "tailplane_tip_l" or "tailplane_tip_r"
                 or "elevator_left" or "elevator_right" or "rudder" => accent,
-            "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right"
-                or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right" => accent * 0.85f,
+            "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
+                or "nacelle_left" or "nacelle_right"
+                or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right"
+                or "exhaust_stack_l" or "exhaust_stack_r" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
                 or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
+                or "hub_cap_left" or "hub_cap_right"
                 => new Color(0.2f, 0.2f, 0.22f),
             "gear_nose" or "gear_left" or "gear_right"
+                or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
                 or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
-            "antenna" or "antenna_aft" or "pitot" or "vor_antenna" => new Color(0.35f, 0.35f, 0.38f),
+            "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
+                or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
             "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),
             "nav_light_right" => new Color(0.9f, 0.2f, 0.2f),
             "beacon_top" => new Color(0.95f, 0.35f, 0.12f),
+            "tail_nav_light" => new Color(0.95f, 0.95f, 0.9f),
             "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null
         };

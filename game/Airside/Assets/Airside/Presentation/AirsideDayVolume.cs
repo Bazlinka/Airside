@@ -169,53 +169,53 @@ namespace Airside.Presentation
 
             // Day: slight lift; dusk: warmer filter; night: darker exposure + bloom;
             // adverse weather: cooler filter + pulled exposure.
-            var exposure = Mathf.Lerp(-0.68f, 0.12f, daylight) + warm * 0.14f - weatherGloom * 0.38f;
-            var contrast = Mathf.Lerp(11f, 3.2f, daylight) + weatherGloom * 4.5f;
-            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.82f, 0.64f), warm);
-            var nightFilter = new Color(0.64f, 0.72f, 1f);
-            var stormFilter = new Color(0.7f, 0.76f, 0.86f);
+            var exposure = Mathf.Lerp(-0.72f, 0.14f, daylight) + warm * 0.18f - weatherGloom * 0.4f;
+            var contrast = Mathf.Lerp(12f, 3.0f, daylight) + weatherGloom * 4.8f;
+            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.78f, 0.58f), warm);
+            var nightFilter = new Color(0.62f, 0.7f, 1f);
+            var stormFilter = new Color(0.68f, 0.74f, 0.84f);
             var filter = Color.Lerp(
-                Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.4f)),
+                Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.45f)),
                 stormFilter,
                 weatherGloom);
 
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(10f, 1.2f, daylight) - weatherGloom * 7f);
-            _color.hueShift.Override(Mathf.Lerp(0f, -5f, weatherGloom));
+            _color.saturation.Override(Mathf.Lerp(12f, 1.5f, daylight) - weatherGloom * 8f + warm * 2.5f);
+            _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.42f, 0.1f, daylight) * (1f - weatherGloom * 0.28f));
-            _bloom.threshold.Override(Mathf.Lerp(0.82f, 0.98f, daylight));
-            _vignette.intensity.Override(Mathf.Lerp(0.32f, 0.08f, daylight) + weatherGloom * 0.07f);
+            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f);
+            _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight));
+            _vignette.intensity.Override(Mathf.Lerp(0.34f, 0.07f, daylight) + weatherGloom * 0.08f);
             // Night film grain for regional dusk grit; nearly off in bright day.
-            _grain.intensity.Override(Mathf.Lerp(0.26f, 0.02f, daylight) + weatherGloom * 0.05f);
-            _grain.response.Override(Mathf.Lerp(0.84f, 0.5f, daylight));
+            _grain.intensity.Override(Mathf.Lerp(0.28f, 0.015f, daylight) + weatherGloom * 0.05f);
+            _grain.response.Override(Mathf.Lerp(0.86f, 0.48f, daylight));
 
             // Lift cool night shadows; warm midtones at golden hour; soft highlight roll-off.
             var shadowTint = Color.Lerp(
-                new Color(0.5f, 0.58f, 0.88f),
-                Color.Lerp(new Color(0.95f, 0.95f, 1f), new Color(1f, 0.86f, 0.74f), warm),
+                new Color(0.48f, 0.56f, 0.9f),
+                Color.Lerp(new Color(0.95f, 0.95f, 1f), new Color(1f, 0.82f, 0.68f), warm),
                 daylight);
-            shadowTint = Color.Lerp(shadowTint, new Color(0.68f, 0.73f, 0.8f), weatherGloom);
+            shadowTint = Color.Lerp(shadowTint, new Color(0.66f, 0.72f, 0.78f), weatherGloom);
             var midTint = Color.Lerp(
-                new Color(0.82f, 0.86f, 1f),
-                Color.Lerp(Color.white, new Color(1f, 0.88f, 0.74f), warm * 0.8f),
+                new Color(0.8f, 0.84f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.86f, 0.7f), warm * 0.9f),
                 daylight);
             var hiTint = Color.Lerp(
-                new Color(0.88f, 0.9f, 1f),
-                Color.Lerp(Color.white, new Color(1f, 0.94f, 0.86f), warm * 0.45f),
+                new Color(0.86f, 0.88f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.93f, 0.82f), warm * 0.55f),
                 daylight);
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
-                Mathf.Lerp(0.14f, -0.05f, daylight) - weatherGloom * 0.07f));
+                Mathf.Lerp(0.16f, -0.06f, daylight) - weatherGloom * 0.08f));
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.05f, 0.03f, daylight) + warm * 0.04f));
+                Mathf.Lerp(-0.06f, 0.04f, daylight) + warm * 0.06f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.1f, -0.015f, daylight)));
+                Mathf.Lerp(-0.12f, -0.01f, daylight) + warm * 0.02f));
             _tonal.shadowsStart.Override(0f);
-            _tonal.shadowsEnd.Override(Mathf.Lerp(0.26f, 0.36f, daylight));
-            _tonal.highlightsStart.Override(Mathf.Lerp(0.42f, 0.56f, daylight));
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.38f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
             _tonal.highlightsEnd.Override(1f);
         }
     }

@@ -1123,9 +1123,10 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("Gear", StringComparison.Ordinal))
+                else if (child.name is "Gear nose" or "Gear L" or "Gear R")
                 {
                     // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
+                    // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
@@ -1856,18 +1857,19 @@ namespace Airside.Presentation
             {
                 if (child == vehicle)
                     continue;
-                if (child.name.StartsWith("Hose", StringComparison.Ordinal))
+                // Exact names only — densified Hose reel/guard/tray and Cargo tags must not reset.
+                if (child.name == "Hose")
                 {
                     child.localScale = new Vector3(0.12f, 0.12f, 0.4f);
                     child.localPosition = new Vector3(child.localPosition.x, child.localPosition.y, 0.4f);
                 }
-                else if (child.name.StartsWith("Cargo", StringComparison.Ordinal))
+                else if (child.name == "Cargo")
                 {
                     var pos = child.localPosition;
                     pos.y = 0.35f;
                     child.localPosition = pos;
                 }
-                else if (child.name.StartsWith("Door", StringComparison.Ordinal))
+                else if (child.name == "Door")
                 {
                     child.localEulerAngles = Vector3.zero;
                 }
@@ -1881,7 +1883,8 @@ namespace Airside.Presentation
 
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
-                if (child == vehicle || !child.name.StartsWith(partPrefix, StringComparison.Ordinal))
+                // Exact part names only so densified accessories (Hose reel, Cargo tag) stay put.
+                if (child == vehicle || child.name != partPrefix)
                     continue;
 
                 if (partPrefix == "Hose")
@@ -2218,25 +2221,25 @@ namespace Airside.Presentation
         private void CollectWetSurfaces()
         {
             _wetSurfaces.Clear();
-            foreach (var name in new[]
-                     {
-                         "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
-                         "Access road", "Access road turn", "Car park", "Service lane",
-                         "Fuel pad", "Coast sand", "Coast shallows", "Coast foam",
-                         "Coast foam inner", "Coast foam outer", "Coast water",
-                         "Outer paddock N", "Outer paddock S", "Outer paddock E", "Outer paddock W",
-                         "Relief berm N", "Relief berm S",
-                         "Access road shoulder L", "Access road shoulder R",
-                         "Runway shoulder N", "Runway shoulder S",
-                         "Grass"
-                     })
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
-                var go = GameObject.Find(name);
-                if (go == null)
-                    continue;
-                var renderer = go.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
+                var n = renderer.gameObject.name;
+                if (!(n is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                        or "Access road" or "Access road turn" or "Car park" or "Service lane"
+                        or "Fuel pad" or "Grass"
+                        or "Access road shoulder L" or "Access road shoulder R"
+                        or "Runway shoulder N" or "Runway shoulder S"
+                        or "Relief berm N" or "Relief berm S")
+                    && !n.StartsWith("Coast ", StringComparison.Ordinal)
+                    && !n.StartsWith("Outer paddock", StringComparison.Ordinal)
+                    && !n.StartsWith("Coast dune", StringComparison.Ordinal)
+                    && !n.StartsWith("Hill far", StringComparison.Ordinal)
+                    && !n.StartsWith("Car park kerb", StringComparison.Ordinal)
+                    && !n.StartsWith("Coast scrub", StringComparison.Ordinal))
+                    continue;
+
                 var mat = renderer.material;
                 var drySmooth = 0.28f;
                 if (mat.HasProperty("_Smoothness"))
@@ -2330,6 +2333,13 @@ namespace Airside.Presentation
                 var n = renderer.gameObject.name;
                 if (n.StartsWith("Runway edge", StringComparison.Ordinal) ||
                     n.StartsWith("Taxi light", StringComparison.Ordinal) ||
+                    n.StartsWith("ALS", StringComparison.Ordinal) ||
+                    n.StartsWith("REIL", StringComparison.Ordinal) ||
+                    n.StartsWith("Apron flood", StringComparison.Ordinal) ||
+                    n.StartsWith("edge_", StringComparison.Ordinal) ||
+                    n.StartsWith("taxi_", StringComparison.Ordinal) ||
+                    n.StartsWith("flood_", StringComparison.Ordinal) ||
+                    n.StartsWith("obst_", StringComparison.Ordinal) ||
                     n == "runway_edge_light" ||
                     n == "taxiway_light" ||
                     n == "apron_floodlight" ||
@@ -3314,17 +3324,26 @@ namespace Airside.Presentation
                 _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
             }
 
-            var ambientDay = new Color(0.38f, 0.48f, 0.62f);   // cool shadows
-            var ambientDusk = new Color(0.48f, 0.36f, 0.42f);
-            var ambientNight = new Color(0.1f, 0.13f, 0.22f);
-            RenderSettings.ambientLight = Color.Lerp(
-                Color.Lerp(ambientNight, ambientDay, daylight),
-                ambientDusk,
-                warm * 0.6f);
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            var ambientDay = new Color(0.42f, 0.52f, 0.68f);
+            var ambientDusk = new Color(0.62f, 0.42f, 0.38f);
+            var ambientNight = new Color(0.08f, 0.1f, 0.18f);
+            var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.75f);
+            var ambientEquator = Color.Lerp(
+                new Color(0.12f, 0.14f, 0.22f),
+                Color.Lerp(new Color(0.45f, 0.5f, 0.55f), new Color(0.55f, 0.4f, 0.35f), warm),
+                daylight);
+            var ambientGround = Color.Lerp(
+                new Color(0.05f, 0.06f, 0.08f),
+                Color.Lerp(new Color(0.22f, 0.24f, 0.2f), new Color(0.28f, 0.18f, 0.14f), warm),
+                daylight);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = ambientSky;
+            RenderSettings.ambientEquatorColor = ambientEquator;
+            RenderSettings.ambientGroundColor = ambientGround;
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.85f, 1.05f, daylight) + warm * 0.08f;
             RenderSettings.subtractiveShadowColor = Color.Lerp(
                 new Color(0.22f, 0.28f, 0.4f),
-                new Color(0.35f, 0.28f, 0.32f),
+                new Color(0.4f, 0.28f, 0.28f),
                 warm);
 
             var skyDay = AirsideTheme.OpenSky;
@@ -3936,8 +3955,10 @@ namespace Airside.Presentation
                 new Vector3(26f, 0f, 27f),
                 name => name switch
                 {
-                    "glass_front" or "windows" or "entrance" or "cabin_windows" or "landside_glass"
-                        or "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
+                    "glass_front" or "windows" or "cabin_windows" or "landside_glass"
+                        or "entrance" or "entrance_door_l" or "entrance_door_r"
+                        or "boarding_gate" => new Color(0.16f, 0.38f, 0.5f),
+                    "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
                         or "window_mullion_4" or "window_mullion_5"
                         or "window_mullion_6" or "window_mullion_7"
                         or "window_mullion_8" or "window_mullion_9"
@@ -3945,8 +3966,9 @@ namespace Airside.Presentation
                         or "window_transom" or "window_midrail" or "window_sill" or "window_header"
                         or "landside_mullion_1" or "landside_mullion_2" or "landside_mullion_3"
                         or "landside_mullion_4" or "landside_mullion_5"
-                        or "entrance_transom" or "entrance_door_l" or "entrance_door_r"
-                        or "boarding_gate" => new Color(0.16f, 0.38f, 0.5f),
+                        or "entrance_transom" or "entrance_frame" or "boarding_frame"
+                        or "entrance_handle_l" or "entrance_handle_r"
+                        => new Color(0.72f, 0.75f, 0.78f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
                         or "canopy_light_l" or "canopy_light_r"
@@ -3957,7 +3979,6 @@ namespace Airside.Presentation
                         or "signage_cap" or "hvac_duct" or "flag_pole" or "flag_cloth"
                         or "baggage_canopy" or "downpipe_l" or "downpipe_r" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
-                        or "entrance_frame" or "boarding_frame" or "entrance_handle_l" or "entrance_handle_r"
                         or "buttress_r" or "plinth" => new Color(0.62f, 0.66f, 0.69f),
                     "service_wing" or "service_door" or "baggage_door" or "baggage_ramp" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
@@ -3974,7 +3995,11 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.2f),
-                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth" });
+                surfaceMeshNames: new[]
+                {
+                    "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
+                    "column", "signage"
+                });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -5628,13 +5653,21 @@ namespace Airside.Presentation
             ApplyLiveryDecal(root, liveryDecalRelativePath);
             EnsurePropDiscs(root);
             EnsureGroundShadow(root);
-            ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
-            ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
-            ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
-            ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
-            ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
-            ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
-            ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+            // Only inject lamp / heat proxies when the authored kit did not already ship them.
+            if (!HasNamedChild(root, "NavLight L"))
+                ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
+            if (!HasNamedChild(root, "NavLight R"))
+                ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
+            if (!HasNamedChild(root, "Beacon"))
+                ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
+                ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            if (!HasNamedChild(root, "TaxiLight"))
+                ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
+            if (!HasNamedChild(root, "EngineHeat L"))
+                ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "EngineHeat R"))
+                ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();
@@ -5816,31 +5849,55 @@ namespace Airside.Presentation
         };
 
         /// <summary>
-        /// Parent the second blade under each propeller so SpinPropellers rotates the
-        /// whole cross as one unit (v02 kits only).
+        /// Parent blades, hubs and spinners under each propeller so SpinPropellers
+        /// rotates the whole assembly (0025 item 7).
         /// </summary>
         private static void NestCrossPropellerBlades(Transform aircraft)
         {
             Transform propL = null, propR = null, bladeL = null, bladeR = null;
+            Transform hubL = null, hubR = null, spinnerL = null, spinnerR = null;
+            Transform capL = null, capR = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name == "Propeller L") propL = child;
                 else if (child.name == "Propeller R") propR = child;
                 else if (child.name == "PropBlade L") bladeL = child;
                 else if (child.name == "PropBlade R") bladeR = child;
+                else if (child.name == "Prop hub L") hubL = child;
+                else if (child.name == "Prop hub R") hubR = child;
+                else if (child.name == "Spinner L") spinnerL = child;
+                else if (child.name == "Spinner R") spinnerR = child;
+                else if (child.name == "Hub cap L") capL = child;
+                else if (child.name == "Hub cap R") capR = child;
             }
 
-            if (propL != null && bladeL != null)
+            NestUnderProp(propL, bladeL, "Blade");
+            NestUnderProp(propR, bladeR, "Blade");
+            NestUnderProp(propL, hubL, "Hub");
+            NestUnderProp(propR, hubR, "Hub");
+            NestUnderProp(propL, spinnerL, "Spinner");
+            NestUnderProp(propR, spinnerR, "Spinner");
+            NestUnderProp(propL, capL, "Hub cap");
+            NestUnderProp(propR, capR, "Hub cap");
+        }
+
+        private static void NestUnderProp(Transform prop, Transform part, string rename)
+        {
+            if (prop == null || part == null || part.parent == prop)
+                return;
+            part.SetParent(prop, true);
+            part.name = rename;
+        }
+
+        private static bool HasNamedChild(Transform root, string name)
+        {
+            foreach (var child in root.GetComponentsInChildren<Transform>(true))
             {
-                bladeL.SetParent(propL, true);
-                bladeL.name = "Blade";
+                if (child != root && child.name == name)
+                    return true;
             }
 
-            if (propR != null && bladeR != null)
-            {
-                bladeR.SetParent(propR, true);
-                bladeR.name = "Blade";
-            }
+            return false;
         }
 
         /// <summary>
@@ -5987,9 +6044,14 @@ namespace Airside.Presentation
                 {
                     "cab" => $"{name} cab",
                     "tank" or "bus_body" or "tug" => $"{name} body",
-                    "hose_mount" => "Hose",
-                    "door" => "Door",
-                    var n when n.StartsWith("cart_", StringComparison.Ordinal) => "Cargo",
+                    "hose_mount" or "hose" or "hose_nozzle" => "Hose",
+                    "hose_reel" => "Hose reel",
+                    "hose_guard" => "Hose guard",
+                    "hose_tray" => "Hose tray",
+                    "door" or "cab_door" or "cab_door_r" => "Door",
+                    "cargo_1" or "cargo_2" or "cargo_3" => "Cargo",
+                    "cargo_tag_1" or "cargo_tag_2" => "Cargo tag",
+                    // Keep cart_* / cart_wheel_* names so wheels roll and carts do not bob as Cargo.
                     _ => $"{name} {kitName}"
                 },
                 kitName => kitName switch
@@ -6368,7 +6430,10 @@ namespace Airside.Presentation
                 {
                     foreach (var child in root.GetComponentsInChildren<Transform>(true))
                     {
-                        if (child.name != "glass_front")
+                        var n = child.name;
+                        if (n is not ("glass_front" or "landside_glass" or "windows" or "entrance"
+                            or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
+                            or "cabin_windows"))
                             continue;
                         var renderer = child.GetComponent<Renderer>();
                         if (renderer == null)

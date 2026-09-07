@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Presentation wiring bug fixes (0025 items 4+5+7).** GSE rename map no longer
+  collapses cart_* into Cargo; gear scissors no longer pitch with struts; prop
+  hubs/spinners nest under propellers; duplicate aircraft lamps skipped when kit
+  ships them; terminal glass panes vs metal frames; wet/ALS Collect covers densified
+  names; day ambient uses Trilight. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Ops/props densify + headlight bugfix (0025 items 2+3+7).** Ops shed 53,
   airfield props 43, lighting 33 meshes; layered coast foam pulse; service-vehicle
   headlights no longer share beacon orange. Presentation only.

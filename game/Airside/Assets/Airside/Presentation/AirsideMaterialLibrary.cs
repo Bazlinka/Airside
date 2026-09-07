@@ -121,9 +121,13 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
-            if (n.Contains("glass") || n.Contains("window") || n.Contains("mullion")
-                || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window"))
+            if (n.Contains("glass") || n.Contains("window")
+                || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
+                || n.Contains("landside_glass") || n.Equals("entrance") || n.Contains("boarding_gate"))
                 return SurfaceKind.Glass;
+            if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
+                || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle"))
+                return SurfaceKind.Metal;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
             if (n.Contains("propeller") || n.Contains("propblade") || n.Contains("spinner")

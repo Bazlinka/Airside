@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ops/props densify + headlight bugfix)
+- **Last updated:** 2026-09-07 by Cursor (presentation wiring bug-fix tip)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — more motion/life, presentation bugs, further env/URP polish, Addressables path later. No new economy. Do not block on Mac playtest.
-- **In progress / half-done:** Ops shed 53, airfield props 43, lighting 33; foam layer pulse; vehicle headlights fixed (no longer beacon-orange). Prior kit densify still in place. Still far from REF (~20% baseline).
+- **Do this next:** Continue 0025 — HUD polish toward REF-004, headlight aim, wet ClearCoat fallbacks, more env/URP. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** Presentation wiring tip landed (GSE rename, gear scissors, prop hubs, lamps, glass/frames, wet/ALS Collect, Trilight). Kits densified. Still far from REF (~20% baseline).
 - **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud / bird / tree count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

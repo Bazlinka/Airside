@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (presentation wave #58–#66 on main)
-- **Branch / working tree:** `main` (`e912ee8`)
-- **Do this next:** Bailey `git pull origin main` → Unity 6.3 Play soak (overview, F-follow takeoff/landing, first-session Enter accept, dusk night glow). Next code: materials/normals spike or HUD Toolkit spike (0025 items 4/6)
-- **In progress / half-done:** none — presentation push landed
-- **Watch out for:** still greybox fidelity (~not REF screenshots); Unity editor verification required before treating visuals as Verified
+- **Last updated:** 2026-09-07 by Cursor (URP material library spike)
+- **Branch / working tree:** `cursor/materials-library-spike-ddad`
+- **Do this next:** Merge materials PR; then HUD Toolkit spike or denser environment materials; Bailey Unity Play soak
+- **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring
+- **Watch out for:** procedural normals are shared noise, not authored surface normals
 - **Open questions for Bailey:** none
-- **Visual assets:** landside life, motion (prop disc/tires/attitude/surfaces/shake), denser apron, first-session UX, night glow, streetlights — all on `main`
+- **Visual assets:** streetlights on `main`; material library on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

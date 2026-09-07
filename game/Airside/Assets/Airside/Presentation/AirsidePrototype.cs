@@ -978,7 +978,8 @@ namespace Airside.Presentation
             foreach (var name in new[]
                      {
                          "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
-                         "Access road", "Access road turn", "Car park", "Service lane"
+                         "Access road", "Access road turn", "Car park", "Service lane",
+                         "Fuel pad"
                      })
             {
                 var go = GameObject.Find(name);
@@ -2478,7 +2479,7 @@ namespace Airside.Presentation
             Object.Destroy(dome.GetComponent<Collider>());
             dome.transform.position = new Vector3(0f, 0f, 0f);
             dome.transform.localScale = new Vector3(260f, 120f, 260f);
-            var material = CreateMaterial(AirsideTheme.OpenSky);
+            var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
             material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
             dome.GetComponent<Renderer>().material = material;
@@ -3224,7 +3225,7 @@ namespace Airside.Presentation
 
         
 
-private static GameObject CreateBlock(
+        private static GameObject CreateBlock(
             string name,
             Vector3 position,
             Vector3 scale,
@@ -3263,35 +3264,23 @@ private static GameObject CreateBlock(
 
         private static Material CreateMaterial(Color color, string artTextureRelativePath = null, Vector2? textureTiling = null)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            var material = new Material(shader) { color = color };
-            if (material.HasProperty("_Metallic"))
-                material.SetFloat("_Metallic", 0.04f);
-            if (material.HasProperty("_Smoothness"))
-                material.SetFloat("_Smoothness", 0.32f);
-            if (material.HasProperty("_Glossiness"))
-                material.SetFloat("_Glossiness", 0.32f);
+            var kind = AirsideMaterialLibrary.InferFromTexturePath(artTextureRelativePath);
+            if (kind == AirsideMaterialLibrary.SurfaceKind.Default)
+                kind = InferSurfaceKindFromColor(color);
+            var albedo = TryLoadArtTexture(artTextureRelativePath);
+            return AirsideMaterialLibrary.Create(color, kind, albedo, textureTiling);
+        }
+
+        private static AirsideMaterialLibrary.SurfaceKind InferSurfaceKindFromColor(Color color)
+        {
+            // Heuristic for untextured primitives (cars, props, glow quads).
             if (color.a < 0.99f)
-            {
-                // Presentation translucency for heat shimmer / rain streaks.
-                material.SetFloat("_Surface", 1f);
-                material.SetFloat("_Blend", 0f);
-                material.SetOverrideTag("RenderType", "Transparent");
-                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                material.SetInt("_ZWrite", 0);
-                material.renderQueue = 3000;
-                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            }
-
-            var texture = TryLoadArtTexture(artTextureRelativePath);
-            if (texture == null)
-                return material;
-
-            material.mainTexture = texture;
-            var tiling = textureTiling ?? Vector2.one;
-            material.mainTextureScale = tiling;
-            return material;
+                return AirsideMaterialLibrary.SurfaceKind.Glass;
+            if (color.r > 0.85f && color.g > 0.85f && color.b > 0.85f)
+                return AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
+            if (color.b > color.r + 0.15f && color.b > color.g + 0.05f)
+                return AirsideMaterialLibrary.SurfaceKind.Water;
+            return AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
         }
 
         /// <summary>

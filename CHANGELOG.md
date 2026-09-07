@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **URP material library spike (0025 item 4).** Shared `AirsideMaterialLibrary`
+  profiles (asphalt/concrete/grass/metal/aircraft/glass/rubber) with procedural
+  normal + soft AO maps; glTF kits and CreateBlock route through it. Not a full
+  authored PBR set — Addressables still the production path. Presentation only.
+
 - **Landside streetlights.** Six poles along the access road and car park with
   warm point lights that come up at dusk/night. Presentation only.
 

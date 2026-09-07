@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (presentation wave #102–#109)
-- **Branch / working tree:** `main`
-- **Do this next:** Bailey Mac `git pull origin main` + Unity Play soak (Toolkit HUD, ARFF, ALS, canopy, 09/27); then authored FBX
-- **In progress / half-done:** 0025 item 6 HUD largely on Toolkit; greybox environment denser; authored aircraft/building meshes still open
-- **Watch out for:** Editor Addressables groups + authored FBX still open (items 1–2); greybox Resources prefabs are pipeline proof not final art
-- **Open questions for Bailey:** drop authored turboprop/terminal FBX next, or keep greybox density ships?
-- **Visual assets:** 13 Resources prefabs; Toolkit full HUD; ALS/ARFF/canopy/digits
+- **Last updated:** 2026-09-07 by Cursor (Batch C v04 denser kits)
+- **Branch / working tree:** `cursor/batch-c-models-v04-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak denser turboprop/terminal/hangar from overview+follow
+- **In progress / half-done:** v04 preferred over v03; still procedural greybox (not authored FBX)
+- **Watch out for:** 68-mesh turboprop draw calls; Editor Addressables + authored FBX still open
+- **Open questions for Bailey:** keep densifying kits, or authored turboprop/terminal FBX next?
+- **Visual assets:** 13 Resources prefabs; Toolkit full HUD; Batch C v04 kits
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

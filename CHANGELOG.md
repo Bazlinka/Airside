@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Batch C v04 denser hero kits (0025 item 2).** Prefer `*_v04` turboprop (68 meshes:
+  winglets, gear doors, spoilers, window panes), terminal/hangar/ops and service
+  vehicles; spoilers deploy on landing. Still procedural greybox. Presentation only.
+
 - **Readable runway threshold digits (0025 item 3).** Block-style 09 / 27 markings plus
   side threshold stripes so runway ends read from overview/follow. Presentation only.
 

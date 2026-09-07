@@ -198,16 +198,19 @@ namespace Airside.Presentation
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
@@ -975,6 +978,16 @@ namespace Airside.Presentation
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     euler.x = Mathf.MoveTowards(current, deploy, Time.unscaledDeltaTime * 40f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.StartsWith("Spoiler", StringComparison.Ordinal))
+                {
+                    var raise = phase is AircraftPhase.Landing
+                        ? Mathf.Lerp(0f, 35f, Mathf.Clamp01(progress))
+                        : 0f;
+                    var euler = child.localEulerAngles;
+                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                    euler.x = Mathf.MoveTowards(current, -raise, Time.unscaledDeltaTime * 55f);
                     child.localEulerAngles = euler;
                 }
             }
@@ -3681,18 +3694,22 @@ namespace Airside.Presentation
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_v04.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v03.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v01.gltf"),
                 new Vector3(26f, 0f, 27f),
                 name => name switch
                 {
-                    "glass_front" or "windows" or "entrance" or "cabin_windows"
-                        or "window_mullion_1" or "window_mullion_2" or "window_mullion_3" => new Color(0.16f, 0.38f, 0.5f),
+                    "glass_front" or "windows" or "entrance" or "cabin_windows" or "landside_glass"
+                        or "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
+                        or "window_mullion_4" or "window_mullion_5" => new Color(0.16f, 0.38f, 0.5f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
-                        or "roof_slab" or "roof_plant" or "roof_plant_b" or "landside_awning" or "signage_bar" => new Color(0.55f, 0.58f, 0.6f),
-                    "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "entrance_frame" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" or "service_door" => new Color(0.58f, 0.62f, 0.64f),
+                        or "canopy_beam" or "roof_slab" or "roof_plant" or "roof_plant_b" or "roof_plant_c"
+                        or "landside_awning" or "signage_bar" => new Color(0.55f, 0.58f, 0.6f),
+                    "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
+                        or "entrance_frame" => new Color(0.62f, 0.66f, 0.69f),
+                    "service_wing" or "service_door" or "baggage_door" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
                 () =>
@@ -3717,17 +3734,20 @@ namespace Airside.Presentation
             CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_hangar_small_v04.gltf",
                     "Models/Buildings/mdl_hangar_small_v03.gltf",
                     "Models/Buildings/mdl_hangar_small_v02.gltf",
                     "Models/Buildings/mdl_hangar_small_v01.gltf"),
                 new Vector3(-20f, 0f, 20f),
                 name => name switch
                 {
-                    "door_opening" or "door_panel_l" or "door_panel_r" => new Color(0.22f, 0.24f, 0.26f),
-                    "roof_ridge" or "roof_panel_l" or "roof_panel_r"
-                        or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4" => new Color(0.4f, 0.44f, 0.48f),
+                    "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
+                        or "personnel_door" => new Color(0.22f, 0.24f, 0.26f),
+                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam"
+                        or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
+                        or "roof_rib_5" or "roof_rib_6" => new Color(0.4f, 0.44f, 0.48f),
                     "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "side_vent"
-                        or "office_lean" or "office_window" or "side_window" => new Color(0.42f, 0.46f, 0.5f),
+                        or "side_vent_b" or "office_lean" or "office_window" or "side_window" => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
                 () =>
@@ -3745,15 +3765,17 @@ namespace Airside.Presentation
             BuildHangarBayInterior();
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_operations_shed_v04.gltf",
                     "Models/Buildings/mdl_operations_shed_v03.gltf",
                     "Models/Buildings/mdl_operations_shed_v02.gltf",
                     "Models/Buildings/mdl_operations_shed_v01.gltf"),
                 new Vector3(-8f, 0f, 26f),
                 name => name switch
                 {
-                    "window_l" or "window_r" or "window_side" => new Color(0.2f, 0.4f, 0.5f),
+                    "window_l" or "window_r" or "window_side" or "window_side_b" => new Color(0.2f, 0.4f, 0.5f),
                     "door" => new Color(0.35f, 0.38f, 0.34f),
-                    "porch_roof" or "roof_ridge" or "roof_panel" or "antenna_mast" or "ac_unit" => new Color(0.48f, 0.5f, 0.46f),
+                    "porch_roof" or "roof_ridge" or "roof_panel" or "antenna_mast" or "antenna_dish"
+                        or "ac_unit" or "ac_unit_b" or "radio_rack" => new Color(0.48f, 0.5f, 0.46f),
                     _ => new Color(0.55f, 0.58f, 0.52f)
                 },
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
@@ -4656,6 +4678,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
@@ -4717,24 +4740,39 @@ namespace Airside.Presentation
         private static string RenameAircraftPart(string kitName) => kitName switch
         {
             "fuselage" => "Fuselage",
+            "fuselage_mid" => "Fuselage mid",
             "fuselage_aft" => "Fuselage aft",
             "belly_fairing" => "Belly fairing",
             "nose" => "Nose",
+            "radome" => "Radome",
             "cockpit" => "Cockpit",
+            "cockpit_frame" => "Cockpit frame",
             "cabin_windows" => "Cabin windows",
             "cabin_window_band" => "Cabin window band",
+            "cabin_window_1" => "Cabin window 1",
+            "cabin_window_2" => "Cabin window 2",
+            "cabin_window_3" => "Cabin window 3",
+            "cabin_window_4" => "Cabin window 4",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
+            "wing_root_left" => "Wing root L",
+            "wing_root_right" => "Wing root R",
             "flap_left" => "Flap L",
             "flap_right" => "Flap R",
+            "spoiler_left" => "Spoiler L",
+            "spoiler_right" => "Spoiler R",
             "aileron_left" => "Aileron L",
             "aileron_right" => "Aileron R",
             "wingtip_left" => "Wingtip L",
             "wingtip_right" => "Wingtip R",
+            "winglet_left" => "Winglet L",
+            "winglet_right" => "Winglet R",
             "engine_left" => "Engine L",
             "engine_right" => "Engine R",
             "nacelle_left" => "Nacelle L",
             "nacelle_right" => "Nacelle R",
+            "intake_left" => "Intake L",
+            "intake_right" => "Intake R",
             "exhaust_left" => "Exhaust L",
             "exhaust_right" => "Exhaust R",
             "propeller_left" => "Propeller L",
@@ -4744,6 +4782,7 @@ namespace Airside.Presentation
             "spinner_left" => "Spinner L",
             "spinner_right" => "Spinner R",
             "tail_fin" => "Tail",
+            "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
             "elevator_left" => "Elevator L",
             "elevator_right" => "Elevator R",
@@ -4751,39 +4790,50 @@ namespace Airside.Presentation
             "gear_nose" => "Gear nose",
             "gear_left" => "Gear L",
             "gear_right" => "Gear R",
+            "gear_door_nose" => "Gear door nose",
+            "gear_door_left" => "Gear door L",
+            "gear_door_right" => "Gear door R",
             "tire_nose" => "Tire nose",
             "tire_left" => "Tire L",
             "tire_right" => "Tire R",
             "door_fwd" => "CabinDoor",
             "cargo_door" => "Cargo door",
             "antenna" => "Antenna",
+            "antenna_aft" => "Antenna aft",
+            "pitot" => "Pitot",
             "nav_light_left" => "NavLight L",
             "nav_light_right" => "NavLight R",
             "beacon_top" => "Beacon",
             "landing_light_l" => "LandingLight L",
             "landing_light_r" => "LandingLight R",
+            "taxi_light" => "TaxiLight",
             _ => kitName
         };
 
         private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
         {
-            "fuselage" or "fuselage_aft" or "nose" or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
-            "cockpit" or "cabin_windows" or "cabin_window_band" => new Color(0.18f, 0.35f, 0.48f),
-            "wing_left" or "wing_right" or "wingtip_left" or "wingtip_right"
-                or "flap_left" or "flap_right" or "aileron_left" or "aileron_right"
-                or "tail_fin" or "tailplane" or "elevator_left" or "elevator_right" or "rudder" => accent,
+            "fuselage" or "fuselage_mid" or "fuselage_aft" or "nose" or "radome" or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
+            "cockpit" or "cabin_windows" or "cabin_window_band"
+                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" => new Color(0.18f, 0.35f, 0.48f),
+            "cockpit_frame" => new Color(0.75f, 0.78f, 0.82f),
+            "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
+                or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
+                or "flap_left" or "flap_right" or "spoiler_left" or "spoiler_right"
+                or "aileron_left" or "aileron_right"
+                or "tail_fin" or "tail_fin_tip" or "tailplane" or "elevator_left" or "elevator_right" or "rudder" => accent,
             "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right"
-                or "exhaust_left" or "exhaust_right" => accent * 0.85f,
+                or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
                 or "spinner_left" or "spinner_right" => new Color(0.2f, 0.2f, 0.22f),
-            "gear_nose" or "gear_left" or "gear_right" => new Color(0.25f, 0.25f, 0.28f),
+            "gear_nose" or "gear_left" or "gear_right"
+                or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
-            "antenna" => new Color(0.35f, 0.35f, 0.38f),
+            "antenna" or "antenna_aft" or "pitot" => new Color(0.35f, 0.35f, 0.38f),
             "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),
             "nav_light_right" => new Color(0.9f, 0.2f, 0.2f),
             "beacon_top" => new Color(0.95f, 0.35f, 0.12f),
-            "landing_light_l" or "landing_light_r" => new Color(0.95f, 0.95f, 0.85f),
+            "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null
         };
 

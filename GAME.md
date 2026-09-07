@@ -11,11 +11,11 @@ This block is the first thing to read and the last thing to update. Any tool
 next session can continue without seeing the previous conversation. Keep it short.
 
 - **Last updated:** 2026-09-07 by Claude (correctness + visual review)
-- **Branch / working tree:** `feature/simulation-correctness-fixes`, 3 commits, not pushed
-- **Do this next:** Airfield re-layout — see "Scale audit" below. Then the URP post stack (the default volume profile is Unity's template junk and must be replaced before post-processing is enabled).
+- **Branch / working tree:** `feature/simulation-correctness-fixes`, 6 commits, not pushed
+- **Do this next:** Bailey Unity Play soak on the new layout. Then lofted geometry for the building / vehicle / prop kits (the aircraft has it, everything else is still boxes) — extend `scripts/generate-batch-c-models-v03.py`.
 - **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring (Cursor)
-- **Watch out for:** the building kits are ~2.7x too large for the airfield; the aircraft was fitted to the airfield, not the other way round
-- **Open questions for Bailey:** grow the airfield to the buildings, or shrink the buildings to the airfield?
+- **Watch out for:** the whole layout is authored in units scaled by `AirportTaxiNetwork.WorldScale` (2.68). Anything placed in world space at runtime must apply it; anything under the airfield root gets it for free.
+- **Open questions for Bailey:** none
 - **Visual assets:** streetlights and material library on `main`
 
 
@@ -56,47 +56,44 @@ Australian airport. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
 
-## Scale audit (2026-09-07)
+## Scale audit (2026-09-07, resolved)
 
-Measured from the shipped kits and `BuildAirfield`, against REF-005:
+Everything is now sized against the aircraft the art kit ships (15 wingspan,
+15.6 long), following REF-005:
 
-| | measured | should be |
+| | world units | REF-005 ratio |
 |---|---|---|
-| Aircraft wingspan (v03) | 5.6 | — (the reference point) |
-| Runway width | 7 | ~6.5 (span x 1.1) — OK |
-| Taxiway A width | 4 | ~3.5 (span x 0.6) — OK |
-| Stand pitch | 6 | ~7 (span + clearance) — marginal |
-| Hangar width / door | 14.9 / 8 | ~5.5 / ~6 — **2.7x too large** |
-| Terminal length | 22 | ~9 — **2.4x too large** |
-| Fuel truck length | 3.55 | ~3.3 — OK |
+| Aircraft wingspan | 15.0 | — |
+| Runway width | 18.8 | 1.25x span |
+| Taxiway A width | 10.7 | 0.71x span |
+| Stand pitch | 18.8 | 1.25x span |
+| Hangar width | 14.9 | ~1x span |
+| Terminal length | 22 | 1.5x span |
 
-The aircraft, service vehicles and paved surfaces now agree. The **building kits do
-not**: they were generated at a scale matching the old 15-wide box aircraft, so the
-hangar and terminal are roughly 2.5x oversized against everything else. Two ways to
-close it, and it is a design call:
-
-1. **Regenerate the building kits ~0.4x** (one constant per kit in the Batch C
-   generators) — keeps the airport compact and is a small change.
-2. **Grow the airfield and vehicles ~2.5x and raise `TARGET_SPAN` in
-   `scripts/generate-batch-c-models-v03.py` back to 15** — matches REF-005's
-   composition (wide runway, generous apron, aircraft the size of the hangar), but
-   moves every hard-coded coordinate in `BuildAirfield`, `AirportTaxiNetwork`,
-   `GroundTrafficAircraft.BuildCircuit`, the apron/landside lights and the camera.
+The layout lives in its original units and is multiplied once by
+`AirportTaxiNetwork.WorldScale`. `BuildAirfield` hangs everything off a single
+scaled root, so roads, lights, props, trees and fences move with it; buildings
+divide the scale back out because their kits are already authored at the
+aircraft's size. Runtime world-space placement (taxi network, ground-traffic
+circuit, aircraft waypoints, stand props, service vehicles, camera) applies the
+factor explicitly.
 
 ## Known visual gaps
 
+- The **aircraft** kit now carries lofted geometry (v03: lathed fuselage, tapered
+  swept wings, T-tail, six-blade props — 4,300 triangles). The **building, vehicle
+  and prop kits are still axis-aligned cubes**, 12 triangles per part, and are the
+  next thing to move the look. `scripts/generate-batch-c-models-v03.py` already has
+  the primitives (`lathe`, `aerofoil_surface`, `band`, `tube`, `blades`).
 - Every glTF kit ships **POSITION only** — no normals, no UVs, no materials. The
   loader recalculates normals and guesses planar UVs, so authored textures land at
-  inconsistent texel density and the livery decal cannot be mapped at all. The
-  aircraft kit now carries lofted geometry (v03); the building, vehicle and prop
-  kits are still cubes.
-- The camera has no `UniversalAdditionalCameraData`, so **post-processing and camera
-  anti-aliasing are both off**, and `Airside.Presentation.asmdef` does not reference
-  URP so the code cannot turn them on. MSAA is now 4x, which covers edge aliasing.
-- `Assets/Settings/DefaultVolumeProfile.asset` is wired as URP's global default
-  volume profile and is Unity's template junk — DepthOfField, MotionBlur, FilmGrain,
-  LensDistortion, ChromaticAberration, ScreenSpaceLensFlare, plus literal
-  `CopyPasteTestComponent2` and `TestVolume`. **Replace it before enabling post.**
+  inconsistent texel density and livery decals cannot be mapped. Livery is carried
+  by accent colour instead.
+- Post-processing is on (SMAA + Neutral tonemapping, bloom, grade, vignette), but
+  `Assets/Settings/DefaultVolumeProfile.asset` — Unity's template profile, complete
+  with `CopyPasteTestComponent2` — is **still wired as URP's global default**.
+  `AirsidePostProcessing` neutralises its effects one by one at runtime. Replacing
+  that asset outright would be cleaner.
 
 ## Invariants
 

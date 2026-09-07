@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Decision 0027 / Batch F visual asset gap closure.** Audited the complete repository,
+  runtime presentation builders, approved references and current asset/register state.
+  Added an implementation-ready ordered asset packet: authored turboprop/terminal/materials
+  first, then turnaround people/vehicles, setting modules and reusable motion/VFX/UI
+  finish. Exact paths, prefab keys, pivots, texture/LOD budgets, fallbacks and packaged
+  Mac acceptance checks are defined; no runtime or simulation behaviour changed.
+
 - **Terminal densify tip (0025 item 2).** Authored terminal kit 191 (extra curtain panes, landside
   ribs, canopy braces/lights, boarding/service glass, girth bands); color map uses StartsWith
   for glass/ribs. Presentation only.
@@ -336,7 +343,6 @@ change it describes.
   Mac menu **Airside → Art → Bake Authored FBX Prefabs** can replace Resources
   prefabs with ModelImporter meshes. No simulation change.
   Evidence: `scripts/test-domain.sh`; art sync 143 files.
-
 - **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
   animate separately from struts; cargo doors open at stand; soft coastal ambient
   audio joins wind/rain; wet response covers more ground surfaces and refreshes the

@@ -5,10 +5,10 @@ using UnityEngine.UIElements;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 6 — UI Toolkit surface. Owns the left status panel,
-    /// OPERATIONS, route offer, toasts and Saved chip via a runtime
-    /// <see cref="UIDocument"/>. Canvas keeps full-screen overlays
-    /// (briefing / away / insolvency / pause) until those migrate.
+    /// Decision 0025 item 6 — UI Toolkit surface. Owns the full gameplay HUD
+    /// (left status, OPERATIONS, route offer, toasts, Saved chip) and
+    /// full-screen overlays (briefing / pause / away / insolvency) via a
+    /// runtime <see cref="UIDocument"/>. Canvas remains as a fallback.
     /// </summary>
     public sealed class AirsideToolkitHud : MonoBehaviour
     {
@@ -61,6 +61,15 @@ namespace Airside.Presentation
         private Label _opsToast;
         private Label _researchToast;
         private Label _saveChip;
+
+        private VisualElement _briefingOverlay;
+        private Label _briefingBody;
+        private VisualElement _pauseOverlay;
+        private VisualElement _awayOverlay;
+        private Label _awayBody;
+        private VisualElement _insolvencyOverlay;
+        private Label _insolvencyBody;
+
         private bool _built;
         private bool _offerVisible;
         private bool _firstDecisionOffer;
@@ -73,6 +82,9 @@ namespace Airside.Presentation
         private Action _onReleaseCrew;
         private Action _onBuildStand;
         private Action _onStartResearch;
+        private Action _onBeginOperations;
+        private Action _onResetAirport;
+        private Action _onContinueAway;
 
         public bool IsActive => _built && _document != null && _document.rootVisualElement != null;
 
@@ -92,7 +104,10 @@ namespace Airside.Presentation
             Action onHireCrew = null,
             Action onReleaseCrew = null,
             Action onBuildStand = null,
-            Action onStartResearch = null)
+            Action onStartResearch = null,
+            Action onBeginOperations = null,
+            Action onResetAirport = null,
+            Action onContinueAway = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -101,6 +116,9 @@ namespace Airside.Presentation
             _onReleaseCrew = onReleaseCrew;
             _onBuildStand = onBuildStand;
             _onStartResearch = onStartResearch;
+            _onBeginOperations = onBeginOperations;
+            _onResetAirport = onResetAirport;
+            _onContinueAway = onContinueAway;
         }
 
         private void Build()
@@ -114,7 +132,7 @@ namespace Airside.Presentation
             panelSettings.referenceResolution = new Vector2Int(1920, 1080);
             panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panelSettings.match = 0.5f;
-            panelSettings.sortingOrder = 50;
+            panelSettings.sortingOrder = 100;
             _document.panelSettings = panelSettings;
 
             _root = _document.rootVisualElement;
@@ -124,6 +142,7 @@ namespace Airside.Presentation
             BuildLeftPanel();
             BuildOfferPanel();
             BuildOpsPanel();
+            BuildOverlays();
 
             _researchToast = MakeToastLabel("Research toast");
             _researchToast.style.top = 18;
@@ -368,6 +387,241 @@ namespace Airside.Presentation
 
             _opsPanel.Add(_reportBlock);
             _root.Add(_opsPanel);
+        }
+
+        private void BuildOverlays()
+        {
+            _briefingOverlay = MakeOverlay("Briefing overlay", new Color(0.05f, 0.07f, 0.09f, 1f));
+            var splash = AirsideTheme.SplashDawn;
+            if (splash != null)
+            {
+                _briefingOverlay.style.backgroundImage = new StyleBackground(splash);
+                _briefingOverlay.style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
+            }
+
+            var briefingCard = MakeCenteredCard(500f);
+            briefingCard.style.minHeight = 360;
+            briefingCard.style.paddingLeft = 24;
+            briefingCard.style.paddingRight = 24;
+            briefingCard.style.paddingTop = 18;
+            briefingCard.style.paddingBottom = 18;
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                var wm = new VisualElement { name = "Briefing wordmark" };
+                wm.pickingMode = PickingMode.Ignore;
+                wm.style.height = 70;
+                wm.style.marginBottom = 8;
+                wm.style.backgroundImage = new StyleBackground(wordmark);
+                wm.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                briefingCard.Add(wm);
+            }
+            else
+            {
+                var brand = MakePanelLabel("Briefing brand", 26, FontStyle.Bold);
+                brand.text = "AIRSIDE";
+                brand.style.marginBottom = 8;
+                briefingCard.Add(brand);
+            }
+
+            _briefingBody = MakePanelLabel("Briefing body", 15, FontStyle.Normal);
+            _briefingBody.style.whiteSpace = WhiteSpace.Normal;
+            _briefingBody.style.flexGrow = 1;
+            _briefingBody.style.marginBottom = 16;
+            briefingCard.Add(_briefingBody);
+            var begin = MakeButton("Begin operations", AirsideTheme.CoastalBlue, 220f);
+            begin.style.alignSelf = Align.Center;
+            begin.clicked += () => _onBeginOperations?.Invoke();
+            briefingCard.Add(begin);
+            _briefingOverlay.Add(briefingCard);
+            _root.Add(_briefingOverlay);
+
+            _pauseOverlay = MakeOverlay("Pause overlay", new Color(0.05f, 0.07f, 0.09f, 0.45f));
+            var pauseCard = MakeCenteredCard(320f);
+            pauseCard.style.paddingLeft = 24;
+            pauseCard.style.paddingRight = 24;
+            pauseCard.style.paddingTop = 18;
+            pauseCard.style.paddingBottom = 18;
+            var pauseTitle = MakePanelLabel("Pause title", 26, FontStyle.Bold);
+            pauseTitle.text = "PAUSED";
+            pauseCard.Add(pauseTitle);
+            var pauseHint = MakePanelLabel("Pause hint", 15, FontStyle.Bold);
+            pauseHint.text = "Space to resume";
+            pauseHint.style.color = AirsideTheme.SafetyYellow;
+            pauseHint.style.marginTop = 8;
+            pauseHint.style.marginBottom = 14;
+            pauseCard.Add(pauseHint);
+            var resetPause = MakeButton("Start new airport", AirsideTheme.Tarmac, 220f);
+            resetPause.style.alignSelf = Align.Center;
+            resetPause.clicked += () => _onResetAirport?.Invoke();
+            pauseCard.Add(resetPause);
+            _pauseOverlay.Add(pauseCard);
+            _root.Add(_pauseOverlay);
+
+            _awayOverlay = MakeOverlay("Away overlay", new Color(0.05f, 0.07f, 0.09f, 0.55f));
+            var awayCard = MakeCenteredCard(460f);
+            awayCard.style.minHeight = 320;
+            awayCard.style.paddingLeft = 24;
+            awayCard.style.paddingRight = 24;
+            awayCard.style.paddingTop = 18;
+            awayCard.style.paddingBottom = 18;
+            var awayTitle = MakePanelLabel("Away title", 26, FontStyle.Bold);
+            awayTitle.text = "AIRSIDE";
+            awayCard.Add(awayTitle);
+            var awaySub = MakePanelLabel("Away subtitle", 16, FontStyle.Bold);
+            awaySub.text = "Welcome back to operations";
+            awaySub.style.marginTop = 6;
+            awaySub.style.marginBottom = 10;
+            awayCard.Add(awaySub);
+            _awayBody = MakePanelLabel("Away body", 14, FontStyle.Normal);
+            _awayBody.style.whiteSpace = WhiteSpace.Normal;
+            _awayBody.style.flexGrow = 1;
+            _awayBody.style.marginBottom = 16;
+            awayCard.Add(_awayBody);
+            var continueBtn = MakeButton("Continue operations", AirsideTheme.CoastalBlue, 220f);
+            continueBtn.style.alignSelf = Align.Center;
+            continueBtn.clicked += () => _onContinueAway?.Invoke();
+            awayCard.Add(continueBtn);
+            _awayOverlay.Add(awayCard);
+            _root.Add(_awayOverlay);
+
+            _insolvencyOverlay = MakeOverlay("Insolvency overlay", new Color(0.08f, 0.05f, 0.05f, 0.6f));
+            var insolventCard = MakeCenteredCard(460f);
+            insolventCard.style.minHeight = 280;
+            insolventCard.style.paddingLeft = 24;
+            insolventCard.style.paddingRight = 24;
+            insolventCard.style.paddingTop = 18;
+            insolventCard.style.paddingBottom = 18;
+            var insolventTitle = MakePanelLabel("Insolvency title", 26, FontStyle.Bold);
+            insolventTitle.text = "AIRSIDE";
+            insolventCard.Add(insolventTitle);
+            var insolventHead = MakePanelLabel("Insolvency head", 17, FontStyle.Bold);
+            insolventHead.text = "Airport declared insolvent";
+            insolventHead.style.color = AirsideTheme.SignalRed;
+            insolventHead.style.marginTop = 8;
+            insolventHead.style.marginBottom = 10;
+            insolventCard.Add(insolventHead);
+            _insolvencyBody = MakePanelLabel("Insolvency body", 14, FontStyle.Normal);
+            _insolvencyBody.style.whiteSpace = WhiteSpace.Normal;
+            _insolvencyBody.style.flexGrow = 1;
+            _insolvencyBody.style.marginBottom = 16;
+            insolventCard.Add(_insolvencyBody);
+            var newAirport = MakeButton("Start a new airport", AirsideTheme.CoastalBlue, 260f);
+            newAirport.style.alignSelf = Align.Center;
+            newAirport.clicked += () => _onResetAirport?.Invoke();
+            insolventCard.Add(newAirport);
+            _insolvencyOverlay.Add(insolventCard);
+            _root.Add(_insolvencyOverlay);
+
+            HideAllOverlays();
+        }
+
+        private VisualElement MakeOverlay(string name, Color dim)
+        {
+            var overlay = new VisualElement { name = name };
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0;
+            overlay.style.top = 0;
+            overlay.style.right = 0;
+            overlay.style.bottom = 0;
+            overlay.style.backgroundColor = dim;
+            overlay.style.justifyContent = Justify.Center;
+            overlay.style.alignItems = Align.Center;
+            overlay.style.display = DisplayStyle.None;
+            return overlay;
+        }
+
+        private VisualElement MakeCenteredCard(float width)
+        {
+            var card = new VisualElement { name = "Card" };
+            card.style.width = width;
+            card.style.backgroundColor = new Color(
+                AirsideTheme.RunwayInk.r,
+                AirsideTheme.RunwayInk.g,
+                AirsideTheme.RunwayInk.b,
+                0.96f);
+            card.style.borderTopLeftRadius = 8;
+            card.style.borderTopRightRadius = 8;
+            card.style.borderBottomLeftRadius = 8;
+            card.style.borderBottomRightRadius = 8;
+            card.style.borderLeftWidth = 1;
+            card.style.borderRightWidth = 1;
+            card.style.borderTopWidth = 1;
+            card.style.borderBottomWidth = 1;
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f);
+            card.style.borderLeftColor = border;
+            card.style.borderRightColor = border;
+            card.style.borderTopColor = border;
+            card.style.borderBottomColor = border;
+            return card;
+        }
+
+        private void HideAllOverlays()
+        {
+            if (_briefingOverlay != null)
+                _briefingOverlay.style.display = DisplayStyle.None;
+            if (_pauseOverlay != null)
+                _pauseOverlay.style.display = DisplayStyle.None;
+            if (_awayOverlay != null)
+                _awayOverlay.style.display = DisplayStyle.None;
+            if (_insolvencyOverlay != null)
+                _insolvencyOverlay.style.display = DisplayStyle.None;
+        }
+
+        public void SyncOverlays(
+            bool showBriefing,
+            bool showPause,
+            bool showAway,
+            bool showInsolvency,
+            string locationName,
+            int firstOfferAfterSeconds,
+            string awayBody,
+            string insolvencyBody)
+        {
+            if (_briefingOverlay == null)
+                return;
+
+            HideAllOverlays();
+
+            if (showInsolvency)
+            {
+                _insolvencyOverlay.style.display = DisplayStyle.Flex;
+                _insolvencyBody.text = insolvencyBody ?? string.Empty;
+                SetGameplayChromeVisible(false);
+                return;
+            }
+
+            if (showAway)
+            {
+                _awayOverlay.style.display = DisplayStyle.Flex;
+                _awayBody.text = awayBody ?? string.Empty;
+                SetGameplayChromeVisible(false);
+                return;
+            }
+
+            if (showBriefing)
+            {
+                _briefingOverlay.style.display = DisplayStyle.Flex;
+                _briefingBody.text =
+                    "You run this regional airport\n\n" +
+                    $"Aircraft move on their own. Your job is cash, reputation and capacity at {locationName}.\n\n" +
+                    "First useful decision\n" +
+                    $"In about {firstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.\n\n" +
+                    "Watch OPERATIONS on the right. Watch cash and delays on the left. Press Enter to Accept the first offer.\n\n" +
+                    "Space / Enter to begin  ·  Tab = 4× speed";
+                SetGameplayChromeVisible(false);
+                return;
+            }
+
+            if (showPause)
+            {
+                _pauseOverlay.style.display = DisplayStyle.Flex;
+                // Pause keeps gameplay chrome visible underneath the dimmer.
+                SetGameplayChromeVisible(true);
+                return;
+            }
+
+            SetGameplayChromeVisible(true);
         }
 
         private static Label AddLeftLine(VisualElement parent, string name, int fontSize, FontStyle style)

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **ARFF shed prefab + textured distant hills (0025 items 1+3).** Resources
+  `mdl_arff_shed_v01` replaces flat rescue-shed blocks; distant hills are segmented
+  and grass/sand-mapped so the horizon is not four unlit slabs. Presentation only.
+
 - **Apron safety props + stand boxes (0025 items 1+3).** Resources
   `mdl_fire_hydrant_v01`, `mdl_extinguisher_cabinet_v01`, `mdl_fod_bin_v01` on the
   apron edge; painted stand bay boxes for stands 1–3. Presentation only.

@@ -10,15 +10,16 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        private readonly Vector3 _overviewCenter = new(4f, 0f, 12f);
-        private const float OverviewDistance = 48f;
-        private const float OverviewFov = 52f;
+        // Slightly terminal-biased so overview reads apron + buildings as one miniature.
+        private readonly Vector3 _overviewCenter = new(8f, 0f, 14f);
+        private const float OverviewDistance = 46f;
+        private const float OverviewFov = 50f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(4f, 0f, 12f);
-        private float _yaw = 145f;
-        private float _pitch = 40f;
+        private Vector3 _center = new(8f, 0f, 14f);
+        private float _yaw = 142f;
+        private float _pitch = 38f;
         private float _distance = OverviewDistance;
         private bool _following;
         private float _touchdownShake;

@@ -1842,7 +1842,7 @@ namespace Airside.Presentation
                 if (renderer != null)
                 {
                     var color = on ? new Color(1f, 0.35f, 0.08f) : new Color(0.35f, 0.12f, 0.05f);
-                    renderer.material.color = color;
+                    SetRendererColor(renderer, color);
                     if (renderer.material.HasProperty("_EmissionColor"))
                     {
                         renderer.material.EnableKeyword("_EMISSION");
@@ -3507,8 +3507,8 @@ namespace Airside.Presentation
             if (camera == null)
                 camera = new GameObject("Main Camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
-            // Slightly tighter FOV reads more like an architectural miniature (decision 0022).
-            camera.fieldOfView = 42f;
+            // Match overview framing (architectural miniature, decision 0022 / post-F polish).
+            camera.fieldOfView = 50f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -3524,8 +3524,9 @@ namespace Airside.Presentation
                 _sun = new GameObject("Sun").AddComponent<Light>();
             _sun.type = LightType.Directional;
             _sun.shadows = LightShadows.Soft;
-            _sun.shadowStrength = 0.72f;
-            _sun.shadowBias = 0.04f;
+            _sun.shadowStrength = 0.78f;
+            _sun.shadowBias = 0.035f;
+            _sun.shadowNormalBias = 0.4f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
             var fillGo = GameObject.Find("Fill light");
@@ -4820,17 +4821,23 @@ namespace Airside.Presentation
                     "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(1.5f, 1.2f));
             }
 
-            // Coastal dune rise between apron grass and sand strip.
-            CreateBlock("Coast dune L", new Vector3(-28f, 0.35f, -42f), new Vector3(18f, 0.9f, 5f), sand,
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3f, 1.2f));
-            CreateBlock("Coast dune R", new Vector3(24f, 0.3f, -43f), new Vector3(16f, 0.75f, 4.5f), sand,
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2.8f, 1.1f));
-            CreateBlock("Coast dune mid", new Vector3(0f, 0.22f, -41f), new Vector3(22f, 0.55f, 3.5f), Shade(sand, 0.9f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1f));
-            CreateBlock("Coast dune L crest", new Vector3(-30f, 0.7f, -43.5f), new Vector3(10f, 0.45f, 2.2f), Shade(sand, 1.05f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2f, 0.8f));
-            CreateBlock("Coast dune R crest", new Vector3(26f, 0.55f, -44f), new Vector3(9f, 0.35f, 2f), Shade(sand, 1.02f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(1.8f, 0.7f));
+            // Coastal dune rise between apron grass and sand strip — skip when WLD-004
+            // terrain kit will place authored dune accents (avoid double densify).
+            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
+            if (!hasTerrainKit)
+            {
+                CreateBlock("Coast dune L", new Vector3(-28f, 0.35f, -42f), new Vector3(18f, 0.9f, 5f), sand,
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3f, 1.2f));
+                CreateBlock("Coast dune R", new Vector3(24f, 0.3f, -43f), new Vector3(16f, 0.75f, 4.5f), sand,
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2.8f, 1.1f));
+                CreateBlock("Coast dune mid", new Vector3(0f, 0.22f, -41f), new Vector3(22f, 0.55f, 3.5f), Shade(sand, 0.9f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1f));
+                CreateBlock("Coast dune L crest", new Vector3(-30f, 0.7f, -43.5f), new Vector3(10f, 0.45f, 2.2f), Shade(sand, 1.05f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2f, 0.8f));
+                CreateBlock("Coast dune R crest", new Vector3(26f, 0.55f, -44f), new Vector3(9f, 0.35f, 2f), Shade(sand, 1.02f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(1.8f, 0.7f));
+            }
             // Soft grass ribbons so the main Grass slab is not a single flat plane.
             CreateBlock("Grass ribbon N", new Vector3(0f, -0.4f, 26f), new Vector3(80f, 0.35f, 8f), Shade(grass, 0.95f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(10f, 1.5f));

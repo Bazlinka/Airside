@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **UI Toolkit overlays (0025 item 6).** Runtime `AirsideToolkitHud` owns briefing
+  (dawn splash), pause, away summary and insolvency overlays with action buttons;
+  Canvas HUD is now a fallback only when Toolkit fails to build. Presentation only.
+
 - **UI Toolkit left status panel (0025 item 6).** Runtime `AirsideToolkitHud` now owns
   the full left status/decision panel (cash, turnaround, crew, stands, research,
   coach, wait meter) with action buttons; Canvas keeps overlays only and hides its

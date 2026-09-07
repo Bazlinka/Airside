@@ -879,6 +879,23 @@ namespace Airside.Presentation
                 _leftPanel.gameObject.SetActive(visible);
         }
 
+        /// <summary>
+        /// When UI Toolkit owns full-screen overlays, hide the Canvas copies.
+        /// </summary>
+        public void SetOverlaysVisible(bool visible)
+        {
+            if (visible)
+                return;
+            if (_briefingPanel != null)
+                _briefingPanel.gameObject.SetActive(false);
+            if (_pausePanel != null)
+                _pausePanel.gameObject.SetActive(false);
+            if (_awayPanel != null)
+                _awayPanel.gameObject.SetActive(false);
+            if (_insolvencyPanel != null)
+                _insolvencyPanel.gameObject.SetActive(false);
+        }
+
         private static void AddWordmark(RectTransform parent)
         {
             var wordmark = AirsideTheme.WordmarkLight;

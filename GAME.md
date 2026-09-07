@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Toolkit left status panel)
-- **Branch / working tree:** `cursor/toolkit-left-panel-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak full Toolkit gameplay HUD
-- **In progress / half-done:** Toolkit owns left + right gameplay chrome + toasts; Canvas still owns overlays
-- **Watch out for:** UI Toolkit clicks need EventSystem (Canvas creates it); authored FBX still open
-- **Open questions for Bailey:** migrate briefing/away overlays to Toolkit next, or authored FBX first?
-- **Visual assets:** twelve Resources prefabs; Toolkit full gameplay HUD; Addressables locator
+- **Last updated:** 2026-09-07 by Cursor (Toolkit overlays)
+- **Branch / working tree:** `cursor/toolkit-overlays-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak Toolkit briefing/pause/away/insolvency
+- **In progress / half-done:** Toolkit owns full HUD + overlays; Canvas is fallback only
+- **Watch out for:** authored FBX / Editor Addressables groups still open (0025 items 1–2)
+- **Open questions for Bailey:** authored aircraft/building meshes next, or denser environment?
+- **Visual assets:** twelve Resources prefabs; Toolkit full HUD; Addressables locator
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

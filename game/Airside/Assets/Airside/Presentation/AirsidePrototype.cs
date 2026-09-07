@@ -291,7 +291,10 @@ namespace Airside.Presentation
                             _session.StartOperationsResearch();
                         else if (research.CanStartPassengerServices)
                             _session.StartPassengerServicesResearch();
-                    });
+                    },
+                    onBeginOperations: () => DismissOpeningBriefing(),
+                    onResetAirport: () => ResetToNewAirport(),
+                    onContinueAway: () => { _showAwaySummary = false; });
             }
             _canvasHudActive = _canvasHud.IsActive;
         }
@@ -372,21 +375,41 @@ namespace Airside.Presentation
                     $"{_simulation.Location.Name} · {_simulation.Location.Region}";
             }
 
-            _canvasHud.SyncOverlays(
-                showBriefing: _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent,
-                showPause: _paused && !_showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent,
-                showAway: _showAwaySummary && !_simulation.IsInsolvent,
-                showInsolvency: _simulation.IsInsolvent,
-                locationName: _simulation.Location.Name,
-                firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
-                awayBody: awayBody,
-                insolvencyBody: insolvencyBody);
-
             var toolkitActive = _toolkitHud != null && _toolkitHud.IsActive;
-            var overlayOwnsScreen = _showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent;
-            if (toolkitActive)
-                _toolkitHud.SetGameplayChromeVisible(!overlayOwnsScreen);
+            var showBriefing = _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
+            var showPause = _paused && !_showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
+            var showAway = _showAwaySummary && !_simulation.IsInsolvent;
+            var showInsolvency = _simulation.IsInsolvent;
 
+            if (toolkitActive)
+            {
+                _toolkitHud.SyncOverlays(
+                    showBriefing: showBriefing,
+                    showPause: showPause,
+                    showAway: showAway,
+                    showInsolvency: showInsolvency,
+                    locationName: _simulation.Location.Name,
+                    firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
+                    awayBody: awayBody,
+                    insolvencyBody: insolvencyBody);
+                _canvasHud.SetOverlaysVisible(false);
+                _canvasHud.SetLeftPanelVisible(false);
+                _canvasHud.SetRightPanelsVisible(false);
+            }
+            else
+            {
+                _canvasHud.SyncOverlays(
+                    showBriefing: showBriefing,
+                    showPause: showPause,
+                    showAway: showAway,
+                    showInsolvency: showInsolvency,
+                    locationName: _simulation.Location.Name,
+                    firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
+                    awayBody: awayBody,
+                    insolvencyBody: insolvencyBody);
+            }
+
+            var overlayOwnsScreen = showBriefing || showAway || showInsolvency;
             if (overlayOwnsScreen)
                 return;
 

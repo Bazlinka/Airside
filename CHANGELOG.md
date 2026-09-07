@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **URP volume + shadow/SSAO polish (0025 item 5).** Deactivate template
+  DefaultVolumeProfile junk (DoF/motion blur/lens/test components); PC shadow
+  distance 140; SSAO intensity/radius raised for apron contact. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Markings, gear nest, ALS spots, HUD time controls (0025 items 3+5+6+7).**
   Stand digits 1/3 paint correctly; markings kit edges/threshold/taxi/stops used;
   gear scissors/tires nest under struts; ALS/REIL SpotLights wash approach;

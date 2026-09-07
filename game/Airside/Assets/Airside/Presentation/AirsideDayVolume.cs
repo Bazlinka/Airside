@@ -127,17 +127,13 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Unity's template profile (<c>Assets/Settings/DefaultVolumeProfile.asset</c>) is
-        /// still wired as URP's global default, and it overrides DepthOfField, MotionBlur,
-        /// LensDistortion, ChromaticAberration, ScreenSpaceLensFlare and PaniniProjection —
-        /// alongside literal CopyPasteTestComponent1/2/3 and TestVolume.
+        /// still wired as URP's global default. Junk test components and presentation
+        /// killers (DoF / motion blur / lens junk) were deactivated in that asset for
+        /// 0025 item 5, but this safety net still pins no-ops on our owned volume so a
+        /// regenerated template cannot fight dusk profiles.
         ///
-        /// Those were harmless while post-processing was off. Switching the post stack on
-        /// made them render. A higher-priority volume only wins on parameters it actually
-        /// overrides, so each one is pinned to its no-op value here rather than merely left
-        /// out. Film grain is deliberately absent: that one is this volume's own, set above
-        /// and driven per-frame by <see cref="Apply"/>.
-        ///
-        /// Replacing that asset outright would be cleaner and would let this go away.
+        /// A higher-priority volume only wins on parameters it actually overrides.
+        /// Film grain is deliberately absent here: that one is this volume's own.
         /// </summary>
         private static void NeutraliseTemplateEffects(VolumeProfile profile)
         {

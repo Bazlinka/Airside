@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Sky bird flock + hangar field restore.** Twelve presentation birds orbit the
+  southern coast; also restores `_hangarDoor` / `_touchdownSmokeRemaining` fields
+  dropped during the Canvas HUD wiring. Presentation only.
+
 - **Ambient wind + rain audio (0025 item 7).** Soft looping wind bed and rain/
   storm ambience that respect mute and pause; procedural clips, presentation only.
 

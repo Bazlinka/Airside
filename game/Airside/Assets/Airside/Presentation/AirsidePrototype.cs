@@ -714,6 +714,11 @@ namespace Airside.Presentation
                 UpdateCabinDoor(view, phase);
                 UpdateCabinWindowGlow(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateEngineHeat(view, phase);
+
+                if (_cameraController != null
+                    && _cameraController.IsFollowing
+                    && _cameraController.FollowTarget == view)
+                    _cameraController.SetFollowPhase(phase, progress);
             }
         }
 
@@ -2925,9 +2930,10 @@ namespace Airside.Presentation
         private void UpdateNightGlow(float daylight)
         {
             // Presentation-only: terminal/hangar windows warm up as daylight falls.
-            var glow = Mathf.Lerp(0.95f, 0.08f, daylight);
-            var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.35f + glow);
+            var glow = Mathf.Lerp(1.15f, 0.05f, daylight);
+            var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f);
             color.a = 1f;
+            var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f);
             foreach (var renderer in _nightGlowRenderers)
             {
                 if (renderer == null)
@@ -2936,7 +2942,8 @@ namespace Airside.Presentation
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
                     renderer.material.EnableKeyword("_EMISSION");
-                    renderer.material.SetColor("_EmissionColor", new Color(1f, 0.75f, 0.35f) * (0.15f + glow * 1.6f));
+                    renderer.material.SetColor("_EmissionColor", emission);
+                    renderer.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 }
             }
         }
@@ -4760,12 +4767,21 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildFuelFarm()
         {
-            CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 22f), new Vector3(8f, 0.08f, 6f), new Color(0.28f, 0.3f, 0.32f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
-            CreateBlock("Fuel tank A", new Vector3(-35.5f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
-            CreateBlock("Fuel tank B", new Vector3(-32.2f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
-            CreateBlock("Fuel bund", new Vector3(-34f, 0.25f, 22f), new Vector3(7.2f, 0.35f, 5.2f), new Color(0.4f, 0.42f, 0.4f));
-            CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_fuel_farm_v01", out var farm))
+            {
+                farm.name = "Fuel farm";
+                farm.position = new Vector3(-34f, 0f, 22f);
+            }
+            else
+            {
+                CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 22f), new Vector3(8f, 0.08f, 6f), new Color(0.28f, 0.3f, 0.32f),
+                    "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
+                CreateBlock("Fuel tank A", new Vector3(-35.5f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
+                CreateBlock("Fuel tank B", new Vector3(-32.2f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
+                CreateBlock("Fuel bund", new Vector3(-34f, 0.25f, 22f), new Vector3(7.2f, 0.35f, 5.2f), new Color(0.4f, 0.42f, 0.4f));
+                CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
+            }
+
             CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
             CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
             CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);

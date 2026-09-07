@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (sign/dolly/windsock prefabs + cabin glow + GSE headlights)
-- **Branch / working tree:** `cursor/props-cabin-glow-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak night cabin glow, GSE headlights, denser signs/dollies
-- **In progress / half-done:** nine Resources prefabs; cabin emissive + GSE SpotLights
-- **Watch out for:** prefabs still greybox — pipeline proof; authored FBX overwrite is the fidelity jump
-- **Open questions for Bailey:** which prefab key to overwrite first (terminal vs turboprop vs GSE)?
-- **Visual assets:** nine Resources prefabs + landing/taxi/GSE SpotLights + cabin emissive
+- **Last updated:** 2026-09-07 by Cursor (follow framing + fuel farm + night windows)
+- **Branch / working tree:** `cursor/follow-fuel-night-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak F-follow phase framing + dusk building glow + fuel farm prefab
+- **In progress / half-done:** ten Resources prefabs; phase-aware follow FOV/distance
+- **Watch out for:** prefabs still greybox — authored FBX overwrite is the fidelity jump
+- **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or fuel farm?
+- **Visual assets:** ten Resources prefabs + phase-aware follow + stronger night window emission
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm Resources prefabs (nine keys), landing/taxi/GSE SpotLights, night cabin glow.
+2. Confirm follow camera phase beats (F), dusk building glow, fuel farm prefab, ten Resources keys.
 3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups.
    No new economy systems; no Companion/CloudKit.

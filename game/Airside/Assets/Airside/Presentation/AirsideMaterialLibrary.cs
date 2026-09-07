@@ -23,6 +23,7 @@ namespace Airside.Presentation
             Metal,
             PaintedMetal,
             AircraftSkin,
+            PaintedLine,
             Glass,
             Rubber,
             Plastic,
@@ -59,6 +60,8 @@ namespace Airside.Presentation
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
             [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.68f, 0.14f, 0.98f),
+            // Flat painted markings — matte, not aircraft-skin gloss.
+            [SurfaceKind.PaintedLine] = new Profile(0.02f, 0.22f, 0.08f, 0.96f),
             // Slightly softer glass so curtain walls read as panes, not chrome mirrors.
             [SurfaceKind.Glass] = new Profile(0.04f, 0.88f, 0.02f, 1f, transparent: true),
             [SurfaceKind.Rubber] = new Profile(0.012f, 0.08f, 0.75f, 0.84f),
@@ -139,6 +142,12 @@ namespace Airside.Presentation
                 || n.Contains("tank") || n.Contains("hose") || n.Contains("column")
                 || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
+            if (n.Contains("marking") || n.Contains("centreline") || n.Contains("centerline")
+                || n.Contains("threshold") || n.Contains("hold_short") || n.Contains("aiming")
+                || n.Contains("tdz") || n.Contains("chevron") || n.Contains("stand_stop")
+                || n.Contains("bay line") || n.Contains("stall line") || n.Contains("access dash")
+                || n.Contains("edge line") || n.Contains("zebra"))
+                return SurfaceKind.PaintedLine;
             if (n.Contains("fuselage") || n.Contains("nose") || n.Contains("wing") || n.Contains("tail")
                 || n.Contains("rudder") || n.Contains("elevator") || n.Contains("flap")
                 || n.Contains("aileron") || n.Contains("cabindoor") || n.Contains("cabin door")

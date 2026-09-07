@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **PaintedLine + landside/motion fixes (0025 items 3–4+7).** Near-white primitives map
+  to `PaintedLine` (not aircraft skin); access-turn markings/shoulders + overflow bay
+  chevrons; hose mount/nozzle no longer stretch with hose; cabin/bus door parts nest
+  for animation; wheel_arch excluded from wheel spin. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Service/props densify + hangar color maps (0025 item 2).** Service equipment 103
+  (stairs/GPU/belt hubs); props 65; hangar color maps cover fascia/ribs 9–10.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
 - **Hangar/GSE densify tip (0025 item 2).** Hangar 149 (fascia/office roof/crane rails/
   extra ribs); fuel truck 87; baggage tug 88 (hubs, bags, hitch pins). Presentation
   only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.

@@ -1502,7 +1502,9 @@ namespace Airside.Presentation
                 if (child == aircraft)
                     continue;
                 if (child.name.StartsWith("Tire", StringComparison.Ordinal) ||
-                    child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
+                    (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
+                     && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
+                     && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0))
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
         }
@@ -1792,7 +1794,9 @@ namespace Airside.Presentation
             {
                 if (child == vehicle)
                     continue;
-                if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
+                    && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
+                    && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
         }
@@ -4420,11 +4424,26 @@ namespace Airside.Presentation
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
             CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
             CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            // Turn segment markings so the landside elbow reads as road, not empty asphalt.
+            CreateBlock("Access turn centreline", new Vector3(38f, 0.05f, 46f), new Vector3(22f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Access turn edge N", new Vector3(38f, 0.05f, 48.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
+            CreateBlock("Access turn edge S", new Vector3(38f, 0.05f, 43.5f), new Vector3(24f, 0.02f, 0.1f), Color.white);
+            CreateBlock("Access turn shoulder N", new Vector3(38f, -0.01f, 49.4f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
+            CreateBlock("Access turn shoulder S", new Vector3(38f, -0.01f, 42.6f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
+            for (var i = 0; i < 6; i++)
+            {
+                CreateBlock($"Access turn dash {i}", new Vector3(28f + i * 3.5f, 0.06f, 46f),
+                    new Vector3(1.4f, 0.02f, 0.35f), new Color(0.95f, 0.9f, 0.35f));
+            }
+
             CreateBlock("Access road shoulder L", new Vector3(22.2f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Access road shoulder R", new Vector3(29.8f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
+            CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
             CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
             CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
 
@@ -4800,6 +4819,13 @@ namespace Airside.Presentation
                 CreateBlock($"Bay line R {bay}", new Vector3(x + 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
                     new Color(0.92f, 0.92f, 0.88f));
                 CreateBlock($"Bay stop {bay}", new Vector3(x, 0.06f, 41.6f), new Vector3(2.8f, 0.02f, 0.08f),
+                    new Color(0.92f, 0.92f, 0.88f));
+                // Overflow row chevrons under the north kerb cars.
+                CreateBlock($"Overflow bay L {bay}", new Vector3(x - 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
+                    new Color(0.92f, 0.92f, 0.88f));
+                CreateBlock($"Overflow bay R {bay}", new Vector3(x + 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
+                    new Color(0.92f, 0.92f, 0.88f));
+                CreateBlock($"Overflow stop {bay}", new Vector3(x, 0.06f, 52.6f), new Vector3(2.8f, 0.02f, 0.08f),
                     new Color(0.92f, 0.92f, 0.88f));
             }
 
@@ -6092,6 +6118,7 @@ namespace Airside.Presentation
             {
                 NestCrossPropellerBlades(root);
                 NestLandingGearParts(root);
+                NestCabinDoorParts(root);
             }
 
             if (!usedArt)
@@ -6454,6 +6481,62 @@ namespace Airside.Presentation
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
         }
 
+        /// <summary>
+        /// Nest cabin door handle under CabinDoor so UpdateCabinDoor swings both (0025 item 7).
+        /// </summary>
+        private static void NestCabinDoorParts(Transform aircraft)
+        {
+            Transform door = null;
+            Transform handle = null;
+            Transform latch = null;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                    door = child;
+                else if (child.name == "Door handle")
+                    handle = child;
+                else if (child.name == "Cargo door latch")
+                    latch = child;
+            }
+
+            NestUnderProp(door, handle, "Handle");
+            // Cargo latch stays with cargo door if present.
+            Transform cargo = null;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Cargo door")
+                {
+                    cargo = child;
+                    break;
+                }
+            }
+
+            NestUnderProp(cargo, latch, "Latch");
+        }
+
+        /// <summary>
+        /// Nest bus/GSE door glass and handles under Door so AnimateServiceLoops swings them.
+        /// </summary>
+        private static void NestServiceDoorParts(Transform vehicle)
+        {
+            Transform door = null;
+            var extras = new List<Transform>();
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == vehicle)
+                    continue;
+                if (child.name == "Door")
+                    door = child;
+                else if (child.name is "Door glass" or "Door handle" or "Door frame")
+                    extras.Add(child);
+            }
+
+            if (door == null)
+                return;
+            foreach (var extra in extras)
+                NestUnderProp(door, extra, extra.name);
+        }
+
         private static bool HasNamedChild(Transform root, string name)
         {
             foreach (var child in root.GetComponentsInChildren<Transform>(true))
@@ -6609,13 +6692,22 @@ namespace Airside.Presentation
                 {
                     "cab" => $"{name} cab",
                     "tank" or "bus_body" or "tug" => $"{name} body",
-                    "hose_mount" or "hose" or "hose_nozzle" => "Hose",
+                    "hose" => "Hose",
+                    "hose_mount" => "Hose mount",
+                    "hose_nozzle" => "Hose nozzle",
                     "hose_reel" => "Hose reel",
                     "hose_guard" => "Hose guard",
                     "hose_tray" => "Hose tray",
                     "door" or "cab_door" or "cab_door_r" => "Door",
+                    "door_glass" or "door_glass_r" => "Door glass",
+                    "door_handle" or "door_handle_l" or "door_handle_r" or "door_hinge_t" or "door_hinge_b"
+                        => "Door handle",
+                    "door_frame" => "Door frame",
                     "cargo_1" or "cargo_2" or "cargo_3" => "Cargo",
                     "cargo_tag_1" or "cargo_tag_2" => "Cargo tag",
+                    "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_1c"
+                        or "cargo_bag_2a" or "cargo_bag_2b" or "cargo_bag_2c"
+                        or "cargo_bag_3a" or "cargo_bag_3b" or "cargo_bag_3c" => "Cargo bag",
                     "headlight_l" => "Headlight L",
                     "headlight_r" => "Headlight R",
                     "taillight_l" => "Taillight L",
@@ -6627,22 +6719,25 @@ namespace Airside.Presentation
                 {
                     if (kitName.StartsWith("glass_pane", StringComparison.Ordinal)
                         || kitName is "cab_window" or "windows" or "tug_window" or "door_glass" or "door_glass_r"
-                        or "windshield" or "rear_window")
+                        or "windshield" or "rear_window" or "belt_loader_cab_glass")
                         return new Color(0.2f, 0.4f, 0.55f, 0.42f);
                     if (kitName.StartsWith("window_mullion", StringComparison.Ordinal)
                         || kitName is "window_sill" or "window_sill_b" or "window_header" or "window_header_b"
-                        or "destination_board")
+                        or "destination_board" or "destination_board_hood" or "destination_digit")
                         return color * 0.7f;
                     return kitName switch
                     {
                         "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
                             or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
                             or "cart_wheel_3l" or "cart_wheel_3r"
-                            or "hub_fl" or "hub_fr" or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
+                            or "hub_fl" or "hub_fr" or "hub_rl" or "hub_rr"
+                            or "wheel_hub_fl" or "wheel_hub_fr" or "wheel_hub_rl" or "wheel_hub_rr"
+                            or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
                         "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
                             or "hose_coil_a" or "hose_coil_b" or "pump_cabinet" or "pump_gauge" or "pump_valve"
-                            or "exhaust" => new Color(0.25f, 0.25f, 0.28f),
+                            or "exhaust" or "pump_hose_out" => new Color(0.25f, 0.25f, 0.28f),
                         "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_handle"
+                            or "door_handle_l" or "door_handle_r" or "door_hinge_t" or "door_hinge_b"
                             => new Color(0.2f, 0.22f, 0.25f),
                         "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
                             or "tug_floor" or "tug_steering" or "counterweight" => color * 0.82f,
@@ -6657,12 +6752,15 @@ namespace Airside.Presentation
                             or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
                             or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
                             or "number_plate" or "fuel_hazard" or "wiper" or "wiper_b"
+                            or "body_panel_l" or "body_panel_r" or "skirt_l" or "skirt_r"
                             => color * 0.7f,
                         "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
-                            or "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_2a" or "cargo_bag_2b"
-                            or "cargo_bag_3a" or "cargo_bag_3b"
+                            or "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_1c"
+                            or "cargo_bag_2a" or "cargo_bag_2b" or "cargo_bag_2c"
+                            or "cargo_bag_3a" or "cargo_bag_3b" or "cargo_bag_3c"
                             => new Color(0.75f, 0.55f, 0.2f),
-                        "stripe" or "stripe_b" or "stripe_upper" => new Color(0.95f, 0.85f, 0.2f),
+                        "stripe" or "stripe_b" or "stripe_upper" or "cab_stripe" or "tank_stripe"
+                            or "tug_stripe" => new Color(0.95f, 0.85f, 0.2f),
                         "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
                             or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
                             or "cart_gate_1" or "cart_gate_2" or "cart_gate_3"
@@ -6671,7 +6769,8 @@ namespace Airside.Presentation
                             or "cart_post_1l" or "cart_post_1r" or "cart_post_2l" or "cart_post_2r"
                             or "cart_post_3l" or "cart_post_3r"
                             or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
-                        "seat_row_1" or "seat_row_2" => new Color(0.35f, 0.38f, 0.42f),
+                        "seat_row_1" or "seat_row_2" or "seat_row_3" or "seat_row_4"
+                            or "seat_back_1" or "seat_back_2" => new Color(0.35f, 0.38f, 0.42f),
                         _ => color
                     };
                 },
@@ -6696,6 +6795,10 @@ namespace Airside.Presentation
                     new Vector3(0.55f, 0.35f, 0.45f), new Color(0.75f, 0.55f, 0.2f));
                 ParentBlock(root, "Door", new Vector3(scale.x * 0.2f, 0.25f, scale.z * 0.45f),
                     new Vector3(0.08f, 0.7f, 0.45f), new Color(0.2f, 0.22f, 0.25f));
+            }
+            else
+            {
+                NestServiceDoorParts(root);
             }
 
             root.gameObject.SetActive(false);
@@ -7939,11 +8042,15 @@ namespace Airside.Presentation
 
         private static AirsideMaterialLibrary.SurfaceKind InferSurfaceKindFromColor(Color color)
         {
-            // Heuristic for untextured primitives (cars, props, glow quads).
+            // Heuristic for untextured primitives (cars, props, glow quads, painted lines).
             if (color.a < 0.99f)
                 return AirsideMaterialLibrary.SurfaceKind.Glass;
+            // Near-white / cream → painted markings, not aircraft skin (MAT-001 / 0025 item 4).
             if (color.r > 0.85f && color.g > 0.85f && color.b > 0.85f)
-                return AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
+                return AirsideMaterialLibrary.SurfaceKind.PaintedLine;
+            // Safety-yellow / taxi paint.
+            if (color.r > 0.85f && color.g > 0.75f && color.b < 0.45f)
+                return AirsideMaterialLibrary.SurfaceKind.PaintedLine;
             if (color.b > color.r + 0.15f && color.b > color.g + 0.05f)
                 return AirsideMaterialLibrary.SurfaceKind.Water;
             return AirsideMaterialLibrary.SurfaceKind.PaintedMetal;

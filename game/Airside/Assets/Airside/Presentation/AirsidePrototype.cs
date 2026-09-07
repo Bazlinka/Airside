@@ -2042,10 +2042,74 @@ namespace Airside.Presentation
             BuildVegetation();
             BuildDistantHills();
             BuildHorizonDome();
+            BuildLandsideLife();
         }
 
-        private static void BuildPerimeterFence()
+        /// <summary>
+        /// Parked cars, kerbside drop-off and a few landside props so the terminal
+        /// approach reads as a working regional airfield (presentation only).
+        /// </summary>
+        private static void BuildLandsideLife()
         {
+            var carColors = new[]
+            {
+                new Color(0.75f, 0.22f, 0.18f),
+                new Color(0.92f, 0.92f, 0.9f),
+                new Color(0.15f, 0.18f, 0.22f),
+                new Color(0.2f, 0.35f, 0.55f),
+                new Color(0.85f, 0.7f, 0.25f),
+                new Color(0.35f, 0.4f, 0.38f),
+                new Color(0.55f, 0.55f, 0.58f),
+                new Color(0.12f, 0.45f, 0.35f)
+            };
+
+            // Car park bays — two rows facing the terminal.
+            for (var i = 0; i < 8; i++)
+            {
+                var row = i < 4 ? 0 : 1;
+                var slot = i % 4;
+                var x = 42f + slot * 3.6f;
+                var z = 43.2f + row * 4.2f;
+                PlaceParkedCar($"Parked car {i}", new Vector3(x, 0.45f, z), 90f, carColors[i]);
+            }
+
+            // Kerbside drop-off on the access road.
+            PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0.45f, 36f), 0f, carColors[2]);
+            PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0.45f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
+
+            // Landside furniture: luggage trolley cluster + bench near terminal doors.
+            CreateBlock("Luggage trolley A", new Vector3(24f, 0.45f, 31.5f), new Vector3(0.9f, 0.7f, 0.55f), new Color(0.7f, 0.72f, 0.75f));
+            CreateBlock("Luggage trolley B", new Vector3(25.2f, 0.45f, 31.5f), new Vector3(0.9f, 0.7f, 0.55f), new Color(0.7f, 0.72f, 0.75f));
+            CreateBlock("Landside bench", new Vector3(29.5f, 0.35f, 31.2f), new Vector3(2.2f, 0.35f, 0.55f), new Color(0.45f, 0.32f, 0.18f));
+            CreateBlock("Bench back", new Vector3(29.5f, 0.7f, 30.95f), new Vector3(2.2f, 0.55f, 0.12f), new Color(0.45f, 0.32f, 0.18f));
+
+            // Extra trees framing the car park.
+            PlaceTree(new Vector3(58f, 0f, 48f), 1.1f);
+            PlaceTree(new Vector3(44f, 0f, 54f), 0.95f);
+            PlaceTree(new Vector3(20f, 0f, 44f), 0.85f);
+
+            // Small general-aviation tie-down markers west of hangar (life, not sim).
+            for (var i = 0; i < 4; i++)
+            {
+                CreateBlock($"Tie-down {i}", new Vector3(-30f - i * 3.5f, 0.08f, 14f), new Vector3(0.35f, 0.08f, 0.35f),
+                    new Color(0.55f, 0.55f, 0.5f));
+            }
+        }
+
+        private static void PlaceParkedCar(string name, Vector3 position, float yawDegrees, Color body)
+        {
+            var root = new GameObject(name).transform;
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+            ParentBlock(root, $"{name} body", Vector3.zero, new Vector3(1.7f, 0.55f, 3.6f), body);
+            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), body * 0.85f);
+            ParentBlock(root, $"{name} window", new Vector3(0f, 0.55f, -0.1f), new Vector3(1.45f, 0.28f, 1.5f), new Color(0.2f, 0.35f, 0.45f));
+            var wheel = new Color(0.12f, 0.12f, 0.13f);
+            ParentBlock(root, $"{name} wheel FL", new Vector3(-0.7f, -0.28f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+            ParentBlock(root, $"{name} wheel FR", new Vector3(0.7f, -0.28f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+            ParentBlock(root, $"{name} wheel RL", new Vector3(-0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+            ParentBlock(root, $"{name} wheel RR", new Vector3(0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+        }
             var post = new Color(0.55f, 0.56f, 0.58f);
             var rail = new Color(0.72f, 0.74f, 0.76f);
             // North landside fence (behind terminal / car park approach).

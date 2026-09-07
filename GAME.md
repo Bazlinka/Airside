@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (HUD contrast polish)
-- **Branch / working tree:** `cursor/hud-contrast-polish-ddad`
-- **Do this next:** Merge; Bailey Unity Play soak of #68–#70; Toolkit spike still open for 0025 item 6
-- **In progress / half-done:** denser IMGUI panels + frames (not Toolkit yet)
-- **Watch out for:** panel art nine-slice still preferred when MeanAlpha is high enough
+- **Last updated:** 2026-09-07 by Cursor (coast jetty + boats)
+- **Branch / working tree:** `cursor/handoff-presentation-wave-ddad`
+- **Do this next:** Merge coast/handoff; Bailey Unity Play soak #68–#71
+- **In progress / half-done:** coastal jetty + three boats; handoff for #68–#70
+- **Watch out for:** boats are greybox primitives on the water plane
 - **Open questions for Bailey:** none
-- **Visual assets:** shadows/clouds on `main`; HUD contrast on this branch
+- **Visual assets:** materials/shadows/HUD on `main`; coast life on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,8 +122,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm the presentation wave: landside cars, denser apron/fuel/GA, prop disc +
-   tires + attitude + touchdown shake, first-session Enter accept, dusk window glow
-   + landside streetlights, follow-camera framing.
-3. Next code track: materials/normals library or HUD Toolkit spike (0025 items 4/6).
-   No new economy systems; no Companion/CloudKit.
+2. Confirm the presentation wave through #70: materials micro-relief, ground shadows,
+   drifting clouds, denser HUD panels, plus earlier landside/motion/first-session work.
+3. Next code track: more environment life, or a real UI Toolkit package spike
+   (0025 item 6). No new economy systems; no Companion/CloudKit.

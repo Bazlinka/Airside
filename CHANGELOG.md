@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **GSE/ops densify, landside panes, mullion tint fix (0025 items 2+4+7).** Ops shed
+  cladding ribs + split glass panes (94); fuel truck tank ends/pump/cab panes (75);
+  baggage tug cart beds/bags/canopies (68); apron bus side glass_pane* (72);
+  terminal landside curtain panes (126); GSE/ops mullions metal not glass-blue;
+  wet collect includes runway/taxi/stand markings. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Scrub carpet, dusk floods, glass/apron wet, terminal interior (0025 items 2–5+7).**
   Fence-line multi-sphere scrub carpet; URP additional lights/object 12 + warmer
   dusk flood punch with soft shadows on mast floods; glass_pane* get glass masks;

@@ -2310,7 +2310,14 @@ namespace Airside.Presentation
                     && !n.StartsWith("Coast scrub", StringComparison.Ordinal)
                     && !n.StartsWith("Apron joint", StringComparison.Ordinal)
                     && !n.StartsWith("Apron fringe", StringComparison.Ordinal)
-                    && !n.StartsWith("Apron slab", StringComparison.Ordinal))
+                    && !n.StartsWith("Apron slab", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway marking", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway edge", StringComparison.Ordinal)
+                    && !n.StartsWith("Threshold", StringComparison.Ordinal)
+                    && !n.StartsWith("Hold short", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi edge", StringComparison.Ordinal)
+                    && !n.StartsWith("Stand stop", StringComparison.Ordinal)
+                    && !n.StartsWith("Stand number", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -4105,6 +4112,10 @@ namespace Airside.Presentation
                         or "glass_pane_lo_4" or "glass_pane_lo_5" or "glass_pane_lo_6"
                         or "glass_pane_lo_7" or "glass_pane_lo_8" or "glass_pane_lo_9"
                         or "glass_pane_lo_10"
+                        or "glass_pane_land_1" or "glass_pane_land_2" or "glass_pane_land_3"
+                        or "glass_pane_land_4" or "glass_pane_land_5" or "glass_pane_land_6"
+                        or "glass_pane_land_lo_1" or "glass_pane_land_lo_2" or "glass_pane_land_lo_3"
+                        or "glass_pane_land_lo_4" or "glass_pane_land_lo_5" or "glass_pane_land_lo_6"
                         => new Color(0.16f, 0.38f, 0.5f, 0.42f),
                     "interior_glow_l" or "interior_glow_r" or "interior_glow_mid" or "interior_glow_desk"
                         => new Color(1f, 0.82f, 0.55f),
@@ -4125,6 +4136,8 @@ namespace Airside.Presentation
                         or "window_transom" or "window_midrail" or "window_sill" or "window_header"
                         or "landside_mullion_1" or "landside_mullion_2" or "landside_mullion_3"
                         or "landside_mullion_4" or "landside_mullion_5"
+                        or "landside_mullion_6" or "landside_mullion_7"
+                        or "landside_transom" or "landside_sill"
                         or "entrance_transom" or "entrance_frame" or "boarding_frame"
                         or "entrance_handle_l" or "entrance_handle_r"
                         => new Color(0.72f, 0.75f, 0.78f),
@@ -4226,31 +4239,43 @@ namespace Airside.Presentation
                     "Models/Buildings/mdl_operations_shed_v02.gltf",
                     "Models/Buildings/mdl_operations_shed_v01.gltf"),
                 new Vector3(-8f, 0f, 26f),
-                name => name switch
+                name =>
                 {
-                    "window_l" or "window_r" or "window_side" or "window_side_b"
-                        or "window_mullion_l" or "window_mullion_r"
-                        or "window_transom_l" or "window_transom_r"
-                        or "window_header_l" or "window_header_r" => new Color(0.2f, 0.4f, 0.5f),
-                    "door" or "door_frame" or "door_knob" or "door_kick" => new Color(0.35f, 0.38f, 0.34f),
-                    "porch_roof" or "porch_beam" or "porch_light" or "roof_ridge" or "roof_panel" or "roof_gutter"
-                        or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
-                        or "roof_vent_a" or "roof_vent_b"
-                        or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy" or "antenna_guy_b"
-                        or "ac_unit" or "ac_unit_b" or "ac_grille" or "radio_rack"
-                        or "vent_pipe" or "wall_vent" or "signage" or "flood_can" or "flood_can_b"
-                        or "porch_post_l" or "porch_post_r"
+                    if (name.StartsWith("glass_pane", StringComparison.Ordinal)
+                        || name is "window_l" or "window_r" or "window_side" or "window_side_b")
+                        return new Color(0.2f, 0.4f, 0.5f, 0.42f);
+                    if (name.StartsWith("window_mullion", StringComparison.Ordinal)
+                        || name.StartsWith("wall_rib", StringComparison.Ordinal)
+                        || name is "window_transom_l" or "window_transom_r"
+                        or "window_header_l" or "window_header_r"
                         or "window_sill_l" or "window_sill_r"
-                        or "step_rail_l" or "step_rail_r"
-                        or "side_louvre" or "side_louvre_b" or "mailbox" or "bench" or "plinth"
-                        => new Color(0.48f, 0.5f, 0.46f),
-                    _ => new Color(0.55f, 0.58f, 0.52f)
+                        or "girth_band_1" or "girth_band_2"
+                        or "cladding_face_l" or "cladding_face_r")
+                        return new Color(0.48f, 0.5f, 0.46f);
+                    return name switch
+                    {
+                        "door" or "door_frame" or "door_knob" or "door_kick" => new Color(0.35f, 0.38f, 0.34f),
+                        "interior_glow" => new Color(1f, 0.82f, 0.5f),
+                        "interior_desk" => new Color(0.42f, 0.4f, 0.36f),
+                        "porch_roof" or "porch_beam" or "porch_light" or "roof_ridge" or "roof_panel" or "roof_gutter"
+                            or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
+                            or "roof_vent_a" or "roof_vent_b"
+                            or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy" or "antenna_guy_b"
+                            or "ac_unit" or "ac_unit_b" or "ac_grille" or "radio_rack"
+                            or "vent_pipe" or "wall_vent" or "signage" or "flood_can" or "flood_can_b"
+                            or "porch_post_l" or "porch_post_r"
+                            or "step_rail_l" or "step_rail_r"
+                            or "side_louvre" or "side_louvre_b" or "mailbox" or "bench" or "plinth"
+                            => new Color(0.48f, 0.5f, 0.46f),
+                        _ => new Color(0.55f, 0.58f, 0.52f)
+                    };
                 },
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
                     "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
+                "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(1.5f, 1.2f),
-                surfaceMeshNames: new[] { "shed_body", "porch", "roof" });
+                surfaceMeshNames: new[] { "shed_body", "porch", "roof", "cladding", "wall_rib", "girth" });
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -6492,42 +6517,57 @@ namespace Airside.Presentation
                     // Keep cart_* / cart_wheel_* names so wheels roll and carts do not bob as Cargo.
                     _ => $"{name} {kitName}"
                 },
-                kitName => kitName switch
+                kitName =>
                 {
-                    "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
-                        or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
-                        or "cart_wheel_3l" or "cart_wheel_3r"
-                        or "hub_fl" or "hub_fr" or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
-                    "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
-                        or "exhaust" => new Color(0.25f, 0.25f, 0.28f),
-                    "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_glass" or "door_handle"
-                        => new Color(0.2f, 0.22f, 0.25f),
-                    "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
-                        or "tug_floor" or "tug_steering" or "counterweight" => color * 0.82f,
-                    "cab_window" or "windows" or "tug_window" or "window_mullion"
-                        or "window_mullion_2" or "window_mullion_3" or "window_mullion_4"
-                        or "window_mullion_5" or "window_mullion_6" or "window_mullion_7"
-                        or "window_sill" or "window_header" or "destination_board"
-                        => new Color(0.2f, 0.4f, 0.55f),
-                    "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
-                    "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
-                    "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
-                    "mirror_l" or "mirror_r" or "bumper" or "bumper_front" or "bumper_rear"
-                        or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3" or "tank_band_4"
-                        or "tank_cap" or "tank_cap_b" or "tank_ladder" or "tank_walkway"
-                        or "grill" or "light_bar" or "fender_fl" or "fender_fr" or "fender_rl" or "fender_rr"
-                        or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
-                        or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
-                        or "number_plate" or "fuel_hazard" or "wiper" or "wiper_b"
-                        => color * 0.7f,
-                    "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
-                        => new Color(0.75f, 0.55f, 0.2f),
-                    "stripe" or "stripe_b" or "stripe_upper" => new Color(0.95f, 0.85f, 0.2f),
-                    "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
-                        or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
-                        or "cart_gate_1" or "cart_gate_2" or "cart_gate_3"
-                        or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
-                    _ => color
+                    if (kitName.StartsWith("glass_pane", StringComparison.Ordinal)
+                        || kitName is "cab_window" or "windows" or "tug_window" or "door_glass" or "door_glass_r"
+                        or "windshield" or "rear_window")
+                        return new Color(0.2f, 0.4f, 0.55f, 0.42f);
+                    if (kitName.StartsWith("window_mullion", StringComparison.Ordinal)
+                        || kitName is "window_sill" or "window_sill_b" or "window_header" or "window_header_b"
+                        or "destination_board")
+                        return color * 0.7f;
+                    return kitName switch
+                    {
+                        "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
+                            or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
+                            or "cart_wheel_3l" or "cart_wheel_3r"
+                            or "hub_fl" or "hub_fr" or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
+                        "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
+                            or "hose_coil_a" or "hose_coil_b" or "pump_cabinet" or "pump_gauge" or "pump_valve"
+                            or "exhaust" => new Color(0.25f, 0.25f, 0.28f),
+                        "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_handle"
+                            => new Color(0.2f, 0.22f, 0.25f),
+                        "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
+                            or "tug_floor" or "tug_steering" or "counterweight" => color * 0.82f,
+                        "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
+                        "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
+                        "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
+                        "mirror_l" or "mirror_r" or "bumper" or "bumper_front" or "bumper_rear"
+                            or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3" or "tank_band_4"
+                            or "tank_cap" or "tank_cap_b" or "tank_ladder" or "tank_walkway"
+                            or "tank_end_f" or "tank_end_r" or "tank_rail_l" or "tank_rail_r"
+                            or "grill" or "light_bar" or "fender_fl" or "fender_fr" or "fender_rl" or "fender_rr"
+                            or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
+                            or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
+                            or "number_plate" or "fuel_hazard" or "wiper" or "wiper_b"
+                            => color * 0.7f,
+                        "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
+                            or "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_2a" or "cargo_bag_2b"
+                            or "cargo_bag_3a" or "cargo_bag_3b"
+                            => new Color(0.75f, 0.55f, 0.2f),
+                        "stripe" or "stripe_b" or "stripe_upper" => new Color(0.95f, 0.85f, 0.2f),
+                        "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
+                            or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
+                            or "cart_gate_1" or "cart_gate_2" or "cart_gate_3"
+                            or "cart_bed_1" or "cart_bed_2" or "cart_bed_3"
+                            or "cart_canopy_1" or "cart_canopy_2" or "cart_canopy_3"
+                            or "cart_post_1l" or "cart_post_1r" or "cart_post_2l" or "cart_post_2r"
+                            or "cart_post_3l" or "cart_post_3r"
+                            or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
+                        "seat_row_1" or "seat_row_2" => new Color(0.35f, 0.38f, 0.42f),
+                        _ => color
+                    };
                 },
                 localPosition: new Vector3(0f, -0.55f, 0f));
 
@@ -6870,7 +6910,8 @@ namespace Airside.Presentation
                     {
                         var n = child.name;
                         if (n is not ("glass_front" or "landside_glass" or "windows" or "cabin_windows"
-                            or "door_glass")
+                            or "door_glass" or "window_l" or "window_r" or "window_side" or "window_side_b"
+                            or "windshield" or "rear_window")
                             && !n.StartsWith("glass_pane", StringComparison.Ordinal))
                             continue;
                         var renderer = child.GetComponent<Renderer>();
@@ -6894,7 +6935,11 @@ namespace Airside.Presentation
                         foreach (var child in root.GetComponentsInChildren<Transform>(true))
                         {
                             if (child.name is "glass_front" or "door_opening" or "entrance"
-                                or "window_l" or "window_r" or "cabin_windows" or "cockpit")
+                                or "window_l" or "window_r" or "window_side" or "window_side_b"
+                                or "cabin_windows" or "cockpit" or "landside_glass"
+                                or "windshield" or "rear_window")
+                                continue;
+                            if (child.name.StartsWith("glass_pane", StringComparison.Ordinal))
                                 continue;
                             if (surfaceMeshNames != null && surfaceMeshNames.Length > 0)
                             {

@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (scrub carpet + dusk floods + wet/interior)
+- **Last updated:** 2026-09-07 by Cursor (GSE/ops densify + mullion/glass fixes)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — Addressables/DCC path, more kit fidelity. No new economy. Do not block on Mac playtest.
-- **In progress / half-done:** Fence scrub carpet; URP lights/object 12 + dusk flood punch; glass_pane masks; apron slabs + residual damp; terminal interior furniture (110); irregular puddles. Still ~20% of REF.
+- **Do this next:** Continue 0025 — Addressables/DCC path, more kit fidelity, day/wet polish. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** Ops shed 94 (cladding/panes); fuel 75; tug 68; bus 72 split panes; terminal 126 landside panes; mullions no longer glass-tinted on GSE/ops; wet collect covers markings. Still ~20% of REF.
 - **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud / bird / tree / shrub count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

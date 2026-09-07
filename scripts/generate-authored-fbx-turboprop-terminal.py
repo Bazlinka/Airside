@@ -567,12 +567,16 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "entrance_transom": box(0, 2.55, -2.38, 2.5, 0.08, 0.06),
         "entrance_handle_l": box(-0.15, 1.35, -2.4, 0.08, 0.35, 0.08),
         "entrance_handle_r": box(0.15, 1.35, -2.4, 0.08, 0.35, 0.08),
-        "landside_glass": box(0, 2.2, 2.35, 12.0, 1.8, 0.1),
-        "landside_mullion_1": box(-4.0, 2.2, 2.4, 0.1, 1.9, 0.1),
-        "landside_mullion_2": box(0.0, 2.2, 2.4, 0.1, 1.9, 0.1),
-        "landside_mullion_3": box(4.0, 2.2, 2.4, 0.1, 1.9, 0.1),
-        "landside_mullion_4": box(-2.0, 2.2, 2.4, 0.08, 1.9, 0.08),
-        "landside_mullion_5": box(2.0, 2.2, 2.4, 0.08, 1.9, 0.08),
+        "landside_glass": box(0, 2.2, 2.35, 12.0, 1.8, 0.04),
+        "landside_mullion_1": box(-4.0, 2.2, 2.42, 0.1, 1.9, 0.12),
+        "landside_mullion_2": box(0.0, 2.2, 2.42, 0.1, 1.9, 0.12),
+        "landside_mullion_3": box(4.0, 2.2, 2.42, 0.1, 1.9, 0.12),
+        "landside_mullion_4": box(-2.0, 2.2, 2.42, 0.08, 1.9, 0.1),
+        "landside_mullion_5": box(2.0, 2.2, 2.42, 0.08, 1.9, 0.1),
+        "landside_mullion_6": box(-5.5, 2.2, 2.42, 0.08, 1.9, 0.1),
+        "landside_mullion_7": box(5.5, 2.2, 2.42, 0.08, 1.9, 0.1),
+        "landside_transom": box(0, 2.85, 2.42, 11.5, 0.08, 0.1),
+        "landside_sill": box(0, 1.35, 2.42, 11.5, 0.08, 0.12),
         "landside_awning": box(0, 3.2, 3.0, 10.0, 0.12, 1.4),
         "canopy": box(0, 3.55, -3.1, 14.0, 0.18, 2.2),
         "canopy_beam": box(0, 3.35, -3.1, 14.0, 0.12, 0.25),
@@ -630,6 +634,12 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         # Upper + lower panes split by midrail.
         meshes[f"glass_pane_{i}"] = box(x, 2.85, pane_z, 1.35, 0.9, 0.06)
         meshes[f"glass_pane_lo_{i}"] = box(x, 1.75, pane_z, 1.35, 1.05, 0.06)
+    # Landside curtain panes between mullions.
+    land_xs = [-5.0, -3.0, -1.0, 1.0, 3.0, 5.0]
+    land_z = 2.36
+    for i, x in enumerate(land_xs, start=1):
+        meshes[f"glass_pane_land_{i}"] = box(x, 2.55, land_z, 1.7, 0.55, 0.05)
+        meshes[f"glass_pane_land_lo_{i}"] = box(x, 1.75, land_z, 1.7, 0.7, 0.05)
     return meshes
 
 
@@ -718,7 +728,10 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
 
 
 def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    return {
+    # Corrugation ribs + split glass panes so mullions read metal, not glass tint.
+    pane_z = 2.02
+    mullion_z = 2.08
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "shed_body": box(0, 1.4, 0, 6, 2.8, 4),
         "porch": box(0, 1.0, 2.3, 3, 2.0, 1.2),
         "porch_roof": box(0, 2.15, 2.4, 3.4, 0.18, 1.5),
@@ -728,16 +741,21 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "door": box(0, 1.0, 2.85, 1.1, 1.9, 0.1),
         "door_frame": box(0, 1.0, 2.92, 1.25, 2.05, 0.06),
         "door_knob": cylinder(0.4, 1.05, 2.95, 0.04, 0.06, axis="z", segments=8),
-        "window_l": box(-1.8, 1.6, 2.05, 1.0, 0.9, 0.08),
-        "window_r": box(1.8, 1.6, 2.05, 1.0, 0.9, 0.08),
-        "window_side": box(-3.05, 1.6, 0, 0.08, 0.9, 1.4),
-        "window_side_b": box(3.05, 1.6, 0, 0.08, 0.9, 1.4),
-        "window_mullion_l": box(-1.8, 1.6, 2.08, 0.06, 0.9, 0.06),
-        "window_mullion_r": box(1.8, 1.6, 2.08, 0.06, 0.9, 0.06),
-        "window_sill_l": box(-1.8, 1.12, 2.08, 1.05, 0.08, 0.12),
-        "window_sill_r": box(1.8, 1.12, 2.08, 1.05, 0.08, 0.12),
-        "window_transom_l": box(-1.8, 2.0, 2.08, 1.0, 0.05, 0.05),
-        "window_transom_r": box(1.8, 2.0, 2.08, 1.0, 0.05, 0.05),
+        # Keep named slabs as deep fallbacks; panes carry the visible glass.
+        "window_l": box(-1.8, 1.6, pane_z - 0.02, 1.0, 0.9, 0.04),
+        "window_r": box(1.8, 1.6, pane_z - 0.02, 1.0, 0.9, 0.04),
+        "window_side": box(-3.05, 1.6, 0, 0.04, 0.9, 1.4),
+        "window_side_b": box(3.05, 1.6, 0, 0.04, 0.9, 1.4),
+        "window_mullion_l": box(-1.8, 1.6, mullion_z, 0.06, 0.9, 0.08),
+        "window_mullion_r": box(1.8, 1.6, mullion_z, 0.06, 0.9, 0.08),
+        "window_mullion_l2": box(-2.05, 1.6, mullion_z, 0.05, 0.9, 0.06),
+        "window_mullion_l3": box(-1.55, 1.6, mullion_z, 0.05, 0.9, 0.06),
+        "window_mullion_r2": box(1.55, 1.6, mullion_z, 0.05, 0.9, 0.06),
+        "window_mullion_r3": box(2.05, 1.6, mullion_z, 0.05, 0.9, 0.06),
+        "window_sill_l": box(-1.8, 1.12, mullion_z, 1.05, 0.08, 0.12),
+        "window_sill_r": box(1.8, 1.12, mullion_z, 1.05, 0.08, 0.12),
+        "window_transom_l": box(-1.8, 2.0, mullion_z, 1.0, 0.05, 0.06),
+        "window_transom_r": box(1.8, 2.0, mullion_z, 1.0, 0.05, 0.06),
         "roof_ridge": box(0, 2.95, 0, 6.2, 0.25, 1.0),
         "roof_panel": box(0, 2.85, 0, 6.0, 0.12, 3.8),
         "roof_gutter": box(0, 2.55, 2.0, 6.0, 0.08, 0.12),
@@ -761,8 +779,8 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "flood_can": box(-2.4, 2.7, 2.05, 0.25, 0.18, 0.2),
         "plinth": box(0, 0.1, 0, 6.2, 0.2, 4.2),
         "porch_light": box(0, 2.05, 2.95, 0.2, 0.12, 0.2),
-        "window_header_l": box(-1.8, 2.1, 2.08, 1.05, 0.06, 0.1),
-        "window_header_r": box(1.8, 2.1, 2.08, 1.05, 0.06, 0.1),
+        "window_header_l": box(-1.8, 2.1, mullion_z, 1.05, 0.06, 0.1),
+        "window_header_r": box(1.8, 2.1, mullion_z, 1.05, 0.06, 0.1),
         "side_louvre": box(-3.05, 1.0, -1.2, 0.1, 0.7, 1.0),
         "side_louvre_b": box(3.05, 1.0, -1.2, 0.1, 0.7, 1.0),
         "roof_vent_a": cylinder(-1.0, 3.15, 0.5, 0.15, 0.35, axis="y", segments=8),
@@ -772,18 +790,40 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "bench": box(-2.2, 0.35, 2.6, 1.2, 0.35, 0.4),
         "flood_can_b": box(2.4, 2.7, 2.05, 0.25, 0.18, 0.2),
         "door_kick": box(0, 0.25, 2.9, 1.0, 0.2, 0.08),
+        "girth_band_1": box(0, 0.85, 0, 6.05, 0.08, 4.05),
+        "girth_band_2": box(0, 1.95, 0, 6.05, 0.08, 4.05),
+        "cladding_face_l": box(-3.02, 1.4, 0, 0.06, 2.6, 3.9),
+        "cladding_face_r": box(3.02, 1.4, 0, 0.06, 2.6, 3.9),
+        "interior_desk": box(-1.2, 1.05, -0.6, 1.6, 0.85, 0.7),
+        "interior_glow": box(0, 1.55, 1.7, 3.2, 1.0, 0.06),
     }
+    # Front bay panes (split by mullions).
+    for i, x in enumerate([-2.05, -1.55, 1.55, 2.05], start=1):
+        meshes[f"glass_pane_{i}"] = box(x, 1.85, pane_z, 0.42, 0.42, 0.05)
+        meshes[f"glass_pane_lo_{i}"] = box(x, 1.35, pane_z, 0.42, 0.42, 0.05)
+    # Side curtain panes.
+    for i, z in enumerate([-0.45, 0.0, 0.45], start=1):
+        meshes[f"glass_pane_side_l_{i}"] = box(-3.04, 1.6, z, 0.05, 0.75, 0.4)
+        meshes[f"glass_pane_side_r_{i}"] = box(3.04, 1.6, z, 0.05, 0.75, 0.4)
+    for i, x in enumerate([-2.4, -1.6, -0.8, 0.0, 0.8, 1.6, 2.4], start=1):
+        meshes[f"wall_rib_{i}"] = box(x, 1.4, 2.02, 0.08, 2.5, 0.06)
+    for i, z in enumerate([-1.5, -0.75, 0.0, 0.75, 1.5], start=1):
+        meshes[f"wall_rib_l_{i}"] = box(-3.04, 1.4, z, 0.06, 2.5, 0.08)
+        meshes[f"wall_rib_r_{i}"] = box(3.04, 1.4, z, 0.06, 2.5, 0.08)
+    return meshes
 
 
 def fuel_truck_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    return {
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "cab": box(1.05, 0.95, 0, 1.5, 1.5, 1.55),
-        "cab_window": box(1.55, 1.25, 0, 0.08, 0.7, 1.2),
+        "cab_window": box(1.55, 1.25, 0, 0.04, 0.7, 1.2),
         "cab_door": box(1.05, 0.95, 0.78, 1.2, 1.2, 0.08),
         "cab_door_r": box(1.05, 0.95, -0.78, 1.2, 1.2, 0.08),
         "cab_roof": box(1.05, 1.75, 0, 1.45, 0.12, 1.45),
         "cab_visor": box(1.55, 1.55, 0, 0.35, 0.08, 1.3),
         "tank": cylinder(-0.45, 0.9, 0, 0.65, 2.5, axis="x", segments=16),
+        "tank_end_f": cylinder(0.78, 0.9, 0, 0.62, 0.22, axis="x", segments=16),
+        "tank_end_r": cylinder(-1.68, 0.9, 0, 0.62, 0.22, axis="x", segments=16),
         "tank_band": box(-0.45, 0.9, 0, 2.55, 0.2, 1.4),
         "tank_band_2": box(-0.45, 0.9, 0, 0.15, 1.35, 1.35),
         "tank_band_3": box(0.4, 0.9, 0, 0.12, 1.3, 1.3),
@@ -792,6 +832,8 @@ def fuel_truck_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "tank_cap_b": cylinder(0.35, 1.55, 0, 0.18, 0.16, axis="y", segments=10),
         "tank_ladder": box(-1.5, 1.1, 0.75, 0.08, 1.0, 0.35),
         "tank_walkway": box(-0.45, 1.5, 0.55, 2.2, 0.06, 0.35),
+        "tank_rail_l": box(-0.45, 1.55, 0.72, 2.0, 0.05, 0.05),
+        "tank_rail_r": box(-0.45, 1.55, -0.72, 2.0, 0.05, 0.05),
         "chassis": box(0.1, 0.35, 0, 3.6, 0.25, 1.1),
         "fender_fl": box(1.35, 0.45, 0.7, 0.7, 0.2, 0.2),
         "fender_fr": box(1.35, 0.45, -0.7, 0.7, 0.2, 0.2),
@@ -809,6 +851,11 @@ def fuel_truck_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "hose": cylinder(-1.7, 0.55, 0.55, 0.06, 0.7, axis="z", segments=8),
         "hose_guard": box(-1.7, 0.7, 0.75, 0.5, 0.5, 0.08),
         "hose_tray": box(-1.55, 0.55, 0.55, 0.55, 0.12, 0.55),
+        "pump_cabinet": box(-1.55, 0.85, -0.55, 0.55, 0.7, 0.55),
+        "pump_gauge": box(-1.55, 1.1, -0.82, 0.25, 0.2, 0.06),
+        "pump_valve": cylinder(-1.55, 0.55, -0.55, 0.08, 0.25, axis="y", segments=8),
+        "hose_coil_a": cylinder(-1.75, 0.7, 0.2, 0.12, 0.2, axis="z", segments=10),
+        "hose_coil_b": cylinder(-1.75, 0.7, 0.0, 0.12, 0.2, axis="z", segments=10),
         "mirror_l": box(1.7, 1.35, 0.85, 0.12, 0.25, 0.18),
         "mirror_r": box(1.7, 1.35, -0.85, 0.12, 0.25, 0.18),
         "beacon": box(1.05, 1.85, 0, 0.25, 0.2, 0.25),
@@ -828,14 +875,26 @@ def fuel_truck_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "mudflap_r": box(-1.15, 0.25, -0.75, 0.35, 0.35, 0.04),
         "number_plate": box(1.95, 0.55, 0, 0.04, 0.18, 0.45),
         "fuel_hazard": box(-0.45, 1.2, 0.72, 0.55, 0.35, 0.04),
+        "window_mullion": box(1.56, 1.25, 0, 0.04, 0.7, 0.05),
+        "window_mullion_2": box(1.56, 1.25, 0.4, 0.04, 0.7, 0.05),
+        "window_mullion_3": box(1.56, 1.25, -0.4, 0.04, 0.7, 0.05),
+        "window_sill": box(1.56, 0.88, 0, 0.05, 0.05, 1.15),
+        "window_header": box(1.56, 1.62, 0, 0.05, 0.05, 1.15),
+        "door_glass": box(1.05, 1.2, 0.8, 0.7, 0.55, 0.04),
+        "door_glass_r": box(1.05, 1.2, -0.8, 0.7, 0.55, 0.04),
     }
+    # Cab windshield panes between mullions.
+    for i, z in enumerate([-0.45, -0.15, 0.15, 0.45], start=1):
+        meshes[f"glass_pane_{i}"] = box(1.57, 1.4, z, 0.04, 0.35, 0.28)
+        meshes[f"glass_pane_lo_{i}"] = box(1.57, 1.1, z, 0.04, 0.28, 0.28)
+    return meshes
 
 
 def baggage_tug_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    return {
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "tug": box(3.6, 0.55, 0, 1.7, 0.95, 1.15),
         "tug_cab": box(4.1, 0.95, 0, 0.9, 0.85, 1.05),
-        "tug_window": box(4.5, 1.15, 0, 0.08, 0.45, 0.85),
+        "tug_window": box(4.5, 1.15, 0, 0.04, 0.45, 0.85),
         "tug_bumper": box(4.55, 0.4, 0, 0.2, 0.35, 1.0),
         "tug_seat": box(3.85, 0.85, 0, 0.45, 0.35, 0.7),
         "tug_rollbar": box(3.7, 1.35, 0, 0.08, 0.7, 0.9),
@@ -844,6 +903,9 @@ def baggage_tug_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "cart_1": box(1.8, 0.5, 0, 1.5, 0.75, 1.05),
         "cart_2": box(0.2, 0.5, 0, 1.5, 0.75, 1.05),
         "cart_3": box(-1.4, 0.5, 0, 1.5, 0.75, 1.05),
+        "cart_bed_1": box(1.8, 0.22, 0, 1.45, 0.08, 1.0),
+        "cart_bed_2": box(0.2, 0.22, 0, 1.45, 0.08, 1.0),
+        "cart_bed_3": box(-1.4, 0.22, 0, 1.45, 0.08, 1.0),
         "cart_rail_1": box(1.8, 0.85, 0.48, 1.4, 0.08, 0.08),
         "cart_rail_2": box(0.2, 0.85, 0.48, 1.4, 0.08, 0.08),
         "cart_rail_3": box(-1.4, 0.85, 0.48, 1.4, 0.08, 0.08),
@@ -853,9 +915,24 @@ def baggage_tug_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "cart_gate_1": box(1.8, 0.7, -0.55, 1.3, 0.45, 0.06),
         "cart_gate_2": box(0.2, 0.7, -0.55, 1.3, 0.45, 0.06),
         "cart_gate_3": box(-1.4, 0.7, -0.55, 1.3, 0.45, 0.06),
+        "cart_canopy_1": box(1.8, 1.25, 0, 1.35, 0.06, 0.95),
+        "cart_canopy_2": box(0.2, 1.25, 0, 1.35, 0.06, 0.95),
+        "cart_canopy_3": box(-1.4, 1.25, 0, 1.35, 0.06, 0.95),
+        "cart_post_1l": box(1.2, 0.95, 0.42, 0.05, 0.55, 0.05),
+        "cart_post_1r": box(1.2, 0.95, -0.42, 0.05, 0.55, 0.05),
+        "cart_post_2l": box(-0.4, 0.95, 0.42, 0.05, 0.55, 0.05),
+        "cart_post_2r": box(-0.4, 0.95, -0.42, 0.05, 0.55, 0.05),
+        "cart_post_3l": box(-2.0, 0.95, 0.42, 0.05, 0.55, 0.05),
+        "cart_post_3r": box(-2.0, 0.95, -0.42, 0.05, 0.55, 0.05),
         "cargo_1": box(1.8, 0.95, 0, 1.2, 0.45, 0.85),
         "cargo_2": box(0.2, 0.95, 0, 1.2, 0.45, 0.85),
         "cargo_3": box(-1.4, 0.95, 0, 1.2, 0.45, 0.85),
+        "cargo_bag_1a": box(1.5, 1.05, 0.2, 0.45, 0.28, 0.35),
+        "cargo_bag_1b": box(2.1, 1.05, -0.15, 0.4, 0.25, 0.3),
+        "cargo_bag_2a": box(-0.1, 1.05, 0.15, 0.45, 0.28, 0.35),
+        "cargo_bag_2b": box(0.5, 1.05, -0.2, 0.4, 0.25, 0.3),
+        "cargo_bag_3a": box(-1.7, 1.05, 0.1, 0.45, 0.28, 0.35),
+        "cargo_bag_3b": box(-1.1, 1.05, -0.15, 0.4, 0.25, 0.3),
         "cargo_tag_1": box(1.8, 1.15, 0.4, 0.35, 0.12, 0.04),
         "cargo_tag_2": box(0.2, 1.15, 0.4, 0.35, 0.12, 0.04),
         "hitch_1": box(2.7, 0.35, 0, 0.45, 0.2, 0.2),
@@ -878,23 +955,35 @@ def baggage_tug_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "taillight_r": box(3.0, 0.55, -0.55, 0.08, 0.1, 0.1),
         "counterweight": box(3.15, 0.55, 0, 0.45, 0.55, 0.9),
         "number_plate": box(4.65, 0.5, 0, 0.04, 0.14, 0.35),
+        "glass_pane_1": box(4.51, 1.25, -0.25, 0.04, 0.28, 0.35),
+        "glass_pane_2": box(4.51, 1.25, 0.25, 0.04, 0.28, 0.35),
+        "glass_pane_lo_1": box(4.51, 1.0, -0.25, 0.04, 0.2, 0.35),
+        "glass_pane_lo_2": box(4.51, 1.0, 0.25, 0.04, 0.2, 0.35),
+        "window_mullion": box(4.51, 1.15, 0, 0.04, 0.45, 0.04),
     }
+    return meshes
 
 
 def passenger_bus_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    return {
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "bus_body": box(0, 0.95, 0, 4.4, 1.65, 1.65),
         "cabin_roof": box(0, 1.9, 0, 4.2, 0.28, 1.55),
-        "windows": box(0, 1.35, 0, 3.8, 0.55, 1.7),
-        "window_mullion": box(0, 1.35, 0, 0.08, 0.55, 1.72),
-        "window_mullion_2": box(-1.2, 1.35, 0, 0.08, 0.55, 1.72),
-        "window_mullion_3": box(1.2, 1.35, 0, 0.08, 0.55, 1.72),
-        "window_mullion_4": box(-2.0, 1.35, 0, 0.08, 0.55, 1.72),
-        "window_mullion_5": box(2.0, 1.35, 0, 0.08, 0.55, 1.72),
-        "window_mullion_6": box(-0.6, 1.35, 0, 0.06, 0.55, 1.72),
-        "window_mullion_7": box(0.6, 1.35, 0, 0.06, 0.55, 1.72),
+        # Keep a thin deep slab for older binders; side panes carry visible glass.
+        "windows": box(0, 1.35, 0, 3.8, 0.55, 1.62),
+        "window_mullion": box(0, 1.35, 0.84, 0.08, 0.55, 0.06),
+        "window_mullion_2": box(-1.2, 1.35, 0.84, 0.08, 0.55, 0.06),
+        "window_mullion_3": box(1.2, 1.35, 0.84, 0.08, 0.55, 0.06),
+        "window_mullion_4": box(-2.0, 1.35, 0.84, 0.08, 0.55, 0.06),
+        "window_mullion_5": box(2.0, 1.35, 0.84, 0.08, 0.55, 0.06),
+        "window_mullion_6": box(-0.6, 1.35, 0.84, 0.06, 0.55, 0.06),
+        "window_mullion_7": box(0.6, 1.35, 0.84, 0.06, 0.55, 0.06),
+        "window_mullion_8": box(-1.2, 1.35, -0.84, 0.08, 0.55, 0.06),
+        "window_mullion_9": box(1.2, 1.35, -0.84, 0.08, 0.55, 0.06),
+        "window_mullion_10": box(0, 1.35, -0.84, 0.08, 0.55, 0.06),
         "window_sill": box(0, 1.05, 0.86, 3.8, 0.06, 0.06),
+        "window_sill_b": box(0, 1.05, -0.86, 3.8, 0.06, 0.06),
         "window_header": box(0, 1.65, 0.86, 3.8, 0.06, 0.06),
+        "window_header_b": box(0, 1.65, -0.86, 3.8, 0.06, 0.06),
         "door": box(0.25, 0.95, 0.85, 1.05, 1.35, 0.1),
         "door_frame": box(0.25, 0.95, 0.92, 1.15, 1.45, 0.06),
         "door_glass": box(0.25, 1.25, 0.9, 0.7, 0.55, 0.05),
@@ -929,7 +1018,19 @@ def passenger_bus_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "mudflap_l": box(-1.45, 0.25, 0.85, 0.4, 0.35, 0.04),
         "mudflap_r": box(-1.45, 0.25, -0.85, 0.4, 0.35, 0.04),
         "destination_board": box(2.15, 1.85, 0, 0.08, 0.22, 0.9),
+        "rear_window": box(-2.22, 1.35, 0, 0.05, 0.55, 1.2),
+        "seat_row_1": box(-0.8, 0.85, 0.35, 1.8, 0.45, 0.45),
+        "seat_row_2": box(-0.8, 0.85, -0.35, 1.8, 0.45, 0.45),
+        "windshield": box(2.18, 1.35, 0, 0.05, 0.7, 1.35),
     }
+    # Side curtain panes between mullions (skip door bay around x=0.25).
+    pane_xs = [-1.8, -1.5, -0.9, -0.3, 0.9, 1.5, 1.8]
+    for i, x in enumerate(pane_xs, start=1):
+        meshes[f"glass_pane_{i}"] = box(x, 1.35, 0.855, 0.5, 0.48, 0.04)
+        meshes[f"glass_pane_lo_{i}"] = box(x, 1.35, -0.855, 0.5, 0.48, 0.04)
+    for i, z in enumerate([-0.45, 0.0, 0.45], start=1):
+        meshes[f"glass_pane_front_{i}"] = box(2.2, 1.35, z, 0.04, 0.55, 0.4)
+    return meshes
 
 
 def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:

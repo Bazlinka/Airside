@@ -128,7 +128,8 @@ namespace Airside.Presentation
                 return SurfaceKind.Metal;
             if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
                 || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
-                || n.Contains("landside_glass") || n.Contains("door_glass"))
+                || n.Contains("landside_glass") || n.Contains("door_glass")
+                || n.Contains("windshield") || n.Equals("rear_window"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;

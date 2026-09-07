@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **UI Toolkit toasts + aircraft nav/beacon lights (0025 items 5+6+7).** Runtime
+  `AirsideToolkitHud` (UIDocument) owns ops/research toasts and the Saved chip;
+  Canvas keeps panels/overlays. Wingtip nav and anti-collision beacon cast real
+  PointLights. Presentation only.
+
 - **Addressables-first Resources locator (0025 item 1 / ADR 0026).** Runtime
   `AirsidePrefabAddressables` exposes every `Resources/Airside/Prefabs` asset under
   `airside-prefab/<key>` via LegacyResourcesProvider; loader prefers Addressables

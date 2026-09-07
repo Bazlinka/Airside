@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Add review-ready brand and splash candidates.** Added the transparent
+  `airside_wordmark_light_v01.png`, the 3840×2160
+  `ui_splash_airport_dawn_v01.png`, exact generation evidence, and a compact AI
+  image reference index. Both remain candidates until Bailey approves them;
+  neither is wired into Unity.
+
 - **Focus product plan on the Mac first playable.** Replaces the broad blueprint with
   a delivery plan that makes the first playable the only active target; defers companion,
   CloudKit, cargo/GA and extra art batches until external playtest confirms the loop.

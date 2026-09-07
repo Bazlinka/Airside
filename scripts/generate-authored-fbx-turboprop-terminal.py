@@ -23,6 +23,7 @@ ROOT = Path("/workspace/game/Airside/Assets/Airside/Art")
 AIRCRAFT = ROOT / "Models" / "Aircraft"
 BUILDINGS = ROOT / "Models" / "Buildings"
 VEHICLES = ROOT / "Models" / "Vehicles"
+PROPS = ROOT / "Models" / "Props"
 
 _SPEC = importlib.util.spec_from_file_location(
     "batch_c_v01", Path("/workspace/scripts/generate-batch-c-models.py")
@@ -571,6 +572,38 @@ def passenger_bus_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     }
 
 
+def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """PRP-001 — keep extract names stairs/chocks/gpu used by presentation helpers."""
+    return {
+        "stairs": box(0, 0.9, 0, 1.2, 1.8, 2.4),
+        "stairs_base": box(0, 0.12, 0, 1.3, 0.2, 2.5),
+        "stairs_rail_l": box(-0.55, 1.0, 0, 0.08, 1.6, 2.3),
+        "stairs_rail_r": box(0.55, 1.0, 0, 0.08, 1.6, 2.3),
+        "stairs_tread_1": box(0, 0.35, 0.8, 1.1, 0.08, 0.4),
+        "stairs_tread_2": box(0, 0.7, 0.3, 1.1, 0.08, 0.4),
+        "stairs_tread_3": box(0, 1.05, -0.2, 1.1, 0.08, 0.4),
+        "stairs_tread_4": box(0, 1.4, -0.7, 1.1, 0.08, 0.4),
+        "stairs_platform": box(0, 1.7, -1.1, 1.2, 0.12, 0.7),
+        "stairs_wheel_l": cylinder(-0.5, 0.2, 1.0, 0.12, 0.15, axis="z", segments=8),
+        "stairs_wheel_r": cylinder(0.5, 0.2, 1.0, 0.12, 0.15, axis="z", segments=8),
+        "chocks": box(0, 0.15, 0, 0.6, 0.3, 0.35),
+        "chock_a": box(-0.4, 0.12, 0, 0.35, 0.24, 0.2),
+        "chock_b": box(0.4, 0.12, 0, 0.35, 0.24, 0.2),
+        "gpu": box(0, 0.55, 0, 1.4, 1.1, 0.9),
+        "gpu_body": box(0, 0.55, 0, 1.4, 0.9, 0.85),
+        "gpu_cab": box(0.4, 0.85, 0, 0.55, 0.55, 0.7),
+        "gpu_vent": box(-0.4, 0.9, 0, 0.45, 0.25, 0.7),
+        "gpu_cable": box(0.85, 0.45, 0, 0.35, 0.2, 0.2),
+        "gpu_wheel_fl": cylinder(0.45, 0.15, 0.35, 0.1, 0.12, axis="z", segments=8),
+        "gpu_wheel_fr": cylinder(0.45, 0.15, -0.35, 0.1, 0.12, axis="z", segments=8),
+        "gpu_wheel_rl": cylinder(-0.45, 0.15, 0.35, 0.1, 0.12, axis="z", segments=8),
+        "gpu_wheel_rr": cylinder(-0.45, 0.15, -0.35, 0.1, 0.12, axis="z", segments=8),
+        "cone": cylinder(1.2, 0.35, 0, 0.16, 0.7, axis="y", segments=8),
+        "towbar": box(0, 0.2, -1.5, 2.5, 0.12, 0.12),
+        "bin": box(-1.2, 0.45, 0.8, 0.7, 0.9, 0.7),
+    }
+
+
 def write_kit(
     folder: Path,
     basename: str,
@@ -589,6 +622,7 @@ def main() -> None:
     AIRCRAFT.mkdir(parents=True, exist_ok=True)
     BUILDINGS.mkdir(parents=True, exist_ok=True)
     VEHICLES.mkdir(parents=True, exist_ok=True)
+    PROPS.mkdir(parents=True, exist_ok=True)
 
     write_kit(AIRCRAFT, "mdl_regional_turboprop_01_authored_v01", turboprop_meshes())
     write_kit(BUILDINGS, "mdl_terminal_regional_small_authored_v01", terminal_meshes())
@@ -597,6 +631,7 @@ def main() -> None:
     write_kit(VEHICLES, "mdl_fuel_truck_small_authored_v01", fuel_truck_meshes())
     write_kit(VEHICLES, "mdl_baggage_tug_train_authored_v01", baggage_tug_meshes())
     write_kit(VEHICLES, "mdl_passenger_bus_apron_authored_v01", passenger_bus_meshes())
+    write_kit(PROPS, "mdl_service_equipment_kit_authored_v01", service_equipment_meshes())
 
 
 if __name__ == "__main__":

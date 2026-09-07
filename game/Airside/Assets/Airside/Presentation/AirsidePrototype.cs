@@ -5360,6 +5360,7 @@ namespace Airside.Presentation
             var root = new GameObject("Passenger stairs").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     PreferArtKit(
+                        "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                         "Models/Props/mdl_service_equipment_kit_v02.gltf",
                         "Models/Props/mdl_service_equipment_kit_v01.gltf"),
                     "stairs",
@@ -5396,6 +5397,7 @@ namespace Airside.Presentation
 
             var root = new GameObject("Wheel chocks").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
             var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
@@ -5429,6 +5431,7 @@ namespace Airside.Presentation
             var root = new GameObject("GPU cart").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     PreferArtKit(
+                        "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                         "Models/Props/mdl_service_equipment_kit_v02.gltf",
                         "Models/Props/mdl_service_equipment_kit_v01.gltf"),
                     "gpu",
@@ -5463,6 +5466,7 @@ namespace Airside.Presentation
 
             var root = new GameObject("Pushback tug").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,

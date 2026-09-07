@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Authored PRP-001 service equipment kit.** `mdl_service_equipment_kit_authored_v01`
+  (stairs/chocks/GPU extract names + denser rails/treads/wheels) preferred ahead of
+  v02/v01 for stand GSE mesh extraction. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Material binder fix for authored kits.** `AirsideRuntimeMaterialBinder` no
   longer treats every name containing `cabin` as glass (CabinDoor was wrong);
   fuselage/wing/tire kinds route correctly; InferFromMeshName covers authored

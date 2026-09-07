@@ -42,12 +42,11 @@ HEIGHT = 7.65 * K          # ~4.24
 FUSELAGE_R = 2.865 * K / 2  # ~0.79
 PROP_R = 3.93 * K / 2      # ~1.09
 
-# The airfield has a 7-wide runway, a 4-wide taxiway and stands 6 apart. Fit the
-# aircraft to that: a 5.6 span sits on the runway with the small overhang a real
-# turboprop has and leaves clearance between adjacent stands. The building kits are
-# ~2.7x too large for this airfield and want their own pass (see GAME.md); when the
-# airfield grows to meet them, raise this one number.
-TARGET_SPAN = 5.6
+# The airfield is laid out in units scaled by AirportTaxiNetwork.WorldScale (2.68),
+# giving an 18.8-wide runway, a 10.7-wide taxiway and stands 18.8 apart. A 15 span
+# matches that and the building kits (hangar 14.9 wide), which is REF-005's
+# proportion: the hangar is about as wide as the aircraft's wingspan.
+TARGET_SPAN = 15.0
 OUTPUT_SCALE = TARGET_SPAN / SPAN
 
 HALF_SPAN = SPAN / 2

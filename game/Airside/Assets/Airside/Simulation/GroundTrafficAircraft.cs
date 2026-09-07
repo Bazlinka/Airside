@@ -141,7 +141,7 @@ namespace Airside.Simulation
             get
             {
                 if (_warmup > 0)
-                    return new TaxiPoint(-60f, -30f);
+                    return new TaxiPoint(-60f * AirportTaxiNetwork.WorldScale, -30f * AirportTaxiNetwork.WorldScale);
 
                 var leg = _circuit[_legIndex];
                 var t = (float)Progress;
@@ -310,17 +310,18 @@ namespace Airside.Simulation
 
         private static Leg[] BuildCircuit(GroundTrafficRole role, StableId stand)
         {
+            const float s = AirportTaxiNetwork.WorldScale;
             var corridorA1 = new[] { AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaOne };
             var corridorA2 = new[] { AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaTwo };
-            var runwayEnd = new TaxiPoint(-24f, 0f);
-            var junction = new TaxiPoint(-12f, 9f);
-            var alphaEnd = new TaxiPoint(8f, 9f);
-            var away = new TaxiPoint(-60f, -30f);
-            var offField = new TaxiPoint(-36f, -4f);
+            var runwayEnd = new TaxiPoint(-24f * s, 0f * s);
+            var junction = new TaxiPoint(-12f * s, 9f * s);
+            var alphaEnd = new TaxiPoint(8f * s, 9f * s);
+            var away = new TaxiPoint(-60f * s, -30f * s);
+            var offField = new TaxiPoint(-36f * s, -4f * s);
 
             if (role == GroundTrafficRole.Reposition)
             {
-                var bay = new TaxiPoint(5f, 9f);
+                var bay = new TaxiPoint(5f * s, 9f * s);
                 return new[]
                 {
                     new Leg("Taxi in on A1", corridorA1, runwayEnd, junction, 14),
@@ -334,7 +335,7 @@ namespace Airside.Simulation
             }
 
             var leadIn = AirportTaxiNetwork.LeadInFor(stand);
-            var standPoint = new TaxiPoint(17f, AirportTaxiNetwork.StandZ(stand));
+            var standPoint = new TaxiPoint(17f * s, AirportTaxiNetwork.StandZ(stand));
             var label = stand.Equals(AirportSimulation.StandOne) ? "Stand 1"
                 : stand.Equals(AirportSimulation.StandTwo) ? "Stand 2"
                 : "Stand 3";

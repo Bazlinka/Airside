@@ -47,6 +47,14 @@ namespace Airside.Presentation
         private Transform _pushbackTug;
         private Transform _windsockSock;
         private bool _standThreeVisualBuilt;
+        // Everything the airfield builder creates hangs off this, so the whole layout
+        // can be grown to the aircraft's real size with one uniform scale instead of
+        // rewriting every coordinate. Buildings cancel it back out (their kits are
+        // already authored at the right size); vehicles and props ride it.
+        private static Transform s_airfieldRoot;
+        private const float S = AirportTaxiNetwork.WorldScale;
+        private const float StandThreeLayoutZ =
+            AirportTaxiNetwork.StandOneLayoutZ + AirportTaxiNetwork.StandPitch * 2f;
         private Camera _mainCamera;
         private AirsideCameraController _cameraController;
         private double _preciseTime;
@@ -106,7 +114,11 @@ namespace Airside.Presentation
             _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
+            s_airfieldRoot = new GameObject("Airfield").transform;
+            ArtGltfLoader.DefaultParent = s_airfieldRoot;
             BuildAirfield();
+            // Grow the layout to the aircraft it serves. Buildings opt out below.
+            s_airfieldRoot.localScale = Vector3.one * AirportTaxiNetwork.WorldScale;
             CollectNightGlowWindows();
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
@@ -640,7 +652,7 @@ namespace Airside.Presentation
                 var view = _groundTraffic[index];
                 var traffic = _simulation.GroundTraffic[index];
                 var point = traffic.Position;
-                var target = new Vector3(point.X, 0.7f, point.Z);
+                var target = new Vector3(point.X, AircraftRootHeight, point.Z);
                 var previous = view.position;
 
                 // A yield can snap the sim point back; do not lerp through released space.
@@ -704,9 +716,9 @@ namespace Airside.Presentation
             var fuelActive = TaskActive(servicing, "Refuel");
             var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
             var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
-            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f));
-            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f));
-            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f));
+            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f * S, 0.55f * S, standZ + 1.8f * S));
+            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f * S, 0.42f * S, standZ - 1.8f * S));
+            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f * S, 0.68f * S, standZ - 2.2f * S));
             AnimateServiceLoops(_fuelTruck, fuelActive, "Hose");
             AnimateServiceLoops(_baggageCart, bagActive, "Cargo");
             AnimateServiceLoops(_passengerBus, paxActive, "Door");
@@ -728,9 +740,9 @@ namespace Airside.Presentation
             if (atStand != null)
             {
                 var z = AirportTaxiNetwork.StandZ(atStand.AssignedStand);
-                PlaceProp(_stairs, true, new Vector3(17.9f, 0.55f, z + 0.15f), Quaternion.Euler(0f, -8f, 0f));
-                PlaceProp(_chocks, true, new Vector3(17f, 0.12f, z + 1.55f), Quaternion.identity);
-                PlaceProp(_gpuCart, true, new Vector3(15.2f, 0.35f, z + 2.4f), Quaternion.Euler(0f, 90f, 0f));
+                PlaceProp(_stairs, true, new Vector3(17.9f * S, 0.55f * S, z + 0.15f * S), Quaternion.Euler(0f, -8f, 0f));
+                PlaceProp(_chocks, true, new Vector3(17f * S, 0.12f * S, z + 1.55f * S), Quaternion.identity);
+                PlaceProp(_gpuCart, true, new Vector3(15.2f * S, 0.35f * S, z + 2.4f * S), Quaternion.Euler(0f, 90f, 0f));
             }
             else
             {
@@ -744,8 +756,8 @@ namespace Airside.Presentation
                 var z = AirportTaxiNetwork.StandZ(pushing.AssignedStand);
                 var progress = VisualPhaseProgress(pushing, 0f);
                 var tugPos = Vector3.Lerp(
-                    new Vector3(15.2f, 0.4f, z),
-                    new Vector3(11.2f, 0.4f, z - 2f),
+                    new Vector3(15.2f * S, 0.4f * S, z),
+                    new Vector3(11.2f * S, 0.4f * S, z - 2f * S),
                     Mathf.SmoothStep(0f, 1f, progress));
                 PlaceProp(_pushbackTug, true, tugPos, Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f)));
             }
@@ -784,15 +796,16 @@ namespace Airside.Presentation
             if (_standThreeVisualBuilt || !_simulation.Capacity.HasThirdStand)
                 return;
 
-            BuildStandMarking(17f, 26f, "Stand 3");
-            CreateBlock("Stand 3 apron pad", new Vector3(20f, 0.01f, 26f), new Vector3(16f, 0.08f, 6f),
+            BuildStandMarking(17f, StandThreeLayoutZ, "Stand 3");
+            var z3 = StandThreeLayoutZ;
+            CreateBlock("Stand 3 apron pad", new Vector3(20f, 0.01f, z3), new Vector3(16f, 0.08f, 6f),
                 new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
-            CreateCone(new Vector3(14.5f, 0.25f, 24.2f));
-            CreateCone(new Vector3(14.5f, 0.25f, 27.8f));
-            CreateBlock("Stand number 3", new Vector3(14.2f, 0.09f, 26.4f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 3 mid", new Vector3(14.2f, 0.09f, 26f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 3 stem", new Vector3(14.55f, 0.09f, 25.7f), new Vector3(0.28f, 0.04f, 1.0f), Color.white);
+            CreateCone(new Vector3(14.5f, 0.25f, z3 - 1.8f));
+            CreateCone(new Vector3(14.5f, 0.25f, z3 + 1.8f));
+            CreateBlock("Stand number 3", new Vector3(14.2f, 0.09f, z3 + 0.4f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+            CreateBlock("Stand number 3 mid", new Vector3(14.2f, 0.09f, z3), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+            CreateBlock("Stand number 3 stem", new Vector3(14.55f, 0.09f, z3 - 0.3f), new Vector3(0.28f, 0.04f, 1.0f), Color.white);
             _standThreeVisualBuilt = true;
             // The pad is built after the initial sweep, so re-collect or it alone stays
             // dry while every other paved surface darkens in the rain.
@@ -1090,6 +1103,7 @@ namespace Airside.Presentation
         private static Transform BuildRainRoot()
         {
             var root = new GameObject("Rain").transform;
+            Attach(root);
             root.position = new Vector3(0f, 0f, 8f);
             var rng = new System.Random(42);
             for (var i = 0; i < 96; i++)
@@ -1116,6 +1130,7 @@ namespace Airside.Presentation
         private static Transform BuildTouchdownSmoke()
         {
             var root = new GameObject("Touchdown smoke").transform;
+            Attach(root);
             for (var i = 0; i < 2; i++)
             {
                 var smoke = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -1958,6 +1973,8 @@ namespace Airside.Presentation
             if (camera.GetComponent<AudioListener>() == null)
                 camera.gameObject.AddComponent<AudioListener>();
 
+            AirsidePostProcessing.Apply(camera);
+
             _sun = FindFirstObjectByType<Light>();
             if (_sun == null)
                 _sun = new GameObject("Sun").AddComponent<Light>();
@@ -2150,11 +2167,11 @@ namespace Airside.Presentation
             for (var i = 0; i < positions.Length; i++)
             {
                 var go = new GameObject($"Apron flood {i + 1}");
-                go.transform.position = positions[i];
+                go.transform.position = positions[i] * S;
                 var light = go.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.92f, 0.78f);
-                light.range = 28f;
+                light.range = 28f * S;
                 light.intensity = 0.05f;
                 lights[i] = light;
             }
@@ -2186,11 +2203,11 @@ namespace Airside.Presentation
                     new Color(1f, 0.92f, 0.7f));
 
                 var go = new GameObject($"Landside streetlight {i + 1}");
-                go.transform.position = pos + new Vector3(0.55f, 4.1f, 0f);
+                go.transform.position = (pos + new Vector3(0.55f, 4.1f, 0f)) * S;
                 var light = go.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.9f, 0.7f);
-                light.range = 16f;
+                light.range = 16f * S;
                 light.intensity = 0.02f;
                 lights[i] = light;
             }
@@ -2202,7 +2219,8 @@ namespace Airside.Presentation
         {
             // Presentation-only rotating aerodrome beacon (greybox mast + point light).
             var mast = new GameObject("Aerodrome beacon").transform;
-            mast.position = new Vector3(38f, 0f, 18f);
+            Attach(mast);
+            mast.localPosition = new Vector3(38f, 0f, 18f);
             var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             pole.name = "Beacon mast";
             Object.Destroy(pole.GetComponent<Collider>());
@@ -2220,12 +2238,11 @@ namespace Airside.Presentation
             head.GetComponent<Renderer>().material.color = new Color(0.95f, 0.95f, 0.9f);
 
             var lightGo = new GameObject("Beacon light");
-            lightGo.transform.SetParent(mast, false);
-            lightGo.transform.localPosition = new Vector3(0f, 9.1f, 0f);
+            lightGo.transform.position = new Vector3(38f, 9.1f, 18f) * S;
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(0.85f, 1f, 0.9f);
-            light.range = 42f;
+            light.range = 42f * S;
             light.intensity = 0f;
             return light;
         }
@@ -2252,20 +2269,20 @@ namespace Airside.Presentation
         private static void BuildAirfield()
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
-            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
+            CreateBlock("Grass", new Vector3(0f, -0.65f, 12f), new Vector3(120f, 1f, 110f), Shade(AirsideTheme.Eucalyptus, 0.55f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
-            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Apron", new Vector3(20f, 0f, 23f), new Vector3(28f, 0.12f, 26f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
             // Batch C buildings — prefer richer v02 kits (0025 item 2) with v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v01.gltf"),
-                new Vector3(26f, 0f, 27f),
+                new Vector3(26f, 0f, 33f),
                 name => name switch
                 {
                     "glass_front" or "windows" or "entrance" or "cabin_windows" => new Color(0.16f, 0.38f, 0.5f),
@@ -2342,8 +2359,8 @@ namespace Airside.Presentation
             PlaceWorldProps();
             BuildEnvironmentContext();
 
-            BuildStandMarking(17f, 14f, "Stand 1");
-            BuildStandMarking(17f, 20f, "Stand 2");
+            BuildStandMarking(17f, AirportTaxiNetwork.StandOneLayoutZ, "Stand 1");
+            BuildStandMarking(17f, AirportTaxiNetwork.StandOneLayoutZ + AirportTaxiNetwork.StandPitch, "Stand 2");
             // Simple painted stand digits (WLD-001 language; not real typography assets).
             CreateBlock("Stand number 1", new Vector3(14.2f, 0.09f, 14f), new Vector3(0.35f, 0.04f, 1.2f), Color.white);
             CreateBlock("Stand number 2 stem", new Vector3(14.2f, 0.09f, 20.35f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
@@ -2517,21 +2534,64 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// A eucalypt-ish tree: leaning trunk, two limbs and a handful of overlapping
+        /// canopy masses at varied scale and shade. One sphere on a stick read as a
+        /// lollipop once the world grew to the aircraft's size.
+        /// </summary>
         private static void PlaceTree(Vector3 basePosition, float scale)
         {
+            // Deterministic per-position variation, so the grove is not a row of clones
+            // and is identical every run.
+            var seed = Mathf.Abs(basePosition.x * 73.1f + basePosition.z * 19.7f);
+            float Vary(float index, float spread) =>
+                (Mathf.Repeat(Mathf.Sin(seed + index * 12.9898f) * 43758.5453f, 1f) - 0.5f) * spread;
+
+            var lean = new Vector3(Vary(1f, 0.35f), 0f, Vary(2f, 0.35f));
+            var trunkHeight = 1.35f * scale * (1f + Vary(3f, 0.3f));
+
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "Tree trunk";
             Object.Destroy(trunk.GetComponent<Collider>());
-            trunk.transform.position = basePosition + new Vector3(0f, 1.1f * scale, 0f);
-            trunk.transform.localScale = new Vector3(0.28f * scale, 1.1f * scale, 0.28f * scale);
-            trunk.GetComponent<Renderer>().material = CreateMaterial(new Color(0.35f, 0.26f, 0.16f));
+            Attach(trunk.transform);
+            trunk.transform.localPosition = basePosition + new Vector3(0f, trunkHeight, 0f) + lean * 0.4f;
+            trunk.transform.localScale = new Vector3(0.24f * scale, trunkHeight, 0.24f * scale);
+            trunk.transform.localRotation = Quaternion.Euler(lean.z * 14f, 0f, -lean.x * 14f);
+            trunk.GetComponent<Renderer>().material = CreateMaterial(new Color(0.42f, 0.36f, 0.28f));
 
-            var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            canopy.name = "Tree canopy";
-            Object.Destroy(canopy.GetComponent<Collider>());
-            canopy.transform.position = basePosition + new Vector3(0f, 2.6f * scale, 0f);
-            canopy.transform.localScale = new Vector3(2.2f * scale, 1.8f * scale, 2.2f * scale);
-            canopy.GetComponent<Renderer>().material = CreateMaterial(Shade(AirsideTheme.Eucalyptus, 0.9f));
+            for (var limb = 0; limb < 2; limb++)
+            {
+                var branch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                branch.name = "Tree limb";
+                Object.Destroy(branch.GetComponent<Collider>());
+                Attach(branch.transform);
+                var side = limb == 0 ? 1f : -1f;
+                branch.transform.localPosition = basePosition
+                    + new Vector3(side * 0.35f * scale, trunkHeight * 1.75f, Vary(4f + limb, 0.5f) * scale);
+                branch.transform.localScale = new Vector3(0.12f * scale, 0.55f * scale, 0.12f * scale);
+                branch.transform.localRotation = Quaternion.Euler(0f, 0f, side * (22f + Vary(6f + limb, 16f)));
+                branch.GetComponent<Renderer>().material = CreateMaterial(new Color(0.42f, 0.36f, 0.28f));
+            }
+
+            var masses = 4;
+            for (var i = 0; i < masses; i++)
+            {
+                var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                canopy.name = "Tree canopy";
+                Object.Destroy(canopy.GetComponent<Collider>());
+                Attach(canopy.transform);
+                var spread = 0.85f * scale;
+                var offset = i == 0
+                    ? Vector3.zero
+                    : new Vector3(Vary(10f + i, 2f) * spread, Vary(20f + i, 0.9f) * spread, Vary(30f + i, 2f) * spread);
+                var size = (i == 0 ? 2.0f : 1.35f + Vary(40f + i, 0.6f)) * scale;
+                canopy.transform.localPosition = basePosition
+                    + new Vector3(0f, trunkHeight * 2.1f, 0f) + lean + offset;
+                // Gums are broader than they are tall and thin out toward the top.
+                canopy.transform.localScale = new Vector3(size, size * 0.72f, size);
+                canopy.GetComponent<Renderer>().material =
+                    CreateMaterial(Shade(AirsideTheme.Eucalyptus, 0.78f + Vary(50f + i, 0.28f)));
+            }
         }
 
         private static void BuildDistantHills()
@@ -2549,7 +2609,8 @@ namespace Airside.Presentation
             var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             dome.name = "Horizon dome";
             Object.Destroy(dome.GetComponent<Collider>());
-            dome.transform.position = new Vector3(0f, 0f, 0f);
+            Attach(dome.transform);
+            dome.transform.localPosition = new Vector3(0f, 0f, 0f);
             dome.transform.localScale = new Vector3(260f, 120f, 260f);
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
@@ -2639,10 +2700,10 @@ namespace Airside.Presentation
         }
 
         /// <summary>World height of an aircraft motion root while it is on the ground.</summary>
-        private const float AircraftRootHeight = 0.7f;
+        private const float AircraftRootHeight = 0.7f * AirportTaxiNetwork.WorldScale;
 
         /// <summary>Top surface of the apron slab — where wheels should touch.</summary>
-        private const float TarmacSurfaceY = 0.06f;
+        private const float TarmacSurfaceY = 0.06f * AirportTaxiNetwork.WorldScale;
 
         /// <summary>
         /// Drops a loaded kit so its lowest geometry rests on the tarmac. glTF kits carry
@@ -2827,6 +2888,7 @@ namespace Airside.Presentation
         private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale, string artRelativePath = null)
         {
             var root = new GameObject(name).transform;
+            Attach(root);
             var usedArt = !string.IsNullOrEmpty(artRelativePath) && ArtGltfLoader.TryInstantiate(
                 artRelativePath,
                 root,
@@ -2883,6 +2945,7 @@ namespace Airside.Presentation
         private static Transform BuildStairs()
         {
             var root = new GameObject("Passenger stairs").transform;
+            Attach(root);
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_service_equipment_kit_v01.gltf",
                     "stairs",
@@ -2911,6 +2974,7 @@ namespace Airside.Presentation
         private static Transform BuildChocks()
         {
             var root = new GameObject("Wheel chocks").transform;
+            Attach(root);
             var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
             var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
                 new Color(0.85f, 0.2f, 0.15f), out var a);
@@ -2934,6 +2998,7 @@ namespace Airside.Presentation
         private static Transform BuildGpuCart()
         {
             var root = new GameObject("GPU cart").transform;
+            Attach(root);
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_service_equipment_kit_v01.gltf",
                     "gpu",
@@ -2960,6 +3025,7 @@ namespace Airside.Presentation
         private static Transform BuildPushbackTug()
         {
             var root = new GameObject("Pushback tug").transform;
+            Attach(root);
             var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,
                     new Color(0.82f, 0.62f, 0.18f), out var towbar))
@@ -2996,7 +3062,8 @@ namespace Airside.Presentation
             var sock = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             sock.name = "Windsock sock";
             Object.Destroy(sock.GetComponent<Collider>());
-            sock.transform.position = new Vector3(-11.2f, 3.05f, 12f);
+            Attach(sock.transform);
+            sock.transform.localPosition = new Vector3(-11.2f, 3.05f, 12f);
             sock.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
             sock.transform.rotation = Quaternion.Euler(0f, 12f, 90f);
             sock.GetComponent<Renderer>().material = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
@@ -3020,7 +3087,8 @@ namespace Airside.Presentation
             var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             cone.name = "Safety cone";
             Object.Destroy(cone.GetComponent<Collider>());
-            cone.transform.position = position;
+            Attach(cone.transform);
+            cone.transform.localPosition = position;
             cone.transform.localScale = new Vector3(0.28f, 0.35f, 0.28f);
             cone.GetComponent<Renderer>().material = CreateMaterial(new Color(0.95f, 0.45f, 0.08f));
             CreateBlock("Cone collar", position + new Vector3(0f, 0.12f, 0f), new Vector3(0.32f, 0.06f, 0.32f), Color.white);
@@ -3038,6 +3106,7 @@ namespace Airside.Presentation
                 return;
 
             var root = new GameObject("Barrier").transform;
+            Attach(root);
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
             ParentBlock(root, "Barrier rail", Vector3.zero, new Vector3(2.4f, 0.12f, 0.12f), new Color(0.9f, 0.55f, 0.12f));
@@ -3057,7 +3126,11 @@ namespace Airside.Presentation
         {
             if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
-                root.position = worldPosition;
+                Attach(root);
+                root.localPosition = worldPosition;
+                // The building kits are already authored at the aircraft's scale, so
+                // cancel the airfield's layout scale back out of them.
+                root.localScale = Vector3.one / AirportTaxiNetwork.WorldScale;
                 if (!string.IsNullOrEmpty(glassTextureRelativePath))
                 {
                     foreach (var child in root.GetComponentsInChildren<Transform>(true))
@@ -3231,6 +3304,7 @@ namespace Airside.Presentation
                 return;
 
             var root = new GameObject("Airside sign").transform;
+            Attach(root);
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
             ParentBlock(root, "Airside sign post", new Vector3(0f, 1.1f, 0f), new Vector3(0.12f, 2.0f, 0.12f), new Color(0.35f, 0.36f, 0.38f));
@@ -3320,35 +3394,51 @@ namespace Airside.Presentation
 
         private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute)
         {
+            const float s = AirportTaxiNetwork.WorldScale;
+            var standX = 17f * s;
+            var pushbackX = 12f * s;
+            var pushbackZ = standZ - 2f * s;
             return phase switch
             {
-                AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
-                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
+                AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f) * s, new Vector3(-35f, 2f, 0f) * s, progress),
+                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f) * s, new Vector3(-24f, 0.7f, 0f) * s, progress),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, progress, false),
-                AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
-                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
+                AircraftPhase.AtStand => new Vector3(standX, AircraftRootHeight, standZ),
+                AircraftPhase.Pushback => Smooth(new Vector3(standX, AircraftRootHeight, standZ),
+                    new Vector3(pushbackX, AircraftRootHeight, pushbackZ), progress),
                 // Blend off the pushback point onto the outbound route. The route runs on
                 // the same 0..1 window the reservation uses, so the model never leads the
                 // segment it holds — and it never taxis back onto the stand it just left.
                 AircraftPhase.TaxiOut => progress < 0.15f
                     ? Vector3.Lerp(
-                        new Vector3(12f, 0.7f, standZ - 2f),
+                        new Vector3(pushbackX, AircraftRootHeight, pushbackZ),
                         PositionAlongTaxiRoute(taxiRoute, progress, true),
                         Mathf.SmoothStep(0f, 1f, progress / 0.15f))
                     : PositionAlongTaxiRoute(taxiRoute, progress, true),
-                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
-                _ => new Vector3(52f, 15f, 0f)
+                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f) * s, new Vector3(48f, 12f, 0f) * s, progress),
+                _ => new Vector3(52f, 15f, 0f) * s
             };
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)
         {
-            return TaxiVisualPath.PositionAt(route, progress, reverse);
+            return TaxiVisualPath.PositionAt(route, progress, reverse, AircraftRootHeight);
         }
 
         private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
 
         
+
+        /// <summary>
+        /// Parents a freshly created world object to the airfield root so it inherits
+        /// the layout scale. Objects that later re-parent themselves (aircraft parts,
+        /// vehicle parts) simply move out again.
+        /// </summary>
+        private static void Attach(Transform child)
+        {
+            if (s_airfieldRoot != null)
+                child.SetParent(s_airfieldRoot, false);
+        }
 
         private static GameObject CreateBlock(
             string name,
@@ -3360,7 +3450,8 @@ namespace Airside.Presentation
         {
             var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.name = name;
-            block.transform.position = position;
+            Attach(block.transform);
+            block.transform.localPosition = position;
             block.transform.localScale = scale;
             block.GetComponent<Renderer>().material = CreateMaterial(color, artTextureRelativePath, textureTiling);
             return block;
@@ -3375,8 +3466,9 @@ namespace Airside.Presentation
             var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.name = name;
             UnityEngine.Object.Destroy(quad.GetComponent<Collider>());
-            quad.transform.position = position;
-            quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            Attach(quad.transform);
+            quad.transform.localPosition = position;
+            quad.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             quad.transform.localScale = scale;
             var material = CreateMaterial(Color.white, artTextureRelativePath, Vector2.one);
             material.SetFloat("_Surface", 1f); // URP transparent hint when available

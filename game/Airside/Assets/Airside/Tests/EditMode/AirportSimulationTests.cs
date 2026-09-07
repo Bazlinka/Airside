@@ -111,7 +111,8 @@ namespace Airside.Tests
             Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
             Assert.That(standThree.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
             Assert.That(standOne.Points.Count, Is.EqualTo(standOne.SegmentIds.Count + 1));
-            Assert.That(standThree.Points[standThree.Points.Count - 1].Z, Is.EqualTo(26f));
+            Assert.That(standThree.Points[standThree.Points.Count - 1].Z,
+                Is.EqualTo(AirportTaxiNetwork.StandZ(AirportSimulation.StandThree)).Within(0.001f));
         }
 
         [Test]

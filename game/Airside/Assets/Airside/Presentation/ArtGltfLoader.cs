@@ -36,7 +36,7 @@ namespace Airside.Presentation
                 return false;
 
             var holder = new GameObject(Path.GetFileNameWithoutExtension(artRelativePath)).transform;
-            holder.SetParent(parent, false);
+            holder.SetParent(parent != null ? parent : DefaultParent, false);
             holder.localPosition = localPosition;
             holder.localRotation = Quaternion.identity;
             holder.localScale = Vector3.one;
@@ -56,6 +56,13 @@ namespace Airside.Presentation
         /// Places one named mesh from a kit at a world pose. Used for WLD lighting/prop
         /// templates and PRP service gear. Returns false when the kit or mesh is missing.
         /// </summary>
+        /// <summary>
+        /// Parent given to kit instances that are not placed under an explicit parent.
+        /// The airfield sets this to its scaled root so kit props land in the same
+        /// layout space as the primitives around them.
+        /// </summary>
+        public static Transform DefaultParent { get; set; }
+
         public static bool TryPlaceNamedMesh(
             string artRelativePath,
             string meshName,
@@ -72,6 +79,13 @@ namespace Airside.Presentation
                 return false;
 
             instance = CreateMeshObject(meshName, entry.Mesh, color, null, worldPosition, worldRotation);
+            if (DefaultParent != null)
+            {
+                instance.SetParent(DefaultParent, false);
+                instance.localPosition = worldPosition;
+                instance.localRotation = worldRotation;
+            }
+
             if (localScale.HasValue)
                 instance.localScale = localScale.Value;
             return true;

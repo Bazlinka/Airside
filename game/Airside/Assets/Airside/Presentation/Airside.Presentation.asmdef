@@ -5,7 +5,9 @@
     "Airside.Domain",
     "Airside.Simulation",
     "Airside.Persistence",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.RenderPipelines.Core.Runtime"
   ],
   "autoReferenced": true
 }

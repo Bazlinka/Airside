@@ -5,6 +5,30 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield grown to the aircraft (REF-005 proportions).** The paved surfaces, stand
+  pitch and taxi distances were laid out around a 5.6-unit proxy aircraft while the
+  art kit's aircraft has a 15 wingspan — wings overhung the runway by four units each
+  side and aircraft on adjacent stands interpenetrated. `AirportTaxiNetwork.WorldScale`
+  now scales the whole layout by 2.68 (runway 18.8 wide, taxiway 10.7, stands 18.8
+  apart), applied through one scaled airfield root so every road, light, prop, tree
+  and fence moves with it. Buildings cancel the scale back out — their kits were
+  already authored at the aircraft's size. Stand pitch raised from 6 to 7 layout units
+  so parked aircraft clear each other, apron deepened to reach the terminal, terminal
+  moved clear of stand 3, grass extended, camera framing rebuilt around the new
+  footprint. Aircraft kit back to its full 15 wingspan.
+
+- **URP post stack switched on.** The runtime camera never carried a
+  `UniversalAdditionalCameraData` — post-processing and camera AA were both off, and
+  the Presentation assembly could not even reference URP. It now gets SMAA (high) plus
+  a runtime volume with Neutral tonemapping, restrained bloom, a light grade, warm
+  white balance and a soft vignette. Unity's template default volume profile (depth of
+  field, motion blur, film grain, lens distortion, chromatic aberration, plus literal
+  test components) is still wired as URP's global default, so each of those effects is
+  explicitly overridden to its no-op value rather than left to blend in underneath.
+
+- **Trees.** Eucalypt-ish: leaning trunk, two limbs and four overlapping canopy masses
+  with deterministic per-position variation, instead of one sphere on a stick.
+
 - **v03 aircraft kit: lofted geometry instead of boxes.** Every glTF part in the
   Batch C kits was a 24-vertex axis-aligned cube — the "regional turboprop" was 29
   boxes with no curvature and 15.05 x 9.82 proportions no turboprop has.

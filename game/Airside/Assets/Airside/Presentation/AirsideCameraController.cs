@@ -5,13 +5,17 @@ namespace Airside.Presentation
 {
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
-        // Framed against the aircraft's actual size (v03 kit: 5.6 span, 5.8 long) and
-        // the airfield's ~50-unit footprint, so the overview reads as a place rather
-        // than a close-up of one corner of it.
-        private const float OverviewDistance = 60f;
-        private const float FollowDistanceGround = 24f;
-        private const float FollowDistanceAir = 38f;
+        private const float S = Airside.Simulation.AirportTaxiNetwork.WorldScale;
+        private readonly Vector3 _overviewCenter = new Vector3(8f, 0f, 16f) * S;
+        // Framed against the aircraft's real size (15 span, 15.6 long) and the airfield
+        // that now surrounds it, so the overview reads as a place rather than a close-up
+        // of one corner of it.
+        // The airfield now runs from the runway at z -3.5 to the terminal at z 33 in
+        // layout units — about 120 world units deep — so the overview has to stand well
+        // back to hold all of it.
+        private const float OverviewDistance = 70f * S;
+        private const float FollowDistanceGround = 9.5f * S;
+        private const float FollowDistanceAir = 15f * S;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
@@ -66,18 +70,18 @@ namespace Airside.Presentation
 
                 var altitude = Mathf.Max(0f, _followTarget.position.y);
                 var lookPoint = _followTarget.position
-                    + ahead * Mathf.Lerp(4.5f, 10f, Mathf.Clamp01(altitude / 12f))
-                    + Vector3.up * Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
+                    + ahead * Mathf.Lerp(4.5f * S, 10f * S, Mathf.Clamp01(altitude / (12f * S)))
+                    + Vector3.up * Mathf.Lerp(1.2f * S, 2.5f * S, Mathf.Clamp01(altitude / (12f * S)));
                 _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.8f));
 
-                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / 10f))
+                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / (10f * S)))
                     * _followZoom;
                 _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2f));
 
                 // Ease yaw toward the aircraft heading without fighting player orbit.
                 var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + 28f;
                 _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.55f));
-                _pitch = Mathf.Lerp(_pitch, Mathf.Lerp(28f, 36f, Mathf.Clamp01(altitude / 10f)),
+                _pitch = Mathf.Lerp(_pitch, Mathf.Lerp(28f, 36f, Mathf.Clamp01(altitude / (10f * S))),
                     1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
             }
 
@@ -85,7 +89,7 @@ namespace Airside.Presentation
             var shakeOffset = Vector3.zero;
             if (_touchdownShake > 0f)
             {
-                var strength = _touchdownShake * 0.55f;
+                var strength = _touchdownShake * 0.55f * S;
                 shakeOffset = new Vector3(
                     Mathf.Sin(Time.unscaledTime * 48f) * strength,
                     Mathf.Sin(Time.unscaledTime * 61f) * strength * 0.6f,
@@ -122,7 +126,7 @@ namespace Airside.Presentation
                     if (keyboard.aKey.isPressed) move.x -= 1f;
                     var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                     var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                    _center += (planarForward * move.y + planarRight * move.x) * (18f * Time.unscaledDeltaTime);
+                    _center += (planarForward * move.y + planarRight * move.x) * (18f * S * Time.unscaledDeltaTime);
                 }
             }
 
@@ -142,7 +146,7 @@ namespace Airside.Presentation
                 if (_following)
                     _followZoom = Mathf.Clamp(_followZoom - scroll * 0.0016f, MinFollowZoom, MaxFollowZoom);
                 else
-                    _distance = Mathf.Clamp(_distance - scroll * 0.035f, 14f, 90f);
+                    _distance = Mathf.Clamp(_distance - scroll * 0.035f * S, 14f * S, 90f * S);
             }
         }
 

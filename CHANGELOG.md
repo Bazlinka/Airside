@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Touchdown chirp and day-est income icon.** Soft procedural squeal on landing
+  transition plus income icon on the day-estimate HUD line. Presentation only.
+  `scripts/test-domain.sh` 97/97.
+
 - **Batch D runtime alive-airport + first-session coach tips.** Phase-based prop RPM,
   soft gear retract, split landing/taxi lights, dual touchdown smoke, denser storm rain,
   stronger engine heat on takeoff/approach, ground-traffic props/lights/heat, wet Stand 3

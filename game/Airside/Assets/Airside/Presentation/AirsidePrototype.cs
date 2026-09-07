@@ -24,6 +24,8 @@ namespace Airside.Presentation
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private float _touchdownSmokeRemaining;
+        private AudioSource _touchdownAudio;
+        private AudioClip _touchdownClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly List<(Renderer Renderer, Color DryColor)> _wetSurfaces = new List<(Renderer, Color)>();
         private Transform _fuelTruck;
@@ -79,6 +81,11 @@ namespace Airside.Presentation
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
+            _touchdownClip = CreateTouchdownClip();
+            _touchdownAudio = gameObject.AddComponent<AudioSource>();
+            _touchdownAudio.playOnAwake = false;
+            _touchdownAudio.spatialBlend = 0.55f;
+            _touchdownAudio.volume = 0.22f;
             CollectWetSurfaces();
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
@@ -693,6 +700,11 @@ namespace Airside.Presentation
                     _touchdownSmoke.localScale = Vector3.one;
                     _touchdownSmoke.gameObject.SetActive(true);
                     _touchdownSmokeRemaining = 0.95f;
+                    if (_touchdownAudio != null && _touchdownClip != null && !_audioMuted)
+                    {
+                        _touchdownAudio.transform.position = _touchdownSmoke.position;
+                        _touchdownAudio.PlayOneShot(_touchdownClip, 0.35f);
+                    }
                 }
 
                 _previousPhases[id] = phase;
@@ -859,7 +871,14 @@ namespace Airside.Presentation
             var financeStyle = finance.ExpectedNet < 0 ? delayed
                 : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? caution
                 : onTime;
-            GUI.Label(new Rect(42, 176, 390, 22),
+            var incomeIcon = AirsideTheme.Icon("economy", "income");
+            var financeX = 42f;
+            if (incomeIcon != null)
+            {
+                GUI.DrawTexture(new Rect(42, 176, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                financeX = 64f;
+            }
+            GUI.Label(new Rect(financeX, 176, 390 - (financeX - 42), 22),
                 $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", financeStyle);
             if (_simulation.IsInsolvent)
             {
@@ -2046,6 +2065,24 @@ namespace Airside.Presentation
             }
 
             var clip = AudioClip.Create("Prototype engine", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private static AudioClip CreateTouchdownClip()
+        {
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate / 4];
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var time = i / (float)sampleRate;
+                var envelope = Mathf.Exp(-time * 18f);
+                var chirp = Mathf.Sin(time * 2f * Mathf.PI * (420f + time * 900f));
+                var rumble = Mathf.Sin(time * 2f * Mathf.PI * 90f) * 0.35f;
+                samples[i] = (chirp * 0.22f + rumble) * envelope;
+            }
+
+            var clip = AudioClip.Create("Touchdown chirp", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

@@ -52,6 +52,7 @@ namespace Airside.Presentation
         private AudioClip _touchdownClip;
         private AudioSource _ambientWindAudio;
         private AudioSource _ambientRainAudio;
+        private AudioSource _ambientCoastAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness)> _wetSurfaces = new List<(Renderer, Color, float)>();
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
@@ -86,6 +87,8 @@ namespace Airside.Presentation
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
+        private const float AmbientCoastVolume = 0.035f;
+        private float _apronProbeRefreshAt;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
         private float _saveIndicatorUntil;
@@ -159,6 +162,13 @@ namespace Airside.Presentation
             _ambientRainAudio.spatialBlend = 0f;
             _ambientRainAudio.volume = 0f;
             _ambientRainAudio.Play();
+            _ambientCoastAudio = gameObject.AddComponent<AudioSource>();
+            _ambientCoastAudio.clip = CreateCoastClip();
+            _ambientCoastAudio.loop = true;
+            _ambientCoastAudio.playOnAwake = false;
+            _ambientCoastAudio.spatialBlend = 0f;
+            _ambientCoastAudio.volume = 0f;
+            _ambientCoastAudio.Play();
             CollectWetSurfaces();
             BuildWetPuddles();
             CollectHoldShortMarkings();
@@ -1041,10 +1051,12 @@ namespace Airside.Presentation
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
             var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
+            var coastTarget = _audioMuted ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
             if (_paused)
             {
                 windTarget *= EngineVolumePausedScale;
                 rainTarget *= EngineVolumePausedScale;
+                coastTarget *= EngineVolumePausedScale;
             }
 
             // Slight day/night wind variation (presentation only).
@@ -1054,6 +1066,12 @@ namespace Airside.Presentation
             _ambientWindAudio.volume = Mathf.MoveTowards(_ambientWindAudio.volume, windTarget, Time.unscaledDeltaTime * 0.2f);
             _ambientRainAudio.volume = Mathf.MoveTowards(_ambientRainAudio.volume, rainTarget, Time.unscaledDeltaTime * 0.25f);
             _ambientRainAudio.pitch = storm ? 1.08f : 1f;
+            if (_ambientCoastAudio != null)
+            {
+                _ambientCoastAudio.volume = Mathf.MoveTowards(
+                    _ambientCoastAudio.volume, coastTarget, Time.unscaledDeltaTime * 0.15f);
+                _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
+            }
         }
 
         private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
@@ -1068,7 +1086,17 @@ namespace Airside.Presentation
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Gear", StringComparison.Ordinal))
+                if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
+                {
+                    // Doors open when gear is down; close when retracted (presentation only).
+                    child.gameObject.SetActive(true);
+                    var euler = child.localEulerAngles;
+                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                    var target = airborne ? 0f : 78f;
+                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.StartsWith("Gear", StringComparison.Ordinal))
                 {
                     // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
                     child.gameObject.SetActive(true);
@@ -1190,16 +1218,28 @@ namespace Airside.Presentation
 
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
         {
-            // Presentation-only: cabin door swings open at stand, closes before pushback.
-            var targetY = phase == AircraftPhase.AtStand ? -85f : 0f;
+            // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
+            var cabinTargetY = phase == AircraftPhase.AtStand ? -85f : 0f;
+            var cargoTargetY = phase == AircraftPhase.AtStand ? 70f : 0f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                if (child == aircraft || !child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                if (child == aircraft)
                     continue;
-                var euler = child.localEulerAngles;
-                var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                euler.y = Mathf.MoveTowards(current, targetY, Time.unscaledDeltaTime * 120f);
-                child.localEulerAngles = euler;
+                if (child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, cabinTargetY, Time.unscaledDeltaTime * 120f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
+                         || child.name.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, cargoTargetY, Time.unscaledDeltaTime * 100f);
+                    child.localEulerAngles = euler;
+                }
             }
         }
 
@@ -1884,6 +1924,14 @@ namespace Airside.Presentation
 
             UpdateWetPuddles(wetness, storm);
             UpdateTaxiSpray(wetness, raining || storm);
+
+            // Refresh apron probe when wetness or dusk shifts so Lit pavement picks up floods.
+            if (_apronProbe != null && Time.unscaledTime >= _apronProbeRefreshAt)
+            {
+                _apronProbe.intensity = Mathf.Lerp(0.75f, 1.15f, wetness);
+                _apronProbe.RenderProbe();
+                _apronProbeRefreshAt = Time.unscaledTime + (wetness > 0.05f ? 4.5f : 12f);
+            }
         }
 
         private void UpdateTaxiSpray(float wetness, bool raining)
@@ -2118,7 +2166,8 @@ namespace Airside.Presentation
                      {
                          "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
                          "Access road", "Access road turn", "Car park", "Service lane",
-                         "Fuel pad"
+                         "Fuel pad", "Coast sand", "Outer paddock N", "Outer paddock S",
+                         "Relief berm N", "Relief berm S"
                      })
             {
                 var go = GameObject.Find(name);
@@ -2155,7 +2204,12 @@ namespace Airside.Presentation
                 new Vector3(20f, 0.07f, 12f),
                 new Vector3(-18f, 0.07f, 16f),
                 new Vector3(32f, 0.07f, 18f),
-                new Vector3(22f, 0.07f, 22f)
+                new Vector3(22f, 0.07f, 22f),
+                new Vector3(16f, 0.07f, 17.5f),
+                new Vector3(26f, 0.07f, 16f),
+                new Vector3(10f, 0.07f, 14f),
+                new Vector3(30f, 0.07f, 21f),
+                new Vector3(-14f, 0.07f, 18f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -2268,6 +2322,11 @@ namespace Airside.Presentation
 
         private void OnGUI()
         {
+            // Toolkit owns the full gameplay HUD + overlays when active — skip IMGUI
+            // entirely so first-session density is Toolkit/uGUI only (0025 item 6).
+            if (_toolkitHud != null && _toolkitHud.IsActive)
+                return;
+
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
             var previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -3876,6 +3935,12 @@ namespace Airside.Presentation
             CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            CreateBlock("Access road shoulder L", new Vector3(22.2f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
+            CreateBlock("Access road shoulder R", new Vector3(29.8f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
             CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
@@ -4317,6 +4382,20 @@ namespace Airside.Presentation
             CreateBlock("Gate stop L", new Vector3(23.1f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate stop R", new Vector3(28.9f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate sign", new Vector3(26f, 2.0f, 34.2f), new Vector3(1.6f, 0.55f, 0.06f), AirsideTheme.SafetyYellow);
+
+            // South airside fence above the dunes (gap kept clear of runway strip).
+            for (var x = -40; x <= 40; x += 4)
+            {
+                if (x >= -12 && x <= 12)
+                    continue;
+                CreateBlock($"Fence post S {x}", new Vector3(x, 0.65f, -20f), new Vector3(0.12f, 1.3f, 0.12f), post);
+                if (x < 40 && !(x >= -16 && x <= 12))
+                {
+                    CreateBlock($"Fence rail S top {x}", new Vector3(x + 2f, 1.15f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence rail S mid {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence mesh S {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
+                }
+            }
         }
 
         /// <summary>
@@ -4472,7 +4551,19 @@ namespace Airside.Presentation
                 (new Vector3(28f, 0f, -30f), 0.95f),
                 (new Vector3(40f, 0f, -26f), 1.1f),
                 (new Vector3(-60f, 0f, 20f), 1.2f),
-                (new Vector3(68f, 0f, 16f), 1.05f)
+                (new Vector3(68f, 0f, 16f), 1.05f),
+                // Extra belt density so overview reads as continuous KI bush (0025 item 3).
+                (new Vector3(-34f, 0f, 48f), 1.0f),
+                (new Vector3(-20f, 0f, 52f), 1.15f),
+                (new Vector3(4f, 0f, 54f), 0.9f),
+                (new Vector3(22f, 0f, 50f), 1.05f),
+                (new Vector3(44f, 0f, 56f), 1.2f),
+                (new Vector3(-58f, 0f, 32f), 0.95f),
+                (new Vector3(70f, 0f, 30f), 1.1f),
+                (new Vector3(-64f, 0f, -10f), 1.05f),
+                (new Vector3(66f, 0f, -14f), 0.88f),
+                (new Vector3(-50f, 0f, -30f), 1.0f),
+                (new Vector3(48f, 0f, -32f), 1.12f)
             };
             for (var i = 0; i < trees.Length; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
@@ -4846,6 +4937,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
@@ -4910,10 +5002,19 @@ namespace Airside.Presentation
             "fuselage" => "Fuselage",
             "fuselage_mid" => "Fuselage mid",
             "fuselage_aft" => "Fuselage aft",
+            "cabin_ring_fwd" => "Fuselage",
+            "cabin_ring_mid" => "Fuselage mid",
+            "cabin_ring_aft" => "Fuselage aft",
+            "cabin_ring_tail" => "Fuselage aft",
+            "tail_cone" => "Fuselage aft",
             "belly_fairing" => "Belly fairing",
             "nose" => "Nose",
+            "nose_tip" => "Nose",
+            "nose_ring_a" => "Nose",
+            "nose_ring_b" => "Nose",
             "radome" => "Radome",
             "cockpit" => "Cockpit",
+            "cockpit_loft" => "Cockpit",
             "cockpit_frame" => "Cockpit frame",
             "cabin_windows" => "Cabin windows",
             "cabin_window_band" => "Cabin window band",
@@ -4921,10 +5022,18 @@ namespace Airside.Presentation
             "cabin_window_2" => "Cabin window 2",
             "cabin_window_3" => "Cabin window 3",
             "cabin_window_4" => "Cabin window 4",
+            "cabin_window_5" => "Cabin window 5",
+            "cabin_window_r1" => "Cabin window R1",
+            "cabin_window_r2" => "Cabin window R2",
+            "cabin_window_r3" => "Cabin window R3",
+            "cabin_window_r4" => "Cabin window R4",
+            "cabin_window_r5" => "Cabin window R5",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
             "wing_root_left" => "Wing root L",
             "wing_root_right" => "Wing root R",
+            "wing_fairing_left" => "Wing fairing L",
+            "wing_fairing_right" => "Wing fairing R",
             "flap_left" => "Flap L",
             "flap_right" => "Flap R",
             "spoiler_left" => "Spoiler L",
@@ -4952,6 +5061,7 @@ namespace Airside.Presentation
             "tail_fin" => "Tail",
             "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
+            "dorsal_fin" => "Dorsal fin",
             "elevator_left" => "Elevator L",
             "elevator_right" => "Elevator R",
             "rudder" => "Rudder",
@@ -4980,15 +5090,22 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
         {
-            "fuselage" or "fuselage_mid" or "fuselage_aft" or "nose" or "radome" or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
-            "cockpit" or "cabin_windows" or "cabin_window_band"
-                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" => new Color(0.18f, 0.35f, 0.48f),
+            "fuselage" or "fuselage_mid" or "fuselage_aft"
+                or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
+                or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
+                or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
+            "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
+                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
+                or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
+                => new Color(0.18f, 0.35f, 0.48f),
             "cockpit_frame" => new Color(0.75f, 0.78f, 0.82f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
+                or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
                 or "flap_left" or "flap_right" or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
-                or "tail_fin" or "tail_fin_tip" or "tailplane" or "elevator_left" or "elevator_right" or "rudder" => accent,
+                or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
+                or "elevator_left" or "elevator_right" or "rudder" => accent,
             "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right"
                 or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
@@ -5132,10 +5249,13 @@ namespace Airside.Presentation
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 var n = child.name;
-                // Cover segmented turboprop fuselage parts (v04 Fuselage / FuselageMid / FuselageAft / Nose).
-                if (n != "Fuselage" && n != "FuselageMid" && n != "FuselageAft" && n != "Nose"
+                // Cover segmented turboprop fuselage parts (v04 + lofted cabin rings / nose rings).
+                if (n != "Fuselage" && n != "FuselageMid" && n != "Fuselage mid" && n != "FuselageAft" && n != "Fuselage aft"
+                    && n != "Nose"
                     && n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0)
+                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("tail_cone", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)
@@ -6007,6 +6127,27 @@ namespace Airside.Presentation
             }
 
             var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        /// <summary>Soft coastal wave bed for Kangaroo Island ambience (presentation only).</summary>
+        private static AudioClip CreateCoastClip()
+        {
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate * 3];
+            var state = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var t = i / (float)sampleRate;
+                var white = UnityEngine.Random.value * 2f - 1f;
+                state = state * 0.96f + white * 0.04f;
+                var swell = Mathf.Sin(t * 2f * Mathf.PI * 0.22f) * 0.5f + 0.5f;
+                var wash = Mathf.Sin(t * 2f * Mathf.PI * 0.55f + 1.3f) * 0.35f + 0.65f;
+                samples[i] = state * 0.4f * swell * wash;
+            }
+
+            var clip = AudioClip.Create("Ambient coast", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

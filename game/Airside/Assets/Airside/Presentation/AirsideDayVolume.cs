@@ -163,11 +163,12 @@ namespace Airside.Presentation
             _color.colorFilter.Override(filter);
             _color.saturation.Override(Mathf.Lerp(6f, 2f, daylight));
 
-            _bloom.intensity.Override(Mathf.Lerp(0.55f, 0.18f, daylight));
-            _vignette.intensity.Override(Mathf.Lerp(0.32f, 0.12f, daylight));
+            _bloom.intensity.Override(Mathf.Lerp(0.42f, 0.14f, daylight));
+            _vignette.intensity.Override(Mathf.Lerp(0.28f, 0.1f, daylight));
             // Night film grain for regional dusk grit; nearly off in bright day.
-            _grain.intensity.Override(Mathf.Lerp(0.28f, 0.04f, daylight));
-            _grain.response.Override(Mathf.Lerp(0.85f, 0.55f, daylight));
+            // Cap bloom so night never reintroduces the soft/smeary template look.
+            _grain.intensity.Override(Mathf.Lerp(0.22f, 0.03f, daylight));
+            _grain.response.Override(Mathf.Lerp(0.8f, 0.55f, daylight));
         }
     }
 }

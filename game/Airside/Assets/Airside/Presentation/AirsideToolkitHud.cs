@@ -443,9 +443,7 @@ namespace Airside.Presentation
             pauseCard.style.paddingRight = 24;
             pauseCard.style.paddingTop = 18;
             pauseCard.style.paddingBottom = 18;
-            var pauseTitle = MakePanelLabel("Pause title", 26, FontStyle.Bold);
-            pauseTitle.text = "PAUSED";
-            pauseCard.Add(pauseTitle);
+            AddBrandHeader(pauseCard, "PAUSED");
             var pauseHint = MakePanelLabel("Pause hint", 15, FontStyle.Bold);
             pauseHint.text = "Space to resume";
             pauseHint.style.color = AirsideTheme.SafetyYellow;
@@ -466,9 +464,7 @@ namespace Airside.Presentation
             awayCard.style.paddingRight = 24;
             awayCard.style.paddingTop = 18;
             awayCard.style.paddingBottom = 18;
-            var awayTitle = MakePanelLabel("Away title", 26, FontStyle.Bold);
-            awayTitle.text = "AIRSIDE";
-            awayCard.Add(awayTitle);
+            AddBrandHeader(awayCard, null);
             var awaySub = MakePanelLabel("Away subtitle", 16, FontStyle.Bold);
             awaySub.text = "Welcome back to operations";
             awaySub.style.marginTop = 6;
@@ -493,9 +489,7 @@ namespace Airside.Presentation
             insolventCard.style.paddingRight = 24;
             insolventCard.style.paddingTop = 18;
             insolventCard.style.paddingBottom = 18;
-            var insolventTitle = MakePanelLabel("Insolvency title", 26, FontStyle.Bold);
-            insolventTitle.text = "AIRSIDE";
-            insolventCard.Add(insolventTitle);
+            AddBrandHeader(insolventCard, null);
             var insolventHead = MakePanelLabel("Insolvency head", 17, FontStyle.Bold);
             insolventHead.text = "Airport declared insolvent";
             insolventHead.style.color = AirsideTheme.SignalRed;
@@ -515,6 +509,40 @@ namespace Airside.Presentation
             _root.Add(_insolvencyOverlay);
 
             HideAllOverlays();
+        }
+
+        /// <summary>
+        /// Decision 0025 item 8 — wordmark first on overlays; optional subtitle when
+        /// wordmark art is missing falls back to AIRSIDE text, then the subtitle.
+        /// </summary>
+        private void AddBrandHeader(VisualElement card, string subtitleOrNull)
+        {
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                var wm = new VisualElement { name = "Overlay wordmark" };
+                wm.pickingMode = PickingMode.Ignore;
+                wm.style.height = 36;
+                wm.style.marginBottom = string.IsNullOrEmpty(subtitleOrNull) ? 8 : 4;
+                wm.style.backgroundImage = new StyleBackground(wordmark);
+                wm.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                card.Add(wm);
+            }
+            else
+            {
+                var brand = MakePanelLabel("Overlay brand", 26, FontStyle.Bold);
+                brand.text = "AIRSIDE";
+                brand.style.marginBottom = 4;
+                card.Add(brand);
+            }
+
+            if (!string.IsNullOrEmpty(subtitleOrNull))
+            {
+                var title = MakePanelLabel("Overlay title", 22, FontStyle.Bold);
+                title.text = subtitleOrNull;
+                title.style.marginBottom = 4;
+                card.Add(title);
+            }
         }
 
         private VisualElement MakeOverlay(string name, Color dim)

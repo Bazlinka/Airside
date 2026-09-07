@@ -5,13 +5,30 @@ change it describes.
 
 ## Unreleased
 
+- **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
+  animate separately from struts; cargo doors open at stand; soft coastal ambient
+  audio joins wind/rain; wet response covers more ground surfaces and refreshes the
+  apron reflection probe; night bloom/grain capped to avoid smear; Toolkit pause /
+  away / insolvency overlays use the BRD-001 wordmark. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; `scripts/test-unity.sh` 116/116;
+  Play soak: gear/cargo doors in hierarchy, BRD-001 wordmark on HUD + 3 overlays.
+
+- **Addressables Resources provider + lofted turboprop + env densify (0025 items 1–3+6).**
+  Runtime `airside-prefab/<key>` keys now load via `AirsideResourcesProvider`
+  (`Resources.Load`) instead of the missing LegacyResourcesProvider stub — StreamingAssets
+  glTF and direct Resources fallbacks stay intact. Hero aircraft prefers distinct
+  `mdl_regional_turboprop_01_lofted_v01` (79 stepped-fuselage meshes; does not race
+  `*_v04`). South fence, denser vegetation belt, access-road shoulders; Toolkit HUD
+  early-outs residual IMGUI when active. Evidence: `scripts/test-domain.sh` 105/105;
+  `scripts/test-unity.sh` 116/116; Play soak loaded lofted kit, denser env, Batch C/WLD/PRP.
+
 - **Unity 6.3 HUD startup: font + PanelSettings theme.** Editor Play threw
   `ArgumentException: Arial.ttf is no longer a valid built in font` while building
   the Canvas HUD; the packaged player logged `No Theme Style Sheet set to
   PanelSettings` for the runtime Toolkit UIDocument. Canvas text now loads
   `LegacyRuntime.ttf`, and Toolkit PanelSettings assigns
   `Resources/Airside/UI/AirsideRuntimeTheme.tss` (imports Unity's default theme).
-  No simulation or art-path changes.
+  Play soak 2026-09-07: zero Arial / PanelSettings warnings. No simulation or art-path changes.
 
 - **Verified decision 0025 packaged-art delivery on a real macOS build.** From clean
   `main` at `33a961a`, the art sync copied 137 files without repository drift,

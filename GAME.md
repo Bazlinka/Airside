@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (URP material library spike)
-- **Branch / working tree:** `cursor/materials-library-spike-ddad`
-- **Do this next:** Merge materials PR; then HUD Toolkit spike or denser environment materials; Bailey Unity Play soak
-- **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring
+- **Last updated:** 2026-09-07 by Claude (simulation correctness review)
+- **Branch / working tree:** `main`, uncommitted — four simulation fixes + 8 tests
+- **Do this next:** Review/commit the fixes below; then HUD Toolkit spike or denser environment materials; Bailey Unity Play soak
+- **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring (Cursor)
 - **Watch out for:** procedural normals are shared noise, not authored surface normals
 - **Open questions for Bailey:** none
-- **Visual assets:** streetlights on `main`; material library on this branch
+- **Visual assets:** streetlights and material library on `main`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -41,7 +41,7 @@ progression: Operations Efficiency (−$100/day running cost), then Passenger Se
 (+$75 route income per departed commercial). If cash stays negative across three
 consecutive day closes, the airport is declared insolvent and the simulation stops.
 
-When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever built stand no commercial is using (holding off-field when every built stand is taken), and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
 
 ## Visual asset contract
 
@@ -87,6 +87,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Current evidence
 
 - `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 96 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
+- `scripts/test-unity.sh` on the Mac editor (Unity 6000.3.23f1): 115 EditMode tests pass.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
@@ -97,7 +98,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight. Acceptance also refuses when the projected schedule would exceed stand capacity (12 flights/day on two stands).
 - Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
 - Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
-- Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
+- Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it — and an understaffing delay is reported with "Understaffed ground crew" as its cause, so no delay is ever shown without one.
+- The daily finance brief projects income from every commercial aircraft currently operating, not just the first.
+- A player command issued before the first simulated tick (second 0) is replayed on load like any other.
 - Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
 - Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
 - Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). `scripts/test-domain.sh`: 96 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
@@ -107,6 +110,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 - The event history produces an ordered, player-readable account of each flight.
 - Taxi movements release shared segments progressively instead of locking the whole route.
 - A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
+- Ground traffic only uses stands the airport has actually built; with every built stand occupied by a commercial it holds off-field (leaving the corridor free) instead of taxiing to an unbuilt Stand 3.
 - A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
 - Fleet aircraft move identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.

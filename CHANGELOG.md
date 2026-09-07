@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Four simulation correctness fixes (Claude architecture review).** Ground
+  traffic no longer taxis to and parks on Stand 3 before the player has built it
+  (it now holds off-field when every built stand is occupied); understaffing
+  delays are reported with a cause instead of an empty explanation; the daily
+  finance brief counts every commercial aircraft operating, not just the first;
+  and a command issued at simulation second 0 is replayed on load instead of
+  being dropped. 8 new EditMode tests, all verified failing before the fix.
+  Unity EditMode: 115 tests pass on the Mac editor.
+
 - **URP material library spike (0025 item 4).** Shared `AirsideMaterialLibrary`
   profiles (asphalt/concrete/grass/metal/aircraft/glass/rubber) with procedural
   normal + soft AO maps; glTF kits and CreateBlock route through it. Not a full

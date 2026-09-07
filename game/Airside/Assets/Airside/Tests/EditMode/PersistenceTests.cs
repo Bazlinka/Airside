@@ -25,6 +25,25 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void CommandIssuedBeforeTheFirstTick_SurvivesReload()
+        {
+            const long savedWallTime = 100000;
+            var session = PersistentAirportSession.LoadOrCreate(_path, savedWallTime, 24031996);
+
+            // The player can act on the very first frame, before the clock has ticked.
+            Assert.That(session.Clock.Now.ElapsedSeconds, Is.Zero);
+            Assert.That(session.HireGroundCrew(), Is.True);
+            var crewAfterHire = session.Simulation.Staffing.GroundCrew;
+            session.Save(savedWallTime);
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, savedWallTime, 1);
+
+            Assert.That(restored.Simulation.Staffing.GroundCrew, Is.EqualTo(crewAfterHire),
+                "a command recorded at simulation second 0 must be replayed on load");
+            Assert.That(restored.Simulation.Economy.Cash, Is.EqualTo(session.Simulation.Economy.Cash));
+        }
+
+        [Test]
         public void OfflineCatchUp_MatchesContinuousSimulationIncludingPlayerCommands()
         {
             const long savedWallTime = 100000;

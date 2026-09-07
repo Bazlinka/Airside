@@ -39,6 +39,33 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void SecondCommercialAircraft_DoublesTheProjectedFlightIncome()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(11), new ReservationTable());
+
+            for (var second = 1; second <= 6000 && simulation.Flights.Count < 2; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.Routes.Pending != null)
+                    simulation.AcceptPendingRoute();
+            }
+
+            Assert.That(simulation.Flights.Count, Is.EqualTo(2),
+                "the run needs a second commercial aircraft to exercise the projection");
+
+            var perCycle = AirportEconomy.TurnaroundRevenue
+                + simulation.Routes.IncomePerFlight
+                + simulation.Research.RouteIncomeBonus;
+            var expected = perCycle * simulation.Flights.Count
+                * DayCycle.DaySeconds / AirportSimulation.CycleLengthSeconds;
+
+            Assert.That(simulation.DailyFinance.ExpectedFlightIncome, Is.EqualTo(expected),
+                "the brief must count every aircraft actually flying, not just the first");
+        }
+
+        [Test]
         public void NegativeNet_ReportsCashRunwayInWholeDays()
         {
             var brief = new DailyFinanceBrief(

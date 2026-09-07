@@ -2252,7 +2252,16 @@ namespace Airside.Presentation
                 new Vector3(26f, 0.07f, 16f),
                 new Vector3(10f, 0.07f, 14f),
                 new Vector3(30f, 0.07f, 21f),
-                new Vector3(-14f, 0.07f, 18f)
+                new Vector3(-14f, 0.07f, 18f),
+                new Vector3(12f, 0.07f, 18.5f),
+                new Vector3(34f, 0.07f, 15f),
+                new Vector3(6f, 0.07f, 12.5f),
+                new Vector3(48f, 0.07f, 46f),
+                new Vector3(44f, 0.07f, 44f),
+                new Vector3(26f, 0.07f, 38f),
+                new Vector3(-20f, 0.07f, 28.5f),
+                new Vector3(-34f, 0.07f, 22f),
+                new Vector3(0f, 0.07f, 2f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -5815,14 +5824,30 @@ namespace Airside.Presentation
                 },
                 kitName => kitName switch
                 {
-                    "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr" => new Color(0.15f, 0.15f, 0.16f),
-                    "hose_mount" => new Color(0.25f, 0.25f, 0.28f),
-                    "door" => new Color(0.2f, 0.22f, 0.25f),
-                    "cab" or "tug_cab" => color * 0.82f,
-                    "cab_window" or "windows" => new Color(0.2f, 0.4f, 0.55f),
-                    "beacon" => new Color(0.95f, 0.35f, 0.12f),
-                    "mirror_l" or "bumper_front" or "bumper_rear" or "tank_band" => color * 0.7f,
+                    "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
+                        or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
+                        or "cart_wheel_3l" or "cart_wheel_3r" => new Color(0.15f, 0.15f, 0.16f),
+                    "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard"
+                        or "exhaust" => new Color(0.25f, 0.25f, 0.28f),
+                    "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_glass"
+                        => new Color(0.2f, 0.22f, 0.25f),
+                    "cab" or "tug_cab" or "cab_roof" or "tug_seat" or "tug_rollbar" => color * 0.82f,
+                    "cab_window" or "windows" or "tug_window" or "window_mullion"
+                        or "window_mullion_2" or "window_mullion_3" or "window_mullion_4"
+                        or "window_mullion_5" or "window_sill" => new Color(0.2f, 0.4f, 0.55f),
+                    "beacon" or "headlight_l" or "headlight_r" => new Color(0.95f, 0.35f, 0.12f),
+                    "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
+                    "mirror_l" or "mirror_r" or "bumper" or "bumper_front" or "bumper_rear"
+                        or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3"
+                        or "grill" or "light_bar" or "fender_fl" or "fender_fr"
+                        or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
+                        or "chassis" or "step" or "step_r" or "roof_rack"
+                        => color * 0.7f,
                     "cargo_1" or "cargo_2" or "cargo_3" => new Color(0.75f, 0.55f, 0.2f),
+                    "stripe" or "stripe_b" => new Color(0.95f, 0.85f, 0.2f),
+                    "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
+                        or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
+                        or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
                     _ => color
                 },
                 localPosition: new Vector3(0f, -0.55f, 0f));

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Atmospheric fog + apron life figures (0025 items 5+7).** Soft exponential fog on
+  clear days (weather still thickens it); seven stylised staff/passenger silhouettes
+  on apron and landside with idle lean and marshaller wave on approach. Presentation only.
+
 - **URP day volume + richer GSE motion (0025 items 5+7).** Runtime global Volume with
   ACES tonemap, day-driven color/exposure, bloom and vignette; service vehicles park
   on the apron and drive into stand tasks; stairs/chocks deploy; GPU and beacons pulse.

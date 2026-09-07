@@ -4232,19 +4232,25 @@ namespace Airside.Presentation
                             or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
                             or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
                             or "flood_can_l" or "flood_can_r" or "downpipe_l" or "downpipe_r"
-                            or "sign_board" or "rear_vent"
+                            or "sign_board" or "sign_glyph" or "rear_vent"
+                            or "fascia_front" or "fascia_back" or "office_roof" or "office_fascia"
+                            or "office_downpipe" or "crane_rail_l" or "crane_rail_r"
                             => new Color(0.4f, 0.44f, 0.48f),
                         "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
+                            or "door_track_brace_l" or "door_track_brace_r"
                             or "plinth" or "side_louvre_l" or "side_louvre_r"
-                            or "workbench" or "tool_cabinet" or "floor_drain"
+                            or "workbench" or "tool_cabinet" or "floor_drain" or "floor_mark_bay"
                             or "side_vent" or "side_vent_b" or "office_lean" or "office_door"
                             or "column_ml" or "column_mr"
                             or "cladding_face_l" or "cladding_face_r"
                             or "girth_band_1" or "girth_band_2" or "girth_band_3"
+                            or "corner_trim_fl" or "corner_trim_fr"
                             or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
                             or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
+                            or "wall_rib_l_9" or "wall_rib_l_10"
                             or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
                             or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
+                            or "wall_rib_r_9" or "wall_rib_r_10"
                             => new Color(0.42f, 0.46f, 0.5f),
                         _ => new Color(0.45f, 0.5f, 0.54f)
                     };

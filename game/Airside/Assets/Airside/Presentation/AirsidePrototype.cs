@@ -2020,25 +2020,33 @@ namespace Airside.Presentation
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
             // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
-            var wetness = wet ? (weather == WeatherKind.Storm ? 0.72f : raining ? 0.52f : 0.34f) : 0f;
+            // Clear weather keeps a soft residual damp on paved slabs (REF day apron).
+            var rainWetness = wet
+                ? (weather == WeatherKind.Storm ? 0.72f : raining ? 0.52f : 0.34f)
+                : 0f;
             for (var i = 0; i < _wetSurfaces.Count; i++)
             {
                 var (renderer, dry, drySmooth, dryMetallic, dryBump) = _wetSurfaces[i];
                 if (renderer == null)
                     continue;
+                var name = renderer.gameObject.name;
+                var paved = name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                    || name.StartsWith("Apron joint", StringComparison.Ordinal)
+                    || name.StartsWith("Apron slab", StringComparison.Ordinal);
+                var apply = wet ? rainWetness : (paved ? 0.14f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
-                    renderer.material, wetness, dry, drySmooth, dryMetallic, dryBump);
+                    renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
             }
 
-            UpdateWetPuddles(wetness, storm);
-            UpdateTaxiSpray(wetness, raining || storm);
+            UpdateWetPuddles(rainWetness, storm);
+            UpdateTaxiSpray(rainWetness, raining || storm);
 
             // Refresh apron probe when wetness or dusk shifts so Lit pavement picks up floods.
             if (_apronProbe != null && Time.unscaledTime >= _apronProbeRefreshAt)
             {
-                _apronProbe.intensity = Mathf.Lerp(0.75f, 1.15f, wetness);
+                _apronProbe.intensity = Mathf.Lerp(0.75f, 1.15f, rainWetness);
                 _apronProbe.RenderProbe();
-                _apronProbeRefreshAt = Time.unscaledTime + (wetness > 0.05f ? 4.5f : 12f);
+                _apronProbeRefreshAt = Time.unscaledTime + (rainWetness > 0.05f ? 4.5f : 12f);
             }
         }
 
@@ -2100,13 +2108,17 @@ namespace Airside.Presentation
             var alpha = Mathf.Lerp(0.12f, storm ? 0.42f : 0.32f, wetness);
             for (var i = 0; i < _wetPuddleRoot.childCount; i++)
             {
-                var puddle = _wetPuddleRoot.GetChild(i);
-                var renderer = puddle.GetComponent<Renderer>();
-                if (renderer == null)
-                    continue;
-                var color = renderer.material.color;
-                color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i));
-                renderer.material.color = color;
+                var cluster = _wetPuddleRoot.GetChild(i);
+                for (var b = 0; b < cluster.childCount; b++)
+                {
+                    var puddle = cluster.GetChild(b);
+                    var renderer = puddle.GetComponent<Renderer>();
+                    if (renderer == null)
+                        continue;
+                    var color = renderer.material.color;
+                    color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i + b * 0.4f));
+                    renderer.material.color = color;
+                }
             }
         }
 
@@ -2296,7 +2308,9 @@ namespace Airside.Presentation
                     && !n.StartsWith("Hill far", StringComparison.Ordinal)
                     && !n.StartsWith("Car park kerb", StringComparison.Ordinal)
                     && !n.StartsWith("Coast scrub", StringComparison.Ordinal)
-                    && !n.StartsWith("Apron joint", StringComparison.Ordinal))
+                    && !n.StartsWith("Apron joint", StringComparison.Ordinal)
+                    && !n.StartsWith("Apron fringe", StringComparison.Ordinal)
+                    && !n.StartsWith("Apron slab", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -2356,35 +2370,34 @@ namespace Airside.Presentation
             };
             for (var i = 0; i < spots.Length; i++)
             {
-                var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                puddle.name = $"Puddle {i}";
-                Object.Destroy(puddle.GetComponent<Collider>());
-                puddle.transform.SetParent(root, false);
-                puddle.transform.position = spots[i];
-                var radius = 1.2f + (i % 3) * 0.55f;
-                puddle.transform.localScale = new Vector3(radius, 0.015f, radius * (0.7f + (i % 2) * 0.25f));
-                var material = AirsideMaterialLibrary.Create(
-                    new Color(0.22f, 0.3f, 0.36f, 0.32f),
-                    AirsideMaterialLibrary.SurfaceKind.Water);
-                if (material.HasProperty("_Smoothness"))
-                    material.SetFloat("_Smoothness", 0.96f);
-                if (material.HasProperty("_ClearCoatMask"))
+                // Irregular multi-blob puddles (REF soft damp patches, not toy discs).
+                var cluster = new GameObject($"Puddle {i}").transform;
+                cluster.SetParent(root, false);
+                cluster.position = spots[i];
+                var blobs = 2 + (i % 3);
+                for (var b = 0; b < blobs; b++)
                 {
-                    material.SetFloat("_ClearCoatMask", 1f);
-                    if (material.HasProperty("_ClearCoatSmoothness"))
-                        material.SetFloat("_ClearCoatSmoothness", 0.98f);
-                    material.EnableKeyword("_CLEARCOAT");
-                }
-                else if (material.HasProperty("_EmissionColor"))
-                {
-                    // ClearCoat-free URP: cool specular sheen so puddles still read wet.
-                    material.EnableKeyword("_EMISSION");
-                    material.SetColor("_EmissionColor", new Color(0.1f, 0.14f, 0.18f) * 0.4f);
+                    var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    puddle.name = $"Puddle {i} blob {b}";
+                    Object.Destroy(puddle.GetComponent<Collider>());
+                    puddle.transform.SetParent(cluster, false);
+                    var ox = ((b * 37 + i * 13) % 17) * 0.06f - 0.4f;
+                    var oz = ((b * 29 + i * 11) % 15) * 0.07f - 0.35f;
+                    puddle.transform.localPosition = new Vector3(ox, 0f, oz);
+                    var rx = 0.7f + (i % 3) * 0.35f + b * 0.15f;
+                    var rz = rx * (0.45f + (b % 3) * 0.22f);
+                    puddle.transform.localScale = new Vector3(rx, 0.012f, rz);
+                    puddle.transform.localRotation = Quaternion.Euler(0f, (i * 23 + b * 41) % 360, 0f);
+                    var material = AirsideMaterialLibrary.Create(
+                        new Color(0.2f, 0.28f, 0.34f, 0.28f),
+                        AirsideMaterialLibrary.SurfaceKind.Water);
+                    if (material.HasProperty("_Smoothness"))
+                        material.SetFloat("_Smoothness", 0.96f);
                     if (material.HasProperty("_Metallic"))
                         material.SetFloat("_Metallic", 0.35f);
+                    puddle.GetComponent<Renderer>().material = material;
+                    puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
-                puddle.GetComponent<Renderer>().material = material;
-                puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
 
             root.gameObject.SetActive(false);
@@ -3450,7 +3463,8 @@ namespace Airside.Presentation
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
-                var flood = Mathf.Lerp(2.35f, 0.05f, daylight);
+                // Stronger night punch so REF-002 warm pools read against scrub.
+                var flood = Mathf.Lerp(3.1f, 0.05f, daylight);
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -3460,7 +3474,9 @@ namespace Airside.Presentation
                     var flicker = daylight < 0.4f
                         ? 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.1f + i * 1.7f)
                         : 1f;
-                    light.intensity = flood * flicker;
+                    // Corner masts (0–3) get a bit more punch than fill floods.
+                    var boost = i < 4 ? 1.15f : 1f;
+                    light.intensity = flood * flicker * boost;
                     light.enabled = flood > 0.06f;
                 }
             }
@@ -3615,7 +3631,8 @@ namespace Airside.Presentation
                          "Ops shed window glow",
                          "interior_glow_l",
                          "interior_glow_r",
-                         "interior_glow_mid"
+                         "interior_glow_mid",
+                         "interior_glow_desk"
                      })
             {
                 var go = GameObject.Find(name);
@@ -3788,12 +3805,13 @@ namespace Airside.Presentation
                 go.transform.LookAt(lookAt);
                 var light = go.AddComponent<Light>();
                 light.type = LightType.Spot;
-                light.color = new Color(1f, 0.93f, 0.8f);
-                light.range = 34f;
+                light.color = new Color(1f, 0.88f, 0.55f);
+                light.range = 36f;
                 light.spotAngle = 78f;
                 light.innerSpotAngle = 42f;
                 light.intensity = 0.05f;
-                light.shadows = LightShadows.None;
+                // Soft shadows on the four corner mast floods (hero REF-002 pools).
+                light.shadows = i < 4 ? LightShadows.Soft : LightShadows.None;
                 lights[i] = light;
             }
 
@@ -4049,6 +4067,25 @@ namespace Airside.Presentation
                 CreateBlock($"Apron joint X {x:0}", new Vector3(x, 0.065f, 17f), new Vector3(0.06f, 0.02f, 13.6f), joint);
             for (var z = 11f; z <= 23f; z += 3f)
                 CreateBlock($"Apron joint Z {z:0}", new Vector3(20f, 0.065f, z), new Vector3(27.6f, 0.02f, 0.06f), joint);
+            // Moisture-varied slab overlays so dry apron isn't one plastic tile (REF).
+            var slabA = new Color(0.32f, 0.34f, 0.35f);
+            var slabB = new Color(0.36f, 0.37f, 0.38f);
+            CreateBlock("Apron slab A", new Vector3(14f, 0.02f, 14f), new Vector3(5.5f, 0.04f, 4.5f), slabA,
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
+            CreateBlock("Apron slab B", new Vector3(26f, 0.02f, 15f), new Vector3(6f, 0.04f, 5f), slabB,
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.3f, 1.1f));
+            CreateBlock("Apron slab C", new Vector3(18f, 0.02f, 20f), new Vector3(5f, 0.04f, 4f), Shade(slabA, 1.05f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.1f, 0.9f));
+            CreateBlock("Apron slab D", new Vector3(28f, 0.02f, 20.5f), new Vector3(5.5f, 0.04f, 4.5f), Shade(slabB, 0.95f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
+            CreateBlock("Apron slab E", new Vector3(12f, 0.02f, 19f), new Vector3(4.5f, 0.04f, 3.8f), slabB,
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1f, 0.9f));
+            CreateBlock("Apron slab F", new Vector3(22f, 0.02f, 13f), new Vector3(4.8f, 0.04f, 3.5f), Shade(slabA, 0.92f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.1f, 0.85f));
+            CreateBlock("Apron slab G", new Vector3(30f, 0.02f, 17f), new Vector3(4f, 0.04f, 4.2f), slabA,
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.9f, 1f));
+            CreateBlock("Apron slab H", new Vector3(16f, 0.02f, 22f), new Vector3(5.2f, 0.04f, 3.6f), Shade(slabB, 1.04f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.15f, 0.8f));
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -4069,10 +4106,15 @@ namespace Airside.Presentation
                         or "glass_pane_lo_7" or "glass_pane_lo_8" or "glass_pane_lo_9"
                         or "glass_pane_lo_10"
                         => new Color(0.16f, 0.38f, 0.5f, 0.42f),
-                    "interior_glow_l" or "interior_glow_r" or "interior_glow_mid"
+                    "interior_glow_l" or "interior_glow_r" or "interior_glow_mid" or "interior_glow_desk"
                         => new Color(1f, 0.82f, 0.55f),
-                    "interior_counter" or "interior_seat_row"
+                    "interior_counter" or "interior_seat_row" or "interior_desk_a" or "interior_desk_b"
+                        or "interior_table_1" or "interior_table_2"
                         => new Color(0.45f, 0.42f, 0.38f),
+                    "interior_chair_1" or "interior_chair_2" or "interior_chair_3" or "interior_chair_4"
+                        => new Color(0.35f, 0.4f, 0.48f),
+                    "interior_figure_a" or "interior_figure_b" or "interior_figure_c"
+                        => new Color(0.25f, 0.28f, 0.32f),
                     "entrance" or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
                         => new Color(0.55f, 0.6f, 0.64f),
                     "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
@@ -5173,6 +5215,24 @@ namespace Airside.Presentation
             for (var i = 0; i < inlandScrub.Length; i++)
                 PlaceShrub(inlandScrub[i], 0.75f + (i % 5) * 0.1f);
 
+            // Fence-line scrub carpet — fill paddock holes to the perimeter (REF-001/002).
+            for (var x = -70; x <= 70; x += 4)
+            {
+                PlaceShrubClump(new Vector3(x, 0f, 36f + (x % 5) * 0.2f), 0.55f + (Mathf.Abs(x) % 4) * 0.08f);
+                if (x % 8 == 0)
+                    PlaceShrubClump(new Vector3(x + 1.5f, 0f, 40f), 0.7f);
+            }
+
+            for (var z = -20; z <= 50; z += 5)
+            {
+                PlaceShrubClump(new Vector3(-48f - (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
+                PlaceShrubClump(new Vector3(50f + (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
+            }
+
+            // Between apron fringe and N fence.
+            for (var x = 6; x <= 34; x += 3)
+                PlaceShrubClump(new Vector3(x, 0f, 28.5f + (x % 2) * 0.4f), 0.5f);
+
             // Dense coastal scrub belt between berms and sand.
             for (var x = -55; x <= 55; x += 5)
             {
@@ -5187,13 +5247,31 @@ namespace Airside.Presentation
 
         private static void PlaceShrub(Vector3 basePosition, float scale)
         {
+            PlaceShrubClump(basePosition, scale);
+        }
+
+        private static void PlaceShrubClump(Vector3 basePosition, float scale)
+        {
+            // Multi-sphere scrub clump so fence belts read as bumpy KI olive, not props.
+            var colorA = Shade(AirsideTheme.DryGrass, 0.85f);
+            var colorB = Shade(AirsideTheme.Eucalyptus, 0.72f);
+            PlaceShrubSphere(basePosition + new Vector3(0f, 0.4f * scale, 0f),
+                new Vector3(1.35f * scale, 0.8f * scale, 1.15f * scale), colorA, "Shrub");
+            PlaceShrubSphere(basePosition + new Vector3(0.45f * scale, 0.35f * scale, -0.3f * scale),
+                new Vector3(0.95f * scale, 0.6f * scale, 0.85f * scale), colorB, "Shrub B");
+            PlaceShrubSphere(basePosition + new Vector3(-0.4f * scale, 0.32f * scale, 0.25f * scale),
+                new Vector3(0.85f * scale, 0.55f * scale, 0.75f * scale), Shade(colorA, 0.9f), "Shrub C");
+        }
+
+        private static void PlaceShrubSphere(Vector3 position, Vector3 scale, Color color, string name)
+        {
             var bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            bush.name = "Shrub";
+            bush.name = name;
             Object.Destroy(bush.GetComponent<Collider>());
-            bush.transform.position = basePosition + new Vector3(0f, 0.45f * scale, 0f);
-            bush.transform.localScale = new Vector3(1.4f * scale, 0.85f * scale, 1.2f * scale);
+            bush.transform.position = position;
+            bush.transform.localScale = scale;
             bush.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                Shade(AirsideTheme.DryGrass, 0.85f), AirsideMaterialLibrary.SurfaceKind.Grass);
+                color, AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
         private static void PlaceTree(Vector3 basePosition, float scale)
@@ -6792,7 +6870,8 @@ namespace Airside.Presentation
                     {
                         var n = child.name;
                         if (n is not ("glass_front" or "landside_glass" or "windows" or "cabin_windows"
-                            or "door_glass"))
+                            or "door_glass")
+                            && !n.StartsWith("glass_pane", StringComparison.Ordinal))
                             continue;
                         var renderer = child.GetComponent<Renderer>();
                         if (renderer == null)

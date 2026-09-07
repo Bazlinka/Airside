@@ -260,7 +260,7 @@ namespace Airside.Presentation
 
             // Deeper night exposure so flood pools read against the apron (REF-002).
             if (daylight < 0.35f)
-                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.35f);
+                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.55f);
         }
     }
 }

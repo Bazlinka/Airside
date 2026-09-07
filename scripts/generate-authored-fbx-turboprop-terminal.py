@@ -608,9 +608,21 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         # Warm interior silhouettes behind the curtain wall (night glow targets).
         "interior_counter": box(-3.5, 1.15, -1.55, 4.5, 0.9, 0.7),
         "interior_seat_row": box(3.2, 0.75, -1.45, 5.0, 0.55, 0.7),
+        "interior_desk_a": box(-5.5, 1.05, -1.5, 2.2, 0.85, 0.65),
+        "interior_desk_b": box(5.5, 1.05, -1.5, 2.2, 0.85, 0.65),
+        "interior_table_1": box(-2.0, 0.85, -1.35, 1.2, 0.12, 0.7),
+        "interior_table_2": box(1.8, 0.85, -1.35, 1.2, 0.12, 0.7),
+        "interior_chair_1": box(-2.5, 0.55, -1.2, 0.45, 0.55, 0.45),
+        "interior_chair_2": box(-1.5, 0.55, -1.2, 0.45, 0.55, 0.45),
+        "interior_chair_3": box(1.3, 0.55, -1.2, 0.45, 0.55, 0.45),
+        "interior_chair_4": box(2.3, 0.55, -1.2, 0.45, 0.55, 0.45),
+        "interior_figure_a": box(-4.2, 1.2, -1.35, 0.35, 1.4, 0.25),
+        "interior_figure_b": box(0.2, 1.15, -1.3, 0.35, 1.35, 0.25),
+        "interior_figure_c": box(4.0, 1.2, -1.35, 0.35, 1.4, 0.25),
         "interior_glow_l": box(-5.0, 2.4, -1.7, 3.2, 1.4, 0.08),
         "interior_glow_r": box(5.0, 2.4, -1.7, 3.2, 1.4, 0.08),
         "interior_glow_mid": box(0.0, 2.6, -1.65, 2.8, 1.2, 0.08),
+        "interior_glow_desk": box(-5.5, 1.6, -1.75, 2.0, 0.6, 0.06),
     }
     # Pane bays between mullions at x = -7.5..7.5 every 1.5 m (skip entrance bay).
     pane_xs = [-6.75, -5.25, -3.75, -2.25, 2.25, 3.75, 5.25, 6.75, -0.75, 0.75]

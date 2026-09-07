@@ -37,6 +37,8 @@ namespace Airside.Presentation
         private Transform _taxiSprayRoot;
         private Light[] _windowLights;
         private Transform _horizonDome;
+        private Transform _sunDisc;
+        private Transform _moonDisc;
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
         private Transform _birdFlockRoot;
@@ -3295,6 +3297,8 @@ namespace Airside.Presentation
                     domeRenderer.material.color = sky;
             }
 
+            UpdateSunAndMoonDiscs(daylight, warm, elevation);
+
             // Soft exponential fog for depth on clear days; weather can thicken it later.
             if (!Weather.IsAdverse(_simulation.CurrentWeather))
             {
@@ -3887,7 +3891,8 @@ namespace Airside.Presentation
                 {
                     "glass_front" or "windows" or "entrance" or "cabin_windows" or "landside_glass"
                         or "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
-                        or "window_mullion_4" or "window_mullion_5" => new Color(0.16f, 0.38f, 0.5f),
+                        or "window_mullion_4" or "window_mullion_5"
+                        or "window_mullion_6" or "window_mullion_7" or "window_transom" => new Color(0.16f, 0.38f, 0.5f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "roof_slab" or "roof_plant" or "roof_plant_b" or "roof_plant_c"
                         or "landside_awning" or "signage_bar" => new Color(0.55f, 0.58f, 0.6f),
@@ -4812,7 +4817,114 @@ namespace Airside.Presentation
             dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             dome.GetComponent<Renderer>().receiveShadows = false;
             BuildCloudBands();
+            BuildSunAndMoonDiscs();
             BuildBirdFlock();
+        }
+
+        private static void BuildSunAndMoonDiscs()
+        {
+            // Visible sun/moon discs so day cycle reads from overview (0025 item 5).
+            var sun = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sun.name = "Sun disc";
+            Object.Destroy(sun.GetComponent<Collider>());
+            sun.transform.localScale = new Vector3(6.5f, 6.5f, 6.5f);
+            var sunMat = AirsideMaterialLibrary.Create(
+                new Color(1f, 0.92f, 0.65f, 1f),
+                AirsideMaterialLibrary.SurfaceKind.UnlitSky);
+            if (sunMat.HasProperty("_EmissionColor"))
+            {
+                sunMat.EnableKeyword("_EMISSION");
+                sunMat.SetColor("_EmissionColor", new Color(1.4f, 1.1f, 0.55f));
+            }
+
+            sun.GetComponent<Renderer>().material = sunMat;
+            sun.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            sun.GetComponent<Renderer>().receiveShadows = false;
+
+            var moon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            moon.name = "Moon disc";
+            Object.Destroy(moon.GetComponent<Collider>());
+            moon.transform.localScale = new Vector3(4.2f, 4.2f, 4.2f);
+            var moonMat = AirsideMaterialLibrary.Create(
+                new Color(0.82f, 0.86f, 0.95f, 1f),
+                AirsideMaterialLibrary.SurfaceKind.UnlitSky);
+            if (moonMat.HasProperty("_EmissionColor"))
+            {
+                moonMat.EnableKeyword("_EMISSION");
+                moonMat.SetColor("_EmissionColor", new Color(0.55f, 0.6f, 0.75f));
+            }
+
+            moon.GetComponent<Renderer>().material = moonMat;
+            moon.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            moon.GetComponent<Renderer>().receiveShadows = false;
+            moon.SetActive(false);
+        }
+
+        private void UpdateSunAndMoonDiscs(float daylight, float warm, float elevation)
+        {
+            if (_sunDisc == null)
+            {
+                var found = GameObject.Find("Sun disc");
+                if (found != null)
+                    _sunDisc = found.transform;
+            }
+
+            if (_moonDisc == null)
+            {
+                var foundMoon = GameObject.Find("Moon disc");
+                if (foundMoon != null)
+                    _moonDisc = foundMoon.transform;
+            }
+
+            // Place discs opposite the light direction on a large sky sphere.
+            var sunDir = _sun != null ? -_sun.transform.forward : Vector3.up;
+            if (_sunDisc != null)
+            {
+                var showSun = daylight > 0.02f || elevation > -4f;
+                _sunDisc.gameObject.SetActive(showSun);
+                if (showSun)
+                {
+                    _sunDisc.position = sunDir.normalized * 95f + Vector3.up * 8f;
+                    var sunColor = Color.Lerp(
+                        new Color(1f, 0.55f, 0.28f),
+                        new Color(1f, 0.95f, 0.78f),
+                        Mathf.Clamp01(daylight));
+                    sunColor = Color.Lerp(sunColor, new Color(1f, 0.7f, 0.4f), warm * 0.55f);
+                    var renderer = _sunDisc.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        renderer.material.color = sunColor;
+                        if (renderer.material.HasProperty("_EmissionColor"))
+                            renderer.material.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
+                    }
+
+                    var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
+                    _sunDisc.localScale = Vector3.one * scale;
+                }
+            }
+
+            if (_moonDisc != null)
+            {
+                var showMoon = daylight < 0.45f;
+                _moonDisc.gameObject.SetActive(showMoon);
+                if (showMoon)
+                {
+                    // Opposite hemisphere from the sun path.
+                    var moonDir = Quaternion.Euler(0f, 180f, 0f) * sunDir;
+                    if (moonDir.y < 0.05f)
+                        moonDir.y = 0.15f;
+                    _moonDisc.position = moonDir.normalized * 90f + Vector3.up * 6f;
+                    var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
+                    var renderer = _moonDisc.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
+                        renderer.material.color = c;
+                        if (renderer.material.HasProperty("_EmissionColor"))
+                            renderer.material.SetColor("_EmissionColor", c * 0.7f);
+                    }
+                }
+            }
         }
 
         private static void BuildCloudBands()
@@ -4821,21 +4933,21 @@ namespace Airside.Presentation
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 16; i++)
             {
                 var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 cloud.name = $"Cloud {i}";
                 Object.Destroy(cloud.GetComponent<Collider>());
-                var x = (float)(rng.NextDouble() * 180f - 90f);
-                var z = (float)(rng.NextDouble() * 160f - 80f);
-                var y = 28f + (float)rng.NextDouble() * 18f;
+                var x = (float)(rng.NextDouble() * 200f - 100f);
+                var z = (float)(rng.NextDouble() * 180f - 90f);
+                var y = 26f + (float)rng.NextDouble() * 22f;
                 cloud.transform.SetParent(cloudRoot, false);
                 cloud.transform.position = new Vector3(x, y, z);
-                var sx = 18f + (float)rng.NextDouble() * 22f;
-                var sy = 4f + (float)rng.NextDouble() * 3f;
-                var sz = 10f + (float)rng.NextDouble() * 14f;
+                var sx = 16f + (float)rng.NextDouble() * 24f;
+                var sy = 3.5f + (float)rng.NextDouble() * 3.5f;
+                var sz = 9f + (float)rng.NextDouble() * 16f;
                 cloud.transform.localScale = new Vector3(sx, sy, sz);
-                var alpha = 0.18f + (float)rng.NextDouble() * 0.14f;
+                var alpha = 0.16f + (float)rng.NextDouble() * 0.16f;
                 cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.95f, 0.96f, 0.98f, alpha),
                     AirsideMaterialLibrary.SurfaceKind.Glass);
@@ -4869,6 +4981,8 @@ namespace Airside.Presentation
             PlaceContactShadow("Ops contact", new Vector3(-8f, 0.04f, 26f), new Vector3(8f, 0.03f, 5.5f), 0.26f);
             PlaceContactShadow("Car park contact", new Vector3(48f, 0.04f, 46f), new Vector3(18f, 0.02f, 12f), 0.12f);
             PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.04f, 22f), new Vector3(9f, 0.02f, 7f), 0.22f);
+            PlaceContactShadow("ARFF contact", new Vector3(-28f, 0.04f, 30f), new Vector3(9f, 0.02f, 7f), 0.2f);
+            PlaceContactShadow("Canopy contact", new Vector3(26f, 0.04f, 31.5f), new Vector3(16f, 0.02f, 5f), 0.14f);
         }
 
         private static void PlaceContactShadow(string name, Vector3 position, Vector3 scale, float alpha)
@@ -6294,10 +6408,12 @@ namespace Airside.Presentation
             {
                 CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 22f), new Vector3(8f, 0.08f, 6f), new Color(0.28f, 0.3f, 0.32f),
                     "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
-                CreateBlock("Fuel tank A", new Vector3(-35.5f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
-                CreateBlock("Fuel tank B", new Vector3(-32.2f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
+                // Cylindrical tanks read as storage vessels, not cargo cubes (0025 item 2/3).
+                PlaceFuelTank("Fuel tank A", new Vector3(-35.5f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
+                PlaceFuelTank("Fuel tank B", new Vector3(-32.2f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
                 CreateBlock("Fuel bund", new Vector3(-34f, 0.25f, 22f), new Vector3(7.2f, 0.35f, 5.2f), new Color(0.4f, 0.42f, 0.4f));
                 CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
+                CreateBlock("Fuel hose reel", new Vector3(-33.1f, 0.45f, 19.8f), new Vector3(0.55f, 0.55f, 0.55f), new Color(0.35f, 0.2f, 0.12f));
             }
 
             CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
@@ -6313,6 +6429,21 @@ namespace Airside.Presentation
             light.range = 16f;
             light.intensity = 0f;
             light.shadows = LightShadows.None;
+        }
+
+        private static void PlaceFuelTank(string name, Vector3 position, Color color)
+        {
+            var tank = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            tank.name = name;
+            Object.Destroy(tank.GetComponent<Collider>());
+            tank.transform.position = position;
+            tank.transform.localScale = new Vector3(2.0f, 1.15f, 2.0f);
+            tank.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                color, AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
+            // Cap + ladder stub for silhouette.
+            CreateBlock($"{name} cap", position + new Vector3(0f, 1.25f, 0f), new Vector3(0.9f, 0.18f, 0.9f), Shade(color, 0.85f));
+            CreateBlock($"{name} ladder", position + new Vector3(1.05f, 0.2f, 0f), new Vector3(0.12f, 1.8f, 0.35f),
+                new Color(0.45f, 0.46f, 0.48f));
         }
 
         /// <summary>

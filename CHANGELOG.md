@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Denser authored turboprop/terminal + sky discs (0025 items 2+5).** Hero
+  turboprop regenerated to 74 meshes (more lathe stations, cabin windows,
+  wing fences, prop hubs); terminal gains extra mullions/transom. Runtime sun
+  and moon discs track the day cycle; cloud count 16; cylindrical fuel tanks +
+  more contact shadows. Generator preserves Unity .meta GUIDs on regenerate.
+  Evidence: `scripts/test-domain.sh`; art sync 159 files.
+
 - **Toolkit HUD readability (0025 item 6).** Status panel gains a coastal accent
   bar and stronger type hierarchy (location/phase Open Sky, cash bold, coach
   urgent yellow vs calm Open Sky). Presentation only.

@@ -16,10 +16,16 @@ authored → lofted (aircraft only) → v04 → … → v01 → primitives.
 
 ## Topology (vs lofted boxes)
 
-- Turboprop fuselage: 16-segment lathe stations (round silhouette), cylindrical
-  engines/nacelles/spinners/tires; separated gear doors, cabin/cargo doors, props.
-- Terminal: body/roof/caps/glass/mullions/canopy with cylindrical posts/columns;
-  service wing + baggage door.
+- Turboprop fuselage: 20-segment lathe with 14 stations (74 meshes total), cylindrical
+  engines/nacelles/spinners/tires/prop hubs; cabin window row + livery stripe;
+  wing fences; separated gear doors, cabin/cargo doors, props.
+- Terminal: body/roof/caps/glass with denser mullions + transom; canopy with
+  cylindrical posts/columns; service wing + baggage door.
+
+## Regeneration note
+
+`write_kit` preserves existing Unity `.meta` GUIDs so Addressables/Resources
+references stay stable across densify passes.
 
 ## Runtime path
 

@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Toolkit HUD readability)
+- **Last updated:** 2026-09-07 by Cursor (denser kits + sun/moon discs)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — kit fidelity, atmosphere, or further HUD hierarchy. No new economy systems.
-- **In progress / half-done:** Authored kits; wet/day/env/motion/night polish; Toolkit status panel accent + type hierarchy.
-- **Watch out for:** Spot flood count vs Mac Play perf; Addressables settings.json log still OK; ClearCoat on older URP paths is no-op if missing.
+- **Do this next:** Continue 0025 — more kit fidelity (hangar/vehicles), atmosphere, or HUD. No new economy systems.
+- **In progress / half-done:** Denser authored turboprop (74 meshes) + terminal mullions; sun/moon discs; denser clouds; cylindrical fuel tanks.
+- **Watch out for:** Spot flood / cloud count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
-- **Visual assets:** Authored Batch C set + lighting/props; presentation track mid-backlog (items 2–7 advancing).
+- **Visual assets:** Authored Batch C densified; sun/moon + fuel-farm silhouette polish on presentation track.

@@ -135,7 +135,8 @@ namespace Airside.Presentation
                 || n.Contains("rudder") || n.Contains("elevator") || n.Contains("flap")
                 || n.Contains("aileron") || n.Contains("cabindoor") || n.Contains("cabin door")
                 || n.Contains("cargo door") || n.Contains("body") || n.Contains("cab")
-                || n.Contains("bus_") || n.Equals("tug") || n.Contains("tug_"))
+                || n.Contains("bus_") || n.Equals("tug") || n.Contains("tug_")
+                || n.Contains("livery") || n.Contains("stripe") || n.Contains("fairing"))
                 return SurfaceKind.AircraftSkin;
             if (n.Contains("roof") || n.Contains("corrugat") || n.Contains("hangar") || n.Contains("shed")
                 || n.Contains("buttress") || n.Contains("vent") || n.Contains("track")

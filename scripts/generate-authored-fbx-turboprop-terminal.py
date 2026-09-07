@@ -41,7 +41,10 @@ def new_guid() -> str:
 
 
 def write_fbx_model_meta(path: Path) -> None:
-    """Unity ModelImporter stub — Editor regenerates detail on first open."""
+    """Unity ModelImporter stub — keep existing GUID when regenerating."""
+    meta_path = Path(str(path) + ".meta")
+    if meta_path.exists():
+        return
     Path(str(path) + ".meta").write_text(
         f"""fileFormatVersion: 2
 guid: {new_guid()}
@@ -319,36 +322,45 @@ def export_fbx(meshes: dict[str, tuple[np.ndarray, np.ndarray]], fbx_path: Path)
 
 
 def turboprop_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    # Lathed cabin — round silhouette from overview/follow.
+    # Lathed cabin — denser stations/segments so overview/follow reads rounder (0025 item 2).
     fuselage = {
         "fuselage": lathe_fuselage(
             [
-                (5.2, 0.28, 1.05),
-                (4.6, 0.48, 1.08),
-                (3.7, 0.58, 1.2),
-                (2.6, 0.68, 1.18),
-                (1.0, 0.72, 1.18),
-                (-0.6, 0.7, 1.15),
-                (-2.2, 0.62, 1.12),
-                (-3.4, 0.48, 1.05),
-                (-4.2, 0.32, 1.0),
+                (5.35, 0.22, 1.02),
+                (5.0, 0.34, 1.05),
+                (4.55, 0.48, 1.08),
+                (3.9, 0.56, 1.16),
+                (3.2, 0.64, 1.2),
+                (2.4, 0.7, 1.2),
+                (1.4, 0.73, 1.18),
+                (0.4, 0.74, 1.18),
+                (-0.6, 0.72, 1.16),
+                (-1.5, 0.68, 1.14),
+                (-2.4, 0.6, 1.1),
+                (-3.2, 0.5, 1.05),
+                (-3.85, 0.38, 1.0),
+                (-4.35, 0.26, 0.96),
             ],
-            segments=16,
+            segments=20,
         ),
-        "belly_fairing": cylinder(0, 0.52, 0.2, 0.42, 4.2, axis="z", segments=12),
+        "belly_fairing": cylinder(0, 0.52, 0.2, 0.42, 4.2, axis="z", segments=14),
         "cockpit": box(0, 1.55, 3.55, 0.95, 0.55, 1.1),
         "cockpit_frame": box(0, 1.82, 3.55, 1.0, 0.06, 1.15),
+        "cockpit_glare": box(0, 1.62, 4.05, 0.85, 0.28, 0.12),
         "cabin_window_band": box(0, 1.38, 0.4, 1.48, 0.12, 4.2),
         "cabin_window_1": box(-0.74, 1.38, 2.0, 0.05, 0.26, 0.48),
         "cabin_window_2": box(-0.74, 1.38, 1.1, 0.05, 0.26, 0.48),
         "cabin_window_3": box(-0.74, 1.38, 0.2, 0.05, 0.26, 0.48),
         "cabin_window_4": box(-0.74, 1.38, -0.7, 0.05, 0.26, 0.48),
         "cabin_window_5": box(-0.74, 1.38, -1.6, 0.05, 0.26, 0.48),
+        "cabin_window_6": box(-0.74, 1.38, -2.35, 0.05, 0.22, 0.36),
         "cabin_window_r1": box(0.74, 1.38, 2.0, 0.05, 0.26, 0.48),
         "cabin_window_r2": box(0.74, 1.38, 1.1, 0.05, 0.26, 0.48),
         "cabin_window_r3": box(0.74, 1.38, 0.2, 0.05, 0.26, 0.48),
         "cabin_window_r4": box(0.74, 1.38, -0.7, 0.05, 0.26, 0.48),
         "cabin_window_r5": box(0.74, 1.38, -1.6, 0.05, 0.26, 0.48),
+        "cabin_window_r6": box(0.74, 1.38, -2.35, 0.05, 0.22, 0.36),
+        "livery_stripe": box(0, 1.05, 0.5, 1.52, 0.1, 5.8),
     }
 
     wings = {
@@ -362,29 +374,35 @@ def turboprop_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "aileron_right": box(6.1, 1.02, 0.15, 1.7, 0.06, 0.5),
         "winglet_left": box(-7.35, 1.4, 0.45, 0.1, 0.6, 0.4),
         "winglet_right": box(7.35, 1.4, 0.45, 0.1, 0.6, 0.4),
+        "wing_fence_left": box(-4.6, 1.18, 0.55, 0.06, 0.28, 0.9),
+        "wing_fence_right": box(4.6, 1.18, 0.55, 0.06, 0.28, 0.9),
     }
 
     engines = {
-        "engine_left": cylinder(-2.4, 0.85, 1.0, 0.38, 2.1, axis="z", segments=12),
-        "engine_right": cylinder(2.4, 0.85, 1.0, 0.38, 2.1, axis="z", segments=12),
-        "nacelle_left": cylinder(-2.4, 0.52, 0.55, 0.28, 1.2, axis="z", segments=10),
-        "nacelle_right": cylinder(2.4, 0.52, 0.55, 0.28, 1.2, axis="z", segments=10),
-        "intake_left": cylinder(-2.4, 0.95, 2.0, 0.28, 0.35, axis="z", segments=10),
-        "intake_right": cylinder(2.4, 0.95, 2.0, 0.28, 0.35, axis="z", segments=10),
-        "exhaust_left": cylinder(-2.4, 0.7, -0.2, 0.18, 0.5, axis="z", segments=8),
-        "exhaust_right": cylinder(2.4, 0.7, -0.2, 0.18, 0.5, axis="z", segments=8),
+        "engine_left": cylinder(-2.4, 0.85, 1.0, 0.38, 2.1, axis="z", segments=14),
+        "engine_right": cylinder(2.4, 0.85, 1.0, 0.38, 2.1, axis="z", segments=14),
+        "nacelle_left": cylinder(-2.4, 0.52, 0.55, 0.28, 1.2, axis="z", segments=12),
+        "nacelle_right": cylinder(2.4, 0.52, 0.55, 0.28, 1.2, axis="z", segments=12),
+        "intake_left": cylinder(-2.4, 0.95, 2.0, 0.28, 0.35, axis="z", segments=12),
+        "intake_right": cylinder(2.4, 0.95, 2.0, 0.28, 0.35, axis="z", segments=12),
+        "exhaust_left": cylinder(-2.4, 0.7, -0.2, 0.18, 0.5, axis="z", segments=10),
+        "exhaust_right": cylinder(2.4, 0.7, -0.2, 0.18, 0.5, axis="z", segments=10),
         "propeller_left": box(-2.4, 0.85, 2.25, 0.08, 2.4, 0.16),
         "propeller_left_b": box(-2.4, 0.85, 2.25, 2.4, 0.08, 0.16),
         "propeller_right": box(2.4, 0.85, 2.25, 0.08, 2.4, 0.16),
         "propeller_right_b": box(2.4, 0.85, 2.25, 2.4, 0.08, 0.16),
-        "spinner_left": cylinder(-2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=10),
-        "spinner_right": cylinder(2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=10),
+        "spinner_left": cylinder(-2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=12),
+        "spinner_right": cylinder(2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=12),
+        "prop_hub_left": cylinder(-2.4, 0.85, 2.3, 0.12, 0.18, axis="z", segments=10),
+        "prop_hub_right": cylinder(2.4, 0.85, 2.3, 0.12, 0.18, axis="z", segments=10),
     }
 
     empennage = {
         "tail_fin": box(0, 2.45, -3.7, 0.12, 2.2, 1.45),
         "tail_fin_tip": box(0, 3.45, -3.5, 0.1, 0.35, 0.7),
         "tailplane": box(0, 1.75, -3.85, 3.4, 0.1, 1.0),
+        "tailplane_tip_l": box(-1.85, 1.78, -3.85, 0.35, 0.12, 0.7),
+        "tailplane_tip_r": box(1.85, 1.78, -3.85, 0.35, 0.12, 0.7),
         "elevator_left": box(-1.1, 1.72, -4.25, 1.3, 0.05, 0.4),
         "elevator_right": box(1.1, 1.72, -4.25, 1.3, 0.05, 0.4),
         "rudder": box(0, 2.5, -4.35, 0.09, 1.6, 0.45),
@@ -398,9 +416,9 @@ def turboprop_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "gear_door_nose": box(0, 0.55, 3.15, 0.5, 0.05, 0.65),
         "gear_door_left": box(-1.15, 0.55, -0.35, 0.6, 0.05, 0.8),
         "gear_door_right": box(1.15, 0.55, -0.35, 0.6, 0.05, 0.8),
-        "tire_nose": cylinder(0, 0.12, 3.15, 0.14, 0.2, axis="x", segments=10),
-        "tire_left": cylinder(-1.15, 0.12, -0.35, 0.16, 0.18, axis="x", segments=10),
-        "tire_right": cylinder(1.15, 0.12, -0.35, 0.16, 0.18, axis="x", segments=10),
+        "tire_nose": cylinder(0, 0.12, 3.15, 0.14, 0.2, axis="x", segments=12),
+        "tire_left": cylinder(-1.15, 0.12, -0.35, 0.16, 0.18, axis="x", segments=12),
+        "tire_right": cylinder(1.15, 0.12, -0.35, 0.16, 0.18, axis="x", segments=12),
         "door_fwd": box(-0.72, 1.1, 2.1, 0.07, 1.0, 1.2),
         "cargo_door": box(0.72, 1.0, -1.5, 0.07, 0.9, 1.5),
         "antenna": box(0, 2.05, 1.2, 0.05, 0.5, 0.05),
@@ -433,6 +451,9 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "window_mullion_3": box(0.0, 2.35, -2.2, 0.12, 2.5, 0.14),
         "window_mullion_4": box(3.0, 2.35, -2.2, 0.12, 2.5, 0.14),
         "window_mullion_5": box(6.0, 2.35, -2.2, 0.12, 2.5, 0.14),
+        "window_mullion_6": box(-7.5, 2.35, -2.2, 0.1, 2.5, 0.12),
+        "window_mullion_7": box(7.5, 2.35, -2.2, 0.1, 2.5, 0.12),
+        "window_transom": box(0, 3.35, -2.2, 16.2, 0.1, 0.12),
         "entrance": box(0, 1.35, -2.25, 2.4, 2.4, 0.12),
         "entrance_frame": box(0, 1.35, -2.35, 2.7, 2.6, 0.08),
         "landside_glass": box(0, 2.2, 2.35, 12.0, 1.8, 0.1),
@@ -664,10 +685,21 @@ def write_kit(
 ) -> None:
     gltf = folder / f"{basename}.gltf"
     fbx = folder / f"{basename}.fbx"
+    bin_path = gltf.with_suffix(".bin")
+    # pack_gltf always rewrites .meta — preserve Unity GUIDs across regenerates.
+    preserved = {}
+    for p in (gltf, bin_path, fbx):
+        meta = Path(str(p) + ".meta")
+        if meta.exists():
+            preserved[meta] = meta.read_text(encoding="utf-8")
     pack_gltf(gltf, meshes)
-    write_default_meta(gltf)
-    write_default_meta(gltf.with_suffix(".bin"))
     export_fbx(meshes, fbx)
+    for meta, text in preserved.items():
+        meta.write_text(text, encoding="utf-8")
+    if not Path(str(gltf) + ".meta").exists():
+        write_default_meta(gltf)
+    if not Path(str(bin_path) + ".meta").exists():
+        write_default_meta(bin_path)
     print(f"Wrote {gltf.name} + {fbx.name} ({len(meshes)} meshes)")
 
 

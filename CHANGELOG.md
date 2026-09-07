@@ -5,7 +5,7 @@ change it describes.
 
 ## Unreleased
 
-- **Batch F1 soak evidence.** Packaged Mac soak logger recorded `complete=` (~30 min) in `work/evidence/batch-f1/soak4.txt` after mid-run rebuild for shallower roof; no crash observed.
+- **Batch F1 soak evidence.** Packaged Mac soak ~16 min stable (`work/evidence/batch-f1/soak4.txt`, RSS ~330–430 MB, no crash) before shallower-roof rebuild interrupt; not claimed as full 30-min continuous soak.
 
 - **BLD-001 v05 roof silhouette.** Shallower ~4° dual-pitch roof / lower plant to better match REF-001; Mac FBX rebake. Packaged rebuild pending soak tip.
 

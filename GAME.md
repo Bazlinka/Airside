@@ -11,7 +11,7 @@
   - MAT-001 `.mat` under Art + Resources; `AirsideMaterialLibrary` instances them when present
   - Prefab instantiate re-applies presentation materials (avoids grey FBX defaults)
   - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
-  - Soak: `work/evidence/batch-f1/soak4.txt` reached `complete=` (~30 min logger; RSS ~330–430 MB mid-run, no crash). Interrupted once ~16 min for shallower-roof Mac rebuild (23:04); app relaunched. Screenshots under `work/evidence/batch-f1/`
+  - Soak: `work/evidence/batch-f1/soak4.txt` — ~16 min stable packaged run (RSS ~330–430 MB, no crash), then interrupted for shallower-roof Mac rebuild. **Not** a full 30-min continuous soak. Post-rebuild app relaunched; screenshots in `work/evidence/batch-f1/`
   - Night/dusk: terminal + AIR-001 visible; Addressables aa/settings.json missing (known)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
   - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)

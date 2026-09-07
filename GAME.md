@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Canvas away + insolvency)
-- **Branch / working tree:** `cursor/canvas-away-insolvency-ddad`
-- **Do this next:** Merge Canvas away-summary + insolvency overlays; Bailey Play soak full Canvas HUD
-- **In progress / half-done:** welcome-back and insolvency cards on Canvas; IMGUI gated
-- **Watch out for:** Space/Enter dismiss paths for away summary still via keyboard
-- **Open questions for Bailey:** none
-- **Visual assets:** full-screen overlays now Canvas (briefing/pause/away/insolvency)
+- **Last updated:** 2026-09-07 by Cursor (Batch C v03 kits)
+- **Branch / working tree:** `cursor/batch-c-models-v03-ddad`
+- **Do this next:** Merge v03 kits; Bailey Play soak turboprop/terminal silhouette + flaps
+- **In progress / half-done:** denser procedural v03 kits preferred over v02/v01; StreamingAssets synced
+- **Watch out for:** still greybox — not authored meshes; PreferArtKit now takes params chain
+- **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
+- **Visual assets:** v03 kits under Art + StreamingAssets
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,6 +122,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm full Canvas HUD including welcome-back and insolvency overlays.
+2. Confirm v03 turboprop (flaps/ailerons/elevators) and denser terminal/hangar silhouettes.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
-   matching a glTF basename, or authored PBR maps. No new economy systems; no Companion/CloudKit.
+   or authored PBR maps. No new economy systems; no Companion/CloudKit.

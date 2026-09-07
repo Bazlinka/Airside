@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Batch C v03 denser kits (0025 item 2).** Procedural turboprop/terminal/hangar/ops/
+  GSE kits with more segmented parts; runtime prefers v03→v02→v01; flaps/ailerons/
+  elevators animate. Still greybox — not authored meshes. StreamingAssets synced.
+
 - **Canvas away + insolvency overlays (0025 item 6).** Welcome-back summary and
   insolvency cards move onto runtime uGUI; IMGUI duplicates gated when Canvas is
   active. Presentation only.

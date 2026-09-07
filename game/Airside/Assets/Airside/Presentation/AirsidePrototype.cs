@@ -1567,6 +1567,9 @@ namespace Airside.Presentation
             if (_sun == null)
                 _sun = new GameObject("Sun").AddComponent<Light>();
             _sun.type = LightType.Directional;
+            _sun.shadows = LightShadows.Soft;
+            _sun.shadowStrength = 0.72f;
+            _sun.shadowBias = 0.04f;
             ApplyDayCycle();
         }
 
@@ -1578,26 +1581,32 @@ namespace Airside.Presentation
             var elevation = (float)cycle.SunElevationDegrees;
             _sun.transform.rotation = Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
 
-            var day = new Color(1f, 0.95f, 0.86f);
-            var goldenHour = new Color(1f, 0.66f, 0.42f);
-            var night = new Color(0.32f, 0.4f, 0.62f);
-            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f); // strong near dawn/dusk
-            _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * daylight);
-            _sun.intensity = Mathf.Lerp(0.12f, 1.3f, daylight);
+            // Warm key light, cooler fill — closer to REF dawn/day without a full URP stack.
+            var day = new Color(1f, 0.94f, 0.82f);
+            var goldenHour = new Color(1f, 0.62f, 0.38f);
+            var night = new Color(0.28f, 0.36f, 0.58f);
+            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
+            _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
+            _sun.intensity = Mathf.Lerp(0.1f, 1.45f, daylight);
 
-            var ambientDay = new Color(0.46f, 0.53f, 0.61f);
-            var ambientDusk = new Color(0.55f, 0.42f, 0.38f);
-            var ambientNight = new Color(0.12f, 0.15f, 0.24f);
+            var ambientDay = new Color(0.38f, 0.48f, 0.62f);   // cool shadows
+            var ambientDusk = new Color(0.48f, 0.36f, 0.42f);
+            var ambientNight = new Color(0.1f, 0.13f, 0.22f);
             RenderSettings.ambientLight = Color.Lerp(
                 Color.Lerp(ambientNight, ambientDay, daylight),
                 ambientDusk,
-                warm * 0.55f);
+                warm * 0.6f);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.subtractiveShadowColor = Color.Lerp(
+                new Color(0.22f, 0.28f, 0.4f),
+                new Color(0.35f, 0.28f, 0.32f),
+                warm);
 
             if (_mainCamera != null)
             {
-                var skyDay = new Color(0.55f, 0.72f, 0.88f);
+                var skyDay = AirsideTheme.OpenSky;
                 var skyDusk = new Color(0.78f, 0.48f, 0.36f);
-                var skyNight = new Color(0.06f, 0.08f, 0.14f);
+                var skyNight = new Color(0.05f, 0.07f, 0.12f);
                 _mainCamera.backgroundColor = Color.Lerp(
                     Color.Lerp(skyNight, skyDay, daylight),
                     skyDusk,

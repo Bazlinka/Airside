@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Approve brand/splash + wire)
-- **Branch / working tree:** `cursor/approve-brand-splash-38b9` → merge to `main`
-- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets art + splash/wordmark). Then presentation backlog 0025 items 2–7 (real models first).
-- **In progress / half-done:** none after this merge.
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox fidelity.
-- **Open questions for Bailey:** none on brand — Approved and wired. Visual ~20% of REF still honest.
-- **Visual assets:** BRD-001 + UI-ILL-001 Approved · Integrated; Batch A–E/WLD as before; Play Verified pending rebuild
+- **Last updated:** 2026-09-07 by Cursor (warm sun / cool ambient lighting pass)
+- **Branch / working tree:** `cursor/dawn-ambient-lighting-38b9` → merge to `main`
+- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets + splash/wordmark + soft sun shadows). Then 0025 item 2 — replace placeholder 3D.
+- **In progress / half-done:** soft directional shadows + warmer key / cooler ambient (this branch).
+- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox.
+- **Open questions for Bailey:** none — brand Approved. Visual ~20% of REF still honest.
+- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; StreamingAssets art path on `main`; Play Verified pending rebuild
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

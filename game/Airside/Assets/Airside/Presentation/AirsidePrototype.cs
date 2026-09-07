@@ -5995,7 +5995,7 @@ namespace Airside.Presentation
                 var alpha = 0.14f + (float)rng.NextDouble() * 0.18f;
                 cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.95f, 0.96f, 0.98f, alpha),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 cloud.GetComponent<Renderer>().receiveShadows = false;
 
@@ -6008,7 +6008,7 @@ namespace Airside.Presentation
                 umbra.transform.localScale = new Vector3(sx * 0.85f, 0.02f, sz * 0.85f);
                 var umbraMat = AirsideMaterialLibrary.Create(
                     new Color(0.05f, 0.07f, 0.1f, 0.22f),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 umbra.GetComponent<Renderer>().material = umbraMat;
                 umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 umbra.GetComponent<Renderer>().receiveShadows = false;
@@ -6045,7 +6045,7 @@ namespace Airside.Presentation
             shadow.transform.localScale = scale;
             var material = AirsideMaterialLibrary.Create(
                 new Color(0.04f, 0.05f, 0.07f, alpha),
-                AirsideMaterialLibrary.SurfaceKind.Glass);
+                AirsideMaterialLibrary.SurfaceKind.Default);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             shadow.GetComponent<Renderer>().receiveShadows = false;
@@ -7040,8 +7040,8 @@ namespace Airside.Presentation
             shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
             shadow.transform.localScale = new Vector3(3.4f, 0.02f, 1.9f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.35f),
-                AirsideMaterialLibrary.SurfaceKind.Glass);
+            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.45f),
+                AirsideMaterialLibrary.SurfaceKind.Default);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             shadow.GetComponent<Renderer>().receiveShadows = false;

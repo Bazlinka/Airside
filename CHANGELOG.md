@@ -5,6 +5,8 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 follow-up: stop mat_glass on shadows/clouds/VFX.** Ground/contact shadows, cloud volumes and umbras use Default Lit instead of mat_glass (was causing bright shaft artefacts). Evidence: test-unity 116/116; Mac rebuild.
+
 - **Batch F1 follow-up: day light + glass blend.** Daytime sun/ambient raised for REF-readable overview;
   `mat_glass_v01` transparent blend/ZWrite fixed via MAT-001 menu. Evidence: test-unity 116/116; Mac rebuild.
 

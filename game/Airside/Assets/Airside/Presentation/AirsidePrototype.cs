@@ -4080,6 +4080,15 @@ namespace Airside.Presentation
 
         private static Transform BuildStairs()
         {
+            // Prefer the Resources / Addressables prefab (0025 item 1), then service-kit
+            // glTF mesh, then procedural cuboids.
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Passenger stairs";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
             var root = new GameObject("Passenger stairs").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_service_equipment_kit_v01.gltf",

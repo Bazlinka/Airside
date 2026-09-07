@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Ambient wind + rain audio (0025 item 7).** Soft looping wind bed and rain/
+  storm ambience that respect mute and pause; procedural clips, presentation only.
+
 - **Canvas HUD foundation (0025 item 6).** Runtime uGUI Canvas hosts the route
   offer panel and ops toast with EventSystem + Input System UI module. Status /
   research remain IMGUI until the interactive left panel migrates. Presentation only.

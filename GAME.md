@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (canvas HUD foundation)
-- **Branch / working tree:** `cursor/canvas-hud-foundation-ddad`
-- **Do this next:** Merge; then migrate left status/research onto Canvas or ambient audio
-- **In progress / half-done:** uGUI offer + toast live; left panel still IMGUI
-- **Watch out for:** needs EventSystem/InputSystemUIInputModule; asmdef refs UnityEngine.UI
+- **Last updated:** 2026-09-07 by Cursor (ambient wind/rain audio)
+- **Branch / working tree:** `cursor/ambient-wind-audio-ddad`
+- **Do this next:** Merge; Bailey Unity Play soak #73–#74; migrate left Canvas panel next
+- **In progress / half-done:** procedural wind + rain ambience
+- **Watch out for:** Random-based clips are non-deterministic audio (presentation only)
 - **Open questions for Bailey:** none
-- **Visual assets:** hangar door on `main`; canvas HUD on this branch
+- **Visual assets:** canvas HUD on `main`; ambient audio on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

@@ -5310,10 +5310,16 @@ namespace Airside.Presentation
             }
             CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
             CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
-            CreateBlock("Runway number 09 bar", new Vector3(-34f, 0.04f, -1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
-            CreateBlock("Runway number 09 stem", new Vector3(-34f, 0.04f, 1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
-            CreateBlock("Runway number 27 bar", new Vector3(34f, 0.04f, 1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
-            CreateBlock("Runway number 27 stem", new Vector3(34f, 0.04f, -1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
+            // Readable block digits for 09 / 27 (facing inbound traffic).
+            PlaceRunwayDigit('0', new Vector3(-34.6f, 0.04f, 0f), yaw: 90f);
+            PlaceRunwayDigit('9', new Vector3(-32.6f, 0.04f, 0f), yaw: 90f);
+            PlaceRunwayDigit('2', new Vector3(32.6f, 0.04f, 0f), yaw: -90f);
+            PlaceRunwayDigit('7', new Vector3(34.6f, 0.04f, 0f), yaw: -90f);
+            // Side stripes beside threshold bars.
+            CreateBlock("Threshold stripe W L", new Vector3(-36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            CreateBlock("Threshold stripe W R", new Vector3(-36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            CreateBlock("Threshold stripe E L", new Vector3(36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            CreateBlock("Threshold stripe E R", new Vector3(36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
 
             // Aiming-point pairs (WLD markings language) — readable from overview/follow.
             foreach (var x in new[] { -18f, 18f })
@@ -5324,6 +5330,49 @@ namespace Airside.Presentation
 
             for (var x = -4; x <= 28; x += 4)
                 CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+        }
+
+        /// <summary>
+        /// Decision 0025 item 3 — block runway digits readable from overview.
+        /// Local +Z is digit height; yaw rotates onto the runway axis.
+        /// </summary>
+        private static void PlaceRunwayDigit(char digit, Vector3 centre, float yaw)
+        {
+            var root = new GameObject($"Runway digit {digit}").transform;
+            root.position = centre;
+            root.rotation = Quaternion.Euler(0f, yaw, 0f);
+            void Seg(string name, float x, float z, float sx, float sz)
+            {
+                ParentBlock(root, name, new Vector3(x, 0f, z), new Vector3(sx, 0.03f, sz), Color.white);
+            }
+
+            switch (digit)
+            {
+                case '0':
+                    Seg("top", 0f, 0.95f, 1.1f, 0.28f);
+                    Seg("bot", 0f, -0.95f, 1.1f, 0.28f);
+                    Seg("left", -0.55f, 0f, 0.28f, 1.9f);
+                    Seg("right", 0.55f, 0f, 0.28f, 1.9f);
+                    break;
+                case '2':
+                    Seg("top", 0f, 0.95f, 1.1f, 0.28f);
+                    Seg("mid", 0f, 0f, 1.1f, 0.28f);
+                    Seg("bot", 0f, -0.95f, 1.1f, 0.28f);
+                    Seg("ur", 0.55f, 0.5f, 0.28f, 0.9f);
+                    Seg("ll", -0.55f, -0.5f, 0.28f, 0.9f);
+                    break;
+                case '7':
+                    Seg("top", 0f, 0.95f, 1.1f, 0.28f);
+                    Seg("stem", 0.35f, -0.1f, 0.28f, 1.9f);
+                    break;
+                case '9':
+                    Seg("top", 0f, 0.95f, 1.1f, 0.28f);
+                    Seg("mid", 0f, 0.1f, 1.1f, 0.28f);
+                    Seg("ul", -0.55f, 0.55f, 0.28f, 0.85f);
+                    Seg("ur", 0.55f, 0.55f, 0.28f, 0.85f);
+                    Seg("stem", 0.55f, -0.45f, 0.28f, 1.0f);
+                    break;
+            }
         }
 
         /// <summary>

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal landside canopy (0025 item 3).** Steel posts, soffit slab, landside glass
+  curtain, entrance doors, bench/planter and dusk canopy under-glow so the terminal
+  entrance reads from landside and overview. Presentation only.
+
 - **ALS chase flash + ARFF lightbar blink (0025 items 5+7).** Approach lamps run a
   far-to-threshold sequence at night; ARFF truck lightbar pulses amber/red at dusk.
   Presentation only.

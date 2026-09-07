@@ -3317,6 +3317,7 @@ namespace Airside.Presentation
                          "Terminal window glow L",
                          "Terminal window glow R",
                          "Terminal landside glow",
+                         "Terminal canopy glow",
                          "Hangar window glow",
                          "Ops shed window glow"
                      })
@@ -3711,6 +3712,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
+            BuildTerminalLandsideCanopy();
             CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
             PlaceBuildingOrFallback(
@@ -4230,6 +4232,33 @@ namespace Airside.Presentation
 
             root.position = new Vector3(-28f, 0f, 25.2f);
             root.rotation = Quaternion.Euler(0f, 180f, 0f);
+        }
+
+        /// <summary>
+        /// Decision 0025 item 3 — landside canopy, posts and glass so the terminal
+        /// entrance reads as a building, not a flat box, from overview and landside.
+        /// </summary>
+        private static void BuildTerminalLandsideCanopy()
+        {
+            var steel = new Color(0.48f, 0.5f, 0.52f);
+            var glass = new Color(0.18f, 0.42f, 0.55f);
+            var soffit = new Color(0.62f, 0.64f, 0.66f);
+            CreateBlock("Terminal canopy slab", new Vector3(26f, 3.55f, 31.2f), new Vector3(16f, 0.18f, 4.2f), soffit);
+            CreateBlock("Terminal canopy edge", new Vector3(26f, 3.4f, 33.1f), new Vector3(16.2f, 0.22f, 0.25f), steel);
+            for (var i = 0; i < 5; i++)
+            {
+                var x = 18.5f + i * 3.75f;
+                CreateBlock($"Terminal canopy post {i}", new Vector3(x, 1.7f, 32.6f), new Vector3(0.22f, 3.4f, 0.22f), steel);
+            }
+
+            CreateBlock("Terminal landside glass", new Vector3(26f, 2.1f, 29.55f), new Vector3(14f, 2.6f, 0.1f), glass,
+                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(2.5f, 1.2f));
+            CreateBlock("Terminal entrance frame", new Vector3(26f, 1.6f, 29.5f), new Vector3(3.2f, 2.8f, 0.18f), steel);
+            CreateBlock("Terminal doors", new Vector3(26f, 1.45f, 29.35f), new Vector3(2.6f, 2.4f, 0.08f), new Color(0.22f, 0.28f, 0.32f));
+            CreateBlock("Terminal bench", new Vector3(21f, 0.35f, 31.6f), new Vector3(2.4f, 0.35f, 0.55f), new Color(0.4f, 0.32f, 0.22f));
+            CreateBlock("Terminal planter", new Vector3(31.5f, 0.35f, 31.8f), new Vector3(1.4f, 0.5f, 1.0f), AirsideTheme.Concrete);
+            CreateBlock("Terminal planter scrub", new Vector3(31.5f, 0.85f, 31.8f), new Vector3(1.1f, 0.55f, 0.7f), Shade(AirsideTheme.Eucalyptus, 0.85f));
+            CreateBlock("Terminal canopy glow", new Vector3(26f, 3.35f, 31.2f), new Vector3(12f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
         }
 
         private static void BuildVegetation()

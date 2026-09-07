@@ -12,9 +12,9 @@ next session can continue without seeing the previous conversation. Keep it shor
 
 - **Last updated:** 2026-09-07 by Cursor (rebased presentation tip onto main after #127)
 - **Branch / working tree:** `cursor/presentation-stack-tip-8515` (Addressables/lofted + motion/brand; #127 already on main)
-- **Do this next:** On Mac — `git fetch && git checkout cursor/presentation-stack-tip-8515`, run `scripts/test-unity.sh`, Play soak (no Arial/PanelSettings warnings; lofted turboprop; denser env; gear/cargo doors; wordmark overlays; wet probe; Batch C/WLD/PRP present). Then squash-merge this PR. Close superseded #128/#129.
-- **In progress / half-done:** #128+#129 content rebased cleanly onto post-#127 main. Domain 105/105. Mac Unity still required.
-- **Watch out for:** Linux cloud cannot green `scripts/test-unity.sh`. Old #128/#129 conflict with main — use this tip only.
+- **Do this next:** On Mac — checkout PR #130 (`cursor/presentation-stack-tip-8515`), run `scripts/test-unity.sh`, Play soak, then squash-merge #130.
+- **In progress / half-done:** #128+#129 superseded/closed; content lives on #130 rebased onto post-#127 main. Domain 105/105. Mac Unity still required.
+- **Watch out for:** Linux cloud cannot green `scripts/test-unity.sh`. Ignore closed #128/#129.
 - **Open questions for Bailey:** authored FBX next, or more procedural densify?
 - **Visual assets:** Lofted turboprop + Addressables wired; env densify; brand overlays; motion/life; wet/probe polish. Packaged Batch C/WLD/PRP path preserved.
 

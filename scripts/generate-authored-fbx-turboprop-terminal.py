@@ -604,6 +604,35 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     }
 
 
+def airfield_props_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    return {
+        "windsock_pole": cylinder(0, 1.5, 0, 0.05, 3.0, axis="y", segments=8),
+        "cone": cylinder(0, 0.28, 0, 0.16, 0.55, axis="y", segments=8),
+        "barrier": box(0, 0.55, 0, 1.6, 1.1, 0.1),
+        "sign_board": box(0, 1.1, 0, 1.3, 0.9, 0.08),
+        "baggage_dolly": box(0, 0.4, 0, 1.5, 0.55, 0.85),
+        "sock_pole": cylinder(0, 1.6, 0, 0.05, 3.2, axis="y", segments=8),
+        "sock_base": box(0, 0.08, 0, 0.45, 0.16, 0.45),
+        "sock_frame": box(0, 3.1, 0.35, 0.08, 0.08, 0.7),
+        "sock_fabric": box(0, 3.05, 0.85, 0.35, 0.35, 1.1),
+        "cone_base": box(0, 0.05, 0, 0.4, 0.08, 0.4),
+        "cone_body": cylinder(0, 0.35, 0, 0.14, 0.55, axis="y", segments=8),
+        "cone_stripe": cylinder(0, 0.35, 0, 0.15, 0.12, axis="y", segments=8),
+        "cone_tip": cylinder(0, 0.7, 0, 0.06, 0.18, axis="y", segments=8),
+        "barrier_rail": box(0, 0.85, 0, 1.7, 0.12, 0.1),
+        "barrier_rail_low": box(0, 0.35, 0, 1.7, 0.12, 0.1),
+        "barrier_leg_l": box(-0.7, 0.45, 0, 0.12, 0.9, 0.12),
+        "barrier_leg_r": box(0.7, 0.45, 0, 0.12, 0.9, 0.12),
+        "sign_post": cylinder(0, 1.15, 0, 0.06, 2.3, axis="y", segments=8),
+        "sign_face": box(0.08, 1.45, 0, 0.06, 0.95, 1.2),
+        "dolly_bed": box(0, 0.45, 0, 1.5, 0.18, 0.85),
+        "dolly_wheel_fl": cylinder(-0.55, 0.15, 0.3, 0.1, 0.12, axis="z", segments=8),
+        "dolly_wheel_fr": cylinder(0.55, 0.15, 0.3, 0.1, 0.12, axis="z", segments=8),
+        "dolly_wheel_rl": cylinder(-0.55, 0.15, -0.3, 0.1, 0.12, axis="z", segments=8),
+        "dolly_wheel_rr": cylinder(0.55, 0.15, -0.3, 0.1, 0.12, axis="z", segments=8),
+    }
+
+
 def airfield_lighting_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     """WLD lighting — keep PlaceWorldLighting extract names."""
     return {
@@ -657,6 +686,7 @@ def main() -> None:
     write_kit(VEHICLES, "mdl_passenger_bus_apron_authored_v01", passenger_bus_meshes())
     write_kit(PROPS, "mdl_service_equipment_kit_authored_v01", service_equipment_meshes())
     write_kit(PROPS, "mdl_airfield_lighting_kit_authored_v01", airfield_lighting_meshes())
+    write_kit(PROPS, "mdl_airfield_props_kit_authored_v01", airfield_props_meshes())
 
 
 if __name__ == "__main__":

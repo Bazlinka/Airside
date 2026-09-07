@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Authored airfield props kit.** `mdl_airfield_props_kit_authored_v01` (cylindrical
+  poles/cones/dolly wheels) preferred ahead of v02/v01 for PlaceWorldProps.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Apron lighting + probes for authored kits (0025 item 5).** Apron floods are
   SpotLights aimed at stands/hangar/terminal; terminal gets its own realtime
   reflection probe; apron probe box expanded. Authored airfield lighting kit

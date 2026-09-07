@@ -25,6 +25,7 @@ namespace Airside.Editor
             "Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_authored_v01.fbx",
             "Assets/Airside/Art/Models/Props/mdl_service_equipment_kit_authored_v01.fbx",
             "Assets/Airside/Art/Models/Props/mdl_airfield_lighting_kit_authored_v01.fbx",
+            "Assets/Airside/Art/Models/Props/mdl_airfield_props_kit_authored_v01.fbx",
         };
 
         [MenuItem(MenuPath)]

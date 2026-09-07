@@ -5537,6 +5537,7 @@ namespace Airside.Presentation
         {
             // WLD-003 windsock — Resources / kit pole when available; animated sock always procedural.
             var propsKit = PreferArtKit(
+                "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
                 "Models/Props/mdl_airfield_props_kit_v01.gltf");
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_windsock_pole_v01", out var polePrefab))
@@ -5891,6 +5892,7 @@ namespace Airside.Presentation
         private static void PlaceWorldProps()
         {
             var kit = PreferArtKit(
+                "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
                 "Models/Props/mdl_airfield_props_kit_v01.gltf");
 

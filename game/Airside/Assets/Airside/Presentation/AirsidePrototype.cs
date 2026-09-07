@@ -170,11 +170,41 @@ namespace Airside.Presentation
 
             _canvasHud = AirsideCanvasHud.Create(transform);
             _canvasHud.BindActions(
-                () => TryAcceptPendingRouteFromHotkey(),
-                () =>
+                onAccept: () => TryAcceptPendingRouteFromHotkey(),
+                onDecline: () =>
                 {
                     if (_simulation.Routes.Pending != null && !_simulation.IsInsolvent)
                         _session.DeclineRoute();
+                },
+                onPriorityCrew: () =>
+                {
+                    if (!_simulation.IsInsolvent)
+                        _session.EnablePriorityCrew();
+                },
+                onHireCrew: () =>
+                {
+                    if (!_simulation.IsInsolvent)
+                        _session.HireGroundCrew();
+                },
+                onReleaseCrew: () =>
+                {
+                    if (!_simulation.IsInsolvent)
+                        _session.ReleaseGroundCrew();
+                },
+                onBuildStand: () =>
+                {
+                    if (!_simulation.IsInsolvent)
+                        _session.BuildThirdStand();
+                },
+                onStartResearch: () =>
+                {
+                    if (_simulation.IsInsolvent)
+                        return;
+                    var research = _simulation.Research;
+                    if (research.CanStartOperationsEfficiency)
+                        _session.StartOperationsResearch();
+                    else if (research.CanStartPassengerServices)
+                        _session.StartPassengerServicesResearch();
                 });
             _canvasHudActive = _canvasHud.IsActive;
         }
@@ -232,6 +262,7 @@ namespace Airside.Presentation
             }
 
             _canvasHud.SetVisible(true);
+            SyncCanvasLeftPanel();
             var earlySession = _simulation.Routes.Accepted.Count == 0;
             var proposal = _simulation.Routes.Pending;
             if (proposal == null)
@@ -268,6 +299,203 @@ namespace Airside.Presentation
 
             var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
             _canvasHud.SyncToast(_opsToast, toastVisible);
+        }
+
+        private void SyncCanvasLeftPanel()
+        {
+            var timeOfDay = _simulation.TimeOfDay;
+            var earlySession = _simulation.Routes.Accepted.Count == 0;
+            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
+
+            var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
+            if (Weather.IsAdverse(_simulation.CurrentWeather))
+                weatherLabel += " · wet apron";
+            var clockLine =
+                $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}";
+            var clockColor = _paused || _speed > 1 ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+
+            var cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.Cloud;
+            var cashLine =
+                $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})";
+            if (_simulation.Reputation.Band == "Trusted")
+                cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.ClearGreen;
+            else if (_simulation.Reputation.Band == "Provisional" || _simulation.Reputation.Band == "At Risk")
+                cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.SafetyYellow;
+
+            var finance = _simulation.DailyFinance;
+            var runway = finance.CashRunwayDays is int days
+                ? $"  ·  ~{days}d runway"
+                : "  ·  cash building";
+            var financeColor = finance.ExpectedNet < 0 ? AirsideTheme.SignalRed
+                : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? AirsideTheme.SafetyYellow
+                : AirsideTheme.ClearGreen;
+            var financeLine =
+                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}";
+
+            string warningLine = null;
+            var warningColor = AirsideTheme.SafetyYellow;
+            if (_simulation.Economy.ConsecutiveNegativeDays > 0)
+            {
+                var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
+                warningLine =
+                    $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent";
+            }
+            else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
+            {
+                warningLine = $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}";
+            }
+
+            var turnaroundLines = string.Empty;
+            var priorityVisible = false;
+            var priorityInteractable = false;
+            var priorityLabel = "Hire priority crew · $300";
+            string scheduleLine;
+            var scheduleColor = AirsideTheme.Cloud;
+            if (atStand)
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
+                {
+                    var mark = task.State == TurnaroundTaskState.Complete ? "✓"
+                        : task.State == TurnaroundTaskState.Active ? "●" : "○";
+                    var time = task.State == TurnaroundTaskState.Complete ? string.Empty : $"  {task.SecondsRemaining}s";
+                    parts.Add($"{mark} {task.Name}{time}");
+                }
+
+                if (_simulation.CurrentDelaySeconds > 0)
+                {
+                    parts.Add($"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}");
+                    scheduleColor = AirsideTheme.SignalRed;
+                }
+
+                turnaroundLines = string.Join("\n", parts);
+                var alreadyAssigned = _simulation.ActiveTurnaround.PriorityCrewEnabled;
+                priorityVisible = true;
+                priorityInteractable = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
+                priorityLabel = alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300";
+                scheduleLine = "Turnaround in progress";
+            }
+            else
+            {
+                var onSchedule = _simulation.LastDelaySeconds <= 0;
+                scheduleLine = onSchedule
+                    ? "Operations running to schedule"
+                    : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}";
+                scheduleColor = onSchedule ? AirsideTheme.ClearGreen : AirsideTheme.SignalRed;
+            }
+
+            var staffing = _simulation.Staffing;
+            var staffingLine =
+                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}";
+            var staffingColor = staffing.IsUnderstaffed ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+
+            var capacity = _simulation.Capacity;
+            var research = _simulation.Research;
+            var researchLine = string.Empty;
+            var researchProgressVisible = false;
+            var researchProgress01 = 0f;
+            var researchButtonVisible = false;
+            var researchButtonInteractable = false;
+            var researchButtonLabel = "Start research";
+            if (!earlySession)
+            {
+                if (research.IsResearching)
+                {
+                    researchProgress01 = (float)research.Progress01(_clock.Now);
+                    var pct = (int)(researchProgress01 * 100);
+                    researchLine =
+                        $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left";
+                    researchProgressVisible = true;
+                }
+                else if (research.CanStartOperationsEfficiency)
+                {
+                    researchLine =
+                        $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done";
+                    researchButtonVisible = true;
+                    researchButtonInteractable = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                    researchButtonLabel = $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}";
+                }
+                else if (research.CanStartPassengerServices)
+                {
+                    researchLine =
+                        $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done";
+                    researchButtonVisible = true;
+                    researchButtonInteractable = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
+                    researchButtonLabel = $"Start research · ${AirportResearch.PassengerServicesCost:N0}";
+                }
+                else
+                {
+                    var ops = research.OperationsEfficiencyComplete
+                        ? $"{AirportResearch.OperationsEfficiencyName} ✓"
+                        : string.Empty;
+                    var pax = research.PassengerServicesComplete
+                        ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
+                        : string.Empty;
+                    researchLine =
+                        $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}";
+                }
+            }
+
+            var coachUrgent = _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0;
+            var showWaitMeter = earlySession && _simulation.Routes.Pending == null && !_showOpeningBriefing;
+            var waitLabel = string.Empty;
+            var waitProgress = 0f;
+            if (showWaitMeter)
+            {
+                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
+                waitProgress = 1f - Mathf.Clamp01(secondsToOffer / (float)AirportRoutes.FirstOfferAfterSeconds);
+                waitLabel = secondsToOffer > 0
+                    ? $"Waiting for first airline offer… {secondsToOffer}s"
+                    : "Airline offer arriving…";
+            }
+
+            _canvasHud.SyncLeftPanel(
+                locationLine: $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}",
+                flightLine: CommercialFlightHudLine(),
+                phaseLine: CommercialPhaseHudLine(),
+                clockLine: clockLine,
+                clockColor: clockColor,
+                cashLine: cashLine,
+                cashColor: cashColor,
+                financeLine: financeLine,
+                financeColor: financeColor,
+                warningLine: warningLine,
+                warningColor: warningColor,
+                showTurnaround: atStand,
+                turnaroundLines: turnaroundLines,
+                priorityVisible: priorityVisible,
+                priorityInteractable: priorityInteractable,
+                priorityLabel: priorityLabel,
+                scheduleLine: scheduleLine,
+                scheduleColor: scheduleColor,
+                staffingLine: staffingLine,
+                staffingColor: staffingColor,
+                earlySession: earlySession,
+                earlyHint: "Crew / stand / research unlock after you accept a route",
+                hireInteractable: staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
+                                  && _simulation.Economy.Cash >= AirportStaffing.HireCost,
+                hireLabel: $"Hire crew · ${AirportStaffing.HireCost}",
+                releaseInteractable: staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
+                buildStandVisible: true,
+                buildStandInteractable: capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost,
+                buildStandLabel: capacity.HasThirdStand
+                    ? "Stand 3 built"
+                    : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}",
+                standsLine: $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
+                researchLine: researchLine,
+                researchProgressVisible: researchProgressVisible,
+                researchProgress01: researchProgress01,
+                researchButtonVisible: researchButtonVisible,
+                researchButtonInteractable: researchButtonInteractable,
+                researchButtonLabel: researchButtonLabel,
+                coachLine: FirstSessionCoachLine(),
+                coachUrgent: coachUrgent,
+                controlsLine: earlySession
+                    ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
+                    : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
+                showWaitMeter: showWaitMeter,
+                waitLabel: waitLabel,
+                waitProgress01: waitProgress);
         }
 
         private void ReadSimulationControls()
@@ -1211,6 +1439,9 @@ namespace Airside.Presentation
             var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
             var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 14, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
 
+            // Canvas HUD owns the left status / hire / research panel when active.
+            if (!_canvasHudActive)
+            {
             var timeOfDay = _simulation.TimeOfDay;
             var earlySession = _simulation.Routes.Accepted.Count == 0;
             var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
@@ -1494,6 +1725,7 @@ namespace Airside.Presentation
                     AirsideTheme.CoastalBlue,
                     new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f));
             }
+            } // end !_canvasHudActive left panel
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;

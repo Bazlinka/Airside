@@ -5,11 +5,11 @@ using UnityEngine.UI;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 6 foundation — runtime uGUI Canvas HUD for the primary
-    /// first-session surfaces (status strip, route offer, ops toast). Built in code
-    /// so packaged builds do not depend on editor-imported PanelSettings. Remaining
-    /// dense IMGUI (operations log, research, briefing overlays) stays in
-    /// <see cref="AirsidePrototype"/> until the full Toolkit/uGUI migration.
+    /// Decision 0025 item 6 — runtime uGUI Canvas HUD for primary first-session
+    /// surfaces: left status (incl. hire / research / turnaround), route offer, and
+    /// ops toast. Built in code so packaged builds do not depend on editor-imported
+    /// PanelSettings. Dense operations log and full-screen overlays stay in
+    /// <see cref="AirsidePrototype"/> IMGUI until a later Toolkit pass.
     /// </summary>
     public sealed class AirsideCanvasHud
     {
@@ -23,9 +23,30 @@ namespace Airside.Presentation
         private readonly Text _clockText;
         private readonly Text _cashText;
         private readonly Text _financeText;
+        private readonly Text _warningText;
+        private readonly Text _turnaroundText;
+        private readonly GameObject _turnaroundBlock;
+        private readonly Button _priorityButton;
+        private readonly Text _priorityLabel;
+        private readonly Text _scheduleText;
+        private readonly Text _staffingText;
+        private readonly Text _earlyHintText;
+        private readonly GameObject _crewRow;
+        private readonly Button _hireCrewButton;
+        private readonly Button _releaseCrewButton;
+        private readonly Text _standsText;
+        private readonly Button _buildStandButton;
+        private readonly Text _buildStandLabel;
+        private readonly Text _researchText;
+        private readonly Image _researchFill;
+        private readonly GameObject _researchTrack;
+        private readonly Button _researchButton;
+        private readonly Text _researchButtonLabel;
         private readonly Text _coachText;
+        private readonly Text _controlsText;
         private readonly Image _waitFill;
         private readonly GameObject _waitRow;
+        private readonly Text _waitLabel;
         private readonly Text _offerTitle;
         private readonly Text _offerBody;
         private readonly Text _offerStatus;
@@ -36,6 +57,11 @@ namespace Airside.Presentation
         private readonly Image _offerAccent;
         private Action _onAccept;
         private Action _onDecline;
+        private Action _onPriorityCrew;
+        private Action _onHireCrew;
+        private Action _onReleaseCrew;
+        private Action _onBuildStand;
+        private Action _onStartResearch;
 
         private AirsideCanvasHud(
             RectTransform root,
@@ -48,9 +74,30 @@ namespace Airside.Presentation
             Text clockText,
             Text cashText,
             Text financeText,
+            Text warningText,
+            Text turnaroundText,
+            GameObject turnaroundBlock,
+            Button priorityButton,
+            Text priorityLabel,
+            Text scheduleText,
+            Text staffingText,
+            Text earlyHintText,
+            GameObject crewRow,
+            Button hireCrewButton,
+            Button releaseCrewButton,
+            Text standsText,
+            Button buildStandButton,
+            Text buildStandLabel,
+            Text researchText,
+            Image researchFill,
+            GameObject researchTrack,
+            Button researchButton,
+            Text researchButtonLabel,
             Text coachText,
+            Text controlsText,
             Image waitFill,
             GameObject waitRow,
+            Text waitLabel,
             Text offerTitle,
             Text offerBody,
             Text offerStatus,
@@ -70,9 +117,30 @@ namespace Airside.Presentation
             _clockText = clockText;
             _cashText = cashText;
             _financeText = financeText;
+            _warningText = warningText;
+            _turnaroundText = turnaroundText;
+            _turnaroundBlock = turnaroundBlock;
+            _priorityButton = priorityButton;
+            _priorityLabel = priorityLabel;
+            _scheduleText = scheduleText;
+            _staffingText = staffingText;
+            _earlyHintText = earlyHintText;
+            _crewRow = crewRow;
+            _hireCrewButton = hireCrewButton;
+            _releaseCrewButton = releaseCrewButton;
+            _standsText = standsText;
+            _buildStandButton = buildStandButton;
+            _buildStandLabel = buildStandLabel;
+            _researchText = researchText;
+            _researchFill = researchFill;
+            _researchTrack = researchTrack;
+            _researchButton = researchButton;
+            _researchButtonLabel = researchButtonLabel;
             _coachText = coachText;
+            _controlsText = controlsText;
             _waitFill = waitFill;
             _waitRow = waitRow;
+            _waitLabel = waitLabel;
             _offerTitle = offerTitle;
             _offerBody = offerBody;
             _offerStatus = offerStatus;
@@ -101,70 +169,121 @@ namespace Airside.Presentation
             var root = canvasGo.GetComponent<RectTransform>();
             Stretch(root);
 
-            var left = BuildPanel(root, "Status panel", new Vector2(22f, -22f), new Vector2(410f, 360f), anchorTopLeft: true);
-            var location = AddText(left, "Location", 18, FontStyle.Normal, new Vector2(20f, -56f), new Vector2(370f, 22f));
-            var flight = AddText(left, "Flight", 17, FontStyle.Bold, new Vector2(20f, -84f), new Vector2(370f, 24f));
-            var phase = AddText(left, "Phase", 17, FontStyle.Normal, new Vector2(20f, -112f), new Vector2(370f, 24f));
-            var clock = AddText(left, "Clock", 14, FontStyle.Normal, new Vector2(20f, -140f), new Vector2(370f, 22f));
-            var cash = AddText(left, "Cash", 14, FontStyle.Normal, new Vector2(20f, -166f), new Vector2(370f, 22f));
-            var finance = AddText(left, "Finance", 14, FontStyle.Normal, new Vector2(20f, -190f), new Vector2(370f, 22f));
-            var coach = AddText(left, "Coach", 15, FontStyle.Bold, new Vector2(20f, -230f), new Vector2(370f, 44f));
-            coach.color = AirsideTheme.SafetyYellow;
+            var left = BuildPanel(root, "Status panel", new Vector2(22f, -22f), new Vector2(410f, 420f), anchorTopLeft: true);
+            var content = new GameObject("Content", typeof(RectTransform));
+            content.transform.SetParent(left, false);
+            var contentRt = content.GetComponent<RectTransform>();
+            contentRt.anchorMin = new Vector2(0f, 0f);
+            contentRt.anchorMax = new Vector2(1f, 1f);
+            contentRt.offsetMin = new Vector2(16f, 12f);
+            contentRt.offsetMax = new Vector2(-16f, -12f);
+            var layout = content.AddComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.spacing = 4f;
+            layout.padding = new RectOffset(4, 4, 0, 0);
+            content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            var wordmarkLabel = AddText(left, "Brand", 22, FontStyle.Bold, new Vector2(20f, -18f), new Vector2(370f, 32f));
-            wordmarkLabel.text = "AIRSIDE";
-            wordmarkLabel.color = AirsideTheme.Cloud;
-            var wordmark = AirsideTheme.WordmarkLight;
-            if (wordmark != null)
-            {
-                wordmarkLabel.gameObject.SetActive(false);
-                var imageGo = new GameObject("Wordmark", typeof(RectTransform));
-                imageGo.transform.SetParent(left, false);
-                var imageRt = imageGo.GetComponent<RectTransform>();
-                imageRt.anchorMin = new Vector2(0f, 1f);
-                imageRt.anchorMax = new Vector2(0f, 1f);
-                imageRt.pivot = new Vector2(0f, 1f);
-                imageRt.anchoredPosition = new Vector2(16f, -12f);
-                imageRt.sizeDelta = new Vector2(240f, 40f);
-                var image = imageGo.AddComponent<Image>();
-                image.sprite = Sprite.Create(wordmark, new Rect(0, 0, wordmark.width, wordmark.height), new Vector2(0.5f, 0.5f));
-                image.preserveAspect = true;
-                image.raycastTarget = false;
-            }
+            AddWordmark(contentRt);
 
-            var waitRow = new GameObject("Wait row", typeof(RectTransform));
-            waitRow.transform.SetParent(left, false);
-            var waitRt = waitRow.GetComponent<RectTransform>();
-            waitRt.anchorMin = new Vector2(0f, 1f);
-            waitRt.anchorMax = new Vector2(0f, 1f);
-            waitRt.pivot = new Vector2(0f, 1f);
-            waitRt.anchoredPosition = new Vector2(20f, -290f);
-            waitRt.sizeDelta = new Vector2(370f, 36f);
-            var waitLabel = AddText(waitRt, "Wait label", 13, FontStyle.Normal, new Vector2(0f, 0f), new Vector2(370f, 18f));
-            waitLabel.name = "Wait label";
-            waitLabel.text = "Waiting for first airline offer…";
-            var track = new GameObject("Wait track", typeof(RectTransform));
-            track.transform.SetParent(waitRt, false);
-            var trackRt = track.GetComponent<RectTransform>();
-            trackRt.anchorMin = new Vector2(0f, 1f);
-            trackRt.anchorMax = new Vector2(0f, 1f);
-            trackRt.pivot = new Vector2(0f, 1f);
-            trackRt.anchoredPosition = new Vector2(0f, -22f);
-            trackRt.sizeDelta = new Vector2(370f, 10f);
-            var trackImage = track.AddComponent<Image>();
+            var location = AddLayoutText(contentRt, "Location", 14, FontStyle.Normal, 18f);
+            var flight = AddLayoutText(contentRt, "Flight", 16, FontStyle.Bold, 22f);
+            var phase = AddLayoutText(contentRt, "Phase", 15, FontStyle.Normal, 22f);
+            var clock = AddLayoutText(contentRt, "Clock", 13, FontStyle.Normal, 20f);
+            var cash = AddLayoutText(contentRt, "Cash", 13, FontStyle.Normal, 20f);
+            var finance = AddLayoutText(contentRt, "Finance", 13, FontStyle.Normal, 20f);
+            var warning = AddLayoutText(contentRt, "Warning", 13, FontStyle.Bold, 20f);
+            warning.color = AirsideTheme.SafetyYellow;
+
+            var turnaroundBlock = new GameObject("Turnaround", typeof(RectTransform));
+            turnaroundBlock.transform.SetParent(contentRt, false);
+            turnaroundBlock.AddComponent<LayoutElement>().preferredHeight = 90f;
+            var turnaroundLayout = turnaroundBlock.AddComponent<VerticalLayoutGroup>();
+            turnaroundLayout.spacing = 4f;
+            turnaroundLayout.childControlHeight = true;
+            turnaroundLayout.childControlWidth = true;
+            turnaroundLayout.childForceExpandHeight = false;
+            turnaroundLayout.childForceExpandWidth = true;
+            var turnaround = AddLayoutText(turnaroundBlock.GetComponent<RectTransform>(), "Tasks", 12, FontStyle.Normal, 72f);
+            var priority = AddLayoutButton(turnaroundBlock.GetComponent<RectTransform>(), "Hire priority crew", 190f, 28f, AirsideTheme.CoastalBlue);
+            var priorityLabel = priority.GetComponentInChildren<Text>();
+
+            var schedule = AddLayoutText(contentRt, "Schedule", 13, FontStyle.Normal, 20f);
+            var staffing = AddLayoutText(contentRt, "Staffing", 13, FontStyle.Normal, 20f);
+            var earlyHint = AddLayoutText(contentRt, "Early hint", 13, FontStyle.Normal, 22f);
+
+            var crewRow = new GameObject("Crew row", typeof(RectTransform));
+            crewRow.transform.SetParent(contentRt, false);
+            crewRow.AddComponent<LayoutElement>().preferredHeight = 28f;
+            var crewLayout = crewRow.AddComponent<HorizontalLayoutGroup>();
+            crewLayout.spacing = 8f;
+            crewLayout.childControlHeight = true;
+            crewLayout.childControlWidth = false;
+            crewLayout.childForceExpandHeight = true;
+            crewLayout.childForceExpandWidth = false;
+            var hireCrew = AddLayoutButton(crewRow.GetComponent<RectTransform>(), "Hire crew", 150f, 28f, AirsideTheme.CoastalBlue, flexibleWidth: false);
+            var releaseCrew = AddLayoutButton(crewRow.GetComponent<RectTransform>(), "Release crew", 110f, 28f, AirsideTheme.Tarmac, flexibleWidth: false);
+
+            var stands = AddLayoutText(contentRt, "Stands", 13, FontStyle.Normal, 20f);
+            var buildStand = AddLayoutButton(contentRt, "Build stand 3", 220f, 28f, AirsideTheme.CoastalBlue);
+            var buildStandLabel = buildStand.GetComponentInChildren<Text>();
+
+            var research = AddLayoutText(contentRt, "Research", 13, FontStyle.Normal, 20f);
+            var researchTrackGo = new GameObject("Research track", typeof(RectTransform));
+            researchTrackGo.transform.SetParent(contentRt, false);
+            researchTrackGo.AddComponent<LayoutElement>().preferredHeight = 10f;
+            var trackImage = researchTrackGo.AddComponent<Image>();
             trackImage.color = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f);
             trackImage.raycastTarget = false;
-            var fillGo = new GameObject("Wait fill", typeof(RectTransform));
-            fillGo.transform.SetParent(trackRt, false);
-            var fillRt = fillGo.GetComponent<RectTransform>();
-            fillRt.anchorMin = new Vector2(0f, 0f);
-            fillRt.anchorMax = new Vector2(0f, 1f);
-            fillRt.pivot = new Vector2(0f, 0.5f);
-            fillRt.anchoredPosition = Vector2.zero;
-            fillRt.sizeDelta = new Vector2(0f, 0f);
-            var fillImage = fillGo.AddComponent<Image>();
-            fillImage.color = AirsideTheme.CoastalBlue;
-            fillImage.raycastTarget = false;
+            var researchFillGo = new GameObject("Research fill", typeof(RectTransform));
+            researchFillGo.transform.SetParent(researchTrackGo.transform, false);
+            var researchFillRt = researchFillGo.GetComponent<RectTransform>();
+            researchFillRt.anchorMin = new Vector2(0f, 0f);
+            researchFillRt.anchorMax = new Vector2(0f, 1f);
+            researchFillRt.pivot = new Vector2(0f, 0.5f);
+            researchFillRt.anchoredPosition = Vector2.zero;
+            researchFillRt.sizeDelta = new Vector2(0f, 0f);
+            var researchFill = researchFillGo.AddComponent<Image>();
+            researchFill.color = AirsideTheme.CoastalBlue;
+            researchFill.raycastTarget = false;
+            var researchButton = AddLayoutButton(contentRt, "Start research", 260f, 28f, AirsideTheme.CoastalBlue);
+            var researchButtonLabel = researchButton.GetComponentInChildren<Text>();
+
+            var coach = AddLayoutText(contentRt, "Coach", 14, FontStyle.Bold, 28f);
+            coach.color = AirsideTheme.SafetyYellow;
+            var controls = AddLayoutText(contentRt, "Controls", 12, FontStyle.Normal, 20f);
+
+            var waitRow = new GameObject("Wait row", typeof(RectTransform));
+            waitRow.transform.SetParent(contentRt, false);
+            waitRow.AddComponent<LayoutElement>().preferredHeight = 36f;
+            var waitLayout = waitRow.AddComponent<VerticalLayoutGroup>();
+            waitLayout.spacing = 4f;
+            waitLayout.childControlHeight = true;
+            waitLayout.childControlWidth = true;
+            waitLayout.childForceExpandHeight = false;
+            waitLayout.childForceExpandWidth = true;
+            var waitLabel = AddLayoutText(waitRow.GetComponent<RectTransform>(), "Wait label", 12, FontStyle.Normal, 16f);
+            waitLabel.text = "Waiting for first airline offer…";
+            var waitTrackGo = new GameObject("Wait track", typeof(RectTransform));
+            waitTrackGo.transform.SetParent(waitRow.transform, false);
+            waitTrackGo.AddComponent<LayoutElement>().preferredHeight = 10f;
+            var waitTrackImage = waitTrackGo.AddComponent<Image>();
+            waitTrackImage.color = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f);
+            waitTrackImage.raycastTarget = false;
+            var waitFillGo = new GameObject("Wait fill", typeof(RectTransform));
+            waitFillGo.transform.SetParent(waitTrackGo.transform, false);
+            var waitFillRt = waitFillGo.GetComponent<RectTransform>();
+            waitFillRt.anchorMin = new Vector2(0f, 0f);
+            waitFillRt.anchorMax = new Vector2(0f, 1f);
+            waitFillRt.pivot = new Vector2(0f, 0.5f);
+            waitFillRt.anchoredPosition = Vector2.zero;
+            waitFillRt.sizeDelta = new Vector2(0f, 0f);
+            var waitFill = waitFillGo.AddComponent<Image>();
+            waitFill.color = AirsideTheme.CoastalBlue;
+            waitFill.raycastTarget = false;
 
             var offer = BuildPanel(root, "Offer panel", new Vector2(-22f, -22f), new Vector2(340f, 196f), anchorTopRight: true);
             var offerAccentGo = new GameObject("Offer accent", typeof(RectTransform));
@@ -192,19 +311,28 @@ namespace Airside.Presentation
             toastText.color = AirsideTheme.ClearGreen;
             toast.gameObject.SetActive(false);
             offer.gameObject.SetActive(false);
-            // Phase-1 foundation: offer + toast on Canvas. Status/research stay on IMGUI
-            // until the interactive left panel is migrated (hire/research buttons).
-            left.gameObject.SetActive(false);
+            left.gameObject.SetActive(true);
 
             var hud = new AirsideCanvasHud(
                 root, left, offer, toast,
-                location, flight, phase, clock, cash, finance, coach,
-                fillImage, waitRow,
+                location, flight, phase, clock, cash, finance, warning,
+                turnaround, turnaroundBlock, priority, priorityLabel,
+                schedule, staffing, earlyHint,
+                crewRow, hireCrew, releaseCrew,
+                stands, buildStand, buildStandLabel,
+                research, researchFill, researchTrackGo, researchButton, researchButtonLabel,
+                coach, controls,
+                waitFill, waitRow, waitLabel,
                 offerTitle, offerBody, offerStatus,
                 accept, decline, acceptLabel, toastText, offerAccent);
 
             accept.onClick.AddListener(() => hud._onAccept?.Invoke());
             decline.onClick.AddListener(() => hud._onDecline?.Invoke());
+            priority.onClick.AddListener(() => hud._onPriorityCrew?.Invoke());
+            hireCrew.onClick.AddListener(() => hud._onHireCrew?.Invoke());
+            releaseCrew.onClick.AddListener(() => hud._onReleaseCrew?.Invoke());
+            buildStand.onClick.AddListener(() => hud._onBuildStand?.Invoke());
+            researchButton.onClick.AddListener(() => hud._onStartResearch?.Invoke());
 
             if (UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
@@ -216,49 +344,159 @@ namespace Airside.Presentation
             return hud;
         }
 
-        public void BindActions(Action onAccept, Action onDecline)
+        public void BindActions(
+            Action onAccept,
+            Action onDecline,
+            Action onPriorityCrew = null,
+            Action onHireCrew = null,
+            Action onReleaseCrew = null,
+            Action onBuildStand = null,
+            Action onStartResearch = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
+            _onPriorityCrew = onPriorityCrew;
+            _onHireCrew = onHireCrew;
+            _onReleaseCrew = onReleaseCrew;
+            _onBuildStand = onBuildStand;
+            _onStartResearch = onStartResearch;
         }
 
-        public void SyncStatus(
+        public void SyncLeftPanel(
             string locationLine,
             string flightLine,
             string phaseLine,
             string clockLine,
+            Color clockColor,
             string cashLine,
             Color cashColor,
             string financeLine,
             Color financeColor,
+            string warningLine,
+            Color warningColor,
+            bool showTurnaround,
+            string turnaroundLines,
+            bool priorityVisible,
+            bool priorityInteractable,
+            string priorityLabel,
+            string scheduleLine,
+            Color scheduleColor,
+            string staffingLine,
+            Color staffingColor,
+            bool earlySession,
+            string earlyHint,
+            bool hireInteractable,
+            string hireLabel,
+            bool releaseInteractable,
+            bool buildStandVisible,
+            bool buildStandInteractable,
+            string buildStandLabel,
+            string standsLine,
+            string researchLine,
+            bool researchProgressVisible,
+            float researchProgress01,
+            bool researchButtonVisible,
+            bool researchButtonInteractable,
+            string researchButtonLabel,
             string coachLine,
             bool coachUrgent,
+            string controlsLine,
             bool showWaitMeter,
             string waitLabel,
-            float waitProgress01,
-            float leftPanelHeight)
+            float waitProgress01)
         {
             _locationText.text = locationLine;
             _flightText.text = flightLine;
             _phaseText.text = phaseLine;
             _clockText.text = clockLine;
+            _clockText.color = clockColor;
             _cashText.text = cashLine;
             _cashText.color = cashColor;
             _financeText.text = financeLine;
             _financeText.color = financeColor;
+
+            var hasWarning = !string.IsNullOrEmpty(warningLine);
+            _warningText.gameObject.SetActive(hasWarning);
+            if (hasWarning)
+            {
+                _warningText.text = warningLine;
+                _warningText.color = warningColor;
+            }
+
+            _turnaroundBlock.SetActive(showTurnaround);
+            if (showTurnaround)
+            {
+                _turnaroundText.text = turnaroundLines ?? string.Empty;
+                var lines = string.IsNullOrEmpty(turnaroundLines) ? 1 : turnaroundLines.Split('\n').Length;
+                _turnaroundBlock.GetComponent<LayoutElement>().preferredHeight = Mathf.Clamp(18f + lines * 16f + (priorityVisible ? 34f : 0f), 40f, 160f);
+                _priorityButton.gameObject.SetActive(priorityVisible);
+                if (priorityVisible)
+                {
+                    _priorityButton.interactable = priorityInteractable;
+                    _priorityLabel.text = priorityLabel;
+                }
+            }
+
+            _scheduleText.text = scheduleLine;
+            _scheduleText.color = scheduleColor;
+            _staffingText.text = staffingLine;
+            _staffingText.color = staffingColor;
+
+            _earlyHintText.gameObject.SetActive(earlySession);
+            if (earlySession)
+                _earlyHintText.text = earlyHint;
+
+            _crewRow.SetActive(!earlySession);
+            _standsText.gameObject.SetActive(!earlySession);
+            _buildStandButton.gameObject.SetActive(!earlySession && buildStandVisible);
+            _researchText.gameObject.SetActive(!earlySession);
+            _researchTrack.SetActive(!earlySession && researchProgressVisible);
+            _researchButton.gameObject.SetActive(!earlySession && researchButtonVisible);
+
+            if (!earlySession)
+            {
+                _hireCrewButton.interactable = hireInteractable;
+                _hireCrewButton.GetComponentInChildren<Text>().text = hireLabel;
+                _releaseCrewButton.interactable = releaseInteractable;
+                _standsText.text = standsLine;
+                if (buildStandVisible)
+                {
+                    _buildStandButton.interactable = buildStandInteractable;
+                    _buildStandLabel.text = buildStandLabel;
+                }
+
+                _researchText.text = researchLine;
+                if (researchProgressVisible)
+                {
+                    var trackRt = _researchTrack.GetComponent<RectTransform>();
+                    var trackWidth = Mathf.Max(40f, trackRt.rect.width);
+                    if (trackWidth < 40f)
+                        trackWidth = 370f;
+                    _researchFill.rectTransform.sizeDelta = new Vector2(trackWidth * Mathf.Clamp01(researchProgress01), 0f);
+                }
+
+                if (researchButtonVisible)
+                {
+                    _researchButton.interactable = researchButtonInteractable;
+                    _researchButtonLabel.text = researchButtonLabel;
+                }
+            }
+
             _coachText.text = coachLine;
             _coachText.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _controlsText.text = controlsLine;
+
             _waitRow.SetActive(showWaitMeter);
             if (showWaitMeter)
             {
-                var label = _waitRow.transform.Find("Wait label")?.GetComponent<Text>();
-                if (label != null)
-                    label.text = waitLabel;
-                var fillRt = _waitFill.rectTransform;
-                fillRt.sizeDelta = new Vector2(370f * Mathf.Clamp01(waitProgress01), 0f);
+                _waitLabel.text = waitLabel;
+                _waitFill.rectTransform.sizeDelta = new Vector2(370f * Mathf.Clamp01(waitProgress01), 0f);
             }
 
-            _leftPanel.sizeDelta = new Vector2(410f, leftPanelHeight);
+            // Prefer content height; clamp so the world stays readable.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_leftPanel);
+            var preferred = LayoutUtility.GetPreferredHeight(_leftPanel.Find("Content") as RectTransform);
+            _leftPanel.sizeDelta = new Vector2(410f, Mathf.Clamp(preferred + 24f, 360f, 620f));
         }
 
         public void SyncOffer(
@@ -301,6 +539,28 @@ namespace Airside.Presentation
 
         public void SetVisible(bool visible) => _root.gameObject.SetActive(visible);
 
+        private static void AddWordmark(RectTransform parent)
+        {
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                var imageGo = new GameObject("Wordmark", typeof(RectTransform));
+                imageGo.transform.SetParent(parent, false);
+                imageGo.AddComponent<LayoutElement>().preferredHeight = 40f;
+                var image = imageGo.AddComponent<Image>();
+                image.sprite = Sprite.Create(wordmark, new Rect(0, 0, wordmark.width, wordmark.height), new Vector2(0.5f, 0.5f));
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+                image.color = Color.white;
+            }
+            else
+            {
+                var label = AddLayoutText(parent, "Brand", 22, FontStyle.Bold, 32f);
+                label.text = "AIRSIDE";
+                label.color = AirsideTheme.Cloud;
+            }
+        }
+
         private static RectTransform BuildPanel(
             RectTransform parent,
             string name,
@@ -340,7 +600,6 @@ namespace Airside.Presentation
             image.color = ink;
             image.raycastTarget = true;
 
-            // Thin Coastal Blue frame.
             AddEdge(rt, "Edge top", anchoredTop: true, horizontal: true);
             AddEdge(rt, "Edge bottom", anchoredTop: false, horizontal: true);
             AddEdge(rt, "Edge left", anchoredLeft: true, horizontal: false);
@@ -373,6 +632,56 @@ namespace Airside.Presentation
             var image = go.AddComponent<Image>();
             image.color = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.55f);
             image.raycastTarget = false;
+        }
+
+        private static Text AddLayoutText(RectTransform parent, string name, int fontSize, FontStyle style, float preferredHeight)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
+            var text = go.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.fontSize = fontSize;
+            text.fontStyle = style;
+            text.color = AirsideTheme.Cloud;
+            text.alignment = TextAnchor.UpperLeft;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private static Button AddLayoutButton(
+            RectTransform parent,
+            string label,
+            float width,
+            float height,
+            Color color,
+            bool flexibleWidth = true)
+        {
+            var go = new GameObject(label + " button", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var le = go.AddComponent<LayoutElement>();
+            le.preferredHeight = height;
+            le.preferredWidth = width;
+            le.flexibleWidth = flexibleWidth ? 0f : 0f;
+            var image = go.AddComponent<Image>();
+            image.color = color;
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+            var textGo = new GameObject("Label", typeof(RectTransform));
+            textGo.transform.SetParent(go.transform, false);
+            var textRt = textGo.GetComponent<RectTransform>();
+            Stretch(textRt);
+            var text = textGo.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.fontSize = 13;
+            text.fontStyle = FontStyle.Bold;
+            text.color = AirsideTheme.Cloud;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.text = label;
+            text.raycastTarget = false;
+            return button;
         }
 
         private static Text AddText(RectTransform parent, string name, int fontSize, FontStyle style, Vector2 pos, Vector2 size)

@@ -241,31 +241,35 @@ namespace Airside.Presentation
                 return;
             wetness01 = Mathf.Clamp01(wetness01);
             // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
-            var wetTint = new Color(0.04f, 0.07f, 0.11f, 0f);
-            var wetColor = Color.Lerp(dryColor, dryColor * 0.42f + wetTint, wetness01);
+            var wetTint = new Color(0.03f, 0.06f, 0.1f, 0f);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.38f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
 
-            var targetSmooth = Mathf.Max(drySmoothness, 0.9f);
+            var targetSmooth = Mathf.Max(drySmoothness, 0.92f);
             var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", smoothness);
             if (material.HasProperty("_Glossiness"))
                 material.SetFloat("_Glossiness", smoothness);
 
-            var metallic = Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.18f), wetness01 * 0.85f);
+            var metallic = Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.22f), wetness01 * 0.9f);
             if (material.HasProperty("_Metallic"))
                 material.SetFloat("_Metallic", metallic);
 
             // Wet surfaces lose micro-relief — bump flattens toward a mirror sheen.
             if (material.HasProperty("_BumpScale"))
-                material.SetFloat("_BumpScale", Mathf.Lerp(dryBumpScale, dryBumpScale * 0.28f, wetness01));
+                material.SetFloat("_BumpScale", Mathf.Lerp(dryBumpScale, dryBumpScale * 0.22f, wetness01));
+
+            // Slight AO deepen so wet pavement reads puddled rather than just glossy.
+            if (material.HasProperty("_OcclusionStrength"))
+                material.SetFloat("_OcclusionStrength", Mathf.Lerp(1f, 1.25f, wetness01));
 
             if (material.HasProperty("_ClearCoatMask"))
             {
                 material.SetFloat("_ClearCoatMask", wetness01);
                 if (material.HasProperty("_ClearCoatSmoothness"))
-                    material.SetFloat("_ClearCoatSmoothness", Mathf.Lerp(0.15f, 0.95f, wetness01));
+                    material.SetFloat("_ClearCoatSmoothness", Mathf.Lerp(0.12f, 0.98f, wetness01));
                 if (wetness01 > 0.02f)
                     material.EnableKeyword("_CLEARCOAT");
                 else

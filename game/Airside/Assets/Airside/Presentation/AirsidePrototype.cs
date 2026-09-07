@@ -7436,13 +7436,35 @@ namespace Airside.Presentation
                 CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             if (!usedTaxiEdgeS)
                 CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);
-            // Apron lead-in chevrons from taxi to stand lead.
+            // Apron lead-in chevrons from taxi to stand lead — kit chevrons when present.
             for (var i = 0; i < 4; i++)
             {
                 var z = 11.2f + i * 0.85f;
-                CreateBlock($"Apron chevron {i}", new Vector3(14f + i * 0.4f, 0.04f, z), new Vector3(1.1f, 0.02f, 0.16f),
-                    new Color(0.95f, 0.85f, 0.2f));
+                var pos = new Vector3(14f + i * 0.4f, 0.04f, z);
+                var mesh = i % 2 == 0 ? "chevron_lead_a" : "chevron_lead_b";
+                if (i == 2) mesh = "chevron_lead_c";
+                if (i == 3) mesh = "chevron_lead_d";
+                if (!ArtGltfLoader.TryPlaceNamedMesh(
+                        kit, mesh, pos, Quaternion.Euler(0f, 25f, 0f),
+                        new Color(0.95f, 0.85f, 0.2f), out _))
+                {
+                    CreateBlock($"Apron chevron {i}", pos, new Vector3(1.1f, 0.02f, 0.16f),
+                        new Color(0.95f, 0.85f, 0.2f));
+                }
             }
+
+            // Taxi direction arrows on Taxiway A (kit shaft+head or greybox).
+            PlaceTaxiArrow(kit, new Vector3(-4f, 0.04f, 9f), 90f);
+            PlaceTaxiArrow(kit, new Vector3(18f, 0.04f, 9f), 90f);
+            PlaceTaxiArrow(kit, new Vector3(14f, 0.04f, 12.5f), 0f);
+
+            // Extra hold-short bars on the west taxi entry when kit densified.
+            if (!ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "hold_short_e", new Vector3(-18f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _))
+                CreateBlock("Hold short E", new Vector3(-18f, 0.05f, 6.6f), new Vector3(3.2f, 0.03f, 0.2f), holdYellow);
+            if (!ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "hold_short_f", new Vector3(-18f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _))
+                CreateBlock("Hold short F", new Vector3(-18f, 0.05f, 7.1f), new Vector3(3.2f, 0.03f, 0.2f), holdYellow);
 
             // Stand lead-in dashes for bays 1–3 so apron reads painted from overview (0025 item 3).
             foreach (var standX in new[] { 14f, 22f, 30f })
@@ -7456,17 +7478,68 @@ namespace Airside.Presentation
             }
         }
 
+        private static void PlaceTaxiArrow(string kit, Vector3 position, float yaw)
+        {
+            var root = new GameObject("Taxi arrow").transform;
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yaw, 0f);
+            var yellow = new Color(0.95f, 0.85f, 0.2f);
+            var used = false;
+            void PlacePart(string mesh, Vector3 local)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, yellow, out var part))
+                    return;
+                part.SetParent(root, false);
+                part.localPosition = local;
+                part.localRotation = Quaternion.identity;
+                used = true;
+            }
+
+            PlacePart("taxi_arrow_shaft", Vector3.zero);
+            PlacePart("taxi_arrow_head_l", Vector3.zero);
+            PlacePart("taxi_arrow_head_r", Vector3.zero);
+            PlacePart("taxi_arrow_head_cap", Vector3.zero);
+            if (used)
+                return;
+
+            ParentBlock(root, "shaft", new Vector3(0f, 0f, -0.2f), new Vector3(0.28f, 0.03f, 1.6f), yellow);
+            ParentBlock(root, "head L", new Vector3(-0.35f, 0f, 0.7f), new Vector3(0.55f, 0.03f, 0.35f), yellow);
+            ParentBlock(root, "head R", new Vector3(0.35f, 0f, 0.7f), new Vector3(0.55f, 0.03f, 0.35f), yellow);
+        }
+
         /// <summary>
         /// Decision 0025 item 3 — block runway digits readable from overview.
+        /// Prefer WLD kit digit bars when present; greybox segments remain the fallback.
         /// Local +Z is digit height; yaw rotates onto the runway axis.
         /// </summary>
         private static void PlaceRunwayDigit(char digit, Vector3 centre, float yaw)
         {
+            const string kit = "Models/Props/mdl_airfield_markings_kit_v01.gltf";
             var root = new GameObject($"Runway digit {digit}").transform;
             root.position = centre;
             root.rotation = Quaternion.Euler(0f, yaw, 0f);
             void Seg(string name, float x, float z, float sx, float sz)
             {
+                // Prefer kit digit bars for micro-relief; scale locally to match segment size.
+                var mesh = Math.Abs(sx - sz) < 0.01f || sx > sz ? "digit_bar_h" : "digit_bar_v";
+                if (name.Contains("serif", StringComparison.Ordinal))
+                    mesh = "digit_serif";
+                else if (sx > sz * 1.2f)
+                    mesh = name.Contains("mid", StringComparison.Ordinal) ? "digit_bar_h_short" : "digit_bar_h";
+                else
+                    mesh = "digit_bar_v";
+
+                if (ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, new Vector3(x, 0f, z), Quaternion.identity, Color.white, out var part))
+                {
+                    part.SetParent(root, false);
+                    part.localPosition = new Vector3(x, 0f, z);
+                    part.localScale = new Vector3(
+                        Mathf.Max(0.35f, sx / 1.1f),
+                        1f,
+                        Mathf.Max(0.35f, sz / 1.9f));
+                    return;
+                }
+
                 ParentBlock(root, name, new Vector3(x, 0f, z), new Vector3(sx, 0.03f, sz), Color.white);
             }
 

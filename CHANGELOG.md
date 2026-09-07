@@ -5,6 +5,19 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 AIR-001 v05 Mac bake.** Unity ModelImporter meshes now in Resources prefabs for
+  `mdl_regional_turboprop_01_v05` plus the authored FBX kits from the same bake menu; Bailey
+  accepted the AIR-001 v05 result. No standalone `.mat` files (materials stay FBX sub-assets).
+  BLD-001 v05 / MAT-001 / F2–F4 not started.
+  Evidence: Unity bake 11/11 prefabs, 32 Addressables keys; `scripts/test-unity.sh` 116/116
+  on Unity 6000.3.23f1. `scripts/test-domain.sh` not available on this Mac (no .NET SDK).
+
+- **Batch F1 AIR-001 v05.** Authored `mdl_regional_turboprop_01_v05` FBX + companion glTF (163 meshes:
+  oval lathe, tilted windscreen, six-blade props with yellow tips, separated gear/doors/surfaces/lights)
+  and Resources prefab; PreferArtKit prefers v05 ahead of authored/lofted/v04; pipeline-proof Resources
+  yield to StreamingAssets glTF until Mac FBX bake. BLD-001/MAT-001/F2–F4 not started.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 173; `docs/art/prompts/air-001-v05-turboprop-2026-09-07.md`.
+
 - **Decision 0027 / Batch F visual asset gap closure.** Audited the complete repository,
   runtime presentation builders, approved references and current asset/register state.
   Added an implementation-ready ordered asset packet: authored turboprop/terminal/materials

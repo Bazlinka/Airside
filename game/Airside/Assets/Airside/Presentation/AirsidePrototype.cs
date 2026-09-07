@@ -6410,6 +6410,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
@@ -6511,26 +6512,39 @@ namespace Airside.Presentation
             "cabin_window_4" => "Cabin window 4",
             "cabin_window_5" => "Cabin window 5",
             "cabin_window_6" => "Cabin window 6",
+            "cabin_window_7" => "Cabin window 7",
             "cabin_window_r1" => "Cabin window R1",
             "cabin_window_r2" => "Cabin window R2",
             "cabin_window_r3" => "Cabin window R3",
             "cabin_window_r4" => "Cabin window R4",
             "cabin_window_r5" => "Cabin window R5",
             "cabin_window_r6" => "Cabin window R6",
+            "cabin_window_r7" => "Cabin window R7",
             "cabin_window_frame_1" => "Cabin window frame 1",
             "cabin_window_frame_3" => "Cabin window frame 3",
             "cabin_window_frame_5" => "Cabin window frame 5",
+            "cabin_window_frame_7" => "Cabin window frame 7",
+            "cabin_window_frame_r1" => "Cabin window frame R1",
             "cabin_window_frame_r2" => "Cabin window frame R2",
+            "cabin_window_frame_r3" => "Cabin window frame R3",
             "cabin_window_frame_r4" => "Cabin window frame R4",
+            "cabin_window_frame_r5" => "Cabin window frame R5",
+            "cabin_window_frame_r7" => "Cabin window frame R7",
             "cockpit_glare" => "Cockpit glare",
+            "windscreen_c" => "Windscreen C",
+            "windscreen_l" => "Windscreen L",
+            "windscreen_r" => "Windscreen R",
             "windscreen_pillar_l" => "Windscreen pillar L",
             "windscreen_pillar_r" => "Windscreen pillar R",
+            "windscreen_pillar_c" => "Windscreen pillar C",
             "livery_stripe" => "Livery stripe",
             "livery_stripe_lower" => "Livery stripe lower",
+            "livery_tail_sweep" => "Livery tail sweep",
             "door_frame_fwd" => "Door frame",
             "door_handle_fwd" => "Door handle",
             "inspection_panel_fwd" => "Inspection panel fwd",
             "inspection_panel_aft" => "Inspection panel aft",
+            "cargo_sill" => "Cargo sill",
             "wing_fence_left" => "Wing fence L",
             "wing_fence_right" => "Wing fence R",
             "wing_fence_mid_l" => "Wing fence mid L",
@@ -6588,6 +6602,24 @@ namespace Airside.Presentation
             "propeller_right_b" => "PropBlade R",
             "propeller_left_c" => "PropBlade L2",
             "propeller_right_c" => "PropBlade R2",
+            "propeller_left_d" => "PropBlade L3",
+            "propeller_right_d" => "PropBlade R3",
+            "propeller_left_e" => "PropBlade L4",
+            "propeller_right_e" => "PropBlade R4",
+            "propeller_left_f" => "PropBlade L5",
+            "propeller_right_f" => "PropBlade R5",
+            "propeller_left_tip" => "PropTip L",
+            "propeller_right_tip" => "PropTip R",
+            "propeller_left_tip_b" => "PropTip L2",
+            "propeller_right_tip_b" => "PropTip R2",
+            "propeller_left_tip_c" => "PropTip L3",
+            "propeller_right_tip_c" => "PropTip R3",
+            "propeller_left_tip_d" => "PropTip L4",
+            "propeller_right_tip_d" => "PropTip R4",
+            "propeller_left_tip_e" => "PropTip L5",
+            "propeller_right_tip_e" => "PropTip R5",
+            "propeller_left_tip_f" => "PropTip L6",
+            "propeller_right_tip_f" => "PropTip R6",
             "spinner_left" => "Spinner L",
             "spinner_right" => "Spinner R",
             "spinner_stripe_l" => "Spinner stripe L",
@@ -6616,6 +6648,9 @@ namespace Airside.Presentation
             "tire_nose" => "Tire nose",
             "tire_left" => "Tire L",
             "tire_right" => "Tire R",
+            "wheel_nose" => "Wheel nose",
+            "wheel_left" => "Wheel L",
+            "wheel_right" => "Wheel R",
             "rim_nose" => "Rim nose",
             "rim_left" => "Rim L",
             "rim_right" => "Rim R",
@@ -6643,16 +6678,18 @@ namespace Airside.Presentation
                 or "belly_fairing" or "cargo_door" or "door_frame_fwd" => new Color(0.93f, 0.95f, 0.97f),
             "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
                 or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
-                or "cabin_window_6"
+                or "cabin_window_6" or "cabin_window_7"
                 or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
-                or "cabin_window_r6" or "cockpit_glare"
+                or "cabin_window_r6" or "cabin_window_r7" or "cockpit_glare"
+                or "windscreen_c" or "windscreen_l" or "windscreen_r"
                 => new Color(0.18f, 0.35f, 0.48f, 0.42f),
-            "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5"
-                or "cabin_window_frame_r2" or "cabin_window_frame_r4"
-                or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r"
+            "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5" or "cabin_window_frame_7"
+                or "cabin_window_frame_r1" or "cabin_window_frame_r2" or "cabin_window_frame_r3"
+                or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
+                or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" or "livery_stripe_lower" => new Color(0.15f, 0.35f, 0.65f),
-            "door_handle_fwd" or "cargo_door_latch" => new Color(0.72f, 0.74f, 0.78f),
+            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
+            "door_handle_fwd" or "cargo_door_latch" or "cargo_sill" => new Color(0.72f, 0.74f, 0.78f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
@@ -6668,21 +6705,34 @@ namespace Airside.Presentation
                 => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
                 or "nacelle_left" or "nacelle_right"
-                or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right"
-                or "exhaust_stack_l" or "exhaust_stack_r"
-                or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r" => accent * 0.85f,
+                or "intake_left" or "intake_right"
+                or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r"
+                => new Color(0.15f, 0.38f, 0.55f),
+            "exhaust_left" or "exhaust_right" or "exhaust_stack_l" or "exhaust_stack_r"
+                => new Color(0.35f, 0.36f, 0.38f),
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
                 or "propeller_left_c" or "propeller_right_c"
+                or "propeller_left_d" or "propeller_right_d"
+                or "propeller_left_e" or "propeller_right_e"
+                or "propeller_left_f" or "propeller_right_f"
                 or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
                 or "hub_cap_left" or "hub_cap_right"
                 => new Color(0.2f, 0.2f, 0.22f),
+            "propeller_left_tip" or "propeller_right_tip"
+                or "propeller_left_tip_b" or "propeller_right_tip_b"
+                or "propeller_left_tip_c" or "propeller_right_tip_c"
+                or "propeller_left_tip_d" or "propeller_right_tip_d"
+                or "propeller_left_tip_e" or "propeller_right_tip_e"
+                or "propeller_left_tip_f" or "propeller_right_tip_f"
+                => new Color(0.92f, 0.78f, 0.18f),
             "spinner_stripe_l" or "spinner_stripe_r" => new Color(0.92f, 0.55f, 0.12f),
             "gear_nose" or "gear_left" or "gear_right"
                 or "gear_oleo_nose" or "gear_oleo_left" or "gear_oleo_right"
                 or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
                 or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
-            "rim_nose" or "rim_left" or "rim_right" => new Color(0.55f, 0.56f, 0.58f),
+            "rim_nose" or "rim_left" or "rim_right"
+                or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.55f, 0.56f, 0.58f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
             "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
@@ -6700,19 +6750,40 @@ namespace Airside.Presentation
         /// </summary>
         private static void NestCrossPropellerBlades(Transform aircraft)
         {
-            Transform propL = null, propR = null, bladeL = null, bladeR = null;
-            Transform bladeL2 = null, bladeR2 = null;
+            Transform propL = null, propR = null;
             Transform hubL = null, hubR = null, spinnerL = null, spinnerR = null;
             Transform capL = null, capR = null;
             Transform stripeL = null, stripeR = null;
+            var bladesL = new Transform[5];
+            var bladesR = new Transform[5];
+            var tipsL = new Transform[6];
+            var tipsR = new Transform[6];
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name == "Propeller L") propL = child;
                 else if (child.name == "Propeller R") propR = child;
-                else if (child.name == "PropBlade L") bladeL = child;
-                else if (child.name == "PropBlade R") bladeR = child;
-                else if (child.name == "PropBlade L2") bladeL2 = child;
-                else if (child.name == "PropBlade R2") bladeR2 = child;
+                else if (child.name == "PropBlade L") bladesL[0] = child;
+                else if (child.name == "PropBlade R") bladesR[0] = child;
+                else if (child.name == "PropBlade L2") bladesL[1] = child;
+                else if (child.name == "PropBlade R2") bladesR[1] = child;
+                else if (child.name == "PropBlade L3") bladesL[2] = child;
+                else if (child.name == "PropBlade R3") bladesR[2] = child;
+                else if (child.name == "PropBlade L4") bladesL[3] = child;
+                else if (child.name == "PropBlade R4") bladesR[3] = child;
+                else if (child.name == "PropBlade L5") bladesL[4] = child;
+                else if (child.name == "PropBlade R5") bladesR[4] = child;
+                else if (child.name == "PropTip L") tipsL[0] = child;
+                else if (child.name == "PropTip R") tipsR[0] = child;
+                else if (child.name == "PropTip L2") tipsL[1] = child;
+                else if (child.name == "PropTip R2") tipsR[1] = child;
+                else if (child.name == "PropTip L3") tipsL[2] = child;
+                else if (child.name == "PropTip R3") tipsR[2] = child;
+                else if (child.name == "PropTip L4") tipsL[3] = child;
+                else if (child.name == "PropTip R4") tipsR[3] = child;
+                else if (child.name == "PropTip L5") tipsL[4] = child;
+                else if (child.name == "PropTip R5") tipsR[4] = child;
+                else if (child.name == "PropTip L6") tipsL[5] = child;
+                else if (child.name == "PropTip R6") tipsR[5] = child;
                 else if (child.name == "Prop hub L") hubL = child;
                 else if (child.name == "Prop hub R") hubR = child;
                 else if (child.name == "Spinner L") spinnerL = child;
@@ -6723,10 +6794,14 @@ namespace Airside.Presentation
                 else if (child.name == "Spinner stripe R") stripeR = child;
             }
 
-            NestUnderProp(propL, bladeL, "Blade");
-            NestUnderProp(propR, bladeR, "Blade");
-            NestUnderProp(propL, bladeL2, "Blade 2");
-            NestUnderProp(propR, bladeR2, "Blade 2");
+            for (var i = 0; i < bladesL.Length; i++)
+                NestUnderProp(propL, bladesL[i], i == 0 ? "Blade" : $"Blade {i + 1}");
+            for (var i = 0; i < bladesR.Length; i++)
+                NestUnderProp(propR, bladesR[i], i == 0 ? "Blade" : $"Blade {i + 1}");
+            for (var i = 0; i < tipsL.Length; i++)
+                NestUnderProp(propL, tipsL[i], i == 0 ? "Tip" : $"Tip {i + 1}");
+            for (var i = 0; i < tipsR.Length; i++)
+                NestUnderProp(propR, tipsR[i], i == 0 ? "Tip" : $"Tip {i + 1}");
             NestUnderProp(propL, hubL, "Hub");
             NestUnderProp(propR, hubR, "Hub");
             NestUnderProp(propL, spinnerL, "Spinner");
@@ -6756,6 +6831,7 @@ namespace Airside.Presentation
             Transform tireNose = null, tireL = null, tireR = null;
             Transform oleoNose = null, oleoL = null, oleoR = null;
             Transform rimNose = null, rimL = null, rimR = null;
+            Transform wheelNose = null, wheelL = null, wheelR = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name == "Gear nose") gearNose = child;
@@ -6773,6 +6849,9 @@ namespace Airside.Presentation
                 else if (child.name == "Rim nose") rimNose = child;
                 else if (child.name == "Rim L") rimL = child;
                 else if (child.name == "Rim R") rimR = child;
+                else if (child.name == "Wheel nose") wheelNose = child;
+                else if (child.name == "Wheel L") wheelL = child;
+                else if (child.name == "Wheel R") wheelR = child;
             }
 
             NestUnderProp(gearNose, scissorsNose, "Scissors");
@@ -6784,6 +6863,9 @@ namespace Airside.Presentation
             NestUnderProp(gearNose, tireNose, "Tire");
             NestUnderProp(gearL, tireL, "Tire");
             NestUnderProp(gearR, tireR, "Tire");
+            NestUnderProp(gearNose, wheelNose, "Wheel");
+            NestUnderProp(gearL, wheelL, "Wheel");
+            NestUnderProp(gearR, wheelR, "Wheel");
             NestUnderProp(gearNose, rimNose, "Rim");
             NestUnderProp(gearL, rimL, "Rim");
             NestUnderProp(gearR, rimR, "Rim");

@@ -59,7 +59,7 @@ namespace Airside.Simulation
     /// </summary>
     public sealed class AirportRoutes
     {
-        public const long FirstOfferAfterSeconds = 25;
+        public const long FirstOfferAfterSeconds = 12;
         public const long OfferIntervalSeconds = 130;
         public const long OfferWindowSeconds = 80;
 

@@ -73,6 +73,7 @@ namespace Airside.Presentation
             [SurfaceKind.Grass] = "tx_grass_kingscote",
             [SurfaceKind.Sand] = "tx_sand_coast",
             [SurfaceKind.Water] = "tx_water_coast",
+            [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
             [SurfaceKind.PaintedMetal] = "tx_corrugated_metal"
         };
@@ -80,6 +81,7 @@ namespace Airside.Presentation
         private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredNormals = new();
         private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredAo = new();
         private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredMasks = new();
+        private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredAlbedo = new();
         private static bool _authoredResolved;
 
         private static Texture2D _sharedNormal;
@@ -108,6 +110,8 @@ namespace Airside.Presentation
                 return SurfaceKind.Sand;
             if (p.Contains("water"))
                 return SurfaceKind.Water;
+            if (p.Contains("aircraft_skin") || p.Contains("livery"))
+                return SurfaceKind.AircraftSkin;
             return SurfaceKind.Default;
         }
 
@@ -156,6 +160,11 @@ namespace Airside.Presentation
             if (albedo != null)
             {
                 material.mainTexture = albedo;
+                material.mainTextureScale = tiling ?? Vector2.one;
+            }
+            else if (AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo) && authoredAlbedo != null)
+            {
+                material.mainTexture = authoredAlbedo;
                 material.mainTextureScale = tiling ?? Vector2.one;
             }
 
@@ -258,12 +267,15 @@ namespace Airside.Presentation
                 var normal = TryLoadArtTexture($"Textures/Surfaces/{stem}_normal_v01.png", linear: true);
                 var ao = TryLoadArtTexture($"Textures/Surfaces/{stem}_ao_v01.png", linear: true);
                 var mask = TryLoadArtTexture($"Textures/Surfaces/{stem}_mask_v01.png", linear: true);
+                var albedo = TryLoadArtTexture($"Textures/Surfaces/{stem}_basecolor_v01.png", linear: false);
                 if (normal != null)
                     AuthoredNormals[kind] = normal;
                 if (ao != null)
                     AuthoredAo[kind] = ao;
                 if (mask != null)
                     AuthoredMasks[kind] = mask;
+                if (albedo != null)
+                    AuthoredAlbedo[kind] = albedo;
             }
         }
 

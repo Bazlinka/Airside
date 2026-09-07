@@ -5131,7 +5131,11 @@ namespace Airside.Presentation
 
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                if (child.name != "Fuselage")
+                var n = child.name;
+                // Cover segmented turboprop fuselage parts (v04 Fuselage / FuselageMid / FuselageAft / Nose).
+                if (n != "Fuselage" && n != "FuselageMid" && n != "FuselageAft" && n != "Nose"
+                    && n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)

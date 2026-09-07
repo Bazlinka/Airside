@@ -3274,11 +3274,21 @@ namespace Airside.Presentation
             if (_runwayEdgeLights != null)
             {
                 var edge = Mathf.Lerp(0.95f, 0.02f, daylight);
+                var reilPulse = daylight < 0.42f
+                    ? (Mathf.Repeat(Time.unscaledTime * 1.8f, 1f) < 0.22f ? 2.6f : 0.15f)
+                    : 0f;
                 for (var i = 0; i < _runwayEdgeLights.Length; i++)
                 {
                     var light = _runwayEdgeLights[i];
                     if (light == null)
                         continue;
+                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    {
+                        light.intensity = edge * 0.35f + reilPulse;
+                        light.enabled = daylight < 0.55f;
+                        continue;
+                    }
+
                     light.intensity = edge;
                 }
             }
@@ -3491,26 +3501,39 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Decision 0025 item 5 — sparse PointLights along runway edges (every 12 m)
-        /// so the strip reads as a lit ribbon at dusk without one light per fixture.
-        /// Presentation only.
+        /// Decision 0025 item 5 — PointLights along runway edges (every 8 m) plus taxi
+        /// centreline hints and REIL pairs at both thresholds so the strip reads as a
+        /// lit ribbon at dusk. Presentation only.
         /// </summary>
         private static Light[] BuildRunwayEdgePointLights()
         {
             var lights = new System.Collections.Generic.List<Light>();
-            for (var x = -36; x <= 36; x += 12)
+            for (var x = -36; x <= 36; x += 8)
             {
                 lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
                 lights.Add(CreateEdgePointLight($"Runway edge point R {x}", new Vector3(x, 0.55f, 3.4f)));
             }
 
-            // Green taxi centreline hints at the A1 hold.
-            lights.Add(CreateEdgePointLight("Taxi point A", new Vector3(-8f, 0.45f, 9f),
-                new Color(0.25f, 0.9f, 0.4f), range: 8f));
-            lights.Add(CreateEdgePointLight("Taxi point B", new Vector3(8f, 0.45f, 9f),
-                new Color(0.25f, 0.9f, 0.4f), range: 8f));
-            lights.Add(CreateEdgePointLight("Taxi point C", new Vector3(24f, 0.45f, 9f),
-                new Color(0.25f, 0.9f, 0.4f), range: 8f));
+            // Green taxi centreline hints along A1 / stand lead-in.
+            for (var x = -12; x <= 28; x += 8)
+            {
+                lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
+                    new Color(0.25f, 0.9f, 0.4f), range: 7.5f));
+            }
+
+            // REIL-style white flashers just beyond each threshold (blinked later).
+            lights.Add(CreateEdgePointLight("REIL W L", new Vector3(-44f, 1.6f, -2.8f),
+                new Color(1f, 1f, 0.95f), range: 16f));
+            lights.Add(CreateEdgePointLight("REIL W R", new Vector3(-44f, 1.6f, 2.8f),
+                new Color(1f, 1f, 0.95f), range: 16f));
+            lights.Add(CreateEdgePointLight("REIL E L", new Vector3(44f, 1.6f, -2.8f),
+                new Color(1f, 1f, 0.95f), range: 16f));
+            lights.Add(CreateEdgePointLight("REIL E R", new Vector3(44f, 1.6f, 2.8f),
+                new Color(1f, 1f, 0.95f), range: 16f));
+            CreateBlock("REIL post W L", new Vector3(-44f, 0.8f, -2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("REIL post W R", new Vector3(-44f, 0.8f, 2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("REIL post E L", new Vector3(44f, 0.8f, -2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("REIL post E R", new Vector3(44f, 0.8f, 2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
             return lights.ToArray();
         }
 
@@ -5360,6 +5383,9 @@ namespace Airside.Presentation
             }
             CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
             CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
+            // Second hold-short pair nearer the apron lead-in.
+            CreateBlock("Hold short C", new Vector3(4f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), new Color(0.95f, 0.82f, 0.12f));
+            CreateBlock("Hold short D", new Vector3(4f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), new Color(0.95f, 0.82f, 0.12f));
             // Readable block digits for 09 / 27 (facing inbound traffic).
             PlaceRunwayDigit('0', new Vector3(-34.6f, 0.04f, 0f), yaw: 90f);
             PlaceRunwayDigit('9', new Vector3(-32.6f, 0.04f, 0f), yaw: 90f);

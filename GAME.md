@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Batch C v04 denser kits)
-- **Branch / working tree:** `cursor/batch-c-models-v04-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak denser turboprop/terminal/hangar from overview+follow
-- **In progress / half-done:** v04 preferred over v03; still procedural greybox (not authored FBX)
-- **Watch out for:** 68-mesh turboprop draw calls; Editor Addressables + authored FBX still open
-- **Open questions for Bailey:** keep densifying kits, or authored turboprop/terminal FBX next?
-- **Visual assets:** 13 Resources prefabs; Toolkit full HUD; Batch C v04 kits
+- **Last updated:** 2026-09-07 by Cursor (denser runway edge + REIL)
+- **Branch / working tree:** `cursor/runway-edge-pointlights-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak denser edge ribbon + REIL blink at dusk
+- **In progress / half-done:** Batch C v04 on main; runway light density this PR; authored FBX still open
+- **Watch out for:** more PointLights — Mac Play perf; Editor Addressables + authored FBX still open
+- **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
+- **Visual assets:** Batch C v04; denser edge/REIL; 13 Resources prefabs; Toolkit HUD
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

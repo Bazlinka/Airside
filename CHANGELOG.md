@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Authored service vehicles (VEH-001…003).** Fuel truck (cylindrical tank), baggage
+  tug train and apron bus ship as `*_authored_v01` FBX + glTF + Resources prefabs
+  with PreferArtKit ahead of v04. Completes the Batch C first-playable model set
+  on the authored track. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Authored ops shed + full building Resources set.** `mdl_operations_shed_authored_v01`
   joins turboprop/terminal/hangar with FBX + glTF + Resources prefab so
   `airside-prefab/*_authored_v01` covers AIR-001 and BLD-001…003. PreferArtKit

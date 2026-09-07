@@ -208,18 +208,21 @@ namespace Airside.Presentation
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",

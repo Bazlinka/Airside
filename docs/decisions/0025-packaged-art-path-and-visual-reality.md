@@ -36,8 +36,9 @@
    7. Add motion and life (gear, doors, wheels, service animation, audio).
    8. Integrate Bailey-approved brand assets (wordmark + dawn splash) into menu/load.
 
-5. **Brand candidates stay candidates** until Bailey's visual approval, then Unity
-   import and menu/loading-screen wiring.
+5. **Brand assets BRD-001 and UI-ILL-001** — Approved by Bailey 2026-09-07 and
+   integrated into the opening briefing / HUD (see later changelog). Remaining
+   visual backlog items 2–7 stand.
 
 ## Reason
 

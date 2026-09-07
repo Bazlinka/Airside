@@ -168,12 +168,13 @@ in the same commit as each asset batch.
 | REF-003 | `docs/art/reference/ref_turnaround_service_zones_v01.png` | Concept sheet | One fictional regional turboprop at stand with fuel truck, baggage train and passenger bus in safe readable positions; no text baked into final runtime art | Approved |
 | REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay; approved reference is 1280×720 (runtime HUD targets desktop ~2560×1440) | Approved |
 | REF-005 | `docs/art/reference/ref_asset_scale_and_palette_v01.png` | Style sheet | Aircraft, vehicles, person, terminal module, materials and palette in one consistent scale reference | Approved |
-| BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Transparent wordmark; simple aviation/wayfinding character; no tiny tagline | Generated — review candidate at `docs/art/candidates/airside_wordmark_light_v01.png`; not integrated |
-| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Generated — review candidate at `docs/art/candidates/ui_splash_airport_dawn_v01.png`; not integrated |
+| BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Transparent wordmark; simple aviation/wayfinding character; no tiny tagline | Approved · Integrated (opening + HUD; packaged via StreamingAssets) |
+| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Approved · Integrated (opening briefing backdrop; packaged via StreamingAssets) |
 
-**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Batches
-B–D may now use them as production targets. UI-ILL-001 and any later day/dusk
-masters must inherit that approved design rather than reinvent it.
+**Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Bailey
+approved BRD-001 and UI-ILL-001 on 7 September 2026 for runtime use. Batches
+B–D may now use REF masters as production targets. UI-ILL-001 inherits that
+approved design rather than reinventing it.
 
 For a machine-friendly map of the approved references, candidates and remaining
 gaps, see `docs/art/AI_IMAGE_REFERENCE_INDEX.md`.

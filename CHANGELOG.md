@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Approve and integrate brand wordmark + dawn splash.** Bailey Approve for BRD-001
+  and UI-ILL-001; promoted into `Art/Brand` and `Art/UI/Illustrations`, synced to
+  StreamingAssets, drawn on the opening briefing (full-bleed splash) and left HUD
+  title. Also lands `.cursor/environment.json` for the headless domain harness
+  (supersedes draft PR #34). `scripts/test-domain.sh` 97/97.
+
 - **Fix packaged-build art loading (StreamingAssets).** Runtime glTF/PNG loaders
   resolve via `ArtRuntimePaths` (StreamingAssets first, Editor Assets fallback).
   Synced 63 art files into `Assets/StreamingAssets/Airside/Art` with

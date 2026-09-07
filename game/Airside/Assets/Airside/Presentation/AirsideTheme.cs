@@ -29,7 +29,41 @@ namespace Airside.Presentation
 
         private static Texture2D _panelBackground;
         private static Texture2D _solidWhite;
+        private static Texture2D _wordmarkLight;
+        private static Texture2D _splashDawn;
         private static bool _panelBackgroundResolved;
+        private static bool _wordmarkResolved;
+        private static bool _splashResolved;
+
+        /// <summary>BRD-001 light wordmark (transparent). Null when the art file is missing.</summary>
+        public static Texture2D WordmarkLight
+        {
+            get
+            {
+                if (!_wordmarkResolved)
+                {
+                    _wordmarkResolved = true;
+                    _wordmarkLight = LoadArtTexture("Brand/airside_wordmark_light_v01.png");
+                }
+
+                return _wordmarkLight;
+            }
+        }
+
+        /// <summary>UI-ILL-001 dawn splash illustration. Null when the art file is missing.</summary>
+        public static Texture2D SplashDawn
+        {
+            get
+            {
+                if (!_splashResolved)
+                {
+                    _splashResolved = true;
+                    _splashDawn = LoadArtTexture("UI/Illustrations/ui_splash_airport_dawn_v01.png");
+                }
+
+                return _splashDawn;
+            }
+        }
 
         /// <summary>
         /// Translucent Runway Ink panel. Prefers UI-PNL-002 dark nine-slice when the

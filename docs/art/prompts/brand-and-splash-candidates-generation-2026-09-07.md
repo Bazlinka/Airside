@@ -1,6 +1,6 @@
 # Brand and splash candidate generation — 2026-09-07
 
-**Status:** Generated; Bailey review required. Not approved or integrated.  
+**Status:** Approved by Bailey 2026-09-07 · Integrated into runtime Art + StreamingAssets.  
 **Assets:** BRD-001 and UI-ILL-001  
 **Visual authority:** Approved REF-001, REF-002 and REF-005
 
@@ -57,5 +57,7 @@ Avoid: photoreal documentary look, toy-city cartoon, saturated teal-orange gradi
 - BRD-001 spelling is exact and the background has real alpha.
 - UI-ILL-001 is 3840×2160, contains no visible text or UI, and follows the
   approved airfield layout, aircraft family and dawn/dusk lighting language.
-- Both files use repository naming and remain under `docs/art/candidates/` until
-  Bailey explicitly approves promotion.
+- Both files use repository naming. Bailey Approved promotion on 2026-09-07;
+  runtime copies live under `Art/Brand/` and `Art/UI/Illustrations/` (synced to
+  StreamingAssets). Candidate originals remain under `docs/art/candidates/` as
+  evidence — do not overwrite `_v01`.

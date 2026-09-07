@@ -25,14 +25,15 @@ All five files above are Approved. Do not overwrite or restyle them.
 
 ## Review candidates
 
-| ID | File | Intended use | Status |
-|---|---|---|---|
-| BRD-001 | `docs/art/candidates/airside_wordmark_light_v01.png` | Transparent light wordmark for dark surfaces | Generated; exact spelling and alpha verified; Bailey review required |
-| UI-ILL-001 | `docs/art/candidates/ui_splash_airport_dawn_v01.png` | 3840×2160 dawn splash with no baked UI | Generated from REF-001, REF-002 and REF-005; Bailey review required |
+None pending. BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and
+promoted into runtime art (see production assets below).
 
-Candidates are source/review material. Do not copy them into
-`game/Airside/Assets/Airside/Art/` or mark them Approved without Bailey's explicit
-acceptance. A visibly changed option becomes `_v02`; never overwrite `_v01`.
+Previously reviewed here:
+
+| ID | Candidate source | Runtime path | Status |
+|---|---|---|---|
+| BRD-001 | `docs/art/candidates/airside_wordmark_light_v01.png` | `Art/Brand/airside_wordmark_light_v01.png` | Approved · Integrated |
+| UI-ILL-001 | `docs/art/candidates/ui_splash_airport_dawn_v01.png` | `Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Approved · Integrated |
 
 ## Existing production assets
 

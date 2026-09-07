@@ -10,13 +10,18 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (warm sun / cool ambient lighting pass)
-- **Branch / working tree:** `cursor/dawn-ambient-lighting-38b9` → merge to `main`
-- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets + splash/wordmark + soft sun shadows). Then 0025 item 2 — replace placeholder 3D.
-- **In progress / half-done:** soft directional shadows + warmer key / cooler ambient (this branch).
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox.
-- **Open questions for Bailey:** none — brand Approved. Visual ~20% of REF still honest.
-- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; StreamingAssets art path on `main`; Play Verified pending rebuild
+- **Last updated:** 2026-09-07 by Cursor (Batch C v02 richer kits)
+- **Branch / working tree:** `cursor/batch-c-models-v02-ddad` (+ open
+  `cursor/regional-airfield-environment-ddad` for environment greybox)
+- **Do this next:** Merge environment + v02 PRs; continue 0025 materials/lighting
+  or first-session polish. Bailey Play soak when convenient — do not block on it.
+- **In progress / half-done:** v02 kits on this branch; environment greybox on
+  sibling PR #51.
+- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art
+  changes. v02 still procedural boxes, not authored meshes.
+- **Open questions for Bailey:** none — keep shipping presentation without Play gate.
+- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; Batch C v02 Integrated
+  (prefer); environment greybox pending merge; Play Verified Bailey-owned
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,8 +125,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): `git pull`, then verify Batch C/E/WLD/D, tips, touchdown,
-   traffic hold-short pulse, dual commercials, insolvency at 1280×720 / 1440×900 / Retina.
-2. **First-session flow** (per delivery plan v2): clean new-game path, opening role tip,
-   visible decision→consequence within a short session, packaged Mac playtest build.
-3. No unapproved economy systems. Companion / CloudKit / extra fleets stay deferred.
+1. **Merge open presentation PRs** (environment greybox #51, Batch C v02).
+2. **URP / materials / lighting polish** (0025 items 4–5) or first-session HUD
+   readability — keep shipping without waiting on Play.
+3. **Bailey Unity Play soak** when convenient (do not block merges on it).
+   No new economy systems. Companion / CloudKit / extra fleets stay deferred.

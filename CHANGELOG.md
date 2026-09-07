@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Richer Batch C v02 kits (0025 item 2).** Procedural `*_v02.gltf` turboprop,
+  terminal, hangar, ops shed and service vehicles with more readable parts.
+  Runtime prefers v02 and falls back to Approved v01; StreamingAssets synced.
+  Presentation only; `scripts/test-domain.sh` unchanged in behaviour.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

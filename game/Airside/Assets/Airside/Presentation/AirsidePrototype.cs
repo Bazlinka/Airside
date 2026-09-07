@@ -4154,16 +4154,26 @@ namespace Airside.Presentation
                         => new Color(0.72f, 0.75f, 0.78f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
-                        or "canopy_light_l" or "canopy_light_r"
+                        or "canopy_light_l" or "canopy_light_r" or "canopy_soffit" or "canopy_gutter"
                         or "roof_slab" or "roof_plant" or "roof_plant_b"
                         or "roof_plant_c" or "roof_parapet" or "roof_parapet_back"
                         or "roof_vent_a" or "roof_vent_b"
+                        or "fascia_front" or "fascia_back" or "soffit_front"
                         or "landside_awning" or "signage_bar"
                         or "signage_cap" or "hvac_duct" or "flag_pole" or "flag_cloth"
-                        or "baggage_canopy" or "downpipe_l" or "downpipe_r" => new Color(0.55f, 0.58f, 0.6f),
+                        or "baggage_canopy" or "downpipe_l" or "downpipe_r"
+                        or "service_wing_roof" or "service_wing_fascia"
+                        or "corner_trim_l" or "corner_trim_r" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
-                        or "buttress_r" or "plinth" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" or "service_door" or "baggage_door" or "baggage_ramp" => new Color(0.58f, 0.62f, 0.64f),
+                        or "buttress_r" or "plinth" or "plinth_step" => new Color(0.62f, 0.66f, 0.69f),
+                    "service_wing" or "service_door" or "baggage_door" or "baggage_ramp"
+                        or "service_door_frame" or "baggage_door_frame"
+                        or "wall_rib_end_1" or "wall_rib_end_2" or "wall_rib_end_3" or "wall_rib_end_4"
+                        or "wall_rib_land_1" or "wall_rib_land_2" or "wall_rib_land_3" or "wall_rib_land_4"
+                        or "wall_rib_land_5" or "wall_rib_land_6" or "wall_rib_land_7" or "wall_rib_land_8"
+                        or "service_rib_1" or "service_rib_2" or "service_rib_3" or "service_rib_4"
+                        or "service_rib_5" or "service_rib_6" or "service_rib_7"
+                        => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
                 () =>
@@ -4181,7 +4191,7 @@ namespace Airside.Presentation
                 surfaceMeshNames: new[]
                 {
                     "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
-                    "column", "signage"
+                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim"
                 });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));

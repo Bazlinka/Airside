@@ -29,8 +29,10 @@ namespace Airside.Presentation
         private Label _clockText;
         private VisualElement _economyStrip;
         private VisualElement _cashIcon;
+        private VisualElement _incomeIcon;
         private Label _cashText;
         private VisualElement _repIcon;
+        private VisualElement _researchIcon;
         private Label _financeText;
         private Label _warningText;
         private VisualElement _speedChip;
@@ -69,6 +71,7 @@ namespace Airside.Presentation
         private VisualElement _offerPanel;
         private VisualElement _offerAccent;
         private Label _offerTitle;
+        private VisualElement _routeIcon;
         private Label _offerBody;
         private Label _offerStatus;
         private Button _acceptButton;
@@ -367,8 +370,12 @@ namespace Airside.Presentation
             _economyStrip.Add(_cashIcon);
             _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
             _cashText.style.marginLeft = 6;
-            _cashText.style.marginRight = 10;
+            _cashText.style.marginRight = 8;
             _economyStrip.Add(_cashText);
+
+            _incomeIcon = MakeIconSlot("Income icon", 16);
+            _incomeIcon.style.marginRight = 4;
+            _economyStrip.Add(_incomeIcon);
 
             _economyStrip.Add(MakeStripDivider());
 
@@ -390,6 +397,9 @@ namespace Airside.Presentation
 
             _economyStrip.Add(MakeStripDivider());
 
+            _researchIcon = MakeIconSlot("Research icon", 16);
+            _researchIcon.style.marginRight = 4;
+            _economyStrip.Add(_researchIcon);
             _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
             _stripResearchText.style.marginRight = 6;
             _stripResearchText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.85f);
@@ -473,11 +483,19 @@ namespace Airside.Presentation
             _offerAccent.style.backgroundColor = AirsideTheme.SafetyYellow;
             _offerPanel.Add(_offerAccent);
 
+            var offerHeader = new VisualElement { name = "Offer header" };
+            offerHeader.style.flexDirection = FlexDirection.Row;
+            offerHeader.style.alignItems = Align.Center;
+            offerHeader.style.marginLeft = 14;
+            offerHeader.style.marginTop = 14;
+            offerHeader.style.marginRight = 14;
+            _routeIcon = MakeIconSlot("Route icon", 18);
+            _routeIcon.style.marginRight = 8;
+            offerHeader.Add(_routeIcon);
             _offerTitle = MakePanelLabel("Offer title", 16, FontStyle.Bold);
-            _offerTitle.style.marginLeft = 14;
-            _offerTitle.style.marginTop = 14;
-            _offerTitle.style.marginRight = 14;
-            _offerPanel.Add(_offerTitle);
+            _offerTitle.style.flexGrow = 1;
+            offerHeader.Add(_offerTitle);
+            _offerPanel.Add(offerHeader);
 
             _offerBody = MakePanelLabel("Offer body", 14, FontStyle.Normal);
             _offerBody.style.marginLeft = 14;
@@ -1304,13 +1322,17 @@ namespace Airside.Presentation
             ApplyIcon(_phaseIcon, phase.HasValue ? AirsideTheme.OperationIcon(phase.Value) : null);
             ApplyIcon(_weatherIcon, AirsideTheme.WeatherIcon(weather));
             ApplyIcon(_cashIcon, AirsideTheme.Icon("economy", "cash"));
+            ApplyIcon(_incomeIcon, AirsideTheme.Icon("economy", "income"));
             ApplyIcon(_repIcon, AirsideTheme.Icon("economy", "reputation"));
+            ApplyIcon(_researchIcon, AirsideTheme.Icon("economy", "research"));
+            ApplyIcon(_routeIcon, AirsideTheme.Icon("economy", "route"));
             if (_speedText != null)
                 _speedText.text = paused ? "PAUSED" : "Tab cycles";
             if (_pauseButton != null)
             {
                 _pauseButton.text = paused ? "Resume" : "Pause";
                 _pauseButton.style.backgroundColor = paused ? AirsideTheme.CoastalBlue : AirsideTheme.Tarmac;
+                _pauseButton.style.opacity = paused ? 1f : 0.9f;
             }
 
             HighlightSpeedButton(_speed1Button, !paused && speed <= 1);

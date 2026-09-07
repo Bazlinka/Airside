@@ -230,20 +230,20 @@ namespace Airside.Presentation
                 daylight);
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
-                Mathf.Lerp(0.16f, -0.1f, daylight) - weatherGloom * 0.08f));
+                Mathf.Lerp(0.16f, -0.14f, daylight) - weatherGloom * 0.08f));
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.06f, 0.08f, daylight) + warm * 0.08f));
+                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.1f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.12f, -0.02f, daylight) + warm * 0.03f));
+                Mathf.Lerp(-0.12f, 0.01f, daylight) + warm * 0.04f));
             _tonal.shadowsStart.Override(0f);
-            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.42f, daylight));
-            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.55f, daylight));
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.46f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
             _tonal.highlightsEnd.Override(1f);
 
             // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
             // so night blue survives and weather gloom stays cool.
-            var temperature = Mathf.Lerp(-8f, 4f, daylight) + warm * 42f - weatherGloom * 14f;
-            var tint = warm * 6f - weatherGloom * 3f;
+            var temperature = Mathf.Lerp(-8f, 5f, daylight) + warm * 48f - weatherGloom * 14f;
+            var tint = warm * 7.5f - weatherGloom * 3f;
             _whiteBalance.temperature.Override(temperature);
             _whiteBalance.tint.Override(tint);
 
@@ -253,15 +253,21 @@ namespace Airside.Presentation
                 weatherGloom);
             var highlights = Color.Lerp(
                 Color.white,
-                new Color(1f, 0.7f, 0.45f),
-                warm * 0.95f);
+                new Color(1f, 0.68f, 0.4f),
+                warm * 1.05f);
             _splitToning.shadows.Override(shadows);
             _splitToning.highlights.Override(highlights);
-            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.16f, warm) - weatherGloom * 0.1f);
+            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.2f, warm) - weatherGloom * 0.1f);
 
             // Deeper night exposure so flood pools read against the apron (REF-002).
             if (daylight < 0.35f)
-                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.55f);
+                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.65f);
+            // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
+            else if (daylight > 0.75f && warm < 0.2f)
+            {
+                _color.contrast.Override(contrast + 2.2f);
+                _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
+            }
         }
     }
 }

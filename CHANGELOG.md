@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal/ops/bus + day/wet/HUD tip (0025 items 2+4–6).** Terminal shell densify
+  (157: fascia/soffit/ribs); ops shed 111; apron bus 90; noon midtone punch + dusk
+  WB warmth; stronger non-ClearCoat wet sheen; Toolkit income/research/route icons.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
 - **Turboprop/ARFF/fuel/HUD densify tip (0025 items 1–2+4+7).** Authored turboprop
   131 meshes (window frames, flap tracks, oil coolers, oleos/rims, spinner stripes);
   cabin glass alpha 0.42; lighting kit 55; markings kit 28 + PlaceWorldMarkings

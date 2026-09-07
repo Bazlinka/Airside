@@ -334,11 +334,11 @@ namespace Airside.Presentation
                 if (material.HasProperty("_Glossiness"))
                     material.SetFloat("_Glossiness", boostedSmooth);
                 if (material.HasProperty("_Metallic"))
-                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.48f), wetness01));
+                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.55f), wetness01));
                 if (material.HasProperty("_EmissionColor"))
                 {
                     material.EnableKeyword("_EMISSION");
-                    var sheen = new Color(0.06f, 0.1f, 0.14f) * (wetness01 * 0.42f);
+                    var sheen = new Color(0.07f, 0.12f, 0.16f) * (wetness01 * 0.52f);
                     material.SetColor("_EmissionColor", sheen);
                 }
             }

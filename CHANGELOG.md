@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **First route-income consequence toast.** When the first accepted-route payout hits
+  cash, a HUD toast confirms the decision→money loop. Presentation only.
+  `scripts/test-domain.sh` 97/97.
+
 - **First-session HUD declutter.** Until the first route is accepted, hide hire/release
   crew, stand-3 build and research start controls; show one unlock line instead so the
   route offer stays the only early decision. Presentation only. `scripts/test-domain.sh` 97/97.

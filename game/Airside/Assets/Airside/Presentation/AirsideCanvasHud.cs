@@ -870,6 +870,15 @@ namespace Airside.Presentation
                 _offerPanel.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// When UI Toolkit owns the left status panel, hide the Canvas copy.
+        /// </summary>
+        public void SetLeftPanelVisible(bool visible)
+        {
+            if (_leftPanel != null)
+                _leftPanel.gameObject.SetActive(visible);
+        }
+
         private static void AddWordmark(RectTransform parent)
         {
             var wordmark = AirsideTheme.WordmarkLight;

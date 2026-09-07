@@ -5,15 +5,47 @@ using UnityEngine.UIElements;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 6 — UI Toolkit surface. Owns ops/research toasts, the
-    /// Saved chip, OPERATIONS panel, and the route-offer card via a runtime
-    /// <see cref="UIDocument"/>. Canvas keeps the left status panel and
-    /// full-screen overlays until those migrate.
+    /// Decision 0025 item 6 — UI Toolkit surface. Owns the left status panel,
+    /// OPERATIONS, route offer, toasts and Saved chip via a runtime
+    /// <see cref="UIDocument"/>. Canvas keeps full-screen overlays
+    /// (briefing / away / insolvency / pause) until those migrate.
     /// </summary>
     public sealed class AirsideToolkitHud : MonoBehaviour
     {
         private UIDocument _document;
         private VisualElement _root;
+
+        private VisualElement _leftPanel;
+        private Label _brandLabel;
+        private VisualElement _brandImage;
+        private Label _locationText;
+        private Label _flightText;
+        private Label _phaseText;
+        private Label _clockText;
+        private Label _cashText;
+        private Label _financeText;
+        private Label _warningText;
+        private VisualElement _turnaroundBlock;
+        private Label _turnaroundText;
+        private Button _priorityButton;
+        private Label _scheduleText;
+        private Label _staffingText;
+        private Label _earlyHintText;
+        private VisualElement _crewRow;
+        private Button _hireCrewButton;
+        private Button _releaseCrewButton;
+        private Label _standsText;
+        private Button _buildStandButton;
+        private Label _researchText;
+        private VisualElement _researchTrack;
+        private VisualElement _researchFill;
+        private Button _researchButton;
+        private Label _coachText;
+        private Label _controlsText;
+        private VisualElement _waitRow;
+        private Label _waitLabel;
+        private VisualElement _waitFill;
+
         private VisualElement _offerPanel;
         private VisualElement _offerAccent;
         private Label _offerTitle;
@@ -36,6 +68,11 @@ namespace Airside.Presentation
 
         private Action _onAccept;
         private Action _onDecline;
+        private Action _onPriorityCrew;
+        private Action _onHireCrew;
+        private Action _onReleaseCrew;
+        private Action _onBuildStand;
+        private Action _onStartResearch;
 
         public bool IsActive => _built && _document != null && _document.rootVisualElement != null;
 
@@ -48,10 +85,22 @@ namespace Airside.Presentation
             return hud;
         }
 
-        public void BindActions(Action onAccept, Action onDecline)
+        public void BindActions(
+            Action onAccept,
+            Action onDecline,
+            Action onPriorityCrew = null,
+            Action onHireCrew = null,
+            Action onReleaseCrew = null,
+            Action onBuildStand = null,
+            Action onStartResearch = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
+            _onPriorityCrew = onPriorityCrew;
+            _onHireCrew = onHireCrew;
+            _onReleaseCrew = onReleaseCrew;
+            _onBuildStand = onBuildStand;
+            _onStartResearch = onStartResearch;
         }
 
         private void Build()
@@ -70,9 +119,9 @@ namespace Airside.Presentation
 
             _root = _document.rootVisualElement;
             _root.style.flexGrow = 1;
-            // Position so Accept/Decline receive clicks; non-interactive chrome uses Ignore.
             _root.pickingMode = PickingMode.Position;
 
+            BuildLeftPanel();
             BuildOfferPanel();
             BuildOpsPanel();
 
@@ -101,6 +150,107 @@ namespace Airside.Presentation
             SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
             SyncOps(string.Empty, string.Empty, null);
             _built = true;
+        }
+
+        private void BuildLeftPanel()
+        {
+            _leftPanel = MakePanel("Status panel", 410f);
+            _leftPanel.style.left = 22;
+            _leftPanel.style.top = 22;
+            _leftPanel.style.maxHeight = 620;
+            _leftPanel.style.paddingLeft = 16;
+            _leftPanel.style.paddingRight = 16;
+            _leftPanel.style.paddingTop = 12;
+            _leftPanel.style.paddingBottom = 12;
+
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                _brandImage = new VisualElement { name = "Wordmark" };
+                _brandImage.pickingMode = PickingMode.Ignore;
+                _brandImage.style.height = 40;
+                _brandImage.style.marginBottom = 6;
+                _brandImage.style.backgroundImage = new StyleBackground(wordmark);
+                _brandImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                _leftPanel.Add(_brandImage);
+            }
+            else
+            {
+                _brandLabel = MakePanelLabel("Brand", 22, FontStyle.Bold);
+                _brandLabel.text = "AIRSIDE";
+                _brandLabel.style.marginBottom = 4;
+                _leftPanel.Add(_brandLabel);
+            }
+
+            _locationText = AddLeftLine(_leftPanel, "Location", 14, FontStyle.Normal);
+            _flightText = AddLeftLine(_leftPanel, "Flight", 16, FontStyle.Bold);
+            _phaseText = AddLeftLine(_leftPanel, "Phase", 15, FontStyle.Normal);
+            _clockText = AddLeftLine(_leftPanel, "Clock", 13, FontStyle.Normal);
+            _cashText = AddLeftLine(_leftPanel, "Cash", 13, FontStyle.Normal);
+            _financeText = AddLeftLine(_leftPanel, "Finance", 13, FontStyle.Normal);
+            _warningText = AddLeftLine(_leftPanel, "Warning", 13, FontStyle.Bold);
+            _warningText.style.color = AirsideTheme.SafetyYellow;
+
+            _turnaroundBlock = new VisualElement { name = "Turnaround" };
+            _turnaroundBlock.style.marginTop = 4;
+            _turnaroundBlock.style.marginBottom = 4;
+            _turnaroundText = MakePanelLabel("Tasks", 12, FontStyle.Normal);
+            _turnaroundText.style.whiteSpace = WhiteSpace.Normal;
+            _turnaroundBlock.Add(_turnaroundText);
+            _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 190f);
+            _priorityButton.style.marginTop = 6;
+            _priorityButton.clicked += () => _onPriorityCrew?.Invoke();
+            _turnaroundBlock.Add(_priorityButton);
+            _leftPanel.Add(_turnaroundBlock);
+
+            _scheduleText = AddLeftLine(_leftPanel, "Schedule", 13, FontStyle.Normal);
+            _staffingText = AddLeftLine(_leftPanel, "Staffing", 13, FontStyle.Normal);
+            _earlyHintText = AddLeftLine(_leftPanel, "Early hint", 13, FontStyle.Normal);
+
+            _crewRow = new VisualElement { name = "Crew row" };
+            _crewRow.style.flexDirection = FlexDirection.Row;
+            _crewRow.style.marginTop = 4;
+            _crewRow.style.marginBottom = 4;
+            _hireCrewButton = MakeButton("Hire crew", AirsideTheme.CoastalBlue, 150f);
+            _hireCrewButton.clicked += () => _onHireCrew?.Invoke();
+            _crewRow.Add(_hireCrewButton);
+            _releaseCrewButton = MakeButton("Release crew", AirsideTheme.Tarmac, 110f);
+            _releaseCrewButton.style.marginLeft = 8;
+            _releaseCrewButton.clicked += () => _onReleaseCrew?.Invoke();
+            _crewRow.Add(_releaseCrewButton);
+            _leftPanel.Add(_crewRow);
+
+            _standsText = AddLeftLine(_leftPanel, "Stands", 13, FontStyle.Normal);
+            _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 220f);
+            _buildStandButton.style.marginTop = 4;
+            _buildStandButton.clicked += () => _onBuildStand?.Invoke();
+            _leftPanel.Add(_buildStandButton);
+
+            _researchText = AddLeftLine(_leftPanel, "Research", 13, FontStyle.Normal);
+            _researchTrack = MakeProgressTrack("Research track");
+            _researchFill = _researchTrack.Q<VisualElement>("Fill");
+            _leftPanel.Add(_researchTrack);
+            _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 260f);
+            _researchButton.style.marginTop = 4;
+            _researchButton.clicked += () => _onStartResearch?.Invoke();
+            _leftPanel.Add(_researchButton);
+
+            _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
+            _coachText.style.color = AirsideTheme.SafetyYellow;
+            _coachText.style.whiteSpace = WhiteSpace.Normal;
+            _controlsText = AddLeftLine(_leftPanel, "Controls", 12, FontStyle.Normal);
+            _controlsText.style.whiteSpace = WhiteSpace.Normal;
+
+            _waitRow = new VisualElement { name = "Wait row" };
+            _waitRow.style.marginTop = 6;
+            _waitLabel = MakePanelLabel("Wait label", 12, FontStyle.Normal);
+            _waitRow.Add(_waitLabel);
+            var waitTrack = MakeProgressTrack("Wait track");
+            _waitFill = waitTrack.Q<VisualElement>("Fill");
+            _waitRow.Add(waitTrack);
+            _leftPanel.Add(_waitRow);
+
+            _root.Add(_leftPanel);
         }
 
         private void BuildOfferPanel()
@@ -220,6 +370,41 @@ namespace Airside.Presentation
             _root.Add(_opsPanel);
         }
 
+        private static Label AddLeftLine(VisualElement parent, string name, int fontSize, FontStyle style)
+        {
+            var label = MakePanelLabel(name, fontSize, style);
+            label.style.marginTop = 2;
+            label.style.marginBottom = 2;
+            label.style.whiteSpace = WhiteSpace.Normal;
+            parent.Add(label);
+            return label;
+        }
+
+        private static VisualElement MakeProgressTrack(string name)
+        {
+            var track = new VisualElement { name = name };
+            track.pickingMode = PickingMode.Ignore;
+            track.style.height = 10;
+            track.style.marginTop = 4;
+            track.style.backgroundColor = new Color(
+                AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f);
+            track.style.borderTopLeftRadius = 3;
+            track.style.borderTopRightRadius = 3;
+            track.style.borderBottomLeftRadius = 3;
+            track.style.borderBottomRightRadius = 3;
+            var fill = new VisualElement { name = "Fill" };
+            fill.pickingMode = PickingMode.Ignore;
+            fill.style.height = Length.Percent(100);
+            fill.style.width = Length.Percent(0);
+            fill.style.backgroundColor = AirsideTheme.CoastalBlue;
+            fill.style.borderTopLeftRadius = 3;
+            fill.style.borderTopRightRadius = 3;
+            fill.style.borderBottomLeftRadius = 3;
+            fill.style.borderBottomRightRadius = 3;
+            track.Add(fill);
+            return track;
+        }
+
         private VisualElement MakePanel(string name, float width)
         {
             var panel = new VisualElement { name = name };
@@ -314,12 +499,10 @@ namespace Airside.Presentation
             return label;
         }
 
-        /// <summary>
-        /// Hide right-side Toolkit chrome while Canvas full-screen overlays own the screen.
-        /// </summary>
         public void SetGameplayChromeVisible(bool visible)
         {
             _gameplayChromeVisible = visible;
+            ApplyLeftVisibility();
             ApplyOfferVisibility();
             ApplyOpsVisibility();
             if (!visible)
@@ -355,6 +538,136 @@ namespace Airside.Presentation
             if (_saveChip == null)
                 return;
             _saveChip.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        public void SyncLeftPanel(
+            string locationLine,
+            string flightLine,
+            string phaseLine,
+            string clockLine,
+            Color clockColor,
+            string cashLine,
+            Color cashColor,
+            string financeLine,
+            Color financeColor,
+            string warningLine,
+            Color warningColor,
+            bool showTurnaround,
+            string turnaroundLines,
+            bool priorityVisible,
+            bool priorityInteractable,
+            string priorityLabel,
+            string scheduleLine,
+            Color scheduleColor,
+            string staffingLine,
+            Color staffingColor,
+            bool earlySession,
+            string earlyHint,
+            bool hireInteractable,
+            string hireLabel,
+            bool releaseInteractable,
+            bool buildStandVisible,
+            bool buildStandInteractable,
+            string buildStandLabel,
+            string standsLine,
+            string researchLine,
+            bool researchProgressVisible,
+            float researchProgress01,
+            bool researchButtonVisible,
+            bool researchButtonInteractable,
+            string researchButtonLabel,
+            string coachLine,
+            bool coachUrgent,
+            string controlsLine,
+            bool showWaitMeter,
+            string waitLabel,
+            float waitProgress01)
+        {
+            if (_leftPanel == null)
+                return;
+
+            _locationText.text = locationLine ?? string.Empty;
+            _flightText.text = flightLine ?? string.Empty;
+            _phaseText.text = phaseLine ?? string.Empty;
+            _clockText.text = clockLine ?? string.Empty;
+            _clockText.style.color = clockColor;
+            _cashText.text = cashLine ?? string.Empty;
+            _cashText.style.color = cashColor;
+            _financeText.text = financeLine ?? string.Empty;
+            _financeText.style.color = financeColor;
+
+            var hasWarning = !string.IsNullOrEmpty(warningLine);
+            _warningText.style.display = hasWarning ? DisplayStyle.Flex : DisplayStyle.None;
+            if (hasWarning)
+            {
+                _warningText.text = warningLine;
+                _warningText.style.color = warningColor;
+            }
+
+            _turnaroundBlock.style.display = showTurnaround ? DisplayStyle.Flex : DisplayStyle.None;
+            if (showTurnaround)
+            {
+                _turnaroundText.text = turnaroundLines ?? string.Empty;
+                _priorityButton.style.display = priorityVisible ? DisplayStyle.Flex : DisplayStyle.None;
+                if (priorityVisible)
+                {
+                    _priorityButton.SetEnabled(priorityInteractable);
+                    _priorityButton.text = priorityLabel ?? string.Empty;
+                }
+            }
+
+            _scheduleText.text = scheduleLine ?? string.Empty;
+            _scheduleText.style.color = scheduleColor;
+            _staffingText.text = staffingLine ?? string.Empty;
+            _staffingText.style.color = staffingColor;
+
+            _earlyHintText.style.display = earlySession ? DisplayStyle.Flex : DisplayStyle.None;
+            if (earlySession)
+                _earlyHintText.text = earlyHint ?? string.Empty;
+
+            _crewRow.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
+            _standsText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
+            _buildStandButton.style.display = !earlySession && buildStandVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            _researchText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
+            _researchTrack.style.display = !earlySession && researchProgressVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            _researchButton.style.display = !earlySession && researchButtonVisible ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (!earlySession)
+            {
+                _hireCrewButton.SetEnabled(hireInteractable);
+                _hireCrewButton.text = hireLabel ?? string.Empty;
+                _releaseCrewButton.SetEnabled(releaseInteractable);
+                _standsText.text = standsLine ?? string.Empty;
+                if (buildStandVisible)
+                {
+                    _buildStandButton.SetEnabled(buildStandInteractable);
+                    _buildStandButton.text = buildStandLabel ?? string.Empty;
+                }
+
+                _researchText.text = researchLine ?? string.Empty;
+                if (researchProgressVisible && _researchFill != null)
+                    _researchFill.style.width = Length.Percent(Mathf.Clamp01(researchProgress01) * 100f);
+
+                if (researchButtonVisible)
+                {
+                    _researchButton.SetEnabled(researchButtonInteractable);
+                    _researchButton.text = researchButtonLabel ?? string.Empty;
+                }
+            }
+
+            _coachText.text = coachLine ?? string.Empty;
+            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _controlsText.text = controlsLine ?? string.Empty;
+
+            _waitRow.style.display = showWaitMeter ? DisplayStyle.Flex : DisplayStyle.None;
+            if (showWaitMeter)
+            {
+                _waitLabel.text = waitLabel ?? string.Empty;
+                if (_waitFill != null)
+                    _waitFill.style.width = Length.Percent(Mathf.Clamp01(waitProgress01) * 100f);
+            }
+
+            ApplyLeftVisibility();
         }
 
         public void SyncOffer(
@@ -413,6 +726,13 @@ namespace Airside.Presentation
                 _reportBody.text = reportBodyOrNull;
 
             ApplyOpsVisibility();
+        }
+
+        private void ApplyLeftVisibility()
+        {
+            if (_leftPanel == null)
+                return;
+            _leftPanel.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void ApplyOfferVisibility()

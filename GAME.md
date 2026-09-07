@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Toolkit ops + route offer)
-- **Branch / working tree:** `cursor/toolkit-ops-offer-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak Toolkit OPERATIONS + Accept/Decline
-- **In progress / half-done:** Toolkit owns toasts + right column; Canvas still owns left panel + overlays
+- **Last updated:** 2026-09-07 by Cursor (Toolkit left status panel)
+- **Branch / working tree:** `cursor/toolkit-left-panel-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak full Toolkit gameplay HUD
+- **In progress / half-done:** Toolkit owns left + right gameplay chrome + toasts; Canvas still owns overlays
 - **Watch out for:** UI Toolkit clicks need EventSystem (Canvas creates it); authored FBX still open
-- **Open questions for Bailey:** migrate left status panel to Toolkit next, or authored FBX first?
-- **Visual assets:** twelve Resources prefabs; Toolkit ops/offer/toasts; Addressables locator
+- **Open questions for Bailey:** migrate briefing/away overlays to Toolkit next, or authored FBX first?
+- **Visual assets:** twelve Resources prefabs; Toolkit full gameplay HUD; Addressables locator
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

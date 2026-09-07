@@ -6,9 +6,9 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 6 — runtime uGUI Canvas HUD for primary first-session
-    /// surfaces: left status (incl. hire / research / turnaround), route offer, and
-    /// ops toast. Built in code so packaged builds do not depend on editor-imported
-    /// PanelSettings. Dense operations log and full-screen overlays stay in
+    /// surfaces: left status (incl. hire / research / turnaround), route offer,
+    /// operations log, and ops toast. Built in code so packaged builds do not
+    /// depend on editor-imported PanelSettings. Full-screen overlays stay in
     /// <see cref="AirsidePrototype"/> IMGUI until a later Toolkit pass.
     /// </summary>
     public sealed class AirsideCanvasHud
@@ -16,7 +16,13 @@ namespace Airside.Presentation
         private readonly RectTransform _root;
         private readonly RectTransform _leftPanel;
         private readonly RectTransform _offerPanel;
+        private readonly RectTransform _opsPanel;
         private readonly RectTransform _toastPanel;
+        private readonly Text _opsSummary;
+        private readonly Text _opsBody;
+        private readonly Text _reportTitle;
+        private readonly Text _reportBody;
+        private readonly GameObject _reportBlock;
         private readonly Text _locationText;
         private readonly Text _flightText;
         private readonly Text _phaseText;
@@ -67,6 +73,12 @@ namespace Airside.Presentation
             RectTransform root,
             RectTransform leftPanel,
             RectTransform offerPanel,
+            RectTransform opsPanel,
+            Text opsSummary,
+            Text opsBody,
+            Text reportTitle,
+            Text reportBody,
+            GameObject reportBlock,
             RectTransform toastPanel,
             Text locationText,
             Text flightText,
@@ -110,6 +122,12 @@ namespace Airside.Presentation
             _root = root;
             _leftPanel = leftPanel;
             _offerPanel = offerPanel;
+            _opsPanel = opsPanel;
+            _opsSummary = opsSummary;
+            _opsBody = opsBody;
+            _reportTitle = reportTitle;
+            _reportBody = reportBody;
+            _reportBlock = reportBlock;
             _toastPanel = toastPanel;
             _locationText = locationText;
             _flightText = flightText;
@@ -311,10 +329,33 @@ namespace Airside.Presentation
             toastText.color = AirsideTheme.ClearGreen;
             toast.gameObject.SetActive(false);
             offer.gameObject.SetActive(false);
+
+            var ops = BuildPanel(root, "Ops panel", new Vector2(-22f, -22f), new Vector2(340f, 260f), anchorTopRight: true);
+            var opsTitle = AddText(ops, "Ops title", 16, FontStyle.Bold, new Vector2(18f, -14f), new Vector2(300f, 24f));
+            opsTitle.text = "OPERATIONS";
+            var opsSummary = AddText(ops, "Ops summary", 12, FontStyle.Normal, new Vector2(18f, -40f), new Vector2(304f, 36f));
+            var opsBody = AddText(ops, "Ops body", 12, FontStyle.Normal, new Vector2(18f, -78f), new Vector2(304f, 140f));
+            var reportBlock = new GameObject("Daily report", typeof(RectTransform));
+            reportBlock.transform.SetParent(ops, false);
+            var reportRt = reportBlock.GetComponent<RectTransform>();
+            reportRt.anchorMin = new Vector2(0f, 0f);
+            reportRt.anchorMax = new Vector2(1f, 0f);
+            reportRt.pivot = new Vector2(0.5f, 0f);
+            reportRt.anchoredPosition = new Vector2(0f, 8f);
+            reportRt.sizeDelta = new Vector2(-16f, 96f);
+            var reportBg = reportBlock.AddComponent<Image>();
+            var reportInk = AirsideTheme.RunwayInk;
+            reportInk.a = 0.55f;
+            reportBg.color = reportInk;
+            reportBg.raycastTarget = false;
+            var reportTitle = AddText(reportRt, "Report title", 13, FontStyle.Bold, new Vector2(10f, -8f), new Vector2(280f, 18f));
+            reportTitle.text = "DAILY REPORT";
+            var reportBody = AddText(reportRt, "Report body", 11, FontStyle.Normal, new Vector2(10f, -28f), new Vector2(290f, 60f));
+            reportBlock.SetActive(false);
             left.gameObject.SetActive(true);
 
             var hud = new AirsideCanvasHud(
-                root, left, offer, toast,
+                root, left, offer, ops, opsSummary, opsBody, reportTitle, reportBody, reportBlock, toast,
                 location, flight, phase, clock, cash, finance, warning,
                 turnaround, turnaroundBlock, priority, priorityLabel,
                 schedule, staffing, earlyHint,
@@ -511,7 +552,10 @@ namespace Airside.Presentation
         {
             _offerPanel.gameObject.SetActive(visible);
             if (!visible)
+            {
+                RepositionOpsBelowOffer(false, firstDecision: false);
                 return;
+            }
 
             _offerTitle.text = title;
             _offerTitle.color = firstDecision ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
@@ -528,6 +572,33 @@ namespace Airside.Presentation
                 c.a = pulse;
                 _offerAccent.color = c;
             }
+
+            RepositionOpsBelowOffer(true, firstDecision);
+        }
+
+        public void SyncOps(string summary, string body, string reportBodyOrNull)
+        {
+            _opsSummary.text = summary ?? string.Empty;
+            _opsBody.text = body ?? string.Empty;
+            var hasReport = !string.IsNullOrEmpty(reportBodyOrNull);
+            _reportBlock.SetActive(hasReport);
+            if (hasReport)
+                _reportBody.text = reportBodyOrNull;
+
+            var lineCount = 1;
+            if (!string.IsNullOrEmpty(body))
+                lineCount = body.Split('\n').Length;
+            var bodyHeight = Mathf.Clamp(18f + lineCount * 15f, 60f, 180f);
+            _opsBody.rectTransform.sizeDelta = new Vector2(304f, bodyHeight);
+            var reportExtra = hasReport ? 108f : 12f;
+            _opsPanel.sizeDelta = new Vector2(340f, 78f + bodyHeight + reportExtra);
+        }
+
+        private void RepositionOpsBelowOffer(bool offerVisible, bool firstDecision)
+        {
+            var offerHeight = offerVisible ? (firstDecision ? 196f : 156f) : 0f;
+            var top = -22f - (offerVisible ? offerHeight + 12f : 0f);
+            _opsPanel.anchoredPosition = new Vector2(-22f, top);
         }
 
         public void SyncToast(string message, bool visible)

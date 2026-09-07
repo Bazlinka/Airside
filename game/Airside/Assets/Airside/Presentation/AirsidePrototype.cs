@@ -299,6 +299,60 @@ namespace Airside.Presentation
 
             var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
             _canvasHud.SyncToast(_opsToast, toastVisible);
+            SyncCanvasOpsPanel();
+        }
+
+        private void SyncCanvasOpsPanel()
+        {
+            var accepted = _simulation.Routes.Accepted;
+            var pendingOffer = _simulation.Routes.Pending;
+            var summary =
+                $"Routes {accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight";
+
+            var lines = new System.Collections.Generic.List<string>();
+            if (accepted.Count == 0)
+            {
+                if (pendingOffer != null)
+                    lines.Add("Offer waiting above — Accept to start income");
+                else
+                {
+                    var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
+                    lines.Add(secondsToOffer > 0
+                        ? $"No routes yet — first offer in {secondsToOffer}s"
+                        : "No routes yet — offer arriving…");
+                }
+            }
+            else
+            {
+                var start = Math.Max(0, accepted.Count - 4);
+                for (var i = start; i < accepted.Count; i++)
+                {
+                    var route = accepted[i];
+                    lines.Add($"{route.Airline} · {route.FlightsPerDay}/d → {route.Destination} · ${route.IncomePerFlight:N0}");
+                }
+
+                if (start > 0)
+                    lines.Add($"+{start} earlier route(s)");
+            }
+
+            foreach (var aircraft in _simulation.GroundTraffic)
+                lines.Add($"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}");
+
+            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(4))
+                lines.Add($"T+{entry.OccurredAt.ElapsedSeconds}s  {entry.FlightId}  ·  {entry.Title}");
+
+            string report = null;
+            var latest = _simulation.DailyReports.Latest;
+            if (latest != null)
+            {
+                var rep = latest.ReputationChange == 0 ? "reputation flat"
+                    : latest.ReputationChange > 0 ? $"reputation +{latest.ReputationChange}"
+                    : $"reputation {latest.ReputationChange}";
+                report =
+                    $"{latest.SummaryLine}\nIncome ${latest.FlightIncome:N0}  ·  delays -${latest.DelayCost:N0}  ·  running -${latest.OperatingCost:N0}\n{rep}  ·  {latest.GroundCrew} crew";
+            }
+
+            _canvasHud.SyncOps(summary, string.Join("\n", lines), report);
         }
 
         private void SyncCanvasLeftPanel()
@@ -1738,6 +1792,8 @@ namespace Airside.Presentation
             if (pendingOffer != null && !_canvasHudActive)
                 DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f);
 
+            if (!_canvasHudActive)
+            {
             var listedRoutes = accepted.Count == 0
                 ? 1
                 : Math.Min(4, accepted.Count) + (accepted.Count > 4 ? 1 : 0);
@@ -1814,6 +1870,7 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(historyLeft + 20, reportTop + 80, 310, 20),
                     $"{rep}  ·  {latest.GroundCrew} crew", small);
             }
+            } // end !_canvasHudActive ops panel
 
             DrawResearchToast(scale, panel, onTime);
             DrawSaveIndicator(scale, panel, small, onTime);

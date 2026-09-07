@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar bay densify + marking wet collect (0025 items 3–4).** Hangar bay props ~49
+  parts (vise, shelves, tires, extinguisher, pegboard); wet/residual damp covers taxi
+  arrows, runway digits, stand leads, chevrons, hold-shorts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Markings/ARFF/fuel densify (0025 items 1–3).** Markings kit 44 (digit bars, taxi
   arrows, extra hold/chevrons) wired into PlaceWorldMarkings/PlaceRunwayDigit; fuel
   farm ~47 / ARFF shed ~52 / truck ~53 Resources parts. Presentation only.

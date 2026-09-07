@@ -53,10 +53,18 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 
-Companion StreamingAssets glTF is preferred at runtime until Resources prefabs
-exist. On Mac, after FBX import: **Airside → Art → Bake Authored FBX Prefabs**
-writes `mdl_*_authored_v01.prefab` here so `airside-prefab/<key>` serves
-Unity-imported meshes.
+Resources prefabs (Addressables keys live now):
+
+| Key | Regenerator |
+|---|---|
+| `mdl_regional_turboprop_01_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
+| `mdl_terminal_regional_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
+
+Round fuselage/engines use built-in cylinders with motion part names (gear doors,
+props, cabin/cargo doors). Mac menu **Airside → Art → Bake Authored FBX Prefabs**
+can overwrite these with ModelImporter meshes from the `.fbx` files.
+
+Companion StreamingAssets glTF remains the fallback if a prefab is missing.
 
 ## Workflow (Mac Unity)
 

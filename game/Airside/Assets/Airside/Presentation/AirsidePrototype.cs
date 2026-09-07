@@ -3817,6 +3817,7 @@ namespace Airside.Presentation
             CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_hangar_small_authored_v01.gltf",
                     "Models/Buildings/mdl_hangar_small_v04.gltf",
                     "Models/Buildings/mdl_hangar_small_v03.gltf",
                     "Models/Buildings/mdl_hangar_small_v02.gltf",

@@ -450,6 +450,37 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     }
 
 
+def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    return {
+        "hangar_shell": box(0, 2.5, 0, 14, 5, 9),
+        "roof_ridge": box(0, 5.15, 0, 14.4, 0.35, 1.2),
+        "roof_panel_l": box(-3.5, 4.85, 0, 7.2, 0.22, 9.2),
+        "roof_panel_r": box(3.5, 4.85, 0, 7.2, 0.22, 9.2),
+        "roof_rib_1": box(-5.0, 4.7, 0, 0.18, 0.45, 9.0),
+        "roof_rib_2": box(-2.5, 4.7, 0, 0.18, 0.45, 9.0),
+        "roof_rib_3": box(0.0, 4.7, 0, 0.18, 0.45, 9.0),
+        "roof_rib_4": box(2.5, 4.7, 0, 0.18, 0.45, 9.0),
+        "roof_rib_5": box(5.0, 4.7, 0, 0.18, 0.45, 9.0),
+        "door_opening": box(0, 2.2, 4.6, 9.5, 4.2, 0.15),
+        "door_panel_l": box(-2.4, 2.0, 4.7, 4.6, 3.9, 0.12),
+        "door_panel_r": box(2.4, 2.0, 4.7, 4.6, 3.9, 0.12),
+        "door_rib_l": box(-2.4, 2.0, 4.78, 0.12, 3.9, 0.08),
+        "door_rib_r": box(2.4, 2.0, 4.78, 0.12, 3.9, 0.08),
+        "door_track_l": box(-4.8, 4.3, 4.55, 0.25, 0.2, 0.5),
+        "door_track_r": box(4.8, 4.3, 4.55, 0.25, 0.2, 0.5),
+        "buttress_l": box(-7.2, 1.5, 2.5, 1.0, 3.0, 2.5),
+        "buttress_r": box(7.2, 1.5, 2.5, 1.0, 3.0, 2.5),
+        "side_vent": box(-7.05, 3.2, -1.5, 0.15, 1.2, 2.0),
+        "side_vent_b": box(7.05, 3.2, -1.5, 0.15, 1.2, 2.0),
+        "personnel_door": box(-5.5, 1.1, 4.65, 1.1, 2.1, 0.1),
+        "office_lean": box(5.8, 1.4, -3.5, 3.5, 2.6, 3.0),
+        "office_window": box(5.8, 1.8, -5.05, 2.2, 1.2, 0.08),
+        "crane_beam": box(0, 4.4, 0, 12.0, 0.2, 0.35),
+        "column_l": cylinder(-6.2, 2.4, -2.0, 0.2, 4.6, axis="y", segments=8),
+        "column_r": cylinder(6.2, 2.4, -2.0, 0.2, 4.6, axis="y", segments=8),
+    }
+
+
 def main() -> None:
     AIRCRAFT.mkdir(parents=True, exist_ok=True)
     BUILDINGS.mkdir(parents=True, exist_ok=True)
@@ -471,6 +502,15 @@ def main() -> None:
     write_default_meta(bld_gltf.with_suffix(".bin"))
     export_fbx(bld, bld_fbx)
     print(f"Wrote {bld_gltf.name} + {bld_fbx.name} ({len(bld)} meshes)")
+
+    hangar = hangar_meshes()
+    hangar_gltf = BUILDINGS / "mdl_hangar_small_authored_v01.gltf"
+    hangar_fbx = BUILDINGS / "mdl_hangar_small_authored_v01.fbx"
+    pack_gltf(hangar_gltf, hangar)
+    write_default_meta(hangar_gltf)
+    write_default_meta(hangar_gltf.with_suffix(".bin"))
+    export_fbx(hangar, hangar_fbx)
+    print(f"Wrote {hangar_gltf.name} + {hangar_fbx.name} ({len(hangar)} meshes)")
 
 
 if __name__ == "__main__":

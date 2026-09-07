@@ -5,14 +5,21 @@ change it describes.
 
 ## Unreleased
 
+- **Authored Resources prefabs for turboprop + terminal.** Addressables keys
+  `airside-prefab/mdl_regional_turboprop_01_authored_v01` and
+  `…/mdl_terminal_regional_small_authored_v01` now resolve via Resources
+  (cylinder fuselage / canopy posts; gear/cargo/prop names wired for motion).
+  FBX ModelImporter bake can overwrite later. StreamingAssets glTF + primitives
+  remain fallbacks. Evidence: `scripts/test-domain.sh`.
+
 - **Authored FBX turboprop + terminal (0025 item 2).** Distinct
   `mdl_regional_turboprop_01_authored_v01` and
   `mdl_terminal_regional_small_authored_v01` ship as Unity-importable `.fbx`
   (lathed fuselage / cylindrical engines; canopy posts) plus companion glTF for
   StreamingAssets. PreferArtKit prefers authored → lofted/v04 → … → primitives.
-  Mac menu **Airside → Art → Bake Authored FBX Prefabs** writes Resources prefabs
-  so `airside-prefab/<key>` can serve Unity-imported meshes. No simulation change.
-  Evidence: `scripts/test-domain.sh`; art sync 143 files; Mac Unity bake + Play soak pending.
+  Mac menu **Airside → Art → Bake Authored FBX Prefabs** can replace Resources
+  prefabs with ModelImporter meshes. No simulation change.
+  Evidence: `scripts/test-domain.sh`; art sync 143 files.
 
 - **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
   animate separately from struts; cargo doors open at stand; soft coastal ambient

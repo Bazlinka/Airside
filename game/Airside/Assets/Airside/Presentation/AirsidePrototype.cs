@@ -4179,12 +4179,16 @@ namespace Airside.Presentation
             PlacePerson(root, "Ops walker", new Vector3(22f, 0f, 22.5f), 15f, new Color(0.25f, 0.28f, 0.32f));
             PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f));
             PlacePerson(root, "Hangar tech", new Vector3(-16f, 0f, 18.5f), 270f, new Color(0.35f, 0.4f, 0.45f));
+            PlacePerson(root, "Hangar tech B", new Vector3(-18.5f, 0f, 17.2f), 200f, new Color(0.4f, 0.42f, 0.38f));
             PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
             PlacePerson(root, "Landside passenger B", new Vector3(27.8f, 0f, 31.6f), 175f, new Color(0.2f, 0.35f, 0.4f));
             PlacePerson(root, "Landside passenger C", new Vector3(25.6f, 0f, 31.4f), 190f, new Color(0.3f, 0.32f, 0.45f));
+            PlacePerson(root, "Landside passenger D", new Vector3(28.5f, 0f, 32.2f), 160f, new Color(0.5f, 0.45f, 0.35f));
             PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
             PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
             PlacePerson(root, "Car park walker", new Vector3(34f, 0f, 34f), 220f, new Color(0.4f, 0.25f, 0.3f));
+            PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f));
+            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f));
         }
 
         private static void PlacePerson(Transform parent, string name, Vector3 position, float yaw, Color clothes, bool seated = false)
@@ -5133,6 +5137,12 @@ namespace Airside.Presentation
             PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.04f, 22f), new Vector3(9f, 0.02f, 7f), 0.22f);
             PlaceContactShadow("ARFF contact", new Vector3(-28f, 0.04f, 30f), new Vector3(9f, 0.02f, 7f), 0.2f);
             PlaceContactShadow("Canopy contact", new Vector3(26f, 0.04f, 31.5f), new Vector3(16f, 0.02f, 5f), 0.14f);
+            PlaceContactShadow("Flood NE contact", new Vector3(32f, 0.04f, 22f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
+            PlaceContactShadow("Flood NW contact", new Vector3(8f, 0.04f, 22f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
+            PlaceContactShadow("Flood SE contact", new Vector3(32f, 0.04f, 12f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
+            PlaceContactShadow("Flood SW contact", new Vector3(8f, 0.04f, 12f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
+            PlaceContactShadow("Windsock contact", new Vector3(-12f, 0.04f, 12f), new Vector3(1.4f, 0.02f, 1.4f), 0.16f);
+            PlaceContactShadow("Dolly cluster contact", new Vector3(31f, 0.04f, 20f), new Vector3(8f, 0.02f, 6f), 0.1f);
         }
 
         private static void PlaceContactShadow(string name, Vector3 position, Vector3 scale, float alpha)

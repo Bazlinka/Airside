@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Focus product plan on the Mac first playable.** Replaces the broad blueprint with
+  a delivery plan that makes the first playable the only active target; defers companion,
+  CloudKit, cargo/GA and extra art batches until external playtest confirms the loop.
+
 - **Pulse hold-short markings during traffic waits.** When the traffic wait monitor
   warns, hold-short bars flash Safety Yellow → orange so the delay cause is visible
   in-world, not only on the HUD. Presentation only. `scripts/test-domain.sh` 97/97.

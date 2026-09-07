@@ -10,13 +10,14 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (warm sun / cool ambient lighting pass)
-- **Branch / working tree:** `cursor/dawn-ambient-lighting-38b9` → merge to `main`
-- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets + splash/wordmark + soft sun shadows). Then 0025 item 2 — replace placeholder 3D.
-- **In progress / half-done:** soft directional shadows + warmer key / cooler ambient (this branch).
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox.
-- **Open questions for Bailey:** none — brand Approved. Visual ~20% of REF still honest.
-- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; StreamingAssets art path on `main`; Play Verified pending rebuild
+- **Last updated:** 2026-09-07 by Cursor (follow-camera framing)
+- **Branch / working tree:** `cursor/follow-camera-framing-ddad` (+ open #51–#54)
+- **Do this next:** Merge open presentation PRs in order (env → v02 → HUD → UVs →
+  camera), resolve `AirsidePrototype` conflicts carefully. Bailey Play when ready.
+- **In progress / half-done:** follow look-ahead / altitude framing on this branch.
+- **Watch out for:** Parallel PRs touch Presentation; merge one-at-a-time.
+- **Open questions for Bailey:** none — keep shipping without Play gate.
+- **Visual assets:** brand Integrated; multiple presentation PRs pending merge
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

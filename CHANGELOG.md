@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Follow-camera framing.** Look-ahead along aircraft heading, altitude-based
+  distance/pitch, and gentle yaw ease so F-follow fills the frame for taxi and
+  flight. Overview (O) restores the default pitch. Presentation only.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

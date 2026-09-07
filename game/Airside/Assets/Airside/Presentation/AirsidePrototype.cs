@@ -54,6 +54,7 @@ namespace Airside.Presentation
         private Transform _passengerBus;
         private Transform _stairs;
         private Transform _chocks;
+        private Transform _wetPuddleRoot;
         private Transform _gpuCart;
         private Transform _pushbackTug;
         private Transform _windsockSock;
@@ -142,6 +143,7 @@ namespace Airside.Presentation
             _ambientRainAudio.volume = 0f;
             _ambientRainAudio.Play();
             CollectWetSurfaces();
+            BuildWetPuddles();
             CollectHoldShortMarkings();
             CollectAirfieldLights();
             var hangarDoor = GameObject.Find("Hangar door");
@@ -1465,6 +1467,29 @@ namespace Airside.Presentation
                     continue;
                 AirsideMaterialLibrary.ApplyWetness(renderer.material, wetness, dry, drySmooth);
             }
+
+            UpdateWetPuddles(wetness, storm);
+        }
+
+        private void UpdateWetPuddles(float wetness, bool storm)
+        {
+            if (_wetPuddleRoot == null)
+                return;
+            var show = wetness > 0.05f;
+            _wetPuddleRoot.gameObject.SetActive(show);
+            if (!show)
+                return;
+            var alpha = Mathf.Lerp(0.12f, storm ? 0.42f : 0.32f, wetness);
+            for (var i = 0; i < _wetPuddleRoot.childCount; i++)
+            {
+                var puddle = _wetPuddleRoot.GetChild(i);
+                var renderer = puddle.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                var color = renderer.material.color;
+                color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i));
+                renderer.material.color = color;
+            }
         }
 
         private void UpdateTouchdownSmoke()
@@ -1577,6 +1602,48 @@ namespace Airside.Presentation
                     drySmooth = renderer.material.GetFloat("_Glossiness");
                 _wetSurfaces.Add((renderer, renderer.material.color, drySmooth));
             }
+        }
+
+        /// <summary>
+        /// Soft reflective puddle discs on the apron / taxi — visible wet response beyond
+        /// material darken (0025 items 4+7). Presentation only.
+        /// </summary>
+        private void BuildWetPuddles()
+        {
+            var root = new GameObject("Wet puddles").transform;
+            _wetPuddleRoot = root;
+            var spots = new[]
+            {
+                new Vector3(18f, 0.07f, 15f),
+                new Vector3(24f, 0.07f, 19f),
+                new Vector3(14f, 0.07f, 20.5f),
+                new Vector3(28f, 0.07f, 14.5f),
+                new Vector3(8f, 0.07f, 10f),
+                new Vector3(4f, 0.07f, 9f),
+                new Vector3(20f, 0.07f, 12f),
+                new Vector3(-18f, 0.07f, 16f),
+                new Vector3(32f, 0.07f, 18f),
+                new Vector3(22f, 0.07f, 22f)
+            };
+            for (var i = 0; i < spots.Length; i++)
+            {
+                var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                puddle.name = $"Puddle {i}";
+                Object.Destroy(puddle.GetComponent<Collider>());
+                puddle.transform.SetParent(root, false);
+                puddle.transform.position = spots[i];
+                var radius = 1.2f + (i % 3) * 0.55f;
+                puddle.transform.localScale = new Vector3(radius, 0.015f, radius * (0.7f + (i % 2) * 0.25f));
+                var material = AirsideMaterialLibrary.Create(
+                    new Color(0.25f, 0.32f, 0.38f, 0.28f),
+                    AirsideMaterialLibrary.SurfaceKind.Water);
+                if (material.HasProperty("_Smoothness"))
+                    material.SetFloat("_Smoothness", 0.92f);
+                puddle.GetComponent<Renderer>().material = material;
+                puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+
+            root.gameObject.SetActive(false);
         }
 
         private void CollectAirfieldLights()
@@ -4117,6 +4184,13 @@ namespace Airside.Presentation
 
         private static Transform BuildChocks()
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_wheel_chocks_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Wheel chocks";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
             var root = new GameObject("Wheel chocks").transform;
             var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
             var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
@@ -4140,6 +4214,13 @@ namespace Airside.Presentation
 
         private static Transform BuildGpuCart()
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_gpu_cart_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "GPU cart";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
             var root = new GameObject("GPU cart").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
                     "Models/Props/mdl_service_equipment_kit_v01.gltf",

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **More building night glow.** Ops shed + terminal landside window spill; night
+  glow quads now emit so dusk/night interiors punch through. Presentation only.
+
 - **Control surfaces + touchdown camera shake.** Rudder/elevator (and soft
   tailplane) deflect with attitude; follow camera pulses on commercial
   touchdown with the existing smoke/chirp. Presentation only.

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (control surfaces + touchdown shake)
-- **Branch / working tree:** `cursor/control-surfaces-touchdown-ddad`
-- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave (#58–#63)
-- **In progress / half-done:** rudder/elevator cue + camera PulseTouchdown
-- **Watch out for:** Tailplane pitch is subtle on kits without a separate elevator mesh
+- **Last updated:** 2026-09-07 by Cursor (ops/landside night glow)
+- **Branch / working tree:** `cursor/ops-window-beacon-ddad`
+- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak (#58–#65)
+- **In progress / half-done:** ops + landside window glow + emission
+- **Watch out for:** glow quads are still flat panels, not interior rooms
 - **Open questions for Bailey:** none
-- **Visual assets:** attitude on `main`; control surfaces on this branch
+- **Visual assets:** control surfaces on `main`; night glow on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

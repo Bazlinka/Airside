@@ -778,9 +778,22 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "girth_band_1": box(0, 1.4, 0, 14.1, 0.12, 9.05),
         "girth_band_2": box(0, 3.2, 0, 14.1, 0.12, 9.05),
         "girth_band_3": box(0, 4.4, 0, 14.1, 0.1, 9.05),
+        "fascia_front": box(0, 4.75, 4.55, 14.2, 0.18, 0.14),
+        "fascia_back": box(0, 4.75, -4.55, 14.2, 0.18, 0.14),
+        "door_track_brace_l": box(-4.8, 3.8, 4.5, 0.12, 0.9, 0.12),
+        "door_track_brace_r": box(4.8, 3.8, 4.5, 0.12, 0.9, 0.12),
+        "office_roof": box(5.8, 2.8, -3.5, 3.6, 0.16, 3.1),
+        "office_fascia": box(5.8, 2.65, -5.05, 3.4, 0.12, 0.1),
+        "office_downpipe": cylinder(7.4, 1.5, -5.0, 0.05, 2.6, axis="y", segments=8),
+        "sign_glyph": box(0, 4.7, 4.48, 2.4, 0.22, 0.04),
+        "crane_rail_l": box(-5.5, 4.35, 0, 0.12, 0.12, 8.0),
+        "crane_rail_r": box(5.5, 4.35, 0, 0.12, 0.12, 8.0),
+        "floor_mark_bay": box(0, 0.04, 2.5, 8.0, 0.03, 0.25),
+        "corner_trim_fl": box(-7.0, 2.5, 4.4, 0.14, 4.6, 0.14),
+        "corner_trim_fr": box(7.0, 2.5, 4.4, 0.14, 4.6, 0.14),
     }
     # Vertical corrugation ribs on ±X faces.
-    for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5), start=1):
+    for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, -4.0, 4.0), start=1):
         meshes[f"wall_rib_l_{i}"] = box(-7.12, 2.5, z, 0.1, 4.5, 0.18)
         meshes[f"wall_rib_r_{i}"] = box(7.12, 2.5, z, 0.1, 4.5, 0.18)
     # Side wall glass panes between ribs around the office-side windows.
@@ -965,6 +978,18 @@ def fuel_truck_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "window_header": box(1.56, 1.62, 0, 0.05, 0.05, 1.15),
         "door_glass": box(1.05, 1.2, 0.8, 0.7, 0.55, 0.04),
         "door_glass_r": box(1.05, 1.2, -0.8, 0.7, 0.55, 0.04),
+        "hub_rl": cylinder(-1.15, 0.28, 0.58, 0.12, 0.1, axis="z", segments=8),
+        "hub_rr": cylinder(-1.15, 0.28, -0.58, 0.12, 0.1, axis="z", segments=8),
+        "door_handle_l": box(1.35, 0.95, 0.85, 0.08, 0.18, 0.06),
+        "door_handle_r": box(1.35, 0.95, -0.85, 0.08, 0.18, 0.06),
+        "tank_valve_top": cylinder(-0.1, 1.65, 0, 0.08, 0.18, axis="y", segments=8),
+        "chassis_rail_l": box(0.1, 0.45, 0.5, 3.4, 0.1, 0.08),
+        "chassis_rail_r": box(0.1, 0.45, -0.5, 3.4, 0.1, 0.08),
+        "cab_stripe": box(1.05, 0.7, 0.8, 1.35, 0.1, 0.04),
+        "tank_stripe": box(-0.45, 0.7, 0.72, 2.3, 0.1, 0.04),
+        "pump_hose_out": box(-1.85, 0.55, -0.55, 0.35, 0.1, 0.1),
+        "spare_wheel": cylinder(-1.7, 0.85, 0.0, 0.22, 0.12, axis="z", segments=12),
+        "wiper": box(1.7, 1.5, 0, 0.06, 0.05, 0.7),
     }
     # Cab windshield panes between mullions.
     for i, z in enumerate([-0.45, -0.15, 0.15, 0.45], start=1):
@@ -1043,6 +1068,26 @@ def baggage_tug_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "glass_pane_lo_1": box(4.51, 1.0, -0.25, 0.04, 0.2, 0.35),
         "glass_pane_lo_2": box(4.51, 1.0, 0.25, 0.04, 0.2, 0.35),
         "window_mullion": box(4.51, 1.15, 0, 0.04, 0.45, 0.04),
+        "tug_hub_fl": cylinder(4.0, 0.22, 0.5, 0.1, 0.1, axis="z", segments=8),
+        "tug_hub_fr": cylinder(4.0, 0.22, -0.5, 0.1, 0.1, axis="z", segments=8),
+        "tug_hub_rl": cylinder(3.2, 0.22, 0.5, 0.1, 0.1, axis="z", segments=8),
+        "tug_hub_rr": cylinder(3.2, 0.22, -0.5, 0.1, 0.1, axis="z", segments=8),
+        "cart_hub_1l": cylinder(1.8, 0.18, 0.48, 0.08, 0.08, axis="z", segments=8),
+        "cart_hub_1r": cylinder(1.8, 0.18, -0.48, 0.08, 0.08, axis="z", segments=8),
+        "cart_hub_2l": cylinder(0.2, 0.18, 0.48, 0.08, 0.08, axis="z", segments=8),
+        "cart_hub_2r": cylinder(0.2, 0.18, -0.48, 0.08, 0.08, axis="z", segments=8),
+        "cart_hub_3l": cylinder(-1.4, 0.18, 0.48, 0.08, 0.08, axis="z", segments=8),
+        "cart_hub_3r": cylinder(-1.4, 0.18, -0.48, 0.08, 0.08, axis="z", segments=8),
+        "tug_mirror_l": box(4.4, 1.2, 0.55, 0.1, 0.18, 0.08),
+        "tug_mirror_r": box(4.4, 1.2, -0.55, 0.1, 0.18, 0.08),
+        "tug_stripe": box(3.6, 0.55, 0.58, 1.5, 0.12, 0.04),
+        "cargo_bag_1c": box(1.8, 1.15, 0.0, 0.35, 0.22, 0.28),
+        "cargo_bag_2c": box(0.2, 1.15, 0.0, 0.35, 0.22, 0.28),
+        "cargo_bag_3c": box(-1.4, 1.15, 0.0, 0.35, 0.22, 0.28),
+        "hitch_pin_1": cylinder(2.7, 0.45, 0, 0.04, 0.18, axis="y", segments=6),
+        "hitch_pin_2": cylinder(1.0, 0.45, 0, 0.04, 0.18, axis="y", segments=6),
+        "hitch_pin_3": cylinder(-0.6, 0.45, 0, 0.04, 0.18, axis="y", segments=6),
+        "tug_exhaust": box(3.05, 0.7, -0.45, 0.25, 0.1, 0.1),
     }
     return meshes
 

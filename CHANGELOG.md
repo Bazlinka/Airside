@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar/GSE densify tip (0025 item 2).** Hangar 149 (fascia/office roof/crane rails/
+  extra ribs); fuel truck 87; baggage tug 88 (hubs, bags, hitch pins). Presentation
+  only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
 - **Terminal/ops/bus + day/wet/HUD tip (0025 items 2+4–6).** Terminal shell densify
   (157: fascia/soffit/ribs); ops shed 111; apron bus 90; noon midtone punch + dusk
   WB warmth; stronger non-ClearCoat wet sheen; Toolkit income/research/route icons.

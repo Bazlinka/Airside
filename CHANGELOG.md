@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar glass, service densify, day/wet polish (0025 items 2+4+5).** Hangar side/office/
+  skylight glass panes + mullions (132); stairs posts/GPU grille/belt rollers (80);
+  stronger noon midtone separation + dusk WB warmth; residual damp on roads/markings;
+  non-ClearCoat wet sheen bump. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **GSE/ops densify, landside panes, mullion tint fix (0025 items 2+4+7).** Ops shed
   cladding ribs + split glass panes (94); fuel truck tank ends/pump/cab panes (75);
   baggage tug cart beds/bags/canopies (68); apron bus side glass_pane* (72);

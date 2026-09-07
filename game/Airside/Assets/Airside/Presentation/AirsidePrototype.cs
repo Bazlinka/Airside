@@ -1084,12 +1084,12 @@ namespace Airside.Presentation
                 padding = new RectOffset(18, 18, 14, 14)
             });
             var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold });
-            var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 16 });
-            var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 });
+            var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 17 });
+            var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14 });
             var caution = AirsideTheme.CautionStyle(small);
             var onTime = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.ClearGreen);
             var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
-            var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
+            var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 14, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
 
             var timeOfDay = _simulation.TimeOfDay;
             var earlySession = _simulation.Routes.Accepted.Count == 0;
@@ -1099,7 +1099,9 @@ namespace Airside.Presentation
             var leftPanelHeight = earlySession
                 ? 420f
                 : Mathf.Clamp(360f + turnaroundTaskCount * 19f + (atStand ? 70f : 0f) + 140f, 420f, 580f);
-            GUI.Box(new Rect(22, 22, 410, leftPanelHeight), string.Empty, panel);
+            var leftPanelRect = new Rect(22, 22, 410, leftPanelHeight);
+            GUI.Box(leftPanelRect, string.Empty, panel);
+            AirsideTheme.DrawPanelFrame(leftPanelRect);
 
             var y = 36f;
             var wordmark = AirsideTheme.WordmarkLight;
@@ -1366,14 +1368,11 @@ namespace Airside.Presentation
                         : "Airline offer arriving…",
                     small);
                 y += 20f;
-                var barLeft = 42f;
-                var barWidth = 360f;
-                var prev = GUI.color;
-                GUI.color = new Color(0.12f, 0.14f, 0.16f, 0.85f);
-                GUI.DrawTexture(new Rect(barLeft, y, barWidth, 8f), Texture2D.whiteTexture);
-                GUI.color = AirsideTheme.CoastalBlue;
-                GUI.DrawTexture(new Rect(barLeft, y, barWidth * progress, 8f), Texture2D.whiteTexture);
-                GUI.color = prev;
+                AirsideTheme.DrawProgressBar(
+                    new Rect(42, y, 360, 10),
+                    progress,
+                    AirsideTheme.CoastalBlue,
+                    new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f));
             }
 
             var historyLeft = Screen.width / scale - 362;
@@ -1391,7 +1390,9 @@ namespace Airside.Presentation
                 : Math.Min(4, accepted.Count) + (accepted.Count > 4 ? 1 : 0);
             // Header through routes summary (~80), schedule lines, fleet (2), event tail (4).
             var opsHeight = 80f + listedRoutes * 18f + 4f + 2 * 18f + 6f + 4 * 20f + 16f;
-            GUI.Box(new Rect(historyLeft, opsTop, 340, opsHeight), string.Empty, panel);
+            var opsRect = new Rect(historyLeft, opsTop, 340, opsHeight);
+            GUI.Box(opsRect, string.Empty, panel);
+            AirsideTheme.DrawPanelFrame(opsRect);
             GUI.Label(new Rect(historyLeft + 20, opsTop + 14, 300, 26), "OPERATIONS", detail);
             GUI.Label(new Rect(historyLeft + 20, opsTop + 40, 320, 20),
                 $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight", small);
@@ -1518,7 +1519,11 @@ namespace Airside.Presentation
             var top = offerTop;
             var firstDecision = _simulation.Routes.Accepted.Count == 0;
             var height = firstDecision ? 196f : 156f;
-            GUI.Box(new Rect(left, top, 340, height), string.Empty, panel);
+            var offerRect = new Rect(left, top, 340, height);
+            GUI.Box(offerRect, string.Empty, panel);
+            AirsideTheme.DrawPanelFrame(offerRect, firstDecision
+                ? new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, 0.7f)
+                : null);
             if (firstDecision)
             {
                 var stripe = AirsideTheme.AlertStripeBackground;

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **HUD contrast polish (0025 item 6 interim).** Panel fill 94% opaque, Coastal Blue
+  panel frames, larger body type, themed progress bar for the first-offer wait,
+  framed OPERATIONS panel. Still IMGUI — Toolkit/uGUI rebuild remains next.
+
 - **Ground shadows + drifting cloud bands.** Soft elliptical shadows under
   commercials/ground traffic that soften with altitude; ten translucent cloud
   blobs drift east and tint with day/dusk. Presentation only.

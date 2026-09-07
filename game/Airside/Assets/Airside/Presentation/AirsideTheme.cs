@@ -82,7 +82,7 @@ namespace Airside.Presentation
                     else
                     {
                         var ink = RunwayInk;
-                        ink.a = 0.88f;
+                        ink.a = 0.94f;
                         _panelBackground = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
                         _panelBackground.SetPixel(0, 0, ink);
                         _panelBackground.Apply();
@@ -91,6 +91,18 @@ namespace Airside.Presentation
 
                 return _panelBackground;
             }
+        }
+
+        /// <summary>Draw a thin frame around a panel for separation from the 3D world.</summary>
+        public static void DrawPanelFrame(Rect rect, Color? edge = null)
+        {
+            var previous = GUI.color;
+            GUI.color = edge ?? new Color(CoastalBlue.r, CoastalBlue.g, CoastalBlue.b, 0.55f);
+            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, 2f), SolidWhite);
+            GUI.DrawTexture(new Rect(rect.x, rect.yMax - 2f, rect.width, 2f), SolidWhite);
+            GUI.DrawTexture(new Rect(rect.x, rect.y, 2f, rect.height), SolidWhite);
+            GUI.DrawTexture(new Rect(rect.xMax - 2f, rect.y, 2f, rect.height), SolidWhite);
+            GUI.color = previous;
         }
 
         /// <summary>Opaque white 1x1 for tinted progress fills and tracks.</summary>

@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (first-session countdown + auto-follow)
-- **Branch / working tree:** `cursor/first-session-countdown-38b9` → merge to `main`
-- **Do this next:** Bailey `git pull origin main` then Unity Play soak. Optional: enable GitHub **Allow auto-merge** (Settings → General) — agent cannot (403).
-- **In progress / half-done:** offer countdown tip + auto-follow on Begin (this branch).
+- **Last updated:** 2026-09-07 by Cursor (first-session declutter)
+- **Branch / working tree:** `cursor/first-session-declutter-38b9` → merge to `main`
+- **Do this next:** Bailey `git pull origin main` then Unity Play soak of first-session flow (briefing → follow → 12s offer → decluttered left panel). Optional: enable GitHub Allow auto-merge (agent 403).
+- **In progress / half-done:** hide crew/stand/research controls until first accepted route (this branch).
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**. Delivery plan **0024**.
 - **Open questions for Bailey:** none — Play soak when ready.
 - **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; brand/splash candidates unapproved; Play Verified pending

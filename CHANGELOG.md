@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **First-session HUD declutter.** Until the first route is accepted, hide hire/release
+  crew, stand-3 build and research start controls; show one unlock line instead so the
+  route offer stays the only early decision. Presentation only. `scripts/test-domain.sh` 97/97.
+
 - **First-session countdown tip and auto-follow on Begin.** Coach line counts down to
   the first route offer; dismissing the opening briefing starts camera follow on the
   lead commercial so the aircraft cycle is visible immediately. Presentation only.

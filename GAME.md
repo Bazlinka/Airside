@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (squash-merged #130 onto main)
-- **Branch / working tree:** `main`
-- **Do this next:** authored FBX overwrite for turboprop or terminal; Editor Addressables groups when ready. No new economy systems.
-- **In progress / half-done:** Resources prefab keys work without a built Addressables catalog; Unity still logs missing `Library/com.unity.addressables/aa/OSX/settings.json` at init (fallback path used).
-- **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art; do not rebuild Addressables content until Bailey authors groups.
-- **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
-- **Visual assets:** Lofted turboprop + Addressables Resources provider; denser fence/vegetation/shoulders; gear/cargo doors; BRD-001 wordmark overlays; Batch C/WLD/PRP still loading. Verified Play soak.
+- **Last updated:** 2026-09-07 by Cursor (authored FBX turboprop + terminal)
+- **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515`
+- **Do this next:** On Mac — open Unity, let FBX import, run **Airside → Art → Bake Authored FBX Prefabs**, then `scripts/test-unity.sh` + Play soak (authored silhouette; Batch C/WLD/PRP still present). Squash-merge when green.
+- **In progress / half-done:** Authored `*_authored_v01.fbx` + companion glTF preferred in PreferArtKit; Resources prefab bake still needs Mac Editor. No new economy systems.
+- **Watch out for:** Unity may still log missing Addressables `settings.json` (fallback OK). Do not rebuild Addressables catalog until Bailey authors groups. Greybox densify is not the path — authored FBX is.
+- **Open questions for Bailey:** after Mac bake, hand-authored DCC FBX replace, or continue procedural authored kits for hangar/vehicles?
+- **Visual assets:** Authored turboprop (lathed) + terminal FBX/glTF; lofted/v04 remain fallbacks; Batch C/WLD/PRP preserved.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

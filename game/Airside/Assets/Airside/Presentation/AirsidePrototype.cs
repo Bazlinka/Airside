@@ -3776,6 +3776,7 @@ namespace Airside.Presentation
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v04.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v03.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
@@ -4937,6 +4938,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",

@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Authored FBX turboprop + terminal (0025 item 2).** Distinct
+  `mdl_regional_turboprop_01_authored_v01` and
+  `mdl_terminal_regional_small_authored_v01` ship as Unity-importable `.fbx`
+  (lathed fuselage / cylindrical engines; canopy posts) plus companion glTF for
+  StreamingAssets. PreferArtKit prefers authored → lofted/v04 → … → primitives.
+  Mac menu **Airside → Art → Bake Authored FBX Prefabs** writes Resources prefabs
+  so `airside-prefab/<key>` can serve Unity-imported meshes. No simulation change.
+  Evidence: `scripts/test-domain.sh`; art sync 143 files; Mac Unity bake + Play soak pending.
+
 - **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
   animate separately from struts; cargo doors open at stand; soft coastal ambient
   audio joins wind/rain; wet response covers more ground surfaces and refreshes the

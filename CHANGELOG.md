@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Service vehicles densify + puddles (0025 items 2+4).** Fuel truck 33, baggage
+  tug 34, apron bus 35 authored meshes (fenders, rails, arches, lights); vehicle
+  material map covers new parts; wet puddle count raised across apron/landside/
+  fuel pad. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Terminal/hangar/turboprop densify (0025 items 2+3).** Authored terminal to 49
   meshes (extra mullions/sills/canopy/columns), hangar to 53 (door bars/handles,
   crane hook, skylights, downpipes), turboprop to 78 (mid fences, pitot, VOR).

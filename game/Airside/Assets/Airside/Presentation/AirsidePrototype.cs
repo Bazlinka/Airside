@@ -5678,8 +5678,95 @@ namespace Airside.Presentation
             PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
             PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
 
+            BuildApronSafetyProps();
             BuildFuelFarm();
             BuildParkedGaAircraft();
+        }
+
+        /// <summary>
+        /// Decision 0025 items 1+3 — fire hydrants, extinguisher cabinets and FOD bins
+        /// so the apron edge reads as a working safety-equipped airfield.
+        /// </summary>
+        private static void BuildApronSafetyProps()
+        {
+            PlaceFireHydrant("Hydrant apron NE", new Vector3(34f, 0f, 23.5f), 0f);
+            PlaceFireHydrant("Hydrant apron NW", new Vector3(8.5f, 0f, 23.5f), 0f);
+            PlaceFireHydrant("Hydrant taxi", new Vector3(-2f, 0f, 11.5f), 90f);
+            PlaceFireHydrant("Hydrant hangar", new Vector3(-14f, 0f, 16f), 0f);
+
+            PlaceExtinguisherCabinet("Extinguisher terminal", new Vector3(20f, 0f, 24.2f), 180f);
+            PlaceExtinguisherCabinet("Extinguisher hangar", new Vector3(-15.5f, 0f, 24.2f), 180f);
+            PlaceExtinguisherCabinet("Extinguisher ops", new Vector3(-5f, 0f, 24.2f), 180f);
+
+            PlaceFodBin("FOD bin A", new Vector3(36f, 0f, 20f), 270f);
+            PlaceFodBin("FOD bin B", new Vector3(10f, 0f, 11.2f), 0f);
+            PlaceFodBin("FOD bin C", new Vector3(-24f, 0f, 16.5f), 90f);
+
+            // Stand lead-in / box paint so stands read as marked bays from overview.
+            foreach (var z in new[] { 14f, 20f, 26f })
+            {
+                CreateBlock($"Stand box front {z}", new Vector3(20f, 0.04f, z - 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
+                CreateBlock($"Stand box back {z}", new Vector3(20f, 0.04f, z + 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
+                CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+                CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+            }
+        }
+
+        private static void PlaceFireHydrant(string name, Vector3 position, float yawDegrees)
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_fire_hydrant_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} barrel", new Vector3(0f, 0.55f, 0f), new Vector3(0.4f, 0.7f, 0.4f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, $"{name} stripe", new Vector3(0f, 0.55f, 0f), new Vector3(0.42f, 0.12f, 0.42f), AirsideTheme.SafetyYellow);
+            }
+
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        private static void PlaceExtinguisherCabinet(string name, Vector3 position, float yawDegrees)
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_extinguisher_cabinet_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} body", new Vector3(0f, 0.7f, 0f), new Vector3(0.55f, 1.2f, 0.35f), new Color(0.82f, 0.2f, 0.16f));
+                ParentBlock(root, $"{name} stripe", new Vector3(0f, 1.15f, 0.2f), new Vector3(0.5f, 0.1f, 0.05f), AirsideTheme.SafetyYellow);
+            }
+
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        private static void PlaceFodBin(string name, Vector3 position, float yawDegrees)
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_fod_bin_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} body", new Vector3(0f, 0.45f, 0f), new Vector3(0.7f, 0.75f, 0.55f), new Color(0.95f, 0.75f, 0.15f));
+                ParentBlock(root, $"{name} lid", new Vector3(0f, 0.88f, 0f), new Vector3(0.75f, 0.1f, 0.6f), new Color(0.2f, 0.22f, 0.25f));
+            }
+
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
         }
 
         private static void PlaceSignBoard(string kit, Vector3 position, float yawDegrees)

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Apron safety props + stand boxes (0025 items 1+3).** Resources
+  `mdl_fire_hydrant_v01`, `mdl_extinguisher_cabinet_v01`, `mdl_fod_bin_v01` on the
+  apron edge; painted stand bay boxes for stands 1–3. Presentation only.
+
 - **Coast sand + water PBR surfaces (0025 item 4).** Authored `tx_sand_coast_*` and
   `tx_water_coast_*` basecolour/normal/AO/mask maps on coast strip and dunes;
   material library wires Sand/Water stems. Presentation only.

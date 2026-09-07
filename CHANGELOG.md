@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Left HUD sequential layout + first-decision coach.** Status panel rows no longer
+  overlap; height shrinks in the first session; the coach tip uses a Safety Yellow
+  stripe when a route offer needs Accept. Presentation only.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

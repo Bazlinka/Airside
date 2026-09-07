@@ -874,30 +874,47 @@ namespace Airside.Presentation
             var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
 
             var timeOfDay = _simulation.TimeOfDay;
+            var earlySession = _simulation.Routes.Accepted.Count == 0;
+            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
+            var turnaroundTaskCount = atStand ? _simulation.ActiveTurnaround.Tasks(_clock.Now).Count() : 0;
+            // Dynamic left panel: shorter in the first session so the world stays visible.
+            var leftPanelHeight = earlySession
+                ? 360f
+                : Mathf.Clamp(360f + turnaroundTaskCount * 19f + (atStand ? 70f : 0f) + 140f, 420f, 580f);
+            GUI.Box(new Rect(22, 22, 410, leftPanelHeight), string.Empty, panel);
 
-            GUI.Box(new Rect(22, 22, 410, 540), string.Empty, panel);
+            var y = 36f;
             var wordmark = AirsideTheme.WordmarkLight;
             if (wordmark != null)
             {
                 GUI.DrawTexture(new Rect(42, 28, 240, 40), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
-                GUI.Label(new Rect(42, 70, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y = 70f;
+                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y += 20f;
             }
             else
             {
-                GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
-                GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                GUI.Label(new Rect(42, y, 320, 34), "AIRSIDE", title);
+                y += 28f;
+                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y += 20f;
             }
-            GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
+
+            GUI.Label(new Rect(42, y, 380, 22), CommercialFlightHudLine(), detail);
+            y += 24f;
+
             var phaseLineX = 42f;
             var phaseIcon = _simulation.Flights.Count > 0
                 ? AirsideTheme.OperationIcon(_simulation.Flights[0].Operation.Phase)
                 : null;
             if (phaseIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 104, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 phaseLineX = 68f;
             }
-            GUI.Label(new Rect(phaseLineX, 104, 380 - (phaseLineX - 42), 25), CommercialPhaseHudLine(), detail);
+            GUI.Label(new Rect(phaseLineX, y, 380 - (phaseLineX - 42), 22), CommercialPhaseHudLine(), detail);
+            y += 24f;
+
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
@@ -906,30 +923,34 @@ namespace Airside.Presentation
             var weatherIcon = AirsideTheme.WeatherIcon(_simulation.CurrentWeather);
             if (weatherIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 132, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 weatherLineX = 68f;
             }
-            GUI.Label(new Rect(weatherLineX, 132, 380 - (weatherLineX - 42), 22),
+            GUI.Label(new Rect(weatherLineX, y, 380 - (weatherLineX - 42), 22),
                 $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
+            y += 24f;
+
             var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
             var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
             var cashIcon = AirsideTheme.Icon("economy", "cash");
             var cashX = 42f;
             if (cashIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 156, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 cashX = 64f;
             }
-            GUI.Label(new Rect(cashX, 156, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
+            GUI.Label(new Rect(cashX, y, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
             var repIcon = AirsideTheme.Icon("economy", "reputation");
             var repX = 242f;
             if (repIcon != null)
             {
-                GUI.DrawTexture(new Rect(242, 156, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(242, y, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 repX = 264f;
             }
-            GUI.Label(new Rect(repX, 156, 190 - (repX - 242), 22),
+            GUI.Label(new Rect(repX, y, 190 - (repX - 242), 22),
                 $"Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", reputationStyle);
+            y += 22f;
+
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
                 ? $"  ·  ~{days}d runway"
@@ -941,26 +962,32 @@ namespace Airside.Presentation
             var financeX = 42f;
             if (incomeIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 176, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 financeX = 64f;
             }
-            GUI.Label(new Rect(financeX, 176, 390 - (financeX - 42), 22),
+            GUI.Label(new Rect(financeX, y, 390 - (financeX - 42), 22),
                 $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", financeStyle);
+            y += 22f;
+
             if (_simulation.IsInsolvent)
             {
-                GUI.Label(new Rect(42, 198, 360, 22), "INSOLVENT — operations frozen", delayed);
+                GUI.Label(new Rect(42, y, 360, 22), "INSOLVENT — operations frozen", delayed);
+                y += 22f;
             }
             else if (_simulation.Economy.ConsecutiveNegativeDays > 0)
             {
                 var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
-                GUI.Label(new Rect(42, 198, 360, 22),
+                GUI.Label(new Rect(42, y, 360, 22),
                     $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent", caution);
+                y += 22f;
             }
             else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-                GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
+            {
+                GUI.Label(new Rect(42, y, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
+                y += 22f;
+            }
 
-            var lineY = 180f;
-            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)
+            if (atStand)
             {
                 foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
                 {
@@ -970,95 +997,111 @@ namespace Airside.Presentation
                     var taskX = 42f;
                     if (taskIcon != null)
                     {
-                        GUI.DrawTexture(new Rect(42, lineY, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                        GUI.DrawTexture(new Rect(42, y, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                         taskX = 62f;
                     }
-                    GUI.Label(new Rect(taskX, lineY, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
-                    lineY += 19f;
+                    GUI.Label(new Rect(taskX, y, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
+                    y += 19f;
                 }
 
                 if (_simulation.CurrentDelaySeconds > 0)
-                    GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
+                {
+                    GUI.Label(new Rect(42, y, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
+                    y += 22f;
+                }
 
                 var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
                 GUI.enabled = !_simulation.IsInsolvent && !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
-                if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
+                if (GUI.Button(new Rect(42, y, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
                     _session.EnablePriorityCrew();
                 GUI.enabled = true;
+                y += 34f;
             }
             else
             {
                 var onSchedule = _simulation.LastDelaySeconds <= 0;
-                GUI.Label(new Rect(42, 184, 350, 22), onSchedule
+                GUI.Label(new Rect(42, y, 350, 22), onSchedule
                     ? "Operations running to schedule"
                     : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}", onSchedule ? onTime : delayed);
+                y += 24f;
             }
 
-            var earlySession = _simulation.Routes.Accepted.Count == 0;
             var staffing = _simulation.Staffing;
-            GUI.Label(new Rect(42, 360, 380, 20),
+            GUI.Label(new Rect(42, y, 380, 20),
                 $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
                 staffing.IsUnderstaffed ? caution : small);
+            y += 22f;
+
             if (earlySession)
             {
-                GUI.Label(new Rect(42, 380, 360, 22), "Crew / stand / research unlock after you accept a route", small);
+                GUI.Label(new Rect(42, y, 360, 22), "Crew / stand / research unlock after you accept a route", small);
+                y += 24f;
             }
             else
             {
                 GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
-                if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
+                if (GUI.Button(new Rect(42, y, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
                     _session.HireGroundCrew();
                 GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
-                if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
+                if (GUI.Button(new Rect(198, y, 110, 24), "Release crew", button))
                     _session.ReleaseGroundCrew();
                 GUI.enabled = true;
+                y += 28f;
 
                 var capacity = _simulation.Capacity;
-                GUI.Label(new Rect(42, 408, 380, 20),
+                GUI.Label(new Rect(42, y, 380, 20),
                     $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
+                y += 22f;
                 GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
-                if (GUI.Button(new Rect(42, 426, 220, 24),
+                if (GUI.Button(new Rect(42, y, 220, 24),
                         capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
                     _session.BuildThirdStand();
                 GUI.enabled = true;
+                y += 28f;
 
                 var research = _simulation.Research;
                 var researchIcon = AirsideTheme.Icon("economy", "research");
                 var researchLabelX = 42f;
                 if (researchIcon != null)
                 {
-                    GUI.DrawTexture(new Rect(42, 454, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                    GUI.DrawTexture(new Rect(42, y, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                     researchLabelX = 64f;
                 }
                 if (research.IsResearching)
                 {
                     var progress = (float)research.Progress01(_clock.Now);
                     var pct = (int)(progress * 100);
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+                    y += 22f;
                     AirsideTheme.DrawProgressBar(
-                        new Rect(42, 476, 280, 8),
+                        new Rect(42, y, 280, 8),
                         progress,
                         AirsideTheme.CoastalBlue,
                         new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
+                    y += 16f;
                 }
                 else if (research.CanStartOperationsEfficiency)
                 {
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
+                    y += 22f;
                     GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                    if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
+                    if (GUI.Button(new Rect(42, y, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
                         _session.StartOperationsResearch();
                     GUI.enabled = true;
+                    y += 28f;
                 }
                 else if (research.CanStartPassengerServices)
                 {
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
+                    y += 22f;
                     GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                    if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
+                    if (GUI.Button(new Rect(42, y, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
                         _session.StartPassengerServicesResearch();
                     GUI.enabled = true;
+                    y += 28f;
                 }
                 else
                 {
@@ -1068,14 +1111,26 @@ namespace Airside.Presentation
                     var pax = research.PassengerServicesComplete
                         ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
                         : string.Empty;
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
+                    y += 22f;
                 }
             }
 
-            GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(),
-                _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0 ? caution : small);
-            GUI.Label(new Rect(42, 518, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
+            // Coach tip — Safety Yellow when the first decision is live.
+            var coachUrgent = _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0;
+            var coachStyle = coachUrgent
+                ? AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow)
+                : detail;
+            if (coachUrgent)
+            {
+                var stripe = AirsideTheme.AlertStripeBackground;
+                if (stripe != null)
+                    GUI.DrawTexture(new Rect(36, y - 2, 382, 28), stripe, ScaleMode.StretchToFill, alphaBlend: true);
+            }
+            GUI.Label(new Rect(42, y, 380, 24), FirstSessionCoachLine(), coachStyle);
+            y += 26f;
+            GUI.Label(new Rect(42, y, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;

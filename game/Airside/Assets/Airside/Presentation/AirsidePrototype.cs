@@ -981,75 +981,83 @@ namespace Airside.Presentation
                     : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}", onSchedule ? onTime : delayed);
             }
 
+            var earlySession = _simulation.Routes.Accepted.Count == 0;
             var staffing = _simulation.Staffing;
             GUI.Label(new Rect(42, 360, 380, 20),
                 $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
                 staffing.IsUnderstaffed ? caution : small);
-            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
-            if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
-                _session.HireGroundCrew();
-            GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
-            if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
-                _session.ReleaseGroundCrew();
-            GUI.enabled = true;
-
-            var capacity = _simulation.Capacity;
-            GUI.Label(new Rect(42, 408, 380, 20),
-                $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
-            GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
-            if (GUI.Button(new Rect(42, 426, 220, 24),
-                    capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
-                _session.BuildThirdStand();
-            GUI.enabled = true;
-
-            var research = _simulation.Research;
-            var researchIcon = AirsideTheme.Icon("economy", "research");
-            var researchLabelX = 42f;
-            if (researchIcon != null)
+            if (earlySession)
             {
-                GUI.DrawTexture(new Rect(42, 454, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                researchLabelX = 64f;
-            }
-            if (research.IsResearching)
-            {
-                var progress = (float)research.Progress01(_clock.Now);
-                var pct = (int)(progress * 100);
-                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
-                    $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
-                AirsideTheme.DrawProgressBar(
-                    new Rect(42, 476, 280, 8),
-                    progress,
-                    AirsideTheme.CoastalBlue,
-                    new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
-            }
-            else if (research.CanStartOperationsEfficiency)
-            {
-                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
-                    $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
-                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
-                    _session.StartOperationsResearch();
-                GUI.enabled = true;
-            }
-            else if (research.CanStartPassengerServices)
-            {
-                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
-                    $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
-                GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
-                    _session.StartPassengerServicesResearch();
-                GUI.enabled = true;
+                GUI.Label(new Rect(42, 380, 360, 22), "Crew / stand / research unlock after you accept a route", small);
             }
             else
             {
-                var ops = research.OperationsEfficiencyComplete
-                    ? $"{AirportResearch.OperationsEfficiencyName} ✓"
-                    : string.Empty;
-                var pax = research.PassengerServicesComplete
-                    ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
-                    : string.Empty;
-                GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
-                    $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
+                GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
+                if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
+                    _session.HireGroundCrew();
+                GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
+                if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
+                    _session.ReleaseGroundCrew();
+                GUI.enabled = true;
+
+                var capacity = _simulation.Capacity;
+                GUI.Label(new Rect(42, 408, 380, 20),
+                    $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
+                GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
+                if (GUI.Button(new Rect(42, 426, 220, 24),
+                        capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
+                    _session.BuildThirdStand();
+                GUI.enabled = true;
+
+                var research = _simulation.Research;
+                var researchIcon = AirsideTheme.Icon("economy", "research");
+                var researchLabelX = 42f;
+                if (researchIcon != null)
+                {
+                    GUI.DrawTexture(new Rect(42, 454, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                    researchLabelX = 64f;
+                }
+                if (research.IsResearching)
+                {
+                    var progress = (float)research.Progress01(_clock.Now);
+                    var pct = (int)(progress * 100);
+                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                        $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+                    AirsideTheme.DrawProgressBar(
+                        new Rect(42, 476, 280, 8),
+                        progress,
+                        AirsideTheme.CoastalBlue,
+                        new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
+                }
+                else if (research.CanStartOperationsEfficiency)
+                {
+                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                        $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
+                    GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
+                    if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
+                        _session.StartOperationsResearch();
+                    GUI.enabled = true;
+                }
+                else if (research.CanStartPassengerServices)
+                {
+                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                        $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
+                    GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
+                    if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
+                        _session.StartPassengerServicesResearch();
+                    GUI.enabled = true;
+                }
+                else
+                {
+                    var ops = research.OperationsEfficiencyComplete
+                        ? $"{AirportResearch.OperationsEfficiencyName} ✓"
+                        : string.Empty;
+                    var pax = research.PassengerServicesComplete
+                        ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
+                        : string.Empty;
+                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                        $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
+                }
             }
 
             GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(),

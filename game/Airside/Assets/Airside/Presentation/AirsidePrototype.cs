@@ -31,6 +31,8 @@ namespace Airside.Presentation
         private bool _canvasHudActive;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
+        private AudioSource _ambientWindAudio;
+        private AudioSource _ambientRainAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness)> _wetSurfaces = new List<(Renderer, Color, float)>();
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
@@ -61,6 +63,9 @@ namespace Airside.Presentation
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
         private const float EngineVolumePausedScale = 0.28f;
+        private const float AmbientWindVolume = 0.045f;
+        private const float AmbientRainVolume = 0.07f;
+        private const float AmbientStormVolume = 0.11f;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
         private float _saveIndicatorUntil;
@@ -107,6 +112,20 @@ namespace Airside.Presentation
             _touchdownAudio.playOnAwake = false;
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;
+            _ambientWindAudio = gameObject.AddComponent<AudioSource>();
+            _ambientWindAudio.clip = CreateWindClip();
+            _ambientWindAudio.loop = true;
+            _ambientWindAudio.playOnAwake = false;
+            _ambientWindAudio.spatialBlend = 0f;
+            _ambientWindAudio.volume = 0f;
+            _ambientWindAudio.Play();
+            _ambientRainAudio = gameObject.AddComponent<AudioSource>();
+            _ambientRainAudio.clip = CreateRainClip();
+            _ambientRainAudio.loop = true;
+            _ambientRainAudio.playOnAwake = false;
+            _ambientRainAudio.spatialBlend = 0f;
+            _ambientRainAudio.volume = 0f;
+            _ambientRainAudio.Play();
             CollectWetSurfaces();
             CollectHoldShortMarkings();
             CollectAirfieldLights();
@@ -186,6 +205,7 @@ namespace Airside.Presentation
             UpdateWindsock();
             EnsureStandThreeVisual();
             UpdateEngineAudio();
+            UpdateAmbientAudio();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
             UpdateTrafficWaitPresentation();
@@ -424,6 +444,31 @@ namespace Airside.Presentation
             if (_paused)
                 target *= EngineVolumePausedScale;
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
+        }
+
+        private void UpdateAmbientAudio()
+        {
+            if (_ambientWindAudio == null || _ambientRainAudio == null)
+                return;
+
+            var weather = _simulation.CurrentWeather;
+            var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
+            var storm = weather == WeatherKind.Storm;
+            var windTarget = _audioMuted ? 0f : AmbientWindVolume;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
+            if (_paused)
+            {
+                windTarget *= EngineVolumePausedScale;
+                rainTarget *= EngineVolumePausedScale;
+            }
+
+            // Slight day/night wind variation (presentation only).
+            if (!_audioMuted)
+                windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - (float)_simulation.TimeOfDay.Daylight);
+
+            _ambientWindAudio.volume = Mathf.MoveTowards(_ambientWindAudio.volume, windTarget, Time.unscaledDeltaTime * 0.2f);
+            _ambientRainAudio.volume = Mathf.MoveTowards(_ambientRainAudio.volume, rainTarget, Time.unscaledDeltaTime * 0.25f);
+            _ambientRainAudio.pitch = storm ? 1.08f : 1f;
         }
 
         private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
@@ -3424,6 +3469,41 @@ namespace Airside.Presentation
             }
 
             var clip = AudioClip.Create("Prototype engine", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private static AudioClip CreateWindClip()
+        {
+            // Soft filtered noise bed for regional airfield air (presentation only).
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate * 2];
+            var state = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var white = (UnityEngine.Random.value * 2f - 1f);
+                state = state * 0.92f + white * 0.08f;
+                var gust = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * 0.35f) * 0.15f;
+                samples[i] = (state * 0.55f + white * 0.08f + gust * state) * 0.35f;
+            }
+
+            var clip = AudioClip.Create("Ambient wind", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        private static AudioClip CreateRainClip()
+        {
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate];
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var crackle = UnityEngine.Random.value * 2f - 1f;
+                var hush = Mathf.Sin(i * 0.015f) * 0.1f;
+                samples[i] = crackle * 0.22f + hush * crackle;
+            }
+
+            var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

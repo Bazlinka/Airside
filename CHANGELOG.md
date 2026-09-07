@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Lighting/props/jetty/flap tip (0025 items 2–5+7).** Wire unused authored lighting densify
+  into PlaceFlood/Edge/Taxi/Obst; apron cone/barrier/sign/dolly prefer denser kit over thin
+  prefabs; windsock kit fabric+guys; NestFlapParts; jetty planks/rails/bollards; wet for
+  jetty/fuel/ARFF/canopy/shoulders; markings centre dashes/threshold bars/apron arrows;
+  landside bench/trolley densify. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Hangar bay densify + marking wet collect (0025 items 3–4).** Hangar bay props ~49
   parts (vise, shelves, tires, extinguisher, pegboard); wet/residual damp covers taxi
   arrows, runway digits, stand leads, chevrons, hold-shorts. Presentation only.

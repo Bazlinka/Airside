@@ -11,7 +11,7 @@
   - MAT-001 `.mat` under Art + Resources; `AirsideMaterialLibrary` instances them when present
   - Prefab instantiate re-applies presentation materials (avoids grey FBX defaults)
   - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
-  - Soak: packaged rebuild after rain/mat_glass fix; monitor in `work/evidence/batch-f1/soak2.txt`. Prior tip: ~3 min then clean quit; bright vertical shafts were rain Cubes wrongly using mat_glass — fixed
+  - Soak: background logger `work/evidence/batch-f1/soak2.txt` (interrupted for rebuilds). Day lighting bumped; mat_glass blend modes fixed for true transparency. Do not claim full 30-min until soak2 shows `complete=`
   - Night/dusk: terminal + AIR-001 visible; Addressables aa/settings.json missing (known)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
   - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)

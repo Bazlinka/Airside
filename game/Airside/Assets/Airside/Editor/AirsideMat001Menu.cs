@@ -87,9 +87,25 @@ namespace Airside.Editor
             {
                 mat.SetFloat("_Surface", 1f);
                 mat.SetFloat("_Blend", 0f);
+                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+                mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+                mat.SetFloat("_ZWrite", 0f);
                 mat.SetOverrideTag("RenderType", "Transparent");
                 mat.renderQueue = (int)RenderQueue.Transparent;
                 mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            }
+            else
+            {
+                mat.SetFloat("_Surface", 0f);
+                mat.SetFloat("_SrcBlend", (float)BlendMode.One);
+                mat.SetFloat("_DstBlend", (float)BlendMode.Zero);
+                mat.SetFloat("_ZWrite", 1f);
+                mat.SetOverrideTag("RenderType", "Opaque");
+                mat.renderQueue = (int)RenderQueue.Geometry;
+                mat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
             }
 
             AssignMap(mat, "_BaseMap", $"{SurfacesDir}/{spec.stem}_basecolor_v01.png");

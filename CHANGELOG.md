@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 follow-up: day light + glass blend.** Daytime sun/ambient raised for REF-readable overview;
+  `mat_glass_v01` transparent blend/ZWrite fixed via MAT-001 menu. Evidence: test-unity 116/116; Mac rebuild.
+
 - **Batch F1 follow-up: rain no longer uses mat_glass.** Translucent VFX (rain/smoke mist)
   stays on Default Lit instead of MAT-001 glass panes — fixes bright vertical shafts in storm.
   Evidence: `scripts/test-unity.sh` 116/116; `scripts/build-mac.sh` rebuilt packaged app.

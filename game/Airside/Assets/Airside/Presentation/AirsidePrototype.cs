@@ -3487,7 +3487,7 @@ namespace Airside.Presentation
             var night = new Color(0.28f, 0.36f, 0.58f);
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            _sun.intensity = Mathf.Lerp(0.08f, 1.5f, daylight);
+            _sun.intensity = Mathf.Lerp(0.12f, 1.85f, daylight);
             _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -3510,7 +3510,7 @@ namespace Airside.Presentation
                 _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
             }
 
-            var ambientDay = new Color(0.40f, 0.48f, 0.58f);
+            var ambientDay = new Color(0.52f, 0.58f, 0.64f);
             var ambientDusk = new Color(0.58f, 0.38f, 0.32f);
             var ambientNight = new Color(0.08f, 0.1f, 0.18f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.85f);

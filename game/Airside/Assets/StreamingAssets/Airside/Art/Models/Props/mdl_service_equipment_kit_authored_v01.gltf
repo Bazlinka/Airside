@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_service_equipment_kit_authored_v01.bin",
-      "byteLength": 26712
+      "byteLength": 29664
     }
   ],
   "bufferViews": [
@@ -511,6 +511,78 @@
     {
       "buffer": 0,
       "byteOffset": 26640,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 26712,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 27000,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 27072,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 27360,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 27432,
+      "byteLength": 960,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28392,
+      "byteLength": 192,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28584,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28872,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28944,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 29232,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 29304,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 29592,
       "byteLength": 72,
       "target": 34963
     }
@@ -1439,6 +1511,138 @@
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
+    },
+    {
+      "bufferView": 84,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.550000011920929,
+        1.690000057220459,
+        -1.100000023841858
+      ],
+      "min": [
+        -0.550000011920929,
+        1.6100000143051147,
+        -1.399999976158142
+      ]
+    },
+    {
+      "bufferView": 85,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 86,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.550000011920929,
+        1.225000023841858,
+        0.5249999761581421
+      ],
+      "min": [
+        -0.550000011920929,
+        1.1749999523162842,
+        0.4749999940395355
+      ]
+    },
+    {
+      "bufferView": 87,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 88,
+      "componentType": 5126,
+      "count": 80,
+      "type": "VEC3",
+      "max": [
+        -0.4699999988079071,
+        1.3250000476837158,
+        0.07999999821186066
+      ],
+      "min": [
+        -0.6299999952316284,
+        0.9749999642372131,
+        -0.07999999821186066
+      ]
+    },
+    {
+      "bufferView": 89,
+      "componentType": 5123,
+      "count": 96,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 90,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.46000000834465027,
+        1.2000000476837158,
+        0.05999999865889549
+      ],
+      "min": [
+        0.3400000035762787,
+        1.100000023841858,
+        -0.05999999865889549
+      ]
+    },
+    {
+      "bufferView": 91,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 92,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -1.024999976158142,
+        0.38999998569488525,
+        -1.4600000381469727
+      ],
+      "min": [
+        -1.375,
+        0.3100000023841858,
+        -1.5399999618530273
+      ]
+    },
+    {
+      "bufferView": 93,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 94,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        1.399999976158142,
+        0.07999999821186066,
+        0.20000000298023224
+      ],
+      "min": [
+        1.0,
+        0.0,
+        -0.20000000298023224
+      ]
+    },
+    {
+      "bufferView": 95,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
     }
   ],
   "meshes": [
@@ -1945,6 +2149,78 @@
           "mode": 4
         }
       ]
+    },
+    {
+      "name": "stairs_tread_6",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 84
+          },
+          "indices": 85,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "stairs_rail_cross",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 86
+          },
+          "indices": 87,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "gpu_exhaust",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 88
+          },
+          "indices": 89,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "gpu_light",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 90
+          },
+          "indices": 91,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "towbar_handle",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 92
+          },
+          "indices": 93,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "cone_base",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 94
+          },
+          "indices": 95,
+          "mode": 4
+        }
+      ]
     }
   ],
   "nodes": [
@@ -2115,6 +2391,30 @@
     {
       "name": "bin_handle",
       "mesh": 41
+    },
+    {
+      "name": "stairs_tread_6",
+      "mesh": 42
+    },
+    {
+      "name": "stairs_rail_cross",
+      "mesh": 43
+    },
+    {
+      "name": "gpu_exhaust",
+      "mesh": 44
+    },
+    {
+      "name": "gpu_light",
+      "mesh": 45
+    },
+    {
+      "name": "towbar_handle",
+      "mesh": 46
+    },
+    {
+      "name": "cone_base",
+      "mesh": 47
     }
   ],
   "scenes": [
@@ -2162,7 +2462,13 @@
         38,
         39,
         40,
-        41
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
       ]
     }
   ],

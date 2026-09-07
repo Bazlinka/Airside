@@ -4240,6 +4240,12 @@ namespace Airside.Presentation
             PlacePerson(root, "Car park walker", new Vector3(34f, 0f, 34f), 220f, new Color(0.4f, 0.25f, 0.3f));
             PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f));
             PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f));
+            PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f));
+            PlacePerson(root, "Stairs attendant", new Vector3(16.8f, 0f, 18.2f), 170f, new Color(0.6f, 0.35f, 0.25f));
+            PlacePerson(root, "Ops walker B", new Vector3(-6f, 0f, 24.5f), 40f, new Color(0.28f, 0.3f, 0.35f));
+            PlacePerson(root, "Car park walker B", new Vector3(44f, 0f, 42f), 280f, new Color(0.35f, 0.4f, 0.45f));
+            PlacePerson(root, "Landside passenger E", new Vector3(24.8f, 0f, 32.5f), 150f, new Color(0.55f, 0.3f, 0.35f));
+            PlacePerson(root, "Bench sitter B", new Vector3(30.8f, 0.15f, 31.2f), 10f, new Color(0.25f, 0.35f, 0.4f), seated: true);
         }
 
         private static void PlacePerson(Transform parent, string name, Vector3 position, float yaw, Color clothes, bool seated = false)
@@ -4847,7 +4853,17 @@ namespace Airside.Presentation
                 (new Vector3(-72f, 0f, 8f), 1.1f),
                 (new Vector3(76f, 0f, 6f), 1.0f),
                 (new Vector3(-12f, 0f, 58f), 1.2f),
-                (new Vector3(30f, 0f, 58f), 1.08f)
+                (new Vector3(30f, 0f, 58f), 1.08f),
+                // Inland paddock densify — close the gaps between belts (0025 item 3).
+                (new Vector3(-38f, 0f, 56f), 1.1f),
+                (new Vector3(12f, 0f, 60f), 0.95f),
+                (new Vector3(52f, 0f, 60f), 1.15f),
+                (new Vector3(-68f, 0f, -22f), 1.05f),
+                (new Vector3(70f, 0f, -20f), 0.9f),
+                (new Vector3(-55f, 0f, 55f), 1.2f),
+                (new Vector3(58f, 0f, 54f), 1.0f),
+                (new Vector3(-25f, 0f, -36f), 0.85f),
+                (new Vector3(18f, 0f, -34f), 1.0f)
             };
             for (var i = 0; i < trees.Length; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
@@ -5444,7 +5460,7 @@ namespace Airside.Presentation
             // (0025 item 7). Presentation only.
             var root = new GameObject("Bird flock").transform;
             var rng = new System.Random(4242);
-            for (var i = 0; i < 18; i++)
+            for (var i = 0; i < 28; i++)
             {
                 var bird = new GameObject($"Bird {i}").transform;
                 bird.SetParent(root, false);
@@ -5951,27 +5967,35 @@ namespace Airside.Presentation
                 {
                     "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
                         or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
-                        or "cart_wheel_3l" or "cart_wheel_3r" => new Color(0.15f, 0.15f, 0.16f),
-                    "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard"
+                        or "cart_wheel_3l" or "cart_wheel_3r"
+                        or "hub_fl" or "hub_fr" or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
+                    "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
                         or "exhaust" => new Color(0.25f, 0.25f, 0.28f),
-                    "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_glass"
+                    "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_glass" or "door_handle"
                         => new Color(0.2f, 0.22f, 0.25f),
-                    "cab" or "tug_cab" or "cab_roof" or "tug_seat" or "tug_rollbar" => color * 0.82f,
+                    "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
+                        or "tug_floor" or "tug_steering" or "counterweight" => color * 0.82f,
                     "cab_window" or "windows" or "tug_window" or "window_mullion"
                         or "window_mullion_2" or "window_mullion_3" or "window_mullion_4"
-                        or "window_mullion_5" or "window_sill" => new Color(0.2f, 0.4f, 0.55f),
-                    "beacon" or "headlight_l" or "headlight_r" => new Color(0.95f, 0.35f, 0.12f),
+                        or "window_mullion_5" or "window_mullion_6" or "window_mullion_7"
+                        or "window_sill" or "window_header" or "destination_board"
+                        => new Color(0.2f, 0.4f, 0.55f),
+                    "beacon" or "beacon_guard" or "headlight_l" or "headlight_r" => new Color(0.95f, 0.35f, 0.12f),
                     "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
                     "mirror_l" or "mirror_r" or "bumper" or "bumper_front" or "bumper_rear"
-                        or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3"
-                        or "grill" or "light_bar" or "fender_fl" or "fender_fr"
+                        or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3" or "tank_band_4"
+                        or "tank_cap" or "tank_cap_b" or "tank_ladder" or "tank_walkway"
+                        or "grill" or "light_bar" or "fender_fl" or "fender_fr" or "fender_rl" or "fender_rr"
                         or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
-                        or "chassis" or "step" or "step_r" or "roof_rack"
+                        or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
+                        or "number_plate" or "fuel_hazard" or "wiper" or "wiper_b"
                         => color * 0.7f,
-                    "cargo_1" or "cargo_2" or "cargo_3" => new Color(0.75f, 0.55f, 0.2f),
-                    "stripe" or "stripe_b" => new Color(0.95f, 0.85f, 0.2f),
+                    "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
+                        => new Color(0.75f, 0.55f, 0.2f),
+                    "stripe" or "stripe_b" or "stripe_upper" => new Color(0.95f, 0.85f, 0.2f),
                     "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
                         or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
+                        or "cart_gate_1" or "cart_gate_2" or "cart_gate_3"
                         or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
                     _ => color
                 },
@@ -6039,6 +6063,8 @@ namespace Airside.Presentation
             PlacePart("stairs_tread_3", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_4", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_5", new Color(0.62f, 0.63f, 0.65f));
+            PlacePart("stairs_tread_6", new Color(0.62f, 0.63f, 0.65f));
+            PlacePart("stairs_rail_cross", new Color(0.85f, 0.55f, 0.15f));
             PlacePart("stairs_platform", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_handle", new Color(0.75f, 0.5f, 0.15f));
             PlacePart("stairs_brace", new Color(0.5f, 0.5f, 0.52f));
@@ -6133,6 +6159,8 @@ namespace Airside.Presentation
             PlaceGpu("gpu_cable", new Color(0.2f, 0.2f, 0.22f));
             PlaceGpu("gpu_hitch", new Color(0.3f, 0.3f, 0.32f));
             PlaceGpu("gpu_beacon", new Color(0.95f, 0.35f, 0.12f));
+            PlaceGpu("gpu_exhaust", new Color(0.3f, 0.32f, 0.3f));
+            PlaceGpu("gpu_light", new Color(0.95f, 0.9f, 0.6f));
             PlaceGpu("gpu_wheel_fl", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_fr", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_rl", new Color(0.15f, 0.15f, 0.16f));

@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Vehicles + apron life + URP dry retune (0025 items 2–4+7).** Fuel truck 47,
+  baggage tug 45, apron bus 46, service kit 48 meshes; denser apron figures,
+  birds (28), vegetation belt; dry asphalt/concrete/skin/metal profiles retuned
+  for stronger wet contrast. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Hangar densify (0025 items 2+7).** Authored hangar to 69 meshes (extra door
   bars/warnings, plinth, louvres, gutters, workbench/tool cabinet); door motion
   collects new bars/warnings. Presentation only.

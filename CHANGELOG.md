@@ -8,7 +8,7 @@ change it describes.
 - **First-session offer pacing and HUD priority.** First route offer arrives at 12s
   (was 25s); pending offers pin above the OPERATIONS panel so detail never buries
   the decision; first-offer coach tip uses caution colour. Domain constant +
-  Presentation. `scripts/test-domain.sh` expected 97/97.
+  Presentation. `scripts/test-domain.sh` 97/97.
 
 - **First-session opening briefing and clean new-game path.** New games (no away
   report, no accepted routes) open paused on a role + first-decision briefing;

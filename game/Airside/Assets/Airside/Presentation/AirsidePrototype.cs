@@ -2007,7 +2007,14 @@ namespace Airside.Presentation
         private void CollectNightGlowWindows()
         {
             _nightGlowRenderers.Clear();
-            foreach (var name in new[] { "Terminal window glow L", "Terminal window glow R", "Hangar window glow" })
+            foreach (var name in new[]
+                     {
+                         "Terminal window glow L",
+                         "Terminal window glow R",
+                         "Terminal landside glow",
+                         "Hangar window glow",
+                         "Ops shed window glow"
+                     })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
@@ -2030,6 +2037,11 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 renderer.material.color = color;
+                if (renderer.material.HasProperty("_EmissionColor"))
+                {
+                    renderer.material.EnableKeyword("_EMISSION");
+                    renderer.material.SetColor("_EmissionColor", new Color(1f, 0.75f, 0.35f) * (0.15f + glow * 1.6f));
+                }
             }
         }
 
@@ -2154,7 +2166,9 @@ namespace Airside.Presentation
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
+            CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_hangar_small_v02.gltf",

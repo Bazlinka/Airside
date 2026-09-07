@@ -31,8 +31,12 @@ change it describes.
   centralize windsock/flag/apron/bird life Hz; collect hangar glass_pane_* for
   night glow; thin apron joints/slabs; restrain jetty densify; scale up terrain
   accents; landside benches/trolleys prefer PRP-003; dropoff_bollard preferred;
-  UI offer pulse + window flicker via AirsideReusableMotion. Presentation only —
-  simulation unchanged.
+  UI offer pulse + window flicker via AirsideReusableMotion; restore
+  BirdOrbitHz/BirdFlapHz (tip-8 compile break); Flood/Star/Coast/ApronStride Hz
+  centralized; WLD-004 thins outer paddock + skips relief mounds/ribbons;
+  VEG-002 coast rocks; scaled landside kit streetlights; thin bay/overflow paint
+  when forecourt kerbs present; dusk flood/landside/window flicker share rates.
+  Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

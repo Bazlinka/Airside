@@ -3657,7 +3657,8 @@ namespace Airside.Presentation
                         continue;
                     // Tiny phase offset flicker so floods don't feel static at night.
                     var flicker = daylight < 0.4f
-                        ? 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.1f + i * 1.7f)
+                        ? 1f + 0.04f * Mathf.Sin(
+                            Time.unscaledTime * AirsideReusableMotion.FloodFlickerHz * Mathf.PI * 2f + i * 1.7f)
                         : 1f;
                     // Corner masts (0–3) get a bit more punch than fill floods.
                     var boost = i < 4 ? 1.15f : 1f;
@@ -3675,7 +3676,11 @@ namespace Airside.Presentation
                     var light = _landsideLights[i];
                     if (light == null)
                         continue;
-                    light.intensity = street;
+                    var flicker = daylight < 0.4f
+                        ? 1f + 0.035f * Mathf.Sin(
+                            Time.unscaledTime * AirsideReusableMotion.FloodFlickerHz * Mathf.PI * 2f + i * 2.1f + 0.8f)
+                        : 1f;
+                    light.intensity = street * flicker;
                 }
             }
 
@@ -3940,7 +3945,8 @@ namespace Airside.Presentation
                     if (light == null)
                         continue;
                     var flicker = night > 0.35f
-                        ? 1f + 0.05f * Mathf.Sin(Time.unscaledTime * (1.5f + i * 0.41f) + i * 0.7f)
+                        ? 1f + 0.05f * Mathf.Sin(
+                            Time.unscaledTime * (AirsideReusableMotion.WindowFlickerHz * Mathf.PI * 2f + i * 0.41f) + i * 0.7f)
                         : 1f;
                     light.intensity = intensity * flicker;
                     light.enabled = intensity > 0.05f;
@@ -4261,16 +4267,21 @@ namespace Airside.Presentation
             var steel = new Color(0.35f, 0.36f, 0.38f);
             var head = new Color(0.25f, 0.26f, 0.28f);
             var lampColor = new Color(1f, 0.92f, 0.7f);
+            // Apron flood masts are oversized for drop-off — shrink landside kit stems.
+            var landsideMastScale = Vector3.one * 0.62f;
             var lights = new Light[positions.Length];
             for (var i = 0; i < positions.Length; i++)
             {
                 var pos = positions[i];
                 var kitPole = ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "flood_pole", pos, Quaternion.identity, steel, out _);
+                    lightingKit, "flood_pole", pos, Quaternion.identity, steel, out _,
+                    localScale: landsideMastScale);
                 var kitHead = ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "flood_head", pos, Quaternion.identity, head, out _);
+                    lightingKit, "flood_head", pos, Quaternion.identity, head, out _,
+                    localScale: landsideMastScale);
                 ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "flood_lamp", pos, Quaternion.identity, lampColor, out _);
+                    lightingKit, "flood_lamp", pos, Quaternion.identity, lampColor, out _,
+                    localScale: landsideMastScale);
                 if (!kitPole)
                 {
                     CreateBlock($"Streetlight pole {i}", pos + new Vector3(0f, 2.2f, 0f), new Vector3(0.14f, 4.4f, 0.14f), steel);
@@ -4283,7 +4294,9 @@ namespace Airside.Presentation
                 }
 
                 var go = new GameObject($"Landside streetlight {i + 1}");
-                go.transform.position = pos + new Vector3(0.55f, 4.1f, 0f);
+                // Kit masts are scaled ~0.62 — keep the point light near the shorter head.
+                var lightHeight = kitPole || kitHead ? 2.55f : 4.1f;
+                go.transform.position = pos + new Vector3(0.35f, lightHeight, 0f);
                 var light = go.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.9f, 0.7f);
@@ -4703,14 +4716,31 @@ namespace Airside.Presentation
         private static void BuildEnvironmentContext()
         {
             // Outer paddock + dry-grass fringe so the airfield is not a floating island.
-            CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 48f), new Vector3(140f, 0.8f, 40f), Shade(AirsideTheme.DryGrass, 0.7f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 6f));
-            CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -36f), new Vector3(140f, 0.8f, 36f), Shade(AirsideTheme.DryGrass, 0.65f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 5f));
-            CreateBlock("Outer paddock E", new Vector3(68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
-            CreateBlock("Outer paddock W", new Vector3(-68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+            // When WLD-004 terrain accents own paddock_* meshes, keep thin fringe only.
+            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
+            if (hasTerrainKit)
+            {
+                CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 58f), new Vector3(90f, 0.55f, 14f), Shade(AirsideTheme.DryGrass, 0.7f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 2f));
+                CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -40f), new Vector3(90f, 0.55f, 12f), Shade(AirsideTheme.DryGrass, 0.65f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 1.8f));
+                CreateBlock("Outer paddock E", new Vector3(72f, -0.85f, 4f), new Vector3(14f, 0.55f, 60f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 8f));
+                CreateBlock("Outer paddock W", new Vector3(-72f, -0.85f, 4f), new Vector3(14f, 0.55f, 60f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 8f));
+            }
+            else
+            {
+                CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 48f), new Vector3(140f, 0.8f, 40f), Shade(AirsideTheme.DryGrass, 0.7f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 6f));
+                CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -36f), new Vector3(140f, 0.8f, 36f), Shade(AirsideTheme.DryGrass, 0.65f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 5f));
+                CreateBlock("Outer paddock E", new Vector3(68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+                CreateBlock("Outer paddock W", new Vector3(-68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+            }
 
             // Kangaroo Island coastal strip south of the runway (sand, not water physics).
             CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand,
@@ -4738,23 +4768,28 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(4f, 1f));
             CreateBlock("Car park", new Vector3(48f, -0.01f, 46f), new Vector3(18f, 0.08f, 12f), new Color(0.28f, 0.3f, 0.32f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 2f));
-            // Horizontal bay rows + vertical stall dividers so the park reads from overview.
-            for (var i = 0; i < 5; i++)
+            // Bay/stall paint — thin when PRP-003 kerbs already frame the park.
+            var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
+            var bayRows = hasForecourtKerbs ? 2 : 5;
+            var stallCols = hasForecourtKerbs ? 3 : 5;
+            for (var i = 0; i < bayRows; i++)
             {
-                var z = 42f + i * 2.0f;
+                var z = hasForecourtKerbs ? 43f + i * 4.0f : 42f + i * 2.0f;
                 CreateBlock($"Bay line {i}", new Vector3(48f, 0.05f, z), new Vector3(14f, 0.02f, 0.08f), Color.white);
             }
 
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < stallCols; i++)
             {
-                var x = 41.5f + i * 3.6f;
+                var x = hasForecourtKerbs ? 42.5f + i * 5.0f : 41.5f + i * 3.6f;
                 CreateBlock($"Stall line {i}", new Vector3(x, 0.05f, 46f), new Vector3(0.08f, 0.02f, 10f), Color.white);
             }
 
-            if (GameObject.Find("Car park kerb N") == null)
+            if (!hasForecourtKerbs)
+            {
                 CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
-            if (GameObject.Find("Car park kerb S") == null)
                 CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
+            }
+
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
             CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
             CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
@@ -4766,9 +4801,11 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
             CreateBlock("Access turn shoulder S", new Vector3(38f, -0.01f, 42.6f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
-            for (var i = 0; i < 6; i++)
+            var turnDashes = hasForecourtKerbs ? 3 : 6;
+            for (var i = 0; i < turnDashes; i++)
             {
-                CreateBlock($"Access turn dash {i}", new Vector3(28f + i * 3.5f, 0.06f, 46f),
+                var x = hasForecourtKerbs ? 30f + i * 6f : 28f + i * 3.5f;
+                CreateBlock($"Access turn dash {i}", new Vector3(x, 0.06f, 46f),
                     new Vector3(1.4f, 0.02f, 0.35f), new Color(0.95f, 0.9f, 0.35f));
             }
 
@@ -4812,54 +4849,69 @@ namespace Airside.Presentation
             var grass = Shade(AirsideTheme.Eucalyptus, 0.62f);
             var dry = Shade(AirsideTheme.DryGrass, 0.9f);
             var sand = Shade(AirsideTheme.Sand, 0.95f);
-            // North/south berms framing the runway strip.
-            CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 30f), new Vector3(70f, 0.55f, 4.5f), grass,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(8f, 1.2f));
-            CreateBlock("Relief berm S", new Vector3(0f, 0.12f, -22f), new Vector3(64f, 0.45f, 5f), dry,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(7f, 1f));
-            // Scattered mounds — fixed offsets keep layout stable across runs.
-            var mounds = new[]
+            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
+
+            // North/south berms framing the runway strip — thinner when WLD accents land.
+            if (hasTerrainKit)
             {
-                new Vector3(-36f, 0.2f, 8f),
-                new Vector3(-34f, 0.18f, -8f),
-                new Vector3(36f, 0.22f, 6f),
-                new Vector3(38f, 0.16f, -10f),
-                new Vector3(-26f, 0.25f, 26f),
-                new Vector3(30f, 0.2f, 34f),
-                new Vector3(-12f, 0.14f, -28f),
-                new Vector3(14f, 0.15f, -30f),
-                new Vector3(-40f, 0.2f, 18f),
-                new Vector3(42f, 0.18f, 20f),
-                new Vector3(-22f, 0.12f, -34f),
-                new Vector3(8f, 0.1f, -36f),
-                new Vector3(-48f, 0.22f, 42f),
-                new Vector3(52f, 0.2f, 52f),
-                new Vector3(-55f, 0.18f, -20f),
-                new Vector3(60f, 0.16f, -18f),
-                new Vector3(0f, 0.14f, 56f),
-                new Vector3(-6f, 0.12f, -40f),
-                new Vector3(-50f, 0.18f, 8f),
-                new Vector3(48f, 0.16f, -6f),
-                new Vector3(-18f, 0.14f, 40f),
-                new Vector3(22f, 0.15f, 38f),
-                new Vector3(-32f, 0.12f, -24f),
-                new Vector3(28f, 0.13f, -26f),
-                new Vector3(10f, 0.11f, 48f),
-                new Vector3(-8f, 0.12f, 50f)
-            };
-            for (var i = 0; i < mounds.Length; i++)
+                CreateBlock("Relief berm N", new Vector3(0f, 0.12f, 30f), new Vector3(55f, 0.35f, 3.2f), grass,
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 1f));
+                CreateBlock("Relief berm S", new Vector3(0f, 0.1f, -22f), new Vector3(50f, 0.28f, 3.5f), dry,
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5.5f, 0.9f));
+            }
+            else
             {
-                var pos = mounds[i];
-                var size = new Vector3(4.5f + (i % 3) * 1.2f, 0.35f + (i % 4) * 0.08f, 3.2f + (i % 2) * 1.1f);
-                var color = i % 3 == 0 ? sand : i % 3 == 1 ? dry : grass;
-                CreateBlock($"Relief mound {i}", pos, size, color,
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(1.5f, 1.2f));
+                CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 30f), new Vector3(70f, 0.55f, 4.5f), grass,
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(8f, 1.2f));
+                CreateBlock("Relief berm S", new Vector3(0f, 0.12f, -22f), new Vector3(64f, 0.45f, 5f), dry,
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(7f, 1f));
+            }
+
+            // Scattered mounds — skip dense field when WLD-004 paddock/hill accents own the fringe.
+            if (!hasTerrainKit)
+            {
+                var mounds = new[]
+                {
+                    new Vector3(-36f, 0.2f, 8f),
+                    new Vector3(-34f, 0.18f, -8f),
+                    new Vector3(36f, 0.22f, 6f),
+                    new Vector3(38f, 0.16f, -10f),
+                    new Vector3(-26f, 0.25f, 26f),
+                    new Vector3(30f, 0.2f, 34f),
+                    new Vector3(-12f, 0.14f, -28f),
+                    new Vector3(14f, 0.15f, -30f),
+                    new Vector3(-40f, 0.2f, 18f),
+                    new Vector3(42f, 0.18f, 20f),
+                    new Vector3(-22f, 0.12f, -34f),
+                    new Vector3(8f, 0.1f, -36f),
+                    new Vector3(-48f, 0.22f, 42f),
+                    new Vector3(52f, 0.2f, 52f),
+                    new Vector3(-55f, 0.18f, -20f),
+                    new Vector3(60f, 0.16f, -18f),
+                    new Vector3(0f, 0.14f, 56f),
+                    new Vector3(-6f, 0.12f, -40f),
+                    new Vector3(-50f, 0.18f, 8f),
+                    new Vector3(48f, 0.16f, -6f),
+                    new Vector3(-18f, 0.14f, 40f),
+                    new Vector3(22f, 0.15f, 38f),
+                    new Vector3(-32f, 0.12f, -24f),
+                    new Vector3(28f, 0.13f, -26f),
+                    new Vector3(10f, 0.11f, 48f),
+                    new Vector3(-8f, 0.12f, 50f)
+                };
+                for (var i = 0; i < mounds.Length; i++)
+                {
+                    var pos = mounds[i];
+                    var size = new Vector3(4.5f + (i % 3) * 1.2f, 0.35f + (i % 4) * 0.08f, 3.2f + (i % 2) * 1.1f);
+                    var color = i % 3 == 0 ? sand : i % 3 == 1 ? dry : grass;
+                    CreateBlock($"Relief mound {i}", pos, size, color,
+                        "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(1.5f, 1.2f));
+                }
             }
 
             // Coastal dune rise between apron grass and sand strip — skip when WLD-004
             // terrain kit will place authored dune accents (avoid double densify).
-            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
-            var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
             if (!hasTerrainKit)
             {
                 CreateBlock("Coast dune L", new Vector3(-28f, 0.35f, -42f), new Vector3(18f, 0.9f, 5f), sand,
@@ -4872,16 +4924,16 @@ namespace Airside.Presentation
                     "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2f, 0.8f));
                 CreateBlock("Coast dune R crest", new Vector3(26f, 0.55f, -44f), new Vector3(9f, 0.35f, 2f), Shade(sand, 1.02f),
                     "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(1.8f, 0.7f));
+                // Soft grass ribbons so the main Grass slab is not a single flat plane.
+                CreateBlock("Grass ribbon N", new Vector3(0f, -0.4f, 26f), new Vector3(80f, 0.35f, 8f), Shade(grass, 0.95f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(10f, 1.5f));
+                CreateBlock("Grass ribbon S", new Vector3(0f, -0.42f, -16f), new Vector3(72f, 0.3f, 7f), Shade(dry, 0.92f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(9f, 1.3f));
+                CreateBlock("Grass ribbon W", new Vector3(-40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(grass, 0.88f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
+                CreateBlock("Grass ribbon E", new Vector3(40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(dry, 0.9f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
             }
-            // Soft grass ribbons so the main Grass slab is not a single flat plane.
-            CreateBlock("Grass ribbon N", new Vector3(0f, -0.4f, 26f), new Vector3(80f, 0.35f, 8f), Shade(grass, 0.95f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(10f, 1.5f));
-            CreateBlock("Grass ribbon S", new Vector3(0f, -0.42f, -16f), new Vector3(72f, 0.3f, 7f), Shade(dry, 0.92f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(9f, 1.3f));
-            CreateBlock("Grass ribbon W", new Vector3(-40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(grass, 0.88f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
-            CreateBlock("Grass ribbon E", new Vector3(40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(dry, 0.9f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
         }
 
         /// <summary>
@@ -5141,7 +5193,8 @@ namespace Airside.Presentation
                     }
                     else if (walker && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var stride = Mathf.Sin(Time.unscaledTime * 5.5f + (child.name.Contains("L") ? 0f : 3.14f)) * 18f;
+                        var stride = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronStrideHz
+                            + (child.name.Contains("L") ? 0f : 3.14f)) * 18f;
                         child.localEulerAngles = new Vector3(stride, 0f, 0f);
                     }
                 }
@@ -5185,11 +5238,32 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat E", new Vector3(8f, -0.48f, -78f), 28f, new Color(0.92f, 0.9f, 0.82f));
             PlaceCoastBoat("Coast boat F", new Vector3(-58f, -0.52f, -66f), -15f, new Color(0.15f, 0.28f, 0.22f));
 
-            // Rock outcrops along the sand so the shoreline is not a flat ribbon.
+            // Rock outcrops along the sand — prefer VEG-002 scrub kit rocks.
             var rock = new Color(0.42f, 0.4f, 0.38f);
-            CreateBlock("Coast rock A", new Vector3(-28f, -0.25f, -50f), new Vector3(2.8f, 0.9f, 2.2f), rock);
-            CreateBlock("Coast rock B", new Vector3(18f, -0.2f, -49f), new Vector3(2.2f, 0.7f, 1.8f), Shade(rock, 0.9f));
-            CreateBlock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), new Vector3(3.4f, 1.1f, 2.6f), Shade(rock, 1.1f));
+            PlaceCoastRock("Coast rock A", new Vector3(-28f, -0.25f, -50f), "rock_a", rock, 4.2f, 18f);
+            PlaceCoastRock("Coast rock B", new Vector3(18f, -0.2f, -49f), "rock_b", Shade(rock, 0.9f), 3.6f, -12f);
+            PlaceCoastRock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), "rock_a", Shade(rock, 1.1f), 5.0f, 40f);
+        }
+
+        /// <summary>VEG-002 rock accents on the KI shoreline; cube blocks remain fallback.</summary>
+        private static void PlaceCoastRock(string name, Vector3 position, string mesh, Color color, float scale, float yawDegrees)
+        {
+            var kit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            if (!string.IsNullOrEmpty(kit)
+                && ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, mesh, position, Quaternion.Euler(0f, yawDegrees, 0f), color, out var part,
+                    localScale: Vector3.one * scale))
+            {
+                part.name = name;
+                return;
+            }
+
+            var size = mesh == "rock_b"
+                ? new Vector3(2.2f, 0.7f, 1.8f)
+                : new Vector3(2.8f, 0.9f, 2.2f);
+            if (scale > 4.5f)
+                size = new Vector3(3.4f, 1.1f, 2.6f);
+            CreateBlock(name, position, size, color);
         }
 
         /// <summary>
@@ -5302,38 +5376,46 @@ namespace Airside.Presentation
             PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
             PlaceLandsideBench("Access bench", new Vector3(22f, 0f, 40.5f), 90f);
 
-            // Painted parking bay chevrons so the car park reads marked, not empty asphalt.
-            for (var bay = 0; bay < 4; bay++)
+            // Painted parking bay chevrons — thin when PRP-003 kerbs already frame the park.
+            var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
+            var bayCount = hasForecourtKerbs ? 2 : 4;
+            for (var bay = 0; bay < bayCount; bay++)
             {
-                var x = 42f + bay * 3.6f;
+                var x = hasForecourtKerbs ? 43.5f + bay * 5.5f : 42f + bay * 3.6f;
                 CreateBlock($"Bay line L {bay}", new Vector3(x - 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
                     new Color(0.92f, 0.92f, 0.88f));
                 CreateBlock($"Bay line R {bay}", new Vector3(x + 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
                     new Color(0.92f, 0.92f, 0.88f));
                 CreateBlock($"Bay stop {bay}", new Vector3(x, 0.06f, 41.6f), new Vector3(2.8f, 0.02f, 0.08f),
                     new Color(0.92f, 0.92f, 0.88f));
-                // Overflow row chevrons under the north kerb cars.
-                CreateBlock($"Overflow bay L {bay}", new Vector3(x - 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Overflow bay R {bay}", new Vector3(x + 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Overflow stop {bay}", new Vector3(x, 0.06f, 52.6f), new Vector3(2.8f, 0.02f, 0.08f),
-                    new Color(0.92f, 0.92f, 0.88f));
+                if (!hasForecourtKerbs)
+                {
+                    // Overflow row chevrons under the north kerb cars.
+                    CreateBlock($"Overflow bay L {bay}", new Vector3(x - 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                    CreateBlock($"Overflow bay R {bay}", new Vector3(x + 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                    CreateBlock($"Overflow stop {bay}", new Vector3(x, 0.06f, 52.6f), new Vector3(2.8f, 0.02f, 0.08f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                }
             }
 
             // Access-road centre dashes toward the terminal (0025 item 3).
-            for (var i = 0; i < 8; i++)
+            var dashCount = hasForecourtKerbs ? 4 : 8;
+            for (var i = 0; i < dashCount; i++)
             {
-                CreateBlock($"Access dash {i}", new Vector3(26f, 0.06f, 38f + i * 1.8f),
+                var z = hasForecourtKerbs ? 38.5f + i * 3.2f : 38f + i * 1.8f;
+                CreateBlock($"Access dash {i}", new Vector3(26f, 0.06f, z),
                     new Vector3(0.35f, 0.02f, 0.9f), new Color(0.95f, 0.9f, 0.35f));
             }
 
             // Small general-aviation tie-down markers west of hangar (life, not sim).
-            for (var i = 0; i < 6; i++)
+            var tieCount = 3;
+            for (var i = 0; i < tieCount; i++)
             {
-                CreateBlock($"Tie-down {i}", new Vector3(-30f - i * 3.5f, 0.08f, 14f), new Vector3(0.35f, 0.08f, 0.35f),
+                CreateBlock($"Tie-down {i}", new Vector3(-30f - i * 5.5f, 0.08f, 14f), new Vector3(0.35f, 0.08f, 0.35f),
                     new Color(0.55f, 0.55f, 0.5f));
-                CreateBlock($"Tie-down rope {i}", new Vector3(-30f - i * 3.5f, 0.04f, 14.55f),
+                CreateBlock($"Tie-down rope {i}", new Vector3(-30f - i * 5.5f, 0.04f, 14.55f),
                     new Vector3(0.06f, 0.04f, 0.9f), new Color(0.35f, 0.35f, 0.32f));
             }
         }
@@ -6487,10 +6569,10 @@ namespace Airside.Presentation
             Place("coast_shallows", new Vector3(-30f, -0.5f, -58f), Quaternion.identity, new Color(0.45f, 0.68f, 0.78f), "Context shallows W", 1.4f);
             Place("coast_shallows", new Vector3(30f, -0.5f, -58f), Quaternion.Euler(0f, 180f, 0f), new Color(0.45f, 0.68f, 0.78f), "Context shallows E", 1.4f);
             Place("coast_water", new Vector3(0f, -0.8f, -70f), Quaternion.identity, new Color(0.22f, 0.42f, 0.58f), "Context coast water", 2.2f);
-            Place("paddock_n", new Vector3(-50f, -0.3f, 42f), Quaternion.identity, dry, "Context paddock NW", 1.6f);
-            Place("paddock_s", new Vector3(50f, -0.3f, 42f), Quaternion.Euler(0f, 180f, 0f), dry, "Context paddock NE", 1.5f);
-            Place("paddock_e", new Vector3(62f, -0.3f, -20f), Quaternion.identity, euc, "Context paddock E", 1.3f);
-            Place("paddock_w", new Vector3(-62f, -0.3f, -18f), Quaternion.Euler(0f, 20f, 0f), euc, "Context paddock W", 1.3f);
+            Place("paddock_n", new Vector3(-50f, -0.3f, 42f), Quaternion.identity, dry, "Context paddock NW", 2.1f);
+            Place("paddock_s", new Vector3(50f, -0.3f, 42f), Quaternion.Euler(0f, 180f, 0f), dry, "Context paddock NE", 2.0f);
+            Place("paddock_e", new Vector3(62f, -0.3f, -20f), Quaternion.identity, euc, "Context paddock E", 1.75f);
+            Place("paddock_w", new Vector3(-62f, -0.3f, -18f), Quaternion.Euler(0f, 20f, 0f), euc, "Context paddock W", 1.75f);
             return placed > 0;
         }
 
@@ -6627,14 +6709,15 @@ namespace Airside.Presentation
                 return;
 
             // Soft twinkle — alpha via emission intensity.
-            var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 1.7f);
+            var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.StarTwinkleHz);
             for (var i = 0; i < _starFieldRoot.childCount; i++)
             {
                 var star = _starFieldRoot.GetChild(i);
                 var renderer = star.GetComponent<Renderer>();
                 if (renderer == null || !renderer.material.HasProperty("_EmissionColor"))
                     continue;
-                var phase = 0.7f + 0.3f * Mathf.Sin(Time.unscaledTime * (1.2f + i * 0.11f) + i);
+                var phase = 0.7f + 0.3f * Mathf.Sin(
+                    Time.unscaledTime * (AirsideReusableMotion.StarTwinkleHz * 0.7f + i * 0.11f) + i);
                 var c = new Color(phase, phase, 1f) * (twinkle * (1.1f - daylight));
                 renderer.material.SetColor("_EmissionColor", c);
             }
@@ -6978,7 +7061,7 @@ namespace Airside.Presentation
                 var (boat, basePos, baseYaw) = _coastBoats[i];
                 if (boat == null)
                     continue;
-                var bob = Mathf.Sin(t * 0.85f + i * 1.4f) * 0.08f;
+                var bob = Mathf.Sin(t * AirsideReusableMotion.CoastBobHz + i * 1.4f) * 0.08f;
                 var yawSway = Mathf.Sin(t * 0.35f + i) * 2.2f;
                 boat.position = basePos + new Vector3(0f, bob, 0f);
                 boat.rotation = Quaternion.Euler(
@@ -6989,7 +7072,7 @@ namespace Airside.Presentation
 
             if (_coastFoam != null)
             {
-                var pulse = 0.92f + 0.08f * Mathf.Sin(t * 1.6f);
+                var pulse = 0.92f + 0.08f * Mathf.Sin(t * AirsideReusableMotion.FoamPulseHz);
                 var scale = _coastFoam.localScale;
                 scale.z = 2.2f * pulse;
                 _coastFoam.localScale = scale;

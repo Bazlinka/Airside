@@ -39,3 +39,5 @@ reflections kept restrained; no unique 4K textures.
   Addressables groups.
 - Wetness still uses `ApplyWetness` on instances; `mat_wet_v01` is the Water /
   wet SurfaceKind template.
+- Do **not** assign `mat_glass` / SurfaceKind.Glass to rain, shadows, clouds or
+  contact blobs — those must use Default Lit (Batch F1 follow-up on PR #134).

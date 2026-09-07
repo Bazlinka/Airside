@@ -44,3 +44,4 @@ xcuserdata/
 /game/Airside/Assets/Resources/PerformanceTestRunInfo.json*
 /game/Airside/Assets/Resources/PerformanceTestRunSettings.json*
 /game/Airside/Assets/Resources.meta
+__pycache__/

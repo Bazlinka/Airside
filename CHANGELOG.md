@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Coast jetty + fishing boats.** Timber jetty into the shallows and three boat
+  silhouettes so the southern KI shoreline reads as a living coast. Presentation only.
+
 - **HUD contrast polish (0025 item 6 interim).** Panel fill 94% opaque, Coastal Blue
   panel frames, larger body type, themed progress bar for the first-offer wait,
   framed OPERATIONS panel. Still IMGUI — Toolkit/uGUI rebuild remains next.

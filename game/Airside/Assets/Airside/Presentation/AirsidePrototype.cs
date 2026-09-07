@@ -2313,6 +2313,7 @@ namespace Airside.Presentation
             CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand);
             CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f));
             CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f));
+            BuildCoastalLife();
 
             // Landside access: terminal → car park road + bay.
             CreateBlock("Access road", new Vector3(26f, -0.02f, 38f), new Vector3(6f, 0.1f, 22f), new Color(0.2f, 0.22f, 0.24f),
@@ -2336,6 +2337,36 @@ namespace Airside.Presentation
             BuildDistantHills();
             BuildHorizonDome();
             BuildLandsideLife();
+        }
+
+        /// <summary>
+        /// Jetty + fishing boat silhouettes on the KI coast so the southern edge
+        /// reads as a shoreline with life (presentation only).
+        /// </summary>
+        private static void BuildCoastalLife()
+        {
+            // Timber jetty reaching into the shallows.
+            CreateBlock("Jetty deck", new Vector3(-18f, -0.15f, -52f), new Vector3(2.4f, 0.18f, 14f), new Color(0.45f, 0.32f, 0.18f));
+            for (var i = 0; i < 5; i++)
+            {
+                var z = -46f - i * 2.5f;
+                CreateBlock($"Jetty pile L {i}", new Vector3(-19f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), new Color(0.35f, 0.26f, 0.16f));
+                CreateBlock($"Jetty pile R {i}", new Vector3(-17f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), new Color(0.35f, 0.26f, 0.16f));
+            }
+
+            PlaceCoastBoat("Coast boat A", new Vector3(-12f, -0.55f, -62f), 12f, new Color(0.85f, 0.88f, 0.9f));
+            PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
+            PlaceCoastBoat("Coast boat C", new Vector3(55f, -0.45f, -74f), 5f, new Color(0.2f, 0.35f, 0.45f));
+        }
+
+        private static void PlaceCoastBoat(string name, Vector3 position, float yawDegrees, Color hull)
+        {
+            var root = new GameObject(name).transform;
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+            ParentBlock(root, $"{name} hull", Vector3.zero, new Vector3(1.4f, 0.55f, 4.2f), hull);
+            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.4f), new Vector3(1.1f, 0.7f, 1.6f), Shade(hull, 0.85f));
+            ParentBlock(root, $"{name} mast", new Vector3(0f, 1.4f, 0.2f), new Vector3(0.1f, 2.2f, 0.1f), new Color(0.75f, 0.75f, 0.72f));
         }
 
         /// <summary>

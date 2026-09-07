@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **ALS chase flash + ARFF lightbar blink (0025 items 5+7).** Approach lamps run a
+  far-to-threshold sequence at night; ARFF truck lightbar pulses amber/red at dusk.
+  Presentation only.
+
 - **ARFF truck Resources prefab (0025 items 1+3).** `mdl_arff_truck_v01` parks on the
   rescue apron in front of the ARFF shed (Addressables key auto-registered).
   Presentation only.

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Readable runway threshold digits (0025 item 3).** Block-style 09 / 27 markings plus
+  side threshold stripes so runway ends read from overview/follow. Presentation only.
+
 - **Terminal landside canopy (0025 item 3).** Steel posts, soffit slab, landside glass
   curtain, entrance doors, bench/planter and dusk canopy under-glow so the terminal
   entrance reads from landside and overview. Presentation only.

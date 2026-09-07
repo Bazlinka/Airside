@@ -1774,7 +1774,10 @@ namespace Airside.Presentation
                     CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
                     CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
                 },
-                "Textures/Environment/tx_terminal_glass_mask_v01.png");
+                "Textures/Environment/tx_terminal_glass_mask_v01.png",
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.2f),
+                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress" });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -1793,13 +1796,19 @@ namespace Airside.Presentation
                     CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
                         "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
                     CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
-                });
+                },
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.5f),
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent" });
             PlaceBuildingOrFallback(
                 "Models/Buildings/mdl_operations_shed_v01.gltf",
                 new Vector3(-8f, 0f, 26f),
                 _ => new Color(0.55f, 0.58f, 0.52f),
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
-                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)));
+                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(1.5f, 1.2f),
+                surfaceMeshNames: new[] { "shed_body", "porch", "roof" });
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -2173,7 +2182,10 @@ namespace Airside.Presentation
             Vector3 worldPosition,
             System.Func<string, Color?> colorFor,
             System.Action fallback,
-            string glassTextureRelativePath = null)
+            string glassTextureRelativePath = null,
+            string surfaceTextureRelativePath = null,
+            Vector2? surfaceTextureTiling = null,
+            string[] surfaceMeshNames = null)
         {
             if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
@@ -2192,6 +2204,45 @@ namespace Airside.Presentation
                         {
                             renderer.material.mainTexture = texture;
                             renderer.material.mainTextureScale = new Vector2(3f, 1.5f);
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(surfaceTextureRelativePath))
+                {
+                    var surface = TryLoadArtTexture(surfaceTextureRelativePath);
+                    if (surface != null)
+                    {
+                        var tiling = surfaceTextureTiling ?? new Vector2(2f, 1.5f);
+                        foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                        {
+                            if (child.name is "glass_front" or "door_opening" or "entrance"
+                                or "window_l" or "window_r" or "cabin_windows" or "cockpit")
+                                continue;
+                            if (surfaceMeshNames != null && surfaceMeshNames.Length > 0)
+                            {
+                                var match = false;
+                                for (var i = 0; i < surfaceMeshNames.Length; i++)
+                                {
+                                    if (child.name == surfaceMeshNames[i] ||
+                                        child.name.StartsWith(surfaceMeshNames[i], StringComparison.Ordinal))
+                                    {
+                                        match = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!match)
+                                    continue;
+                            }
+
+                            var renderer = child.GetComponent<Renderer>();
+                            if (renderer == null)
+                                continue;
+                            renderer.material.mainTexture = surface;
+                            renderer.material.mainTextureScale = tiling;
+                            if (renderer.material.HasProperty("_Smoothness"))
+                                renderer.material.SetFloat("_Smoothness", 0.28f);
                         }
                     }
                 }

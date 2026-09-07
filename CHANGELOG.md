@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **glTF kit UVs + building surface textures.** `ArtGltfLoader` generates planar
+  UVs so Batch B basecolours tile on box kits; hangar/ops/terminal meshes get
+  corrugated/concrete textures with soft URP Lit response. Presentation only.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

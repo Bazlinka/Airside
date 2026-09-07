@@ -184,7 +184,8 @@ gaps, see `docs/art/AI_IMAGE_REFERENCE_INDEX.md`.
 Production task packet:
 `docs/art/prompts/batch-b-surfaces-task-packet.md`.
 Generation evidence:
-`docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md`.
+`docs/art/prompts/batch-b-surfaces-generation-2026-09-06.md` and
+`docs/art/prompts/batch-b-pbr-maps-generation-2026-09-07.md` (normal/AO/mask).
 
 | ID | Runtime file | Requirement | Status |
 |---|---|---|---|
@@ -192,10 +193,11 @@ Generation evidence:
 | TEX-SRF-002 | `Textures/Surfaces/tx_concrete_apron_basecolor_v01.png` | Seamless large slab variation; joints supplied separately or shader-scaled | Approved · Integrated |
 | TEX-SRF-003 | `Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png` | Seamless dry-green regional grass, no obvious flowers or objects | Approved · Integrated |
 | TEX-SRF-004 | `Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png` | Neutral building material that can be tinted | Approved · Integrated |
+| TEX-SRF-005 | `Textures/Surfaces/tx_*_{normal,ao,mask}_v01.png` | Companion PBR maps for asphalt/concrete/grass/metal (1024²) | Integrated (runtime Lit; Play unverified) |
 | TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Approved · Integrated |
 | TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Approved · Integrated |
 | TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Approved · Integrated |
-| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Planned (Editor .mat optional; prototype loads PNGs) |
+| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Partial — runtime library binds authored maps; Editor `.mat` still Planned |
 | WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.gltf` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Approved · Integrated |
 | WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.gltf` | Runway edge, taxiway, apron floodlight and obstruction lights | Approved · Integrated |
 | WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.gltf` | Windsock, cones, barriers, signs and baggage dollies | Approved · Integrated |

@@ -1,13 +1,15 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 4 — coherent URP Lit material profiles for the greybox /
-    /// kit presentation. Profiles set metallic/smoothness and attach a shared
-    /// procedural normal (and soft occlusion) so surfaces stop reading as flat
-    /// unlit plastic. Not a full authored PBR library; that comes with Addressables.
+    /// kit presentation. Profiles set metallic/smoothness and attach authored
+    /// Batch B normal / AO / metallic-smoothness masks when present (StreamingAssets),
+    /// falling back to shared procedural maps so surfaces never read as flat unlit
+    /// plastic. Full Addressables materials remain the longer-term production path.
     /// </summary>
     public static class AirsideMaterialLibrary
     {
@@ -62,6 +64,21 @@ namespace Airside.Presentation
             [SurfaceKind.Water] = new Profile(0.02f, 0.78f, 0.15f, 1f, transparent: true),
             [SurfaceKind.UnlitSky] = new Profile(0f, 0f, 0f, 1f)
         };
+
+        /// <summary>Authored Batch B map stems under Textures/Surfaces/.</summary>
+        private static readonly Dictionary<SurfaceKind, string> AuthoredStemByKind = new()
+        {
+            [SurfaceKind.Asphalt] = "tx_asphalt_runway",
+            [SurfaceKind.Concrete] = "tx_concrete_apron",
+            [SurfaceKind.Grass] = "tx_grass_kingscote",
+            [SurfaceKind.Metal] = "tx_corrugated_metal",
+            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal"
+        };
+
+        private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredNormals = new();
+        private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredAo = new();
+        private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredMasks = new();
+        private static bool _authoredResolved;
 
         private static Texture2D _sharedNormal;
         private static Texture2D _sharedOcclusion;
@@ -121,6 +138,7 @@ namespace Airside.Presentation
         {
             var profile = GetProfile(kind);
             EnsureSharedMaps();
+            EnsureAuthoredMaps();
             var shader = _litShader ??= Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             var material = new Material(shader) { color = color };
 
@@ -137,9 +155,10 @@ namespace Airside.Presentation
                 material.mainTextureScale = tiling ?? Vector2.one;
             }
 
-            if (kind != SurfaceKind.UnlitSky && _sharedNormal != null && material.HasProperty("_BumpMap"))
+            var normal = ResolveNormal(kind);
+            if (kind != SurfaceKind.UnlitSky && normal != null && material.HasProperty("_BumpMap"))
             {
-                material.SetTexture("_BumpMap", _sharedNormal);
+                material.SetTexture("_BumpMap", normal);
                 material.EnableKeyword("_NORMALMAP");
                 if (material.HasProperty("_BumpScale"))
                     material.SetFloat("_BumpScale", profile.BumpScale);
@@ -147,13 +166,22 @@ namespace Airside.Presentation
                     material.SetTextureScale("_BumpMap", tiling.Value);
             }
 
-            if (kind != SurfaceKind.UnlitSky && _sharedOcclusion != null && material.HasProperty("_OcclusionMap"))
+            var ao = ResolveAo(kind);
+            if (kind != SurfaceKind.UnlitSky && ao != null && material.HasProperty("_OcclusionMap"))
             {
-                material.SetTexture("_OcclusionMap", _sharedOcclusion);
+                material.SetTexture("_OcclusionMap", ao);
                 if (material.HasProperty("_OcclusionStrength"))
                     material.SetFloat("_OcclusionStrength", 1f - profile.Occlusion + 0.15f);
                 if (tiling.HasValue)
                     material.SetTextureScale("_OcclusionMap", tiling.Value * 0.5f);
+            }
+
+            if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null && material.HasProperty("_MetallicGlossMap"))
+            {
+                material.SetTexture("_MetallicGlossMap", mask);
+                material.EnableKeyword("_METALLICSPECGLOSSMAP");
+                if (tiling.HasValue)
+                    material.SetTextureScale("_MetallicGlossMap", tiling.Value);
             }
 
             if (profile.Transparent || color.a < 0.99f)
@@ -185,6 +213,12 @@ namespace Airside.Presentation
                 material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.16f, wetness01));
         }
 
+        private static Texture2D ResolveNormal(SurfaceKind kind) =>
+            AuthoredNormals.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedNormal;
+
+        private static Texture2D ResolveAo(SurfaceKind kind) =>
+            AuthoredAo.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedOcclusion;
+
         private static void ApplyTransparent(Material material)
         {
             material.SetFloat("_Surface", 1f);
@@ -205,6 +239,51 @@ namespace Airside.Presentation
             const int size = 64;
             _sharedNormal = BuildNormalMap(size, seed: 17);
             _sharedOcclusion = BuildOcclusionMap(size, seed: 41);
+        }
+
+        private static void EnsureAuthoredMaps()
+        {
+            if (_authoredResolved)
+                return;
+            _authoredResolved = true;
+
+            foreach (var pair in AuthoredStemByKind)
+            {
+                var kind = pair.Key;
+                var stem = pair.Value;
+                var normal = TryLoadArtTexture($"Textures/Surfaces/{stem}_normal_v01.png", linear: true);
+                var ao = TryLoadArtTexture($"Textures/Surfaces/{stem}_ao_v01.png", linear: true);
+                var mask = TryLoadArtTexture($"Textures/Surfaces/{stem}_mask_v01.png", linear: true);
+                if (normal != null)
+                    AuthoredNormals[kind] = normal;
+                if (ao != null)
+                    AuthoredAo[kind] = ao;
+                if (mask != null)
+                    AuthoredMasks[kind] = mask;
+            }
+        }
+
+        private static Texture2D TryLoadArtTexture(string artRelativePath, bool linear)
+        {
+            var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
+            if (fullPath == null)
+                return null;
+
+            try
+            {
+                var bytes = File.ReadAllBytes(fullPath);
+                var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
+                if (!texture.LoadImage(bytes))
+                    return null;
+                texture.name = Path.GetFileNameWithoutExtension(artRelativePath);
+                texture.wrapMode = TextureWrapMode.Repeat;
+                texture.filterMode = FilterMode.Bilinear;
+                return texture;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         /// <summary>

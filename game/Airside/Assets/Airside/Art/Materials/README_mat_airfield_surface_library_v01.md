@@ -1,9 +1,11 @@
-# MAT-001 deferred (optional Editor library)
+# MAT-001 — airfield surface material library
 
-Bailey approved Batch B on 2026-09-06. The greybox prototype already loads the
-Batch B PNGs at runtime (`AirsidePrototype.TryLoadArtTexture`) with solid-colour
-fallback.
+Bailey approved Batch B on 2026-09-06. Runtime already binds:
+
+- basecolours TEX-SRF-001…004 via `AirsidePrototype.TryLoadArtTexture`
+- companion normal / AO / metallic-smoothness masks TEX-SRF-005 via
+  `AirsideMaterialLibrary` (StreamingAssets; procedural fallbacks)
 
 Optionally create `mat_airfield_surface_library_v01.mat` in Unity 6.3 LTS after
-import, linking TEX-SRF-001…004, painted-line colour, glass and metal slots.
-Do not invent shader GUIDs outside the Editor.
+import, linking the same maps into Editor materials / Addressables. Do not invent
+shader GUIDs outside the Editor.

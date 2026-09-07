@@ -7521,7 +7521,7 @@ namespace Airside.Presentation
             void Seg(string name, float x, float z, float sx, float sz)
             {
                 // Prefer kit digit bars for micro-relief; scale locally to match segment size.
-                var mesh = Math.Abs(sx - sz) < 0.01f || sx > sz ? "digit_bar_h" : "digit_bar_v";
+                string mesh;
                 if (name.Contains("serif", StringComparison.Ordinal))
                     mesh = "digit_serif";
                 else if (sx > sz * 1.2f)

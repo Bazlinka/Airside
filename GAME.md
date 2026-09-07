@@ -10,14 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (MAT-001 maps + wet/motion/fence/boat tip)
+- **Last updated:** 2026-09-07 by Cursor (markings/ARFF/fuel densify tip)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — Addressables/DCC when Mac-ready; densify thin kits
-  (markings digits/arrows, fuel farm/ARFF); keep env densify without more scrub. No new economy.
-  Do not block on Mac playtest.
-- **In progress / half-done:** MAT-001 glass/rubber/painted-line/plastic maps + per-kind
-  procedural fallbacks/tiling; landside wet collect; flap/cargo/door nesting; fence/gate/ALS/
-  coast boat densify. Still ~28% of REF — DCC/Addressables + real materials remain the jump.
+- **Do this next:** Continue 0025 — Addressables/DCC when Mac-ready; more env/kit fidelity
+  without scrub spam. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** MAT-001 maps landed; markings kit 44 (digits/arrows);
+  fuel farm ~47 / ARFF shed ~52 / truck ~53 parts. Still ~29% of REF — DCC/Addressables
+  + real materials remain the jump.
 - **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud / bird / tree / shrub / fence brace count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; MAT-001 Batch B companions extended; presentation track mid-backlog.

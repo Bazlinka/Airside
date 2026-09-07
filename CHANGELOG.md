@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Markings/ARFF/fuel densify (0025 items 1–3).** Markings kit 44 (digit bars, taxi
+  arrows, extra hold/chevrons) wired into PlaceWorldMarkings/PlaceRunwayDigit; fuel
+  farm ~47 / ARFF shed ~52 / truck ~53 Resources parts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
 - **MAT-001 maps + wet/motion/env tip (0025 items 3–5+7).** Per-kind glass/rubber/
   painted-line/plastic PBR companions + procedural fallbacks/default tiling; wet
   `_BaseColor` sync; landside Access/Overflow/zebra wet collect; flap exact L/R;

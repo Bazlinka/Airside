@@ -40,7 +40,9 @@ change it describes.
   light chrome on economy/speed; Toolkit hides Canvas when active; Cloudy soft
   fog + cloud umbra; horizon/sun/moon SetRendererColor; Cloudy/Overcast soft sun
   gloom; contact shadows SetRendererColor; light toast/save chrome; parked GA
-  capped at 3 when prefab present. Presentation only — simulation unchanged.
+  capped at 3 when prefab present; fuel farm kit skips cone/barrier densify;
+  ARFF kit softens bay Point; coast boats capped at 3 with prefab; cloud bands
+  thinned to 9×1–2 blobs. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

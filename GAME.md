@@ -1,15 +1,14 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 11)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 12)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Cloudy/Overcast soft sun gloom; contact shadows via SetRendererColor
-  - Light toast/save chrome (UI-PNL-001); parked GA capped at 3 when prefab present
-  - Tip 10: VEG densify thin; Canvas hide when Toolkit; Cloudy fog/umbra
-  - Tip 9: BirdOrbitHz; WLD paddock gate; coast rocks; scaled streetlights
+  - Fuel farm kit skips cone/barrier densify; ARFF kit softens bay Point; coast boats capped at 3
+  - Cloud bands 9 clusters × 1–2 blobs (weather tint still thickens)
+  - Tips 9–11: BirdOrbitHz, WLD/VEG densify, light HUD, Cloudy gloom, GA cap
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

@@ -5240,12 +5240,17 @@ namespace Airside.Presentation
             CreateBlock("Jetty end cap", new Vector3(-18f, -0.05f, -58f), new Vector3(2.5f, 0.2f, 0.35f), Shade(timber, 0.8f));
             CreateBlock("Jetty approach", new Vector3(-18f, -0.12f, -44.5f), new Vector3(3.2f, 0.14f, 2.2f), Shade(AirsideTheme.Concrete, 0.9f));
 
+            // Prefab boats are heavy silhouettes — three near the jetty; six only as greybox fallback.
+            var hasBoatPrefab = ArtPresentationLoader.HasPrefab("mdl_coast_boat_v01");
             PlaceCoastBoat("Coast boat A", new Vector3(-12f, -0.55f, -62f), 12f, new Color(0.85f, 0.88f, 0.9f));
             PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
-            PlaceCoastBoat("Coast boat C", new Vector3(55f, -0.45f, -74f), 5f, new Color(0.2f, 0.35f, 0.45f));
-            PlaceCoastBoat("Coast boat D", new Vector3(-40f, -0.5f, -70f), -8f, new Color(0.55f, 0.2f, 0.18f));
-            PlaceCoastBoat("Coast boat E", new Vector3(8f, -0.48f, -78f), 28f, new Color(0.92f, 0.9f, 0.82f));
-            PlaceCoastBoat("Coast boat F", new Vector3(-58f, -0.52f, -66f), -15f, new Color(0.15f, 0.28f, 0.22f));
+            PlaceCoastBoat("Coast boat C", new Vector3(8f, -0.48f, -78f), 28f, new Color(0.92f, 0.9f, 0.82f));
+            if (!hasBoatPrefab)
+            {
+                PlaceCoastBoat("Coast boat D", new Vector3(55f, -0.45f, -74f), 5f, new Color(0.2f, 0.35f, 0.45f));
+                PlaceCoastBoat("Coast boat E", new Vector3(-40f, -0.5f, -70f), -8f, new Color(0.55f, 0.2f, 0.18f));
+                PlaceCoastBoat("Coast boat F", new Vector3(-58f, -0.52f, -66f), -15f, new Color(0.15f, 0.28f, 0.22f));
+            }
 
             // Rock outcrops along the sand — prefer VEG-002 scrub kit rocks.
             var rock = new Color(0.42f, 0.4f, 0.38f);
@@ -6020,6 +6025,15 @@ namespace Airside.Presentation
             {
                 shed.name = "ARFF rescue shed";
                 shed.position = new Vector3(-28f, 0f, 30f);
+                // Kit already carries side spill meshes — soft Point only as dusk fallback.
+                var bay = new GameObject("ARFF bay light");
+                bay.transform.position = new Vector3(-28f, 2.4f, 27.8f);
+                var light = bay.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.85f, 0.55f);
+                light.range = 8f;
+                light.intensity = 0f;
+                light.shadows = LightShadows.None;
             }
             else
             {
@@ -6039,17 +6053,17 @@ namespace Airside.Presentation
                 CreateBlock("ARFF sign", new Vector3(-28f, 2.6f, 27.15f), new Vector3(2.2f, 0.45f, 0.08f), AirsideTheme.SafetyYellow);
                 CreateBlock("ARFF hose reel", new Vector3(-31.2f, 0.55f, 27.5f), new Vector3(0.7f, 0.9f, 0.7f), new Color(0.35f, 0.2f, 0.15f));
                 CreateBlock("ARFF hydrant", new Vector3(-24.8f, 0.35f, 27.8f), new Vector3(0.35f, 0.55f, 0.35f), new Color(0.75f, 0.2f, 0.15f));
-            }
 
-            // Soft bay spill at dusk.
-            var bay = new GameObject("ARFF bay light");
-            bay.transform.position = new Vector3(-28f, 2.4f, 27.8f);
-            var light = bay.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.color = new Color(1f, 0.85f, 0.55f);
-            light.range = 10f;
-            light.intensity = 0f;
-            light.shadows = LightShadows.None;
+                // Soft bay spill at dusk (greybox shed has no kit side lamps).
+                var bay = new GameObject("ARFF bay light");
+                bay.transform.position = new Vector3(-28f, 2.4f, 27.8f);
+                var light = bay.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.85f, 0.55f);
+                light.range = 10f;
+                light.intensity = 0f;
+                light.shadows = LightShadows.None;
+            }
 
             PlaceArffTruck();
         }
@@ -6851,10 +6865,12 @@ namespace Airside.Presentation
         private static void BuildCloudBands()
         {
             // Soft translucent cloud clusters so the sky reads layered — presentation only.
+            // Keep the count calm for a miniature sky; UpdateCloudDrift thickens tint for weather.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            for (var i = 0; i < 18; i++)
+            const int clusterCount = 9;
+            for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
@@ -6863,11 +6879,11 @@ namespace Airside.Presentation
                 var y = 24f + (float)rng.NextDouble() * 26f;
                 cluster.position = new Vector3(x, y, z);
 
-                var sx = 14f + (float)rng.NextDouble() * 28f;
-                var sy = 3.2f + (float)rng.NextDouble() * 4.2f;
-                var sz = 8f + (float)rng.NextDouble() * 18f;
-                var alpha = 0.12f + (float)rng.NextDouble() * 0.16f;
-                var blobs = 2 + (i % 3);
+                var sx = 16f + (float)rng.NextDouble() * 30f;
+                var sy = 3.4f + (float)rng.NextDouble() * 4.5f;
+                var sz = 9f + (float)rng.NextDouble() * 18f;
+                var alpha = 0.14f + (float)rng.NextDouble() * 0.14f;
+                var blobs = 1 + (i % 2);
                 for (var b = 0; b < blobs; b++)
                 {
                     var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -6875,13 +6891,13 @@ namespace Airside.Presentation
                     Object.Destroy(cloud.GetComponent<Collider>());
                     cloud.transform.SetParent(cluster, false);
                     cloud.transform.localPosition = new Vector3(
-                        (b - 1) * sx * 0.22f,
+                        (b - 0.5f) * sx * 0.22f,
                         (b % 2) * sy * 0.15f,
-                        (b - 0.5f) * sz * 0.12f);
+                        (b - 0.25f) * sz * 0.12f);
                     cloud.transform.localScale = new Vector3(
-                        sx * (0.55f + b * 0.12f),
-                        sy * (0.7f + (b % 2) * 0.2f),
-                        sz * (0.55f + b * 0.1f));
+                        sx * (0.65f + b * 0.14f),
+                        sy * (0.75f + (b % 2) * 0.2f),
+                        sz * (0.65f + b * 0.12f));
                     cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                         new Color(0.95f, 0.96f, 0.98f, alpha),
                         AirsideMaterialLibrary.SurfaceKind.Default);
@@ -9237,7 +9253,8 @@ namespace Airside.Presentation
             // Worksite / hangar barriers.
             CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
             CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
-            CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
+            if (!ArtPresentationLoader.HasPrefab("mdl_fuel_farm_v01"))
+                CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
             CreateBarrier(new Vector3(36f, 0.45f, 18f), 90f);
             CreateBarrier(new Vector3(6f, 0.45f, 24.5f), 0f);
             CreateBarrier(new Vector3(34f, 0.45f, 24.5f), 0f);
@@ -9509,11 +9526,11 @@ namespace Airside.Presentation
                 CreateBlock("Fuel bund", new Vector3(-34f, 0.25f, 22f), new Vector3(7.2f, 0.35f, 5.2f), new Color(0.4f, 0.42f, 0.4f));
                 CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
                 CreateBlock("Fuel hose reel", new Vector3(-33.1f, 0.45f, 19.8f), new Vector3(0.55f, 0.55f, 0.55f), new Color(0.35f, 0.2f, 0.12f));
+                // Cones/barrier only when the farm is greybox — kit ships its own safety fringe.
+                CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
+                CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
+                CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
             }
-
-            CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
-            CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
-            CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
 
             // Amber safety flood over the fuel pad at night (presentation only).
             var lamp = new GameObject("Fuel farm light");

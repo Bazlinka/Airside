@@ -42,7 +42,10 @@ change it describes.
   gloom; contact shadows SetRendererColor; light toast/save chrome; parked GA
   capped at 3 when prefab present; fuel farm kit skips cone/barrier densify;
   ARFF kit softens bay Point; coast boats capped at 3 with prefab; cloud bands
-  thinned to 9×1–2 blobs. Presentation only — simulation unchanged.
+  thinned to 9×1–2 blobs; props kit thins cones/barriers/dollies/signs; night
+  glow PointLights capped to hero + ≤6 panes; parked cars / CHR people / rain
+  stamps thinned when kits present; decal SetRendererColor; speed chip ink on
+  light chrome. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

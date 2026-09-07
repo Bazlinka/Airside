@@ -504,7 +504,8 @@ namespace Airside.Presentation
 
             _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal, inkOnLight: true);
             _speedText.style.marginLeft = 10;
-            _speedText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.75f);
+            _speedText.style.color = new Color(
+                AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.78f);
             _speedChip.Add(_speedText);
             _root.Add(_speedChip);
         }

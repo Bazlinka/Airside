@@ -2591,7 +2591,9 @@ namespace Airside.Presentation
             }
 
             var rng = new System.Random(42);
-            for (var i = 0; i < 96; i++)
+            // Kit drops already read; keep a calmer field so rain is weather, not soup.
+            var dropCount = seed != null ? 40 : 96;
+            for (var i = 0; i < dropCount; i++)
             {
                 GameObject drop;
                 if (seed != null && seed.childCount > 0)
@@ -3861,18 +3863,22 @@ namespace Airside.Presentation
                     _nightGlowRenderers.Add(renderer);
 
                 // Real PointLight spill so dusk buildings light the apron (0025 item 5).
+                // Skip glass_pane* here — prefix collect below attaches emission only.
+                var wantsPoint = !(name.StartsWith("glass_pane", StringComparison.Ordinal)
+                                   || name is "glass_front" or "landside_glass"
+                                   || name.StartsWith("side_window", StringComparison.Ordinal)
+                                   || name.StartsWith("window_", StringComparison.Ordinal)
+                                   || name == "office_window");
+                if (!wantsPoint)
+                    continue;
+
                 var light = go.GetComponent<Light>();
                 if (light == null)
                 {
                     light = go.AddComponent<Light>();
                     light.type = LightType.Point;
                     light.color = new Color(1f, 0.78f, 0.45f);
-                    light.range = name.StartsWith("Hangar", StringComparison.Ordinal)
-                        || name.StartsWith("side_window", StringComparison.Ordinal)
-                        || name.StartsWith("glass_pane", StringComparison.Ordinal)
-                        || name == "office_window"
-                        ? 14f
-                        : 11f;
+                    light.range = name.StartsWith("Hangar", StringComparison.Ordinal) ? 14f : 11f;
                     light.shadows = LightShadows.None;
                     light.intensity = 0f;
                 }
@@ -3883,7 +3889,10 @@ namespace Airside.Presentation
 
             _windowLights = lights.ToArray();
 
-            // Authored hangar/terminal glass often uses numbered pane names — collect by prefix.
+            // Authored hangar/terminal glass often uses numbered pane names — emission glow only.
+            // Do not stamp a PointLight on every glass_pane* (dusk wash / overlapping soup).
+            var paneLights = 0;
+            const int maxPaneLights = 6;
             foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
                 if (renderer == null || _nightGlowRenderers.Contains(renderer))
@@ -3899,19 +3908,26 @@ namespace Airside.Presentation
                     continue;
 
                 _nightGlowRenderers.Add(renderer);
+                // Sparse hero PointLights only — every ~7th pane, max six.
+                if (paneLights >= maxPaneLights || (_nightGlowRenderers.Count % 7) != 0)
+                    continue;
+
                 var light = renderer.GetComponent<Light>();
                 if (light == null)
                 {
                     light = renderer.gameObject.AddComponent<Light>();
                     light.type = LightType.Point;
                     light.color = new Color(1f, 0.78f, 0.45f);
-                    light.range = 12f;
+                    light.range = 10f;
                     light.shadows = LightShadows.None;
                     light.intensity = 0f;
                 }
 
                 if (!lights.Contains(light))
+                {
                     lights.Add(light);
+                    paneLights++;
+                }
             }
 
             _windowLights = lights.ToArray();
@@ -4951,24 +4967,38 @@ namespace Airside.Presentation
         private static void BuildApronLife()
         {
             var root = new GameObject("Apron life").transform;
+            var crewKit = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+            var paxKit = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+            var hasChrKits = (!string.IsNullOrEmpty(crewKit) && ArtGltfLoader.HasKit(crewKit))
+                             || (!string.IsNullOrEmpty(paxKit) && ArtGltfLoader.HasKit(paxKit));
+
+            // Hero set always — marshallers, fuel, baggage, hangar, gate, a few passengers.
             PlacePerson(root, "Marshaller", new Vector3(14.5f, 0f, 16.5f), 200f, new Color(0.85f, 0.55f, 0.12f),
                 hiVis: true, marshallerWand: true);
             PlacePerson(root, "Fueler", new Vector3(-3.2f, 0f, 13.2f), 90f, new Color(0.2f, 0.35f, 0.55f), hiVis: true);
-            PlacePerson(root, "Ops walker", new Vector3(22f, 0f, 22.5f), 15f, new Color(0.25f, 0.28f, 0.32f));
-            PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f), hiVis: true);
             PlacePerson(root, "Hangar tech", new Vector3(-16f, 0f, 18.5f), 270f, new Color(0.35f, 0.4f, 0.45f));
-            PlacePerson(root, "Hangar tech B", new Vector3(-18.5f, 0f, 17.2f), 200f, new Color(0.4f, 0.42f, 0.38f));
             PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
             PlacePerson(root, "Landside passenger B", new Vector3(27.8f, 0f, 31.6f), 175f, new Color(0.2f, 0.35f, 0.4f));
-            PlacePerson(root, "Landside passenger C", new Vector3(25.6f, 0f, 31.4f), 190f, new Color(0.3f, 0.32f, 0.45f));
-            PlacePerson(root, "Landside passenger D", new Vector3(28.5f, 0f, 32.2f), 160f, new Color(0.5f, 0.45f, 0.35f));
-            PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
             PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
-            PlacePerson(root, "Car park walker", new Vector3(34f, 0f, 34f), 220f, new Color(0.4f, 0.25f, 0.3f));
-            PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f), hiVis: true);
             PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f),
                 hiVis: true, marshallerWand: true);
             PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
+            PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
+
+            if (hasChrKits)
+            {
+                // One calm walker so life still moves without a CHR carpet.
+                PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f), hiVis: true);
+                return;
+            }
+
+            PlacePerson(root, "Ops walker", new Vector3(22f, 0f, 22.5f), 15f, new Color(0.25f, 0.28f, 0.32f));
+            PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f), hiVis: true);
+            PlacePerson(root, "Hangar tech B", new Vector3(-18.5f, 0f, 17.2f), 200f, new Color(0.4f, 0.42f, 0.38f));
+            PlacePerson(root, "Landside passenger C", new Vector3(25.6f, 0f, 31.4f), 190f, new Color(0.3f, 0.32f, 0.45f));
+            PlacePerson(root, "Landside passenger D", new Vector3(28.5f, 0f, 32.2f), 160f, new Color(0.5f, 0.45f, 0.35f));
+            PlacePerson(root, "Car park walker", new Vector3(34f, 0f, 34f), 220f, new Color(0.4f, 0.25f, 0.3f));
+            PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f), hiVis: true);
             PlacePerson(root, "Stairs attendant", new Vector3(16.8f, 0f, 18.2f), 170f, new Color(0.6f, 0.35f, 0.25f), hiVis: true);
             PlacePerson(root, "Ops walker B", new Vector3(-6f, 0f, 24.5f), 40f, new Color(0.28f, 0.3f, 0.35f));
             PlacePerson(root, "Car park walker B", new Vector3(44f, 0f, 42f), 280f, new Color(0.35f, 0.4f, 0.45f));
@@ -5351,14 +5381,22 @@ namespace Airside.Presentation
                 new Color(0.12f, 0.45f, 0.35f)
             };
 
-            // Car park bays — two rows facing the terminal.
-            for (var i = 0; i < 8; i++)
+            // Car park bays — thin when parked-car prefab is a heavy silhouette.
+            var hasCarPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
+            var bayCarCount = hasCarPrefab ? 4 : 8;
+            for (var i = 0; i < bayCarCount; i++)
             {
-                var row = i < 4 ? 0 : 1;
-                var slot = i % 4;
-                var x = 42f + slot * 3.6f;
-                var z = 43.2f + row * 4.2f;
-                PlaceParkedCar($"Parked car {i}", new Vector3(x, 0f, z), 90f, carColors[i]);
+                if (hasCarPrefab)
+                {
+                    // Single calm row facing the terminal.
+                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + i * 3.6f, 0f, 43.2f), 90f, carColors[i]);
+                }
+                else
+                {
+                    var row = i < 4 ? 0 : 1;
+                    var slot = i % 4;
+                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + slot * 3.6f, 0f, 43.2f + row * 4.2f), 90f, carColors[i]);
+                }
             }
 
             // Kerbside drop-off on the access road.
@@ -5368,7 +5406,8 @@ namespace Airside.Presentation
             // Landside furniture: luggage trolley cluster + bench near terminal doors.
             PlaceLuggageTrolley("Luggage trolley A", new Vector3(24f, 0f, 31.5f), -15f);
             PlaceLuggageTrolley("Luggage trolley B", new Vector3(25.2f, 0f, 31.5f), 8f);
-            PlaceLuggageTrolley("Luggage trolley C", new Vector3(24.6f, 0f, 30.6f), 175f);
+            if (!hasCarPrefab)
+                PlaceLuggageTrolley("Luggage trolley C", new Vector3(24.6f, 0f, 30.6f), 175f);
             PlaceLandsideBench("Landside bench", new Vector3(29.5f, 0f, 31.2f), 0f);
             PlaceLandsideBench("Car park bench", new Vector3(40.5f, 0f, 40.2f), 90f);
 
@@ -5378,16 +5417,28 @@ namespace Airside.Presentation
             PlaceTree(new Vector3(20f, 0f, 44f), 0.85f);
             PlaceTree(new Vector3(56f, 0f, 40f), 0.9f);
             PlaceTree(new Vector3(34f, 0f, 52f), 1.05f);
-            PlaceTree(new Vector3(52f, 0f, 56f), 0.88f);
-            PlaceTree(new Vector3(38f, 0f, 56f), 1.0f);
+            if (!hasCarPrefab)
+            {
+                PlaceTree(new Vector3(52f, 0f, 56f), 0.88f);
+                PlaceTree(new Vector3(38f, 0f, 56f), 1.0f);
+            }
 
-            // Overflow bay row + roadside van so landside reads busier (0025 item 3).
-            PlaceParkedCar("Overflow car A", new Vector3(42f, 0f, 51.2f), 90f, new Color(0.45f, 0.2f, 0.18f));
-            PlaceParkedCar("Overflow car B", new Vector3(45.6f, 0f, 51.2f), 90f, new Color(0.7f, 0.72f, 0.75f));
-            PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
-            PlaceParkedCar("Overflow car C", new Vector3(52.8f, 0f, 51.2f), 90f, new Color(0.25f, 0.3f, 0.45f));
-            PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
-            PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
+            // Overflow bay row — one hero ute + visitor when prefab cars are present.
+            if (hasCarPrefab)
+            {
+                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
+                PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
+            }
+            else
+            {
+                PlaceParkedCar("Overflow car A", new Vector3(42f, 0f, 51.2f), 90f, new Color(0.45f, 0.2f, 0.18f));
+                PlaceParkedCar("Overflow car B", new Vector3(45.6f, 0f, 51.2f), 90f, new Color(0.7f, 0.72f, 0.75f));
+                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
+                PlaceParkedCar("Overflow car C", new Vector3(52.8f, 0f, 51.2f), 90f, new Color(0.25f, 0.3f, 0.45f));
+                PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
+                PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
+            }
+
             PlaceLandsideBench("Access bench", new Vector3(22f, 0f, 40.5f), 90f);
 
             // Painted parking bay chevrons — thin when PRP-003 kerbs already frame the park.
@@ -9231,46 +9282,66 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
                 "Models/Props/mdl_airfield_props_kit_v01.gltf");
+            var hasPropsKit = !string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit);
 
-            // Stand lead-in cones (denser apron edge read).
+            // Stand lead-in cones — hero corners when props kit stamps multi-mesh cones.
             CreateCone(new Vector3(12.5f, 0.25f, 12.2f));
-            CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
-            CreateCone(new Vector3(12.5f, 0.25f, 18.2f));
             CreateCone(new Vector3(12.5f, 0.25f, 21.8f));
             CreateCone(new Vector3(23.5f, 0.25f, 12.2f));
-            CreateCone(new Vector3(23.5f, 0.25f, 15.8f));
-            CreateCone(new Vector3(23.5f, 0.25f, 18.2f));
             CreateCone(new Vector3(23.5f, 0.25f, 21.8f));
-            CreateCone(new Vector3(-6f, 0.25f, 11f));
-            CreateCone(new Vector3(-10f, 0.25f, 11f));
-            CreateCone(new Vector3(4f, 0.25f, 7.2f));
-            CreateCone(new Vector3(4f, 0.25f, 10.8f));
-            CreateCone(new Vector3(18f, 0.25f, 11.2f));
-            CreateCone(new Vector3(28f, 0.25f, 11.2f));
-            CreateCone(new Vector3(8f, 0.25f, 23.5f));
-            CreateCone(new Vector3(30f, 0.25f, 23.5f));
+            if (!hasPropsKit)
+            {
+                CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
+                CreateCone(new Vector3(12.5f, 0.25f, 18.2f));
+                CreateCone(new Vector3(23.5f, 0.25f, 15.8f));
+                CreateCone(new Vector3(23.5f, 0.25f, 18.2f));
+                CreateCone(new Vector3(-6f, 0.25f, 11f));
+                CreateCone(new Vector3(-10f, 0.25f, 11f));
+                CreateCone(new Vector3(4f, 0.25f, 7.2f));
+                CreateCone(new Vector3(4f, 0.25f, 10.8f));
+                CreateCone(new Vector3(18f, 0.25f, 11.2f));
+                CreateCone(new Vector3(28f, 0.25f, 11.2f));
+                CreateCone(new Vector3(8f, 0.25f, 23.5f));
+                CreateCone(new Vector3(30f, 0.25f, 23.5f));
+            }
+            else
+            {
+                // Taxi lead-in pair so the A1 entry still reads marked.
+                CreateCone(new Vector3(4f, 0.25f, 7.2f));
+                CreateCone(new Vector3(4f, 0.25f, 10.8f));
+            }
 
-            // Worksite / hangar barriers.
+            // Worksite / hangar barriers — thin when kit barriers are heavy silhouettes.
             CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
             CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
-            if (!ArtPresentationLoader.HasPrefab("mdl_fuel_farm_v01"))
-                CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
-            CreateBarrier(new Vector3(36f, 0.45f, 18f), 90f);
-            CreateBarrier(new Vector3(6f, 0.45f, 24.5f), 0f);
-            CreateBarrier(new Vector3(34f, 0.45f, 24.5f), 0f);
+            if (!hasPropsKit)
+            {
+                if (!ArtPresentationLoader.HasPrefab("mdl_fuel_farm_v01"))
+                    CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
+                CreateBarrier(new Vector3(36f, 0.45f, 18f), 90f);
+                CreateBarrier(new Vector3(6f, 0.45f, 24.5f), 0f);
+                CreateBarrier(new Vector3(34f, 0.45f, 24.5f), 0f);
+            }
 
             PlaceSignBoard(kit, new Vector3(10f, 0f, 22f), 90f);
             PlaceSignBoard(kit, new Vector3(-4f, 0f, 12f), 0f);
-            PlaceSignBoard(kit, new Vector3(18f, 0f, 11.5f), 0f);
-            PlaceSignBoard(kit, new Vector3(28f, 0f, 12f), 0f);
-            PlaceSignBoard(kit, new Vector3(-18f, 0f, 16f), 90f);
+            if (!hasPropsKit)
+            {
+                PlaceSignBoard(kit, new Vector3(18f, 0f, 11.5f), 0f);
+                PlaceSignBoard(kit, new Vector3(28f, 0f, 12f), 0f);
+                PlaceSignBoard(kit, new Vector3(-18f, 0f, 16f), 90f);
+            }
 
             PlaceBaggageDolly(kit, new Vector3(30f, 0f, 22f));
             PlaceBaggageDolly(kit, new Vector3(32.2f, 0f, 22f));
             PlaceBaggageDolly(kit, new Vector3(28f, 0f, 19.5f));
-            PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
-            PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
-            PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
+            if (!hasPropsKit)
+            {
+                PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
+                PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
+                PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
+            }
+
             // Belt loaders live in the service kit, not the props kit (0025 wiring bug).
             var serviceKit = PreferArtKit(
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
@@ -9760,9 +9831,10 @@ namespace Airside.Presentation
             material.SetFloat("_Surface", 1f); // URP transparent hint when available
             if (material.HasProperty("_Mode"))
                 material.SetFloat("_Mode", 3f);
-            material.color = new Color(1f, 1f, 1f, 1f);
             material.mainTexture = texture;
-            quad.GetComponent<Renderer>().material = material;
+            var renderer = quad.GetComponent<Renderer>();
+            renderer.material = material;
+            SetRendererColor(renderer, new Color(1f, 1f, 1f, 1f));
         }
 
         private static Material CreateMaterial(Color color, string artTextureRelativePath = null, Vector2? textureTiling = null)

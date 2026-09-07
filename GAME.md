@@ -1,14 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 12)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 13)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Fuel farm kit skips cone/barrier densify; ARFF kit softens bay Point; coast boats capped at 3
-  - Cloud bands 9 clusters × 1–2 blobs (weather tint still thickens)
-  - Tips 9–11: BirdOrbitHz, WLD/VEG densify, light HUD, Cloudy gloom, GA cap
+  - Props kit thins cones/barriers/dollies/signs; night glow PointLights capped (hero + ≤6 panes)
+  - Parked cars / CHR people / rain stamps thinned when kits present; decal SetRendererColor
+  - Speed chip label uses Runway Ink on light chrome
+  - Tips 9–12: BirdOrbitHz, WLD/VEG, light HUD, fuel/ARFF/boats/clouds
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Landside parking life.** Parked cars in the car park, kerbside drop-off/taxi,
+  luggage trolleys, bench, extra trees and GA tie-down markers so the terminal
+  approach reads as a working regional airfield. Presentation only.
+
 - **Lighting profiles + wet surface gloss.** Cool fill light opposite the sun,
   horizon dome follows sky colour, nav/edge lights emit at dusk/night, and wet
   weather darkens/glosses paved surfaces (VFX-004 greybox). Presentation only.

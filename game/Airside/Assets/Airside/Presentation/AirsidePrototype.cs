@@ -2102,7 +2102,7 @@ namespace Airside.Presentation
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
             ParentBlock(root, $"{name} body", Vector3.zero, new Vector3(1.7f, 0.55f, 3.6f), body);
-            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), body * 0.85f);
+            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), Shade(body, 0.85f));
             ParentBlock(root, $"{name} window", new Vector3(0f, 0.55f, -0.1f), new Vector3(1.45f, 0.28f, 1.5f), new Color(0.2f, 0.35f, 0.45f));
             var wheel = new Color(0.12f, 0.12f, 0.13f);
             ParentBlock(root, $"{name} wheel FL", new Vector3(-0.7f, -0.28f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
@@ -2110,6 +2110,9 @@ namespace Airside.Presentation
             ParentBlock(root, $"{name} wheel RL", new Vector3(-0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
             ParentBlock(root, $"{name} wheel RR", new Vector3(0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
         }
+
+        private static void BuildPerimeterFence()
+        {
             var post = new Color(0.55f, 0.56f, 0.58f);
             var rail = new Color(0.72f, 0.74f, 0.76f);
             // North landside fence (behind terminal / car park approach).

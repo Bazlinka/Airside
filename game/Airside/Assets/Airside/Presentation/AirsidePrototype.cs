@@ -340,7 +340,10 @@ namespace Airside.Presentation
                     },
                     onBeginOperations: () => DismissOpeningBriefing(),
                     onResetAirport: () => ResetToNewAirport(),
-                    onContinueAway: () => { _showAwaySummary = false; });
+                    onContinueAway: () => { _showAwaySummary = false; },
+                    onTogglePause: () => { _paused = !_paused; },
+                    onSpeed1: () => { _speed = 1; },
+                    onSpeed4: () => { _speed = 4; });
             }
             _canvasHudActive = _canvasHud.IsActive;
         }
@@ -3459,6 +3462,17 @@ namespace Airside.Presentation
                     var light = _alsLights[i];
                     if (light == null)
                         continue;
+
+                    // Far ALS REIL spots — sharp night flash, not centreline chase.
+                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    {
+                        var flash = daylight < 0.42f
+                            && Mathf.Repeat(Time.unscaledTime * 1.9f + (light.name.EndsWith("R") ? 0.5f : 0f), 1f) < 0.18f;
+                        light.intensity = flash ? 4.2f : alsBase * 0.25f;
+                        light.enabled = daylight < 0.55f;
+                        continue;
+                    }
+
                     if (!nightChase)
                     {
                         light.intensity = alsBase;
@@ -3467,7 +3481,7 @@ namespace Airside.Presentation
                     }
 
                     // Chase from far approach (high index) toward the threshold (index 0).
-                    var step = (_alsLights.Length - 1 - i) * 0.42f;
+                    var step = (Mathf.Min(_alsLights.Length, 8) - 1 - i) * 0.42f;
                     var wave = Mathf.Repeat(chase - step, 2.4f);
                     var pulse = wave < 0.4f
                         ? Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(wave / 0.2f - 1f))
@@ -3686,6 +3700,16 @@ namespace Airside.Presentation
             for (var i = 0; i < 8; i++)
             {
                 var go = GameObject.Find($"ALS lamp {i}");
+                if (go == null)
+                    continue;
+                var light = go.GetComponent<Light>();
+                if (light != null)
+                    lights.Add(light);
+            }
+
+            foreach (var name in new[] { "REIL lamp L", "REIL lamp R" })
+            {
+                var go = GameObject.Find(name);
                 if (go == null)
                     continue;
                 var light = go.GetComponent<Light>();
@@ -4782,17 +4806,40 @@ namespace Airside.Presentation
 
                 var lampGo = new GameObject($"ALS lamp {i}");
                 lampGo.transform.position = new Vector3(x, 0.95f, 0f);
+                // Aim SpotLights toward threshold (~x=-36) so approach washes asphalt (0025 item 5).
+                lampGo.transform.rotation = Quaternion.LookRotation(new Vector3(-36f - x, -0.7f, 0f).normalized);
                 var light = lampGo.AddComponent<Light>();
-                light.type = LightType.Point;
+                light.type = LightType.Spot;
                 light.color = new Color(1f, 0.95f, 0.85f);
-                light.range = 8f;
+                light.range = 14f + i * 0.6f;
+                light.spotAngle = 42f;
+                light.innerSpotAngle = 18f;
                 light.intensity = 0f;
                 light.shadows = LightShadows.None;
+
+                // Emissive lens proxy so bars read lit from overview without more spots.
+                CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                    new Color(1f, 0.97f, 0.88f));
             }
 
-            // Far REIL pair markers beyond the ALS fan.
+            // Far REIL pair — pulsed SpotLights at night (collected with runway edge REIL names).
             CreateBlock("ALS REIL L", new Vector3(-78f, 0.8f, -2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
             CreateBlock("ALS REIL R", new Vector3(-78f, 0.8f, 2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
+            for (var side = 0; side < 2; side++)
+            {
+                var z = side == 0 ? -2.8f : 2.8f;
+                var reilGo = new GameObject(side == 0 ? "REIL lamp L" : "REIL lamp R");
+                reilGo.transform.position = new Vector3(-78f, 1.1f, z);
+                reilGo.transform.rotation = Quaternion.LookRotation(new Vector3(1f, -0.15f, 0f));
+                var reil = reilGo.AddComponent<Light>();
+                reil.type = LightType.Spot;
+                reil.color = new Color(1f, 1f, 0.92f);
+                reil.range = 22f;
+                reil.spotAngle = 28f;
+                reil.innerSpotAngle = 12f;
+                reil.intensity = 0f;
+                reil.shadows = LightShadows.None;
+            }
         }
 
         /// <summary>
@@ -5742,7 +5789,10 @@ namespace Airside.Presentation
                 localPosition: new Vector3(0f, -0.7f, 0f));
 
             if (usedArt)
+            {
                 NestCrossPropellerBlades(root);
+                NestLandingGearParts(root);
+            }
 
             if (!usedArt)
             {
@@ -6005,6 +6055,37 @@ namespace Airside.Presentation
                 return;
             part.SetParent(prop, true);
             part.name = rename;
+        }
+
+        /// <summary>
+        /// Parent scissors / tires under matching gear struts so retract takes the
+        /// whole assembly (0025 item 7) — mirrors NestCrossPropellerBlades.
+        /// </summary>
+        private static void NestLandingGearParts(Transform aircraft)
+        {
+            Transform gearNose = null, gearL = null, gearR = null;
+            Transform scissorsNose = null, scissorsL = null, scissorsR = null;
+            Transform tireNose = null, tireL = null, tireR = null;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Gear nose") gearNose = child;
+                else if (child.name == "Gear L") gearL = child;
+                else if (child.name == "Gear R") gearR = child;
+                else if (child.name == "Gear scissors nose") scissorsNose = child;
+                else if (child.name == "Gear scissors L") scissorsL = child;
+                else if (child.name == "Gear scissors R") scissorsR = child;
+                else if (child.name == "Tire nose") tireNose = child;
+                else if (child.name == "Tire L") tireL = child;
+                else if (child.name == "Tire R") tireR = child;
+            }
+
+            NestUnderProp(gearNose, scissorsNose, "Scissors");
+            NestUnderProp(gearL, scissorsL, "Scissors");
+            NestUnderProp(gearR, scissorsR, "Scissors");
+            NestUnderProp(gearNose, tireNose, "Tire");
+            NestUnderProp(gearL, tireL, "Tire");
+            NestUnderProp(gearR, tireR, "Tire");
+            // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
         }
 
         private static bool HasNamedChild(Transform root, string name)
@@ -6626,12 +6707,31 @@ namespace Airside.Presentation
                     CreateBlock("Runway marking", new Vector3(x, 0.02f, 0f), new Vector3(3.5f, 0.03f, 0.28f), Color.white);
             }
 
-            // Threshold bars + hold-short remain greybox-scale to match the 7 m runway.
-            for (var z = -2.4f; z <= 2.4f; z += 0.8f)
+            // Kit edge / threshold strips when present; greybox fallbacks keep the 7 m strip readable.
+            var usedEdgeL = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "runway_edge_left", new Vector3(0f, 0.025f, -3.35f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            var usedEdgeR = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "runway_edge_right", new Vector3(0f, 0.025f, 3.35f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            if (!usedEdgeL)
+                CreateBlock("Runway edge L", new Vector3(0f, 0.025f, -3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
+            if (!usedEdgeR)
+                CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
+
+            var usedThresholdW = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "runway_threshold", new Vector3(-36f, 0.03f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            var usedThresholdE = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "runway_threshold", new Vector3(36f, 0.03f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            if (!usedThresholdW || !usedThresholdE)
             {
-                CreateBlock("Threshold W", new Vector3(-36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
-                CreateBlock("Threshold E", new Vector3(36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
+                for (var z = -2.4f; z <= 2.4f; z += 0.8f)
+                {
+                    if (!usedThresholdW)
+                        CreateBlock("Threshold W", new Vector3(-36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
+                    if (!usedThresholdE)
+                        CreateBlock("Threshold E", new Vector3(36f, 0.03f, z), new Vector3(2.2f, 0.02f, 0.35f), Color.white);
+                }
             }
+
             CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
             CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
             // Second hold-short pair nearer the apron lead-in.
@@ -6655,23 +6755,40 @@ namespace Airside.Presentation
                 CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
             }
 
-            // Continuous runway edge stripes so the strip reads at dusk without relying on lights alone.
-            CreateBlock("Runway edge L", new Vector3(0f, 0.025f, -3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
-            CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
             // Touchdown zone marks between threshold and aiming points.
             foreach (var x in new[] { -30f, -28f, -26f, -24f, -22f, 22f, 24f, 26f, 28f, 30f })
             {
                 CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
                 CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
             }
-            // Stand bay numbers on the apron (readable from overview).
+            // Stand bay numbers on the apron (readable from overview) — digits 1/3 were missing segments.
             PlaceRunwayDigit('1', new Vector3(14f, 0.04f, 14f), yaw: 0f);
             PlaceRunwayDigit('2', new Vector3(22f, 0.04f, 14f), yaw: 0f);
             PlaceRunwayDigit('3', new Vector3(30f, 0.04f, 14f), yaw: 0f);
-            // Taxiway centreline dashes along Taxiway A.
-            for (var x = -6; x <= 28; x += 6)
-                CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(2.4f, 0.02f, 0.16f),
-                    new Color(0.95f, 0.85f, 0.2f));
+
+            var usedStandA = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "stand_stop_a", new Vector3(14f, 0.04f, 16.2f), Quaternion.identity,
+                new Color(0.95f, 0.85f, 0.2f), out _);
+            var usedStandB = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "stand_stop_b", new Vector3(22f, 0.04f, 16.2f), Quaternion.identity,
+                new Color(0.95f, 0.85f, 0.2f), out _);
+            if (!usedStandA)
+                CreateBlock("Stand stop 1", new Vector3(14f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+            if (!usedStandB)
+                CreateBlock("Stand stop 2", new Vector3(22f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Stand stop 3", new Vector3(30f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+
+            // Single dashed taxi centreline (kit or greybox) — no overlapping duplicate loop.
+            var usedTaxi = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(8f, 0.035f, 9f), Quaternion.Euler(0f, 90f, 0f),
+                new Color(0.95f, 0.85f, 0.2f), out _);
+            if (!usedTaxi)
+            {
+                for (var x = -6; x <= 28; x += 5)
+                    CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(2.2f, 0.02f, 0.16f),
+                        new Color(0.95f, 0.85f, 0.2f));
+            }
+
             // Taxiway edge lines along Taxiway A.
             CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);
@@ -6682,9 +6799,6 @@ namespace Airside.Presentation
                 CreateBlock($"Apron chevron {i}", new Vector3(14f + i * 0.4f, 0.04f, z), new Vector3(1.1f, 0.02f, 0.16f),
                     new Color(0.95f, 0.85f, 0.2f));
             }
-
-            for (var x = -4; x <= 28; x += 4)
-                CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
         }
 
         /// <summary>
@@ -6726,6 +6840,18 @@ namespace Airside.Presentation
                     Seg("ul", -0.55f, 0.55f, 0.28f, 0.85f);
                     Seg("ur", 0.55f, 0.55f, 0.28f, 0.85f);
                     Seg("stem", 0.55f, -0.45f, 0.28f, 1.0f);
+                    break;
+                case '1':
+                    Seg("stem", 0f, 0f, 0.32f, 1.9f);
+                    Seg("base", 0f, -0.95f, 0.85f, 0.28f);
+                    Seg("serif", -0.28f, 0.7f, 0.45f, 0.28f);
+                    break;
+                case '3':
+                    Seg("top", 0f, 0.95f, 1.1f, 0.28f);
+                    Seg("mid", 0f, 0f, 1.0f, 0.28f);
+                    Seg("bot", 0f, -0.95f, 1.1f, 0.28f);
+                    Seg("ur", 0.55f, 0.5f, 0.28f, 0.9f);
+                    Seg("lr", 0.55f, -0.5f, 0.28f, 0.9f);
                     break;
             }
         }

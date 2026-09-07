@@ -35,6 +35,12 @@ namespace Airside.Presentation
         private Label _warningText;
         private VisualElement _speedChip;
         private Label _speedText;
+        private Button _pauseButton;
+        private Button _speed1Button;
+        private Button _speed4Button;
+        private VisualElement _stripResearchTrack;
+        private VisualElement _stripResearchFill;
+        private Label _stripResearchText;
         private VisualElement _turnaroundBlock;
         private Label _turnaroundText;
         private Button _priorityButton;
@@ -95,6 +101,9 @@ namespace Airside.Presentation
         private Action _onBeginOperations;
         private Action _onResetAirport;
         private Action _onContinueAway;
+        private Action _onTogglePause;
+        private Action _onSpeed1;
+        private Action _onSpeed4;
 
         public bool IsActive => _built && _document != null && _document.rootVisualElement != null;
 
@@ -117,7 +126,10 @@ namespace Airside.Presentation
             Action onStartResearch = null,
             Action onBeginOperations = null,
             Action onResetAirport = null,
-            Action onContinueAway = null)
+            Action onContinueAway = null,
+            Action onTogglePause = null,
+            Action onSpeed1 = null,
+            Action onSpeed4 = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -129,6 +141,9 @@ namespace Airside.Presentation
             _onBeginOperations = onBeginOperations;
             _onResetAirport = onResetAirport;
             _onContinueAway = onContinueAway;
+            _onTogglePause = onTogglePause;
+            _onSpeed1 = onSpeed1;
+            _onSpeed4 = onSpeed4;
         }
 
         private void Build()
@@ -322,8 +337,8 @@ namespace Airside.Presentation
 
         private void BuildEconomyStrip()
         {
-            // REF-004 top-centre cash / finance strip (0025 item 6).
-            _economyStrip = MakePanel("Economy strip", 520f);
+            // REF-004 top-centre cash / finance / research strip (0025 item 6).
+            _economyStrip = MakePanel("Economy strip", 640f);
             _economyStrip.style.top = 18;
             _economyStrip.style.left = Length.Percent(50);
             _economyStrip.style.translate = new Translate(Length.Percent(-50), 0);
@@ -344,35 +359,66 @@ namespace Airside.Presentation
             _economyStrip.Add(_cashIcon);
             _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
             _cashText.style.marginLeft = 6;
-            _cashText.style.marginRight = 16;
+            _cashText.style.marginRight = 14;
             _economyStrip.Add(_cashText);
 
             _repIcon = MakeIconSlot("Rep icon", 18);
             _economyStrip.Add(_repIcon);
             _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
             _financeText.style.marginLeft = 6;
+            _financeText.style.marginRight = 14;
             _financeText.style.whiteSpace = WhiteSpace.Normal;
             _economyStrip.Add(_financeText);
+
+            _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
+            _stripResearchText.style.marginRight = 6;
+            _stripResearchText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.85f);
+            _economyStrip.Add(_stripResearchText);
+            _stripResearchTrack = MakeProgressTrack("Strip research track");
+            _stripResearchTrack.style.width = 110;
+            _stripResearchTrack.style.marginTop = 0;
+            _stripResearchFill = _stripResearchTrack.Q<VisualElement>("Fill");
+            _economyStrip.Add(_stripResearchTrack);
 
             _root.Add(_economyStrip);
         }
 
         private void BuildSpeedChip()
         {
-            _speedChip = MakePanel("Speed chip", 160f);
+            // REF-004 bottom-centre Pause · 1× · 4× controls (0025 item 6).
+            _speedChip = MakePanel("Speed chip", 280f);
             _speedChip.style.bottom = 22;
             _speedChip.style.left = Length.Percent(50);
             _speedChip.style.translate = new Translate(Length.Percent(-50), 0);
-            _speedChip.style.paddingLeft = 12;
-            _speedChip.style.paddingRight = 12;
+            _speedChip.style.paddingLeft = 10;
+            _speedChip.style.paddingRight = 10;
             _speedChip.style.paddingTop = 8;
             _speedChip.style.paddingBottom = 8;
-            _speedChip.pickingMode = PickingMode.Ignore;
+            _speedChip.style.flexDirection = FlexDirection.Row;
+            _speedChip.style.alignItems = Align.Center;
+            _speedChip.style.justifyContent = Justify.Center;
+            _speedChip.pickingMode = PickingMode.Position;
             _speedChip.style.borderTopWidth = 2;
             _speedChip.style.borderTopColor = new Color(
                 AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
-            _speedText = MakePanelLabel("Speed", 13, FontStyle.Bold);
-            _speedText.style.unityTextAlign = TextAnchor.MiddleCenter;
+
+            _pauseButton = MakeButton("Pause", AirsideTheme.Tarmac, 72f);
+            _pauseButton.clicked += () => _onTogglePause?.Invoke();
+            _speedChip.Add(_pauseButton);
+
+            _speed1Button = MakeButton("1×", AirsideTheme.CoastalBlue, 56f);
+            _speed1Button.style.marginLeft = 8;
+            _speed1Button.clicked += () => _onSpeed1?.Invoke();
+            _speedChip.Add(_speed1Button);
+
+            _speed4Button = MakeButton("4×", AirsideTheme.CoastalBlue, 56f);
+            _speed4Button.style.marginLeft = 8;
+            _speed4Button.clicked += () => _onSpeed4?.Invoke();
+            _speedChip.Add(_speed4Button);
+
+            _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal);
+            _speedText.style.marginLeft = 10;
+            _speedText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.75f);
             _speedChip.Add(_speedText);
             _root.Add(_speedChip);
         }
@@ -1062,9 +1108,14 @@ namespace Airside.Presentation
             _crewRow.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
             _standsText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
             _buildStandButton.style.display = !earlySession && buildStandVisible ? DisplayStyle.Flex : DisplayStyle.None;
-            _researchText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
-            _researchTrack.style.display = !earlySession && researchProgressVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            // Research progress lives on the top economy strip; left keeps the start button only.
+            _researchText.style.display = DisplayStyle.None;
+            _researchTrack.style.display = DisplayStyle.None;
             _researchButton.style.display = !earlySession && researchButtonVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_stripResearchText != null)
+                _stripResearchText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_stripResearchTrack != null && earlySession)
+                _stripResearchTrack.style.display = DisplayStyle.None;
 
             if (!earlySession)
             {
@@ -1081,6 +1132,13 @@ namespace Airside.Presentation
                 _researchText.text = researchLine ?? string.Empty;
                 if (researchProgressVisible && _researchFill != null)
                     _researchFill.style.width = Length.Percent(Mathf.Clamp01(researchProgress01) * 100f);
+                if (_stripResearchText != null)
+                    _stripResearchText.text = string.IsNullOrEmpty(researchLine) ? "Research" : researchLine;
+                if (_stripResearchFill != null)
+                    _stripResearchFill.style.width = Length.Percent(
+                        researchProgressVisible ? Mathf.Clamp01(researchProgress01) * 100f : 0f);
+                if (_stripResearchTrack != null)
+                    _stripResearchTrack.style.display = researchProgressVisible ? DisplayStyle.Flex : DisplayStyle.None;
 
                 if (researchButtonVisible)
                 {
@@ -1116,7 +1174,23 @@ namespace Airside.Presentation
             ApplyIcon(_cashIcon, AirsideTheme.Icon("economy", "cash"));
             ApplyIcon(_repIcon, AirsideTheme.Icon("economy", "reputation"));
             if (_speedText != null)
-                _speedText.text = paused ? "PAUSED" : $"{Mathf.Max(1, speed)}× time · Tab";
+                _speedText.text = paused ? "PAUSED" : "Tab cycles";
+            if (_pauseButton != null)
+            {
+                _pauseButton.text = paused ? "Resume" : "Pause";
+                _pauseButton.style.backgroundColor = paused ? AirsideTheme.CoastalBlue : AirsideTheme.Tarmac;
+            }
+
+            HighlightSpeedButton(_speed1Button, !paused && speed <= 1);
+            HighlightSpeedButton(_speed4Button, !paused && speed >= 4);
+        }
+
+        private static void HighlightSpeedButton(Button button, bool active)
+        {
+            if (button == null)
+                return;
+            button.style.backgroundColor = active ? AirsideTheme.OpenSky : AirsideTheme.CoastalBlue;
+            button.style.opacity = active ? 1f : 0.72f;
         }
 
         public void SyncOffer(

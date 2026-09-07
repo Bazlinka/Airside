@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Markings, gear nest, ALS spots, HUD time controls (0025 items 3+5+6+7).**
+  Stand digits 1/3 paint correctly; markings kit edges/threshold/taxi/stops used;
+  gear scissors/tires nest under struts; ALS/REIL SpotLights wash approach;
+  Toolkit economy strip shows research; Pause/1×/4× buttons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Landside + fence densify (0025 item 3).** Parking bay lines, access dashes,
   extra cars, inland scrub belt, E/W fence mid-posts and corner braces.
   Presentation only. Evidence: `scripts/test-domain.sh` 105/105.

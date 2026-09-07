@@ -850,6 +850,14 @@ namespace Airside.Presentation
                 waitMeter: showWaitMeter,
                 waitLbl: waitLabel,
                 waitProgress: waitProgress);
+
+            if (toolkitOwnsLeft)
+            {
+                AircraftPhase? phase = _simulation.Flights.Count > 0
+                    ? _simulation.Flights[0].Operation.Phase
+                    : null;
+                _toolkitHud.SyncChromeIcons(phase, _simulation.CurrentWeather, _speed, _paused);
+            }
         }
 
         private void ReadSimulationControls()
@@ -1292,9 +1300,11 @@ namespace Airside.Presentation
                 if (child == aircraft)
                     continue;
                 var n = child.name;
-                if (!(n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                // Exact glass only — densified Cockpit frame / pillars must not emit.
+                if (!(n == "Cockpit"
+                      || n == "Cockpit glare"
+                      || n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
                       || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
-                      || n.StartsWith("Cockpit", StringComparison.OrdinalIgnoreCase)
                       || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0))
                     continue;
 
@@ -1798,6 +1808,8 @@ namespace Airside.Presentation
                     light.shadows = LightShadows.None;
                 }
 
+                // Authored GSE kits face along +X (cab/nose at +X); Unity SpotLights aim +Z.
+                light.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
                 light.enabled = on;
                 if (on)
                     light.intensity = night ? 2.8f : 1.1f;
@@ -1819,9 +1831,10 @@ namespace Airside.Presentation
             if (has)
                 return;
 
-            ParentBlock(vehicle, "Headlight L", new Vector3(0.55f, 0.25f, 0.35f),
+            // Fallback lamps sit on the forward bumper (+X cab end), not mid-body.
+            ParentBlock(vehicle, "Headlight L", new Vector3(1.85f, 0.55f, 0.4f),
                 new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
-            ParentBlock(vehicle, "Headlight R", new Vector3(0.55f, 0.25f, -0.35f),
+            ParentBlock(vehicle, "Headlight R", new Vector3(1.85f, 0.55f, -0.4f),
                 new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
         }
 
@@ -3956,8 +3969,9 @@ namespace Airside.Presentation
                 name => name switch
                 {
                     "glass_front" or "windows" or "cabin_windows" or "landside_glass"
-                        or "entrance" or "entrance_door_l" or "entrance_door_r"
-                        or "boarding_gate" => new Color(0.16f, 0.38f, 0.5f),
+                        or "door_glass" => new Color(0.16f, 0.38f, 0.5f),
+                    "entrance" or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
+                        => new Color(0.55f, 0.6f, 0.64f),
                     "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
                         or "window_mullion_4" or "window_mullion_5"
                         or "window_mullion_6" or "window_mullion_7"
@@ -6051,6 +6065,10 @@ namespace Airside.Presentation
                     "door" or "cab_door" or "cab_door_r" => "Door",
                     "cargo_1" or "cargo_2" or "cargo_3" => "Cargo",
                     "cargo_tag_1" or "cargo_tag_2" => "Cargo tag",
+                    "headlight_l" => "Headlight L",
+                    "headlight_r" => "Headlight R",
+                    "taillight_l" => "Taillight L",
+                    "taillight_r" => "Taillight R",
                     // Keep cart_* / cart_wheel_* names so wheels roll and carts do not bob as Cargo.
                     _ => $"{name} {kitName}"
                 },
@@ -6431,9 +6449,8 @@ namespace Airside.Presentation
                     foreach (var child in root.GetComponentsInChildren<Transform>(true))
                     {
                         var n = child.name;
-                        if (n is not ("glass_front" or "landside_glass" or "windows" or "entrance"
-                            or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
-                            or "cabin_windows"))
+                        if (n is not ("glass_front" or "landside_glass" or "windows" or "cabin_windows"
+                            or "door_glass"))
                             continue;
                         var renderer = child.GetComponent<Renderer>();
                         if (renderer == null)

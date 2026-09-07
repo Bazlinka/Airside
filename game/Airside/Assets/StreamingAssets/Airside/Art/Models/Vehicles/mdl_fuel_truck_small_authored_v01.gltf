@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_fuel_truck_small_authored_v01.bin",
-      "byteLength": 32184
+      "byteLength": 33624
     }
   ],
   "bufferViews": [
@@ -517,60 +517,108 @@
     {
       "buffer": 0,
       "byteOffset": 29592,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 29880,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 29952,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30240,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30312,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30600,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30672,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30960,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 31032,
       "byteLength": 960,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 30552,
+      "byteOffset": 31992,
       "byteLength": 192,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 30744,
+      "byteOffset": 32184,
       "byteLength": 288,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 31032,
+      "byteOffset": 32472,
       "byteLength": 72,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 31104,
+      "byteOffset": 32544,
       "byteLength": 288,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 31392,
+      "byteOffset": 32832,
       "byteLength": 72,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 31464,
+      "byteOffset": 32904,
       "byteLength": 288,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 31752,
+      "byteOffset": 33192,
       "byteLength": 72,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 31824,
+      "byteOffset": 33264,
       "byteLength": 288,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 32112,
+      "byteOffset": 33552,
       "byteLength": 72,
       "target": 34963
     }
@@ -1503,6 +1551,94 @@
     {
       "bufferView": 84,
       "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        2.0,
+        0.7099999785423279,
+        0.4699999988079071
+      ],
+      "min": [
+        1.899999976158142,
+        0.5899999737739563,
+        0.33000001311302185
+      ]
+    },
+    {
+      "bufferView": 85,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 86,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        2.0,
+        0.7099999785423279,
+        -0.33000001311302185
+      ],
+      "min": [
+        1.899999976158142,
+        0.5899999737739563,
+        -0.4699999988079071
+      ]
+    },
+    {
+      "bufferView": 87,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 88,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -1.909999966621399,
+        0.6000000238418579,
+        0.5
+      ],
+      "min": [
+        -1.9900000095367432,
+        0.5,
+        0.4000000059604645
+      ]
+    },
+    {
+      "bufferView": 89,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 90,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -1.909999966621399,
+        0.6000000238418579,
+        -0.4000000059604645
+      ],
+      "min": [
+        -1.9900000095367432,
+        0.5,
+        -0.5
+      ]
+    },
+    {
+      "bufferView": 91,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 92,
+      "componentType": 5126,
       "count": 80,
       "type": "VEC3",
       "max": [
@@ -1517,13 +1653,13 @@
       ]
     },
     {
-      "bufferView": 85,
+      "bufferView": 93,
       "componentType": 5123,
       "count": 96,
       "type": "SCALAR"
     },
     {
-      "bufferView": 86,
+      "bufferView": 94,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -1539,13 +1675,13 @@
       ]
     },
     {
-      "bufferView": 87,
+      "bufferView": 95,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 88,
+      "bufferView": 96,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -1561,13 +1697,13 @@
       ]
     },
     {
-      "bufferView": 89,
+      "bufferView": 97,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 90,
+      "bufferView": 98,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -1583,13 +1719,13 @@
       ]
     },
     {
-      "bufferView": 91,
+      "bufferView": 99,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 92,
+      "bufferView": 100,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -1605,7 +1741,7 @@
       ]
     },
     {
-      "bufferView": 93,
+      "bufferView": 101,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
@@ -2117,7 +2253,7 @@
       ]
     },
     {
-      "name": "exhaust",
+      "name": "headlight_l",
       "primitives": [
         {
           "attributes": {
@@ -2129,7 +2265,7 @@
       ]
     },
     {
-      "name": "mudflap_l",
+      "name": "headlight_r",
       "primitives": [
         {
           "attributes": {
@@ -2141,7 +2277,7 @@
       ]
     },
     {
-      "name": "mudflap_r",
+      "name": "taillight_l",
       "primitives": [
         {
           "attributes": {
@@ -2153,7 +2289,7 @@
       ]
     },
     {
-      "name": "number_plate",
+      "name": "taillight_r",
       "primitives": [
         {
           "attributes": {
@@ -2165,13 +2301,61 @@
       ]
     },
     {
-      "name": "fuel_hazard",
+      "name": "exhaust",
       "primitives": [
         {
           "attributes": {
             "POSITION": 92
           },
           "indices": 93,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "mudflap_l",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 94
+          },
+          "indices": 95,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "mudflap_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 96
+          },
+          "indices": 97,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "number_plate",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 98
+          },
+          "indices": 99,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "fuel_hazard",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 100
+          },
+          "indices": 101,
           "mode": 4
         }
       ]
@@ -2347,24 +2531,40 @@
       "mesh": 41
     },
     {
-      "name": "exhaust",
+      "name": "headlight_l",
       "mesh": 42
     },
     {
-      "name": "mudflap_l",
+      "name": "headlight_r",
       "mesh": 43
     },
     {
-      "name": "mudflap_r",
+      "name": "taillight_l",
       "mesh": 44
     },
     {
-      "name": "number_plate",
+      "name": "taillight_r",
       "mesh": 45
     },
     {
-      "name": "fuel_hazard",
+      "name": "exhaust",
       "mesh": 46
+    },
+    {
+      "name": "mudflap_l",
+      "mesh": 47
+    },
+    {
+      "name": "mudflap_r",
+      "mesh": 48
+    },
+    {
+      "name": "number_plate",
+      "mesh": 49
+    },
+    {
+      "name": "fuel_hazard",
+      "mesh": 50
     }
   ],
   "scenes": [
@@ -2417,7 +2617,11 @@
         43,
         44,
         45,
-        46
+        46,
+        47,
+        48,
+        49,
+        50
       ]
     }
   ],

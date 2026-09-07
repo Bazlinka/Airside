@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Night lighting + wet fallback + Toolkit HUD REF-004 layout (0025 items 4–7).**
+  GSE SpotLights aim along kit +X; fuel truck gains bumper headlights (51 meshes);
+  cabin glow skips frames; entrance doors no longer Glass; wet sheen without ClearCoat;
+  Toolkit HUD: translucent panels, ops top-left, economy strip, bottom speed chip,
+  Batch E phase/weather/cash icons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Presentation wiring bug fixes (0025 items 4+5+7).** GSE rename map no longer
   collapses cart_* into Cargo; gear scissors no longer pitch with struts; prop
   hubs/spinners nest under propellers; duplicate aircraft lamps skipped when kit

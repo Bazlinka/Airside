@@ -1,4 +1,5 @@
 using System;
+using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,11 +21,20 @@ namespace Airside.Presentation
         private VisualElement _brandImage;
         private Label _locationText;
         private Label _flightText;
+        private VisualElement _phaseRow;
+        private VisualElement _phaseIcon;
         private Label _phaseText;
+        private VisualElement _clockRow;
+        private VisualElement _weatherIcon;
         private Label _clockText;
+        private VisualElement _economyStrip;
+        private VisualElement _cashIcon;
         private Label _cashText;
+        private VisualElement _repIcon;
         private Label _financeText;
         private Label _warningText;
+        private VisualElement _speedChip;
+        private Label _speedText;
         private VisualElement _turnaroundBlock;
         private Label _turnaroundText;
         private Button _priorityButton;
@@ -129,7 +139,7 @@ namespace Airside.Presentation
             _document = gameObject.AddComponent<UIDocument>();
             var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             panelSettings.scaleMode = PanelScaleMode.ScaleWithScreenSize;
-            panelSettings.referenceResolution = new Vector2Int(1920, 1080);
+            panelSettings.referenceResolution = new Vector2Int(2560, 1440);
             panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panelSettings.match = 0.5f;
             panelSettings.sortingOrder = 100;
@@ -140,9 +150,11 @@ namespace Airside.Presentation
             _root.style.flexGrow = 1;
             _root.pickingMode = PickingMode.Position;
 
+            BuildEconomyStrip();
             BuildLeftPanel();
             BuildOfferPanel();
             BuildOpsPanel();
+            BuildSpeedChip();
             BuildOverlays();
 
             _researchToast = MakeToastLabel("Research toast");
@@ -176,10 +188,11 @@ namespace Airside.Presentation
 
         private void BuildLeftPanel()
         {
-            _leftPanel = MakePanel("Status panel", 410f);
+            // REF-004: turnaround / flight card sits bottom-left; ops owns top-left.
+            _leftPanel = MakePanel("Status panel", 400f);
             _leftPanel.style.left = 22;
-            _leftPanel.style.top = 22;
-            _leftPanel.style.maxHeight = 660;
+            _leftPanel.style.bottom = 22;
+            _leftPanel.style.maxHeight = 520;
             _leftPanel.style.paddingLeft = 16;
             _leftPanel.style.paddingRight = 16;
             _leftPanel.style.paddingTop = 12;
@@ -196,28 +209,50 @@ namespace Airside.Presentation
             {
                 _brandImage = new VisualElement { name = "Wordmark" };
                 _brandImage.pickingMode = PickingMode.Ignore;
-                _brandImage.style.height = 40;
-                _brandImage.style.marginBottom = 6;
+                _brandImage.style.height = 36;
+                _brandImage.style.marginBottom = 4;
                 _brandImage.style.backgroundImage = new StyleBackground(wordmark);
                 _brandImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 _leftPanel.Add(_brandImage);
             }
             else
             {
-                _brandLabel = MakePanelLabel("Brand", 22, FontStyle.Bold);
+                _brandLabel = MakePanelLabel("Brand", 20, FontStyle.Bold);
                 _brandLabel.text = "AIRSIDE";
                 _brandLabel.style.marginBottom = 4;
                 _leftPanel.Add(_brandLabel);
             }
 
-            _locationText = AddLeftLine(_leftPanel, "Location", 14, FontStyle.Normal);
+            _locationText = AddLeftLine(_leftPanel, "Location", 13, FontStyle.Normal);
             _locationText.style.color = AirsideTheme.OpenSky;
-            _flightText = AddLeftLine(_leftPanel, "Flight", 17, FontStyle.Bold);
-            _phaseText = AddLeftLine(_leftPanel, "Phase", 15, FontStyle.Normal);
+            _flightText = AddLeftLine(_leftPanel, "Flight", 16, FontStyle.Bold);
+
+            _phaseRow = new VisualElement { name = "Phase row" };
+            _phaseRow.style.flexDirection = FlexDirection.Row;
+            _phaseRow.style.alignItems = Align.Center;
+            _phaseRow.style.marginTop = 2;
+            _phaseRow.style.marginBottom = 2;
+            _phaseIcon = MakeIconSlot("Phase icon", 20);
+            _phaseRow.Add(_phaseIcon);
+            _phaseText = MakePanelLabel("Phase", 14, FontStyle.Normal);
             _phaseText.style.color = AirsideTheme.OpenSky;
-            _clockText = AddLeftLine(_leftPanel, "Clock", 13, FontStyle.Normal);
-            _cashText = AddLeftLine(_leftPanel, "Cash", 14, FontStyle.Bold);
-            _financeText = AddLeftLine(_leftPanel, "Finance", 13, FontStyle.Normal);
+            _phaseText.style.marginLeft = 8;
+            _phaseRow.Add(_phaseText);
+            _leftPanel.Add(_phaseRow);
+
+            _clockRow = new VisualElement { name = "Clock row" };
+            _clockRow.style.flexDirection = FlexDirection.Row;
+            _clockRow.style.alignItems = Align.Center;
+            _clockRow.style.marginTop = 2;
+            _clockRow.style.marginBottom = 2;
+            _weatherIcon = MakeIconSlot("Weather icon", 18);
+            _clockRow.Add(_weatherIcon);
+            _clockText = MakePanelLabel("Clock", 12, FontStyle.Normal);
+            _clockText.style.marginLeft = 8;
+            _clockText.style.whiteSpace = WhiteSpace.Normal;
+            _clockRow.Add(_clockText);
+            _leftPanel.Add(_clockRow);
+
             _warningText = AddLeftLine(_leftPanel, "Warning", 13, FontStyle.Bold);
             _warningText.style.color = AirsideTheme.SafetyYellow;
 
@@ -265,12 +300,13 @@ namespace Airside.Presentation
             _researchButton.clicked += () => _onStartResearch?.Invoke();
             _leftPanel.Add(_researchButton);
 
-            _coachText = AddLeftLine(_leftPanel, "Coach", 15, FontStyle.Bold);
+            _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
             _coachText.style.color = AirsideTheme.OpenSky;
             _coachText.style.whiteSpace = WhiteSpace.Normal;
-            _controlsText = AddLeftLine(_leftPanel, "Controls", 12, FontStyle.Normal);
-            _controlsText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.78f);
+            _controlsText = AddLeftLine(_leftPanel, "Controls", 11, FontStyle.Normal);
+            _controlsText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.7f);
             _controlsText.style.whiteSpace = WhiteSpace.Normal;
+            _controlsText.style.display = DisplayStyle.None;
 
             _waitRow = new VisualElement { name = "Wait row" };
             _waitRow.style.marginTop = 6;
@@ -282,6 +318,63 @@ namespace Airside.Presentation
             _leftPanel.Add(_waitRow);
 
             _root.Add(_leftPanel);
+        }
+
+        private void BuildEconomyStrip()
+        {
+            // REF-004 top-centre cash / finance strip (0025 item 6).
+            _economyStrip = MakePanel("Economy strip", 520f);
+            _economyStrip.style.top = 18;
+            _economyStrip.style.left = Length.Percent(50);
+            _economyStrip.style.translate = new Translate(Length.Percent(-50), 0);
+            _economyStrip.style.height = StyleKeyword.Auto;
+            _economyStrip.style.paddingLeft = 14;
+            _economyStrip.style.paddingRight = 14;
+            _economyStrip.style.paddingTop = 8;
+            _economyStrip.style.paddingBottom = 8;
+            _economyStrip.style.flexDirection = FlexDirection.Row;
+            _economyStrip.style.alignItems = Align.Center;
+            _economyStrip.style.justifyContent = Justify.Center;
+            _economyStrip.pickingMode = PickingMode.Ignore;
+            _economyStrip.style.borderTopWidth = 2;
+            _economyStrip.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.45f);
+
+            _cashIcon = MakeIconSlot("Cash icon", 18);
+            _economyStrip.Add(_cashIcon);
+            _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
+            _cashText.style.marginLeft = 6;
+            _cashText.style.marginRight = 16;
+            _economyStrip.Add(_cashText);
+
+            _repIcon = MakeIconSlot("Rep icon", 18);
+            _economyStrip.Add(_repIcon);
+            _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
+            _financeText.style.marginLeft = 6;
+            _financeText.style.whiteSpace = WhiteSpace.Normal;
+            _economyStrip.Add(_financeText);
+
+            _root.Add(_economyStrip);
+        }
+
+        private void BuildSpeedChip()
+        {
+            _speedChip = MakePanel("Speed chip", 160f);
+            _speedChip.style.bottom = 22;
+            _speedChip.style.left = Length.Percent(50);
+            _speedChip.style.translate = new Translate(Length.Percent(-50), 0);
+            _speedChip.style.paddingLeft = 12;
+            _speedChip.style.paddingRight = 12;
+            _speedChip.style.paddingTop = 8;
+            _speedChip.style.paddingBottom = 8;
+            _speedChip.pickingMode = PickingMode.Ignore;
+            _speedChip.style.borderTopWidth = 2;
+            _speedChip.style.borderTopColor = new Color(
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
+            _speedText = MakePanelLabel("Speed", 13, FontStyle.Bold);
+            _speedText.style.unityTextAlign = TextAnchor.MiddleCenter;
+            _speedChip.Add(_speedText);
+            _root.Add(_speedChip);
         }
 
         private void BuildOfferPanel()
@@ -343,8 +436,10 @@ namespace Airside.Presentation
 
         private void BuildOpsPanel()
         {
+            // REF-004: OPERATIONS card owns top-left (status/turnaround sits bottom-left).
             _opsPanel = MakePanel("Ops panel", 340f);
-            _opsPanel.style.right = 22;
+            _opsPanel.style.left = 22;
+            _opsPanel.style.top = 22;
             _opsPanel.pickingMode = PickingMode.Ignore;
             // Match status panel brand chrome (0025 item 6).
             _opsPanel.style.borderLeftWidth = 3;
@@ -711,11 +806,15 @@ namespace Airside.Presentation
             var panel = new VisualElement { name = name };
             panel.style.position = Position.Absolute;
             panel.style.width = width;
-            panel.style.backgroundColor = new Color(
-                AirsideTheme.RunwayInk.r,
-                AirsideTheme.RunwayInk.g,
-                AirsideTheme.RunwayInk.b,
-                0.96f);
+            var ink = AirsideTheme.RunwayInk;
+            ink.a = 0.82f;
+            panel.style.backgroundColor = ink;
+            var panelTex = AirsideTheme.PanelBackground;
+            if (panelTex != null)
+            {
+                panel.style.backgroundImage = new StyleBackground(panelTex);
+                panel.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+            }
             panel.style.borderTopLeftRadius = 8;
             panel.style.borderTopRightRadius = 8;
             panel.style.borderBottomLeftRadius = 8;
@@ -724,12 +823,39 @@ namespace Airside.Presentation
             panel.style.borderRightWidth = 1;
             panel.style.borderTopWidth = 1;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.75f);
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.55f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
             panel.style.borderTopColor = border;
             panel.style.borderBottomColor = border;
             return panel;
+        }
+
+        private static VisualElement MakeIconSlot(string name, float size)
+        {
+            var icon = new VisualElement { name = name };
+            icon.pickingMode = PickingMode.Ignore;
+            icon.style.width = size;
+            icon.style.height = size;
+            icon.style.flexShrink = 0;
+            icon.style.display = DisplayStyle.None;
+            return icon;
+        }
+
+        private static void ApplyIcon(VisualElement slot, Texture2D texture)
+        {
+            if (slot == null)
+                return;
+            if (texture == null)
+            {
+                slot.style.display = DisplayStyle.None;
+                slot.style.backgroundImage = StyleKeyword.None;
+                return;
+            }
+
+            slot.style.display = DisplayStyle.Flex;
+            slot.style.backgroundImage = new StyleBackground(texture);
+            slot.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
         }
 
         private static Label MakePanelLabel(string name, int fontSize, FontStyle style)
@@ -806,6 +932,8 @@ namespace Airside.Presentation
             ApplyLeftVisibility();
             ApplyOfferVisibility();
             ApplyOpsVisibility();
+            ApplyEconomyVisibility();
+            ApplySpeedVisibility();
             if (!visible)
             {
                 SyncToast(string.Empty, false);
@@ -896,6 +1024,11 @@ namespace Airside.Presentation
             _cashText.style.color = cashColor;
             _financeText.text = financeLine ?? string.Empty;
             _financeText.style.color = financeColor;
+            if (_speedText != null)
+            {
+                // Prefer a calm speed readout; fall back to the controls hint string.
+                _speedText.text = string.IsNullOrEmpty(controlsLine) ? "1× time" : controlsLine.Split('\n')[0];
+            }
 
             var hasWarning = !string.IsNullOrEmpty(warningLine);
             _warningText.style.display = hasWarning ? DisplayStyle.Flex : DisplayStyle.None;
@@ -969,6 +1102,21 @@ namespace Airside.Presentation
             }
 
             ApplyLeftVisibility();
+            ApplyEconomyVisibility();
+            ApplySpeedVisibility();
+        }
+
+        /// <summary>
+        /// Batch E icons on the Toolkit path (IMGUI already had these; Toolkit did not).
+        /// </summary>
+        public void SyncChromeIcons(AircraftPhase? phase, WeatherKind weather, int speed, bool paused)
+        {
+            ApplyIcon(_phaseIcon, phase.HasValue ? AirsideTheme.OperationIcon(phase.Value) : null);
+            ApplyIcon(_weatherIcon, AirsideTheme.WeatherIcon(weather));
+            ApplyIcon(_cashIcon, AirsideTheme.Icon("economy", "cash"));
+            ApplyIcon(_repIcon, AirsideTheme.Icon("economy", "reputation"));
+            if (_speedText != null)
+                _speedText.text = paused ? "PAUSED" : $"{Mathf.Max(1, speed)}× time · Tab";
         }
 
         public void SyncOffer(
@@ -1055,9 +1203,23 @@ namespace Airside.Presentation
             if (!show)
                 return;
 
-            var offerHeight = _offerVisible ? (_firstDecisionOffer ? 196f : 156f) : 0f;
-            var top = 22f + (_offerVisible ? offerHeight + 12f : 0f);
-            _opsPanel.style.top = top;
+            // Top-left ops card — no longer stacks under the right-side offer.
+            _opsPanel.style.top = 22;
+            _opsPanel.style.left = 22;
+        }
+
+        private void ApplyEconomyVisibility()
+        {
+            if (_economyStrip == null)
+                return;
+            _economyStrip.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void ApplySpeedVisibility()
+        {
+            if (_speedChip == null)
+                return;
+            _speedChip.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>

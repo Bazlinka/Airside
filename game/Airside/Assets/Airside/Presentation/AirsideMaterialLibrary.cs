@@ -59,7 +59,8 @@ namespace Airside.Presentation
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
             [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.68f, 0.14f, 0.98f),
-            [SurfaceKind.Glass] = new Profile(0.06f, 0.92f, 0.02f, 1f, transparent: true),
+            // Slightly softer glass so curtain walls read as panes, not chrome mirrors.
+            [SurfaceKind.Glass] = new Profile(0.04f, 0.88f, 0.02f, 1f, transparent: true),
             [SurfaceKind.Rubber] = new Profile(0.012f, 0.08f, 0.75f, 0.84f),
             [SurfaceKind.Plastic] = new Profile(0.04f, 0.38f, 0.28f, 0.95f),
             [SurfaceKind.Water] = new Profile(0.025f, 0.94f, 0.18f, 1f, transparent: true),
@@ -121,13 +122,14 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
+            if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
+                || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle")
+                || n.Equals("entrance") || n.Contains("entrance_door") || n.Contains("boarding_gate"))
+                return SurfaceKind.Metal;
             if (n.Contains("glass") || n.Contains("window")
                 || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
-                || n.Contains("landside_glass") || n.Equals("entrance") || n.Contains("boarding_gate"))
+                || n.Contains("landside_glass") || n.Contains("door_glass"))
                 return SurfaceKind.Glass;
-            if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
-                || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle"))
-                return SurfaceKind.Metal;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
             if (n.Contains("propeller") || n.Contains("propblade") || n.Contains("spinner")
@@ -278,6 +280,28 @@ namespace Airside.Presentation
                     material.EnableKeyword("_CLEARCOAT");
                 else
                     material.DisableKeyword("_CLEARCOAT");
+            }
+            else if (wetness01 > 0.02f)
+            {
+                // Older URP Lit without ClearCoat: push specular + cool sheen so wet still reads.
+                var boostedSmooth = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.98f), wetness01);
+                if (material.HasProperty("_Smoothness"))
+                    material.SetFloat("_Smoothness", boostedSmooth);
+                if (material.HasProperty("_Glossiness"))
+                    material.SetFloat("_Glossiness", boostedSmooth);
+                if (material.HasProperty("_Metallic"))
+                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.42f), wetness01));
+                if (material.HasProperty("_EmissionColor"))
+                {
+                    material.EnableKeyword("_EMISSION");
+                    var sheen = new Color(0.08f, 0.12f, 0.16f) * (wetness01 * 0.35f);
+                    material.SetColor("_EmissionColor", sheen);
+                }
+            }
+            else if (material.HasProperty("_EmissionColor") && !material.HasProperty("_ClearCoatMask"))
+            {
+                material.SetColor("_EmissionColor", Color.black);
+                material.DisableKeyword("_EMISSION");
             }
         }
 

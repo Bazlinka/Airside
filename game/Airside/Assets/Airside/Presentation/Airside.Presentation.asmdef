@@ -5,7 +5,8 @@
     "Airside.Domain",
     "Airside.Simulation",
     "Airside.Persistence",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "UnityEngine.UI"
   ],
   "autoReferenced": true
 }

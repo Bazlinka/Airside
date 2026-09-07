@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Canvas HUD foundation (0025 item 6).** Runtime uGUI Canvas hosts the route
+  offer panel and ops toast with EventSystem + Input System UI module. Status /
+  research remain IMGUI until the interactive left panel migrates. Presentation only.
+
 - **Hangar door day/night slide.** Hangar door slab opens through the day and
   closes at night (presentation only; always placed even when the hangar kit
   provides an opening).

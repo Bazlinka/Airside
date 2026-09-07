@@ -1195,7 +1195,8 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = airborne ? -80f : 0f;
+                    var gearBias = AirsideReusableMotion.GearBias(phase);
+                    var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 140f);
                     child.localEulerAngles = euler;
                 }
@@ -1209,7 +1210,9 @@ namespace Airside.Presentation
                 }
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    var beaconOn = enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0);
+                    // ANM-AIR-004 — pulse rate from AirsideReusableMotion (not a hard-coded 2 Hz).
+                    var beaconOn = enginesOn &&
+                        (Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
@@ -3995,10 +3998,26 @@ namespace Airside.Presentation
             }
 
             // Blue taxi centreline hints along A1 / stand lead-in (REF-002).
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var taxiStem = new Color(0.35f, 0.36f, 0.38f);
+            var taxiLens = new Color(0.3f, 0.55f, 1f);
             for (var x = -12; x <= 28; x += 8)
             {
                 lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                     new Color(0.3f, 0.55f, 1f), range: 7.5f));
+                // Kit fixtures so the centreline ribbon has geometry, not orphan points.
+                var origin = new Vector3(x, 0f, 9f);
+                if (!ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_stem", origin, Quaternion.identity, taxiStem, out _)
+                    && !ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxiway_light", origin, Quaternion.identity, taxiLens, out _))
+                {
+                    CreateBlock($"Taxi fixture {x}", new Vector3(x, 0.2f, 9f), new Vector3(0.18f, 0.35f, 0.18f), taxiStem);
+                }
+
+                ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_lens", origin, Quaternion.identity, taxiLens, out _);
+                ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_base", origin, Quaternion.identity, taxiStem, out _);
             }
 
             // REIL-style white flashers just beyond each threshold (blinked later).
@@ -4010,10 +4029,19 @@ namespace Airside.Presentation
                 new Color(1f, 1f, 0.95f), range: 16f));
             lights.Add(CreateEdgePointLight("REIL E R", new Vector3(44f, 1.6f, 2.8f),
                 new Color(1f, 1f, 0.95f), range: 16f));
-            CreateBlock("REIL post W L", new Vector3(-44f, 0.8f, -2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
-            CreateBlock("REIL post W R", new Vector3(-44f, 0.8f, 2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
-            CreateBlock("REIL post E L", new Vector3(44f, 0.8f, -2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
-            CreateBlock("REIL post E R", new Vector3(44f, 0.8f, 2.8f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            void PlaceReilPost(string name, Vector3 origin)
+            {
+                var kit = ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", origin, Quaternion.identity, taxiStem, out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", origin, Quaternion.identity, taxiStem, out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_lens", origin, Quaternion.identity, new Color(1f, 1f, 0.9f), out _);
+                if (!kit)
+                    CreateBlock(name, origin + new Vector3(0f, 0.8f, 0f), new Vector3(0.18f, 1.6f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            }
+
+            PlaceReilPost("REIL post W L", new Vector3(-44f, 0f, -2.8f));
+            PlaceReilPost("REIL post W R", new Vector3(-44f, 0f, 2.8f));
+            PlaceReilPost("REIL post E L", new Vector3(44f, 0f, -2.8f));
+            PlaceReilPost("REIL post E R", new Vector3(44f, 0f, 2.8f));
             return lights.ToArray();
         }
 
@@ -4133,16 +4161,33 @@ namespace Airside.Presentation
                 new Vector3(52f, 0f, 46f),
                 new Vector3(48f, 0f, 40f)
             };
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var steel = new Color(0.35f, 0.36f, 0.38f);
+            var head = new Color(0.25f, 0.26f, 0.28f);
+            var lampColor = new Color(1f, 0.92f, 0.7f);
             var lights = new Light[positions.Length];
             for (var i = 0; i < positions.Length; i++)
             {
                 var pos = positions[i];
-                CreateBlock($"Streetlight pole {i}", pos + new Vector3(0f, 2.2f, 0f), new Vector3(0.14f, 4.4f, 0.14f),
-                    new Color(0.35f, 0.36f, 0.38f));
-                CreateBlock($"Streetlight head {i}", pos + new Vector3(0.35f, 4.35f, 0f), new Vector3(0.7f, 0.18f, 0.35f),
-                    new Color(0.25f, 0.26f, 0.28f));
-                CreateBlock($"Streetlight lamp {i}", pos + new Vector3(0.55f, 4.2f, 0f), new Vector3(0.28f, 0.16f, 0.28f),
-                    new Color(1f, 0.92f, 0.7f));
+                var kitPole = ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "flood_pole", pos, Quaternion.identity, steel, out _);
+                var kitHead = ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "flood_head", pos, Quaternion.identity, head, out _);
+                ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "flood_lamp", pos, Quaternion.identity, lampColor, out _);
+                if (!kitPole)
+                {
+                    CreateBlock($"Streetlight pole {i}", pos + new Vector3(0f, 2.2f, 0f), new Vector3(0.14f, 4.4f, 0.14f), steel);
+                }
+
+                if (!kitHead)
+                {
+                    CreateBlock($"Streetlight head {i}", pos + new Vector3(0.35f, 4.35f, 0f), new Vector3(0.7f, 0.18f, 0.35f), head);
+                    CreateBlock($"Streetlight lamp {i}", pos + new Vector3(0.55f, 4.2f, 0f), new Vector3(0.28f, 0.16f, 0.28f), lampColor);
+                }
 
                 var go = new GameObject($"Landside streetlight {i + 1}");
                 go.transform.position = pos + new Vector3(0.55f, 4.1f, 0f);
@@ -4201,9 +4246,9 @@ namespace Airside.Presentation
                 return;
             }
 
-            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3.2f));
+            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * (AirsideReusableMotion.BeaconHz * Mathf.PI)));
             _aerodromeBeacon.intensity = pulse * Mathf.Lerp(2.4f, 0.2f, daylight / 0.38f);
-            _aerodromeBeacon.color = Mathf.FloorToInt(Time.unscaledTime * 1.6f) % 2 == 0
+            _aerodromeBeacon.color = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz) % 2 == 0
                 ? new Color(0.95f, 0.98f, 1f)
                 : new Color(0.35f, 0.95f, 0.55f);
         }
@@ -4566,8 +4611,10 @@ namespace Airside.Presentation
                 CreateBlock($"Stall line {i}", new Vector3(x, 0.05f, 46f), new Vector3(0.08f, 0.02f, 10f), Color.white);
             }
 
-            CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
-            CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
+            if (GameObject.Find("Car park kerb N") == null)
+                CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
+            if (GameObject.Find("Car park kerb S") == null)
+                CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
             CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
             CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
@@ -4591,8 +4638,10 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
-            CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
-            CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
+            if (GameObject.Find("Parking sign post") == null)
+                CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
+            if (GameObject.Find("Parking sign face") == null)
+                CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
 
             // Hangar service lane.
             CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
@@ -5510,6 +5559,7 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
             // Reuse edge/taxi/obst lighting kit parts so stations read authored, not toy cubes.
+            var anyKitStation = false;
             for (var i = 0; i < 8; i++)
             {
                 var x = -40f - i * 5f;
@@ -5582,6 +5632,9 @@ namespace Airside.Presentation
                     }
                 }
 
+                if (kitStation)
+                    anyKitStation = true;
+
                 var lampGo = new GameObject($"ALS lamp {i}");
                 lampGo.transform.position = new Vector3(x, 0.95f, 0f);
                 // Aim SpotLights toward threshold (~x=-36) so approach washes asphalt (0025 item 5).
@@ -5595,14 +5648,17 @@ namespace Airside.Presentation
                 light.intensity = 0f;
                 light.shadows = LightShadows.None;
 
-                // Emissive lens proxy so bars read lit from overview without more spots.
-                var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
-                    new Color(1f, 0.97f, 0.88f));
-                var lensRenderer = lens.GetComponent<Renderer>();
-                if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
+                // Emissive lens proxy only on greybox path — kit stations already ship edge_lens.
+                if (!kitStation)
                 {
-                    lensRenderer.material.EnableKeyword("_EMISSION");
-                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
+                    var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                        new Color(1f, 0.97f, 0.88f));
+                    var lensRenderer = lens.GetComponent<Renderer>();
+                    if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
+                    {
+                        lensRenderer.material.EnableKeyword("_EMISSION");
+                        lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
+                    }
                 }
             }
 
@@ -5633,9 +5689,26 @@ namespace Airside.Presentation
                 CreateBlock("ALS REIL base R", new Vector3(-78f, 0.06f, 2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
             }
 
-            CreateBlock("ALS lead-in bar", new Vector3(-58f, 0.72f, 0f), new Vector3(0.2f, 0.12f, 4.8f), bar);
-            CreateBlock("ALS wing bar L", new Vector3(-52f, 0.7f, -3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
-            CreateBlock("ALS wing bar R", new Vector3(-52f, 0.7f, 3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
+            if (!anyKitStation)
+            {
+                CreateBlock("ALS lead-in bar", new Vector3(-58f, 0.72f, 0f), new Vector3(0.2f, 0.12f, 4.8f), bar);
+                CreateBlock("ALS wing bar L", new Vector3(-52f, 0.7f, -3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
+                CreateBlock("ALS wing bar R", new Vector3(-52f, 0.7f, 3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
+            }
+            else
+            {
+                // Kit path — reuse taxi stems for the approach wing / lead-in read.
+                ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "taxi_stem", new Vector3(-58f, 0.5f, 0f),
+                    Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.35f, 1.2f, 0.35f));
+                ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "taxi_stem", new Vector3(-52f, 0.5f, -3.2f),
+                    Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.3f, 0.7f, 0.3f));
+                ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "taxi_stem", new Vector3(-52f, 0.5f, 3.2f),
+                    Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.3f, 0.7f, 0.3f));
+            }
+
             for (var side = 0; side < 2; side++)
             {
                 var z = side == 0 ? -2.8f : 2.8f;
@@ -5786,6 +5859,11 @@ namespace Airside.Presentation
             Place("trolley_rail", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley rail");
             Place("trolley_post_l", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post L");
             Place("trolley_post_r", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post R");
+            Place("sign_post", new Vector3(39.5f, 0f, 40.5f), steel, "Parking sign post");
+            Place("sign_face", new Vector3(39.5f, 0f, 40.5f), AirsideTheme.SafetyYellow, "Parking sign face");
+            Place("sign_frame", new Vector3(39.5f, 0f, 40.5f), Shade(steel, 0.85f), "Parking sign frame");
+            Place("kerb_straight", new Vector3(48f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb N");
+            Place("kerb_straight", new Vector3(48f, 0f, 39.8f), AirsideTheme.Concrete, "Car park kerb S");
             return placed >= 6;
         }
 
@@ -6152,6 +6230,16 @@ namespace Airside.Presentation
             Place("dune_a", new Vector3(-40f, 0f, -52f), Quaternion.identity, sand, "Context dune SW", 1.6f);
             Place("dune_b", new Vector3(35f, 0f, -50f), Quaternion.Euler(0f, 15f, 0f), sand, "Context dune SE", 1.5f);
             Place("berm", new Vector3(0f, 0f, -42f), Quaternion.identity, Shade(sand, 0.9f), "Context coast berm", 2.5f);
+            // Near-field coast / paddock accents from the same WLD-004 kit (textured slabs remain).
+            Place("coast_sand", new Vector3(-55f, -0.2f, -48f), Quaternion.identity, sand, "Context coast sand W", 1.8f);
+            Place("coast_sand", new Vector3(55f, -0.2f, -48f), Quaternion.Euler(0f, 180f, 0f), sand, "Context coast sand E", 1.8f);
+            Place("coast_shallows", new Vector3(-30f, -0.5f, -58f), Quaternion.identity, new Color(0.45f, 0.68f, 0.78f), "Context shallows W", 1.4f);
+            Place("coast_shallows", new Vector3(30f, -0.5f, -58f), Quaternion.Euler(0f, 180f, 0f), new Color(0.45f, 0.68f, 0.78f), "Context shallows E", 1.4f);
+            Place("coast_water", new Vector3(0f, -0.8f, -70f), Quaternion.identity, new Color(0.22f, 0.42f, 0.58f), "Context coast water", 2.2f);
+            Place("paddock_n", new Vector3(-50f, -0.3f, 42f), Quaternion.identity, dry, "Context paddock NW", 1.6f);
+            Place("paddock_s", new Vector3(50f, -0.3f, 42f), Quaternion.Euler(0f, 180f, 0f), dry, "Context paddock NE", 1.5f);
+            Place("paddock_e", new Vector3(62f, -0.3f, -20f), Quaternion.identity, euc, "Context paddock E", 1.3f);
+            Place("paddock_w", new Vector3(-62f, -0.3f, -18f), Quaternion.Euler(0f, 20f, 0f), euc, "Context paddock W", 1.3f);
         }
 
         private static void BuildDistantHills()
@@ -8311,10 +8399,14 @@ namespace Airside.Presentation
                 ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(36f, 0.032f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
             }
 
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_l", new Vector3(-36f, 0.032f, -3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_r", new Vector3(-36f, 0.032f, 3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_l", new Vector3(36f, 0.032f, -3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_r", new Vector3(36f, 0.032f, 3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            var usedSideWL = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "threshold_side_l", new Vector3(-36f, 0.032f, -3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            var usedSideWR = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "threshold_side_r", new Vector3(-36f, 0.032f, 3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            var usedSideEL = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "threshold_side_l", new Vector3(36f, 0.032f, -3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            var usedSideER = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "threshold_side_r", new Vector3(36f, 0.032f, 3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
             if (!usedThresholdW || !usedThresholdE)
             {
                 for (var z = -2.4f; z <= 2.4f; z += 0.8f)
@@ -8348,11 +8440,15 @@ namespace Airside.Presentation
             PlaceRunwayDigit('9', new Vector3(-32.6f, 0.04f, 0f), yaw: 90f);
             PlaceRunwayDigit('2', new Vector3(32.6f, 0.04f, 0f), yaw: -90f);
             PlaceRunwayDigit('7', new Vector3(34.6f, 0.04f, 0f), yaw: -90f);
-            // Side stripes beside threshold bars.
-            CreateBlock("Threshold stripe W L", new Vector3(-36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
-            CreateBlock("Threshold stripe W R", new Vector3(-36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
-            CreateBlock("Threshold stripe E L", new Vector3(36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
-            CreateBlock("Threshold stripe E R", new Vector3(36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            // Side stripes beside threshold bars — only when kit sides missed (avoid z-fight).
+            if (!usedSideWL)
+                CreateBlock("Threshold stripe W L", new Vector3(-36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            if (!usedSideWR)
+                CreateBlock("Threshold stripe W R", new Vector3(-36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            if (!usedSideEL)
+                CreateBlock("Threshold stripe E L", new Vector3(36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
+            if (!usedSideER)
+                CreateBlock("Threshold stripe E R", new Vector3(36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
 
             // Aiming-point pairs (WLD markings language) — kit first, greybox fallback.
             foreach (var x in new[] { -18f, 18f })

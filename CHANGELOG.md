@@ -10,8 +10,10 @@ change it describes.
   kit; softer contact shadows; windsock fabric segment ripple; tighter overview
   camera; day/night sun/flood/fog soak; thinner bird silhouettes; ALS lateral
   bars from lighting-kit stems; layered cloud clusters; closer phase-aware
-  follow framing; warmer hangar bay spill. Presentation only — simulation
-  unchanged.
+  follow framing; warmer hangar bay spill; BeaconHz for aircraft/aerodrome;
+  forecourt parking sign + kerbs from PRP-003; WLD-004 coast/paddock accents;
+  landside flood-kit streetlights; taxi centreline + REIL kit fixtures;
+  threshold side-stripe z-fight gate. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

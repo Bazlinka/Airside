@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
+  day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
+  not a full URP post stack. `scripts/test-domain.sh` 97/97.
+
 - **Approve and integrate brand wordmark + dawn splash.** Bailey Approve for BRD-001
   and UI-ILL-001; promoted into `Art/Brand` and `Art/UI/Illustrations`, synced to
   StreamingAssets, drawn on the opening briefing (full-bleed splash) and left HUD

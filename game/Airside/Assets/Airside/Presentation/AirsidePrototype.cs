@@ -2867,10 +2867,56 @@ namespace Airside.Presentation
 
             BuildPerimeterFence();
             BuildVegetation();
+            BuildTerrainMicroRelief();
             BuildDistantHills();
             BuildHorizonDome();
             BuildLandsideLife();
             BuildApronLife();
+        }
+
+        /// <summary>
+        /// Soft grass/sand mounds around the airfield so the ground plane reads as
+        /// terrain rather than a flat slab (0025 item 3). Presentation only.
+        /// </summary>
+        private static void BuildTerrainMicroRelief()
+        {
+            var grass = Shade(AirsideTheme.Eucalyptus, 0.62f);
+            var dry = Shade(AirsideTheme.DryGrass, 0.9f);
+            var sand = Shade(AirsideTheme.Sand, 0.95f);
+            // North/south berms framing the runway strip.
+            CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 30f), new Vector3(70f, 0.55f, 4.5f), grass,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(8f, 1.2f));
+            CreateBlock("Relief berm S", new Vector3(0f, 0.12f, -22f), new Vector3(64f, 0.45f, 5f), dry,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(7f, 1f));
+            // Scattered mounds — fixed offsets keep layout stable across runs.
+            var mounds = new[]
+            {
+                new Vector3(-36f, 0.2f, 8f),
+                new Vector3(-34f, 0.18f, -8f),
+                new Vector3(36f, 0.22f, 6f),
+                new Vector3(38f, 0.16f, -10f),
+                new Vector3(-26f, 0.25f, 26f),
+                new Vector3(30f, 0.2f, 34f),
+                new Vector3(-12f, 0.14f, -28f),
+                new Vector3(14f, 0.15f, -30f),
+                new Vector3(-40f, 0.2f, 18f),
+                new Vector3(42f, 0.18f, 20f),
+                new Vector3(-22f, 0.12f, -34f),
+                new Vector3(8f, 0.1f, -36f)
+            };
+            for (var i = 0; i < mounds.Length; i++)
+            {
+                var pos = mounds[i];
+                var size = new Vector3(4.5f + (i % 3) * 1.2f, 0.35f + (i % 4) * 0.08f, 3.2f + (i % 2) * 1.1f);
+                var color = i % 3 == 0 ? sand : i % 3 == 1 ? dry : grass;
+                CreateBlock($"Relief mound {i}", pos, size, color,
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(1.5f, 1.2f));
+            }
+
+            // Coastal dune rise between apron grass and sand strip.
+            CreateBlock("Coast dune L", new Vector3(-28f, 0.35f, -42f), new Vector3(18f, 0.9f, 5f), sand);
+            CreateBlock("Coast dune R", new Vector3(24f, 0.3f, -43f), new Vector3(16f, 0.75f, 4.5f), sand);
+            CreateBlock("Coast dune mid", new Vector3(0f, 0.22f, -41f), new Vector3(22f, 0.55f, 3.5f), Shade(sand, 0.9f));
         }
 
         /// <summary>

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (atmosphere + apron life)
-- **Branch / working tree:** `cursor/atmosphere-apron-life-ddad`
-- **Do this next:** Merge clear-day fog + apron/landside figures; Bailey Play soak depth + people
-- **In progress / half-done:** always-on exponential fog; seven stylised people with marshaller wave
-- **Watch out for:** fog density may need Mac tweak vs weather fog stack
+- **Last updated:** 2026-09-07 by Cursor (terrain micro-relief)
+- **Branch / working tree:** `cursor/terrain-microrelief-ddad`
+- **Do this next:** Merge berms/mounds/dunes; Bailey Play soak overview for ground depth
+- **In progress / half-done:** grass berms, scattered mounds, coastal dunes around flat slab
+- **Watch out for:** mounds must not clip taxi/runway; keep clear of paved footprints
 - **Open questions for Bailey:** none
-- **Visual assets:** day volume on main; atmosphere/people on this branch
+- **Visual assets:** fog/people on main; terrain relief on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,7 +122,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm Canvas HUD, URP day volume, GSE drive-in, **clear-day atmospheric fog**, and
-   **apron/landside people** (marshaller waves on approach).
+2. Confirm Canvas HUD, day volume, GSE motion, fog, people, and **terrain berms/dunes**
+   (ground no longer reads as a flat green slab from overview).
 3. Next code track: Addressables/prefab path (0025 item 1–2), or authored material
    maps beyond the procedural spike. No new economy systems; no Companion/CloudKit.

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Terrain micro-relief (0025 item 3).** Grass berms, scattered mounds and coastal
+  dunes break the flat ground slab so overview reads as a regional airfield site.
+  Presentation only.
+
 - **Atmospheric fog + apron life figures (0025 items 5+7).** Soft exponential fog on
   clear days (weather still thickens it); seven stylised staff/passenger silhouettes
   on apron and landside with idle lean and marshaller wave on approach. Presentation only.

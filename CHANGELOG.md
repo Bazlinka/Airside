@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **First-session UX polish.** Enter accepts a ready route offer; waiting countdown
+  + progress bar before the first airline; taller Accept button with pulse stripe
+  on the first-decision panel; clearer empty OPERATIONS copy. Presentation only.
+
 - **Denser apron props + fuel farm + parked GA.** More cones/barriers/signs/dollies,
   four apron floodlights, a small fuel farm west of the hangar, and two static GA
   aircraft so the airfield reads busier from overview. Presentation only.

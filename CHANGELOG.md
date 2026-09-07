@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal panes, hangar ribs, apron fringe, belt loaders, HUD chrome (0025 items 2+3+6).**
+  Curtain-wall glass panes + proud mullions + interior glow; hangar corrugation
+  ribs/girth bands (90 meshes); apron fringe/planters/stand stains; belt loaders
+  on service kit (60); Toolkit METAR row, reputation bar, strip dividers, more
+  translucent panels; concrete bump raised. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Materials, tapered props, day grade, trees, wet fixes (0025 items 2–5+7).**
   URP Lit AO strength uses profile occlusion; Glass/Water force alpha panes; wet
   disables metallic-gloss mask so sheen reads; turboprop 3× tapered blades (104

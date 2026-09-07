@@ -603,6 +603,7 @@ namespace Airside.Presentation
             return weather switch
             {
                 WeatherKind.Clear => "METAR  ·  TEMP 18°  ·  WIND 240/08  ·  VIS 10km",
+                WeatherKind.Cloudy => "METAR  ·  TEMP 17°  ·  WIND 230/10  ·  VIS 9km",
                 WeatherKind.Overcast => "METAR  ·  TEMP 16°  ·  WIND 220/12  ·  VIS 8km",
                 WeatherKind.Rain => "METAR  ·  TEMP 14°  ·  WIND 200/14  ·  VIS 4km  ·  RA",
                 WeatherKind.Storm => "METAR  ·  TEMP 13°  ·  WIND 190/22G32  ·  VIS 2km  ·  TSRA",

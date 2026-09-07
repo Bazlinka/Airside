@@ -34,6 +34,13 @@ namespace Airside.Presentation
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
+                else if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber"))
+                {
+                    // Must run before the step/wheel metal branch — "wheel" names used to
+                    // steal Rubber and leave tyres as painted metal.
+                    color = stepColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.Rubber;
+                }
                 else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
                          || n.Contains("leg") || n.Contains("base") || n.Contains("post")
                          || n.Contains("plate") || n.Contains("pad") || n.Contains("bund")
@@ -43,12 +50,36 @@ namespace Airside.Presentation
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("window") || n.Contains("glass") || n.Contains("cabin"))
+                else if (n.Contains("window") || n.Contains("glass") || n.Contains("canopy")
+                         || n.Equals("cockpit") || n.Contains("cabin window"))
                 {
-                    color = new Color(0.18f, 0.35f, 0.48f, 1f);
+                    color = new Color(0.18f, 0.35f, 0.48f, 0.42f);
                     kind = AirsideMaterialLibrary.SurfaceKind.Glass;
                 }
-                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("stripe"))
+                else if (n.Contains("headlight") || n.Contains("taillight"))
+                {
+                    color = n.Contains("tail")
+                        ? new Color(0.85f, 0.15f, 0.12f)
+                        : new Color(0.95f, 0.95f, 0.85f);
+                    kind = AirsideMaterialLibrary.SurfaceKind.Metal;
+                }
+                else if (n.Contains("mullion") || n.Contains("transom") || n.Contains("strut")
+                         || n.Contains("spinner") || n.Contains("hub") || n.Contains("scissor")
+                         || n.Contains("antenna") || n.Contains("pitot") || n.Contains("exhaust")
+                         || n.Contains("fairing") || n.Contains("grille") || n.Contains("mirror"))
+                {
+                    color = stepColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.Metal;
+                }
+                else if (n.Contains("fuselage") || n.Contains("nose") || n.Contains("cowling")
+                         || (n.Contains("cabin") && !n.Contains("window")))
+                {
+                    color = baseColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
+                }
+                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("rudder")
+                         || n.Contains("elevator") || n.Contains("flap") || n.Contains("aileron")
+                         || n.Contains("cabindoor") || n.Contains("cabin door") || n.Contains("door"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;

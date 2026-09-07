@@ -1,26 +1,17 @@
-# Airside active brief
-
-## Vision
-
-Airside is a real-time, persistent airport management game for Mac. The player designs and manages the system while aircraft, passengers and ground services operate automatically. Watching the airport work should be satisfying, and every delay should have an understandable cause.
-
 ## Where to resume — session handoff
 
-This block is the first thing to read and the last thing to update. Any tool
-(Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
-next session can continue without seeing the previous conversation. Keep it short.
+- **Last updated:** 2026-09-07 (Cursor Cloud — merge `origin/main` into PR #131; resolved doc conflicts)
+- **Branch:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131) — merge of `main` in progress / completing; tip includes Decision **0027** + Batch F packet from main
+- **Do next:** After Mac Unity confirm of this branch tip, **merge PR #131**. Then start **Batch F1** (AIR-001 v05 authored turboprop mesh) per Decision **0027** — do **not** treat more procedural densify as Batch F completion
+- **In progress / half-done:** none on this merge resolution
+- **Watch for:**
+  - Decision **0027** (on main): procedural densify of authored kits is **complementary fallback work**, not Batch F asset completion. This PR’s densify tips improve interim presentation but do **not** supersede F1–F6 ordered authored slices
+  - This branch previously truncated `GAME.md` to handoff-only for many tips — restored full living brief from `main` in this merge
+  - Belt-loader kit-path fix + densify stack still need Mac Play Mode before merge
+  - Domain EditMode: `scripts/test-domain.sh` → 105/105 on Linux cloud (pre-merge tip); re-run after merge commit
+- **Open question for Bailey:** none for this merge fix — confirm Mac playtest when ready, then merge #131 and pivot to Batch F1
 
-- **Last updated:** 2026-09-07 by ChatGPT (decision 0027 / Batch F asset design)
-- **Branch / working tree:** `main`
-- **Do this next:** Bailey tells Cursor to implement Batch F1, AIR-001 v05 only: authored turboprop FBX/prefab, preferred ahead of lofted/v04, every fallback retained.
-- **In progress / half-done:** No runtime work started. Batch F packet defines exact assets, hierarchy, budgets, hooks and packaged-build checks.
-- **Watch out for:** Do not answer Batch F with another procedural cuboid/glTF density pass; operational geometry and simulation remain unchanged.
-- **Open questions for Bailey:** Approve AIR-001 v05 after the packaged Mac camera matrix before Cursor starts the terminal.
-- **Visual assets:** Full repository gap audit complete. Ordered F1 hero, F2 turnaround, F3 setting and F4 reusable-finish slices are specified under `docs/art/prompts/`.
-
-
-Full start-of-session and end-of-session checklists are in `AGENTS.md` →
-"Session handoff protocol".
+---
 
 ## Current milestone
 

@@ -12,6 +12,337 @@ change it describes.
   finish. Exact paths, prefab keys, pivots, texture/LOD budgets, fallbacks and packaged
   Mac acceptance checks are defined; no runtime or simulation behaviour changed.
 
+- **Terminal densify tip (0025 item 2).** Authored terminal kit 191 (extra curtain panes, landside
+  ribs, canopy braces/lights, boarding/service glass, girth bands); color map uses StartsWith
+  for glass/ribs. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
+- **Hangar/ops densify tip (0025 item 2).** Authored hangar kit 165 / ops shed 127 (extra ribs,
+  corner trims, door peeks, awnings, flashings, porch/AC detail); color maps cover new metal/
+  glass parts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
+- **Wet/terrain densify tip (0025 items 3–4).** Residual damp covers markings-kit paint + relief
+  mounds (0.22 clear-day); stronger wet darken/spec; more terrain mounds, grass ribbons, dune
+  crests; scrub clumps to 5 spheres. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **HUD/day/fence/tree densify tip (0025 items 3–6).** Toolkit panels denser brand chrome +
+  coastal top edge; ChannelMixer day profiles + golden-hour bloom; eucalyptus flare/fork/5
+  canopies; fence top wire + post caps; densify stairs (~28) / pushback tug (~20) / cone /
+  barrier Resources fallbacks. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Service GSE / belt-loader / ALS tip (0025 items 2–5).** Fix belt loaders to use service
+  kit (were cube fallbacks via wrong props kit); prefer denser stairs/GPU/chocks kit over thin
+  Resources prefabs; densify towbar/FOD bin kit parts; ALS stations + REIL reuse lighting kit;
+  apron-safety hydrant/cabinet/FOD + chocks/GPU Resources densify; wet collect for markings-kit
+  node names + relief mounds. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Lighting/props/jetty/flap tip (0025 items 2–5+7).** Wire unused authored lighting densify
+  into PlaceFlood/Edge/Taxi/Obst; apron cone/barrier/sign/dolly prefer denser kit over thin
+  prefabs; windsock kit fabric+guys; NestFlapParts; jetty planks/rails/bollards; wet for
+  jetty/fuel/ARFF/canopy/shoulders; markings centre dashes/threshold bars/apron arrows;
+  landside bench/trolley densify. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Hangar bay densify + marking wet collect (0025 items 3–4).** Hangar bay props ~49
+  parts (vise, shelves, tires, extinguisher, pegboard); wet/residual damp covers taxi
+  arrows, runway digits, stand leads, chevrons, hold-shorts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Markings/ARFF/fuel densify (0025 items 1–3).** Markings kit 44 (digit bars, taxi
+  arrows, extra hold/chevrons) wired into PlaceWorldMarkings/PlaceRunwayDigit; fuel
+  farm ~47 / ARFF shed ~52 / truck ~53 Resources parts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
+- **MAT-001 maps + wet/motion/env tip (0025 items 3–5+7).** Per-kind glass/rubber/
+  painted-line/plastic PBR companions + procedural fallbacks/default tiling; wet
+  `_BaseColor` sync; landside Access/Overflow/zebra wet collect; flap exact L/R;
+  cargo bags nest under Cargo; cabin Door frame nests; fence/gate/ALS densify;
+  coast boat ~16 parts; dusk midtone/WB polish. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
+- **PaintedLine + landside/motion fixes (0025 items 3–4+7).** Near-white primitives map
+  to `PaintedLine` (not aircraft skin); access-turn markings/shoulders + overflow bay
+  chevrons; hose mount/nozzle no longer stretch with hose; cabin/bus door parts nest
+  for animation; wheel_arch excluded from wheel spin. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Service/props densify + hangar color maps (0025 item 2).** Service equipment 103
+  (stairs/GPU/belt hubs); props 65; hangar color maps cover fascia/ribs 9–10.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
+- **Hangar/GSE densify tip (0025 item 2).** Hangar 149 (fascia/office roof/crane rails/
+  extra ribs); fuel truck 87; baggage tug 88 (hubs, bags, hitch pins). Presentation
+  only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
+- **Terminal/ops/bus + day/wet/HUD tip (0025 items 2+4–6).** Terminal shell densify
+  (157: fascia/soffit/ribs); ops shed 111; apron bus 90; noon midtone punch + dusk
+  WB warmth; stronger non-ClearCoat wet sheen; Toolkit income/research/route icons.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159.
+
+- **Turboprop/ARFF/fuel/HUD densify tip (0025 items 1–2+4+7).** Authored turboprop
+  131 meshes (window frames, flap tracks, oil coolers, oleos/rims, spinner stripes);
+  cabin glass alpha 0.42; lighting kit 55; markings kit 28 + PlaceWorldMarkings
+  hold/aiming/TDZ/taxi-edge kit wiring; ARFF shed/truck ~36–37 parts; fuel farm ~31;
+  Toolkit turnaround service icons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Airfield props densify (0025 item 2).** Props kit dolly bags/posts, windsock fabric
+  segments, barrier braces, sign glyphs (~55 meshes). Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Parked car densify (0025 items 1+3).** `mdl_parked_car_v01` ~32 parts (split glass,
+  mirrors, grille, wheel arches, hood/boot); body tint covers door/hood/arch;
+  headlight/taillight binder colors. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Parked GA densify + fuselage binder fix (0025 items 1–2).** `mdl_parked_ga_v01`
+  ~40 parts (canopy glass, struts, spinner, gear scissors/wheels); runtime binder
+  maps fuselage/nose to baseColor AircraftSkin; canopy→Glass. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Hangar glass, service densify, day/wet polish (0025 items 2+4+5).** Hangar side/office/
+  skylight glass panes + mullions (132); stairs posts/GPU grille/belt rollers (80);
+  stronger noon midtone separation + dusk WB warmth; residual damp on roads/markings;
+  non-ClearCoat wet sheen bump. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **GSE/ops densify, landside panes, mullion tint fix (0025 items 2+4+7).** Ops shed
+  cladding ribs + split glass panes (94); fuel truck tank ends/pump/cab panes (75);
+  baggage tug cart beds/bags/canopies (68); apron bus side glass_pane* (72);
+  terminal landside curtain panes (126); GSE/ops mullions metal not glass-blue;
+  wet collect includes runway/taxi/stand markings. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Scrub carpet, dusk floods, glass/apron wet, terminal interior (0025 items 2–5+7).**
+  Fence-line multi-sphere scrub carpet; URP additional lights/object 12 + warmer
+  dusk flood punch with soft shadows on mast floods; glass_pane* get glass masks;
+  apron slab overlays + clear-weather residual damp; terminal interior desks/
+  chairs/figures (110 meshes); irregular multi-blob puddles; fringe/slab wet
+  collect. Presentation only. Evidence: `scripts/test-domain.sh` 105/105; art sync
+  159 files.
+
+- **Terminal panes, hangar ribs, apron fringe, belt loaders, HUD chrome (0025 items 2+3+6).**
+  Curtain-wall glass panes + proud mullions + interior glow; hangar corrugation
+  ribs/girth bands (90 meshes); apron fringe/planters/stand stains; belt loaders
+  on service kit (60); Toolkit METAR row, reputation bar, strip dividers, more
+  translucent panels; concrete bump raised. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Materials, tapered props, day grade, trees, wet fixes (0025 items 2–5+7).**
+  URP Lit AO strength uses profile occlusion; Glass/Water force alpha panes; wet
+  disables metallic-gloss mask so sheen reads; turboprop 3× tapered blades (104
+  meshes); REF-001 muted day sky + warmer dusk WB; eucalyptus 3-canopy clumps;
+  Stand 3 pad and apron joints join wet collect. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Taxi blue, tall floods, apron joints, HUD bars, hi-vis (0025 items 3+5+6+7).**
+  Taxi edge/point lights are blue (REF-002); airfield lighting kit floods ~9 m with
+  multi-head lamps (41 meshes) and SpotLights synced to mast height; apron
+  expansion-joint grid; Toolkit turnaround progress bars + slim economy strip;
+  hi-vis ramp crew with marshaller wands. Presentation only (Progress01 on
+  TurnaroundTaskView is HUD-facing). Evidence: `scripts/test-domain.sh` 105/105;
+  art sync 159 files.
+
+- **Stand lead dashes + calm coach + ALS lenses (0025 items 3+5+6).** Apron stand
+  lead-in dashes for bays 1–3; ALS lenses emissive; Toolkit coach only when urgent.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **URP volume + shadow/SSAO polish (0025 item 5).** Deactivate template
+  DefaultVolumeProfile junk (DoF/motion blur/lens/test components); PC shadow
+  distance 140; SSAO intensity/radius raised for apron contact. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Markings, gear nest, ALS spots, HUD time controls (0025 items 3+5+6+7).**
+  Stand digits 1/3 paint correctly; markings kit edges/threshold/taxi/stops used;
+  gear scissors/tires nest under struts; ALS/REIL SpotLights wash approach;
+  Toolkit economy strip shows research; Pause/1×/4× buttons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Landside + fence densify (0025 item 3).** Parking bay lines, access dashes,
+  extra cars, inland scrub belt, E/W fence mid-posts and corner braces.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Env motion + day-volume polish (0025 items 3+5+7).** Apron walkers orbit
+  spawn bases (no teleports); coast water UV scroll; weather thickens cloud alpha;
+  UnlitSky uses URP Unlit; day volume owns WhiteBalance/SplitToning; puddle sheen
+  without ClearCoat. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Night lighting + wet fallback + Toolkit HUD REF-004 layout (0025 items 4–7).**
+  GSE SpotLights aim along kit +X; fuel truck gains bumper headlights (51 meshes);
+  cabin glow skips frames; entrance doors no longer Glass; wet sheen without ClearCoat;
+  Toolkit HUD: translucent panels, ops top-left, economy strip, bottom speed chip,
+  Batch E phase/weather/cash icons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Presentation wiring bug fixes (0025 items 4+5+7).** GSE rename map no longer
+  collapses cart_* into Cargo; gear scissors no longer pitch with struts; prop
+  hubs/spinners nest under propellers; duplicate aircraft lamps skipped when kit
+  ships them; terminal glass panes vs metal frames; wet/ALS Collect covers densified
+  names; day ambient uses Trilight. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Ops/props densify + headlight bugfix (0025 items 2+3+7).** Ops shed 53,
+  airfield props 43, lighting 33 meshes; layered coast foam pulse; service-vehicle
+  headlights no longer share beacon orange. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Vehicles + apron life + URP dry retune (0025 items 2–4+7).** Fuel truck 47,
+  baggage tug 45, apron bus 46, service kit 48 meshes; denser apron figures,
+  birds (28), vegetation belt; dry asphalt/concrete/skin/metal profiles retuned
+  for stronger wet contrast. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Hangar densify (0025 items 2+7).** Authored hangar to 69 meshes (extra door
+  bars/warnings, plinth, louvres, gutters, workbench/tool cabinet); door motion
+  collects new bars/warnings. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Terminal densify + HUD chrome (0025 items 2+6+7).** Authored terminal to 73
+  meshes (doors, boarding gate, canopy braces/lights, plinth, vents, flag);
+  toolkit status/ops panels gain Open Sky top accent; save chip coastal bar;
+  terminal flag flap motion. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Turboprop + coast/wet/day tip (0025 items 2–5).** Authored turboprop to 102
+  meshes (spoilers, pylons, wicks, gear scissors, denser lathe); coast foam
+  layers, six boats, rock outcrops, runway shoulders, 22 clouds; wet response
+  deeper specular/AO + more puddles; stronger golden-hour day volume. Presentation
+  only. Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **ALS / ARFF / GA densify (0025 items 3+5).** Approach light fan to 8 stations with
+  crossbars + far REIL; ARFF shed gains roof ridge/door ribs/hose/hydrant; five
+  denser parked GA with gear/struts and contact shadows. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **URP profile retune + apron life (0025 items 4+7).** Drier asphalt / richer
+  aircraft-skin & glass dry profiles; denser apron figures; flood mast and dolly
+  cluster contact shadows. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Fence densify + ops HUD chrome (0025 items 3+6).** West/east/south perimeter
+  fences gain bottom rails and denser mesh posts; extra terrain mounds; OPERATIONS
+  panel gets coastal accent + Open Sky title. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Service vehicles densify + puddles (0025 items 2+4).** Fuel truck 33, baggage
+  tug 34, apron bus 35 authored meshes (fenders, rails, arches, lights); vehicle
+  material map covers new parts; wet puddle count raised across apron/landside/
+  fuel pad. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Terminal/hangar/turboprop densify (0025 items 2+3).** Authored terminal to 49
+  meshes (extra mullions/sills/canopy/columns), hangar to 53 (door bars/handles,
+  crane hook, skylights, downpipes), turboprop to 78 (mid fences, pitot, VOR).
+  Denser TDZ marks, stand digits 1–3, taxi centreline dashes. Hangar door motion
+  includes new bars/handles. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Ops/props densify + atmosphere (0025 items 2–5+7).** Authored ops shed 40,
+  service equipment 42, lighting 28, props 34 meshes; presentation places denser
+  stairs/GPU/cone/barrier/sign/dolly/flood parts. Night star field (72) + ops
+  antenna sweep; wet AO deepen + stronger golden-hour day volume; landside overflow
+  cars and denser bush belt. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
+- **Service vehicles densify (0025 item 2).** Authored baggage tug and apron bus gain
+  rails/cart wheels, mullions, arches and stripe detail.
+  Evidence: `scripts/test-domain.sh`.
+
+- **Hangar + fuel truck densify (0025 item 2).** Authored hangar to 38 meshes
+  (door bars, skylights, crane trolley, extra columns); fuel truck to 18 meshes
+  (chassis, hose, denser tank). Door bars slide with hangar panels. Presentation
+  only. Evidence: `scripts/test-domain.sh`; art sync 159 files.
+
+- **Denser authored turboprop/terminal + sky discs (0025 items 2+5).** Hero
+  turboprop regenerated to 74 meshes (more lathe stations, cabin windows,
+  wing fences, prop hubs); terminal gains extra mullions/transom. Runtime sun
+  and moon discs track the day cycle; cloud count 16; cylindrical fuel tanks +
+  more contact shadows. Generator preserves Unity .meta GUIDs on regenerate.
+  Evidence: `scripts/test-domain.sh`; art sync 159 files.
+
+- **Toolkit HUD readability (0025 item 6).** Status panel gains a coastal accent
+  bar and stronger type hierarchy (location/phase Open Sky, cash bold, coach
+  urgent yellow vs calm Open Sky). Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
+- **Night glow flicker + hold-short polish (0025 items 5+7).** Building window
+  PointLights and emissive quads flicker softly at dusk; hold-short bars C/D join
+  the traffic-wait pulse with emission; touchdown-zone marks added beside aiming
+  points. Presentation only. Evidence: `scripts/test-domain.sh`.
+
+- **Runway/taxi markings + fence densify (0025 item 3).** Continuous runway edge
+  stripes, taxi edge lines, apron lead-in chevrons, mid-span fence posts and gate
+  chevrons. Coast boat bob no longer drifts yaw. Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
+- **Stand GSE deploy + hangar door dedupe (0025 item 7).** Stairs roll in from
+  the apron edge before pitching up; chocks settle with a roll; when authored
+  hangar door panels are present the greybox slab is hidden so doors do not
+  double up. Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Hangar kit doors + coastal motion (0025 items 3+7).** Authored hangar
+  `door_panel_*` / `door_rib_*` slide with the greybox slab (opens for day and
+  active stand traffic); coast boats bob, foam pulses, jetty breathes.
+  Presentation only. Evidence: `scripts/test-domain.sh`.
+
+- **Wet materials + day profiles + coast densify (0025 items 3–5).** URP Lit wet
+  variants darken albedo, flatten bump, raise gloss and enable clear-coat sheen;
+  day volume adds ShadowsMidtonesHighlights + rain/fog/storm gloom; coast foam
+  ribbon, service-lane markings and southern headlands. Tire binder no longer
+  paints wheels as metal before Rubber. Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
+- **Authored airfield props kit.** `mdl_airfield_props_kit_authored_v01` (cylindrical
+  poles/cones/dolly wheels) preferred ahead of v02/v01 for PlaceWorldProps.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Apron lighting + probes for authored kits (0025 item 5).** Apron floods are
+  SpotLights aimed at stands/hangar/terminal; terminal gets its own realtime
+  reflection probe; apron probe box expanded. Authored airfield lighting kit
+  (`mdl_airfield_lighting_kit_authored_v01`, cylindrical poles/lenses) preferred
+  ahead of v02/v01. Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Authored PRP-001 service equipment kit.** `mdl_service_equipment_kit_authored_v01`
+  (stairs/chocks/GPU extract names + denser rails/treads/wheels) preferred ahead of
+  v02/v01 for stand GSE mesh extraction. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Material binder fix for authored kits.** `AirsideRuntimeMaterialBinder` no
+  longer treats every name containing `cabin` as glass (CabinDoor was wrong);
+  fuselage/wing/tire kinds route correctly; InferFromMeshName covers authored
+  mullions, canopy posts, hangar door panels and vehicle tanks. Presentation only.
+
+- **Authored service vehicles (VEH-001…003).** Fuel truck (cylindrical tank), baggage
+  tug train and apron bus ship as `*_authored_v01` FBX + glTF + Resources prefabs
+  with PreferArtKit ahead of v04. Completes the Batch C first-playable model set
+  on the authored track. Evidence: `scripts/test-domain.sh` 105/105.
+
+- **Authored ops shed + full building Resources set.** `mdl_operations_shed_authored_v01`
+  joins turboprop/terminal/hangar with FBX + glTF + Resources prefab so
+  `airside-prefab/*_authored_v01` covers AIR-001 and BLD-001…003. PreferArtKit
+  prefers authored. Evidence: `scripts/test-domain.sh` 105/105; art sync updated.
+
+- **Authored Resources prefabs + hangar kit.** Addressables keys
+  `airside-prefab/mdl_regional_turboprop_01_authored_v01`,
+  `…/mdl_terminal_regional_small_authored_v01`, and
+  `…/mdl_hangar_small_authored_v01` resolve via Resources (round fuselage /
+  canopy / hangar columns; gear/cargo/prop names for motion). FBX sources +
+  companion glTF remain; ModelImporter bake can overwrite later. PreferArtKit
+  prefers authored → prior kits → primitives. Evidence: `scripts/test-domain.sh`
+  105/105; art sync 145 files.
+
+- **Authored FBX turboprop + terminal (0025 item 2).** Distinct
+  `mdl_regional_turboprop_01_authored_v01` and
+  `mdl_terminal_regional_small_authored_v01` ship as Unity-importable `.fbx`
+  (lathed fuselage / cylindrical engines; canopy posts) plus companion glTF for
+  StreamingAssets. PreferArtKit prefers authored → lofted/v04 → … → primitives.
+  Mac menu **Airside → Art → Bake Authored FBX Prefabs** can replace Resources
+  prefabs with ModelImporter meshes. No simulation change.
+  Evidence: `scripts/test-domain.sh`; art sync 143 files.
 - **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
   animate separately from struts; cargo doors open at stand; soft coastal ambient
   audio joins wind/rain; wet response covers more ground surfaces and refreshes the

@@ -23,6 +23,7 @@ namespace Airside.Presentation
             Metal,
             PaintedMetal,
             AircraftSkin,
+            PaintedLine,
             Glass,
             Rubber,
             Plastic,
@@ -50,18 +51,22 @@ namespace Airside.Presentation
 
         private static readonly Dictionary<SurfaceKind, Profile> Profiles = new()
         {
-            [SurfaceKind.Default] = new Profile(0.04f, 0.32f, 0.35f),
-            [SurfaceKind.Asphalt] = new Profile(0.02f, 0.22f, 0.55f, 0.92f),
-            [SurfaceKind.Concrete] = new Profile(0.03f, 0.28f, 0.45f, 0.94f),
-            [SurfaceKind.Grass] = new Profile(0.0f, 0.18f, 0.7f, 0.88f),
-            [SurfaceKind.Sand] = new Profile(0.0f, 0.2f, 0.5f, 0.9f),
-            [SurfaceKind.Metal] = new Profile(0.55f, 0.42f, 0.4f, 0.95f),
-            [SurfaceKind.PaintedMetal] = new Profile(0.25f, 0.48f, 0.3f, 0.96f),
-            [SurfaceKind.AircraftSkin] = new Profile(0.18f, 0.55f, 0.2f, 0.97f),
-            [SurfaceKind.Glass] = new Profile(0.05f, 0.85f, 0.05f, 1f, transparent: true),
-            [SurfaceKind.Rubber] = new Profile(0.02f, 0.15f, 0.6f, 0.9f),
-            [SurfaceKind.Plastic] = new Profile(0.05f, 0.4f, 0.25f, 0.96f),
-            [SurfaceKind.Water] = new Profile(0.02f, 0.78f, 0.15f, 1f, transparent: true),
+            // Dry profiles tuned so wet variants can raise gloss without starting shiny.
+            [SurfaceKind.Default] = new Profile(0.04f, 0.26f, 0.4f),
+            [SurfaceKind.Asphalt] = new Profile(0.01f, 0.10f, 0.78f, 0.9f),
+            [SurfaceKind.Concrete] = new Profile(0.015f, 0.18f, 0.72f, 0.94f),
+            [SurfaceKind.Grass] = new Profile(0.0f, 0.08f, 0.88f, 0.86f),
+            [SurfaceKind.Sand] = new Profile(0.0f, 0.16f, 0.62f, 0.84f),
+            [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
+            [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
+            [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.68f, 0.14f, 0.98f),
+            // Flat painted markings — matte, not aircraft-skin gloss.
+            [SurfaceKind.PaintedLine] = new Profile(0.02f, 0.22f, 0.08f, 0.96f),
+            // Slightly softer glass so curtain walls read as panes, not chrome mirrors.
+            [SurfaceKind.Glass] = new Profile(0.04f, 0.88f, 0.02f, 1f, transparent: true),
+            [SurfaceKind.Rubber] = new Profile(0.012f, 0.08f, 0.75f, 0.84f),
+            [SurfaceKind.Plastic] = new Profile(0.04f, 0.38f, 0.28f, 0.95f),
+            [SurfaceKind.Water] = new Profile(0.025f, 0.94f, 0.18f, 1f, transparent: true),
             [SurfaceKind.UnlitSky] = new Profile(0f, 0f, 0f, 1f)
         };
 
@@ -75,7 +80,29 @@ namespace Airside.Presentation
             [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
-            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal"
+            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal",
+            // MAT-001 — dedicated glass / rubber / painted-line / plastic companions.
+            [SurfaceKind.Glass] = "tx_glass_pane",
+            [SurfaceKind.Rubber] = "tx_rubber_tire",
+            [SurfaceKind.PaintedLine] = "tx_painted_line",
+            [SurfaceKind.Plastic] = "tx_plastic_trim"
+        };
+
+        /// <summary>Default UV tiling when callers omit an explicit scale (MAT-001).</summary>
+        private static readonly Dictionary<SurfaceKind, Vector2> DefaultTilingByKind = new()
+        {
+            [SurfaceKind.Asphalt] = new Vector2(6f, 6f),
+            [SurfaceKind.Concrete] = new Vector2(4f, 4f),
+            [SurfaceKind.Grass] = new Vector2(8f, 8f),
+            [SurfaceKind.Sand] = new Vector2(5f, 5f),
+            [SurfaceKind.Metal] = new Vector2(2.5f, 1.5f),
+            [SurfaceKind.PaintedMetal] = new Vector2(2f, 1.2f),
+            [SurfaceKind.AircraftSkin] = new Vector2(1.5f, 1.5f),
+            [SurfaceKind.PaintedLine] = new Vector2(3f, 1f),
+            [SurfaceKind.Glass] = new Vector2(1.2f, 1.2f),
+            [SurfaceKind.Rubber] = new Vector2(2.5f, 2.5f),
+            [SurfaceKind.Plastic] = new Vector2(2f, 2f),
+            [SurfaceKind.Water] = new Vector2(3f, 3f)
         };
 
         private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredNormals = new();
@@ -86,6 +113,8 @@ namespace Airside.Presentation
 
         private static Texture2D _sharedNormal;
         private static Texture2D _sharedOcclusion;
+        private static readonly Dictionary<SurfaceKind, Texture2D> KindNormals = new();
+        private static readonly Dictionary<SurfaceKind, Texture2D> KindOcclusion = new();
         private static Shader _litShader;
 
         public static Profile GetProfile(SurfaceKind kind) =>
@@ -120,20 +149,43 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
-            if (n.Contains("glass") || n.Contains("window") || n.Contains("cockpit") || n.Contains("cabin_windows"))
+            if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
+                || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle")
+                || n.Contains("skylight_frame") || n.Equals("entrance") || n.Contains("entrance_door")
+                || n.Contains("boarding_gate"))
+                return SurfaceKind.Metal;
+            if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
+                || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
+                || n.Contains("landside_glass") || n.Contains("door_glass")
+                || n.Contains("windshield") || n.Equals("rear_window") || n.Contains("skylight"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
-            if (n.Contains("propeller") || n.Contains("spinner") || n.Contains("gear") || n.Contains("nacelle")
-                || n.Contains("engine") || n.Contains("tank") || n.Contains("hose"))
+            if (n.Contains("propeller") || n.Contains("propblade") || n.Contains("spinner")
+                || n.Contains("gear") || n.Contains("nacelle") || n.Contains("engine")
+                || n.Contains("tank") || n.Contains("hose") || n.Contains("column")
+                || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
+            if (n.Contains("marking") || n.Contains("centreline") || n.Contains("centerline")
+                || n.Contains("threshold") || n.Contains("hold_short") || n.Contains("aiming")
+                || n.Contains("tdz") || n.Contains("chevron") || n.Contains("stand_stop")
+                || n.Contains("bay line") || n.Contains("stall line") || n.Contains("access dash")
+                || n.Contains("edge line") || n.Contains("zebra"))
+                return SurfaceKind.PaintedLine;
             if (n.Contains("fuselage") || n.Contains("nose") || n.Contains("wing") || n.Contains("tail")
-                || n.Contains("rudder") || n.Contains("door") || n.Contains("body") || n.Contains("cab"))
+                || n.Contains("rudder") || n.Contains("elevator") || n.Contains("flap")
+                || n.Contains("aileron") || n.Contains("cabindoor") || n.Contains("cabin door")
+                || n.Contains("cargo door") || n.Contains("body") || n.Contains("cab")
+                || n.Contains("bus_") || n.Equals("tug") || n.Contains("tug_")
+                || n.Contains("livery") || n.Contains("stripe") || n.Contains("fairing"))
                 return SurfaceKind.AircraftSkin;
             if (n.Contains("roof") || n.Contains("corrugat") || n.Contains("hangar") || n.Contains("shed")
-                || n.Contains("buttress") || n.Contains("vent") || n.Contains("track"))
+                || n.Contains("buttress") || n.Contains("vent") || n.Contains("track")
+                || n.Contains("door_panel") || n.Contains("door_opening") || n.Contains("door_rib")
+                || n.Contains("door_track") || n.Contains("service_wing") || n.Contains("signage"))
                 return SurfaceKind.Metal;
-            if (n.Contains("terminal") || n.Contains("concrete") || n.Contains("apron") || n.Contains("canopy"))
+            if (n.Contains("terminal") || n.Contains("concrete") || n.Contains("apron")
+                || n.Contains("canopy") || n.Contains("end_cap") || n.Contains("entrance"))
                 return SurfaceKind.Concrete;
             return SurfaceKind.PaintedMetal;
         }
@@ -147,8 +199,40 @@ namespace Airside.Presentation
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
-            var shader = _litShader ??= Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            // Opaque RGB callers (terminal glass colors) still need real alpha panes.
+            if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
+                color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
+
+            Shader shader;
+            if (kind == SurfaceKind.UnlitSky)
+            {
+                shader = Shader.Find("Universal Render Pipeline/Unlit")
+                         ?? Shader.Find("Unlit/Color")
+                         ?? Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Standard");
+            }
+            else
+            {
+                shader = _litShader ??= Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            }
+
             var material = new Material(shader) { color = color };
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
+
+            if (kind == SurfaceKind.UnlitSky)
+            {
+                // Keep sky/stars/discs free of Lit shading so day tint reads cleanly.
+                if (material.HasProperty("_BaseColor"))
+                    material.SetColor("_BaseColor", color);
+                if (material.HasProperty("_EmissionColor"))
+                {
+                    material.EnableKeyword("_EMISSION");
+                    material.SetColor("_EmissionColor", color);
+                }
+
+                return material;
+            }
 
             if (material.HasProperty("_Metallic"))
                 material.SetFloat("_Metallic", profile.Metallic);
@@ -156,16 +240,22 @@ namespace Airside.Presentation
                 material.SetFloat("_Smoothness", profile.Smoothness);
             if (material.HasProperty("_Glossiness"))
                 material.SetFloat("_Glossiness", profile.Smoothness);
+            if (material.HasProperty("_SpecularHighlights"))
+                material.SetFloat("_SpecularHighlights", 1f);
+            if (material.HasProperty("_EnvironmentReflections"))
+                material.SetFloat("_EnvironmentReflections", 1f);
+
+            var resolvedTiling = tiling ?? ResolveDefaultTiling(kind);
 
             if (albedo != null)
             {
                 material.mainTexture = albedo;
-                material.mainTextureScale = tiling ?? Vector2.one;
+                material.mainTextureScale = resolvedTiling;
             }
             else if (AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo) && authoredAlbedo != null)
             {
                 material.mainTexture = authoredAlbedo;
-                material.mainTextureScale = tiling ?? Vector2.one;
+                material.mainTextureScale = resolvedTiling;
             }
 
             var normal = ResolveNormal(kind);
@@ -175,8 +265,7 @@ namespace Airside.Presentation
                 material.EnableKeyword("_NORMALMAP");
                 if (material.HasProperty("_BumpScale"))
                     material.SetFloat("_BumpScale", profile.BumpScale);
-                if (tiling.HasValue)
-                    material.SetTextureScale("_BumpMap", tiling.Value);
+                material.SetTextureScale("_BumpMap", resolvedTiling);
             }
 
             var ao = ResolveAo(kind);
@@ -184,17 +273,15 @@ namespace Airside.Presentation
             {
                 material.SetTexture("_OcclusionMap", ao);
                 if (material.HasProperty("_OcclusionStrength"))
-                    material.SetFloat("_OcclusionStrength", 1f - profile.Occlusion + 0.15f);
-                if (tiling.HasValue)
-                    material.SetTextureScale("_OcclusionMap", tiling.Value * 0.5f);
+                    material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
+                material.SetTextureScale("_OcclusionMap", resolvedTiling * 0.5f);
             }
 
             if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null && material.HasProperty("_MetallicGlossMap"))
             {
                 material.SetTexture("_MetallicGlossMap", mask);
                 material.EnableKeyword("_METALLICSPECGLOSSMAP");
-                if (tiling.HasValue)
-                    material.SetTextureScale("_MetallicGlossMap", tiling.Value);
+                material.SetTextureScale("_MetallicGlossMap", resolvedTiling);
             }
 
             if (profile.Transparent || color.a < 0.99f)
@@ -205,32 +292,126 @@ namespace Airside.Presentation
 
         public static float DrySmoothness(SurfaceKind kind) => GetProfile(kind).Smoothness;
 
+        public static float DryMetallic(SurfaceKind kind) => GetProfile(kind).Metallic;
+
+        public static float DryBumpScale(SurfaceKind kind) => GetProfile(kind).BumpScale;
+
         /// <summary>
         /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
-        /// albedo, raises smoothness and a touch of metallic so rain reads on Lit.
+        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
+        /// sheen so rain reads on URP Lit without authoring separate wet mats.
         /// </summary>
-        public static void ApplyWetness(Material material, float wetness01, Color dryColor, float drySmoothness)
+        public static void ApplyWetness(
+            Material material,
+            float wetness01,
+            Color dryColor,
+            float drySmoothness,
+            float dryMetallic = 0.02f,
+            float dryBumpScale = 0.5f)
         {
             if (material == null)
                 return;
             wetness01 = Mathf.Clamp01(wetness01);
-            var wetColor = Color.Lerp(dryColor, dryColor * 0.48f + new Color(0.05f, 0.08f, 0.12f, 0f), wetness01);
+            // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
+            var wetTint = new Color(0.02f, 0.05f, 0.1f, 0f);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.28f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
-            var smoothness = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.86f), wetness01);
+            // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", wetColor);
+            if (material.HasProperty("_SpecColor"))
+            {
+                var spec = Color.Lerp(
+                    new Color(0.2f, 0.2f, 0.2f),
+                    new Color(0.55f, 0.62f, 0.7f),
+                    wetness01);
+                material.SetColor("_SpecColor", spec);
+            }
+
+            var targetSmooth = Mathf.Max(drySmoothness, 0.96f);
+            var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);
+            // Dry metallic-gloss masks cap wet sheen — drop the keyword while wet so
+            // _Smoothness reads (0025 item 4). Re-enable when dry.
+            if (material.HasProperty("_MetallicGlossMap") && material.GetTexture("_MetallicGlossMap") != null)
+            {
+                if (wetness01 > 0.2f)
+                    material.DisableKeyword("_METALLICSPECGLOSSMAP");
+                else
+                    material.EnableKeyword("_METALLICSPECGLOSSMAP");
+            }
+
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", smoothness);
             if (material.HasProperty("_Glossiness"))
                 material.SetFloat("_Glossiness", smoothness);
+
+            var metallic = Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.28f), wetness01 * 0.95f);
             if (material.HasProperty("_Metallic"))
-                material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.16f, wetness01));
+                material.SetFloat("_Metallic", metallic);
+
+            // Wet surfaces lose micro-relief — bump flattens toward a mirror sheen.
+            if (material.HasProperty("_BumpScale"))
+                material.SetFloat("_BumpScale", Mathf.Lerp(dryBumpScale, dryBumpScale * 0.16f, wetness01));
+
+            // Slight AO deepen so wet pavement reads puddled rather than just glossy.
+            if (material.HasProperty("_OcclusionStrength"))
+                material.SetFloat("_OcclusionStrength", Mathf.Lerp(1f, 1.35f, wetness01));
+
+            if (material.HasProperty("_ClearCoatMask"))
+            {
+                material.SetFloat("_ClearCoatMask", wetness01);
+                if (material.HasProperty("_ClearCoatSmoothness"))
+                    material.SetFloat("_ClearCoatSmoothness", Mathf.Lerp(0.12f, 0.99f, wetness01));
+                if (wetness01 > 0.02f)
+                    material.EnableKeyword("_CLEARCOAT");
+                else
+                    material.DisableKeyword("_CLEARCOAT");
+            }
+            else if (wetness01 > 0.02f)
+            {
+                // Older URP Lit without ClearCoat: push specular + cool sheen so wet still reads.
+                var boostedSmooth = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.99f), wetness01);
+                if (material.HasProperty("_Smoothness"))
+                    material.SetFloat("_Smoothness", boostedSmooth);
+                if (material.HasProperty("_Glossiness"))
+                    material.SetFloat("_Glossiness", boostedSmooth);
+                if (material.HasProperty("_Metallic"))
+                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.55f), wetness01));
+                if (material.HasProperty("_EmissionColor"))
+                {
+                    material.EnableKeyword("_EMISSION");
+                    var sheen = new Color(0.07f, 0.12f, 0.16f) * (wetness01 * 0.52f);
+                    material.SetColor("_EmissionColor", sheen);
+                }
+            }
+            else if (material.HasProperty("_EmissionColor") && !material.HasProperty("_ClearCoatMask"))
+            {
+                material.SetColor("_EmissionColor", Color.black);
+                material.DisableKeyword("_EMISSION");
+            }
         }
 
-        private static Texture2D ResolveNormal(SurfaceKind kind) =>
-            AuthoredNormals.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedNormal;
+        private static Vector2 ResolveDefaultTiling(SurfaceKind kind) =>
+            DefaultTilingByKind.TryGetValue(kind, out var tiling) ? tiling : Vector2.one;
 
-        private static Texture2D ResolveAo(SurfaceKind kind) =>
-            AuthoredAo.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedOcclusion;
+        private static Texture2D ResolveNormal(SurfaceKind kind)
+        {
+            if (AuthoredNormals.TryGetValue(kind, out var authored) && authored != null)
+                return authored;
+            if (KindNormals.TryGetValue(kind, out var kindNormal) && kindNormal != null)
+                return kindNormal;
+            return _sharedNormal;
+        }
+
+        private static Texture2D ResolveAo(SurfaceKind kind)
+        {
+            if (AuthoredAo.TryGetValue(kind, out var authored) && authored != null)
+                return authored;
+            if (KindOcclusion.TryGetValue(kind, out var kindAo) && kindAo != null)
+                return kindAo;
+            return _sharedOcclusion;
+        }
 
         private static void ApplyTransparent(Material material)
         {
@@ -246,12 +427,36 @@ namespace Airside.Presentation
 
         private static void EnsureSharedMaps()
         {
-            if (_sharedNormal != null && _sharedOcclusion != null)
+            if (_sharedNormal != null && _sharedOcclusion != null && KindNormals.Count > 0)
                 return;
 
             const int size = 64;
-            _sharedNormal = BuildNormalMap(size, seed: 17);
-            _sharedOcclusion = BuildOcclusionMap(size, seed: 41);
+            _sharedNormal ??= BuildNormalMap(size, seed: 17, strength: 2f, name: "airside_proc_normal");
+            _sharedOcclusion ??= BuildOcclusionMap(size, seed: 41, dark: 180, span: 75, name: "airside_proc_ao");
+
+            // Per-kind procedural fallbacks so Glass/Rubber/PaintedLine/Plastic do not
+            // share the generic asphalt-like micro-relief (MAT-001 / 0025 item 4).
+            EnsureKindMaps(SurfaceKind.Glass, size, normalSeed: 101, strength: 0.35f, aoSeed: 102, dark: 230, span: 20);
+            EnsureKindMaps(SurfaceKind.Rubber, size, normalSeed: 211, strength: 3.4f, aoSeed: 212, dark: 140, span: 90);
+            EnsureKindMaps(SurfaceKind.PaintedLine, size, normalSeed: 307, strength: 0.55f, aoSeed: 308, dark: 210, span: 30);
+            EnsureKindMaps(SurfaceKind.Plastic, size, normalSeed: 419, strength: 1.1f, aoSeed: 420, dark: 195, span: 45);
+            EnsureKindMaps(SurfaceKind.AircraftSkin, size, normalSeed: 503, strength: 0.7f, aoSeed: 504, dark: 215, span: 28);
+            EnsureKindMaps(SurfaceKind.Water, size, normalSeed: 601, strength: 1.6f, aoSeed: 602, dark: 200, span: 40);
+        }
+
+        private static void EnsureKindMaps(
+            SurfaceKind kind,
+            int size,
+            int normalSeed,
+            float strength,
+            int aoSeed,
+            int dark,
+            int span)
+        {
+            if (!KindNormals.ContainsKey(kind) || KindNormals[kind] == null)
+                KindNormals[kind] = BuildNormalMap(size, normalSeed, strength, $"airside_proc_normal_{kind}");
+            if (!KindOcclusion.ContainsKey(kind) || KindOcclusion[kind] == null)
+                KindOcclusion[kind] = BuildOcclusionMap(size, aoSeed, dark, span, $"airside_proc_ao_{kind}");
         }
 
         private static void EnsureAuthoredMaps()
@@ -305,7 +510,7 @@ namespace Airside.Presentation
         /// <summary>
         /// Tiny procedural normal map — enough micro-relief that Lit lighting catches edges.
         /// </summary>
-        private static Texture2D BuildNormalMap(int size, int seed)
+        private static Texture2D BuildNormalMap(int size, int seed, float strength = 2f, string name = "airside_proc_normal")
         {
             var height = new float[size * size];
             var rng = new System.Random(seed);
@@ -331,7 +536,7 @@ namespace Airside.Presentation
 
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: true, linear: true)
             {
-                name = "airside_proc_normal",
+                name = name,
                 wrapMode = TextureWrapMode.Repeat,
                 filterMode = FilterMode.Bilinear
             };
@@ -343,8 +548,8 @@ namespace Airside.Presentation
                 var hR = blurred[y * size + ((x + 1) % size)];
                 var hD = blurred[((y - 1 + size) % size) * size + x];
                 var hU = blurred[((y + 1) % size) * size + x];
-                var dx = (hL - hR) * 2f;
-                var dy = (hD - hU) * 2f;
+                var dx = (hL - hR) * strength;
+                var dy = (hD - hU) * strength;
                 var normal = new Vector3(dx, dy, 1f).normalized;
                 // Unity tangent-space normal encoding.
                 pixels[y * size + x] = new Color32(
@@ -359,19 +564,24 @@ namespace Airside.Presentation
             return tex;
         }
 
-        private static Texture2D BuildOcclusionMap(int size, int seed)
+        private static Texture2D BuildOcclusionMap(
+            int size,
+            int seed,
+            int dark = 180,
+            int span = 75,
+            string name = "airside_proc_ao")
         {
             var rng = new System.Random(seed);
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: true, linear: true)
             {
-                name = "airside_proc_ao",
+                name = name,
                 wrapMode = TextureWrapMode.Repeat,
                 filterMode = FilterMode.Bilinear
             };
             var pixels = new Color32[size * size];
             for (var i = 0; i < pixels.Length; i++)
             {
-                var v = (byte)(180 + rng.Next(0, 75));
+                var v = (byte)Mathf.Clamp(dark + rng.Next(0, Mathf.Max(1, span)), 0, 255);
                 pixels[i] = new Color32(v, v, v, 255);
             }
 

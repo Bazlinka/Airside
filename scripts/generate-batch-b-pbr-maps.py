@@ -23,11 +23,16 @@ def new_guid() -> str:
 
 
 def write_texture_meta(png_path: Path, *, srgb: bool, normal: bool = False, alpha: bool = False) -> None:
+    meta = png_path.with_suffix(".png.meta")
     g = new_guid()
+    if meta.exists():
+        for line in meta.read_text(encoding="utf-8").splitlines():
+            if line.startswith("guid: "):
+                g = line.split(":", 1)[1].strip()
+                break
     color_space = 1 if srgb else 0
     # Unity TextureImporter.textureType: 0 Default, 1 NormalMap
     texture_type = 1 if normal else 0
-    meta = png_path.with_suffix(".png.meta")
     meta.write_text(
         f"""fileFormatVersion: 2
 guid: {g}
@@ -242,6 +247,34 @@ def emit(stem: str, height: np.ndarray, *, normal_strength: float, metallic: flo
     print(f"wrote {stem} normal/ao/mask")
 
 
+def glass_height() -> np.ndarray:
+    # Very soft micro-ripples — glass should stay almost flat.
+    n = wrap_noise((SIZE, SIZE), scale=3, octaves=2)
+    return (n - n.min()) / (n.max() - n.min() + 1e-8) * 0.15 + 0.425
+
+
+def rubber_height() -> np.ndarray:
+    # Circumferential tread bands + fine grit.
+    y = np.arange(SIZE)[:, None]
+    bands = 0.5 + 0.5 * np.sin(2 * np.pi * y * 28 / SIZE)
+    bands = np.repeat(bands, SIZE, axis=1)
+    grit = wrap_noise((SIZE, SIZE), scale=48, octaves=3)
+    grit = (grit - grit.min()) / (grit.max() - grit.min() + 1e-8)
+    h = 0.65 * bands + 0.35 * grit
+    return (h - h.min()) / (h.max() - h.min() + 1e-8)
+
+
+def painted_line_height() -> np.ndarray:
+    # Nearly flat paint with faint brush noise.
+    n = wrap_noise((SIZE, SIZE), scale=10, octaves=3)
+    return (n - n.min()) / (n.max() - n.min() + 1e-8) * 0.2 + 0.4
+
+
+def plastic_height() -> np.ndarray:
+    n = wrap_noise((SIZE, SIZE), scale=12, octaves=4)
+    return (n - n.min()) / (n.max() - n.min() + 1e-8)
+
+
 def main() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
     emit(
@@ -279,6 +312,43 @@ def main() -> None:
         smooth_base=0.42,
         smooth_var=0.18,
         ao_contrast=0.35,
+    )
+    # MAT-001 — glass / rubber / painted line / plastic companions (0025 item 4).
+    emit(
+        "tx_glass_pane",
+        glass_height(),
+        normal_strength=0.6,
+        metallic=0.04,
+        smooth_base=0.9,
+        smooth_var=0.02,
+        ao_contrast=0.08,
+    )
+    emit(
+        "tx_rubber_tire",
+        rubber_height(),
+        normal_strength=3.8,
+        metallic=0.01,
+        smooth_base=0.12,
+        smooth_var=0.08,
+        ao_contrast=0.45,
+    )
+    emit(
+        "tx_painted_line",
+        painted_line_height(),
+        normal_strength=0.8,
+        metallic=0.02,
+        smooth_base=0.24,
+        smooth_var=0.04,
+        ao_contrast=0.12,
+    )
+    emit(
+        "tx_plastic_trim",
+        plastic_height(),
+        normal_strength=1.4,
+        metallic=0.05,
+        smooth_base=0.4,
+        smooth_var=0.1,
+        ao_contrast=0.22,
     )
     print("Batch B PBR companions ready under", ROOT)
 

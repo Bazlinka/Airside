@@ -13,16 +13,19 @@ namespace Airside.Simulation
 
     public readonly struct TurnaroundTaskView
     {
-        public TurnaroundTaskView(string name, TurnaroundTaskState state, long secondsRemaining)
+        public TurnaroundTaskView(string name, TurnaroundTaskState state, long secondsRemaining, float progress01 = 0f)
         {
             Name = name;
             State = state;
             SecondsRemaining = secondsRemaining;
+            Progress01 = progress01 < 0f ? 0f : progress01 > 1f ? 1f : progress01;
         }
 
         public string Name { get; }
         public TurnaroundTaskState State { get; }
         public long SecondsRemaining { get; }
+        /// <summary>0 waiting, 0–1 active, 1 complete. Presentation HUD bars only.</summary>
+        public float Progress01 { get; }
     }
 
     public sealed class TurnaroundWorkflow
@@ -127,11 +130,14 @@ namespace Airside.Simulation
         private TurnaroundTaskView View(string name, long start, long end, SimulationTime now)
         {
             var elapsed = Elapsed(now);
+            var duration = Math.Max(1L, end - start);
             if (elapsed < start)
-                return new TurnaroundTaskView(name, TurnaroundTaskState.Waiting, end - start);
+                return new TurnaroundTaskView(name, TurnaroundTaskState.Waiting, duration, 0f);
             if (elapsed >= end)
-                return new TurnaroundTaskView(name, TurnaroundTaskState.Complete, 0);
-            return new TurnaroundTaskView(name, TurnaroundTaskState.Active, end - elapsed);
+                return new TurnaroundTaskView(name, TurnaroundTaskState.Complete, 0, 1f);
+            var remaining = end - elapsed;
+            var progress = 1f - (float)remaining / duration;
+            return new TurnaroundTaskView(name, TurnaroundTaskState.Active, remaining, progress);
         }
 
         private long Duration(long normalSeconds)

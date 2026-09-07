@@ -28,15 +28,34 @@ def add_cube(name: str, pos: tuple[float, float, float], scale: tuple[float, flo
 
 def main() -> None:
     add_cube("Stairs base", (0.0, 0.0, 0.0), (1.1, 0.2, 2.4), 200000)
+    add_cube("Stairs platform", (0.0, 0.95, 0.85), (1.05, 0.1, 0.7), 205000)
     add_cube("Stairs rail L", (-0.45, 0.55, 0.0), (0.08, 1.0, 2.2), 210000)
     add_cube("Stairs rail R", (0.45, 0.55, 0.0), (0.08, 1.0, 2.2), 220000)
-    for i in range(5):
+    add_cube("Stairs rail mid", (0.0, 0.85, 0.2), (0.9, 0.06, 0.06), 225000)
+    add_cube("Stairs rail cross", (0.0, 0.45, -0.4), (0.9, 0.05, 0.05), 226000)
+    add_cube("Stairs side L", (-0.52, 0.45, 0.0), (0.06, 0.7, 2.0), 227000)
+    add_cube("Stairs side R", (0.52, 0.45, 0.0), (0.06, 0.7, 2.0), 228000)
+    add_cube("Stairs handle", (0.0, 1.05, 0.55), (0.35, 0.08, 0.08), 229000)
+    add_cube("Stairs brace", (0.0, 0.25, 0.4), (0.9, 0.08, 0.08), 230000)
+    for i in range(6):
         add_cube(
             f"Step {i}",
-            (0.0, 0.15 + i * 0.18, -0.9 + i * 0.35),
-            (0.95, 0.08, 0.32),
+            (0.0, 0.15 + i * 0.16, -0.95 + i * 0.32),
+            (0.95, 0.08, 0.3),
             300000 + i * 1000,
         )
+        add_cube(
+            f"Nosing {i}",
+            (0.0, 0.2 + i * 0.16, -0.8 + i * 0.32),
+            (0.98, 0.04, 0.08),
+            400000 + i * 1000,
+        )
+    add_cube("Stairs wheel FL", (0.4, -0.22, 0.9), (0.22, 0.22, 0.14), 500000)
+    add_cube("Stairs wheel FR", (-0.4, -0.22, 0.9), (0.22, 0.22, 0.14), 501000)
+    add_cube("Stairs wheel RL", (0.4, -0.22, -0.9), (0.22, 0.22, 0.14), 502000)
+    add_cube("Stairs wheel RR", (-0.4, -0.22, -0.9), (0.22, 0.22, 0.14), 503000)
+    add_cube("Stairs hub FL", (0.4, -0.22, 0.9), (0.1, 0.1, 0.08), 504000)
+    add_cube("Stairs hub FR", (-0.4, -0.22, 0.9), (0.1, 0.1, 0.08), 505000)
 
     child_file_ids = [p[3] for p in parts]  # GameObject ids
     lines: list[str] = ["%YAML 1.1", "%TAG !u! tag:unity3d.com,2011:"]

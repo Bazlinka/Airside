@@ -131,8 +131,13 @@ TextureImporter:
 
 
 def write_default_meta(path: Path) -> str:
-    g = new_guid()
     meta = Path(str(path) + ".meta")
+    g = new_guid()
+    if meta.exists():
+        for line in meta.read_text(encoding="utf-8").splitlines():
+            if line.startswith("guid:"):
+                g = line.split(":", 1)[1].strip()
+                break
     meta.write_text(
         "fileFormatVersion: 2\n"
         f"guid: {g}\n"
@@ -472,15 +477,53 @@ def main() -> None:
 
     props = ROOT / "Models" / "Props"
 
-    # Markings kit — flat precision strips (metres)
+    # Markings kit — flat precision strips (metres) + denser hold/aiming/TDZ language.
     markings = {
         "runway_centreline": quad(-0.15, -30, 0.15, 30, 0.02),
+        "runway_centre_dash_a": quad(-0.12, -22, 0.12, -18, 0.022),
+        "runway_centre_dash_b": quad(-0.12, -10, 0.12, -6, 0.022),
+        "runway_centre_dash_c": quad(-0.12, 6, 0.12, 10, 0.022),
+        "runway_centre_dash_d": quad(-0.12, 18, 0.12, 22, 0.022),
         "runway_edge_left": quad(-15.0, -30, -14.7, 30, 0.02),
         "runway_edge_right": quad(14.7, -30, 15.0, 30, 0.02),
         "runway_threshold": quad(-15.0, -30, 15.0, -28.5, 0.025),
+        "threshold_bar_a": quad(-12.0, -29.6, -9.0, -28.8, 0.028),
+        "threshold_bar_b": quad(-6.0, -29.6, -3.0, -28.8, 0.028),
+        "threshold_bar_c": quad(3.0, -29.6, 6.0, -28.8, 0.028),
+        "threshold_bar_d": quad(9.0, -29.6, 12.0, -28.8, 0.028),
         "taxi_centreline": quad(-20.0, -0.1, 0.0, 0.1, 0.02),
+        "taxi_edge_n": quad(-20.0, 1.75, 20.0, 1.9, 0.02),
+        "taxi_edge_s": quad(-20.0, -1.9, 20.0, -1.75, 0.02),
         "stand_stop_a": quad(-8.0, 8.0, -4.0, 8.3, 0.03),
         "stand_stop_b": quad(4.0, 8.0, 8.0, 8.3, 0.03),
+        "stand_stop_c": quad(12.0, 8.0, 16.0, 8.3, 0.03),
+        "hold_short_a": quad(-6.0, 4.0, -2.0, 4.25, 0.03),
+        "hold_short_b": quad(-6.0, 4.55, -2.0, 4.8, 0.03),
+        "hold_short_c": quad(2.0, 4.0, 5.5, 4.25, 0.03),
+        "hold_short_d": quad(2.0, 4.55, 5.5, 4.8, 0.03),
+        "aiming_point_l": quad(-2.0, -8.0, 0.8, -6.0, 0.03),
+        "aiming_point_r": quad(-2.0, 6.0, 0.8, 8.0, 0.03),
+        "tdz_mark_l": quad(-0.7, -6.5, 0.7, -5.5, 0.025),
+        "tdz_mark_r": quad(-0.7, 5.5, 0.7, 6.5, 0.025),
+        "chevron_lead_a": quad(8.0, 2.0, 10.0, 3.2, 0.025),
+        "chevron_lead_b": quad(11.0, 2.0, 13.0, 3.2, 0.025),
+        # Digit segment bars + taxi arrows (MAT densify / 0025 item 3).
+        "digit_bar_h": quad(-0.55, -0.14, 0.55, 0.14, 0.03),
+        "digit_bar_v": quad(-0.14, -0.95, 0.14, 0.95, 0.03),
+        "digit_bar_h_short": quad(-0.4, -0.12, 0.4, 0.12, 0.03),
+        "digit_serif": quad(-0.35, -0.12, 0.1, 0.12, 0.03),
+        "taxi_arrow_shaft": quad(-0.18, -1.1, 0.18, 0.6, 0.03),
+        "taxi_arrow_head_l": quad(-0.75, 0.35, -0.05, 1.15, 0.03),
+        "taxi_arrow_head_r": quad(0.05, 0.35, 0.75, 1.15, 0.03),
+        "taxi_arrow_head_cap": quad(-0.55, 0.85, 0.55, 1.2, 0.03),
+        "hold_short_e": quad(-10.0, 4.0, -7.0, 4.25, 0.03),
+        "hold_short_f": quad(-10.0, 4.55, -7.0, 4.8, 0.03),
+        "chevron_lead_c": quad(14.0, 2.0, 16.0, 3.2, 0.025),
+        "chevron_lead_d": quad(17.0, 2.0, 19.0, 3.2, 0.025),
+        "apron_arrow_a": quad(-0.2, -0.9, 0.2, 0.5, 0.03),
+        "apron_arrow_b": quad(-0.65, 0.25, 0.65, 0.95, 0.03),
+        "threshold_side_l": quad(-14.5, -29.6, -13.2, -28.8, 0.028),
+        "threshold_side_r": quad(13.2, -29.6, 14.5, -28.8, 0.028),
     }
     pack_gltf(props / "mdl_airfield_markings_kit_v01.gltf", markings)
     guids["WLD-001"] = "gltf"

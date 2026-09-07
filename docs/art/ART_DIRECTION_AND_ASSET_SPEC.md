@@ -231,13 +231,13 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v02.gltf` (fallback `…_v01.gltf`) | Fictional twin turboprop; gear, cross props, doors and surfaces separated; primary and traffic liveries use material variants | Integrated (v02 preferred; v01 Approved fallback) |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf` (+ `.fbx`; fallbacks lofted→v04→…→v01) | Fictional twin turboprop; denser lathed fuselage (74 meshes), cabin windows, wing fences, prop hubs; gear/props/doors separated | Integrated (authored preferred; FBX prefab bake on Mac) |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v02.gltf` (fallback `…_v01.gltf`) | Small practical terminal, glass frontage, canopy, service side, modular end caps | Integrated (v02 preferred; v01 Approved fallback) |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_v02.gltf` (fallback `…_v01.gltf`) | Corrugated metal hangar with readable door opening, tracks and buttresses | Integrated (v02 preferred; v01 Approved fallback) |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v02.gltf` (fallback `…_v01.gltf`) | Compact service/crew building with porch, door and windows | Integrated (v02 preferred; v01 Approved fallback) |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Small practical terminal, glass frontage with denser mullions/transom, canopy posts, service side, modular end caps | Integrated (authored preferred; FBX prefab bake on Mac) |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Corrugated hangar with door panels/bars, tracks, skylights, crane trolley, buttresses, office lean | Integrated (authored preferred) |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Compact service/crew building with porch, antenna, AC units | Integrated (authored preferred) |
 | VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v02.gltf` (fallback `…_v01.gltf`) | Cab, wheels and hose connection separated | Integrated (v02 preferred; v01 Approved fallback) |
 | VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v02.gltf` (fallback `…_v01.gltf`) | Tug plus three low-detail carts; articulation points defined | Integrated (v02 preferred; v01 Approved fallback) |
 | VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v02.gltf` (fallback `…_v01.gltf`) | Compact apron bus with doors and wheels separated | Integrated (v02 preferred; v01 Approved fallback) |

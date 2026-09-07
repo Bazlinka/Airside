@@ -1,4 +1,5 @@
 using System;
+using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,13 +21,34 @@ namespace Airside.Presentation
         private VisualElement _brandImage;
         private Label _locationText;
         private Label _flightText;
+        private VisualElement _phaseRow;
+        private VisualElement _phaseIcon;
         private Label _phaseText;
+        private VisualElement _clockRow;
+        private VisualElement _weatherIcon;
         private Label _clockText;
+        private VisualElement _economyStrip;
+        private VisualElement _cashIcon;
+        private VisualElement _incomeIcon;
         private Label _cashText;
+        private VisualElement _repIcon;
+        private VisualElement _researchIcon;
         private Label _financeText;
         private Label _warningText;
+        private VisualElement _speedChip;
+        private Label _speedText;
+        private Button _pauseButton;
+        private Button _speed1Button;
+        private Button _speed4Button;
+        private VisualElement _stripResearchTrack;
+        private VisualElement _stripResearchFill;
+        private Label _stripResearchText;
+        private VisualElement _repTrack;
+        private VisualElement _repFill;
+        private Label _metarText;
         private VisualElement _turnaroundBlock;
         private Label _turnaroundText;
+        private VisualElement _turnaroundBars;
         private Button _priorityButton;
         private Label _scheduleText;
         private Label _staffingText;
@@ -49,6 +71,7 @@ namespace Airside.Presentation
         private VisualElement _offerPanel;
         private VisualElement _offerAccent;
         private Label _offerTitle;
+        private VisualElement _routeIcon;
         private Label _offerBody;
         private Label _offerStatus;
         private Button _acceptButton;
@@ -85,6 +108,9 @@ namespace Airside.Presentation
         private Action _onBeginOperations;
         private Action _onResetAirport;
         private Action _onContinueAway;
+        private Action _onTogglePause;
+        private Action _onSpeed1;
+        private Action _onSpeed4;
 
         public bool IsActive => _built && _document != null && _document.rootVisualElement != null;
 
@@ -107,7 +133,10 @@ namespace Airside.Presentation
             Action onStartResearch = null,
             Action onBeginOperations = null,
             Action onResetAirport = null,
-            Action onContinueAway = null)
+            Action onContinueAway = null,
+            Action onTogglePause = null,
+            Action onSpeed1 = null,
+            Action onSpeed4 = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -119,6 +148,9 @@ namespace Airside.Presentation
             _onBeginOperations = onBeginOperations;
             _onResetAirport = onResetAirport;
             _onContinueAway = onContinueAway;
+            _onTogglePause = onTogglePause;
+            _onSpeed1 = onSpeed1;
+            _onSpeed4 = onSpeed4;
         }
 
         private void Build()
@@ -129,7 +161,7 @@ namespace Airside.Presentation
             _document = gameObject.AddComponent<UIDocument>();
             var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
             panelSettings.scaleMode = PanelScaleMode.ScaleWithScreenSize;
-            panelSettings.referenceResolution = new Vector2Int(1920, 1080);
+            panelSettings.referenceResolution = new Vector2Int(2560, 1440);
             panelSettings.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panelSettings.match = 0.5f;
             panelSettings.sortingOrder = 100;
@@ -140,9 +172,11 @@ namespace Airside.Presentation
             _root.style.flexGrow = 1;
             _root.pickingMode = PickingMode.Position;
 
+            BuildEconomyStrip();
             BuildLeftPanel();
             BuildOfferPanel();
             BuildOpsPanel();
+            BuildSpeedChip();
             BuildOverlays();
 
             _researchToast = MakeToastLabel("Research toast");
@@ -161,6 +195,8 @@ namespace Airside.Presentation
             _saveChip.style.alignSelf = Align.FlexEnd;
             _saveChip.style.fontSize = 13;
             _saveChip.style.minWidth = 72;
+            _saveChip.style.borderLeftWidth = 3;
+            _saveChip.style.borderLeftColor = AirsideTheme.CoastalBlue;
             _saveChip.text = "Saved";
             _root.Add(_saveChip);
 
@@ -174,92 +210,129 @@ namespace Airside.Presentation
 
         private void BuildLeftPanel()
         {
-            _leftPanel = MakePanel("Status panel", 410f);
+            // REF-004: turnaround / flight card sits bottom-left; ops owns top-left.
+            _leftPanel = MakePanel("Status panel", 360f);
             _leftPanel.style.left = 22;
-            _leftPanel.style.top = 22;
-            _leftPanel.style.maxHeight = 620;
-            _leftPanel.style.paddingLeft = 16;
-            _leftPanel.style.paddingRight = 16;
-            _leftPanel.style.paddingTop = 12;
+            _leftPanel.style.bottom = 22;
+            _leftPanel.style.maxHeight = 460;
+            _leftPanel.style.paddingLeft = 14;
+            _leftPanel.style.paddingRight = 14;
+            _leftPanel.style.paddingTop = 10;
             _leftPanel.style.paddingBottom = 12;
+            // Coastal accent bar so the status panel reads as brand chrome, not a debug box.
+            _leftPanel.style.borderLeftWidth = 3;
+            _leftPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
+            _leftPanel.style.borderTopWidth = 2;
+            _leftPanel.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
 
             var wordmark = AirsideTheme.WordmarkLight;
             if (wordmark != null)
             {
                 _brandImage = new VisualElement { name = "Wordmark" };
                 _brandImage.pickingMode = PickingMode.Ignore;
-                _brandImage.style.height = 40;
-                _brandImage.style.marginBottom = 6;
+                _brandImage.style.height = 36;
+                _brandImage.style.marginBottom = 4;
                 _brandImage.style.backgroundImage = new StyleBackground(wordmark);
                 _brandImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
                 _leftPanel.Add(_brandImage);
             }
             else
             {
-                _brandLabel = MakePanelLabel("Brand", 22, FontStyle.Bold);
+                _brandLabel = MakePanelLabel("Brand", 20, FontStyle.Bold);
                 _brandLabel.text = "AIRSIDE";
                 _brandLabel.style.marginBottom = 4;
                 _leftPanel.Add(_brandLabel);
             }
 
-            _locationText = AddLeftLine(_leftPanel, "Location", 14, FontStyle.Normal);
+            _locationText = AddLeftLine(_leftPanel, "Location", 13, FontStyle.Normal);
+            _locationText.style.color = AirsideTheme.OpenSky;
             _flightText = AddLeftLine(_leftPanel, "Flight", 16, FontStyle.Bold);
-            _phaseText = AddLeftLine(_leftPanel, "Phase", 15, FontStyle.Normal);
-            _clockText = AddLeftLine(_leftPanel, "Clock", 13, FontStyle.Normal);
-            _cashText = AddLeftLine(_leftPanel, "Cash", 13, FontStyle.Normal);
-            _financeText = AddLeftLine(_leftPanel, "Finance", 13, FontStyle.Normal);
+
+            _phaseRow = new VisualElement { name = "Phase row" };
+            _phaseRow.style.flexDirection = FlexDirection.Row;
+            _phaseRow.style.alignItems = Align.Center;
+            _phaseRow.style.marginTop = 2;
+            _phaseRow.style.marginBottom = 2;
+            _phaseIcon = MakeIconSlot("Phase icon", 20);
+            _phaseRow.Add(_phaseIcon);
+            _phaseText = MakePanelLabel("Phase", 14, FontStyle.Normal);
+            _phaseText.style.color = AirsideTheme.OpenSky;
+            _phaseText.style.marginLeft = 8;
+            _phaseRow.Add(_phaseText);
+            _leftPanel.Add(_phaseRow);
+
+            _clockRow = new VisualElement { name = "Clock row" };
+            _clockRow.style.flexDirection = FlexDirection.Row;
+            _clockRow.style.alignItems = Align.Center;
+            _clockRow.style.marginTop = 2;
+            _clockRow.style.marginBottom = 2;
+            _weatherIcon = MakeIconSlot("Weather icon", 18);
+            _clockRow.Add(_weatherIcon);
+            _clockText = MakePanelLabel("Clock", 12, FontStyle.Normal);
+            _clockText.style.marginLeft = 8;
+            _clockText.style.whiteSpace = WhiteSpace.Normal;
+            _clockRow.Add(_clockText);
+            _leftPanel.Add(_clockRow);
+
             _warningText = AddLeftLine(_leftPanel, "Warning", 13, FontStyle.Bold);
             _warningText.style.color = AirsideTheme.SafetyYellow;
 
             _turnaroundBlock = new VisualElement { name = "Turnaround" };
             _turnaroundBlock.style.marginTop = 4;
             _turnaroundBlock.style.marginBottom = 4;
-            _turnaroundText = MakePanelLabel("Tasks", 12, FontStyle.Normal);
+            _turnaroundText = MakePanelLabel("Tasks", 11, FontStyle.Normal);
             _turnaroundText.style.whiteSpace = WhiteSpace.Normal;
+            _turnaroundText.style.display = DisplayStyle.None;
             _turnaroundBlock.Add(_turnaroundText);
-            _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 190f);
+            _turnaroundBars = new VisualElement { name = "Turnaround bars" };
+            _turnaroundBars.style.marginTop = 2;
+            _turnaroundBlock.Add(_turnaroundBars);
+            _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 180f);
             _priorityButton.style.marginTop = 6;
             _priorityButton.clicked += () => _onPriorityCrew?.Invoke();
             _turnaroundBlock.Add(_priorityButton);
             _leftPanel.Add(_turnaroundBlock);
 
-            _scheduleText = AddLeftLine(_leftPanel, "Schedule", 13, FontStyle.Normal);
-            _staffingText = AddLeftLine(_leftPanel, "Staffing", 13, FontStyle.Normal);
-            _earlyHintText = AddLeftLine(_leftPanel, "Early hint", 13, FontStyle.Normal);
+            _scheduleText = AddLeftLine(_leftPanel, "Schedule", 12, FontStyle.Normal);
+            _staffingText = AddLeftLine(_leftPanel, "Staffing", 12, FontStyle.Normal);
+            _earlyHintText = AddLeftLine(_leftPanel, "Early hint", 12, FontStyle.Normal);
 
             _crewRow = new VisualElement { name = "Crew row" };
             _crewRow.style.flexDirection = FlexDirection.Row;
-            _crewRow.style.marginTop = 4;
-            _crewRow.style.marginBottom = 4;
-            _hireCrewButton = MakeButton("Hire crew", AirsideTheme.CoastalBlue, 150f);
+            _crewRow.style.marginTop = 2;
+            _crewRow.style.marginBottom = 2;
+            _hireCrewButton = MakeButton("Hire", AirsideTheme.CoastalBlue, 100f);
             _hireCrewButton.clicked += () => _onHireCrew?.Invoke();
             _crewRow.Add(_hireCrewButton);
-            _releaseCrewButton = MakeButton("Release crew", AirsideTheme.Tarmac, 110f);
-            _releaseCrewButton.style.marginLeft = 8;
+            _releaseCrewButton = MakeButton("Release", AirsideTheme.Tarmac, 90f);
+            _releaseCrewButton.style.marginLeft = 6;
             _releaseCrewButton.clicked += () => _onReleaseCrew?.Invoke();
             _crewRow.Add(_releaseCrewButton);
             _leftPanel.Add(_crewRow);
 
-            _standsText = AddLeftLine(_leftPanel, "Stands", 13, FontStyle.Normal);
-            _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 220f);
-            _buildStandButton.style.marginTop = 4;
+            _standsText = AddLeftLine(_leftPanel, "Stands", 12, FontStyle.Normal);
+            _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 180f);
+            _buildStandButton.style.marginTop = 2;
             _buildStandButton.clicked += () => _onBuildStand?.Invoke();
             _leftPanel.Add(_buildStandButton);
 
-            _researchText = AddLeftLine(_leftPanel, "Research", 13, FontStyle.Normal);
+            _researchText = AddLeftLine(_leftPanel, "Research", 12, FontStyle.Normal);
             _researchTrack = MakeProgressTrack("Research track");
             _researchFill = _researchTrack.Q<VisualElement>("Fill");
             _leftPanel.Add(_researchTrack);
-            _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 260f);
-            _researchButton.style.marginTop = 4;
+            _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 200f);
+            _researchButton.style.marginTop = 2;
             _researchButton.clicked += () => _onStartResearch?.Invoke();
             _leftPanel.Add(_researchButton);
 
             _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
-            _coachText.style.color = AirsideTheme.SafetyYellow;
+            _coachText.style.color = AirsideTheme.OpenSky;
             _coachText.style.whiteSpace = WhiteSpace.Normal;
-            _controlsText = AddLeftLine(_leftPanel, "Controls", 12, FontStyle.Normal);
+            _controlsText = AddLeftLine(_leftPanel, "Controls", 11, FontStyle.Normal);
+            _controlsText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.7f);
             _controlsText.style.whiteSpace = WhiteSpace.Normal;
+            _controlsText.style.display = DisplayStyle.None;
 
             _waitRow = new VisualElement { name = "Wait row" };
             _waitRow.style.marginTop = 6;
@@ -271,6 +344,126 @@ namespace Airside.Presentation
             _leftPanel.Add(_waitRow);
 
             _root.Add(_leftPanel);
+        }
+
+        private void BuildEconomyStrip()
+        {
+            // REF-004 top-centre cash / finance / research strip (0025 item 6).
+            _economyStrip = MakePanel("Economy strip", 520f);
+            _economyStrip.style.top = 18;
+            _economyStrip.style.left = Length.Percent(50);
+            _economyStrip.style.translate = new Translate(Length.Percent(-50), 0);
+            _economyStrip.style.height = StyleKeyword.Auto;
+            _economyStrip.style.paddingLeft = 12;
+            _economyStrip.style.paddingRight = 12;
+            _economyStrip.style.paddingTop = 6;
+            _economyStrip.style.paddingBottom = 6;
+            _economyStrip.style.flexDirection = FlexDirection.Row;
+            _economyStrip.style.alignItems = Align.Center;
+            _economyStrip.style.justifyContent = Justify.Center;
+            _economyStrip.pickingMode = PickingMode.Ignore;
+            _economyStrip.style.borderTopWidth = 2;
+            _economyStrip.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.45f);
+
+            _cashIcon = MakeIconSlot("Cash icon", 18);
+            _economyStrip.Add(_cashIcon);
+            _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
+            _cashText.style.marginLeft = 6;
+            _cashText.style.marginRight = 8;
+            _economyStrip.Add(_cashText);
+
+            _incomeIcon = MakeIconSlot("Income icon", 16);
+            _incomeIcon.style.marginRight = 4;
+            _economyStrip.Add(_incomeIcon);
+
+            _economyStrip.Add(MakeStripDivider());
+
+            _repIcon = MakeIconSlot("Rep icon", 18);
+            _economyStrip.Add(_repIcon);
+            _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
+            _financeText.style.marginLeft = 6;
+            _financeText.style.marginRight = 6;
+            _financeText.style.whiteSpace = WhiteSpace.NoWrap;
+            _economyStrip.Add(_financeText);
+            _repTrack = MakeProgressTrack("Rep track");
+            _repTrack.style.width = 72;
+            _repTrack.style.marginTop = 0;
+            _repTrack.style.marginRight = 10;
+            _repFill = _repTrack.Q<VisualElement>("Fill");
+            if (_repFill != null)
+                _repFill.style.backgroundColor = AirsideTheme.ClearGreen;
+            _economyStrip.Add(_repTrack);
+
+            _economyStrip.Add(MakeStripDivider());
+
+            _researchIcon = MakeIconSlot("Research icon", 16);
+            _researchIcon.style.marginRight = 4;
+            _economyStrip.Add(_researchIcon);
+            _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
+            _stripResearchText.style.marginRight = 6;
+            _stripResearchText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.85f);
+            _economyStrip.Add(_stripResearchText);
+            _stripResearchTrack = MakeProgressTrack("Strip research track");
+            _stripResearchTrack.style.width = 90;
+            _stripResearchTrack.style.marginTop = 0;
+            _stripResearchFill = _stripResearchTrack.Q<VisualElement>("Fill");
+            _economyStrip.Add(_stripResearchTrack);
+
+            _root.Add(_economyStrip);
+        }
+
+        private static VisualElement MakeStripDivider()
+        {
+            var div = new VisualElement { name = "Strip divider" };
+            div.pickingMode = PickingMode.Ignore;
+            div.style.width = 1;
+            div.style.height = 18;
+            div.style.marginLeft = 4;
+            div.style.marginRight = 8;
+            div.style.backgroundColor = new Color(
+                AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.22f);
+            return div;
+        }
+
+        private void BuildSpeedChip()
+        {
+            // REF-004 bottom-centre Pause · 1× · 4× controls (0025 item 6).
+            _speedChip = MakePanel("Speed chip", 280f);
+            _speedChip.style.bottom = 22;
+            _speedChip.style.left = Length.Percent(50);
+            _speedChip.style.translate = new Translate(Length.Percent(-50), 0);
+            _speedChip.style.paddingLeft = 10;
+            _speedChip.style.paddingRight = 10;
+            _speedChip.style.paddingTop = 8;
+            _speedChip.style.paddingBottom = 8;
+            _speedChip.style.flexDirection = FlexDirection.Row;
+            _speedChip.style.alignItems = Align.Center;
+            _speedChip.style.justifyContent = Justify.Center;
+            _speedChip.pickingMode = PickingMode.Position;
+            _speedChip.style.borderTopWidth = 2;
+            _speedChip.style.borderTopColor = new Color(
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
+
+            _pauseButton = MakeButton("Pause", AirsideTheme.Tarmac, 72f);
+            _pauseButton.clicked += () => _onTogglePause?.Invoke();
+            _speedChip.Add(_pauseButton);
+
+            _speed1Button = MakeButton("1×", AirsideTheme.CoastalBlue, 56f);
+            _speed1Button.style.marginLeft = 8;
+            _speed1Button.clicked += () => _onSpeed1?.Invoke();
+            _speedChip.Add(_speed1Button);
+
+            _speed4Button = MakeButton("4×", AirsideTheme.CoastalBlue, 56f);
+            _speed4Button.style.marginLeft = 8;
+            _speed4Button.clicked += () => _onSpeed4?.Invoke();
+            _speedChip.Add(_speed4Button);
+
+            _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal);
+            _speedText.style.marginLeft = 10;
+            _speedText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.75f);
+            _speedChip.Add(_speedText);
+            _root.Add(_speedChip);
         }
 
         private void BuildOfferPanel()
@@ -290,11 +483,19 @@ namespace Airside.Presentation
             _offerAccent.style.backgroundColor = AirsideTheme.SafetyYellow;
             _offerPanel.Add(_offerAccent);
 
+            var offerHeader = new VisualElement { name = "Offer header" };
+            offerHeader.style.flexDirection = FlexDirection.Row;
+            offerHeader.style.alignItems = Align.Center;
+            offerHeader.style.marginLeft = 14;
+            offerHeader.style.marginTop = 14;
+            offerHeader.style.marginRight = 14;
+            _routeIcon = MakeIconSlot("Route icon", 18);
+            _routeIcon.style.marginRight = 8;
+            offerHeader.Add(_routeIcon);
             _offerTitle = MakePanelLabel("Offer title", 16, FontStyle.Bold);
-            _offerTitle.style.marginLeft = 14;
-            _offerTitle.style.marginTop = 14;
-            _offerTitle.style.marginRight = 14;
-            _offerPanel.Add(_offerTitle);
+            _offerTitle.style.flexGrow = 1;
+            offerHeader.Add(_offerTitle);
+            _offerPanel.Add(offerHeader);
 
             _offerBody = MakePanelLabel("Offer body", 14, FontStyle.Normal);
             _offerBody.style.marginLeft = 14;
@@ -332,12 +533,21 @@ namespace Airside.Presentation
 
         private void BuildOpsPanel()
         {
+            // REF-004: OPERATIONS card owns top-left (status/turnaround sits bottom-left).
             _opsPanel = MakePanel("Ops panel", 340f);
-            _opsPanel.style.right = 22;
+            _opsPanel.style.left = 22;
+            _opsPanel.style.top = 22;
             _opsPanel.pickingMode = PickingMode.Ignore;
+            // Match status panel brand chrome (0025 item 6).
+            _opsPanel.style.borderLeftWidth = 3;
+            _opsPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
+            _opsPanel.style.borderTopWidth = 2;
+            _opsPanel.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
 
             var title = MakePanelLabel("Ops title", 16, FontStyle.Bold);
             title.text = "OPERATIONS";
+            title.style.color = AirsideTheme.OpenSky;
             title.style.marginLeft = 14;
             title.style.marginTop = 12;
             title.style.marginRight = 14;
@@ -350,6 +560,13 @@ namespace Airside.Presentation
             _opsSummary.style.whiteSpace = WhiteSpace.Normal;
             _opsSummary.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.92f);
             _opsPanel.Add(_opsSummary);
+
+            _metarText = MakePanelLabel("Metar", 11, FontStyle.Normal);
+            _metarText.style.marginLeft = 14;
+            _metarText.style.marginRight = 14;
+            _metarText.style.marginTop = 4;
+            _metarText.style.color = new Color(AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.9f);
+            _opsPanel.Add(_metarText);
 
             _opsBody = MakePanelLabel("Ops body", 12, FontStyle.Normal);
             _opsBody.style.marginLeft = 14;
@@ -693,25 +910,61 @@ namespace Airside.Presentation
             var panel = new VisualElement { name = name };
             panel.style.position = Position.Absolute;
             panel.style.width = width;
-            panel.style.backgroundColor = new Color(
-                AirsideTheme.RunwayInk.r,
-                AirsideTheme.RunwayInk.g,
-                AirsideTheme.RunwayInk.b,
-                0.94f);
-            panel.style.borderTopLeftRadius = 6;
-            panel.style.borderTopRightRadius = 6;
-            panel.style.borderBottomLeftRadius = 6;
-            panel.style.borderBottomRightRadius = 6;
+            // REF-004 chrome: denser ink + coastal hairline so panels read as brand glass,
+            // not translucent IMGUI debug boxes.
+            var ink = AirsideTheme.RunwayInk;
+            ink.a = 0.86f;
+            panel.style.backgroundColor = ink;
+            var panelTex = AirsideTheme.PanelBackground;
+            if (panelTex != null)
+            {
+                panel.style.backgroundImage = new StyleBackground(panelTex);
+                panel.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+            }
+            panel.style.borderTopLeftRadius = 4;
+            panel.style.borderTopRightRadius = 4;
+            panel.style.borderBottomLeftRadius = 4;
+            panel.style.borderBottomRightRadius = 4;
             panel.style.borderLeftWidth = 1;
             panel.style.borderRightWidth = 1;
-            panel.style.borderTopWidth = 1;
+            panel.style.borderTopWidth = 2;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f);
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.4f);
+            var top = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
-            panel.style.borderTopColor = border;
+            panel.style.borderTopColor = top;
             panel.style.borderBottomColor = border;
+            panel.style.paddingLeft = 2;
+            panel.style.paddingRight = 2;
             return panel;
+        }
+
+        private static VisualElement MakeIconSlot(string name, float size)
+        {
+            var icon = new VisualElement { name = name };
+            icon.pickingMode = PickingMode.Ignore;
+            icon.style.width = size;
+            icon.style.height = size;
+            icon.style.flexShrink = 0;
+            icon.style.display = DisplayStyle.None;
+            return icon;
+        }
+
+        private static void ApplyIcon(VisualElement slot, Texture2D texture)
+        {
+            if (slot == null)
+                return;
+            if (texture == null)
+            {
+                slot.style.display = DisplayStyle.None;
+                slot.style.backgroundImage = StyleKeyword.None;
+                return;
+            }
+
+            slot.style.display = DisplayStyle.Flex;
+            slot.style.backgroundImage = new StyleBackground(texture);
+            slot.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
         }
 
         private static Label MakePanelLabel(string name, int fontSize, FontStyle style)
@@ -733,20 +986,26 @@ namespace Airside.Presentation
         {
             var button = new Button { text = label };
             button.style.width = width;
-            button.style.height = 32;
+            button.style.height = 30;
             button.style.backgroundColor = background;
             button.style.color = AirsideTheme.Cloud;
-            button.style.fontSize = 13;
+            button.style.fontSize = 12;
             button.style.unityFontStyleAndWeight = FontStyle.Bold;
-            button.style.borderTopLeftRadius = 4;
-            button.style.borderTopRightRadius = 4;
-            button.style.borderBottomLeftRadius = 4;
-            button.style.borderBottomRightRadius = 4;
-            button.style.borderLeftWidth = 0;
-            button.style.borderRightWidth = 0;
-            button.style.borderTopWidth = 0;
-            button.style.borderBottomWidth = 0;
+            button.style.borderTopLeftRadius = 3;
+            button.style.borderTopRightRadius = 3;
+            button.style.borderBottomLeftRadius = 3;
+            button.style.borderBottomRightRadius = 3;
+            button.style.borderLeftWidth = 1;
+            button.style.borderRightWidth = 1;
+            button.style.borderTopWidth = 1;
+            button.style.borderBottomWidth = 1;
+            var edge = new Color(AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.35f);
+            button.style.borderLeftColor = edge;
+            button.style.borderRightColor = edge;
+            button.style.borderTopColor = edge;
+            button.style.borderBottomColor = edge;
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
+            button.style.letterSpacing = 0.4f;
             return button;
         }
 
@@ -763,18 +1022,20 @@ namespace Airside.Presentation
                 AirsideTheme.RunwayInk.r,
                 AirsideTheme.RunwayInk.g,
                 AirsideTheme.RunwayInk.b,
-                0.92f);
+                0.94f);
             label.style.color = AirsideTheme.Cloud;
-            label.style.fontSize = 15;
+            label.style.fontSize = 14;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
-            label.style.paddingLeft = 18;
-            label.style.paddingRight = 18;
-            label.style.paddingTop = 10;
-            label.style.paddingBottom = 10;
-            label.style.borderTopLeftRadius = 6;
-            label.style.borderTopRightRadius = 6;
-            label.style.borderBottomLeftRadius = 6;
-            label.style.borderBottomRightRadius = 6;
+            label.style.paddingLeft = 16;
+            label.style.paddingRight = 16;
+            label.style.paddingTop = 9;
+            label.style.paddingBottom = 9;
+            label.style.borderTopLeftRadius = 3;
+            label.style.borderTopRightRadius = 3;
+            label.style.borderBottomLeftRadius = 3;
+            label.style.borderBottomRightRadius = 3;
+            label.style.borderLeftWidth = 3;
+            label.style.borderLeftColor = AirsideTheme.CoastalBlue;
             label.style.maxWidth = 520;
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;
@@ -788,6 +1049,8 @@ namespace Airside.Presentation
             ApplyLeftVisibility();
             ApplyOfferVisibility();
             ApplyOpsVisibility();
+            ApplyEconomyVisibility();
+            ApplySpeedVisibility();
             if (!visible)
             {
                 SyncToast(string.Empty, false);
@@ -878,6 +1141,11 @@ namespace Airside.Presentation
             _cashText.style.color = cashColor;
             _financeText.text = financeLine ?? string.Empty;
             _financeText.style.color = financeColor;
+            if (_speedText != null)
+            {
+                // Prefer a calm speed readout; fall back to the controls hint string.
+                _speedText.text = string.IsNullOrEmpty(controlsLine) ? "1× time" : controlsLine.Split('\n')[0];
+            }
 
             var hasWarning = !string.IsNullOrEmpty(warningLine);
             _warningText.style.display = hasWarning ? DisplayStyle.Flex : DisplayStyle.None;
@@ -890,7 +1158,20 @@ namespace Airside.Presentation
             _turnaroundBlock.style.display = showTurnaround ? DisplayStyle.Flex : DisplayStyle.None;
             if (showTurnaround)
             {
-                _turnaroundText.text = turnaroundLines ?? string.Empty;
+                // Bars are driven by SyncTurnaroundBars; keep text for delay callouts only.
+                var delayOnly = ExtractDelayLine(turnaroundLines);
+                if (!string.IsNullOrEmpty(delayOnly))
+                {
+                    _turnaroundText.text = delayOnly;
+                    _turnaroundText.style.display = DisplayStyle.Flex;
+                    _turnaroundText.style.color = AirsideTheme.SignalRed;
+                }
+                else
+                {
+                    _turnaroundText.text = string.Empty;
+                    _turnaroundText.style.display = DisplayStyle.None;
+                }
+
                 _priorityButton.style.display = priorityVisible ? DisplayStyle.Flex : DisplayStyle.None;
                 if (priorityVisible)
                 {
@@ -911,9 +1192,14 @@ namespace Airside.Presentation
             _crewRow.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
             _standsText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
             _buildStandButton.style.display = !earlySession && buildStandVisible ? DisplayStyle.Flex : DisplayStyle.None;
-            _researchText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
-            _researchTrack.style.display = !earlySession && researchProgressVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            // Research progress lives on the top economy strip; left keeps the start button only.
+            _researchText.style.display = DisplayStyle.None;
+            _researchTrack.style.display = DisplayStyle.None;
             _researchButton.style.display = !earlySession && researchButtonVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_stripResearchText != null)
+                _stripResearchText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_stripResearchTrack != null && earlySession)
+                _stripResearchTrack.style.display = DisplayStyle.None;
 
             if (!earlySession)
             {
@@ -930,6 +1216,13 @@ namespace Airside.Presentation
                 _researchText.text = researchLine ?? string.Empty;
                 if (researchProgressVisible && _researchFill != null)
                     _researchFill.style.width = Length.Percent(Mathf.Clamp01(researchProgress01) * 100f);
+                if (_stripResearchText != null)
+                    _stripResearchText.text = string.IsNullOrEmpty(researchLine) ? "Research" : researchLine;
+                if (_stripResearchFill != null)
+                    _stripResearchFill.style.width = Length.Percent(
+                        researchProgressVisible ? Mathf.Clamp01(researchProgress01) * 100f : 0f);
+                if (_stripResearchTrack != null)
+                    _stripResearchTrack.style.display = researchProgressVisible ? DisplayStyle.Flex : DisplayStyle.None;
 
                 if (researchButtonVisible)
                 {
@@ -939,7 +1232,11 @@ namespace Airside.Presentation
             }
 
             _coachText.text = coachLine ?? string.Empty;
-            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.OpenSky;
+            // REF-004 calm chrome: coach only when urgent; otherwise flight card stays sparse.
+            _coachText.style.display = coachUrgent && !string.IsNullOrEmpty(coachLine)
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
             _controlsText.text = controlsLine ?? string.Empty;
 
             _waitRow.style.display = showWaitMeter ? DisplayStyle.Flex : DisplayStyle.None;
@@ -951,6 +1248,116 @@ namespace Airside.Presentation
             }
 
             ApplyLeftVisibility();
+            ApplyEconomyVisibility();
+            ApplySpeedVisibility();
+        }
+
+        /// <summary>
+        /// Turnaround task progress bars (REF-004) — one row per ground task with
+        /// optional service icons matching the IMGUI turnaround list.
+        /// </summary>
+        public void SyncTurnaroundBars(
+            bool visible,
+            string[] names,
+            float[] progress01,
+            Texture2D[] icons = null)
+        {
+            if (_turnaroundBars == null)
+                return;
+
+            _turnaroundBars.Clear();
+            if (!visible || names == null || progress01 == null)
+                return;
+
+            var count = Math.Min(names.Length, progress01.Length);
+            for (var i = 0; i < count; i++)
+            {
+                var row = new VisualElement { name = $"Task row {i}" };
+                row.style.marginTop = 3;
+
+                var header = new VisualElement { name = $"Task header {i}" };
+                header.style.flexDirection = FlexDirection.Row;
+                header.style.alignItems = Align.Center;
+                header.style.marginBottom = 1;
+
+                var icon = MakeIconSlot($"Task icon {i}", 14);
+                icon.style.marginRight = 4;
+                Texture2D tex = null;
+                if (icons != null && i < icons.Length)
+                    tex = icons[i];
+                ApplyIcon(icon, tex);
+                header.Add(icon);
+
+                var label = MakePanelLabel($"Task {i}", 11, FontStyle.Normal);
+                label.text = names[i] ?? string.Empty;
+                label.style.flexGrow = 1;
+                header.Add(label);
+                row.Add(header);
+
+                var track = MakeProgressTrack($"Task track {i}");
+                track.style.marginTop = 1;
+                track.style.height = 7;
+                var fill = track.Q<VisualElement>("Fill");
+                if (fill != null)
+                {
+                    var p = Mathf.Clamp01(progress01[i]);
+                    fill.style.width = Length.Percent(p * 100f);
+                    fill.style.backgroundColor = p >= 0.999f
+                        ? AirsideTheme.ClearGreen
+                        : p > 0.01f
+                            ? AirsideTheme.CoastalBlue
+                            : new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.5f);
+                }
+
+                row.Add(track);
+                _turnaroundBars.Add(row);
+            }
+        }
+
+        private static string ExtractDelayLine(string turnaroundLines)
+        {
+            if (string.IsNullOrEmpty(turnaroundLines))
+                return null;
+            foreach (var line in turnaroundLines.Split('\n'))
+            {
+                if (line.IndexOf("DELAY", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return line.Trim();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Batch E icons on the Toolkit path (IMGUI already had these; Toolkit did not).
+        /// </summary>
+        public void SyncChromeIcons(AircraftPhase? phase, WeatherKind weather, int speed, bool paused)
+        {
+            ApplyIcon(_phaseIcon, phase.HasValue ? AirsideTheme.OperationIcon(phase.Value) : null);
+            ApplyIcon(_weatherIcon, AirsideTheme.WeatherIcon(weather));
+            ApplyIcon(_cashIcon, AirsideTheme.Icon("economy", "cash"));
+            ApplyIcon(_incomeIcon, AirsideTheme.Icon("economy", "income"));
+            ApplyIcon(_repIcon, AirsideTheme.Icon("economy", "reputation"));
+            ApplyIcon(_researchIcon, AirsideTheme.Icon("economy", "research"));
+            ApplyIcon(_routeIcon, AirsideTheme.Icon("economy", "route"));
+            if (_speedText != null)
+                _speedText.text = paused ? "PAUSED" : "Tab cycles";
+            if (_pauseButton != null)
+            {
+                _pauseButton.text = paused ? "Resume" : "Pause";
+                _pauseButton.style.backgroundColor = paused ? AirsideTheme.CoastalBlue : AirsideTheme.Tarmac;
+                _pauseButton.style.opacity = paused ? 1f : 0.9f;
+            }
+
+            HighlightSpeedButton(_speed1Button, !paused && speed <= 1);
+            HighlightSpeedButton(_speed4Button, !paused && speed >= 4);
+        }
+
+        private static void HighlightSpeedButton(Button button, bool active)
+        {
+            if (button == null)
+                return;
+            button.style.backgroundColor = active ? AirsideTheme.OpenSky : AirsideTheme.CoastalBlue;
+            button.style.opacity = active ? 1f : 0.72f;
         }
 
         public void SyncOffer(
@@ -996,19 +1403,32 @@ namespace Airside.Presentation
             ApplyOpsVisibility();
         }
 
-        public void SyncOps(string summary, string body, string reportBodyOrNull)
+        public void SyncOps(string summary, string body, string reportBodyOrNull, string metarLine = null)
         {
             if (_opsPanel == null)
                 return;
 
             _opsSummary.text = summary ?? string.Empty;
             _opsBody.text = body ?? string.Empty;
+            if (_metarText != null)
+            {
+                _metarText.text = metarLine ?? string.Empty;
+                _metarText.style.display = string.IsNullOrEmpty(metarLine) ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
             var hasReport = !string.IsNullOrEmpty(reportBodyOrNull);
             _reportBlock.style.display = hasReport ? DisplayStyle.Flex : DisplayStyle.None;
             if (hasReport)
                 _reportBody.text = reportBodyOrNull;
 
             ApplyOpsVisibility();
+        }
+
+        public void SyncReputationBar(float score01)
+        {
+            if (_repFill == null)
+                return;
+            _repFill.style.width = Length.Percent(Mathf.Clamp01(score01) * 100f);
         }
 
         private void ApplyLeftVisibility()
@@ -1037,9 +1457,23 @@ namespace Airside.Presentation
             if (!show)
                 return;
 
-            var offerHeight = _offerVisible ? (_firstDecisionOffer ? 196f : 156f) : 0f;
-            var top = 22f + (_offerVisible ? offerHeight + 12f : 0f);
-            _opsPanel.style.top = top;
+            // Top-left ops card — no longer stacks under the right-side offer.
+            _opsPanel.style.top = 22;
+            _opsPanel.style.left = 22;
+        }
+
+        private void ApplyEconomyVisibility()
+        {
+            if (_economyStrip == null)
+                return;
+            _economyStrip.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void ApplySpeedVisibility()
+        {
+            if (_speedChip == null)
+                return;
+            _speedChip.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>

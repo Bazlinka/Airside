@@ -5,9 +5,10 @@ using UnityEngine.Rendering.Universal;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 5 spike — runtime global Volume with ACES tonemap,
-    /// mild bloom/vignette/film grain, and day-driven color adjustments.
-    /// Presentation only; not a full probe bake or authored day profiles.
+    /// Decision 0025 item 5 — runtime global Volume with ACES tonemap,
+    /// bloom/vignette/film grain, shadows-midtones-highlights day profiles,
+    /// white-balance / split-toning dusk warmth, and weather gloom.
+    /// Presentation only; not a full authored day-profile asset.
     /// </summary>
     public sealed class AirsideDayVolume
     {
@@ -15,13 +16,29 @@ namespace Airside.Presentation
         private readonly Bloom _bloom;
         private readonly Vignette _vignette;
         private readonly FilmGrain _grain;
+        private readonly ShadowsMidtonesHighlights _tonal;
+        private readonly WhiteBalance _whiteBalance;
+        private readonly SplitToning _splitToning;
+        private readonly ChannelMixer _channelMixer;
 
-        private AirsideDayVolume(ColorAdjustments color, Bloom bloom, Vignette vignette, FilmGrain grain)
+        private AirsideDayVolume(
+            ColorAdjustments color,
+            Bloom bloom,
+            Vignette vignette,
+            FilmGrain grain,
+            ShadowsMidtonesHighlights tonal,
+            WhiteBalance whiteBalance,
+            SplitToning splitToning,
+            ChannelMixer channelMixer)
         {
             _color = color;
             _bloom = bloom;
             _vignette = vignette;
             _grain = grain;
+            _tonal = tonal;
+            _whiteBalance = whiteBalance;
+            _splitToning = splitToning;
+            _channelMixer = channelMixer;
         }
 
         public static AirsideDayVolume Ensure(Transform host)
@@ -58,14 +75,15 @@ namespace Airside.Presentation
             if (!profile.TryGet(out Bloom bloom))
                 bloom = profile.Add<Bloom>(true);
             bloom.active = true;
-            bloom.threshold.Override(0.95f);
-            bloom.scatter.Override(0.55f);
+            bloom.threshold.Override(0.92f);
+            bloom.scatter.Override(0.52f);
+            bloom.clamp.Override(24f);
 
             if (!profile.TryGet(out Vignette vignette))
                 vignette = profile.Add<Vignette>(true);
             vignette.active = true;
             vignette.color.Override(new Color(0.05f, 0.07f, 0.12f));
-            vignette.smoothness.Override(0.45f);
+            vignette.smoothness.Override(0.48f);
 
             if (!profile.TryGet(out FilmGrain grain))
                 grain = profile.Add<FilmGrain>(true);
@@ -73,6 +91,22 @@ namespace Airside.Presentation
             grain.type.Override(FilmGrainLookup.Medium1);
             grain.intensity.Override(0.12f);
             grain.response.Override(0.7f);
+
+            if (!profile.TryGet(out ShadowsMidtonesHighlights tonal))
+                tonal = profile.Add<ShadowsMidtonesHighlights>(true);
+            tonal.active = true;
+
+            if (!profile.TryGet(out WhiteBalance whiteBalance))
+                whiteBalance = profile.Add<WhiteBalance>(true);
+            whiteBalance.active = true;
+
+            if (!profile.TryGet(out SplitToning splitToning))
+                splitToning = profile.Add<SplitToning>(true);
+            splitToning.active = true;
+
+            if (!profile.TryGet(out ChannelMixer channelMixer))
+                channelMixer = profile.Add<ChannelMixer>(true);
+            channelMixer.active = true;
 
             NeutraliseTemplateEffects(profile);
 
@@ -95,22 +129,18 @@ namespace Airside.Presentation
                 }
             }
 
-            return new AirsideDayVolume(color, bloom, vignette, grain);
+            return new AirsideDayVolume(color, bloom, vignette, grain, tonal, whiteBalance, splitToning, channelMixer);
         }
 
         /// <summary>
         /// Unity's template profile (<c>Assets/Settings/DefaultVolumeProfile.asset</c>) is
-        /// still wired as URP's global default, and it overrides DepthOfField, MotionBlur,
-        /// LensDistortion, ChromaticAberration, ScreenSpaceLensFlare and PaniniProjection —
-        /// alongside literal CopyPasteTestComponent1/2/3 and TestVolume.
+        /// still wired as URP's global default. Junk test components and presentation
+        /// killers (DoF / motion blur / lens junk) were deactivated in that asset for
+        /// 0025 item 5, but this safety net still pins no-ops on our owned volume so a
+        /// regenerated template cannot fight dusk profiles.
         ///
-        /// Those were harmless while post-processing was off. Switching the post stack on
-        /// made them render. A higher-priority volume only wins on parameters it actually
-        /// overrides, so each one is pinned to its no-op value here rather than merely left
-        /// out. Film grain is deliberately absent: that one is this volume's own, set above
-        /// and driven per-frame by <see cref="Apply"/>.
-        ///
-        /// Replacing that asset outright would be cleaner and would let this go away.
+        /// A higher-priority volume only wins on parameters it actually overrides.
+        /// Film grain is deliberately absent here: that one is this volume's own.
         /// </summary>
         private static void NeutraliseTemplateEffects(VolumeProfile profile)
         {
@@ -146,29 +176,124 @@ namespace Airside.Presentation
                 lensFlare = profile.Add<ScreenSpaceLensFlare>(true);
             lensFlare.active = true;
             lensFlare.intensity.Override(0f);
+
+            // Template WhiteBalance / SplitToning / LiftGammaGain stay neutral so our
+            // owned copies (or this profile's overrides) drive dusk warmth alone.
+            if (profile.TryGet(out LiftGammaGain liftGammaGain))
+            {
+                liftGammaGain.active = true;
+                liftGammaGain.lift.Override(new Vector4(1f, 1f, 1f, 0f));
+                liftGammaGain.gamma.Override(new Vector4(1f, 1f, 1f, 0f));
+                liftGammaGain.gain.Override(new Vector4(1f, 1f, 1f, 0f));
+            }
         }
 
-        public void Apply(float daylight, float warm)
+        /// <param name="daylight">0 night … 1 noon.</param>
+        /// <param name="warm">Dawn/dusk warmth 0…1.</param>
+        /// <param name="weatherGloom">Rain/fog/storm cool-down 0…1 (presentation only).</param>
+        public void Apply(float daylight, float warm, float weatherGloom = 0f)
         {
-            // Day: slight lift; dusk: warmer filter; night: darker exposure + bloom.
-            var exposure = Mathf.Lerp(-0.55f, 0.12f, daylight) + warm * 0.08f;
-            var contrast = Mathf.Lerp(8f, 4f, daylight);
+            weatherGloom = Mathf.Clamp01(weatherGloom);
+
+            // Day: slight lift; dusk: warmer filter; night: darker exposure + bloom;
+            // adverse weather: cooler filter + pulled exposure.
+            var exposure = Mathf.Lerp(-0.72f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.4f;
+            var contrast = Mathf.Lerp(12f, 5.5f, daylight) + weatherGloom * 4.8f;
+            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
+            var nightFilter = new Color(0.62f, 0.7f, 1f);
+            var stormFilter = new Color(0.68f, 0.74f, 0.84f);
             var filter = Color.Lerp(
-                new Color(0.72f, 0.78f, 1f),
-                Color.Lerp(Color.white, new Color(1f, 0.82f, 0.62f), warm),
-                Mathf.Clamp01(daylight + warm * 0.35f));
+                Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.45f)),
+                stormFilter,
+                weatherGloom);
 
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(6f, 2f, daylight));
+            _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
+            _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.42f, 0.14f, daylight));
-            _vignette.intensity.Override(Mathf.Lerp(0.28f, 0.1f, daylight));
+            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
+                + weatherGloom * 0.06f);
+            _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight) - weatherGloom * 0.06f);
+            _vignette.intensity.Override(Mathf.Lerp(0.34f, 0.07f, daylight) + weatherGloom * 0.08f);
             // Night film grain for regional dusk grit; nearly off in bright day.
-            // Cap bloom so night never reintroduces the soft/smeary template look.
-            _grain.intensity.Override(Mathf.Lerp(0.22f, 0.03f, daylight));
-            _grain.response.Override(Mathf.Lerp(0.8f, 0.55f, daylight));
+            _grain.intensity.Override(Mathf.Lerp(0.28f, 0.015f, daylight) + weatherGloom * 0.05f);
+            _grain.response.Override(Mathf.Lerp(0.86f, 0.48f, daylight));
+
+            // Lift cool night shadows; warm midtones at golden hour; soft highlight roll-off.
+            // Noon keeps deeper shadows + lifted midtones so apron slabs separate from grass (REF-001).
+            var shadowTint = Color.Lerp(
+                new Color(0.48f, 0.56f, 0.9f),
+                Color.Lerp(new Color(0.95f, 0.95f, 1f), new Color(1f, 0.82f, 0.68f), warm),
+                daylight);
+            shadowTint = Color.Lerp(shadowTint, new Color(0.66f, 0.72f, 0.78f), weatherGloom);
+            var midTint = Color.Lerp(
+                new Color(0.8f, 0.84f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.86f, 0.7f), warm * 0.9f),
+                daylight);
+            var hiTint = Color.Lerp(
+                new Color(0.86f, 0.88f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.93f, 0.82f), warm * 0.55f),
+                daylight);
+
+            _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
+                Mathf.Lerp(0.16f, -0.14f, daylight) - weatherGloom * 0.08f));
+            // Dusk: lift midtones a touch more so hangar faces keep shape in warm light.
+            _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
+                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.16f));
+            _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
+                Mathf.Lerp(-0.12f, 0.01f, daylight) + warm * 0.06f));
+            _tonal.shadowsStart.Override(0f);
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.46f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
+            _tonal.highlightsEnd.Override(1f);
+
+            // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
+            // so night blue survives and weather gloom stays cool.
+            var temperature = Mathf.Lerp(-8f, 5f, daylight) + warm * 52f - weatherGloom * 14f;
+            var tint = warm * 8.5f - weatherGloom * 3f;
+            _whiteBalance.temperature.Override(temperature);
+            _whiteBalance.tint.Override(tint);
+
+            var shadows = Color.Lerp(
+                new Color(0.45f, 0.55f, 0.85f),
+                new Color(0.35f, 0.42f, 0.62f),
+                weatherGloom);
+            var highlights = Color.Lerp(
+                Color.white,
+                new Color(1f, 0.68f, 0.4f),
+                warm * 1.05f);
+            _splitToning.shadows.Override(shadows);
+            _splitToning.highlights.Override(highlights);
+            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.2f, warm) - weatherGloom * 0.1f);
+
+            // Channel mixer: dawn/dusk push warm reds into midtones; night cools greens into blue.
+            var warmPush = warm * 18f;
+            var coolPush = (1f - daylight) * 10f + weatherGloom * 6f;
+            _channelMixer.redOutRedIn.Override(100f + warmPush * 0.35f);
+            _channelMixer.redOutGreenIn.Override(warmPush * 0.25f);
+            _channelMixer.redOutBlueIn.Override(-coolPush * 0.15f);
+            _channelMixer.greenOutRedIn.Override(warmPush * 0.12f);
+            _channelMixer.greenOutGreenIn.Override(100f - weatherGloom * 4f);
+            _channelMixer.greenOutBlueIn.Override(coolPush * 0.2f);
+            _channelMixer.blueOutRedIn.Override(-warmPush * 0.2f);
+            _channelMixer.blueOutGreenIn.Override(coolPush * 0.15f);
+            _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.25f - warmPush * 0.1f);
+
+            // Deeper night exposure so flood pools read against the apron (REF-002).
+            if (daylight < 0.35f)
+                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.65f);
+            // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
+            else if (daylight > 0.75f && warm < 0.2f)
+            {
+                _color.contrast.Override(contrast + 2.2f);
+                _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
+            }
+            // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
+            else if (warm > 0.35f)
+                _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f)
+                    + warm * 0.18f + weatherGloom * 0.06f);
         }
     }
 }

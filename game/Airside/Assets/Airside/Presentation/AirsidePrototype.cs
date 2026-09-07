@@ -225,6 +225,7 @@ namespace Airside.Presentation
                     view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
 
                 SpinPropellers(view, phase);
+                RollLandingGearTires(view, phase);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinDoor(view, phase);
                 UpdateEngineHeat(view, phase);
@@ -349,7 +350,10 @@ namespace Airside.Presentation
         {
             // Presentation-only: RPM follows phase (Batch D ANM-AIR-001).
             if (phase == AircraftPhase.AtStand || phase == AircraftPhase.Departed)
+            {
+                ApplyPropBlur(aircraft, highRpm: false);
                 return;
+            }
 
             var rpm = phase switch
             {
@@ -359,26 +363,95 @@ namespace Airside.Presentation
                 _ => 720f
             };
             var degrees = Time.unscaledDeltaTime * rpm;
+            var highRpm = rpm >= 1000f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Propeller", StringComparison.Ordinal))
-                    child.Rotate(Vector3.forward, degrees, Space.Self);
+                if (!child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                child.Rotate(Vector3.forward, degrees, Space.Self);
+                ApplyPropBlurToHub(child, highRpm);
             }
         }
 
         private static void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
         {
             if (!enginesOn)
+            {
+                ApplyPropBlur(aircraft, highRpm: false);
                 return;
+            }
+
             var degrees = Time.unscaledDeltaTime * 520f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Propeller", StringComparison.Ordinal))
-                    child.Rotate(Vector3.forward, degrees, Space.Self);
+                if (!child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                child.Rotate(Vector3.forward, degrees, Space.Self);
+                ApplyPropBlurToHub(child, highRpm: false);
+            }
+        }
+
+        /// <summary>
+        /// At high RPM hide individual blades and show a translucent disc (Batch D life).
+        /// </summary>
+        private static void ApplyPropBlur(Transform aircraft, bool highRpm)
+        {
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                ApplyPropBlurToHub(child, highRpm);
+            }
+        }
+
+        private static void ApplyPropBlurToHub(Transform propeller, bool highRpm)
+        {
+            var selfRenderer = propeller.GetComponent<Renderer>();
+            if (selfRenderer != null)
+                selfRenderer.enabled = !highRpm;
+
+            for (var i = 0; i < propeller.childCount; i++)
+            {
+                var child = propeller.GetChild(i);
+                if (child.name == "PropDisc")
+                {
+                    child.gameObject.SetActive(highRpm);
+                    continue;
+                }
+
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer != null)
+                    renderer.enabled = !highRpm;
+            }
+        }
+
+        private static void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
+        {
+            // Presentation-only: tires roll on the ground (Batch D motion life).
+            var rolling = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
+                or AircraftPhase.Pushback or AircraftPhase.Landing or AircraftPhase.Takeoff;
+            if (!rolling)
+                return;
+
+            var speed = phase switch
+            {
+                AircraftPhase.Takeoff => 1.6f,
+                AircraftPhase.Landing => 1.35f,
+                AircraftPhase.Pushback => 0.55f,
+                _ => 1f
+            };
+            var degrees = Time.unscaledDeltaTime * 380f * speed;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft)
+                    continue;
+                if (child.name.StartsWith("Tire", StringComparison.Ordinal) ||
+                    child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0)
+                    child.Rotate(Vector3.right, degrees, Space.Self);
             }
         }
 
@@ -436,6 +509,9 @@ namespace Airside.Presentation
                         Time.unscaledDeltaTime * 4f);
 
                 SpinGroundTrafficPropellers(view, enginesOn: !traffic.IsHolding);
+                RollLandingGearTires(
+                    view,
+                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
                 UpdateAircraftLightsAndGear(
                     view,
                     traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
@@ -2259,6 +2335,7 @@ namespace Airside.Presentation
             }
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
+            EnsurePropDiscs(root);
             ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
             ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
@@ -2353,6 +2430,31 @@ namespace Airside.Presentation
             {
                 bladeR.SetParent(propR, true);
                 bladeR.name = "Blade";
+            }
+        }
+
+        /// <summary>
+        /// Translucent prop disc under each propeller hub — shown only at high RPM.
+        /// </summary>
+        private static void EnsurePropDiscs(Transform aircraft)
+        {
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                if (child.Find("PropDisc") != null)
+                    continue;
+
+                var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                disc.name = "PropDisc";
+                Object.Destroy(disc.GetComponent<Collider>());
+                disc.transform.SetParent(child, false);
+                disc.transform.localPosition = Vector3.zero;
+                // Cylinder axis → local Z so the face is perpendicular to the spin axis.
+                disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                disc.transform.localScale = new Vector3(1.2f, 0.012f, 1.2f);
+                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.56f, 0.6f, 0.32f));
+                disc.SetActive(false);
             }
         }
 

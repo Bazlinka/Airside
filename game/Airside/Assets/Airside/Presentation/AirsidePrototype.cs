@@ -2378,7 +2378,25 @@ namespace Airside.Presentation
                     && !n.StartsWith("Stand box", StringComparison.Ordinal)
                     && !n.StartsWith("Access road shoulder", StringComparison.Ordinal)
                     && !n.StartsWith("Runway shoulder", StringComparison.Ordinal)
-                    && !n.StartsWith("Access turn shoulder", StringComparison.Ordinal))
+                    && !n.StartsWith("Access turn shoulder", StringComparison.Ordinal)
+                    // Authored markings kit mesh names (glTF nodes), not CreateBlock titles.
+                    // Keep prefixes tight so lighting kit taxi_/edge_/runway_edge_light stay dry.
+                    && !n.StartsWith("runway_centre", StringComparison.Ordinal)
+                    && !n.StartsWith("runway_edge_left", StringComparison.Ordinal)
+                    && !n.StartsWith("runway_edge_right", StringComparison.Ordinal)
+                    && !n.StartsWith("runway_threshold", StringComparison.Ordinal)
+                    && !n.StartsWith("taxi_centreline", StringComparison.Ordinal)
+                    && !n.StartsWith("taxi_edge_", StringComparison.Ordinal)
+                    && !n.StartsWith("taxi_arrow_", StringComparison.Ordinal)
+                    && !n.StartsWith("hold_short_", StringComparison.Ordinal)
+                    && !n.StartsWith("threshold_", StringComparison.Ordinal)
+                    && !n.StartsWith("stand_stop_", StringComparison.Ordinal)
+                    && !n.StartsWith("aiming_", StringComparison.Ordinal)
+                    && !n.StartsWith("tdz_", StringComparison.Ordinal)
+                    && !n.StartsWith("chevron_", StringComparison.Ordinal)
+                    && !n.StartsWith("digit_", StringComparison.Ordinal)
+                    && !n.StartsWith("apron_arrow_", StringComparison.Ordinal)
+                    && !n.StartsWith("Relief mound", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -5182,17 +5200,56 @@ namespace Airside.Presentation
         {
             var bar = new Color(0.85f, 0.88f, 0.9f);
             var stem = new Color(0.35f, 0.36f, 0.38f);
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
+            // Reuse edge/taxi/obst lighting kit parts so stations read authored, not toy cubes.
             for (var i = 0; i < 8; i++)
             {
                 var x = -40f - i * 5f;
-                CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
-                CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
-                CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
-                CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
-                // Crossbar densify every other station.
+                var origin = new Vector3(x, 0f, 0f);
+                var kitStation = false;
+                void AlsPart(string mesh, Color color)
+                {
+                    if (ArtGltfLoader.TryPlaceNamedMesh(lightingKit, mesh, origin, Quaternion.identity, color, out _))
+                        kitStation = true;
+                }
+
+                AlsPart("edge_base", stem);
+                AlsPart("edge_stem", stem);
+                AlsPart("edge_collar", Shade(stem, 1.1f));
+                AlsPart("edge_gasket", new Color(0.2f, 0.21f, 0.22f));
+                AlsPart("edge_lens", bar);
+                AlsPart("edge_glare", new Color(1f, 0.97f, 0.88f));
+                AlsPart("edge_reflector", new Color(0.9f, 0.92f, 0.94f));
                 if (i % 2 == 0)
-                    CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
+                {
+                    AlsPart("taxi_base", stem);
+                    AlsPart("taxi_stem", stem);
+                    AlsPart("taxi_lens", bar);
+                    AlsPart("taxi_collar", Shade(stem, 1.05f));
+                    AlsPart("taxi_reflector", new Color(0.9f, 0.92f, 0.94f));
+                }
+
+                if (!kitStation)
+                {
+                    CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
+                    CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
+                    CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    if (i % 2 == 0)
+                        CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
+                }
+                else
+                {
+                    // Lateral bar proxies still needed — kit has no ALS wing meshes.
+                    CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    if (i % 2 == 0)
+                        CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
+                }
 
                 var lampGo = new GameObject($"ALS lamp {i}");
                 lampGo.transform.position = new Vector3(x, 0.95f, 0f);
@@ -5219,12 +5276,32 @@ namespace Airside.Presentation
             }
 
             // Far REIL pair — pulsed SpotLights at night (collected with runway edge REIL names).
-            CreateBlock("ALS REIL L", new Vector3(-78f, 0.8f, -2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
-            CreateBlock("ALS REIL R", new Vector3(-78f, 0.8f, 2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
-            CreateBlock("ALS REIL mast L", new Vector3(-78f, 0.4f, -2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
-            CreateBlock("ALS REIL mast R", new Vector3(-78f, 0.4f, 2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
-            CreateBlock("ALS REIL base L", new Vector3(-78f, 0.06f, -2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
-            CreateBlock("ALS REIL base R", new Vector3(-78f, 0.06f, 2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
+            var reilOriginL = new Vector3(-78f, 0f, -2.8f);
+            var reilOriginR = new Vector3(-78f, 0f, 2.8f);
+            var reilKit = ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", reilOriginL, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", reilOriginL, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_lens", reilOriginL, Quaternion.identity, new Color(1f, 1f, 0.9f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_guard", reilOriginL, Quaternion.identity, Shade(stem, 1.1f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_ring", reilOriginL, Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_cap", reilOriginL, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_beacon_ring", reilOriginL, Quaternion.identity, new Color(1f, 0.9f, 0.5f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", reilOriginR, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", reilOriginR, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_lens", reilOriginR, Quaternion.identity, new Color(1f, 1f, 0.9f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_guard", reilOriginR, Quaternion.identity, Shade(stem, 1.1f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_ring", reilOriginR, Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_cap", reilOriginR, Quaternion.identity, stem, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_beacon_ring", reilOriginR, Quaternion.identity, new Color(1f, 0.9f, 0.5f), out _);
+            if (!reilKit)
+            {
+                CreateBlock("ALS REIL L", new Vector3(-78f, 0.8f, -2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
+                CreateBlock("ALS REIL R", new Vector3(-78f, 0.8f, 2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
+                CreateBlock("ALS REIL mast L", new Vector3(-78f, 0.4f, -2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
+                CreateBlock("ALS REIL mast R", new Vector3(-78f, 0.4f, 2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
+                CreateBlock("ALS REIL base L", new Vector3(-78f, 0.06f, -2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
+                CreateBlock("ALS REIL base R", new Vector3(-78f, 0.06f, 2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
+            }
+
             CreateBlock("ALS lead-in bar", new Vector3(-58f, 0.72f, 0f), new Vector3(0.2f, 0.12f, 4.8f), bar);
             CreateBlock("ALS wing bar L", new Vector3(-52f, 0.7f, -3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
             CreateBlock("ALS wing bar R", new Vector3(-52f, 0.7f, 3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
@@ -6996,15 +7073,7 @@ namespace Airside.Presentation
 
         private static Transform BuildStairs()
         {
-            // Prefer the Resources / Addressables prefab (0025 item 1), then service-kit
-            // glTF mesh, then procedural cuboids.
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Passenger stairs";
-                prefabRoot.gameObject.SetActive(false);
-                return prefabRoot;
-            }
-
+            // Prefer denser authored service kit over thin Resources prefab (0025 item 2).
             var root = new GameObject("Passenger stairs").transform;
             var kit = PreferArtKit(
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
@@ -7041,6 +7110,10 @@ namespace Airside.Presentation
             PlacePart("stairs_nosing_1", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_nosing_2", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_nosing_3", new Color(0.7f, 0.72f, 0.74f));
+            PlacePart("stairs_nosing_4", new Color(0.7f, 0.72f, 0.74f));
+            PlacePart("stairs_nosing_5", new Color(0.7f, 0.72f, 0.74f));
+            PlacePart("stairs_side_panel_l", new Color(0.6f, 0.61f, 0.63f));
+            PlacePart("stairs_side_panel_r", new Color(0.6f, 0.61f, 0.63f));
             PlacePart("stairs_platform", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_handle", new Color(0.75f, 0.5f, 0.15f));
             PlacePart("stairs_brace", new Color(0.5f, 0.5f, 0.52f));
@@ -7048,6 +7121,10 @@ namespace Airside.Presentation
             PlacePart("stairs_wheel_r", new Color(0.15f, 0.15f, 0.16f));
             PlacePart("stairs_wheel_rl", new Color(0.15f, 0.15f, 0.16f));
             PlacePart("stairs_wheel_rr", new Color(0.15f, 0.15f, 0.16f));
+            PlacePart("stairs_hub_fl", new Color(0.25f, 0.26f, 0.28f));
+            PlacePart("stairs_hub_fr", new Color(0.25f, 0.26f, 0.28f));
+            PlacePart("stairs_hub_rl", new Color(0.25f, 0.26f, 0.28f));
+            PlacePart("stairs_hub_rr", new Color(0.25f, 0.26f, 0.28f));
             if (!placed && ArtGltfLoader.TryPlaceNamedMesh(kit, "stairs", Vector3.zero, Quaternion.identity,
                     new Color(0.7f, 0.72f, 0.74f), out var stairs))
             {
@@ -7056,15 +7133,27 @@ namespace Airside.Presentation
                 placed = true;
             }
 
-            if (!placed)
+            if (placed)
             {
-                ParentBlock(root, "Stairs base", Vector3.zero, new Vector3(1.1f, 0.2f, 2.4f), new Color(0.7f, 0.72f, 0.74f));
-                ParentBlock(root, "Stairs rail L", new Vector3(-0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
-                ParentBlock(root, "Stairs rail R", new Vector3(0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
-                for (var i = 0; i < 5; i++)
-                    ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
-                        new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
+                root.gameObject.SetActive(false);
+                return root;
             }
+
+            Object.Destroy(root.gameObject);
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Passenger stairs";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
+            root = new GameObject("Passenger stairs").transform;
+            ParentBlock(root, "Stairs base", Vector3.zero, new Vector3(1.1f, 0.2f, 2.4f), new Color(0.7f, 0.72f, 0.74f));
+            ParentBlock(root, "Stairs rail L", new Vector3(-0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
+            ParentBlock(root, "Stairs rail R", new Vector3(0.45f, 0.55f, 0f), new Vector3(0.08f, 1.0f, 2.2f), new Color(0.85f, 0.55f, 0.15f));
+            for (var i = 0; i < 5; i++)
+                ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
+                    new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
 
             root.gameObject.SetActive(false);
             return root;
@@ -7072,13 +7161,6 @@ namespace Airside.Presentation
 
         private static Transform BuildChocks()
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_wheel_chocks_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Wheel chocks";
-                prefabRoot.gameObject.SetActive(false);
-                return prefabRoot;
-            }
-
             var root = new GameObject("Wheel chocks").transform;
             var kit = PreferArtKit(
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
@@ -7088,30 +7170,37 @@ namespace Airside.Presentation
                 new Color(0.85f, 0.2f, 0.15f), out var a);
             placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_b", new Vector3(0.55f, 0f, 0f), Quaternion.identity,
                 new Color(0.85f, 0.2f, 0.15f), out var b) || placed;
+            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_rope", Vector3.zero, Quaternion.identity,
+                new Color(0.2f, 0.2f, 0.22f), out var rope) || placed;
+            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_handle", Vector3.zero, Quaternion.identity,
+                new Color(0.25f, 0.26f, 0.28f), out var handle) || placed;
             if (placed)
             {
                 if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, -0.55f, 0f); }
                 if (b != null) { b.SetParent(root, false); b.localPosition = new Vector3(0.55f, -0.55f, 0f); }
-            }
-            else
-            {
-                ParentBlock(root, "Chock L", new Vector3(-0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
-                ParentBlock(root, "Chock R", new Vector3(0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
+                if (rope != null) { rope.SetParent(root, false); rope.localPosition = new Vector3(0f, -0.55f, 0f); }
+                if (handle != null) { handle.SetParent(root, false); handle.localPosition = new Vector3(0f, -0.55f, 0f); }
+                root.gameObject.SetActive(false);
+                return root;
             }
 
+            Object.Destroy(root.gameObject);
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_wheel_chocks_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Wheel chocks";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
+            root = new GameObject("Wheel chocks").transform;
+            ParentBlock(root, "Chock L", new Vector3(-0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
+            ParentBlock(root, "Chock R", new Vector3(0.55f, 0f, 0f), new Vector3(0.35f, 0.22f, 0.45f), new Color(0.85f, 0.2f, 0.15f));
             root.gameObject.SetActive(false);
             return root;
         }
 
         private static Transform BuildGpuCart()
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_gpu_cart_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "GPU cart";
-                prefabRoot.gameObject.SetActive(false);
-                return prefabRoot;
-            }
-
             var root = new GameObject("GPU cart").transform;
             var kit = PreferArtKit(
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
@@ -7142,10 +7231,16 @@ namespace Airside.Presentation
             PlaceGpu("gpu_beacon", new Color(0.95f, 0.35f, 0.12f));
             PlaceGpu("gpu_exhaust", new Color(0.3f, 0.32f, 0.3f));
             PlaceGpu("gpu_light", new Color(0.95f, 0.9f, 0.6f));
+            PlaceGpu("gpu_handle", new Color(0.28f, 0.3f, 0.32f));
+            PlaceGpu("gpu_stripe", new Color(0.85f, 0.75f, 0.2f));
             PlaceGpu("gpu_wheel_fl", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_fr", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_rl", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_rr", new Color(0.15f, 0.15f, 0.16f));
+            PlaceGpu("gpu_hub_fl", new Color(0.25f, 0.26f, 0.28f));
+            PlaceGpu("gpu_hub_fr", new Color(0.25f, 0.26f, 0.28f));
+            PlaceGpu("gpu_hub_rl", new Color(0.25f, 0.26f, 0.28f));
+            PlaceGpu("gpu_hub_rr", new Color(0.25f, 0.26f, 0.28f));
             if (!placed && ArtGltfLoader.TryPlaceNamedMesh(kit, "gpu", Vector3.zero, Quaternion.identity,
                     new Color(0.25f, 0.55f, 0.35f), out var gpu))
             {
@@ -7154,14 +7249,25 @@ namespace Airside.Presentation
                 placed = true;
             }
 
-            if (!placed)
+            if (placed)
             {
-                ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), new Color(0.25f, 0.55f, 0.35f));
-                ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
-                ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
-                ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
+                root.gameObject.SetActive(false);
+                return root;
             }
 
+            Object.Destroy(root.gameObject);
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_gpu_cart_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "GPU cart";
+                prefabRoot.gameObject.SetActive(false);
+                return prefabRoot;
+            }
+
+            root = new GameObject("GPU cart").transform;
+            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), new Color(0.25f, 0.55f, 0.35f));
+            ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
+            ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
+            ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
             root.gameObject.SetActive(false);
             return root;
         }
@@ -7180,13 +7286,22 @@ namespace Airside.Presentation
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
-            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,
-                    new Color(0.82f, 0.62f, 0.18f), out var towbar))
+            var placed = false;
+            void PlaceTow(string mesh, Color color)
             {
-                towbar.SetParent(root, false);
-                towbar.localPosition = new Vector3(0f, -0.55f, 0f);
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                    return;
+                part.SetParent(root, false);
+                part.localPosition = new Vector3(0f, -0.55f, 0f);
+                placed = true;
             }
-            else
+
+            PlaceTow("towbar", new Color(0.82f, 0.62f, 0.18f));
+            PlaceTow("towbar_head", new Color(0.3f, 0.32f, 0.34f));
+            PlaceTow("towbar_wheel", new Color(0.15f, 0.15f, 0.16f));
+            PlaceTow("towbar_handle", new Color(0.28f, 0.3f, 0.32f));
+            PlaceTow("towbar_eye", new Color(0.35f, 0.36f, 0.38f));
+            if (!placed)
             {
                 ParentBlock(root, "Tug body", Vector3.zero, new Vector3(2.2f, 0.85f, 1.15f), new Color(0.82f, 0.62f, 0.18f));
                 ParentBlock(root, "Tug cab", new Vector3(0.55f, 0.45f, 0f), new Vector3(0.9f, 0.7f, 1.0f), new Color(0.7f, 0.52f, 0.14f));
@@ -7918,8 +8033,13 @@ namespace Airside.Presentation
             PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
             PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
             PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
-            PlaceBeltLoader(kit, new Vector3(12.5f, 0f, 21.5f), 200f);
-            PlaceBeltLoader(kit, new Vector3(29.5f, 0f, 15.5f), 110f);
+            // Belt loaders live in the service kit, not the props kit (0025 wiring bug).
+            var serviceKit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
+                "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                "Models/Props/mdl_service_equipment_kit_v01.gltf");
+            PlaceBeltLoader(serviceKit, new Vector3(12.5f, 0f, 21.5f), 200f);
+            PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f);
 
             BuildApronSafetyProps();
             BuildFuelFarm();
@@ -7941,6 +8061,8 @@ namespace Airside.Presentation
 
             Place("belt_loader_chassis", yellow);
             Place("belt_loader_cab", Shade(yellow, 0.85f));
+            Place("belt_loader_cab_glass", new Color(0.35f, 0.55f, 0.65f));
+            Place("belt_loader_stripe", new Color(0.15f, 0.16f, 0.18f));
             Place("belt_loader_boom", new Color(0.55f, 0.56f, 0.58f));
             Place("belt_loader_belt", new Color(0.25f, 0.25f, 0.26f));
             Place("belt_loader_rail_l", dark);
@@ -7950,11 +8072,14 @@ namespace Airside.Presentation
             Place("belt_loader_roller_1", new Color(0.35f, 0.36f, 0.38f));
             Place("belt_loader_roller_2", new Color(0.35f, 0.36f, 0.38f));
             Place("belt_loader_roller_3", new Color(0.35f, 0.36f, 0.38f));
+            Place("belt_loader_roller_4", new Color(0.35f, 0.36f, 0.38f));
             Place("belt_loader_bumper", Shade(yellow, 0.7f));
             Place("belt_loader_wheel_fl", dark);
             Place("belt_loader_wheel_fr", dark);
             Place("belt_loader_wheel_rl", dark);
             Place("belt_loader_wheel_rr", dark);
+            Place("belt_loader_hub_fl", new Color(0.28f, 0.3f, 0.32f));
+            Place("belt_loader_hub_fr", new Color(0.28f, 0.3f, 0.32f));
             Place("belt_loader_hitch", dark);
             Place("belt_loader_light", new Color(0.95f, 0.9f, 0.6f));
             if (!placed)
@@ -8034,6 +8159,19 @@ namespace Airside.Presentation
 
         private static void PlaceFodBin(string name, Vector3 position, float yawDegrees)
         {
+            var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
+                "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                "Models/Props/mdl_service_equipment_kit_v01.gltf");
+            var rot = Quaternion.Euler(0f, yawDegrees, 0f);
+            var yellow = new Color(0.95f, 0.75f, 0.15f);
+            var dark = new Color(0.2f, 0.22f, 0.25f);
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "bin", position, rot, yellow, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "bin_lid", position, rot, dark, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "bin_handle", position, rot, Shade(dark, 1.15f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "bin_stripe", position, rot, new Color(0.15f, 0.16f, 0.18f), out _))
+                return;
+
             Transform root;
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_fod_bin_v01", out var prefabRoot))
             {
@@ -8043,12 +8181,12 @@ namespace Airside.Presentation
             else
             {
                 root = new GameObject(name).transform;
-                ParentBlock(root, $"{name} body", new Vector3(0f, 0.45f, 0f), new Vector3(0.7f, 0.75f, 0.55f), new Color(0.95f, 0.75f, 0.15f));
-                ParentBlock(root, $"{name} lid", new Vector3(0f, 0.88f, 0f), new Vector3(0.75f, 0.1f, 0.6f), new Color(0.2f, 0.22f, 0.25f));
+                ParentBlock(root, $"{name} body", new Vector3(0f, 0.45f, 0f), new Vector3(0.7f, 0.75f, 0.55f), yellow);
+                ParentBlock(root, $"{name} lid", new Vector3(0f, 0.88f, 0f), new Vector3(0.75f, 0.1f, 0.6f), dark);
             }
 
             root.position = position;
-            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+            root.rotation = rot;
         }
 
         private static void PlaceSignBoard(string kit, Vector3 position, float yawDegrees)

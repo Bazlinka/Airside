@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Service GSE / belt-loader / ALS tip (0025 items 2–5).** Fix belt loaders to use service
+  kit (were cube fallbacks via wrong props kit); prefer denser stairs/GPU/chocks kit over thin
+  Resources prefabs; densify towbar/FOD bin kit parts; ALS stations + REIL reuse lighting kit;
+  apron-safety hydrant/cabinet/FOD + chocks/GPU Resources densify; wet collect for markings-kit
+  node names + relief mounds. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Lighting/props/jetty/flap tip (0025 items 2–5+7).** Wire unused authored lighting densify
   into PlaceFlood/Edge/Taxi/Obst; apron cone/barrier/sign/dolly prefer denser kit over thin
   prefabs; windsock kit fabric+guys; NestFlapParts; jetty planks/rails/bollards; wet for

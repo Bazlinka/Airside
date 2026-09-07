@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (merging presentation PRs onto main)
-- **Branch / working tree:** `main` — merging #51–#55 for Bailey Mac pull
-- **Do this next:** Finish #55 camera, push `main`, Bailey `git pull` + Unity rebuild
-- **In progress / half-done:** env + v02 + HUD + UVs merged; camera next
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes
+- **Last updated:** 2026-09-07 by Cursor (merged presentation wave onto main)
+- **Branch / working tree:** `main` — ready for Bailey Mac `git pull`
+- **Do this next:** Bailey `git pull origin main`, Unity open `game/Airside`, Play soak
+- **In progress / half-done:** none — #51–#55 merged
+- **Watch out for:** First Unity open may reimport StreamingAssets; wait for import
 - **Open questions for Bailey:** none
-- **Visual assets:** env + v02 + HUD + kit UVs on main; Play Verified Bailey-owned
+- **Visual assets:** env + Batch C v02 + HUD + kit UVs + follow camera on `main`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Finish merging** follow-camera (#55), push `main`.
-2. **Bailey `git pull` + Unity rebuild** on Mac — Play soak of env, v02, HUD, UVs.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
+   let it import StreamingAssets / new glTF kits, then Play.
+2. Confirm environment, v02 models, HUD coach, textured buildings, follow camera.
 3. Then lighting / HUD Toolkit (0025 items 5–6). No new economy systems.
-   Companion / CloudKit / extra fleets stay deferred.

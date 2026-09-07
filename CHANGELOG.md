@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Follow-camera framing.** Look-ahead along aircraft heading, altitude-based
+  distance/pitch, and gentle yaw ease so F-follow fills the frame for taxi and
+  flight. Overview (O) restores the default pitch. Presentation only.
+
 - **glTF kit UVs + building surface textures.** `ArtGltfLoader` generates planar
   UVs so Batch B basecolours tile on box kits; hangar/ops/terminal meshes get
   corrugated/concrete textures with soft URP Lit response. Presentation only.

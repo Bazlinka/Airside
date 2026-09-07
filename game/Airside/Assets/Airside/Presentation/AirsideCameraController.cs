@@ -6,13 +6,16 @@ namespace Airside.Presentation
     public sealed class AirsideCameraController : MonoBehaviour
     {
         private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
+        private const float OverviewDistance = 52f;
+        private const float FollowDistanceGround = 22f;
+        private const float FollowDistanceAir = 34f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
         private Vector3 _center = new(5f, 0f, 10f);
         private float _yaw = 138f;
         private float _pitch = 38f;
-        private float _distance = 52f;
+        private float _distance = OverviewDistance;
         private bool _following;
 
         public void SetFollowTarget(Transform target)
@@ -39,13 +42,32 @@ namespace Airside.Presentation
         private void LateUpdate()
         {
             ReadInput();
-            var desiredCenter = _following && _followTarget != null ? _followTarget.position : _center;
-            if (_following)
+            if (_following && _followTarget != null)
             {
-                _center = Vector3.Lerp(_center, desiredCenter, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.5f));
-                // Ease in a little closer when following so the aircraft fills the frame.
-                var followDistance = 28f;
-                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.8f));
+                // Look a little ahead of the aircraft so taxi/takeoff reads forward motion.
+                var ahead = _followTarget.forward;
+                if (ahead.sqrMagnitude < 0.0001f)
+                    ahead = Vector3.forward;
+                ahead.y = 0f;
+                if (ahead.sqrMagnitude > 0.0001f)
+                    ahead.Normalize();
+                else
+                    ahead = Vector3.forward;
+
+                var altitude = Mathf.Max(0f, _followTarget.position.y);
+                var lookPoint = _followTarget.position
+                    + ahead * Mathf.Lerp(4.5f, 10f, Mathf.Clamp01(altitude / 12f))
+                    + Vector3.up * Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
+                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.8f));
+
+                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / 10f));
+                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2f));
+
+                // Ease yaw toward the aircraft heading without fighting player orbit.
+                var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + 28f;
+                _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.55f));
+                _pitch = Mathf.Lerp(_pitch, Mathf.Lerp(28f, 36f, Mathf.Clamp01(altitude / 10f)),
+                    1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
             }
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
@@ -64,7 +86,8 @@ namespace Airside.Presentation
                 {
                     _following = false;
                     _center = _overviewCenter;
-                    _distance = 52f;
+                    _distance = OverviewDistance;
+                    _pitch = 38f;
                 }
 
                 if (!_following)

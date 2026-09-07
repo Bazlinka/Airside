@@ -2151,7 +2151,7 @@ namespace Airside.Presentation
         private void CollectHoldShortMarkings()
         {
             _holdShortRenderers.Clear();
-            foreach (var name in new[] { "Hold short A", "Hold short B" })
+            foreach (var name in new[] { "Hold short A", "Hold short B", "Hold short C", "Hold short D" })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
@@ -2175,8 +2175,17 @@ namespace Airside.Presentation
             for (var i = 0; i < _holdShortRenderers.Count; i++)
             {
                 var renderer = _holdShortRenderers[i];
-                if (renderer != null)
-                    renderer.material.color = color;
+                if (renderer == null)
+                    continue;
+                renderer.material.color = color;
+                if (renderer.material.HasProperty("_EmissionColor"))
+                {
+                    renderer.material.EnableKeyword("_EMISSION");
+                    var emit = warning
+                        ? new Color(1f, 0.4f, 0.08f) * (0.35f + pulse * 1.4f)
+                        : Color.black;
+                    renderer.material.SetColor("_EmissionColor", emit);
+                }
             }
         }
 
@@ -3483,15 +3492,21 @@ namespace Airside.Presentation
 
         private void UpdateNightGlow(float daylight)
         {
-            // Presentation-only: terminal/hangar windows warm up as daylight falls.
+            // Presentation-only: terminal/hangar windows warm up as daylight falls,
+            // with a soft per-window flicker so night interiors feel occupied (0025 item 5).
             var glow = Mathf.Lerp(1.15f, 0.05f, daylight);
-            var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f);
-            color.a = 1f;
-            var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f);
-            foreach (var renderer in _nightGlowRenderers)
+            var night = 1f - daylight;
+            for (var i = 0; i < _nightGlowRenderers.Count; i++)
             {
+                var renderer = _nightGlowRenderers[i];
                 if (renderer == null)
                     continue;
+                var flicker = night > 0.35f
+                    ? 1f + 0.06f * Mathf.Sin(Time.unscaledTime * (1.7f + i * 0.37f) + i)
+                    : 1f;
+                var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f) * flicker;
+                color.a = 1f;
+                var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f) * flicker;
                 renderer.material.color = color;
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
@@ -3509,7 +3524,10 @@ namespace Airside.Presentation
                     var light = _windowLights[i];
                     if (light == null)
                         continue;
-                    light.intensity = intensity;
+                    var flicker = night > 0.35f
+                        ? 1f + 0.05f * Mathf.Sin(Time.unscaledTime * (1.5f + i * 0.41f) + i * 0.7f)
+                        : 1f;
+                    light.intensity = intensity * flicker;
                     light.enabled = intensity > 0.05f;
                 }
             }
@@ -5923,6 +5941,12 @@ namespace Airside.Presentation
             // Continuous runway edge stripes so the strip reads at dusk without relying on lights alone.
             CreateBlock("Runway edge L", new Vector3(0f, 0.025f, -3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
             CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
+            // Touchdown zone marks between threshold and aiming points.
+            foreach (var x in new[] { -28f, -24f, 24f, 28f })
+            {
+                CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.6f, 0.02f, 0.55f), Color.white);
+                CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.6f, 0.02f, 0.55f), Color.white);
+            }
             // Taxiway edge lines along Taxiway A.
             CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);

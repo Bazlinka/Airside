@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Night glow flicker + hold-short polish (0025 items 5+7).** Building window
+  PointLights and emissive quads flicker softly at dusk; hold-short bars C/D join
+  the traffic-wait pulse with emission; touchdown-zone marks added beside aiming
+  points. Presentation only. Evidence: `scripts/test-domain.sh`.
+
 - **Runway/taxi markings + fence densify (0025 item 3).** Continuous runway edge
   stripes, taxi edge lines, apron lead-in chevrons, mid-span fence posts and gate
   chevrons. Coast boat bob no longer drifts yaw. Presentation only.

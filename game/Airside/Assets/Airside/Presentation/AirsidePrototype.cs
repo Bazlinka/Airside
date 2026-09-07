@@ -1339,6 +1339,35 @@ namespace Airside.Presentation
         {
             _showOpeningBriefing = false;
             _paused = false;
+            if (_commercialAircraft != null && _commercialAircraft.Length > 0)
+            {
+                _cameraController.SetFollowTargets(_commercialAircraft);
+                _cameraController.StartFollowFirst();
+            }
+        }
+
+        private string FirstSessionCoachLine()
+        {
+            if (_simulation.IsInsolvent)
+                return "Airport insolvent — operations frozen.";
+            if (_showOpeningBriefing)
+                return "Read the briefing, then begin — first route offer arrives soon.";
+            if (_simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
+                return "Tip: This is your first useful decision — Accept the route offer.";
+            if (_simulation.Routes.Pending != null)
+                return "Tip: Accept a route offer to earn recurring flight income.";
+            if (_simulation.Routes.Accepted.Count == 0)
+            {
+                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
+                if (secondsToOffer > 0)
+                    return $"Tip: First route offer in {secondsToOffer}s — watch the top-right panel.";
+                return "Tip: Airlines will offer routes soon — watch the right panel.";
+            }
+            if (_simulation.Flights.Count == 0)
+                return "Tip: Accepted routes spawn commercial flights automatically.";
+            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand)
+                return "Tip: Hire crew or priority crew to speed turnarounds.";
+            return "Tip: Watch delays — reputation and cash follow on-time ops.";
         }
 
         private void MaybeShowFirstSessionDecisionToasts()
@@ -2408,25 +2437,6 @@ private static GameObject CreateBlock(
             }
 
             return string.Join("  ·  ", parts);
-        }
-
-        private string FirstSessionCoachLine()
-        {
-            if (_simulation.IsInsolvent)
-                return "Airport insolvent — operations frozen.";
-            if (_showOpeningBriefing)
-                return "Read the briefing, then begin — first route offer arrives soon.";
-            if (_simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
-                return "Tip: This is your first useful decision — Accept the route offer.";
-            if (_simulation.Routes.Pending != null)
-                return "Tip: Accept a route offer to earn recurring flight income.";
-            if (_simulation.Routes.Accepted.Count == 0)
-                return "Tip: Airlines will offer routes soon — watch the right panel.";
-            if (_simulation.Flights.Count == 0)
-                return "Tip: Accepted routes spawn commercial flights automatically.";
-            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand)
-                return "Tip: Hire crew or priority crew to speed turnarounds.";
-            return "Tip: Watch delays — reputation and cash follow on-time ops.";
         }
 
         private static string FormatPhase(AircraftPhase phase) => phase switch

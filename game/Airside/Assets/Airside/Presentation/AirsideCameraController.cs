@@ -115,5 +115,15 @@ namespace Airside.Presentation
             _followIndex = (_followIndex + 1) % _followTargets.Length;
             _followTarget = _followTargets[_followIndex];
         }
+
+        /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>
+        public void StartFollowFirst()
+        {
+            if (_followTargets.Length == 0)
+                return;
+            _following = true;
+            _followIndex = 0;
+            _followTarget = _followTargets[0];
+        }
     }
 }

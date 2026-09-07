@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft skin PBR + wider livery coverage (0025 item 4).** Authored
+  `tx_aircraft_skin_*` maps for AircraftSkin materials; livery decals cover
+  segmented fuselage/nose parts on denser turboprop kits. Presentation only.
+
 - **Denser WLD/PRP kits v02 (0025 item 2).** Prefer `*_v02` airfield lighting
   (multi-part flood masts, edge/taxi/obst), props and service equipment kits over
   thin v01 Batch B boxes. Presentation only.

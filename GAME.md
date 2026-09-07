@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ops/landside night glow)
-- **Branch / working tree:** `cursor/ops-window-beacon-ddad`
-- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak (#58–#65)
-- **In progress / half-done:** ops + landside window glow + emission
-- **Watch out for:** glow quads are still flat panels, not interior rooms
+- **Last updated:** 2026-09-07 by Cursor (landside streetlights)
+- **Branch / working tree:** `cursor/landside-streetlights-ddad`
+- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave (#58–#66)
+- **In progress / half-done:** access-road / car-park streetlights
+- **Watch out for:** streetlight poles are greybox; intensity follows day cycle with apron floods
 - **Open questions for Bailey:** none
-- **Visual assets:** control surfaces on `main`; night glow on this branch
+- **Visual assets:** night glow on `main`; streetlights on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

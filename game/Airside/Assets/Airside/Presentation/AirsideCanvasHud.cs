@@ -997,7 +997,7 @@ namespace Airside.Presentation
             go.transform.SetParent(parent, false);
             go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
             var text = go.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = fontSize;
             text.fontStyle = style;
             text.color = AirsideTheme.Cloud;
@@ -1031,7 +1031,7 @@ namespace Airside.Presentation
             var textRt = textGo.GetComponent<RectTransform>();
             Stretch(textRt);
             var text = textGo.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = 13;
             text.fontStyle = FontStyle.Bold;
             text.color = AirsideTheme.Cloud;
@@ -1052,7 +1052,7 @@ namespace Airside.Presentation
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
             var text = go.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = fontSize;
             text.fontStyle = style;
             text.color = AirsideTheme.Cloud;

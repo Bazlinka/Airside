@@ -10,11 +10,20 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Codex (decision 0025 packaged-art verification on `33a961a`)
-- **Branch / working tree:** `verify/packaged-art-20260907`
-- **Do this next:** Repair the Unity 6.3 Canvas HUD font/theme startup failure, then rerun the packaged-app versus Editor Play comparison for Batch E and daylight/PBR parity. Keep loader and WorldScale code unchanged unless a later log names an art-path failure.
-- **In progress / half-done:** none — verification-only documentation; no runtime code changed.
-- **Watch out for:** Editor Play throws `ArgumentException: Arial.ttf is no longer a valid built in font. Please use LegacyRuntime.ttf` at `AirsideCanvasHud.cs:1000`; the packaged player logs `No Theme Style Sheet set to PanelSettings`. Neither build, player nor Editor log reports a missing `StreamingAssets/Airside/Art` path.
+- **Last updated:** 2026-09-07 by Claude (fixed the Canvas HUD `Arial.ttf` crash; `PanelSettings` theme still open)
+- **Branch / working tree:** `main` — no branch waiting to land.
+- **Do this next:** On a Mac with Unity: pull, press Play, confirm the `ArgumentException` is gone. Then
+  assign a `themeStyleSheet` to `AirsideToolkitHud`'s runtime-created `PanelSettings` (needs the UI Toolkit
+  Editor tooling — Create > UI Toolkit > Panel Settings gives a correctly wired default theme to reference,
+  or author one matching `AirsideTheme`'s palette). Once both are clear, rerun the packaged-app vs Editor
+  Play comparison for Batch E and daylight/PBR parity that the font crash was blocking. Keep loader and
+  WorldScale code unchanged unless a later log names an art-path failure.
+- **In progress / half-done:** Canvas HUD font fixed (3 call sites, `Resources.GetBuiltinResource<Font>`
+  now requests `"LegacyRuntime.ttf"`) — unverified in Unity, no editor available to this session.
+  `PanelSettings.themeStyleSheet` on `AirsideToolkitHud` still unset (separate warning, not a crash).
+- **Watch out for:** the `PanelSettings` fix needs Editor UI Toolkit tooling to do properly — don't
+  hand-guess a theme asset path blind. Neither build, player nor Editor log reports a missing
+  `StreamingAssets/Airside/Art` path, so leave the art loaders/WorldScale code alone unless one does.
 - **Open questions for Bailey:** none.
 - **Verification evidence:** sync copied 137 files and left git clean; Unity 6000.3.23f1 EditMode 116/116 passed; macOS build succeeded; all 137 built art files are byte-identical to the synced source.
 - **Visual assets:** Batch C **Verified in packaged build / present in Editor hierarchy and Game view** (turboprop, terminal, hangar/ops and vehicles render as model geometry, not primitive fallbacks); WLD/PRP **Verified in packaged build / present in Editor Game view** (lights, runway markings and props); Batch B aircraft-skin PBR **Verified in packaged daylight build / Editor daylight parity blocked by the HUD startup exception**; Batch E **Not verified for parity** (packaged panels render, but weather/caution presentation could not be matched against the incomplete Editor HUD).

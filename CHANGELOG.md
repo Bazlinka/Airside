@@ -5,6 +5,21 @@ change it describes.
 
 ## Unreleased
 
+- **Fix the Canvas HUD startup crash on removed built-in `Arial.ttf`.** Unity
+  removed the `"Arial.ttf"` built-in font resource; `AirsideCanvasHud.AddLayoutText`/
+  `AddLayoutButton`/`AddText` still requested it via
+  `Resources.GetBuiltinResource<Font>("Arial.ttf")`, throwing `ArgumentException` the
+  moment the Canvas HUD (fallback path) tried to build any text, and blocking the
+  Editor-Play-vs-packaged-build comparison the previous verification pass needed.
+  Swapped all 3 call sites to `"LegacyRuntime.ttf"`, the exact replacement Unity's
+  own exception message names. `PanelSettings` on `AirsideToolkitHud` still has no
+  `themeStyleSheet` assigned (separate "No Theme Style Sheet set to PanelSettings"
+  warning, not a crash) — left for the next Unity-editor session; needs the UI
+  Toolkit tooling to author/assign a theme asset correctly, not a blind code change.
+  Presentation only; no simulation code touched. `scripts/test-domain.sh` 105/105
+  pass (unaffected — this file has no EditMode coverage). Written and reviewed
+  without a Unity editor available; needs a Play check to confirm the exception is
+  actually gone.
 - **Verified decision 0025 packaged-art delivery on a real macOS build.** From clean
   `main` at `33a961a`, the art sync copied 137 files without repository drift,
   Unity 6000.3.23f1 passed 116/116 EditMode tests, and the Mac build succeeded.

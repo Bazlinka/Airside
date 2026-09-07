@@ -191,6 +191,15 @@ namespace Airside.Persistence
 
         private void ReplayTo(long targetSecond, AirsideCommandRecord[] commands, ref int commandIndex)
         {
+            // Commands issued before the first tick sit at second 0. The advance-then-apply
+            // loop below never visits that second, so drain anything already due first —
+            // commandIndex only moves forward, so a second call cannot re-apply them.
+            while (commandIndex < commands.Length && commands[commandIndex].simulationSecond <= Clock.Now.ElapsedSeconds)
+            {
+                Apply(commands[commandIndex]);
+                commandIndex++;
+            }
+
             while (Clock.Now.ElapsedSeconds < targetSecond)
             {
                 AdvanceTo(Clock.Now.ElapsedSeconds + 1);

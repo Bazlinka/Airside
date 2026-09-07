@@ -5,6 +5,25 @@ change it describes.
 
 ## Unreleased
 
+- **Four simulation bugs that contradicted the design brief.** Ground traffic taxied
+  to and parked on Stand 3 before the player built it (`AlternateStand` walked
+  Stand 1/2/3 with no knowledge of `Capacity.StandCount`, so with both baseline
+  stands occupied GT-201 reserved `LEAD-IN-3` and parked on bare ground); it now
+  holds off-field, leaving the corridor free, when every built stand is taken.
+  Understaffing delays were reported with an empty cause, against the brief's "every
+  delay should have an understandable cause" — `TurnaroundWorkflow.OverrunCause` now
+  names cleaning disruption, understaffing or a generic extended turnaround. The
+  daily finance brief halved the moment a second commercial started operating,
+  because the projection assumed one aircraft. And a player command issued at
+  simulation second 0 was dropped on reload — `ReplayTo` advances the clock then
+  applies commands at the new second, so it never visited second 0, replaying the
+  cash it cost but not its effect. Eight new EditMode tests, each verified failing
+  against the previous code.
+
+- **Fixed the main build.** `AirsidePrefabAddressables` implements `IResourceLocator`
+  but did not import `UnityEngine.AddressableAssets.ResourceLocators`, so every
+  EditMode run and player build had been failing with CS0246 since PR #97.
+
 - **Aircraft skin PBR + wider livery coverage (0025 item 4).** Authored
   `tx_aircraft_skin_*` maps for AircraftSkin materials; livery decals cover
   segmented fuselage/nose parts on denser turboprop kits. Presentation only.

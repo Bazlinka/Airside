@@ -177,37 +177,34 @@ namespace Airside.Simulation
             }
         }
 
-        /// <summary>
-        /// Advance one simulated second. Called after the commercial flights has taken its
-        /// reservations for this tick. <paramref name="commercialStands"/> is the stand the
-        /// commercial flights is currently assigned; a fresh arrival parks on the other one.
-        /// </summary>
-
-        /// <summary>Compatibility overload for tests that pass a single commercial stand.</summary>
+        /// <summary>Overload for a single occupied commercial stand on the baseline airfield.</summary>
         public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, bool mayEnterCorridor)
         {
-            Reposition(now, monitor, new[] { primaryStand }, mayEnterCorridor);
+            Reposition(now, monitor, new[] { primaryStand }, AirportCapacity.BaselineStands, mayEnterCorridor);
         }
 
+        /// <summary>Overload for a single occupied commercial stand on an airfield of <paramref name="standCount"/> stands.</summary>
         public void Reposition(SimulationTime now, TrafficWaitMonitor monitor, StableId primaryStand, int standCount, bool mayEnterCorridor)
         {
-            // Compatibility with capacity tests: treat standCount as the field size and
-            // keep the primary stand occupied so the fleet seeks an alternate.
-            Reposition(now, monitor, new[] { primaryStand }, mayEnterCorridor);
-            if (Role == GroundTrafficRole.ArriveDepart && standCount >= 2)
-            {
-                var away = AirportSimulation.AlternateStand(primaryStand, standCount);
-                if (!away.Equals(default(StableId)) && !away.Equals(_targetStand))
-                {
-                    _targetStand = away;
-                    _circuit = BuildCircuit(Role, _targetStand);
-                }
-            }
+            Reposition(now, monitor, new[] { primaryStand }, standCount, mayEnterCorridor);
         }
 
-
+        /// <summary>Overload that assumes the baseline two-stand airfield.</summary>
         public void Reposition(SimulationTime now, TrafficWaitMonitor monitor,
             System.Collections.Generic.IReadOnlyList<StableId> commercialStands, bool mayEnterCorridor)
+        {
+            Reposition(now, monitor, commercialStands, AirportCapacity.BaselineStands, mayEnterCorridor);
+        }
+
+        /// <summary>
+        /// Advance one simulated second. Called after the commercial flights have taken
+        /// their reservations for this tick. <paramref name="commercialStands"/> is every
+        /// stand a commercial currently occupies and <paramref name="standCount"/> is how
+        /// many stands the airport has actually built; a fresh arrival parks on the lowest
+        /// built stand that is free, and holds off-field when none is.
+        /// </summary>
+        public void Reposition(SimulationTime now, TrafficWaitMonitor monitor,
+            System.Collections.Generic.IReadOnlyList<StableId> commercialStands, int standCount, bool mayEnterCorridor)
         {
             if (_warmup > 0)
             {
@@ -217,8 +214,18 @@ namespace Airside.Simulation
 
             if (_legIndex == 0 && !_onLeg && Role == GroundTrafficRole.ArriveDepart)
             {
-                var away = AlternateStand(commercialStands);
-                if (!away.Equals(default(StableId)) && !away.Equals(_targetStand))
+                var away = AlternateStand(commercialStands, standCount);
+                if (away.Equals(default(StableId)))
+                {
+                    // Every stand the airport has actually built is taken by a
+                    // commercial. Hold off-field rather than taxiing to a stand that
+                    // does not exist yet — and leave the corridor free while waiting.
+                    IsHolding = true;
+                    monitor.SetWaiting(Id, _targetStand, now);
+                    return;
+                }
+
+                if (!away.Equals(_targetStand))
                 {
                     _targetStand = away;
                     _circuit = BuildCircuit(Role, away);
@@ -268,10 +275,19 @@ namespace Airside.Simulation
         }
 
 
-        private static StableId AlternateStand(System.Collections.Generic.IReadOnlyList<StableId> commercialStands)
+        /// <summary>
+        /// The lowest-numbered stand the airport has built that no commercial flight
+        /// occupies, or <c>default</c> when every built stand is taken. Stands beyond
+        /// <paramref name="standCount"/> are not on the airfield yet and are never chosen.
+        /// </summary>
+        private static StableId AlternateStand(
+            System.Collections.Generic.IReadOnlyList<StableId> commercialStands, int standCount)
         {
-            foreach (var candidate in new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo, AirportSimulation.StandThree })
+            var built = new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo, AirportSimulation.StandThree };
+            var usable = Math.Max(0, Math.Min(built.Length, standCount));
+            for (var index = 0; index < usable; index++)
             {
+                var candidate = built[index];
                 var taken = false;
                 if (commercialStands != null)
                 {

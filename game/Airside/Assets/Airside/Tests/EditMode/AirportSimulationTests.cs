@@ -265,16 +265,17 @@ namespace Airside.Tests
             var monitor = new TrafficWaitMonitor();
             var groundTraffic = NewArrival(table);
 
-            // Both baseline stands occupied by commercial traffic → fleet takes Stand 3.
+            // Both baseline stands occupied by commercial traffic and Stand 3 built
+            // → fleet takes Stand 3.
             var busy = new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo };
-            groundTraffic.Reposition(new SimulationTime(1), monitor, busy, true);
+            groundTraffic.Reposition(new SimulationTime(1), monitor, busy, AirportCapacity.MaximumStands, true);
             Assert.That(groundTraffic.TargetStand, Is.EqualTo(AirportSimulation.StandThree));
 
             var usedStandThreeLeadIn = false;
             var parkedOnStandThree = false;
             for (long second = 2; second <= 400; second++)
             {
-                groundTraffic.Reposition(new SimulationTime(second), monitor, busy, true);
+                groundTraffic.Reposition(new SimulationTime(second), monitor, busy, AirportCapacity.MaximumStands, true);
                 if (table.TryGetOwner(AirportTaxiNetwork.StandThreeLeadIn, out var leadOwner) &&
                     leadOwner.Equals(groundTraffic.Id))
                     usedStandThreeLeadIn = true;
@@ -288,6 +289,58 @@ namespace Airside.Tests
 
             Assert.That(usedStandThreeLeadIn, Is.True, "ground traffic should reserve the Stand 3 lead-in");
             Assert.That(parkedOnStandThree, Is.True, "and park on Stand 3 at the correct apron Z");
+        }
+
+        [Test]
+        public void GroundTraffic_WithEveryBuiltStandBusy_HoldsInsteadOfUsingAnUnbuiltStand()
+        {
+            var table = new ReservationTable();
+            var monitor = new TrafficWaitMonitor();
+            var groundTraffic = NewArrival(table);
+
+            // Two commercials fill the only two stands the airport has built. Stand 3
+            // does not exist yet, so the fleet must wait rather than taxi to it.
+            var busy = new[] { AirportSimulation.StandOne, AirportSimulation.StandTwo };
+            for (long second = 1; second <= 400; second++)
+            {
+                groundTraffic.Reposition(new SimulationTime(second), monitor, busy, AirportCapacity.BaselineStands, true);
+
+                Assert.That(groundTraffic.TargetStand, Is.Not.EqualTo(AirportSimulation.StandThree),
+                    "the fleet must not target a stand the airport has not built");
+                Assert.That(table.IsReserved(AirportSimulation.StandThree), Is.False);
+                Assert.That(table.IsReserved(AirportTaxiNetwork.StandThreeLeadIn), Is.False);
+                Assert.That(groundTraffic.IsHolding, Is.True);
+                // Holding off-field must leave the shared corridor free for the rest of the fleet.
+                Assert.That(table.IsReserved(AirportTaxiNetwork.Corridor), Is.False);
+            }
+        }
+
+        [Test]
+        public void GroundTraffic_NeverTouchesStandThree_BeforeItIsBuilt()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(11), new ReservationTable());
+
+            var sawTwoCommercials = false;
+            for (var second = 1; second <= 6000; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.Routes.Pending != null)
+                    simulation.AcceptPendingRoute();
+
+                sawTwoCommercials |= simulation.Flights.Count > 1;
+
+                Assert.That(simulation.Capacity.HasThirdStand, Is.False);
+                Assert.That(simulation.Reservations.IsReserved(AirportSimulation.StandThree), Is.False,
+                    "Stand 3 is not built, so nothing may reserve it");
+                Assert.That(simulation.Reservations.IsReserved(AirportTaxiNetwork.StandThreeLeadIn), Is.False);
+                foreach (var traffic in simulation.GroundTraffic)
+                    Assert.That(traffic.TargetStand, Is.Not.EqualTo(AirportSimulation.StandThree));
+            }
+
+            Assert.That(sawTwoCommercials, Is.True,
+                "the run needs both stands occupied by commercials to exercise the case");
         }
 
         [Test]

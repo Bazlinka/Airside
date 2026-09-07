@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **ARFF truck Resources prefab (0025 items 1+3).** `mdl_arff_truck_v01` parks on the
+  rescue apron in front of the ARFF shed (Addressables key auto-registered).
+  Presentation only.
+
 - **Perimeter fence, ALS bars + ARFF shed (0025 items 3+5).** Chain-link style multi-rail
   fence with open vehicle gate; five approach light bars west of threshold with night
   PointLights; red ARFF rescue shed + bay spill. Presentation only.

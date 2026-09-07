@@ -2061,7 +2061,17 @@ namespace Airside.Presentation
                     || name.StartsWith("Taxi centre", StringComparison.Ordinal)
                     || name.StartsWith("Aiming point", StringComparison.Ordinal)
                     || name.StartsWith("TDZ ", StringComparison.Ordinal)
-                    || name.StartsWith("Threshold stripe", StringComparison.Ordinal);
+                    || name.StartsWith("Threshold stripe", StringComparison.Ordinal)
+                    || name.StartsWith("Jetty ", StringComparison.Ordinal)
+                    || name.StartsWith("ARFF apron", StringComparison.Ordinal)
+                    || name.StartsWith("Fuel ", StringComparison.Ordinal)
+                    || name.StartsWith("Terminal canopy", StringComparison.Ordinal)
+                    || name.StartsWith("Stand box", StringComparison.Ordinal)
+                    || name.StartsWith("Access road shoulder", StringComparison.Ordinal)
+                    || name.StartsWith("Runway shoulder", StringComparison.Ordinal)
+                    || name.StartsWith("Access turn shoulder", StringComparison.Ordinal)
+                    || name.StartsWith("Car park kerb", StringComparison.Ordinal)
+                    || name.StartsWith("Relief berm", StringComparison.Ordinal);
                 var apply = wet ? rainWetness : (paved ? 0.16f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
                     renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
@@ -2359,7 +2369,15 @@ namespace Airside.Presentation
                     && !n.StartsWith("Taxi centre", StringComparison.Ordinal)
                     && !n.StartsWith("Aiming point", StringComparison.Ordinal)
                     && !n.StartsWith("TDZ ", StringComparison.Ordinal)
-                    && !n.StartsWith("Threshold stripe", StringComparison.Ordinal))
+                    && !n.StartsWith("Threshold stripe", StringComparison.Ordinal)
+                    && !n.StartsWith("Jetty ", StringComparison.Ordinal)
+                    && !n.StartsWith("ARFF apron", StringComparison.Ordinal)
+                    && !n.StartsWith("Fuel ", StringComparison.Ordinal)
+                    && !n.StartsWith("Terminal canopy", StringComparison.Ordinal)
+                    && !n.StartsWith("Stand box", StringComparison.Ordinal)
+                    && !n.StartsWith("Access road shoulder", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway shoulder", StringComparison.Ordinal)
+                    && !n.StartsWith("Access turn shoulder", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -4725,13 +4743,36 @@ namespace Airside.Presentation
         private static void BuildCoastalLife()
         {
             // Timber jetty reaching into the shallows.
-            CreateBlock("Jetty deck", new Vector3(-18f, -0.15f, -52f), new Vector3(2.4f, 0.18f, 14f), new Color(0.45f, 0.32f, 0.18f));
+            var timber = new Color(0.45f, 0.32f, 0.18f);
+            var pile = new Color(0.35f, 0.26f, 0.16f);
+            CreateBlock("Jetty deck", new Vector3(-18f, -0.15f, -52f), new Vector3(2.4f, 0.18f, 14f), timber);
+            for (var plank = 0; plank < 7; plank++)
+            {
+                var z = -46.5f - plank * 1.7f;
+                CreateBlock($"Jetty plank {plank}", new Vector3(-18f, -0.04f, z), new Vector3(2.2f, 0.05f, 1.4f), Shade(timber, 0.9f + (plank % 3) * 0.05f));
+            }
+
             for (var i = 0; i < 5; i++)
             {
                 var z = -46f - i * 2.5f;
-                CreateBlock($"Jetty pile L {i}", new Vector3(-19f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), new Color(0.35f, 0.26f, 0.16f));
-                CreateBlock($"Jetty pile R {i}", new Vector3(-17f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), new Color(0.35f, 0.26f, 0.16f));
+                CreateBlock($"Jetty pile L {i}", new Vector3(-19f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), pile);
+                CreateBlock($"Jetty pile R {i}", new Vector3(-17f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), pile);
+                CreateBlock($"Jetty brace {i}", new Vector3(-18f, -0.35f, z), new Vector3(1.8f, 0.1f, 0.12f), Shade(pile, 1.1f));
             }
+
+            CreateBlock("Jetty rail L", new Vector3(-19.1f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 12f), Shade(timber, 0.85f));
+            CreateBlock("Jetty rail R", new Vector3(-16.9f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 12f), Shade(timber, 0.85f));
+            CreateBlock("Jetty bollard A", new Vector3(-19.0f, 0.25f, -46.5f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
+            CreateBlock("Jetty bollard B", new Vector3(-17.0f, 0.25f, -46.5f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
+            CreateBlock("Jetty bollard C", new Vector3(-19.0f, 0.25f, -57f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
+            CreateBlock("Jetty cleat A", new Vector3(-18.6f, 0.02f, -48f), new Vector3(0.35f, 0.12f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("Jetty cleat B", new Vector3(-17.4f, 0.02f, -54f), new Vector3(0.35f, 0.12f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("Jetty ladder", new Vector3(-16.7f, -0.4f, -55f), new Vector3(0.12f, 1.1f, 0.55f), new Color(0.5f, 0.52f, 0.54f));
+            CreateBlock("Jetty ladder rung", new Vector3(-16.7f, -0.15f, -55f), new Vector3(0.35f, 0.06f, 0.08f), new Color(0.55f, 0.56f, 0.58f));
+            CreateBlock("Jetty end cap", new Vector3(-18f, -0.05f, -59.2f), new Vector3(2.5f, 0.2f, 0.35f), Shade(timber, 0.8f));
+            CreateBlock("Jetty deck seam", new Vector3(-18f, -0.02f, -52f), new Vector3(0.08f, 0.04f, 13.5f), Shade(timber, 0.7f));
+            CreateBlock("Jetty approach", new Vector3(-18f, -0.12f, -44.5f), new Vector3(3.2f, 0.14f, 2.2f), Shade(AirsideTheme.Concrete, 0.9f));
+            CreateBlock("Jetty approach edge", new Vector3(-18f, -0.02f, -43.6f), new Vector3(3.0f, 0.04f, 0.18f), Color.white);
 
             PlaceCoastBoat("Coast boat A", new Vector3(-12f, -0.55f, -62f), 12f, new Color(0.85f, 0.88f, 0.9f));
             PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
@@ -6210,6 +6251,7 @@ namespace Airside.Presentation
                 NestCrossPropellerBlades(root);
                 NestLandingGearParts(root);
                 NestCabinDoorParts(root);
+                NestFlapParts(root);
             }
 
             if (!usedArt)
@@ -6570,6 +6612,32 @@ namespace Airside.Presentation
             NestUnderProp(gearL, rimL, "Rim");
             NestUnderProp(gearR, rimR, "Rim");
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
+        }
+
+        /// <summary>
+        /// Nest flap tracks/fairings under Flap L/R so approach deploy carries them (0025 item 7).
+        /// </summary>
+        private static void NestFlapParts(Transform aircraft)
+        {
+            Transform flapL = null, flapR = null;
+            var leftExtras = new List<Transform>();
+            var rightExtras = new List<Transform>();
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Flap L")
+                    flapL = child;
+                else if (child.name == "Flap R")
+                    flapR = child;
+                else if (child.name is "Flap track L1" or "Flap track L2" or "Flap fairing L")
+                    leftExtras.Add(child);
+                else if (child.name is "Flap track R1" or "Flap track R2" or "Flap fairing R")
+                    rightExtras.Add(child);
+            }
+
+            foreach (var extra in leftExtras)
+                NestUnderProp(flapL, extra, extra.name);
+            foreach (var extra in rightExtras)
+                NestUnderProp(flapR, extra, extra.name);
         }
 
         /// <summary>
@@ -7135,45 +7203,72 @@ namespace Airside.Presentation
 
         private static Transform BuildWindsock()
         {
-            // WLD-003 windsock — Resources / kit pole when available; animated sock always procedural.
+            // WLD-003 windsock — denser authored kit pole/fabric; animated sock parent stays procedural.
             var propsKit = PreferArtKit(
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
                 "Models/Props/mdl_airfield_props_kit_v01.gltf");
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_windsock_pole_v01", out var polePrefab))
+            var poleOrigin = new Vector3(-12f, 0f, 12f);
+            var placedPole = ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_base", poleOrigin, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_pole", poleOrigin, Quaternion.identity, new Color(0.75f, 0.75f, 0.72f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", poleOrigin, Quaternion.identity, new Color(0.75f, 0.75f, 0.72f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_frame", poleOrigin, Quaternion.identity, new Color(0.55f, 0.55f, 0.52f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_swivel", poleOrigin, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_guy_l", poleOrigin, Quaternion.identity, new Color(0.4f, 0.4f, 0.42f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_guy_r", poleOrigin, Quaternion.identity, new Color(0.4f, 0.4f, 0.42f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_counterweight", poleOrigin, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_light", poleOrigin, Quaternion.identity, new Color(0.95f, 0.95f, 0.85f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_ring", poleOrigin, Quaternion.identity, new Color(0.55f, 0.55f, 0.52f), out _);
+
+            if (!placedPole && ArtPresentationLoader.TryInstantiatePrefab("mdl_windsock_pole_v01", out var polePrefab))
             {
                 polePrefab.name = "Windsock pole";
-                polePrefab.position = new Vector3(-12f, 0f, 12f);
+                polePrefab.position = poleOrigin;
             }
-            else if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", new Vector3(-12f, 0f, 12f), Quaternion.identity,
-                    new Color(0.75f, 0.75f, 0.72f), out _))
+            else if (!placedPole)
             {
                 CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
                 CreateBlock("Windsock hinge", new Vector3(-12f, 3.15f, 12f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.55f, 0.55f, 0.52f));
             }
 
-            var sock = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            sock.name = "Windsock sock";
-            Object.Destroy(sock.GetComponent<Collider>());
-            sock.transform.position = new Vector3(-11.2f, 3.05f, 12f);
-            sock.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
-            sock.transform.rotation = Quaternion.Euler(0f, 12f, 90f);
-            sock.GetComponent<Renderer>().material = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
-            var stripe = CreateBlock("Windsock stripe", new Vector3(-10.6f, 3.05f, 12f), new Vector3(0.35f, 0.52f, 0.52f),
-                new Color(0.95f, 0.95f, 0.92f));
-            stripe.transform.SetParent(sock.transform, true);
-            return sock.transform;
+            var sock = new GameObject("Windsock sock").transform;
+            sock.position = new Vector3(-11.2f, 3.05f, 12f);
+            sock.rotation = Quaternion.Euler(0f, 12f, 0f);
+            var fabricPlaced = false;
+            void PlaceFabric(string mesh, Color color)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                    return;
+                part.SetParent(sock, false);
+                part.localPosition = Vector3.zero;
+                part.localRotation = Quaternion.identity;
+                fabricPlaced = true;
+            }
+
+            PlaceFabric("sock_fabric", new Color(0.92f, 0.55f, 0.12f));
+            PlaceFabric("sock_fabric_mid", new Color(0.95f, 0.65f, 0.2f));
+            PlaceFabric("sock_fabric_tip", new Color(0.95f, 0.95f, 0.92f));
+            if (!fabricPlaced)
+            {
+                var cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                cylinder.name = "Windsock fabric";
+                Object.Destroy(cylinder.GetComponent<Collider>());
+                cylinder.transform.SetParent(sock, false);
+                cylinder.transform.localPosition = Vector3.zero;
+                cylinder.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
+                cylinder.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                cylinder.GetComponent<Renderer>().material = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
+                var stripe = CreateBlock("Windsock stripe", new Vector3(-10.6f, 3.05f, 12f), new Vector3(0.35f, 0.52f, 0.52f),
+                    new Color(0.95f, 0.95f, 0.92f));
+                stripe.transform.SetParent(sock, true);
+            }
+
+            return sock;
         }
 
         private static void CreateCone(Vector3 position)
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_safety_cone_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Safety cone";
-                prefabRoot.position = position;
-                return;
-            }
-
+            // Prefer denser authored props kit over thin Resources prefab (0025 item 2).
             var kit = PreferArtKit(
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
@@ -7182,11 +7277,20 @@ namespace Airside.Presentation
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_base", origin, Quaternion.identity, new Color(0.2f, 0.2f, 0.22f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_body", origin, Quaternion.identity, new Color(0.95f, 0.45f, 0.08f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_stripe", origin, Quaternion.identity, Color.white, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_tip", origin, Quaternion.identity, new Color(0.95f, 0.45f, 0.08f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_tip", origin, Quaternion.identity, new Color(0.95f, 0.45f, 0.08f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_collar", origin, Quaternion.identity, Color.white, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "cone_handle", origin, Quaternion.identity, new Color(0.25f, 0.25f, 0.28f), out _))
                 return;
 
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "cone", origin, Quaternion.identity, new Color(0.95f, 0.45f, 0.08f), out _))
                 return;
+
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_safety_cone_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Safety cone";
+                prefabRoot.position = position;
+                return;
+            }
 
             var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             cone.name = "Safety cone";
@@ -7199,14 +7303,6 @@ namespace Airside.Presentation
 
         private static void CreateBarrier(Vector3 position, float yawDegrees)
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_work_barrier_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Barrier";
-                prefabRoot.position = position;
-                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
-                return;
-            }
-
             var kit = PreferArtKit(
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
@@ -7219,6 +7315,7 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_stripe_b", origin, rot, Color.white, out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_brace", origin, rot, new Color(0.3f, 0.3f, 0.32f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_brace_b", origin, rot, new Color(0.3f, 0.3f, 0.32f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_top_cap", origin, rot, new Color(0.85f, 0.5f, 0.12f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_leg_l", origin, rot, new Color(0.25f, 0.25f, 0.28f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_leg_r", origin, rot, new Color(0.25f, 0.25f, 0.28f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier_foot_l", origin, rot, new Color(0.3f, 0.3f, 0.32f), out _)
@@ -7227,6 +7324,14 @@ namespace Airside.Presentation
 
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "barrier", origin, rot, new Color(0.9f, 0.55f, 0.12f), out _))
                 return;
+
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_work_barrier_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Barrier";
+                prefabRoot.position = position;
+                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+                return;
+            }
 
             var root = new GameObject("Barrier").transform;
             root.position = position;
@@ -7328,6 +7433,11 @@ namespace Airside.Presentation
             const string kit = "Models/Props/mdl_airfield_markings_kit_v01.gltf";
             var usedCentre = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "runway_centreline", Vector3.zero, Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            // Centreline dashes densify the strip when kit ships them (0025 item 3).
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_a", new Vector3(-20f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_b", new Vector3(-8f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_c", new Vector3(8f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_d", new Vector3(20f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
 
             if (!usedCentre)
             {
@@ -7349,6 +7459,17 @@ namespace Airside.Presentation
                 kit, "runway_threshold", new Vector3(-36f, 0.03f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
             var usedThresholdE = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "runway_threshold", new Vector3(36f, 0.03f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            // Threshold bar densify + side bars when kit present.
+            foreach (var bar in new[] { "threshold_bar_a", "threshold_bar_b", "threshold_bar_c", "threshold_bar_d" })
+            {
+                ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(-36f, 0.032f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+                ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(36f, 0.032f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            }
+
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_l", new Vector3(-36f, 0.032f, -3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_r", new Vector3(-36f, 0.032f, 3.0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_l", new Vector3(36f, 0.032f, -3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "threshold_side_r", new Vector3(36f, 0.032f, 3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
             if (!usedThresholdW || !usedThresholdE)
             {
                 for (var z = -2.4f; z <= 2.4f; z += 0.8f)
@@ -7475,6 +7596,11 @@ namespace Airside.Presentation
             PlaceTaxiArrow(kit, new Vector3(-4f, 0.04f, 9f), 90f);
             PlaceTaxiArrow(kit, new Vector3(18f, 0.04f, 9f), 90f);
             PlaceTaxiArrow(kit, new Vector3(14f, 0.04f, 12.5f), 0f);
+            // Apron entry arrows from densified kit when present.
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_arrow_a", new Vector3(12f, 0.04f, 11.5f), Quaternion.identity,
+                new Color(0.95f, 0.85f, 0.2f), out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_arrow_b", new Vector3(16f, 0.04f, 12.8f), Quaternion.identity,
+                new Color(0.95f, 0.85f, 0.2f), out _);
 
             // Extra hold-short bars on the west taxi entry when kit densified.
             if (!ArtGltfLoader.TryPlaceNamedMesh(
@@ -7672,8 +7798,10 @@ namespace Airside.Presentation
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_stem", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_collar", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_gasket", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_glare", position, Quaternion.identity, new Color(1f, 1f, 0.9f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_glare", position, Quaternion.identity, new Color(1f, 1f, 0.9f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_reflector", position, Quaternion.identity, new Color(0.85f, 0.88f, 0.9f), out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Runway edge", position + new Vector3(0f, 0.05f, 0f), new Vector3(0.25f, 0.1f, 0.25f), color);
@@ -7684,8 +7812,10 @@ namespace Airside.Presentation
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_collar", position, Quaternion.identity, new Color(0.38f, 0.4f, 0.42f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_gasket", position, Quaternion.identity, new Color(0.18f, 0.2f, 0.22f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_glare", position, Quaternion.identity, new Color(0.55f, 0.75f, 1f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_glare", position, Quaternion.identity, new Color(0.55f, 0.75f, 1f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_reflector", position, Quaternion.identity, new Color(0.7f, 0.82f, 1f), out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Taxi light", position + new Vector3(0f, 0.18f, 0f), new Vector3(0.18f, 0.35f, 0.18f), color);
@@ -7697,7 +7827,10 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_guard", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_ring", position, Quaternion.identity, new Color(0.9f, 0.4f, 0.15f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_ring", position, Quaternion.identity, new Color(0.9f, 0.4f, 0.15f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_beacon_ring", position, Quaternion.identity, new Color(0.95f, 0.45f, 0.12f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_cap", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_cable", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", position, Quaternion.identity, color, out _))
                 CreateBlock(fallbackName, position + new Vector3(0f, 0.2f, 0f), new Vector3(0.22f, 0.22f, 0.22f), color);
@@ -7713,8 +7846,16 @@ namespace Airside.Presentation
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_ladder", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_guy", position, Quaternion.identity, new Color(0.32f, 0.33f, 0.35f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_b", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_c", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_d", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_junction", position, Quaternion.identity, new Color(0.28f, 0.3f, 0.32f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_cable_tray", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_transformer", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.38f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm_brace", position, Quaternion.identity, Shade(color, 0.85f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_platform", position, Quaternion.identity, Shade(color, 0.82f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_handrail", position, Quaternion.identity, new Color(0.55f, 0.56f, 0.58f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm_b", position, Quaternion.identity, Shade(color, 0.85f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
@@ -7723,8 +7864,10 @@ namespace Airside.Presentation
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_b", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_c", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_d", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor_b", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor_c", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
             if (!placed)
                 ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _);
         }
@@ -7909,14 +8052,6 @@ namespace Airside.Presentation
 
         private static void PlaceSignBoard(string kit, Vector3 position, float yawDegrees)
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_airside_sign_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Airside sign";
-                prefabRoot.position = position;
-                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
-                return;
-            }
-
             var rot = Quaternion.Euler(0f, yawDegrees, 0f);
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_post", position, rot, new Color(0.35f, 0.36f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_face", position, rot, new Color(0.95f, 0.95f, 0.92f), out _)
@@ -7925,11 +8060,20 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_reflector", position, rot, new Color(0.85f, 0.88f, 0.9f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_base", position, rot, new Color(0.3f, 0.32f, 0.34f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_glyph_bar", position, rot, new Color(0.12f, 0.35f, 0.55f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_glyph_bar_b", position, rot, new Color(0.12f, 0.35f, 0.55f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_glyph_dot", position, rot, new Color(0.12f, 0.35f, 0.55f), out _))
                 return;
 
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_board", position, rot, new Color(0.12f, 0.35f, 0.55f), out _))
                 return;
+
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_airside_sign_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Airside sign";
+                prefabRoot.position = position;
+                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+                return;
+            }
 
             var root = new GameObject("Airside sign").transform;
             root.position = position;
@@ -7941,13 +8085,6 @@ namespace Airside.Presentation
 
         private static void PlaceBaggageDolly(string kit, Vector3 position)
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_baggage_dolly_v01", out var prefabRoot))
-            {
-                prefabRoot.name = "Baggage dolly";
-                prefabRoot.position = position;
-                return;
-            }
-
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_bed", position, Quaternion.identity, new Color(0.55f, 0.35f, 0.18f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_l", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_r", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
@@ -7957,6 +8094,7 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_post_r", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_handle", position, Quaternion.identity, new Color(0.4f, 0.4f, 0.42f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hitch", position, Quaternion.identity, new Color(0.35f, 0.35f, 0.38f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hitch_pin", position, Quaternion.identity, new Color(0.3f, 0.3f, 0.32f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_cargo", position, Quaternion.identity, new Color(0.7f, 0.55f, 0.25f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_bag_a", position, Quaternion.identity, new Color(0.75f, 0.55f, 0.2f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_bag_b", position, Quaternion.identity, new Color(0.65f, 0.45f, 0.18f), out _)
@@ -7964,12 +8102,24 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_fl", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_fr", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_rl", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_rr", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_rr", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hub_fl", position, Quaternion.identity, new Color(0.45f, 0.45f, 0.48f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hub_fr", position, Quaternion.identity, new Color(0.45f, 0.45f, 0.48f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hub_rl", position, Quaternion.identity, new Color(0.45f, 0.45f, 0.48f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hub_rr", position, Quaternion.identity, new Color(0.45f, 0.45f, 0.48f), out _))
                 return;
 
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", position, Quaternion.identity,
                     new Color(0.55f, 0.35f, 0.18f), out _))
                 return;
+
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_baggage_dolly_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Baggage dolly";
+                prefabRoot.position = position;
+                return;
+            }
+
             CreateBlock("Dolly", position + new Vector3(0f, 0.35f, 0f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
         }
 

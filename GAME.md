@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (lighting + wet materials)
-- **Branch / working tree:** `cursor/lighting-wet-materials-ddad`
-- **Do this next:** Merge this PR, then denser props / motion polish; Bailey Play when ready
-- **In progress / half-done:** fill light, wet gloss, nav-light night punch
-- **Watch out for:** First Unity open may reimport StreamingAssets
+- **Last updated:** 2026-09-07 by Cursor (landside fence fix + merge)
+- **Branch / working tree:** `cursor/landside-parking-props-ddad`
+- **Do this next:** Merge landside PR, then motion polish (prop disc / wheel roll); Bailey Play when ready
+- **In progress / half-done:** restored BuildPerimeterFence (was broken by landside insert)
+- **Watch out for:** cars are greybox primitives, not vehicle kits
 - **Open questions for Bailey:** none
-- **Visual assets:** presentation wave on `main`; lighting/wet on this branch
+- **Visual assets:** lighting on `main`; landside life ready to merge
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

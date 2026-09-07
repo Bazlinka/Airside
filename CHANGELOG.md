@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Batch B surface PBR maps (0025 item 4).** Authored normal / AO / metallic-smoothness
+  masks for asphalt, concrete, grass and corrugated metal; `AirsideMaterialLibrary`
+  prefers them via StreamingAssets with procedural fallbacks. Presentation only.
+
 - **Batch C v03 denser kits (0025 item 2).** Procedural turboprop/terminal/hangar/ops/
   GSE kits with more segmented parts; runtime prefers v03→v02→v01; flaps/ailerons/
   elevators animate. Still greybox — not authored meshes. StreamingAssets synced.

@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F3 setting modules.** Authored eucalyptus + Kingscote scrub kits, modular
+  fence/gate, terminal forecourt furniture, and context terrain accents; PlaceTree /
+  PlaceShrub / BuildPerimeterFence / landside canopy / distant hills prefer kits with
+  procedural fallbacks. Presentation only — operational geometry unchanged.
+  Evidence: `scripts/test-domain.sh`; art sync; `docs/art/prompts/batch-f3-setting-modules-2026-09-07.md`.
+
 - **Batch F2 turnaround vehicles + people.** Authored VEH-001/002/003 v05 (fuel truck
   oval tank, baggage tug+carts, apron bus with rounded nose), VEH-004 pushback tug v02,
   CHR-001 ramp-crew and CHR-002 passenger kits; PreferArtKit + PlacePerson wired;

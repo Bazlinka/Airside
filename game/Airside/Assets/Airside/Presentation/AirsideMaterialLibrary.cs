@@ -184,6 +184,23 @@ namespace Airside.Presentation
                 || n.Contains("door_panel") || n.Contains("door_opening") || n.Contains("door_rib")
                 || n.Contains("door_track") || n.Contains("service_wing") || n.Contains("signage"))
                 return SurfaceKind.Metal;
+            // F3 foliage / scrub / hills — before generic "canopy" concrete match.
+            if (n.Contains("leaf") || n.Contains("scrub") || n.Contains("tuft")
+                || n.Contains("tree_") || n.StartsWith("tree ") || n.Contains("grass_tuft")
+                || n.Contains("planter_scrub") || n.Contains("hill_") || n.Contains("dune_")
+                || n.Contains("paddock") || n.Contains("canopy_b") || n.Contains("canopy_c")
+                || n.Contains("canopy_d") || n.EndsWith("_canopy") || n.Contains("tree canopy"))
+                return SurfaceKind.Grass;
+            if (n.Contains("fence") || n.Contains("gate_") || n.Contains("bollard") || n.Contains("kerb")
+                || n.Contains("sign_post") || n.Contains("sign_frame") || n.Contains("trolley"))
+                return SurfaceKind.Metal;
+            if (n.Contains("trunk") || n.Contains("bark") || n.Contains("flare") || n.Contains("fork")
+                || n.Contains("bench") || n.Contains("planter") || n.Contains("rock"))
+                return SurfaceKind.PaintedMetal;
+            if (n.Contains("coast_sand") || n.Equals("berm"))
+                return SurfaceKind.Sand;
+            if (n.Contains("coast_water") || n.Contains("shallows"))
+                return SurfaceKind.Water;
             if (n.Contains("terminal") || n.Contains("concrete") || n.Contains("apron")
                 || n.Contains("canopy") || n.Contains("end_cap") || n.Contains("entrance"))
                 return SurfaceKind.Concrete;

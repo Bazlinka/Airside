@@ -1,19 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Batch F2 vehicles/people)
-- **Branch:** `cursor/batch-f2-vehicles-people-a8ff` (based on main with F1 merged)
-- **Do next:** Bailey playtest packaged Mac build for F2 turnaround read (fuel truck,
-  baggage tug, apron bus, pushback tug, ramp crew, passengers). After accept: merge,
-  then Batch F3 (vegetation/boundary) on a **new** branch only.
+- **Last updated:** 2026-09-07 (Cursor — Batch F3 setting modules)
+- **Branch:** `cursor/batch-f3-setting-modules-a8ff`
+- **Do next:** Bailey merge F3 when ready (StreamingAssets glTF path; no Mac bake required).
+  Then Batch F4 (motion/VFX/UI system icons) on a **new** branch.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PreferArtKit vehicles: v05 → authored → v04 → …; pushback: v02 → v01 prefab → towbar kit
-  - PlacePerson prefers CHR kits; block figures remain fallback; torso/wand/arm/leg names preserved for idle/wave
-  - Pipeline-proof Resources prefabs yield to StreamingAssets glTF until Mac FBX bake
-  - Addressables: skip full catalog `InitializeAsync` when `StreamingAssets/aa/settings.json` is missing
-  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch; use `scripts/build-mac.sh`
-  - Mac bake: `Airside → Art → Bake Authored FBX Prefabs` (now includes F2 FBX paths)
-- **Open question for Bailey:** visual accept of F2 vehicles/people vs REF-003/005
+  - PlaceTree / PlaceShrub prefer VEG-001/002; fence prefers PRP-002 modular bays; landside canopy prefers PRP-003; hills get WLD-004 accents
+  - Operational runway/taxi/stand geometry unchanged
+  - Pipeline-proof Resources prefabs yield to StreamingAssets glTF
+  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
+- **Open question for Bailey:** none — merge when happy; continue F4 next
 
 ---
 
@@ -90,40 +87,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Current evidence
 
 - `scripts/test-unity.sh`: 124/124 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
-- A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
-- Large and one-second time steps reach identical simulation state.
-- When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
-- Turnaround dependencies, disruptions, priority crews and delay costs are covered by tests.
-- Continuous play and offline replay produce matching operational and financial state.
-- Save recovery, backward clock handling and a bounded thirty-day absence are covered by tests.
-- The airport has a real-world location and a deterministic day/night cycle; a schema-1 save migrates to schema 2 (adding the location) on load.
-- Airlines propose routes on a schedule; accepting one is a persisted command that survives reload and offline catch-up and pays out on every completed flight. Acceptance also refuses when the projected schedule would exceed stand capacity (12 flights/day on two stands).
-- Reputation moves with on-time vs delayed departures, gates which proposals can be accepted, and raises the per-flight payment locked in at acceptance.
-- Weather is deterministic from the timeline; each simulated midnight the airport pays a base running cost, a weather surcharge and crew payroll, identical under live play and offline catch-up.
-- Ground-crew headcount is a persisted decision (replayed on load); the baseline leaves turnaround timing byte-identical to before, extra crew shorten it, understaffing lengthens it.
-- Each midnight publishes a daily operations report (flights, income, delays, running cost, net cash, reputation); latest seven kept; HUD shows the latest.
-- Operations Efficiency research (2500, one simulated day) permanently reduces base daily running cost by 100; start is command-replayed. The daily finance brief subtracts that discount from expected operating cost.
-- Passenger Services research (3500, one simulated day) unlocks after Ops Efficiency and permanently adds +$75 route income per departed commercial; start command `start-research-passenger-services` is replayed on load (decision 0023). `scripts/test-domain.sh`: 96 deterministic Domain/Simulation/Persistence tests pass (Unity edit-mode still needs Mac).
-- A buildable third stand (8000, `build-stand`) expands capacity; taxi, ground traffic and the HUD use it; two-stand seeds stay identical.
-- Three consecutive negative day closes declare insolvency: the simulation freezes, commands refuse, and an `"Insolvent"` event is logged (identical under large and small time steps; rebuilt by replay).
-- Named taxi routes connect both stands through shared reserved segments.
-- The event history produces an ordered, player-readable account of each flight.
-- Taxi movements release shared segments progressively instead of locking the whole route.
-- A competing owner cannot enter an occupied segment, and prolonged waits produce a diagnostic.
-- A ground-traffic fleet (`GT-201` arrive/depart, `GT-202` repositioning) shares the taxi segments and stands through the reservation table without ever blocking the primary flight; a single-file corridor lock keeps at most one fleet aircraft on the A1/A2 taxiway at a time, and a free corridor goes to the longest-waiting aircraft (30 edit-mode tests, including a forty-cycle soak asserting the corridor invariant, no starvation, and zero primary-flight conflicts).
-- Fleet aircraft move identically under large and small time steps.
-- The project compiles in Unity 6.3 LTS and builds a macOS player.
-- The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
-  text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay).
-  Unity 6.3 Play: no `Arial.ttf` / PanelSettings theme warnings; Toolkit wordmark overlays present.
-- Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
-  Batch F1 **AIR-001 v05** / **BLD-001 v05** / **MAT-001** on main.
-  Batch F2 **VEH-001/002/003 v05**, **VEH-004 pushback v02**, **CHR-001/002** kits preferred;
-  PlacePerson uses character kits. See art spec.
+- Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
+- Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
+  prefer authored kits with procedural fallbacks; operational geometry unchanged.
 
 ## Next work
 
-1. Bailey playtest / accept **Batch F2** (this PR), then merge.
-2. **Batch F3** (vegetation/boundary/landside modules) on a new branch after F2 acceptance.
-3. Optional: build Editor Addressables groups so player catalog `aa/settings.json` exists.
-4. No F4 until F3 slice acceptance; no new economy systems; no Companion/CloudKit.
+1. Merge **Batch F3** (this PR) when ready.
+2. **Batch F4** (reusable motion/VFX + UI system icons) on a new branch.
+3. Optional: Editor Addressables groups for player catalog.
+4. No new economy systems; no Companion/CloudKit.

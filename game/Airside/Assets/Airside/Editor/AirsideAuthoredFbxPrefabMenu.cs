@@ -17,6 +17,7 @@ namespace Airside.Editor
         private static readonly string[] AuthoredFbxPaths =
         {
             "Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx",
+            "Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx",
             "Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx",

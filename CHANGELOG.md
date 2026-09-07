@@ -5,6 +5,27 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 soak evidence.** Pre-rebuild soak ~16 min stable; post-rebuild packaged app (shallower roof) stayed up 35+ min continuous with no crash (RSS ~250 MB).
+
+- **BLD-001 v05 roof silhouette.** Shallower ~4° dual-pitch roof / lower plant to better match REF-001; Mac FBX rebake. Packaged rebuild pending soak tip.
+
+- **Batch F1 follow-up: stop mat_glass on shadows/clouds/VFX.** Ground/contact shadows, cloud volumes and umbras use Default Lit instead of mat_glass (was causing bright shaft artefacts). Evidence: test-unity 116/116; Mac rebuild.
+
+- **Batch F1 follow-up: day light + glass blend.** Daytime sun/ambient raised for REF-readable overview;
+  `mat_glass_v01` transparent blend/ZWrite fixed via MAT-001 menu. Evidence: test-unity 116/116; Mac rebuild.
+
+- **Batch F1 follow-up: rain no longer uses mat_glass.** Translucent VFX (rain/smoke mist)
+  stays on Default Lit instead of MAT-001 glass panes — fixes bright vertical shafts in storm.
+  Evidence: `scripts/test-unity.sh` 116/116; `scripts/build-mac.sh` rebuilt packaged app.
+
+- **Batch F1 BLD-001 v05 + MAT-001.** Authored regional terminal `mdl_terminal_regional_small_v05`
+  (FBX + glTF + Resources bake; PreferArtKit v05 first) and eight URP Lit materials
+  `mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01`.
+  Prefab instantiate re-applies presentation materials. Fallbacks retained; no simulation change.
+  Evidence: Unity bake 12 prefabs; MAT-001 CreateMaterials ×8×2; `scripts/test-unity.sh` 116/116;
+  packaged Mac build launched; soak notes in GAME handoff.
+  F2–F4 not started.
+
 - **Save/replay and insolvency bug audit.** Preserve player order for same-second commands
   (including legacy IDs), assign unique IDs to new commands, retain the valid backup after
   recovery writes, reject unsupported schemas before migration, and stop traffic immediately

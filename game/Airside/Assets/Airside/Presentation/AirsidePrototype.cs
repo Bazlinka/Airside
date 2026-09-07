@@ -2548,7 +2548,9 @@ namespace Airside.Presentation
                     (float)(rng.NextDouble() * 50f - 10f));
                 drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
                 drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-                drop.GetComponent<Renderer>().material = CreateMaterial(new Color(0.7f, 0.78f, 0.88f, 0.35f));
+                drop.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    new Color(0.7f, 0.78f, 0.88f, 0.35f),
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 var collider = drop.GetComponent<Collider>();
                 if (collider != null)
                     Object.Destroy(collider);
@@ -3485,7 +3487,7 @@ namespace Airside.Presentation
             var night = new Color(0.28f, 0.36f, 0.58f);
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            _sun.intensity = Mathf.Lerp(0.08f, 1.5f, daylight);
+            _sun.intensity = Mathf.Lerp(0.12f, 1.85f, daylight);
             _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -3508,7 +3510,7 @@ namespace Airside.Presentation
                 _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
             }
 
-            var ambientDay = new Color(0.40f, 0.48f, 0.58f);
+            var ambientDay = new Color(0.52f, 0.58f, 0.64f);
             var ambientDusk = new Color(0.58f, 0.38f, 0.32f);
             var ambientNight = new Color(0.08f, 0.1f, 0.18f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.85f);
@@ -4193,6 +4195,7 @@ namespace Airside.Presentation
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_v05.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v04.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v03.gltf",
@@ -4230,8 +4233,9 @@ namespace Airside.Presentation
                         || name is "service_wing" or "service_door" or "baggage_door" or "baggage_ramp"
                         or "service_door_frame" or "baggage_door_frame")
                         return new Color(0.58f, 0.62f, 0.64f);
-                    if (name is "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
+                    if ((name is "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
                         or "buttress_r" or "plinth" or "plinth_step" or "plinth_kerb_l" or "plinth_kerb_r")
+                        || name.StartsWith("end_cap_soft", StringComparison.Ordinal))
                         return new Color(0.62f, 0.66f, 0.69f);
                     if (name is "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
@@ -4240,11 +4244,14 @@ namespace Airside.Presentation
                         or "canopy_soffit" or "canopy_gutter" or "canopy_flash"
                         or "roof_slab" or "roof_plant" or "roof_plant_b"
                         or "roof_plant_c" or "roof_parapet" or "roof_parapet_back"
-                        or "roof_vent_a" or "roof_vent_b" or "roof_flash_front" or "roof_flash_back"
+                        or "roof_vent_a" or "roof_vent_b" or "roof_vent_c"
+                        or "roof_panel_l" or "roof_panel_r" or "roof_ridge"
+                        or "roof_eave_front" or "roof_eave_back"
+                        or "roof_flash_front" or "roof_flash_back"
                         or "fascia_front" or "fascia_back" or "soffit_front"
                         or "landside_awning" or "landside_awning_brace_l" or "landside_awning_brace_r"
                         or "signage_bar" or "signage_cap" or "signage_glyph_a" or "signage_glyph_b"
-                        or "hvac_duct" or "flag_pole" or "flag_cloth"
+                        or "hvac_duct" or "hvac_duct_b" or "flag_pole" or "flag_cloth"
                         or "baggage_canopy" or "boarding_canopy" or "downpipe_l" or "downpipe_r"
                         or "service_wing_roof" or "service_wing_fascia"
                         or "corner_trim_l" or "corner_trim_r" or "corner_trim_bl" or "corner_trim_br")
@@ -4266,7 +4273,8 @@ namespace Airside.Presentation
                 surfaceMeshNames: new[]
                 {
                     "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
-                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth"
+                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
+                    "roof_panel", "roof_ridge", "roof_eave", "hvac"
                 });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -5987,7 +5995,7 @@ namespace Airside.Presentation
                 var alpha = 0.14f + (float)rng.NextDouble() * 0.18f;
                 cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.95f, 0.96f, 0.98f, alpha),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 cloud.GetComponent<Renderer>().receiveShadows = false;
 
@@ -6000,7 +6008,7 @@ namespace Airside.Presentation
                 umbra.transform.localScale = new Vector3(sx * 0.85f, 0.02f, sz * 0.85f);
                 var umbraMat = AirsideMaterialLibrary.Create(
                     new Color(0.05f, 0.07f, 0.1f, 0.22f),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 umbra.GetComponent<Renderer>().material = umbraMat;
                 umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 umbra.GetComponent<Renderer>().receiveShadows = false;
@@ -6037,7 +6045,7 @@ namespace Airside.Presentation
             shadow.transform.localScale = scale;
             var material = AirsideMaterialLibrary.Create(
                 new Color(0.04f, 0.05f, 0.07f, alpha),
-                AirsideMaterialLibrary.SurfaceKind.Glass);
+                AirsideMaterialLibrary.SurfaceKind.Default);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             shadow.GetComponent<Renderer>().receiveShadows = false;
@@ -7032,8 +7040,8 @@ namespace Airside.Presentation
             shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
             shadow.transform.localScale = new Vector3(3.4f, 0.02f, 1.9f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.35f),
-                AirsideMaterialLibrary.SurfaceKind.Glass);
+            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.45f),
+                AirsideMaterialLibrary.SurfaceKind.Default);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             shadow.GetComponent<Renderer>().receiveShadows = false;
@@ -8711,8 +8719,15 @@ namespace Airside.Presentation
         private static AirsideMaterialLibrary.SurfaceKind InferSurfaceKindFromColor(Color color)
         {
             // Heuristic for untextured primitives (cars, props, glow quads, painted lines).
+            // Translucent rain/smoke/mist must NOT become Glass — MAT-001 mat_glass is a pane
+            // material and reads as bright vertical shafts on thin Cube droplets.
             if (color.a < 0.99f)
+            {
+                var isVfxMist = color.a < 0.55f && color.r > 0.55f && color.g > 0.55f && color.b > 0.55f;
+                if (isVfxMist)
+                    return AirsideMaterialLibrary.SurfaceKind.Default;
                 return AirsideMaterialLibrary.SurfaceKind.Glass;
+            }
             // Near-white / cream → painted markings, not aircraft skin (MAT-001 / 0025 item 4).
             if (color.r > 0.85f && color.g > 0.85f && color.b > 0.85f)
                 return AirsideMaterialLibrary.SurfaceKind.PaintedLine;

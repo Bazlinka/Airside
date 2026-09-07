@@ -52,6 +52,7 @@ Source FBX (Unity ModelImporter):
 
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx` (Batch F1 AIR-001)
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx` (Batch F1 BLD-001)
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx`
@@ -67,6 +68,7 @@ Resources prefabs (Addressables keys live now):
 | Key | Regenerator |
 |---|---|
 | `mdl_regional_turboprop_01_v05` | Mac bake (`Airside → Art → Bake Authored FBX Prefabs`); generator `scripts/generate-air-001-v05-prefab.py` is the pipeline-proof fallback |
+| `mdl_terminal_regional_small_v05` | Mac bake; `scripts/generate-bld-001-v05-prefab.py` is the pipeline-proof fallback |
 | `mdl_regional_turboprop_01_authored_v01` | Mac bake; `scripts/generate-authored-resources-prefabs.py` is the pipeline-proof fallback |
 | `mdl_terminal_regional_small_authored_v01` | Mac bake; same generator fallback |
 | `mdl_hangar_small_authored_v01` | Mac bake; same generator fallback |

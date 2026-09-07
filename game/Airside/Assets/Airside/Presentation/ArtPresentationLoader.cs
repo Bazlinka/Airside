@@ -87,12 +87,44 @@ namespace Airside.Presentation
                     if (parent != null)
                         root.SetParent(parent, false);
                     root.localPosition = localPosition;
+                    ApplyPresentationMaterials(root, rename, colorFor);
                     return true;
                 }
             }
 
             return ArtGltfLoader.TryInstantiate(
                 artRelativePath, parent, out root, rename, colorFor, localPosition);
+        }
+
+        /// <summary>
+        /// After a Mac FBX bake, Resources prefabs keep ModelImporter default materials.
+        /// Re-apply the same per-mesh colour / SurfaceKind mapping the glTF path uses so
+        /// glass, metal and painted surfaces stay readable.
+        /// </summary>
+        private static void ApplyPresentationMaterials(
+            Transform root,
+            Func<string, string> rename,
+            Func<string, Color?> colorFor)
+        {
+            if (root == null)
+                return;
+
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+                var originalName = renderer.gameObject.name;
+                var color = colorFor?.Invoke(originalName) ?? new Color(0.61f, 0.64f, 0.63f);
+                if (rename != null)
+                {
+                    var renamed = rename(originalName);
+                    if (!string.IsNullOrEmpty(renamed) && renamed != originalName)
+                        renderer.gameObject.name = renamed;
+                }
+
+                var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
+                renderer.sharedMaterial = AirsideMaterialLibrary.Create(color, kind);
+            }
         }
 
         public static bool HasPresentation(string artRelativePath) =>

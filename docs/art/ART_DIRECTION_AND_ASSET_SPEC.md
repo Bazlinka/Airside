@@ -197,7 +197,7 @@ Generation evidence:
 | TEX-ENV-001 | `Textures/Environment/tx_terminal_glass_mask_v01.png` | Window variation mask; no fake people or unreadable signage | Approved · Integrated |
 | TEX-DEC-001 | `Textures/Decals/dc_runway_wear_v01.png` | Transparent subtle rubber/wear pass | Approved · Integrated |
 | TEX-DEC-002 | `Textures/Decals/dc_apron_stains_v01.png` | Transparent restrained service wear | Approved · Integrated |
-| MAT-001 | `Materials/mat_airfield_surface_library_v01.mat` | Shared asphalt, concrete, grass, glass, painted line and metal materials | Partial — runtime library binds authored maps; Editor `.mat` still Planned |
+| MAT-001 | `Materials/mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01.mat` | Shared URP Lit family using Batch B maps; Resources mirror for runtime | Integrated (Editor `.mat` + runtime instantiate; Play soak on packaged build) |
 | WLD-001 | `Models/Props/mdl_airfield_markings_kit_v01.gltf` | Runway centre/edge/threshold, taxi centreline and two stand stop markings; precision geometry, not AI-painted text | Approved · Integrated |
 | WLD-002 | `Models/Props/mdl_airfield_lighting_kit_v01.gltf` | Runway edge, taxiway, apron floodlight and obstruction lights | Approved · Integrated |
 | WLD-003 | `Models/Props/mdl_airfield_props_kit_v01.gltf` | Windsock, cones, barriers, signs and baggage dollies | Approved · Integrated |
@@ -235,7 +235,7 @@ references but **does not substitute a flat image for a 3D object**.
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Small practical terminal, glass frontage with denser mullions/transom, canopy posts, service side, modular end caps | Integrated (authored preferred; FBX prefab bake on Mac) |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F1 authored small regional terminal: pitched roof, glazed airside frontage, canopy, service side, rooftop plant, soft end caps (~202 meshes) | Integrated (v05 preferred; Mac FBX bake in Resources; Bailey playtest pending) |
 | BLD-002 | `Models/Buildings/mdl_hangar_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Corrugated hangar with door panels/bars, tracks, skylights, crane trolley, buttresses, office lean | Integrated (authored preferred) |
 | BLD-003 | `Models/Buildings/mdl_operations_shed_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Compact service/crew building with porch, antenna, AC units | Integrated (authored preferred) |
 | VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v02.gltf` (fallback `…_v01.gltf`) | Cab, wheels and hose connection separated | Integrated (v02 preferred; v01 Approved fallback) |
@@ -293,7 +293,7 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
-| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 v05 Integrated + Mac bake accepted**; BLD-001 v05 + MAT-001 still Planned |
+| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 accepted**; **BLD-001 v05 + MAT-001 Integrated** (Bailey playtest pending on packaged Mac build) |
 | F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | Planned |
 | F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | Planned |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | Planned |

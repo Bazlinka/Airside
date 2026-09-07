@@ -5,6 +5,21 @@ change it describes.
 
 ## Unreleased
 
+- **Anti-aliasing and the template post-processing profile.** The game shipped with
+  no anti-aliasing at all: `PC_RPAsset` had `m_MSAA: 1` and nothing set camera
+  antialiasing — on a world made entirely of hard box edges and thin poles. MSAA is
+  now 4x and the camera runs SMAA (high). Separately, Unity's template
+  `DefaultVolumeProfile` is still wired as URP's global default and overrides
+  DepthOfField, MotionBlur, LensDistortion, ChromaticAberration, ScreenSpaceLensFlare
+  and PaniniProjection (alongside literal `CopyPasteTestComponent1/2/3` and
+  `TestVolume`). Harmless while post-processing was off; rendering since
+  `AirsideDayVolume` switched the post stack on. Each is now pinned to its no-op value
+  in the day volume's own profile. Film grain is untouched — that one is the day
+  volume's, and stays day-driven.
+
+- **`runInBackground`.** A real-time, persistent simulation froze whenever the window
+  lost focus — clock, flights and economy all stopped mid-session.
+
 - **Four simulation bugs that contradicted the design brief.** Ground traffic taxied
   to and parked on Stand 3 before the player built it (`AlternateStand` walked
   Stand 1/2/3 with no knowledge of `Capacity.StandCount`, so with both baseline

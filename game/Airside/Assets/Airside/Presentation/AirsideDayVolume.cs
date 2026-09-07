@@ -74,16 +74,78 @@ namespace Airside.Presentation
             grain.intensity.Override(0.12f);
             grain.response.Override(0.7f);
 
+            NeutraliseTemplateEffects(profile);
+
             // Ensure the main camera actually runs the URP post stack.
             var camera = Camera.main;
             if (camera != null)
             {
                 var data = camera.GetUniversalAdditionalCameraData();
                 if (data != null)
+                {
                     data.renderPostProcessing = true;
+                    // Nothing was setting camera AA, and the pipeline asset had MSAA off,
+                    // so the game shipped with no anti-aliasing at all — on a world made
+                    // entirely of hard box edges and thin poles. MSAA now covers geometric
+                    // edges; SMAA cleans up what is left after the post stack, without
+                    // TAA's ghosting on fast-moving propellers.
+                    data.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+                    data.antialiasingQuality = AntialiasingQuality.High;
+                    data.dithering = true;
+                }
             }
 
             return new AirsideDayVolume(color, bloom, vignette, grain);
+        }
+
+        /// <summary>
+        /// Unity's template profile (<c>Assets/Settings/DefaultVolumeProfile.asset</c>) is
+        /// still wired as URP's global default, and it overrides DepthOfField, MotionBlur,
+        /// LensDistortion, ChromaticAberration, ScreenSpaceLensFlare and PaniniProjection —
+        /// alongside literal CopyPasteTestComponent1/2/3 and TestVolume.
+        ///
+        /// Those were harmless while post-processing was off. Switching the post stack on
+        /// made them render. A higher-priority volume only wins on parameters it actually
+        /// overrides, so each one is pinned to its no-op value here rather than merely left
+        /// out. Film grain is deliberately absent: that one is this volume's own, set above
+        /// and driven per-frame by <see cref="Apply"/>.
+        ///
+        /// Replacing that asset outright would be cleaner and would let this go away.
+        /// </summary>
+        private static void NeutraliseTemplateEffects(VolumeProfile profile)
+        {
+            if (profile == null)
+                return;
+
+            if (!profile.TryGet(out DepthOfField depthOfField))
+                depthOfField = profile.Add<DepthOfField>(true);
+            depthOfField.active = true;
+            depthOfField.mode.Override(DepthOfFieldMode.Off);
+
+            if (!profile.TryGet(out MotionBlur motionBlur))
+                motionBlur = profile.Add<MotionBlur>(true);
+            motionBlur.active = true;
+            motionBlur.intensity.Override(0f);
+
+            if (!profile.TryGet(out LensDistortion lensDistortion))
+                lensDistortion = profile.Add<LensDistortion>(true);
+            lensDistortion.active = true;
+            lensDistortion.intensity.Override(0f);
+
+            if (!profile.TryGet(out ChromaticAberration chromaticAberration))
+                chromaticAberration = profile.Add<ChromaticAberration>(true);
+            chromaticAberration.active = true;
+            chromaticAberration.intensity.Override(0f);
+
+            if (!profile.TryGet(out PaniniProjection panini))
+                panini = profile.Add<PaniniProjection>(true);
+            panini.active = true;
+            panini.distance.Override(0f);
+
+            if (!profile.TryGet(out ScreenSpaceLensFlare lensFlare))
+                lensFlare = profile.Add<ScreenSpaceLensFlare>(true);
+            lensFlare.active = true;
+            lensFlare.intensity.Override(0f);
         }
 
         public void Apply(float daylight, float warm)

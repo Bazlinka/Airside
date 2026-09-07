@@ -17,14 +17,17 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 
 ## Prefabs on disk
 
-| Key | File | Notes |
-|---|---|---|
-| `mdl_passenger_stairs_v01` | `mdl_passenger_stairs_v01.prefab` | Stairs; `scripts/generate-passenger-stairs-prefab.py` |
-| `mdl_wheel_chocks_v01` | `mdl_wheel_chocks_v01.prefab` | Twin chocks; `scripts/generate-gse-prefabs.py` |
-| `mdl_gpu_cart_v01` | `mdl_gpu_cart_v01.prefab` | GPU cart; `scripts/generate-gse-prefabs.py` |
-| `mdl_pushback_tug_v01` | `mdl_pushback_tug_v01.prefab` | Pushback tug; `scripts/generate-apron-gse-prefabs.py` |
-| `mdl_safety_cone_v01` | `mdl_safety_cone_v01.prefab` | Safety cone; `scripts/generate-apron-gse-prefabs.py` |
-| `mdl_work_barrier_v01` | `mdl_work_barrier_v01.prefab` | Work barrier; `scripts/generate-apron-gse-prefabs.py` |
+| Key | Regenerator |
+|---|---|
+| `mdl_passenger_stairs_v01` | `scripts/generate-passenger-stairs-prefab.py` |
+| `mdl_wheel_chocks_v01` | `scripts/generate-gse-prefabs.py` |
+| `mdl_gpu_cart_v01` | `scripts/generate-gse-prefabs.py` |
+| `mdl_pushback_tug_v01` | `scripts/generate-apron-gse-prefabs.py` |
+| `mdl_safety_cone_v01` | `scripts/generate-apron-gse-prefabs.py` |
+| `mdl_work_barrier_v01` | `scripts/generate-apron-gse-prefabs.py` |
+| `mdl_airside_sign_v01` | `scripts/generate-apron-sign-dolly-prefabs.py` |
+| `mdl_baggage_dolly_v01` | `scripts/generate-apron-sign-dolly-prefabs.py` |
+| `mdl_windsock_pole_v01` | `scripts/generate-apron-sign-dolly-prefabs.py` |
 
 All use built-in cube/cylinder meshes + `AirsideRuntimeMaterialBinder`. Bailey may
 overwrite any with an authored FBX prefab of the same name.

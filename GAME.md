@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (apron GSE prefabs + landing SpotLights)
-- **Branch / working tree:** `cursor/apron-gse-landing-lights-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak approach landing beams + denser apron cones/barriers/tug
-- **In progress / half-done:** six Resources prefabs on disk; aircraft SpotLights on approach/taxi
-- **Watch out for:** prefabs still greybox cubes — pipeline proof, not final art; SpotLights are presentation-only
-- **Open questions for Bailey:** overwrite tug/cone/barrier (and stairs/GSE) with authored FBX?
-- **Visual assets:** stairs, chocks, GPU, tug, cone, barrier Resources prefabs + landing/taxi SpotLights
+- **Last updated:** 2026-09-07 by Cursor (sign/dolly/windsock prefabs + cabin glow + GSE headlights)
+- **Branch / working tree:** `cursor/props-cabin-glow-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak night cabin glow, GSE headlights, denser signs/dollies
+- **In progress / half-done:** nine Resources prefabs; cabin emissive + GSE SpotLights
+- **Watch out for:** prefabs still greybox — pipeline proof; authored FBX overwrite is the fidelity jump
+- **Open questions for Bailey:** which prefab key to overwrite first (terminal vs turboprop vs GSE)?
+- **Visual assets:** nine Resources prefabs + landing/taxi/GSE SpotLights + cabin emissive
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm Resources prefabs (stairs/chocks/GPU/tug/cone/barrier) and landing SpotLights on approach.
+2. Confirm Resources prefabs (nine keys), landing/taxi/GSE SpotLights, night cabin glow.
 3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups.
    No new economy systems; no Companion/CloudKit.

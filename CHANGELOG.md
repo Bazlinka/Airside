@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Sign/dolly/windsock prefabs + cabin glow + GSE headlights (0025 items 1+5+7).**
+  Resources prefabs for airside sign, baggage dolly and windsock pole; denser apron
+  placement; cabin/cockpit emissive at night/stand; fuel/baggage/bus/tug headlamp
+  SpotLights. Presentation only.
+
 - **Apron GSE prefabs + aircraft landing SpotLights (0025 items 1+5+7).** Resources
   prefabs for pushback tug, safety cone and work barrier (denser apron placement);
   approach/landing/takeoff landing lamps and night taxi lamps cast real SpotLights.

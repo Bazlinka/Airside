@@ -5,12 +5,14 @@ change it describes.
 
 ## Unreleased
 
-- **Authored Resources prefabs for turboprop + terminal.** Addressables keys
-  `airside-prefab/mdl_regional_turboprop_01_authored_v01` and
-  `…/mdl_terminal_regional_small_authored_v01` now resolve via Resources
-  (cylinder fuselage / canopy posts; gear/cargo/prop names wired for motion).
-  FBX ModelImporter bake can overwrite later. StreamingAssets glTF + primitives
-  remain fallbacks. Evidence: `scripts/test-domain.sh`.
+- **Authored Resources prefabs + hangar kit.** Addressables keys
+  `airside-prefab/mdl_regional_turboprop_01_authored_v01`,
+  `…/mdl_terminal_regional_small_authored_v01`, and
+  `…/mdl_hangar_small_authored_v01` resolve via Resources (round fuselage /
+  canopy / hangar columns; gear/cargo/prop names for motion). FBX sources +
+  companion glTF remain; ModelImporter bake can overwrite later. PreferArtKit
+  prefers authored → prior kits → primitives. Evidence: `scripts/test-domain.sh`
+  105/105; art sync 145 files.
 
 - **Authored FBX turboprop + terminal (0025 item 2).** Distinct
   `mdl_regional_turboprop_01_authored_v01` and

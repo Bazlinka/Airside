@@ -27,6 +27,7 @@ namespace Airside.Presentation
         private Light[] _runwayEdgeLights;
         private Light _aerodromeBeacon;
         private ReflectionProbe _apronProbe;
+        private ReflectionProbe _terminalProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private Light _fuelFarmLight;
@@ -138,6 +139,7 @@ namespace Airside.Presentation
             _alsLights = CollectAlsLights();
             _runwayEdgeLights = BuildRunwayEdgePointLights();
             _apronProbe = BuildApronReflectionProbe();
+            _terminalProbe = BuildTerminalReflectionProbe();
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
@@ -3261,7 +3263,7 @@ namespace Airside.Presentation
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
-                var flood = Mathf.Lerp(1.55f, 0.05f, daylight);
+                var flood = Mathf.Lerp(2.35f, 0.05f, daylight);
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -3272,6 +3274,7 @@ namespace Airside.Presentation
                         ? 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.1f + i * 1.7f)
                         : 1f;
                     light.intensity = flood * flicker;
+                    light.enabled = flood > 0.06f;
                 }
             }
 
@@ -3361,6 +3364,13 @@ namespace Airside.Presentation
                 _apronProbe.intensity = Mathf.Lerp(1.15f, 0.85f, daylight);
                 if (daylight < 0.45f && Time.frameCount % 45 == 0)
                     _apronProbe.RenderProbe();
+            }
+
+            if (_terminalProbe != null)
+            {
+                _terminalProbe.intensity = Mathf.Lerp(1.05f, 0.8f, daylight);
+                if (daylight < 0.45f && Time.frameCount % 60 == 0)
+                    _terminalProbe.RenderProbe();
             }
 
             UpdateAirfieldNavLights(daylight);
@@ -3535,27 +3545,34 @@ namespace Airside.Presentation
 
         private static Light[] BuildApronLights()
         {
-            var positions = new[]
+            // Spot floods aimed at stand / hangar apron so authored metal picks up
+            // directional wash at dusk (0025 item 5) — fewer omnidirectional spills.
+            var specs = new[]
             {
-                new Vector3(12f, 5.5f, 12f),
-                new Vector3(28f, 5.5f, 12f),
-                new Vector3(20f, 5.5f, 22f),
-                new Vector3(-18f, 4.5f, 16f),
-                new Vector3(8f, 4.8f, 9f),
-                new Vector3(32f, 5.2f, 18f),
-                new Vector3(17f, 5.0f, 26f),
-                new Vector3(-8f, 4.2f, 22f)
+                (new Vector3(8f, 7.2f, 12f), new Vector3(17f, 0.2f, 14f)),
+                (new Vector3(32f, 7.2f, 12f), new Vector3(17f, 0.2f, 20f)),
+                (new Vector3(8f, 7.2f, 22f), new Vector3(26f, 0.2f, 24f)),
+                (new Vector3(32f, 7.2f, 22f), new Vector3(20f, 0.2f, 17f)),
+                (new Vector3(-18f, 6.5f, 16f), new Vector3(-20f, 0.2f, 20f)),
+                (new Vector3(17f, 6.8f, 26f), new Vector3(26f, 0.5f, 27f)),
+                (new Vector3(-8f, 5.8f, 22f), new Vector3(-8f, 0.2f, 26f)),
+                (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f))
             };
-            var lights = new Light[positions.Length];
-            for (var i = 0; i < positions.Length; i++)
+            var lights = new Light[specs.Length];
+            for (var i = 0; i < specs.Length; i++)
             {
+                var (pos, lookAt) = specs[i];
                 var go = new GameObject($"Apron flood {i + 1}");
-                go.transform.position = positions[i];
+                go.transform.position = pos;
+                go.transform.LookAt(lookAt);
                 var light = go.AddComponent<Light>();
-                light.type = LightType.Point;
-                light.color = new Color(1f, 0.92f, 0.78f);
-                light.range = 28f;
+                light.type = LightType.Spot;
+                light.color = new Color(1f, 0.93f, 0.8f);
+                light.range = 34f;
+                light.spotAngle = 78f;
+                light.innerSpotAngle = 42f;
                 light.intensity = 0.05f;
+                light.shadows = LightShadows.None;
                 lights[i] = light;
             }
 
@@ -3667,13 +3684,38 @@ namespace Airside.Presentation
             probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
             probe.resolution = 128;
-            probe.size = new Vector3(48f, 18f, 36f);
+            // Cover stand apron + hangar face so authored metal/glass get local floods.
+            probe.size = new Vector3(56f, 22f, 42f);
             probe.center = Vector3.zero;
             probe.intensity = 1f;
             probe.boxProjection = true;
-            probe.shadowDistance = 24f;
+            probe.shadowDistance = 28f;
             probe.nearClipPlane = 0.3f;
-            probe.farClipPlane = 80f;
+            probe.farClipPlane = 90f;
+            probe.RenderProbe();
+            return probe;
+        }
+
+        /// <summary>
+        /// Decision 0025 item 5 — second realtime probe on the terminal landside so
+        /// authored glass / canopy posts catch window spill at dusk.
+        /// </summary>
+        private static ReflectionProbe BuildTerminalReflectionProbe()
+        {
+            var go = new GameObject("Terminal reflection probe");
+            go.transform.position = new Vector3(26f, 3.2f, 27f);
+            var probe = go.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            probe.resolution = 64;
+            probe.size = new Vector3(32f, 16f, 22f);
+            probe.center = Vector3.zero;
+            probe.intensity = 0.95f;
+            probe.boxProjection = true;
+            probe.shadowDistance = 18f;
+            probe.nearClipPlane = 0.3f;
+            probe.farClipPlane = 60f;
             probe.RenderProbe();
             return probe;
         }
@@ -5773,6 +5815,7 @@ namespace Airside.Presentation
         private static void PlaceWorldLighting()
         {
             var kit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var edgeColor = new Color(1f, 1f, 0.85f);

@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Apron lighting + probes for authored kits (0025 item 5).** Apron floods are
+  SpotLights aimed at stands/hangar/terminal; terminal gets its own realtime
+  reflection probe; apron probe box expanded. Authored airfield lighting kit
+  (`mdl_airfield_lighting_kit_authored_v01`, cylindrical poles/lenses) preferred
+  ahead of v02/v01. Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Authored PRP-001 service equipment kit.** `mdl_service_equipment_kit_authored_v01`
   (stairs/chocks/GPU extract names + denser rails/treads/wheels) preferred ahead of
   v02/v01 for stand GSE mesh extraction. Evidence: `scripts/test-domain.sh` 105/105.

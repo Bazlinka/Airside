@@ -604,6 +604,30 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     }
 
 
+def airfield_lighting_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """WLD lighting — keep PlaceWorldLighting extract names."""
+    return {
+        "runway_edge_light": cylinder(0, 0.18, 0, 0.07, 0.36, axis="y", segments=8),
+        "taxiway_light": cylinder(0, 0.14, 0, 0.06, 0.28, axis="y", segments=8),
+        "apron_floodlight": cylinder(0, 2.0, 0, 0.14, 4.0, axis="y", segments=8),
+        "obstruction_light": cylinder(0, 0.45, 0, 0.09, 0.9, axis="y", segments=8),
+        "edge_base": box(0, 0.04, 0, 0.28, 0.08, 0.28),
+        "edge_stem": cylinder(0, 0.18, 0, 0.05, 0.28, axis="y", segments=8),
+        "edge_lens": cylinder(0, 0.36, 0, 0.08, 0.1, axis="y", segments=10),
+        "taxi_base": box(0, 0.04, 0, 0.22, 0.06, 0.22),
+        "taxi_stem": cylinder(0, 0.16, 0, 0.045, 0.24, axis="y", segments=8),
+        "taxi_lens": cylinder(0, 0.3, 0, 0.07, 0.08, axis="y", segments=10),
+        "obst_base": box(0, 0.05, 0, 0.24, 0.08, 0.24),
+        "obst_stem": cylinder(0, 0.35, 0, 0.05, 0.55, axis="y", segments=8),
+        "obst_lens": cylinder(0, 0.7, 0, 0.1, 0.14, axis="y", segments=10),
+        "flood_base": box(0, 0.08, 0, 0.55, 0.12, 0.55),
+        "flood_pole": cylinder(0, 2.2, 0, 0.12, 4.2, axis="y", segments=10),
+        "flood_arm": box(0.55, 4.2, 0, 1.1, 0.12, 0.18),
+        "flood_head": box(1.0, 4.15, 0, 0.45, 0.28, 0.35),
+        "flood_lamp": box(1.15, 4.05, 0, 0.28, 0.16, 0.28),
+    }
+
+
 def write_kit(
     folder: Path,
     basename: str,
@@ -632,6 +656,7 @@ def main() -> None:
     write_kit(VEHICLES, "mdl_baggage_tug_train_authored_v01", baggage_tug_meshes())
     write_kit(VEHICLES, "mdl_passenger_bus_apron_authored_v01", passenger_bus_meshes())
     write_kit(PROPS, "mdl_service_equipment_kit_authored_v01", service_equipment_meshes())
+    write_kit(PROPS, "mdl_airfield_lighting_kit_authored_v01", airfield_lighting_meshes())
 
 
 if __name__ == "__main__":

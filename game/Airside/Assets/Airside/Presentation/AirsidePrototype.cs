@@ -75,6 +75,7 @@ namespace Airside.Presentation
         private Transform _windsockSock;
         private Transform _terminalFlag;
         private Transform _coastFoam;
+        private readonly List<Transform> _coastFoamLayers = new List<Transform>();
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
         private Transform _jettyDeck;
@@ -4038,16 +4039,20 @@ namespace Airside.Presentation
                 {
                     "window_l" or "window_r" or "window_side" or "window_side_b"
                         or "window_mullion_l" or "window_mullion_r"
-                        or "window_transom_l" or "window_transom_r" => new Color(0.2f, 0.4f, 0.5f),
-                    "door" or "door_frame" or "door_knob" => new Color(0.35f, 0.38f, 0.34f),
-                    "porch_roof" or "porch_beam" or "roof_ridge" or "roof_panel" or "roof_gutter"
+                        or "window_transom_l" or "window_transom_r"
+                        or "window_header_l" or "window_header_r" => new Color(0.2f, 0.4f, 0.5f),
+                    "door" or "door_frame" or "door_knob" or "door_kick" => new Color(0.35f, 0.38f, 0.34f),
+                    "porch_roof" or "porch_beam" or "porch_light" or "roof_ridge" or "roof_panel" or "roof_gutter"
                         or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
-                        or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy"
+                        or "roof_vent_a" or "roof_vent_b"
+                        or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy" or "antenna_guy_b"
                         or "ac_unit" or "ac_unit_b" or "ac_grille" or "radio_rack"
-                        or "vent_pipe" or "wall_vent" or "signage" or "flood_can"
+                        or "vent_pipe" or "wall_vent" or "signage" or "flood_can" or "flood_can_b"
                         or "porch_post_l" or "porch_post_r"
                         or "window_sill_l" or "window_sill_r"
-                        or "step_rail_l" or "step_rail_r" => new Color(0.48f, 0.5f, 0.46f),
+                        or "step_rail_l" or "step_rail_r"
+                        or "side_louvre" or "side_louvre_b" or "mailbox" or "bench" or "plinth"
+                        => new Color(0.48f, 0.5f, 0.46f),
                     _ => new Color(0.55f, 0.58f, 0.52f)
                 },
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
@@ -5282,8 +5287,15 @@ namespace Airside.Presentation
         private void CollectCoastalMotionTargets()
         {
             _coastBoats.Clear();
+            _coastFoamLayers.Clear();
             _coastFoam = GameObject.Find("Coast foam")?.transform;
             _jettyDeck = GameObject.Find("Jetty deck")?.transform;
+            foreach (var name in new[] { "Coast foam inner", "Coast foam outer" })
+            {
+                var foam = GameObject.Find(name);
+                if (foam != null)
+                    _coastFoamLayers.Add(foam.transform);
+            }
             foreach (var name in new[]
                      {
                          "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D",
@@ -5382,6 +5394,23 @@ namespace Airside.Presentation
                     c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * 1.4f));
                     renderer.material.color = c;
                 }
+            }
+
+            // Secondary foam ribbons pulse out of phase so the surf edge reads layered.
+            for (var i = 0; i < _coastFoamLayers.Count; i++)
+            {
+                var foam = _coastFoamLayers[i];
+                if (foam == null)
+                    continue;
+                var renderer = foam.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                var c = renderer.material.color;
+                c.a = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f));
+                renderer.material.color = c;
+                var scale = foam.localScale;
+                scale.z = (i == 0 ? 1.1f : 1.4f) * (0.9f + 0.1f * Mathf.Sin(t * 1.5f + i));
+                foam.localScale = scale;
             }
 
             if (_jettyDeck != null)
@@ -5980,7 +6009,8 @@ namespace Airside.Presentation
                         or "window_mullion_5" or "window_mullion_6" or "window_mullion_7"
                         or "window_sill" or "window_header" or "destination_board"
                         => new Color(0.2f, 0.4f, 0.55f),
-                    "beacon" or "beacon_guard" or "headlight_l" or "headlight_r" => new Color(0.95f, 0.35f, 0.12f),
+                    "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
+                    "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
                     "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
                     "mirror_l" or "mirror_r" or "bumper" or "bumper_front" or "bumper_rear"
                         or "tug_bumper" or "tank_band" or "tank_band_2" or "tank_band_3" or "tank_band_4"
@@ -6617,6 +6647,8 @@ namespace Airside.Presentation
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_brace", position, Quaternion.identity, Shade(color, 0.9f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_brace_b", position, Quaternion.identity, Shade(color, 0.88f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_ladder", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_guy", position, Quaternion.identity, new Color(0.32f, 0.33f, 0.35f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
@@ -6803,7 +6835,9 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_l", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_r", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_mid", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_rail_end", position, Quaternion.identity, new Color(0.45f, 0.3f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_handle", position, Quaternion.identity, new Color(0.4f, 0.4f, 0.42f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_hitch", position, Quaternion.identity, new Color(0.35f, 0.35f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_cargo", position, Quaternion.identity, new Color(0.7f, 0.55f, 0.25f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_fl", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "dolly_wheel_fr", position, Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), out _)

@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_airfield_lighting_kit_authored_v01.bin",
-      "byteLength": 28512
+      "byteLength": 33552
     }
   ],
   "bufferViews": [
@@ -343,6 +343,66 @@
     {
       "buffer": 0,
       "byteOffset": 28440,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28512,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28800,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 28872,
+      "byteLength": 1200,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30072,
+      "byteLength": 240,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30312,
+      "byteLength": 1200,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 31512,
+      "byteLength": 240,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 31752,
+      "byteLength": 1200,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 32952,
+      "byteLength": 240,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 33192,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 33480,
       "byteLength": 72,
       "target": 34963
     }
@@ -963,6 +1023,116 @@
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
+    },
+    {
+      "bufferView": 56,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.3700000047683716,
+        3.75,
+        0.019999999552965164
+      ],
+      "min": [
+        0.33000001311302185,
+        0.25,
+        -0.019999999552965164
+      ]
+    },
+    {
+      "bufferView": 57,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 58,
+      "componentType": 5126,
+      "count": 100,
+      "type": "VEC3",
+      "max": [
+        0.10000000149011612,
+        0.11999999731779099,
+        0.09510564804077148
+      ],
+      "min": [
+        -0.10000000149011612,
+        0.07999999076128006,
+        -0.09510564804077148
+      ]
+    },
+    {
+      "bufferView": 59,
+      "componentType": 5123,
+      "count": 120,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 60,
+      "componentType": 5126,
+      "count": 100,
+      "type": "VEC3",
+      "max": [
+        0.07999999821186066,
+        0.0950000062584877,
+        0.07608452439308167
+      ],
+      "min": [
+        -0.07999999821186066,
+        0.06499999761581421,
+        -0.07608452439308167
+      ]
+    },
+    {
+      "bufferView": 61,
+      "componentType": 5123,
+      "count": 120,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 62,
+      "componentType": 5126,
+      "count": 100,
+      "type": "VEC3",
+      "max": [
+        0.07999999821186066,
+        0.8100000619888306,
+        0.07608452439308167
+      ],
+      "min": [
+        -0.07999999821186066,
+        0.75,
+        -0.07608452439308167
+      ]
+    },
+    {
+      "bufferView": 63,
+      "componentType": 5123,
+      "count": 120,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 64,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.23999999463558197,
+        0.15000000596046448,
+        0.23999999463558197
+      ],
+      "min": [
+        0.1599999964237213,
+        0.09000000357627869,
+        0.1599999964237213
+      ]
+    },
+    {
+      "bufferView": 65,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
     }
   ],
   "meshes": [
@@ -1301,6 +1471,66 @@
           "mode": 4
         }
       ]
+    },
+    {
+      "name": "flood_guy",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 56
+          },
+          "indices": 57,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "edge_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 58
+          },
+          "indices": 59,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "taxi_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 60
+          },
+          "indices": 61,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "obst_cap",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 62
+          },
+          "indices": 63,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_base_bolt",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 64
+          },
+          "indices": 65,
+          "mode": 4
+        }
+      ]
     }
   ],
   "nodes": [
@@ -1415,6 +1645,26 @@
     {
       "name": "flood_ladder",
       "mesh": 27
+    },
+    {
+      "name": "flood_guy",
+      "mesh": 28
+    },
+    {
+      "name": "edge_gasket",
+      "mesh": 29
+    },
+    {
+      "name": "taxi_gasket",
+      "mesh": 30
+    },
+    {
+      "name": "obst_cap",
+      "mesh": 31
+    },
+    {
+      "name": "flood_base_bolt",
+      "mesh": 32
     }
   ],
   "scenes": [
@@ -1448,7 +1698,12 @@
         24,
         25,
         26,
-        27
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
       ]
     }
   ],

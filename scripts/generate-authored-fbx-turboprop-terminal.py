@@ -662,6 +662,19 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "step_rail_r": box(0.65, 0.55, 2.95, 0.06, 0.7, 0.06),
         "signage": box(0, 2.55, 2.1, 1.6, 0.35, 0.08),
         "flood_can": box(-2.4, 2.7, 2.05, 0.25, 0.18, 0.2),
+        "plinth": box(0, 0.1, 0, 6.2, 0.2, 4.2),
+        "porch_light": box(0, 2.05, 2.95, 0.2, 0.12, 0.2),
+        "window_header_l": box(-1.8, 2.1, 2.08, 1.05, 0.06, 0.1),
+        "window_header_r": box(1.8, 2.1, 2.08, 1.05, 0.06, 0.1),
+        "side_louvre": box(-3.05, 1.0, -1.2, 0.1, 0.7, 1.0),
+        "side_louvre_b": box(3.05, 1.0, -1.2, 0.1, 0.7, 1.0),
+        "roof_vent_a": cylinder(-1.0, 3.15, 0.5, 0.15, 0.35, axis="y", segments=8),
+        "roof_vent_b": cylinder(1.2, 3.15, -0.8, 0.15, 0.35, axis="y", segments=8),
+        "antenna_guy_b": box(1.5, 3.3, -0.2, 0.03, 0.8, 0.03),
+        "mailbox": box(2.6, 0.85, 2.6, 0.35, 0.4, 0.25),
+        "bench": box(-2.2, 0.35, 2.6, 1.2, 0.35, 0.4),
+        "flood_can_b": box(2.4, 2.7, 2.05, 0.25, 0.18, 0.2),
+        "door_kick": box(0, 0.25, 2.9, 1.0, 0.2, 0.08),
     }
 
 
@@ -908,6 +921,15 @@ def airfield_props_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "dolly_wheel_fr": cylinder(0.55, 0.15, 0.3, 0.1, 0.12, axis="z", segments=10),
         "dolly_wheel_rl": cylinder(-0.55, 0.15, -0.3, 0.1, 0.12, axis="z", segments=10),
         "dolly_wheel_rr": cylinder(0.55, 0.15, -0.3, 0.1, 0.12, axis="z", segments=10),
+        "dolly_hitch": box(0, 0.35, -0.55, 0.35, 0.15, 0.2),
+        "dolly_rail_end": box(0, 0.7, -0.4, 1.35, 0.05, 0.05),
+        "barrier_stripe_b": box(0, 0.35, 0.06, 1.5, 0.08, 0.04),
+        "sign_reflector": box(0.1, 1.45, 0, 0.02, 0.85, 1.1),
+        "sign_base": box(0, 0.06, 0, 0.35, 0.12, 0.35),
+        "cone_collar": cylinder(0, 0.2, 0, 0.16, 0.08, axis="y", segments=8),
+        "sock_guy_l": box(-0.2, 1.5, 0, 0.03, 2.5, 0.03),
+        "sock_guy_r": box(0.2, 1.5, 0, 0.03, 2.5, 0.03),
+        "sock_light": box(0, 3.2, 0, 0.12, 0.1, 0.12),
     }
 
 
@@ -942,6 +964,11 @@ def airfield_lighting_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "flood_lamp": box(1.15, 4.05, 0, 0.28, 0.16, 0.28),
         "flood_visor": box(1.15, 4.22, 0, 0.32, 0.08, 0.35),
         "flood_ladder": box(-0.18, 1.8, 0, 0.08, 3.2, 0.08),
+        "flood_guy": box(0.35, 2.0, 0, 0.04, 3.5, 0.04),
+        "edge_gasket": cylinder(0, 0.1, 0, 0.1, 0.04, axis="y", segments=10),
+        "taxi_gasket": cylinder(0, 0.08, 0, 0.08, 0.03, axis="y", segments=10),
+        "obst_cap": cylinder(0, 0.78, 0, 0.08, 0.06, axis="y", segments=10),
+        "flood_base_bolt": box(0.2, 0.12, 0.2, 0.08, 0.06, 0.08),
     }
 
 

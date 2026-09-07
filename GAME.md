@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Batch B PBR maps)
-- **Branch / working tree:** `cursor/surface-pbr-maps-ddad`
-- **Do this next:** Merge PBR maps; Bailey Play soak runway/apron Lit response day+rain
-- **In progress / half-done:** authored normal/AO/mask companions for Batch B surfaces
-- **Watch out for:** still not full Addressables materials; procedural fallbacks remain
+- **Last updated:** 2026-09-07 by Cursor (threshold lights + apron probe)
+- **Branch / working tree:** `cursor/threshold-lights-probe-ddad`
+- **Do this next:** Merge lighting ship; Bailey Play soak dusk runway ends + wet apron reflections
+- **In progress / half-done:** threshold/PAPI point lights + realtime apron ReflectionProbe
+- **Watch out for:** probe is low-res realtime (128); not a full baked probe set
 - **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** surface `*_normal/_ao/_mask_v01` under Art + StreamingAssets
+- **Visual assets:** surface PBR maps + v03 kits already on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,7 +121,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
-   let it import StreamingAssets / new surface PBR maps + v03 kits, then Play.
-2. Confirm asphalt/concrete/grass/metal catch Lit normals and wet response; confirm v03 kits.
+   let it import StreamingAssets / PBR maps + v03 kits, then Play (include a dusk/night pass).
+2. Confirm threshold/PAPI glow at runway ends and wet apron Lit response with reflections.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
-   or further lighting/probes. No new economy systems; no Companion/CloudKit.
+   or denser environment vegetation. No new economy systems; no Companion/CloudKit.

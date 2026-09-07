@@ -22,7 +22,9 @@ namespace Airside.Presentation
         private Light _fillLight;
         private Light[] _apronLights;
         private Light[] _landsideLights;
+        private Light[] _thresholdLights;
         private Light _aerodromeBeacon;
+        private ReflectionProbe _apronProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
@@ -112,6 +114,8 @@ namespace Airside.Presentation
             CollectNightGlowWindows();
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
+            _thresholdLights = BuildThresholdApproachLights();
+            _apronProbe = BuildApronReflectionProbe();
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
@@ -2588,6 +2592,27 @@ namespace Airside.Presentation
                 }
             }
 
+            // Threshold / approach point lights punch up at dusk for runway ends.
+            if (_thresholdLights != null)
+            {
+                var approach = Mathf.Lerp(1.85f, 0.04f, daylight);
+                for (var i = 0; i < _thresholdLights.Length; i++)
+                {
+                    var light = _thresholdLights[i];
+                    if (light == null)
+                        continue;
+                    light.intensity = approach;
+                }
+            }
+
+            if (_apronProbe != null)
+            {
+                // Brighter probe intensity at night so wet Lit surfaces pick up floods.
+                _apronProbe.intensity = Mathf.Lerp(1.15f, 0.85f, daylight);
+                if (daylight < 0.45f && Time.frameCount % 45 == 0)
+                    _apronProbe.RenderProbe();
+            }
+
             UpdateAirfieldNavLights(daylight);
             UpdateNightGlow(daylight);
             UpdateAerodromeBeacon(daylight);
@@ -2686,6 +2711,73 @@ namespace Airside.Presentation
             }
 
             return lights;
+        }
+
+        /// <summary>
+        /// Decision 0025 item 5 — threshold / short approach point lights so runway
+        /// ends read at dusk without a full nav-aid system. Presentation only.
+        /// </summary>
+        private static Light[] BuildThresholdApproachLights()
+        {
+            var specs = new (Vector3 Pos, Color Color, float Range)[]
+            {
+                // West threshold (09) — warm white bars + green wing-bar hint.
+                (new Vector3(-38f, 1.1f, -2.2f), new Color(1f, 0.96f, 0.82f), 14f),
+                (new Vector3(-38f, 1.1f, 2.2f), new Color(1f, 0.96f, 0.82f), 14f),
+                (new Vector3(-42f, 0.9f, -1.1f), new Color(0.35f, 0.95f, 0.55f), 10f),
+                (new Vector3(-42f, 0.9f, 1.1f), new Color(0.35f, 0.95f, 0.55f), 10f),
+                // East threshold (27).
+                (new Vector3(38f, 1.1f, -2.2f), new Color(1f, 0.96f, 0.82f), 14f),
+                (new Vector3(38f, 1.1f, 2.2f), new Color(1f, 0.96f, 0.82f), 14f),
+                (new Vector3(42f, 0.9f, -1.1f), new Color(0.35f, 0.95f, 0.55f), 10f),
+                (new Vector3(42f, 0.9f, 1.1f), new Color(0.35f, 0.95f, 0.55f), 10f),
+                // Compact PAPI-style ladder south of west approach path.
+                (new Vector3(-34f, 1.4f, -5.2f), new Color(1f, 0.35f, 0.28f), 9f),
+                (new Vector3(-32.5f, 1.4f, -5.2f), new Color(1f, 0.35f, 0.28f), 9f),
+                (new Vector3(-31f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f),
+                (new Vector3(-29.5f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f)
+            };
+
+            var lights = new Light[specs.Length];
+            for (var i = 0; i < specs.Length; i++)
+            {
+                var spec = specs[i];
+                CreateBlock($"Threshold lamp {i}", spec.Pos, new Vector3(0.22f, 0.18f, 0.22f), spec.Color);
+                var go = new GameObject($"Threshold approach light {i + 1}");
+                go.transform.position = spec.Pos + new Vector3(0f, 0.15f, 0f);
+                var light = go.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = spec.Color;
+                light.range = spec.Range;
+                light.intensity = 0.04f;
+                lights[i] = light;
+            }
+
+            return lights;
+        }
+
+        /// <summary>
+        /// Decision 0025 item 5 — realtime apron ReflectionProbe so Lit wet asphalt /
+        /// metal pick up local floods at night without a baked probe set.
+        /// </summary>
+        private static ReflectionProbe BuildApronReflectionProbe()
+        {
+            var go = new GameObject("Apron reflection probe");
+            go.transform.position = new Vector3(20f, 3.5f, 17f);
+            var probe = go.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            probe.resolution = 128;
+            probe.size = new Vector3(48f, 18f, 36f);
+            probe.center = Vector3.zero;
+            probe.intensity = 1f;
+            probe.boxProjection = true;
+            probe.shadowDistance = 24f;
+            probe.nearClipPlane = 0.3f;
+            probe.farClipPlane = 80f;
+            probe.RenderProbe();
+            return probe;
         }
 
         private static Light[] BuildLandsideStreetlights()

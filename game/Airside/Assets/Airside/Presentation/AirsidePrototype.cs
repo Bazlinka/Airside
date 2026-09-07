@@ -52,6 +52,7 @@ namespace Airside.Presentation
         private AudioClip _touchdownClip;
         private AudioSource _ambientWindAudio;
         private AudioSource _ambientRainAudio;
+        private AudioSource _ambientCoastAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness)> _wetSurfaces = new List<(Renderer, Color, float)>();
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
@@ -86,6 +87,8 @@ namespace Airside.Presentation
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
+        private const float AmbientCoastVolume = 0.035f;
+        private float _apronProbeRefreshAt;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
         private float _saveIndicatorUntil;
@@ -159,6 +162,13 @@ namespace Airside.Presentation
             _ambientRainAudio.spatialBlend = 0f;
             _ambientRainAudio.volume = 0f;
             _ambientRainAudio.Play();
+            _ambientCoastAudio = gameObject.AddComponent<AudioSource>();
+            _ambientCoastAudio.clip = CreateCoastClip();
+            _ambientCoastAudio.loop = true;
+            _ambientCoastAudio.playOnAwake = false;
+            _ambientCoastAudio.spatialBlend = 0f;
+            _ambientCoastAudio.volume = 0f;
+            _ambientCoastAudio.Play();
             CollectWetSurfaces();
             BuildWetPuddles();
             CollectHoldShortMarkings();
@@ -1041,10 +1051,12 @@ namespace Airside.Presentation
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
             var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
+            var coastTarget = _audioMuted ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
             if (_paused)
             {
                 windTarget *= EngineVolumePausedScale;
                 rainTarget *= EngineVolumePausedScale;
+                coastTarget *= EngineVolumePausedScale;
             }
 
             // Slight day/night wind variation (presentation only).
@@ -1054,6 +1066,12 @@ namespace Airside.Presentation
             _ambientWindAudio.volume = Mathf.MoveTowards(_ambientWindAudio.volume, windTarget, Time.unscaledDeltaTime * 0.2f);
             _ambientRainAudio.volume = Mathf.MoveTowards(_ambientRainAudio.volume, rainTarget, Time.unscaledDeltaTime * 0.25f);
             _ambientRainAudio.pitch = storm ? 1.08f : 1f;
+            if (_ambientCoastAudio != null)
+            {
+                _ambientCoastAudio.volume = Mathf.MoveTowards(
+                    _ambientCoastAudio.volume, coastTarget, Time.unscaledDeltaTime * 0.15f);
+                _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
+            }
         }
 
         private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
@@ -1068,7 +1086,17 @@ namespace Airside.Presentation
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Gear", StringComparison.Ordinal))
+                if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
+                {
+                    // Doors open when gear is down; close when retracted (presentation only).
+                    child.gameObject.SetActive(true);
+                    var euler = child.localEulerAngles;
+                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                    var target = airborne ? 0f : 78f;
+                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.StartsWith("Gear", StringComparison.Ordinal))
                 {
                     // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
                     child.gameObject.SetActive(true);
@@ -1190,16 +1218,28 @@ namespace Airside.Presentation
 
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
         {
-            // Presentation-only: cabin door swings open at stand, closes before pushback.
-            var targetY = phase == AircraftPhase.AtStand ? -85f : 0f;
+            // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
+            var cabinTargetY = phase == AircraftPhase.AtStand ? -85f : 0f;
+            var cargoTargetY = phase == AircraftPhase.AtStand ? 70f : 0f;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
-                if (child == aircraft || !child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                if (child == aircraft)
                     continue;
-                var euler = child.localEulerAngles;
-                var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                euler.y = Mathf.MoveTowards(current, targetY, Time.unscaledDeltaTime * 120f);
-                child.localEulerAngles = euler;
+                if (child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, cabinTargetY, Time.unscaledDeltaTime * 120f);
+                    child.localEulerAngles = euler;
+                }
+                else if (child.name.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
+                         || child.name.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
+                {
+                    var euler = child.localEulerAngles;
+                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                    euler.y = Mathf.MoveTowards(current, cargoTargetY, Time.unscaledDeltaTime * 100f);
+                    child.localEulerAngles = euler;
+                }
             }
         }
 
@@ -1884,6 +1924,14 @@ namespace Airside.Presentation
 
             UpdateWetPuddles(wetness, storm);
             UpdateTaxiSpray(wetness, raining || storm);
+
+            // Refresh apron probe when wetness or dusk shifts so Lit pavement picks up floods.
+            if (_apronProbe != null && Time.unscaledTime >= _apronProbeRefreshAt)
+            {
+                _apronProbe.intensity = Mathf.Lerp(0.75f, 1.15f, wetness);
+                _apronProbe.RenderProbe();
+                _apronProbeRefreshAt = Time.unscaledTime + (wetness > 0.05f ? 4.5f : 12f);
+            }
         }
 
         private void UpdateTaxiSpray(float wetness, bool raining)
@@ -2118,7 +2166,8 @@ namespace Airside.Presentation
                      {
                          "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
                          "Access road", "Access road turn", "Car park", "Service lane",
-                         "Fuel pad"
+                         "Fuel pad", "Coast sand", "Outer paddock N", "Outer paddock S",
+                         "Relief berm N", "Relief berm S"
                      })
             {
                 var go = GameObject.Find(name);
@@ -2155,7 +2204,12 @@ namespace Airside.Presentation
                 new Vector3(20f, 0.07f, 12f),
                 new Vector3(-18f, 0.07f, 16f),
                 new Vector3(32f, 0.07f, 18f),
-                new Vector3(22f, 0.07f, 22f)
+                new Vector3(22f, 0.07f, 22f),
+                new Vector3(16f, 0.07f, 17.5f),
+                new Vector3(26f, 0.07f, 16f),
+                new Vector3(10f, 0.07f, 14f),
+                new Vector3(30f, 0.07f, 21f),
+                new Vector3(-14f, 0.07f, 18f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -6073,6 +6127,27 @@ namespace Airside.Presentation
             }
 
             var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        /// <summary>Soft coastal wave bed for Kangaroo Island ambience (presentation only).</summary>
+        private static AudioClip CreateCoastClip()
+        {
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate * 3];
+            var state = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var t = i / (float)sampleRate;
+                var white = UnityEngine.Random.value * 2f - 1f;
+                state = state * 0.96f + white * 0.04f;
+                var swell = Mathf.Sin(t * 2f * Mathf.PI * 0.22f) * 0.5f + 0.5f;
+                var wash = Mathf.Sin(t * 2f * Mathf.PI * 0.55f + 1.3f) * 0.35f + 0.65f;
+                samples[i] = state * 0.4f * swell * wash;
+            }
+
+            var clip = AudioClip.Create("Ambient coast", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

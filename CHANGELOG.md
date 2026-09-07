@@ -5,6 +5,7 @@ change it describes.
 
 ## Unreleased
 
+<<<<<<< HEAD
 - **Addressables Resources provider + lofted turboprop + env densify (0025 items 1–3+6).**
   Runtime `airside-prefab/<key>` keys now load via `AirsideResourcesProvider`
   (`Resources.Load`) instead of the missing LegacyResourcesProvider stub — StreamingAssets
@@ -21,6 +22,14 @@ change it describes.
   `LegacyRuntime.ttf`, and Toolkit PanelSettings assigns
   `Resources/Airside/UI/AirsideRuntimeTheme.tss` (imports Unity's default theme).
   No simulation or art-path changes.
+=======
+- **Motion, brand overlays, wet/coast polish (0025 items 4–5+7–8).** Gear doors
+  animate separately from struts; cargo doors open at stand; soft coastal ambient
+  audio joins wind/rain; wet response covers more ground surfaces and refreshes the
+  apron reflection probe; night bloom/grain capped to avoid smear; Toolkit pause /
+  away / insolvency overlays use the BRD-001 wordmark. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+>>>>>>> aea5782 (Polish motion, brand overlays, wet surfaces and coast audio)
 
 - **Verified decision 0025 packaged-art delivery on a real macOS build.** From clean
   `main` at `33a961a`, the art sync copied 137 files without repository drift,

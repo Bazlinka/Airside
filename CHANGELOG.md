@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Fence densify + ops HUD chrome (0025 items 3+6).** West/east/south perimeter
+  fences gain bottom rails and denser mesh posts; extra terrain mounds; OPERATIONS
+  panel gets coastal accent + Open Sky title. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Service vehicles densify + puddles (0025 items 2+4).** Fuel truck 33, baggage
   tug 34, apron bus 35 authored meshes (fenders, rails, arches, lights); vehicle
   material map covers new parts; wet puddle count raised across apron/landside/

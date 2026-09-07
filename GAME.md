@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (cloud umbra + contact shadows)
-- **Branch / working tree:** `cursor/cloud-umbra-contact-ddad`
-- **Do this next:** Merge shadow ship; Bailey Play soak drifting cloud umbras + building contact
-- **In progress / half-done:** cloud ground umbras, building contact shadows, night film grain
-- **Watch out for:** umbras are soft discs — not real projected shadows
+- **Last updated:** 2026-09-07 by Cursor (runway edge point lights)
+- **Branch / working tree:** `cursor/runway-edge-pointlights-ddad`
+- **Do this next:** Merge edge lights; Bailey Play soak dusk runway ribbon + taxi points
+- **In progress / half-done:** sparse runway-edge + taxi PointLights driven by day cycle
+- **Watch out for:** every 12 m (not every fixture) to keep light count sane
 - **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** vegetation densify + prior wave on main
+- **Visual assets:** cloud umbras + prior wave on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play overview + day cycle.
-2. Confirm drifting cloud umbras, building contact shadows, night film grain; vegetation belts.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play dusk/night.
+2. Confirm runway-edge PointLight ribbon + taxi points; cloud umbras by day.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2).
    No new economy systems; no Companion/CloudKit.

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Runway edge PointLights (0025 item 5).** Sparse warm point lights every 12 m along
+  both runway edges plus green taxi centreline hints; day-cycle intensity. Presentation only.
+
 - **Cloud umbras + building contact shadows (0025 items 3+5).** Soft ground discs drift
   under cloud bands; terminal/hangar/ops/car-park contact blobs ground Lit surfaces;
   night film grain on the day Volume. Presentation only.

@@ -72,7 +72,8 @@ namespace Airside.Presentation
         private Transform _pushbackTug;
         private Transform _windsockSock;
         private Transform _coastFoam;
-        private readonly List<(Transform Boat, Vector3 BasePos)> _coastBoats = new List<(Transform, Vector3)>();
+        private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
+            new List<(Transform, Vector3, float)>();
         private Transform _jettyDeck;
         private bool _standThreeVisualBuilt;
         private Camera _mainCamera;
@@ -4489,6 +4490,27 @@ namespace Airside.Presentation
                     CreateBlock($"Fence mesh S {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
                 }
             }
+
+            // Mid-span fence posts densify the north/south ribbons so overview reads as chain-link.
+            for (var x = -38; x <= 54; x += 4)
+            {
+                if (x >= 22 && x <= 30)
+                    continue;
+                CreateBlock($"Fence post N mid {x}", new Vector3(x + 2f, 0.7f, 34f), new Vector3(0.1f, 1.35f, 0.1f), post);
+            }
+
+            for (var x = -38; x <= 38; x += 4)
+            {
+                if (x >= -12 && x <= 12)
+                    continue;
+                CreateBlock($"Fence post S mid {x}", new Vector3(x + 2f, 0.65f, -20f), new Vector3(0.1f, 1.25f, 0.1f), post);
+            }
+
+            // Warning chevrons on the airside face of the vehicle gate.
+            CreateBlock("Gate chevron L", new Vector3(24.2f, 0.85f, 35.45f), new Vector3(1.8f, 0.35f, 0.04f),
+                new Color(0.15f, 0.15f, 0.16f));
+            CreateBlock("Gate chevron R", new Vector3(27.8f, 0.85f, 35.45f), new Vector3(1.8f, 0.35f, 0.04f),
+                new Color(0.15f, 0.15f, 0.16f));
         }
 
         /// <summary>
@@ -4878,7 +4900,7 @@ namespace Airside.Presentation
                 var go = GameObject.Find(name);
                 if (go == null)
                     continue;
-                _coastBoats.Add((go.transform, go.transform.position));
+                _coastBoats.Add((go.transform, go.transform.position, go.transform.eulerAngles.y));
             }
         }
 
@@ -4942,17 +4964,15 @@ namespace Airside.Presentation
             var t = Time.unscaledTime;
             for (var i = 0; i < _coastBoats.Count; i++)
             {
-                var (boat, basePos) = _coastBoats[i];
+                var (boat, basePos, baseYaw) = _coastBoats[i];
                 if (boat == null)
                     continue;
                 var bob = Mathf.Sin(t * 0.85f + i * 1.4f) * 0.08f;
                 var yawSway = Mathf.Sin(t * 0.35f + i) * 2.2f;
                 boat.position = basePos + new Vector3(0f, bob, 0f);
-                var euler = boat.eulerAngles;
-                // Preserve authored yaw; add a tiny roll/yaw sway.
                 boat.rotation = Quaternion.Euler(
                     Mathf.Sin(t * 0.7f + i) * 2.5f,
-                    euler.y + yawSway * 0.02f,
+                    baseYaw + yawSway,
                     Mathf.Cos(t * 0.55f + i * 0.8f) * 3f);
             }
 
@@ -5898,6 +5918,20 @@ namespace Airside.Presentation
             {
                 CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
                 CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+            }
+
+            // Continuous runway edge stripes so the strip reads at dusk without relying on lights alone.
+            CreateBlock("Runway edge L", new Vector3(0f, 0.025f, -3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
+            CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
+            // Taxiway edge lines along Taxiway A.
+            CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
+            CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);
+            // Apron lead-in chevrons from taxi to stand lead.
+            for (var i = 0; i < 4; i++)
+            {
+                var z = 11.2f + i * 0.85f;
+                CreateBlock($"Apron chevron {i}", new Vector3(14f + i * 0.4f, 0.04f, z), new Vector3(1.1f, 0.02f, 0.16f),
+                    new Color(0.95f, 0.85f, 0.2f));
             }
 
             for (var x = -4; x <= 28; x += 4)

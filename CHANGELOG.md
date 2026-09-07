@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Runway/taxi markings + fence densify (0025 item 3).** Continuous runway edge
+  stripes, taxi edge lines, apron lead-in chevrons, mid-span fence posts and gate
+  chevrons. Coast boat bob no longer drifts yaw. Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
+- **Stand GSE deploy + hangar door dedupe (0025 item 7).** Stairs roll in from
+  the apron edge before pitching up; chocks settle with a roll; when authored
+  hangar door panels are present the greybox slab is hidden so doors do not
+  double up. Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Hangar kit doors + coastal motion (0025 items 3+7).** Authored hangar
   `door_panel_*` / `door_rib_*` slide with the greybox slab (opens for day and
   active stand traffic); coast boats bob, foam pulses, jetty breathes.

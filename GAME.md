@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (runway threshold digits 09/27)
-- **Branch / working tree:** `cursor/runway-threshold-numbers-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak readable 09/27 digits from overview
-- **In progress / half-done:** thirteen Resources prefabs; Toolkit full HUD; authored FBX still open
-- **Watch out for:** 0025 visual bar still needs authored aircraft/building meshes + Editor Addressables groups
-- **Open questions for Bailey:** authored turboprop/terminal FBX first, or keep shipping greybox life?
-- **Visual assets:** thirteen Resources prefabs; Toolkit full HUD; terminal canopy; runway digits; ARFF
+- **Last updated:** 2026-09-07 by Cursor (presentation wave #102–#109)
+- **Branch / working tree:** `main`
+- **Do this next:** Bailey Mac `git pull origin main` + Unity Play soak (Toolkit HUD, ARFF, ALS, canopy, 09/27); then authored FBX
+- **In progress / half-done:** 0025 item 6 HUD largely on Toolkit; greybox environment denser; authored aircraft/building meshes still open
+- **Watch out for:** Editor Addressables groups + authored FBX still open (items 1–2); greybox Resources prefabs are pipeline proof not final art
+- **Open questions for Bailey:** drop authored turboprop/terminal FBX next, or keep greybox density ships?
+- **Visual assets:** 13 Resources prefabs; Toolkit full HUD; ALS/ARFF/canopy/digits
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

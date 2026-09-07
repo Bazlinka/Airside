@@ -472,15 +472,36 @@ def main() -> None:
 
     props = ROOT / "Models" / "Props"
 
-    # Markings kit — flat precision strips (metres)
+    # Markings kit — flat precision strips (metres) + denser hold/aiming/TDZ language.
     markings = {
         "runway_centreline": quad(-0.15, -30, 0.15, 30, 0.02),
+        "runway_centre_dash_a": quad(-0.12, -22, 0.12, -18, 0.022),
+        "runway_centre_dash_b": quad(-0.12, -10, 0.12, -6, 0.022),
+        "runway_centre_dash_c": quad(-0.12, 6, 0.12, 10, 0.022),
+        "runway_centre_dash_d": quad(-0.12, 18, 0.12, 22, 0.022),
         "runway_edge_left": quad(-15.0, -30, -14.7, 30, 0.02),
         "runway_edge_right": quad(14.7, -30, 15.0, 30, 0.02),
         "runway_threshold": quad(-15.0, -30, 15.0, -28.5, 0.025),
+        "threshold_bar_a": quad(-12.0, -29.6, -9.0, -28.8, 0.028),
+        "threshold_bar_b": quad(-6.0, -29.6, -3.0, -28.8, 0.028),
+        "threshold_bar_c": quad(3.0, -29.6, 6.0, -28.8, 0.028),
+        "threshold_bar_d": quad(9.0, -29.6, 12.0, -28.8, 0.028),
         "taxi_centreline": quad(-20.0, -0.1, 0.0, 0.1, 0.02),
+        "taxi_edge_n": quad(-20.0, 1.75, 20.0, 1.9, 0.02),
+        "taxi_edge_s": quad(-20.0, -1.9, 20.0, -1.75, 0.02),
         "stand_stop_a": quad(-8.0, 8.0, -4.0, 8.3, 0.03),
         "stand_stop_b": quad(4.0, 8.0, 8.0, 8.3, 0.03),
+        "stand_stop_c": quad(12.0, 8.0, 16.0, 8.3, 0.03),
+        "hold_short_a": quad(-6.0, 4.0, -2.0, 4.25, 0.03),
+        "hold_short_b": quad(-6.0, 4.55, -2.0, 4.8, 0.03),
+        "hold_short_c": quad(2.0, 4.0, 5.5, 4.25, 0.03),
+        "hold_short_d": quad(2.0, 4.55, 5.5, 4.8, 0.03),
+        "aiming_point_l": quad(-2.0, -8.0, 0.8, -6.0, 0.03),
+        "aiming_point_r": quad(-2.0, 6.0, 0.8, 8.0, 0.03),
+        "tdz_mark_l": quad(-0.7, -6.5, 0.7, -5.5, 0.025),
+        "tdz_mark_r": quad(-0.7, 5.5, 0.7, 6.5, 0.025),
+        "chevron_lead_a": quad(8.0, 2.0, 10.0, 3.2, 0.025),
+        "chevron_lead_b": quad(11.0, 2.0, 13.0, 3.2, 0.025),
     }
     pack_gltf(props / "mdl_airfield_markings_kit_v01.gltf", markings)
     guids["WLD-001"] = "gltf"

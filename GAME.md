@@ -10,10 +10,12 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (airfield props densify)
+- **Last updated:** 2026-09-07 by Cursor (turboprop/ARFF/fuel/HUD densify tip)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — Addressables/DCC path, more env/HUD fidelity. No new economy. Do not block on Mac playtest.
-- **In progress / half-done:** Airfield props kit ~55 (dolly bags, sock segments, barrier braces, sign glyphs); parked GA/car densified. Still ~20% of REF.
+- **Do this next:** Continue 0025 — Addressables/DCC path, more env/HUD fidelity,
+  day-profile polish. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** Turboprop 131; lighting 55; markings 28 wired;
+  ARFF shed/truck ~36–37; fuel farm ~31; Toolkit turnaround icons. Still ~22% of REF.
 - **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud / bird / tree / shrub count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

@@ -884,6 +884,7 @@ namespace Airside.Presentation
                     var tasks = _simulation.ActiveTurnaround.Tasks(_clock.Now);
                     var names = new string[tasks.Count];
                     var progress = new float[tasks.Count];
+                    var icons = new Texture2D[tasks.Count];
                     for (var i = 0; i < tasks.Count; i++)
                     {
                         names[i] = tasks[i].State == TurnaroundTaskState.Complete
@@ -892,13 +893,14 @@ namespace Airside.Presentation
                                 ? $"● {tasks[i].Name}  {tasks[i].SecondsRemaining}s"
                                 : $"○ {tasks[i].Name}";
                         progress[i] = tasks[i].Progress01;
+                        icons[i] = AirsideTheme.ServiceIconForTask(tasks[i].Name);
                     }
 
-                    _toolkitHud.SyncTurnaroundBars(true, names, progress);
+                    _toolkitHud.SyncTurnaroundBars(true, names, progress, icons);
                 }
                 else
                 {
-                    _toolkitHud.SyncTurnaroundBars(false, null, null);
+                    _toolkitHud.SyncTurnaroundBars(false, null, null, null);
                 }
             }
         }
@@ -6163,12 +6165,20 @@ namespace Airside.Presentation
             "cabin_window_r4" => "Cabin window R4",
             "cabin_window_r5" => "Cabin window R5",
             "cabin_window_r6" => "Cabin window R6",
+            "cabin_window_frame_1" => "Cabin window frame 1",
+            "cabin_window_frame_3" => "Cabin window frame 3",
+            "cabin_window_frame_5" => "Cabin window frame 5",
+            "cabin_window_frame_r2" => "Cabin window frame R2",
+            "cabin_window_frame_r4" => "Cabin window frame R4",
             "cockpit_glare" => "Cockpit glare",
             "windscreen_pillar_l" => "Windscreen pillar L",
             "windscreen_pillar_r" => "Windscreen pillar R",
             "livery_stripe" => "Livery stripe",
             "livery_stripe_lower" => "Livery stripe lower",
             "door_frame_fwd" => "Door frame",
+            "door_handle_fwd" => "Door handle",
+            "inspection_panel_fwd" => "Inspection panel fwd",
+            "inspection_panel_aft" => "Inspection panel aft",
             "wing_fence_left" => "Wing fence L",
             "wing_fence_right" => "Wing fence R",
             "wing_fence_mid_l" => "Wing fence mid L",
@@ -6190,6 +6200,12 @@ namespace Airside.Presentation
             "wing_fairing_right" => "Wing fairing R",
             "flap_left" => "Flap L",
             "flap_right" => "Flap R",
+            "flap_track_l1" => "Flap track L1",
+            "flap_track_l2" => "Flap track L2",
+            "flap_track_r1" => "Flap track R1",
+            "flap_track_r2" => "Flap track R2",
+            "flap_fairing_l" => "Flap fairing L",
+            "flap_fairing_r" => "Flap fairing R",
             "spoiler_left" => "Spoiler L",
             "spoiler_right" => "Spoiler R",
             "aileron_left" => "Aileron L",
@@ -6210,6 +6226,10 @@ namespace Airside.Presentation
             "exhaust_right" => "Exhaust R",
             "exhaust_stack_l" => "Exhaust stack L",
             "exhaust_stack_r" => "Exhaust stack R",
+            "oil_cooler_l" => "Oil cooler L",
+            "oil_cooler_r" => "Oil cooler R",
+            "cowl_flap_l" => "Cowl flap L",
+            "cowl_flap_r" => "Cowl flap R",
             "propeller_left" => "Propeller L",
             "propeller_right" => "Propeller R",
             "propeller_left_b" => "PropBlade L",
@@ -6218,6 +6238,8 @@ namespace Airside.Presentation
             "propeller_right_c" => "PropBlade R2",
             "spinner_left" => "Spinner L",
             "spinner_right" => "Spinner R",
+            "spinner_stripe_l" => "Spinner stripe L",
+            "spinner_stripe_r" => "Spinner stripe R",
             "tail_fin" => "Tail",
             "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
@@ -6230,6 +6252,9 @@ namespace Airside.Presentation
             "gear_nose" => "Gear nose",
             "gear_left" => "Gear L",
             "gear_right" => "Gear R",
+            "gear_oleo_nose" => "Gear oleo nose",
+            "gear_oleo_left" => "Gear oleo L",
+            "gear_oleo_right" => "Gear oleo R",
             "gear_scissors_nose" => "Gear scissors nose",
             "gear_scissors_left" => "Gear scissors L",
             "gear_scissors_right" => "Gear scissors R",
@@ -6239,8 +6264,12 @@ namespace Airside.Presentation
             "tire_nose" => "Tire nose",
             "tire_left" => "Tire L",
             "tire_right" => "Tire R",
+            "rim_nose" => "Rim nose",
+            "rim_left" => "Rim L",
+            "rim_right" => "Rim R",
             "door_fwd" => "CabinDoor",
             "cargo_door" => "Cargo door",
+            "cargo_door_latch" => "Cargo door latch",
             "antenna" => "Antenna",
             "antenna_aft" => "Antenna aft",
             "pitot" => "Pitot",
@@ -6265,31 +6294,43 @@ namespace Airside.Presentation
                 or "cabin_window_6"
                 or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
                 or "cabin_window_r6" or "cockpit_glare"
-                => new Color(0.18f, 0.35f, 0.48f),
-            "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" => new Color(0.75f, 0.78f, 0.82f),
+                => new Color(0.18f, 0.35f, 0.48f, 0.42f),
+            "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5"
+                or "cabin_window_frame_r2" or "cabin_window_frame_r4"
+                or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r"
+                => new Color(0.75f, 0.78f, 0.82f),
             "livery_stripe" or "livery_stripe_lower" => new Color(0.15f, 0.35f, 0.65f),
+            "door_handle_fwd" or "cargo_door_latch" => new Color(0.72f, 0.74f, 0.78f),
+            "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
                 or "wing_fence_left" or "wing_fence_right" or "wing_fence_mid_l" or "wing_fence_mid_r"
-                or "flap_left" or "flap_right" or "spoiler_left" or "spoiler_right"
+                or "flap_left" or "flap_right" or "flap_fairing_l" or "flap_fairing_r"
+                or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
                 or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
                 or "tailplane_tip_l" or "tailplane_tip_r"
                 or "elevator_left" or "elevator_right" or "rudder" => accent,
+            "flap_track_l1" or "flap_track_l2" or "flap_track_r1" or "flap_track_r2"
+                => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
                 or "nacelle_left" or "nacelle_right"
                 or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right"
-                or "exhaust_stack_l" or "exhaust_stack_r" => accent * 0.85f,
+                or "exhaust_stack_l" or "exhaust_stack_r"
+                or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
                 or "propeller_left_c" or "propeller_right_c"
                 or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
                 or "hub_cap_left" or "hub_cap_right"
                 => new Color(0.2f, 0.2f, 0.22f),
+            "spinner_stripe_l" or "spinner_stripe_r" => new Color(0.92f, 0.55f, 0.12f),
             "gear_nose" or "gear_left" or "gear_right"
+                or "gear_oleo_nose" or "gear_oleo_left" or "gear_oleo_right"
                 or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
                 or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
+            "rim_nose" or "rim_left" or "rim_right" => new Color(0.55f, 0.56f, 0.58f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
             "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
@@ -6311,6 +6352,7 @@ namespace Airside.Presentation
             Transform bladeL2 = null, bladeR2 = null;
             Transform hubL = null, hubR = null, spinnerL = null, spinnerR = null;
             Transform capL = null, capR = null;
+            Transform stripeL = null, stripeR = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name == "Propeller L") propL = child;
@@ -6325,6 +6367,8 @@ namespace Airside.Presentation
                 else if (child.name == "Spinner R") spinnerR = child;
                 else if (child.name == "Hub cap L") capL = child;
                 else if (child.name == "Hub cap R") capR = child;
+                else if (child.name == "Spinner stripe L") stripeL = child;
+                else if (child.name == "Spinner stripe R") stripeR = child;
             }
 
             NestUnderProp(propL, bladeL, "Blade");
@@ -6337,6 +6381,8 @@ namespace Airside.Presentation
             NestUnderProp(propR, spinnerR, "Spinner");
             NestUnderProp(propL, capL, "Hub cap");
             NestUnderProp(propR, capR, "Hub cap");
+            NestUnderProp(propL, stripeL, "Stripe");
+            NestUnderProp(propR, stripeR, "Stripe");
         }
 
         private static void NestUnderProp(Transform prop, Transform part, string rename)
@@ -6356,6 +6402,8 @@ namespace Airside.Presentation
             Transform gearNose = null, gearL = null, gearR = null;
             Transform scissorsNose = null, scissorsL = null, scissorsR = null;
             Transform tireNose = null, tireL = null, tireR = null;
+            Transform oleoNose = null, oleoL = null, oleoR = null;
+            Transform rimNose = null, rimL = null, rimR = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name == "Gear nose") gearNose = child;
@@ -6367,14 +6415,26 @@ namespace Airside.Presentation
                 else if (child.name == "Tire nose") tireNose = child;
                 else if (child.name == "Tire L") tireL = child;
                 else if (child.name == "Tire R") tireR = child;
+                else if (child.name == "Gear oleo nose") oleoNose = child;
+                else if (child.name == "Gear oleo L") oleoL = child;
+                else if (child.name == "Gear oleo R") oleoR = child;
+                else if (child.name == "Rim nose") rimNose = child;
+                else if (child.name == "Rim L") rimL = child;
+                else if (child.name == "Rim R") rimR = child;
             }
 
             NestUnderProp(gearNose, scissorsNose, "Scissors");
             NestUnderProp(gearL, scissorsL, "Scissors");
             NestUnderProp(gearR, scissorsR, "Scissors");
+            NestUnderProp(gearNose, oleoNose, "Oleo");
+            NestUnderProp(gearL, oleoL, "Oleo");
+            NestUnderProp(gearR, oleoR, "Oleo");
             NestUnderProp(gearNose, tireNose, "Tire");
             NestUnderProp(gearL, tireL, "Tire");
             NestUnderProp(gearR, tireR, "Tire");
+            NestUnderProp(gearNose, rimNose, "Rim");
+            NestUnderProp(gearL, rimL, "Rim");
+            NestUnderProp(gearR, rimR, "Rim");
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
         }
 
@@ -7062,11 +7122,23 @@ namespace Airside.Presentation
                 }
             }
 
-            CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
-            CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), new Color(0.95f, 0.82f, 0.12f));
-            // Second hold-short pair nearer the apron lead-in.
-            CreateBlock("Hold short C", new Vector3(4f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), new Color(0.95f, 0.82f, 0.12f));
-            CreateBlock("Hold short D", new Vector3(4f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), new Color(0.95f, 0.82f, 0.12f));
+            var holdYellow = new Color(0.95f, 0.82f, 0.12f);
+            var usedHoldA = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "hold_short_a", new Vector3(-12f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _);
+            var usedHoldB = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "hold_short_b", new Vector3(-12f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _);
+            var usedHoldC = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "hold_short_c", new Vector3(4f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _);
+            var usedHoldD = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "hold_short_d", new Vector3(4f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _);
+            if (!usedHoldA)
+                CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
+            if (!usedHoldB)
+                CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
+            if (!usedHoldC)
+                CreateBlock("Hold short C", new Vector3(4f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            if (!usedHoldD)
+                CreateBlock("Hold short D", new Vector3(4f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             // Readable block digits for 09 / 27 (facing inbound traffic).
             PlaceRunwayDigit('0', new Vector3(-34.6f, 0.04f, 0f), yaw: 90f);
             PlaceRunwayDigit('9', new Vector3(-32.6f, 0.04f, 0f), yaw: 90f);
@@ -7078,18 +7150,30 @@ namespace Airside.Presentation
             CreateBlock("Threshold stripe E L", new Vector3(36f, 0.03f, -3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
             CreateBlock("Threshold stripe E R", new Vector3(36f, 0.03f, 3.05f), new Vector3(2.2f, 0.02f, 0.45f), Color.white);
 
-            // Aiming-point pairs (WLD markings language) — readable from overview/follow.
+            // Aiming-point pairs (WLD markings language) — kit first, greybox fallback.
             foreach (var x in new[] { -18f, 18f })
             {
-                CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
-                CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+                var placedL = ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "aiming_point_l", new Vector3(x, 0.035f, -1.55f), Quaternion.identity, Color.white, out _);
+                var placedR = ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "aiming_point_r", new Vector3(x, 0.035f, 1.55f), Quaternion.identity, Color.white, out _);
+                if (!placedL)
+                    CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+                if (!placedR)
+                    CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
             }
 
             // Touchdown zone marks between threshold and aiming points.
             foreach (var x in new[] { -30f, -28f, -26f, -24f, -22f, 22f, 24f, 26f, 28f, 30f })
             {
-                CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
-                CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
+                var placedL = ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "tdz_mark_l", new Vector3(x, 0.03f, -1.4f), Quaternion.identity, Color.white, out _);
+                var placedR = ArtGltfLoader.TryPlaceNamedMesh(
+                    kit, "tdz_mark_r", new Vector3(x, 0.03f, 1.4f), Quaternion.identity, Color.white, out _);
+                if (!placedL)
+                    CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
+                if (!placedR)
+                    CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
             }
             // Stand bay numbers on the apron (readable from overview) — digits 1/3 were missing segments.
             PlaceRunwayDigit('1', new Vector3(14f, 0.04f, 14f), yaw: 0f);
@@ -7106,7 +7190,11 @@ namespace Airside.Presentation
                 CreateBlock("Stand stop 1", new Vector3(14f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
             if (!usedStandB)
                 CreateBlock("Stand stop 2", new Vector3(22f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
-            CreateBlock("Stand stop 3", new Vector3(30f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+            var usedStandC = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "stand_stop_c", new Vector3(30f, 0.04f, 16.2f), Quaternion.identity,
+                new Color(0.95f, 0.85f, 0.2f), out _);
+            if (!usedStandC)
+                CreateBlock("Stand stop 3", new Vector3(30f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
 
             // Single dashed taxi centreline (kit or greybox) — no overlapping duplicate loop.
             var usedTaxi = ArtGltfLoader.TryPlaceNamedMesh(
@@ -7119,9 +7207,15 @@ namespace Airside.Presentation
                         new Color(0.95f, 0.85f, 0.2f));
             }
 
-            // Taxiway edge lines along Taxiway A.
-            CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
-            CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);
+            // Taxiway edge lines along Taxiway A — kit meshes when present.
+            var usedTaxiEdgeN = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(8f, 0.035f, 10.85f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            var usedTaxiEdgeS = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(8f, 0.035f, 7.15f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            if (!usedTaxiEdgeN)
+                CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
+            if (!usedTaxiEdgeS)
+                CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             // Apron lead-in chevrons from taxi to stand lead.
             for (var i = 0; i < 4; i++)
             {

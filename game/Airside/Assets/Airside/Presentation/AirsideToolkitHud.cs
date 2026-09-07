@@ -1222,9 +1222,14 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Turnaround task progress bars (REF-004) — one row per ground task.
+        /// Turnaround task progress bars (REF-004) — one row per ground task with
+        /// optional service icons matching the IMGUI turnaround list.
         /// </summary>
-        public void SyncTurnaroundBars(bool visible, string[] names, float[] progress01)
+        public void SyncTurnaroundBars(
+            bool visible,
+            string[] names,
+            float[] progress01,
+            Texture2D[] icons = null)
         {
             if (_turnaroundBars == null)
                 return;
@@ -1238,10 +1243,26 @@ namespace Airside.Presentation
             {
                 var row = new VisualElement { name = $"Task row {i}" };
                 row.style.marginTop = 3;
+
+                var header = new VisualElement { name = $"Task header {i}" };
+                header.style.flexDirection = FlexDirection.Row;
+                header.style.alignItems = Align.Center;
+                header.style.marginBottom = 1;
+
+                var icon = MakeIconSlot($"Task icon {i}", 14);
+                icon.style.marginRight = 4;
+                Texture2D tex = null;
+                if (icons != null && i < icons.Length)
+                    tex = icons[i];
+                ApplyIcon(icon, tex);
+                header.Add(icon);
+
                 var label = MakePanelLabel($"Task {i}", 11, FontStyle.Normal);
                 label.text = names[i] ?? string.Empty;
-                label.style.marginBottom = 1;
-                row.Add(label);
+                label.style.flexGrow = 1;
+                header.Add(label);
+                row.Add(header);
+
                 var track = MakeProgressTrack($"Task track {i}");
                 track.style.marginTop = 1;
                 track.style.height = 7;

@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_airfield_lighting_kit_authored_v01.bin",
-      "byteLength": 36432
+      "byteLength": 42552
     }
   ],
   "bufferViews": [
@@ -499,6 +499,174 @@
     {
       "buffer": 0,
       "byteOffset": 36360,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 36432,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 36720,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 36792,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37080,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37152,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37440,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37512,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37800,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 37872,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38160,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38232,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38520,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38592,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38880,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38952,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 39240,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 39312,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 39600,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 39672,
+      "byteLength": 1200,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 40872,
+      "byteLength": 240,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 41112,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 41400,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 41472,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 41760,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 41832,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 42120,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 42192,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 42480,
       "byteLength": 72,
       "target": 34963
     }
@@ -1405,6 +1573,314 @@
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
+    },
+    {
+      "bufferView": 82,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -0.17000000178813934,
+        0.17000000178813934,
+        -0.17000000178813934
+      ],
+      "min": [
+        -0.27000001072883606,
+        0.10999999940395355,
+        -0.27000001072883606
+      ]
+    },
+    {
+      "bufferView": 83,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 84,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.27000001072883606,
+        0.17000000178813934,
+        -0.17000000178813934
+      ],
+      "min": [
+        0.17000000178813934,
+        0.10999999940395355,
+        -0.27000001072883606
+      ]
+    },
+    {
+      "bufferView": 85,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 86,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -0.17000000178813934,
+        0.17000000178813934,
+        0.27000001072883606
+      ],
+      "min": [
+        -0.27000001072883606,
+        0.10999999940395355,
+        0.17000000178813934
+      ]
+    },
+    {
+      "bufferView": 87,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 88,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.14000000059604645,
+        6.710000038146973,
+        0.14000000059604645
+      ],
+      "min": [
+        -0.14000000059604645,
+        6.489999771118164,
+        -0.14000000059604645
+      ]
+    },
+    {
+      "bufferView": 89,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 90,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.2199999988079071,
+        8.199999809265137,
+        0.03999999910593033
+      ],
+      "min": [
+        0.14000000059604645,
+        6.599999904632568,
+        -0.03999999910593033
+      ]
+    },
+    {
+      "bufferView": 91,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 92,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.550000011920929,
+        8.579999923706055,
+        0.3799999952316284
+      ],
+      "min": [
+        -0.550000011920929,
+        8.520000457763672,
+        0.3199999928474426
+      ]
+    },
+    {
+      "bufferView": 93,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 94,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.675000011920929,
+        0.8999999761581421,
+        0.5249999761581421
+      ],
+      "min": [
+        0.22499999403953552,
+        0.20000000298023224,
+        0.17499999701976776
+      ]
+    },
+    {
+      "bufferView": 95,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 96,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.05999999865889549,
+        0.46000000834465027,
+        0.10000000149011612
+      ],
+      "min": [
+        -0.05999999865889549,
+        0.3799999952316284,
+        0.05999999865889549
+      ]
+    },
+    {
+      "bufferView": 97,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 98,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.05000000074505806,
+        0.38999998569488525,
+        0.08749999850988388
+      ],
+      "min": [
+        -0.05000000074505806,
+        0.33000001311302185,
+        0.05249999836087227
+      ]
+    },
+    {
+      "bufferView": 99,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 100,
+      "componentType": 5126,
+      "count": 100,
+      "type": "VEC3",
+      "max": [
+        0.1599999964237213,
+        0.7350000739097595,
+        0.15216904878616333
+      ],
+      "min": [
+        -0.1599999964237213,
+        0.7049999833106995,
+        -0.15216904878616333
+      ]
+    },
+    {
+      "bufferView": 101,
+      "componentType": 5123,
+      "count": 120,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 102,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.0949999988079071,
+        0.6000000238418579,
+        0.014999999664723873
+      ],
+      "min": [
+        0.06499999761581421,
+        0.10000000149011612,
+        -0.014999999664723873
+      ]
+    },
+    {
+      "bufferView": 103,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 104,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -1.2599999904632568,
+        8.930000305175781,
+        -0.009999999776482582
+      ],
+      "min": [
+        -1.5399999618530273,
+        8.770000457763672,
+        -0.28999999165534973
+      ]
+    },
+    {
+      "bufferView": 105,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 106,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -0.8899999856948853,
+        8.890000343322754,
+        0.29499998688697815
+      ],
+      "min": [
+        -1.2100000381469727,
+        8.8100004196167,
+        -0.054999999701976776
+      ]
+    },
+    {
+      "bufferView": 107,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 108,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.44999998807907104,
+        8.600000381469727,
+        0.05000000074505806
+      ],
+      "min": [
+        -0.44999998807907104,
+        8.5,
+        -0.05000000074505806
+      ]
+    },
+    {
+      "bufferView": 109,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
     }
   ],
   "meshes": [
@@ -1899,6 +2375,174 @@
           "mode": 4
         }
       ]
+    },
+    {
+      "name": "flood_base_bolt_b",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 82
+          },
+          "indices": 83,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_base_bolt_c",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 84
+          },
+          "indices": 85,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_base_bolt_d",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 86
+          },
+          "indices": 87,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_junction",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 88
+          },
+          "indices": 89,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_cable_tray",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 90
+          },
+          "indices": 91,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_handrail",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 92
+          },
+          "indices": 93,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_transformer",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 94
+          },
+          "indices": 95,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "edge_reflector",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 96
+          },
+          "indices": 97,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "taxi_reflector",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 98
+          },
+          "indices": 99,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "obst_beacon_ring",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 100
+          },
+          "indices": 101,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "obst_cable",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 102
+          },
+          "indices": 103,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_lamp_d",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 104
+          },
+          "indices": 105,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_visor_c",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 106
+          },
+          "indices": 107,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "flood_crossarm_brace",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 108
+          },
+          "indices": 109,
+          "mode": 4
+        }
+      ]
     }
   ],
   "nodes": [
@@ -2065,6 +2709,62 @@
     {
       "name": "flood_base_bolt",
       "mesh": 40
+    },
+    {
+      "name": "flood_base_bolt_b",
+      "mesh": 41
+    },
+    {
+      "name": "flood_base_bolt_c",
+      "mesh": 42
+    },
+    {
+      "name": "flood_base_bolt_d",
+      "mesh": 43
+    },
+    {
+      "name": "flood_junction",
+      "mesh": 44
+    },
+    {
+      "name": "flood_cable_tray",
+      "mesh": 45
+    },
+    {
+      "name": "flood_handrail",
+      "mesh": 46
+    },
+    {
+      "name": "flood_transformer",
+      "mesh": 47
+    },
+    {
+      "name": "edge_reflector",
+      "mesh": 48
+    },
+    {
+      "name": "taxi_reflector",
+      "mesh": 49
+    },
+    {
+      "name": "obst_beacon_ring",
+      "mesh": 50
+    },
+    {
+      "name": "obst_cable",
+      "mesh": 51
+    },
+    {
+      "name": "flood_lamp_d",
+      "mesh": 52
+    },
+    {
+      "name": "flood_visor_c",
+      "mesh": 53
+    },
+    {
+      "name": "flood_crossarm_brace",
+      "mesh": 54
     }
   ],
   "scenes": [
@@ -2111,7 +2811,21 @@
         37,
         38,
         39,
-        40
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
       ]
     }
   ],

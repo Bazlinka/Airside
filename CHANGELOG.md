@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Turboprop/ARFF/fuel/HUD densify tip (0025 items 1–2+4+7).** Authored turboprop
+  131 meshes (window frames, flap tracks, oil coolers, oleos/rims, spinner stripes);
+  cabin glass alpha 0.42; lighting kit 55; markings kit 28 + PlaceWorldMarkings
+  hold/aiming/TDZ/taxi-edge kit wiring; ARFF shed/truck ~36–37 parts; fuel farm ~31;
+  Toolkit turnaround service icons. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Airfield props densify (0025 item 2).** Props kit dolly bags/posts, windsock fabric
   segments, barrier braces, sign glyphs (~55 meshes). Presentation only.
   Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.

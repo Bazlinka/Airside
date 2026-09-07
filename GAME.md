@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (UI Toolkit toasts + nav/beacon PointLights)
-- **Branch / working tree:** `cursor/toolkit-nav-lights-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak Toolkit toasts + wingtip nav lights at dusk
-- **In progress / half-done:** Toolkit owns ops/research/save toasts; Canvas keeps panels
-- **Watch out for:** Toolkit uses runtime PanelSettings (no UXML yet); authored FBX still the fidelity jump
+- **Last updated:** 2026-09-07 by Cursor (hangar bay props + aiming points)
+- **Branch / working tree:** `cursor/hangar-bay-props-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak open hangar bay clutter + runway aiming points
+- **In progress / half-done:** twelve Resources prefabs; hangar interior reads occupied
+- **Watch out for:** Toolkit toast compile needs Unity 6 UIElements; authored FBX still open
 - **Open questions for Bailey:** expand Toolkit to left panel next, or authored FBX first?
-- **Visual assets:** eleven Resources prefabs; Addressables locator; Toolkit toast surface
+- **Visual assets:** twelve Resources prefabs; Toolkit toasts; Addressables locator
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm Toolkit toasts (research/ops/Saved), wingtip nav PointLights at dusk, prefabs still load.
+2. Confirm hangar bay clutter when door open, aiming points, Toolkit toasts, nav lights.
 3. Next code track: authored FBX overwrite for terminal or turboprop; expand Toolkit to left/ops panels.
    No new economy systems; no Companion/CloudKit.

@@ -32,6 +32,7 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 | `mdl_windsock_pole_v01` | `scripts/generate-apron-sign-dolly-prefabs.py` |
 | `mdl_fuel_farm_v01` | `scripts/generate-fuel-farm-prefab.py` |
 | `mdl_parked_ga_v01` | `scripts/generate-parked-ga-prefab.py` |
+| `mdl_hangar_bay_props_v01` | `scripts/generate-hangar-bay-props-prefab.py` |
 
 All use built-in cube/cylinder meshes + `AirsideRuntimeMaterialBinder`. Bailey may
 overwrite any with an authored FBX prefab of the same name.

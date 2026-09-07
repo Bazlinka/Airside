@@ -3494,6 +3494,7 @@ namespace Airside.Presentation
             // Sliding door slab always present (covers kit opening or fallback hangar).
             if (GameObject.Find("Hangar door") == null)
                 CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
+            BuildHangarBayInterior();
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_operations_shed_v03.gltf",
@@ -4938,8 +4939,40 @@ namespace Airside.Presentation
             CreateBlock("Runway number 27 bar", new Vector3(34f, 0.04f, 1.1f), new Vector3(1.6f, 0.03f, 0.35f), Color.white);
             CreateBlock("Runway number 27 stem", new Vector3(34f, 0.04f, -1.1f), new Vector3(0.35f, 0.03f, 1.8f), Color.white);
 
+            // Aiming-point pairs (WLD markings language) — readable from overview/follow.
+            foreach (var x in new[] { -18f, 18f })
+            {
+                CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+                CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+            }
+
             for (var x = -4; x <= 28; x += 4)
                 CreateBlock("Taxi centre", new Vector3(x, 0.04f, 9f), new Vector3(1.2f, 0.03f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+        }
+
+        /// <summary>
+        /// Decision 0025 items 1+3 — workbench / shelves / drums so the open hangar
+        /// bay reads occupied instead of an empty shell.
+        /// </summary>
+        private static void BuildHangarBayInterior()
+        {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_hangar_bay_props_v01", out var props))
+            {
+                props.name = "Hangar bay props";
+                props.position = new Vector3(-20f, 0f, 18.2f);
+                props.rotation = Quaternion.Euler(0f, 8f, 0f);
+                return;
+            }
+
+            var root = new GameObject("Hangar bay props").transform;
+            root.position = new Vector3(-20f, 0f, 18.2f);
+            ParentBlock(root, "Workbench top", new Vector3(0f, 0.85f, 0f), new Vector3(2.4f, 0.12f, 0.9f), new Color(0.45f, 0.42f, 0.38f));
+            ParentBlock(root, "Workbench leg L", new Vector3(-1f, 0.4f, 0f), new Vector3(0.12f, 0.8f, 0.8f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "Workbench leg R", new Vector3(1f, 0.4f, 0f), new Vector3(0.12f, 0.8f, 0.8f), new Color(0.25f, 0.25f, 0.28f));
+            ParentBlock(root, "Shelf frame", new Vector3(-2.2f, 1.1f, -0.1f), new Vector3(0.9f, 1.8f, 0.45f), new Color(0.4f, 0.42f, 0.4f));
+            ParentBlock(root, "Oil drum", new Vector3(-1.6f, 0.55f, 0.9f), new Vector3(0.55f, 1.1f, 0.55f), new Color(0.85f, 0.55f, 0.18f));
+            ParentBlock(root, "Tool cart body", new Vector3(1.8f, 0.55f, 0.6f), new Vector3(0.9f, 0.7f, 0.7f), new Color(0.35f, 0.45f, 0.55f));
+            ParentBlock(root, "Crate stack", new Vector3(2.3f, 0.45f, -0.5f), new Vector3(0.7f, 0.9f, 0.55f), new Color(0.55f, 0.4f, 0.22f));
         }
 
         private static void PlaceWorldLighting()

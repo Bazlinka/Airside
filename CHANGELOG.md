@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Left HUD sequential layout + first-decision coach.** Status panel rows no longer
+  overlap; height shrinks in the first session; the coach tip uses a Safety Yellow
+  stripe when a route offer needs Accept. Presentation only.
+
 - **Richer Batch C v02 kits (0025 item 2).** Procedural `*_v02.gltf` turboprop,
   terminal, hangar, ops shed and service vehicles with more readable parts.
   Runtime prefers v02 and falls back to Approved v01; StreamingAssets synced.

@@ -12,11 +12,11 @@ next session can continue without seeing the previous conversation. Keep it shor
 
 - **Last updated:** 2026-09-07 by Cursor (merging presentation PRs onto main)
 - **Branch / working tree:** `main` — merging #51–#55 for Bailey Mac pull
-- **Do this next:** Finish merge wave, push `main`, Bailey `git pull` + Unity rebuild
-- **In progress / half-done:** merge of environment + Batch C v02 in progress
+- **Do this next:** Finish #54 UVs + #55 camera, push `main`, Bailey `git pull`
+- **In progress / half-done:** env + v02 + HUD merged; UVs and camera next
 - **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes
 - **Open questions for Bailey:** none
-- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; env + v02 landing on main
+- **Visual assets:** env + v02 + HUD landing on main; Play Verified Bailey-owned
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Finish merging** remaining presentation PRs (#53 HUD, #54 UVs, #55 camera).
+1. **Finish merging** remaining presentation PRs (#54 UVs, #55 camera), push `main`.
 2. **Bailey `git pull` + Unity rebuild** on Mac — Play soak of env + v02 + HUD.
 3. Then URP materials / lighting / HUD Toolkit (0025 items 4–6). No new economy
    systems. Companion / CloudKit / extra fleets stay deferred.

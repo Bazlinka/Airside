@@ -29,6 +29,7 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
         private Transform _cloudRoot;
+        private Transform _cloudUmbraRoot;
         private Transform _birdFlockRoot;
         private Transform _apronLifeRoot;
         private Transform _hangarDoor;
@@ -166,6 +167,9 @@ namespace Airside.Presentation
             var clouds = GameObject.Find("Cloud bands");
             if (clouds != null)
                 _cloudRoot = clouds.transform;
+            var umbras = GameObject.Find("Cloud umbras");
+            if (umbras != null)
+                _cloudUmbraRoot = umbras.transform;
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -3028,6 +3032,7 @@ namespace Airside.Presentation
             BuildPerimeterFence();
             BuildVegetation();
             BuildTerrainMicroRelief();
+            BuildBuildingContactShadows();
             BuildDistantHills();
             BuildHorizonDome();
             BuildLandsideLife();
@@ -3420,6 +3425,7 @@ namespace Airside.Presentation
         {
             // Soft translucent cloud blobs so the sky is not empty — presentation only.
             var cloudRoot = new GameObject("Cloud bands").transform;
+            var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
             for (var i = 0; i < 10; i++)
             {
@@ -3441,7 +3447,49 @@ namespace Airside.Presentation
                     AirsideMaterialLibrary.SurfaceKind.Glass);
                 cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 cloud.GetComponent<Renderer>().receiveShadows = false;
+
+                // Soft ground umbra under each cloud — drifts with UpdateCloudDrift.
+                var umbra = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                umbra.name = $"Cloud umbra {i}";
+                Object.Destroy(umbra.GetComponent<Collider>());
+                umbra.transform.SetParent(umbraRoot, false);
+                umbra.transform.position = new Vector3(x, 0.06f, z);
+                umbra.transform.localScale = new Vector3(sx * 0.85f, 0.02f, sz * 0.85f);
+                var umbraMat = AirsideMaterialLibrary.Create(
+                    new Color(0.05f, 0.07f, 0.1f, 0.22f),
+                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                umbra.GetComponent<Renderer>().material = umbraMat;
+                umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                umbra.GetComponent<Renderer>().receiveShadows = false;
             }
+        }
+
+        /// <summary>
+        /// Soft contact blobs under primary buildings so Lit surfaces read grounded
+        /// without waiting for a full shadow-cascade bake (0025 items 3+5).
+        /// </summary>
+        private static void BuildBuildingContactShadows()
+        {
+            PlaceContactShadow("Terminal contact", new Vector3(26f, 0.04f, 27f), new Vector3(24f, 0.03f, 7f), 0.28f);
+            PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.04f, 20f), new Vector3(16f, 0.03f, 11f), 0.3f);
+            PlaceContactShadow("Ops contact", new Vector3(-8f, 0.04f, 26f), new Vector3(8f, 0.03f, 5.5f), 0.26f);
+            PlaceContactShadow("Car park contact", new Vector3(48f, 0.04f, 46f), new Vector3(18f, 0.02f, 12f), 0.12f);
+            PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.04f, 22f), new Vector3(9f, 0.02f, 7f), 0.22f);
+        }
+
+        private static void PlaceContactShadow(string name, Vector3 position, Vector3 scale, float alpha)
+        {
+            var shadow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            shadow.name = name;
+            Object.Destroy(shadow.GetComponent<Collider>());
+            shadow.transform.position = position;
+            shadow.transform.localScale = scale;
+            var material = AirsideMaterialLibrary.Create(
+                new Color(0.04f, 0.05f, 0.07f, alpha),
+                AirsideMaterialLibrary.SurfaceKind.Glass);
+            shadow.GetComponent<Renderer>().material = material;
+            shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            shadow.GetComponent<Renderer>().receiveShadows = false;
         }
 
         private void UpdateHangarDoor()
@@ -3482,12 +3530,23 @@ namespace Airside.Presentation
                     _cloudRoot = found.transform;
             }
 
+            if (_cloudUmbraRoot == null)
+            {
+                var foundUmbra = GameObject.Find("Cloud umbras");
+                if (foundUmbra != null)
+                    _cloudUmbraRoot = foundUmbra.transform;
+            }
+
             if (_cloudRoot == null)
                 return;
 
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             var drift = Time.unscaledDeltaTime * 0.35f;
+            var overcast = _simulation.CurrentWeather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
+            var umbraAlpha = overcast
+                ? Mathf.Lerp(0.06f, 0.18f, daylight)
+                : Mathf.Lerp(0.04f, 0.26f, daylight);
             for (var i = 0; i < _cloudRoot.childCount; i++)
             {
                 var cloud = _cloudRoot.GetChild(i);
@@ -3498,14 +3557,29 @@ namespace Airside.Presentation
                 cloud.position = p;
 
                 var renderer = cloud.GetComponent<Renderer>();
-                if (renderer == null)
+                if (renderer != null)
+                {
+                    var color = renderer.material.color;
+                    var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
+                    var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
+                    tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
+                    tint.a = color.a;
+                    renderer.material.color = tint;
+                }
+
+                if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)
                     continue;
-                var color = renderer.material.color;
-                var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
-                var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
-                tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
-                tint.a = color.a;
-                renderer.material.color = tint;
+                var umbra = _cloudUmbraRoot.GetChild(i);
+                umbra.position = new Vector3(p.x, 0.06f, p.z);
+                umbra.rotation = Quaternion.identity;
+                var scale = cloud.localScale;
+                umbra.localScale = new Vector3(scale.x * 0.85f, 0.02f, scale.z * 0.85f);
+                var umbraRenderer = umbra.GetComponent<Renderer>();
+                if (umbraRenderer == null)
+                    continue;
+                var umbraColor = umbraRenderer.material.color;
+                umbraColor.a = umbraAlpha;
+                umbraRenderer.material.color = umbraColor;
             }
         }
 

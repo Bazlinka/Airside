@@ -6,20 +6,22 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 5 spike — runtime global Volume with ACES tonemap,
-    /// mild bloom/vignette, and day-driven color adjustments. Presentation only;
-    /// not a full probe bake or authored day profiles.
+    /// mild bloom/vignette/film grain, and day-driven color adjustments.
+    /// Presentation only; not a full probe bake or authored day profiles.
     /// </summary>
     public sealed class AirsideDayVolume
     {
         private readonly ColorAdjustments _color;
         private readonly Bloom _bloom;
         private readonly Vignette _vignette;
+        private readonly FilmGrain _grain;
 
-        private AirsideDayVolume(ColorAdjustments color, Bloom bloom, Vignette vignette)
+        private AirsideDayVolume(ColorAdjustments color, Bloom bloom, Vignette vignette, FilmGrain grain)
         {
             _color = color;
             _bloom = bloom;
             _vignette = vignette;
+            _grain = grain;
         }
 
         public static AirsideDayVolume Ensure(Transform host)
@@ -65,6 +67,13 @@ namespace Airside.Presentation
             vignette.color.Override(new Color(0.05f, 0.07f, 0.12f));
             vignette.smoothness.Override(0.45f);
 
+            if (!profile.TryGet(out FilmGrain grain))
+                grain = profile.Add<FilmGrain>(true);
+            grain.active = true;
+            grain.type.Override(FilmGrainLookup.Medium1);
+            grain.intensity.Override(0.12f);
+            grain.response.Override(0.7f);
+
             // Ensure the main camera actually runs the URP post stack.
             var camera = Camera.main;
             if (camera != null)
@@ -74,7 +83,7 @@ namespace Airside.Presentation
                     data.renderPostProcessing = true;
             }
 
-            return new AirsideDayVolume(color, bloom, vignette);
+            return new AirsideDayVolume(color, bloom, vignette, grain);
         }
 
         public void Apply(float daylight, float warm)
@@ -94,6 +103,9 @@ namespace Airside.Presentation
 
             _bloom.intensity.Override(Mathf.Lerp(0.55f, 0.18f, daylight));
             _vignette.intensity.Override(Mathf.Lerp(0.32f, 0.12f, daylight));
+            // Night film grain for regional dusk grit; nearly off in bright day.
+            _grain.intensity.Override(Mathf.Lerp(0.28f, 0.04f, daylight));
+            _grain.response.Override(Mathf.Lerp(0.85f, 0.55f, daylight));
         }
     }
 }

@@ -4083,10 +4083,23 @@ namespace Airside.Presentation
             };
 
             var lights = new Light[specs.Length];
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var stem = new Color(0.35f, 0.36f, 0.38f);
             for (var i = 0; i < specs.Length; i++)
             {
                 var spec = specs[i];
-                CreateBlock($"Threshold lamp {i}", spec.Pos, new Vector3(0.22f, 0.18f, 0.22f), spec.Color);
+                var origin = new Vector3(spec.Pos.x, 0f, spec.Pos.z);
+                var kitLamp = ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "edge_stem", origin, Quaternion.identity, stem, out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "edge_lens", origin, Quaternion.identity, spec.Color, out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "taxi_lens", origin, Quaternion.identity, spec.Color, out _);
+                if (!kitLamp)
+                    CreateBlock($"Threshold lamp {i}", spec.Pos, new Vector3(0.22f, 0.18f, 0.22f), spec.Color);
                 var go = new GameObject($"Threshold approach light {i + 1}");
                 go.transform.position = spec.Pos + new Vector3(0f, 0.15f, 0f);
                 var light = go.AddComponent<Light>();
@@ -4204,28 +4217,64 @@ namespace Airside.Presentation
 
         private static Light BuildAerodromeBeacon()
         {
-            // Presentation-only rotating aerodrome beacon (greybox mast + point light).
+            // Presentation-only aerodrome beacon — prefer lighting-kit obst mast.
             var mast = new GameObject("Aerodrome beacon").transform;
             mast.position = new Vector3(38f, 0f, 18f);
-            var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            pole.name = "Beacon mast";
-            Object.Destroy(pole.GetComponent<Collider>());
-            pole.transform.SetParent(mast, false);
-            pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
-            pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
-            pole.GetComponent<Renderer>().material.color = new Color(0.55f, 0.56f, 0.58f);
+            var lightingKit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
+            var steel = new Color(0.55f, 0.56f, 0.58f);
+            var origin = mast.position;
+            var kitMast = false;
+            if (ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_base", origin, Quaternion.identity, steel, out var basePart))
+            {
+                basePart.SetParent(mast, true);
+                kitMast = true;
+            }
 
-            var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Beacon head";
-            Object.Destroy(head.GetComponent<Collider>());
-            head.transform.SetParent(mast, false);
-            head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
-            head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
-            head.GetComponent<Renderer>().material.color = new Color(0.95f, 0.95f, 0.9f);
+            if (ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "obst_stem", origin, Quaternion.identity, steel, out var stemPart))
+            {
+                stemPart.SetParent(mast, true);
+                kitMast = true;
+            }
+
+            if (ArtGltfLoader.TryPlaceNamedMesh(
+                    lightingKit, "obst_lens", origin, Quaternion.identity,
+                    new Color(0.95f, 0.95f, 0.9f), out var lensPart))
+            {
+                lensPart.SetParent(mast, true);
+                kitMast = true;
+            }
+
+            ArtGltfLoader.TryPlaceNamedMesh(
+                lightingKit, "obst_beacon_ring", origin, Quaternion.identity,
+                new Color(1f, 0.9f, 0.5f), out var ringPart);
+            if (ringPart != null)
+                ringPart.SetParent(mast, true);
+
+            if (!kitMast)
+            {
+                var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                pole.name = "Beacon mast";
+                Object.Destroy(pole.GetComponent<Collider>());
+                pole.transform.SetParent(mast, false);
+                pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
+                pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
+                pole.GetComponent<Renderer>().material.color = steel;
+
+                var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                head.name = "Beacon head";
+                Object.Destroy(head.GetComponent<Collider>());
+                head.transform.SetParent(mast, false);
+                head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
+                head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
+                head.GetComponent<Renderer>().material.color = new Color(0.95f, 0.95f, 0.9f);
+            }
 
             var lightGo = new GameObject("Beacon light");
             lightGo.transform.SetParent(mast, false);
-            lightGo.transform.localPosition = new Vector3(0f, 9.1f, 0f);
+            lightGo.transform.localPosition = new Vector3(0f, kitMast ? 6.5f : 9.1f, 0f);
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(0.85f, 1f, 0.9f);

@@ -3288,25 +3288,78 @@ namespace Airside.Presentation
 
         private static void BuildVegetation()
         {
-            // Stylised eucalyptus clumps — readable from overview, not botanical.
-            PlaceTree(new Vector3(-32f, 0f, 30f), 1.1f);
-            PlaceTree(new Vector3(-38f, 0f, 22f), 0.9f);
-            PlaceTree(new Vector3(-28f, 0f, 36f), 1.25f);
-            PlaceTree(new Vector3(40f, 0f, 30f), 1.0f);
-            PlaceTree(new Vector3(52f, 0f, 34f), 1.15f);
-            PlaceTree(new Vector3(58f, 0f, 28f), 0.85f);
-            PlaceTree(new Vector3(36f, 0f, 52f), 1.2f);
-            PlaceTree(new Vector3(-52f, 0f, 8f), 1.3f);
-            PlaceTree(new Vector3(-48f, 0f, -8f), 0.95f);
-            PlaceTree(new Vector3(50f, 0f, -10f), 1.05f);
-            PlaceTree(new Vector3(56f, 0f, 8f), 0.9f);
-            PlaceTree(new Vector3(-18f, 0f, 42f), 0.8f);
-            // Low scrub near the coast.
-            for (var x = -50; x <= 50; x += 10)
+            // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
+            // a handful of props (0025 item 3). Presentation only.
+            var trees = new (Vector3 Pos, float Scale)[]
             {
-                CreateBlock($"Coast scrub {x}", new Vector3(x, 0.25f, -40f), new Vector3(2.2f, 0.5f, 1.4f),
-                    Shade(AirsideTheme.Eucalyptus, 0.75f));
+                (new Vector3(-32f, 0f, 30f), 1.1f),
+                (new Vector3(-38f, 0f, 22f), 0.9f),
+                (new Vector3(-28f, 0f, 36f), 1.25f),
+                (new Vector3(-42f, 0f, 34f), 1.05f),
+                (new Vector3(-46f, 0f, 26f), 0.88f),
+                (new Vector3(-24f, 0f, 40f), 0.95f),
+                (new Vector3(40f, 0f, 30f), 1.0f),
+                (new Vector3(52f, 0f, 34f), 1.15f),
+                (new Vector3(58f, 0f, 28f), 0.85f),
+                (new Vector3(46f, 0f, 40f), 1.05f),
+                (new Vector3(36f, 0f, 52f), 1.2f),
+                (new Vector3(62f, 0f, 42f), 0.92f),
+                (new Vector3(-52f, 0f, 8f), 1.3f),
+                (new Vector3(-48f, 0f, -8f), 0.95f),
+                (new Vector3(-56f, 0f, -2f), 1.1f),
+                (new Vector3(-44f, 0f, 14f), 0.82f),
+                (new Vector3(50f, 0f, -10f), 1.05f),
+                (new Vector3(56f, 0f, 8f), 0.9f),
+                (new Vector3(62f, 0f, -4f), 1.15f),
+                (new Vector3(54f, 0f, 18f), 0.78f),
+                (new Vector3(-18f, 0f, 42f), 0.8f),
+                (new Vector3(-8f, 0f, 46f), 0.95f),
+                (new Vector3(8f, 0f, 44f), 1.05f),
+                (new Vector3(16f, 0f, 50f), 0.88f),
+                // South fringe above the dunes (keep clear of runway strip).
+                (new Vector3(-40f, 0f, -28f), 0.9f),
+                (new Vector3(-28f, 0f, -32f), 1.0f),
+                (new Vector3(28f, 0f, -30f), 0.95f),
+                (new Vector3(40f, 0f, -26f), 1.1f),
+                (new Vector3(-60f, 0f, 20f), 1.2f),
+                (new Vector3(68f, 0f, 16f), 1.05f)
+            };
+            for (var i = 0; i < trees.Length; i++)
+                PlaceTree(trees[i].Pos, trees[i].Scale);
+
+            // Low shrub / scrub clusters along fence and car-park edges.
+            var shrubs = new[]
+            {
+                new Vector3(-30f, 0f, 33f), new Vector3(-22f, 0f, 35f), new Vector3(-14f, 0f, 33.5f),
+                new Vector3(12f, 0f, 34.5f), new Vector3(34f, 0f, 33f), new Vector3(40f, 0f, 36f),
+                new Vector3(54f, 0f, 50f), new Vector3(50f, 0f, 54f), new Vector3(60f, 0f, 44f),
+                new Vector3(-50f, 0f, 4f), new Vector3(-54f, 0f, -12f), new Vector3(48f, 0f, -16f),
+                new Vector3(-36f, 0f, -24f), new Vector3(32f, 0f, -22f), new Vector3(0f, 0f, 38f)
+            };
+            for (var i = 0; i < shrubs.Length; i++)
+                PlaceShrub(shrubs[i], 0.7f + (i % 4) * 0.12f);
+
+            // Dense coastal scrub belt between berms and sand.
+            for (var x = -55; x <= 55; x += 5)
+            {
+                var zJitter = ((x * 13) % 7) * 0.15f;
+                CreateBlock($"Coast scrub {x}", new Vector3(x, 0.28f, -39.5f + zJitter),
+                    new Vector3(2.4f + (x % 3) * 0.4f, 0.45f + (Mathf.Abs(x) % 5) * 0.05f, 1.5f),
+                    Shade(AirsideTheme.Eucalyptus, 0.72f + (x % 4) * 0.04f));
+                if (x % 10 == 0)
+                    PlaceShrub(new Vector3(x + 1.5f, 0f, -37.5f), 0.65f);
             }
+        }
+
+        private static void PlaceShrub(Vector3 basePosition, float scale)
+        {
+            var bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            bush.name = "Shrub";
+            Object.Destroy(bush.GetComponent<Collider>());
+            bush.transform.position = basePosition + new Vector3(0f, 0.45f * scale, 0f);
+            bush.transform.localScale = new Vector3(1.4f * scale, 0.85f * scale, 1.2f * scale);
+            bush.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                Shade(AirsideTheme.DryGrass, 0.85f), AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
         private static void PlaceTree(Vector3 basePosition, float scale)
@@ -3323,7 +3376,17 @@ namespace Airside.Presentation
             Object.Destroy(canopy.GetComponent<Collider>());
             canopy.transform.position = basePosition + new Vector3(0f, 2.6f * scale, 0f);
             canopy.transform.localScale = new Vector3(2.2f * scale, 1.8f * scale, 2.2f * scale);
-            canopy.GetComponent<Renderer>().material = CreateMaterial(Shade(AirsideTheme.Eucalyptus, 0.9f));
+            canopy.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                Shade(AirsideTheme.Eucalyptus, 0.9f), AirsideMaterialLibrary.SurfaceKind.Grass);
+
+            // Secondary canopy blob so clumps read denser from overview.
+            var canopyB = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            canopyB.name = "Tree canopy B";
+            Object.Destroy(canopyB.GetComponent<Collider>());
+            canopyB.transform.position = basePosition + new Vector3(0.55f * scale, 2.2f * scale, -0.4f * scale);
+            canopyB.transform.localScale = new Vector3(1.5f * scale, 1.2f * scale, 1.5f * scale);
+            canopyB.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                Shade(AirsideTheme.Eucalyptus, 0.78f), AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
         private static void BuildDistantHills()

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Canvas research toast + save)
-- **Branch / working tree:** `cursor/canvas-toast-save-ddad`
-- **Do this next:** Merge Canvas toast/save; Bailey Play soak research complete + autosave chip
-- **In progress / half-done:** research toast (top) + ops toast (bottom) + Saved chip on Canvas
-- **Watch out for:** IMGUI toast/save only when Canvas inactive
+- **Last updated:** 2026-09-07 by Cursor (landside vegetation density)
+- **Branch / working tree:** `cursor/landside-vegetation-ddad`
+- **Do this next:** Merge vegetation densify; Bailey Play soak overview tree belts + coastal scrub
+- **In progress / half-done:** denser eucalyptus belts, shrubs, dual-canopy trees, scrub belt
+- **Watch out for:** still greybox primitives — not authored foliage assets
 - **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** PBR maps + v03 kits + threshold lights on main
+- **Visual assets:** PBR + v03 + threshold lights + Canvas chrome on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,8 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
-   Play through dusk and a research complete / autosave if possible.
-2. Confirm Canvas research toast (top), ops toast (bottom), Saved chip; threshold lights at night.
-3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
-   or denser environment vegetation. No new economy systems; no Companion/CloudKit.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play overview.
+2. Confirm denser tree belts / coastal scrub without runway clutter; dusk lights + Canvas chrome.
+3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2).
+   No new economy systems; no Companion/CloudKit.

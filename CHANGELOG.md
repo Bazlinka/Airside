@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Denser landside vegetation (0025 item 3).** More eucalyptus belts, dual-canopy trees,
+  shrub clusters and a tighter coastal scrub strip so overview reads as KI bush, not a
+  sparse prop ring. Presentation only.
+
 - **Canvas research toast + save indicator (0025 item 6).** Research-complete banner
   (top), ops toast (bottom) and Saved chip move onto runtime uGUI; IMGUI gated when
   Canvas is active. Presentation only.

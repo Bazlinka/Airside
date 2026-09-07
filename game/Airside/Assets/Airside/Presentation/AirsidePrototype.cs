@@ -876,8 +876,17 @@ namespace Airside.Presentation
             var timeOfDay = _simulation.TimeOfDay;
 
             GUI.Box(new Rect(22, 22, 410, 540), string.Empty, panel);
-            GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                GUI.DrawTexture(new Rect(42, 28, 240, 40), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.Label(new Rect(42, 70, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+            }
+            else
+            {
+                GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
+                GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+            }
             GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
             var phaseLineX = 42f;
             var phaseIcon = _simulation.Flights.Count > 0
@@ -1327,23 +1336,40 @@ namespace Airside.Presentation
 
         private void DrawOpeningBriefing(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
         {
+            var screenW = Screen.width / scale;
+            var screenH = Screen.height / scale;
+            var splash = AirsideTheme.SplashDawn;
+            if (splash != null)
+            {
+                // Full-bleed dawn splash; briefing card sits in the quiet left/centre area.
+                GUI.DrawTexture(new Rect(0f, 0f, screenW, screenH), splash, ScaleMode.ScaleAndCrop, alphaBlend: false);
+                var prev = GUI.color;
+                GUI.color = new Color(0.05f, 0.07f, 0.09f, 0.28f);
+                GUI.DrawTexture(new Rect(0f, 0f, screenW, screenH), Texture2D.whiteTexture);
+                GUI.color = prev;
+            }
+
             var width = 500f;
             var height = 360f;
-            var left = (Screen.width / scale - width) * 0.5f;
-            var top = (Screen.height / scale - height) * 0.5f;
+            var left = (screenW - width) * 0.5f;
+            var top = (screenH - height) * 0.5f;
             GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(left + 24, top + 56, width - 48, 24), "You run this regional airport", detail);
-            GUI.Label(new Rect(left + 24, top + 92, width - 48, 44),
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+                GUI.DrawTexture(new Rect(left + 24, top + 14, 280, 70), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
+            else
+                GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
+            GUI.Label(new Rect(left + 24, top + 88, width - 48, 24), "You run this regional airport", detail);
+            GUI.Label(new Rect(left + 24, top + 118, width - 48, 44),
                 $"Aircraft move on their own. Your job is cash, reputation and capacity at {_simulation.Location.Name}.", detail);
-            GUI.Label(new Rect(left + 24, top + 148, width - 48, 22), "First useful decision", detail);
-            GUI.Label(new Rect(left + 24, top + 176, width - 48, 44),
+            GUI.Label(new Rect(left + 24, top + 170, width - 48, 22), "First useful decision", detail);
+            GUI.Label(new Rect(left + 24, top + 196, width - 48, 44),
                 $"In about {AirportRoutes.FirstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
-            GUI.Label(new Rect(left + 24, top + 230, width - 48, 40),
+            GUI.Label(new Rect(left + 24, top + 248, width - 48, 40),
                 "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left.", small);
-            GUI.Label(new Rect(left + 24, top + 278, width - 48, 20),
+            GUI.Label(new Rect(left + 24, top + 292, width - 48, 20),
                 "Space / Enter to begin  ·  Tab = 4× speed", small);
-            if (GUI.Button(new Rect(left + 140, top + 308, 220, 34), "Begin operations", button))
+            if (GUI.Button(new Rect(left + 140, top + 318, 220, 30), "Begin operations", button))
                 DismissOpeningBriefing();
         }
 

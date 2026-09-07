@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (packaged art path — decision 0025)
-- **Branch / working tree:** `cursor/art-streaming-assets-38b9` → merge to `main`
-- **Do this next:** Merge StreamingAssets art fix; Bailey rebuild macOS app and confirm kits/PNGs load in the **packaged** build (not only Editor Play). Then visual backlog per 0025 (real models → environment → materials → lighting → HUD → motion → brand).
-- **In progress / half-done:** interim filesystem loaders now prefer StreamingAssets; Unity-imported/Addressables pipeline still future.
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after any Art change. Do not call Batch C kits final. Brand/splash still need Bailey Approve before wiring.
-- **Open questions for Bailey:** Approve wordmark + dawn splash when ready (item 8). Visual ~20% of REF is acknowledged.
-- **Visual assets:** Batch A–C + D(runtime) + E + WLD “Integrated” in Editor; **packaged path fixed on this branch**; Verified still pending rebuild evidence
+- **Last updated:** 2026-09-07 by Cursor (Approve brand/splash + wire)
+- **Branch / working tree:** `cursor/approve-brand-splash-38b9` → merge to `main`
+- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets art + splash/wordmark). Then presentation backlog 0025 items 2–7 (real models first).
+- **In progress / half-done:** none after this merge.
+- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox fidelity.
+- **Open questions for Bailey:** none on brand — Approved and wired. Visual ~20% of REF still honest.
+- **Visual assets:** BRD-001 + UI-ILL-001 Approved · Integrated; Batch A–E/WLD as before; Play Verified pending rebuild
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

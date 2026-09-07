@@ -204,6 +204,22 @@ namespace Airside.Presentation
                 _session.EnablePriorityCrew();
             if (keyboard.mKey.wasPressedThisFrame)
                 _audioMuted = !_audioMuted;
+
+            // First-session: Enter accepts a ready route offer without hunting the mouse.
+            if (keyboard.enterKey.wasPressedThisFrame)
+                TryAcceptPendingRouteFromHotkey();
+        }
+
+        private void TryAcceptPendingRouteFromHotkey()
+        {
+            var proposal = _simulation.Routes.Pending;
+            if (proposal == null || _simulation.IsInsolvent)
+                return;
+            if (_simulation.Reputation.Score < proposal.ReputationRequired)
+                return;
+            if (!_simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount))
+                return;
+            _session.AcceptRoute();
         }
 
         private void UpdateAircraftVisual()
@@ -1005,7 +1021,7 @@ namespace Airside.Presentation
             var turnaroundTaskCount = atStand ? _simulation.ActiveTurnaround.Tasks(_clock.Now).Count() : 0;
             // Dynamic left panel: shorter in the first session so the world stays visible.
             var leftPanelHeight = earlySession
-                ? 360f
+                ? 420f
                 : Mathf.Clamp(360f + turnaroundTaskCount * 19f + (atStand ? 70f : 0f) + 140f, 420f, 580f);
             GUI.Box(new Rect(22, 22, 410, leftPanelHeight), string.Empty, panel);
 
@@ -1256,13 +1272,39 @@ namespace Airside.Presentation
             }
             GUI.Label(new Rect(42, y, 380, 24), FirstSessionCoachLine(), coachStyle);
             y += 26f;
-            GUI.Label(new Rect(42, y, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
+            GUI.Label(new Rect(42, y, 380, 22),
+                earlySession
+                    ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
+                    : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
+                small);
+
+            // First-session waiting meter under the coach tip.
+            if (earlySession && _simulation.Routes.Pending == null && !_showOpeningBriefing)
+            {
+                y += 24f;
+                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
+                var progress = 1f - Mathf.Clamp01(secondsToOffer / (float)AirportRoutes.FirstOfferAfterSeconds);
+                GUI.Label(new Rect(42, y, 380, 18),
+                    secondsToOffer > 0
+                        ? $"Waiting for first airline offer… {secondsToOffer}s"
+                        : "Airline offer arriving…",
+                    small);
+                y += 20f;
+                var barLeft = 42f;
+                var barWidth = 360f;
+                var prev = GUI.color;
+                GUI.color = new Color(0.12f, 0.14f, 0.16f, 0.85f);
+                GUI.DrawTexture(new Rect(barLeft, y, barWidth, 8f), Texture2D.whiteTexture);
+                GUI.color = AirsideTheme.CoastalBlue;
+                GUI.DrawTexture(new Rect(barLeft, y, barWidth * progress, 8f), Texture2D.whiteTexture);
+                GUI.color = prev;
+            }
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;
             var pendingOffer = _simulation.Routes.Pending;
             var firstDecisionOffer = pendingOffer != null && accepted.Count == 0;
-            var offerHeight = pendingOffer == null ? 0f : (firstDecisionOffer ? 176f : 156f);
+            var offerHeight = pendingOffer == null ? 0f : (firstDecisionOffer ? 196f : 156f);
             var opsTop = 22f + (offerHeight > 0f ? offerHeight + 12f : 0f);
             // Pin the actionable offer above operations so status detail never buries it.
             if (pendingOffer != null)
@@ -1281,7 +1323,18 @@ namespace Airside.Presentation
             var trafficY = opsTop + 58f;
             if (accepted.Count == 0)
             {
-                GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), "No accepted routes yet", small);
+                if (pendingOffer != null)
+                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), "Offer waiting above — Accept to start income", caution);
+                else
+                {
+                    var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
+                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20),
+                        secondsToOffer > 0
+                            ? $"No routes yet — first offer in {secondsToOffer}s"
+                            : "No routes yet — offer arriving…",
+                        small);
+                }
+
                 trafficY += 18f;
             }
             else
@@ -1388,8 +1441,22 @@ namespace Airside.Presentation
             var left = Screen.width / scale - 362;
             var top = offerTop;
             var firstDecision = _simulation.Routes.Accepted.Count == 0;
-            var height = firstDecision ? 176f : 156f;
+            var height = firstDecision ? 196f : 156f;
             GUI.Box(new Rect(left, top, 340, height), string.Empty, panel);
+            if (firstDecision)
+            {
+                var stripe = AirsideTheme.AlertStripeBackground;
+                if (stripe != null)
+                    GUI.DrawTexture(new Rect(left, top, 340, 6f), stripe, ScaleMode.StretchToFill, alphaBlend: true);
+                // Soft pulse so the first decision panel reads as live.
+                var pulse = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3.2f));
+                var prev = GUI.color;
+                GUI.color = new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, pulse);
+                GUI.DrawTexture(new Rect(left, top, 4f, height), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(left + 336f, top, 4f, height), Texture2D.whiteTexture);
+                GUI.color = prev;
+            }
+
             var routeIcon = AirsideTheme.Icon("economy", "route");
             var titleX = left + 20f;
             if (routeIcon != null)
@@ -1427,10 +1494,16 @@ namespace Airside.Presentation
 
             var buttonTop = bodyTop + 82f;
             GUI.enabled = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
-            if (GUI.Button(new Rect(left + 20, buttonTop, 150, 24), "Accept route", button))
+            var acceptLabel = firstDecision ? "Accept route  (Enter)" : "Accept route";
+            var acceptWidth = firstDecision ? 190f : 150f;
+            if (GUI.Button(new Rect(left + 20, buttonTop, acceptWidth, firstDecision ? 32f : 24f), acceptLabel, button))
                 _session.AcceptRoute();
             GUI.enabled = true;
-            if (GUI.Button(new Rect(left + 178, buttonTop, 130, 24), "Decline", button))
+            var declineTop = firstDecision ? buttonTop : buttonTop;
+            var declineLeft = firstDecision ? left + 220f : left + 178f;
+            var declineW = firstDecision ? 100f : 130f;
+            var declineH = firstDecision ? 32f : 24f;
+            if (GUI.Button(new Rect(declineLeft, declineTop, declineW, declineH), "Decline", button))
                 _session.DeclineRoute();
         }
 
@@ -1547,7 +1620,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 24, top + 196, width - 48, 44),
                 $"In about {AirportRoutes.FirstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
             GUI.Label(new Rect(left + 24, top + 248, width - 48, 40),
-                "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left.", small);
+                "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left. Press Enter to Accept the first offer.", small);
             GUI.Label(new Rect(left + 24, top + 292, width - 48, 20),
                 "Space / Enter to begin  ·  Tab = 4× speed", small);
             if (GUI.Button(new Rect(left + 140, top + 318, 220, 30), "Begin operations", button))
@@ -1572,9 +1645,9 @@ namespace Airside.Presentation
             if (_showOpeningBriefing)
                 return "Read the briefing, then begin — first route offer arrives soon.";
             if (_simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
-                return "Tip: This is your first useful decision — Accept the route offer.";
+                return "Tip: First useful decision — Accept the route offer (Enter).";
             if (_simulation.Routes.Pending != null)
-                return "Tip: Accept a route offer to earn recurring flight income.";
+                return "Tip: Accept a route offer (Enter) for recurring flight income.";
             if (_simulation.Routes.Accepted.Count == 0)
             {
                 var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);

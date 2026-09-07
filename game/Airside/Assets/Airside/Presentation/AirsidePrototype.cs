@@ -3604,7 +3604,7 @@ namespace Airside.Presentation
         private static Light[] CollectAlsLights()
         {
             var lights = new List<Light>();
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var go = GameObject.Find($"ALS lamp {i}");
                 if (go == null)

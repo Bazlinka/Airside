@@ -103,22 +103,9 @@ namespace Airside.Presentation
             var filter = go.AddComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = CreateMaterial(color);
+            var kind = AirsideMaterialLibrary.InferFromMeshName(name);
+            renderer.sharedMaterial = AirsideMaterialLibrary.Create(color, kind);
             return transform;
-        }
-
-        private static Material CreateMaterial(Color color)
-        {
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            var material = new Material(shader) { color = color };
-            // Soft miniature response — not a full authored material library.
-            if (material.HasProperty("_Metallic"))
-                material.SetFloat("_Metallic", 0.05f);
-            if (material.HasProperty("_Smoothness"))
-                material.SetFloat("_Smoothness", 0.35f);
-            if (material.HasProperty("_Glossiness"))
-                material.SetFloat("_Glossiness", 0.35f);
-            return material;
         }
 
         private static bool TryLoadKit(string artRelativePath, out GltfKit kit)

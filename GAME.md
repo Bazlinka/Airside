@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (first-session flow)
-- **Branch / working tree:** `cursor/first-session-flow-38b9` (PR open) → merge then `main`
-- **Do this next:** Merge first-session flow; Bailey `git pull origin main` then Unity Play soak including new-game briefing + first route decision.
-- **In progress / half-done:** first-session opening briefing + new-airport reset + first-decision cues (this branch).
-- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**. Delivery plan **0024**.
-- **Open questions for Bailey:** none — Play soak when ready after pull.
-- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified pending
+- **Last updated:** 2026-09-07 by Cursor (first-session pacing)
+- **Branch / working tree:** `cursor/first-session-pacing-38b9` → merge to `main`
+- **Do this next:** Bailey enable GitHub **Allow auto-merge** (Settings → General) if wanted; `git pull origin main` then Unity Play soak (briefing + first offer at 12s + pinned offer panel).
+- **In progress / half-done:** first-offer pacing 12s + pin route offer above OPERATIONS.
+- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**. Delivery plan **0024**. Auto-merge repo setting is currently off (agent cannot enable it — 403).
+- **Open questions for Bailey:** none for gameplay — Play soak when ready.
+- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; brand/splash candidates unapproved; Play Verified pending
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

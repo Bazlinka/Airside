@@ -1052,22 +1052,31 @@ namespace Airside.Presentation
                     $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
             }
 
-            GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(), small);
+            GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(),
+                _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0 ? caution : small);
             GUI.Label(new Rect(42, 518, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;
+            var pendingOffer = _simulation.Routes.Pending;
+            var firstDecisionOffer = pendingOffer != null && accepted.Count == 0;
+            var offerHeight = pendingOffer == null ? 0f : (firstDecisionOffer ? 176f : 156f);
+            var opsTop = 22f + (offerHeight > 0f ? offerHeight + 12f : 0f);
+            // Pin the actionable offer above operations so status detail never buries it.
+            if (pendingOffer != null)
+                DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f);
+
             var listedRoutes = accepted.Count == 0
                 ? 1
                 : Math.Min(4, accepted.Count) + (accepted.Count > 4 ? 1 : 0);
             // Header through routes summary (~80), schedule lines, fleet (2), event tail (4).
             var opsHeight = 80f + listedRoutes * 18f + 4f + 2 * 18f + 6f + 4 * 20f + 16f;
-            GUI.Box(new Rect(historyLeft, 22, 340, opsHeight), string.Empty, panel);
-            GUI.Label(new Rect(historyLeft + 20, 36, 300, 26), "OPERATIONS", detail);
-            GUI.Label(new Rect(historyLeft + 20, 62, 320, 20),
+            GUI.Box(new Rect(historyLeft, opsTop, 340, opsHeight), string.Empty, panel);
+            GUI.Label(new Rect(historyLeft + 20, opsTop + 14, 300, 26), "OPERATIONS", detail);
+            GUI.Label(new Rect(historyLeft + 20, opsTop + 40, 320, 20),
                 $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight", small);
 
-            var trafficY = 80f;
+            var trafficY = opsTop + 58f;
             if (accepted.Count == 0)
             {
                 GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), "No accepted routes yet", small);
@@ -1092,7 +1101,6 @@ namespace Airside.Presentation
             }
 
             trafficY += 4f;
-            DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f + opsHeight + 12f);
             foreach (var aircraft in _simulation.GroundTraffic)
             {
                 GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}", small);
@@ -1318,7 +1326,7 @@ namespace Airside.Presentation
                 $"Aircraft move on their own. Your job is cash, reputation and capacity at {_simulation.Location.Name}.", detail);
             GUI.Label(new Rect(left + 24, top + 148, width - 48, 22), "First useful decision", detail);
             GUI.Label(new Rect(left + 24, top + 176, width - 48, 44),
-                "In about 25 seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
+                $"In about {AirportRoutes.FirstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
             GUI.Label(new Rect(left + 24, top + 230, width - 48, 40),
                 "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left.", small);
             GUI.Label(new Rect(left + 24, top + 278, width - 48, 20),

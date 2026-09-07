@@ -5548,11 +5548,38 @@ namespace Airside.Presentation
                 }
                 else
                 {
-                    // Lateral bar proxies still needed — kit has no ALS wing meshes.
-                    CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
-                    CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    // Lateral bars from lighting kit stems rotated across the approach axis
+                    // (kit has no dedicated ALS wing meshes).
+                    var barHalf = 1.4f + i * 0.12f;
+                    var barLen = 2.2f + i * 0.18f;
+                    ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "taxi_stem",
+                        new Vector3(x, 0.55f, -barHalf),
+                        Quaternion.Euler(0f, 90f, 0f), stem, out _,
+                        new Vector3(0.35f, barLen * 0.35f, 0.35f));
+                    ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "taxi_stem",
+                        new Vector3(x, 0.55f, barHalf),
+                        Quaternion.Euler(0f, 90f, 0f), stem, out _,
+                        new Vector3(0.35f, barLen * 0.35f, 0.35f));
+                    ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "taxi_lens",
+                        new Vector3(x, 0.72f, -barHalf),
+                        Quaternion.identity, bar, out _,
+                        new Vector3(0.55f, 0.55f, 0.55f));
+                    ArtGltfLoader.TryPlaceNamedMesh(
+                        lightingKit, "taxi_lens",
+                        new Vector3(x, 0.72f, barHalf),
+                        Quaternion.identity, bar, out _,
+                        new Vector3(0.55f, 0.55f, 0.55f));
                     if (i % 2 == 0)
-                        CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
+                    {
+                        ArtGltfLoader.TryPlaceNamedMesh(
+                            lightingKit, "edge_stem",
+                            new Vector3(x, 0.5f, 0f),
+                            Quaternion.Euler(0f, 90f, 0f), stem, out _,
+                            new Vector3(0.3f, (3.6f + i * 0.15f) * 0.28f, 0.3f));
+                    }
                 }
 
                 var lampGo = new GameObject($"ALS lamp {i}");
@@ -6379,40 +6406,54 @@ namespace Airside.Presentation
 
         private static void BuildCloudBands()
         {
-            // Soft translucent cloud blobs so the sky is not empty — presentation only.
+            // Soft translucent cloud clusters so the sky reads layered — presentation only.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            for (var i = 0; i < 22; i++)
+            for (var i = 0; i < 18; i++)
             {
-                var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                cloud.name = $"Cloud {i}";
-                Object.Destroy(cloud.GetComponent<Collider>());
+                var cluster = new GameObject($"Cloud {i}").transform;
+                cluster.SetParent(cloudRoot, false);
                 var x = (float)(rng.NextDouble() * 220f - 110f);
                 var z = (float)(rng.NextDouble() * 200f - 100f);
                 var y = 24f + (float)rng.NextDouble() * 26f;
-                cloud.transform.SetParent(cloudRoot, false);
-                cloud.transform.position = new Vector3(x, y, z);
+                cluster.position = new Vector3(x, y, z);
+
                 var sx = 14f + (float)rng.NextDouble() * 28f;
                 var sy = 3.2f + (float)rng.NextDouble() * 4.2f;
                 var sz = 8f + (float)rng.NextDouble() * 18f;
-                cloud.transform.localScale = new Vector3(sx, sy, sz);
-                var alpha = 0.14f + (float)rng.NextDouble() * 0.18f;
-                cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                    new Color(0.95f, 0.96f, 0.98f, alpha),
-                    AirsideMaterialLibrary.SurfaceKind.Default);
-                cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                cloud.GetComponent<Renderer>().receiveShadows = false;
+                var alpha = 0.12f + (float)rng.NextDouble() * 0.16f;
+                var blobs = 2 + (i % 3);
+                for (var b = 0; b < blobs; b++)
+                {
+                    var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    cloud.name = $"Cloud {i} blob {b}";
+                    Object.Destroy(cloud.GetComponent<Collider>());
+                    cloud.transform.SetParent(cluster, false);
+                    cloud.transform.localPosition = new Vector3(
+                        (b - 1) * sx * 0.22f,
+                        (b % 2) * sy * 0.15f,
+                        (b - 0.5f) * sz * 0.12f);
+                    cloud.transform.localScale = new Vector3(
+                        sx * (0.55f + b * 0.12f),
+                        sy * (0.7f + (b % 2) * 0.2f),
+                        sz * (0.55f + b * 0.1f));
+                    cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                        new Color(0.95f, 0.96f, 0.98f, alpha),
+                        AirsideMaterialLibrary.SurfaceKind.Default);
+                    cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    cloud.GetComponent<Renderer>().receiveShadows = false;
+                }
 
-                // Soft ground umbra under each cloud — drifts with UpdateCloudDrift.
+                // Soft ground umbra under each cloud cluster — drifts with UpdateCloudDrift.
                 var umbra = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 umbra.name = $"Cloud umbra {i}";
                 Object.Destroy(umbra.GetComponent<Collider>());
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
-                umbra.transform.localScale = new Vector3(sx * 0.85f, 0.02f, sz * 0.85f);
+                umbra.transform.localScale = new Vector3(sx * 0.9f, 0.02f, sz * 0.9f);
                 var umbraMat = AirsideMaterialLibrary.Create(
-                    new Color(0.05f, 0.07f, 0.1f, 0.22f),
+                    new Color(0.05f, 0.07f, 0.1f, 0.18f),
                     AirsideMaterialLibrary.SurfaceKind.Default);
                 umbra.GetComponent<Renderer>().material = umbraMat;
                 umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -6687,21 +6728,39 @@ namespace Airside.Presentation
                     p.x = -100f;
                 cloud.position = p;
 
-                var renderer = cloud.GetComponent<Renderer>();
-                if (renderer != null)
+                var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
+                var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
+                tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
+                if (overcast)
+                    tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.55f);
+                var baseAlpha = overcast ? 0.42f : 0.22f;
+                tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
+
+                // Cluster roots have no renderer — tint each blob child.
+                if (cloud.childCount > 0)
                 {
-                    var color = renderer.material.color;
-                    var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
-                    var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
-                    tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
-                    if (overcast)
-                        tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.55f);
-                    // Weather thickens cloud alpha so adverse sky reads from overview.
-                    var baseAlpha = overcast ? 0.42f : 0.22f;
-                    tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
-                    if (color.a > 0.01f)
-                        tint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
-                    renderer.material.color = tint;
+                    for (var b = 0; b < cloud.childCount; b++)
+                    {
+                        var blobRenderer = cloud.GetChild(b).GetComponent<Renderer>();
+                        if (blobRenderer == null)
+                            continue;
+                        var color = blobRenderer.material.color;
+                        var blobTint = tint;
+                        if (color.a > 0.01f)
+                            blobTint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
+                        blobRenderer.material.color = blobTint;
+                    }
+                }
+                else
+                {
+                    var renderer = cloud.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        var color = renderer.material.color;
+                        if (color.a > 0.01f)
+                            tint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
+                        renderer.material.color = tint;
+                    }
                 }
 
                 if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)
@@ -6709,8 +6768,7 @@ namespace Airside.Presentation
                 var umbra = _cloudUmbraRoot.GetChild(i);
                 umbra.position = new Vector3(p.x, 0.06f, p.z);
                 umbra.rotation = Quaternion.identity;
-                var scale = cloud.localScale;
-                umbra.localScale = new Vector3(scale.x * 0.85f, 0.02f, scale.z * 0.85f);
+                // Keep authored umbra footprint; only drift with the cluster.
                 var umbraRenderer = umbra.GetComponent<Renderer>();
                 if (umbraRenderer == null)
                     continue;

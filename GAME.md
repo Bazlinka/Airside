@@ -10,23 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-<<<<<<< HEAD
-- **Last updated:** 2026-09-07 by Cursor (Addressables provider + lofted turboprop + env densify; stacked on HUD fix)
-- **Branch / working tree:** `cursor/addressables-provider-env-cc2d` (stacked on #127 HUD fix)
-- **Do this next:** Bailey squash-merge #127 then #128. Mac Play soak: no Arial/PanelSettings warnings; lofted turboprop; denser fence/vegetation; Addressables keys load; Toolkit without IMGUI. Then #129 motion/brand.
-- **In progress / half-done:** HUD LegacyRuntime + theme TSS; AirsideResourcesProvider; lofted turboprop synced; south fence + vegetation + road shoulders; Toolkit early-outs IMGUI.
-- **Watch out for:** Linux cloud has no Unity — Mac `scripts/test-unity.sh` before merge. Do not overwrite `*_v04` with lofted geometry. Keep StreamingAssets sync.
-- **Open questions for Bailey:** authored FBX overwrite for terminal/turboprop next, or keep procedural loft density?
-- **Visual assets:** Lofted turboprop **Integrated** (prefer `…_lofted_v01`); Addressables Resources provider **wired**; env densify **code-side**; HUD startup **fixed** on this stack.
-=======
-- **Last updated:** 2026-09-07 by Cursor (motion/brand/wet/coast ambient polish)
-- **Branch / working tree:** `cursor/materials-motion-brand-cc2d` (also open: #127 HUD font, #128 Addressables/lofted/env)
-- **Do this next:** Bailey squash-merge #127 → #128 → this PR on Mac; run `scripts/test-unity.sh`; Play soak (no Arial/PanelSettings warnings; lofted turboprop; gear/cargo doors; dawn splash + wordmark on overlays; wet probe refresh).
-- **In progress / half-done:** Presentation polish only — gear doors, cargo door, coast ambient, wet surface set, apron probe refresh, quieter night bloom, brand wordmark on pause/away/insolvency.
+- **Last updated:** 2026-09-07 by Cursor (motion/brand/wet/coast stacked on #127+#128)
+- **Branch / working tree:** `cursor/materials-motion-brand-cc2d` (stack tip: HUD → Addressables/lofted → motion/brand)
+- **Do this next:** Bailey squash-merge #127 → #128 → #129 on Mac; `scripts/test-unity.sh` + Play soak (no Arial/PanelSettings warnings; lofted turboprop; gear/cargo doors; wordmark overlays; wet probe).
+- **In progress / half-done:** Full presentation stack on this tip — HUD fix, Addressables provider, lofted turboprop, env densify, motion/brand/wet/coast polish.
 - **Watch out for:** Linux cloud has no Unity — Mac EditMode required before merge. Do not force-push main. Keep StreamingAssets path intact.
 - **Open questions for Bailey:** authored FBX next, or more procedural densify?
-- **Visual assets:** Brand overlays **strengthened**; motion/life **extended**; materials wet/probe **extended**. Heroes/env densify land with #128.
->>>>>>> aea5782 (Polish motion, brand overlays, wet surfaces and coast audio)
+- **Visual assets:** Lofted turboprop + Addressables **wired**; env densify; brand overlays; motion/life; wet/probe polish. Packaged Batch C/WLD/PRP path preserved.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

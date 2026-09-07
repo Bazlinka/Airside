@@ -8,10 +8,10 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 1–2 — production-facing art entry point.
-    /// Prefers Addressables key <c>airside-prefab/&lt;key&gt;</c> (runtime locator
-    /// exposes Resources prefabs until Bailey builds Editor groups), then direct
-    /// <c>Resources/Airside/Prefabs/</c>, then StreamingAssets glTF via
-    /// <see cref="ArtGltfLoader"/>. Procedural cuboids remain the caller's last resort.
+    /// Prefers Addressables/Resources prefabs, then StreamingAssets glTF via
+    /// <see cref="ArtGltfLoader"/>. Builtin Cube/Cylinder pipeline-proof Resources
+    /// prefabs yield to a companion glTF when present (lathed fidelity before Mac
+    /// FBX bake). Procedural cuboids remain the caller's last resort.
     /// </summary>
     public static class ArtPresentationLoader
     {
@@ -63,6 +63,9 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Prefab / Addressables first, then glTF kit. Returns false when neither source exists.
+        /// Pipeline-proof Resources prefabs (Unity builtin Cube/Cylinder meshes only) yield to a
+        /// StreamingAssets glTF companion when present, so AIR-001 v05 / authored kits show
+        /// lathed mesh fidelity before Mac FBX bake replaces the Resources prefab.
         /// </summary>
         public static bool TryInstantiate(
             string artRelativePath,
@@ -73,12 +76,19 @@ namespace Airside.Presentation
             Vector3 localPosition = default)
         {
             var key = PrefabKeyFromArtPath(artRelativePath);
-            if (TryInstantiatePrefab(key, out root))
+            if (!string.IsNullOrEmpty(key) && TryLoadPrefabAsset(key, out var prefab))
             {
-                if (parent != null)
-                    root.SetParent(parent, false);
-                root.localPosition = localPosition;
-                return true;
+                var gltfAvailable = ArtGltfLoader.HasKit(artRelativePath);
+                if (!gltfAvailable || !IsPipelineProofPrefab(prefab))
+                {
+                    var instance = UnityEngine.Object.Instantiate(prefab);
+                    instance.name = key;
+                    root = instance.transform;
+                    if (parent != null)
+                        root.SetParent(parent, false);
+                    root.localPosition = localPosition;
+                    return true;
+                }
             }
 
             return ArtGltfLoader.TryInstantiate(
@@ -87,6 +97,61 @@ namespace Airside.Presentation
 
         public static bool HasPresentation(string artRelativePath) =>
             HasPrefab(PrefabKeyFromArtPath(artRelativePath)) || ArtGltfLoader.HasKit(artRelativePath);
+
+        private static bool TryLoadPrefabAsset(string prefabKey, out GameObject prefab)
+        {
+            prefab = null;
+            if (string.IsNullOrEmpty(prefabKey))
+                return false;
+
+            AirsidePrefabAddressables.EnsureRegistered();
+            try
+            {
+                var key = AddressablesKeyPrefix + prefabKey;
+                if (AddressablesKeyExists(prefabKey))
+                {
+                    var handle = Addressables.LoadAssetAsync<GameObject>(key);
+                    prefab = handle.WaitForCompletion();
+                    if (handle.Status == AsyncOperationStatus.Succeeded && prefab != null)
+                        return true;
+                    if (handle.IsValid())
+                        Addressables.Release(handle);
+                    prefab = null;
+                }
+            }
+            catch (Exception)
+            {
+                prefab = null;
+            }
+
+            prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
+            return prefab != null;
+        }
+
+        /// <summary>
+        /// True when every MeshFilter uses a Unity builtin Cube/Cylinder (pipeline proof),
+        /// or when no mesh filters exist. Mac FBX bake replaces these with imported meshes.
+        /// </summary>
+        private static bool IsPipelineProofPrefab(GameObject prefab)
+        {
+            if (prefab == null)
+                return true;
+            var filters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            if (filters == null || filters.Length == 0)
+                return true;
+            for (var i = 0; i < filters.Length; i++)
+            {
+                var mesh = filters[i].sharedMesh;
+                if (mesh == null)
+                    continue;
+                var n = mesh.name;
+                if (n != "Cube" && n != "Cylinder" && n != "Sphere" && n != "Capsule"
+                    && n != "Plane" && n != "Quad")
+                    return false;
+            }
+
+            return true;
+        }
 
         private static bool TryInstantiateAddressable(string prefabKey, out Transform root)
         {

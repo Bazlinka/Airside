@@ -48,7 +48,7 @@ Slice F1 is the only recommended first implementation task.
 
 | ID | Exact authoring/runtime paths | Required design | Priority |
 |---|---|---|---|
-| AIR-001 v05 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v05.prefab` | Authored fictional twin turboprop matching REF-003/005; rounded fuselage, readable cockpit/windows, six-blade propellers, separated gear/doors/control surfaces/lights; livery slots preserved | P0 |
+| AIR-001 v05 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v05.prefab` | Authored fictional twin turboprop matching REF-003/005; rounded fuselage, readable cockpit/windows, six-blade propellers, separated gear/doors/control surfaces/lights; livery slots preserved | P0 — **Integrated** (prefer v05; Mac FBX bake upgrades Resources) |
 | BLD-001 v05 | `Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx`; `Resources/Airside/Prefabs/mdl_terminal_regional_small_v05.prefab` | Practical small regional terminal matching REF-001/005: glazed airside face, shallow roof, canopy, service side, rooftop plant and modular end caps | P0 |
 | MAT-001 | `Art/Materials/mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01.mat` | Shared URP Lit material family using existing Batch B maps; consistent roughness, restrained normal strength, glass/emission profiles and wet variants | P0 |
 

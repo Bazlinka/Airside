@@ -1,15 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor Cloud — merge `origin/main` into PR #131; resolved doc conflicts)
-- **Branch:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131) — merge of `main` in progress / completing; tip includes Decision **0027** + Batch F packet from main
-- **Do next:** After Mac Unity confirm of this branch tip, **merge PR #131**. Then start **Batch F1** (AIR-001 v05 authored turboprop mesh) per Decision **0027** — do **not** treat more procedural densify as Batch F completion
-- **In progress / half-done:** none on this merge resolution
+- **Last updated:** 2026-09-07 (Cursor Cloud — Batch F1 AIR-001 v05)
+- **Branch:** `cursor/air-001-v05-turboprop-8515` (PR pending) — AIR-001 v05 only; no BLD/MAT/F2–F4
+- **Do next:** Mac Unity: import FBX, run **Airside → Art → Bake Authored FBX Prefabs**, Play overview/follow at day/dusk/night; then Bailey accept. After accept, start **BLD-001 v05** on a new branch
+- **In progress / half-done:** none
 - **Watch for:**
-  - Decision **0027** (on main): procedural densify of authored kits is **complementary fallback work**, not Batch F asset completion. This PR’s densify tips improve interim presentation but do **not** supersede F1–F6 ordered authored slices
-  - This branch previously truncated `GAME.md` to handoff-only for many tips — restored full living brief from `main` in this merge
-  - Belt-loader kit-path fix + densify stack still need Mac Play Mode before merge
-  - Domain EditMode: `scripts/test-domain.sh` → 105/105 on Linux cloud (pre-merge tip); re-run after merge commit
-- **Open question for Bailey:** none for this merge fix — confirm Mac playtest when ready, then merge #131 and pivot to Batch F1
+  - PreferArtKit order is v05 → authored → lofted → v04 → …; lofted/authored files untouched
+  - `ArtPresentationLoader` yields builtin Cube/Cylinder Resources to StreamingAssets glTF until Mac FBX bake
+  - Domain EditMode: `scripts/test-domain.sh` (Linux cloud) — re-run on this tip
+  - Do **not** start terminal v05 / MAT-001 / F2–F4 on this branch
+- **Open question for Bailey:** Mac camera-matrix accept of AIR-001 v05 vs REF-003/005
 
 ---
 
@@ -113,12 +113,13 @@ supplementary check, not a replacement for a real Unity run before merging.
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay).
   Unity 6.3 Play: no `Arial.ttf` / PanelSettings theme warnings; Toolkit wordmark overlays present.
 - Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
-  Play soak (2026-09-07): lofted turboprop kit in hierarchy; gear/cargo doors present; denser
-  south fence / vegetation / road shoulders; WLD/PRP meshes still placed. Batch E icons remain
+  Batch F1 **AIR-001 v05** (`mdl_regional_turboprop_01_v05`) is preferred ahead of authored/lofted/v04.
+  Play soak still needs Mac Unity confirm of v05 silhouette vs REF-003/005. Batch E icons remain
   as previously integrated. See `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`.
 
 ## Next work
 
-1. Authored FBX overwrite for the lofted turboprop or regional terminal (still procedural greybox).
-2. Optional: build Editor Addressables groups so init stops looking for missing player content.
-3. Expand Toolkit to left/ops panels if needed. No new economy systems; no Companion/CloudKit.
+1. Mac accept AIR-001 v05 (Bake Authored FBX Prefabs + camera matrix), then **BLD-001 v05** only.
+2. After BLD-001: **MAT-001** shared URP material family (still F1; separate tips).
+3. Optional: build Editor Addressables groups so init stops looking for missing player content.
+4. No F2–F4 until F1 hero read is accepted; no new economy systems; no Companion/CloudKit.

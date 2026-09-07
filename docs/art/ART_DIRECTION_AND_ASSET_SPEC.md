@@ -231,7 +231,7 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf` (+ `.fbx`; fallbacks lofted→v04→…→v01) | Fictional twin turboprop; denser lathed fuselage (74 meshes), cabin windows, wing fences, prop hubs; gear/props/doors separated | Integrated (authored preferred; FBX prefab bake on Mac) |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v05.gltf` (+ `.fbx`; fallbacks authored→lofted→v04→…→v01) | Batch F1 authored twin turboprop: oval lathe, six-blade props with yellow tips, tilted windscreen, separated gear/doors/control surfaces/lights (163 meshes) | Integrated (v05 preferred; Mac FBX bake upgrades Resources) |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
@@ -293,7 +293,7 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
-| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | Planned — implement AIR-001 first |
+| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 v05 Integrated** (this slice); BLD-001 v05 + MAT-001 still Planned |
 | F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | Planned |
 | F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | Planned |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | Planned |

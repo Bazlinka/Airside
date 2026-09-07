@@ -50,6 +50,7 @@ overwrite any with an authored FBX prefab of the same name.
 
 Source FBX (Unity ModelImporter):
 
+- `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx` (Batch F1 AIR-001)
 - `Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 
@@ -57,6 +58,7 @@ Resources prefabs (Addressables keys live now):
 
 | Key | Regenerator |
 |---|---|
+| `mdl_regional_turboprop_01_v05` | `scripts/generate-air-001-v05-prefab.py` |
 | `mdl_regional_turboprop_01_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
 | `mdl_terminal_regional_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
 | `mdl_hangar_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
@@ -65,6 +67,10 @@ Resources prefabs (Addressables keys live now):
 Round fuselage/engines use built-in cylinders with motion part names (gear doors,
 props, cabin/cargo doors). Mac menu **Airside → Art → Bake Authored FBX Prefabs**
 can overwrite these with ModelImporter meshes from the `.fbx` files.
+
+`ArtPresentationLoader.TryInstantiate` yields builtin Cube/Cylinder Resources
+prefabs to a StreamingAssets glTF companion when present, so v05/authored lathed
+meshes show before Mac bake.
 
 Companion StreamingAssets glTF remains the fallback if a prefab is missing.
 
@@ -80,4 +86,4 @@ Companion StreamingAssets glTF remains the fallback if a prefab is missing.
    builds them. Verify with **Airside → Art → Verify Prefab Addressables Keys**.
 
 Until a prefab is present for a kit, the existing glTF kits keep working
-(including `mdl_regional_turboprop_01_authored_v01` ahead of lofted/v04/…).
+(including `mdl_regional_turboprop_01_v05` ahead of authored/lofted/v04/…).

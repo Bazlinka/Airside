@@ -45,6 +45,17 @@ namespace Airside.Presentation
         public const float AlsChaseHz = 3.1f;
         public const float ReilFlashHz = 1.9f;
 
+        // Environmental life motion (presentation only)
+        public const float WindsockSwayHz = 0.38f;
+        public const float WindsockRippleHz = 0.54f;
+        public const float FlagFlapHz = 0.67f;
+        public const float FlagRippleHz = 1.13f;
+        public const float ApronWalkerHz = 0.045f;
+        public const float ApronIdleSwayHz = 0.09f;
+        public const float ApronWaveHz = 0.64f;
+        public const float BirdOrbitHz = 0.035f;
+        public const float BirdFlapHz = 1.6f;
+
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
             AircraftPhase.Takeoff => PropRpmTakeoff,

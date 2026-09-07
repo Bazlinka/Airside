@@ -1726,15 +1726,17 @@ namespace Airside.Presentation
                 return;
 
             // Presentation-only: sock streams with a soft wind sway (not sim weather).
-            var wind = 12f + Mathf.Sin(Time.unscaledTime * 0.7f) * 8f;
-            var sway = Mathf.Sin(Time.unscaledTime * 2.4f) * 6f;
+            var wind = 12f + Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 8f;
+            var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f) * 6f;
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
             // Keep parent scale stable; ripple fabric segments so authored children keep shape.
             _windsockSock.localScale = Vector3.one;
             for (var i = 0; i < _windsockSock.childCount; i++)
             {
                 var seg = _windsockSock.GetChild(i);
-                var ripple = Mathf.Sin(Time.unscaledTime * 3.4f + i * 1.35f) * 5f;
+                var ripple = Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f * 1.4f
+                    + i * 1.35f) * 5f;
                 seg.localRotation = Quaternion.Euler(ripple * 0.25f, 0f, ripple);
             }
         }
@@ -1749,8 +1751,8 @@ namespace Airside.Presentation
             }
 
             // Soft flap on the terminal flag cloth (0025 item 7) — presentation only.
-            var flap = Mathf.Sin(Time.unscaledTime * 4.2f) * 12f;
-            var ripple = Mathf.Sin(Time.unscaledTime * 7.1f) * 4f;
+            var flap = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.FlagFlapHz * Mathf.PI * 2f) * 12f;
+            var ripple = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.FlagRippleHz * Mathf.PI * 2f) * 4f;
             _terminalFlag.localRotation = Quaternion.Euler(flap * 0.15f, 0f, flap + ripple);
         }
 
@@ -2320,9 +2322,7 @@ namespace Airside.Presentation
                     continue;
                 }
 
-                renderer.material.color = color;
-                if (renderer.material.HasProperty("_BaseColor"))
-                    renderer.material.SetColor("_BaseColor", color);
+                SetRendererColor(renderer, color);
                 // Stretch slightly as the mark ages so it reads as a rollout streak.
                 var scale = mark.localScale;
                 scale.z = Mathf.MoveTowards(scale.z, 5.2f, Time.unscaledDeltaTime * 0.08f);
@@ -3867,6 +3867,39 @@ namespace Airside.Presentation
             }
 
             _windowLights = lights.ToArray();
+
+            // Authored hangar/terminal glass often uses numbered pane names — collect by prefix.
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                    continue;
+                var n = renderer.gameObject.name;
+                if (!(n.StartsWith("glass_pane", StringComparison.Ordinal)
+                      || n.StartsWith("skylight_l", StringComparison.Ordinal)
+                      || n.StartsWith("skylight_r", StringComparison.Ordinal)
+                      || n.StartsWith("skylight_mid", StringComparison.Ordinal)
+                      || n is "skylight_l" or "skylight_r" or "skylight_mid"))
+                    continue;
+                if (n.StartsWith("skylight_frame", StringComparison.Ordinal))
+                    continue;
+
+                _nightGlowRenderers.Add(renderer);
+                var light = renderer.GetComponent<Light>();
+                if (light == null)
+                {
+                    light = renderer.gameObject.AddComponent<Light>();
+                    light.type = LightType.Point;
+                    light.color = new Color(1f, 0.78f, 0.45f);
+                    light.range = 12f;
+                    light.shadows = LightShadows.None;
+                    light.intensity = 0f;
+                }
+
+                if (!lights.Contains(light))
+                    lights.Add(light);
+            }
+
+            _windowLights = lights.ToArray();
             UpdateNightGlow((float)_simulation.TimeOfDay.Daylight);
         }
 
@@ -4306,7 +4339,8 @@ namespace Airside.Presentation
                 pole.transform.SetParent(mast, false);
                 pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
                 pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
-                pole.GetComponent<Renderer>().material.color = steel;
+                if (pole.GetComponent<Renderer>() != null)
+                    SetRendererColor(pole.GetComponent<Renderer>(), steel);
 
                 var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 head.name = "Beacon head";
@@ -4362,13 +4396,13 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
-            // Expansion-joint grid so the apron reads as poured slabs (REF densify).
+            // Expansion-joint grid — sparse so MAT apron texture remains the read (not plastic grid).
             var joint = new Color(0.22f, 0.23f, 0.24f);
-            for (var x = 8f; x <= 32f; x += 4f)
-                CreateBlock($"Apron joint X {x:0}", new Vector3(x, 0.065f, 17f), new Vector3(0.06f, 0.02f, 13.6f), joint);
-            for (var z = 11f; z <= 23f; z += 3f)
-                CreateBlock($"Apron joint Z {z:0}", new Vector3(20f, 0.065f, z), new Vector3(27.6f, 0.02f, 0.06f), joint);
-            // Moisture-varied slab overlays so dry apron isn't one plastic tile (REF).
+            for (var x = 10f; x <= 30f; x += 8f)
+                CreateBlock($"Apron joint X {x:0}", new Vector3(x, 0.065f, 17f), new Vector3(0.05f, 0.02f, 12f), joint);
+            for (var z = 12f; z <= 22f; z += 5f)
+                CreateBlock($"Apron joint Z {z:0}", new Vector3(20f, 0.065f, z), new Vector3(24f, 0.02f, 0.05f), joint);
+            // Moisture-varied slab overlays — three accents, not a full densify set.
             var slabA = new Color(0.32f, 0.34f, 0.35f);
             var slabB = new Color(0.36f, 0.37f, 0.38f);
             CreateBlock("Apron slab A", new Vector3(14f, 0.02f, 14f), new Vector3(5.5f, 0.04f, 4.5f), slabA,
@@ -4377,16 +4411,6 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.3f, 1.1f));
             CreateBlock("Apron slab C", new Vector3(18f, 0.02f, 20f), new Vector3(5f, 0.04f, 4f), Shade(slabA, 1.05f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.1f, 0.9f));
-            CreateBlock("Apron slab D", new Vector3(28f, 0.02f, 20.5f), new Vector3(5.5f, 0.04f, 4.5f), Shade(slabB, 0.95f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
-            CreateBlock("Apron slab E", new Vector3(12f, 0.02f, 19f), new Vector3(4.5f, 0.04f, 3.8f), slabB,
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1f, 0.9f));
-            CreateBlock("Apron slab F", new Vector3(22f, 0.02f, 13f), new Vector3(4.8f, 0.04f, 3.5f), Shade(slabA, 0.92f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.1f, 0.85f));
-            CreateBlock("Apron slab G", new Vector3(30f, 0.02f, 17f), new Vector3(4f, 0.04f, 4.2f), slabA,
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.9f, 1f));
-            CreateBlock("Apron slab H", new Vector3(16f, 0.02f, 22f), new Vector3(5.2f, 0.04f, 3.6f), Shade(slabB, 1.04f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.15f, 0.8f));
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -5077,8 +5101,8 @@ namespace Airside.Presentation
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
                 if (walker)
                 {
-                    var ox = Mathf.Sin(Time.unscaledTime * 0.28f + i) * 1.6f;
-                    var oz = Mathf.Cos(Time.unscaledTime * 0.22f + i * 0.7f) * 1.0f;
+                    var ox = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWalkerHz * Mathf.PI * 2f + i) * 1.6f;
+                    var oz = Mathf.Cos(Time.unscaledTime * AirsideReusableMotion.ApronWalkerHz * Mathf.PI * 2f * 0.8f + i * 0.7f) * 1.0f;
                     person.position = new Vector3(basePos.x + ox, basePos.y, basePos.z + oz);
                     var look = new Vector3(-oz, 0f, ox);
                     if (look.sqrMagnitude > 0.0001f)
@@ -5087,7 +5111,7 @@ namespace Airside.Presentation
                 }
                 else
                 {
-                    var sway = Mathf.Sin(Time.unscaledTime * 0.55f + i * 0.9f) * 0.08f;
+                    var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronIdleSwayHz * Mathf.PI * 2f + i * 0.9f) * 0.08f;
                     person.position = new Vector3(basePos.x + sway, basePos.y, basePos.z);
                 }
 
@@ -5097,19 +5121,20 @@ namespace Airside.Presentation
                         continue;
                     if (child.name.IndexOf("torso", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var lean = Mathf.Sin(Time.unscaledTime * 0.9f + i * 1.3f) * 4f;
+                        var lean = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronIdleSwayHz * Mathf.PI * 2f * 1.6f + i * 1.3f) * 4f;
                         if (wave)
-                            lean += Mathf.Sin(Time.unscaledTime * 4f) * 16f;
+                            lean += Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f) * 16f;
                         child.localEulerAngles = new Vector3(0f, 0f, lean);
                     }
                     else if (wave && child.name.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var tip = Mathf.Sin(Time.unscaledTime * 6f) * 28f;
+                        var tip = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.5f) * 28f;
                         child.localEulerAngles = new Vector3(tip, 0f, 12f);
                     }
                     else if (wave && child.name.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var swing = Mathf.Sin(Time.unscaledTime * 5f + (child.name.Contains("L") ? 0f : 1.2f)) * 35f;
+                        var swing = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.25f
+                            + (child.name.Contains("L") ? 0f : 1.2f)) * 35f;
                         child.localEulerAngles = new Vector3(swing, 0f, child.name.Contains("L") ? -12f : 12f);
                     }
                     else if (walker && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -5127,37 +5152,29 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildCoastalLife()
         {
-            // Timber jetty reaching into the shallows.
+            // Timber jetty — restrained silhouette so kit coast/dunes stay the hero read.
             var timber = new Color(0.45f, 0.32f, 0.18f);
             var pile = new Color(0.35f, 0.26f, 0.16f);
-            CreateBlock("Jetty deck", new Vector3(-18f, -0.15f, -52f), new Vector3(2.4f, 0.18f, 14f), timber);
-            for (var plank = 0; plank < 7; plank++)
+            CreateBlock("Jetty deck", new Vector3(-18f, -0.15f, -52f), new Vector3(2.4f, 0.18f, 12f), timber);
+            for (var plank = 0; plank < 4; plank++)
             {
-                var z = -46.5f - plank * 1.7f;
-                CreateBlock($"Jetty plank {plank}", new Vector3(-18f, -0.04f, z), new Vector3(2.2f, 0.05f, 1.4f), Shade(timber, 0.9f + (plank % 3) * 0.05f));
+                var z = -47f - plank * 2.2f;
+                CreateBlock($"Jetty plank {plank}", new Vector3(-18f, -0.04f, z), new Vector3(2.2f, 0.05f, 1.6f), Shade(timber, 0.92f + (plank % 2) * 0.04f));
             }
 
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 3; i++)
             {
-                var z = -46f - i * 2.5f;
+                var z = -47f - i * 3.5f;
                 CreateBlock($"Jetty pile L {i}", new Vector3(-19f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), pile);
                 CreateBlock($"Jetty pile R {i}", new Vector3(-17f, -0.55f, z), new Vector3(0.28f, 0.9f, 0.28f), pile);
-                CreateBlock($"Jetty brace {i}", new Vector3(-18f, -0.35f, z), new Vector3(1.8f, 0.1f, 0.12f), Shade(pile, 1.1f));
             }
 
-            CreateBlock("Jetty rail L", new Vector3(-19.1f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 12f), Shade(timber, 0.85f));
-            CreateBlock("Jetty rail R", new Vector3(-16.9f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 12f), Shade(timber, 0.85f));
+            CreateBlock("Jetty rail L", new Vector3(-19.1f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 10f), Shade(timber, 0.85f));
+            CreateBlock("Jetty rail R", new Vector3(-16.9f, 0.35f, -52f), new Vector3(0.08f, 0.7f, 10f), Shade(timber, 0.85f));
             CreateBlock("Jetty bollard A", new Vector3(-19.0f, 0.25f, -46.5f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
             CreateBlock("Jetty bollard B", new Vector3(-17.0f, 0.25f, -46.5f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
-            CreateBlock("Jetty bollard C", new Vector3(-19.0f, 0.25f, -57f), new Vector3(0.22f, 0.55f, 0.22f), new Color(0.25f, 0.26f, 0.28f));
-            CreateBlock("Jetty cleat A", new Vector3(-18.6f, 0.02f, -48f), new Vector3(0.35f, 0.12f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
-            CreateBlock("Jetty cleat B", new Vector3(-17.4f, 0.02f, -54f), new Vector3(0.35f, 0.12f, 0.18f), new Color(0.4f, 0.42f, 0.44f));
-            CreateBlock("Jetty ladder", new Vector3(-16.7f, -0.4f, -55f), new Vector3(0.12f, 1.1f, 0.55f), new Color(0.5f, 0.52f, 0.54f));
-            CreateBlock("Jetty ladder rung", new Vector3(-16.7f, -0.15f, -55f), new Vector3(0.35f, 0.06f, 0.08f), new Color(0.55f, 0.56f, 0.58f));
-            CreateBlock("Jetty end cap", new Vector3(-18f, -0.05f, -59.2f), new Vector3(2.5f, 0.2f, 0.35f), Shade(timber, 0.8f));
-            CreateBlock("Jetty deck seam", new Vector3(-18f, -0.02f, -52f), new Vector3(0.08f, 0.04f, 13.5f), Shade(timber, 0.7f));
+            CreateBlock("Jetty end cap", new Vector3(-18f, -0.05f, -58f), new Vector3(2.5f, 0.2f, 0.35f), Shade(timber, 0.8f));
             CreateBlock("Jetty approach", new Vector3(-18f, -0.12f, -44.5f), new Vector3(3.2f, 0.14f, 2.2f), Shade(AirsideTheme.Concrete, 0.9f));
-            CreateBlock("Jetty approach edge", new Vector3(-18f, -0.02f, -43.6f), new Vector3(3.0f, 0.04f, 0.18f), Color.white);
 
             PlaceCoastBoat("Coast boat A", new Vector3(-12f, -0.55f, -62f), 12f, new Color(0.85f, 0.88f, 0.9f));
             PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
@@ -5171,8 +5188,6 @@ namespace Airside.Presentation
             CreateBlock("Coast rock A", new Vector3(-28f, -0.25f, -50f), new Vector3(2.8f, 0.9f, 2.2f), rock);
             CreateBlock("Coast rock B", new Vector3(18f, -0.2f, -49f), new Vector3(2.2f, 0.7f, 1.8f), Shade(rock, 0.9f));
             CreateBlock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), new Vector3(3.4f, 1.1f, 2.6f), Shade(rock, 1.1f));
-            CreateBlock("Coast rock D", new Vector3(-52f, -0.22f, -48.5f), new Vector3(2.0f, 0.65f, 1.6f), Shade(rock, 0.85f));
-            CreateBlock("Coast rock E", new Vector3(68f, -0.28f, -53f), new Vector3(2.6f, 0.85f, 2.0f), rock);
         }
 
         /// <summary>
@@ -5194,15 +5209,15 @@ namespace Airside.Presentation
                         renderer.material = AirsideMaterialLibrary.Create(
                             new Color(0.35f, 0.55f, 0.7f, 0.55f), AirsideMaterialLibrary.SurfaceKind.Glass);
                     else if (n.Contains("stripe"))
-                        renderer.material.color = new Color(0.2f, 0.45f, 0.65f);
+                        SetRendererColor(renderer, new Color(0.2f, 0.45f, 0.65f));
                     else if (n.Contains("mast") || n.Contains("boom") || n.Contains("rail") || n.Contains("cleat"))
-                        renderer.material.color = new Color(0.75f, 0.75f, 0.72f);
+                        SetRendererColor(renderer, new Color(0.75f, 0.75f, 0.72f));
                     else if (n.Contains("outboard"))
-                        renderer.material.color = new Color(0.2f, 0.22f, 0.25f);
+                        SetRendererColor(renderer, new Color(0.2f, 0.22f, 0.25f));
                     else if (n.Contains("hull") || n.Contains("bow") || n.Contains("gunwale") || n.Contains("transom")
                              || n.Contains("roof") || n.Contains("cabin"))
-                        renderer.material.color = n.Contains("roof") || n.Contains("cabin")
-                            ? Shade(hull, 0.85f) : hull;
+                        SetRendererColor(renderer, n.Contains("roof") || n.Contains("cabin")
+                            ? Shade(hull, 0.85f) : hull);
                 }
             }
             else
@@ -5372,7 +5387,7 @@ namespace Airside.Presentation
                     var color = n.Contains("roof") ? Shade(body, 0.85f)
                         : n.Contains("bumper") || n.Contains("arch") ? Shade(body, 0.7f)
                         : body;
-                    renderer.material.color = color;
+                    SetRendererColor(renderer, color);
                 }
             }
         }
@@ -6386,13 +6401,13 @@ namespace Airside.Presentation
             var euc = Shade(AirsideTheme.Eucalyptus, 0.45f);
             var dry = Shade(AirsideTheme.DryGrass, 0.55f);
             var sand = Shade(AirsideTheme.Sand, 0.75f);
-            Place("hill_a", new Vector3(-85f, 0f, 68f), Quaternion.identity, euc, "Context hill NW", 2.2f);
-            Place("hill_b", new Vector3(90f, 0f, 62f), Quaternion.Euler(0f, 25f, 0f), dry, "Context hill NE", 2.0f);
-            Place("hill_c", new Vector3(-95f, 0f, 8f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill W", 1.8f);
-            Place("hill_a", new Vector3(100f, 0f, 4f), Quaternion.Euler(0f, -30f, 0f), dry, "Context hill E", 1.7f);
-            Place("dune_a", new Vector3(-40f, 0f, -52f), Quaternion.identity, sand, "Context dune SW", 1.6f);
-            Place("dune_b", new Vector3(35f, 0f, -50f), Quaternion.Euler(0f, 15f, 0f), sand, "Context dune SE", 1.5f);
-            Place("berm", new Vector3(0f, 0f, -42f), Quaternion.identity, Shade(sand, 0.9f), "Context coast berm", 2.5f);
+            Place("hill_a", new Vector3(-85f, 0f, 68f), Quaternion.identity, euc, "Context hill NW", 2.8f);
+            Place("hill_b", new Vector3(90f, 0f, 62f), Quaternion.Euler(0f, 25f, 0f), dry, "Context hill NE", 2.6f);
+            Place("hill_c", new Vector3(-95f, 0f, 8f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill W", 2.4f);
+            Place("hill_a", new Vector3(100f, 0f, 4f), Quaternion.Euler(0f, -30f, 0f), dry, "Context hill E", 2.3f);
+            Place("dune_a", new Vector3(-40f, 0f, -52f), Quaternion.identity, sand, "Context dune SW", 2.0f);
+            Place("dune_b", new Vector3(35f, 0f, -50f), Quaternion.Euler(0f, 15f, 0f), sand, "Context dune SE", 1.9f);
+            Place("berm", new Vector3(0f, 0f, -42f), Quaternion.identity, Shade(sand, 0.9f), "Context coast berm", 2.8f);
             // Near-field coast / paddock accents from the same WLD-004 kit (textured slabs remain).
             Place("coast_sand", new Vector3(-55f, -0.2f, -48f), Quaternion.identity, sand, "Context coast sand W", 1.8f);
             Place("coast_sand", new Vector3(55f, -0.2f, -48f), Quaternion.Euler(0f, 180f, 0f), sand, "Context coast sand E", 1.8f);
@@ -6408,43 +6423,46 @@ namespace Airside.Presentation
 
         private static void BuildDistantHills()
         {
-            // Batch F3 WLD-004 — authored hill/dune accents; far slabs fill the horizon.
+            // Batch F3 WLD-004 — authored hill/dune accents; far slabs only when accents miss.
             var accents = TryPlaceContextTerrainAccents();
 
-            // Textured far masses so the horizon is not a void (0025 item 3).
-            CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 3f));
-            CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 2.5f));
-            CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 5f));
-            CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3.5f, 4.5f));
-            CreateBlock("Hill far S", new Vector3(0f, 0.8f, -95f), new Vector3(70f, 3.5f, 18f), Shade(AirsideTheme.Sand, 0.75f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(8f, 2f));
-
-            // Secondary ridges/shoulders/headlands densify only when WLD-004 accents missed
-            // (avoid mushy double silhouette next to authored hills/dunes).
-            if (accents)
+            if (!accents)
+            {
+                // Textured far masses so the horizon is not a void (0025 item 3).
+                CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 3f));
+                CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 2.5f));
+                CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 5f));
+                CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3.5f, 4.5f));
+                CreateBlock("Hill far S", new Vector3(0f, 0.8f, -95f), new Vector3(70f, 3.5f, 18f), Shade(AirsideTheme.Sand, 0.75f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(8f, 2f));
+                CreateBlock("Hill far NW ridge", new Vector3(-78f, 5.2f, 72f), new Vector3(22f, 3.5f, 12f), Shade(AirsideTheme.Eucalyptus, 0.48f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 1.5f));
+                CreateBlock("Hill far NE spur", new Vector3(108f, 3.2f, 58f), new Vector3(18f, 3.2f, 14f), Shade(AirsideTheme.DryGrass, 0.62f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+                CreateBlock("Hill far W shoulder", new Vector3(-88f, 2.8f, -8f), new Vector3(16f, 3.5f, 18f), Shade(AirsideTheme.Eucalyptus, 0.42f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2.2f));
+                CreateBlock("Hill far E shoulder", new Vector3(92f, 2.4f, -12f), new Vector3(14f, 3.0f, 16f), Shade(AirsideTheme.DryGrass, 0.58f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
+                CreateBlock("Hill far SW headland", new Vector3(-55f, 1.4f, -88f), new Vector3(28f, 4.2f, 14f),
+                    Shade(AirsideTheme.Sand, 0.68f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(4f, 2f));
+                CreateBlock("Hill far SE headland", new Vector3(58f, 1.2f, -90f), new Vector3(26f, 3.8f, 12f),
+                    Shade(AirsideTheme.Sand, 0.72f),
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1.8f));
+                CreateBlock("Hill far N spur", new Vector3(12f, 3.8f, 78f), new Vector3(24f, 4.5f, 16f),
+                    Shade(AirsideTheme.Eucalyptus, 0.5f),
+                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 2f));
                 return;
+            }
 
-            CreateBlock("Hill far NW ridge", new Vector3(-78f, 5.2f, 72f), new Vector3(22f, 3.5f, 12f), Shade(AirsideTheme.Eucalyptus, 0.48f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 1.5f));
-            CreateBlock("Hill far NE spur", new Vector3(108f, 3.2f, 58f), new Vector3(18f, 3.2f, 14f), Shade(AirsideTheme.DryGrass, 0.62f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2.5f, 1.5f));
-            CreateBlock("Hill far W shoulder", new Vector3(-88f, 2.8f, -8f), new Vector3(16f, 3.5f, 18f), Shade(AirsideTheme.Eucalyptus, 0.42f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2.2f));
-            CreateBlock("Hill far E shoulder", new Vector3(92f, 2.4f, -12f), new Vector3(14f, 3.0f, 16f), Shade(AirsideTheme.DryGrass, 0.58f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
-            CreateBlock("Hill far SW headland", new Vector3(-55f, 1.4f, -88f), new Vector3(28f, 4.2f, 14f),
-                Shade(AirsideTheme.Sand, 0.68f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(4f, 2f));
-            CreateBlock("Hill far SE headland", new Vector3(58f, 1.2f, -90f), new Vector3(26f, 3.8f, 12f),
-                Shade(AirsideTheme.Sand, 0.72f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1.8f));
-            CreateBlock("Hill far N spur", new Vector3(12f, 3.8f, 78f), new Vector3(24f, 4.5f, 16f),
-                Shade(AirsideTheme.Eucalyptus, 0.5f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 2f));
+            // Kit accents own the near horizon — one thin far sand ring only so the south
+            // skyline does not open into a void behind the dunes.
+            CreateBlock("Hill far S", new Vector3(0f, 0.6f, -102f), new Vector3(90f, 2.4f, 12f), Shade(AirsideTheme.Sand, 0.7f),
+                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(10f, 1.5f));
         }
 
         private static void BuildHorizonDome()
@@ -7038,7 +7056,7 @@ namespace Airside.Presentation
                     continue;
                 var umbraColor = umbraRenderer.material.color;
                 umbraColor.a = umbraAlpha;
-                umbraRenderer.material.color = umbraColor;
+                SetRendererColor(umbraRenderer, umbraColor);
             }
         }
 
@@ -7099,7 +7117,7 @@ namespace Airside.Presentation
                 return;
 
             // Wide lazy orbit south of the runway — presentation flock, not wildlife sim.
-            var t = Time.unscaledTime * 0.22f;
+            var t = Time.unscaledTime * AirsideReusableMotion.BirdOrbitHz * Mathf.PI * 2f;
             for (var i = 0; i < _birdFlockRoot.childCount; i++)
             {
                 var bird = _birdFlockRoot.GetChild(i);
@@ -7116,7 +7134,7 @@ namespace Airside.Presentation
                     bird.rotation = Quaternion.Slerp(bird.rotation, Quaternion.LookRotation(dir.normalized), Time.unscaledDeltaTime * 4f);
 
                 // Hinged wing flaps — readable silhouette from overview.
-                var flap = Mathf.Sin(Time.unscaledTime * 10f + i * 0.7f) * 38f;
+                var flap = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.BirdFlapHz * Mathf.PI * 2f + i * 0.7f) * 38f;
                 for (var c = 0; c < bird.childCount; c++)
                 {
                     var child = bird.GetChild(c);

@@ -164,8 +164,34 @@ namespace Airside.Presentation
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
-            var shader = _litShader ??= Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Shader shader;
+            if (kind == SurfaceKind.UnlitSky)
+            {
+                shader = Shader.Find("Universal Render Pipeline/Unlit")
+                         ?? Shader.Find("Unlit/Color")
+                         ?? Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Standard");
+            }
+            else
+            {
+                shader = _litShader ??= Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            }
+
             var material = new Material(shader) { color = color };
+
+            if (kind == SurfaceKind.UnlitSky)
+            {
+                // Keep sky/stars/discs free of Lit shading so day tint reads cleanly.
+                if (material.HasProperty("_BaseColor"))
+                    material.SetColor("_BaseColor", color);
+                if (material.HasProperty("_EmissionColor"))
+                {
+                    material.EnableKeyword("_EMISSION");
+                    material.SetColor("_EmissionColor", color);
+                }
+
+                return material;
+            }
 
             if (material.HasProperty("_Metallic"))
                 material.SetFloat("_Metallic", profile.Metallic);

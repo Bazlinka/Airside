@@ -43,6 +43,8 @@ namespace Airside.Presentation
         private Transform _cloudUmbraRoot;
         private Transform _birdFlockRoot;
         private Transform _apronLifeRoot;
+        private readonly List<(Transform Person, Vector3 BasePos, bool Walker)> _apronPeople =
+            new List<(Transform, Vector3, bool)>();
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
         private readonly List<(Transform Panel, float ClosedX, float OpenDelta)> _hangarDoorPanels =
@@ -78,6 +80,7 @@ namespace Airside.Presentation
         private readonly List<Transform> _coastFoamLayers = new List<Transform>();
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
+        private readonly List<Renderer> _coastWaterRenderers = new List<Renderer>();
         private Transform _jettyDeck;
         private Transform _opsAntennaDish;
         private Transform _starFieldRoot;
@@ -2329,6 +2332,14 @@ namespace Airside.Presentation
                         material.SetFloat("_ClearCoatSmoothness", 0.98f);
                     material.EnableKeyword("_CLEARCOAT");
                 }
+                else if (material.HasProperty("_EmissionColor"))
+                {
+                    // ClearCoat-free URP: cool specular sheen so puddles still read wet.
+                    material.EnableKeyword("_EMISSION");
+                    material.SetColor("_EmissionColor", new Color(0.1f, 0.14f, 0.18f) * 0.4f);
+                    if (material.HasProperty("_Metallic"))
+                        material.SetFloat("_Metallic", 0.35f);
+                }
                 puddle.GetComponent<Renderer>().material = material;
                 puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
@@ -3369,7 +3380,14 @@ namespace Airside.Presentation
             {
                 var domeRenderer = _horizonDome.GetComponent<Renderer>();
                 if (domeRenderer != null)
-                    domeRenderer.material.color = sky;
+                {
+                    var mat = domeRenderer.material;
+                    mat.color = sky;
+                    if (mat.HasProperty("_BaseColor"))
+                        mat.SetColor("_BaseColor", sky);
+                    if (mat.HasProperty("_EmissionColor"))
+                        mat.SetColor("_EmissionColor", sky);
+                }
             }
 
             UpdateSunAndMoonDiscs(daylight, warm, elevation);
@@ -4328,10 +4346,22 @@ namespace Airside.Presentation
             if (_apronLifeRoot == null)
                 return;
 
-            // Soft idle lean on torsos so figures don't read as frozen props.
-            for (var i = 0; i < _apronLifeRoot.childCount; i++)
+            if (_apronPeople.Count == 0)
             {
-                var person = _apronLifeRoot.GetChild(i);
+                for (var i = 0; i < _apronLifeRoot.childCount; i++)
+                {
+                    var person = _apronLifeRoot.GetChild(i);
+                    var walker = person.name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0;
+                    _apronPeople.Add((person, person.position, walker));
+                }
+            }
+
+            // Soft idle lean on torsos so figures don't read as frozen props.
+            for (var i = 0; i < _apronPeople.Count; i++)
+            {
+                var (person, basePos, walker) = _apronPeople[i];
+                if (person == null)
+                    continue;
                 if (person.name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0)
                     continue;
 
@@ -4348,33 +4378,21 @@ namespace Airside.Presentation
                     }
                 }
 
-                // Short shuffle for walkers so the apron edge reads busy.
-                if (person.name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0)
+                // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
+                if (walker)
                 {
-                    float baseX = 22f, baseZ = 22.5f;
-                    if (person.name.StartsWith("Ramp", StringComparison.Ordinal))
-                    {
-                        baseX = 18.5f;
-                        baseZ = 14.2f;
-                    }
-                    else if (person.name.StartsWith("Car park", StringComparison.Ordinal))
-                    {
-                        baseX = 34f;
-                        baseZ = 34f;
-                    }
-                    else if (person.name.StartsWith("Ops", StringComparison.Ordinal))
-                    {
-                        baseX = 22f;
-                        baseZ = 22.5f;
-                    }
-
-                    var ox = Mathf.Sin(Time.unscaledTime * 0.28f + i) * 1.8f;
-                    var oz = Mathf.Cos(Time.unscaledTime * 0.22f + i * 0.7f) * 1.1f;
-                    person.position = new Vector3(baseX + ox, 0f, baseZ + oz);
+                    var ox = Mathf.Sin(Time.unscaledTime * 0.28f + i) * 1.6f;
+                    var oz = Mathf.Cos(Time.unscaledTime * 0.22f + i * 0.7f) * 1.0f;
+                    person.position = new Vector3(basePos.x + ox, basePos.y, basePos.z + oz);
                     var look = new Vector3(-oz, 0f, ox);
                     if (look.sqrMagnitude > 0.0001f)
                         person.rotation = Quaternion.Slerp(person.rotation, Quaternion.LookRotation(look.normalized),
                             Time.unscaledDeltaTime * 2f);
+                }
+                else
+                {
+                    var sway = Mathf.Sin(Time.unscaledTime * 0.55f + i * 0.9f) * 0.08f;
+                    person.position = new Vector3(basePos.x + sway, basePos.y, basePos.z);
                 }
 
                 foreach (var child in person.GetComponentsInChildren<Transform>(true))
@@ -4393,8 +4411,7 @@ namespace Airside.Presentation
                         var swing = Mathf.Sin(Time.unscaledTime * 5f + (child.name.Contains("L") ? 0f : 1.2f)) * 35f;
                         child.localEulerAngles = new Vector3(swing, 0f, child.name.Contains("L") ? -12f : 12f);
                     }
-                    else if (person.name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0
-                             && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (walker && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         var stride = Mathf.Sin(Time.unscaledTime * 5.5f + (child.name.Contains("L") ? 0f : 3.14f)) * 18f;
                         child.localEulerAngles = new Vector3(stride, 0f, 0f);
@@ -5181,9 +5198,12 @@ namespace Airside.Presentation
                     var renderer = _sunDisc.GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        renderer.material.color = sunColor;
-                        if (renderer.material.HasProperty("_EmissionColor"))
-                            renderer.material.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
+                        var mat = renderer.material;
+                        mat.color = sunColor;
+                        if (mat.HasProperty("_BaseColor"))
+                            mat.SetColor("_BaseColor", sunColor);
+                        if (mat.HasProperty("_EmissionColor"))
+                            mat.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
                     }
 
                     var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
@@ -5207,9 +5227,12 @@ namespace Airside.Presentation
                     if (renderer != null)
                     {
                         var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
-                        renderer.material.color = c;
-                        if (renderer.material.HasProperty("_EmissionColor"))
-                            renderer.material.SetColor("_EmissionColor", c * 0.7f);
+                        var mat = renderer.material;
+                        mat.color = c;
+                        if (mat.HasProperty("_BaseColor"))
+                            mat.SetColor("_BaseColor", c);
+                        if (mat.HasProperty("_EmissionColor"))
+                            mat.SetColor("_EmissionColor", c * 0.7f);
                     }
                 }
             }
@@ -5327,6 +5350,7 @@ namespace Airside.Presentation
         {
             _coastBoats.Clear();
             _coastFoamLayers.Clear();
+            _coastWaterRenderers.Clear();
             _coastFoam = GameObject.Find("Coast foam")?.transform;
             _jettyDeck = GameObject.Find("Jetty deck")?.transform;
             foreach (var name in new[] { "Coast foam inner", "Coast foam outer" })
@@ -5345,6 +5369,16 @@ namespace Airside.Presentation
                 if (go == null)
                     continue;
                 _coastBoats.Add((go.transform, go.transform.position, go.transform.eulerAngles.y));
+            }
+
+            foreach (var name in new[] { "Coast water", "Coast shallows" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                var renderer = go.GetComponent<Renderer>();
+                if (renderer != null)
+                    _coastWaterRenderers.Add(renderer);
             }
         }
 
@@ -5458,6 +5492,25 @@ namespace Airside.Presentation
                 pos.y = -0.15f + Mathf.Sin(t * 0.9f) * 0.02f;
                 _jettyDeck.position = pos;
             }
+
+            // Slow UV scroll + shallow bob so the KI coast reads as living water (0025 items 3+7).
+            for (var i = 0; i < _coastWaterRenderers.Count; i++)
+            {
+                var renderer = _coastWaterRenderers[i];
+                if (renderer == null)
+                    continue;
+                var mat = renderer.material;
+                var scroll = new Vector2(t * (0.012f + i * 0.004f), t * 0.008f);
+                mat.mainTextureOffset = scroll;
+                if (mat.HasProperty("_BaseMap"))
+                    mat.SetTextureOffset("_BaseMap", scroll);
+                if (renderer.gameObject.name.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var p = renderer.transform.position;
+                    p.y = -0.35f + Mathf.Sin(t * 0.65f + i) * 0.03f;
+                    renderer.transform.position = p;
+                }
+            }
         }
 
         private void UpdateCloudDrift()
@@ -5502,7 +5555,13 @@ namespace Airside.Presentation
                     var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
                     var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
                     tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
-                    tint.a = color.a;
+                    if (overcast)
+                        tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.55f);
+                    // Weather thickens cloud alpha so adverse sky reads from overview.
+                    var baseAlpha = overcast ? 0.42f : 0.22f;
+                    tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
+                    if (color.a > 0.01f)
+                        tint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
                     renderer.material.color = tint;
                 }
 

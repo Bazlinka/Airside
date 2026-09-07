@@ -6,8 +6,9 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 5 — runtime global Volume with ACES tonemap,
-    /// bloom/vignette/film grain, shadows-midtones-highlights day profiles, and
-    /// weather gloom. Presentation only; not a full authored day-profile asset.
+    /// bloom/vignette/film grain, shadows-midtones-highlights day profiles,
+    /// white-balance / split-toning dusk warmth, and weather gloom.
+    /// Presentation only; not a full authored day-profile asset.
     /// </summary>
     public sealed class AirsideDayVolume
     {
@@ -16,19 +17,25 @@ namespace Airside.Presentation
         private readonly Vignette _vignette;
         private readonly FilmGrain _grain;
         private readonly ShadowsMidtonesHighlights _tonal;
+        private readonly WhiteBalance _whiteBalance;
+        private readonly SplitToning _splitToning;
 
         private AirsideDayVolume(
             ColorAdjustments color,
             Bloom bloom,
             Vignette vignette,
             FilmGrain grain,
-            ShadowsMidtonesHighlights tonal)
+            ShadowsMidtonesHighlights tonal,
+            WhiteBalance whiteBalance,
+            SplitToning splitToning)
         {
             _color = color;
             _bloom = bloom;
             _vignette = vignette;
             _grain = grain;
             _tonal = tonal;
+            _whiteBalance = whiteBalance;
+            _splitToning = splitToning;
         }
 
         public static AirsideDayVolume Ensure(Transform host)
@@ -86,6 +93,14 @@ namespace Airside.Presentation
                 tonal = profile.Add<ShadowsMidtonesHighlights>(true);
             tonal.active = true;
 
+            if (!profile.TryGet(out WhiteBalance whiteBalance))
+                whiteBalance = profile.Add<WhiteBalance>(true);
+            whiteBalance.active = true;
+
+            if (!profile.TryGet(out SplitToning splitToning))
+                splitToning = profile.Add<SplitToning>(true);
+            splitToning.active = true;
+
             NeutraliseTemplateEffects(profile);
 
             // Ensure the main camera actually runs the URP post stack.
@@ -107,7 +122,7 @@ namespace Airside.Presentation
                 }
             }
 
-            return new AirsideDayVolume(color, bloom, vignette, grain, tonal);
+            return new AirsideDayVolume(color, bloom, vignette, grain, tonal, whiteBalance, splitToning);
         }
 
         /// <summary>
@@ -158,6 +173,16 @@ namespace Airside.Presentation
                 lensFlare = profile.Add<ScreenSpaceLensFlare>(true);
             lensFlare.active = true;
             lensFlare.intensity.Override(0f);
+
+            // Template WhiteBalance / SplitToning / LiftGammaGain stay neutral so our
+            // owned copies (or this profile's overrides) drive dusk warmth alone.
+            if (profile.TryGet(out LiftGammaGain liftGammaGain))
+            {
+                liftGammaGain.active = true;
+                liftGammaGain.lift.Override(new Vector4(1f, 1f, 1f, 0f));
+                liftGammaGain.gamma.Override(new Vector4(1f, 1f, 1f, 0f));
+                liftGammaGain.gain.Override(new Vector4(1f, 1f, 1f, 0f));
+            }
         }
 
         /// <param name="daylight">0 night … 1 noon.</param>
@@ -217,6 +242,25 @@ namespace Airside.Presentation
             _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.38f, daylight));
             _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
             _tonal.highlightsEnd.Override(1f);
+
+            // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
+            // so night blue survives and weather gloom stays cool.
+            var temperature = Mathf.Lerp(-8f, 6f, daylight) + warm * 28f - weatherGloom * 14f;
+            var tint = warm * 4f - weatherGloom * 3f;
+            _whiteBalance.temperature.Override(temperature);
+            _whiteBalance.tint.Override(tint);
+
+            var shadows = Color.Lerp(
+                new Color(0.45f, 0.55f, 0.85f),
+                new Color(0.35f, 0.42f, 0.62f),
+                weatherGloom);
+            var highlights = Color.Lerp(
+                Color.white,
+                new Color(1f, 0.78f, 0.55f),
+                warm * 0.85f);
+            _splitToning.shadows.Override(shadows);
+            _splitToning.highlights.Override(highlights);
+            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.08f, warm) - weatherGloom * 0.1f);
         }
     }
 }

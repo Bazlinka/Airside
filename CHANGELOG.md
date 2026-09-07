@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Env motion + day-volume polish (0025 items 3+5+7).** Apron walkers orbit
+  spawn bases (no teleports); coast water UV scroll; weather thickens cloud alpha;
+  UnlitSky uses URP Unlit; day volume owns WhiteBalance/SplitToning; puddle sheen
+  without ClearCoat. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Night lighting + wet fallback + Toolkit HUD REF-004 layout (0025 items 4–7).**
   GSE SpotLights aim along kit +X; fuel truck gains bumper headlights (51 meshes);
   cabin glow skips frames; entrance doors no longer Glass; wet sheen without ClearCoat;

@@ -9,6 +9,8 @@
 - **Watch for / assumptions:**
   - Quality PC `shadowDistance` aligned to URP 140; Mobile 90
   - Rain stamps from VFX-003 kit; engine heat prefers VFX-002 kit
+  - ALS lateral bars reuse lighting-kit taxi/edge stems when kit stations land
+  - Cloud bands are multi-blob clusters (UpdateCloudDrift tints children)
   - Overview camera slightly tighter three-quarter (48 m / 52° FOV)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish

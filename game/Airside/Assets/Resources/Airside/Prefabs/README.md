@@ -60,6 +60,7 @@ Resources prefabs (Addressables keys live now):
 | `mdl_regional_turboprop_01_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
 | `mdl_terminal_regional_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
 | `mdl_hangar_small_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
+| `mdl_operations_shed_authored_v01` | `scripts/generate-authored-resources-prefabs.py` |
 
 Round fuselage/engines use built-in cylinders with motion part names (gear doors,
 props, cabin/cargo doors). Mac menu **Airside → Art → Bake Authored FBX Prefabs**

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (authored FBX/Resources: turboprop, terminal, hangar)
+- **Last updated:** 2026-09-07 by Cursor (authored building set + Resources prefabs)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 item 2 — authored ops shed / vehicles, or materials library. No new economy systems.
-- **In progress / half-done:** Authored turboprop + terminal + hangar: FBX + glTF + Resources prefabs (`airside-prefab/*_authored_v01` live).
+- **Do this next:** Continue 0025 item 2 — authored fuel truck / vehicles, or URP material library. No new economy systems.
+- **In progress / half-done:** Authored turboprop + terminal + hangar + ops shed: FBX + glTF + Resources prefabs.
 - **Watch out for:** Addressables missing `settings.json` log is still OK (Resources provider). More PointLights → Mac Play perf.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
-- **Visual assets:** Authored turboprop/terminal/hangar via Resources + FBX; Batch C/WLD/PRP preserved.
+- **Visual assets:** Authored AIR-001 + BLD-001/002/003 via Resources + FBX; Batch C/WLD/PRP preserved.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

@@ -3849,6 +3849,7 @@ namespace Airside.Presentation
             BuildHangarBayInterior();
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_operations_shed_authored_v01.gltf",
                     "Models/Buildings/mdl_operations_shed_v04.gltf",
                     "Models/Buildings/mdl_operations_shed_v03.gltf",
                     "Models/Buildings/mdl_operations_shed_v02.gltf",

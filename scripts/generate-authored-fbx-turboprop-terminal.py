@@ -481,36 +481,49 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     }
 
 
+def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    return {
+        "shed_body": box(0, 1.4, 0, 6, 2.8, 4),
+        "porch": box(0, 1.0, 2.3, 3, 2.0, 1.2),
+        "porch_roof": box(0, 2.15, 2.4, 3.4, 0.18, 1.5),
+        "door": box(0, 1.0, 2.85, 1.1, 1.9, 0.1),
+        "window_l": box(-1.8, 1.6, 2.05, 1.0, 0.9, 0.08),
+        "window_r": box(1.8, 1.6, 2.05, 1.0, 0.9, 0.08),
+        "window_side": box(-3.05, 1.6, 0, 0.08, 0.9, 1.4),
+        "window_side_b": box(3.05, 1.6, 0, 0.08, 0.9, 1.4),
+        "roof_ridge": box(0, 2.95, 0, 6.2, 0.25, 1.0),
+        "roof_panel": box(0, 2.85, 0, 6.0, 0.12, 3.8),
+        "antenna_mast": cylinder(1.8, 3.6, -0.5, 0.05, 1.2, axis="y", segments=6),
+        "antenna_dish": cylinder(1.8, 4.15, -0.5, 0.22, 0.1, axis="y", segments=10),
+        "ac_unit": box(-1.5, 3.15, -0.8, 1.2, 0.45, 0.9),
+        "ac_unit_b": box(0.5, 3.1, -1.0, 0.9, 0.35, 0.7),
+        "radio_rack": box(-2.2, 1.4, -1.6, 0.8, 1.6, 0.5),
+        "step": box(0, 0.15, 2.9, 1.4, 0.25, 0.5),
+    }
+
+
+def write_kit(
+    folder: Path,
+    basename: str,
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]],
+) -> None:
+    gltf = folder / f"{basename}.gltf"
+    fbx = folder / f"{basename}.fbx"
+    pack_gltf(gltf, meshes)
+    write_default_meta(gltf)
+    write_default_meta(gltf.with_suffix(".bin"))
+    export_fbx(meshes, fbx)
+    print(f"Wrote {gltf.name} + {fbx.name} ({len(meshes)} meshes)")
+
+
 def main() -> None:
     AIRCRAFT.mkdir(parents=True, exist_ok=True)
     BUILDINGS.mkdir(parents=True, exist_ok=True)
 
-    air = turboprop_meshes()
-    air_gltf = AIRCRAFT / "mdl_regional_turboprop_01_authored_v01.gltf"
-    air_fbx = AIRCRAFT / "mdl_regional_turboprop_01_authored_v01.fbx"
-    pack_gltf(air_gltf, air)
-    write_default_meta(air_gltf)
-    write_default_meta(air_gltf.with_suffix(".bin"))
-    export_fbx(air, air_fbx)
-    print(f"Wrote {air_gltf.name} + {air_fbx.name} ({len(air)} meshes)")
-
-    bld = terminal_meshes()
-    bld_gltf = BUILDINGS / "mdl_terminal_regional_small_authored_v01.gltf"
-    bld_fbx = BUILDINGS / "mdl_terminal_regional_small_authored_v01.fbx"
-    pack_gltf(bld_gltf, bld)
-    write_default_meta(bld_gltf)
-    write_default_meta(bld_gltf.with_suffix(".bin"))
-    export_fbx(bld, bld_fbx)
-    print(f"Wrote {bld_gltf.name} + {bld_fbx.name} ({len(bld)} meshes)")
-
-    hangar = hangar_meshes()
-    hangar_gltf = BUILDINGS / "mdl_hangar_small_authored_v01.gltf"
-    hangar_fbx = BUILDINGS / "mdl_hangar_small_authored_v01.fbx"
-    pack_gltf(hangar_gltf, hangar)
-    write_default_meta(hangar_gltf)
-    write_default_meta(hangar_gltf.with_suffix(".bin"))
-    export_fbx(hangar, hangar_fbx)
-    print(f"Wrote {hangar_gltf.name} + {hangar_fbx.name} ({len(hangar)} meshes)")
+    write_kit(AIRCRAFT, "mdl_regional_turboprop_01_authored_v01", turboprop_meshes())
+    write_kit(BUILDINGS, "mdl_terminal_regional_small_authored_v01", terminal_meshes())
+    write_kit(BUILDINGS, "mdl_hangar_small_authored_v01", hangar_meshes())
+    write_kit(BUILDINGS, "mdl_operations_shed_authored_v01", ops_shed_meshes())
 
 
 if __name__ == "__main__":

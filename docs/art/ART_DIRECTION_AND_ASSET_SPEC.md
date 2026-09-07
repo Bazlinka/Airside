@@ -237,7 +237,7 @@ references but **does not substitute a flat image for a 3D object**.
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
 | BLD-001 | `Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Small practical terminal, glass frontage, canopy posts, service side, modular end caps | Integrated (authored preferred; FBX prefab bake on Mac) |
 | BLD-002 | `Models/Buildings/mdl_hangar_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Corrugated hangar with door panels, tracks, buttresses, office lean | Integrated (authored preferred) |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v02.gltf` (fallback `…_v01.gltf`) | Compact service/crew building with porch, door and windows | Integrated (v02 preferred; v01 Approved fallback) |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Compact service/crew building with porch, antenna, AC units | Integrated (authored preferred) |
 | VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v02.gltf` (fallback `…_v01.gltf`) | Cab, wheels and hose connection separated | Integrated (v02 preferred; v01 Approved fallback) |
 | VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v02.gltf` (fallback `…_v01.gltf`) | Tug plus three low-detail carts; articulation points defined | Integrated (v02 preferred; v01 Approved fallback) |
 | VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v02.gltf` (fallback `…_v01.gltf`) | Compact apron bus with doors and wheels separated | Integrated (v02 preferred; v01 Approved fallback) |

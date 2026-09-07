@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Authored ops shed + full building Resources set.** `mdl_operations_shed_authored_v01`
+  joins turboprop/terminal/hangar with FBX + glTF + Resources prefab so
+  `airside-prefab/*_authored_v01` covers AIR-001 and BLD-001…003. PreferArtKit
+  prefers authored. Evidence: `scripts/test-domain.sh` 105/105; art sync updated.
+
 - **Authored Resources prefabs + hangar kit.** Addressables keys
   `airside-prefab/mdl_regional_turboprop_01_authored_v01`,
   `…/mdl_terminal_regional_small_authored_v01`, and

@@ -206,8 +206,9 @@ namespace Airside.Presentation
             _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
             _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f);
-            _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight));
+            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
+                + weatherGloom * 0.06f);
+            _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight) - weatherGloom * 0.06f);
             _vignette.intensity.Override(Mathf.Lerp(0.34f, 0.07f, daylight) + weatherGloom * 0.08f);
             // Night film grain for regional dusk grit; nearly off in bright day.
             _grain.intensity.Override(Mathf.Lerp(0.28f, 0.015f, daylight) + weatherGloom * 0.05f);
@@ -231,10 +232,11 @@ namespace Airside.Presentation
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
                 Mathf.Lerp(0.16f, -0.14f, daylight) - weatherGloom * 0.08f));
+            // Dusk: lift midtones a touch more so hangar faces keep shape in warm light.
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.1f));
+                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.16f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.12f, 0.01f, daylight) + warm * 0.04f));
+                Mathf.Lerp(-0.12f, 0.01f, daylight) + warm * 0.06f));
             _tonal.shadowsStart.Override(0f);
             _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.46f, daylight));
             _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
@@ -242,8 +244,8 @@ namespace Airside.Presentation
 
             // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
             // so night blue survives and weather gloom stays cool.
-            var temperature = Mathf.Lerp(-8f, 5f, daylight) + warm * 48f - weatherGloom * 14f;
-            var tint = warm * 7.5f - weatherGloom * 3f;
+            var temperature = Mathf.Lerp(-8f, 5f, daylight) + warm * 52f - weatherGloom * 14f;
+            var tint = warm * 8.5f - weatherGloom * 3f;
             _whiteBalance.temperature.Override(temperature);
             _whiteBalance.tint.Override(tint);
 

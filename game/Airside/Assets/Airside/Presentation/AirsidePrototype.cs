@@ -1060,7 +1060,7 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("Flap", StringComparison.Ordinal))
+                else if (child.name is "Flap L" or "Flap R")
                 {
                     var deploy = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff
                         ? Mathf.Lerp(0f, 22f, Mathf.Clamp01(progress + 0.25f))
@@ -1948,6 +1948,7 @@ namespace Airside.Presentation
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
             {
                 // Exact part names only so densified accessories (Hose reel, Cargo tag) stay put.
+                // Cargo bags nest under Cargo so they bob with the crate (0025 item 7).
                 if (child == vehicle || child.name != partPrefix)
                     continue;
 
@@ -1961,7 +1962,7 @@ namespace Airside.Presentation
                 else if (partPrefix == "Cargo")
                 {
                     var pos = child.localPosition;
-                    pos.y = 0.35f + Mathf.Sin(Time.unscaledTime * 6f) * 0.08f;
+                    pos.y = 0.35f + Mathf.Sin(Time.unscaledTime * 6f + child.GetInstanceID() * 0.01f) * 0.08f;
                     child.localPosition = pos;
                 }
                 else if (partPrefix == "Door")
@@ -2047,7 +2048,11 @@ namespace Airside.Presentation
                     || name.StartsWith("Hold short", StringComparison.Ordinal)
                     || name.StartsWith("Taxi edge", StringComparison.Ordinal)
                     || name.StartsWith("Stand stop", StringComparison.Ordinal)
-                    || name.StartsWith("Stand number", StringComparison.Ordinal);
+                    || name.StartsWith("Stand number", StringComparison.Ordinal)
+                    || name.StartsWith("Access turn", StringComparison.Ordinal)
+                    || name.StartsWith("Drop-off zebra", StringComparison.Ordinal)
+                    || name.StartsWith("Overflow bay", StringComparison.Ordinal)
+                    || name.StartsWith("Bay line", StringComparison.Ordinal);
                 var apply = wet ? rainWetness : (paved ? 0.16f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
                     renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
@@ -2332,7 +2337,11 @@ namespace Airside.Presentation
                     && !n.StartsWith("Hold short", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi edge", StringComparison.Ordinal)
                     && !n.StartsWith("Stand stop", StringComparison.Ordinal)
-                    && !n.StartsWith("Stand number", StringComparison.Ordinal))
+                    && !n.StartsWith("Stand number", StringComparison.Ordinal)
+                    && !n.StartsWith("Access turn", StringComparison.Ordinal)
+                    && !n.StartsWith("Drop-off zebra", StringComparison.Ordinal)
+                    && !n.StartsWith("Overflow bay", StringComparison.Ordinal)
+                    && !n.StartsWith("Bay line", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -4737,16 +4746,38 @@ namespace Airside.Presentation
                     if (renderer == null)
                         continue;
                     var n = renderer.gameObject.name.ToLowerInvariant();
-                    if (n.Contains("hull") || n.Contains("bow") || n.Contains("roof"))
-                        renderer.material.color = n.Contains("roof") ? Shade(hull, 0.85f) : hull;
+                    if (n.Contains("window"))
+                        renderer.material = AirsideMaterialLibrary.Create(
+                            new Color(0.35f, 0.55f, 0.7f, 0.55f), AirsideMaterialLibrary.SurfaceKind.Glass);
+                    else if (n.Contains("stripe"))
+                        renderer.material.color = new Color(0.2f, 0.45f, 0.65f);
+                    else if (n.Contains("mast") || n.Contains("boom") || n.Contains("rail") || n.Contains("cleat"))
+                        renderer.material.color = new Color(0.75f, 0.75f, 0.72f);
+                    else if (n.Contains("outboard"))
+                        renderer.material.color = new Color(0.2f, 0.22f, 0.25f);
+                    else if (n.Contains("hull") || n.Contains("bow") || n.Contains("gunwale") || n.Contains("transom")
+                             || n.Contains("roof") || n.Contains("cabin"))
+                        renderer.material.color = n.Contains("roof") || n.Contains("cabin")
+                            ? Shade(hull, 0.85f) : hull;
                 }
             }
             else
             {
                 root = new GameObject(name).transform;
                 ParentBlock(root, $"{name} hull", Vector3.zero, new Vector3(1.4f, 0.55f, 4.2f), hull);
+                ParentBlock(root, $"{name} gunwale", new Vector3(0f, 0.28f, 0.05f), new Vector3(1.48f, 0.08f, 3.9f), Shade(hull, 1.08f));
+                ParentBlock(root, $"{name} bow", new Vector3(0f, 0.12f, 2.05f), new Vector3(1.05f, 0.4f, 0.7f), Shade(hull, 0.95f));
+                ParentBlock(root, $"{name} transom", new Vector3(0f, 0.18f, -2.05f), new Vector3(1.25f, 0.45f, 0.18f), Shade(hull, 0.9f));
                 ParentBlock(root, $"{name} roof", new Vector3(0f, 0.45f, -0.4f), new Vector3(1.1f, 0.7f, 1.6f), Shade(hull, 0.85f));
+                ParentBlock(root, $"{name} window", new Vector3(0f, 0.55f, 0.15f), new Vector3(1.0f, 0.35f, 0.08f),
+                    new Color(0.35f, 0.55f, 0.7f, 0.55f));
                 ParentBlock(root, $"{name} mast", new Vector3(0f, 1.4f, 0.2f), new Vector3(0.1f, 2.2f, 0.1f), new Color(0.75f, 0.75f, 0.72f));
+                ParentBlock(root, $"{name} boom", new Vector3(0f, 0.95f, -0.35f), new Vector3(0.08f, 0.08f, 1.6f), new Color(0.7f, 0.7f, 0.68f));
+                ParentBlock(root, $"{name} cabin door", new Vector3(0.45f, 0.4f, -0.55f), new Vector3(0.08f, 0.45f, 0.35f), Shade(hull, 0.7f));
+                ParentBlock(root, $"{name} rail L", new Vector3(-0.72f, 0.42f, 0.2f), new Vector3(0.05f, 0.08f, 3.2f), new Color(0.8f, 0.8f, 0.78f));
+                ParentBlock(root, $"{name} rail R", new Vector3(0.72f, 0.42f, 0.2f), new Vector3(0.05f, 0.08f, 3.2f), new Color(0.8f, 0.8f, 0.78f));
+                ParentBlock(root, $"{name} outboard", new Vector3(0f, 0.05f, -2.35f), new Vector3(0.35f, 0.45f, 0.55f), new Color(0.2f, 0.22f, 0.25f));
+                ParentBlock(root, $"{name} stripe", new Vector3(0f, 0.15f, 0.0f), new Vector3(1.42f, 0.08f, 3.6f), new Color(0.2f, 0.45f, 0.65f));
             }
 
             root.position = position;
@@ -4994,9 +5025,19 @@ namespace Airside.Presentation
             CreateBlock("Gate post R", new Vector3(29f, 0.9f, 34f), new Vector3(0.22f, 1.8f, 0.22f), post);
             CreateBlock("Gate leaf L", new Vector3(24.2f, 0.85f, 35.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
             CreateBlock("Gate leaf R", new Vector3(27.8f, 0.85f, 35.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
+            CreateBlock("Gate rail L top", new Vector3(24.2f, 1.45f, 35.55f), new Vector3(2.0f, 0.06f, 0.06f), rail);
+            CreateBlock("Gate rail L mid", new Vector3(24.2f, 0.85f, 35.55f), new Vector3(2.0f, 0.06f, 0.06f), rail);
+            CreateBlock("Gate rail R top", new Vector3(27.8f, 1.45f, 35.55f), new Vector3(2.0f, 0.06f, 0.06f), rail);
+            CreateBlock("Gate rail R mid", new Vector3(27.8f, 0.85f, 35.55f), new Vector3(2.0f, 0.06f, 0.06f), rail);
+            CreateBlock("Gate hinge L", new Vector3(23.15f, 0.9f, 34.35f), new Vector3(0.12f, 0.35f, 0.12f), mesh);
+            CreateBlock("Gate hinge R", new Vector3(28.85f, 0.9f, 34.35f), new Vector3(0.12f, 0.35f, 0.12f), mesh);
+            CreateBlock("Gate latch", new Vector3(26f, 0.95f, 35.5f), new Vector3(0.35f, 0.18f, 0.12f), new Color(0.25f, 0.26f, 0.28f));
             CreateBlock("Gate stop L", new Vector3(23.1f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate stop R", new Vector3(28.9f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate sign", new Vector3(26f, 2.0f, 34.2f), new Vector3(1.6f, 0.55f, 0.06f), AirsideTheme.SafetyYellow);
+            CreateBlock("Gate sign frame", new Vector3(26f, 2.0f, 34.15f), new Vector3(1.75f, 0.68f, 0.04f), post);
+            CreateBlock("Gate light L", new Vector3(23f, 1.85f, 34.15f), new Vector3(0.18f, 0.18f, 0.18f), new Color(0.95f, 0.35f, 0.12f));
+            CreateBlock("Gate light R", new Vector3(29f, 1.85f, 34.15f), new Vector3(0.18f, 0.18f, 0.18f), new Color(0.95f, 0.35f, 0.12f));
 
             // South airside fence above the dunes (gap kept clear of runway strip).
             for (var x = -40; x <= 40; x += 4)
@@ -5046,6 +5087,31 @@ namespace Airside.Presentation
             CreateBlock("Fence brace NE", new Vector3(43.2f, 0.7f, 33.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
             CreateBlock("Fence brace SW", new Vector3(-43.2f, 0.65f, -19.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
             CreateBlock("Fence brace SE", new Vector3(43.2f, 0.65f, -19.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
+            // Mid-span diagonal braces so the fence reads as stiffened chain-link, not toy rails.
+            for (var x = -36; x <= 52; x += 12)
+            {
+                if (x >= 20 && x <= 32)
+                    continue;
+                CreateBlock($"Fence brace N diag {x}", new Vector3(x + 1f, 0.75f, 34f), new Vector3(2.2f, 0.06f, 0.06f), mesh);
+            }
+
+            for (var x = -36; x <= 36; x += 12)
+            {
+                if (x >= -14 && x <= 14)
+                    continue;
+                CreateBlock($"Fence brace S diag {x}", new Vector3(x + 1f, 0.7f, -20f), new Vector3(2.2f, 0.06f, 0.06f), mesh);
+            }
+
+            for (var z = -14; z <= 28; z += 12)
+            {
+                CreateBlock($"Fence brace W diag {z}", new Vector3(-44f, 0.75f, z + 1f), new Vector3(0.06f, 0.06f, 2.2f), mesh);
+                CreateBlock($"Fence brace E diag {z}", new Vector3(44f, 0.75f, z + 1f), new Vector3(0.06f, 0.06f, 2.2f), mesh);
+            }
+
+            CreateBlock("Fence cap NW", new Vector3(-44f, 1.45f, 34f), new Vector3(0.28f, 0.12f, 0.28f), post);
+            CreateBlock("Fence cap NE", new Vector3(44f, 1.45f, 34f), new Vector3(0.28f, 0.12f, 0.28f), post);
+            CreateBlock("Fence cap SW", new Vector3(-44f, 1.35f, -20f), new Vector3(0.28f, 0.12f, 0.28f), post);
+            CreateBlock("Fence cap SE", new Vector3(44f, 1.35f, -20f), new Vector3(0.28f, 0.12f, 0.28f), post);
         }
 
         /// <summary>
@@ -5095,6 +5161,13 @@ namespace Airside.Presentation
             // Far REIL pair — pulsed SpotLights at night (collected with runway edge REIL names).
             CreateBlock("ALS REIL L", new Vector3(-78f, 0.8f, -2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
             CreateBlock("ALS REIL R", new Vector3(-78f, 0.8f, 2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
+            CreateBlock("ALS REIL mast L", new Vector3(-78f, 0.4f, -2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
+            CreateBlock("ALS REIL mast R", new Vector3(-78f, 0.4f, 2.8f), new Vector3(0.14f, 0.75f, 0.14f), stem);
+            CreateBlock("ALS REIL base L", new Vector3(-78f, 0.06f, -2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
+            CreateBlock("ALS REIL base R", new Vector3(-78f, 0.06f, 2.8f), new Vector3(0.45f, 0.1f, 0.45f), AirsideTheme.Concrete);
+            CreateBlock("ALS lead-in bar", new Vector3(-58f, 0.72f, 0f), new Vector3(0.2f, 0.12f, 4.8f), bar);
+            CreateBlock("ALS wing bar L", new Vector3(-52f, 0.7f, -3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
+            CreateBlock("ALS wing bar R", new Vector3(-52f, 0.7f, 3.2f), new Vector3(0.22f, 0.12f, 2.4f), bar);
             for (var side = 0; side < 2; side++)
             {
                 var z = side == 0 ? -2.8f : 2.8f;
@@ -6482,12 +6555,36 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Nest densified cargo bags under the first Cargo crate so bag unload bob carries them.
+        /// </summary>
+        private static void NestCargoBags(Transform vehicle)
+        {
+            Transform cargo = null;
+            var bags = new List<Transform>();
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == vehicle)
+                    continue;
+                if (child.name == "Cargo" && cargo == null)
+                    cargo = child;
+                else if (child.name.StartsWith("Cargo bag", StringComparison.Ordinal))
+                    bags.Add(child);
+            }
+
+            if (cargo == null)
+                return;
+            foreach (var bag in bags)
+                NestUnderProp(cargo, bag, bag.name);
+        }
+
+        /// <summary>
         /// Nest cabin door handle under CabinDoor so UpdateCabinDoor swings both (0025 item 7).
         /// </summary>
         private static void NestCabinDoorParts(Transform aircraft)
         {
             Transform door = null;
             Transform handle = null;
+            Transform frame = null;
             Transform latch = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -6495,11 +6592,14 @@ namespace Airside.Presentation
                     door = child;
                 else if (child.name == "Door handle")
                     handle = child;
+                else if (child.name == "Door frame")
+                    frame = child;
                 else if (child.name == "Cargo door latch")
                     latch = child;
             }
 
             NestUnderProp(door, handle, "Handle");
+            NestUnderProp(door, frame, "Frame");
             // Cargo latch stays with cargo door if present.
             Transform cargo = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
@@ -6799,6 +6899,7 @@ namespace Airside.Presentation
             else
             {
                 NestServiceDoorParts(root);
+                NestCargoBags(root);
             }
 
             root.gameObject.SetActive(false);

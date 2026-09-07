@@ -80,7 +80,29 @@ namespace Airside.Presentation
             [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
-            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal"
+            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal",
+            // MAT-001 — dedicated glass / rubber / painted-line / plastic companions.
+            [SurfaceKind.Glass] = "tx_glass_pane",
+            [SurfaceKind.Rubber] = "tx_rubber_tire",
+            [SurfaceKind.PaintedLine] = "tx_painted_line",
+            [SurfaceKind.Plastic] = "tx_plastic_trim"
+        };
+
+        /// <summary>Default UV tiling when callers omit an explicit scale (MAT-001).</summary>
+        private static readonly Dictionary<SurfaceKind, Vector2> DefaultTilingByKind = new()
+        {
+            [SurfaceKind.Asphalt] = new Vector2(6f, 6f),
+            [SurfaceKind.Concrete] = new Vector2(4f, 4f),
+            [SurfaceKind.Grass] = new Vector2(8f, 8f),
+            [SurfaceKind.Sand] = new Vector2(5f, 5f),
+            [SurfaceKind.Metal] = new Vector2(2.5f, 1.5f),
+            [SurfaceKind.PaintedMetal] = new Vector2(2f, 1.2f),
+            [SurfaceKind.AircraftSkin] = new Vector2(1.5f, 1.5f),
+            [SurfaceKind.PaintedLine] = new Vector2(3f, 1f),
+            [SurfaceKind.Glass] = new Vector2(1.2f, 1.2f),
+            [SurfaceKind.Rubber] = new Vector2(2.5f, 2.5f),
+            [SurfaceKind.Plastic] = new Vector2(2f, 2f),
+            [SurfaceKind.Water] = new Vector2(3f, 3f)
         };
 
         private static readonly Dictionary<SurfaceKind, Texture2D> AuthoredNormals = new();
@@ -91,6 +113,8 @@ namespace Airside.Presentation
 
         private static Texture2D _sharedNormal;
         private static Texture2D _sharedOcclusion;
+        private static readonly Dictionary<SurfaceKind, Texture2D> KindNormals = new();
+        private static readonly Dictionary<SurfaceKind, Texture2D> KindOcclusion = new();
         private static Shader _litShader;
 
         public static Profile GetProfile(SurfaceKind kind) =>
@@ -221,15 +245,17 @@ namespace Airside.Presentation
             if (material.HasProperty("_EnvironmentReflections"))
                 material.SetFloat("_EnvironmentReflections", 1f);
 
+            var resolvedTiling = tiling ?? ResolveDefaultTiling(kind);
+
             if (albedo != null)
             {
                 material.mainTexture = albedo;
-                material.mainTextureScale = tiling ?? Vector2.one;
+                material.mainTextureScale = resolvedTiling;
             }
             else if (AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo) && authoredAlbedo != null)
             {
                 material.mainTexture = authoredAlbedo;
-                material.mainTextureScale = tiling ?? Vector2.one;
+                material.mainTextureScale = resolvedTiling;
             }
 
             var normal = ResolveNormal(kind);
@@ -239,8 +265,7 @@ namespace Airside.Presentation
                 material.EnableKeyword("_NORMALMAP");
                 if (material.HasProperty("_BumpScale"))
                     material.SetFloat("_BumpScale", profile.BumpScale);
-                if (tiling.HasValue)
-                    material.SetTextureScale("_BumpMap", tiling.Value);
+                material.SetTextureScale("_BumpMap", resolvedTiling);
             }
 
             var ao = ResolveAo(kind);
@@ -249,16 +274,14 @@ namespace Airside.Presentation
                 material.SetTexture("_OcclusionMap", ao);
                 if (material.HasProperty("_OcclusionStrength"))
                     material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
-                if (tiling.HasValue)
-                    material.SetTextureScale("_OcclusionMap", tiling.Value * 0.5f);
+                material.SetTextureScale("_OcclusionMap", resolvedTiling * 0.5f);
             }
 
             if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null && material.HasProperty("_MetallicGlossMap"))
             {
                 material.SetTexture("_MetallicGlossMap", mask);
                 material.EnableKeyword("_METALLICSPECGLOSSMAP");
-                if (tiling.HasValue)
-                    material.SetTextureScale("_MetallicGlossMap", tiling.Value);
+                material.SetTextureScale("_MetallicGlossMap", resolvedTiling);
             }
 
             if (profile.Transparent || color.a < 0.99f)
@@ -294,6 +317,9 @@ namespace Airside.Presentation
             var wetColor = Color.Lerp(dryColor, dryColor * 0.32f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
+            // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", wetColor);
 
             var targetSmooth = Mathf.Max(drySmoothness, 0.96f);
             var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);
@@ -358,11 +384,26 @@ namespace Airside.Presentation
             }
         }
 
-        private static Texture2D ResolveNormal(SurfaceKind kind) =>
-            AuthoredNormals.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedNormal;
+        private static Vector2 ResolveDefaultTiling(SurfaceKind kind) =>
+            DefaultTilingByKind.TryGetValue(kind, out var tiling) ? tiling : Vector2.one;
 
-        private static Texture2D ResolveAo(SurfaceKind kind) =>
-            AuthoredAo.TryGetValue(kind, out var tex) && tex != null ? tex : _sharedOcclusion;
+        private static Texture2D ResolveNormal(SurfaceKind kind)
+        {
+            if (AuthoredNormals.TryGetValue(kind, out var authored) && authored != null)
+                return authored;
+            if (KindNormals.TryGetValue(kind, out var kindNormal) && kindNormal != null)
+                return kindNormal;
+            return _sharedNormal;
+        }
+
+        private static Texture2D ResolveAo(SurfaceKind kind)
+        {
+            if (AuthoredAo.TryGetValue(kind, out var authored) && authored != null)
+                return authored;
+            if (KindOcclusion.TryGetValue(kind, out var kindAo) && kindAo != null)
+                return kindAo;
+            return _sharedOcclusion;
+        }
 
         private static void ApplyTransparent(Material material)
         {
@@ -378,12 +419,36 @@ namespace Airside.Presentation
 
         private static void EnsureSharedMaps()
         {
-            if (_sharedNormal != null && _sharedOcclusion != null)
+            if (_sharedNormal != null && _sharedOcclusion != null && KindNormals.Count > 0)
                 return;
 
             const int size = 64;
-            _sharedNormal = BuildNormalMap(size, seed: 17);
-            _sharedOcclusion = BuildOcclusionMap(size, seed: 41);
+            _sharedNormal ??= BuildNormalMap(size, seed: 17, strength: 2f, name: "airside_proc_normal");
+            _sharedOcclusion ??= BuildOcclusionMap(size, seed: 41, dark: 180, span: 75, name: "airside_proc_ao");
+
+            // Per-kind procedural fallbacks so Glass/Rubber/PaintedLine/Plastic do not
+            // share the generic asphalt-like micro-relief (MAT-001 / 0025 item 4).
+            EnsureKindMaps(SurfaceKind.Glass, size, normalSeed: 101, strength: 0.35f, aoSeed: 102, dark: 230, span: 20);
+            EnsureKindMaps(SurfaceKind.Rubber, size, normalSeed: 211, strength: 3.4f, aoSeed: 212, dark: 140, span: 90);
+            EnsureKindMaps(SurfaceKind.PaintedLine, size, normalSeed: 307, strength: 0.55f, aoSeed: 308, dark: 210, span: 30);
+            EnsureKindMaps(SurfaceKind.Plastic, size, normalSeed: 419, strength: 1.1f, aoSeed: 420, dark: 195, span: 45);
+            EnsureKindMaps(SurfaceKind.AircraftSkin, size, normalSeed: 503, strength: 0.7f, aoSeed: 504, dark: 215, span: 28);
+            EnsureKindMaps(SurfaceKind.Water, size, normalSeed: 601, strength: 1.6f, aoSeed: 602, dark: 200, span: 40);
+        }
+
+        private static void EnsureKindMaps(
+            SurfaceKind kind,
+            int size,
+            int normalSeed,
+            float strength,
+            int aoSeed,
+            int dark,
+            int span)
+        {
+            if (!KindNormals.ContainsKey(kind) || KindNormals[kind] == null)
+                KindNormals[kind] = BuildNormalMap(size, normalSeed, strength, $"airside_proc_normal_{kind}");
+            if (!KindOcclusion.ContainsKey(kind) || KindOcclusion[kind] == null)
+                KindOcclusion[kind] = BuildOcclusionMap(size, aoSeed, dark, span, $"airside_proc_ao_{kind}");
         }
 
         private static void EnsureAuthoredMaps()
@@ -437,7 +502,7 @@ namespace Airside.Presentation
         /// <summary>
         /// Tiny procedural normal map — enough micro-relief that Lit lighting catches edges.
         /// </summary>
-        private static Texture2D BuildNormalMap(int size, int seed)
+        private static Texture2D BuildNormalMap(int size, int seed, float strength = 2f, string name = "airside_proc_normal")
         {
             var height = new float[size * size];
             var rng = new System.Random(seed);
@@ -463,7 +528,7 @@ namespace Airside.Presentation
 
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: true, linear: true)
             {
-                name = "airside_proc_normal",
+                name = name,
                 wrapMode = TextureWrapMode.Repeat,
                 filterMode = FilterMode.Bilinear
             };
@@ -475,8 +540,8 @@ namespace Airside.Presentation
                 var hR = blurred[y * size + ((x + 1) % size)];
                 var hD = blurred[((y - 1 + size) % size) * size + x];
                 var hU = blurred[((y + 1) % size) * size + x];
-                var dx = (hL - hR) * 2f;
-                var dy = (hD - hU) * 2f;
+                var dx = (hL - hR) * strength;
+                var dy = (hD - hU) * strength;
                 var normal = new Vector3(dx, dy, 1f).normalized;
                 // Unity tangent-space normal encoding.
                 pixels[y * size + x] = new Color32(
@@ -491,19 +556,24 @@ namespace Airside.Presentation
             return tex;
         }
 
-        private static Texture2D BuildOcclusionMap(int size, int seed)
+        private static Texture2D BuildOcclusionMap(
+            int size,
+            int seed,
+            int dark = 180,
+            int span = 75,
+            string name = "airside_proc_ao")
         {
             var rng = new System.Random(seed);
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: true, linear: true)
             {
-                name = "airside_proc_ao",
+                name = name,
                 wrapMode = TextureWrapMode.Repeat,
                 filterMode = FilterMode.Bilinear
             };
             var pixels = new Color32[size * size];
             for (var i = 0; i < pixels.Length; i++)
             {
-                var v = (byte)(180 + rng.Next(0, 75));
+                var v = (byte)Mathf.Clamp(dark + rng.Next(0, Mathf.Max(1, span)), 0, 255);
                 pixels[i] = new Color32(v, v, v, 255);
             }
 

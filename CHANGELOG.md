@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **MAT-001 maps + wet/motion/env tip (0025 items 3–5+7).** Per-kind glass/rubber/
+  painted-line/plastic PBR companions + procedural fallbacks/default tiling; wet
+  `_BaseColor` sync; landside Access/Overflow/zebra wet collect; flap exact L/R;
+  cargo bags nest under Cargo; cabin Door frame nests; fence/gate/ALS densify;
+  coast boat ~16 parts; dusk midtone/WB polish. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
 - **PaintedLine + landside/motion fixes (0025 items 3–4+7).** Near-white primitives map
   to `PaintedLine` (not aircraft skin); access-turn markings/shoulders + overflow bay
   chevrons; hose mount/nozzle no longer stretch with hose; cabin/bus door parts nest

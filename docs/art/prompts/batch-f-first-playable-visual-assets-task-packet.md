@@ -48,9 +48,9 @@ Slice F1 is the only recommended first implementation task.
 
 | ID | Exact authoring/runtime paths | Required design | Priority |
 |---|---|---|---|
-| AIR-001 v05 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v05.prefab` | Authored fictional twin turboprop matching REF-003/005; rounded fuselage, readable cockpit/windows, six-blade propellers, separated gear/doors/control surfaces/lights; livery slots preserved | P0 — **Integrated** (prefer v05; Mac FBX bake upgrades Resources) |
-| BLD-001 v05 | `Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx`; `Resources/Airside/Prefabs/mdl_terminal_regional_small_v05.prefab` | Practical small regional terminal matching REF-001/005: glazed airside face, shallow roof, canopy, service side, rooftop plant and modular end caps | P0 |
-| MAT-001 | `Art/Materials/mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01.mat` | Shared URP Lit material family using existing Batch B maps; consistent roughness, restrained normal strength, glass/emission profiles and wet variants | P0 |
+| AIR-001 v05 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v05.prefab` | Authored fictional twin turboprop matching REF-003/005; rounded fuselage, readable cockpit/windows, six-blade propellers, separated gear/doors/control surfaces/lights; livery slots preserved | P0 — **Integrated** (prefer v05; Mac FBX bake upgrades Resources); Bailey accepted |
+| BLD-001 v05 | `Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx`; `Resources/Airside/Prefabs/mdl_terminal_regional_small_v05.prefab` | Practical small regional terminal matching REF-001/005: glazed airside face, shallow roof, canopy, service side, rooftop plant and modular end caps | P0 — **Integrated** (prefer v05; Mac FBX bake); Bailey playtest pending |
+| MAT-001 | `Art/Materials/mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01.mat` | Shared URP Lit material family using existing Batch B maps; consistent roughness, restrained normal strength, glass/emission profiles and wet variants | P0 — **Integrated** (Art + Resources; runtime instantiate) |
 
 F1 must update preference order to v05 → current preferred kit → older fallbacks.
 Do not overwrite the lofted or v04 files.
@@ -147,8 +147,7 @@ UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
 
 ## Cursor handoff: first task
 
-AIR-001 v05 is integrated and Bailey-accepted (Mac FBX bake in Resources). Next
-implementation tip is **BLD-001 v05 on a new branch**, then MAT-001. Do not
-generate another cuboid glTF. Retain every fallback.
-
-Do not begin F2–F4 in the same branch. Do not start the terminal on the AIR-001 branch.
+Batch F1 (AIR-001 v05, BLD-001 v05, MAT-001) is integrated on
+`cursor/batch-f1-terminal-materials`. Next implementation tip after Bailey accepts
+the packaged Mac playtest is **Batch F2** on a **new** branch. Do not begin F2–F4
+in the F1 branch.

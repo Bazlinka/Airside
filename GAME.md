@@ -1,15 +1,21 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Mac FBX bake; Bailey accepted AIR-001 v05)
-- **Branch:** `cursor/air-001-v05-turboprop-8515` (PR #133) — AIR-001 v05 only; no BLD/MAT/F2–F4
-- **Do next:** Start **BLD-001 v05** on a **new** branch when ready. Do **not** start the terminal, MAT-001, or F2–F4 on this branch.
-- **In progress / half-done:** none
-- **Watch for:**
-  - PreferArtKit order is v05 → authored → lofted → v04 → …; lofted/authored source files untouched
-  - Mac bake wrote ModelImporter meshes into Resources prefabs (11 kits, including AIR-001 v05). Pipeline-proof Cube/Cylinder yield remains only for unbaked Resources proofs
-  - Domain EditMode: `scripts/test-unity.sh` 116/116 on this tip. `scripts/test-domain.sh` needs a .NET SDK (not installed on this Mac)
-  - Do **not** start terminal v05 / MAT-001 / F2–F4 on this branch
-- **Open question for Bailey:** none for AIR-001 v05 — accepted
+- **Last updated:** 2026-09-07 (Cursor overnight — Batch F1 BLD-001 v05 + MAT-001)
+- **Branch:** `cursor/batch-f1-terminal-materials` — open PR (do not merge until Bailey review)
+- **Do next:** Bailey playtest packaged `work/builds/Airside.app`; review PR for BLD-001/MAT-001.
+  After accept: merge, then Batch F2 (vehicles/people) on a **new** branch only.
+- **In progress / half-done:** none once PR is open
+- **Watch for / assumptions:**
+  - PreferArtKit terminal: v05 → authored → v04 → …; aircraft still v05 first
+  - BLD-001 v05 = project procedural mesh → ASCII FBX (assimp unavailable); Mac bake → Resources ModelImporter meshes
+  - MAT-001 `.mat` under Art + Resources; `AirsideMaterialLibrary` instances them when present
+  - Prefab instantiate re-applies presentation materials (avoids grey FBX defaults)
+  - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
+  - Soak: packaged app ran ~3 min stable (~515–540 MB RSS), then clean quit (no DiagnosticReports). **Not** a verified 30-minute soak — Bailey should leave it running overnight if desired
+  - Night/dusk screenshots show terminal silhouette + AIR-001; one bright pink vertical ray near apron (likely selection/light artefact — investigate if still present in day)
+  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
+  - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)
+- **Open question for Bailey:** visual accept of BLD-001 v05 vs REF-001/005; whether magenta ray is a real material miss
 
 ---
 
@@ -113,13 +119,13 @@ supplementary check, not a replacement for a real Unity run before merging.
   text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay).
   Unity 6.3 Play: no `Arial.ttf` / PanelSettings theme warnings; Toolkit wordmark overlays present.
 - Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
-  Batch F1 **AIR-001 v05** (`mdl_regional_turboprop_01_v05`) is preferred ahead of authored/lofted/v04;
-  Mac **Bake Authored FBX Prefabs** put ModelImporter meshes in Resources; Bailey accepted the v05 result.
-  Batch E icons remain as previously integrated. See `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`.
+  Batch F1 **AIR-001 v05** (`mdl_regional_turboprop_01_v05`) preferred ahead of authored/lofted/v04;
+  **BLD-001 v05** (`mdl_terminal_regional_small_v05`) preferred ahead of authored/v04…; Mac FBX bake in Resources.
+  **MAT-001** eight URP Lit `.mat` files under `Art/Materials/` (+ Resources mirror). See art spec.
 
 ## Next work
 
-1. **BLD-001 v05** on a new branch (AIR-001 v05 accepted; do not start the terminal on this branch).
-2. After BLD-001: **MAT-001** shared URP material family (still F1; separate tips).
+1. Bailey playtest / accept **BLD-001 v05 + MAT-001** (this PR), then merge.
+2. **Batch F2** (vehicles/people) on a new branch after F1 hero read is accepted — not before.
 3. Optional: build Editor Addressables groups so init stops looking for missing player content.
-4. No F2–F4 until F1 hero read is accepted; no new economy systems; no Companion/CloudKit.
+4. No F3–F4 until F2 slice acceptance; no new economy systems; no Companion/CloudKit.

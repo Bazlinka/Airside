@@ -203,6 +203,10 @@ namespace Airside.Presentation
             if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
 
+            // Batch F1 MAT-001 — prefer inspectable authored materials when present.
+            if (TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
+                return authoredInstance;
+
             Shader shader;
             if (kind == SurfaceKind.UnlitSky)
             {
@@ -403,6 +407,64 @@ namespace Airside.Presentation
                 return kindNormal;
             return _sharedNormal;
         }
+
+        /// <summary>
+        /// Batch F1 MAT-001 — instance an authored Resources material when present.
+        /// Returns false so callers keep the procedural Lit Create path.
+        /// </summary>
+        private static bool TryInstantiateAuthored(
+            SurfaceKind kind,
+            Color color,
+            Vector2? tiling,
+            out Material instance)
+        {
+            instance = null;
+            var key = AuthoredMaterialKey(kind);
+            if (key == null)
+                return false;
+            var template = Resources.Load<Material>($"Airside/Materials/{key}");
+            if (template == null)
+                return false;
+
+            instance = new Material(template);
+            if (instance.HasProperty("_BaseColor"))
+            {
+                var baseColor = color;
+                if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && baseColor.a >= 0.99f)
+                    baseColor.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
+                instance.SetColor("_BaseColor", baseColor);
+            }
+            else
+            {
+                instance.color = color;
+            }
+
+            if (tiling.HasValue)
+            {
+                instance.mainTextureScale = tiling.Value;
+                if (instance.HasProperty("_BumpMap"))
+                    instance.SetTextureScale("_BumpMap", tiling.Value);
+                if (instance.HasProperty("_OcclusionMap"))
+                    instance.SetTextureScale("_OcclusionMap", tiling.Value);
+            }
+
+            return true;
+        }
+
+        private static string AuthoredMaterialKey(SurfaceKind kind) =>
+            kind switch
+            {
+                SurfaceKind.Asphalt => "mat_asphalt_v01",
+                SurfaceKind.Concrete => "mat_concrete_v01",
+                SurfaceKind.Grass => "mat_grass_v01",
+                SurfaceKind.Metal => "mat_corrugated_metal_v01",
+                SurfaceKind.PaintedMetal => "mat_corrugated_metal_v01",
+                SurfaceKind.Glass => "mat_glass_v01",
+                SurfaceKind.PaintedLine => "mat_painted_line_v01",
+                SurfaceKind.AircraftSkin => "mat_aircraft_v01",
+                SurfaceKind.Water => "mat_wet_v01",
+                _ => null
+            };
 
         private static Texture2D ResolveAo(SurfaceKind kind)
         {

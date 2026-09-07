@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 BLD-001 v05 + MAT-001.** Authored regional terminal `mdl_terminal_regional_small_v05`
+  (FBX + glTF + Resources bake; PreferArtKit v05 first) and eight URP Lit materials
+  `mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01`.
+  Prefab instantiate re-applies presentation materials. Fallbacks retained; no simulation change.
+  Evidence: Unity bake 12 prefabs; MAT-001 CreateMaterials ×8×2; `scripts/test-unity.sh` 116/116;
+  packaged Mac build launched; ~3 min stable soak then clean quit (30-min soak not completed).
+  F2–F4 not started.
+
 - **Batch F1 AIR-001 v05 Mac bake.** Unity ModelImporter meshes now in Resources prefabs for
   `mdl_regional_turboprop_01_v05` plus the authored FBX kits from the same bake menu; Bailey
   accepted the AIR-001 v05 result. No standalone `.mat` files (materials stay FBX sub-assets).

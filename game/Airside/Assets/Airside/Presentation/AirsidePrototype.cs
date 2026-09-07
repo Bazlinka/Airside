@@ -4193,6 +4193,7 @@ namespace Airside.Presentation
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_v05.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_authored_v01.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v04.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v03.gltf",
@@ -4230,8 +4231,9 @@ namespace Airside.Presentation
                         || name is "service_wing" or "service_door" or "baggage_door" or "baggage_ramp"
                         or "service_door_frame" or "baggage_door_frame")
                         return new Color(0.58f, 0.62f, 0.64f);
-                    if (name is "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
+                    if ((name is "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
                         or "buttress_r" or "plinth" or "plinth_step" or "plinth_kerb_l" or "plinth_kerb_r")
+                        || name.StartsWith("end_cap_soft", StringComparison.Ordinal))
                         return new Color(0.62f, 0.66f, 0.69f);
                     if (name is "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
@@ -4240,11 +4242,14 @@ namespace Airside.Presentation
                         or "canopy_soffit" or "canopy_gutter" or "canopy_flash"
                         or "roof_slab" or "roof_plant" or "roof_plant_b"
                         or "roof_plant_c" or "roof_parapet" or "roof_parapet_back"
-                        or "roof_vent_a" or "roof_vent_b" or "roof_flash_front" or "roof_flash_back"
+                        or "roof_vent_a" or "roof_vent_b" or "roof_vent_c"
+                        or "roof_panel_l" or "roof_panel_r" or "roof_ridge"
+                        or "roof_eave_front" or "roof_eave_back"
+                        or "roof_flash_front" or "roof_flash_back"
                         or "fascia_front" or "fascia_back" or "soffit_front"
                         or "landside_awning" or "landside_awning_brace_l" or "landside_awning_brace_r"
                         or "signage_bar" or "signage_cap" or "signage_glyph_a" or "signage_glyph_b"
-                        or "hvac_duct" or "flag_pole" or "flag_cloth"
+                        or "hvac_duct" or "hvac_duct_b" or "flag_pole" or "flag_cloth"
                         or "baggage_canopy" or "boarding_canopy" or "downpipe_l" or "downpipe_r"
                         or "service_wing_roof" or "service_wing_fascia"
                         or "corner_trim_l" or "corner_trim_r" or "corner_trim_bl" or "corner_trim_br")
@@ -4266,7 +4271,8 @@ namespace Airside.Presentation
                 surfaceMeshNames: new[]
                 {
                     "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
-                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth"
+                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
+                    "roof_panel", "roof_ridge", "roof_eave", "hvac"
                 });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));

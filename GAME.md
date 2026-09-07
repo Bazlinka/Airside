@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-07 (Cursor overnight — Batch F1 BLD-001 v05 + MAT-001)
-- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — tip `9402df7`+; do not merge until Bailey review
+- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — tip `dc8e548`+; do not merge until Bailey review
 - **Do next:** Bailey playtest packaged `work/builds/Airside.app`; review PR for BLD-001/MAT-001.
   After accept: merge, then Batch F2 (vehicles/people) on a **new** branch only.
 - **In progress / half-done:** none once PR is open

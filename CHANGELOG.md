@@ -8,8 +8,9 @@ change it describes.
 - **Post-F visual polish.** Align Quality shadow distance with URP (PC 140 /
   Mobile 90); rain field stamps from VFX-003 kit; aircraft prefer VFX-002 heat
   kit; softer contact shadows; windsock fabric segment ripple; tighter overview
-  camera; day/night sun/flood/fog soak; bird silhouette thinner. Presentation
-  only — simulation unchanged.
+  camera; day/night sun/flood/fog soak; thinner bird silhouettes; ALS lateral
+  bars from lighting-kit stems; layered cloud clusters. Presentation only —
+  simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

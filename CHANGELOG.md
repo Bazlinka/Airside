@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Wet/terrain densify tip (0025 items 3–4).** Residual damp covers markings-kit paint + relief
+  mounds (0.22 clear-day); stronger wet darken/spec; more terrain mounds, grass ribbons, dune
+  crests; scrub clumps to 5 spheres. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **HUD/day/fence/tree densify tip (0025 items 3–6).** Toolkit panels denser brand chrome +
   coastal top edge; ChannelMixer day profiles + golden-hour bloom; eucalyptus flare/fork/5
   canopies; fence top wire + post caps; densify stairs (~28) / pushback tug (~20) / cone /

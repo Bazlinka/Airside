@@ -314,12 +314,20 @@ namespace Airside.Presentation
             wetness01 = Mathf.Clamp01(wetness01);
             // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
             var wetTint = new Color(0.02f, 0.05f, 0.1f, 0f);
-            var wetColor = Color.Lerp(dryColor, dryColor * 0.32f + wetTint, wetness01);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.28f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
             // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", wetColor);
+            if (material.HasProperty("_SpecColor"))
+            {
+                var spec = Color.Lerp(
+                    new Color(0.2f, 0.2f, 0.2f),
+                    new Color(0.55f, 0.62f, 0.7f),
+                    wetness01);
+                material.SetColor("_SpecColor", spec);
+            }
 
             var targetSmooth = Mathf.Max(drySmoothness, 0.96f);
             var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);

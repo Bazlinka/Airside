@@ -2072,8 +2072,24 @@ namespace Airside.Presentation
                     || name.StartsWith("Runway shoulder", StringComparison.Ordinal)
                     || name.StartsWith("Access turn shoulder", StringComparison.Ordinal)
                     || name.StartsWith("Car park kerb", StringComparison.Ordinal)
-                    || name.StartsWith("Relief berm", StringComparison.Ordinal);
-                var apply = wet ? rainWetness : (paved ? 0.16f : 0f);
+                    || name.StartsWith("Relief berm", StringComparison.Ordinal)
+                    || name.StartsWith("Relief mound", StringComparison.Ordinal)
+                    || name.StartsWith("runway_centre", StringComparison.Ordinal)
+                    || name.StartsWith("runway_edge_left", StringComparison.Ordinal)
+                    || name.StartsWith("runway_edge_right", StringComparison.Ordinal)
+                    || name.StartsWith("runway_threshold", StringComparison.Ordinal)
+                    || name.StartsWith("taxi_centreline", StringComparison.Ordinal)
+                    || name.StartsWith("taxi_edge_", StringComparison.Ordinal)
+                    || name.StartsWith("taxi_arrow_", StringComparison.Ordinal)
+                    || name.StartsWith("hold_short_", StringComparison.Ordinal)
+                    || name.StartsWith("threshold_", StringComparison.Ordinal)
+                    || name.StartsWith("stand_stop_", StringComparison.Ordinal)
+                    || name.StartsWith("aiming_", StringComparison.Ordinal)
+                    || name.StartsWith("tdz_", StringComparison.Ordinal)
+                    || name.StartsWith("chevron_", StringComparison.Ordinal)
+                    || name.StartsWith("digit_", StringComparison.Ordinal)
+                    || name.StartsWith("apron_arrow_", StringComparison.Ordinal);
+                var apply = wet ? rainWetness : (paved ? 0.22f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
                     renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
             }
@@ -2396,7 +2412,9 @@ namespace Airside.Presentation
                     && !n.StartsWith("chevron_", StringComparison.Ordinal)
                     && !n.StartsWith("digit_", StringComparison.Ordinal)
                     && !n.StartsWith("apron_arrow_", StringComparison.Ordinal)
-                    && !n.StartsWith("Relief mound", StringComparison.Ordinal))
+                    && !n.StartsWith("Relief mound", StringComparison.Ordinal)
+                    && !n.StartsWith("Grass ribbon", StringComparison.Ordinal)
+                    && !n.StartsWith("Coast dune", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -4565,7 +4583,15 @@ namespace Airside.Presentation
                 new Vector3(-55f, 0.18f, -20f),
                 new Vector3(60f, 0.16f, -18f),
                 new Vector3(0f, 0.14f, 56f),
-                new Vector3(-6f, 0.12f, -40f)
+                new Vector3(-6f, 0.12f, -40f),
+                new Vector3(-50f, 0.18f, 8f),
+                new Vector3(48f, 0.16f, -6f),
+                new Vector3(-18f, 0.14f, 40f),
+                new Vector3(22f, 0.15f, 38f),
+                new Vector3(-32f, 0.12f, -24f),
+                new Vector3(28f, 0.13f, -26f),
+                new Vector3(10f, 0.11f, 48f),
+                new Vector3(-8f, 0.12f, 50f)
             };
             for (var i = 0; i < mounds.Length; i++)
             {
@@ -4583,6 +4609,19 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2.8f, 1.1f));
             CreateBlock("Coast dune mid", new Vector3(0f, 0.22f, -41f), new Vector3(22f, 0.55f, 3.5f), Shade(sand, 0.9f),
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1f));
+            CreateBlock("Coast dune L crest", new Vector3(-30f, 0.7f, -43.5f), new Vector3(10f, 0.45f, 2.2f), Shade(sand, 1.05f),
+                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2f, 0.8f));
+            CreateBlock("Coast dune R crest", new Vector3(26f, 0.55f, -44f), new Vector3(9f, 0.35f, 2f), Shade(sand, 1.02f),
+                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(1.8f, 0.7f));
+            // Soft grass ribbons so the main Grass slab is not a single flat plane.
+            CreateBlock("Grass ribbon N", new Vector3(0f, -0.4f, 26f), new Vector3(80f, 0.35f, 8f), Shade(grass, 0.95f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(10f, 1.5f));
+            CreateBlock("Grass ribbon S", new Vector3(0f, -0.42f, -16f), new Vector3(72f, 0.3f, 7f), Shade(dry, 0.92f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(9f, 1.3f));
+            CreateBlock("Grass ribbon W", new Vector3(-40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(grass, 0.88f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
+            CreateBlock("Grass ribbon E", new Vector3(40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(dry, 0.9f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
         }
 
         /// <summary>
@@ -5589,12 +5628,17 @@ namespace Airside.Presentation
             // Multi-sphere scrub clump so fence belts read as bumpy KI olive, not props.
             var colorA = Shade(AirsideTheme.DryGrass, 0.85f);
             var colorB = Shade(AirsideTheme.Eucalyptus, 0.72f);
+            var colorC = Shade(AirsideTheme.DryGrass, 0.95f);
             PlaceShrubSphere(basePosition + new Vector3(0f, 0.4f * scale, 0f),
                 new Vector3(1.35f * scale, 0.8f * scale, 1.15f * scale), colorA, "Shrub");
             PlaceShrubSphere(basePosition + new Vector3(0.45f * scale, 0.35f * scale, -0.3f * scale),
                 new Vector3(0.95f * scale, 0.6f * scale, 0.85f * scale), colorB, "Shrub B");
             PlaceShrubSphere(basePosition + new Vector3(-0.4f * scale, 0.32f * scale, 0.25f * scale),
                 new Vector3(0.85f * scale, 0.55f * scale, 0.75f * scale), Shade(colorA, 0.9f), "Shrub C");
+            PlaceShrubSphere(basePosition + new Vector3(0.15f * scale, 0.28f * scale, 0.45f * scale),
+                new Vector3(0.7f * scale, 0.45f * scale, 0.65f * scale), colorC, "Shrub D");
+            PlaceShrubSphere(basePosition + new Vector3(-0.25f * scale, 0.25f * scale, -0.4f * scale),
+                new Vector3(0.65f * scale, 0.4f * scale, 0.6f * scale), Shade(colorB, 0.88f), "Shrub E");
         }
 
         private static void PlaceShrubSphere(Vector3 position, Vector3 scale, Color color, string name)

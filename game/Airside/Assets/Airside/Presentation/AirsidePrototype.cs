@@ -2854,38 +2854,109 @@ namespace Airside.Presentation
                 CreateBlock("Hangar obstruction", new Vector3(-20f, 5.2f, 20f), new Vector3(0.25f, 0.25f, 0.25f), obstruction);
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(26f, 4.5f, 27f), Quaternion.identity, obstruction, out _))
                 CreateBlock("Terminal roof light", new Vector3(26f, 4.7f, 27f), new Vector3(0.22f, 0.22f, 0.22f), obstruction);
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(-8f, 3.2f, 26f), Quaternion.identity, obstruction, out _))
+                CreateBlock("Ops obstruction", new Vector3(-8f, 3.4f, 26f), new Vector3(0.2f, 0.2f, 0.2f), obstruction);
 
-            // Corner flood poles on the apron.
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 12f), Quaternion.identity,
-                new Color(0.75f, 0.78f, 0.8f), out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 12f), Quaternion.identity,
-                new Color(0.75f, 0.78f, 0.8f), out _);
+            // Apron flood poles — four corners so night turnarounds read lit.
+            var flood = new Color(0.75f, 0.78f, 0.8f);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 12f), Quaternion.identity, flood, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 12f), Quaternion.identity, flood, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 22f), Quaternion.identity, flood, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 22f), Quaternion.identity, flood, out _);
         }
 
         private static void PlaceWorldProps()
         {
             const string kit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
+
+            // Stand lead-in cones.
             CreateCone(new Vector3(12.5f, 0.25f, 12.2f));
             CreateCone(new Vector3(12.5f, 0.25f, 15.8f));
+            CreateCone(new Vector3(12.5f, 0.25f, 18.2f));
+            CreateCone(new Vector3(12.5f, 0.25f, 21.8f));
             CreateCone(new Vector3(23.5f, 0.25f, 12.2f));
             CreateCone(new Vector3(23.5f, 0.25f, 21.8f));
             CreateCone(new Vector3(-6f, 0.25f, 11f));
+            CreateCone(new Vector3(-10f, 0.25f, 11f));
+            CreateCone(new Vector3(4f, 0.25f, 7.2f));
+            CreateCone(new Vector3(4f, 0.25f, 10.8f));
+
+            // Worksite / hangar barriers.
             CreateBarrier(new Vector3(-14f, 0.45f, 14f), 0f);
             CreateBarrier(new Vector3(-22f, 0.45f, 25.5f), 90f);
+            CreateBarrier(new Vector3(-28f, 0.45f, 18f), 0f);
+            CreateBarrier(new Vector3(36f, 0.45f, 18f), 90f);
 
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_board", new Vector3(10f, 0f, 22f), Quaternion.Euler(0f, 90f, 0f),
+            PlaceSignBoard(kit, new Vector3(10f, 0f, 22f), 90f);
+            PlaceSignBoard(kit, new Vector3(-4f, 0f, 12f), 0f);
+            PlaceSignBoard(kit, new Vector3(18f, 0f, 11.5f), 0f);
+
+            PlaceBaggageDolly(kit, new Vector3(30f, 0f, 22f));
+            PlaceBaggageDolly(kit, new Vector3(32.2f, 0f, 22f));
+            PlaceBaggageDolly(kit, new Vector3(28f, 0f, 19.5f));
+            PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
+
+            BuildFuelFarm();
+            BuildParkedGaAircraft();
+        }
+
+        private static void PlaceSignBoard(string kit, Vector3 position, float yawDegrees)
+        {
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_board", position, Quaternion.Euler(0f, yawDegrees, 0f),
                     new Color(0.12f, 0.35f, 0.55f), out _))
-            {
-                CreateBlock("Airside sign", new Vector3(10f, 1.1f, 22f), new Vector3(0.12f, 2.0f, 1.4f), new Color(0.12f, 0.35f, 0.55f));
-                CreateBlock("Airside sign face", new Vector3(10.08f, 1.35f, 22f), new Vector3(0.04f, 0.9f, 1.1f), new Color(0.95f, 0.95f, 0.92f));
-            }
+                return;
 
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", new Vector3(30f, 0f, 22f), Quaternion.identity,
+            var root = new GameObject("Airside sign").transform;
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+            ParentBlock(root, "Airside sign post", new Vector3(0f, 1.1f, 0f), new Vector3(0.12f, 2.0f, 0.12f), new Color(0.35f, 0.36f, 0.38f));
+            ParentBlock(root, "Airside sign face", new Vector3(0.08f, 1.35f, 0f), new Vector3(0.04f, 0.9f, 1.1f), new Color(0.95f, 0.95f, 0.92f));
+            ParentBlock(root, "Airside sign back", new Vector3(0f, 1.35f, 0f), new Vector3(0.12f, 1.0f, 1.2f), new Color(0.12f, 0.35f, 0.55f));
+        }
+
+        private static void PlaceBaggageDolly(string kit, Vector3 position)
+        {
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", position, Quaternion.identity,
                     new Color(0.55f, 0.35f, 0.18f), out _))
-                CreateBlock("Dolly A", new Vector3(30f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", new Vector3(32.2f, 0f, 22f), Quaternion.identity,
-                    new Color(0.55f, 0.35f, 0.18f), out _))
-                CreateBlock("Dolly B", new Vector3(32.2f, 0.35f, 22f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
+                return;
+            CreateBlock("Dolly", position + new Vector3(0f, 0.35f, 0f), new Vector3(1.6f, 0.7f, 0.9f), new Color(0.55f, 0.35f, 0.18f));
+        }
+
+        /// <summary>
+        /// Small fuel farm west of the hangar — readable silhouette, not a sim system.
+        /// </summary>
+        private static void BuildFuelFarm()
+        {
+            CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 22f), new Vector3(8f, 0.08f, 6f), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
+            CreateBlock("Fuel tank A", new Vector3(-35.5f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
+            CreateBlock("Fuel tank B", new Vector3(-32.2f, 1.1f, 22.5f), new Vector3(2.2f, 2.2f, 2.2f), new Color(0.72f, 0.55f, 0.18f));
+            CreateBlock("Fuel bund", new Vector3(-34f, 0.25f, 22f), new Vector3(7.2f, 0.35f, 5.2f), new Color(0.4f, 0.42f, 0.4f));
+            CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
+            CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
+            CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
+            CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
+        }
+
+        /// <summary>
+        /// Static GA aircraft west of the hangar so the GA apron reads occupied.
+        /// Presentation-only; not in the simulation fleet.
+        /// </summary>
+        private static void BuildParkedGaAircraft()
+        {
+            for (var i = 0; i < 2; i++)
+            {
+                var x = -30f - i * 7f;
+                var root = new GameObject($"Parked GA {i}").transform;
+                root.position = new Vector3(x, 0.55f, 14f);
+                root.rotation = Quaternion.Euler(0f, 90f + i * 8f, 0f);
+                ParentBlock(root, "GA fuselage", Vector3.zero, new Vector3(0.55f, 0.55f, 2.4f), new Color(0.9f, 0.91f, 0.93f));
+                ParentBlock(root, "GA wing", new Vector3(0f, 0.05f, 0.2f), new Vector3(3.2f, 0.08f, 0.7f), new Color(0.85f, 0.55f, 0.2f));
+                ParentBlock(root, "GA tail", new Vector3(0f, 0.55f, -1.0f), new Vector3(0.1f, 0.9f, 0.55f), new Color(0.85f, 0.55f, 0.2f));
+                ParentBlock(root, "GA prop", new Vector3(0f, 0f, 1.25f), new Vector3(0.06f, 0.9f, 0.12f), new Color(0.2f, 0.2f, 0.22f));
+                CreateBlock($"Tie rope {i}a", new Vector3(x - 1.4f, 0.08f, 14f), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
+                CreateBlock($"Tie rope {i}b", new Vector3(x + 1.4f, 0.08f, 14f), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
+            }
         }
 
 

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Denser apron props + fuel farm + parked GA.** More cones/barriers/signs/dollies,
+  four apron floodlights, a small fuel farm west of the hangar, and two static GA
+  aircraft so the airfield reads busier from overview. Presentation only.
+
 - **Prop disc blur + tire roll (0025 item 7).** High-RPM takeoff/approach hides
   blade meshes and shows a translucent prop disc; landing-gear tires roll on
   ground phases. Presentation only (Batch D motion life).

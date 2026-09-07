@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (motion prop disc + tires)
-- **Branch / working tree:** `cursor/motion-prop-disc-wheels-ddad`
-- **Do this next:** Merge motion PR, then denser stand/WLD props or first-session UX; Bailey Play when ready
-- **In progress / half-done:** prop disc blur + tire roll on this branch
-- **Watch out for:** prop disc is a greybox cylinder, not an authored texture
+- **Last updated:** 2026-09-07 by Cursor (apron props density)
+- **Branch / working tree:** `cursor/apron-props-density-ddad`
+- **Do this next:** Merge apron PR, then first-session UX polish; Bailey Play when ready
+- **In progress / half-done:** denser WLD props + fuel farm + parked GA
+- **Watch out for:** GA aircraft and fuel tanks are greybox primitives
 - **Open questions for Bailey:** none
-- **Visual assets:** landside on `main`; motion polish on this branch
+- **Visual assets:** motion on `main`; apron density on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

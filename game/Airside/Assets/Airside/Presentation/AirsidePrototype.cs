@@ -5228,7 +5228,9 @@ namespace Airside.Presentation
 
             var root = new GameObject("Passenger stairs").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
-                    "Models/Props/mdl_service_equipment_kit_v01.gltf",
+                    PreferArtKit(
+                        "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                        "Models/Props/mdl_service_equipment_kit_v01.gltf"),
                     "stairs",
                     Vector3.zero,
                     Quaternion.identity,
@@ -5262,7 +5264,9 @@ namespace Airside.Presentation
             }
 
             var root = new GameObject("Wheel chocks").transform;
-            var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
+            var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                "Models/Props/mdl_service_equipment_kit_v01.gltf");
             var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
                 new Color(0.85f, 0.2f, 0.15f), out var a);
             placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_b", new Vector3(0.55f, 0f, 0f), Quaternion.identity,
@@ -5293,7 +5297,9 @@ namespace Airside.Presentation
 
             var root = new GameObject("GPU cart").transform;
             if (ArtGltfLoader.TryPlaceNamedMesh(
-                    "Models/Props/mdl_service_equipment_kit_v01.gltf",
+                    PreferArtKit(
+                        "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                        "Models/Props/mdl_service_equipment_kit_v01.gltf"),
                     "gpu",
                     Vector3.zero,
                     Quaternion.identity,
@@ -5325,7 +5331,9 @@ namespace Airside.Presentation
             }
 
             var root = new GameObject("Pushback tug").transform;
-            var kit = "Models/Props/mdl_service_equipment_kit_v01.gltf";
+            var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                "Models/Props/mdl_service_equipment_kit_v01.gltf");
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "towbar", Vector3.zero, Quaternion.identity,
                     new Color(0.82f, 0.62f, 0.18f), out var towbar))
             {
@@ -5351,7 +5359,9 @@ namespace Airside.Presentation
         private static Transform BuildWindsock()
         {
             // WLD-003 windsock — Resources / kit pole when available; animated sock always procedural.
-            const string propsKit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
+            var propsKit = PreferArtKit(
+                "Models/Props/mdl_airfield_props_kit_v02.gltf",
+                "Models/Props/mdl_airfield_props_kit_v01.gltf");
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_windsock_pole_v01", out var polePrefab))
             {
                 polePrefab.name = "Windsock pole";
@@ -5387,7 +5397,9 @@ namespace Airside.Presentation
             }
 
             if (ArtGltfLoader.TryPlaceNamedMesh(
-                    "Models/Props/mdl_airfield_props_kit_v01.gltf",
+                    PreferArtKit(
+                        "Models/Props/mdl_airfield_props_kit_v02.gltf",
+                        "Models/Props/mdl_airfield_props_kit_v01.gltf"),
                     "cone",
                     position + new Vector3(0f, -0.25f, 0f),
                     Quaternion.identity,
@@ -5415,7 +5427,9 @@ namespace Airside.Presentation
             }
 
             if (ArtGltfLoader.TryPlaceNamedMesh(
-                    "Models/Props/mdl_airfield_props_kit_v01.gltf",
+                    PreferArtKit(
+                        "Models/Props/mdl_airfield_props_kit_v02.gltf",
+                        "Models/Props/mdl_airfield_props_kit_v01.gltf"),
                     "barrier",
                     position + new Vector3(0f, -0.45f, 0f),
                     Quaternion.Euler(0f, yawDegrees, 0f),
@@ -5623,45 +5637,84 @@ namespace Airside.Presentation
 
         private static void PlaceWorldLighting()
         {
-            const string kit = "Models/Props/mdl_airfield_lighting_kit_v01.gltf";
+            var kit = PreferArtKit(
+                "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
+                "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var edgeColor = new Color(1f, 1f, 0.85f);
             var taxiColor = new Color(0.2f, 0.85f, 0.35f);
             var obstruction = new Color(0.95f, 0.35f, 0.12f);
 
             for (var x = -36; x <= 36; x += 6)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", new Vector3(x, 0f, -3.4f), Quaternion.identity, edgeColor, out _))
-                    CreateBlock("Runway edge L", new Vector3(x, 0.05f, -3.4f), new Vector3(0.25f, 0.1f, 0.25f), edgeColor);
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", new Vector3(x, 0f, 3.4f), Quaternion.identity, edgeColor, out _))
-                    CreateBlock("Runway edge R", new Vector3(x, 0.05f, 3.4f), new Vector3(0.25f, 0.1f, 0.25f), edgeColor);
+                PlaceEdgeLamp(kit, new Vector3(x, 0f, -3.4f), edgeColor);
+                PlaceEdgeLamp(kit, new Vector3(x, 0f, 3.4f), edgeColor);
             }
 
             for (var x = -8; x <= 28; x += 8)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", new Vector3(x, 0f, 11.1f), Quaternion.identity, taxiColor, out _))
-                    CreateBlock("Taxi light N", new Vector3(x, 0.18f, 11.1f), new Vector3(0.18f, 0.35f, 0.18f), taxiColor);
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", new Vector3(x, 0f, 6.9f), Quaternion.identity, taxiColor, out _))
-                    CreateBlock("Taxi light S", new Vector3(x, 0.18f, 6.9f), new Vector3(0.18f, 0.35f, 0.18f), taxiColor);
+                PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
+                PlaceTaxiLamp(kit, new Vector3(x, 0f, 6.9f), taxiColor);
             }
 
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(-20f, 5.0f, 20f), Quaternion.identity, obstruction, out _))
-                CreateBlock("Hangar obstruction", new Vector3(-20f, 5.2f, 20f), new Vector3(0.25f, 0.25f, 0.25f), obstruction);
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(26f, 4.5f, 27f), Quaternion.identity, obstruction, out _))
-                CreateBlock("Terminal roof light", new Vector3(26f, 4.7f, 27f), new Vector3(0.22f, 0.22f, 0.22f), obstruction);
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", new Vector3(-8f, 3.2f, 26f), Quaternion.identity, obstruction, out _))
-                CreateBlock("Ops obstruction", new Vector3(-8f, 3.4f, 26f), new Vector3(0.2f, 0.2f, 0.2f), obstruction);
+            PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
+            PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
+            PlaceObstructionLamp(kit, new Vector3(-8f, 3.2f, 26f), obstruction, "Ops obstruction");
 
             // Apron flood poles — four corners so night turnarounds read lit.
             var flood = new Color(0.75f, 0.78f, 0.8f);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 12f), Quaternion.identity, flood, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 12f), Quaternion.identity, flood, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(8f, 0f, 22f), Quaternion.identity, flood, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", new Vector3(32f, 0f, 22f), Quaternion.identity, flood, out _);
+            PlaceFloodMast(kit, new Vector3(8f, 0f, 12f), flood);
+            PlaceFloodMast(kit, new Vector3(32f, 0f, 12f), flood);
+            PlaceFloodMast(kit, new Vector3(8f, 0f, 22f), flood);
+            PlaceFloodMast(kit, new Vector3(32f, 0f, 22f), flood);
+        }
+
+        private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)
+        {
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_stem", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_lens", position, Quaternion.identity, color, out _))
+                return;
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", position, Quaternion.identity, color, out _))
+                CreateBlock("Runway edge", position + new Vector3(0f, 0.05f, 0f), new Vector3(0.25f, 0.1f, 0.25f), color);
+        }
+
+        private static void PlaceTaxiLamp(string kit, Vector3 position, Color color)
+        {
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _))
+                return;
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", position, Quaternion.identity, color, out _))
+                CreateBlock("Taxi light", position + new Vector3(0f, 0.18f, 0f), new Vector3(0.18f, 0.35f, 0.18f), color);
+        }
+
+        private static void PlaceObstructionLamp(string kit, Vector3 position, Color color, string fallbackName)
+        {
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_lens", position, Quaternion.identity, color, out _))
+                return;
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", position, Quaternion.identity, color, out _))
+                CreateBlock(fallbackName, position + new Vector3(0f, 0.2f, 0f), new Vector3(0.22f, 0.22f, 0.22f), color);
+        }
+
+        private static void PlaceFloodMast(string kit, Vector3 position, Color color)
+        {
+            var placed = false;
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_pole", position, Quaternion.identity, color, out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
+            if (!placed)
+                ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _);
         }
 
         private static void PlaceWorldProps()
         {
-            const string kit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
+            var kit = PreferArtKit(
+                "Models/Props/mdl_airfield_props_kit_v02.gltf",
+                "Models/Props/mdl_airfield_props_kit_v01.gltf");
 
             // Stand lead-in cones (denser apron edge read).
             CreateCone(new Vector3(12.5f, 0.25f, 12.2f));

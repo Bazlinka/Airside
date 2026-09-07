@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **glTF kit UVs + building surface textures.** `ArtGltfLoader` generates planar
+  UVs so Batch B basecolours tile on box kits; hangar/ops/terminal meshes get
+  corrugated/concrete textures with soft URP Lit response. Presentation only.
+
 - **Left HUD sequential layout + first-decision coach.** Status panel rows no longer
   overlap; height shrinks in the first session; the coach tip uses a Safety Yellow
   stripe when a route offer needs Accept. Presentation only.

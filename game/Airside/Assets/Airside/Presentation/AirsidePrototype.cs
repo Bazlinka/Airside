@@ -1838,7 +1838,7 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.2f),
-                surfaceMeshNames: new[] { "terminal_body", "end_cap_left", "end_cap_right", "service_wing" });
+                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress" });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -1863,7 +1863,7 @@ namespace Airside.Presentation
                 },
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
-                surfaceMeshNames: new[] { "hangar_shell", "roof_ridge" });
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent" });
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_operations_shed_v02.gltf",
@@ -1880,7 +1880,7 @@ namespace Airside.Presentation
                     "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(1.5f, 1.2f),
-                surfaceMeshNames: new[] { "shed_body", "porch" });
+                surfaceMeshNames: new[] { "shed_body", "porch", "roof" });
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -2494,14 +2494,16 @@ namespace Airside.Presentation
                         var tiling = surfaceTextureTiling ?? new Vector2(2f, 1.5f);
                         foreach (var child in root.GetComponentsInChildren<Transform>(true))
                         {
-                            if (child.name == "glass_front" || child.name == "door_opening")
+                            if (child.name is "glass_front" or "door_opening" or "entrance"
+                                or "window_l" or "window_r" or "cabin_windows" or "cockpit")
                                 continue;
                             if (surfaceMeshNames != null && surfaceMeshNames.Length > 0)
                             {
                                 var match = false;
                                 for (var i = 0; i < surfaceMeshNames.Length; i++)
                                 {
-                                    if (child.name == surfaceMeshNames[i])
+                                    if (child.name == surfaceMeshNames[i] ||
+                                        child.name.StartsWith(surfaceMeshNames[i], StringComparison.Ordinal))
                                     {
                                         match = true;
                                         break;
@@ -2517,6 +2519,8 @@ namespace Airside.Presentation
                                 continue;
                             renderer.material.mainTexture = surface;
                             renderer.material.mainTextureScale = tiling;
+                            if (renderer.material.HasProperty("_Smoothness"))
+                                renderer.material.SetFloat("_Smoothness", 0.28f);
                         }
                     }
                 }

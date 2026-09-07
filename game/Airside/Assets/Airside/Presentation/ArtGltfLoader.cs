@@ -110,7 +110,15 @@ namespace Airside.Presentation
         private static Material CreateMaterial(Color color)
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            return new Material(shader) { color = color };
+            var material = new Material(shader) { color = color };
+            // Soft miniature response — not a full authored material library.
+            if (material.HasProperty("_Metallic"))
+                material.SetFloat("_Metallic", 0.05f);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", 0.35f);
+            if (material.HasProperty("_Glossiness"))
+                material.SetFloat("_Glossiness", 0.35f);
+            return material;
         }
 
         private static bool TryLoadKit(string artRelativePath, out GltfKit kit)
@@ -201,6 +209,7 @@ namespace Airside.Presentation
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
                 mesh.RecalculateNormals();
+                mesh.SetUVs(0, BuildPlanarUvs(vertices));
                 mesh.RecalculateBounds();
 
                 var entry = new MeshEntry(name, mesh);
@@ -209,6 +218,59 @@ namespace Airside.Presentation
             }
 
             return kit.Meshes.Count > 0 ? kit : null;
+        }
+
+        /// <summary>
+        /// Simple planar UVs from dominant axes so Batch B basecolours tile on
+        /// box kits (ArtGltfLoader has no TEXCOORD0). Presentation only.
+        /// </summary>
+        private static Vector2[] BuildPlanarUvs(Vector3[] vertices)
+        {
+            if (vertices == null || vertices.Length == 0)
+                return Array.Empty<Vector2>();
+
+            var min = vertices[0];
+            var max = vertices[0];
+            for (var i = 1; i < vertices.Length; i++)
+            {
+                min = Vector3.Min(min, vertices[i]);
+                max = Vector3.Max(max, vertices[i]);
+            }
+
+            var size = max - min;
+            // Prefer the two largest axes for unwrap (walls/roofs/aprons).
+            var abs = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
+            var uAxis = 0;
+            var vAxis = 2;
+            if (abs.y >= abs.x && abs.y >= abs.z)
+            {
+                // Tallest span is Y → use XZ (top-down) or XY for walls later per-vertex.
+                uAxis = 0;
+                vAxis = 2;
+            }
+            else if (abs.z >= abs.x)
+            {
+                uAxis = 0;
+                vAxis = 1;
+            }
+            else
+            {
+                uAxis = 2;
+                vAxis = 1;
+            }
+
+            var uSize = Mathf.Max(0.0001f, abs[uAxis]);
+            var vSize = Mathf.Max(0.0001f, abs[vAxis]);
+            var uvs = new Vector2[vertices.Length];
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                var p = vertices[i];
+                uvs[i] = new Vector2(
+                    (p[uAxis] - min[uAxis]) / uSize,
+                    (p[vAxis] - min[vAxis]) / vSize);
+            }
+
+            return uvs;
         }
 
         private static string MatchFirst(string input, string pattern)

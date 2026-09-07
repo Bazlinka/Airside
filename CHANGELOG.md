@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **First-session opening briefing and clean new-game path.** New games (no away
+  report, no accepted routes) open paused on a role + first-decision briefing;
+  first route offer is labelled FIRST DECISION with consequence toasts on offer and
+  accept; Pause / Insolvent offer Start new airport (wipes save and reloads).
+  Presentation only. `scripts/test-domain.sh` 97/97.
+
 - **Focus product plan on the Mac first playable.** Replaces the broad blueprint with
   a delivery plan that makes the first playable the only active target; defers companion,
   CloudKit, cargo/GA and extra art batches until external playtest confirms the loop.

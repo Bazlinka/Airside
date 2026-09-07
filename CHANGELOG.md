@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Denser WLD/PRP kits v02 (0025 item 2).** Prefer `*_v02` airfield lighting
+  (multi-part flood masts, edge/taxi/obst), props and service equipment kits over
+  thin v01 Batch B boxes. Presentation only.
+
 - **ARFF shed prefab + textured distant hills (0025 items 1+3).** Resources
   `mdl_arff_shed_v01` replaces flat rescue-shed blocks; distant hills are segmented
   and grass/sand-mapped so the horizon is not four unlit slabs. Presentation only.

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ARFF shed + textured hills)
-- **Branch / working tree:** `cursor/arff-shed-hills-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak ARFF shed + textured horizon; denser WLD/PRP kits or authored FBX next
-- **In progress / half-done:** 21 Resources prefabs after this PR; authored FBX + Editor Addressables still open
+- **Last updated:** 2026-09-07 by Cursor (WLD/PRP kits v02)
+- **Branch / working tree:** `cursor/wld-prp-kits-v02-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak denser flood masts + props; authored FBX still the real visual bar
+- **In progress / half-done:** 21 Resources prefabs + WLD/PRP v02 on this PR; authored FBX + Editor Addressables still open
 - **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art
 - **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
-- **Visual assets:** Batch C v04; 21 Resources prefabs; coast PBR; textured hills; Toolkit HUD
+- **Visual assets:** Batch C v04; WLD/PRP v02; 21 Resources prefabs; coast PBR; Toolkit HUD
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

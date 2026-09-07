@@ -2052,7 +2052,16 @@ namespace Airside.Presentation
                     || name.StartsWith("Access turn", StringComparison.Ordinal)
                     || name.StartsWith("Drop-off zebra", StringComparison.Ordinal)
                     || name.StartsWith("Overflow bay", StringComparison.Ordinal)
-                    || name.StartsWith("Bay line", StringComparison.Ordinal);
+                    || name.StartsWith("Bay line", StringComparison.Ordinal)
+                    || name.StartsWith("Taxi arrow", StringComparison.Ordinal)
+                    || name.StartsWith("Runway digit", StringComparison.Ordinal)
+                    || name.StartsWith("Stand lead", StringComparison.Ordinal)
+                    || name.StartsWith("Apron chevron", StringComparison.Ordinal)
+                    || name.StartsWith("Hold short", StringComparison.Ordinal)
+                    || name.StartsWith("Taxi centre", StringComparison.Ordinal)
+                    || name.StartsWith("Aiming point", StringComparison.Ordinal)
+                    || name.StartsWith("TDZ ", StringComparison.Ordinal)
+                    || name.StartsWith("Threshold stripe", StringComparison.Ordinal);
                 var apply = wet ? rainWetness : (paved ? 0.16f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
                     renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
@@ -2341,7 +2350,16 @@ namespace Airside.Presentation
                     && !n.StartsWith("Access turn", StringComparison.Ordinal)
                     && !n.StartsWith("Drop-off zebra", StringComparison.Ordinal)
                     && !n.StartsWith("Overflow bay", StringComparison.Ordinal)
-                    && !n.StartsWith("Bay line", StringComparison.Ordinal))
+                    && !n.StartsWith("Bay line", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi arrow", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway digit", StringComparison.Ordinal)
+                    && !n.StartsWith("Stand lead", StringComparison.Ordinal)
+                    && !n.StartsWith("Apron chevron", StringComparison.Ordinal)
+                    && !n.StartsWith("Hold short", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi centre", StringComparison.Ordinal)
+                    && !n.StartsWith("Aiming point", StringComparison.Ordinal)
+                    && !n.StartsWith("TDZ ", StringComparison.Ordinal)
+                    && !n.StartsWith("Threshold stripe", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -7601,12 +7619,18 @@ namespace Airside.Presentation
             var root = new GameObject("Hangar bay props").transform;
             root.position = new Vector3(-20f, 0f, 18.2f);
             ParentBlock(root, "Workbench top", new Vector3(0f, 0.85f, 0f), new Vector3(2.4f, 0.12f, 0.9f), new Color(0.45f, 0.42f, 0.38f));
+            ParentBlock(root, "Workbench vise", new Vector3(0.85f, 0.98f, 0.15f), new Vector3(0.35f, 0.28f, 0.35f), new Color(0.35f, 0.36f, 0.38f));
             ParentBlock(root, "Workbench leg L", new Vector3(-1f, 0.4f, 0f), new Vector3(0.12f, 0.8f, 0.8f), new Color(0.25f, 0.25f, 0.28f));
             ParentBlock(root, "Workbench leg R", new Vector3(1f, 0.4f, 0f), new Vector3(0.12f, 0.8f, 0.8f), new Color(0.25f, 0.25f, 0.28f));
             ParentBlock(root, "Shelf frame", new Vector3(-2.2f, 1.1f, -0.1f), new Vector3(0.9f, 1.8f, 0.45f), new Color(0.4f, 0.42f, 0.4f));
+            ParentBlock(root, "Shelf board mid", new Vector3(-2.2f, 1.0f, -0.1f), new Vector3(0.85f, 0.08f, 0.4f), new Color(0.5f, 0.45f, 0.35f));
             ParentBlock(root, "Oil drum", new Vector3(-1.6f, 0.55f, 0.9f), new Vector3(0.55f, 1.1f, 0.55f), new Color(0.85f, 0.55f, 0.18f));
+            ParentBlock(root, "Oil drum B", new Vector3(-0.9f, 0.45f, 1.1f), new Vector3(0.45f, 0.9f, 0.45f), new Color(0.75f, 0.45f, 0.15f));
             ParentBlock(root, "Tool cart body", new Vector3(1.8f, 0.55f, 0.6f), new Vector3(0.9f, 0.7f, 0.7f), new Color(0.35f, 0.45f, 0.55f));
             ParentBlock(root, "Crate stack", new Vector3(2.3f, 0.45f, -0.5f), new Vector3(0.7f, 0.9f, 0.55f), new Color(0.55f, 0.4f, 0.22f));
+            ParentBlock(root, "Tire rack", new Vector3(-0.2f, 0.7f, -1.0f), new Vector3(1.4f, 1.2f, 0.35f), new Color(0.3f, 0.32f, 0.34f));
+            ParentBlock(root, "Fire extinguisher", new Vector3(0.9f, 0.55f, -0.9f), new Vector3(0.22f, 0.7f, 0.22f), new Color(0.85f, 0.15f, 0.12f));
+            ParentBlock(root, "Parts bin", new Vector3(0.4f, 0.35f, 0.7f), new Vector3(0.55f, 0.4f, 0.4f), new Color(0.55f, 0.55f, 0.2f));
         }
 
         private static void PlaceWorldLighting()

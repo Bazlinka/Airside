@@ -1724,6 +1724,8 @@ namespace Airside.Presentation
             CreateBlock("Stand number 3 mid", new Vector3(14.2f, 0.09f, 26f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
             CreateBlock("Stand number 3 stem", new Vector3(14.55f, 0.09f, 25.7f), new Vector3(0.28f, 0.04f, 1.0f), Color.white);
             _standThreeVisualBuilt = true;
+            // Pad is created after the Awake wet collect — refresh so Stand 3 rains too.
+            CollectWetSurfaces();
         }
 
         private bool TaskActive(CommercialFlight flight, string name)
@@ -2274,7 +2276,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Coast dune", StringComparison.Ordinal)
                     && !n.StartsWith("Hill far", StringComparison.Ordinal)
                     && !n.StartsWith("Car park kerb", StringComparison.Ordinal)
-                    && !n.StartsWith("Coast scrub", StringComparison.Ordinal))
+                    && !n.StartsWith("Coast scrub", StringComparison.Ordinal)
+                    && !n.StartsWith("Apron joint", StringComparison.Ordinal))
                     continue;
 
                 var mat = renderer.material;
@@ -3369,13 +3372,13 @@ namespace Airside.Presentation
                 _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
             }
 
-            var ambientDay = new Color(0.42f, 0.52f, 0.68f);
-            var ambientDusk = new Color(0.62f, 0.42f, 0.38f);
+            var ambientDay = new Color(0.40f, 0.48f, 0.58f);
+            var ambientDusk = new Color(0.58f, 0.38f, 0.32f);
             var ambientNight = new Color(0.08f, 0.1f, 0.18f);
-            var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.75f);
+            var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.85f);
             var ambientEquator = Color.Lerp(
                 new Color(0.12f, 0.14f, 0.22f),
-                Color.Lerp(new Color(0.45f, 0.5f, 0.55f), new Color(0.55f, 0.4f, 0.35f), warm),
+                Color.Lerp(new Color(0.42f, 0.46f, 0.48f), new Color(0.53f, 0.40f, 0.34f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
                 new Color(0.05f, 0.06f, 0.08f),
@@ -3391,10 +3394,10 @@ namespace Airside.Presentation
                 new Color(0.4f, 0.28f, 0.28f),
                 warm);
 
-            var skyDay = AirsideTheme.OpenSky;
-            var skyDusk = new Color(0.78f, 0.48f, 0.36f);
+            var skyDay = new Color(0.50f, 0.55f, 0.56f); // REF-001 muted day sky (not OpenSky cyan)
+            var skyDusk = new Color(0.72f, 0.42f, 0.32f);
             var skyNight = new Color(0.05f, 0.07f, 0.12f);
-            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.7f);
+            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.78f);
             if (_mainCamera != null)
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
@@ -5066,7 +5069,18 @@ namespace Airside.Presentation
                 (new Vector3(-55f, 0f, 55f), 1.2f),
                 (new Vector3(58f, 0f, 54f), 1.0f),
                 (new Vector3(-25f, 0f, -36f), 0.85f),
-                (new Vector3(18f, 0f, -34f), 1.0f)
+                (new Vector3(18f, 0f, -34f), 1.0f),
+                // Close N/E paddock holes from overview (0025 item 3).
+                (new Vector3(-42f, 0f, 62f), 1.15f),
+                (new Vector3(-15f, 0f, 62f), 1.05f),
+                (new Vector3(6f, 0f, 64f), 0.92f),
+                (new Vector3(26f, 0f, 62f), 1.1f),
+                (new Vector3(48f, 0f, 64f), 1.0f),
+                (new Vector3(64f, 0f, 58f), 1.18f),
+                (new Vector3(-75f, 0f, 28f), 1.08f),
+                (new Vector3(78f, 0f, 24f), 0.95f),
+                (new Vector3(-8f, 0f, -38f), 0.88f),
+                (new Vector3(36f, 0f, -36f), 1.02f)
             };
             for (var i = 0; i < trees.Length; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
@@ -5120,29 +5134,38 @@ namespace Airside.Presentation
 
         private static void PlaceTree(Vector3 basePosition, float scale)
         {
+            // Eucalyptus clump: tall thin trunk + 3 staggered canopies (REF overview).
+            var yaw = (basePosition.x * 17f + basePosition.z * 13f) % 360f;
+            var lean = ((basePosition.x + basePosition.z) % 9f) - 4f;
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "Tree trunk";
             Object.Destroy(trunk.GetComponent<Collider>());
-            trunk.transform.position = basePosition + new Vector3(0f, 1.1f * scale, 0f);
-            trunk.transform.localScale = new Vector3(0.28f * scale, 1.1f * scale, 0.28f * scale);
-            trunk.GetComponent<Renderer>().material = CreateMaterial(new Color(0.35f, 0.26f, 0.16f));
+            trunk.transform.position = basePosition + new Vector3(0f, 1.55f * scale, 0f);
+            trunk.transform.localScale = new Vector3(0.22f * scale, 1.55f * scale, 0.22f * scale);
+            trunk.transform.rotation = Quaternion.Euler(lean * 0.6f, yaw, lean * 0.35f);
+            trunk.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                new Color(0.32f, 0.24f, 0.15f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
 
+            var canopyColorA = Shade(AirsideTheme.Eucalyptus, 0.9f);
+            var canopyColorB = Shade(AirsideTheme.Eucalyptus, 0.78f);
+            var canopyColorC = Shade(AirsideTheme.Eucalyptus, 0.7f);
+            PlaceTreeCanopy(basePosition + new Vector3(0f, 3.35f * scale, 0f),
+                new Vector3(2.0f * scale, 1.55f * scale, 1.9f * scale), canopyColorA, "Tree canopy");
+            PlaceTreeCanopy(basePosition + new Vector3(0.65f * scale, 2.85f * scale, -0.45f * scale),
+                new Vector3(1.45f * scale, 1.15f * scale, 1.35f * scale), canopyColorB, "Tree canopy B");
+            PlaceTreeCanopy(basePosition + new Vector3(-0.55f * scale, 2.95f * scale, 0.5f * scale),
+                new Vector3(1.25f * scale, 1.05f * scale, 1.2f * scale), canopyColorC, "Tree canopy C");
+        }
+
+        private static void PlaceTreeCanopy(Vector3 position, Vector3 scale, Color color, string name)
+        {
             var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            canopy.name = "Tree canopy";
+            canopy.name = name;
             Object.Destroy(canopy.GetComponent<Collider>());
-            canopy.transform.position = basePosition + new Vector3(0f, 2.6f * scale, 0f);
-            canopy.transform.localScale = new Vector3(2.2f * scale, 1.8f * scale, 2.2f * scale);
+            canopy.transform.position = position;
+            canopy.transform.localScale = scale;
             canopy.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                Shade(AirsideTheme.Eucalyptus, 0.9f), AirsideMaterialLibrary.SurfaceKind.Grass);
-
-            // Secondary canopy blob so clumps read denser from overview.
-            var canopyB = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            canopyB.name = "Tree canopy B";
-            Object.Destroy(canopyB.GetComponent<Collider>());
-            canopyB.transform.position = basePosition + new Vector3(0.55f * scale, 2.2f * scale, -0.4f * scale);
-            canopyB.transform.localScale = new Vector3(1.5f * scale, 1.2f * scale, 1.5f * scale);
-            canopyB.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                Shade(AirsideTheme.Eucalyptus, 0.78f), AirsideMaterialLibrary.SurfaceKind.Grass);
+                color, AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
         private static void BuildDistantHills()
@@ -5994,6 +6017,8 @@ namespace Airside.Presentation
             "propeller_right" => "Propeller R",
             "propeller_left_b" => "PropBlade L",
             "propeller_right_b" => "PropBlade R",
+            "propeller_left_c" => "PropBlade L2",
+            "propeller_right_c" => "PropBlade R2",
             "spinner_left" => "Spinner L",
             "spinner_right" => "Spinner R",
             "tail_fin" => "Tail",
@@ -6060,6 +6085,7 @@ namespace Airside.Presentation
                 or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right"
                 or "exhaust_stack_l" or "exhaust_stack_r" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
+                or "propeller_left_c" or "propeller_right_c"
                 or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
                 or "hub_cap_left" or "hub_cap_right"
                 => new Color(0.2f, 0.2f, 0.22f),
@@ -6085,6 +6111,7 @@ namespace Airside.Presentation
         private static void NestCrossPropellerBlades(Transform aircraft)
         {
             Transform propL = null, propR = null, bladeL = null, bladeR = null;
+            Transform bladeL2 = null, bladeR2 = null;
             Transform hubL = null, hubR = null, spinnerL = null, spinnerR = null;
             Transform capL = null, capR = null;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
@@ -6093,6 +6120,8 @@ namespace Airside.Presentation
                 else if (child.name == "Propeller R") propR = child;
                 else if (child.name == "PropBlade L") bladeL = child;
                 else if (child.name == "PropBlade R") bladeR = child;
+                else if (child.name == "PropBlade L2") bladeL2 = child;
+                else if (child.name == "PropBlade R2") bladeR2 = child;
                 else if (child.name == "Prop hub L") hubL = child;
                 else if (child.name == "Prop hub R") hubR = child;
                 else if (child.name == "Spinner L") spinnerL = child;
@@ -6103,6 +6132,8 @@ namespace Airside.Presentation
 
             NestUnderProp(propL, bladeL, "Blade");
             NestUnderProp(propR, bladeR, "Blade");
+            NestUnderProp(propL, bladeL2, "Blade 2");
+            NestUnderProp(propR, bladeR2, "Blade 2");
             NestUnderProp(propL, hubL, "Hub");
             NestUnderProp(propR, hubR, "Hub");
             NestUnderProp(propL, spinnerL, "Spinner");

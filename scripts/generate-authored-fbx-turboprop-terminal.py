@@ -288,6 +288,61 @@ def tapered_wing(
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
+def prop_blade(
+    cx: float,
+    cy: float,
+    cz: float,
+    angle_deg: float,
+    *,
+    length: float = 1.18,
+    root_chord: float = 0.13,
+    tip_chord: float = 0.04,
+    thickness: float = 0.034,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Thin tapered blade in the propeller disc (around +Z spin axis)."""
+    a = np.deg2rad(angle_deg)
+    ca, sa = float(np.cos(a)), float(np.sin(a))
+
+    def pt(u: float, v: float, w: float) -> list[float]:
+        # u radial from hub, v chord, w thickness along spin axis
+        x = cx + v * ca - u * sa
+        y = cy + v * sa + u * ca
+        z = cz + w
+        return [x, y, z]
+
+    u0, u1 = 0.1, length
+    hr, ht = root_chord / 2, tip_chord / 2
+    tw = thickness / 2
+    corners = np.array(
+        [
+            pt(u0, -hr, -tw),
+            pt(u0, hr, -tw),
+            pt(u1, ht, -tw),
+            pt(u1, -ht, -tw),
+            pt(u0, -hr, tw),
+            pt(u0, hr, tw),
+            pt(u1, ht, tw),
+            pt(u1, -ht, tw),
+        ],
+        dtype=np.float32,
+    )
+    faces = [
+        (0, 1, 2, 3),
+        (4, 7, 6, 5),
+        (0, 4, 5, 1),
+        (3, 2, 6, 7),
+        (1, 5, 6, 2),
+        (0, 3, 7, 4),
+    ]
+    verts: list = []
+    indices: list = []
+    for a0, b, c, d in faces:
+        base = len(verts)
+        verts.extend([corners[a0], corners[b], corners[c], corners[d]])
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
+    return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
+
+
 def write_obj(path: Path, meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> None:
     lines = ["# Airside authored kit", "mtllib none"]
     v_offset = 1
@@ -410,10 +465,13 @@ def turboprop_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "exhaust_right": cylinder(2.4, 0.7, -0.2, 0.18, 0.5, axis="z", segments=12),
         "exhaust_stack_l": box(-2.55, 0.55, -0.35, 0.12, 0.18, 0.35),
         "exhaust_stack_r": box(2.55, 0.55, -0.35, 0.12, 0.18, 0.35),
-        "propeller_left": box(-2.4, 0.85, 2.25, 0.08, 2.4, 0.16),
-        "propeller_left_b": box(-2.4, 0.85, 2.25, 2.4, 0.08, 0.16),
-        "propeller_right": box(2.4, 0.85, 2.25, 0.08, 2.4, 0.16),
-        "propeller_right_b": box(2.4, 0.85, 2.25, 2.4, 0.08, 0.16),
+        # Three tapered blades per hub (REF silhouette) — spin around +Z.
+        "propeller_left": prop_blade(-2.4, 0.85, 2.25, 0),
+        "propeller_left_b": prop_blade(-2.4, 0.85, 2.25, 120),
+        "propeller_left_c": prop_blade(-2.4, 0.85, 2.25, 240),
+        "propeller_right": prop_blade(2.4, 0.85, 2.25, 0),
+        "propeller_right_b": prop_blade(2.4, 0.85, 2.25, 120),
+        "propeller_right_c": prop_blade(2.4, 0.85, 2.25, 240),
         "spinner_left": cylinder(-2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=14),
         "spinner_right": cylinder(2.4, 0.85, 2.42, 0.16, 0.36, axis="z", segments=14),
         "prop_hub_left": cylinder(-2.4, 0.85, 2.3, 0.12, 0.18, axis="z", segments=12),

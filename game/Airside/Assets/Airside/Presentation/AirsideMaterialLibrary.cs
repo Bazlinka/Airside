@@ -164,6 +164,10 @@ namespace Airside.Presentation
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
+            // Opaque RGB callers (terminal glass colors) still need real alpha panes.
+            if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
+                color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
+
             Shader shader;
             if (kind == SurfaceKind.UnlitSky)
             {
@@ -178,6 +182,8 @@ namespace Airside.Presentation
             }
 
             var material = new Material(shader) { color = color };
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
 
             if (kind == SurfaceKind.UnlitSky)
             {
@@ -231,7 +237,7 @@ namespace Airside.Presentation
             {
                 material.SetTexture("_OcclusionMap", ao);
                 if (material.HasProperty("_OcclusionStrength"))
-                    material.SetFloat("_OcclusionStrength", 1f - profile.Occlusion + 0.15f);
+                    material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
                 if (tiling.HasValue)
                     material.SetTextureScale("_OcclusionMap", tiling.Value * 0.5f);
             }
@@ -280,6 +286,16 @@ namespace Airside.Presentation
 
             var targetSmooth = Mathf.Max(drySmoothness, 0.96f);
             var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);
+            // Dry metallic-gloss masks cap wet sheen — drop the keyword while wet so
+            // _Smoothness reads (0025 item 4). Re-enable when dry.
+            if (material.HasProperty("_MetallicGlossMap") && material.GetTexture("_MetallicGlossMap") != null)
+            {
+                if (wetness01 > 0.2f)
+                    material.DisableKeyword("_METALLICSPECGLOSSMAP");
+                else
+                    material.EnableKeyword("_METALLICSPECGLOSSMAP");
+            }
+
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", smoothness);
             if (material.HasProperty("_Glossiness"))

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Materials, tapered props, day grade, trees, wet fixes (0025 items 2–5+7).**
+  URP Lit AO strength uses profile occlusion; Glass/Water force alpha panes; wet
+  disables metallic-gloss mask so sheen reads; turboprop 3× tapered blades (104
+  meshes); REF-001 muted day sky + warmer dusk WB; eucalyptus 3-canopy clumps;
+  Stand 3 pad and apron joints join wet collect. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Taxi blue, tall floods, apron joints, HUD bars, hi-vis (0025 items 3+5+6+7).**
   Taxi edge/point lights are blue (REF-002); airfield lighting kit floods ~9 m with
   multi-head lamps (41 meshes) and SpotLights synced to mast height; apron

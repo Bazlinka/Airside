@@ -50,11 +50,16 @@ namespace Airside.Presentation
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("window") || n.Contains("glass") || n.Contains("mullion")
+                else if (n.Contains("window") || n.Contains("glass")
                          || n.Equals("cockpit") || n.Contains("cabin window"))
                 {
-                    color = new Color(0.18f, 0.35f, 0.48f, 1f);
+                    color = new Color(0.18f, 0.35f, 0.48f, 0.42f);
                     kind = AirsideMaterialLibrary.SurfaceKind.Glass;
+                }
+                else if (n.Contains("mullion") || n.Contains("transom") || n.Contains("frame"))
+                {
+                    color = stepColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
                 else if (n.Contains("wing") || n.Contains("tail") || n.Contains("fuselage")
                          || n.Contains("nose") || n.Contains("rudder") || n.Contains("elevator")

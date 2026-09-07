@@ -192,7 +192,7 @@ namespace Airside.Presentation
             // adverse weather: cooler filter + pulled exposure.
             var exposure = Mathf.Lerp(-0.72f, 0.14f, daylight) + warm * 0.18f - weatherGloom * 0.4f;
             var contrast = Mathf.Lerp(12f, 3.0f, daylight) + weatherGloom * 4.8f;
-            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.78f, 0.58f), warm);
+            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
             var nightFilter = new Color(0.62f, 0.7f, 1f);
             var stormFilter = new Color(0.68f, 0.74f, 0.84f);
             var filter = Color.Lerp(
@@ -241,8 +241,8 @@ namespace Airside.Presentation
 
             // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
             // so night blue survives and weather gloom stays cool.
-            var temperature = Mathf.Lerp(-8f, 6f, daylight) + warm * 28f - weatherGloom * 14f;
-            var tint = warm * 4f - weatherGloom * 3f;
+            var temperature = Mathf.Lerp(-8f, 4f, daylight) + warm * 38f - weatherGloom * 14f;
+            var tint = warm * 5f - weatherGloom * 3f;
             _whiteBalance.temperature.Override(temperature);
             _whiteBalance.tint.Override(tint);
 
@@ -252,11 +252,15 @@ namespace Airside.Presentation
                 weatherGloom);
             var highlights = Color.Lerp(
                 Color.white,
-                new Color(1f, 0.78f, 0.55f),
-                warm * 0.85f);
+                new Color(1f, 0.72f, 0.48f),
+                warm * 0.9f);
             _splitToning.shadows.Override(shadows);
             _splitToning.highlights.Override(highlights);
-            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.08f, warm) - weatherGloom * 0.1f);
+            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.12f, warm) - weatherGloom * 0.1f);
+
+            // Deeper night exposure so flood pools read against the apron (REF-002).
+            if (daylight < 0.35f)
+                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.35f);
         }
     }
 }

@@ -35,8 +35,11 @@ change it describes.
   BirdOrbitHz/BirdFlapHz (tip-8 compile break); Flood/Star/Coast/ApronStride Hz
   centralized; WLD-004 thins outer paddock + skips relief mounds/ribbons;
   VEG-002 coast rocks; scaled landside kit streetlights; thin bay/overflow paint
-  when forecourt kerbs present; dusk flood/landside/window flicker share rates.
-  Presentation only — simulation unchanged.
+  when forecourt kerbs present; dusk flood/landside/window flicker share rates;
+  VEG kits thin far tree/scrub densify; coast scrub via PlaceShrub; UI-PNL-001
+  light chrome on economy/speed; Toolkit hides Canvas when active; Cloudy soft
+  fog + cloud umbra; horizon/sun/moon SetRendererColor. Presentation only —
+  simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

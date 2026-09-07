@@ -28,10 +28,12 @@ namespace Airside.Presentation
         public static readonly Color OpenSky = FromHex("#A7C9D9");
 
         private static Texture2D _panelBackground;
+        private static Texture2D _panelBackgroundLight;
         private static Texture2D _solidWhite;
         private static Texture2D _wordmarkLight;
         private static Texture2D _splashDawn;
         private static bool _panelBackgroundResolved;
+        private static bool _panelBackgroundLightResolved;
         private static bool _wordmarkResolved;
         private static bool _splashResolved;
 
@@ -90,6 +92,34 @@ namespace Airside.Presentation
                 }
 
                 return _panelBackground;
+            }
+        }
+
+        /// <summary>
+        /// UI-PNL-001 light nine-slice for secondary chrome (economy strip / speed chip).
+        /// Falls back to a soft Cloud fill when the art file is missing.
+        /// </summary>
+        public static Texture2D PanelBackgroundLight
+        {
+            get
+            {
+                if (!_panelBackgroundLightResolved)
+                {
+                    _panelBackgroundLightResolved = true;
+                    var art = LoadArtTexture("UI/Panels/ui_panel_9slice_light_v01.png");
+                    if (art != null && MeanAlpha(art) >= 0.35f)
+                        _panelBackgroundLight = art;
+                    else
+                    {
+                        var fill = Cloud;
+                        fill.a = 0.92f;
+                        _panelBackgroundLight = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
+                        _panelBackgroundLight.SetPixel(0, 0, fill);
+                        _panelBackgroundLight.Apply();
+                    }
+                }
+
+                return _panelBackgroundLight;
             }
         }
 

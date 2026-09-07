@@ -374,7 +374,7 @@ namespace Airside.Presentation
         private void BuildEconomyStrip()
         {
             // REF-004 top-centre cash / finance / research strip (0025 item 6).
-            _economyStrip = MakePanel("Economy strip", 520f);
+            _economyStrip = MakePanel("Economy strip", 520f, lightChrome: true);
             _economyStrip.style.top = 18;
             _economyStrip.style.left = Length.Percent(50);
             _economyStrip.style.translate = new Translate(Length.Percent(-50), 0);
@@ -393,7 +393,7 @@ namespace Airside.Presentation
 
             _cashIcon = MakeIconSlot("Cash icon", 18);
             _economyStrip.Add(_cashIcon);
-            _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
+            _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold, inkOnLight: true);
             _cashText.style.marginLeft = 6;
             _cashText.style.marginRight = 8;
             _economyStrip.Add(_cashText);
@@ -402,11 +402,11 @@ namespace Airside.Presentation
             _incomeIcon.style.marginRight = 4;
             _economyStrip.Add(_incomeIcon);
 
-            _economyStrip.Add(MakeStripDivider());
+            _economyStrip.Add(MakeStripDivider(inkOnLight: true));
 
             _repIcon = MakeIconSlot("Rep icon", 18);
             _economyStrip.Add(_repIcon);
-            _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
+            _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal, inkOnLight: true);
             _financeText.style.marginLeft = 6;
             _financeText.style.marginRight = 6;
             _financeText.style.whiteSpace = WhiteSpace.NoWrap;
@@ -420,14 +420,15 @@ namespace Airside.Presentation
                 _repFill.style.backgroundColor = AirsideTheme.ClearGreen;
             _economyStrip.Add(_repTrack);
 
-            _economyStrip.Add(MakeStripDivider());
+            _economyStrip.Add(MakeStripDivider(inkOnLight: true));
 
             _researchIcon = MakeIconSlot("Research icon", 16);
             _researchIcon.style.marginRight = 4;
             _economyStrip.Add(_researchIcon);
-            _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
+            _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal, inkOnLight: true);
             _stripResearchText.style.marginRight = 6;
-            _stripResearchText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.85f);
+            _stripResearchText.style.color = new Color(
+                AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.78f);
             _economyStrip.Add(_stripResearchText);
             _stripResearchTrack = MakeProgressTrack("Strip research track");
             _stripResearchTrack.style.width = 90;
@@ -438,7 +439,7 @@ namespace Airside.Presentation
             _root.Add(_economyStrip);
         }
 
-        private static VisualElement MakeStripDivider()
+        private static VisualElement MakeStripDivider(bool inkOnLight = false)
         {
             var div = new VisualElement { name = "Strip divider" };
             div.pickingMode = PickingMode.Ignore;
@@ -446,7 +447,9 @@ namespace Airside.Presentation
             div.style.height = 18;
             div.style.marginLeft = 4;
             div.style.marginRight = 8;
-            div.style.backgroundColor = new Color(
+            div.style.backgroundColor = inkOnLight
+                ? new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.22f)
+                : new Color(
                 AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.22f);
             return div;
         }
@@ -454,7 +457,7 @@ namespace Airside.Presentation
         private void BuildSpeedChip()
         {
             // REF-004 + Batch F4 UI-ICO-005 — pause/speed/camera/audio chrome.
-            _speedChip = MakePanel("Speed chip", 420f);
+            _speedChip = MakePanel("Speed chip", 420f, lightChrome: true);
             _speedChip.style.bottom = 22;
             _speedChip.style.left = Length.Percent(50);
             _speedChip.style.translate = new Translate(Length.Percent(-50), 0);
@@ -499,7 +502,7 @@ namespace Airside.Presentation
             _muteButton.clicked += () => _onToggleMute?.Invoke();
             _speedChip.Add(_muteButton);
 
-            _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal);
+            _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal, inkOnLight: true);
             _speedText.style.marginLeft = 10;
             _speedText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.75f);
             _speedChip.Add(_speedText);
@@ -945,17 +948,27 @@ namespace Airside.Presentation
             return track;
         }
 
-        private VisualElement MakePanel(string name, float width)
+        private VisualElement MakePanel(string name, float width, bool lightChrome = false)
         {
             var panel = new VisualElement { name = name };
             panel.style.position = Position.Absolute;
             panel.style.width = width;
             // REF-004 chrome: denser ink + coastal hairline so panels read as brand glass,
-            // not translucent IMGUI debug boxes.
-            var ink = AirsideTheme.RunwayInk;
-            ink.a = 0.86f;
-            panel.style.backgroundColor = ink;
-            var panelTex = AirsideTheme.PanelBackground;
+            // not translucent IMGUI debug boxes. Light chrome uses UI-PNL-001 for secondary strips.
+            if (lightChrome)
+            {
+                var fill = AirsideTheme.Cloud;
+                fill.a = 0.9f;
+                panel.style.backgroundColor = fill;
+            }
+            else
+            {
+                var ink = AirsideTheme.RunwayInk;
+                ink.a = 0.86f;
+                panel.style.backgroundColor = ink;
+            }
+
+            var panelTex = lightChrome ? AirsideTheme.PanelBackgroundLight : AirsideTheme.PanelBackground;
             if (panelTex != null)
             {
                 panel.style.backgroundImage = new StyleBackground(panelTex);
@@ -969,8 +982,10 @@ namespace Airside.Presentation
             panel.style.borderRightWidth = 1;
             panel.style.borderTopWidth = 2;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.4f);
-            var top = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
+            var border = lightChrome
+                ? new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.28f)
+                : new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.4f);
+            var top = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, lightChrome ? 0.55f : 0.7f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
             panel.style.borderTopColor = top;
@@ -1007,7 +1022,7 @@ namespace Airside.Presentation
             slot.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
         }
 
-        private static Label MakePanelLabel(string name, int fontSize, FontStyle style)
+        private static Label MakePanelLabel(string name, int fontSize, FontStyle style, bool inkOnLight = false)
         {
             var label = new Label
             {
@@ -1015,7 +1030,7 @@ namespace Airside.Presentation
                 text = string.Empty
             };
             label.pickingMode = PickingMode.Ignore;
-            label.style.color = AirsideTheme.Cloud;
+            label.style.color = inkOnLight ? AirsideTheme.RunwayInk : AirsideTheme.Cloud;
             label.style.fontSize = fontSize;
             label.style.unityFontStyleAndWeight = style;
             label.style.unityTextAlign = TextAnchor.UpperLeft;

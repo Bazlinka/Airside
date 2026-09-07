@@ -404,7 +404,9 @@ namespace Airside.Presentation
             if (!_canvasHudActive || _canvasHud == null)
                 return;
 
-            _canvasHud.SetVisible(true);
+            var toolkitActive = _toolkitHud != null && _toolkitHud.IsActive;
+            // Toolkit owns product chrome — keep Canvas as hotkey/fallback only (0025 item 6).
+            _canvasHud.SetVisible(!toolkitActive);
 
             string awayBody = null;
             if (_showAwaySummary)
@@ -434,7 +436,6 @@ namespace Airside.Presentation
                     $"{_simulation.Location.Name} · {_simulation.Location.Region}";
             }
 
-            var toolkitActive = _toolkitHud != null && _toolkitHud.IsActive;
             var showBriefing = _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
             var showPause = _paused && !_showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
             var showAway = _showAwaySummary && !_simulation.IsInsolvent;
@@ -3622,12 +3623,9 @@ namespace Airside.Presentation
                 var domeRenderer = _horizonDome.GetComponent<Renderer>();
                 if (domeRenderer != null)
                 {
-                    var mat = domeRenderer.material;
-                    mat.color = sky;
-                    if (mat.HasProperty("_BaseColor"))
-                        mat.SetColor("_BaseColor", sky);
-                    if (mat.HasProperty("_EmissionColor"))
-                        mat.SetColor("_EmissionColor", sky);
+                    SetRendererColor(domeRenderer, sky);
+                    if (domeRenderer.material.HasProperty("_EmissionColor"))
+                        domeRenderer.material.SetColor("_EmissionColor", sky);
                 }
             }
 
@@ -3636,13 +3634,22 @@ namespace Airside.Presentation
             // Soft exponential fog for depth on clear days; weather can thicken it later.
             if (!Weather.IsAdverse(_simulation.CurrentWeather))
             {
+                var cloudy = _simulation.CurrentWeather == WeatherKind.Cloudy;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
-                RenderSettings.fogColor = Color.Lerp(
+                var clearFog = Color.Lerp(
                     new Color(0.08f, 0.1f, 0.16f),
                     Color.Lerp(skyDay * 0.92f, skyDusk * 0.85f, warm),
                     Mathf.Clamp01(daylight + warm * 0.25f));
-                RenderSettings.fogDensity = Mathf.Lerp(0.0058f, 0.0028f, daylight);
+                if (cloudy)
+                    clearFog = Color.Lerp(clearFog, new Color(0.55f, 0.6f, 0.66f), 0.28f);
+                RenderSettings.fogColor = clearFog;
+                var density = Mathf.Lerp(0.0058f, 0.0028f, daylight);
+                if (cloudy)
+                    density = Mathf.Max(density, Mathf.Lerp(0.0072f, 0.0042f, daylight));
+                // Soft dusk thicken so warm horizon haze reads without washing ALS.
+                density += warm * 0.0009f;
+                RenderSettings.fogDensity = density;
             }
 
             // Apron floods come up as daylight falls (presentation only).
@@ -6201,7 +6208,12 @@ namespace Airside.Presentation
         private static void BuildVegetation()
         {
             // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
-            // a handful of props (0025 item 3). Presentation only.
+            // a handful of props (0025 item 3). When VEG kits land, skip far densify carpets.
+            var eucKit = PreferArtKit("Models/Environment/mdl_eucalyptus_kit_v01.gltf");
+            var scrubKit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            var hasEucKit = !string.IsNullOrEmpty(eucKit) && ArtGltfLoader.HasKit(eucKit);
+            var hasScrubKit = !string.IsNullOrEmpty(scrubKit) && ArtGltfLoader.HasKit(scrubKit);
+
             var trees = new (Vector3 Pos, float Scale)[]
             {
                 (new Vector3(-32f, 0f, 30f), 1.1f),
@@ -6278,7 +6290,9 @@ namespace Airside.Presentation
                 (new Vector3(-8f, 0f, -38f), 0.88f),
                 (new Vector3(36f, 0f, -36f), 1.02f)
             };
-            for (var i = 0; i < trees.Length; i++)
+            // Core + extra belt always; far densify only when eucalyptus kit is missing.
+            var treeCount = hasEucKit ? 41 : trees.Length;
+            for (var i = 0; i < treeCount; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
 
             // Low shrub / scrub clusters along fence and car-park edges.
@@ -6293,7 +6307,7 @@ namespace Airside.Presentation
             for (var i = 0; i < shrubs.Length; i++)
                 PlaceShrub(shrubs[i], 0.7f + (i % 4) * 0.12f);
 
-            // Extra inland scrub clusters so paddock gaps close from overview (0025 item 3).
+            // Extra inland scrub — thin when VEG-002 already stamps authored clumps.
             var inlandScrub = new[]
             {
                 new Vector3(-62f, 0f, 44f), new Vector3(-58f, 0f, 52f), new Vector3(-45f, 0f, 58f),
@@ -6302,35 +6316,38 @@ namespace Airside.Presentation
                 new Vector3(72f, 0f, 22f), new Vector3(70f, 0f, -8f), new Vector3(-70f, 0f, -6f),
                 new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f)
             };
-            for (var i = 0; i < inlandScrub.Length; i++)
+            var inlandCount = hasScrubKit ? 7 : inlandScrub.Length;
+            for (var i = 0; i < inlandCount; i++)
                 PlaceShrub(inlandScrub[i], 0.75f + (i % 5) * 0.1f);
 
-            // Fence-line scrub carpet — fill paddock holes to the perimeter (REF-001/002).
-            for (var x = -70; x <= 70; x += 4)
+            // Fence-line scrub carpet — wider step when kit scrub owns the silhouette.
+            var fenceStep = hasScrubKit ? 9 : 4;
+            for (var x = -70; x <= 70; x += fenceStep)
             {
                 PlaceShrubClump(new Vector3(x, 0f, 36f + (x % 5) * 0.2f), 0.55f + (Mathf.Abs(x) % 4) * 0.08f);
-                if (x % 8 == 0)
+                if (x % (fenceStep * 2) == 0)
                     PlaceShrubClump(new Vector3(x + 1.5f, 0f, 40f), 0.7f);
             }
 
-            for (var z = -20; z <= 50; z += 5)
+            var sideStep = hasScrubKit ? 10 : 5;
+            for (var z = -20; z <= 50; z += sideStep)
             {
                 PlaceShrubClump(new Vector3(-48f - (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
                 PlaceShrubClump(new Vector3(50f + (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
             }
 
             // Between apron fringe and N fence.
-            for (var x = 6; x <= 34; x += 3)
+            var fringeStep = hasScrubKit ? 6 : 3;
+            for (var x = 6; x <= 34; x += fringeStep)
                 PlaceShrubClump(new Vector3(x, 0f, 28.5f + (x % 2) * 0.4f), 0.5f);
 
-            // Dense coastal scrub belt between berms and sand.
-            for (var x = -55; x <= 55; x += 5)
+            // Dense coastal scrub belt — prefer VEG-002 clumps over greybox cubes.
+            var coastStep = hasScrubKit ? 8 : 5;
+            for (var x = -55; x <= 55; x += coastStep)
             {
                 var zJitter = ((x * 13) % 7) * 0.15f;
-                CreateBlock($"Coast scrub {x}", new Vector3(x, 0.28f, -39.5f + zJitter),
-                    new Vector3(2.4f + (x % 3) * 0.4f, 0.45f + (Mathf.Abs(x) % 5) * 0.05f, 1.5f),
-                    Shade(AirsideTheme.Eucalyptus, 0.72f + (x % 4) * 0.04f));
-                if (x % 10 == 0)
+                PlaceShrub(new Vector3(x, 0f, -39.5f + zJitter), 0.7f + (Mathf.Abs(x) % 4) * 0.06f);
+                if (x % (coastStep * 2) == 0)
                     PlaceShrub(new Vector3(x + 1.5f, 0f, -37.5f), 0.65f);
             }
         }
@@ -6795,12 +6812,9 @@ namespace Airside.Presentation
                     var renderer = _sunDisc.GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        var mat = renderer.material;
-                        mat.color = sunColor;
-                        if (mat.HasProperty("_BaseColor"))
-                            mat.SetColor("_BaseColor", sunColor);
-                        if (mat.HasProperty("_EmissionColor"))
-                            mat.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
+                        SetRendererColor(renderer, sunColor);
+                        if (renderer.material.HasProperty("_EmissionColor"))
+                            renderer.material.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
                     }
 
                     var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
@@ -6824,12 +6838,9 @@ namespace Airside.Presentation
                     if (renderer != null)
                     {
                         var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
-                        var mat = renderer.material;
-                        mat.color = c;
-                        if (mat.HasProperty("_BaseColor"))
-                            mat.SetColor("_BaseColor", c);
-                        if (mat.HasProperty("_EmissionColor"))
-                            mat.SetColor("_EmissionColor", c * 0.7f);
+                        SetRendererColor(renderer, c);
+                        if (renderer.material.HasProperty("_EmissionColor"))
+                            renderer.material.SetColor("_EmissionColor", c * 0.7f);
                     }
                 }
             }
@@ -7153,10 +7164,15 @@ namespace Airside.Presentation
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             var drift = Time.unscaledDeltaTime * 0.35f;
-            var overcast = _simulation.CurrentWeather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
+            var weather = _simulation.CurrentWeather;
+            var overcast = weather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
+            var cloudy = weather == WeatherKind.Cloudy;
+            var thickSky = overcast || cloudy;
             var umbraAlpha = overcast
                 ? Mathf.Lerp(0.06f, 0.18f, daylight)
-                : Mathf.Lerp(0.04f, 0.26f, daylight);
+                : cloudy
+                    ? Mathf.Lerp(0.05f, 0.22f, daylight)
+                    : Mathf.Lerp(0.04f, 0.26f, daylight);
             for (var i = 0; i < _cloudRoot.childCount; i++)
             {
                 var cloud = _cloudRoot.GetChild(i);
@@ -7169,9 +7185,9 @@ namespace Airside.Presentation
                 var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
                 var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
-                if (overcast)
-                    tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.55f);
-                var baseAlpha = overcast ? 0.42f : 0.22f;
+                if (thickSky)
+                    tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), overcast ? 0.55f : 0.32f);
+                var baseAlpha = overcast ? 0.42f : cloudy ? 0.32f : 0.22f;
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
                 // Cluster roots have no renderer — tint each blob child.
@@ -7185,7 +7201,7 @@ namespace Airside.Presentation
                         var color = blobRenderer.material.color;
                         var blobTint = tint;
                         if (color.a > 0.01f)
-                            blobTint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
+                            blobTint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
                         SetRendererColor(blobRenderer, blobTint);
                     }
                 }
@@ -7196,7 +7212,7 @@ namespace Airside.Presentation
                     {
                         var color = renderer.material.color;
                         if (color.a > 0.01f)
-                            tint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
+                            tint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
                         SetRendererColor(renderer, tint);
                     }
                 }

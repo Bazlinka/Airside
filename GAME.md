@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (aircraft skin PBR)
-- **Branch / working tree:** `cursor/aircraft-skin-pbr-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak aircraft skin under follow; authored FBX still the real visual bar
-- **In progress / half-done:** aircraft skin maps this PR; 21 Resources prefabs + WLD/PRP v02 on main; authored FBX + Editor Addressables still open
+- **Last updated:** 2026-09-07 by Cursor (handoff after aircraft skin PBR)
+- **Branch / working tree:** `main`
+- **Do this next:** Bailey `git pull` + Play soak (ARFF shed, hills, flood masts, aircraft skin under follow); then authored turboprop/terminal FBX or Editor Addressables
+- **In progress / half-done:** 21 Resources prefabs + WLD/PRP v02 + coast/aircraft skin PBR on main; authored FBX + Editor Addressables still open
 - **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art
 - **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
 - **Visual assets:** Batch C v04; WLD/PRP v02; aircraft skin PBR; 21 Resources prefabs; Toolkit HUD

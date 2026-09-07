@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Batch D runtime alive-airport + first-session tips)
-- **Branch / working tree:** `cursor/batch-d-alive-airport-38b9` (off `main` after #33 + #35)
-- **Do this next:** Bailey Unity Play soak (Batch C/E/WLD + Batch D runtime feel). Optional: produce real .anim/.prefab files later.
-- **In progress / half-done:** Batch D runtime presentation Integrated; Unity clip/prefab assets still Planned.
+- **Last updated:** 2026-09-07 by Cursor (keep-going: Batch D merged + touchdown/HUD polish)
+- **Branch / working tree:** `cursor/playable-polish-round2-38b9` (Batch D already on `main` via #37)
+- **Do this next:** Bailey `git pull` + Unity Play soak. Merge round-2 polish when ready.
+- **In progress / half-done:** round-2 touchdown chirp + income icon.
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-- **Open questions for Bailey:** none — keep building; Play soak when convenient.
-- **Visual assets:** Batch A–C + E + WLD Integrated; Batch D **runtime Integrated** (clip files Planned)
+- **Open questions for Bailey:** none.
+- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified still pending
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

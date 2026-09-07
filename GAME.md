@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (birds + hangar field fix)
-- **Branch / working tree:** `cursor/sky-birds-handoff-ddad`
-- **Do this next:** Merge hot-fix for hangar/touchdown fields; Bailey Play soak #73–#75
-- **In progress / half-done:** bird flock + restored missing fields from Canvas wiring
-- **Watch out for:** #73 on main was missing `_hangarDoor` / `_touchdownSmokeRemaining` declarations — fixed here
+- **Last updated:** 2026-09-07 by Cursor (Canvas left HUD migration)
+- **Branch / working tree:** `cursor/canvas-left-hud-ddad`
+- **Do this next:** Merge left-status Canvas HUD; Bailey Play soak hire/research/offer on Canvas
+- **In progress / half-done:** left status + hire/research/turnaround on `AirsideCanvasHud`; IMGUI left gated
+- **Watch out for:** operations log still IMGUI; verify EventSystem clicks for hire/research on Mac
 - **Open questions for Bailey:** none
-- **Visual assets:** canvas HUD + ambient audio on `main`; birds/fix on this branch
+- **Visual assets:** Canvas owns left status + offer + toast; ops log remains IMGUI
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,7 +122,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm the presentation wave through #70: materials micro-relief, ground shadows,
-   drifting clouds, denser HUD panels, plus earlier landside/motion/first-session work.
-3. Next code track: more environment life, or a real UI Toolkit package spike
-   (0025 item 6). No new economy systems; no Companion/CloudKit.
+2. Confirm Canvas HUD: left status (hire/research/priority), route offer Accept/Decline,
+   ops toast, plus birds / hangar door / ambient audio from #72–#75.
+3. Next code track: migrate OPERATIONS log to Canvas, or lighting/tonemap spike
+   (0025 item 5). No new economy systems; no Companion/CloudKit.

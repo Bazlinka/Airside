@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Canvas left HUD migration (0025 item 6).** Runtime uGUI left panel now owns
+  status, coach, wait meter, turnaround tasks, and hire / release / stand /
+  research / priority-crew buttons; IMGUI left panel is gated when Canvas is
+  active. Operations log remains IMGUI. Presentation only.
+
 - **Sky bird flock + hangar field restore.** Twelve presentation birds orbit the
   southern coast; also restores `_hangarDoor` / `_touchdownSmokeRemaining` fields
   dropped during the Canvas HUD wiring. Presentation only.

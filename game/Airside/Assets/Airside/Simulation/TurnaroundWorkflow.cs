@@ -43,6 +43,28 @@ namespace Airside.Simulation
         public bool PriorityCrewEnabled { get; private set; }
         public bool HasCleaningDisruption => _cleaningDisruptionSeconds > 0;
 
+        /// <summary>True when this turnaround is being run by fewer than the baseline crew.</summary>
+        public bool IsUnderstaffed => _staffingFactor > 1.0;
+
+        /// <summary>
+        /// Why this turnaround runs past its scheduled window, or empty when it does
+        /// not. Every delay the airport reports has to name a cause the player can act
+        /// on, so this covers understaffing as well as cabin-cleaning disruptions.
+        /// </summary>
+        public string OverrunCause
+        {
+            get
+            {
+                if (CompletionOffset() <= ScheduledWindowSeconds)
+                    return string.Empty;
+                if (HasCleaningDisruption)
+                    return "Cabin cleaning disruption";
+                if (IsUnderstaffed)
+                    return "Understaffed ground crew";
+                return "Extended turnaround";
+            }
+        }
+
         public void EnablePriorityCrew()
         {
             PriorityCrewEnabled = true;
@@ -59,6 +81,8 @@ namespace Airside.Simulation
 
             if (HasCleaningDisruption)
                 return "Cabin cleaning disruption";
+            if (IsUnderstaffed)
+                return "Understaffed ground crew";
 
             foreach (var task in Tasks(now))
             {

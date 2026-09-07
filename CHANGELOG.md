@@ -5,12 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F1 follow-up: rain no longer uses mat_glass.** Translucent VFX (rain/smoke mist)
+  stays on Default Lit instead of MAT-001 glass panes — fixes bright vertical shafts in storm.
+  Evidence: `scripts/test-unity.sh` 116/116; `scripts/build-mac.sh` rebuilt packaged app.
+
 - **Batch F1 BLD-001 v05 + MAT-001.** Authored regional terminal `mdl_terminal_regional_small_v05`
   (FBX + glTF + Resources bake; PreferArtKit v05 first) and eight URP Lit materials
   `mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01`.
   Prefab instantiate re-applies presentation materials. Fallbacks retained; no simulation change.
   Evidence: Unity bake 12 prefabs; MAT-001 CreateMaterials ×8×2; `scripts/test-unity.sh` 116/116;
-  packaged Mac build launched; ~3 min stable soak then clean quit (30-min soak not completed).
+  packaged Mac build launched; soak notes in GAME handoff (do not claim 30-min until soak2 completes).
   F2–F4 not started.
 
 - **Batch F1 AIR-001 v05 Mac bake.** Unity ModelImporter meshes now in Resources prefabs for

@@ -11,8 +11,8 @@
   - MAT-001 `.mat` under Art + Resources; `AirsideMaterialLibrary` instances them when present
   - Prefab instantiate re-applies presentation materials (avoids grey FBX defaults)
   - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
-  - Soak: packaged app ran ~3 min stable (~515–540 MB RSS), then clean quit (no DiagnosticReports). **Not** a verified 30-minute soak — Bailey should leave it running overnight if desired
-  - Night/dusk screenshots show terminal silhouette + AIR-001; one bright pink vertical ray near apron (likely selection/light artefact — investigate if still present in day)
+  - Soak: packaged rebuild after rain/mat_glass fix; monitor in `work/evidence/batch-f1/soak2.txt`. Prior tip: ~3 min then clean quit; bright vertical shafts were rain Cubes wrongly using mat_glass — fixed
+  - Night/dusk: terminal + AIR-001 visible; Addressables aa/settings.json missing (known)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
   - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)
 - **Open question for Bailey:** visual accept of BLD-001 v05 vs REF-001/005; whether magenta ray is a real material miss

@@ -2548,7 +2548,9 @@ namespace Airside.Presentation
                     (float)(rng.NextDouble() * 50f - 10f));
                 drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
                 drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-                drop.GetComponent<Renderer>().material = CreateMaterial(new Color(0.7f, 0.78f, 0.88f, 0.35f));
+                drop.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    new Color(0.7f, 0.78f, 0.88f, 0.35f),
+                    AirsideMaterialLibrary.SurfaceKind.Default);
                 var collider = drop.GetComponent<Collider>();
                 if (collider != null)
                     Object.Destroy(collider);
@@ -8717,8 +8719,15 @@ namespace Airside.Presentation
         private static AirsideMaterialLibrary.SurfaceKind InferSurfaceKindFromColor(Color color)
         {
             // Heuristic for untextured primitives (cars, props, glow quads, painted lines).
+            // Translucent rain/smoke/mist must NOT become Glass — MAT-001 mat_glass is a pane
+            // material and reads as bright vertical shafts on thin Cube droplets.
             if (color.a < 0.99f)
+            {
+                var isVfxMist = color.a < 0.55f && color.r > 0.55f && color.g > 0.55f && color.b > 0.55f;
+                if (isVfxMist)
+                    return AirsideMaterialLibrary.SurfaceKind.Default;
                 return AirsideMaterialLibrary.SurfaceKind.Glass;
+            }
             // Near-white / cream → painted markings, not aircraft skin (MAT-001 / 0025 item 4).
             if (color.r > 0.85f && color.g > 0.85f && color.b > 0.85f)
                 return AirsideMaterialLibrary.SurfaceKind.PaintedLine;

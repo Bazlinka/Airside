@@ -49,14 +49,18 @@ new style authority; the individual runtime icons are the prepared outputs.
 
 ## What is still missing
 
-- Bailey review and approval of BRD-001 and UI-ILL-001, followed by Unity import,
-  `.meta` files and runtime wiring if accepted.
-- Batch D's actual `.anim`, controller and VFX prefab deliverables. Greybox
-  presentation exists, but the manifest assets remain Planned.
-- Optional `MAT-001` Unity material library; current surface loading has a
-  documented fallback.
-- Unity Play verification of already Integrated Batch B/C/E assets at overview,
-  follow, day, dusk and night views.
+- Batch F1 authored AIR-001 v05 turboprop, BLD-001 v05 terminal and MAT-001
+  material family. These are the next recommended assets; current glTF/runtime
+  materials remain fallbacks.
+- Batch F2 turnaround vehicle and character replacements.
+- Batch F3 vegetation, fence/gate, terminal forecourt and non-operational context.
+- Batch D's actual `.anim`, controller and VFX prefab deliverables, grouped into
+  Batch F4 with UI-ICO-005 system-control icons.
+- Packaged Mac camera-matrix verification of each replacement before the next
+  Batch F slice begins.
+
+The exact paths, hierarchy, budgets, hooks and acceptance checks are in
+`docs/art/prompts/batch-f-first-playable-visual-assets-task-packet.md`.
 
 Later fleets, interiors, passengers, construction illustrations and companion art
 are deliberately out of scope until their gameplay milestones are approved.

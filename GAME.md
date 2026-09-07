@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (squash-merged #130 onto main)
+- **Last updated:** 2026-09-07 by ChatGPT (decision 0027 / Batch F asset design)
 - **Branch / working tree:** `main`
-- **Do this next:** authored FBX overwrite for turboprop or terminal; Editor Addressables groups when ready. No new economy systems.
-- **In progress / half-done:** Resources prefab keys work without a built Addressables catalog; Unity still logs missing `Library/com.unity.addressables/aa/OSX/settings.json` at init (fallback path used).
-- **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art; do not rebuild Addressables content until Bailey authors groups.
-- **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
-- **Visual assets:** Lofted turboprop + Addressables Resources provider; denser fence/vegetation/shoulders; gear/cargo doors; BRD-001 wordmark overlays; Batch C/WLD/PRP still loading. Verified Play soak.
+- **Do this next:** Bailey tells Cursor to implement Batch F1, AIR-001 v05 only: authored turboprop FBX/prefab, preferred ahead of lofted/v04, every fallback retained.
+- **In progress / half-done:** No runtime work started. Batch F packet defines exact assets, hierarchy, budgets, hooks and packaged-build checks.
+- **Watch out for:** Do not answer Batch F with another procedural cuboid/glTF density pass; operational geometry and simulation remain unchanged.
+- **Open questions for Bailey:** Approve AIR-001 v05 after the packaged Mac camera matrix before Cursor starts the terminal.
+- **Visual assets:** Full repository gap audit complete. Ordered F1 hero, F2 turnaround, F3 setting and F4 reusable-finish slices are specified under `docs/art/prompts/`.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

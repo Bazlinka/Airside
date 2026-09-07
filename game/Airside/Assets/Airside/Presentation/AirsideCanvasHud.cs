@@ -797,7 +797,8 @@ namespace Airside.Presentation
             _offerAccent.gameObject.SetActive(firstDecision);
             if (firstDecision)
             {
-                var pulse = 0.45f + 0.35f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3.2f));
+                var pulse = 0.45f + 0.35f * (0.5f + 0.5f * Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.UiPulseHz * Mathf.PI * 2f));
                 var c = AirsideTheme.SafetyYellow;
                 c.a = pulse;
                 _offerAccent.color = c;

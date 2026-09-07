@@ -53,8 +53,9 @@ namespace Airside.Presentation
         public const float ApronWalkerHz = 0.045f;
         public const float ApronIdleSwayHz = 0.09f;
         public const float ApronWaveHz = 0.64f;
-        public const float BirdOrbitHz = 0.035f;
-        public const float BirdFlapHz = 1.6f;
+        // UI / chrome accent pulse
+        public const float UiPulseHz = 0.51f;
+        public const float WindowFlickerHz = 0.27f;
 
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {

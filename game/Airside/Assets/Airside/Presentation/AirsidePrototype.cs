@@ -3160,7 +3160,8 @@ namespace Airside.Presentation
                 if (stripe != null)
                     GUI.DrawTexture(new Rect(left, top, 340, 6f), stripe, ScaleMode.StretchToFill, alphaBlend: true);
                 // Soft pulse so the first decision panel reads as live.
-                var pulse = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3.2f));
+                var pulse = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.UiPulseHz * Mathf.PI * 2f));
                 var prev = GUI.color;
                 GUI.color = new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, pulse);
                 GUI.DrawTexture(new Rect(left, top, 4f, height), Texture2D.whiteTexture);
@@ -3915,7 +3916,8 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var flicker = night > 0.35f
-                    ? 1f + 0.06f * Mathf.Sin(Time.unscaledTime * (1.7f + i * 0.37f) + i)
+                    ? 1f + 0.06f * Mathf.Sin(
+                        Time.unscaledTime * (AirsideReusableMotion.WindowFlickerHz * Mathf.PI * 2f + i * 0.37f) + i)
                     : 1f;
                 var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f) * flicker;
                 color.a = 1f;
@@ -4348,7 +4350,7 @@ namespace Airside.Presentation
                 head.transform.SetParent(mast, false);
                 head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
                 head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
-                head.GetComponent<Renderer>().material.color = new Color(0.95f, 0.95f, 0.9f);
+                SetRendererColor(head.GetComponent<Renderer>(), new Color(0.95f, 0.95f, 0.9f));
             }
 
             var lightGo = new GameObject("Beacon light");
@@ -5393,17 +5395,44 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Decision 0025 items 1+3 — Resources luggage trolley with procedural fallback.
+        /// Decision 0025 / Batch F3 — prefer PRP-003 trolley parts, then Resources, then greybox.
         /// </summary>
         private static void PlaceLuggageTrolley(string name, Vector3 position, float yawDegrees)
         {
-            Transform root;
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_luggage_trolley_v01", out var prefabRoot))
+            Transform root = null;
+            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
+            {
+                root = new GameObject(name).transform;
+                var steel = new Color(0.7f, 0.72f, 0.75f);
+                var placed = 0;
+                void Place(string mesh, Color color)
+                {
+                    if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                        return;
+                    part.SetParent(root, false);
+                    part.localPosition = Vector3.zero;
+                    part.localRotation = Quaternion.identity;
+                    placed++;
+                }
+
+                Place("trolley_rail", steel);
+                Place("trolley_post_l", steel);
+                Place("trolley_post_r", steel);
+                if (placed == 0)
+                {
+                    Object.Destroy(root.gameObject);
+                    root = null;
+                }
+            }
+
+            if (root == null && ArtPresentationLoader.TryInstantiatePrefab("mdl_luggage_trolley_v01", out var prefabRoot))
             {
                 prefabRoot.name = name;
                 root = prefabRoot;
             }
-            else
+
+            if (root == null)
             {
                 root = new GameObject(name).transform;
                 ParentBlock(root, $"{name} basket", new Vector3(0f, 0.45f, 0f), new Vector3(0.8f, 0.55f, 0.45f), new Color(0.7f, 0.72f, 0.75f));
@@ -5415,17 +5444,46 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Decision 0025 items 1+3 — Resources landside bench with procedural fallback.
+        /// Decision 0025 / Batch F3 — prefer PRP-003 bench parts, then Resources, then greybox.
         /// </summary>
         private static void PlaceLandsideBench(string name, Vector3 position, float yawDegrees)
         {
-            Transform root;
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_landside_bench_v01", out var prefabRoot))
+            Transform root = null;
+            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
+            {
+                root = new GameObject(name).transform;
+                var wood = new Color(0.4f, 0.32f, 0.22f);
+                var steel = new Color(0.45f, 0.46f, 0.48f);
+                var placed = 0;
+                void Place(string mesh, Color color)
+                {
+                    if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                        return;
+                    part.SetParent(root, false);
+                    part.localPosition = Vector3.zero;
+                    part.localRotation = Quaternion.identity;
+                    placed++;
+                }
+
+                Place("bench_seat", wood);
+                Place("bench_back", Shade(wood, 0.9f));
+                Place("bench_leg_l", steel);
+                Place("bench_leg_r", steel);
+                if (placed == 0)
+                {
+                    Object.Destroy(root.gameObject);
+                    root = null;
+                }
+            }
+
+            if (root == null && ArtPresentationLoader.TryInstantiatePrefab("mdl_landside_bench_v01", out var prefabRoot))
             {
                 prefabRoot.name = name;
                 root = prefabRoot;
             }
-            else
+
+            if (root == null)
             {
                 root = new GameObject(name).transform;
                 var wood = new Color(0.45f, 0.32f, 0.18f);
@@ -5999,8 +6057,23 @@ namespace Airside.Presentation
             Place("planter", new Vector3(31.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter");
             Place("planter_soil", new Vector3(31.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil");
             Place("planter_scrub", new Vector3(31.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub");
-            Place("bollard", new Vector3(23.5f, 0f, 33.2f), steel, "Drop-off bollard L");
-            Place("bollard", new Vector3(28.5f, 0f, 33.2f), steel, "Drop-off bollard R");
+            // Prefer authored dropoff bollard; fall back to generic bollard mesh.
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(23.5f, 0f, 33.2f), Quaternion.identity, steel, out var dropL))
+                Place("bollard", new Vector3(23.5f, 0f, 33.2f), steel, "Drop-off bollard L");
+            else
+            {
+                dropL.name = "Drop-off bollard L";
+                placed++;
+            }
+
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(28.5f, 0f, 33.2f), Quaternion.identity, steel, out var dropR))
+                Place("bollard", new Vector3(28.5f, 0f, 33.2f), steel, "Drop-off bollard R");
+            else
+            {
+                dropR.name = "Drop-off bollard R";
+                placed++;
+            }
+
             Place("bollard_cap", new Vector3(23.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap L");
             Place("bollard_cap", new Vector3(28.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap R");
             Place("kerb_straight", new Vector3(26f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb");

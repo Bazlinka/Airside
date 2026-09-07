@@ -1,15 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 7)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 8)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - WLD-004 accents own near horizon (far greybox hills skipped when accents land)
-  - Life motion Hz centralized (windsock/flag/apron/birds) in AirsideReusableMotion
-  - Hangar `glass_pane_*` / skylight panes collected for night glow
-  - Apron joints/slabs thinned; jetty densify restrained
+  - WLD-004 accents own near horizon; life motion Hz centralized
+  - Hangar glass_pane_* night glow; apron/jetty densify thinned
+  - Landside benches/trolleys prefer PRP-003; dropoff_bollard preferred
+  - UI offer accent + window flicker use AirsideReusableMotion.UiPulseHz / WindowFlickerHz
   - Overview ~46 m / 50° FOV; PC quality cascades/MSAA as prior tips
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish

@@ -30,7 +30,9 @@ change it describes.
   `_BaseColor`; WLD-004 accents own near horizon (skip far greybox hills);
   centralize windsock/flag/apron/bird life Hz; collect hangar glass_pane_* for
   night glow; thin apron joints/slabs; restrain jetty densify; scale up terrain
-  accents. Presentation only — simulation unchanged.
+  accents; landside benches/trolleys prefer PRP-003; dropoff_bollard preferred;
+  UI offer pulse + window flicker via AirsideReusableMotion. Presentation only —
+  simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

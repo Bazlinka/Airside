@@ -399,7 +399,7 @@ namespace Airside.Presentation
                     showAway: showAway,
                     showInsolvency: showInsolvency,
                     locationName: _simulation.Location.Name,
-                    firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
+                    firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
                     awayBody: awayBody,
                     insolvencyBody: insolvencyBody);
                 _canvasHud.SetOverlaysVisible(false);
@@ -414,7 +414,7 @@ namespace Airside.Presentation
                     showAway: showAway,
                     showInsolvency: showInsolvency,
                     locationName: _simulation.Location.Name,
-                    firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
+                    firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
                     awayBody: awayBody,
                     insolvencyBody: insolvencyBody);
             }

@@ -71,7 +71,8 @@ namespace Airside.Simulation
             SpawnCommercial(_clock.Now, preferredStand: null, consumeRandomWhenChoosing: true);
             SynchronizeCommercialReservations();
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(_clock.Now, TrafficWaits, CommercialStandOccupancy(), mayEnterCorridor: true);
+                aircraft.Reposition(_clock.Now, TrafficWaits, CommercialStandOccupancy(), Capacity.StandCount,
+                    mayEnterCorridor: true);
         }
 
         public AirportLocation Location { get; }
@@ -164,7 +165,8 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Expected daily income and cost under the current weather, staffing and
-        /// route book, assuming today's flight cadence continues with no delays.
+        /// route book, assuming today's flight cadence — every commercial aircraft
+        /// currently operating — continues with no delays.
         /// </summary>
         public DailyFinanceBrief DailyFinance
         {
@@ -174,7 +176,10 @@ namespace Airside.Simulation
                     + Weather.DailyOperatingCost(CurrentWeather)
                     + Staffing.DailyWage;
                 var incomePerCycle = AirportEconomy.TurnaroundRevenue + Routes.IncomePerFlight + Research.RouteIncomeBonus;
-                var expectedIncome = incomePerCycle * DayCycle.DaySeconds / CycleLengthSeconds;
+                // Every commercial aircraft flies its own cycle, so the projection has to
+                // count them all — otherwise the brief halves the moment a second one starts.
+                var concurrentFlights = Math.Max(1, _flights.Count);
+                var expectedIncome = incomePerCycle * concurrentFlights * DayCycle.DaySeconds / CycleLengthSeconds;
                 return new DailyFinanceBrief(operatingCost, expectedIncome, Economy.Cash);
             }
         }
@@ -307,8 +312,10 @@ namespace Airside.Simulation
             if (previousPhase == AircraftPhase.AtStand && flight.Turnaround != null)
             {
                 flight.LastDelaySeconds = flight.Turnaround.DelaySeconds(now);
-                flight.LastDelayCause = flight.LastDelaySeconds > 0 && flight.Turnaround.HasCleaningDisruption
-                    ? "Cabin cleaning disruption"
+                // Every delay has to name a cause the player can act on — understaffing
+                // included, not just cabin-cleaning disruptions.
+                flight.LastDelayCause = flight.LastDelaySeconds > 0
+                    ? flight.Turnaround.OverrunCause
                     : string.Empty;
                 LastDelaySeconds = flight.LastDelaySeconds;
                 LastDelayCause = flight.LastDelayCause;
@@ -551,7 +558,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             var grantee = ChooseCorridorGrantee(now);
             var occupied = CommercialStandOccupancy();
             foreach (var aircraft in _groundTraffic)
-                aircraft.Reposition(now, TrafficWaits, occupied,
+                aircraft.Reposition(now, TrafficWaits, occupied, Capacity.StandCount,
                     mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
         }
 

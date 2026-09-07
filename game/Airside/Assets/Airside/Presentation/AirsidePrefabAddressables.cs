@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
@@ -16,6 +17,22 @@ namespace Airside.Presentation
     public static class AirsidePrefabAddressables
     {
         public const string LocatorId = "Airside.Prefabs";
+
+        /// <summary>
+        /// This locator was written against <c>LegacyResourcesProvider</c>, which the
+        /// Addressables version in this project does not ship — so the file never
+        /// compiled and this path has never run. The provider id is named rather than
+        /// resolved via typeof so the build is green; until a real provider is
+        /// registered, <see cref="Register"/> deliberately does nothing and
+        /// <see cref="ArtPresentationLoader"/> keeps using its Resources → glTF
+        /// fallbacks, which is what has actually been serving prefabs all along.
+        /// Bailey's Editor Addressables groups are the intended replacement.
+        /// </summary>
+        private const string ResourcesProviderId =
+            "UnityEngine.ResourceManagement.ResourceProviders.LegacyResourcesProvider";
+
+        /// <summary>True once a real provider exists and this locator can be trusted.</summary>
+        public static bool Enabled { get; set; }
         private static bool _registered;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -25,6 +42,15 @@ namespace Airside.Presentation
         {
             if (_registered)
                 return;
+
+            // Off until a provider that exists in this Addressables version is wired up
+            // (see ResourcesProviderId). Registering a locator whose provider cannot load
+            // would turn a working Resources fallback into a runtime failure.
+            if (!Enabled)
+            {
+                _registered = true;
+                return;
+            }
 
             try
             {
@@ -41,7 +67,7 @@ namespace Airside.Presentation
                     IResourceLocation location = new ResourceLocationBase(
                         key,
                         internalId,
-                        typeof(LegacyResourcesProvider).FullName,
+                        ResourcesProviderId,
                         typeof(GameObject));
                     locations[key] = new List<IResourceLocation> { location };
                 }
@@ -98,6 +124,27 @@ namespace Airside.Presentation
             public string LocatorId => AirsidePrefabAddressables.LocatorId;
 
             public IEnumerable<object> Keys => _locations.Keys;
+
+#if !ENABLE_JSON_CATALOG
+            /// <summary>
+            /// Required by IResourceLocator when Addressables is built against the binary
+            /// catalog (the default in this Unity version). Guarded the same way the
+            /// interface declares it, so a JSON-catalog build still compiles.
+            /// </summary>
+            public IEnumerable<IResourceLocation> AllLocations
+            {
+                get
+                {
+                    foreach (var entry in _locations.Values)
+                    {
+                        if (entry == null)
+                            continue;
+                        foreach (var location in entry)
+                            yield return location;
+                    }
+                }
+            }
+#endif
 
             public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
             {

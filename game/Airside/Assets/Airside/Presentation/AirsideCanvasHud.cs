@@ -858,6 +858,18 @@ namespace Airside.Presentation
 
         public void SetVisible(bool visible) => _root.gameObject.SetActive(visible);
 
+        /// <summary>
+        /// When UI Toolkit owns OPERATIONS + route offer, hide the Canvas copies
+        /// so the two systems do not double-draw the right column.
+        /// </summary>
+        public void SetRightPanelsVisible(bool visible)
+        {
+            if (_opsPanel != null)
+                _opsPanel.gameObject.SetActive(visible);
+            if (_offerPanel != null && !visible)
+                _offerPanel.gameObject.SetActive(false);
+        }
+
         private static void AddWordmark(RectTransform parent)
         {
             var wordmark = AirsideTheme.WordmarkLight;

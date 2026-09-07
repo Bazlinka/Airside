@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (hangar bay props + aiming points)
-- **Branch / working tree:** `cursor/hangar-bay-props-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak open hangar bay clutter + runway aiming points
-- **In progress / half-done:** twelve Resources prefabs; hangar interior reads occupied
-- **Watch out for:** Toolkit toast compile needs Unity 6 UIElements; authored FBX still open
-- **Open questions for Bailey:** expand Toolkit to left panel next, or authored FBX first?
-- **Visual assets:** twelve Resources prefabs; Toolkit toasts; Addressables locator
+- **Last updated:** 2026-09-07 by Cursor (Toolkit ops + route offer)
+- **Branch / working tree:** `cursor/toolkit-ops-offer-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak Toolkit OPERATIONS + Accept/Decline
+- **In progress / half-done:** Toolkit owns toasts + right column; Canvas still owns left panel + overlays
+- **Watch out for:** UI Toolkit clicks need EventSystem (Canvas creates it); authored FBX still open
+- **Open questions for Bailey:** migrate left status panel to Toolkit next, or authored FBX first?
+- **Visual assets:** twelve Resources prefabs; Toolkit ops/offer/toasts; Addressables locator
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

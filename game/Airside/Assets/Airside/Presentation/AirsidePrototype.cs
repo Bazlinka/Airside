@@ -712,6 +712,7 @@ namespace Airside.Presentation
                 UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinDoor(view, phase);
+                UpdateCabinWindowGlow(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateEngineHeat(view, phase);
             }
         }
@@ -954,6 +955,52 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Decision 0025 items 5+7 — cabin / cockpit glass picks up warm emissive glow
+        /// at night and a softer stand dwell glow so the airframe reads alive.
+        /// </summary>
+        private static void UpdateCabinWindowGlow(Transform aircraft, AircraftPhase phase, float daylight)
+        {
+            var night = daylight < 0.4f;
+            var atStand = phase == AircraftPhase.AtStand;
+            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var intensity = 0f;
+            if (night)
+                intensity = atStand ? 1.35f : enginesOn ? 1.05f : 0.55f;
+            else if (atStand)
+                intensity = 0.22f;
+
+            var glow = new Color(1f, 0.82f, 0.55f) * intensity;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft)
+                    continue;
+                var n = child.name;
+                if (!(n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                      || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
+                      || n.StartsWith("Cockpit", StringComparison.OrdinalIgnoreCase)
+                      || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0))
+                    continue;
+
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer == null || renderer.material == null)
+                    continue;
+                var mat = renderer.material;
+                if (intensity > 0.01f)
+                {
+                    mat.EnableKeyword("_EMISSION");
+                    if (mat.HasProperty("_EmissionColor"))
+                        mat.SetColor("_EmissionColor", glow);
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                }
+                else if (mat.HasProperty("_EmissionColor"))
+                {
+                    mat.SetColor("_EmissionColor", Color.black);
+                    mat.DisableKeyword("_EMISSION");
+                }
+            }
+        }
+
         private static void UpdateEngineHeat(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: subtle heat shimmer behind running engines.
@@ -1152,6 +1199,10 @@ namespace Airside.Presentation
                     view,
                     traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
                     (float)_simulation.TimeOfDay.Daylight);
+                UpdateCabinWindowGlow(
+                    view,
+                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
+                    (float)_simulation.TimeOfDay.Daylight);
                 UpdateEngineHeat(view, traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
             }
         }
@@ -1188,6 +1239,9 @@ namespace Airside.Presentation
                 UpdateVehicle(_fuelTruck, false, fuelPark, fuelPark);
                 UpdateVehicle(_baggageCart, false, bagPark, bagPark);
                 UpdateVehicle(_passengerBus, false, busPark, busPark);
+                SyncVehicleHeadlights(_fuelTruck, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
+                SyncVehicleHeadlights(_baggageCart, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
+                SyncVehicleHeadlights(_passengerBus, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
                 return;
             }
 
@@ -1198,6 +1252,10 @@ namespace Airside.Presentation
             UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f), fuelPark);
             UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f), bagPark);
             UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f), busPark);
+            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            SyncVehicleHeadlights(_fuelTruck, fuelActive || daylight < 0.38f, daylight);
+            SyncVehicleHeadlights(_baggageCart, bagActive || daylight < 0.38f, daylight);
+            SyncVehicleHeadlights(_passengerBus, paxActive || daylight < 0.38f, daylight);
             AnimateServiceLoops(_fuelTruck, fuelActive, "Hose");
             AnimateServiceLoops(_baggageCart, bagActive, "Cargo");
             AnimateServiceLoops(_passengerBus, paxActive, "Door");
@@ -1250,6 +1308,7 @@ namespace Airside.Presentation
                     Mathf.SmoothStep(0f, 1f, progress));
                 PlaceProp(_pushbackTug, true, tugPos, Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f)));
                 PulseServiceBeacon(_pushbackTug, true);
+                SyncVehicleHeadlights(_pushbackTug, true, (float)_simulation.TimeOfDay.Daylight);
             }
             else
             {
@@ -1372,6 +1431,63 @@ namespace Airside.Presentation
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Decision 0025 items 5+7 — GSE headlamp SpotLights so night apron servicing reads lit.
+        /// </summary>
+        private static void SyncVehicleHeadlights(Transform vehicle, bool on, float daylight)
+        {
+            if (vehicle == null || !vehicle.gameObject.activeInHierarchy)
+                return;
+
+            EnsureVehicleHeadlightMeshes(vehicle);
+            var night = daylight < 0.4f;
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == vehicle)
+                    continue;
+                if (child.name.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                child.gameObject.SetActive(on);
+                var light = child.GetComponent<Light>();
+                if (light == null)
+                {
+                    light = child.gameObject.AddComponent<Light>();
+                    light.type = LightType.Spot;
+                    light.color = new Color(1f, 0.95f, 0.8f);
+                    light.range = 14f;
+                    light.spotAngle = 58f;
+                    light.innerSpotAngle = 28f;
+                    light.shadows = LightShadows.None;
+                }
+
+                light.enabled = on;
+                if (on)
+                    light.intensity = night ? 2.8f : 1.1f;
+            }
+        }
+
+        private static void EnsureVehicleHeadlightMeshes(Transform vehicle)
+        {
+            var has = false;
+            foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
+            {
+                if (child != vehicle && child.name.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    has = true;
+                    break;
+                }
+            }
+
+            if (has)
+                return;
+
+            ParentBlock(vehicle, "Headlight L", new Vector3(0.55f, 0.25f, 0.35f),
+                new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
+            ParentBlock(vehicle, "Headlight R", new Vector3(0.55f, 0.25f, -0.35f),
+                new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
         }
 
         private static void PulseGpuCart(Transform gpu, bool active)
@@ -4330,9 +4446,14 @@ namespace Airside.Presentation
 
         private static Transform BuildWindsock()
         {
-            // WLD-003 windsock — kit pole when available, animated sock always procedural.
+            // WLD-003 windsock — Resources / kit pole when available; animated sock always procedural.
             const string propsKit = "Models/Props/mdl_airfield_props_kit_v01.gltf";
-            if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", new Vector3(-12f, 0f, 12f), Quaternion.identity,
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_windsock_pole_v01", out var polePrefab))
+            {
+                polePrefab.name = "Windsock pole";
+                polePrefab.position = new Vector3(-12f, 0f, 12f);
+            }
+            else if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", new Vector3(-12f, 0f, 12f), Quaternion.identity,
                     new Color(0.75f, 0.75f, 0.72f), out _))
             {
                 CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
@@ -4583,11 +4704,15 @@ namespace Airside.Presentation
             PlaceSignBoard(kit, new Vector3(10f, 0f, 22f), 90f);
             PlaceSignBoard(kit, new Vector3(-4f, 0f, 12f), 0f);
             PlaceSignBoard(kit, new Vector3(18f, 0f, 11.5f), 0f);
+            PlaceSignBoard(kit, new Vector3(28f, 0f, 12f), 0f);
+            PlaceSignBoard(kit, new Vector3(-18f, 0f, 16f), 90f);
 
             PlaceBaggageDolly(kit, new Vector3(30f, 0f, 22f));
             PlaceBaggageDolly(kit, new Vector3(32.2f, 0f, 22f));
             PlaceBaggageDolly(kit, new Vector3(28f, 0f, 19.5f));
             PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
+            PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
+            PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
 
             BuildFuelFarm();
             BuildParkedGaAircraft();
@@ -4595,6 +4720,14 @@ namespace Airside.Presentation
 
         private static void PlaceSignBoard(string kit, Vector3 position, float yawDegrees)
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_airside_sign_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Airside sign";
+                prefabRoot.position = position;
+                prefabRoot.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+                return;
+            }
+
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "sign_board", position, Quaternion.Euler(0f, yawDegrees, 0f),
                     new Color(0.12f, 0.35f, 0.55f), out _))
                 return;
@@ -4609,6 +4742,13 @@ namespace Airside.Presentation
 
         private static void PlaceBaggageDolly(string kit, Vector3 position)
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_baggage_dolly_v01", out var prefabRoot))
+            {
+                prefabRoot.name = "Baggage dolly";
+                prefabRoot.position = position;
+                return;
+            }
+
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "baggage_dolly", position, Quaternion.identity,
                     new Color(0.55f, 0.35f, 0.18f), out _))
                 return;

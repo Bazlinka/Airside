@@ -27,13 +27,15 @@ namespace Airside.Presentation
                 Color color;
                 var kind = AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
                 if (n.Contains("rail") || n.Contains("accent") || n.Contains("beacon")
-                    || n.Contains("collar") || n.Contains("stripe"))
+                    || n.Contains("collar") || n.Contains("stripe") || n.Contains("face")
+                    || n.Contains("cargo") || n.Contains("hinge"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
                 else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
-                         || n.Contains("leg") || n.Contains("base"))
+                         || n.Contains("leg") || n.Contains("base") || n.Contains("post")
+                         || n.Contains("plate"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

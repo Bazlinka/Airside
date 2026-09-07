@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (coast jetty + boats)
-- **Branch / working tree:** `cursor/handoff-presentation-wave-ddad`
-- **Do this next:** Merge coast/handoff; Bailey Unity Play soak #68–#71
-- **In progress / half-done:** coastal jetty + three boats; handoff for #68–#70
-- **Watch out for:** boats are greybox primitives on the water plane
+- **Last updated:** 2026-09-07 by Cursor (hangar door motion)
+- **Branch / working tree:** `cursor/hangar-door-motion-ddad`
+- **Do this next:** Merge; Bailey Unity Play soak through #72; Toolkit spike still open
+- **In progress / half-done:** hangar door day/night slide
+- **Watch out for:** door always created even with hangar kit (covers opening)
 - **Open questions for Bailey:** none
-- **Visual assets:** materials/shadows/HUD on `main`; coast life on this branch
+- **Visual assets:** coast on `main`; hangar door on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

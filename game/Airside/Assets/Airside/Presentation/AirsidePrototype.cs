@@ -27,6 +27,8 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
         private Transform _cloudRoot;
+        private Transform _hangarDoor;
+        private float _hangarDoorClosedX = -20f;
         private float _touchdownSmokeRemaining;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
@@ -109,6 +111,12 @@ namespace Airside.Presentation
             CollectWetSurfaces();
             CollectHoldShortMarkings();
             CollectAirfieldLights();
+            var hangarDoor = GameObject.Find("Hangar door");
+            if (hangarDoor != null)
+            {
+                _hangarDoor = hangarDoor.transform;
+                _hangarDoorClosedX = _hangarDoor.position.x;
+            }
             var dome = GameObject.Find("Horizon dome");
             if (dome != null)
                 _horizonDome = dome.transform;
@@ -173,6 +181,7 @@ namespace Airside.Presentation
             UpdateTouchdownSmoke();
             UpdateTrafficWaitPresentation();
             UpdateCloudDrift();
+            UpdateHangarDoor();
         }
 
         private void ReadSimulationControls()
@@ -2254,6 +2263,9 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent" });
+            // Sliding door slab always present (covers kit opening or fallback hangar).
+            if (GameObject.Find("Hangar door") == null)
+                CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_operations_shed_v02.gltf",
@@ -2557,6 +2569,20 @@ namespace Airside.Presentation
                 cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 cloud.GetComponent<Renderer>().receiveShadows = false;
             }
+        }
+
+        private void UpdateHangarDoor()
+        {
+            if (_hangarDoor == null)
+                return;
+
+            // Presentation-only: hangar door slides open by day, closes at night.
+            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
+            var targetX = Mathf.Lerp(_hangarDoorClosedX, _hangarDoorClosedX - 7.2f, openAmount);
+            var pos = _hangarDoor.position;
+            pos.x = Mathf.MoveTowards(pos.x, targetX, Time.unscaledDeltaTime * 1.8f);
+            _hangarDoor.position = pos;
         }
 
         private void UpdateCloudDrift()

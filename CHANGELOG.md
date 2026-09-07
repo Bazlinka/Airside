@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Denser runway edge lights + REIL blink (0025 items 3+5).** Edge PointLights every
+  8 m, more taxi centreline lamps, REIL flashers at both thresholds, and a second
+  hold-short pair. Presentation only.
+
 - **Batch C v04 denser hero kits (0025 item 2).** Prefer `*_v04` turboprop (68 meshes:
   winglets, gear doors, spoilers, window panes), terminal/hangar/ops and service
   vehicles; spoilers deploy on landing. Still procedural greybox. Presentation only.

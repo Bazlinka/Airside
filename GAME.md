@@ -10,12 +10,12 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Claude (simulation correctness review)
-- **Branch / working tree:** `main`, uncommitted — four simulation fixes + 8 tests
-- **Do this next:** Review/commit the fixes below; then HUD Toolkit spike or denser environment materials; Bailey Unity Play soak
+- **Last updated:** 2026-09-07 by Claude (correctness + visual review)
+- **Branch / working tree:** `feature/simulation-correctness-fixes`, 3 commits, not pushed
+- **Do this next:** Airfield re-layout — see "Scale audit" below. Then the URP post stack (the default volume profile is Unity's template junk and must be replaced before post-processing is enabled).
 - **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring (Cursor)
-- **Watch out for:** procedural normals are shared noise, not authored surface normals
-- **Open questions for Bailey:** none
+- **Watch out for:** the building kits are ~2.7x too large for the airfield; the aircraft was fitted to the airfield, not the other way round
+- **Open questions for Bailey:** grow the airfield to the buildings, or shrink the buildings to the airfield?
 - **Visual assets:** streetlights and material library on `main`
 
 
@@ -55,6 +55,48 @@ The immediate visual target is a premium stylised-realism miniature of a regiona
 Australian airport. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
+
+## Scale audit (2026-09-07)
+
+Measured from the shipped kits and `BuildAirfield`, against REF-005:
+
+| | measured | should be |
+|---|---|---|
+| Aircraft wingspan (v03) | 5.6 | — (the reference point) |
+| Runway width | 7 | ~6.5 (span x 1.1) — OK |
+| Taxiway A width | 4 | ~3.5 (span x 0.6) — OK |
+| Stand pitch | 6 | ~7 (span + clearance) — marginal |
+| Hangar width / door | 14.9 / 8 | ~5.5 / ~6 — **2.7x too large** |
+| Terminal length | 22 | ~9 — **2.4x too large** |
+| Fuel truck length | 3.55 | ~3.3 — OK |
+
+The aircraft, service vehicles and paved surfaces now agree. The **building kits do
+not**: they were generated at a scale matching the old 15-wide box aircraft, so the
+hangar and terminal are roughly 2.5x oversized against everything else. Two ways to
+close it, and it is a design call:
+
+1. **Regenerate the building kits ~0.4x** (one constant per kit in the Batch C
+   generators) — keeps the airport compact and is a small change.
+2. **Grow the airfield and vehicles ~2.5x and raise `TARGET_SPAN` in
+   `scripts/generate-batch-c-models-v03.py` back to 15** — matches REF-005's
+   composition (wide runway, generous apron, aircraft the size of the hangar), but
+   moves every hard-coded coordinate in `BuildAirfield`, `AirportTaxiNetwork`,
+   `GroundTrafficAircraft.BuildCircuit`, the apron/landside lights and the camera.
+
+## Known visual gaps
+
+- Every glTF kit ships **POSITION only** — no normals, no UVs, no materials. The
+  loader recalculates normals and guesses planar UVs, so authored textures land at
+  inconsistent texel density and the livery decal cannot be mapped at all. The
+  aircraft kit now carries lofted geometry (v03); the building, vehicle and prop
+  kits are still cubes.
+- The camera has no `UniversalAdditionalCameraData`, so **post-processing and camera
+  anti-aliasing are both off**, and `Airside.Presentation.asmdef` does not reference
+  URP so the code cannot turn them on. MSAA is now 4x, which covers edge aliasing.
+- `Assets/Settings/DefaultVolumeProfile.asset` is wired as URP's global default
+  volume profile and is Unity's template junk — DepthOfField, MotionBlur, FilmGrain,
+  LensDistortion, ChromaticAberration, ScreenSpaceLensFlare, plus literal
+  `CopyPasteTestComponent2` and `TestVolume`. **Replace it before enabling post.**
 
 ## Invariants
 

@@ -237,8 +237,14 @@ namespace Airside.Presentation
                 view.position = position;
 
                 var direction = next - position;
-                if (direction.sqrMagnitude > 0.001f)
-                    view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(direction.normalized), Time.unscaledDeltaTime * 5f);
+                var targetRotation = direction.sqrMagnitude > 0.001f
+                    ? Quaternion.LookRotation(direction.normalized)
+                    : view.rotation;
+                targetRotation *= Quaternion.Euler(
+                    PhasePitchDegrees(phase, progress),
+                    0f,
+                    TurnBankDegrees(view, targetRotation, phase));
+                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 5f);
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
@@ -246,6 +252,32 @@ namespace Airside.Presentation
                 UpdateCabinDoor(view, phase);
                 UpdateEngineHeat(view, phase);
             }
+        }
+
+        private static float PhasePitchDegrees(AircraftPhase phase, float progress)
+        {
+            // Presentation-only attitude: nose-up takeoff, approach pitch, landing flare.
+            var t = Mathf.Clamp01(progress);
+            return phase switch
+            {
+                AircraftPhase.Takeoff => Mathf.Lerp(0f, -11f, Mathf.SmoothStep(0f, 1f, t)),
+                AircraftPhase.Approach => Mathf.Lerp(-3f, -7f, t),
+                AircraftPhase.Landing => Mathf.Lerp(-6f, 1.5f, Mathf.SmoothStep(0f, 1f, t)),
+                AircraftPhase.Departed => -8f,
+                _ => 0f
+            };
+        }
+
+        private static float TurnBankDegrees(Transform view, Quaternion targetRotation, AircraftPhase phase)
+        {
+            if (phase is AircraftPhase.AtStand or AircraftPhase.Departed)
+                return 0f;
+
+            var yawDelta = Mathf.DeltaAngle(view.eulerAngles.y, targetRotation.eulerAngles.y);
+            var limit = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                ? 8f
+                : 16f;
+            return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
         }
 
         private void UpdateEngineAudio()
@@ -518,11 +550,12 @@ namespace Airside.Presentation
                     Time.unscaledDeltaTime * 10f);
 
                 var direction = target - previous;
-                if (direction.sqrMagnitude > 0.0004f)
-                    view.rotation = Quaternion.Slerp(
-                        view.rotation,
-                        Quaternion.LookRotation(direction.normalized),
-                        Time.unscaledDeltaTime * 4f);
+                var targetRotation = direction.sqrMagnitude > 0.0004f
+                    ? Quaternion.LookRotation(direction.normalized)
+                    : view.rotation;
+                if (!traffic.IsHolding)
+                    targetRotation *= Quaternion.Euler(0f, 0f, TurnBankDegrees(view, targetRotation, AircraftPhase.TaxiIn));
+                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 4f);
 
                 SpinGroundTrafficPropellers(view, enginesOn: !traffic.IsHolding);
                 RollLandingGearTires(

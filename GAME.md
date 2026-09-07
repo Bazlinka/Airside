@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (first-session UX polish)
-- **Branch / working tree:** `cursor/first-session-ux-polish-ddad`
-- **Do this next:** Merge this PR; Bailey `git pull` + Unity Play soak; next could be materials normals or HUD Toolkit spike
-- **In progress / half-done:** Enter-to-accept + waiting meter + first-decision pulse
-- **Watch out for:** Enter also dismisses opening briefing (intentional); after briefing it accepts offers
+- **Last updated:** 2026-09-07 by Cursor (aircraft attitude + bank)
+- **Branch / working tree:** `cursor/aircraft-attitude-bank-ddad`
+- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave
+- **In progress / half-done:** phase pitch + turn bank on this branch
+- **Watch out for:** pitch is presentation-only and not tied to altitude physics
 - **Open questions for Bailey:** none
-- **Visual assets:** apron density on `main`; first-session UX on this branch
+- **Visual assets:** first-session UX on `main`; attitude on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

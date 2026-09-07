@@ -656,9 +656,11 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "roof_rib_5": box(5.0, 4.7, 0, 0.18, 0.45, 9.0),
         "roof_rib_6": box(-6.5, 4.7, 0, 0.16, 0.4, 9.0),
         "roof_rib_7": box(6.5, 4.7, 0, 0.16, 0.4, 9.0),
-        "skylight_l": box(-3.0, 5.05, -1.5, 2.2, 0.08, 1.4),
-        "skylight_r": box(3.0, 5.05, -1.5, 2.2, 0.08, 1.4),
-        "skylight_mid": box(0.0, 5.05, 1.2, 2.0, 0.08, 1.2),
+        "side_window": box(-7.05, 2.0, 0.5, 0.04, 1.0, 1.6),
+        "side_window_b": box(7.05, 2.0, 0.5, 0.04, 1.0, 1.6),
+        "skylight_l": box(-3.0, 5.05, -1.5, 2.2, 0.04, 1.4),
+        "skylight_r": box(3.0, 5.05, -1.5, 2.2, 0.04, 1.4),
+        "skylight_mid": box(0.0, 5.05, 1.2, 2.0, 0.04, 1.2),
         "gutter_front": box(0, 4.55, 4.5, 14.0, 0.1, 0.12),
         "door_opening": box(0, 2.2, 4.6, 9.5, 4.2, 0.15),
         "door_panel_l": box(-2.4, 2.0, 4.7, 4.6, 3.9, 0.12),
@@ -680,13 +682,23 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "buttress_r": box(7.2, 1.5, 2.5, 1.0, 3.0, 2.5),
         "side_vent": box(-7.05, 3.2, -1.5, 0.15, 1.2, 2.0),
         "side_vent_b": box(7.05, 3.2, -1.5, 0.15, 1.2, 2.0),
-        "side_window": box(-7.05, 2.0, 0.5, 0.1, 1.0, 1.6),
-        "side_window_b": box(7.05, 2.0, 0.5, 0.1, 1.0, 1.6),
         "personnel_door": box(-5.5, 1.1, 4.65, 1.1, 2.1, 0.1),
         "personnel_frame": box(-5.5, 1.1, 4.72, 1.25, 2.25, 0.06),
         "office_lean": box(5.8, 1.4, -3.5, 3.5, 2.6, 3.0),
-        "office_window": box(5.8, 1.8, -5.05, 2.2, 1.2, 0.08),
+        "office_window": box(5.8, 1.8, -5.02, 2.2, 1.2, 0.04),
         "office_door": box(4.4, 1.1, -5.05, 0.9, 2.0, 0.08),
+        "office_mullion": box(5.8, 1.8, -5.08, 0.06, 1.2, 0.06),
+        "office_mullion_2": box(5.2, 1.8, -5.08, 0.05, 1.2, 0.05),
+        "office_mullion_3": box(6.4, 1.8, -5.08, 0.05, 1.2, 0.05),
+        "office_sill": box(5.8, 1.18, -5.08, 2.25, 0.06, 0.1),
+        "office_header": box(5.8, 2.42, -5.08, 2.25, 0.06, 0.1),
+        "skylight_frame_l": box(-3.0, 5.08, -1.5, 2.3, 0.06, 1.5),
+        "skylight_frame_r": box(3.0, 5.08, -1.5, 2.3, 0.06, 1.5),
+        "skylight_frame_mid": box(0.0, 5.08, 1.2, 2.1, 0.06, 1.3),
+        "side_mullion_l": box(-7.08, 2.0, 0.5, 0.06, 1.0, 0.06),
+        "side_mullion_r": box(7.08, 2.0, 0.5, 0.06, 1.0, 0.06),
+        "side_sill_l": box(-7.08, 1.48, 0.5, 0.08, 0.06, 1.65),
+        "side_sill_r": box(7.08, 1.48, 0.5, 0.08, 0.06, 1.65),
         "crane_beam": box(0, 4.4, 0, 12.0, 0.2, 0.35),
         "crane_trolley": box(1.5, 4.25, 0, 0.8, 0.35, 0.6),
         "crane_hook": box(1.5, 3.85, 0, 0.15, 0.35, 0.15),
@@ -724,6 +736,19 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5), start=1):
         meshes[f"wall_rib_l_{i}"] = box(-7.12, 2.5, z, 0.1, 4.5, 0.18)
         meshes[f"wall_rib_r_{i}"] = box(7.12, 2.5, z, 0.1, 4.5, 0.18)
+    # Side wall glass panes between ribs around the office-side windows.
+    for i, z in enumerate((0.0, 0.35, 0.7, 1.05), start=1):
+        meshes[f"glass_pane_side_l_{i}"] = box(-7.06, 2.15, z, 0.05, 0.7, 0.3)
+        meshes[f"glass_pane_side_r_{i}"] = box(7.06, 2.15, z, 0.05, 0.7, 0.3)
+        meshes[f"glass_pane_side_lo_l_{i}"] = box(-7.06, 1.75, z, 0.05, 0.45, 0.3)
+        meshes[f"glass_pane_side_lo_r_{i}"] = box(7.06, 1.75, z, 0.05, 0.45, 0.3)
+    # Office lean-to curtain panes.
+    for i, x in enumerate((5.05, 5.5, 5.95, 6.4), start=1):
+        meshes[f"glass_pane_office_{i}"] = box(x, 2.15, -5.04, 0.4, 0.5, 0.05)
+        meshes[f"glass_pane_office_lo_{i}"] = box(x, 1.55, -5.04, 0.4, 0.55, 0.05)
+    # Roof skylight panes.
+    for i, (x, z) in enumerate(((-3.5, -1.5), (-2.5, -1.5), (2.5, -1.5), (3.5, -1.5), (-0.5, 1.2), (0.5, 1.2)), start=1):
+        meshes[f"glass_pane_sky_{i}"] = box(x, 5.06, z, 0.85, 0.05, 1.0)
     return meshes
 
 
@@ -1035,7 +1060,7 @@ def passenger_bus_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
 
 def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     """PRP-001 — keep extract names stairs/chocks/gpu used by presentation helpers."""
-    return {
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "stairs": box(0, 0.9, 0, 1.2, 1.8, 2.4),
         "stairs_base": box(0, 0.12, 0, 1.3, 0.2, 2.5),
         "stairs_rail_l": box(-0.55, 1.0, 0, 0.08, 1.6, 2.3),
@@ -1053,6 +1078,15 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "stairs_wheel_rr": cylinder(0.5, 0.2, -0.9, 0.12, 0.15, axis="z", segments=10),
         "stairs_handle": box(0, 1.85, -1.1, 0.7, 0.08, 0.08),
         "stairs_brace": box(0, 0.9, 0.2, 1.15, 0.06, 0.06),
+        "stairs_post_1l": box(-0.55, 0.55, 0.8, 0.06, 0.7, 0.06),
+        "stairs_post_1r": box(0.55, 0.55, 0.8, 0.06, 0.7, 0.06),
+        "stairs_post_2l": box(-0.55, 0.9, 0.2, 0.06, 0.7, 0.06),
+        "stairs_post_2r": box(0.55, 0.9, 0.2, 0.06, 0.7, 0.06),
+        "stairs_post_3l": box(-0.55, 1.25, -0.4, 0.06, 0.7, 0.06),
+        "stairs_post_3r": box(0.55, 1.25, -0.4, 0.06, 0.7, 0.06),
+        "stairs_nosing_1": box(0, 0.4, 0.95, 1.05, 0.04, 0.08),
+        "stairs_nosing_2": box(0, 0.75, 0.45, 1.05, 0.04, 0.08),
+        "stairs_nosing_3": box(0, 1.1, -0.05, 1.05, 0.04, 0.08),
         "chocks": box(0, 0.15, 0, 0.6, 0.3, 0.35),
         "chock_a": box(-0.4, 0.12, 0, 0.35, 0.24, 0.2),
         "chock_b": box(0.4, 0.12, 0, 0.35, 0.24, 0.2),
@@ -1063,9 +1097,14 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "gpu_vent": box(-0.4, 0.9, 0, 0.45, 0.25, 0.7),
         "gpu_panel": box(-0.55, 0.7, 0.42, 0.5, 0.45, 0.06),
         "gpu_cable": box(0.85, 0.45, 0, 0.35, 0.2, 0.2),
+        "gpu_cable_reel": cylinder(0.95, 0.55, 0.25, 0.14, 0.2, axis="z", segments=10),
         "gpu_hitch": box(0.85, 0.35, 0, 0.25, 0.15, 0.15),
         "gpu_beacon": box(0.15, 1.2, 0, 0.18, 0.14, 0.18),
         "gpu_grille": box(-0.55, 0.55, 0.45, 0.7, 0.35, 0.04),
+        "gpu_grille_2": box(-0.55, 0.55, -0.45, 0.7, 0.35, 0.04),
+        "gpu_panel_b": box(-0.55, 0.7, -0.42, 0.5, 0.45, 0.06),
+        "gpu_slot_1": box(-0.7, 0.75, 0.46, 0.2, 0.08, 0.04),
+        "gpu_slot_2": box(-0.7, 0.6, 0.46, 0.2, 0.08, 0.04),
         "gpu_wheel_fl": cylinder(0.45, 0.15, 0.35, 0.1, 0.12, axis="z", segments=10),
         "gpu_wheel_fr": cylinder(0.45, 0.15, -0.35, 0.1, 0.12, axis="z", segments=10),
         "gpu_wheel_rl": cylinder(-0.45, 0.15, 0.35, 0.1, 0.12, axis="z", segments=10),
@@ -1084,7 +1123,6 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "gpu_light": box(0.4, 1.15, 0, 0.12, 0.1, 0.12),
         "towbar_handle": box(-1.2, 0.35, -1.5, 0.35, 0.08, 0.08),
         "cone_base": box(1.2, 0.04, 0, 0.4, 0.08, 0.4),
-        # Belt loader (REF-003 service zone) — parked GSE silhouette.
         "belt_loader_chassis": box(2.8, 0.35, 0, 1.6, 0.45, 0.85),
         "belt_loader_cab": box(3.35, 0.75, 0, 0.55, 0.55, 0.7),
         "belt_loader_boom": box(2.2, 0.95, 0, 2.4, 0.18, 0.35),
@@ -1097,7 +1135,14 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "belt_loader_wheel_rr": cylinder(2.3, 0.15, -0.35, 0.12, 0.14, axis="z", segments=10),
         "belt_loader_hitch": box(3.7, 0.35, 0, 0.25, 0.15, 0.2),
         "belt_loader_light": box(3.4, 1.05, 0, 0.12, 0.1, 0.12),
+        "belt_loader_hinge": box(3.1, 0.85, 0, 0.25, 0.25, 0.4),
+        "belt_loader_support": box(2.5, 0.65, 0, 0.12, 0.45, 0.12),
+        "belt_loader_roller_1": cylinder(1.4, 1.05, 0, 0.06, 0.3, axis="z", segments=8),
+        "belt_loader_roller_2": cylinder(2.0, 1.05, 0, 0.06, 0.3, axis="z", segments=8),
+        "belt_loader_roller_3": cylinder(2.6, 1.05, 0, 0.06, 0.3, axis="z", segments=8),
+        "belt_loader_bumper": box(3.55, 0.35, 0, 0.12, 0.25, 0.75),
     }
+    return meshes
 
 
 def airfield_props_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:

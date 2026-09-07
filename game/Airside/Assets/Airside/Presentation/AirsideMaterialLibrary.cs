@@ -124,12 +124,13 @@ namespace Airside.Presentation
             var n = meshName.ToLowerInvariant();
             if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
                 || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle")
-                || n.Equals("entrance") || n.Contains("entrance_door") || n.Contains("boarding_gate"))
+                || n.Contains("skylight_frame") || n.Equals("entrance") || n.Contains("entrance_door")
+                || n.Contains("boarding_gate"))
                 return SurfaceKind.Metal;
             if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
                 || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
                 || n.Contains("landside_glass") || n.Contains("door_glass")
-                || n.Contains("windshield") || n.Equals("rear_window"))
+                || n.Contains("windshield") || n.Equals("rear_window") || n.Contains("skylight"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
@@ -327,17 +328,17 @@ namespace Airside.Presentation
             else if (wetness01 > 0.02f)
             {
                 // Older URP Lit without ClearCoat: push specular + cool sheen so wet still reads.
-                var boostedSmooth = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.98f), wetness01);
+                var boostedSmooth = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.99f), wetness01);
                 if (material.HasProperty("_Smoothness"))
                     material.SetFloat("_Smoothness", boostedSmooth);
                 if (material.HasProperty("_Glossiness"))
                     material.SetFloat("_Glossiness", boostedSmooth);
                 if (material.HasProperty("_Metallic"))
-                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.42f), wetness01));
+                    material.SetFloat("_Metallic", Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.48f), wetness01));
                 if (material.HasProperty("_EmissionColor"))
                 {
                     material.EnableKeyword("_EMISSION");
-                    var sheen = new Color(0.08f, 0.12f, 0.16f) * (wetness01 * 0.35f);
+                    var sheen = new Color(0.06f, 0.1f, 0.14f) * (wetness01 * 0.42f);
                     material.SetColor("_EmissionColor", sheen);
                 }
             }

@@ -190,8 +190,8 @@ namespace Airside.Presentation
 
             // Day: slight lift; dusk: warmer filter; night: darker exposure + bloom;
             // adverse weather: cooler filter + pulled exposure.
-            var exposure = Mathf.Lerp(-0.72f, 0.14f, daylight) + warm * 0.18f - weatherGloom * 0.4f;
-            var contrast = Mathf.Lerp(12f, 3.0f, daylight) + weatherGloom * 4.8f;
+            var exposure = Mathf.Lerp(-0.72f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.4f;
+            var contrast = Mathf.Lerp(12f, 5.5f, daylight) + weatherGloom * 4.8f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
             var nightFilter = new Color(0.62f, 0.7f, 1f);
             var stormFilter = new Color(0.68f, 0.74f, 0.84f);
@@ -203,10 +203,10 @@ namespace Airside.Presentation
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(12f, 1.5f, daylight) - weatherGloom * 8f + warm * 2.5f);
-            _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3f);
+            _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
+            _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f);
+            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f);
             _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight));
             _vignette.intensity.Override(Mathf.Lerp(0.34f, 0.07f, daylight) + weatherGloom * 0.08f);
             // Night film grain for regional dusk grit; nearly off in bright day.
@@ -214,6 +214,7 @@ namespace Airside.Presentation
             _grain.response.Override(Mathf.Lerp(0.86f, 0.48f, daylight));
 
             // Lift cool night shadows; warm midtones at golden hour; soft highlight roll-off.
+            // Noon keeps deeper shadows + lifted midtones so apron slabs separate from grass (REF-001).
             var shadowTint = Color.Lerp(
                 new Color(0.48f, 0.56f, 0.9f),
                 Color.Lerp(new Color(0.95f, 0.95f, 1f), new Color(1f, 0.82f, 0.68f), warm),
@@ -229,20 +230,20 @@ namespace Airside.Presentation
                 daylight);
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
-                Mathf.Lerp(0.16f, -0.06f, daylight) - weatherGloom * 0.08f));
+                Mathf.Lerp(0.16f, -0.1f, daylight) - weatherGloom * 0.08f));
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.06f, 0.04f, daylight) + warm * 0.06f));
+                Mathf.Lerp(-0.06f, 0.08f, daylight) + warm * 0.08f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.12f, -0.01f, daylight) + warm * 0.02f));
+                Mathf.Lerp(-0.12f, -0.02f, daylight) + warm * 0.03f));
             _tonal.shadowsStart.Override(0f);
-            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.38f, daylight));
-            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.42f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.55f, daylight));
             _tonal.highlightsEnd.Override(1f);
 
             // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
             // so night blue survives and weather gloom stays cool.
-            var temperature = Mathf.Lerp(-8f, 4f, daylight) + warm * 38f - weatherGloom * 14f;
-            var tint = warm * 5f - weatherGloom * 3f;
+            var temperature = Mathf.Lerp(-8f, 4f, daylight) + warm * 42f - weatherGloom * 14f;
+            var tint = warm * 6f - weatherGloom * 3f;
             _whiteBalance.temperature.Override(temperature);
             _whiteBalance.tint.Override(tint);
 
@@ -252,11 +253,11 @@ namespace Airside.Presentation
                 weatherGloom);
             var highlights = Color.Lerp(
                 Color.white,
-                new Color(1f, 0.72f, 0.48f),
-                warm * 0.9f);
+                new Color(1f, 0.7f, 0.45f),
+                warm * 0.95f);
             _splitToning.shadows.Override(shadows);
             _splitToning.highlights.Override(highlights);
-            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.12f, warm) - weatherGloom * 0.1f);
+            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.16f, warm) - weatherGloom * 0.1f);
 
             // Deeper night exposure so flood pools read against the apron (REF-002).
             if (daylight < 0.35f)

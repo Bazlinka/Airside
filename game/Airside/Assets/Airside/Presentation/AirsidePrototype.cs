@@ -2030,10 +2030,19 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var name = renderer.gameObject.name;
-                var paved = name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                var paved = (name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                        or "Access road" or "Access road turn" or "Car park" or "Service lane" or "Fuel pad")
                     || name.StartsWith("Apron joint", StringComparison.Ordinal)
-                    || name.StartsWith("Apron slab", StringComparison.Ordinal);
-                var apply = wet ? rainWetness : (paved ? 0.14f : 0f);
+                    || name.StartsWith("Apron slab", StringComparison.Ordinal)
+                    || name.StartsWith("Apron fringe", StringComparison.Ordinal)
+                    || name.StartsWith("Runway marking", StringComparison.Ordinal)
+                    || name.StartsWith("Runway edge", StringComparison.Ordinal)
+                    || name.StartsWith("Threshold", StringComparison.Ordinal)
+                    || name.StartsWith("Hold short", StringComparison.Ordinal)
+                    || name.StartsWith("Taxi edge", StringComparison.Ordinal)
+                    || name.StartsWith("Stand stop", StringComparison.Ordinal)
+                    || name.StartsWith("Stand number", StringComparison.Ordinal);
+                var apply = wet ? rainWetness : (paved ? 0.16f : 0f);
                 AirsideMaterialLibrary.ApplyWetness(
                     renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
             }
@@ -4187,36 +4196,46 @@ namespace Airside.Presentation
                     "Models/Buildings/mdl_hangar_small_v02.gltf",
                     "Models/Buildings/mdl_hangar_small_v01.gltf"),
                 new Vector3(-20f, 0f, 20f),
-                name => name switch
+                name =>
                 {
-                    "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
-                        or "door_bar_l1" or "door_bar_l2" or "door_bar_l3" or "door_bar_l4"
-                        or "door_bar_r1" or "door_bar_r2" or "door_bar_r3" or "door_bar_r4"
-                        or "door_handle_l" or "door_handle_r"
-                        or "door_warning_l" or "door_warning_r"
-                        or "personnel_door" or "personnel_frame" or "rear_door" => new Color(0.22f, 0.24f, 0.26f),
-                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
-                        or "crane_hook" or "gutter_front" or "gutter_back" or "gutter_end_l" or "gutter_end_r"
-                        or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
-                        or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
-                        or "skylight_l" or "skylight_r" or "skylight_mid"
-                        or "flood_can_l" or "flood_can_r" or "downpipe_l" or "downpipe_r"
-                        or "sign_board" or "rear_vent"
-                        => new Color(0.4f, 0.44f, 0.48f),
-                    "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
-                        or "plinth" or "side_louvre_l" or "side_louvre_r"
-                        or "workbench" or "tool_cabinet" or "floor_drain"
-                        or "side_vent" or "side_vent_b" or "office_lean" or "office_window" or "office_door"
-                        or "side_window" or "side_window_b"
-                        or "column_ml" or "column_mr"
-                        or "cladding_face_l" or "cladding_face_r"
-                        or "girth_band_1" or "girth_band_2" or "girth_band_3"
-                        or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
-                        or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
-                        or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
-                        or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
-                        => new Color(0.42f, 0.46f, 0.5f),
-                    _ => new Color(0.45f, 0.5f, 0.54f)
+                    if (name.StartsWith("glass_pane", StringComparison.Ordinal)
+                        || name is "side_window" or "side_window_b" or "office_window"
+                        or "skylight_l" or "skylight_r" or "skylight_mid")
+                        return new Color(0.18f, 0.36f, 0.48f, 0.42f);
+                    if (name.StartsWith("office_mullion", StringComparison.Ordinal)
+                        || name.StartsWith("skylight_frame", StringComparison.Ordinal)
+                        || name is "side_mullion_l" or "side_mullion_r"
+                        or "side_sill_l" or "side_sill_r" or "office_sill" or "office_header")
+                        return new Color(0.4f, 0.44f, 0.48f);
+                    return name switch
+                    {
+                        "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
+                            or "door_bar_l1" or "door_bar_l2" or "door_bar_l3" or "door_bar_l4"
+                            or "door_bar_r1" or "door_bar_r2" or "door_bar_r3" or "door_bar_r4"
+                            or "door_handle_l" or "door_handle_r"
+                            or "door_warning_l" or "door_warning_r"
+                            or "personnel_door" or "personnel_frame" or "rear_door" => new Color(0.22f, 0.24f, 0.26f),
+                        "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
+                            or "crane_hook" or "gutter_front" or "gutter_back" or "gutter_end_l" or "gutter_end_r"
+                            or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
+                            or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
+                            or "flood_can_l" or "flood_can_r" or "downpipe_l" or "downpipe_r"
+                            or "sign_board" or "rear_vent"
+                            => new Color(0.4f, 0.44f, 0.48f),
+                        "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
+                            or "plinth" or "side_louvre_l" or "side_louvre_r"
+                            or "workbench" or "tool_cabinet" or "floor_drain"
+                            or "side_vent" or "side_vent_b" or "office_lean" or "office_door"
+                            or "column_ml" or "column_mr"
+                            or "cladding_face_l" or "cladding_face_r"
+                            or "girth_band_1" or "girth_band_2" or "girth_band_3"
+                            or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
+                            or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
+                            or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
+                            or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
+                            => new Color(0.42f, 0.46f, 0.5f),
+                        _ => new Color(0.45f, 0.5f, 0.54f)
+                    };
                 },
                 () =>
                 {
@@ -4224,9 +4243,10 @@ namespace Airside.Presentation
                         "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
                     CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
                 },
+                "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
-                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent" });
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth" });
             // Sliding door slab always present (covers kit opening or fallback hangar).
             if (GameObject.Find("Hangar door") == null)
                 CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
@@ -6635,6 +6655,15 @@ namespace Airside.Presentation
             PlacePart("stairs_tread_5", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_6", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_rail_cross", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_1l", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_1r", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_2l", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_2r", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_3l", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_post_3r", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_nosing_1", new Color(0.7f, 0.72f, 0.74f));
+            PlacePart("stairs_nosing_2", new Color(0.7f, 0.72f, 0.74f));
+            PlacePart("stairs_nosing_3", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_platform", new Color(0.7f, 0.72f, 0.74f));
             PlacePart("stairs_handle", new Color(0.75f, 0.5f, 0.15f));
             PlacePart("stairs_brace", new Color(0.5f, 0.5f, 0.52f));
@@ -6725,8 +6754,13 @@ namespace Airside.Presentation
             PlaceGpu("gpu_cab", new Color(0.22f, 0.48f, 0.32f));
             PlaceGpu("gpu_vent", new Color(0.35f, 0.38f, 0.36f));
             PlaceGpu("gpu_panel", new Color(0.2f, 0.22f, 0.24f));
+            PlaceGpu("gpu_panel_b", new Color(0.2f, 0.22f, 0.24f));
             PlaceGpu("gpu_grille", new Color(0.18f, 0.2f, 0.2f));
+            PlaceGpu("gpu_grille_2", new Color(0.18f, 0.2f, 0.2f));
+            PlaceGpu("gpu_slot_1", new Color(0.15f, 0.16f, 0.18f));
+            PlaceGpu("gpu_slot_2", new Color(0.15f, 0.16f, 0.18f));
             PlaceGpu("gpu_cable", new Color(0.2f, 0.2f, 0.22f));
+            PlaceGpu("gpu_cable_reel", new Color(0.22f, 0.22f, 0.24f));
             PlaceGpu("gpu_hitch", new Color(0.3f, 0.3f, 0.32f));
             PlaceGpu("gpu_beacon", new Color(0.95f, 0.35f, 0.12f));
             PlaceGpu("gpu_exhaust", new Color(0.3f, 0.32f, 0.3f));
@@ -6911,7 +6945,8 @@ namespace Airside.Presentation
                         var n = child.name;
                         if (n is not ("glass_front" or "landside_glass" or "windows" or "cabin_windows"
                             or "door_glass" or "window_l" or "window_r" or "window_side" or "window_side_b"
-                            or "windshield" or "rear_window")
+                            or "windshield" or "rear_window" or "side_window" or "side_window_b"
+                            or "office_window" or "skylight_l" or "skylight_r" or "skylight_mid")
                             && !n.StartsWith("glass_pane", StringComparison.Ordinal))
                             continue;
                         var renderer = child.GetComponent<Renderer>();
@@ -6937,7 +6972,8 @@ namespace Airside.Presentation
                             if (child.name is "glass_front" or "door_opening" or "entrance"
                                 or "window_l" or "window_r" or "window_side" or "window_side_b"
                                 or "cabin_windows" or "cockpit" or "landside_glass"
-                                or "windshield" or "rear_window")
+                                or "windshield" or "rear_window" or "side_window" or "side_window_b"
+                                or "office_window" or "skylight_l" or "skylight_r" or "skylight_mid")
                                 continue;
                             if (child.name.StartsWith("glass_pane", StringComparison.Ordinal))
                                 continue;
@@ -7341,6 +7377,12 @@ namespace Airside.Presentation
             Place("belt_loader_belt", new Color(0.25f, 0.25f, 0.26f));
             Place("belt_loader_rail_l", dark);
             Place("belt_loader_rail_r", dark);
+            Place("belt_loader_hinge", dark);
+            Place("belt_loader_support", dark);
+            Place("belt_loader_roller_1", new Color(0.35f, 0.36f, 0.38f));
+            Place("belt_loader_roller_2", new Color(0.35f, 0.36f, 0.38f));
+            Place("belt_loader_roller_3", new Color(0.35f, 0.36f, 0.38f));
+            Place("belt_loader_bumper", Shade(yellow, 0.7f));
             Place("belt_loader_wheel_fl", dark);
             Place("belt_loader_wheel_fr", dark);
             Place("belt_loader_wheel_rl", dark);

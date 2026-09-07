@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar door day/night slide.** Hangar door slab opens through the day and
+  closes at night (presentation only; always placed even when the hangar kit
+  provides an opening).
+
 - **Coast jetty + fishing boats.** Timber jetty into the shallows and three boat
   silhouettes so the southern KI shoreline reads as a living coast. Presentation only.
 

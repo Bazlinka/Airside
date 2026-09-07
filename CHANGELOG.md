@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Control surfaces + touchdown camera shake.** Rudder/elevator (and soft
+  tailplane) deflect with attitude; follow camera pulses on commercial
+  touchdown with the existing smoke/chirp. Presentation only.
+
 - **Aircraft attitude pitch + turn bank.** Takeoff nose-up, approach pitch and
   landing flare; gentle bank into turns for commercials and ground traffic.
   Presentation only (Batch D motion life).

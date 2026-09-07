@@ -1714,7 +1714,8 @@ namespace Airside.Presentation
             var sway = Mathf.Sin(Time.unscaledTime * 2.4f) * 6f;
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
             var stretch = 1f + 0.08f * Mathf.Sin(Time.unscaledTime * 3.1f);
-            _windsockSock.localScale = new Vector3(0.55f * stretch, 0.55f, 1.35f);
+            // Uniform scale so authored fabric children keep shape (not cylinder squash).
+            _windsockSock.localScale = new Vector3(stretch, stretch, stretch);
         }
 
         private void UpdateTerminalFlag()

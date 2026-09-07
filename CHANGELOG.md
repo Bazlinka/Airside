@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar densify (0025 items 2+7).** Authored hangar to 69 meshes (extra door
+  bars/warnings, plinth, louvres, gutters, workbench/tool cabinet); door motion
+  collects new bars/warnings. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Terminal densify + HUD chrome (0025 items 2+6+7).** Authored terminal to 73
   meshes (doors, boarding gate, canopy braces/lights, plinth, vents, flag);
   toolkit status/ops panels gain Open Sky top accent; save chip coastal bar;

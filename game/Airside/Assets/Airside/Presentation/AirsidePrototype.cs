@@ -3992,18 +3992,22 @@ namespace Airside.Presentation
                 name => name switch
                 {
                     "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
-                        or "door_bar_l1" or "door_bar_l2" or "door_bar_l3"
-                        or "door_bar_r1" or "door_bar_r2" or "door_bar_r3"
+                        or "door_bar_l1" or "door_bar_l2" or "door_bar_l3" or "door_bar_l4"
+                        or "door_bar_r1" or "door_bar_r2" or "door_bar_r3" or "door_bar_r4"
                         or "door_handle_l" or "door_handle_r"
-                        or "personnel_door" or "personnel_frame" => new Color(0.22f, 0.24f, 0.26f),
+                        or "door_warning_l" or "door_warning_r"
+                        or "personnel_door" or "personnel_frame" or "rear_door" => new Color(0.22f, 0.24f, 0.26f),
                     "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
-                        or "crane_hook" or "gutter_front"
+                        or "crane_hook" or "gutter_front" or "gutter_back" or "gutter_end_l" or "gutter_end_r"
                         or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
                         or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
                         or "skylight_l" or "skylight_r" or "skylight_mid"
                         or "flood_can_l" or "flood_can_r" or "downpipe_l" or "downpipe_r"
+                        or "sign_board" or "rear_vent"
                         => new Color(0.4f, 0.44f, 0.48f),
                     "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
+                        or "plinth" or "side_louvre_l" or "side_louvre_r"
+                        or "workbench" or "tool_cabinet" or "floor_drain"
                         or "side_vent" or "side_vent_b" or "office_lean" or "office_window" or "office_door"
                         or "side_window" or "side_window_b"
                         or "column_ml" or "column_mr" => new Color(0.42f, 0.46f, 0.5f),
@@ -5237,9 +5241,10 @@ namespace Airside.Presentation
             foreach (var name in new[]
                      {
                          "door_panel_l", "door_panel_r", "door_rib_l", "door_rib_r",
-                         "door_bar_l1", "door_bar_l2", "door_bar_l3",
-                         "door_bar_r1", "door_bar_r2", "door_bar_r3",
-                         "door_handle_l", "door_handle_r"
+                         "door_bar_l1", "door_bar_l2", "door_bar_l3", "door_bar_l4",
+                         "door_bar_r1", "door_bar_r2", "door_bar_r3", "door_bar_r4",
+                         "door_handle_l", "door_handle_r",
+                         "door_warning_l", "door_warning_r"
                      })
             {
                 var go = GameObject.Find(name);

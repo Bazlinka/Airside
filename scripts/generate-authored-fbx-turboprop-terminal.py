@@ -601,6 +601,22 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "downpipe_r": cylinder(6.8, 2.2, 4.4, 0.06, 4.2, axis="y", segments=8),
         "flood_can_l": box(-6.5, 4.6, 4.3, 0.35, 0.2, 0.3),
         "flood_can_r": box(6.5, 4.6, 4.3, 0.35, 0.2, 0.3),
+        "plinth": box(0, 0.12, 0, 14.4, 0.24, 9.4),
+        "door_bar_l4": box(-2.4, 3.4, 4.76, 4.4, 0.06, 0.05),
+        "door_bar_r4": box(2.4, 3.4, 4.76, 4.4, 0.06, 0.05),
+        "door_warning_l": box(-3.6, 3.6, 4.8, 1.2, 0.18, 0.04),
+        "door_warning_r": box(3.6, 3.6, 4.8, 1.2, 0.18, 0.04),
+        "side_louvre_l": box(-7.05, 1.2, -1.5, 0.12, 0.8, 1.8),
+        "side_louvre_r": box(7.05, 1.2, -1.5, 0.12, 0.8, 1.8),
+        "rear_vent": box(0, 3.5, -4.5, 2.4, 0.9, 0.12),
+        "rear_door": box(-2.5, 1.1, -4.5, 1.0, 2.0, 0.1),
+        "gutter_back": box(0, 4.55, -4.5, 14.0, 0.1, 0.12),
+        "gutter_end_l": box(-7.0, 4.4, 0, 0.12, 0.12, 9.0),
+        "gutter_end_r": box(7.0, 4.4, 0, 0.12, 0.12, 9.0),
+        "sign_board": box(0, 4.7, 4.4, 3.5, 0.4, 0.12),
+        "workbench": box(5.0, 0.7, -1.5, 2.2, 0.8, 1.0),
+        "tool_cabinet": box(-5.5, 0.8, -2.5, 1.2, 1.4, 0.7),
+        "floor_drain": box(0, 0.05, 1.5, 0.8, 0.06, 0.8),
     }
 
 

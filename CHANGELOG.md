@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **URP day volume + richer GSE motion (0025 items 5+7).** Runtime global Volume with
+  ACES tonemap, day-driven color/exposure, bloom and vignette; service vehicles park
+  on the apron and drive into stand tasks; stairs/chocks deploy; GPU and beacons pulse.
+  Presentation only — not a full probe bake.
+
 - **Hangar bay interior light.** Warm point light inside the hangar brightens with
   the sliding door by day and keeps a soft night glow when closed. Presentation only.
 

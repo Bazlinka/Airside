@@ -365,6 +365,9 @@ namespace Airside.Presentation
 
             var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
             _canvasHud.SyncToast(_opsToast, toastVisible);
+            var researchVisible = !string.IsNullOrEmpty(_researchToast) && Time.unscaledTime <= _researchToastUntil;
+            _canvasHud.SyncResearchToast(_researchToast, researchVisible);
+            _canvasHud.SyncSaveIndicator(Time.unscaledTime <= _saveIndicatorUntil);
             SyncCanvasOpsPanel();
         }
 
@@ -2036,10 +2039,12 @@ namespace Airside.Presentation
             }
             } // end !_canvasHudActive ops panel
 
-            DrawResearchToast(scale, panel, onTime);
-            DrawSaveIndicator(scale, panel, small, onTime);
             if (!_canvasHudActive)
+            {
+                DrawResearchToast(scale, panel, onTime);
+                DrawSaveIndicator(scale, panel, small, onTime);
                 DrawOpsToast(scale, panel, detail, onTime);
+            }
             if (!_canvasHudActive)
             {
                 if (_paused && !_showAwaySummary && !_showOpeningBriefing)

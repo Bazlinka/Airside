@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (threshold lights + apron probe)
-- **Branch / working tree:** `cursor/threshold-lights-probe-ddad`
-- **Do this next:** Merge lighting ship; Bailey Play soak dusk runway ends + wet apron reflections
-- **In progress / half-done:** threshold/PAPI point lights + realtime apron ReflectionProbe
-- **Watch out for:** probe is low-res realtime (128); not a full baked probe set
+- **Last updated:** 2026-09-07 by Cursor (Canvas research toast + save)
+- **Branch / working tree:** `cursor/canvas-toast-save-ddad`
+- **Do this next:** Merge Canvas toast/save; Bailey Play soak research complete + autosave chip
+- **In progress / half-done:** research toast (top) + ops toast (bottom) + Saved chip on Canvas
+- **Watch out for:** IMGUI toast/save only when Canvas inactive
 - **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** surface PBR maps + v03 kits already on main
+- **Visual assets:** PBR maps + v03 kits + threshold lights on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,7 +121,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
-   let it import StreamingAssets / PBR maps + v03 kits, then Play (include a dusk/night pass).
-2. Confirm threshold/PAPI glow at runway ends and wet apron Lit response with reflections.
+   Play through dusk and a research complete / autosave if possible.
+2. Confirm Canvas research toast (top), ops toast (bottom), Saved chip; threshold lights at night.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
    or denser environment vegetation. No new economy systems; no Companion/CloudKit.

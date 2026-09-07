@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Canvas research toast + save indicator (0025 item 6).** Research-complete banner
+  (top), ops toast (bottom) and Saved chip move onto runtime uGUI; IMGUI gated when
+  Canvas is active. Presentation only.
+
 - **Threshold approach lights + apron reflection probe (0025 item 5).** Point lights at
   both runway ends plus a compact PAPI ladder; realtime apron ReflectionProbe so wet
   Lit surfaces pick up floods at night. Presentation only.

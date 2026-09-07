@@ -37,10 +37,20 @@ namespace Airside.Presentation
                 else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
                          || n.Contains("leg") || n.Contains("base") || n.Contains("post")
                          || n.Contains("plate") || n.Contains("pad") || n.Contains("bund")
-                         || n.Contains("pump"))
+                         || n.Contains("pump") || n.Contains("gear") || n.Contains("prop"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
+                }
+                else if (n.Contains("window") || n.Contains("glass") || n.Contains("cabin"))
+                {
+                    color = new Color(0.18f, 0.35f, 0.48f, 1f);
+                    kind = AirsideMaterialLibrary.SurfaceKind.Glass;
+                }
+                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("stripe"))
+                {
+                    color = accentColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
                 }
                 else
                 {

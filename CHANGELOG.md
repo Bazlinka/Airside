@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Parked GA prefab + denser apron life (0025 items 1+7).** Resources prefab
+  `mdl_parked_ga_v01` (three parked GA on the west apron); more staff/passenger
+  silhouettes with walker shuffle, marshaller arm wave and stride. Presentation only.
+
 - **Phase-aware follow camera + fuel farm prefab + night windows (0025 items 1+5+7).**
   Follow framing/FOV lean into taxi, stand, approach, landing and takeoff; Resources
   prefab `mdl_fuel_farm_v01`; stronger terminal/hangar/ops window emission at dusk.

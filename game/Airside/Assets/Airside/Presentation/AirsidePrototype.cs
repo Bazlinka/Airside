@@ -2268,6 +2268,11 @@ namespace Airside.Presentation
 
         private void OnGUI()
         {
+            // Toolkit owns the full gameplay HUD + overlays when active — skip IMGUI
+            // entirely so first-session density is Toolkit/uGUI only (0025 item 6).
+            if (_toolkitHud != null && _toolkitHud.IsActive)
+                return;
+
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
             var previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -3876,6 +3881,12 @@ namespace Airside.Presentation
             CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Access edge L", new Vector3(23.1f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            CreateBlock("Access edge R", new Vector3(28.9f, 0.05f, 38f), new Vector3(0.1f, 0.02f, 18f), Color.white);
+            CreateBlock("Access road shoulder L", new Vector3(22.2f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
+            CreateBlock("Access road shoulder R", new Vector3(29.8f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
             CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
@@ -4317,6 +4328,20 @@ namespace Airside.Presentation
             CreateBlock("Gate stop L", new Vector3(23.1f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate stop R", new Vector3(28.9f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
             CreateBlock("Gate sign", new Vector3(26f, 2.0f, 34.2f), new Vector3(1.6f, 0.55f, 0.06f), AirsideTheme.SafetyYellow);
+
+            // South airside fence above the dunes (gap kept clear of runway strip).
+            for (var x = -40; x <= 40; x += 4)
+            {
+                if (x >= -12 && x <= 12)
+                    continue;
+                CreateBlock($"Fence post S {x}", new Vector3(x, 0.65f, -20f), new Vector3(0.12f, 1.3f, 0.12f), post);
+                if (x < 40 && !(x >= -16 && x <= 12))
+                {
+                    CreateBlock($"Fence rail S top {x}", new Vector3(x + 2f, 1.15f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence rail S mid {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence mesh S {x}", new Vector3(x + 2f, 0.7f, -20f), new Vector3(0.04f, 0.9f, 0.04f), mesh);
+                }
+            }
         }
 
         /// <summary>
@@ -4472,7 +4497,19 @@ namespace Airside.Presentation
                 (new Vector3(28f, 0f, -30f), 0.95f),
                 (new Vector3(40f, 0f, -26f), 1.1f),
                 (new Vector3(-60f, 0f, 20f), 1.2f),
-                (new Vector3(68f, 0f, 16f), 1.05f)
+                (new Vector3(68f, 0f, 16f), 1.05f),
+                // Extra belt density so overview reads as continuous KI bush (0025 item 3).
+                (new Vector3(-34f, 0f, 48f), 1.0f),
+                (new Vector3(-20f, 0f, 52f), 1.15f),
+                (new Vector3(4f, 0f, 54f), 0.9f),
+                (new Vector3(22f, 0f, 50f), 1.05f),
+                (new Vector3(44f, 0f, 56f), 1.2f),
+                (new Vector3(-58f, 0f, 32f), 0.95f),
+                (new Vector3(70f, 0f, 30f), 1.1f),
+                (new Vector3(-64f, 0f, -10f), 1.05f),
+                (new Vector3(66f, 0f, -14f), 0.88f),
+                (new Vector3(-50f, 0f, -30f), 1.0f),
+                (new Vector3(48f, 0f, -32f), 1.12f)
             };
             for (var i = 0; i < trees.Length; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
@@ -4846,6 +4883,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
@@ -4910,10 +4948,19 @@ namespace Airside.Presentation
             "fuselage" => "Fuselage",
             "fuselage_mid" => "Fuselage mid",
             "fuselage_aft" => "Fuselage aft",
+            "cabin_ring_fwd" => "Fuselage",
+            "cabin_ring_mid" => "Fuselage mid",
+            "cabin_ring_aft" => "Fuselage aft",
+            "cabin_ring_tail" => "Fuselage aft",
+            "tail_cone" => "Fuselage aft",
             "belly_fairing" => "Belly fairing",
             "nose" => "Nose",
+            "nose_tip" => "Nose",
+            "nose_ring_a" => "Nose",
+            "nose_ring_b" => "Nose",
             "radome" => "Radome",
             "cockpit" => "Cockpit",
+            "cockpit_loft" => "Cockpit",
             "cockpit_frame" => "Cockpit frame",
             "cabin_windows" => "Cabin windows",
             "cabin_window_band" => "Cabin window band",
@@ -4921,10 +4968,18 @@ namespace Airside.Presentation
             "cabin_window_2" => "Cabin window 2",
             "cabin_window_3" => "Cabin window 3",
             "cabin_window_4" => "Cabin window 4",
+            "cabin_window_5" => "Cabin window 5",
+            "cabin_window_r1" => "Cabin window R1",
+            "cabin_window_r2" => "Cabin window R2",
+            "cabin_window_r3" => "Cabin window R3",
+            "cabin_window_r4" => "Cabin window R4",
+            "cabin_window_r5" => "Cabin window R5",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
             "wing_root_left" => "Wing root L",
             "wing_root_right" => "Wing root R",
+            "wing_fairing_left" => "Wing fairing L",
+            "wing_fairing_right" => "Wing fairing R",
             "flap_left" => "Flap L",
             "flap_right" => "Flap R",
             "spoiler_left" => "Spoiler L",
@@ -4952,6 +5007,7 @@ namespace Airside.Presentation
             "tail_fin" => "Tail",
             "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
+            "dorsal_fin" => "Dorsal fin",
             "elevator_left" => "Elevator L",
             "elevator_right" => "Elevator R",
             "rudder" => "Rudder",
@@ -4980,15 +5036,22 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
         {
-            "fuselage" or "fuselage_mid" or "fuselage_aft" or "nose" or "radome" or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
-            "cockpit" or "cabin_windows" or "cabin_window_band"
-                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" => new Color(0.18f, 0.35f, 0.48f),
+            "fuselage" or "fuselage_mid" or "fuselage_aft"
+                or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
+                or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
+                or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
+            "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
+                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
+                or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
+                => new Color(0.18f, 0.35f, 0.48f),
             "cockpit_frame" => new Color(0.75f, 0.78f, 0.82f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
+                or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
                 or "flap_left" or "flap_right" or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
-                or "tail_fin" or "tail_fin_tip" or "tailplane" or "elevator_left" or "elevator_right" or "rudder" => accent,
+                or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
+                or "elevator_left" or "elevator_right" or "rudder" => accent,
             "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right"
                 or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
@@ -5132,10 +5195,13 @@ namespace Airside.Presentation
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 var n = child.name;
-                // Cover segmented turboprop fuselage parts (v04 Fuselage / FuselageMid / FuselageAft / Nose).
-                if (n != "Fuselage" && n != "FuselageMid" && n != "FuselageAft" && n != "Nose"
+                // Cover segmented turboprop fuselage parts (v04 + lofted cabin rings / nose rings).
+                if (n != "Fuselage" && n != "FuselageMid" && n != "Fuselage mid" && n != "FuselageAft" && n != "Fuselage aft"
+                    && n != "Nose"
                     && n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0)
+                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("tail_cone", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)

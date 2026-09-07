@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (HUD font + PanelSettings theme fix)
-- **Branch / working tree:** `cursor/hud-font-panelsettings-cc2d`
-- **Do this next:** Bailey squash-merge the HUD fix PR, then Mac Play soak to confirm no `Arial.ttf` / PanelSettings warnings. Continue 0025 backlog: denser kits / Addressables groups / environment+materials. Keep StreamingAssets path intact.
-- **In progress / half-done:** Canvas HUD uses `LegacyRuntime.ttf`; Toolkit HUD assigns `Resources/Airside/UI/AirsideRuntimeTheme.tss` (`@import url("unity-theme://default")`) on runtime PanelSettings.
-- **Watch out for:** This cloud agent is Linux — `scripts/test-unity.sh` needs Bailey's Mac Unity 6000.3.23f1. Domain/Simulation/Persistence pre-check via `scripts/test-domain.sh`. Do not force-push main.
-- **Open questions for Bailey:** none for this fix.
-- **Visual assets:** unchanged this PR — presentation HUD startup only. Packaged Batch C / WLD/PRP / surfaces remain as verified in #125.
+- **Last updated:** 2026-09-07 by Cursor (Addressables provider + lofted turboprop + env densify; stacked on HUD fix)
+- **Branch / working tree:** `cursor/addressables-provider-env-cc2d` (stacked on #127 HUD fix)
+- **Do this next:** Bailey squash-merge #127 then #128. Mac Play soak: no Arial/PanelSettings warnings; lofted turboprop; denser fence/vegetation; Addressables keys load; Toolkit without IMGUI. Then #129 motion/brand.
+- **In progress / half-done:** HUD LegacyRuntime + theme TSS; AirsideResourcesProvider; lofted turboprop synced; south fence + vegetation + road shoulders; Toolkit early-outs IMGUI.
+- **Watch out for:** Linux cloud has no Unity — Mac `scripts/test-unity.sh` before merge. Do not overwrite `*_v04` with lofted geometry. Keep StreamingAssets sync.
+- **Open questions for Bailey:** authored FBX overwrite for terminal/turboprop next, or keep procedural loft density?
+- **Visual assets:** Lofted turboprop **Integrated** (prefer `…_lofted_v01`); Addressables Resources provider **wired**; env densify **code-side**; HUD startup **fixed** on this stack.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -128,7 +128,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm hangar bay clutter when door open, aiming points, Toolkit toasts, nav lights.
-3. Next code track: authored FBX overwrite for terminal or turboprop; expand Toolkit to left/ops panels.
-   No new economy systems; no Companion/CloudKit.
+1. Bailey squash-merge HUD fix (#127) then Addressables/lofted/env PR; Mac `scripts/test-unity.sh` + Play soak.
+2. Confirm lofted turboprop + denser fence/vegetation; Toolkit HUD without IMGUI; packaged StreamingAssets still shows Batch C/WLD/PRP.
+3. Next code track: URP materials/lighting polish, motion/life (gear/doors), brand splash on menu/load; authored FBX when ready.
+   No new economy systems; no Companion/CloudKit; no WorldScale re-layout until presentation PRs flow cleanly.

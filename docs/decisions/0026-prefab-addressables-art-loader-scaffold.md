@@ -9,8 +9,9 @@
 1. Runtime art resolution goes through `ArtPresentationLoader`:
    1. Addressables key `airside-prefab/<kit-basename>` — a runtime
       `AirsidePrefabAddressables` locator exposes every
-      `Resources/Airside/Prefabs` asset under that key (LegacyResourcesProvider)
-      until Bailey builds Editor Addressables groups on Mac
+      `Resources/Airside/Prefabs` asset under that key via
+      `AirsideResourcesProvider` (`Resources.Load`) until Bailey builds Editor
+      Addressables groups on Mac
    2. Direct `Resources.Load("Airside/Prefabs/<kit-basename>")` fallback
    3. StreamingAssets glTF (`ArtGltfLoader`)
    4. Caller procedural cuboid fallback
@@ -18,7 +19,9 @@
    shippable content source until Bailey imports authored FBX and builds real groups.
 3. Prefab keys match glTF basenames (`mdl_hangar_small_v02`, etc.) to keep Prefer
    v02/v03 / fallback naming stable. Standalone prop prefabs may use their own
-   basename (e.g. `mdl_passenger_stairs_v01`).
+   basename (e.g. `mdl_passenger_stairs_v01`). Lofted hero kits use distinct ids
+   (e.g. `mdl_regional_turboprop_01_lofted_v01`) — never race an existing
+   `*_v04` filename.
 4. Prefabs may ship without authored `.mat` files when they include
    `AirsideRuntimeMaterialBinder`, which applies Lit profiles at Awake.
 

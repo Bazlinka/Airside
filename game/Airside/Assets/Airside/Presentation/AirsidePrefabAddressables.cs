@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
-using UnityEngine.ResourceManagement.ResourceProviders;
 
 namespace Airside.Presentation
 {
@@ -12,28 +11,15 @@ namespace Airside.Presentation
     /// Decision 0025 item 1 / ADR 0026 — runtime Addressables locator that exposes
     /// every <c>Resources/Airside/Prefabs</c> asset under key
     /// <c>airside-prefab/&lt;key&gt;</c> until Bailey builds Editor Addressables groups.
-    /// Uses the built-in LegacyResourcesProvider so no custom download path is needed.
+    /// Loads via <see cref="AirsideResourcesProvider"/> (Resources.Load), keeping
+    /// StreamingAssets glTF and direct Resources fallbacks intact.
     /// </summary>
     public static class AirsidePrefabAddressables
     {
         public const string LocatorId = "Airside.Prefabs";
 
-        /// <summary>
-        /// This locator was written against <c>LegacyResourcesProvider</c>, which the
-        /// Addressables version in this project does not ship — so the file never
-        /// compiled and this path has never run. The provider id is named rather than
-        /// resolved via typeof so the build is green; until a real provider is
-        /// registered, <see cref="Register"/> deliberately does nothing and
-        /// <see cref="ArtPresentationLoader"/> keeps using its Resources → glTF
-        /// fallbacks, which is what has actually been serving prefabs all along.
-        /// Bailey's Editor Addressables groups are the intended replacement.
-        /// </summary>
-        private const string ResourcesProviderId =
-            "UnityEngine.ResourceManagement.ResourceProviders.LegacyResourcesProvider";
-
-        /// <summary>True once a real provider exists and this locator can be trusted.</summary>
-        public static bool Enabled { get; set; }
         private static bool _registered;
+        private static bool _providerRegistered;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap() => EnsureRegistered();
@@ -43,17 +29,10 @@ namespace Airside.Presentation
             if (_registered)
                 return;
 
-            // Off until a provider that exists in this Addressables version is wired up
-            // (see ResourcesProviderId). Registering a locator whose provider cannot load
-            // would turn a working Resources fallback into a runtime failure.
-            if (!Enabled)
-            {
-                _registered = true;
-                return;
-            }
-
             try
             {
+                EnsureProvider();
+
                 var locations = new Dictionary<object, IList<IResourceLocation>>();
                 var prefabs = Resources.LoadAll<GameObject>(ArtPresentationLoader.ResourcesPrefabRoot);
                 for (var i = 0; i < prefabs.Length; i++)
@@ -67,17 +46,9 @@ namespace Airside.Presentation
                     IResourceLocation location = new ResourceLocationBase(
                         key,
                         internalId,
-                        ResourcesProviderId,
+                        AirsideResourcesProvider.Id,
                         typeof(GameObject));
                     locations[key] = new List<IResourceLocation> { location };
-                }
-
-                if (locations.Count == 0)
-                {
-                    // Still register an empty locator so callers can probe safely.
-                    Addressables.AddResourceLocator(new Locator(locations));
-                    _registered = true;
-                    return;
                 }
 
                 Addressables.AddResourceLocator(new Locator(locations));
@@ -86,6 +57,36 @@ namespace Airside.Presentation
             catch (Exception)
             {
                 // Addressables / ResourceManager unavailable in some batch contexts.
+                // ArtPresentationLoader still falls through to Resources → glTF.
+                _registered = true;
+            }
+        }
+
+        private static void EnsureProvider()
+        {
+            if (_providerRegistered)
+                return;
+
+            try
+            {
+                // Initialize so ResourceManager exists before we add a provider/locator.
+                Addressables.InitializeAsync().WaitForCompletion();
+                var providers = Addressables.ResourceManager.ResourceProviders;
+                for (var i = 0; i < providers.Count; i++)
+                {
+                    if (providers[i] != null && providers[i].ProviderId == AirsideResourcesProvider.Id)
+                    {
+                        _providerRegistered = true;
+                        return;
+                    }
+                }
+
+                providers.Add(new AirsideResourcesProvider());
+                _providerRegistered = true;
+            }
+            catch (Exception)
+            {
+                // Leave unregistered; locator registration may still no-op safely.
             }
         }
 

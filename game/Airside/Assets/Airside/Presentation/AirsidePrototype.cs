@@ -1248,7 +1248,7 @@ namespace Airside.Presentation
 
             light.enabled = on;
             if (on)
-                light.intensity = 1.8f;
+                light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
 
         private static void EnsureBeaconPointLight(Transform lamp, bool on)
@@ -1315,8 +1315,10 @@ namespace Airside.Presentation
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
-            var cabinTargetY = phase == AircraftPhase.AtStand ? -85f : 0f;
-            var cargoTargetY = phase == AircraftPhase.AtStand ? 70f : 0f;
+            // ANM-AIR-003 — open bias from AirsideReusableMotion.
+            var doorBias = AirsideReusableMotion.CabinDoorBias(phase);
+            var cabinTargetY = Mathf.Lerp(0f, -85f, doorBias);
+            var cargoTargetY = Mathf.Lerp(0f, 70f, doorBias);
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -6799,9 +6801,15 @@ namespace Airside.Presentation
                 var renderer = foam.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
+                var wave = 0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f);
                 var c = renderer.material.color;
-                c.a = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f));
+                c.a = 0.3f + 0.35f * wave;
                 renderer.material.color = c;
+                // Soft Z pulse so the surf edge breathes toward shore.
+                var scale = foam.localScale;
+                scale.z = (i == 0 ? 1.1f : 1.4f) * (0.92f + 0.1f * wave);
+                foam.localScale = scale;
+            }
                 var scale = foam.localScale;
                 scale.z = (i == 0 ? 1.1f : 1.4f) * (0.9f + 0.1f * Mathf.Sin(t * 1.5f + i));
                 foam.localScale = scale;

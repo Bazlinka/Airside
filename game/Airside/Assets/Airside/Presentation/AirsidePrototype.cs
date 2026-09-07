@@ -4534,8 +4534,29 @@ namespace Airside.Presentation
             PlaceParkedCar("Overflow car A", new Vector3(42f, 0f, 51.2f), 90f, new Color(0.45f, 0.2f, 0.18f));
             PlaceParkedCar("Overflow car B", new Vector3(45.6f, 0f, 51.2f), 90f, new Color(0.7f, 0.72f, 0.75f));
             PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
+            PlaceParkedCar("Overflow car C", new Vector3(52.8f, 0f, 51.2f), 90f, new Color(0.25f, 0.3f, 0.45f));
+            PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
             PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
             PlaceLandsideBench("Access bench", new Vector3(22f, 0f, 40.5f), 90f);
+
+            // Painted parking bay chevrons so the car park reads marked, not empty asphalt.
+            for (var bay = 0; bay < 4; bay++)
+            {
+                var x = 42f + bay * 3.6f;
+                CreateBlock($"Bay line L {bay}", new Vector3(x - 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
+                    new Color(0.92f, 0.92f, 0.88f));
+                CreateBlock($"Bay line R {bay}", new Vector3(x + 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
+                    new Color(0.92f, 0.92f, 0.88f));
+                CreateBlock($"Bay stop {bay}", new Vector3(x, 0.06f, 41.6f), new Vector3(2.8f, 0.02f, 0.08f),
+                    new Color(0.92f, 0.92f, 0.88f));
+            }
+
+            // Access-road centre dashes toward the terminal (0025 item 3).
+            for (var i = 0; i < 8; i++)
+            {
+                CreateBlock($"Access dash {i}", new Vector3(26f, 0.06f, 38f + i * 1.8f),
+                    new Vector3(0.35f, 0.02f, 0.9f), new Color(0.95f, 0.9f, 0.35f));
+            }
 
             // Small general-aviation tie-down markers west of hangar (life, not sim).
             for (var i = 0; i < 6; i++)
@@ -4725,6 +4746,18 @@ namespace Airside.Presentation
                 new Color(0.15f, 0.15f, 0.16f));
             CreateBlock("Gate chevron R", new Vector3(27.8f, 0.85f, 35.45f), new Vector3(1.8f, 0.35f, 0.04f),
                 new Color(0.15f, 0.15f, 0.16f));
+
+            // East/west mid posts + corner braces so airside boundary reads continuous.
+            for (var z = -16; z <= 30; z += 4)
+            {
+                CreateBlock($"Fence post W mid {z}", new Vector3(-44f, 0.7f, z + 2f), new Vector3(0.1f, 1.35f, 0.1f), post);
+                CreateBlock($"Fence post E mid {z}", new Vector3(44f, 0.7f, z + 2f), new Vector3(0.1f, 1.35f, 0.1f), post);
+            }
+
+            CreateBlock("Fence brace NW", new Vector3(-43.2f, 0.7f, 33.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
+            CreateBlock("Fence brace NE", new Vector3(43.2f, 0.7f, 33.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
+            CreateBlock("Fence brace SW", new Vector3(-43.2f, 0.65f, -19.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
+            CreateBlock("Fence brace SE", new Vector3(43.2f, 0.65f, -19.2f), new Vector3(1.4f, 0.08f, 0.08f), rail);
         }
 
         /// <summary>
@@ -4940,6 +4973,18 @@ namespace Airside.Presentation
             };
             for (var i = 0; i < shrubs.Length; i++)
                 PlaceShrub(shrubs[i], 0.7f + (i % 4) * 0.12f);
+
+            // Extra inland scrub clusters so paddock gaps close from overview (0025 item 3).
+            var inlandScrub = new[]
+            {
+                new Vector3(-62f, 0f, 44f), new Vector3(-58f, 0f, 52f), new Vector3(-45f, 0f, 58f),
+                new Vector3(-30f, 0f, 58f), new Vector3(-5f, 0f, 56f), new Vector3(18f, 0f, 58f),
+                new Vector3(40f, 0f, 58f), new Vector3(62f, 0f, 52f), new Vector3(68f, 0f, 42f),
+                new Vector3(72f, 0f, 22f), new Vector3(70f, 0f, -8f), new Vector3(-70f, 0f, -6f),
+                new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f)
+            };
+            for (var i = 0; i < inlandScrub.Length; i++)
+                PlaceShrub(inlandScrub[i], 0.75f + (i % 5) * 0.1f);
 
             // Dense coastal scrub belt between berms and sand.
             for (var x = -55; x <= 55; x += 5)

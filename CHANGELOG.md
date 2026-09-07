@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Landside + fence densify (0025 item 3).** Parking bay lines, access dashes,
+  extra cars, inland scrub belt, E/W fence mid-posts and corner braces.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Env motion + day-volume polish (0025 items 3+5+7).** Apron walkers orbit
   spawn bases (no teleports); coast water UV scroll; weather thickens cloud alpha;
   UnlitSky uses URP Unlit; day volume owns WhiteBalance/SplitToning; puddle sheen

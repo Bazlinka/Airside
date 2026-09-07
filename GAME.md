@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (env motion + day-volume tip)
+- **Last updated:** 2026-09-07 by Cursor (landside/fence densify tip)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — more REF-004 HUD hierarchy, fence/vegetation densify, Addressables path later. No new economy. Do not block on Mac playtest.
-- **In progress / half-done:** Walker spawn bases fixed; coast UV scroll; weather cloud alpha; UnlitSky shader; WhiteBalance/SplitToning day volume; prior wiring/HUD/lighting tips. Still ~20% of REF.
+- **Do this next:** Continue 0025 — more REF-004 HUD hierarchy, runway marking polish, Addressables path later. No new economy. Do not block on Mac playtest.
+- **In progress / half-done:** Landside bay lines + cars, inland scrub, E/W fence mid posts; prior motion/day/HUD/wiring tips. Still ~20% of REF — far from complete.
 - **Watch out for:** ALS lamp / flood / star / puddle / figure / cloud / bird / tree count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

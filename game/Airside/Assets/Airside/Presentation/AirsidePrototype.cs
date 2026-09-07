@@ -19,16 +19,20 @@ namespace Airside.Presentation
         private Transform[] _commercialAircraft;
         private Transform[] _groundTraffic;
         private Light _sun;
+        private Light _fillLight;
         private Light[] _apronLights;
         private Light _aerodromeBeacon;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
+        private Transform _horizonDome;
         private float _touchdownSmokeRemaining;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
-        private readonly List<(Renderer Renderer, Color DryColor)> _wetSurfaces = new List<(Renderer, Color)>();
+        private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness)> _wetSurfaces = new List<(Renderer, Color, float)>();
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
+        private readonly List<Renderer> _airfieldLightRenderers = new List<Renderer>();
+        private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -51,7 +55,6 @@ namespace Airside.Presentation
         private bool _firstRouteIncomeToastShown;
         private long _routeIncomeSeen;
         private int _acceptedRouteCountSeen;
-        private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
         private const float EngineVolumePausedScale = 0.28f;
@@ -102,6 +105,10 @@ namespace Airside.Presentation
             _touchdownAudio.volume = 0.22f;
             CollectWetSurfaces();
             CollectHoldShortMarkings();
+            CollectAirfieldLights();
+            var dome = GameObject.Find("Horizon dome");
+            if (dome != null)
+                _horizonDome = dome.transform;
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -687,24 +694,37 @@ namespace Airside.Presentation
 
             if (wet)
             {
-                RenderSettings.ambientLight *= 0.92f;
+                // Cooler, denser atmosphere in adverse weather — still presentation only.
+                var fogDay = new Color(0.55f, 0.6f, 0.66f);
+                var fogNight = new Color(0.18f, 0.22f, 0.3f);
+                var daylight = (float)_simulation.TimeOfDay.Daylight;
+                RenderSettings.ambientLight *= 0.9f;
                 RenderSettings.fog = foggy || raining;
-                RenderSettings.fogColor = new Color(0.55f, 0.6f, 0.66f);
-                RenderSettings.fogDensity = weather == WeatherKind.Storm ? 0.012f : foggy ? 0.02f : 0.006f;
+                RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
+                RenderSettings.fogDensity = weather == WeatherKind.Storm ? 0.014f : foggy ? 0.022f : raining ? 0.007f : 0.004f;
             }
             else
             {
                 RenderSettings.fog = false;
             }
 
-            // Darken paved surfaces when wet (presentation only — no sim effect).
-            var wetness = wet ? (weather == WeatherKind.Storm ? 0.55f : raining ? 0.4f : 0.28f) : 0f;
+            // Darken + gloss paved surfaces when wet (VFX-004 wet response, greybox).
+            var wetness = wet ? (weather == WeatherKind.Storm ? 0.62f : raining ? 0.45f : 0.3f) : 0f;
             for (var i = 0; i < _wetSurfaces.Count; i++)
             {
-                var (renderer, dry) = _wetSurfaces[i];
+                var (renderer, dry, drySmooth) = _wetSurfaces[i];
                 if (renderer == null)
                     continue;
-                renderer.material.color = Color.Lerp(dry, dry * 0.55f, wetness);
+                var wetColor = Color.Lerp(dry, dry * 0.48f + new Color(0.05f, 0.08f, 0.12f, 0f), wetness);
+                wetColor.a = dry.a;
+                renderer.material.color = wetColor;
+                var smoothness = Mathf.Lerp(drySmooth, 0.82f, wetness);
+                if (renderer.material.HasProperty("_Smoothness"))
+                    renderer.material.SetFloat("_Smoothness", smoothness);
+                if (renderer.material.HasProperty("_Glossiness"))
+                    renderer.material.SetFloat("_Glossiness", smoothness);
+                if (renderer.material.HasProperty("_Metallic"))
+                    renderer.material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.18f, wetness));
             }
         }
 
@@ -795,7 +815,11 @@ namespace Airside.Presentation
         private void CollectWetSurfaces()
         {
             _wetSurfaces.Clear();
-            foreach (var name in new[] { "Runway", "Taxiway A", "Apron", "Stand 3 apron pad" })
+            foreach (var name in new[]
+                     {
+                         "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
+                         "Access road", "Access road turn", "Car park", "Service lane"
+                     })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
@@ -803,7 +827,30 @@ namespace Airside.Presentation
                 var renderer = go.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
-                _wetSurfaces.Add((renderer, renderer.material.color));
+                var drySmooth = 0.28f;
+                if (renderer.material.HasProperty("_Smoothness"))
+                    drySmooth = renderer.material.GetFloat("_Smoothness");
+                else if (renderer.material.HasProperty("_Glossiness"))
+                    drySmooth = renderer.material.GetFloat("_Glossiness");
+                _wetSurfaces.Add((renderer, renderer.material.color, drySmooth));
+            }
+        }
+
+        private void CollectAirfieldLights()
+        {
+            _airfieldLightRenderers.Clear();
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (renderer == null)
+                    continue;
+                var n = renderer.gameObject.name;
+                if (n.StartsWith("Runway edge", StringComparison.Ordinal) ||
+                    n.StartsWith("Taxi light", StringComparison.Ordinal) ||
+                    n == "runway_edge_light" ||
+                    n == "taxiway_light" ||
+                    n == "apron_floodlight" ||
+                    n == "obstruction_light")
+                    _airfieldLightRenderers.Add(renderer);
             }
         }
 
@@ -1628,6 +1675,17 @@ namespace Airside.Presentation
             _sun.shadows = LightShadows.Soft;
             _sun.shadowStrength = 0.72f;
             _sun.shadowBias = 0.04f;
+
+            // Cool fill opposite the key — softens night and dawn without a full probe bake.
+            var fillGo = GameObject.Find("Fill light");
+            _fillLight = fillGo != null ? fillGo.GetComponent<Light>() : null;
+            if (_fillLight == null)
+                _fillLight = new GameObject("Fill light").AddComponent<Light>();
+            _fillLight.type = LightType.Directional;
+            _fillLight.shadows = LightShadows.None;
+            _fillLight.intensity = 0.25f;
+            _fillLight.color = new Color(0.45f, 0.55f, 0.75f);
+
             ApplyDayCycle();
         }
 
@@ -1645,7 +1703,18 @@ namespace Airside.Presentation
             var night = new Color(0.28f, 0.36f, 0.58f);
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            _sun.intensity = Mathf.Lerp(0.1f, 1.45f, daylight);
+            _sun.intensity = Mathf.Lerp(0.08f, 1.5f, daylight);
+            _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
+
+            if (_fillLight != null)
+            {
+                _fillLight.transform.rotation = Quaternion.Euler(25f, 140f - (float)cycle.Fraction * 40f, 0f);
+                _fillLight.color = Color.Lerp(
+                    new Color(0.25f, 0.32f, 0.55f),
+                    new Color(0.55f, 0.65f, 0.85f),
+                    daylight);
+                _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
+            }
 
             var ambientDay = new Color(0.38f, 0.48f, 0.62f);   // cool shadows
             var ambientDusk = new Color(0.48f, 0.36f, 0.42f);
@@ -1660,21 +1729,23 @@ namespace Airside.Presentation
                 new Color(0.35f, 0.28f, 0.32f),
                 warm);
 
+            var skyDay = AirsideTheme.OpenSky;
+            var skyDusk = new Color(0.78f, 0.48f, 0.36f);
+            var skyNight = new Color(0.05f, 0.07f, 0.12f);
+            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.7f);
             if (_mainCamera != null)
+                _mainCamera.backgroundColor = sky;
+            if (_horizonDome != null)
             {
-                var skyDay = AirsideTheme.OpenSky;
-                var skyDusk = new Color(0.78f, 0.48f, 0.36f);
-                var skyNight = new Color(0.05f, 0.07f, 0.12f);
-                _mainCamera.backgroundColor = Color.Lerp(
-                    Color.Lerp(skyNight, skyDay, daylight),
-                    skyDusk,
-                    warm * 0.7f);
+                var domeRenderer = _horizonDome.GetComponent<Renderer>();
+                if (domeRenderer != null)
+                    domeRenderer.material.color = sky;
             }
 
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
-                var flood = Mathf.Lerp(1.35f, 0.05f, daylight);
+                var flood = Mathf.Lerp(1.55f, 0.05f, daylight);
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -1688,8 +1759,34 @@ namespace Airside.Presentation
                 }
             }
 
+            UpdateAirfieldNavLights(daylight);
             UpdateNightGlow(daylight);
             UpdateAerodromeBeacon(daylight);
+        }
+
+        private void UpdateAirfieldNavLights(float daylight)
+        {
+            // Edge / taxi lights punch up at dusk/night so the airfield stays readable.
+            var night = 1f - daylight;
+            var intensity = Mathf.Lerp(0.35f, 1.35f, night);
+            var warmWhite = Color.Lerp(new Color(0.85f, 0.88f, 0.7f), new Color(1f, 0.95f, 0.75f), night);
+            for (var i = 0; i < _airfieldLightRenderers.Count; i++)
+            {
+                var renderer = _airfieldLightRenderers[i];
+                if (renderer == null)
+                    continue;
+                var baseColor = renderer.gameObject.name.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? new Color(0.2f, 0.85f, 0.35f)
+                    : warmWhite;
+                var color = baseColor * intensity;
+                color.a = 1f;
+                renderer.material.color = color;
+                if (renderer.material.HasProperty("_EmissionColor"))
+                {
+                    renderer.material.EnableKeyword("_EMISSION");
+                    renderer.material.SetColor("_EmissionColor", baseColor * (0.2f + night * 1.4f));
+                }
+            }
         }
 
         private void CollectNightGlowWindows()
@@ -2724,6 +2821,12 @@ private static GameObject CreateBlock(
         {
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             var material = new Material(shader) { color = color };
+            if (material.HasProperty("_Metallic"))
+                material.SetFloat("_Metallic", 0.04f);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", 0.32f);
+            if (material.HasProperty("_Glossiness"))
+                material.SetFloat("_Glossiness", 0.32f);
             if (color.a < 0.99f)
             {
                 // Presentation translucency for heat shimmer / rain streaks.

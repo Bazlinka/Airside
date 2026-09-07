@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Lighting profiles + wet surface gloss.** Cool fill light opposite the sun,
+  horizon dome follows sky colour, nav/edge lights emit at dusk/night, and wet
+  weather darkens/glosses paved surfaces (VFX-004 greybox). Presentation only.
+
 - **Follow-camera framing.** Look-ahead along aircraft heading, altitude-based
   distance/pitch, and gentle yaw ease so F-follow fills the frame for taxi and
   flight. Overview (O) restores the default pitch. Presentation only.

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Landside furniture + coast boat prefabs (0025 items 1+3).** Resources
+  `mdl_luggage_trolley_v01`, `mdl_landside_bench_v01`, `mdl_coast_boat_v01`; denser
+  car-park stall lines, kerbs, drop-off zebra and parking sign. Presentation only.
+
 - **Landside parked-car Resources prefab (0025 items 1+3).** `mdl_parked_car_v01`
   fills car-park bays and kerbside drop-off (tinted body colours; Addressables key
   auto-registered). Presentation only.

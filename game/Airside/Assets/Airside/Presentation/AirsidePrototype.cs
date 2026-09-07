@@ -3857,11 +3857,25 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(4f, 1f));
             CreateBlock("Car park", new Vector3(48f, -0.01f, 46f), new Vector3(18f, 0.08f, 12f), new Color(0.28f, 0.3f, 0.32f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 2f));
+            // Horizontal bay rows + vertical stall dividers so the park reads from overview.
             for (var i = 0; i < 5; i++)
             {
                 var z = 42f + i * 2.0f;
                 CreateBlock($"Bay line {i}", new Vector3(48f, 0.05f, z), new Vector3(14f, 0.02f, 0.08f), Color.white);
             }
+
+            for (var i = 0; i < 5; i++)
+            {
+                var x = 41.5f + i * 3.6f;
+                CreateBlock($"Stall line {i}", new Vector3(x, 0.05f, 46f), new Vector3(0.08f, 0.02f, 10f), Color.white);
+            }
+
+            CreateBlock("Car park kerb N", new Vector3(48f, 0.12f, 52.2f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
+            CreateBlock("Car park kerb S", new Vector3(48f, 0.12f, 39.8f), new Vector3(18.5f, 0.2f, 0.35f), AirsideTheme.Concrete);
+            CreateBlock("Access centreline", new Vector3(26f, 0.05f, 38f), new Vector3(0.12f, 0.02f, 18f), new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
+            CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
+            CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
 
             // Hangar service lane.
             CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
@@ -4072,16 +4086,38 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat A", new Vector3(-12f, -0.55f, -62f), 12f, new Color(0.85f, 0.88f, 0.9f));
             PlaceCoastBoat("Coast boat B", new Vector3(22f, -0.5f, -68f), -20f, new Color(0.75f, 0.35f, 0.22f));
             PlaceCoastBoat("Coast boat C", new Vector3(55f, -0.45f, -74f), 5f, new Color(0.2f, 0.35f, 0.45f));
+            PlaceCoastBoat("Coast boat D", new Vector3(-40f, -0.5f, -70f), -8f, new Color(0.55f, 0.2f, 0.18f));
         }
 
+        /// <summary>
+        /// Decision 0025 items 1+3 — Resources coast boat with procedural fallback.
+        /// </summary>
         private static void PlaceCoastBoat(string name, Vector3 position, float yawDegrees, Color hull)
         {
-            var root = new GameObject(name).transform;
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_coast_boat_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer == null)
+                        continue;
+                    var n = renderer.gameObject.name.ToLowerInvariant();
+                    if (n.Contains("hull") || n.Contains("bow") || n.Contains("roof"))
+                        renderer.material.color = n.Contains("roof") ? Shade(hull, 0.85f) : hull;
+                }
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} hull", Vector3.zero, new Vector3(1.4f, 0.55f, 4.2f), hull);
+                ParentBlock(root, $"{name} roof", new Vector3(0f, 0.45f, -0.4f), new Vector3(1.1f, 0.7f, 1.6f), Shade(hull, 0.85f));
+                ParentBlock(root, $"{name} mast", new Vector3(0f, 1.4f, 0.2f), new Vector3(0.1f, 2.2f, 0.1f), new Color(0.75f, 0.75f, 0.72f));
+            }
+
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
-            ParentBlock(root, $"{name} hull", Vector3.zero, new Vector3(1.4f, 0.55f, 4.2f), hull);
-            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.4f), new Vector3(1.1f, 0.7f, 1.6f), Shade(hull, 0.85f));
-            ParentBlock(root, $"{name} mast", new Vector3(0f, 1.4f, 0.2f), new Vector3(0.1f, 2.2f, 0.1f), new Color(0.75f, 0.75f, 0.72f));
         }
 
         /// <summary>
@@ -4117,15 +4153,18 @@ namespace Airside.Presentation
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
 
             // Landside furniture: luggage trolley cluster + bench near terminal doors.
-            CreateBlock("Luggage trolley A", new Vector3(24f, 0.45f, 31.5f), new Vector3(0.9f, 0.7f, 0.55f), new Color(0.7f, 0.72f, 0.75f));
-            CreateBlock("Luggage trolley B", new Vector3(25.2f, 0.45f, 31.5f), new Vector3(0.9f, 0.7f, 0.55f), new Color(0.7f, 0.72f, 0.75f));
-            CreateBlock("Landside bench", new Vector3(29.5f, 0.35f, 31.2f), new Vector3(2.2f, 0.35f, 0.55f), new Color(0.45f, 0.32f, 0.18f));
-            CreateBlock("Bench back", new Vector3(29.5f, 0.7f, 30.95f), new Vector3(2.2f, 0.55f, 0.12f), new Color(0.45f, 0.32f, 0.18f));
+            PlaceLuggageTrolley("Luggage trolley A", new Vector3(24f, 0f, 31.5f), -15f);
+            PlaceLuggageTrolley("Luggage trolley B", new Vector3(25.2f, 0f, 31.5f), 8f);
+            PlaceLuggageTrolley("Luggage trolley C", new Vector3(24.6f, 0f, 30.6f), 175f);
+            PlaceLandsideBench("Landside bench", new Vector3(29.5f, 0f, 31.2f), 0f);
+            PlaceLandsideBench("Car park bench", new Vector3(40.5f, 0f, 40.2f), 90f);
 
             // Extra trees framing the car park.
             PlaceTree(new Vector3(58f, 0f, 48f), 1.1f);
             PlaceTree(new Vector3(44f, 0f, 54f), 0.95f);
             PlaceTree(new Vector3(20f, 0f, 44f), 0.85f);
+            PlaceTree(new Vector3(56f, 0f, 40f), 0.9f);
+            PlaceTree(new Vector3(34f, 0f, 52f), 1.05f);
 
             // Small general-aviation tie-down markers west of hangar (life, not sim).
             for (var i = 0; i < 4; i++)
@@ -4179,6 +4218,51 @@ namespace Airside.Presentation
                     renderer.material.color = color;
                 }
             }
+        }
+
+        /// <summary>
+        /// Decision 0025 items 1+3 — Resources luggage trolley with procedural fallback.
+        /// </summary>
+        private static void PlaceLuggageTrolley(string name, Vector3 position, float yawDegrees)
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_luggage_trolley_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} basket", new Vector3(0f, 0.45f, 0f), new Vector3(0.8f, 0.55f, 0.45f), new Color(0.7f, 0.72f, 0.75f));
+                ParentBlock(root, $"{name} handle", new Vector3(0f, 0.85f, -0.35f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.7f, 0.72f, 0.75f));
+            }
+
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        /// <summary>
+        /// Decision 0025 items 1+3 — Resources landside bench with procedural fallback.
+        /// </summary>
+        private static void PlaceLandsideBench(string name, Vector3 position, float yawDegrees)
+        {
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_landside_bench_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                var wood = new Color(0.45f, 0.32f, 0.18f);
+                ParentBlock(root, $"{name} seat", new Vector3(0f, 0.35f, 0f), new Vector3(2.2f, 0.12f, 0.55f), wood);
+                ParentBlock(root, $"{name} back", new Vector3(0f, 0.7f, -0.22f), new Vector3(2.2f, 0.55f, 0.1f), wood);
+            }
+
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
         }
 
         private static void BuildPerimeterFence()

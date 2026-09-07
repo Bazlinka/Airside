@@ -164,6 +164,27 @@ namespace Airside.Presentation
 
         public static float DrySmoothness(SurfaceKind kind) => GetProfile(kind).Smoothness;
 
+        /// <summary>
+        /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
+        /// albedo, raises smoothness and a touch of metallic so rain reads on Lit.
+        /// </summary>
+        public static void ApplyWetness(Material material, float wetness01, Color dryColor, float drySmoothness)
+        {
+            if (material == null)
+                return;
+            wetness01 = Mathf.Clamp01(wetness01);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.48f + new Color(0.05f, 0.08f, 0.12f, 0f), wetness01);
+            wetColor.a = dryColor.a;
+            material.color = wetColor;
+            var smoothness = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.86f), wetness01);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", smoothness);
+            if (material.HasProperty("_Glossiness"))
+                material.SetFloat("_Glossiness", smoothness);
+            if (material.HasProperty("_Metallic"))
+                material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.16f, wetness01));
+        }
+
         private static void ApplyTransparent(Material material)
         {
             material.SetFloat("_Surface", 1f);

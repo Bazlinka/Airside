@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (terrain micro-relief)
-- **Branch / working tree:** `cursor/terrain-microrelief-ddad`
-- **Do this next:** Merge berms/mounds/dunes; Bailey Play soak overview for ground depth
-- **In progress / half-done:** grass berms, scattered mounds, coastal dunes around flat slab
-- **Watch out for:** mounds must not clip taxi/runway; keep clear of paved footprints
-- **Open questions for Bailey:** none
-- **Visual assets:** fog/people on main; terrain relief on this branch
+- **Last updated:** 2026-09-07 by Cursor (prefab loader + wet mats + Canvas overlays)
+- **Branch / working tree:** `cursor/art-pipeline-materials-overlays-ddad`
+- **Do this next:** Merge art pipeline scaffold + wet variants + Canvas pause/briefing; Bailey drop first prefabs
+- **In progress / half-done:** ArtPresentationLoader + Addressables package; wet ApplyWetness; Canvas briefing/pause
+- **Watch out for:** Addressables package resolves on Mac Unity open; Resources prefab keys = glTF basenames
+- **Open questions for Bailey:** which kit to import as first real prefab (terminal vs turboprop)?
+- **Visual assets:** pipeline drop folder at `Assets/Resources/Airside/Prefabs/`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,7 +122,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm Canvas HUD, day volume, GSE motion, fog, people, and **terrain berms/dunes**
-   (ground no longer reads as a flat green slab from overview).
-3. Next code track: Addressables/prefab path (0025 item 1–2), or authored material
-   maps beyond the procedural spike. No new economy systems; no Companion/CloudKit.
+2. Confirm Canvas pause/briefing overlays, wet-apron materials in rain, terrain berms.
+3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
+   matching a glTF basename, or authored PBR maps. No new economy systems; no Companion/CloudKit.

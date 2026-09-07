@@ -1,15 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 13)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 14)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Props kit thins cones/barriers/dollies/signs; night glow PointLights capped (hero + ≤6 panes)
-  - Parked cars / CHR people / rain stamps thinned when kits present; decal SetRendererColor
-  - Speed chip label uses Runway Ink on light chrome
-  - Tips 9–12: BirdOrbitHz, WLD/VEG, light HUD, fuel/ARFF/boats/clouds
+  - Overview framing ~44 m / 48° FOV toward terminal (12,16); ReturnToOverview matches start pitch
+  - Safety props thinned when hydrant/cabinet/bin kits present; Stand 3 one cone with props kit
+  - Day volume softer night bloom; warmer dusk fill + midtones
+  - Tip 13: props densify, window PointLight cap, cars/CHR/rain thin
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

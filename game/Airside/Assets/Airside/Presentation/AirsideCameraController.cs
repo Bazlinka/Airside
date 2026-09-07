@@ -11,14 +11,14 @@ namespace Airside.Presentation
     public sealed class AirsideCameraController : MonoBehaviour
     {
         // Slightly terminal-biased so overview reads apron + buildings as one miniature.
-        private readonly Vector3 _overviewCenter = new(8f, 0f, 14f);
-        private const float OverviewDistance = 46f;
-        private const float OverviewFov = 50f;
+        private readonly Vector3 _overviewCenter = new(12f, 0f, 16f);
+        private const float OverviewDistance = 44f;
+        private const float OverviewFov = 48f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(8f, 0f, 14f);
-        private float _yaw = 142f;
+        private Vector3 _center = new(12f, 0f, 16f);
+        private float _yaw = 138f;
         private float _pitch = 38f;
         private float _distance = OverviewDistance;
         private bool _following;
@@ -265,7 +265,9 @@ namespace Airside.Presentation
             _following = false;
             _center = _overviewCenter;
             _distance = OverviewDistance;
-            _pitch = 40f;
+            _pitch = 38f;
+            _yaw = 138f;
+            _fov = OverviewFov;
         }
 
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>

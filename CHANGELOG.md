@@ -45,7 +45,9 @@ change it describes.
   thinned to 9×1–2 blobs; props kit thins cones/barriers/dollies/signs; night
   glow PointLights capped to hero + ≤6 panes; parked cars / CHR people / rain
   stamps thinned when kits present; decal SetRendererColor; speed chip ink on
-  light chrome. Presentation only — simulation unchanged.
+  light chrome; overview framing ~44 m / 48° toward terminal; safety props
+  thinned when kits present; softer night bloom + warmer dusk fill/midtones.
+  Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

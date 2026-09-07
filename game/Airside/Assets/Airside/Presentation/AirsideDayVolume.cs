@@ -213,10 +213,10 @@ namespace Airside.Presentation
             _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
             _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
+            _bloom.intensity.Override(Mathf.Lerp(0.38f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
                 + weatherGloom * 0.06f);
-            _bloom.threshold.Override(Mathf.Lerp(0.8f, 0.97f, daylight) - weatherGloom * 0.06f);
-            _vignette.intensity.Override(Mathf.Lerp(0.34f, 0.07f, daylight) + weatherGloom * 0.08f);
+            _bloom.threshold.Override(Mathf.Lerp(0.84f, 0.97f, daylight) - weatherGloom * 0.06f);
+            _vignette.intensity.Override(Mathf.Lerp(0.32f, 0.08f, daylight) + weatherGloom * 0.08f);
             // Night film grain for regional dusk grit; nearly off in bright day.
             _grain.intensity.Override(Mathf.Lerp(0.28f, 0.015f, daylight) + weatherGloom * 0.05f);
             _grain.response.Override(Mathf.Lerp(0.86f, 0.48f, daylight));
@@ -241,9 +241,9 @@ namespace Airside.Presentation
                 Mathf.Lerp(0.16f, -0.14f, daylight) - weatherGloom * 0.08f));
             // Dusk: lift midtones a touch more so hangar faces keep shape in warm light.
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.16f));
+                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.2f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.12f, 0.01f, daylight) + warm * 0.06f));
+                Mathf.Lerp(-0.1f, 0.01f, daylight) + warm * 0.08f));
             _tonal.shadowsStart.Override(0f);
             _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.46f, daylight));
             _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
@@ -291,9 +291,10 @@ namespace Airside.Presentation
                 _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
             }
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
+            // Kept modest so capped window PointLights don't bloom into soup.
             else if (warm > 0.35f)
-                _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f)
-                    + warm * 0.18f + weatherGloom * 0.06f);
+                _bloom.intensity.Override(Mathf.Lerp(0.38f, 0.11f, daylight) * (1f - weatherGloom * 0.28f)
+                    + warm * 0.14f + weatherGloom * 0.06f);
         }
     }
 }

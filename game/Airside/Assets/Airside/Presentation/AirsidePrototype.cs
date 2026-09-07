@@ -1766,8 +1766,14 @@ namespace Airside.Presentation
             CreateBlock("Stand 3 apron pad", new Vector3(20f, 0.01f, 26f), new Vector3(16f, 0.08f, 6f),
                 new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
+            var propsKit = PreferArtKit(
+                "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
+                "Models/Props/mdl_airfield_props_kit_v02.gltf",
+                "Models/Props/mdl_airfield_props_kit_v01.gltf");
+            // One lead-in cone when props kit is heavy; pair only as greybox fallback.
             CreateCone(new Vector3(14.5f, 0.25f, 24.2f));
-            CreateCone(new Vector3(14.5f, 0.25f, 27.8f));
+            if (string.IsNullOrEmpty(propsKit) || !ArtGltfLoader.HasKit(propsKit))
+                CreateCone(new Vector3(14.5f, 0.25f, 27.8f));
             // Digit paint comes from PlaceWorldMarkings / PlaceRunwayDigit (kit-prefer).
             _standThreeVisualBuilt = true;
             // Pad is created after the Awake wet collect — refresh so Stand 3 rains too.
@@ -3589,9 +3595,9 @@ namespace Airside.Presentation
                 _fillLight.transform.rotation = Quaternion.Euler(25f, 140f - (float)cycle.Fraction * 40f, 0f);
                 _fillLight.color = Color.Lerp(
                     new Color(0.25f, 0.32f, 0.55f),
-                    new Color(0.55f, 0.65f, 0.85f),
+                    Color.Lerp(new Color(0.55f, 0.65f, 0.85f), new Color(1f, 0.78f, 0.62f), warm * 0.55f),
                     daylight);
-                _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight);
+                _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight) + warm * 0.06f;
             }
 
             var ambientDay = new Color(0.52f, 0.58f, 0.64f);
@@ -9405,18 +9411,31 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildApronSafetyProps()
         {
+            var hasHydrant = ArtPresentationLoader.HasPrefab("mdl_fire_hydrant_v01");
+            var hasCabinet = ArtPresentationLoader.HasPrefab("mdl_extinguisher_cabinet_v01");
+            var serviceKit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
+                "Models/Props/mdl_service_equipment_kit_v02.gltf",
+                "Models/Props/mdl_service_equipment_kit_v01.gltf");
+            var hasBinKit = !string.IsNullOrEmpty(serviceKit) && ArtGltfLoader.HasKit(serviceKit);
+
             PlaceFireHydrant("Hydrant apron NE", new Vector3(34f, 0f, 23.5f), 0f);
             PlaceFireHydrant("Hydrant apron NW", new Vector3(8.5f, 0f, 23.5f), 0f);
-            PlaceFireHydrant("Hydrant taxi", new Vector3(-2f, 0f, 11.5f), 90f);
-            PlaceFireHydrant("Hydrant hangar", new Vector3(-14f, 0f, 16f), 0f);
+            if (!hasHydrant)
+            {
+                PlaceFireHydrant("Hydrant taxi", new Vector3(-2f, 0f, 11.5f), 90f);
+                PlaceFireHydrant("Hydrant hangar", new Vector3(-14f, 0f, 16f), 0f);
+            }
 
             PlaceExtinguisherCabinet("Extinguisher terminal", new Vector3(20f, 0f, 24.2f), 180f);
             PlaceExtinguisherCabinet("Extinguisher hangar", new Vector3(-15.5f, 0f, 24.2f), 180f);
-            PlaceExtinguisherCabinet("Extinguisher ops", new Vector3(-5f, 0f, 24.2f), 180f);
+            if (!hasCabinet)
+                PlaceExtinguisherCabinet("Extinguisher ops", new Vector3(-5f, 0f, 24.2f), 180f);
 
             PlaceFodBin("FOD bin A", new Vector3(36f, 0f, 20f), 270f);
             PlaceFodBin("FOD bin B", new Vector3(10f, 0f, 11.2f), 0f);
-            PlaceFodBin("FOD bin C", new Vector3(-24f, 0f, 16.5f), 90f);
+            if (!hasBinKit)
+                PlaceFodBin("FOD bin C", new Vector3(-24f, 0f, 16.5f), 90f);
 
             // Stand lead-in / box paint — skip when markings kit already placed stand stops
             // (avoid double-painted bays next to authored threshold/TDZ).

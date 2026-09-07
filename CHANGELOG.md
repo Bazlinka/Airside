@@ -5,6 +5,8 @@ change it describes.
 
 ## Unreleased
 
+- **BLD-001 v05 roof silhouette.** Shallower ~4° dual-pitch roof / lower plant to better match REF-001; Mac FBX rebake. Packaged rebuild pending soak tip.
+
 - **Batch F1 follow-up: stop mat_glass on shadows/clouds/VFX.** Ground/contact shadows, cloud volumes and umbras use Default Lit instead of mat_glass (was causing bright shaft artefacts). Evidence: test-unity 116/116; Mac rebuild.
 
 - **Batch F1 follow-up: day light + glass blend.** Daytime sun/ambient raised for REF-readable overview;

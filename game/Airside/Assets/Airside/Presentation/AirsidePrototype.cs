@@ -222,7 +222,9 @@ namespace Airside.Presentation
                         _session.StartOperationsResearch();
                     else if (research.CanStartPassengerServices)
                         _session.StartPassengerServicesResearch();
-                });
+                },
+                onBeginOperations: () => DismissOpeningBriefing(),
+                onResetAirport: () => ResetToNewAirport());
             _canvasHudActive = _canvasHud.IsActive;
         }
 
@@ -272,14 +274,23 @@ namespace Airside.Presentation
             if (!_canvasHudActive || _canvasHud == null)
                 return;
 
-            // Hide canvas primary panels while full-screen overlays own the screen.
-            if (_showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent)
+            // Away summary / insolvency stay IMGUI full-screen for now.
+            if (_showAwaySummary || _simulation.IsInsolvent)
             {
                 _canvasHud.SetVisible(false);
                 return;
             }
 
             _canvasHud.SetVisible(true);
+            _canvasHud.SyncOverlays(
+                showBriefing: _showOpeningBriefing,
+                showPause: _paused && !_showOpeningBriefing,
+                locationName: _simulation.Location.Name,
+                firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds);
+
+            if (_showOpeningBriefing)
+                return;
+
             SyncCanvasLeftPanel();
             var earlySession = _simulation.Routes.Accepted.Count == 0;
             var proposal = _simulation.Routes.Pending;
@@ -1380,23 +1391,14 @@ namespace Airside.Presentation
             }
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
-            // Darken + gloss paved surfaces when wet (VFX-004 wet response, greybox).
+            // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
             var wetness = wet ? (weather == WeatherKind.Storm ? 0.62f : raining ? 0.45f : 0.3f) : 0f;
             for (var i = 0; i < _wetSurfaces.Count; i++)
             {
                 var (renderer, dry, drySmooth) = _wetSurfaces[i];
                 if (renderer == null)
                     continue;
-                var wetColor = Color.Lerp(dry, dry * 0.48f + new Color(0.05f, 0.08f, 0.12f, 0f), wetness);
-                wetColor.a = dry.a;
-                renderer.material.color = wetColor;
-                var smoothness = Mathf.Lerp(drySmooth, 0.82f, wetness);
-                if (renderer.material.HasProperty("_Smoothness"))
-                    renderer.material.SetFloat("_Smoothness", smoothness);
-                if (renderer.material.HasProperty("_Glossiness"))
-                    renderer.material.SetFloat("_Glossiness", smoothness);
-                if (renderer.material.HasProperty("_Metallic"))
-                    renderer.material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.18f, wetness));
+                AirsideMaterialLibrary.ApplyWetness(renderer.material, wetness, dry, drySmooth);
             }
         }
 
@@ -1982,11 +1984,13 @@ namespace Airside.Presentation
             DrawSaveIndicator(scale, panel, small, onTime);
             if (!_canvasHudActive)
                 DrawOpsToast(scale, panel, detail, onTime);
-            if (_paused && !_showAwaySummary && !_showOpeningBriefing)
-                DrawPauseOverlay(scale, panel, title, caution, small, button);
-
-            if (_showOpeningBriefing)
-                DrawOpeningBriefing(scale, panel, title, detail, small, button);
+            if (!_canvasHudActive)
+            {
+                if (_paused && !_showAwaySummary && !_showOpeningBriefing)
+                    DrawPauseOverlay(scale, panel, title, caution, small, button);
+                if (_showOpeningBriefing)
+                    DrawOpeningBriefing(scale, panel, title, detail, small, button);
+            }
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             if (_simulation.IsInsolvent)
@@ -3566,9 +3570,9 @@ namespace Airside.Presentation
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
 
-        /// <summary>Prefer a richer kit when present; otherwise the Approved v01 path.</summary>
+        /// <summary>Prefer a richer kit/prefab when present; otherwise the Approved v01 path.</summary>
         private static string PreferArtKit(string preferredRelativePath, string fallbackRelativePath) =>
-            ArtGltfLoader.HasKit(preferredRelativePath) ? preferredRelativePath : fallbackRelativePath;
+            ArtPresentationLoader.HasPresentation(preferredRelativePath) ? preferredRelativePath : fallbackRelativePath;
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
         {
@@ -3611,7 +3615,7 @@ namespace Airside.Presentation
         private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale, string artRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            var usedArt = !string.IsNullOrEmpty(artRelativePath) && ArtGltfLoader.TryInstantiate(
+            var usedArt = !string.IsNullOrEmpty(artRelativePath) && ArtPresentationLoader.TryInstantiate(
                 artRelativePath,
                 root,
                 out _,
@@ -3839,7 +3843,7 @@ namespace Airside.Presentation
             Vector2? surfaceTextureTiling = null,
             string[] surfaceMeshNames = null)
         {
-            if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
+            if (ArtPresentationLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
                 root.position = worldPosition;
                 if (!string.IsNullOrEmpty(glassTextureRelativePath))

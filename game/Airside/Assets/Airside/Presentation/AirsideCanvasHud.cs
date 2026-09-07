@@ -61,6 +61,10 @@ namespace Airside.Presentation
         private readonly Text _acceptLabel;
         private readonly Text _toastText;
         private readonly Image _offerAccent;
+        private RectTransform _pausePanel;
+        private RectTransform _briefingPanel;
+        private Image _briefingSplash;
+        private Text _briefingBody;
         private Action _onAccept;
         private Action _onDecline;
         private Action _onPriorityCrew;
@@ -68,6 +72,8 @@ namespace Airside.Presentation
         private Action _onReleaseCrew;
         private Action _onBuildStand;
         private Action _onStartResearch;
+        private Action _onBeginOperations;
+        private Action _onResetAirport;
 
         private AirsideCanvasHud(
             RectTransform root,
@@ -374,6 +380,7 @@ namespace Airside.Presentation
             releaseCrew.onClick.AddListener(() => hud._onReleaseCrew?.Invoke());
             buildStand.onClick.AddListener(() => hud._onBuildStand?.Invoke());
             researchButton.onClick.AddListener(() => hud._onStartResearch?.Invoke());
+            hud.EnsureOverlays(root);
 
             if (UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
@@ -385,6 +392,82 @@ namespace Airside.Presentation
             return hud;
         }
 
+        private void EnsureOverlays(RectTransform root)
+        {
+            // Full-screen briefing splash + card.
+            var splashGo = new GameObject("Briefing splash", typeof(RectTransform));
+            splashGo.transform.SetParent(root, false);
+            var splashRt = splashGo.GetComponent<RectTransform>();
+            Stretch(splashRt);
+            _briefingSplash = splashGo.AddComponent<Image>();
+            _briefingSplash.color = new Color(0.05f, 0.07f, 0.09f, 1f);
+            _briefingSplash.raycastTarget = true;
+            var splashTex = AirsideTheme.SplashDawn;
+            if (splashTex != null)
+            {
+                _briefingSplash.sprite = Sprite.Create(
+                    splashTex, new Rect(0, 0, splashTex.width, splashTex.height), new Vector2(0.5f, 0.5f));
+                _briefingSplash.preserveAspect = false;
+                _briefingSplash.type = Image.Type.Simple;
+            }
+
+            var briefingCard = BuildPanel(splashRt, "Briefing card", Vector2.zero, new Vector2(500f, 360f), anchorTopCenter: true);
+            briefingCard.anchorMin = new Vector2(0.5f, 0.5f);
+            briefingCard.anchorMax = new Vector2(0.5f, 0.5f);
+            briefingCard.pivot = new Vector2(0.5f, 0.5f);
+            briefingCard.anchoredPosition = Vector2.zero;
+            var wordmark = AirsideTheme.WordmarkLight;
+            if (wordmark != null)
+            {
+                var wmGo = new GameObject("Briefing wordmark", typeof(RectTransform));
+                wmGo.transform.SetParent(briefingCard, false);
+                var wmRt = wmGo.GetComponent<RectTransform>();
+                wmRt.anchorMin = new Vector2(0f, 1f);
+                wmRt.anchorMax = new Vector2(0f, 1f);
+                wmRt.pivot = new Vector2(0f, 1f);
+                wmRt.anchoredPosition = new Vector2(24f, -14f);
+                wmRt.sizeDelta = new Vector2(280f, 70f);
+                var wm = wmGo.AddComponent<Image>();
+                wm.sprite = Sprite.Create(wordmark, new Rect(0, 0, wordmark.width, wordmark.height), new Vector2(0.5f, 0.5f));
+                wm.preserveAspect = true;
+                wm.raycastTarget = false;
+            }
+            else
+            {
+                var brand = AddText(briefingCard, "Briefing brand", 26, FontStyle.Bold, new Vector2(24f, -18f), new Vector2(450f, 34f));
+                brand.text = "AIRSIDE";
+            }
+
+            _briefingBody = AddText(briefingCard, "Briefing body", 15, FontStyle.Normal, new Vector2(24f, -96f), new Vector2(450f, 200f));
+            var begin = AddButton(briefingCard, "Begin operations", new Vector2(140f, -318f), new Vector2(220f, 30f), AirsideTheme.CoastalBlue);
+            begin.onClick.AddListener(() => _onBeginOperations?.Invoke());
+            _briefingPanel = splashRt;
+            splashGo.SetActive(false);
+
+            // Pause dimmer + card.
+            var pauseGo = new GameObject("Pause overlay", typeof(RectTransform));
+            pauseGo.transform.SetParent(root, false);
+            var pauseRt = pauseGo.GetComponent<RectTransform>();
+            Stretch(pauseRt);
+            var dim = pauseGo.AddComponent<Image>();
+            dim.color = new Color(0.05f, 0.07f, 0.09f, 0.45f);
+            dim.raycastTarget = true;
+            var pauseCard = BuildPanel(pauseRt, "Pause card", Vector2.zero, new Vector2(320f, 140f));
+            pauseCard.anchorMin = new Vector2(0.5f, 0.5f);
+            pauseCard.anchorMax = new Vector2(0.5f, 0.5f);
+            pauseCard.pivot = new Vector2(0.5f, 0.5f);
+            pauseCard.anchoredPosition = Vector2.zero;
+            var pauseTitle = AddText(pauseCard, "Pause title", 26, FontStyle.Bold, new Vector2(24f, -18f), new Vector2(270f, 36f));
+            pauseTitle.text = "PAUSED";
+            var pauseHint = AddText(pauseCard, "Pause hint", 15, FontStyle.Bold, new Vector2(24f, -52f), new Vector2(270f, 22f));
+            pauseHint.text = "Space to resume";
+            pauseHint.color = AirsideTheme.SafetyYellow;
+            var reset = AddButton(pauseCard, "Start new airport", new Vector2(50f, -88f), new Vector2(220f, 30f), AirsideTheme.Tarmac);
+            reset.onClick.AddListener(() => _onResetAirport?.Invoke());
+            _pausePanel = pauseRt;
+            pauseGo.SetActive(false);
+        }
+
         public void BindActions(
             Action onAccept,
             Action onDecline,
@@ -392,7 +475,9 @@ namespace Airside.Presentation
             Action onHireCrew = null,
             Action onReleaseCrew = null,
             Action onBuildStand = null,
-            Action onStartResearch = null)
+            Action onStartResearch = null,
+            Action onBeginOperations = null,
+            Action onResetAirport = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -401,6 +486,41 @@ namespace Airside.Presentation
             _onReleaseCrew = onReleaseCrew;
             _onBuildStand = onBuildStand;
             _onStartResearch = onStartResearch;
+            _onBeginOperations = onBeginOperations;
+            _onResetAirport = onResetAirport;
+        }
+
+        public void SyncOverlays(bool showBriefing, bool showPause, string locationName, int firstOfferAfterSeconds)
+        {
+            if (_briefingPanel != null)
+            {
+                _briefingPanel.gameObject.SetActive(showBriefing);
+                if (showBriefing && _briefingBody != null)
+                {
+                    _briefingBody.text =
+                        "You run this regional airport\n\n" +
+                        $"Aircraft move on their own. Your job is cash, reputation and capacity at {locationName}.\n\n" +
+                        "First useful decision\n" +
+                        $"In about {firstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.\n\n" +
+                        "Watch OPERATIONS on the right. Watch cash and delays on the left. Press Enter to Accept the first offer.\n\n" +
+                        "Space / Enter to begin  ·  Tab = 4× speed";
+                }
+            }
+
+            if (_pausePanel != null)
+                _pausePanel.gameObject.SetActive(showPause && !showBriefing);
+
+            // Hide gameplay panels while briefing owns the screen.
+            var gameplay = !showBriefing;
+            if (_leftPanel != null)
+                _leftPanel.gameObject.SetActive(gameplay);
+            if (_opsPanel != null)
+                _opsPanel.gameObject.SetActive(gameplay);
+            if (!gameplay)
+            {
+                _offerPanel.gameObject.SetActive(false);
+                _toastPanel.gameObject.SetActive(false);
+            }
         }
 
         public void SyncLeftPanel(

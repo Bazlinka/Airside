@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Prefab/Addressables art loader scaffold (0025 item 1–2 / ADR 0026).**
+  `ArtPresentationLoader` prefers `Resources/Airside/Prefabs/<kit-basename>` then
+  StreamingAssets glTF; Addressables package added to the Unity manifest; wet
+  material variants centralized; Canvas owns opening briefing + pause overlays.
+  Presentation only.
+
 - **Terrain micro-relief (0025 item 3).** Grass berms, scattered mounds and coastal
   dunes break the flat ground slab so overview reads as a regional airfield site.
   Presentation only.

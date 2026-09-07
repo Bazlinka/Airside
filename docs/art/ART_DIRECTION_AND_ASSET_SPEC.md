@@ -145,7 +145,12 @@ asset must be done inside Unity so its GUID remains stable.
 
 - **Generated/Modelled:** a candidate exists but code must not depend on it.
 - **Approved:** Bailey has accepted the look and the file is registered.
-- **Integrated:** Unity references the approved asset with the documented fallback.
+- **Integrated:** Runtime code references the approved asset with a documented
+  fallback. For filesystem-loaded kits/PNGs this also requires a sync into
+  `StreamingAssets/Airside/Art` (`scripts/sync-art-streaming-assets.sh`) so
+  **packaged builds** load the same files as the Editor (decision 0025).
+  Integrated does **not** mean final fidelity — current Batch C kits are still
+  greybox-scale placeholders relative to REF screenshots.
 - **Verified:** checked at overview/follow views, day/dusk/night and at target Mac
   performance.
 
@@ -203,6 +208,12 @@ Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.
 
 ### Batch C — first-playable 3D set
+
+**Fidelity note (2026-09-07):** Current glTF kits are low-poly greybox stand-ins
+(e.g. turboprop ~336 vertices / 14 meshes; terminal ~120 vertices / 5 meshes)
+with no authored URP materials. Status "Integrated" means the runtime loader
+can place them (when StreamingAssets is synced); it does **not** mean they match
+REF screenshots. Replacing this set is backlog item 2 in decision 0025.
 
 Production task packet:
 `docs/art/prompts/batch-c-models-task-packet.md`.

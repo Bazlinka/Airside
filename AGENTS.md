@@ -47,6 +47,8 @@ Airside/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
     test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation/Persistence
                              tests, for machines without Unity — supplementary, not a replacement
+    sync-art-streaming-assets.sh
+                             Copy runtime glTF/PNG art into StreamingAssets for packaged builds
     dotnet-harness/          Hand-authored csproj backing test-domain.sh
     build-mac.sh             Local macOS application build
   work/                      Local scratch, downloads, builds — git-ignored, never committed

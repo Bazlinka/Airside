@@ -7,10 +7,12 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Loads Airside Batch B/C procedural glTF kits from disk at runtime (Editor /
-    /// unpacked player data). Supports the project's POSITION+indices box/quad
-    /// kits only — not a general glTF importer. Missing files return false so
-    /// callers keep primitive greybox fallbacks.
+    /// Loads Airside Batch B/C procedural glTF kits from disk at runtime.
+    /// Packaged builds read <c>StreamingAssets/Airside/Art</c> (see
+    /// <see cref="ArtRuntimePaths"/> and <c>scripts/sync-art-streaming-assets.sh</c>).
+    /// Supports the project's POSITION+indices box/quad kits only — not a general
+    /// glTF importer. Missing files return false so callers keep primitive greybox
+    /// fallbacks. This is an interim pipeline until Unity-imported prefabs/Addressables.
     /// </summary>
     public static class ArtGltfLoader
     {
@@ -119,8 +121,8 @@ namespace Airside.Presentation
             if (KitCache.TryGetValue(artRelativePath, out kit))
                 return kit != null;
 
-            var fullPath = Path.Combine(Application.dataPath, "Airside", "Art", artRelativePath);
-            if (!File.Exists(fullPath))
+            var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
+            if (fullPath == null)
             {
                 KitCache[artRelativePath] = null;
                 return false;

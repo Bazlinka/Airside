@@ -17,12 +17,26 @@ The Mac first playable is the only active product target. One implementation bra
 
 The next development step is:
 
-1. Merge and verify PR 35, which restores Unity compilation and has local evidence for a successful macOS build and 107 passing EditMode tests.
-2. Launch that exact build and complete a focused visual test at 1280 by 720, 1440 by 900 and the development Mac's Retina resolution.
-3. Fix only failures that stop a new player from completing or understanding the first session.
-4. Build the first-session flow described below and give it to an external player.
+1. **Fix the packaged art pipeline** so macOS builds load the same kits/PNGs as
+   the Editor (`StreamingAssets` + `ArtRuntimePaths`; decision 0025). Rebuild and
+   confirm the turboprop/terminal/UI icons appear in the packaged app — not only
+   coloured primitives.
+2. Launch that exact build and complete a focused visual test at 1280 by 720,
+   1440 by 900 and the development Mac's Retina resolution.
+3. Fix only failures that stop a new player from completing or understanding the
+   first session (first-session flow is already on `main`).
+4. Treat Bailey's visual backlog (replace placeholder 3D, environment, materials,
+   lighting, HUD rebuild, motion, brand) as the presentation track after the
+   pipeline works in packaged builds — do not mark REF screenshots as shipped.
 
-PR 34, cloud tooling and further art production are useful but are not on the critical path to the first playable.
+PR 34, cloud tooling and further parallel simulation systems are useful but are
+not on the critical path to a trustworthy visual playtest.
+
+## Honest presentation status
+
+As of the 2026-09-07 packaged-build assessment, presentation is roughly **~20% of
+the REF target**. Simulation and first-session systems are ahead of final art.
+See decision **0025**.
 
 ## What is already built
 

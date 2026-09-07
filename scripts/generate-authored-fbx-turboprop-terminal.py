@@ -667,25 +667,45 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "plinth_step": box(0, 0.32, -2.4, 16.0, 0.12, 0.55),
         "corner_trim_l": box(-10.25, 2.15, -2.3, 0.18, 3.8, 0.18),
         "corner_trim_r": box(10.25, 2.15, -2.3, 0.18, 3.8, 0.18),
+        "corner_trim_bl": box(-10.25, 2.15, 2.3, 0.18, 3.8, 0.18),
+        "corner_trim_br": box(10.25, 2.15, 2.3, 0.18, 3.8, 0.18),
+        "canopy_brace_ml": box(-2.2, 3.2, -3.4, 0.1, 0.5, 1.4),
+        "canopy_brace_mr": box(2.2, 3.2, -3.4, 0.1, 0.5, 1.4),
+        "canopy_light_mid": box(0.0, 3.4, -3.6, 0.45, 0.08, 0.25),
+        "canopy_flash": box(0, 3.6, -2.2, 14.0, 0.08, 0.2),
+        "signage_glyph_a": box(-2.5, 3.9, -2.22, 1.4, 0.2, 0.04),
+        "signage_glyph_b": box(2.5, 3.9, -2.22, 1.4, 0.2, 0.04),
+        "boarding_glass": box(-5.5, 1.55, -2.42, 1.2, 1.1, 0.05),
+        "boarding_canopy": box(-5.5, 2.45, -2.9, 2.2, 0.1, 1.0),
+        "service_window": box(7.5, 1.7, 4.15, 1.2, 0.8, 0.05),
+        "service_window_frame": box(7.5, 1.7, 4.2, 1.35, 0.95, 0.06),
+        "roof_flash_front": box(0, 4.48, -2.4, 20.5, 0.08, 0.18),
+        "roof_flash_back": box(0, 4.48, 2.4, 20.5, 0.08, 0.18),
+        "plinth_kerb_l": box(-10.0, 0.25, -2.5, 0.8, 0.35, 0.4),
+        "plinth_kerb_r": box(10.0, 0.25, -2.5, 0.8, 0.35, 0.4),
+        "landside_awning_brace_l": box(-4.0, 3.0, 2.7, 0.08, 0.35, 0.7),
+        "landside_awning_brace_r": box(4.0, 3.0, 2.7, 0.08, 0.35, 0.7),
+        "girth_band_1": box(0, 1.0, 0.1, 20.6, 0.1, 4.5),
+        "girth_band_2": box(0, 3.0, 0.1, 20.6, 0.1, 4.5),
     }
     # Pane bays between mullions at x = -7.5..7.5 every 1.5 m (skip entrance bay).
-    pane_xs = [-6.75, -5.25, -3.75, -2.25, 2.25, 3.75, 5.25, 6.75, -0.75, 0.75]
+    pane_xs = [-6.75, -5.25, -3.75, -2.25, 2.25, 3.75, 5.25, 6.75, -0.75, 0.75, -8.0, 8.0]
     for i, x in enumerate(pane_xs, start=1):
         # Upper + lower panes split by midrail.
         meshes[f"glass_pane_{i}"] = box(x, 2.85, pane_z, 1.35, 0.9, 0.06)
         meshes[f"glass_pane_lo_{i}"] = box(x, 1.75, pane_z, 1.35, 1.05, 0.06)
     # Landside curtain panes between mullions.
-    land_xs = [-5.0, -3.0, -1.0, 1.0, 3.0, 5.0]
+    land_xs = [-5.0, -3.0, -1.0, 1.0, 3.0, 5.0, -6.5, 6.5]
     land_z = 2.36
     for i, x in enumerate(land_xs, start=1):
         meshes[f"glass_pane_land_{i}"] = box(x, 2.55, land_z, 1.7, 0.55, 0.05)
         meshes[f"glass_pane_land_lo_{i}"] = box(x, 1.75, land_z, 1.7, 0.7, 0.05)
     # Apron-face cladding ribs (skip glass bay).
-    for i, x in enumerate([-9.5, -8.5, 8.5, 9.5], start=1):
+    for i, x in enumerate([-9.5, -8.5, 8.5, 9.5, -9.0, 9.0], start=1):
         meshes[f"wall_rib_end_{i}"] = box(x, 2.15, -2.35, 0.1, 3.6, 0.08)
-    for i, x in enumerate([-9.0, -7.0, -5.0, -3.0, 3.0, 5.0, 7.0, 9.0], start=1):
+    for i, x in enumerate([-9.0, -7.0, -5.0, -3.0, 3.0, 5.0, 7.0, 9.0, -1.5, 1.5], start=1):
         meshes[f"wall_rib_land_{i}"] = box(x, 2.0, 2.4, 0.1, 3.2, 0.08)
-    for i, x in enumerate([4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5], start=1):
+    for i, x in enumerate([4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 4.0, 11.0], start=1):
         meshes[f"service_rib_{i}"] = box(x, 1.35, 4.12, 0.08, 2.4, 0.06)
     return meshes
 

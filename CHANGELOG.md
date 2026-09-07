@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal densify tip (0025 item 2).** Authored terminal kit 191 (extra curtain panes, landside
+  ribs, canopy braces/lights, boarding/service glass, girth bands); color map uses StartsWith
+  for glass/ribs. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
 - **Hangar/ops densify tip (0025 item 2).** Authored hangar kit 165 / ops shed 127 (extra ribs,
   corner trims, door peeks, awnings, flashings, porch/AC detail); color maps cover new metal/
   glass parts. Presentation only.

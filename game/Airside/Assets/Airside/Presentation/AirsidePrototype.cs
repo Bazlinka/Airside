@@ -4199,68 +4199,57 @@ namespace Airside.Presentation
                     "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
                     "Models/Buildings/mdl_terminal_regional_small_v01.gltf"),
                 new Vector3(26f, 0f, 27f),
-                name => name switch
+                name =>
                 {
-                    "glass_front" or "windows" or "cabin_windows" or "landside_glass"
-                        or "door_glass" or "glass_pane_1" or "glass_pane_2" or "glass_pane_3"
-                        or "glass_pane_4" or "glass_pane_5" or "glass_pane_6" or "glass_pane_7"
-                        or "glass_pane_8" or "glass_pane_9" or "glass_pane_10"
-                        or "glass_pane_lo_1" or "glass_pane_lo_2" or "glass_pane_lo_3"
-                        or "glass_pane_lo_4" or "glass_pane_lo_5" or "glass_pane_lo_6"
-                        or "glass_pane_lo_7" or "glass_pane_lo_8" or "glass_pane_lo_9"
-                        or "glass_pane_lo_10"
-                        or "glass_pane_land_1" or "glass_pane_land_2" or "glass_pane_land_3"
-                        or "glass_pane_land_4" or "glass_pane_land_5" or "glass_pane_land_6"
-                        or "glass_pane_land_lo_1" or "glass_pane_land_lo_2" or "glass_pane_land_lo_3"
-                        or "glass_pane_land_lo_4" or "glass_pane_land_lo_5" or "glass_pane_land_lo_6"
-                        => new Color(0.16f, 0.38f, 0.5f, 0.42f),
-                    "interior_glow_l" or "interior_glow_r" or "interior_glow_mid" or "interior_glow_desk"
-                        => new Color(1f, 0.82f, 0.55f),
-                    "interior_counter" or "interior_seat_row" or "interior_desk_a" or "interior_desk_b"
-                        or "interior_table_1" or "interior_table_2"
-                        => new Color(0.45f, 0.42f, 0.38f),
-                    "interior_chair_1" or "interior_chair_2" or "interior_chair_3" or "interior_chair_4"
-                        => new Color(0.35f, 0.4f, 0.48f),
-                    "interior_figure_a" or "interior_figure_b" or "interior_figure_c"
-                        => new Color(0.25f, 0.28f, 0.32f),
-                    "entrance" or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
-                        => new Color(0.55f, 0.6f, 0.64f),
-                    "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
-                        or "window_mullion_4" or "window_mullion_5"
-                        or "window_mullion_6" or "window_mullion_7"
-                        or "window_mullion_8" or "window_mullion_9"
-                        or "window_mullion_10" or "window_mullion_11"
-                        or "window_transom" or "window_midrail" or "window_sill" or "window_header"
-                        or "landside_mullion_1" or "landside_mullion_2" or "landside_mullion_3"
-                        or "landside_mullion_4" or "landside_mullion_5"
-                        or "landside_mullion_6" or "landside_mullion_7"
+                    if (name.StartsWith("glass_pane", StringComparison.Ordinal)
+                        || name is "glass_front" or "windows" or "cabin_windows" or "landside_glass"
+                        or "door_glass" or "boarding_glass" or "service_window")
+                        return new Color(0.16f, 0.38f, 0.5f, 0.42f);
+                    if (name is "interior_glow_l" or "interior_glow_r" or "interior_glow_mid" or "interior_glow_desk")
+                        return new Color(1f, 0.82f, 0.55f);
+                    if (name is "interior_counter" or "interior_seat_row" or "interior_desk_a" or "interior_desk_b"
+                        or "interior_table_1" or "interior_table_2")
+                        return new Color(0.45f, 0.42f, 0.38f);
+                    if (name is "interior_chair_1" or "interior_chair_2" or "interior_chair_3" or "interior_chair_4")
+                        return new Color(0.35f, 0.4f, 0.48f);
+                    if (name is "interior_figure_a" or "interior_figure_b" or "interior_figure_c")
+                        return new Color(0.25f, 0.28f, 0.32f);
+                    if (name is "entrance" or "entrance_door_l" or "entrance_door_r" or "boarding_gate")
+                        return new Color(0.55f, 0.6f, 0.64f);
+                    if (name.StartsWith("window_mullion", StringComparison.Ordinal)
+                        || name.StartsWith("landside_mullion", StringComparison.Ordinal)
+                        || name is "window_transom" or "window_midrail" or "window_sill" or "window_header"
                         or "landside_transom" or "landside_sill"
                         or "entrance_transom" or "entrance_frame" or "boarding_frame"
                         or "entrance_handle_l" or "entrance_handle_r"
-                        => new Color(0.72f, 0.75f, 0.78f),
-                    "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
+                        or "service_window_frame")
+                        return new Color(0.72f, 0.75f, 0.78f);
+                    if (name.StartsWith("wall_rib", StringComparison.Ordinal)
+                        || name.StartsWith("service_rib", StringComparison.Ordinal)
+                        || name.StartsWith("girth_band", StringComparison.Ordinal)
+                        || name is "service_wing" or "service_door" or "baggage_door" or "baggage_ramp"
+                        or "service_door_frame" or "baggage_door_frame")
+                        return new Color(0.58f, 0.62f, 0.64f);
+                    if (name is "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
+                        or "buttress_r" or "plinth" or "plinth_step" or "plinth_kerb_l" or "plinth_kerb_r")
+                        return new Color(0.62f, 0.66f, 0.69f);
+                    if (name is "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
                         or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
-                        or "canopy_light_l" or "canopy_light_r" or "canopy_soffit" or "canopy_gutter"
+                        or "canopy_brace_ml" or "canopy_brace_mr"
+                        or "canopy_light_l" or "canopy_light_r" or "canopy_light_mid"
+                        or "canopy_soffit" or "canopy_gutter" or "canopy_flash"
                         or "roof_slab" or "roof_plant" or "roof_plant_b"
                         or "roof_plant_c" or "roof_parapet" or "roof_parapet_back"
-                        or "roof_vent_a" or "roof_vent_b"
+                        or "roof_vent_a" or "roof_vent_b" or "roof_flash_front" or "roof_flash_back"
                         or "fascia_front" or "fascia_back" or "soffit_front"
-                        or "landside_awning" or "signage_bar"
-                        or "signage_cap" or "hvac_duct" or "flag_pole" or "flag_cloth"
-                        or "baggage_canopy" or "downpipe_l" or "downpipe_r"
+                        or "landside_awning" or "landside_awning_brace_l" or "landside_awning_brace_r"
+                        or "signage_bar" or "signage_cap" or "signage_glyph_a" or "signage_glyph_b"
+                        or "hvac_duct" or "flag_pole" or "flag_cloth"
+                        or "baggage_canopy" or "boarding_canopy" or "downpipe_l" or "downpipe_r"
                         or "service_wing_roof" or "service_wing_fascia"
-                        or "corner_trim_l" or "corner_trim_r" => new Color(0.55f, 0.58f, 0.6f),
-                    "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
-                        or "buttress_r" or "plinth" or "plinth_step" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" or "service_door" or "baggage_door" or "baggage_ramp"
-                        or "service_door_frame" or "baggage_door_frame"
-                        or "wall_rib_end_1" or "wall_rib_end_2" or "wall_rib_end_3" or "wall_rib_end_4"
-                        or "wall_rib_land_1" or "wall_rib_land_2" or "wall_rib_land_3" or "wall_rib_land_4"
-                        or "wall_rib_land_5" or "wall_rib_land_6" or "wall_rib_land_7" or "wall_rib_land_8"
-                        or "service_rib_1" or "service_rib_2" or "service_rib_3" or "service_rib_4"
-                        or "service_rib_5" or "service_rib_6" or "service_rib_7"
-                        => new Color(0.58f, 0.62f, 0.64f),
-                    _ => new Color(0.68f, 0.72f, 0.75f)
+                        or "corner_trim_l" or "corner_trim_r" or "corner_trim_bl" or "corner_trim_br")
+                        return new Color(0.55f, 0.58f, 0.6f);
+                    return new Color(0.68f, 0.72f, 0.75f);
                 },
                 () =>
                 {
@@ -4277,7 +4266,7 @@ namespace Airside.Presentation
                 surfaceMeshNames: new[]
                 {
                     "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
-                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim"
+                    "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth"
                 });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -7588,7 +7577,7 @@ namespace Airside.Presentation
                             or "door_glass" or "window_l" or "window_r" or "window_side" or "window_side_b"
                             or "windshield" or "rear_window" or "side_window" or "side_window_b"
                             or "office_window" or "skylight_l" or "skylight_r" or "skylight_mid"
-                            or "door_peek_l" or "door_peek_r")
+                            or "door_peek_l" or "door_peek_r" or "boarding_glass" or "service_window")
                             && !n.StartsWith("glass_pane", StringComparison.Ordinal))
                             continue;
                         var renderer = child.GetComponent<Renderer>();

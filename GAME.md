@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Canvas ops panel)
-- **Branch / working tree:** `cursor/canvas-ops-panel-ddad`
-- **Do this next:** Merge Canvas OPERATIONS + daily report; Bailey Play soak full Canvas HUD
-- **In progress / half-done:** OPERATIONS log + daily report on Canvas; IMGUI ops gated
-- **Watch out for:** overlays (briefing/away/insolvencypause) still IMGUI; layout height on Mac
+- **Last updated:** 2026-09-07 by Cursor (hangar bay light)
+- **Branch / working tree:** `cursor/hangar-bay-light-ddad`
+- **Do this next:** Merge hangar bay light; Bailey Play soak Canvas HUD #76–#77 + bay light
+- **In progress / half-done:** warm point light inside hangar tied to door open + night glow
+- **Watch out for:** light intensity may need Mac soak at dusk/night
 - **Open questions for Bailey:** none
-- **Visual assets:** Canvas owns left status + offer + ops + toast
+- **Visual assets:** Canvas HUD on main; hangar bay light on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -124,5 +124,5 @@ supplementary check, not a replacement for a real Unity run before merging.
    let it import StreamingAssets / new glTF kits, then Play.
 2. Confirm full Canvas HUD: left status (hire/research), route offer, OPERATIONS log,
    daily report, ops toast — plus birds / hangar door / ambient audio.
-3. Next code track: lighting/tonemap spike (0025 item 5), or hangar interior glow with
-   door motion. No new economy systems; no Companion/CloudKit.
+3. Next code track: lighting/tonemap spike (0025 item 5), or richer service animation.
+   No new economy systems; no Companion/CloudKit.

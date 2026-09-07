@@ -35,6 +35,9 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 | `mdl_hangar_bay_props_v01` | `scripts/generate-hangar-bay-props-prefab.py` |
 | `mdl_arff_truck_v01` | `scripts/generate-arff-truck-prefab.py` |
 | `mdl_parked_car_v01` | `scripts/generate-parked-car-prefab.py` |
+| `mdl_luggage_trolley_v01` | `scripts/generate-landside-furniture-prefabs.py` |
+| `mdl_landside_bench_v01` | `scripts/generate-landside-furniture-prefabs.py` |
+| `mdl_coast_boat_v01` | `scripts/generate-landside-furniture-prefabs.py` |
 
 All use built-in cube/cylinder meshes + `AirsideRuntimeMaterialBinder`. Bailey may
 overwrite any with an authored FBX prefab of the same name.

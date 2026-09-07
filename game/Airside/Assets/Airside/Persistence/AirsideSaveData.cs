@@ -32,6 +32,9 @@ namespace Airside.Persistence
         /// <summary>Bring an older-schema save up to the current schema. Safe to call on any save.</summary>
         public void Migrate()
         {
+            // Reject unsupported input before migration can erase its original version.
+            if (schemaVersion < MinimumSupportedSchemaVersion || schemaVersion > CurrentSchemaVersion)
+                throw new InvalidOperationException($"Unsupported save schema {schemaVersion}.");
             if (schemaVersion < 2)
             {
                 if (string.IsNullOrWhiteSpace(locationId))

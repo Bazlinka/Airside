@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Save/replay and insolvency bug audit.** Preserve player order for same-second commands
+  (including legacy IDs), assign unique IDs to new commands, retain the valid backup after
+  recovery writes, reject unsupported schemas before migration, and stop traffic immediately
+  when a midnight close declares insolvency. No schema fields changed; schema-1 migration stays
+  supported. Unity 6000.3.23f1 EditMode: 124/124; the pre-fix run reproduced six failing cases
+  across five defects. Universal arm64/x86_64 Mac build passed. See `docs/testing/BUG_AUDIT_2026-09-07.md`.
+
 - **Batch F1 AIR-001 v05 Mac bake.** Unity ModelImporter meshes now in Resources prefabs for
   `mdl_regional_turboprop_01_v05` plus the authored FBX kits from the same bake menu; Bailey
   accepted the AIR-001 v05 result. No standalone `.mat` files (materials stay FBX sub-assets).

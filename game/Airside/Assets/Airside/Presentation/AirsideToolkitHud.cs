@@ -218,7 +218,7 @@ namespace Airside.Presentation
             _saveChip.Add(_saveIcon);
             var saveText = new Label("Saved") { name = "Save text" };
             saveText.pickingMode = PickingMode.Ignore;
-            saveText.style.color = AirsideTheme.Cloud;
+            saveText.style.color = AirsideTheme.RunwayInk;
             saveText.style.fontSize = 13;
             saveText.style.unityFontStyleAndWeight = FontStyle.Bold;
             _saveChip.Add(saveText);
@@ -1110,12 +1110,18 @@ namespace Airside.Presentation
             };
             label.pickingMode = PickingMode.Ignore;
             label.style.position = Position.Absolute;
-            label.style.backgroundColor = new Color(
-                AirsideTheme.RunwayInk.r,
-                AirsideTheme.RunwayInk.g,
-                AirsideTheme.RunwayInk.b,
-                0.94f);
-            label.style.color = AirsideTheme.Cloud;
+            // UI-PNL-001 light toast chrome with Runway Ink type (secondary product surface).
+            var fill = AirsideTheme.Cloud;
+            fill.a = 0.94f;
+            label.style.backgroundColor = fill;
+            var panelTex = AirsideTheme.PanelBackgroundLight;
+            if (panelTex != null)
+            {
+                label.style.backgroundImage = new StyleBackground(panelTex);
+                label.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+            }
+
+            label.style.color = AirsideTheme.RunwayInk;
             label.style.fontSize = 14;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
             label.style.paddingLeft = 16;

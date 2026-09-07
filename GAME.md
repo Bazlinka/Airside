@@ -1,15 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 10)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 11)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - VEG kits thin far tree densify + scrub carpet; coast scrub via PlaceShrub (no greybox cubes)
-  - UI-PNL-001 light chrome on economy strip / speed chip; Toolkit hides Canvas when active
-  - Cloudy softens fog + cloud umbra; horizon/sun/moon via SetRendererColor
-  - Tip 9: BirdOrbitHz restored; WLD paddock densify gate; VEG coast rocks; scaled streetlights
+  - Cloudy/Overcast soft sun gloom; contact shadows via SetRendererColor
+  - Light toast/save chrome (UI-PNL-001); parked GA capped at 3 when prefab present
+  - Tip 10: VEG densify thin; Canvas hide when Toolkit; Cloudy fog/umbra
+  - Tip 9: BirdOrbitHz; WLD paddock gate; coast rocks; scaled streetlights
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

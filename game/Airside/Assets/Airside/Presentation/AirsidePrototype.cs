@@ -3575,6 +3575,8 @@ namespace Airside.Presentation
             var weatherGloom = weather == WeatherKind.Storm ? 0.55f
                 : weather == WeatherKind.Fog ? 0.42f
                 : weather == WeatherKind.Rain ? 0.28f
+                : weather == WeatherKind.Cloudy ? 0.16f
+                : weather == WeatherKind.Overcast ? 0.22f
                 : 0f;
             if (weatherGloom > 0f)
                 _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
@@ -6933,11 +6935,11 @@ namespace Airside.Presentation
             shadow.transform.localScale = scale;
             var color = new Color(0.04f, 0.05f, 0.07f, alpha);
             var material = AirsideMaterialLibrary.Create(color, AirsideMaterialLibrary.SurfaceKind.Default);
-            if (material.HasProperty("_BaseColor"))
-                material.SetColor("_BaseColor", color);
-            shadow.GetComponent<Renderer>().material = material;
-            shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            shadow.GetComponent<Renderer>().receiveShadows = false;
+            var renderer = shadow.GetComponent<Renderer>();
+            renderer.material = material;
+            SetRendererColor(renderer, color);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         private void CollectHangarDoorPanels()
@@ -9553,7 +9555,10 @@ namespace Airside.Presentation
                 (x: -40.5f, z: 11.5f, yaw: 85f),
                 (x: -27f, z: 11f, yaw: 110f)
             };
-            for (var i = 0; i < spots.Length; i++)
+            // Prefab GA reads heavier than greybox — three airframes keep the bay calm.
+            var hasGaPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_ga_v01");
+            var count = hasGaPrefab ? 3 : spots.Length;
+            for (var i = 0; i < count; i++)
             {
                 var spot = spots[i];
                 Transform root;

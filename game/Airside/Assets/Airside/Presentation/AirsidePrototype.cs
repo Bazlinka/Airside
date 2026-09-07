@@ -346,7 +346,10 @@ namespace Airside.Presentation
                     onContinueAway: () => { _showAwaySummary = false; },
                     onTogglePause: () => { _paused = !_paused; },
                     onSpeed1: () => { _speed = 1; },
-                    onSpeed4: () => { _speed = 4; });
+                    onSpeed4: () => { _speed = 4; },
+                    onFollow: () => _cameraController?.CycleOrStartFollow(),
+                    onOverview: () => _cameraController?.ReturnToOverview(),
+                    onToggleMute: () => { _audioMuted = !_audioMuted; });
             }
             _canvasHudActive = _canvasHud.IsActive;
         }
@@ -881,7 +884,13 @@ namespace Airside.Presentation
                 AircraftPhase? phase = _simulation.Flights.Count > 0
                     ? _simulation.Flights[0].Operation.Phase
                     : null;
-                _toolkitHud.SyncChromeIcons(phase, _simulation.CurrentWeather, _speed, _paused);
+                _toolkitHud.SyncChromeIcons(
+                    phase,
+                    _simulation.CurrentWeather,
+                    _speed,
+                    _paused,
+                    _audioMuted,
+                    _cameraController != null && _cameraController.IsFollowing);
                 if (atStand && _simulation.ActiveTurnaround != null)
                 {
                     var tasks = _simulation.ActiveTurnaround.Tasks(_clock.Now);
@@ -1403,22 +1412,16 @@ namespace Airside.Presentation
 
         private static void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
-            // Presentation-only: RPM follows phase (Batch D ANM-AIR-001).
-            if (phase == AircraftPhase.AtStand || phase == AircraftPhase.Departed)
+            // Presentation-only: RPM follows phase (Batch F4 ANM-AIR-001 via AirsideReusableMotion).
+            if (!AirsideReusableMotion.PropellersSpinning(phase))
             {
                 ApplyPropBlur(aircraft, highRpm: false);
                 return;
             }
 
-            var rpm = phase switch
-            {
-                AircraftPhase.Takeoff => 1400f,
-                AircraftPhase.Approach or AircraftPhase.Landing => 1100f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 420f,
-                _ => 720f
-            };
+            var rpm = AirsideReusableMotion.PropRpmForPhase(phase);
             var degrees = Time.unscaledDeltaTime * rpm;
-            var highRpm = rpm >= 1000f;
+            var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -2507,6 +2510,14 @@ namespace Airside.Presentation
                 }
             }
 
+            // Batch F4 VFX-004 — reusable wet accent kit (presentation only).
+            if (ArtPresentationLoader.TryInstantiatePrefab("vfx_wet_surface_response_v01", out var wetKit))
+            {
+                wetKit.SetParent(root, false);
+                wetKit.localPosition = new Vector3(20f, 0f, 16f);
+                wetKit.name = "Wet surface kit";
+            }
+
             root.gameObject.SetActive(false);
         }
 
@@ -2565,6 +2576,13 @@ namespace Airside.Presentation
 
         private static Transform BuildTouchdownSmoke()
         {
+            if (ArtPresentationLoader.TryInstantiatePrefab("vfx_touchdown_smoke_v01", out var kit))
+            {
+                kit.name = "Touchdown smoke";
+                kit.gameObject.SetActive(false);
+                return kit;
+            }
+
             var root = new GameObject("Touchdown smoke").transform;
             for (var i = 0; i < 4; i++)
             {

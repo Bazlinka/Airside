@@ -56,7 +56,7 @@ new style authority; the individual runtime icons are the prepared outputs.
 - Batch F2 turnaround vehicle and character replacements.
 - Batch F3 vegetation, fence/gate, terminal forecourt and non-operational context.
 - Batch D's actual `.anim`, controller and VFX prefab deliverables, grouped into
-  Batch F4 with UI-ICO-005 system-control icons.
+  Batch F4 with UI-ICO-005 system-control icons — **Integrated** (Toolkit chrome).
 - Packaged Mac camera-matrix verification of each replacement before the next
   Batch F slice begins.
 

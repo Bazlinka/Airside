@@ -205,6 +205,9 @@ namespace Airside.Presentation
             _ => Icon("operation", "stand")
         };
 
+        /// <summary>Batch F4 UI-ICO-005 system-control icon, or null.</summary>
+        public static Texture2D SystemIcon(string name) => Icon("system", name);
+
         /// <summary>Maps a turnaround task name to a service icon when available.</summary>
         public static Texture2D ServiceIconForTask(string taskName)
         {

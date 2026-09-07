@@ -87,10 +87,10 @@ paths or stand positions.
 
 | ID | Exact path | Required design | Priority |
 |---|---|---|---|
-| ANM-AIR-001…004 | Existing Batch D paths | Promote current phase-driven propeller, gear, door and light behaviour into reusable authored clips/controller without changing timing authority | P2 |
-| ANM-VEH-001…004 | Existing Batch D paths | Reusable wheel/door/hose/cart clips mapped to task progress and abort-safe | P2 |
-| VFX-001…004 | Existing Batch D paths | Prefabise current restrained smoke, heat, rain and wet response with performance tiers | P2 |
-| UI-ICO-005 | `Art/UI/Icons/ui_system_{play,pause,speed,follow,overview,audio_on,audio_off,save}_v01.png` | Eight hand-cleaned 128 px transparent line icons; same 2 px visual weight and safe area as Batch E; legible at 24 px | P2 |
+| ANM-AIR-001…004 | Existing Batch D paths | Promote current phase-driven propeller, gear, door and light behaviour into reusable authored clips/controller without changing timing authority | P2 — **Integrated** (`AirsideReusableMotion`) |
+| ANM-VEH-001…004 | Existing Batch D paths | Reusable wheel/door/hose/cart clips mapped to task progress and abort-safe | P2 — **Rates extracted**; Unity `.anim` optional later |
+| VFX-001…004 | Existing Batch D paths | Prefabise current restrained smoke, heat, rain and wet response with performance tiers | P2 — **Integrated** (Art/VFX + Resources) |
+| UI-ICO-005 | `Art/UI/Icons/ui_system_{play,pause,speed,follow,overview,audio_on,audio_off,save}_v01.png` | Eight hand-cleaned 128 px transparent line icons; same 2 px visual weight and safe area as Batch E; legible at 24 px | P2 — **Integrated** (Toolkit chrome) |
 
 Panel fills, buttons, focus states, progress tracks and status chips should remain
 UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
@@ -147,6 +147,6 @@ UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
 
 ## Cursor handoff: first task
 
-Batch F1–F2 are on `main`. Batch F3 (setting modules) is on
-`cursor/batch-f3-setting-modules-a8ff`. Next tip after accept is **Batch F4**
-(motion/VFX/UI finish) on a **new** branch.
+Batch F1–F3 are on `main` / PR #137. Next tip after F4 accept is **post-F
+visual polish** (lighting soak, presentation bugs, art fidelity) — not economy
+or Companion.

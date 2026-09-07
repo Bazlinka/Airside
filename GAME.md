@@ -1,16 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Batch F3 setting modules)
-- **Branch:** `cursor/batch-f3-setting-modules-a8ff`
-- **Do next:** Bailey merge F3 when ready (StreamingAssets glTF path; no Mac bake required).
-  Then Batch F4 (motion/VFX/UI system icons) on a **new** branch.
+- **Last updated:** 2026-09-07 (Cursor — Batch F4 motion/VFX/UI)
+- **Branch:** `cursor/batch-f4-motion-vfx-ui-a8ff` (stacks on F3 tip)
+- **Do next:** Bailey merge F3 (#137) then F4 when ready (StreamingAssets glTF /
+  PNG path; no Mac bake required). Then keep pushing first-playable visual polish
+  (lighting, presentation bugs, art fidelity) — standing goal.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PlaceTree / PlaceShrub prefer VEG-001/002; fence prefers PRP-002 modular bays; landside canopy prefers PRP-003; hills get WLD-004 accents
+  - F4 Toolkit chrome uses UI-ICO-005; text fallbacks remain if icons missing
+  - Touchdown smoke prefers `vfx_touchdown_smoke_v01`; dense rain stays procedural
+  - `AirsideReusableMotion` owns prop RPM table — do not re-inline rates
   - Operational runway/taxi/stand geometry unchanged
-  - Pipeline-proof Resources prefabs yield to StreamingAssets glTF
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge when happy; continue F4 next
+- **Open question for Bailey:** none — merge F3/F4 when happy; continue visual polish
 
 ---
 
@@ -90,10 +92,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
 - Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
   prefer authored kits with procedural fallbacks; operational geometry unchanged.
+- Batch F4: UI-ICO-005 system icons on Toolkit chrome; VFX-001…004 Resources/Art
+  prefabs; `AirsideReusableMotion` for ANM rates.
 
 ## Next work
 
-1. Merge **Batch F3** (this PR) when ready.
-2. **Batch F4** (reusable motion/VFX + UI system icons) on a new branch.
+1. Merge **Batch F3** (#137) then **Batch F4** when ready.
+2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
+   art fidelity) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.
 4. No new economy systems; no Companion/CloudKit.

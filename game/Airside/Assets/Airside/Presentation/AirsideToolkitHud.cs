@@ -111,6 +111,14 @@ namespace Airside.Presentation
         private Action _onTogglePause;
         private Action _onSpeed1;
         private Action _onSpeed4;
+        private Action _onFollow;
+        private Action _onOverview;
+        private Action _onToggleMute;
+
+        private Button _followButton;
+        private Button _overviewButton;
+        private Button _muteButton;
+        private VisualElement _saveIcon;
 
         public bool IsActive => _built && _document != null && _document.rootVisualElement != null;
 
@@ -136,7 +144,10 @@ namespace Airside.Presentation
             Action onContinueAway = null,
             Action onTogglePause = null,
             Action onSpeed1 = null,
-            Action onSpeed4 = null)
+            Action onSpeed4 = null,
+            Action onFollow = null,
+            Action onOverview = null,
+            Action onToggleMute = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -151,6 +162,9 @@ namespace Airside.Presentation
             _onTogglePause = onTogglePause;
             _onSpeed1 = onSpeed1;
             _onSpeed4 = onSpeed4;
+            _onFollow = onFollow;
+            _onOverview = onOverview;
+            _onToggleMute = onToggleMute;
         }
 
         private void Build()
@@ -194,10 +208,21 @@ namespace Airside.Presentation
             _saveChip.style.right = 24;
             _saveChip.style.alignSelf = Align.FlexEnd;
             _saveChip.style.fontSize = 13;
-            _saveChip.style.minWidth = 72;
+            _saveChip.style.minWidth = 88;
             _saveChip.style.borderLeftWidth = 3;
             _saveChip.style.borderLeftColor = AirsideTheme.CoastalBlue;
-            _saveChip.text = "Saved";
+            _saveChip.style.flexDirection = FlexDirection.Row;
+            _saveChip.style.alignItems = Align.Center;
+            _saveIcon = MakeIconSlot("Save icon", 16);
+            _saveIcon.style.marginRight = 6;
+            _saveChip.Add(_saveIcon);
+            var saveText = new Label("Saved") { name = "Save text" };
+            saveText.pickingMode = PickingMode.Ignore;
+            saveText.style.color = AirsideTheme.Cloud;
+            saveText.style.fontSize = 13;
+            saveText.style.unityFontStyleAndWeight = FontStyle.Bold;
+            _saveChip.Add(saveText);
+            _saveChip.text = string.Empty;
             _root.Add(_saveChip);
 
             SyncToast(string.Empty, false);
@@ -428,8 +453,8 @@ namespace Airside.Presentation
 
         private void BuildSpeedChip()
         {
-            // REF-004 bottom-centre Pause · 1× · 4× controls (0025 item 6).
-            _speedChip = MakePanel("Speed chip", 280f);
+            // REF-004 + Batch F4 UI-ICO-005 — pause/speed/camera/audio chrome.
+            _speedChip = MakePanel("Speed chip", 420f);
             _speedChip.style.bottom = 22;
             _speedChip.style.left = Length.Percent(50);
             _speedChip.style.translate = new Translate(Length.Percent(-50), 0);
@@ -445,19 +470,34 @@ namespace Airside.Presentation
             _speedChip.style.borderTopColor = new Color(
                 AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
 
-            _pauseButton = MakeButton("Pause", AirsideTheme.Tarmac, 72f);
+            _pauseButton = MakeIconChromeButton("Pause", AirsideTheme.Tarmac, 56f);
             _pauseButton.clicked += () => _onTogglePause?.Invoke();
             _speedChip.Add(_pauseButton);
 
-            _speed1Button = MakeButton("1×", AirsideTheme.CoastalBlue, 56f);
-            _speed1Button.style.marginLeft = 8;
+            _speed1Button = MakeIconChromeButton("1×", AirsideTheme.CoastalBlue, 48f);
+            _speed1Button.style.marginLeft = 6;
             _speed1Button.clicked += () => _onSpeed1?.Invoke();
             _speedChip.Add(_speed1Button);
 
-            _speed4Button = MakeButton("4×", AirsideTheme.CoastalBlue, 56f);
-            _speed4Button.style.marginLeft = 8;
+            _speed4Button = MakeIconChromeButton("4×", AirsideTheme.CoastalBlue, 48f);
+            _speed4Button.style.marginLeft = 6;
             _speed4Button.clicked += () => _onSpeed4?.Invoke();
             _speedChip.Add(_speed4Button);
+
+            _followButton = MakeIconChromeButton("Follow", AirsideTheme.Tarmac, 56f);
+            _followButton.style.marginLeft = 10;
+            _followButton.clicked += () => _onFollow?.Invoke();
+            _speedChip.Add(_followButton);
+
+            _overviewButton = MakeIconChromeButton("Overview", AirsideTheme.Tarmac, 64f);
+            _overviewButton.style.marginLeft = 6;
+            _overviewButton.clicked += () => _onOverview?.Invoke();
+            _speedChip.Add(_overviewButton);
+
+            _muteButton = MakeIconChromeButton("Audio", AirsideTheme.Tarmac, 52f);
+            _muteButton.style.marginLeft = 6;
+            _muteButton.clicked += () => _onToggleMute?.Invoke();
+            _speedChip.Add(_muteButton);
 
             _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal);
             _speedText.style.marginLeft = 10;
@@ -1009,6 +1049,43 @@ namespace Airside.Presentation
             return button;
         }
 
+        /// <summary>
+        /// Chrome control that can show a Batch F4 system icon above a short label.
+        /// Missing icons keep the text label so the HUD stays usable.
+        /// </summary>
+        private static Button MakeIconChromeButton(string label, Color background, float width)
+        {
+            var button = MakeButton(label, background, width);
+            button.style.height = 36;
+            button.style.flexDirection = FlexDirection.Column;
+            button.style.alignItems = Align.Center;
+            button.style.justifyContent = Justify.Center;
+            button.style.paddingTop = 2;
+            button.style.paddingBottom = 2;
+            button.style.fontSize = 10;
+            var icon = MakeIconSlot($"{label} icon", 16);
+            icon.name = "chrome-icon";
+            icon.style.marginBottom = 1;
+            button.Insert(0, icon);
+            return button;
+        }
+
+        private static void ApplyChromeButtonIcon(Button button, Texture2D texture, string fallbackText)
+        {
+            if (button == null)
+                return;
+            var icon = button.Q<VisualElement>("chrome-icon");
+            ApplyIcon(icon, texture);
+            // Keep a short caption under the icon; hide text only when the icon is present
+            // and the caption would crowd a narrow chip.
+            button.text = texture != null ? string.Empty : fallbackText;
+            if (texture != null && icon != null)
+            {
+                // Icon-only chrome reads cleaner at 24 px; tooltip via tooltip attribute.
+                button.tooltip = fallbackText;
+            }
+        }
+
         private static Label MakeToastLabel(string name)
         {
             var label = new Label
@@ -1328,9 +1405,15 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Batch E icons on the Toolkit path (IMGUI already had these; Toolkit did not).
+        /// Batch E panel icons + Batch F4 UI-ICO-005 system chrome.
         /// </summary>
-        public void SyncChromeIcons(AircraftPhase? phase, WeatherKind weather, int speed, bool paused)
+        public void SyncChromeIcons(
+            AircraftPhase? phase,
+            WeatherKind weather,
+            int speed,
+            bool paused,
+            bool audioMuted = false,
+            bool following = false)
         {
             ApplyIcon(_phaseIcon, phase.HasValue ? AirsideTheme.OperationIcon(phase.Value) : null);
             ApplyIcon(_weatherIcon, AirsideTheme.WeatherIcon(weather));
@@ -1339,13 +1422,46 @@ namespace Airside.Presentation
             ApplyIcon(_repIcon, AirsideTheme.Icon("economy", "reputation"));
             ApplyIcon(_researchIcon, AirsideTheme.Icon("economy", "research"));
             ApplyIcon(_routeIcon, AirsideTheme.Icon("economy", "route"));
+            ApplyIcon(_saveIcon, AirsideTheme.SystemIcon("save"));
+
             if (_speedText != null)
-                _speedText.text = paused ? "PAUSED" : "Tab cycles";
+                _speedText.text = paused ? "PAUSED" : (following ? "Follow" : "Tab cycles");
+
             if (_pauseButton != null)
             {
-                _pauseButton.text = paused ? "Resume" : "Pause";
+                var pauseIcon = paused
+                    ? AirsideTheme.SystemIcon("play")
+                    : AirsideTheme.SystemIcon("pause");
+                ApplyChromeButtonIcon(_pauseButton, pauseIcon, paused ? "Resume" : "Pause");
                 _pauseButton.style.backgroundColor = paused ? AirsideTheme.CoastalBlue : AirsideTheme.Tarmac;
                 _pauseButton.style.opacity = paused ? 1f : 0.9f;
+            }
+
+            ApplyChromeButtonIcon(_speed1Button, AirsideTheme.SystemIcon("speed"), "1×");
+            ApplyChromeButtonIcon(_speed4Button, AirsideTheme.SystemIcon("speed"), "4×");
+            // Keep numeric captions on speed even when icons load — 1× vs 4× must stay distinct.
+            if (_speed1Button != null)
+                _speed1Button.text = "1×";
+            if (_speed4Button != null)
+                _speed4Button.text = "4×";
+
+            ApplyChromeButtonIcon(_followButton, AirsideTheme.SystemIcon("follow"), "Follow");
+            ApplyChromeButtonIcon(_overviewButton, AirsideTheme.SystemIcon("overview"), "Overview");
+            ApplyChromeButtonIcon(
+                _muteButton,
+                audioMuted ? AirsideTheme.SystemIcon("audio_off") : AirsideTheme.SystemIcon("audio_on"),
+                audioMuted ? "Unmute" : "Mute");
+
+            if (_followButton != null)
+            {
+                _followButton.style.backgroundColor = following ? AirsideTheme.CoastalBlue : AirsideTheme.Tarmac;
+                _followButton.style.opacity = following ? 1f : 0.9f;
+            }
+
+            if (_muteButton != null)
+            {
+                _muteButton.style.backgroundColor = audioMuted ? AirsideTheme.SignalRed : AirsideTheme.Tarmac;
+                _muteButton.style.opacity = audioMuted ? 1f : 0.9f;
             }
 
             HighlightSpeedButton(_speed1Button, !paused && speed <= 1);

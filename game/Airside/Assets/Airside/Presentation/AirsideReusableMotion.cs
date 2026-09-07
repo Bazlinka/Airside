@@ -1,0 +1,60 @@
+using Airside.Simulation;
+using UnityEngine;
+
+namespace Airside.Presentation
+{
+    /// <summary>
+    /// Batch F4 ANM-AIR / ANM-VEH — reusable phase→motion rates for presentation.
+    /// Simulation timing remains authoritative; these values only drive visuals
+    /// (propeller RPM, gear bias, door open, light pulse). Extracted from the
+    /// prior inline Batch D behaviour so clips/controllers can map to the same
+    /// numbers without changing outcomes.
+    /// </summary>
+    public static class AirsideReusableMotion
+    {
+        // ANM-AIR-001 propeller
+        public const float PropRpmTakeoff = 1400f;
+        public const float PropRpmApproach = 1100f;
+        public const float PropRpmTaxi = 420f;
+        public const float PropRpmCruise = 720f;
+        public const float PropHighRpmThreshold = 1000f;
+
+        // ANM-AIR-002 gear (visual bias only)
+        public const float GearDeployed = 1f;
+        public const float GearRetracted = 0f;
+
+        // ANM-AIR-003 cabin/cargo door
+        public const float DoorOpenAtStand = 1f;
+        public const float DoorClosed = 0f;
+
+        // ANM-AIR-004 nav/beacon pulse
+        public const float BeaconHz = 1.4f;
+        public const float NavSteady = 1f;
+
+        // ANM-VEH wheel spin scale (presentation)
+        public const float VehicleWheelRpmTaxi = 180f;
+        public const float VehicleWheelRpmService = 90f;
+
+        public static float PropRpmForPhase(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Takeoff => PropRpmTakeoff,
+            AircraftPhase.Approach or AircraftPhase.Landing => PropRpmApproach,
+            AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => PropRpmTaxi,
+            AircraftPhase.AtStand or AircraftPhase.Departed => 0f,
+            _ => PropRpmCruise
+        };
+
+        public static bool PropellersSpinning(AircraftPhase phase) =>
+            phase is not (AircraftPhase.AtStand or AircraftPhase.Departed);
+
+        public static float GearBias(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Takeoff or AircraftPhase.Approach => GearRetracted,
+            AircraftPhase.Landing => Mathf.Lerp(GearRetracted, GearDeployed, 0.65f),
+            _ => GearDeployed
+        };
+
+        public static float CabinDoorBias(AircraftPhase phase) =>
+            phase == AircraftPhase.AtStand ? DoorOpenAtStand : DoorClosed;
+    }
+}

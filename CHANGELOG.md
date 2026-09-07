@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Landing skids + window PointLights + wet taxi spray (0025 items 5+7).** Rubber
+  skid streaks fade after touchdown; denser smoke puffs; terminal/hangar/ops window
+  PointLight spill at dusk; amber fuel-farm lamp; mist spray under gear when wet.
+  Presentation only.
+
 - **Parked GA prefab + denser apron life (0025 items 1+7).** Resources prefab
   `mdl_parked_ga_v01` (three parked GA on the west apron); more staff/passenger
   silhouettes with walker shuffle, marshaller arm wave and stride. Presentation only.

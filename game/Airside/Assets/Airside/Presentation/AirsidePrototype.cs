@@ -28,6 +28,10 @@ namespace Airside.Presentation
         private ReflectionProbe _apronProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
+        private Transform _skidMarkRoot;
+        private Transform _taxiSprayRoot;
+        private Light[] _windowLights;
+        private Light _fuelFarmLight;
         private Transform _horizonDome;
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
@@ -115,6 +119,9 @@ namespace Airside.Presentation
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
             CollectNightGlowWindows();
+            var fuelLamp = GameObject.Find("Fuel farm light");
+            if (fuelLamp != null)
+                _fuelFarmLight = fuelLamp.GetComponent<Light>();
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
             _thresholdLights = BuildThresholdApproachLights();
@@ -123,6 +130,8 @@ namespace Airside.Presentation
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
+            _skidMarkRoot = BuildSkidMarkRoot();
+            _taxiSprayRoot = BuildTaxiSprayRoot();
             _touchdownClip = CreateTouchdownClip();
             _touchdownAudio = gameObject.AddComponent<AudioSource>();
             _touchdownAudio.playOnAwake = false;
@@ -1640,6 +1649,54 @@ namespace Airside.Presentation
             }
 
             UpdateWetPuddles(wetness, storm);
+            UpdateTaxiSpray(wetness, raining || storm);
+        }
+
+        private void UpdateTaxiSpray(float wetness, bool raining)
+        {
+            if (_taxiSprayRoot == null)
+                return;
+
+            var anyTaxi = false;
+            foreach (var flight in _simulation.Flights)
+            {
+                if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
+                    or AircraftPhase.Landing or AircraftPhase.Takeoff)
+                {
+                    anyTaxi = true;
+                    break;
+                }
+            }
+
+            var show = wetness > 0.12f && anyTaxi;
+            _taxiSprayRoot.gameObject.SetActive(show);
+            if (!show)
+                return;
+
+            // Follow the lead commercial gear so wet taxi throws mist.
+            Transform lead = null;
+            if (_commercialAircraft != null && _commercialAircraft.Length > 0)
+                lead = _commercialAircraft[0];
+            if (lead == null)
+                return;
+
+            _taxiSprayRoot.position = lead.position + Vector3.up * 0.2f;
+            _taxiSprayRoot.rotation = lead.rotation;
+            for (var i = 0; i < _taxiSprayRoot.childCount; i++)
+            {
+                var puff = _taxiSprayRoot.GetChild(i);
+                var pulse = 0.7f + 0.3f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * (6f + i) + i));
+                var side = i % 2 == 0 ? -0.65f : 0.65f;
+                puff.localPosition = new Vector3(side, 0.08f + pulse * 0.12f, -0.4f - i * 0.15f);
+                puff.localScale = new Vector3(0.55f, 0.25f, 0.55f) * pulse * (raining ? 1.25f : 1f);
+                var renderer = puff.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    var color = renderer.material.color;
+                    color.a = (0.18f + wetness * 0.28f) * pulse;
+                    renderer.material.color = color;
+                }
+            }
         }
 
         private void UpdateWetPuddles(float wetness, bool storm)
@@ -1681,8 +1738,17 @@ namespace Airside.Presentation
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
                     _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
                     _touchdownSmoke.localScale = Vector3.one;
+                    for (var p = 0; p < _touchdownSmoke.childCount; p++)
+                    {
+                        var puff = _touchdownSmoke.GetChild(p);
+                        var side = p % 2 == 0 ? -0.75f : 0.75f;
+                        var aft = -0.15f * (p / 2);
+                        puff.localPosition = new Vector3(side, 0.12f, aft);
+                    }
+
                     _touchdownSmoke.gameObject.SetActive(true);
-                    _touchdownSmokeRemaining = 0.95f;
+                    _touchdownSmokeRemaining = 1.35f;
+                    SpawnSkidMarks(_commercialAircraft[index]);
                     if (_touchdownAudio != null && _touchdownClip != null && !_audioMuted)
                     {
                         _touchdownAudio.transform.position = _touchdownSmoke.position;
@@ -1699,22 +1765,83 @@ namespace Airside.Presentation
             if (_touchdownSmokeRemaining <= 0f)
             {
                 _touchdownSmoke.gameObject.SetActive(false);
-                return;
+            }
+            else
+            {
+                _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
+                var t = Mathf.Clamp01(_touchdownSmokeRemaining / 1.35f);
+                for (var i = 0; i < _touchdownSmoke.childCount; i++)
+                {
+                    var puff = _touchdownSmoke.GetChild(i);
+                    puff.localScale = Vector3.Lerp(new Vector3(2.8f, 0.25f, 2.8f), new Vector3(1.0f, 0.35f, 1.0f), t);
+                    puff.localPosition += Vector3.up * (Time.unscaledDeltaTime * 0.35f);
+                    var renderer = puff.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        var color = renderer.material.color;
+                        color.a = t * 0.5f;
+                        renderer.material.color = color;
+                    }
+                }
             }
 
-            _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
-            var t = Mathf.Clamp01(_touchdownSmokeRemaining / 0.95f);
-            for (var i = 0; i < _touchdownSmoke.childCount; i++)
+            UpdateSkidMarks();
+        }
+
+        private void SpawnSkidMarks(Transform aircraft)
+        {
+            if (_skidMarkRoot == null || aircraft == null)
+                return;
+
+            // Two dark rubber streaks under main gear — fade over ~22s (presentation only).
+            for (var i = 0; i < 2; i++)
             {
-                var puff = _touchdownSmoke.GetChild(i);
-                puff.localScale = Vector3.Lerp(new Vector3(2.2f, 0.2f, 2.2f), new Vector3(1.0f, 0.35f, 1.0f), t);
-                var renderer = puff.GetComponent<Renderer>();
-                if (renderer != null)
+                var mark = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                mark.name = "Skid mark";
+                Object.Destroy(mark.GetComponent<Collider>());
+                mark.transform.SetParent(_skidMarkRoot, false);
+                var side = i == 0 ? -0.75f : 0.75f;
+                mark.transform.position = aircraft.position
+                    + aircraft.right * side
+                    + aircraft.forward * -0.4f
+                    + Vector3.up * 0.04f;
+                var fwd = Vector3.ProjectOnPlane(aircraft.forward, Vector3.up);
+                if (fwd.sqrMagnitude < 0.0001f)
+                    fwd = Vector3.forward;
+                mark.transform.rotation = Quaternion.LookRotation(fwd.normalized, Vector3.up);
+                mark.transform.localScale = new Vector3(0.22f, 0.02f, 3.6f);
+                mark.GetComponent<Renderer>().material = CreateMaterial(new Color(0.12f, 0.11f, 0.1f, 0.7f));
+            }
+        }
+
+        private void UpdateSkidMarks()
+        {
+            if (_skidMarkRoot == null)
+                return;
+
+            for (var i = _skidMarkRoot.childCount - 1; i >= 0; i--)
+            {
+                var mark = _skidMarkRoot.GetChild(i);
+                var renderer = mark.GetComponent<Renderer>();
+                if (renderer == null)
                 {
-                    var color = renderer.material.color;
-                    color.a = t * 0.45f;
-                    renderer.material.color = color;
+                    Object.Destroy(mark.gameObject);
+                    continue;
                 }
+
+                var color = renderer.material.color;
+                color.a -= Time.unscaledDeltaTime / 22f;
+                if (color.a <= 0.02f)
+                {
+                    Object.Destroy(mark.gameObject);
+                    continue;
+                }
+
+                renderer.material.color = color;
+                // Stretch slightly as the mark ages so it reads as a rollout streak.
+                var scale = mark.localScale;
+                scale.z = Mathf.MoveTowards(scale.z, 5.2f, Time.unscaledDeltaTime * 0.08f);
+                mark.localScale = scale;
             }
         }
 
@@ -1864,17 +1991,41 @@ namespace Airside.Presentation
         private static Transform BuildTouchdownSmoke()
         {
             var root = new GameObject("Touchdown smoke").transform;
-            for (var i = 0; i < 2; i++)
+            for (var i = 0; i < 4; i++)
             {
                 var smoke = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                smoke.name = i == 0 ? "Smoke L" : "Smoke R";
+                smoke.name = i % 2 == 0 ? "Smoke L" : "Smoke R";
                 smoke.transform.SetParent(root, false);
-                smoke.transform.localPosition = new Vector3(i == 0 ? -0.7f : 0.7f, 0.15f, 0f);
-                smoke.transform.localScale = new Vector3(1.0f, 0.35f, 1.0f);
+                var side = i % 2 == 0 ? -0.75f : 0.75f;
+                smoke.transform.localPosition = new Vector3(side, 0.12f, -0.15f * (i / 2));
+                smoke.transform.localScale = new Vector3(1.1f, 0.35f, 1.1f);
                 smoke.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
                 var collider = smoke.GetComponent<Collider>();
                 if (collider != null)
                     Object.Destroy(collider);
+            }
+
+            root.gameObject.SetActive(false);
+            return root;
+        }
+
+        private static Transform BuildSkidMarkRoot()
+        {
+            var root = new GameObject("Skid marks").transform;
+            return root;
+        }
+
+        private static Transform BuildTaxiSprayRoot()
+        {
+            var root = new GameObject("Taxi spray").transform;
+            for (var i = 0; i < 4; i++)
+            {
+                var puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                puff.name = $"Spray {i}";
+                Object.Destroy(puff.GetComponent<Collider>());
+                puff.transform.SetParent(root, false);
+                puff.transform.localScale = new Vector3(0.5f, 0.22f, 0.5f);
+                puff.GetComponent<Renderer>().material = CreateMaterial(new Color(0.75f, 0.8f, 0.85f, 0.25f));
             }
 
             root.gameObject.SetActive(false);
@@ -2908,6 +3059,7 @@ namespace Airside.Presentation
         private void CollectNightGlowWindows()
         {
             _nightGlowRenderers.Clear();
+            var lights = new List<Light>();
             foreach (var name in new[]
                      {
                          "Terminal window glow L",
@@ -2923,7 +3075,23 @@ namespace Airside.Presentation
                 var renderer = go.GetComponent<Renderer>();
                 if (renderer != null)
                     _nightGlowRenderers.Add(renderer);
+
+                // Real PointLight spill so dusk buildings light the apron (0025 item 5).
+                var light = go.GetComponent<Light>();
+                if (light == null)
+                {
+                    light = go.AddComponent<Light>();
+                    light.type = LightType.Point;
+                    light.color = new Color(1f, 0.78f, 0.45f);
+                    light.range = name.StartsWith("Hangar", StringComparison.Ordinal) ? 14f : 11f;
+                    light.shadows = LightShadows.None;
+                    light.intensity = 0f;
+                }
+
+                lights.Add(light);
             }
+
+            _windowLights = lights.ToArray();
             UpdateNightGlow((float)_simulation.TimeOfDay.Daylight);
         }
 
@@ -2945,6 +3113,26 @@ namespace Airside.Presentation
                     renderer.material.SetColor("_EmissionColor", emission);
                     renderer.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
                 }
+            }
+
+            if (_windowLights != null)
+            {
+                var intensity = Mathf.Lerp(2.4f, 0.02f, daylight);
+                for (var i = 0; i < _windowLights.Length; i++)
+                {
+                    var light = _windowLights[i];
+                    if (light == null)
+                        continue;
+                    light.intensity = intensity;
+                    light.enabled = intensity > 0.05f;
+                }
+            }
+
+            if (_fuelFarmLight != null)
+            {
+                var farm = Mathf.Lerp(1.6f, 0.02f, daylight);
+                _fuelFarmLight.intensity = farm;
+                _fuelFarmLight.enabled = farm > 0.05f;
             }
         }
 
@@ -4834,6 +5022,16 @@ namespace Airside.Presentation
             CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
             CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
             CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
+
+            // Amber safety flood over the fuel pad at night (presentation only).
+            var lamp = new GameObject("Fuel farm light");
+            lamp.transform.position = new Vector3(-34f, 4.2f, 22f);
+            var light = lamp.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = new Color(1f, 0.72f, 0.28f);
+            light.range = 16f;
+            light.intensity = 0f;
+            light.shadows = LightShadows.None;
         }
 
         /// <summary>

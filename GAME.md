@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (parked GA prefab + denser apron life)
-- **Branch / working tree:** `cursor/parked-ga-apron-life-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak GA apron (3 parked) + walking figures + marshaller arms
-- **In progress / half-done:** eleven Resources prefabs; denser apron life motion
-- **Watch out for:** prefabs still greybox — authored FBX overwrite is the fidelity jump
+- **Last updated:** 2026-09-07 by Cursor (skids + window PointLights + wet taxi spray)
+- **Branch / working tree:** `cursor/skids-window-lights-spray-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak landing skids, dusk window spill, wet taxi mist, fuel farm lamp
+- **In progress / half-done:** denser touchdown smoke; building window PointLights; wet spray
+- **Watch out for:** prefabs still greybox — authored FBX overwrite remains the fidelity jump
 - **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or parked GA?
-- **Visual assets:** eleven Resources prefabs + phase-aware follow + night/life polish
+- **Visual assets:** eleven Resources prefabs + landing life/lighting polish
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm parked GA apron, walking figures, marshaller wave, eleven Resources prefab keys.
-3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups.
+2. Confirm landing skids, dusk window spill, wet taxi mist, fuel farm night lamp.
+3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups; UI Toolkit.
    No new economy systems; no Companion/CloudKit.

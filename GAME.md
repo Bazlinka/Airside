@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (hangar/fuel-truck densify)
+- **Last updated:** 2026-09-07 by Cursor (Batch C vehicle densify)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — densify remaining vehicles/ops/props, atmosphere, or HUD. No new economy systems.
-- **In progress / half-done:** Turboprop 74 / terminal 31 / hangar 38 / fuel truck 18 authored meshes; sun/moon discs; wet/day/env/motion polish.
+- **Do this next:** Continue 0025 — densify ops/props, atmosphere, or further kit polish. No new economy systems.
+- **In progress / half-done:** Turboprop 74 / terminal 31 / hangar 38 / vehicles densified authored meshes; sun/moon discs; wet/day/env/motion polish.
 - **Watch out for:** Spot flood / cloud count vs Mac Play perf; ClearCoat no-op on older URP; preserve art .meta GUIDs when regenerating.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
 - **Visual assets:** Authored Batch C densifying in place; presentation track mid-backlog.

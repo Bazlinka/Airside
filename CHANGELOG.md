@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Service vehicles densify (0025 item 2).** Authored baggage tug and apron bus gain
+  rails/cart wheels, mullions, arches and stripe detail.
+  Evidence: `scripts/test-domain.sh`.
+
 - **Hangar + fuel truck densify (0025 item 2).** Authored hangar to 38 meshes
   (door bars, skylights, crane trolley, extra columns); fuel truck to 18 meshes
   (chassis, hose, denser tank). Door bars slide with hangar panels. Presentation

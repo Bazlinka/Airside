@@ -10,17 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Codex (first playable delivery focus)
-- **Branch / working tree:** `docs/simplify-project-plan`
-- **Do this next:** Merge PR 35, pull `main`, run the Unity tests and Mac build, then
-  play the exact packaged app at 1280x720, 1440x900 and Retina resolution. Fix only
-  first-session showstoppers, then build and externally test the 15 to 30 minute
-  first-session slice in `docs/product/PROJECT_PLAN.md`.
-- **In progress / half-done:** none — Integration wired with primitive fallbacks via `ArtGltfLoader`.
+- **Last updated:** 2026-09-07 by Cursor (keep-going session — Batch D + polish on `main`)
+- **Branch / working tree:** `main` (PRs #35, #37, #38, #39 landed)
+- **Do this next:** Bailey `git pull origin main` then Unity Play soak (C/E/WLD/D + tips + traffic pulse).
+- **In progress / half-done:** none; open docs PRs #36 (conflicts) and #34 (env draft).
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-  Runtime glTF loader is kit-specific (POSITION+indices boxes/quads), not a general importer.
-- **Open questions for Bailey:** none. The Mac first playable is the only active product target.
-- **Visual assets:** Batch A Approved; Batch B Approved (Integrated); Batch C **Approved · Integrated**; Batch E UI **Approved · Integrated**; WLD-001…003 **Approved · Integrated** (unverified in Play)
+- **Open questions for Bailey:** none — Play when ready.
+- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified pending
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -124,7 +120,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): Batch C models, WLD props/lights, Batch E HUD icons/panel,
-   overnight look, dual commercials, insolvency.
-2. **Batch D** animation / VFX after Play confirms Integration.
-3. No unapproved economy systems.
+1. **Unity Play soak** (Bailey): `git pull`, then verify Batch C/E/WLD/D, tips, touchdown,
+   traffic hold-short pulse, dual commercials, insolvency at 1280×720 / 1440×900 / Retina.
+2. **First-session flow** (per delivery plan v2): clean new-game path, opening role tip,
+   visible decision→consequence within a short session, packaged Mac playtest build.
+3. No unapproved economy systems. Companion / CloudKit / extra fleets stay deferred.

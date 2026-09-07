@@ -5,10 +5,28 @@ change it describes.
 
 ## Unreleased
 
-- **Focus delivery on the Mac first playable.** Replace the broad product blueprint
-  with a concise execution plan: merge the verified build repair, test the integrated
-  presentation, make one self-explanatory first session, then run an external playtest.
-  Defer new platforms, major systems and further broad asset batches until that loop is proven.
+- **Focus product plan on the Mac first playable.** Replaces the broad blueprint with
+  a delivery plan that makes the first playable the only active target; defers companion,
+  CloudKit, cargo/GA and extra art batches until external playtest confirms the loop.
+
+- **Pulse hold-short markings during traffic waits.** When the traffic wait monitor
+  warns, hold-short bars flash Safety Yellow → orange so the delay cause is visible
+  in-world, not only on the HUD. Presentation only. `scripts/test-domain.sh` 97/97.
+
+- **Touchdown chirp and day-est income icon.** Soft procedural squeal on landing
+  transition plus income icon on the day-estimate HUD line. Presentation only.
+  `scripts/test-domain.sh` 97/97.
+
+- **Batch D runtime alive-airport + first-session coach tips.** Phase-based prop RPM,
+  soft gear retract, split landing/taxi lights, dual touchdown smoke, denser storm rain,
+  stronger engine heat on takeoff/approach, ground-traffic props/lights/heat, wet Stand 3
+  apron, route-offer icon, and contextual left-panel tips. Presentation only — Unity
+  .anim/.prefab files remain Planned; runtime behaviour Integrated. `scripts/test-domain.sh` 97/97.
+
+- **Restore Unity macOS compilation.** Qualify Unity Object calls and include the
+  built-in image conversion module required by PNG loading. Retain Unity-generated
+  metadata for the new UI assets. Unity 6000.3.23f1 macOS build succeeded and all
+  107 EditMode tests passed on 2026-09-07; live visual verification remains pending.
 
 - **Integrate Batch C models, WLD kits, and Batch E cleanup.** Runtime
   `ArtGltfLoader` loads Approved Batch C / WLD / PRP glTF kits from disk with

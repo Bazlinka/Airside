@@ -234,18 +234,18 @@ simulation timing or resource ownership.
 
 | ID | Clip/prefab | Trigger and behaviour | Status |
 |---|---|---|---|
-| ANM-AIR-001 | `Animation/Aircraft/anm_propeller_spin_v01.anim` | Loops while engines are active; visual speed may smooth but follows phase state | Planned |
-| ANM-AIR-002 | `Animation/Aircraft/anm_gear_cycle_v01.anim` | Deploy/retract only at explicit presentation phase boundaries | Planned |
-| ANM-AIR-003 | `Animation/Aircraft/anm_cabin_door_cycle_v01.anim` | Opens at stand after safe arrival; closes before pushback | Planned |
-| ANM-AIR-004 | `Animation/Aircraft/anm_aircraft_lights_v01.controller` | Nav steady, beacon pulse, landing/taxi lights by phase and day/night | Planned |
-| ANM-VEH-001 | `Animation/Vehicles/anm_vehicle_wheels_v01.anim` | Wheel rotation derived from presentation movement | Planned |
-| ANM-VEH-002 | `Animation/Vehicles/anm_fuel_service_v01.anim` | Park, deploy hose, service loop, retract; duration mapped to task progress | Planned |
-| ANM-VEH-003 | `Animation/Vehicles/anm_baggage_service_v01.anim` | Tug arrival, cart activity and departure mapped to baggage task | Planned |
-| ANM-VEH-004 | `Animation/Vehicles/anm_bus_service_v01.anim` | Door open/close and subtle suspension settle mapped to boarding/deboarding | Planned |
-| VFX-001 | `VFX/vfx_touchdown_smoke_v01.prefab` | Brief restrained wheel smoke on touchdown | Planned |
-| VFX-002 | `VFX/vfx_engine_heat_v01.prefab` | Subtle close-view heat distortion only | Planned |
-| VFX-003 | `VFX/vfx_rain_airfield_v01.prefab` | Camera/world rain with performance tier; weather state controls it | Planned |
-| VFX-004 | `VFX/vfx_wet_surface_response_v01.prefab` | Material wetness and muted reflection, not a full-screen filter | Planned |
+| ANM-AIR-001 | `Animation/Aircraft/anm_propeller_spin_v01.anim` | Loops while engines are active; visual speed may smooth but follows phase state | **Integrated (runtime)** — phase RPM in `SpinPropellers`; clip file still Planned |
+| ANM-AIR-002 | `Animation/Aircraft/anm_gear_cycle_v01.anim` | Deploy/retract only at explicit presentation phase boundaries | **Integrated (runtime)** — soft pitch retract/deploy; clip file still Planned |
+| ANM-AIR-003 | `Animation/Aircraft/anm_cabin_door_cycle_v01.anim` | Opens at stand after safe arrival; closes before pushback | **Integrated (runtime)** — existing door swing; clip file still Planned |
+| ANM-AIR-004 | `Animation/Aircraft/anm_aircraft_lights_v01.controller` | Nav steady, beacon pulse, landing/taxi lights by phase and day/night | **Integrated (runtime)** — landing vs taxi lights split; controller file still Planned |
+| ANM-VEH-001 | `Animation/Vehicles/anm_vehicle_wheels_v01.anim` | Wheel rotation derived from presentation movement | **Integrated (runtime)** — wheel spin from travel; clip file still Planned |
+| ANM-VEH-002 | `Animation/Vehicles/anm_fuel_service_v01.anim` | Park, deploy hose, service loop, retract; duration mapped to task progress | **Integrated (runtime)** — hose loop; clip file still Planned |
+| ANM-VEH-003 | `Animation/Vehicles/anm_baggage_service_v01.anim` | Tug arrival, cart activity and departure mapped to baggage task | **Integrated (runtime)** — cargo bob; clip file still Planned |
+| ANM-VEH-004 | `Animation/Vehicles/anm_bus_service_v01.anim` | Door open/close and subtle suspension settle mapped to boarding/deboarding | **Integrated (runtime)** — door swing; clip file still Planned |
+| VFX-001 | `VFX/vfx_touchdown_smoke_v01.prefab` | Brief restrained wheel smoke on touchdown | **Integrated (runtime)** — dual wheel puffs; prefab file still Planned |
+| VFX-002 | `VFX/vfx_engine_heat_v01.prefab` | Subtle close-view heat distortion only | **Integrated (runtime)** — heat quads + takeoff boost; prefab still Planned |
+| VFX-003 | `VFX/vfx_rain_airfield_v01.prefab` | Camera/world rain with performance tier; weather state controls it | **Integrated (runtime)** — denser rain + storm intensity; prefab still Planned |
+| VFX-004 | `VFX/vfx_wet_surface_response_v01.prefab` | Material wetness and muted reflection, not a full-screen filter | **Integrated (runtime)** — paved surface darken incl. Stand 3; prefab still Planned |
 | VFX-005 | `VFX/vfx_construction_dust_v01.prefab` | Reserved for visible construction milestone, not integrated early | Planned |
 
 ### Batch E — operational interface

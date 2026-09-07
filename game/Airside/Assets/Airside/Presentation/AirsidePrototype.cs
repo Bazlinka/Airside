@@ -215,13 +215,15 @@ namespace Airside.Presentation
 
             _canvasHud = AirsideCanvasHud.Create(transform);
             _toolkitHud = AirsideToolkitHud.Create(transform);
+            Action onAccept = () => TryAcceptPendingRouteFromHotkey();
+            Action onDecline = () =>
+            {
+                if (_simulation.Routes.Pending != null && !_simulation.IsInsolvent)
+                    _session.DeclineRoute();
+            };
             _canvasHud.BindActions(
-                onAccept: () => TryAcceptPendingRouteFromHotkey(),
-                onDecline: () =>
-                {
-                    if (_simulation.Routes.Pending != null && !_simulation.IsInsolvent)
-                        _session.DeclineRoute();
-                },
+                onAccept: onAccept,
+                onDecline: onDecline,
                 onPriorityCrew: () =>
                 {
                     if (!_simulation.IsInsolvent)
@@ -255,6 +257,8 @@ namespace Airside.Presentation
                 onBeginOperations: () => DismissOpeningBriefing(),
                 onResetAirport: () => ResetToNewAirport(),
                 onContinueAway: () => { _showAwaySummary = false; });
+            if (_toolkitHud != null)
+                _toolkitHud.BindActions(onAccept, onDecline);
             _canvasHudActive = _canvasHud.IsActive;
         }
 
@@ -344,7 +348,12 @@ namespace Airside.Presentation
                 awayBody: awayBody,
                 insolvencyBody: insolvencyBody);
 
-            if (_showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent)
+            var toolkitActive = _toolkitHud != null && _toolkitHud.IsActive;
+            var overlayOwnsScreen = _showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent;
+            if (toolkitActive)
+                _toolkitHud.SetGameplayChromeVisible(!overlayOwnsScreen);
+
+            if (overlayOwnsScreen)
                 return;
 
             SyncCanvasLeftPanel();
@@ -352,7 +361,10 @@ namespace Airside.Presentation
             var proposal = _simulation.Routes.Pending;
             if (proposal == null)
             {
-                _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
+                if (toolkitActive)
+                    _toolkitHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
+                else
+                    _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
             }
             else
             {
@@ -371,23 +383,26 @@ namespace Airside.Presentation
                 var body = firstDecision
                     ? $"Accept to earn cash on every completed flight.\n{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight"
                     : $"{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight";
-                _canvasHud.SyncOffer(
-                    true,
-                    firstDecision,
-                    firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now",
-                    body,
-                    status,
-                    blocked,
-                    !_simulation.IsInsolvent && meetsReputation && fitsCapacity,
-                    firstDecision ? "Accept route  (Enter)" : "Accept route");
+                var title = firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now";
+                var acceptLabel = firstDecision ? "Accept route  (Enter)" : "Accept route";
+                var canAccept = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
+                if (toolkitActive)
+                {
+                    _toolkitHud.SyncOffer(true, firstDecision, title, body, status, blocked, canAccept, acceptLabel);
+                    _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
+                }
+                else
+                {
+                    _canvasHud.SyncOffer(true, firstDecision, title, body, status, blocked, canAccept, acceptLabel);
+                }
             }
 
             var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
             var researchVisible = !string.IsNullOrEmpty(_researchToast) && Time.unscaledTime <= _researchToastUntil;
             var saveVisible = Time.unscaledTime <= _saveIndicatorUntil;
 
-            // Decision 0025 item 6 — Toolkit owns toasts when active; Canvas keeps panels.
-            if (_toolkitHud != null && _toolkitHud.IsActive)
+            // Decision 0025 item 6 — Toolkit owns toasts + right column when active.
+            if (toolkitActive)
             {
                 _toolkitHud.SyncToast(_opsToast, toastVisible);
                 _toolkitHud.SyncResearchToast(_researchToast, researchVisible);
@@ -403,10 +418,12 @@ namespace Airside.Presentation
                 _canvasHud.SyncSaveIndicator(saveVisible);
             }
 
-            SyncCanvasOpsPanel();
+            SyncCanvasOpsPanel(toolkitActive);
+            if (toolkitActive)
+                _canvasHud.SetRightPanelsVisible(false);
         }
 
-        private void SyncCanvasOpsPanel()
+        private void SyncCanvasOpsPanel(bool toolkitOwnsOps = false)
         {
             var accepted = _simulation.Routes.Accepted;
             var pendingOffer = _simulation.Routes.Pending;
@@ -456,7 +473,11 @@ namespace Airside.Presentation
                     $"{latest.SummaryLine}\nIncome ${latest.FlightIncome:N0}  ·  delays -${latest.DelayCost:N0}  ·  running -${latest.OperatingCost:N0}\n{rep}  ·  {latest.GroundCrew} crew";
             }
 
-            _canvasHud.SyncOps(summary, string.Join("\n", lines), report);
+            var body = string.Join("\n", lines);
+            if (toolkitOwnsOps && _toolkitHud != null)
+                _toolkitHud.SyncOps(summary, body, report);
+            else
+                _canvasHud.SyncOps(summary, body, report);
         }
 
         private void SyncCanvasLeftPanel()

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **UI Toolkit OPERATIONS + route offer (0025 item 6).** Runtime `AirsideToolkitHud`
+  now owns the OPERATIONS panel and Accept/Decline route card (pulse accent, daily
+  report); Canvas keeps left status + overlays and hides its right-column copies.
+  Presentation only.
+
 - **Hangar bay props + runway aiming points (0025 items 1+3).** Resources prefab
   `mdl_hangar_bay_props_v01` (workbench/shelves/drum/cart) fills the open hangar;
   white aiming-point pairs on the runway. Presentation only.

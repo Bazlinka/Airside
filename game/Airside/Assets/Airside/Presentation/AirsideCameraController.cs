@@ -6,9 +6,12 @@ namespace Airside.Presentation
     public sealed class AirsideCameraController : MonoBehaviour
     {
         private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
-        private const float OverviewDistance = 52f;
-        private const float FollowDistanceGround = 22f;
-        private const float FollowDistanceAir = 34f;
+        // Framed against the aircraft's actual size (v03 kit: 5.6 span, 5.8 long) and
+        // the airfield's ~50-unit footprint, so the overview reads as a place rather
+        // than a close-up of one corner of it.
+        private const float OverviewDistance = 60f;
+        private const float FollowDistanceGround = 24f;
+        private const float FollowDistanceAir = 38f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;

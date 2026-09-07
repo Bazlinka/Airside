@@ -2578,6 +2578,7 @@ namespace Airside.Presentation
             // carry buried the gear 0.38 below the apron surface.
             var usedArt = ArtGltfLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
                 root,
@@ -2690,6 +2691,7 @@ namespace Airside.Presentation
             "spinner_left" => "Spinner L",
             "spinner_right" => "Spinner R",
             "tail_fin" => "Tail",
+            "tailplane_left" => "Tailplane",
             "tailplane" => "Tailplane",
             "rudder" => "Rudder",
             "gear_nose" => "Gear nose",
@@ -2708,7 +2710,7 @@ namespace Airside.Presentation
             "fuselage" or "nose" => new Color(0.93f, 0.95f, 0.97f),
             "cockpit" or "cabin_windows" => new Color(0.18f, 0.35f, 0.48f),
             "wing_left" or "wing_right" or "wingtip_left" or "wingtip_right"
-                or "tail_fin" or "tailplane" or "rudder" => accent,
+                or "tail_fin" or "tailplane" or "tailplane_left" or "rudder" => accent,
             "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
                 or "spinner_left" or "spinner_right" => new Color(0.2f, 0.2f, 0.22f),
@@ -2773,27 +2775,35 @@ namespace Airside.Presentation
         }
 
         /// <summary>Prefer a richer kit when present; otherwise the Approved v01 path.</summary>
-        private static string PreferArtKit(string preferredRelativePath, string fallbackRelativePath) =>
-            ArtGltfLoader.HasKit(preferredRelativePath) ? preferredRelativePath : fallbackRelativePath;
+        /// <summary>First kit in the list that is actually present, else the last one.</summary>
+        private static string PreferArtKit(params string[] candidateRelativePaths)
+        {
+            foreach (var candidate in candidateRelativePaths)
+            {
+                if (ArtGltfLoader.HasKit(candidate))
+                    return candidate;
+            }
 
+            return candidateRelativePaths.Length > 0
+                ? candidateRelativePaths[candidateRelativePaths.Length - 1]
+                : null;
+        }
+
+        /// <summary>
+        /// Livery is currently carried by the accent colour on wings, tail and nacelles
+        /// (white body, teal surfaces — REF-005), not by the decal atlas.
+        ///
+        /// The decal PNG is an atlas authored for a specific unwrap, but glTF kits ship
+        /// POSITION only, so <see cref="ArtGltfLoader"/> generates planar UVs across each
+        /// part's bounding box. Stretching the atlas over those UVs painted the whole
+        /// fuselage in the atlas's tail block — a dark teal body instead of a white one.
+        /// Re-enable this once the kit carries a real cylindrical unwrap and the decal is
+        /// authored against it.
+        /// </summary>
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
         {
-            if (string.IsNullOrEmpty(artRelativePath))
-                return;
-            var texture = TryLoadArtTexture(artRelativePath);
-            if (texture == null)
-                return;
-
-            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
-            {
-                if (child.name != "Fuselage")
-                    continue;
-                var renderer = child.GetComponent<Renderer>();
-                if (renderer == null)
-                    continue;
-                renderer.material.mainTexture = texture;
-                renderer.material.mainTextureScale = new Vector2(1f, 1f);
-            }
+            _ = aircraft;
+            _ = artRelativePath;
         }
 
         private static void ParentBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)

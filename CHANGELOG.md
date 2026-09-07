@@ -5,6 +5,19 @@ change it describes.
 
 ## Unreleased
 
+- **v03 aircraft kit: lofted geometry instead of boxes.** Every glTF part in the
+  Batch C kits was a 24-vertex axis-aligned cube — the "regional turboprop" was 29
+  boxes with no curvature and 15.05 x 9.82 proportions no turboprop has.
+  `scripts/generate-batch-c-models-v03.py` adds real shape primitives (lathed bodies
+  of revolution, tapered aerofoil panels, swept fins, twisted prop blades) and
+  rebuilds the aircraft to ATR-72 proportions from REF-005: round tapered fuselage,
+  nose cone, high wing, T-tail, six-blade props, round gear. 4,300 triangles vs 348.
+  Sized (5.6 span) to the airfield the game actually has. Livery now comes from the
+  accent colour on wings/tail/nacelles — white body, teal surfaces, as in REF-005 —
+  because the decal atlas was being stretched over generated planar UVs it was never
+  authored for, which painted the whole fuselage dark teal. Camera framing set
+  against the aircraft's real size. Presentation only.
+
 - **Presentation fixes (Claude visual review).** Aircraft views are bound to flights
   by identity, so the two commercials no longer swap positions and liveries every
   cycle; after pushback an aircraft no longer taxis backwards onto the stand it just

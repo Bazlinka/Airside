@@ -65,6 +65,10 @@ namespace Airside.Presentation
         private RectTransform _briefingPanel;
         private Image _briefingSplash;
         private Text _briefingBody;
+        private RectTransform _awayPanel;
+        private Text _awayBody;
+        private RectTransform _insolvencyPanel;
+        private Text _insolvencyBody;
         private Action _onAccept;
         private Action _onDecline;
         private Action _onPriorityCrew;
@@ -74,6 +78,7 @@ namespace Airside.Presentation
         private Action _onStartResearch;
         private Action _onBeginOperations;
         private Action _onResetAirport;
+        private Action _onContinueAway;
 
         private AirsideCanvasHud(
             RectTransform root,
@@ -466,6 +471,53 @@ namespace Airside.Presentation
             reset.onClick.AddListener(() => _onResetAirport?.Invoke());
             _pausePanel = pauseRt;
             pauseGo.SetActive(false);
+
+            // Away summary card.
+            var awayGo = new GameObject("Away overlay", typeof(RectTransform));
+            awayGo.transform.SetParent(root, false);
+            var awayRt = awayGo.GetComponent<RectTransform>();
+            Stretch(awayRt);
+            var awayDim = awayGo.AddComponent<Image>();
+            awayDim.color = new Color(0.05f, 0.07f, 0.09f, 0.55f);
+            awayDim.raycastTarget = true;
+            var awayCard = BuildPanel(awayRt, "Away card", Vector2.zero, new Vector2(460f, 348f));
+            awayCard.anchorMin = new Vector2(0.5f, 0.5f);
+            awayCard.anchorMax = new Vector2(0.5f, 0.5f);
+            awayCard.pivot = new Vector2(0.5f, 0.5f);
+            awayCard.anchoredPosition = Vector2.zero;
+            var awayTitle = AddText(awayCard, "Away title", 26, FontStyle.Bold, new Vector2(24f, -18f), new Vector2(410f, 34f));
+            awayTitle.text = "AIRSIDE";
+            var awaySub = AddText(awayCard, "Away subtitle", 16, FontStyle.Bold, new Vector2(24f, -52f), new Vector2(410f, 22f));
+            awaySub.text = "Welcome back to operations";
+            _awayBody = AddText(awayCard, "Away body", 14, FontStyle.Normal, new Vector2(24f, -86f), new Vector2(410f, 200f));
+            var continueBtn = AddButton(awayCard, "Continue operations", new Vector2(130f, -292f), new Vector2(200f, 32f), AirsideTheme.CoastalBlue);
+            continueBtn.onClick.AddListener(() => _onContinueAway?.Invoke());
+            _awayPanel = awayRt;
+            awayGo.SetActive(false);
+
+            // Insolvency card.
+            var insolventGo = new GameObject("Insolvency overlay", typeof(RectTransform));
+            insolventGo.transform.SetParent(root, false);
+            var insolventRt = insolventGo.GetComponent<RectTransform>();
+            Stretch(insolventRt);
+            var insolventDim = insolventGo.AddComponent<Image>();
+            insolventDim.color = new Color(0.08f, 0.05f, 0.05f, 0.6f);
+            insolventDim.raycastTarget = true;
+            var insolventCard = BuildPanel(insolventRt, "Insolvency card", Vector2.zero, new Vector2(460f, 290f));
+            insolventCard.anchorMin = new Vector2(0.5f, 0.5f);
+            insolventCard.anchorMax = new Vector2(0.5f, 0.5f);
+            insolventCard.pivot = new Vector2(0.5f, 0.5f);
+            insolventCard.anchoredPosition = Vector2.zero;
+            var insolventTitle = AddText(insolventCard, "Insolvency title", 26, FontStyle.Bold, new Vector2(24f, -22f), new Vector2(410f, 34f));
+            insolventTitle.text = "AIRSIDE";
+            var insolventHead = AddText(insolventCard, "Insolvency head", 17, FontStyle.Bold, new Vector2(24f, -58f), new Vector2(410f, 28f));
+            insolventHead.text = "Airport declared insolvent";
+            insolventHead.color = AirsideTheme.SignalRed;
+            _insolvencyBody = AddText(insolventCard, "Insolvency body", 14, FontStyle.Normal, new Vector2(24f, -96f), new Vector2(410f, 110f));
+            var newAirport = AddButton(insolventCard, "Start a new airport", new Vector2(100f, -220f), new Vector2(260f, 36f), AirsideTheme.CoastalBlue);
+            newAirport.onClick.AddListener(() => _onResetAirport?.Invoke());
+            _insolvencyPanel = insolventRt;
+            insolventGo.SetActive(false);
         }
 
         public void BindActions(
@@ -477,7 +529,8 @@ namespace Airside.Presentation
             Action onBuildStand = null,
             Action onStartResearch = null,
             Action onBeginOperations = null,
-            Action onResetAirport = null)
+            Action onResetAirport = null,
+            Action onContinueAway = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -488,13 +541,22 @@ namespace Airside.Presentation
             _onStartResearch = onStartResearch;
             _onBeginOperations = onBeginOperations;
             _onResetAirport = onResetAirport;
+            _onContinueAway = onContinueAway;
         }
 
-        public void SyncOverlays(bool showBriefing, bool showPause, string locationName, int firstOfferAfterSeconds)
+        public void SyncOverlays(
+            bool showBriefing,
+            bool showPause,
+            bool showAway,
+            bool showInsolvency,
+            string locationName,
+            int firstOfferAfterSeconds,
+            string awayBody,
+            string insolvencyBody)
         {
             if (_briefingPanel != null)
             {
-                _briefingPanel.gameObject.SetActive(showBriefing);
+                _briefingPanel.gameObject.SetActive(showBriefing && !showAway && !showInsolvency);
                 if (showBriefing && _briefingBody != null)
                 {
                     _briefingBody.text =
@@ -507,11 +569,25 @@ namespace Airside.Presentation
                 }
             }
 
-            if (_pausePanel != null)
-                _pausePanel.gameObject.SetActive(showPause && !showBriefing);
+            if (_awayPanel != null)
+            {
+                _awayPanel.gameObject.SetActive(showAway && !showInsolvency);
+                if (showAway && _awayBody != null)
+                    _awayBody.text = awayBody ?? string.Empty;
+            }
 
-            // Hide gameplay panels while briefing owns the screen.
-            var gameplay = !showBriefing;
+            if (_insolvencyPanel != null)
+            {
+                _insolvencyPanel.gameObject.SetActive(showInsolvency);
+                if (showInsolvency && _insolvencyBody != null)
+                    _insolvencyBody.text = insolvencyBody ?? string.Empty;
+            }
+
+            if (_pausePanel != null)
+                _pausePanel.gameObject.SetActive(showPause && !showBriefing && !showAway && !showInsolvency);
+
+            // Hide gameplay panels while any full-screen overlay owns the screen.
+            var gameplay = !showBriefing && !showAway && !showInsolvency;
             if (_leftPanel != null)
                 _leftPanel.gameObject.SetActive(gameplay);
             if (_opsPanel != null)

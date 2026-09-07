@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Canvas away + insolvency overlays (0025 item 6).** Welcome-back summary and
+  insolvency cards move onto runtime uGUI; IMGUI duplicates gated when Canvas is
+  active. Presentation only.
+
 - **Prefab/Addressables art loader scaffold (0025 item 1–2 / ADR 0026).**
   `ArtPresentationLoader` prefers `Resources/Airside/Prefabs/<kit-basename>` then
   StreamingAssets glTF; Addressables package added to the Unity manifest; wet

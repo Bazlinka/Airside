@@ -2384,16 +2384,17 @@ private static GameObject CreateBlock(
         }
 
         /// <summary>
-        /// Loads Batch B PNGs from the Art folder on disk (Editor / unpacked data).
-        /// Returns null when missing so solid-colour primitives remain the fallback.
+        /// Loads Batch B PNGs via <see cref="ArtRuntimePaths"/> (StreamingAssets in
+        /// packaged builds; Editor Assets fallback). Returns null when missing so
+        /// solid-colour primitives remain the fallback.
         /// </summary>
         private static Texture2D TryLoadArtTexture(string artRelativePath)
         {
             if (string.IsNullOrEmpty(artRelativePath))
                 return null;
 
-            var fullPath = Path.Combine(Application.dataPath, "Airside", "Art", artRelativePath);
-            if (!File.Exists(fullPath))
+            var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
+            if (fullPath == null)
                 return null;
 
             var bytes = File.ReadAllBytes(fullPath);

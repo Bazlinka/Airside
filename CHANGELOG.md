@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Fix packaged-build art loading (StreamingAssets).** Runtime glTF/PNG loaders
+  resolve via `ArtRuntimePaths` (StreamingAssets first, Editor Assets fallback).
+  Synced 63 art files into `Assets/StreamingAssets/Airside/Art` with
+  `scripts/sync-art-streaming-assets.sh`. Records Bailey's ~20% visual assessment
+  and presentation backlog as decision **0025**. Does not replace placeholder
+  models — only stops art from silently vanishing in player builds.
+  `scripts/test-domain.sh` 97/97.
+
 - **First route-income consequence toast.** When the first accepted-route payout hits
   cash, a HUD toast confirms the decision→money loop. Presentation only.
   `scripts/test-domain.sh` 97/97.

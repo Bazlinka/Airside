@@ -224,8 +224,8 @@ namespace Airside.Presentation
 
         private static Texture2D LoadArtTexture(string artRelativePath)
         {
-            var fullPath = Path.Combine(Application.dataPath, "Airside", "Art", artRelativePath);
-            if (!File.Exists(fullPath))
+            var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
+            if (fullPath == null)
                 return null;
 
             var bytes = File.ReadAllBytes(fullPath);

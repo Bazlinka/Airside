@@ -1584,12 +1584,16 @@ namespace Airside.Presentation
             {
                 var z = AirportTaxiNetwork.StandZ(atStand.AssignedStand);
                 var progress = VisualPhaseProgress(atStand, 0f);
-                // Stairs deploy: pitch up from folded, then settle against the cabin.
-                var stairsPitch = Mathf.Lerp(-38f, -6f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f)));
-                PlaceProp(_stairs, true, new Vector3(17.9f, 0.55f, z + 0.15f), Quaternion.Euler(stairsPitch, -8f, 0f));
-                // Chocks drop into place in the first seconds of the stand call.
-                var chockY = Mathf.Lerp(0.35f, 0.12f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f)));
-                PlaceProp(_chocks, true, new Vector3(17f, chockY, z + 1.55f), Quaternion.identity);
+                // Stairs roll in from apron edge, then pitch up against the cabin.
+                var arrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 5f));
+                var stairsX = Mathf.Lerp(20.5f, 17.9f, arrive);
+                var stairsPitch = Mathf.Lerp(-42f, -6f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f)));
+                PlaceProp(_stairs, true, new Vector3(stairsX, 0.55f, z + 0.15f), Quaternion.Euler(stairsPitch, -8f, 0f));
+                // Chocks drop and settle with a slight roll into the tire.
+                var chockArrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f));
+                var chockY = Mathf.Lerp(0.42f, 0.12f, chockArrive);
+                var chockRoll = Mathf.Lerp(35f, 0f, chockArrive);
+                PlaceProp(_chocks, true, new Vector3(17f, chockY, z + 1.55f), Quaternion.Euler(0f, 0f, chockRoll));
                 PlaceProp(_gpuCart, true, new Vector3(15.2f, 0.35f, z + 2.4f), Quaternion.Euler(0f, 90f, 0f));
                 PulseGpuCart(_gpuCart, true);
             }
@@ -4854,6 +4858,13 @@ namespace Airside.Presentation
                 var t = go.transform;
                 var openDelta = name.EndsWith("_l", StringComparison.Ordinal) ? -3.6f : 3.6f;
                 _hangarDoorPanels.Add((t, t.localPosition.x, openDelta));
+            }
+
+            // Avoid stacking the procedural slab on top of authored hangar doors.
+            if (_hangarDoorPanels.Count > 0 && _hangarDoor != null)
+            {
+                _hangarDoor.gameObject.SetActive(false);
+                _hangarDoor = null;
             }
         }
 

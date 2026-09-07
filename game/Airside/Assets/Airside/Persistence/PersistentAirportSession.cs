@@ -79,47 +79,14 @@ namespace Airside.Persistence
             Simulation.Update();
         }
 
-        public bool EnablePriorityCrew()
-        {
-            if (!Simulation.EnablePriorityCrew())
-                return false;
+        public bool EnablePriorityCrew() =>
+            RecordCommand(Simulation.EnablePriorityCrew(), PriorityCrewCommand, "priority");
 
-            _save.commands.Add(new AirsideCommandRecord
-            {
-                commandId = $"priority-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
-                commandType = PriorityCrewCommand,
-                simulationSecond = Clock.Now.ElapsedSeconds
-            });
-            return true;
-        }
+        public bool AcceptRoute() =>
+            RecordCommand(Simulation.AcceptPendingRoute(), AcceptRouteCommand, "route");
 
-        public bool AcceptRoute()
-        {
-            if (!Simulation.AcceptPendingRoute())
-                return false;
-
-            _save.commands.Add(new AirsideCommandRecord
-            {
-                commandId = $"route-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
-                commandType = AcceptRouteCommand,
-                simulationSecond = Clock.Now.ElapsedSeconds
-            });
-            return true;
-        }
-
-        public bool DeclineRoute()
-        {
-            if (!Simulation.DeclinePendingRoute())
-                return false;
-
-            _save.commands.Add(new AirsideCommandRecord
-            {
-                commandId = $"decline-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
-                commandType = DeclineRouteCommand,
-                simulationSecond = Clock.Now.ElapsedSeconds
-            });
-            return true;
-        }
+        public bool DeclineRoute() =>
+            RecordCommand(Simulation.DeclinePendingRoute(), DeclineRouteCommand, "decline");
 
         public bool HireGroundCrew() => RecordCommand(Simulation.HireGroundCrew(), HireCrewCommand, "hire");
 
@@ -139,7 +106,7 @@ namespace Airside.Persistence
 
             _save.commands.Add(new AirsideCommandRecord
             {
-                commandId = $"{prefix}-{_save.revision + 1}-{Clock.Now.ElapsedSeconds}",
+                commandId = $"{prefix}-{Guid.NewGuid():N}",
                 commandType = commandType,
                 simulationSecond = Clock.Now.ElapsedSeconds
             });
@@ -156,9 +123,11 @@ namespace Airside.Persistence
 
         private void RestoreAndCatchUp(long currentUnixSeconds, bool recoveredPrevious)
         {
+            // OrderBy is stable: the persisted list preserves player order within each
+            // second, including legacy records whose IDs may collide. IDs are identity,
+            // not a sort key (alphabetical sorting can change which commands succeed).
             var orderedCommands = _save.commands
                 .OrderBy(command => command.simulationSecond)
-                .ThenBy(command => command.commandId, StringComparer.Ordinal)
                 .ToArray();
             var commandIndex = 0;
 

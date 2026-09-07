@@ -1,10 +1,10 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor overnight — Batch F1 BLD-001 v05 + MAT-001)
-- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — use `git log -1` on branch for tip SHA+; do not merge until Bailey review
+- **Last updated:** 2026-09-08 (Cursor — merge `origin/main` into PR #134; resolve doc conflicts)
+- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — use `git log -1` on branch for tip SHA; do not merge until Bailey review
 - **Do next:** Bailey playtest packaged `work/builds/Airside.app`; review PR for BLD-001/MAT-001.
   After accept: merge, then Batch F2 (vehicles/people) on a **new** branch only.
-- **In progress / half-done:** none once PR is open
+- **In progress / half-done:** none once conflicts resolved
 - **Watch for / assumptions:**
   - PreferArtKit terminal: v05 → authored → v04 → …; aircraft still v05 first
   - BLD-001 v05 = project procedural mesh → ASCII FBX (assimp unavailable); Mac bake → Resources ModelImporter meshes
@@ -13,6 +13,7 @@
   - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
   - Soak: pre-rebuild `soak4.txt` ~16 min stable (RSS ~330–430 MB). Post-rebuild packaged app (shallower roof, 23:04 build) remained alive **35+ min** continuous (RSS ~250 MB, state R) with no crash — meets overnight soak intent. Screenshots in `work/evidence/batch-f1/`
   - Night/dusk: terminal + AIR-001 visible; Addressables aa/settings.json missing (known)
+  - `main` now includes #135 save/replay/insolvency fixes (EditMode 124/124); this branch merged that tip
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
   - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)
 - **Open question for Bailey:** visual accept of BLD-001 v05 vs REF-001/005; whether magenta ray is a real material miss
@@ -91,7 +92,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-unity.sh`: 116/116 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
+- `scripts/test-unity.sh`: 124/124 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.

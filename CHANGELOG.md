@@ -23,8 +23,15 @@ change it describes.
   `mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01`.
   Prefab instantiate re-applies presentation materials. Fallbacks retained; no simulation change.
   Evidence: Unity bake 12 prefabs; MAT-001 CreateMaterials ×8×2; `scripts/test-unity.sh` 116/116;
-  packaged Mac build launched; soak notes in GAME handoff (do not claim 30-min until soak2 completes).
+  packaged Mac build launched; soak notes in GAME handoff.
   F2–F4 not started.
+
+- **Save/replay and insolvency bug audit.** Preserve player order for same-second commands
+  (including legacy IDs), assign unique IDs to new commands, retain the valid backup after
+  recovery writes, reject unsupported schemas before migration, and stop traffic immediately
+  when a midnight close declares insolvency. No schema fields changed; schema-1 migration stays
+  supported. Unity 6000.3.23f1 EditMode: 124/124; the pre-fix run reproduced six failing cases
+  across five defects. Universal arm64/x86_64 Mac build passed. See `docs/testing/BUG_AUDIT_2026-09-07.md`.
 
 - **Batch F1 AIR-001 v05 Mac bake.** Unity ModelImporter meshes now in Resources prefabs for
   `mdl_regional_turboprop_01_v05` plus the authored FBX kits from the same bake menu; Bailey

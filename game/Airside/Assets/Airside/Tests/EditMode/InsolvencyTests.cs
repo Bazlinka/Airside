@@ -8,6 +8,26 @@ namespace Airside.Tests
     public sealed class InsolvencyTests
     {
         [Test]
+        public void InsolvencyAtMidnight_DoesNotAdvanceTrafficAfterTheFinalReport()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(11), new ReservationTable());
+            simulation.Economy.PayOperatingCosts(AirportEconomy.StartingCash + 80000);
+            clock.Advance(3199);
+            simulation.Update();
+            // Arrange an approach whose landing clearance falls exactly on the third close.
+            var flight = simulation.Flights[0];
+            flight.Operation = new AircraftOperation(flight.AircraftId, new SimulationTime(3180));
+
+            clock.Advance(1);
+            simulation.Update();
+
+            Assert.That(simulation.IsInsolvent, Is.True);
+            Assert.That(flight.Operation.Phase, Is.EqualTo(AircraftPhase.Approach));
+            Assert.That(simulation.EventLog.Events.Last().Title, Is.EqualTo("Insolvent"));
+        }
+
+        [Test]
         public void Economy_ThreeConsecutiveNegativeDayEnds_DeclaresInsolvency()
         {
             var economy = new AirportEconomy();

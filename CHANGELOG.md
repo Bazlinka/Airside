@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **First-session countdown tip and auto-follow on Begin.** Coach line counts down to
+  the first route offer; dismissing the opening briefing starts camera follow on the
+  lead commercial so the aircraft cycle is visible immediately. Presentation only.
+  `scripts/test-domain.sh` 97/97.
+
 - **First-session offer pacing and HUD priority.** First route offer arrives at 12s
   (was 25s); pending offers pin above the OPERATIONS panel so detail never buries
   the decision; first-offer coach tip uses caution colour. Domain constant +

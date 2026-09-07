@@ -24,7 +24,10 @@ change it describes.
   hangar door gated on door_panel; chocks accept singular kit mesh; gate coast
   dune densify when WLD-004 terrain kit present; PC quality 4 cascades + High
   shadows + MSAA 2 + probes; overview framing toward terminal (46 m / 50° FOV);
-  stronger soft sun shadows. Presentation only — simulation unchanged.
+  stronger soft sun shadows; fix orphaned UpdateCoastalMotion foam scale
+  (Unity compile); hold-short wait pulse collects kit hold_short meshes;
+  skip BuildStandMarking when stand_stop present; wet VFX + foam sync
+  `_BaseColor`. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

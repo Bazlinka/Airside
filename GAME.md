@@ -1,24 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 5)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 6)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
-  Keep pushing first-playable visual polish (standing goal).
+  Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - Quality PC: shadowDistance 140, 4 cascades, High shadow res, MSAA 2, probes on
-  - Rain stamps from VFX-003 kit; engine heat prefers VFX-002 kit
-  - ALS lateral bars reuse lighting-kit taxi/edge stems when kit stations land
-  - Forecourt kit owns parking sign + kerbs; airside planter strip from PRP-003
-  - WLD-004 accents; greybox coast dunes gated when terrain kit present
-  - Aircraft/aerodrome/service beacon family uses `AirsideReusableMotion` Hz
-  - Taxi centreline + REIL posts prefer lighting kit
-  - Threshold side stripes only when kit sides miss (z-fight gate)
-  - Cloud bands are multi-blob clusters; overview ~46 m / 50° FOV toward terminal
-  - Terminal canopy / window-glow / hangar-bay / hangar-door densify gated by kits
-  - Stand bay digits via PlaceRunwayDigit; stand boxes gated on stand_stop
-  - GT props use PropRpmTaxi; URP `_BaseColor` synced on lights/glow/shadows/clouds
-  - Night glow collects kit glass (`side_window`, `glass_pane_*`, etc.)
+  - Fixed orphaned `UpdateCoastalMotion` foam scale block (would not compile in Unity)
+  - Hold-short traffic pulse collects kit `hold_short_*` (renamed to Hold short A–D)
+  - `BuildStandMarking` skipped when markings `stand_stop_*` present
+  - Wet spray/puddles/touchdown/skid + foam sync URP `_BaseColor`
+  - Overview ~46 m / 50° FOV toward terminal; kit-prefer densify gates as prior tips
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

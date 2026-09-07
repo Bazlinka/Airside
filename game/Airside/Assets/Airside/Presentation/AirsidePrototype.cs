@@ -2173,7 +2173,7 @@ namespace Airside.Presentation
                 {
                     var color = renderer.material.color;
                     color.a = (0.18f + wetness * 0.28f) * pulse;
-                    renderer.material.color = color;
+                    SetRendererColor(renderer, color);
                 }
             }
         }
@@ -2198,7 +2198,7 @@ namespace Airside.Presentation
                         continue;
                     var color = renderer.material.color;
                     color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i + b * 0.4f));
-                    renderer.material.color = color;
+                    SetRendererColor(renderer, color);
                 }
             }
         }
@@ -2263,7 +2263,7 @@ namespace Airside.Presentation
                     {
                         var color = renderer.material.color;
                         color.a = t * 0.5f;
-                        renderer.material.color = color;
+                        SetRendererColor(renderer, color);
                     }
                 }
             }
@@ -2321,6 +2321,8 @@ namespace Airside.Presentation
                 }
 
                 renderer.material.color = color;
+                if (renderer.material.HasProperty("_BaseColor"))
+                    renderer.material.SetColor("_BaseColor", color);
                 // Stretch slightly as the mark ages so it reads as a rollout streak.
                 var scale = mark.localScale;
                 scale.z = Mathf.MoveTowards(scale.z, 5.2f, Time.unscaledDeltaTime * 0.08f);
@@ -2331,13 +2333,19 @@ namespace Airside.Presentation
         private void CollectHoldShortMarkings()
         {
             _holdShortRenderers.Clear();
-            foreach (var name in new[] { "Hold short A", "Hold short B", "Hold short C", "Hold short D" })
+            foreach (var name in new[]
+                     {
+                         "Hold short A", "Hold short B", "Hold short C", "Hold short D",
+                         "Hold short E", "Hold short F",
+                         "hold_short_a", "hold_short_b", "hold_short_c", "hold_short_d",
+                         "hold_short_e", "hold_short_f"
+                     })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
                     continue;
                 var renderer = go.GetComponent<Renderer>();
-                if (renderer != null)
+                if (renderer != null && !_holdShortRenderers.Contains(renderer))
                     _holdShortRenderers.Add(renderer);
             }
         }
@@ -2347,7 +2355,8 @@ namespace Airside.Presentation
             // Presentation-only: pulse hold-short bars when a traffic wait is active.
             var warning = _simulation.TrafficWaits.HasWarning(_clock.Now);
             var pulse = warning
-                ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4.5f))
+                ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.ServicePulseHz * Mathf.PI * 2f))
                 : 1f;
             var baseColor = new Color(0.95f, 0.82f, 0.12f);
             var hot = new Color(1f, 0.45f, 0.12f);
@@ -2357,7 +2366,7 @@ namespace Airside.Presentation
                 var renderer = _holdShortRenderers[i];
                 if (renderer == null)
                     continue;
-                renderer.material.color = color;
+                SetRendererColor(renderer, color);
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
                     renderer.material.EnableKeyword("_EMISSION");
@@ -6898,7 +6907,7 @@ namespace Airside.Presentation
                 {
                     var c = renderer.material.color;
                     c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * 1.4f));
-                    renderer.material.color = c;
+                    SetRendererColor(renderer, c);
                 }
             }
 
@@ -6914,14 +6923,10 @@ namespace Airside.Presentation
                 var wave = 0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f);
                 var c = renderer.material.color;
                 c.a = 0.3f + 0.35f * wave;
-                renderer.material.color = c;
+                SetRendererColor(renderer, c);
                 // Soft Z pulse so the surf edge breathes toward shore.
                 var scale = foam.localScale;
                 scale.z = (i == 0 ? 1.1f : 1.4f) * (0.92f + 0.1f * wave);
-                foam.localScale = scale;
-            }
-                var scale = foam.localScale;
-                scale.z = (i == 0 ? 1.1f : 1.4f) * (0.9f + 0.1f * Mathf.Sin(t * 1.5f + i));
                 foam.localScale = scale;
             }
 
@@ -7129,6 +7134,12 @@ namespace Airside.Presentation
 
         private static void BuildStandMarking(float x, float z, string name)
         {
+            // Markings kit already paints stand_stop + digits + chevrons — skip yellow densify.
+            if (GameObject.Find("stand_stop_a") != null
+                || GameObject.Find("stand_stop_b") != null
+                || GameObject.Find("stand_stop_c") != null)
+                return;
+
             CreateBlock(name, new Vector3(x, 0.08f, z), new Vector3(0.18f, 0.03f, 4.2f), new Color(0.96f, 0.77f, 0.12f));
             CreateBlock($"{name} stop", new Vector3(x, 0.08f, z + 1.9f), new Vector3(3.4f, 0.03f, 0.18f), new Color(0.96f, 0.77f, 0.12f));
         }
@@ -8609,13 +8620,17 @@ namespace Airside.Presentation
 
             var holdYellow = new Color(0.95f, 0.82f, 0.12f);
             var usedHoldA = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_a", new Vector3(-12f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _);
+                kit, "hold_short_a", new Vector3(-12f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out var holdA);
             var usedHoldB = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_b", new Vector3(-12f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _);
+                kit, "hold_short_b", new Vector3(-12f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out var holdB);
             var usedHoldC = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_c", new Vector3(4f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _);
+                kit, "hold_short_c", new Vector3(4f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out var holdC);
             var usedHoldD = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_d", new Vector3(4f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _);
+                kit, "hold_short_d", new Vector3(4f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out var holdD);
+            if (holdA != null) holdA.name = "Hold short A";
+            if (holdB != null) holdB.name = "Hold short B";
+            if (holdC != null) holdC.name = "Hold short C";
+            if (holdD != null) holdD.name = "Hold short D";
             if (!usedHoldA)
                 CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
             if (!usedHoldB)

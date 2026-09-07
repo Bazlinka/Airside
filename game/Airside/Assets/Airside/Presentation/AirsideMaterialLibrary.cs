@@ -52,9 +52,9 @@ namespace Airside.Presentation
         {
             // Dry profiles tuned so wet variants can raise gloss without starting shiny.
             [SurfaceKind.Default] = new Profile(0.04f, 0.26f, 0.4f),
-            [SurfaceKind.Asphalt] = new Profile(0.01f, 0.12f, 0.72f, 0.86f),
-            [SurfaceKind.Concrete] = new Profile(0.018f, 0.22f, 0.55f, 0.9f),
-            [SurfaceKind.Grass] = new Profile(0.0f, 0.1f, 0.82f, 0.82f),
+            [SurfaceKind.Asphalt] = new Profile(0.01f, 0.10f, 0.78f, 0.9f),
+            [SurfaceKind.Concrete] = new Profile(0.015f, 0.18f, 0.72f, 0.94f),
+            [SurfaceKind.Grass] = new Profile(0.0f, 0.08f, 0.88f, 0.86f),
             [SurfaceKind.Sand] = new Profile(0.0f, 0.16f, 0.62f, 0.84f),
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
@@ -126,7 +126,7 @@ namespace Airside.Presentation
                 || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle")
                 || n.Equals("entrance") || n.Contains("entrance_door") || n.Contains("boarding_gate"))
                 return SurfaceKind.Metal;
-            if (n.Contains("glass") || n.Contains("window")
+            if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
                 || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
                 || n.Contains("landside_glass") || n.Contains("door_glass"))
                 return SurfaceKind.Glass;

@@ -527,7 +527,10 @@ def turboprop_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
 
 def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     # Practical regional terminal: body shell, glass curtain, caps, service wing, canopy.
-    return {
+    # Mullions sit proud of panes so the curtain wall reads framed (REF-001/002).
+    mullion_z = -2.28
+    pane_z = -2.18
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "terminal_body": box(0, 2.15, 0.2, 20.5, 4.1, 4.4),
         "plinth": box(0, 0.18, 0.1, 21.0, 0.36, 4.8),
         "roof": box(0, 4.35, 0.1, 21.2, 0.28, 5.0),
@@ -540,22 +543,23 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "roof_parapet_back": box(0, 4.55, -2.25, 20.8, 0.25, 0.12),
         "end_cap_left": box(-10.8, 2.0, 0, 1.1, 3.9, 5.0),
         "end_cap_right": box(10.8, 2.0, 0, 1.1, 3.9, 5.0),
-        "glass_front": box(0, 2.35, -2.15, 16.5, 2.4, 0.1),
-        "window_mullion_1": box(-6.0, 2.35, -2.2, 0.12, 2.5, 0.14),
-        "window_mullion_2": box(-3.0, 2.35, -2.2, 0.12, 2.5, 0.14),
-        "window_mullion_3": box(0.0, 2.35, -2.2, 0.12, 2.5, 0.14),
-        "window_mullion_4": box(3.0, 2.35, -2.2, 0.12, 2.5, 0.14),
-        "window_mullion_5": box(6.0, 2.35, -2.2, 0.12, 2.5, 0.14),
-        "window_mullion_6": box(-7.5, 2.35, -2.2, 0.1, 2.5, 0.12),
-        "window_mullion_7": box(7.5, 2.35, -2.2, 0.1, 2.5, 0.12),
-        "window_mullion_8": box(-4.5, 2.35, -2.2, 0.08, 2.5, 0.1),
-        "window_mullion_9": box(4.5, 2.35, -2.2, 0.08, 2.5, 0.1),
-        "window_mullion_10": box(-1.5, 2.35, -2.2, 0.08, 2.5, 0.1),
-        "window_mullion_11": box(1.5, 2.35, -2.2, 0.08, 2.5, 0.1),
-        "window_transom": box(0, 3.35, -2.2, 16.2, 0.1, 0.12),
-        "window_midrail": box(0, 2.35, -2.2, 16.2, 0.08, 0.1),
-        "window_sill": box(0, 1.15, -2.2, 16.2, 0.08, 0.14),
-        "window_header": box(0, 3.55, -2.2, 16.4, 0.12, 0.14),
+        # Keep glass_front as a thin deep pane strip for fallbacks; panes add depth.
+        "glass_front": box(0, 2.35, pane_z - 0.02, 16.5, 2.4, 0.04),
+        "window_mullion_1": box(-6.0, 2.35, mullion_z, 0.12, 2.5, 0.14),
+        "window_mullion_2": box(-3.0, 2.35, mullion_z, 0.12, 2.5, 0.14),
+        "window_mullion_3": box(0.0, 2.35, mullion_z, 0.12, 2.5, 0.14),
+        "window_mullion_4": box(3.0, 2.35, mullion_z, 0.12, 2.5, 0.14),
+        "window_mullion_5": box(6.0, 2.35, mullion_z, 0.12, 2.5, 0.14),
+        "window_mullion_6": box(-7.5, 2.35, mullion_z, 0.1, 2.5, 0.12),
+        "window_mullion_7": box(7.5, 2.35, mullion_z, 0.1, 2.5, 0.12),
+        "window_mullion_8": box(-4.5, 2.35, mullion_z, 0.08, 2.5, 0.1),
+        "window_mullion_9": box(4.5, 2.35, mullion_z, 0.08, 2.5, 0.1),
+        "window_mullion_10": box(-1.5, 2.35, mullion_z, 0.08, 2.5, 0.1),
+        "window_mullion_11": box(1.5, 2.35, mullion_z, 0.08, 2.5, 0.1),
+        "window_transom": box(0, 3.35, mullion_z, 16.2, 0.1, 0.12),
+        "window_midrail": box(0, 2.35, mullion_z, 16.2, 0.08, 0.1),
+        "window_sill": box(0, 1.15, mullion_z, 16.2, 0.08, 0.14),
+        "window_header": box(0, 3.55, mullion_z, 16.4, 0.12, 0.14),
         "entrance": box(0, 1.35, -2.25, 2.4, 2.4, 0.12),
         "entrance_door_l": box(-0.55, 1.25, -2.32, 1.0, 2.2, 0.06),
         "entrance_door_r": box(0.55, 1.25, -2.32, 1.0, 2.2, 0.06),
@@ -601,11 +605,24 @@ def terminal_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "downpipe_r": cylinder(10.2, 2.2, 2.2, 0.08, 4.2, axis="y", segments=8),
         "flag_pole": cylinder(10.2, 3.5, -2.8, 0.05, 3.0, axis="y", segments=8),
         "flag_cloth": box(10.55, 4.6, -2.8, 0.7, 0.45, 0.04),
+        # Warm interior silhouettes behind the curtain wall (night glow targets).
+        "interior_counter": box(-3.5, 1.15, -1.55, 4.5, 0.9, 0.7),
+        "interior_seat_row": box(3.2, 0.75, -1.45, 5.0, 0.55, 0.7),
+        "interior_glow_l": box(-5.0, 2.4, -1.7, 3.2, 1.4, 0.08),
+        "interior_glow_r": box(5.0, 2.4, -1.7, 3.2, 1.4, 0.08),
+        "interior_glow_mid": box(0.0, 2.6, -1.65, 2.8, 1.2, 0.08),
     }
+    # Pane bays between mullions at x = -7.5..7.5 every 1.5 m (skip entrance bay).
+    pane_xs = [-6.75, -5.25, -3.75, -2.25, 2.25, 3.75, 5.25, 6.75, -0.75, 0.75]
+    for i, x in enumerate(pane_xs, start=1):
+        # Upper + lower panes split by midrail.
+        meshes[f"glass_pane_{i}"] = box(x, 2.85, pane_z, 1.35, 0.9, 0.06)
+        meshes[f"glass_pane_lo_{i}"] = box(x, 1.75, pane_z, 1.35, 1.05, 0.06)
+    return meshes
 
 
 def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    return {
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {
         "hangar_shell": box(0, 2.5, 0, 14, 5, 9),
         "roof_ridge": box(0, 5.15, 0, 14.4, 0.35, 1.2),
         "roof_panel_l": box(-3.5, 4.85, 0, 7.2, 0.22, 9.2),
@@ -675,7 +692,17 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "workbench": box(5.0, 0.7, -1.5, 2.2, 0.8, 1.0),
         "tool_cabinet": box(-5.5, 0.8, -2.5, 1.2, 1.4, 0.7),
         "floor_drain": box(0, 0.05, 1.5, 0.8, 0.06, 0.8),
+        "cladding_face_l": box(-7.05, 2.5, 0, 0.08, 4.6, 8.6),
+        "cladding_face_r": box(7.05, 2.5, 0, 0.08, 4.6, 8.6),
+        "girth_band_1": box(0, 1.4, 0, 14.1, 0.12, 9.05),
+        "girth_band_2": box(0, 3.2, 0, 14.1, 0.12, 9.05),
+        "girth_band_3": box(0, 4.4, 0, 14.1, 0.1, 9.05),
     }
+    # Vertical corrugation ribs on ±X faces.
+    for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5), start=1):
+        meshes[f"wall_rib_l_{i}"] = box(-7.12, 2.5, z, 0.1, 4.5, 0.18)
+        meshes[f"wall_rib_r_{i}"] = box(7.12, 2.5, z, 0.1, 4.5, 0.18)
+    return meshes
 
 
 def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
@@ -944,6 +971,19 @@ def service_equipment_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "gpu_light": box(0.4, 1.15, 0, 0.12, 0.1, 0.12),
         "towbar_handle": box(-1.2, 0.35, -1.5, 0.35, 0.08, 0.08),
         "cone_base": box(1.2, 0.04, 0, 0.4, 0.08, 0.4),
+        # Belt loader (REF-003 service zone) — parked GSE silhouette.
+        "belt_loader_chassis": box(2.8, 0.35, 0, 1.6, 0.45, 0.85),
+        "belt_loader_cab": box(3.35, 0.75, 0, 0.55, 0.55, 0.7),
+        "belt_loader_boom": box(2.2, 0.95, 0, 2.4, 0.18, 0.35),
+        "belt_loader_belt": box(2.2, 1.05, 0, 2.2, 0.06, 0.28),
+        "belt_loader_rail_l": box(2.2, 1.15, 0.18, 2.2, 0.08, 0.05),
+        "belt_loader_rail_r": box(2.2, 1.15, -0.18, 2.2, 0.08, 0.05),
+        "belt_loader_wheel_fl": cylinder(3.3, 0.15, 0.35, 0.12, 0.14, axis="z", segments=10),
+        "belt_loader_wheel_fr": cylinder(3.3, 0.15, -0.35, 0.12, 0.14, axis="z", segments=10),
+        "belt_loader_wheel_rl": cylinder(2.3, 0.15, 0.35, 0.12, 0.14, axis="z", segments=10),
+        "belt_loader_wheel_rr": cylinder(2.3, 0.15, -0.35, 0.12, 0.14, axis="z", segments=10),
+        "belt_loader_hitch": box(3.7, 0.35, 0, 0.25, 0.15, 0.2),
+        "belt_loader_light": box(3.4, 1.05, 0, 0.12, 0.1, 0.12),
     }
 
 

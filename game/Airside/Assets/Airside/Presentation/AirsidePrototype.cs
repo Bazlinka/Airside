@@ -587,10 +587,28 @@ namespace Airside.Presentation
             }
 
             var body = string.Join("\n", lines);
+            var metar = MetarLine(_simulation.CurrentWeather);
             if (toolkitOwnsOps && _toolkitHud != null)
-                _toolkitHud.SyncOps(summary, body, report);
+            {
+                _toolkitHud.SyncOps(summary, body, report, metar);
+                _toolkitHud.SyncReputationBar(_simulation.Reputation.Score / 100f);
+            }
             else
                 _canvasHud.SyncOps(summary, body, report);
+        }
+
+        private static string MetarLine(WeatherKind weather)
+        {
+            // Presentation-only METAR-style readout for REF-004 ops chrome.
+            return weather switch
+            {
+                WeatherKind.Clear => "METAR  ·  TEMP 18°  ·  WIND 240/08  ·  VIS 10km",
+                WeatherKind.Overcast => "METAR  ·  TEMP 16°  ·  WIND 220/12  ·  VIS 8km",
+                WeatherKind.Rain => "METAR  ·  TEMP 14°  ·  WIND 200/14  ·  VIS 4km  ·  RA",
+                WeatherKind.Storm => "METAR  ·  TEMP 13°  ·  WIND 190/22G32  ·  VIS 2km  ·  TSRA",
+                WeatherKind.Fog => "METAR  ·  TEMP 12°  ·  WIND 250/04  ·  VIS 800m  ·  FG",
+                _ => "METAR  ·  TEMP 17°  ·  WIND 230/10  ·  VIS 9km"
+            };
         }
 
         private void SyncCanvasLeftPanel()
@@ -3593,7 +3611,10 @@ namespace Airside.Presentation
                          "Terminal landside glow",
                          "Terminal canopy glow",
                          "Hangar window glow",
-                         "Ops shed window glow"
+                         "Ops shed window glow",
+                         "interior_glow_l",
+                         "interior_glow_r",
+                         "interior_glow_mid"
                      })
             {
                 var go = GameObject.Find(name);
@@ -4039,7 +4060,18 @@ namespace Airside.Presentation
                 name => name switch
                 {
                     "glass_front" or "windows" or "cabin_windows" or "landside_glass"
-                        or "door_glass" => new Color(0.16f, 0.38f, 0.5f),
+                        or "door_glass" or "glass_pane_1" or "glass_pane_2" or "glass_pane_3"
+                        or "glass_pane_4" or "glass_pane_5" or "glass_pane_6" or "glass_pane_7"
+                        or "glass_pane_8" or "glass_pane_9" or "glass_pane_10"
+                        or "glass_pane_lo_1" or "glass_pane_lo_2" or "glass_pane_lo_3"
+                        or "glass_pane_lo_4" or "glass_pane_lo_5" or "glass_pane_lo_6"
+                        or "glass_pane_lo_7" or "glass_pane_lo_8" or "glass_pane_lo_9"
+                        or "glass_pane_lo_10"
+                        => new Color(0.16f, 0.38f, 0.5f, 0.42f),
+                    "interior_glow_l" or "interior_glow_r" or "interior_glow_mid"
+                        => new Color(1f, 0.82f, 0.55f),
+                    "interior_counter" or "interior_seat_row"
+                        => new Color(0.45f, 0.42f, 0.38f),
                     "entrance" or "entrance_door_l" or "entrance_door_r" or "boarding_gate"
                         => new Color(0.55f, 0.6f, 0.64f),
                     "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
@@ -4120,7 +4152,14 @@ namespace Airside.Presentation
                         or "workbench" or "tool_cabinet" or "floor_drain"
                         or "side_vent" or "side_vent_b" or "office_lean" or "office_window" or "office_door"
                         or "side_window" or "side_window_b"
-                        or "column_ml" or "column_mr" => new Color(0.42f, 0.46f, 0.5f),
+                        or "column_ml" or "column_mr"
+                        or "cladding_face_l" or "cladding_face_r"
+                        or "girth_band_1" or "girth_band_2" or "girth_band_3"
+                        or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
+                        or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
+                        or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
+                        or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
+                        => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
                 () =>
@@ -4174,6 +4213,30 @@ namespace Airside.Presentation
                 "Textures/Decals/dc_runway_wear_v01.png");
             CreateDecalQuad("Apron stains", new Vector3(20f, 0.06f, 17f), new Vector3(18f, 1f, 10f),
                 "Textures/Decals/dc_apron_stains_v01.png");
+            CreateDecalQuad("Stand 1 stain", new Vector3(17f, 0.065f, 14f), new Vector3(5.5f, 1f, 3.2f),
+                "Textures/Decals/dc_apron_stains_v01.png");
+            CreateDecalQuad("Stand 2 stain", new Vector3(17f, 0.065f, 20f), new Vector3(5.5f, 1f, 3.2f),
+                "Textures/Decals/dc_apron_stains_v01.png");
+            CreateDecalQuad("Stand 3 stain", new Vector3(20f, 0.065f, 26f), new Vector3(5f, 1f, 2.8f),
+                "Textures/Decals/dc_apron_stains_v01.png");
+            // Soft fringe so the apron doesn't float as a hard cutout (REF densify).
+            var fringe = Shade(AirsideTheme.DryGrass, 0.7f);
+            CreateBlock("Apron fringe N", new Vector3(20f, -0.02f, 24.4f), new Vector3(29f, 0.06f, 1.2f), fringe,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
+            CreateBlock("Apron fringe S", new Vector3(20f, -0.02f, 9.6f), new Vector3(29f, 0.06f, 1.2f), fringe,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
+            CreateBlock("Apron fringe E", new Vector3(34.4f, -0.02f, 17f), new Vector3(1.2f, 0.06f, 15f), fringe,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
+            CreateBlock("Apron fringe W", new Vector3(5.6f, -0.02f, 17f), new Vector3(1.2f, 0.06f, 15f), fringe,
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
+            // Planter strip between terminal glass and apron edge.
+            CreateBlock("Terminal planter bed", new Vector3(26f, 0.12f, 24.4f), new Vector3(14f, 0.28f, 1.1f),
+                new Color(0.28f, 0.22f, 0.16f));
+            PlaceShrub(new Vector3(20f, 0f, 24.4f), 0.55f);
+            PlaceShrub(new Vector3(23f, 0f, 24.5f), 0.62f);
+            PlaceShrub(new Vector3(26f, 0f, 24.35f), 0.58f);
+            PlaceShrub(new Vector3(29f, 0f, 24.45f), 0.65f);
+            PlaceShrub(new Vector3(32f, 0f, 24.4f), 0.5f);
 
             PlaceWorldMarkings();
             PlaceWorldLighting();
@@ -7126,10 +7189,45 @@ namespace Airside.Presentation
             PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
             PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
             PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
+            PlaceBeltLoader(kit, new Vector3(12.5f, 0f, 21.5f), 200f);
+            PlaceBeltLoader(kit, new Vector3(29.5f, 0f, 15.5f), 110f);
 
             BuildApronSafetyProps();
             BuildFuelFarm();
             BuildParkedGaAircraft();
+        }
+
+        private static void PlaceBeltLoader(string kit, Vector3 position, float yaw)
+        {
+            var rot = Quaternion.Euler(0f, yaw, 0f);
+            var yellow = new Color(0.85f, 0.7f, 0.2f);
+            var dark = new Color(0.2f, 0.22f, 0.24f);
+            var placed = false;
+            void Place(string mesh, Color color)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, position, rot, color, out _))
+                    return;
+                placed = true;
+            }
+
+            Place("belt_loader_chassis", yellow);
+            Place("belt_loader_cab", Shade(yellow, 0.85f));
+            Place("belt_loader_boom", new Color(0.55f, 0.56f, 0.58f));
+            Place("belt_loader_belt", new Color(0.25f, 0.25f, 0.26f));
+            Place("belt_loader_rail_l", dark);
+            Place("belt_loader_rail_r", dark);
+            Place("belt_loader_wheel_fl", dark);
+            Place("belt_loader_wheel_fr", dark);
+            Place("belt_loader_wheel_rl", dark);
+            Place("belt_loader_wheel_rr", dark);
+            Place("belt_loader_hitch", dark);
+            Place("belt_loader_light", new Color(0.95f, 0.9f, 0.6f));
+            if (!placed)
+            {
+                CreateBlock("Belt loader body", position + new Vector3(0f, 0.4f, 0f), new Vector3(1.6f, 0.5f, 0.8f), yellow);
+                CreateBlock("Belt loader boom", position + new Vector3(0.8f, 0.85f, 0f), new Vector3(2.2f, 0.2f, 0.35f),
+                    new Color(0.55f, 0.56f, 0.58f));
+            }
         }
 
         /// <summary>

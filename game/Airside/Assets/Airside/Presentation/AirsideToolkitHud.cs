@@ -41,6 +41,9 @@ namespace Airside.Presentation
         private VisualElement _stripResearchTrack;
         private VisualElement _stripResearchFill;
         private Label _stripResearchText;
+        private VisualElement _repTrack;
+        private VisualElement _repFill;
+        private Label _metarText;
         private VisualElement _turnaroundBlock;
         private Label _turnaroundText;
         private VisualElement _turnaroundBars;
@@ -364,16 +367,28 @@ namespace Airside.Presentation
             _economyStrip.Add(_cashIcon);
             _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
             _cashText.style.marginLeft = 6;
-            _cashText.style.marginRight = 12;
+            _cashText.style.marginRight = 10;
             _economyStrip.Add(_cashText);
+
+            _economyStrip.Add(MakeStripDivider());
 
             _repIcon = MakeIconSlot("Rep icon", 18);
             _economyStrip.Add(_repIcon);
             _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
             _financeText.style.marginLeft = 6;
-            _financeText.style.marginRight = 12;
+            _financeText.style.marginRight = 6;
             _financeText.style.whiteSpace = WhiteSpace.NoWrap;
             _economyStrip.Add(_financeText);
+            _repTrack = MakeProgressTrack("Rep track");
+            _repTrack.style.width = 72;
+            _repTrack.style.marginTop = 0;
+            _repTrack.style.marginRight = 10;
+            _repFill = _repTrack.Q<VisualElement>("Fill");
+            if (_repFill != null)
+                _repFill.style.backgroundColor = AirsideTheme.ClearGreen;
+            _economyStrip.Add(_repTrack);
+
+            _economyStrip.Add(MakeStripDivider());
 
             _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
             _stripResearchText.style.marginRight = 6;
@@ -386,6 +401,19 @@ namespace Airside.Presentation
             _economyStrip.Add(_stripResearchTrack);
 
             _root.Add(_economyStrip);
+        }
+
+        private static VisualElement MakeStripDivider()
+        {
+            var div = new VisualElement { name = "Strip divider" };
+            div.pickingMode = PickingMode.Ignore;
+            div.style.width = 1;
+            div.style.height = 18;
+            div.style.marginLeft = 4;
+            div.style.marginRight = 8;
+            div.style.backgroundColor = new Color(
+                AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.22f);
+            return div;
         }
 
         private void BuildSpeedChip()
@@ -514,6 +542,13 @@ namespace Airside.Presentation
             _opsSummary.style.whiteSpace = WhiteSpace.Normal;
             _opsSummary.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.92f);
             _opsPanel.Add(_opsSummary);
+
+            _metarText = MakePanelLabel("Metar", 11, FontStyle.Normal);
+            _metarText.style.marginLeft = 14;
+            _metarText.style.marginRight = 14;
+            _metarText.style.marginTop = 4;
+            _metarText.style.color = new Color(AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.9f);
+            _opsPanel.Add(_metarText);
 
             _opsBody = MakePanelLabel("Ops body", 12, FontStyle.Normal);
             _opsBody.style.marginLeft = 14;
@@ -858,7 +893,7 @@ namespace Airside.Presentation
             panel.style.position = Position.Absolute;
             panel.style.width = width;
             var ink = AirsideTheme.RunwayInk;
-            ink.a = 0.82f;
+            ink.a = 0.72f;
             panel.style.backgroundColor = ink;
             var panelTex = AirsideTheme.PanelBackground;
             if (panelTex != null)
@@ -1312,19 +1347,32 @@ namespace Airside.Presentation
             ApplyOpsVisibility();
         }
 
-        public void SyncOps(string summary, string body, string reportBodyOrNull)
+        public void SyncOps(string summary, string body, string reportBodyOrNull, string metarLine = null)
         {
             if (_opsPanel == null)
                 return;
 
             _opsSummary.text = summary ?? string.Empty;
             _opsBody.text = body ?? string.Empty;
+            if (_metarText != null)
+            {
+                _metarText.text = metarLine ?? string.Empty;
+                _metarText.style.display = string.IsNullOrEmpty(metarLine) ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
             var hasReport = !string.IsNullOrEmpty(reportBodyOrNull);
             _reportBlock.style.display = hasReport ? DisplayStyle.Flex : DisplayStyle.None;
             if (hasReport)
                 _reportBody.text = reportBodyOrNull;
 
             ApplyOpsVisibility();
+        }
+
+        public void SyncReputationBar(float score01)
+        {
+            if (_repFill == null)
+                return;
+            _repFill.style.width = Length.Percent(Mathf.Clamp01(score01) * 100f);
         }
 
         private void ApplyLeftVisibility()

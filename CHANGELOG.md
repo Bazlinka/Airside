@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **UI Toolkit left status panel (0025 item 6).** Runtime `AirsideToolkitHud` now owns
+  the full left status/decision panel (cash, turnaround, crew, stands, research,
+  coach, wait meter) with action buttons; Canvas keeps overlays only and hides its
+  left copy. Presentation only.
+
 - **UI Toolkit OPERATIONS + route offer (0025 item 6).** Runtime `AirsideToolkitHud`
   now owns the OPERATIONS panel and Accept/Decline route card (pulse accent, daily
   report); Canvas keeps left status + overlays and hides its right-column copies.

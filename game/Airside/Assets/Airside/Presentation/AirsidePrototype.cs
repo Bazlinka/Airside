@@ -258,7 +258,41 @@ namespace Airside.Presentation
                 onResetAirport: () => ResetToNewAirport(),
                 onContinueAway: () => { _showAwaySummary = false; });
             if (_toolkitHud != null)
-                _toolkitHud.BindActions(onAccept, onDecline);
+            {
+                _toolkitHud.BindActions(
+                    onAccept: onAccept,
+                    onDecline: onDecline,
+                    onPriorityCrew: () =>
+                    {
+                        if (!_simulation.IsInsolvent)
+                            _session.EnablePriorityCrew();
+                    },
+                    onHireCrew: () =>
+                    {
+                        if (!_simulation.IsInsolvent)
+                            _session.HireGroundCrew();
+                    },
+                    onReleaseCrew: () =>
+                    {
+                        if (!_simulation.IsInsolvent)
+                            _session.ReleaseGroundCrew();
+                    },
+                    onBuildStand: () =>
+                    {
+                        if (!_simulation.IsInsolvent)
+                            _session.BuildThirdStand();
+                    },
+                    onStartResearch: () =>
+                    {
+                        if (_simulation.IsInsolvent)
+                            return;
+                        var research = _simulation.Research;
+                        if (research.CanStartOperationsEfficiency)
+                            _session.StartOperationsResearch();
+                        else if (research.CanStartPassengerServices)
+                            _session.StartPassengerServicesResearch();
+                    });
+            }
             _canvasHudActive = _canvasHud.IsActive;
         }
 
@@ -420,7 +454,10 @@ namespace Airside.Presentation
 
             SyncCanvasOpsPanel(toolkitActive);
             if (toolkitActive)
+            {
                 _canvasHud.SetRightPanelsVisible(false);
+                _canvasHud.SetLeftPanelVisible(false);
+            }
         }
 
         private void SyncCanvasOpsPanel(bool toolkitOwnsOps = false)
@@ -628,53 +665,121 @@ namespace Airside.Presentation
                     : "Airline offer arriving…";
             }
 
-            _canvasHud.SyncLeftPanel(
+            var toolkitOwnsLeft = _toolkitHud != null && _toolkitHud.IsActive;
+            void SyncLeft(
+                string locationLine,
+                string flightLine,
+                string phaseLine,
+                string clock,
+                Color clockCol,
+                string cash,
+                Color cashCol,
+                string finance,
+                Color financeCol,
+                string warning,
+                Color warningCol,
+                bool showTurnaround,
+                string turnaround,
+                bool priorityVis,
+                bool priorityInt,
+                string priorityLbl,
+                string schedule,
+                Color scheduleCol,
+                string staffing,
+                Color staffingCol,
+                bool early,
+                string earlyHint,
+                bool hireInt,
+                string hireLbl,
+                bool releaseInt,
+                bool buildVis,
+                bool buildInt,
+                string buildLbl,
+                string stands,
+                string research,
+                bool researchProgressVis,
+                float researchProgress,
+                bool researchButtonVis,
+                bool researchButtonInt,
+                string researchButtonLbl,
+                string coach,
+                bool coachUrgentFlag,
+                string controls,
+                bool waitMeter,
+                string waitLbl,
+                float waitProgress)
+            {
+                if (toolkitOwnsLeft)
+                {
+                    _toolkitHud.SyncLeftPanel(
+                        locationLine, flightLine, phaseLine, clock, clockCol, cash, cashCol,
+                        finance, financeCol, warning, warningCol, showTurnaround, turnaround,
+                        priorityVis, priorityInt, priorityLbl, schedule, scheduleCol, staffing, staffingCol,
+                        early, earlyHint, hireInt, hireLbl, releaseInt, buildVis, buildInt, buildLbl,
+                        stands, research, researchProgressVis, researchProgress, researchButtonVis,
+                        researchButtonInt, researchButtonLbl, coach, coachUrgentFlag, controls,
+                        waitMeter, waitLbl, waitProgress);
+                }
+                else
+                {
+                    _canvasHud.SyncLeftPanel(
+                        locationLine, flightLine, phaseLine, clock, clockCol, cash, cashCol,
+                        finance, financeCol, warning, warningCol, showTurnaround, turnaround,
+                        priorityVis, priorityInt, priorityLbl, schedule, scheduleCol, staffing, staffingCol,
+                        early, earlyHint, hireInt, hireLbl, releaseInt, buildVis, buildInt, buildLbl,
+                        stands, research, researchProgressVis, researchProgress, researchButtonVis,
+                        researchButtonInt, researchButtonLbl, coach, coachUrgentFlag, controls,
+                        waitMeter, waitLbl, waitProgress);
+                }
+            }
+
+            SyncLeft(
                 locationLine: $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}",
                 flightLine: CommercialFlightHudLine(),
                 phaseLine: CommercialPhaseHudLine(),
-                clockLine: clockLine,
-                clockColor: clockColor,
-                cashLine: cashLine,
-                cashColor: cashColor,
-                financeLine: financeLine,
-                financeColor: financeColor,
-                warningLine: warningLine,
-                warningColor: warningColor,
+                clock: clockLine,
+                clockCol: clockColor,
+                cash: cashLine,
+                cashCol: cashColor,
+                finance: financeLine,
+                financeCol: financeColor,
+                warning: warningLine,
+                warningCol: warningColor,
                 showTurnaround: atStand,
-                turnaroundLines: turnaroundLines,
-                priorityVisible: priorityVisible,
-                priorityInteractable: priorityInteractable,
-                priorityLabel: priorityLabel,
-                scheduleLine: scheduleLine,
-                scheduleColor: scheduleColor,
-                staffingLine: staffingLine,
-                staffingColor: staffingColor,
-                earlySession: earlySession,
+                turnaround: turnaroundLines,
+                priorityVis: priorityVisible,
+                priorityInt: priorityInteractable,
+                priorityLbl: priorityLabel,
+                schedule: scheduleLine,
+                scheduleCol: scheduleColor,
+                staffing: staffingLine,
+                staffingCol: staffingColor,
+                early: earlySession,
                 earlyHint: "Crew / stand / research unlock after you accept a route",
-                hireInteractable: staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
-                                  && _simulation.Economy.Cash >= AirportStaffing.HireCost,
-                hireLabel: $"Hire crew · ${AirportStaffing.HireCost}",
-                releaseInteractable: staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
-                buildStandVisible: true,
-                buildStandInteractable: capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost,
-                buildStandLabel: capacity.HasThirdStand
+                hireInt: staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
+                         && _simulation.Economy.Cash >= AirportStaffing.HireCost,
+                hireLbl: $"Hire crew · ${AirportStaffing.HireCost}",
+                releaseInt: staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
+                buildVis: true,
+                buildInt: capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost,
+                buildLbl: capacity.HasThirdStand
                     ? "Stand 3 built"
                     : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}",
-                standsLine: $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
-                researchLine: researchLine,
-                researchProgressVisible: researchProgressVisible,
-                researchProgress01: researchProgress01,
-                researchButtonVisible: researchButtonVisible,
-                researchButtonInteractable: researchButtonInteractable,
-                researchButtonLabel: researchButtonLabel,
-                coachLine: FirstSessionCoachLine(),
-                coachUrgent: coachUrgent,
-                controlsLine: earlySession
+                stands: $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
+                research: researchLine,
+                researchProgressVis: researchProgressVisible,
+                researchProgress: researchProgress01,
+                researchButtonVis: researchButtonVisible,
+                researchButtonInt: researchButtonInteractable,
+                researchButtonLbl: researchButtonLabel,
+                coach: FirstSessionCoachLine(),
+                coachUrgentFlag: coachUrgent,
+                controls: earlySession
                     ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
                     : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
-                showWaitMeter: showWaitMeter,
-                waitLabel: waitLabel,
-                waitProgress01: waitProgress);
+                waitMeter: showWaitMeter,
+                waitLbl: waitLabel,
+                waitProgress: waitProgress);
         }
 
         private void ReadSimulationControls()

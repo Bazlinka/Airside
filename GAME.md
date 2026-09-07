@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (warm sun / cool ambient lighting pass)
-- **Branch / working tree:** `cursor/dawn-ambient-lighting-38b9` → merge to `main`
-- **Do this next:** Bailey `git pull` + rebuild packaged app (StreamingAssets + splash/wordmark + soft sun shadows). Then 0025 item 2 — replace placeholder 3D.
-- **In progress / half-done:** soft directional shadows + warmer key / cooler ambient (this branch).
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes. Batch C kits still greybox.
-- **Open questions for Bailey:** none — brand Approved. Visual ~20% of REF still honest.
-- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; StreamingAssets art path on `main`; Play Verified pending rebuild
+- **Last updated:** 2026-09-07 by Cursor (merged presentation wave onto main)
+- **Branch / working tree:** `main` — ready for Bailey Mac `git pull`
+- **Do this next:** Bailey `git pull origin main`, Unity open `game/Airside`, Play soak
+- **In progress / half-done:** none — #51–#55 merged
+- **Watch out for:** First Unity open may reimport StreamingAssets; wait for import
+- **Open questions for Bailey:** none
+- **Visual assets:** env + Batch C v02 + HUD + kit UVs + follow camera on `main`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,8 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): `git pull`, then verify Batch C/E/WLD/D, tips, touchdown,
-   traffic hold-short pulse, dual commercials, insolvency at 1280×720 / 1440×900 / Retina.
-2. **First-session flow** (per delivery plan v2): clean new-game path, opening role tip,
-   visible decision→consequence within a short session, packaged Mac playtest build.
-3. No unapproved economy systems. Companion / CloudKit / extra fleets stay deferred.
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
+   let it import StreamingAssets / new glTF kits, then Play.
+2. Confirm environment, v02 models, HUD coach, textured buildings, follow camera.
+3. Then lighting / HUD Toolkit (0025 items 5–6). No new economy systems.

@@ -5,6 +5,28 @@ change it describes.
 
 ## Unreleased
 
+- **Follow-camera framing.** Look-ahead along aircraft heading, altitude-based
+  distance/pitch, and gentle yaw ease so F-follow fills the frame for taxi and
+  flight. Overview (O) restores the default pitch. Presentation only.
+
+- **glTF kit UVs + building surface textures.** `ArtGltfLoader` generates planar
+  UVs so Batch B basecolours tile on box kits; hangar/ops/terminal meshes get
+  corrugated/concrete textures with soft URP Lit response. Presentation only.
+
+- **Left HUD sequential layout + first-decision coach.** Status panel rows no longer
+  overlap; height shrinks in the first session; the coach tip uses a Safety Yellow
+  stripe when a route offer needs Accept. Presentation only.
+
+- **Richer Batch C v02 kits (0025 item 2).** Procedural `*_v02.gltf` turboprop,
+  terminal, hangar, ops shed and service vehicles with more readable parts.
+  Runtime prefers v02 and falls back to Approved v01; StreamingAssets synced.
+  Presentation only; `scripts/test-domain.sh` unchanged in behaviour.
+
+- **Regional airfield environment greybox (0025 item 3).** Outer paddock, coast
+  sand/shallows, access road + car park, perimeter fence, eucalyptus clumps,
+  distant hills and a soft horizon dome. Hangar/ops/terminal glTF kits now get
+  Batch B surface textures when present. Presentation only; simulation unchanged.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

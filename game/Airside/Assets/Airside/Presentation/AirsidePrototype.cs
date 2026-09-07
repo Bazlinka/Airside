@@ -108,11 +108,14 @@ namespace Airside.Presentation
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
-                "Models/Vehicles/mdl_fuel_truck_small_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
+                    "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
-                "Models/Vehicles/mdl_baggage_tug_train_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
+                    "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
-                "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
+                    "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
             _stairs = BuildStairs();
             _chocks = BuildChocks();
             _gpuCart = BuildGpuCart();
@@ -874,30 +877,47 @@ namespace Airside.Presentation
             var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button), AirsideTheme.CoastalBlue);
 
             var timeOfDay = _simulation.TimeOfDay;
+            var earlySession = _simulation.Routes.Accepted.Count == 0;
+            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
+            var turnaroundTaskCount = atStand ? _simulation.ActiveTurnaround.Tasks(_clock.Now).Count() : 0;
+            // Dynamic left panel: shorter in the first session so the world stays visible.
+            var leftPanelHeight = earlySession
+                ? 360f
+                : Mathf.Clamp(360f + turnaroundTaskCount * 19f + (atStand ? 70f : 0f) + 140f, 420f, 580f);
+            GUI.Box(new Rect(22, 22, 410, leftPanelHeight), string.Empty, panel);
 
-            GUI.Box(new Rect(22, 22, 410, 540), string.Empty, panel);
+            var y = 36f;
             var wordmark = AirsideTheme.WordmarkLight;
             if (wordmark != null)
             {
                 GUI.DrawTexture(new Rect(42, 28, 240, 40), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
-                GUI.Label(new Rect(42, 70, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y = 70f;
+                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y += 20f;
             }
             else
             {
-                GUI.Label(new Rect(42, 36, 320, 34), "AIRSIDE", title);
-                GUI.Label(new Rect(42, 58, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                GUI.Label(new Rect(42, y, 320, 34), "AIRSIDE", title);
+                y += 28f;
+                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                y += 20f;
             }
-            GUI.Label(new Rect(42, 76, 380, 25), CommercialFlightHudLine(), detail);
+
+            GUI.Label(new Rect(42, y, 380, 22), CommercialFlightHudLine(), detail);
+            y += 24f;
+
             var phaseLineX = 42f;
             var phaseIcon = _simulation.Flights.Count > 0
                 ? AirsideTheme.OperationIcon(_simulation.Flights[0].Operation.Phase)
                 : null;
             if (phaseIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 104, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 phaseLineX = 68f;
             }
-            GUI.Label(new Rect(phaseLineX, 104, 380 - (phaseLineX - 42), 25), CommercialPhaseHudLine(), detail);
+            GUI.Label(new Rect(phaseLineX, y, 380 - (phaseLineX - 42), 22), CommercialPhaseHudLine(), detail);
+            y += 24f;
+
             var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
             if (Weather.IsAdverse(_simulation.CurrentWeather))
                 weatherLabel += " · wet apron";
@@ -906,30 +926,34 @@ namespace Airside.Presentation
             var weatherIcon = AirsideTheme.WeatherIcon(_simulation.CurrentWeather);
             if (weatherIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 132, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 weatherLineX = 68f;
             }
-            GUI.Label(new Rect(weatherLineX, 132, 380 - (weatherLineX - 42), 22),
+            GUI.Label(new Rect(weatherLineX, y, 380 - (weatherLineX - 42), 22),
                 $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
+            y += 24f;
+
             var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
             var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
             var cashIcon = AirsideTheme.Icon("economy", "cash");
             var cashX = 42f;
             if (cashIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 156, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 cashX = 64f;
             }
-            GUI.Label(new Rect(cashX, 156, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
+            GUI.Label(new Rect(cashX, y, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
             var repIcon = AirsideTheme.Icon("economy", "reputation");
             var repX = 242f;
             if (repIcon != null)
             {
-                GUI.DrawTexture(new Rect(242, 156, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(242, y, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 repX = 264f;
             }
-            GUI.Label(new Rect(repX, 156, 190 - (repX - 242), 22),
+            GUI.Label(new Rect(repX, y, 190 - (repX - 242), 22),
                 $"Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", reputationStyle);
+            y += 22f;
+
             var finance = _simulation.DailyFinance;
             var runway = finance.CashRunwayDays is int days
                 ? $"  ·  ~{days}d runway"
@@ -941,26 +965,32 @@ namespace Airside.Presentation
             var financeX = 42f;
             if (incomeIcon != null)
             {
-                GUI.DrawTexture(new Rect(42, 176, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                GUI.DrawTexture(new Rect(42, y, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 financeX = 64f;
             }
-            GUI.Label(new Rect(financeX, 176, 390 - (financeX - 42), 22),
+            GUI.Label(new Rect(financeX, y, 390 - (financeX - 42), 22),
                 $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", financeStyle);
+            y += 22f;
+
             if (_simulation.IsInsolvent)
             {
-                GUI.Label(new Rect(42, 198, 360, 22), "INSOLVENT — operations frozen", delayed);
+                GUI.Label(new Rect(42, y, 360, 22), "INSOLVENT — operations frozen", delayed);
+                y += 22f;
             }
             else if (_simulation.Economy.ConsecutiveNegativeDays > 0)
             {
                 var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
-                GUI.Label(new Rect(42, 198, 360, 22),
+                GUI.Label(new Rect(42, y, 360, 22),
                     $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent", caution);
+                y += 22f;
             }
             else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-                GUI.Label(new Rect(42, 198, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
+            {
+                GUI.Label(new Rect(42, y, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
+                y += 22f;
+            }
 
-            var lineY = 180f;
-            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null)
+            if (atStand)
             {
                 foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
                 {
@@ -970,95 +1000,111 @@ namespace Airside.Presentation
                     var taskX = 42f;
                     if (taskIcon != null)
                     {
-                        GUI.DrawTexture(new Rect(42, lineY, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                        GUI.DrawTexture(new Rect(42, y, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                         taskX = 62f;
                     }
-                    GUI.Label(new Rect(taskX, lineY, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
-                    lineY += 19f;
+                    GUI.Label(new Rect(taskX, y, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
+                    y += 19f;
                 }
 
                 if (_simulation.CurrentDelaySeconds > 0)
-                    GUI.Label(new Rect(42, 298, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
+                {
+                    GUI.Label(new Rect(42, y, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
+                    y += 22f;
+                }
 
                 var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
                 GUI.enabled = !_simulation.IsInsolvent && !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
-                if (GUI.Button(new Rect(42, 326, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
+                if (GUI.Button(new Rect(42, y, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
                     _session.EnablePriorityCrew();
                 GUI.enabled = true;
+                y += 34f;
             }
             else
             {
                 var onSchedule = _simulation.LastDelaySeconds <= 0;
-                GUI.Label(new Rect(42, 184, 350, 22), onSchedule
+                GUI.Label(new Rect(42, y, 350, 22), onSchedule
                     ? "Operations running to schedule"
                     : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}", onSchedule ? onTime : delayed);
+                y += 24f;
             }
 
-            var earlySession = _simulation.Routes.Accepted.Count == 0;
             var staffing = _simulation.Staffing;
-            GUI.Label(new Rect(42, 360, 380, 20),
+            GUI.Label(new Rect(42, y, 380, 20),
                 $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
                 staffing.IsUnderstaffed ? caution : small);
+            y += 22f;
+
             if (earlySession)
             {
-                GUI.Label(new Rect(42, 380, 360, 22), "Crew / stand / research unlock after you accept a route", small);
+                GUI.Label(new Rect(42, y, 360, 22), "Crew / stand / research unlock after you accept a route", small);
+                y += 24f;
             }
             else
             {
                 GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
-                if (GUI.Button(new Rect(42, 380, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
+                if (GUI.Button(new Rect(42, y, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
                     _session.HireGroundCrew();
                 GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
-                if (GUI.Button(new Rect(198, 380, 110, 24), "Release crew", button))
+                if (GUI.Button(new Rect(198, y, 110, 24), "Release crew", button))
                     _session.ReleaseGroundCrew();
                 GUI.enabled = true;
+                y += 28f;
 
                 var capacity = _simulation.Capacity;
-                GUI.Label(new Rect(42, 408, 380, 20),
+                GUI.Label(new Rect(42, y, 380, 20),
                     $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
+                y += 22f;
                 GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
-                if (GUI.Button(new Rect(42, 426, 220, 24),
+                if (GUI.Button(new Rect(42, y, 220, 24),
                         capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
                     _session.BuildThirdStand();
                 GUI.enabled = true;
+                y += 28f;
 
                 var research = _simulation.Research;
                 var researchIcon = AirsideTheme.Icon("economy", "research");
                 var researchLabelX = 42f;
                 if (researchIcon != null)
                 {
-                    GUI.DrawTexture(new Rect(42, 454, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
+                    GUI.DrawTexture(new Rect(42, y, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                     researchLabelX = 64f;
                 }
                 if (research.IsResearching)
                 {
                     var progress = (float)research.Progress01(_clock.Now);
                     var pct = (int)(progress * 100);
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
+                    y += 22f;
                     AirsideTheme.DrawProgressBar(
-                        new Rect(42, 476, 280, 8),
+                        new Rect(42, y, 280, 8),
                         progress,
                         AirsideTheme.CoastalBlue,
                         new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
+                    y += 16f;
                 }
                 else if (research.CanStartOperationsEfficiency)
                 {
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
+                    y += 22f;
                     GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                    if (GUI.Button(new Rect(42, 472, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
+                    if (GUI.Button(new Rect(42, y, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
                         _session.StartOperationsResearch();
                     GUI.enabled = true;
+                    y += 28f;
                 }
                 else if (research.CanStartPassengerServices)
                 {
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
+                    y += 22f;
                     GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                    if (GUI.Button(new Rect(42, 472, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
+                    if (GUI.Button(new Rect(42, y, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
                         _session.StartPassengerServicesResearch();
                     GUI.enabled = true;
+                    y += 28f;
                 }
                 else
                 {
@@ -1068,14 +1114,26 @@ namespace Airside.Presentation
                     var pax = research.PassengerServicesComplete
                         ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
                         : string.Empty;
-                    GUI.Label(new Rect(researchLabelX, 454, 380 - (researchLabelX - 42), 20),
+                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
                         $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
+                    y += 22f;
                 }
             }
 
-            GUI.Label(new Rect(42, 500, 380, 22), FirstSessionCoachLine(),
-                _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0 ? caution : small);
-            GUI.Label(new Rect(42, 518, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
+            // Coach tip — Safety Yellow when the first decision is live.
+            var coachUrgent = _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0;
+            var coachStyle = coachUrgent
+                ? AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow)
+                : detail;
+            if (coachUrgent)
+            {
+                var stripe = AirsideTheme.AlertStripeBackground;
+                if (stripe != null)
+                    GUI.DrawTexture(new Rect(36, y - 2, 382, 28), stripe, ScaleMode.StretchToFill, alphaBlend: true);
+            }
+            GUI.Label(new Rect(42, y, 380, 24), FirstSessionCoachLine(), coachStyle);
+            y += 26f;
+            GUI.Label(new Rect(42, y, 380, 22), "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview", small);
 
             var historyLeft = Screen.width / scale - 362;
             var accepted = _simulation.Routes.Accepted;
@@ -1746,7 +1804,7 @@ namespace Airside.Presentation
         private static void BuildAirfield()
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
-            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), new Color(0.16f, 0.34f, 0.21f),
+            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
@@ -1754,15 +1812,18 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
-            // Batch C buildings (Approved glTF) with primitive silhouette fallback.
+            // Batch C buildings — prefer richer v02 kits (0025 item 2) with v01 fallback.
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_terminal_regional_small_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
+                    "Models/Buildings/mdl_terminal_regional_small_v01.gltf"),
                 new Vector3(26f, 0f, 27f),
                 name => name switch
                 {
-                    "glass_front" => new Color(0.16f, 0.38f, 0.5f),
+                    "glass_front" or "windows" or "entrance" or "cabin_windows" => new Color(0.16f, 0.38f, 0.5f),
+                    "canopy" or "canopy_post_l" or "canopy_post_r" or "roof_slab" or "roof_plant" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" => new Color(0.58f, 0.62f, 0.64f),
+                    "service_wing" or "service_door" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
                 () =>
@@ -1774,18 +1835,24 @@ namespace Airside.Presentation
                     CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
                     CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
                 },
-                "Textures/Environment/tx_terminal_glass_mask_v01.png");
+                "Textures/Environment/tx_terminal_glass_mask_v01.png",
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.2f),
+                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress" });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_hangar_small_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_hangar_small_v02.gltf",
+                    "Models/Buildings/mdl_hangar_small_v01.gltf"),
                 new Vector3(-20f, 0f, 20f),
                 name => name switch
                 {
                     "door_opening" => new Color(0.22f, 0.24f, 0.26f),
-                    "roof_ridge" => new Color(0.4f, 0.44f, 0.48f),
+                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" => new Color(0.4f, 0.44f, 0.48f),
+                    "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "side_vent" => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
                 () =>
@@ -1793,13 +1860,27 @@ namespace Airside.Presentation
                     CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
                         "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
                     CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
-                });
+                },
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.5f),
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent" });
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_operations_shed_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_operations_shed_v02.gltf",
+                    "Models/Buildings/mdl_operations_shed_v01.gltf"),
                 new Vector3(-8f, 0f, 26f),
-                _ => new Color(0.55f, 0.58f, 0.52f),
+                name => name switch
+                {
+                    "window_l" or "window_r" => new Color(0.2f, 0.4f, 0.5f),
+                    "door" => new Color(0.35f, 0.38f, 0.34f),
+                    "porch_roof" or "roof_ridge" => new Color(0.48f, 0.5f, 0.46f),
+                    _ => new Color(0.55f, 0.58f, 0.52f)
+                },
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
-                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)));
+                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(1.5f, 1.2f),
+                surfaceMeshNames: new[] { "shed_body", "porch", "roof" });
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -1809,6 +1890,7 @@ namespace Airside.Presentation
             PlaceWorldMarkings();
             PlaceWorldLighting();
             PlaceWorldProps();
+            BuildEnvironmentContext();
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
@@ -1819,6 +1901,150 @@ namespace Airside.Presentation
             CreateBlock("Stand number 2 base", new Vector3(14.2f, 0.09f, 19.65f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
 
         }
+
+        /// <summary>
+        /// Decision 0025 item 3 — regional environment greybox around the operating
+        /// airfield: coast, access road, car park, fencing, vegetation and a soft
+        /// horizon dome. Presentation only; primitives + existing Batch B surfaces.
+        /// </summary>
+        private static void BuildEnvironmentContext()
+        {
+            // Outer paddock + dry-grass fringe so the airfield is not a floating island.
+            CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 48f), new Vector3(140f, 0.8f, 40f), Shade(AirsideTheme.DryGrass, 0.7f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 6f));
+            CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -36f), new Vector3(140f, 0.8f, 36f), Shade(AirsideTheme.DryGrass, 0.65f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 5f));
+            CreateBlock("Outer paddock E", new Vector3(68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+            CreateBlock("Outer paddock W", new Vector3(-68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+
+            // Kangaroo Island coastal strip south of the runway (sand, not water physics).
+            CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand);
+            CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f));
+            CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f));
+
+            // Landside access: terminal → car park road + bay.
+            CreateBlock("Access road", new Vector3(26f, -0.02f, 38f), new Vector3(6f, 0.1f, 22f), new Color(0.2f, 0.22f, 0.24f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1f, 4f));
+            CreateBlock("Access road turn", new Vector3(38f, -0.02f, 46f), new Vector3(28f, 0.1f, 5.5f), new Color(0.2f, 0.22f, 0.24f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(4f, 1f));
+            CreateBlock("Car park", new Vector3(48f, -0.01f, 46f), new Vector3(18f, 0.08f, 12f), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 2f));
+            for (var i = 0; i < 5; i++)
+            {
+                var z = 42f + i * 2.0f;
+                CreateBlock($"Bay line {i}", new Vector3(48f, 0.05f, z), new Vector3(14f, 0.02f, 0.08f), Color.white);
+            }
+
+            // Hangar service lane.
+            CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
+
+            BuildPerimeterFence();
+            BuildVegetation();
+            BuildDistantHills();
+            BuildHorizonDome();
+        }
+
+        private static void BuildPerimeterFence()
+        {
+            var post = new Color(0.55f, 0.56f, 0.58f);
+            var rail = new Color(0.72f, 0.74f, 0.76f);
+            // North landside fence (behind terminal / car park approach).
+            for (var x = -40; x <= 56; x += 4)
+            {
+                CreateBlock($"Fence post N {x}", new Vector3(x, 0.7f, 34f), new Vector3(0.12f, 1.4f, 0.12f), post);
+                if (x < 56)
+                    CreateBlock($"Fence rail N {x}", new Vector3(x + 2f, 1.05f, 34f), new Vector3(4f, 0.06f, 0.06f), rail);
+            }
+
+            // West and east airside boundaries (keep runway ends open).
+            for (var z = -18; z <= 32; z += 4)
+            {
+                CreateBlock($"Fence post W {z}", new Vector3(-44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
+                CreateBlock($"Fence post E {z}", new Vector3(44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
+                if (z < 32)
+                {
+                    CreateBlock($"Fence rail W {z}", new Vector3(-44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
+                    CreateBlock($"Fence rail E {z}", new Vector3(44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
+                }
+            }
+
+            // Gate posts at the access road.
+            CreateBlock("Gate post L", new Vector3(23f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
+            CreateBlock("Gate post R", new Vector3(29f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
+            CreateBlock("Gate rail", new Vector3(26f, 1.2f, 34.1f), new Vector3(5.5f, 0.08f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.85f));
+        }
+
+        private static void BuildVegetation()
+        {
+            // Stylised eucalyptus clumps — readable from overview, not botanical.
+            PlaceTree(new Vector3(-32f, 0f, 30f), 1.1f);
+            PlaceTree(new Vector3(-38f, 0f, 22f), 0.9f);
+            PlaceTree(new Vector3(-28f, 0f, 36f), 1.25f);
+            PlaceTree(new Vector3(40f, 0f, 30f), 1.0f);
+            PlaceTree(new Vector3(52f, 0f, 34f), 1.15f);
+            PlaceTree(new Vector3(58f, 0f, 28f), 0.85f);
+            PlaceTree(new Vector3(36f, 0f, 52f), 1.2f);
+            PlaceTree(new Vector3(-52f, 0f, 8f), 1.3f);
+            PlaceTree(new Vector3(-48f, 0f, -8f), 0.95f);
+            PlaceTree(new Vector3(50f, 0f, -10f), 1.05f);
+            PlaceTree(new Vector3(56f, 0f, 8f), 0.9f);
+            PlaceTree(new Vector3(-18f, 0f, 42f), 0.8f);
+            // Low scrub near the coast.
+            for (var x = -50; x <= 50; x += 10)
+            {
+                CreateBlock($"Coast scrub {x}", new Vector3(x, 0.25f, -40f), new Vector3(2.2f, 0.5f, 1.4f),
+                    Shade(AirsideTheme.Eucalyptus, 0.75f));
+            }
+        }
+
+        private static void PlaceTree(Vector3 basePosition, float scale)
+        {
+            var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            trunk.name = "Tree trunk";
+            Object.Destroy(trunk.GetComponent<Collider>());
+            trunk.transform.position = basePosition + new Vector3(0f, 1.1f * scale, 0f);
+            trunk.transform.localScale = new Vector3(0.28f * scale, 1.1f * scale, 0.28f * scale);
+            trunk.GetComponent<Renderer>().material = CreateMaterial(new Color(0.35f, 0.26f, 0.16f));
+
+            var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            canopy.name = "Tree canopy";
+            Object.Destroy(canopy.GetComponent<Collider>());
+            canopy.transform.position = basePosition + new Vector3(0f, 2.6f * scale, 0f);
+            canopy.transform.localScale = new Vector3(2.2f * scale, 1.8f * scale, 2.2f * scale);
+            canopy.GetComponent<Renderer>().material = CreateMaterial(Shade(AirsideTheme.Eucalyptus, 0.9f));
+        }
+
+        private static void BuildDistantHills()
+        {
+            CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f));
+            CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f));
+            CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f));
+            CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f));
+        }
+
+        private static void BuildHorizonDome()
+        {
+            // Soft inverted dome so the sky is not a flat camera clear-colour void.
+            // Unlit-ish pale Open Sky; day/dusk still tint via camera background underneath.
+            var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            dome.name = "Horizon dome";
+            Object.Destroy(dome.GetComponent<Collider>());
+            dome.transform.position = new Vector3(0f, 0f, 0f);
+            dome.transform.localScale = new Vector3(260f, 120f, 260f);
+            var material = CreateMaterial(AirsideTheme.OpenSky);
+            // Render inside of the sphere.
+            material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
+            dome.GetComponent<Renderer>().material = material;
+            dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            dome.GetComponent<Renderer>().receiveShadows = false;
+        }
+
+        /// <summary>Darken an opaque palette colour without dropping alpha into the transparent path.</summary>
+        private static Color Shade(Color color, float factor) =>
+            new Color(color.r * factor, color.g * factor, color.b * factor, 1f);
 
         private static void BuildStandMarking(float x, float z, string name)
         {
@@ -1832,12 +2058,17 @@ namespace Airside.Presentation
             // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtGltfLoader.TryInstantiate(
-                "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf",
+                PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
+                    "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
                 root,
                 out _,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
                 localPosition: new Vector3(0f, -0.7f, 0f));
+
+            if (usedArt)
+                NestCrossPropellerBlades(root);
 
             if (!usedArt)
             {
@@ -1887,31 +2118,83 @@ namespace Airside.Presentation
         {
             "fuselage" => "Fuselage",
             "nose" => "Nose",
+            "cockpit" => "Cockpit",
+            "cabin_windows" => "Cabin windows",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
+            "wingtip_left" => "Wingtip L",
+            "wingtip_right" => "Wingtip R",
             "engine_left" => "Engine L",
             "engine_right" => "Engine R",
+            "nacelle_left" => "Nacelle L",
+            "nacelle_right" => "Nacelle R",
             "propeller_left" => "Propeller L",
             "propeller_right" => "Propeller R",
+            "propeller_left_b" => "PropBlade L",
+            "propeller_right_b" => "PropBlade R",
+            "spinner_left" => "Spinner L",
+            "spinner_right" => "Spinner R",
             "tail_fin" => "Tail",
             "tailplane" => "Tailplane",
+            "rudder" => "Rudder",
             "gear_nose" => "Gear nose",
             "gear_left" => "Gear L",
             "gear_right" => "Gear R",
+            "tire_nose" => "Tire nose",
+            "tire_left" => "Tire L",
+            "tire_right" => "Tire R",
             "door_fwd" => "CabinDoor",
+            "antenna" => "Antenna",
             _ => kitName
         };
 
         private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
         {
             "fuselage" or "nose" => new Color(0.93f, 0.95f, 0.97f),
-            "wing_left" or "wing_right" or "tail_fin" or "tailplane" => accent,
-            "engine_left" or "engine_right" => accent * 0.85f,
-            "propeller_left" or "propeller_right" => new Color(0.2f, 0.2f, 0.22f),
+            "cockpit" or "cabin_windows" => new Color(0.18f, 0.35f, 0.48f),
+            "wing_left" or "wing_right" or "wingtip_left" or "wingtip_right"
+                or "tail_fin" or "tailplane" or "rudder" => accent,
+            "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right" => accent * 0.85f,
+            "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
+                or "spinner_left" or "spinner_right" => new Color(0.2f, 0.2f, 0.22f),
             "gear_nose" or "gear_left" or "gear_right" => new Color(0.25f, 0.25f, 0.28f),
+            "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
+            "antenna" => new Color(0.35f, 0.35f, 0.38f),
             _ => null
         };
+
+        /// <summary>
+        /// Parent the second blade under each propeller so SpinPropellers rotates the
+        /// whole cross as one unit (v02 kits only).
+        /// </summary>
+        private static void NestCrossPropellerBlades(Transform aircraft)
+        {
+            Transform propL = null, propR = null, bladeL = null, bladeR = null;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Propeller L") propL = child;
+                else if (child.name == "Propeller R") propR = child;
+                else if (child.name == "PropBlade L") bladeL = child;
+                else if (child.name == "PropBlade R") bladeR = child;
+            }
+
+            if (propL != null && bladeL != null)
+            {
+                bladeL.SetParent(propL, true);
+                bladeL.name = "Blade";
+            }
+
+            if (propR != null && bladeR != null)
+            {
+                bladeR.SetParent(propR, true);
+                bladeR.name = "Blade";
+            }
+        }
+
+        /// <summary>Prefer a richer kit when present; otherwise the Approved v01 path.</summary>
+        private static string PreferArtKit(string preferredRelativePath, string fallbackRelativePath) =>
+            ArtGltfLoader.HasKit(preferredRelativePath) ? preferredRelativePath : fallbackRelativePath;
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
         {
@@ -1972,7 +2255,11 @@ namespace Airside.Presentation
                     "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr" => new Color(0.15f, 0.15f, 0.16f),
                     "hose_mount" => new Color(0.25f, 0.25f, 0.28f),
                     "door" => new Color(0.2f, 0.22f, 0.25f),
-                    "cab" => color * 0.82f,
+                    "cab" or "tug_cab" => color * 0.82f,
+                    "cab_window" or "windows" => new Color(0.2f, 0.4f, 0.55f),
+                    "beacon" => new Color(0.95f, 0.35f, 0.12f),
+                    "mirror_l" or "bumper_front" or "bumper_rear" or "tank_band" => color * 0.7f,
+                    "cargo_1" or "cargo_2" or "cargo_3" => new Color(0.75f, 0.55f, 0.2f),
                     _ => color
                 },
                 localPosition: new Vector3(0f, -0.55f, 0f));
@@ -2173,7 +2460,10 @@ namespace Airside.Presentation
             Vector3 worldPosition,
             System.Func<string, Color?> colorFor,
             System.Action fallback,
-            string glassTextureRelativePath = null)
+            string glassTextureRelativePath = null,
+            string surfaceTextureRelativePath = null,
+            Vector2? surfaceTextureTiling = null,
+            string[] surfaceMeshNames = null)
         {
             if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
@@ -2192,6 +2482,45 @@ namespace Airside.Presentation
                         {
                             renderer.material.mainTexture = texture;
                             renderer.material.mainTextureScale = new Vector2(3f, 1.5f);
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(surfaceTextureRelativePath))
+                {
+                    var surface = TryLoadArtTexture(surfaceTextureRelativePath);
+                    if (surface != null)
+                    {
+                        var tiling = surfaceTextureTiling ?? new Vector2(2f, 1.5f);
+                        foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                        {
+                            if (child.name is "glass_front" or "door_opening" or "entrance"
+                                or "window_l" or "window_r" or "cabin_windows" or "cockpit")
+                                continue;
+                            if (surfaceMeshNames != null && surfaceMeshNames.Length > 0)
+                            {
+                                var match = false;
+                                for (var i = 0; i < surfaceMeshNames.Length; i++)
+                                {
+                                    if (child.name == surfaceMeshNames[i] ||
+                                        child.name.StartsWith(surfaceMeshNames[i], StringComparison.Ordinal))
+                                    {
+                                        match = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!match)
+                                    continue;
+                            }
+
+                            var renderer = child.GetComponent<Renderer>();
+                            if (renderer == null)
+                                continue;
+                            renderer.material.mainTexture = surface;
+                            renderer.material.mainTextureScale = tiling;
+                            if (renderer.material.HasProperty("_Smoothness"))
+                                renderer.material.SetFloat("_Smoothness", 0.28f);
                         }
                     }
                 }

@@ -210,32 +210,35 @@ Paths in this and later tables are relative to
 
 ### Batch C — first-playable 3D set
 
-**Fidelity note (2026-09-07):** Current glTF kits are low-poly greybox stand-ins
-(e.g. turboprop ~336 vertices / 14 meshes; terminal ~120 vertices / 5 meshes)
-with no authored URP materials. Status "Integrated" means the runtime loader
-can place them (when StreamingAssets is synced); it does **not** mean they match
-REF screenshots. Replacing this set is backlog item 2 in decision 0025.
+**Fidelity note (2026-09-07):** v01 glTF kits were low-poly greybox stand-ins
+(e.g. turboprop ~336 vertices / 14 meshes). **v02 kits** (`*_v02.gltf`) add more
+readable parts (cross props, canopy, hangar buttresses, vehicle detail) while
+staying in the same POSITION+indices box format `ArtGltfLoader` understands.
+Runtime prefers v02 when present and falls back to Approved v01. Status
+"Integrated" still does **not** mean REF-screenshot fidelity — authored meshes /
+URP materials remain the longer-term path (decision 0025).
 
 Production task packet:
 `docs/art/prompts/batch-c-models-task-packet.md`.
 Generation evidence:
-`docs/art/prompts/batch-c-models-generation-2026-09-06.md`.
+`docs/art/prompts/batch-c-models-generation-2026-09-06.md` (v01) and
+`docs/art/prompts/batch-c-models-v02-generation-2026-09-07.md` (v02).
 
 These are modelled assets. Image generation supplies approved concept/orthographic
 references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v01.gltf` | Fictional twin turboprop; gear, propellers, doors and control surfaces separated; primary and traffic liveries use material variants | Approved · Integrated |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v02.gltf` (fallback `…_v01.gltf`) | Fictional twin turboprop; gear, cross props, doors and surfaces separated; primary and traffic liveries use material variants | Integrated (v02 preferred; v01 Approved fallback) |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
-| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v01.gltf` | Small practical terminal, glass frontage, service side, modular end caps | Approved · Integrated |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_v01.gltf` | Corrugated metal hangar with readable door opening | Approved · Integrated |
-| BLD-003 | `Models/Buildings/mdl_operations_shed_v01.gltf` | Compact service/crew building used as visual support, non-interactive initially | Approved · Integrated |
-| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v01.gltf` | Cab, wheels and hose connection separated | Approved · Integrated |
-| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v01.gltf` | Tug plus three low-detail carts; articulation points defined | Approved · Integrated |
-| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v01.gltf` | Compact apron bus with doors and wheels separated | Approved · Integrated |
+| BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v02.gltf` (fallback `…_v01.gltf`) | Small practical terminal, glass frontage, canopy, service side, modular end caps | Integrated (v02 preferred; v01 Approved fallback) |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_v02.gltf` (fallback `…_v01.gltf`) | Corrugated metal hangar with readable door opening, tracks and buttresses | Integrated (v02 preferred; v01 Approved fallback) |
+| BLD-003 | `Models/Buildings/mdl_operations_shed_v02.gltf` (fallback `…_v01.gltf`) | Compact service/crew building with porch, door and windows | Integrated (v02 preferred; v01 Approved fallback) |
+| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v02.gltf` (fallback `…_v01.gltf`) | Cab, wheels and hose connection separated | Integrated (v02 preferred; v01 Approved fallback) |
+| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v02.gltf` (fallback `…_v01.gltf`) | Tug plus three low-detail carts; articulation points defined | Integrated (v02 preferred; v01 Approved fallback) |
+| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v02.gltf` (fallback `…_v01.gltf`) | Compact apron bus with doors and wheels separated | Integrated (v02 preferred; v01 Approved fallback) |
 | PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Approved · Integrated |
 
 ### Batch D — animation, feedback and weather

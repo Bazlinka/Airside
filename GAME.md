@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (landside streetlights)
-- **Branch / working tree:** `cursor/landside-streetlights-ddad`
-- **Do this next:** Merge; Bailey `git pull origin main` then Unity Play soak of presentation wave (#58–#66)
-- **In progress / half-done:** access-road / car-park streetlights
-- **Watch out for:** streetlight poles are greybox; intensity follows day cycle with apron floods
+- **Last updated:** 2026-09-07 by Cursor (presentation wave #58–#66 on main)
+- **Branch / working tree:** `main` (`e912ee8`)
+- **Do this next:** Bailey `git pull origin main` → Unity 6.3 Play soak (overview, F-follow takeoff/landing, first-session Enter accept, dusk night glow). Next code: materials/normals spike or HUD Toolkit spike (0025 items 4/6)
+- **In progress / half-done:** none — presentation push landed
+- **Watch out for:** still greybox fidelity (~not REF screenshots); Unity editor verification required before treating visuals as Verified
 - **Open questions for Bailey:** none
-- **Visual assets:** night glow on `main`; streetlights on this branch
+- **Visual assets:** landside life, motion (prop disc/tires/attitude/surfaces/shake), denser apron, first-session UX, night glow, streetlights — all on `main`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,5 +122,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm environment, v02 models, HUD coach, textured buildings, follow camera.
-3. Then lighting / HUD Toolkit (0025 items 5–6). No new economy systems.
+2. Confirm the presentation wave: landside cars, denser apron/fuel/GA, prop disc +
+   tires + attitude + touchdown shake, first-session Enter accept, dusk window glow
+   + landside streetlights, follow-camera framing.
+3. Next code track: materials/normals library or HUD Toolkit spike (0025 items 4/6).
+   No new economy systems; no Companion/CloudKit.

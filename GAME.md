@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (follow framing + fuel farm + night windows)
-- **Branch / working tree:** `cursor/follow-fuel-night-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak F-follow phase framing + dusk building glow + fuel farm prefab
-- **In progress / half-done:** ten Resources prefabs; phase-aware follow FOV/distance
+- **Last updated:** 2026-09-07 by Cursor (parked GA prefab + denser apron life)
+- **Branch / working tree:** `cursor/parked-ga-apron-life-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak GA apron (3 parked) + walking figures + marshaller arms
+- **In progress / half-done:** eleven Resources prefabs; denser apron life motion
 - **Watch out for:** prefabs still greybox — authored FBX overwrite is the fidelity jump
-- **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or fuel farm?
-- **Visual assets:** ten Resources prefabs + phase-aware follow + stronger night window emission
+- **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or parked GA?
+- **Visual assets:** eleven Resources prefabs + phase-aware follow + night/life polish
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm follow camera phase beats (F), dusk building glow, fuel farm prefab, ten Resources keys.
+2. Confirm parked GA apron, walking figures, marshaller wave, eleven Resources prefab keys.
 3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups.
    No new economy systems; no Companion/CloudKit.

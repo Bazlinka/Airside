@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Perimeter fence, ALS bars + ARFF shed (0025 items 3+5).** Chain-link style multi-rail
+  fence with open vehicle gate; five approach light bars west of threshold with night
+  PointLights; red ARFF rescue shed + bay spill. Presentation only.
+
 - **UI Toolkit overlays (0025 item 6).** Runtime `AirsideToolkitHud` owns briefing
   (dawn splash), pause, away summary and insolvency overlays with action buttons;
   Canvas HUD is now a fallback only when Toolkit fails to build. Presentation only.

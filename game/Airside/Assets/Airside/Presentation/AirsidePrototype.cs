@@ -23,15 +23,17 @@ namespace Airside.Presentation
         private Light[] _apronLights;
         private Light[] _landsideLights;
         private Light[] _thresholdLights;
+        private Light[] _alsLights;
         private Light[] _runwayEdgeLights;
         private Light _aerodromeBeacon;
         private ReflectionProbe _apronProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
+        private Light _fuelFarmLight;
+        private Light _arffBayLight;
         private Transform _skidMarkRoot;
         private Transform _taxiSprayRoot;
         private Light[] _windowLights;
-        private Light _fuelFarmLight;
         private Transform _horizonDome;
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
@@ -123,9 +125,13 @@ namespace Airside.Presentation
             var fuelLamp = GameObject.Find("Fuel farm light");
             if (fuelLamp != null)
                 _fuelFarmLight = fuelLamp.GetComponent<Light>();
+            var arffLamp = GameObject.Find("ARFF bay light");
+            if (arffLamp != null)
+                _arffBayLight = arffLamp.GetComponent<Light>();
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
             _thresholdLights = BuildThresholdApproachLights();
+            _alsLights = CollectAlsLights();
             _runwayEdgeLights = BuildRunwayEdgePointLights();
             _apronProbe = BuildApronReflectionProbe();
             _aerodromeBeacon = BuildAerodromeBeacon();
@@ -3219,6 +3225,20 @@ namespace Airside.Presentation
                 }
             }
 
+            // ALS centreline / bar lamps west of threshold.
+            if (_alsLights != null)
+            {
+                var als = Mathf.Lerp(2.1f, 0.03f, daylight);
+                for (var i = 0; i < _alsLights.Length; i++)
+                {
+                    var light = _alsLights[i];
+                    if (light == null)
+                        continue;
+                    light.intensity = als;
+                    light.enabled = als > 0.05f;
+                }
+            }
+
             // Sparse runway-edge point lights so the strip reads as a lit ribbon at night.
             if (_runwayEdgeLights != null)
             {
@@ -3348,6 +3368,29 @@ namespace Airside.Presentation
                 _fuelFarmLight.intensity = farm;
                 _fuelFarmLight.enabled = farm > 0.05f;
             }
+
+            if (_arffBayLight != null)
+            {
+                var bay = Mathf.Lerp(1.8f, 0.02f, daylight);
+                _arffBayLight.intensity = bay;
+                _arffBayLight.enabled = bay > 0.05f;
+            }
+        }
+
+        private static Light[] CollectAlsLights()
+        {
+            var lights = new List<Light>();
+            for (var i = 0; i < 5; i++)
+            {
+                var go = GameObject.Find($"ALS lamp {i}");
+                if (go == null)
+                    continue;
+                var light = go.GetComponent<Light>();
+                if (light != null)
+                    lights.Add(light);
+            }
+
+            return lights.ToArray();
         }
 
         private static Light[] BuildApronLights()
@@ -3724,6 +3767,8 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
 
             BuildPerimeterFence();
+            BuildApproachLightBars();
+            BuildArffRescueShed();
             BuildVegetation();
             BuildTerrainMicroRelief();
             BuildBuildingContactShadows();
@@ -4008,12 +4053,22 @@ namespace Airside.Presentation
         {
             var post = new Color(0.55f, 0.56f, 0.58f);
             var rail = new Color(0.72f, 0.74f, 0.76f);
-            // North landside fence (behind terminal / car park approach).
+            var mesh = new Color(0.62f, 0.64f, 0.66f);
+            // North landside fence (gap for vehicle gate at access road x≈23–29).
             for (var x = -40; x <= 56; x += 4)
             {
+                if (x >= 22 && x <= 30)
+                    continue;
                 CreateBlock($"Fence post N {x}", new Vector3(x, 0.7f, 34f), new Vector3(0.12f, 1.4f, 0.12f), post);
-                if (x < 56)
-                    CreateBlock($"Fence rail N {x}", new Vector3(x + 2f, 1.05f, 34f), new Vector3(4f, 0.06f, 0.06f), rail);
+                if (x < 56 && !(x >= 18 && x <= 30))
+                {
+                    CreateBlock($"Fence rail N top {x}", new Vector3(x + 2f, 1.25f, 34f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence rail N mid {x}", new Vector3(x + 2f, 0.75f, 34f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    CreateBlock($"Fence rail N bot {x}", new Vector3(x + 2f, 0.28f, 34f), new Vector3(4f, 0.05f, 0.05f), rail);
+                    // Diagonal bars read as chain-link from overview.
+                    CreateBlock($"Fence mesh N a {x}", new Vector3(x + 1f, 0.75f, 34f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh N b {x}", new Vector3(x + 3f, 0.75f, 34f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                }
             }
 
             // West and east airside boundaries (keep runway ends open).
@@ -4023,15 +4078,78 @@ namespace Airside.Presentation
                 CreateBlock($"Fence post E {z}", new Vector3(44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
                 if (z < 32)
                 {
-                    CreateBlock($"Fence rail W {z}", new Vector3(-44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
-                    CreateBlock($"Fence rail E {z}", new Vector3(44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
+                    CreateBlock($"Fence rail W top {z}", new Vector3(-44f, 1.25f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence rail W mid {z}", new Vector3(-44f, 0.75f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence rail E top {z}", new Vector3(44f, 1.25f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence rail E mid {z}", new Vector3(44f, 0.75f, z + 2f), new Vector3(0.05f, 0.05f, 4f), rail);
+                    CreateBlock($"Fence mesh W {z}", new Vector3(-44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
+                    CreateBlock($"Fence mesh E {z}", new Vector3(44f, 0.75f, z + 1f), new Vector3(0.04f, 1.0f, 0.04f), mesh);
                 }
             }
 
-            // Gate posts at the access road.
-            CreateBlock("Gate post L", new Vector3(23f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
-            CreateBlock("Gate post R", new Vector3(29f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
-            CreateBlock("Gate rail", new Vector3(26f, 1.2f, 34.1f), new Vector3(5.5f, 0.08f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.85f));
+            // Vehicle gate leaves at the access road (open inward to landside).
+            CreateBlock("Gate post L", new Vector3(23f, 0.9f, 34f), new Vector3(0.22f, 1.8f, 0.22f), post);
+            CreateBlock("Gate post R", new Vector3(29f, 0.9f, 34f), new Vector3(0.22f, 1.8f, 0.22f), post);
+            CreateBlock("Gate leaf L", new Vector3(24.2f, 0.85f, 35.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
+            CreateBlock("Gate leaf R", new Vector3(27.8f, 0.85f, 35.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
+            CreateBlock("Gate stop L", new Vector3(23.1f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
+            CreateBlock("Gate stop R", new Vector3(28.9f, 0.08f, 34.4f), new Vector3(0.35f, 0.12f, 0.35f), AirsideTheme.Concrete);
+            CreateBlock("Gate sign", new Vector3(26f, 2.0f, 34.2f), new Vector3(1.6f, 0.55f, 0.06f), AirsideTheme.SafetyYellow);
+        }
+
+        /// <summary>
+        /// Decision 0025 items 3+5 — short approach light bars west of the threshold
+        /// so night approaches read as a lit path, not a bare runway end.
+        /// </summary>
+        private static void BuildApproachLightBars()
+        {
+            var bar = new Color(0.85f, 0.88f, 0.9f);
+            var stem = new Color(0.35f, 0.36f, 0.38f);
+            // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
+            for (var i = 0; i < 5; i++)
+            {
+                var x = -42f - i * 6f;
+                CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
+                CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
+                CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.15f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.2f), bar);
+                CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.15f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.2f), bar);
+
+                var lampGo = new GameObject($"ALS lamp {i}");
+                lampGo.transform.position = new Vector3(x, 0.95f, 0f);
+                var light = lampGo.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.95f, 0.85f);
+                light.range = 8f;
+                light.intensity = 0f;
+                light.shadows = LightShadows.None;
+            }
+        }
+
+        /// <summary>
+        /// Decision 0025 item 3 — small ARFF / rescue shed so landside reads as a
+        /// working regional airfield, not only terminal + hangar.
+        /// </summary>
+        private static void BuildArffRescueShed()
+        {
+            var body = new Color(0.72f, 0.22f, 0.18f);
+            var roof = new Color(0.35f, 0.36f, 0.38f);
+            var door = new Color(0.55f, 0.56f, 0.58f);
+            CreateBlock("ARFF shed", new Vector3(-28f, 1.4f, 30f), new Vector3(7f, 2.8f, 5.5f), body);
+            CreateBlock("ARFF roof", new Vector3(-28f, 3.0f, 30f), new Vector3(7.6f, 0.35f, 6.0f), roof);
+            CreateBlock("ARFF door L", new Vector3(-29.4f, 1.2f, 27.2f), new Vector3(2.4f, 2.2f, 0.12f), door);
+            CreateBlock("ARFF door R", new Vector3(-26.6f, 1.2f, 27.2f), new Vector3(2.4f, 2.2f, 0.12f), door);
+            CreateBlock("ARFF apron", new Vector3(-28f, 0.02f, 26.5f), new Vector3(9f, 0.06f, 4f), AirsideTheme.Concrete,
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
+            CreateBlock("ARFF sign", new Vector3(-28f, 2.6f, 27.15f), new Vector3(2.2f, 0.45f, 0.08f), AirsideTheme.SafetyYellow);
+            // Soft bay spill at dusk.
+            var bay = new GameObject("ARFF bay light");
+            bay.transform.position = new Vector3(-28f, 2.4f, 27.8f);
+            var light = bay.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = new Color(1f, 0.85f, 0.55f);
+            light.range = 10f;
+            light.intensity = 0f;
+            light.shadows = LightShadows.None;
         }
 
         private static void BuildVegetation()

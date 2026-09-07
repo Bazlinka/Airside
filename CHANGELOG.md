@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **HUD/day/fence/tree densify tip (0025 items 3–6).** Toolkit panels denser brand chrome +
+  coastal top edge; ChannelMixer day profiles + golden-hour bloom; eucalyptus flare/fork/5
+  canopies; fence top wire + post caps; densify stairs (~28) / pushback tug (~20) / cone /
+  barrier Resources fallbacks. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Service GSE / belt-loader / ALS tip (0025 items 2–5).** Fix belt loaders to use service
   kit (were cube fallbacks via wrong props kit); prefer denser stairs/GPU/chocks kit over thin
   Resources prefabs; densify towbar/FOD bin kit parts; ALS stations + REIL reuse lighting kit;

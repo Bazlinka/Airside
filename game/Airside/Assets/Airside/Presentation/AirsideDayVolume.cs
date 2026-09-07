@@ -19,6 +19,7 @@ namespace Airside.Presentation
         private readonly ShadowsMidtonesHighlights _tonal;
         private readonly WhiteBalance _whiteBalance;
         private readonly SplitToning _splitToning;
+        private readonly ChannelMixer _channelMixer;
 
         private AirsideDayVolume(
             ColorAdjustments color,
@@ -27,7 +28,8 @@ namespace Airside.Presentation
             FilmGrain grain,
             ShadowsMidtonesHighlights tonal,
             WhiteBalance whiteBalance,
-            SplitToning splitToning)
+            SplitToning splitToning,
+            ChannelMixer channelMixer)
         {
             _color = color;
             _bloom = bloom;
@@ -36,6 +38,7 @@ namespace Airside.Presentation
             _tonal = tonal;
             _whiteBalance = whiteBalance;
             _splitToning = splitToning;
+            _channelMixer = channelMixer;
         }
 
         public static AirsideDayVolume Ensure(Transform host)
@@ -101,6 +104,10 @@ namespace Airside.Presentation
                 splitToning = profile.Add<SplitToning>(true);
             splitToning.active = true;
 
+            if (!profile.TryGet(out ChannelMixer channelMixer))
+                channelMixer = profile.Add<ChannelMixer>(true);
+            channelMixer.active = true;
+
             NeutraliseTemplateEffects(profile);
 
             // Ensure the main camera actually runs the URP post stack.
@@ -122,7 +129,7 @@ namespace Airside.Presentation
                 }
             }
 
-            return new AirsideDayVolume(color, bloom, vignette, grain, tonal, whiteBalance, splitToning);
+            return new AirsideDayVolume(color, bloom, vignette, grain, tonal, whiteBalance, splitToning, channelMixer);
         }
 
         /// <summary>
@@ -261,6 +268,19 @@ namespace Airside.Presentation
             _splitToning.highlights.Override(highlights);
             _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.2f, warm) - weatherGloom * 0.1f);
 
+            // Channel mixer: dawn/dusk push warm reds into midtones; night cools greens into blue.
+            var warmPush = warm * 18f;
+            var coolPush = (1f - daylight) * 10f + weatherGloom * 6f;
+            _channelMixer.redOutRedIn.Override(100f + warmPush * 0.35f);
+            _channelMixer.redOutGreenIn.Override(warmPush * 0.25f);
+            _channelMixer.redOutBlueIn.Override(-coolPush * 0.15f);
+            _channelMixer.greenOutRedIn.Override(warmPush * 0.12f);
+            _channelMixer.greenOutGreenIn.Override(100f - weatherGloom * 4f);
+            _channelMixer.greenOutBlueIn.Override(coolPush * 0.2f);
+            _channelMixer.blueOutRedIn.Override(-warmPush * 0.2f);
+            _channelMixer.blueOutGreenIn.Override(coolPush * 0.15f);
+            _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.25f - warmPush * 0.1f);
+
             // Deeper night exposure so flood pools read against the apron (REF-002).
             if (daylight < 0.35f)
                 _color.postExposure.Override(exposure - (0.35f - daylight) * 0.65f);
@@ -270,6 +290,10 @@ namespace Airside.Presentation
                 _color.contrast.Override(contrast + 2.2f);
                 _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
             }
+            // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
+            else if (warm > 0.35f)
+                _bloom.intensity.Override(Mathf.Lerp(0.46f, 0.11f, daylight) * (1f - weatherGloom * 0.28f)
+                    + warm * 0.18f + weatherGloom * 0.06f);
         }
     }
 }

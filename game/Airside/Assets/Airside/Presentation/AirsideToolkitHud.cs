@@ -910,8 +910,10 @@ namespace Airside.Presentation
             var panel = new VisualElement { name = name };
             panel.style.position = Position.Absolute;
             panel.style.width = width;
+            // REF-004 chrome: denser ink + coastal hairline so panels read as brand glass,
+            // not translucent IMGUI debug boxes.
             var ink = AirsideTheme.RunwayInk;
-            ink.a = 0.72f;
+            ink.a = 0.86f;
             panel.style.backgroundColor = ink;
             var panelTex = AirsideTheme.PanelBackground;
             if (panelTex != null)
@@ -919,19 +921,22 @@ namespace Airside.Presentation
                 panel.style.backgroundImage = new StyleBackground(panelTex);
                 panel.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
             }
-            panel.style.borderTopLeftRadius = 8;
-            panel.style.borderTopRightRadius = 8;
-            panel.style.borderBottomLeftRadius = 8;
-            panel.style.borderBottomRightRadius = 8;
+            panel.style.borderTopLeftRadius = 4;
+            panel.style.borderTopRightRadius = 4;
+            panel.style.borderBottomLeftRadius = 4;
+            panel.style.borderBottomRightRadius = 4;
             panel.style.borderLeftWidth = 1;
             panel.style.borderRightWidth = 1;
-            panel.style.borderTopWidth = 1;
+            panel.style.borderTopWidth = 2;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.55f);
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.4f);
+            var top = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
-            panel.style.borderTopColor = border;
+            panel.style.borderTopColor = top;
             panel.style.borderBottomColor = border;
+            panel.style.paddingLeft = 2;
+            panel.style.paddingRight = 2;
             return panel;
         }
 
@@ -981,20 +986,26 @@ namespace Airside.Presentation
         {
             var button = new Button { text = label };
             button.style.width = width;
-            button.style.height = 32;
+            button.style.height = 30;
             button.style.backgroundColor = background;
             button.style.color = AirsideTheme.Cloud;
-            button.style.fontSize = 13;
+            button.style.fontSize = 12;
             button.style.unityFontStyleAndWeight = FontStyle.Bold;
-            button.style.borderTopLeftRadius = 4;
-            button.style.borderTopRightRadius = 4;
-            button.style.borderBottomLeftRadius = 4;
-            button.style.borderBottomRightRadius = 4;
-            button.style.borderLeftWidth = 0;
-            button.style.borderRightWidth = 0;
-            button.style.borderTopWidth = 0;
-            button.style.borderBottomWidth = 0;
+            button.style.borderTopLeftRadius = 3;
+            button.style.borderTopRightRadius = 3;
+            button.style.borderBottomLeftRadius = 3;
+            button.style.borderBottomRightRadius = 3;
+            button.style.borderLeftWidth = 1;
+            button.style.borderRightWidth = 1;
+            button.style.borderTopWidth = 1;
+            button.style.borderBottomWidth = 1;
+            var edge = new Color(AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.35f);
+            button.style.borderLeftColor = edge;
+            button.style.borderRightColor = edge;
+            button.style.borderTopColor = edge;
+            button.style.borderBottomColor = edge;
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
+            button.style.letterSpacing = 0.4f;
             return button;
         }
 
@@ -1011,18 +1022,20 @@ namespace Airside.Presentation
                 AirsideTheme.RunwayInk.r,
                 AirsideTheme.RunwayInk.g,
                 AirsideTheme.RunwayInk.b,
-                0.92f);
+                0.94f);
             label.style.color = AirsideTheme.Cloud;
-            label.style.fontSize = 15;
+            label.style.fontSize = 14;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
-            label.style.paddingLeft = 18;
-            label.style.paddingRight = 18;
-            label.style.paddingTop = 10;
-            label.style.paddingBottom = 10;
-            label.style.borderTopLeftRadius = 6;
-            label.style.borderTopRightRadius = 6;
-            label.style.borderBottomLeftRadius = 6;
-            label.style.borderBottomRightRadius = 6;
+            label.style.paddingLeft = 16;
+            label.style.paddingRight = 16;
+            label.style.paddingTop = 9;
+            label.style.paddingBottom = 9;
+            label.style.borderTopLeftRadius = 3;
+            label.style.borderTopRightRadius = 3;
+            label.style.borderBottomLeftRadius = 3;
+            label.style.borderBottomRightRadius = 3;
+            label.style.borderLeftWidth = 3;
+            label.style.borderLeftColor = AirsideTheme.CoastalBlue;
             label.style.maxWidth = 520;
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;

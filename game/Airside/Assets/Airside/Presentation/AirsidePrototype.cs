@@ -5190,6 +5190,31 @@ namespace Airside.Presentation
             CreateBlock("Fence cap NE", new Vector3(44f, 1.45f, 34f), new Vector3(0.28f, 0.12f, 0.28f), post);
             CreateBlock("Fence cap SW", new Vector3(-44f, 1.35f, -20f), new Vector3(0.28f, 0.12f, 0.28f), post);
             CreateBlock("Fence cap SE", new Vector3(44f, 1.35f, -20f), new Vector3(0.28f, 0.12f, 0.28f), post);
+
+            // Top tension wire + intermittent post caps so the fence reads as chain-link mesh.
+            for (var x = -40; x <= 52; x += 8)
+            {
+                if (x >= 20 && x <= 32)
+                    continue;
+                CreateBlock($"Fence wire N {x}", new Vector3(x + 2f, 1.38f, 34f), new Vector3(8f, 0.03f, 0.03f), mesh);
+                CreateBlock($"Fence cap N {x}", new Vector3(x, 1.42f, 34f), new Vector3(0.2f, 0.1f, 0.2f), post);
+            }
+
+            for (var x = -40; x <= 36; x += 8)
+            {
+                if (x >= -14 && x <= 14)
+                    continue;
+                CreateBlock($"Fence wire S {x}", new Vector3(x + 2f, 1.28f, -20f), new Vector3(8f, 0.03f, 0.03f), mesh);
+                CreateBlock($"Fence cap S {x}", new Vector3(x, 1.32f, -20f), new Vector3(0.2f, 0.1f, 0.2f), post);
+            }
+
+            for (var z = -18; z <= 28; z += 8)
+            {
+                CreateBlock($"Fence wire W {z}", new Vector3(-44f, 1.38f, z + 2f), new Vector3(0.03f, 0.03f, 8f), mesh);
+                CreateBlock($"Fence wire E {z}", new Vector3(44f, 1.38f, z + 2f), new Vector3(0.03f, 0.03f, 8f), mesh);
+                CreateBlock($"Fence cap W {z}", new Vector3(-44f, 1.42f, z), new Vector3(0.2f, 0.1f, 0.2f), post);
+                CreateBlock($"Fence cap E {z}", new Vector3(44f, 1.42f, z), new Vector3(0.2f, 0.1f, 0.2f), post);
+            }
         }
 
         /// <summary>
@@ -5585,7 +5610,7 @@ namespace Airside.Presentation
 
         private static void PlaceTree(Vector3 basePosition, float scale)
         {
-            // Eucalyptus clump: tall thin trunk + 3 staggered canopies (REF overview).
+            // Eucalyptus clump: tall thin trunk + staggered canopies + bark rings (REF overview).
             var yaw = (basePosition.x * 17f + basePosition.z * 13f) % 360f;
             var lean = ((basePosition.x + basePosition.z) % 9f) - 4f;
             var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -5597,15 +5622,43 @@ namespace Airside.Presentation
             trunk.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                 new Color(0.32f, 0.24f, 0.15f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
 
+            // Root flare + bark rings so trunks do not read as perfect cylinders.
+            var flare = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            flare.name = "Tree flare";
+            Object.Destroy(flare.GetComponent<Collider>());
+            flare.transform.position = basePosition + new Vector3(0f, 0.12f * scale, 0f);
+            flare.transform.localScale = new Vector3(0.42f * scale, 0.12f * scale, 0.42f * scale);
+            flare.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                new Color(0.28f, 0.2f, 0.12f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
+            CreateBlock("Tree bark low", basePosition + new Vector3(0f, 0.85f * scale, 0f),
+                new Vector3(0.28f * scale, 0.08f * scale, 0.28f * scale), new Color(0.38f, 0.28f, 0.16f));
+            CreateBlock("Tree bark mid", basePosition + new Vector3(0f, 1.7f * scale, 0f),
+                new Vector3(0.26f * scale, 0.07f * scale, 0.26f * scale), new Color(0.36f, 0.26f, 0.15f));
+
+            // Secondary lean branch for eucalyptus silhouette.
+            var fork = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            fork.name = "Tree fork";
+            Object.Destroy(fork.GetComponent<Collider>());
+            fork.transform.position = basePosition + new Vector3(0.25f * scale, 2.4f * scale, -0.15f * scale);
+            fork.transform.localScale = new Vector3(0.12f * scale, 0.55f * scale, 0.12f * scale);
+            fork.transform.rotation = Quaternion.Euler(18f + lean, yaw + 35f, -12f);
+            fork.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                new Color(0.3f, 0.22f, 0.14f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
+
             var canopyColorA = Shade(AirsideTheme.Eucalyptus, 0.9f);
             var canopyColorB = Shade(AirsideTheme.Eucalyptus, 0.78f);
             var canopyColorC = Shade(AirsideTheme.Eucalyptus, 0.7f);
+            var canopyColorD = Shade(AirsideTheme.Eucalyptus, 0.82f);
             PlaceTreeCanopy(basePosition + new Vector3(0f, 3.35f * scale, 0f),
                 new Vector3(2.0f * scale, 1.55f * scale, 1.9f * scale), canopyColorA, "Tree canopy");
             PlaceTreeCanopy(basePosition + new Vector3(0.65f * scale, 2.85f * scale, -0.45f * scale),
                 new Vector3(1.45f * scale, 1.15f * scale, 1.35f * scale), canopyColorB, "Tree canopy B");
             PlaceTreeCanopy(basePosition + new Vector3(-0.55f * scale, 2.95f * scale, 0.5f * scale),
                 new Vector3(1.25f * scale, 1.05f * scale, 1.2f * scale), canopyColorC, "Tree canopy C");
+            PlaceTreeCanopy(basePosition + new Vector3(0.35f * scale, 3.55f * scale, 0.35f * scale),
+                new Vector3(1.05f * scale, 0.85f * scale, 1.0f * scale), canopyColorD, "Tree canopy D");
+            PlaceTreeCanopy(basePosition + new Vector3(-0.2f * scale, 2.55f * scale, -0.55f * scale),
+                new Vector3(0.95f * scale, 0.75f * scale, 0.9f * scale), Shade(canopyColorB, 0.92f), "Tree canopy E");
         }
 
         private static void PlaceTreeCanopy(Vector3 position, Vector3 scale, Color color, string name)

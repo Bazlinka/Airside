@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Verified decision 0025 packaged-art delivery on a real macOS build.** From clean
+  `main` at `33a961a`, the art sync copied 137 files without repository drift,
+  Unity 6000.3.23f1 passed 116/116 EditMode tests, and the Mac build succeeded.
+  Every built StreamingAssets art file matched its source hash; the player visibly
+  used Batch C model geometry, WLD/PRP lighting and markings, and Batch B aircraft
+  surfaces instead of primitive fallbacks. Full Editor/player parity and Batch E
+  remain unverified because Editor Play throws on removed built-in `Arial.ttf` at
+  `AirsideCanvasHud.cs:1000`; no art-path missing-file error was logged.
+
 - **Anti-aliasing and the template post-processing profile.** The game shipped with
   no anti-aliasing at all: `PC_RPAsset` had `m_MSAA: 1` and nothing set camera
   antialiasing — on a world made entirely of hard box edges and thin poles. MSAA is

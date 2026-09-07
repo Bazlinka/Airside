@@ -6,10 +6,11 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 6 — runtime uGUI Canvas HUD for primary first-session
-    /// surfaces: left status (incl. hire / research / turnaround), route offer,
-    /// operations log, and ops toast. Built in code so packaged builds do not
-    /// depend on editor-imported PanelSettings. Full-screen overlays stay in
-    /// <see cref="AirsidePrototype"/> IMGUI until a later Toolkit pass.
+    /// surfaces: left status, route offer, operations log, ops/research toasts,
+    /// save indicator, and full-screen overlays (briefing / pause / away /
+    /// insolvency). Built in code so packaged builds do not depend on
+    /// editor-imported PanelSettings. Residual IMGUI remains only when Canvas
+    /// is inactive.
     /// </summary>
     public sealed class AirsideCanvasHud
     {
@@ -61,6 +62,10 @@ namespace Airside.Presentation
         private readonly Text _acceptLabel;
         private readonly Text _toastText;
         private readonly Image _offerAccent;
+        private RectTransform _researchToastPanel;
+        private Text _researchToastText;
+        private RectTransform _savePanel;
+        private Text _saveText;
         private RectTransform _pausePanel;
         private RectTransform _briefingPanel;
         private Image _briefingSplash;
@@ -334,11 +339,32 @@ namespace Airside.Presentation
             var decline = AddButton(offer, "Decline", new Vector2(220f, -152f), new Vector2(100f, 32f), AirsideTheme.Tarmac);
             var acceptLabel = accept.GetComponentInChildren<Text>();
 
-            var toast = BuildPanel(root, "Toast panel", new Vector2(0f, -18f), new Vector2(560f, 56f), anchorTopCenter: true);
-            var toastText = AddText(toast, "Toast text", 16, FontStyle.Bold, new Vector2(18f, -14f), new Vector2(524f, 28f));
+            var toast = BuildPanel(root, "Ops toast", new Vector2(0f, 28f), new Vector2(440f, 52f));
+            toast.anchorMin = new Vector2(0.5f, 0f);
+            toast.anchorMax = new Vector2(0.5f, 0f);
+            toast.pivot = new Vector2(0.5f, 0f);
+            toast.anchoredPosition = new Vector2(0f, 28f);
+            var toastText = AddText(toast, "Toast text", 15, FontStyle.Bold, new Vector2(18f, -14f), new Vector2(404f, 26f));
             toastText.alignment = TextAnchor.MiddleCenter;
             toastText.color = AirsideTheme.ClearGreen;
             toast.gameObject.SetActive(false);
+
+            var researchToast = BuildPanel(root, "Research toast", new Vector2(0f, -18f), new Vector2(520f, 64f), anchorTopCenter: true);
+            var researchToastText = AddText(researchToast, "Research toast text", 16, FontStyle.Bold, new Vector2(20f, -18f), new Vector2(480f, 28f));
+            researchToastText.alignment = TextAnchor.MiddleCenter;
+            researchToastText.color = AirsideTheme.ClearGreen;
+            researchToast.gameObject.SetActive(false);
+
+            var savePanel = BuildPanel(root, "Save indicator", new Vector2(-24f, 24f), new Vector2(110f, 36f));
+            savePanel.anchorMin = new Vector2(1f, 0f);
+            savePanel.anchorMax = new Vector2(1f, 0f);
+            savePanel.pivot = new Vector2(1f, 0f);
+            savePanel.anchoredPosition = new Vector2(-24f, 24f);
+            var saveText = AddText(savePanel, "Saved", 14, FontStyle.Bold, new Vector2(16f, -8f), new Vector2(78f, 22f));
+            saveText.text = "Saved";
+            saveText.color = AirsideTheme.ClearGreen;
+            savePanel.gameObject.SetActive(false);
+
             offer.gameObject.SetActive(false);
 
             var ops = BuildPanel(root, "Ops panel", new Vector2(-22f, -22f), new Vector2(340f, 260f), anchorTopRight: true);
@@ -377,6 +403,10 @@ namespace Airside.Presentation
                 waitFill, waitRow, waitLabel,
                 offerTitle, offerBody, offerStatus,
                 accept, decline, acceptLabel, toastText, offerAccent);
+            hud._researchToastPanel = researchToast;
+            hud._researchToastText = researchToastText;
+            hud._savePanel = savePanel;
+            hud._saveText = saveText;
 
             accept.onClick.AddListener(() => hud._onAccept?.Invoke());
             decline.onClick.AddListener(() => hud._onDecline?.Invoke());
@@ -596,6 +626,10 @@ namespace Airside.Presentation
             {
                 _offerPanel.gameObject.SetActive(false);
                 _toastPanel.gameObject.SetActive(false);
+                if (_researchToastPanel != null)
+                    _researchToastPanel.gameObject.SetActive(false);
+                if (_savePanel != null)
+                    _savePanel.gameObject.SetActive(false);
             }
         }
 
@@ -802,6 +836,24 @@ namespace Airside.Presentation
             _toastPanel.gameObject.SetActive(visible);
             if (visible)
                 _toastText.text = message ?? string.Empty;
+        }
+
+        public void SyncResearchToast(string message, bool visible)
+        {
+            if (_researchToastPanel == null)
+                return;
+            _researchToastPanel.gameObject.SetActive(visible);
+            if (visible && _researchToastText != null)
+                _researchToastText.text = message ?? string.Empty;
+        }
+
+        public void SyncSaveIndicator(bool visible)
+        {
+            if (_savePanel == null)
+                return;
+            _savePanel.gameObject.SetActive(visible);
+            if (visible && _saveText != null)
+                _saveText.text = "Saved";
         }
 
         public void SetVisible(bool visible) => _root.gameObject.SetActive(visible);

@@ -3636,22 +3636,46 @@ namespace Airside.Presentation
 
         private static void BuildBirdFlock()
         {
+            // Stylised coastal flock — body + hinged wing quads so flaps read from overview
+            // (0025 item 7). Presentation only.
             var root = new GameObject("Bird flock").transform;
             var rng = new System.Random(4242);
-            for (var i = 0; i < 12; i++)
+            for (var i = 0; i < 18; i++)
             {
-                var bird = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                bird.name = $"Bird {i}";
-                Object.Destroy(bird.GetComponent<Collider>());
-                bird.transform.SetParent(root, false);
-                bird.transform.localScale = new Vector3(0.35f, 0.08f, 0.55f);
-                bird.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                var bird = new GameObject($"Bird {i}").transform;
+                bird.SetParent(root, false);
+                // Seed orbit phase in unused euler z for UpdateBirdFlock.
+                bird.localEulerAngles = new Vector3(0f, (float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f);
+
+                var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                body.name = "Body";
+                Object.Destroy(body.GetComponent<Collider>());
+                body.transform.SetParent(bird, false);
+                body.transform.localScale = new Vector3(0.18f, 0.08f, 0.5f);
+                body.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.12f, 0.12f, 0.14f),
                     AirsideMaterialLibrary.SurfaceKind.Plastic);
-                bird.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                // Seed orbit phase in unused euler z for UpdateBirdFlock.
-                bird.transform.localEulerAngles = new Vector3(0f, (float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 360f);
+                body.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+                PlaceBirdWing(bird, "Wing L", new Vector3(-0.22f, 0.02f, 0.05f), true);
+                PlaceBirdWing(bird, "Wing R", new Vector3(0.22f, 0.02f, 0.05f), false);
             }
+        }
+
+        private static void PlaceBirdWing(Transform bird, string name, Vector3 localPos, bool left)
+        {
+            var wing = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wing.name = name;
+            Object.Destroy(wing.GetComponent<Collider>());
+            wing.transform.SetParent(bird, false);
+            wing.transform.localPosition = localPos;
+            wing.transform.localScale = new Vector3(0.42f, 0.03f, 0.18f);
+            wing.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                new Color(0.18f, 0.18f, 0.2f),
+                AirsideMaterialLibrary.SurfaceKind.Plastic);
+            wing.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            // Pivot hint stored as unused local euler y sign for flap direction.
+            wing.transform.localEulerAngles = new Vector3(0f, left ? -8f : 8f, 0f);
         }
 
         private void UpdateBirdFlock()
@@ -3671,20 +3695,28 @@ namespace Airside.Presentation
             for (var i = 0; i < _birdFlockRoot.childCount; i++)
             {
                 var bird = _birdFlockRoot.GetChild(i);
-                var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.4f;
-                var radius = 28f + (i % 4) * 3.5f;
-                var x = Mathf.Cos(phase) * radius;
+                var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.35f;
+                var radius = 26f + (i % 5) * 3.2f;
+                var x = Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
                 var z = -42f + Mathf.Sin(phase) * radius * 0.45f;
-                var y = 9f + Mathf.Sin(phase * 2.1f + i) * 1.8f + (i % 3);
+                var y = 8.5f + Mathf.Sin(phase * 2.1f + i) * 1.8f + (i % 3) * 0.8f;
                 var next = new Vector3(x, y, z);
                 var prev = bird.position;
                 bird.position = next;
                 var dir = next - prev;
                 if (dir.sqrMagnitude > 0.0001f)
                     bird.rotation = Quaternion.Slerp(bird.rotation, Quaternion.LookRotation(dir.normalized), Time.unscaledDeltaTime * 4f);
-                // Wing flap scale pulse.
-                var flap = 1f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 9f + i));
-                bird.localScale = new Vector3(0.35f * flap, 0.08f, 0.55f);
+
+                // Hinged wing flaps — readable silhouette from overview.
+                var flap = Mathf.Sin(Time.unscaledTime * 10f + i * 0.7f) * 38f;
+                for (var c = 0; c < bird.childCount; c++)
+                {
+                    var child = bird.GetChild(c);
+                    if (child.name.StartsWith("Wing L", StringComparison.Ordinal))
+                        child.localRotation = Quaternion.Euler(0f, -8f, flap);
+                    else if (child.name.StartsWith("Wing R", StringComparison.Ordinal))
+                        child.localRotation = Quaternion.Euler(0f, 8f, -flap);
+                }
             }
         }
 

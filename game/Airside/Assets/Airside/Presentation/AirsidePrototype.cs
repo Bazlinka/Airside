@@ -43,6 +43,7 @@ namespace Airside.Presentation
         private AirsideDayVolume _dayVolume;
         private float _touchdownSmokeRemaining;
         private AirsideCanvasHud _canvasHud;
+        private AirsideToolkitHud _toolkitHud;
         private bool _canvasHudActive;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
@@ -213,6 +214,7 @@ namespace Airside.Presentation
                 _cameraController.SetFollowTargets(_commercialAircraft);
 
             _canvasHud = AirsideCanvasHud.Create(transform);
+            _toolkitHud = AirsideToolkitHud.Create(transform);
             _canvasHud.BindActions(
                 onAccept: () => TryAcceptPendingRouteFromHotkey(),
                 onDecline: () =>
@@ -381,10 +383,26 @@ namespace Airside.Presentation
             }
 
             var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
-            _canvasHud.SyncToast(_opsToast, toastVisible);
             var researchVisible = !string.IsNullOrEmpty(_researchToast) && Time.unscaledTime <= _researchToastUntil;
-            _canvasHud.SyncResearchToast(_researchToast, researchVisible);
-            _canvasHud.SyncSaveIndicator(Time.unscaledTime <= _saveIndicatorUntil);
+            var saveVisible = Time.unscaledTime <= _saveIndicatorUntil;
+
+            // Decision 0025 item 6 — Toolkit owns toasts when active; Canvas keeps panels.
+            if (_toolkitHud != null && _toolkitHud.IsActive)
+            {
+                _toolkitHud.SyncToast(_opsToast, toastVisible);
+                _toolkitHud.SyncResearchToast(_researchToast, researchVisible);
+                _toolkitHud.SyncSaveIndicator(saveVisible);
+                _canvasHud.SyncToast(string.Empty, false);
+                _canvasHud.SyncResearchToast(string.Empty, false);
+                _canvasHud.SyncSaveIndicator(false);
+            }
+            else
+            {
+                _canvasHud.SyncToast(_opsToast, toastVisible);
+                _canvasHud.SyncResearchToast(_researchToast, researchVisible);
+                _canvasHud.SyncSaveIndicator(saveVisible);
+            }
+
             SyncCanvasOpsPanel();
         }
 
@@ -892,10 +910,18 @@ namespace Airside.Presentation
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
-                    child.gameObject.SetActive(enginesOn || night);
+                {
+                    var navOn = enginesOn || night;
+                    child.gameObject.SetActive(navOn);
+                    EnsureNavPointLight(child, navOn, child.name.EndsWith("R", StringComparison.Ordinal)
+                        || child.name.IndexOf(" R", StringComparison.Ordinal) >= 0
+                        || child.name.IndexOf("right", StringComparison.OrdinalIgnoreCase) >= 0);
+                }
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    child.gameObject.SetActive(enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0));
+                    var beaconOn = enginesOn && (Mathf.FloorToInt(Time.unscaledTime * 2f) % 2 == 0);
+                    child.gameObject.SetActive(beaconOn);
+                    EnsureBeaconPointLight(child, beaconOn);
                 }
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
                 {
@@ -908,6 +934,45 @@ namespace Airside.Presentation
                     EnsureTaxiSpotLight(child, taxiLights);
                 }
             }
+        }
+
+        /// <summary>
+        /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
+        /// </summary>
+        private static void EnsureNavPointLight(Transform lamp, bool on, bool isRight)
+        {
+            var light = lamp.GetComponent<Light>();
+            if (light == null)
+            {
+                light = lamp.gameObject.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = isRight
+                    ? new Color(0.95f, 0.15f, 0.12f)
+                    : new Color(0.12f, 0.95f, 0.28f);
+                light.range = 8f;
+                light.shadows = LightShadows.None;
+            }
+
+            light.enabled = on;
+            if (on)
+                light.intensity = 1.8f;
+        }
+
+        private static void EnsureBeaconPointLight(Transform lamp, bool on)
+        {
+            var light = lamp.GetComponent<Light>();
+            if (light == null)
+            {
+                light = lamp.gameObject.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.25f, 0.12f);
+                light.range = 10f;
+                light.shadows = LightShadows.None;
+            }
+
+            light.enabled = on;
+            if (on)
+                light.intensity = 2.6f;
         }
 
         /// <summary>

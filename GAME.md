@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (Addressables-first Resources locator)
-- **Branch / working tree:** `cursor/addressables-prefab-locator-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak confirms prefabs still load; then authored FBX overwrite
-- **In progress / half-done:** runtime Addressables locator exposes all Resources prefab keys
-- **Watch out for:** do not add Resources prefabs named like `mdl_*_v03` aircraft/buildings unless better than glTF
-- **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or parked GA?
-- **Visual assets:** eleven Resources prefabs; Addressables key contract live via runtime locator
+- **Last updated:** 2026-09-07 by Cursor (UI Toolkit toasts + nav/beacon PointLights)
+- **Branch / working tree:** `cursor/toolkit-nav-lights-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak Toolkit toasts + wingtip nav lights at dusk
+- **In progress / half-done:** Toolkit owns ops/research/save toasts; Canvas keeps panels
+- **Watch out for:** Toolkit uses runtime PanelSettings (no UXML yet); authored FBX still the fidelity jump
+- **Open questions for Bailey:** expand Toolkit to left panel next, or authored FBX first?
+- **Visual assets:** eleven Resources prefabs; Addressables locator; Toolkit toast surface
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm Resources prefabs still load (Addressables-first path); landing skids; dusk lights.
-3. Next code track: authored FBX overwrite for terminal or turboprop prefab; Editor Addressables groups; UI Toolkit.
+2. Confirm Toolkit toasts (research/ops/Saved), wingtip nav PointLights at dusk, prefabs still load.
+3. Next code track: authored FBX overwrite for terminal or turboprop; expand Toolkit to left/ops panels.
    No new economy systems; no Companion/CloudKit.

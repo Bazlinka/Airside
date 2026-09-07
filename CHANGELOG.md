@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Ground shadows + drifting cloud bands.** Soft elliptical shadows under
+  commercials/ground traffic that soften with altitude; ten translucent cloud
+  blobs drift east and tint with day/dusk. Presentation only.
+
 - **URP material library spike (0025 item 4).** Shared `AirsideMaterialLibrary`
   profiles (asphalt/concrete/grass/metal/aircraft/glass/rubber) with procedural
   normal + soft AO maps; glTF kits and CreateBlock route through it. Not a full

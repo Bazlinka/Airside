@@ -26,6 +26,7 @@ namespace Airside.Presentation
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
+        private Transform _cloudRoot;
         private float _touchdownSmokeRemaining;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
@@ -111,6 +112,9 @@ namespace Airside.Presentation
             var dome = GameObject.Find("Horizon dome");
             if (dome != null)
                 _horizonDome = dome.transform;
+            var clouds = GameObject.Find("Cloud bands");
+            if (clouds != null)
+                _cloudRoot = clouds.transform;
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -168,6 +172,7 @@ namespace Airside.Presentation
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
             UpdateTrafficWaitPresentation();
+            UpdateCloudDrift();
         }
 
         private void ReadSimulationControls()
@@ -250,6 +255,7 @@ namespace Airside.Presentation
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
                 UpdateControlSurfaces(view, phase, progress, bank);
+                UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinDoor(view, phase);
                 UpdateEngineHeat(view, phase);
@@ -593,6 +599,7 @@ namespace Airside.Presentation
                 RollLandingGearTires(
                     view,
                     traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
+                UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(
                     view,
                     traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
@@ -2485,6 +2492,71 @@ namespace Airside.Presentation
             dome.GetComponent<Renderer>().material = material;
             dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             dome.GetComponent<Renderer>().receiveShadows = false;
+            BuildCloudBands();
+        }
+
+        private static void BuildCloudBands()
+        {
+            // Soft translucent cloud blobs so the sky is not empty — presentation only.
+            var cloudRoot = new GameObject("Cloud bands").transform;
+            var rng = new System.Random(90210);
+            for (var i = 0; i < 10; i++)
+            {
+                var cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                cloud.name = $"Cloud {i}";
+                Object.Destroy(cloud.GetComponent<Collider>());
+                var x = (float)(rng.NextDouble() * 180f - 90f);
+                var z = (float)(rng.NextDouble() * 160f - 80f);
+                var y = 28f + (float)rng.NextDouble() * 18f;
+                cloud.transform.SetParent(cloudRoot, false);
+                cloud.transform.position = new Vector3(x, y, z);
+                var sx = 18f + (float)rng.NextDouble() * 22f;
+                var sy = 4f + (float)rng.NextDouble() * 3f;
+                var sz = 10f + (float)rng.NextDouble() * 14f;
+                cloud.transform.localScale = new Vector3(sx, sy, sz);
+                var alpha = 0.18f + (float)rng.NextDouble() * 0.14f;
+                cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    new Color(0.95f, 0.96f, 0.98f, alpha),
+                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                cloud.GetComponent<Renderer>().receiveShadows = false;
+            }
+        }
+
+        private void UpdateCloudDrift()
+        {
+            if (_cloudRoot == null)
+            {
+                var found = GameObject.Find("Cloud bands");
+                if (found != null)
+                    _cloudRoot = found.transform;
+            }
+
+            if (_cloudRoot == null)
+                return;
+
+            // Slow eastward drift + day tint so clouds feel alive without sim coupling.
+            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var drift = Time.unscaledDeltaTime * 0.35f;
+            for (var i = 0; i < _cloudRoot.childCount; i++)
+            {
+                var cloud = _cloudRoot.GetChild(i);
+                var p = cloud.position;
+                p.x += drift;
+                if (p.x > 100f)
+                    p.x = -100f;
+                cloud.position = p;
+
+                var renderer = cloud.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                var color = renderer.material.color;
+                var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
+                var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
+                tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
+                tint.a = color.a;
+                renderer.material.color = tint;
+            }
         }
 
         /// <summary>Darken an opaque palette colour without dropping alpha into the transparent path.</summary>
@@ -2541,6 +2613,7 @@ namespace Airside.Presentation
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
             EnsurePropDiscs(root);
+            EnsureGroundShadow(root);
             ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
             ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
@@ -2661,6 +2734,55 @@ namespace Airside.Presentation
                 disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.56f, 0.6f, 0.32f));
                 disc.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// Soft elliptical ground shadow under each aircraft (presentation only).
+        /// </summary>
+        private static void EnsureGroundShadow(Transform aircraft)
+        {
+            if (aircraft.Find("GroundShadow") != null)
+                return;
+
+            var shadow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            shadow.name = "GroundShadow";
+            Object.Destroy(shadow.GetComponent<Collider>());
+            shadow.transform.SetParent(aircraft, false);
+            shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
+            shadow.transform.localRotation = Quaternion.identity;
+            shadow.transform.localScale = new Vector3(3.4f, 0.02f, 1.9f);
+            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.35f),
+                AirsideMaterialLibrary.SurfaceKind.Glass);
+            shadow.GetComponent<Renderer>().material = material;
+            shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            shadow.GetComponent<Renderer>().receiveShadows = false;
+        }
+
+        private static void UpdateGroundShadow(Transform aircraft)
+        {
+            var shadow = aircraft.Find("GroundShadow");
+            if (shadow == null)
+                return;
+
+            var ground = new Vector3(aircraft.position.x, 0.05f, aircraft.position.z);
+            shadow.position = ground;
+            shadow.rotation = Quaternion.identity;
+            var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
+            var t = Mathf.Clamp01(altitude / 14f);
+            var width = Mathf.Lerp(3.4f, 8f, t);
+            var depth = width * 0.55f;
+            var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
+            var sy = aircraft.lossyScale.y > 0.001f ? 0.04f / aircraft.lossyScale.y : 0.04f;
+            var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
+            shadow.localScale = new Vector3(sx, sy, sz);
+
+            var renderer = shadow.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+            var color = renderer.material.color;
+            color.a = Mathf.Lerp(0.38f, 0.06f, t);
+            renderer.material.color = color;
+            shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
 
         /// <summary>Prefer a richer kit when present; otherwise the Approved v01 path.</summary>

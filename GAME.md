@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (URP material library spike)
-- **Branch / working tree:** `cursor/materials-library-spike-ddad`
-- **Do this next:** Merge materials PR; then HUD Toolkit spike or denser environment materials; Bailey Unity Play soak
-- **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring
-- **Watch out for:** procedural normals are shared noise, not authored surface normals
+- **Last updated:** 2026-09-07 by Cursor (ground shadows + clouds)
+- **Branch / working tree:** `cursor/ground-shadows-clouds-ddad`
+- **Do this next:** Merge; Bailey Unity Play soak; next HUD Toolkit spike or denser coast props
+- **In progress / half-done:** aircraft ground shadows + cloud band drift
+- **Watch out for:** cloud blobs are translucent spheres, not authored skyboxes
 - **Open questions for Bailey:** none
-- **Visual assets:** streetlights on `main`; material library on this branch
+- **Visual assets:** materials on `main`; shadows/clouds on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

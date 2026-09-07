@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Coast sand + water PBR surfaces (0025 item 4).** Authored `tx_sand_coast_*` and
+  `tx_water_coast_*` basecolour/normal/AO/mask maps on coast strip and dunes;
+  material library wires Sand/Water stems. Presentation only.
+
 - **Landside furniture + coast boat prefabs (0025 items 1+3).** Resources
   `mdl_luggage_trolley_v01`, `mdl_landside_bench_v01`, `mdl_coast_boat_v01`; denser
   car-park stall lines, kerbs, drop-off zebra and parking sign. Presentation only.

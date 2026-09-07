@@ -71,6 +71,8 @@ namespace Airside.Presentation
             [SurfaceKind.Asphalt] = "tx_asphalt_runway",
             [SurfaceKind.Concrete] = "tx_concrete_apron",
             [SurfaceKind.Grass] = "tx_grass_kingscote",
+            [SurfaceKind.Sand] = "tx_sand_coast",
+            [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
             [SurfaceKind.PaintedMetal] = "tx_corrugated_metal"
         };
@@ -104,6 +106,8 @@ namespace Airside.Presentation
                 return SurfaceKind.Glass;
             if (p.Contains("sand"))
                 return SurfaceKind.Sand;
+            if (p.Contains("water"))
+                return SurfaceKind.Water;
             return SurfaceKind.Default;
         }
 

@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Bird wing flaps (0025 item 7).** Coastal flock rebuilt as body + hinged wing quads
+  (18 birds) with flap animation; denser orbit over the shore. Presentation only.
+
 - **Runway edge PointLights (0025 item 5).** Sparse warm point lights every 12 m along
   both runway edges plus green taxi centreline hints; day-cycle intensity. Presentation only.
 

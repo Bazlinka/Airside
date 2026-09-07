@@ -991,13 +991,20 @@ namespace Airside.Presentation
             image.raycastTarget = false;
         }
 
+        /// <summary>
+        /// Unity 6 removed built-in <c>Arial.ttf</c>; uGUI must load
+        /// <c>LegacyRuntime.ttf</c> or Editor Play throws at HUD construction.
+        /// </summary>
+        private static Font ResolveBuiltinUiFont() =>
+            Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
         private static Text AddLayoutText(RectTransform parent, string name, int fontSize, FontStyle style, float preferredHeight)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
             var text = go.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = ResolveBuiltinUiFont();
             text.fontSize = fontSize;
             text.fontStyle = style;
             text.color = AirsideTheme.Cloud;
@@ -1031,7 +1038,7 @@ namespace Airside.Presentation
             var textRt = textGo.GetComponent<RectTransform>();
             Stretch(textRt);
             var text = textGo.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = ResolveBuiltinUiFont();
             text.fontSize = 13;
             text.fontStyle = FontStyle.Bold;
             text.color = AirsideTheme.Cloud;
@@ -1052,7 +1059,7 @@ namespace Airside.Presentation
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
             var text = go.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = ResolveBuiltinUiFont();
             text.fontSize = fontSize;
             text.fontStyle = style;
             text.color = AirsideTheme.Cloud;

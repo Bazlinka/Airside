@@ -10,14 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Codex (decision 0025 packaged-art verification on `33a961a`)
-- **Branch / working tree:** `verify/packaged-art-20260907`
-- **Do this next:** Repair the Unity 6.3 Canvas HUD font/theme startup failure, then rerun the packaged-app versus Editor Play comparison for Batch E and daylight/PBR parity. Keep loader and WorldScale code unchanged unless a later log names an art-path failure.
-- **In progress / half-done:** none — verification-only documentation; no runtime code changed.
-- **Watch out for:** Editor Play throws `ArgumentException: Arial.ttf is no longer a valid built in font. Please use LegacyRuntime.ttf` at `AirsideCanvasHud.cs:1000`; the packaged player logs `No Theme Style Sheet set to PanelSettings`. Neither build, player nor Editor log reports a missing `StreamingAssets/Airside/Art` path.
-- **Open questions for Bailey:** none.
-- **Verification evidence:** sync copied 137 files and left git clean; Unity 6000.3.23f1 EditMode 116/116 passed; macOS build succeeded; all 137 built art files are byte-identical to the synced source.
-- **Visual assets:** Batch C **Verified in packaged build / present in Editor hierarchy and Game view** (turboprop, terminal, hangar/ops and vehicles render as model geometry, not primitive fallbacks); WLD/PRP **Verified in packaged build / present in Editor Game view** (lights, runway markings and props); Batch B aircraft-skin PBR **Verified in packaged daylight build / Editor daylight parity blocked by the HUD startup exception**; Batch E **Not verified for parity** (packaged panels render, but weather/caution presentation could not be matched against the incomplete Editor HUD).
+- **Last updated:** 2026-09-07 by Cursor (HUD font + PanelSettings theme fix)
+- **Branch / working tree:** `cursor/hud-font-panelsettings-cc2d`
+- **Do this next:** Bailey squash-merge the HUD fix PR, then Mac Play soak to confirm no `Arial.ttf` / PanelSettings warnings. Continue 0025 backlog: denser kits / Addressables groups / environment+materials. Keep StreamingAssets path intact.
+- **In progress / half-done:** Canvas HUD uses `LegacyRuntime.ttf`; Toolkit HUD assigns `Resources/Airside/UI/AirsideRuntimeTheme.tss` (`@import url("unity-theme://default")`) on runtime PanelSettings.
+- **Watch out for:** This cloud agent is Linux — `scripts/test-unity.sh` needs Bailey's Mac Unity 6000.3.23f1. Domain/Simulation/Persistence pre-check via `scripts/test-domain.sh`. Do not force-push main.
+- **Open questions for Bailey:** none for this fix.
+- **Visual assets:** unchanged this PR — presentation HUD startup only. Packaged Batch C / WLD/PRP / surfaces remain as verified in #125.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

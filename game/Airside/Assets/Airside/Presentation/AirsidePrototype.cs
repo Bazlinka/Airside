@@ -48,6 +48,8 @@ namespace Airside.Presentation
         private bool _showAwaySummary;
         private bool _showOpeningBriefing;
         private bool _routeOfferToastShown;
+        private bool _firstRouteIncomeToastShown;
+        private long _routeIncomeSeen;
         private int _acceptedRouteCountSeen;
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private const float EngineVolumeRunning = 0.11f;
@@ -82,6 +84,8 @@ namespace Airside.Presentation
             if (_showOpeningBriefing)
                 _paused = true;
             _acceptedRouteCountSeen = _simulation.Routes.Accepted.Count;
+            _routeIncomeSeen = _simulation.Economy.TotalRouteIncome;
+            _firstRouteIncomeToastShown = _routeIncomeSeen > 0;
             _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
@@ -1404,6 +1408,17 @@ namespace Airside.Presentation
             {
                 _acceptedRouteCountSeen = accepted;
             }
+
+            var routeIncome = _simulation.Economy.TotalRouteIncome;
+            if (!_firstRouteIncomeToastShown && routeIncome > _routeIncomeSeen)
+            {
+                var gained = routeIncome - _routeIncomeSeen;
+                _opsToast = $"First route payout +${gained:N0} — completed flights now pay you";
+                _opsToastUntil = Time.unscaledTime + 7f;
+                _firstRouteIncomeToastShown = true;
+            }
+
+            _routeIncomeSeen = routeIncome;
         }
 
         private void ResetToNewAirport()

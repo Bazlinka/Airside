@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **URP profile retune + apron life (0025 items 4+7).** Drier asphalt / richer
+  aircraft-skin & glass dry profiles; denser apron figures; flood mast and dolly
+  cluster contact shadows. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Fence densify + ops HUD chrome (0025 items 3+6).** West/east/south perimeter
   fences gain bottom rails and denser mesh posts; extra terrain mounds; OPERATIONS
   panel gets coastal accent + Open Sky title. Presentation only.

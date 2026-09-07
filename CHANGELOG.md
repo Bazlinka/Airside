@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal/hangar/turboprop densify (0025 items 2+3).** Authored terminal to 49
+  meshes (extra mullions/sills/canopy/columns), hangar to 53 (door bars/handles,
+  crane hook, skylights, downpipes), turboprop to 78 (mid fences, pitot, VOR).
+  Denser TDZ marks, stand digits 1–3, taxi centreline dashes. Hangar door motion
+  includes new bars/handles. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Ops/props densify + atmosphere (0025 items 2–5+7).** Authored ops shed 40,
   service equipment 42, lighting 28, props 34 meshes; presentation places denser
   stairs/GPU/cone/barrier/sign/dolly/flood parts. Night star field (72) + ops

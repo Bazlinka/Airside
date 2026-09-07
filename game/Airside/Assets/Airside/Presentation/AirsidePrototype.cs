@@ -3897,13 +3897,18 @@ namespace Airside.Presentation
                     "glass_front" or "windows" or "entrance" or "cabin_windows" or "landside_glass"
                         or "window_mullion_1" or "window_mullion_2" or "window_mullion_3"
                         or "window_mullion_4" or "window_mullion_5"
-                        or "window_mullion_6" or "window_mullion_7" or "window_transom" => new Color(0.16f, 0.38f, 0.5f),
+                        or "window_mullion_6" or "window_mullion_7"
+                        or "window_mullion_8" or "window_mullion_9"
+                        or "window_transom" or "window_sill" or "window_header"
+                        or "landside_mullion_1" or "landside_mullion_2" or "landside_mullion_3"
+                        or "entrance_transom" => new Color(0.16f, 0.38f, 0.5f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
-                        or "canopy_beam" or "roof_slab" or "roof_plant" or "roof_plant_b" or "roof_plant_c"
-                        or "landside_awning" or "signage_bar" => new Color(0.55f, 0.58f, 0.6f),
+                        or "canopy_beam" or "canopy_edge" or "roof_slab" or "roof_plant" or "roof_plant_b"
+                        or "roof_plant_c" or "roof_parapet" or "landside_awning" or "signage_bar"
+                        or "signage_cap" or "hvac_duct" or "flag_pole" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
-                        or "entrance_frame" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" or "service_door" or "baggage_door" => new Color(0.58f, 0.62f, 0.64f),
+                        or "entrance_frame" or "buttress_r" => new Color(0.62f, 0.66f, 0.69f),
+                    "service_wing" or "service_door" or "baggage_door" or "baggage_ramp" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
                 () =>
@@ -3937,14 +3942,20 @@ namespace Airside.Presentation
                 name => name switch
                 {
                     "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
-                        or "door_bar_l1" or "door_bar_l2" or "door_bar_r1" or "door_bar_r2"
-                        or "personnel_door" => new Color(0.22f, 0.24f, 0.26f),
+                        or "door_bar_l1" or "door_bar_l2" or "door_bar_l3"
+                        or "door_bar_r1" or "door_bar_r2" or "door_bar_r3"
+                        or "door_handle_l" or "door_handle_r"
+                        or "personnel_door" or "personnel_frame" => new Color(0.22f, 0.24f, 0.26f),
                     "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
+                        or "crane_hook" or "gutter_front"
                         or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
                         or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
-                        or "skylight_l" or "skylight_r" => new Color(0.4f, 0.44f, 0.48f),
-                    "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "side_vent"
-                        or "side_vent_b" or "office_lean" or "office_window" or "side_window"
+                        or "skylight_l" or "skylight_r" or "skylight_mid"
+                        or "flood_can_l" or "flood_can_r" or "downpipe_l" or "downpipe_r"
+                        => new Color(0.4f, 0.44f, 0.48f),
+                    "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
+                        or "side_vent" or "side_vent_b" or "office_lean" or "office_window" or "office_door"
+                        or "side_window" or "side_window_b"
                         or "column_ml" or "column_mr" => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
@@ -5125,7 +5136,9 @@ namespace Airside.Presentation
             foreach (var name in new[]
                      {
                          "door_panel_l", "door_panel_r", "door_rib_l", "door_rib_r",
-                         "door_bar_l1", "door_bar_l2", "door_bar_r1", "door_bar_r2"
+                         "door_bar_l1", "door_bar_l2", "door_bar_l3",
+                         "door_bar_r1", "door_bar_r2", "door_bar_r3",
+                         "door_handle_l", "door_handle_r"
                      })
             {
                 var go = GameObject.Find(name);
@@ -5505,11 +5518,24 @@ namespace Airside.Presentation
             "cabin_window_3" => "Cabin window 3",
             "cabin_window_4" => "Cabin window 4",
             "cabin_window_5" => "Cabin window 5",
+            "cabin_window_6" => "Cabin window 6",
             "cabin_window_r1" => "Cabin window R1",
             "cabin_window_r2" => "Cabin window R2",
             "cabin_window_r3" => "Cabin window R3",
             "cabin_window_r4" => "Cabin window R4",
             "cabin_window_r5" => "Cabin window R5",
+            "cabin_window_r6" => "Cabin window R6",
+            "cockpit_glare" => "Cockpit glare",
+            "livery_stripe" => "Livery stripe",
+            "wing_fence_left" => "Wing fence L",
+            "wing_fence_right" => "Wing fence R",
+            "wing_fence_mid_l" => "Wing fence mid L",
+            "wing_fence_mid_r" => "Wing fence mid R",
+            "prop_hub_left" => "Prop hub L",
+            "prop_hub_right" => "Prop hub R",
+            "tailplane_tip_l" => "Tailplane tip L",
+            "tailplane_tip_r" => "Tailplane tip R",
+            "vor_antenna" => "VOR antenna",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
             "wing_root_left" => "Wing root L",
@@ -5578,25 +5604,31 @@ namespace Airside.Presentation
                 or "belly_fairing" or "cargo_door" => new Color(0.93f, 0.95f, 0.97f),
             "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
                 or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
+                or "cabin_window_6"
                 or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
+                or "cabin_window_r6" or "cockpit_glare"
                 => new Color(0.18f, 0.35f, 0.48f),
             "cockpit_frame" => new Color(0.75f, 0.78f, 0.82f),
+            "livery_stripe" => new Color(0.15f, 0.35f, 0.65f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
+                or "wing_fence_left" or "wing_fence_right" or "wing_fence_mid_l" or "wing_fence_mid_r"
                 or "flap_left" or "flap_right" or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
                 or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
+                or "tailplane_tip_l" or "tailplane_tip_r"
                 or "elevator_left" or "elevator_right" or "rudder" => accent,
             "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right"
                 or "intake_left" or "intake_right" or "exhaust_left" or "exhaust_right" => accent * 0.85f,
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
-                or "spinner_left" or "spinner_right" => new Color(0.2f, 0.2f, 0.22f),
+                or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
+                => new Color(0.2f, 0.2f, 0.22f),
             "gear_nose" or "gear_left" or "gear_right"
                 or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
-            "antenna" or "antenna_aft" or "pitot" => new Color(0.35f, 0.35f, 0.38f),
+            "antenna" or "antenna_aft" or "pitot" or "vor_antenna" => new Color(0.35f, 0.35f, 0.38f),
             "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),
             "nav_light_right" => new Color(0.9f, 0.2f, 0.2f),
             "beacon_top" => new Color(0.95f, 0.35f, 0.12f),
@@ -6233,11 +6265,19 @@ namespace Airside.Presentation
             CreateBlock("Runway edge L", new Vector3(0f, 0.025f, -3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
             CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(72f, 0.02f, 0.22f), Color.white);
             // Touchdown zone marks between threshold and aiming points.
-            foreach (var x in new[] { -28f, -24f, 24f, 28f })
+            foreach (var x in new[] { -30f, -28f, -26f, -24f, -22f, 22f, 24f, 26f, 28f, 30f })
             {
-                CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.6f, 0.02f, 0.55f), Color.white);
-                CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.6f, 0.02f, 0.55f), Color.white);
+                CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
+                CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
             }
+            // Stand bay numbers on the apron (readable from overview).
+            PlaceRunwayDigit('1', new Vector3(14f, 0.04f, 14f), yaw: 0f);
+            PlaceRunwayDigit('2', new Vector3(22f, 0.04f, 14f), yaw: 0f);
+            PlaceRunwayDigit('3', new Vector3(30f, 0.04f, 14f), yaw: 0f);
+            // Taxiway centreline dashes along Taxiway A.
+            for (var x = -6; x <= 28; x += 6)
+                CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(2.4f, 0.02f, 0.16f),
+                    new Color(0.95f, 0.85f, 0.2f));
             // Taxiway edge lines along Taxiway A.
             CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f), new Vector3(44f, 0.02f, 0.14f), Color.white);

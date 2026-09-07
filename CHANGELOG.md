@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Canvas OPERATIONS panel (0025 item 6).** Runtime uGUI hosts the OPERATIONS log
+  (routes, ground traffic, event tail) and daily report under the route offer;
+  IMGUI ops panel gated when Canvas is active. Presentation only.
+
 - **Canvas left HUD migration (0025 item 6).** Runtime uGUI left panel now owns
   status, coach, wait meter, turnaround tasks, and hire / release / stand /
   research / priority-crew buttons; IMGUI left panel is gated when Canvas is

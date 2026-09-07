@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Ops/props densify + atmosphere (0025 items 2–5+7).** Authored ops shed 40,
+  service equipment 42, lighting 28, props 34 meshes; presentation places denser
+  stairs/GPU/cone/barrier/sign/dolly/flood parts. Night star field (72) + ops
+  antenna sweep; wet AO deepen + stronger golden-hour day volume; landside overflow
+  cars and denser bush belt. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Service vehicles densify (0025 item 2).** Authored baggage tug and apron bus gain
   rails/cart wheels, mullions, arches and stripe detail.
   Evidence: `scripts/test-domain.sh`.

@@ -8,10 +8,10 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Decision 0025 item 1–2 — production-facing art entry point.
-    /// Prefers Unity-imported prefabs under <c>Resources/Airside/Prefabs/</c>,
-    /// then Addressables (when a catalog + key exist), then StreamingAssets glTF
-    /// via <see cref="ArtGltfLoader"/>. Procedural cuboids remain the caller's
-    /// last resort.
+    /// Prefers Addressables key <c>airside-prefab/&lt;key&gt;</c> (runtime locator
+    /// exposes Resources prefabs until Bailey builds Editor groups), then direct
+    /// <c>Resources/Airside/Prefabs/</c>, then StreamingAssets glTF via
+    /// <see cref="ArtGltfLoader"/>. Procedural cuboids remain the caller's last resort.
     /// </summary>
     public static class ArtPresentationLoader
     {
@@ -33,9 +33,10 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(prefabKey))
                 return false;
-            if (Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}") != null)
+            AirsidePrefabAddressables.EnsureRegistered();
+            if (AddressablesKeyExists(prefabKey))
                 return true;
-            return AddressablesKeyExists(prefabKey);
+            return Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}") != null;
         }
 
         public static bool TryInstantiatePrefab(string prefabKey, out Transform root)
@@ -43,6 +44,10 @@ namespace Airside.Presentation
             root = null;
             if (string.IsNullOrEmpty(prefabKey))
                 return false;
+
+            AirsidePrefabAddressables.EnsureRegistered();
+            if (TryInstantiateAddressable(prefabKey, out root))
+                return true;
 
             var prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
             if (prefab != null)
@@ -53,7 +58,7 @@ namespace Airside.Presentation
                 return true;
             }
 
-            return TryInstantiateAddressable(prefabKey, out root);
+            return false;
         }
 
         /// <summary>
@@ -104,12 +109,11 @@ namespace Airside.Presentation
                 var instance = UnityEngine.Object.Instantiate(prefab);
                 instance.name = prefabKey;
                 root = instance.transform;
-                // Keep the handle alive for the loaded asset; release with the instance if needed later.
                 return true;
             }
             catch (Exception)
             {
-                // No catalog / key — Addressables is optional until Bailey builds groups.
+                // No catalog / key / ResourceManager — fall through to Resources / glTF.
                 return false;
             }
         }

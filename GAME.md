@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (skids + window PointLights + wet taxi spray)
-- **Branch / working tree:** `cursor/skids-window-lights-spray-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak landing skids, dusk window spill, wet taxi mist, fuel farm lamp
-- **In progress / half-done:** denser touchdown smoke; building window PointLights; wet spray
-- **Watch out for:** prefabs still greybox — authored FBX overwrite remains the fidelity jump
+- **Last updated:** 2026-09-07 by Cursor (Addressables-first Resources locator)
+- **Branch / working tree:** `cursor/addressables-prefab-locator-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak confirms prefabs still load; then authored FBX overwrite
+- **In progress / half-done:** runtime Addressables locator exposes all Resources prefab keys
+- **Watch out for:** do not add Resources prefabs named like `mdl_*_v03` aircraft/buildings unless better than glTF
 - **Open questions for Bailey:** first authored FBX key — terminal, turboprop, or parked GA?
-- **Visual assets:** eleven Resources prefabs + landing life/lighting polish
+- **Visual assets:** eleven Resources prefabs; Addressables key contract live via runtime locator
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -121,6 +121,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS.
-2. Confirm landing skids, dusk window spill, wet taxi mist, fuel farm night lamp.
-3. Next code track: authored FBX overwrite for terminal or turboprop prefab; denser Addressables groups; UI Toolkit.
+2. Confirm Resources prefabs still load (Addressables-first path); landing skids; dusk lights.
+3. Next code track: authored FBX overwrite for terminal or turboprop prefab; Editor Addressables groups; UI Toolkit.
    No new economy systems; no Companion/CloudKit.

@@ -791,9 +791,21 @@ def hangar_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "floor_mark_bay": box(0, 0.04, 2.5, 8.0, 0.03, 0.25),
         "corner_trim_fl": box(-7.0, 2.5, 4.4, 0.14, 4.6, 0.14),
         "corner_trim_fr": box(7.0, 2.5, 4.4, 0.14, 4.6, 0.14),
+        "corner_trim_bl": box(-7.0, 2.5, -4.4, 0.14, 4.6, 0.14),
+        "corner_trim_br": box(7.0, 2.5, -4.4, 0.14, 4.6, 0.14),
+        "office_step": box(4.4, 0.2, -5.2, 1.0, 0.25, 0.45),
+        "office_awning": box(5.8, 2.55, -5.15, 2.4, 0.08, 0.55),
+        "roof_flash_front": box(0, 4.95, 4.2, 14.0, 0.08, 0.2),
+        "roof_flash_back": box(0, 4.95, -4.2, 14.0, 0.08, 0.2),
+        "door_peek_l": box(-3.2, 2.8, 4.82, 0.7, 0.45, 0.04),
+        "door_peek_r": box(3.2, 2.8, 4.82, 0.7, 0.45, 0.04),
+        "flood_mount_l": box(-6.5, 4.45, 4.2, 0.18, 0.25, 0.18),
+        "flood_mount_r": box(6.5, 4.45, 4.2, 0.18, 0.25, 0.18),
+        "girth_band_4": box(0, 0.55, 0, 14.1, 0.1, 9.05),
+        "service_door_step": box(-5.5, 0.12, 4.9, 1.2, 0.18, 0.4),
     }
     # Vertical corrugation ribs on ±X faces.
-    for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, -4.0, 4.0), start=1):
+    for i, z in enumerate((-3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, -4.0, 4.0, -3.0, 3.0), start=1):
         meshes[f"wall_rib_l_{i}"] = box(-7.12, 2.5, z, 0.1, 4.5, 0.18)
         meshes[f"wall_rib_r_{i}"] = box(7.12, 2.5, z, 0.1, 4.5, 0.18)
     # Side wall glass panes between ribs around the office-side windows.
@@ -892,6 +904,16 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         "window_ledge_r": box(1.8, 1.08, 2.15, 1.1, 0.06, 0.25),
         "radio_antenna_whip": cylinder(-2.2, 2.4, -1.6, 0.03, 0.9, axis="y", segments=6),
         "signage_glyph": box(0, 2.55, 2.15, 1.1, 0.18, 0.04),
+        "porch_riser": box(0, 0.08, 3.15, 1.5, 0.12, 0.35),
+        "window_awning_l": box(-1.8, 2.2, 2.2, 1.15, 0.06, 0.35),
+        "window_awning_r": box(1.8, 2.2, 2.2, 1.15, 0.06, 0.35),
+        "roof_flash_front": box(0, 2.88, 1.9, 6.0, 0.06, 0.16),
+        "roof_flash_back": box(0, 2.88, -1.9, 6.0, 0.06, 0.16),
+        "power_box": box(2.7, 1.1, 1.6, 0.35, 0.55, 0.25),
+        "hose_reel": box(-2.7, 0.55, 1.8, 0.45, 0.55, 0.45),
+        "flood_mount": box(-2.4, 2.55, 1.95, 0.14, 0.2, 0.14),
+        "flood_mount_b": box(2.4, 2.55, 1.95, 0.14, 0.2, 0.14),
+        "girth_band_3": box(0, 2.45, 0, 6.05, 0.07, 4.05),
     }
     # Front bay panes (split by mullions).
     for i, x in enumerate([-2.05, -1.55, 1.55, 2.05], start=1):
@@ -901,9 +923,9 @@ def ops_shed_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     for i, z in enumerate([-0.45, 0.0, 0.45], start=1):
         meshes[f"glass_pane_side_l_{i}"] = box(-3.04, 1.6, z, 0.05, 0.75, 0.4)
         meshes[f"glass_pane_side_r_{i}"] = box(3.04, 1.6, z, 0.05, 0.75, 0.4)
-    for i, x in enumerate([-2.4, -1.6, -0.8, 0.0, 0.8, 1.6, 2.4, -2.8, 2.8], start=1):
+    for i, x in enumerate([-2.4, -1.6, -0.8, 0.0, 0.8, 1.6, 2.4, -2.8, 2.8, -1.2, 1.2], start=1):
         meshes[f"wall_rib_{i}"] = box(x, 1.4, 2.02, 0.08, 2.5, 0.06)
-    for i, z in enumerate([-1.5, -0.75, 0.0, 0.75, 1.5, -1.1, 1.1], start=1):
+    for i, z in enumerate([-1.5, -0.75, 0.0, 0.75, 1.5, -1.1, 1.1, -0.35, 0.35], start=1):
         meshes[f"wall_rib_l_{i}"] = box(-3.04, 1.4, z, 0.06, 2.5, 0.08)
         meshes[f"wall_rib_r_{i}"] = box(3.04, 1.4, z, 0.06, 2.5, 0.08)
     return meshes

@@ -4331,13 +4331,17 @@ namespace Airside.Presentation
                             or "cladding_face_l" or "cladding_face_r"
                             or "girth_band_1" or "girth_band_2" or "girth_band_3"
                             or "corner_trim_fl" or "corner_trim_fr"
+                            or "corner_trim_bl" or "corner_trim_br"
                             or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
                             or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
-                            or "wall_rib_l_9" or "wall_rib_l_10"
+                            or "wall_rib_l_9" or "wall_rib_l_10" or "wall_rib_l_11" or "wall_rib_l_12"
                             or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
                             or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
-                            or "wall_rib_r_9" or "wall_rib_r_10"
+                            or "wall_rib_r_9" or "wall_rib_r_10" or "wall_rib_r_11" or "wall_rib_r_12"
+                            or "office_step" or "office_awning" or "roof_flash_front" or "roof_flash_back"
+                            or "flood_mount_l" or "flood_mount_r" or "girth_band_4" or "service_door_step"
                             => new Color(0.42f, 0.46f, 0.5f),
+                        "door_peek_l" or "door_peek_r" => new Color(0.18f, 0.36f, 0.48f, 0.42f),
                         _ => new Color(0.45f, 0.5f, 0.54f)
                     };
                 },
@@ -4381,15 +4385,23 @@ namespace Airside.Presentation
                         "door" or "door_frame" or "door_knob" or "door_kick" => new Color(0.35f, 0.38f, 0.34f),
                         "interior_glow" => new Color(1f, 0.82f, 0.5f),
                         "interior_desk" => new Color(0.42f, 0.4f, 0.36f),
-                        "porch_roof" or "porch_beam" or "porch_light" or "roof_ridge" or "roof_panel" or "roof_gutter"
+                        "porch_roof" or "porch_beam" or "porch_light" or "porch_fascia" or "porch_soffit"
+                            or "porch_riser" or "roof_ridge" or "roof_panel" or "roof_gutter"
                             or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
-                            or "roof_vent_a" or "roof_vent_b"
+                            or "roof_vent_a" or "roof_vent_b" or "roof_eave_back"
+                            or "roof_flash_front" or "roof_flash_back"
                             or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy" or "antenna_guy_b"
-                            or "ac_unit" or "ac_unit_b" or "ac_grille" or "radio_rack"
-                            or "vent_pipe" or "wall_vent" or "signage" or "flood_can" or "flood_can_b"
+                            or "radio_antenna_whip"
+                            or "ac_unit" or "ac_unit_b" or "ac_grille" or "ac_pipe" or "ac_pipe_b" or "radio_rack"
+                            or "vent_pipe" or "wall_vent" or "signage" or "signage_glyph" or "flood_can" or "flood_can_b"
+                            or "flood_mount" or "flood_mount_b"
                             or "porch_post_l" or "porch_post_r"
                             or "step_rail_l" or "step_rail_r"
                             or "side_louvre" or "side_louvre_b" or "mailbox" or "bench" or "plinth"
+                            or "shed_corner_l" or "shed_corner_r"
+                            or "window_ledge_l" or "window_ledge_r"
+                            or "window_awning_l" or "window_awning_r"
+                            or "power_box" or "hose_reel" or "girth_band_3"
                             => new Color(0.48f, 0.5f, 0.46f),
                         _ => new Color(0.55f, 0.58f, 0.52f)
                     };
@@ -7575,7 +7587,8 @@ namespace Airside.Presentation
                         if (n is not ("glass_front" or "landside_glass" or "windows" or "cabin_windows"
                             or "door_glass" or "window_l" or "window_r" or "window_side" or "window_side_b"
                             or "windshield" or "rear_window" or "side_window" or "side_window_b"
-                            or "office_window" or "skylight_l" or "skylight_r" or "skylight_mid")
+                            or "office_window" or "skylight_l" or "skylight_r" or "skylight_mid"
+                            or "door_peek_l" or "door_peek_r")
                             && !n.StartsWith("glass_pane", StringComparison.Ordinal))
                             continue;
                         var renderer = child.GetComponent<Renderer>();

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar/ops densify tip (0025 item 2).** Authored hangar kit 165 / ops shed 127 (extra ribs,
+  corner trims, door peeks, awnings, flashings, porch/AC detail); color maps cover new metal/
+  glass parts. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 171.
+
 - **Wet/terrain densify tip (0025 items 3–4).** Residual damp covers markings-kit paint + relief
   mounds (0.22 clear-day); stronger wet darken/spec; more terrain mounds, grass ribbons, dune
   crests; scrub clumps to 5 spheres. Presentation only.

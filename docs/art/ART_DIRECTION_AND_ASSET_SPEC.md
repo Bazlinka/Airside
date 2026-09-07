@@ -284,6 +284,25 @@ Unverified in Unity Play until Bailey soaks.
 | UI-PNL-003 | `UI/Panels/ui_alert_stripe_v01.png` | Caution texture used sparingly; warning colour still supplied by Unity | **Approved · Integrated** — `AirsideTheme.CautionStyle`. Unverified in Unity Play |
 
 
+
+### Batch F — first-playable visual fidelity closure
+
+Decision 0027 and the implementation-ready packet
+`docs/art/prompts/batch-f-first-playable-visual-assets-task-packet.md` define
+the remaining first-playable visual assets after the repository-wide gap audit.
+
+| Slice | Asset IDs | Player-visible purpose | Status |
+|---|---|---|---|
+| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | Planned — implement AIR-001 first |
+| F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | Planned |
+| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | Planned |
+| F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | Planned |
+
+Batch F is intentionally ordered. It does not authorise another broad procedural
+kit pass: each slice must improve silhouette/material fidelity against
+REF-001/003/005, retain the current fallback, and pass the packaged Mac camera
+matrix before the next begins.
+
 ## Later production backlog
 
 Do not generate or integrate this set until the related gameplay milestone is

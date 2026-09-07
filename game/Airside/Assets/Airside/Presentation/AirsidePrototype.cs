@@ -1719,9 +1719,14 @@ namespace Airside.Presentation
             var wind = 12f + Mathf.Sin(Time.unscaledTime * 0.7f) * 8f;
             var sway = Mathf.Sin(Time.unscaledTime * 2.4f) * 6f;
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
-            var stretch = 1f + 0.08f * Mathf.Sin(Time.unscaledTime * 3.1f);
-            // Uniform scale so authored fabric children keep shape (not cylinder squash).
-            _windsockSock.localScale = new Vector3(stretch, stretch, stretch);
+            // Keep parent scale stable; ripple fabric segments so authored children keep shape.
+            _windsockSock.localScale = Vector3.one;
+            for (var i = 0; i < _windsockSock.childCount; i++)
+            {
+                var seg = _windsockSock.GetChild(i);
+                var ripple = Mathf.Sin(Time.unscaledTime * 3.4f + i * 1.35f) * 5f;
+                seg.localRotation = Quaternion.Euler(ripple * 0.25f, 0f, ripple);
+            }
         }
 
         private void UpdateTerminalFlag()
@@ -1986,7 +1991,6 @@ namespace Airside.Presentation
         {
             var weather = _simulation.CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
-            var foggy = weather == WeatherKind.Fog || weather == WeatherKind.Storm;
             var wet = Weather.IsAdverse(weather);
             var storm = weather == WeatherKind.Storm;
 
@@ -2025,11 +2029,14 @@ namespace Airside.Presentation
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
                 var baseDensity = Mathf.Lerp(0.0065f, 0.0032f, daylight);
+                // Adverse fog kept readable on the apron — thick enough to read FG/TSRA, not opaque.
                 RenderSettings.fogDensity = weather == WeatherKind.Storm
-                    ? Mathf.Max(baseDensity, 0.016f)
-                    : foggy ? Mathf.Max(baseDensity, 0.024f)
-                    : raining ? Mathf.Max(baseDensity, 0.009f)
-                    : baseDensity;
+                    ? Mathf.Max(baseDensity, 0.014f)
+                    : weather == WeatherKind.Fog
+                        ? Mathf.Max(baseDensity, 0.011f)
+                        : raining
+                            ? Mathf.Max(baseDensity, 0.0075f)
+                            : baseDensity;
             }
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
@@ -2550,25 +2557,52 @@ namespace Airside.Presentation
         {
             var root = new GameObject("Rain").transform;
             root.position = new Vector3(0f, 0f, 8f);
+
+            // Batch F4 VFX-003 — seed from reusable kit when present, then stamp a dense field.
+            Transform seed = null;
+            if (ArtPresentationLoader.TryInstantiatePrefab("vfx_rain_airfield_v01", out var kit))
+            {
+                kit.SetParent(root, false);
+                kit.localPosition = Vector3.zero;
+                kit.name = "Rain kit seed";
+                seed = kit;
+            }
+
             var rng = new System.Random(42);
             for (var i = 0; i < 96; i++)
             {
-                var drop = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                drop.name = $"Rain {i}";
-                drop.transform.SetParent(root, false);
+                GameObject drop;
+                if (seed != null && seed.childCount > 0)
+                {
+                    var src = seed.GetChild(i % seed.childCount);
+                    drop = Object.Instantiate(src.gameObject);
+                    drop.name = $"Rain {i}";
+                    drop.transform.SetParent(root, false);
+                }
+                else
+                {
+                    drop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    drop.name = $"Rain {i}";
+                    drop.transform.SetParent(root, false);
+                    drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
+                    drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
+                    drop.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                        new Color(0.7f, 0.78f, 0.88f, 0.35f),
+                        AirsideMaterialLibrary.SurfaceKind.Default);
+                    var collider = drop.GetComponent<Collider>();
+                    if (collider != null)
+                        Object.Destroy(collider);
+                }
+
                 drop.transform.localPosition = new Vector3(
                     (float)(rng.NextDouble() * 80f - 40f),
                     (float)(rng.NextDouble() * 16f + 2f),
                     (float)(rng.NextDouble() * 50f - 10f));
-                drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
                 drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-                drop.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                    new Color(0.7f, 0.78f, 0.88f, 0.35f),
-                    AirsideMaterialLibrary.SurfaceKind.Default);
-                var collider = drop.GetComponent<Collider>();
-                if (collider != null)
-                    Object.Destroy(collider);
             }
+
+            if (seed != null)
+                Object.Destroy(seed.gameObject);
 
             root.gameObject.SetActive(false);
             return root;
@@ -3508,8 +3542,9 @@ namespace Airside.Presentation
             var night = new Color(0.28f, 0.36f, 0.58f);
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            _sun.intensity = Mathf.Lerp(0.12f, 1.85f, daylight);
-            _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
+            // Noon punch + readable night key so REF overview separation holds (post-F polish).
+            _sun.intensity = Mathf.Lerp(0.14f, 1.98f, daylight);
+            _sun.shadowStrength = Mathf.Lerp(0.38f, 0.82f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
             var weather = _simulation.CurrentWeather;
@@ -3584,14 +3619,14 @@ namespace Airside.Presentation
                     new Color(0.08f, 0.1f, 0.16f),
                     Color.Lerp(skyDay * 0.92f, skyDusk * 0.85f, warm),
                     Mathf.Clamp01(daylight + warm * 0.25f));
-                RenderSettings.fogDensity = Mathf.Lerp(0.0065f, 0.0032f, daylight);
+                RenderSettings.fogDensity = Mathf.Lerp(0.0058f, 0.0028f, daylight);
             }
 
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
                 // Stronger night punch so REF-002 warm pools read against scrub.
-                var flood = Mathf.Lerp(3.1f, 0.05f, daylight);
+                var flood = Mathf.Lerp(3.45f, 0.05f, daylight);
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -6702,9 +6737,9 @@ namespace Airside.Presentation
                 body.name = "Body";
                 Object.Destroy(body.GetComponent<Collider>());
                 body.transform.SetParent(bird, false);
-                body.transform.localScale = new Vector3(0.18f, 0.08f, 0.5f);
+                body.transform.localScale = new Vector3(0.12f, 0.05f, 0.55f);
                 body.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
-                    new Color(0.12f, 0.12f, 0.14f),
+                    new Color(0.1f, 0.1f, 0.12f),
                     AirsideMaterialLibrary.SurfaceKind.Plastic);
                 body.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
@@ -6720,7 +6755,7 @@ namespace Airside.Presentation
             Object.Destroy(wing.GetComponent<Collider>());
             wing.transform.SetParent(bird, false);
             wing.transform.localPosition = localPos;
-            wing.transform.localScale = new Vector3(0.42f, 0.03f, 0.18f);
+            wing.transform.localScale = new Vector3(0.55f, 0.02f, 0.14f);
             wing.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                 new Color(0.18f, 0.18f, 0.2f),
                 AirsideMaterialLibrary.SurfaceKind.Plastic);
@@ -6847,10 +6882,25 @@ namespace Airside.Presentation
                 ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
-            if (!HasNamedChild(root, "EngineHeat L"))
-                ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
-            if (!HasNamedChild(root, "EngineHeat R"))
-                ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
+            {
+                // Batch F4 VFX-002 — prefer reusable heat kit; fall back to translucent quads.
+                if (ArtPresentationLoader.TryInstantiatePrefab("vfx_engine_heat_v01", out var heatKit))
+                {
+                    while (heatKit.childCount > 0)
+                    {
+                        var child = heatKit.GetChild(0);
+                        child.SetParent(root, false);
+                    }
+
+                    Object.Destroy(heatKit.gameObject);
+                }
+                else
+                {
+                    ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+                    ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+                }
+            }
 
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();
@@ -7409,8 +7459,8 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(3.4f, 0.02f, 1.9f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.45f),
+            shadow.transform.localScale = new Vector3(3.6f, 0.015f, 2.0f);
+            var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.07f, 0.32f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -7428,10 +7478,10 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(3.4f, 8f, t);
-            var depth = width * 0.55f;
+            var width = Mathf.Lerp(3.6f, 7.2f, t);
+            var depth = width * 0.52f;
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
-            var sy = aircraft.lossyScale.y > 0.001f ? 0.04f / aircraft.lossyScale.y : 0.04f;
+            var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
             shadow.localScale = new Vector3(sx, sy, sz);
 
@@ -7439,7 +7489,8 @@ namespace Airside.Presentation
             if (renderer == null)
                 return;
             var color = renderer.material.color;
-            color.a = Mathf.Lerp(0.38f, 0.06f, t);
+            // Softer contact so realtime URP shadows remain the primary read.
+            color.a = Mathf.Lerp(0.28f, 0.04f, t);
             renderer.material.color = color;
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }

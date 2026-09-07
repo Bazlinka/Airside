@@ -43,6 +43,8 @@ namespace Airside.Presentation
         private Transform _apronLifeRoot;
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
+        private readonly List<(Transform Panel, float ClosedX, float OpenDelta)> _hangarDoorPanels =
+            new List<(Transform, float, float)>();
         private Light _hangarBayLight;
         private AirsideDayVolume _dayVolume;
         private float _touchdownSmokeRemaining;
@@ -69,6 +71,9 @@ namespace Airside.Presentation
         private Transform _gpuCart;
         private Transform _pushbackTug;
         private Transform _windsockSock;
+        private Transform _coastFoam;
+        private readonly List<(Transform Boat, Vector3 BasePos)> _coastBoats = new List<(Transform, Vector3)>();
+        private Transform _jettyDeck;
         private bool _standThreeVisualBuilt;
         private Camera _mainCamera;
         private AirsideCameraController _cameraController;
@@ -182,6 +187,9 @@ namespace Airside.Presentation
                 _hangarDoor = hangarDoor.transform;
                 _hangarDoorClosedX = _hangarDoor.position.x;
             }
+
+            CollectHangarDoorPanels();
+            CollectCoastalMotionTargets();
 
             var hangarBayLightGo = GameObject.Find("Hangar bay light");
             if (hangarBayLightGo == null)
@@ -362,6 +370,7 @@ namespace Airside.Presentation
             UpdateCloudDrift();
             UpdateBirdFlock();
             UpdateHangarDoor();
+            UpdateCoastalMotion();
             UpdateApronLife();
             SyncCanvasHud();
         }
@@ -4833,20 +4842,72 @@ namespace Airside.Presentation
             shadow.GetComponent<Renderer>().receiveShadows = false;
         }
 
+        private void CollectHangarDoorPanels()
+        {
+            _hangarDoorPanels.Clear();
+            // Authored / kit hangar doors — slide L/R panels instead of a single greybox slab.
+            foreach (var name in new[] { "door_panel_l", "door_panel_r", "door_rib_l", "door_rib_r" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                var t = go.transform;
+                var openDelta = name.EndsWith("_l", StringComparison.Ordinal) ? -3.6f : 3.6f;
+                _hangarDoorPanels.Add((t, t.localPosition.x, openDelta));
+            }
+        }
+
+        private void CollectCoastalMotionTargets()
+        {
+            _coastBoats.Clear();
+            _coastFoam = GameObject.Find("Coast foam")?.transform;
+            _jettyDeck = GameObject.Find("Jetty deck")?.transform;
+            foreach (var name in new[] { "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                _coastBoats.Add((go.transform, go.transform.position));
+            }
+        }
+
         private void UpdateHangarDoor()
         {
-            if (_hangarDoor == null && _hangarBayLight == null)
+            if (_hangarDoor == null && _hangarBayLight == null && _hangarDoorPanels.Count == 0)
                 return;
 
             // Presentation-only: hangar door slides open by day, closes at night.
+            // Also opens wider when a commercial aircraft is near the hangar apron.
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
+            for (var i = 0; i < _simulation.Flights.Count; i++)
+            {
+                var flight = _simulation.Flights[i];
+                if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.AtStand
+                    or AircraftPhase.TaxiOut or AircraftPhase.Pushback)
+                {
+                    openAmount = Mathf.Max(openAmount, 0.85f);
+                    break;
+                }
+            }
+
             if (_hangarDoor != null)
             {
                 var targetX = Mathf.Lerp(_hangarDoorClosedX, _hangarDoorClosedX - 7.2f, openAmount);
                 var pos = _hangarDoor.position;
                 pos.x = Mathf.MoveTowards(pos.x, targetX, Time.unscaledDeltaTime * 1.8f);
                 _hangarDoor.position = pos;
+            }
+
+            for (var i = 0; i < _hangarDoorPanels.Count; i++)
+            {
+                var (panel, closedX, openDelta) = _hangarDoorPanels[i];
+                if (panel == null)
+                    continue;
+                var local = panel.localPosition;
+                var target = closedX + openDelta * openAmount;
+                local.x = Mathf.MoveTowards(local.x, target, Time.unscaledDeltaTime * 1.6f);
+                panel.localPosition = local;
             }
 
             // Warm bay spill: brighter when the door is open by day; soft night work-light when closed.
@@ -4859,6 +4920,51 @@ namespace Airside.Presentation
                     new Color(1f, 0.78f, 0.48f),
                     new Color(1f, 0.92f, 0.72f),
                     openAmount);
+            }
+        }
+
+        /// <summary>
+        /// Soft boat bob + foam pulse on the KI coast (0025 items 3+7). Presentation only.
+        /// </summary>
+        private void UpdateCoastalMotion()
+        {
+            var t = Time.unscaledTime;
+            for (var i = 0; i < _coastBoats.Count; i++)
+            {
+                var (boat, basePos) = _coastBoats[i];
+                if (boat == null)
+                    continue;
+                var bob = Mathf.Sin(t * 0.85f + i * 1.4f) * 0.08f;
+                var yawSway = Mathf.Sin(t * 0.35f + i) * 2.2f;
+                boat.position = basePos + new Vector3(0f, bob, 0f);
+                var euler = boat.eulerAngles;
+                // Preserve authored yaw; add a tiny roll/yaw sway.
+                boat.rotation = Quaternion.Euler(
+                    Mathf.Sin(t * 0.7f + i) * 2.5f,
+                    euler.y + yawSway * 0.02f,
+                    Mathf.Cos(t * 0.55f + i * 0.8f) * 3f);
+            }
+
+            if (_coastFoam != null)
+            {
+                var pulse = 0.92f + 0.08f * Mathf.Sin(t * 1.6f);
+                var scale = _coastFoam.localScale;
+                scale.z = 2.2f * pulse;
+                _coastFoam.localScale = scale;
+                var renderer = _coastFoam.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    var c = renderer.material.color;
+                    c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * 1.4f));
+                    renderer.material.color = c;
+                }
+            }
+
+            if (_jettyDeck != null)
+            {
+                var pos = _jettyDeck.position;
+                pos.y = -0.15f + Mathf.Sin(t * 0.9f) * 0.02f;
+                _jettyDeck.position = pos;
             }
         }
 

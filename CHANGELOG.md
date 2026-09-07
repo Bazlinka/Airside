@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar kit doors + coastal motion (0025 items 3+7).** Authored hangar
+  `door_panel_*` / `door_rib_*` slide with the greybox slab (opens for day and
+  active stand traffic); coast boats bob, foam pulses, jetty breathes.
+  Presentation only. Evidence: `scripts/test-domain.sh`.
+
 - **Wet materials + day profiles + coast densify (0025 items 3–5).** URP Lit wet
   variants darken albedo, flatten bump, raise gloss and enable clear-coat sheen;
   day volume adds ShadowsMidtonesHighlights + rain/fog/storm gloom; coast foam

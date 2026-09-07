@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F2 turnaround vehicles + people.** Authored VEH-001/002/003 v05 (fuel truck
+  oval tank, baggage tug+carts, apron bus with rounded nose), VEH-004 pushback tug v02,
+  CHR-001 ramp-crew and CHR-002 passenger kits; PreferArtKit + PlacePerson wired;
+  Resources pipeline-proof prefabs; StreamingAssets sync; bake menu updated. Soft-skip
+  Addressables catalog init when `aa/settings.json` is missing. Presentation only —
+  simulation unchanged.
+  Evidence: `scripts/test-domain.sh`; art sync; `docs/art/prompts/batch-f2-vehicles-characters-2026-09-07.md`.
+
 - **Batch F1 soak evidence.** Pre-rebuild soak ~16 min stable; post-rebuild packaged app (shallower roof) stayed up 35+ min continuous with no crash (RSS ~250 MB).
 
 - **BLD-001 v05 roof silhouette.** Shallower ~4° dual-pitch roof / lower plant to better match REF-001; Mac FBX rebake. Packaged rebuild pending soak tip.

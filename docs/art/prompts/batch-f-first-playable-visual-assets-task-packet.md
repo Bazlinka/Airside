@@ -59,12 +59,12 @@ Do not overwrite the lofted or v04 files.
 
 | ID | Exact authoring/runtime paths | Required design | Priority |
 |---|---|---|---|
-| VEH-001 v05 | `Art/Models/Vehicles/mdl_fuel_truck_small_v05.fbx`; matching Resources prefab | Regional rigid fuel truck; separate wheels, cabinet doors, hose reel and hose root; yellow project livery | P1 |
-| VEH-002 v05 | `Art/Models/Vehicles/mdl_baggage_tug_train_v05.fbx`; matching Resources prefab | Tug plus three articulated carts; separate wheels, tow pivots and removable baggage loads | P1 |
-| VEH-003 v05 | `Art/Models/Vehicles/mdl_passenger_bus_apron_v05.fbx`; matching Resources prefab | Compact apron bus; separate wheels and doors; clear glazing and Coastal Blue accent | P1 |
-| VEH-004 | `Art/Models/Vehicles/mdl_pushback_tug_v02.fbx`; `Resources/Airside/Prefabs/mdl_pushback_tug_v02.prefab` | Authored pushback tug with towbar connection and wheel pivots; replaces the current primitive prefab proof | P1 |
-| CHR-001 | `Art/Models/Characters/mdl_ramp_crew_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_ramp_crew_kit_v01.prefab` | One low-detail shared rig with marshaller, fueler and ramp-worker material variants; high-vis accents; marshalling-wand sockets | P1 |
-| CHR-002 | `Art/Models/Characters/mdl_passenger_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_passenger_kit_v01.prefab` | Six restrained silhouettes sharing one rig/material atlas; standing, walking and seated variants; no individual passenger simulation implied | P1 |
+| VEH-001 v05 | `Art/Models/Vehicles/mdl_fuel_truck_small_v05.fbx`; matching Resources prefab | Regional rigid fuel truck; separate wheels, cabinet doors, hose reel and hose root; yellow project livery | P1 — **Integrated** (prefer v05; Mac FBX bake) |
+| VEH-002 v05 | `Art/Models/Vehicles/mdl_baggage_tug_train_v05.fbx`; matching Resources prefab | Tug plus three articulated carts; separate wheels, tow pivots and removable baggage loads | P1 — **Integrated** (prefer v05; Mac FBX bake) |
+| VEH-003 v05 | `Art/Models/Vehicles/mdl_passenger_bus_apron_v05.fbx`; matching Resources prefab | Compact apron bus; separate wheels and doors; clear glazing and Coastal Blue accent | P1 — **Integrated** (prefer v05; Mac FBX bake) |
+| VEH-004 | `Art/Models/Vehicles/mdl_pushback_tug_v02.fbx`; `Resources/Airside/Prefabs/mdl_pushback_tug_v02.prefab` | Authored pushback tug with towbar connection and wheel pivots; replaces the current primitive prefab proof | P1 — **Integrated** (prefer v02; Mac FBX bake) |
+| CHR-001 | `Art/Models/Characters/mdl_ramp_crew_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_ramp_crew_kit_v01.prefab` | One low-detail shared rig with marshaller, fueler and ramp-worker material variants; high-vis accents; marshalling-wand sockets | P1 — **Integrated** (PlacePerson prefers kit) |
+| CHR-002 | `Art/Models/Characters/mdl_passenger_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_passenger_kit_v01.prefab` | Six restrained silhouettes sharing one rig/material atlas; standing, walking and seated variants; no individual passenger simulation implied | P1 — **Integrated** (PlacePerson prefers kit) |
 
 F2 assets mirror existing turnaround state only. People remain presentation
 instances; they do not reserve zones or complete tasks.
@@ -147,7 +147,7 @@ UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
 
 ## Cursor handoff: first task
 
-Batch F1 (AIR-001 v05, BLD-001 v05, MAT-001) is integrated on
-`cursor/batch-f1-terminal-materials`. Next implementation tip after Bailey accepts
-the packaged Mac playtest is **Batch F2** on a **new** branch. Do not begin F2–F4
-in the F1 branch.
+Batch F1 is on `main`. Batch F2 (vehicles/people) is integrated on
+`cursor/batch-f2-vehicles-people-a8ff`. Next tip after Bailey accepts the packaged
+Mac playtest of F2 is **Batch F3** (vegetation/boundary/landside) on a **new**
+branch. Do not begin F3–F4 on the F2 branch.

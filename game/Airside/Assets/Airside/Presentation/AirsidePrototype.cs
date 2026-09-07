@@ -608,21 +608,18 @@ namespace Airside.Presentation
 
             var cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.Cloud;
             var cashLine =
-                $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}  ·  Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})";
+                $"${_simulation.Economy.Cash:N0}  ·  Rep {_simulation.Reputation.Score}";
             if (_simulation.Reputation.Band == "Trusted")
                 cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.ClearGreen;
             else if (_simulation.Reputation.Band == "Provisional" || _simulation.Reputation.Band == "At Risk")
                 cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.SafetyYellow;
 
             var finance = _simulation.DailyFinance;
-            var runway = finance.CashRunwayDays is int days
-                ? $"  ·  ~{days}d runway"
-                : "  ·  cash building";
             var financeColor = finance.ExpectedNet < 0 ? AirsideTheme.SignalRed
                 : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? AirsideTheme.SafetyYellow
                 : AirsideTheme.ClearGreen;
-            var financeLine =
-                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}";
+            // Slim economy strip: short day-net only (full breakdown stays in ops).
+            var financeLine = $"Day {finance.ExpectedNet:+$#,0;-$#,0;$0}";
 
             string warningLine = null;
             var warningColor = AirsideTheme.SafetyYellow;
@@ -678,7 +675,7 @@ namespace Airside.Presentation
 
             var staffing = _simulation.Staffing;
             var staffingLine =
-                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}";
+                $"Crew {staffing.GroundCrew}  ·  ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  SHORT" : string.Empty)}";
             var staffingColor = staffing.IsUnderstaffed ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
 
             var capacity = _simulation.Capacity;
@@ -863,6 +860,27 @@ namespace Airside.Presentation
                     ? _simulation.Flights[0].Operation.Phase
                     : null;
                 _toolkitHud.SyncChromeIcons(phase, _simulation.CurrentWeather, _speed, _paused);
+                if (atStand && _simulation.ActiveTurnaround != null)
+                {
+                    var tasks = _simulation.ActiveTurnaround.Tasks(_clock.Now);
+                    var names = new string[tasks.Count];
+                    var progress = new float[tasks.Count];
+                    for (var i = 0; i < tasks.Count; i++)
+                    {
+                        names[i] = tasks[i].State == TurnaroundTaskState.Complete
+                            ? $"✓ {tasks[i].Name}"
+                            : tasks[i].State == TurnaroundTaskState.Active
+                                ? $"● {tasks[i].Name}  {tasks[i].SecondsRemaining}s"
+                                : $"○ {tasks[i].Name}";
+                        progress[i] = tasks[i].Progress01;
+                    }
+
+                    _toolkitHud.SyncTurnaroundBars(true, names, progress);
+                }
+                else
+                {
+                    _toolkitHud.SyncTurnaroundBars(false, null, null);
+                }
             }
         }
 
@@ -3548,7 +3566,7 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var baseColor = renderer.gameObject.name.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
-                    ? new Color(0.2f, 0.85f, 0.35f)
+                    ? new Color(0.25f, 0.55f, 1f)
                     : warmWhite;
                 var color = baseColor * intensity;
                 color.a = 1f;
@@ -3726,10 +3744,11 @@ namespace Airside.Presentation
             // directional wash at dusk (0025 item 5) — fewer omnidirectional spills.
             var specs = new[]
             {
-                (new Vector3(8f, 7.2f, 12f), new Vector3(17f, 0.2f, 14f)),
-                (new Vector3(32f, 7.2f, 12f), new Vector3(17f, 0.2f, 20f)),
-                (new Vector3(8f, 7.2f, 22f), new Vector3(26f, 0.2f, 24f)),
-                (new Vector3(32f, 7.2f, 22f), new Vector3(20f, 0.2f, 17f)),
+                // Four corner masts — SpotLight height matches ~9 m authored flood heads.
+                (new Vector3(8f, 9.2f, 12f), new Vector3(17f, 0.2f, 14f)),
+                (new Vector3(32f, 9.2f, 12f), new Vector3(17f, 0.2f, 20f)),
+                (new Vector3(8f, 9.2f, 22f), new Vector3(26f, 0.2f, 24f)),
+                (new Vector3(32f, 9.2f, 22f), new Vector3(20f, 0.2f, 17f)),
                 (new Vector3(-18f, 6.5f, 16f), new Vector3(-20f, 0.2f, 20f)),
                 (new Vector3(17f, 6.8f, 26f), new Vector3(26f, 0.5f, 27f)),
                 (new Vector3(-8f, 5.8f, 22f), new Vector3(-8f, 0.2f, 26f)),
@@ -3770,11 +3789,11 @@ namespace Airside.Presentation
                 lights.Add(CreateEdgePointLight($"Runway edge point R {x}", new Vector3(x, 0.55f, 3.4f)));
             }
 
-            // Green taxi centreline hints along A1 / stand lead-in.
+            // Blue taxi centreline hints along A1 / stand lead-in (REF-002).
             for (var x = -12; x <= 28; x += 8)
             {
                 lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
-                    new Color(0.25f, 0.9f, 0.4f), range: 7.5f));
+                    new Color(0.3f, 0.55f, 1f), range: 7.5f));
             }
 
             // REIL-style white flashers just beyond each threshold (blinked later).
@@ -3999,6 +4018,12 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
+            // Expansion-joint grid so the apron reads as poured slabs (REF densify).
+            var joint = new Color(0.22f, 0.23f, 0.24f);
+            for (var x = 8f; x <= 32f; x += 4f)
+                CreateBlock($"Apron joint X {x:0}", new Vector3(x, 0.065f, 17f), new Vector3(0.06f, 0.02f, 13.6f), joint);
+            for (var z = 11f; z <= 23f; z += 3f)
+                CreateBlock($"Apron joint Z {z:0}", new Vector3(20f, 0.065f, z), new Vector3(27.6f, 0.02f, 0.06f), joint);
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -4311,10 +4336,11 @@ namespace Airside.Presentation
         private static void BuildApronLife()
         {
             var root = new GameObject("Apron life").transform;
-            PlacePerson(root, "Marshaller", new Vector3(14.5f, 0f, 16.5f), 200f, new Color(0.85f, 0.55f, 0.12f));
-            PlacePerson(root, "Fueler", new Vector3(-3.2f, 0f, 13.2f), 90f, new Color(0.2f, 0.35f, 0.55f));
+            PlacePerson(root, "Marshaller", new Vector3(14.5f, 0f, 16.5f), 200f, new Color(0.85f, 0.55f, 0.12f),
+                hiVis: true, marshallerWand: true);
+            PlacePerson(root, "Fueler", new Vector3(-3.2f, 0f, 13.2f), 90f, new Color(0.2f, 0.35f, 0.55f), hiVis: true);
             PlacePerson(root, "Ops walker", new Vector3(22f, 0f, 22.5f), 15f, new Color(0.25f, 0.28f, 0.32f));
-            PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f));
+            PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f), hiVis: true);
             PlacePerson(root, "Hangar tech", new Vector3(-16f, 0f, 18.5f), 270f, new Color(0.35f, 0.4f, 0.45f));
             PlacePerson(root, "Hangar tech B", new Vector3(-18.5f, 0f, 17.2f), 200f, new Color(0.4f, 0.42f, 0.38f));
             PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
@@ -4324,17 +4350,26 @@ namespace Airside.Presentation
             PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
             PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
             PlacePerson(root, "Car park walker", new Vector3(34f, 0f, 34f), 220f, new Color(0.4f, 0.25f, 0.3f));
-            PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f));
-            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f));
-            PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f));
-            PlacePerson(root, "Stairs attendant", new Vector3(16.8f, 0f, 18.2f), 170f, new Color(0.6f, 0.35f, 0.25f));
+            PlacePerson(root, "Fuel pad walker", new Vector3(-32f, 0f, 20.5f), 110f, new Color(0.55f, 0.4f, 0.2f), hiVis: true);
+            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f),
+                hiVis: true, marshallerWand: true);
+            PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
+            PlacePerson(root, "Stairs attendant", new Vector3(16.8f, 0f, 18.2f), 170f, new Color(0.6f, 0.35f, 0.25f), hiVis: true);
             PlacePerson(root, "Ops walker B", new Vector3(-6f, 0f, 24.5f), 40f, new Color(0.28f, 0.3f, 0.35f));
             PlacePerson(root, "Car park walker B", new Vector3(44f, 0f, 42f), 280f, new Color(0.35f, 0.4f, 0.45f));
             PlacePerson(root, "Landside passenger E", new Vector3(24.8f, 0f, 32.5f), 150f, new Color(0.55f, 0.3f, 0.35f));
             PlacePerson(root, "Bench sitter B", new Vector3(30.8f, 0.15f, 31.2f), 10f, new Color(0.25f, 0.35f, 0.4f), seated: true);
         }
 
-        private static void PlacePerson(Transform parent, string name, Vector3 position, float yaw, Color clothes, bool seated = false)
+        private static void PlacePerson(
+            Transform parent,
+            string name,
+            Vector3 position,
+            float yaw,
+            Color clothes,
+            bool seated = false,
+            bool hiVis = false,
+            bool marshallerWand = false)
         {
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
@@ -4342,15 +4377,31 @@ namespace Airside.Presentation
             root.rotation = Quaternion.Euler(0f, yaw, 0f);
             var bodyH = seated ? 0.55f : 0.85f;
             var bodyY = seated ? 0.55f : 0.9f;
-            ParentBlock(root, $"{name} torso", new Vector3(0f, bodyY, 0f), new Vector3(0.38f, bodyH, 0.22f), clothes);
+            var torsoColor = hiVis ? new Color(0.95f, 0.72f, 0.12f) : clothes;
+            ParentBlock(root, $"{name} torso", new Vector3(0f, bodyY, 0f), new Vector3(0.38f, bodyH, 0.22f), torsoColor);
+            if (hiVis)
+            {
+                ParentBlock(root, $"{name} vest stripe", new Vector3(0f, bodyY + 0.05f, 0.12f),
+                    new Vector3(0.36f, 0.12f, 0.04f), new Color(0.95f, 0.95f, 0.9f));
+                ParentBlock(root, $"{name} hard hat", new Vector3(0f, bodyY + bodyH * 0.55f + 0.32f, 0f),
+                    new Vector3(0.26f, 0.12f, 0.28f), new Color(0.95f, 0.78f, 0.15f));
+            }
+
             ParentBlock(root, $"{name} head", new Vector3(0f, bodyY + bodyH * 0.55f + 0.18f, 0f), new Vector3(0.22f, 0.22f, 0.22f),
                 new Color(0.78f, 0.62f, 0.5f));
             if (!seated)
             {
                 ParentBlock(root, $"{name} leg L", new Vector3(-0.1f, 0.35f, 0f), new Vector3(0.14f, 0.7f, 0.14f), Shade(clothes, 0.7f));
                 ParentBlock(root, $"{name} leg R", new Vector3(0.1f, 0.35f, 0f), new Vector3(0.14f, 0.7f, 0.14f), Shade(clothes, 0.7f));
-                ParentBlock(root, $"{name} arm L", new Vector3(-0.28f, bodyY + 0.05f, 0f), new Vector3(0.12f, 0.55f, 0.12f), Shade(clothes, 0.85f));
-                ParentBlock(root, $"{name} arm R", new Vector3(0.28f, bodyY + 0.05f, 0f), new Vector3(0.12f, 0.55f, 0.12f), Shade(clothes, 0.85f));
+                ParentBlock(root, $"{name} arm L", new Vector3(-0.28f, bodyY + 0.05f, 0f), new Vector3(0.12f, 0.55f, 0.12f), Shade(torsoColor, 0.85f));
+                ParentBlock(root, $"{name} arm R", new Vector3(0.28f, bodyY + 0.05f, 0f), new Vector3(0.12f, 0.55f, 0.12f), Shade(torsoColor, 0.85f));
+                if (marshallerWand)
+                {
+                    ParentBlock(root, $"{name} wand", new Vector3(0.42f, bodyY + 0.35f, 0.05f),
+                        new Vector3(0.05f, 0.55f, 0.05f), new Color(0.95f, 0.2f, 0.15f));
+                    ParentBlock(root, $"{name} wand tip", new Vector3(0.42f, bodyY + 0.65f, 0.05f),
+                        new Vector3(0.08f, 0.08f, 0.08f), new Color(1f, 0.85f, 0.2f));
+                }
             }
             else
             {
@@ -4390,7 +4441,7 @@ namespace Airside.Presentation
                     continue;
 
                 var wave = false;
-                if (person.name.StartsWith("Marshaller", StringComparison.Ordinal))
+                if (person.name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     foreach (var flight in _simulation.Flights)
                     {
@@ -4429,6 +4480,11 @@ namespace Airside.Presentation
                         if (wave)
                             lean += Mathf.Sin(Time.unscaledTime * 4f) * 16f;
                         child.localEulerAngles = new Vector3(0f, 0f, lean);
+                    }
+                    else if (wave && child.name.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        var tip = Mathf.Sin(Time.unscaledTime * 6f) * 28f;
+                        child.localEulerAngles = new Vector3(tip, 0f, 12f);
                     }
                     else if (wave && child.name.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
@@ -6905,7 +6961,7 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var edgeColor = new Color(1f, 1f, 0.85f);
-            var taxiColor = new Color(0.2f, 0.85f, 0.35f);
+            var taxiColor = new Color(0.25f, 0.55f, 1f);
             var obstruction = new Color(0.95f, 0.35f, 0.12f);
 
             for (var x = -36; x <= 36; x += 6)
@@ -6950,7 +7006,7 @@ namespace Airside.Presentation
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_collar", position, Quaternion.identity, new Color(0.38f, 0.4f, 0.42f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_glare", position, Quaternion.identity, new Color(0.55f, 1f, 0.65f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_glare", position, Quaternion.identity, new Color(0.55f, 0.75f, 1f), out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Taxi light", position + new Vector3(0f, 0.18f, 0f), new Vector3(0.18f, 0.35f, 0.18f), color);
@@ -6978,10 +7034,18 @@ namespace Airside.Presentation
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_ladder", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_guy", position, Quaternion.identity, new Color(0.32f, 0.33f, 0.35f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_platform", position, Quaternion.identity, Shade(color, 0.82f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm_b", position, Quaternion.identity, Shade(color, 0.85f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head_b", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head_c", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_b", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_c", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
             placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
+            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor_b", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
             if (!placed)
                 ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _);
         }

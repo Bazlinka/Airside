@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Taxi blue, tall floods, apron joints, HUD bars, hi-vis (0025 items 3+5+6+7).**
+  Taxi edge/point lights are blue (REF-002); airfield lighting kit floods ~9 m with
+  multi-head lamps (41 meshes) and SpotLights synced to mast height; apron
+  expansion-joint grid; Toolkit turnaround progress bars + slim economy strip;
+  hi-vis ramp crew with marshaller wands. Presentation only (Progress01 on
+  TurnaroundTaskView is HUD-facing). Evidence: `scripts/test-domain.sh` 105/105;
+  art sync 159 files.
+
 - **Stand lead dashes + calm coach + ALS lenses (0025 items 3+5+6).** Apron stand
   lead-in dashes for bays 1–3; ALS lenses emissive; Toolkit coach only when urgent.
   Presentation only. Evidence: `scripts/test-domain.sh` 105/105.

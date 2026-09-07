@@ -43,6 +43,7 @@ namespace Airside.Presentation
         private Label _stripResearchText;
         private VisualElement _turnaroundBlock;
         private Label _turnaroundText;
+        private VisualElement _turnaroundBars;
         private Button _priorityButton;
         private Label _scheduleText;
         private Label _staffingText;
@@ -204,14 +205,14 @@ namespace Airside.Presentation
         private void BuildLeftPanel()
         {
             // REF-004: turnaround / flight card sits bottom-left; ops owns top-left.
-            _leftPanel = MakePanel("Status panel", 400f);
+            _leftPanel = MakePanel("Status panel", 360f);
             _leftPanel.style.left = 22;
             _leftPanel.style.bottom = 22;
-            _leftPanel.style.maxHeight = 520;
-            _leftPanel.style.paddingLeft = 16;
-            _leftPanel.style.paddingRight = 16;
-            _leftPanel.style.paddingTop = 12;
-            _leftPanel.style.paddingBottom = 14;
+            _leftPanel.style.maxHeight = 460;
+            _leftPanel.style.paddingLeft = 14;
+            _leftPanel.style.paddingRight = 14;
+            _leftPanel.style.paddingTop = 10;
+            _leftPanel.style.paddingBottom = 12;
             // Coastal accent bar so the status panel reads as brand chrome, not a debug box.
             _leftPanel.style.borderLeftWidth = 3;
             _leftPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
@@ -274,44 +275,48 @@ namespace Airside.Presentation
             _turnaroundBlock = new VisualElement { name = "Turnaround" };
             _turnaroundBlock.style.marginTop = 4;
             _turnaroundBlock.style.marginBottom = 4;
-            _turnaroundText = MakePanelLabel("Tasks", 12, FontStyle.Normal);
+            _turnaroundText = MakePanelLabel("Tasks", 11, FontStyle.Normal);
             _turnaroundText.style.whiteSpace = WhiteSpace.Normal;
+            _turnaroundText.style.display = DisplayStyle.None;
             _turnaroundBlock.Add(_turnaroundText);
-            _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 190f);
+            _turnaroundBars = new VisualElement { name = "Turnaround bars" };
+            _turnaroundBars.style.marginTop = 2;
+            _turnaroundBlock.Add(_turnaroundBars);
+            _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 180f);
             _priorityButton.style.marginTop = 6;
             _priorityButton.clicked += () => _onPriorityCrew?.Invoke();
             _turnaroundBlock.Add(_priorityButton);
             _leftPanel.Add(_turnaroundBlock);
 
-            _scheduleText = AddLeftLine(_leftPanel, "Schedule", 13, FontStyle.Normal);
-            _staffingText = AddLeftLine(_leftPanel, "Staffing", 13, FontStyle.Normal);
-            _earlyHintText = AddLeftLine(_leftPanel, "Early hint", 13, FontStyle.Normal);
+            _scheduleText = AddLeftLine(_leftPanel, "Schedule", 12, FontStyle.Normal);
+            _staffingText = AddLeftLine(_leftPanel, "Staffing", 12, FontStyle.Normal);
+            _earlyHintText = AddLeftLine(_leftPanel, "Early hint", 12, FontStyle.Normal);
 
             _crewRow = new VisualElement { name = "Crew row" };
             _crewRow.style.flexDirection = FlexDirection.Row;
-            _crewRow.style.marginTop = 4;
-            _crewRow.style.marginBottom = 4;
-            _hireCrewButton = MakeButton("Hire crew", AirsideTheme.CoastalBlue, 150f);
+            _crewRow.style.marginTop = 2;
+            _crewRow.style.marginBottom = 2;
+            _hireCrewButton = MakeButton("Hire", AirsideTheme.CoastalBlue, 100f);
             _hireCrewButton.clicked += () => _onHireCrew?.Invoke();
             _crewRow.Add(_hireCrewButton);
-            _releaseCrewButton = MakeButton("Release crew", AirsideTheme.Tarmac, 110f);
-            _releaseCrewButton.style.marginLeft = 8;
+            _releaseCrewButton = MakeButton("Release", AirsideTheme.Tarmac, 90f);
+            _releaseCrewButton.style.marginLeft = 6;
             _releaseCrewButton.clicked += () => _onReleaseCrew?.Invoke();
             _crewRow.Add(_releaseCrewButton);
             _leftPanel.Add(_crewRow);
 
-            _standsText = AddLeftLine(_leftPanel, "Stands", 13, FontStyle.Normal);
-            _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 220f);
-            _buildStandButton.style.marginTop = 4;
+            _standsText = AddLeftLine(_leftPanel, "Stands", 12, FontStyle.Normal);
+            _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 180f);
+            _buildStandButton.style.marginTop = 2;
             _buildStandButton.clicked += () => _onBuildStand?.Invoke();
             _leftPanel.Add(_buildStandButton);
 
-            _researchText = AddLeftLine(_leftPanel, "Research", 13, FontStyle.Normal);
+            _researchText = AddLeftLine(_leftPanel, "Research", 12, FontStyle.Normal);
             _researchTrack = MakeProgressTrack("Research track");
             _researchFill = _researchTrack.Q<VisualElement>("Fill");
             _leftPanel.Add(_researchTrack);
-            _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 260f);
-            _researchButton.style.marginTop = 4;
+            _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 200f);
+            _researchButton.style.marginTop = 2;
             _researchButton.clicked += () => _onStartResearch?.Invoke();
             _leftPanel.Add(_researchButton);
 
@@ -338,15 +343,15 @@ namespace Airside.Presentation
         private void BuildEconomyStrip()
         {
             // REF-004 top-centre cash / finance / research strip (0025 item 6).
-            _economyStrip = MakePanel("Economy strip", 640f);
+            _economyStrip = MakePanel("Economy strip", 520f);
             _economyStrip.style.top = 18;
             _economyStrip.style.left = Length.Percent(50);
             _economyStrip.style.translate = new Translate(Length.Percent(-50), 0);
             _economyStrip.style.height = StyleKeyword.Auto;
-            _economyStrip.style.paddingLeft = 14;
-            _economyStrip.style.paddingRight = 14;
-            _economyStrip.style.paddingTop = 8;
-            _economyStrip.style.paddingBottom = 8;
+            _economyStrip.style.paddingLeft = 12;
+            _economyStrip.style.paddingRight = 12;
+            _economyStrip.style.paddingTop = 6;
+            _economyStrip.style.paddingBottom = 6;
             _economyStrip.style.flexDirection = FlexDirection.Row;
             _economyStrip.style.alignItems = Align.Center;
             _economyStrip.style.justifyContent = Justify.Center;
@@ -359,15 +364,15 @@ namespace Airside.Presentation
             _economyStrip.Add(_cashIcon);
             _cashText = MakePanelLabel("Cash", 13, FontStyle.Bold);
             _cashText.style.marginLeft = 6;
-            _cashText.style.marginRight = 14;
+            _cashText.style.marginRight = 12;
             _economyStrip.Add(_cashText);
 
             _repIcon = MakeIconSlot("Rep icon", 18);
             _economyStrip.Add(_repIcon);
             _financeText = MakePanelLabel("Finance", 12, FontStyle.Normal);
             _financeText.style.marginLeft = 6;
-            _financeText.style.marginRight = 14;
-            _financeText.style.whiteSpace = WhiteSpace.Normal;
+            _financeText.style.marginRight = 12;
+            _financeText.style.whiteSpace = WhiteSpace.NoWrap;
             _economyStrip.Add(_financeText);
 
             _stripResearchText = MakePanelLabel("Strip research", 11, FontStyle.Normal);
@@ -375,7 +380,7 @@ namespace Airside.Presentation
             _stripResearchText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.85f);
             _economyStrip.Add(_stripResearchText);
             _stripResearchTrack = MakeProgressTrack("Strip research track");
-            _stripResearchTrack.style.width = 110;
+            _stripResearchTrack.style.width = 90;
             _stripResearchTrack.style.marginTop = 0;
             _stripResearchFill = _stripResearchTrack.Q<VisualElement>("Fill");
             _economyStrip.Add(_stripResearchTrack);
@@ -1087,7 +1092,20 @@ namespace Airside.Presentation
             _turnaroundBlock.style.display = showTurnaround ? DisplayStyle.Flex : DisplayStyle.None;
             if (showTurnaround)
             {
-                _turnaroundText.text = turnaroundLines ?? string.Empty;
+                // Bars are driven by SyncTurnaroundBars; keep text for delay callouts only.
+                var delayOnly = ExtractDelayLine(turnaroundLines);
+                if (!string.IsNullOrEmpty(delayOnly))
+                {
+                    _turnaroundText.text = delayOnly;
+                    _turnaroundText.style.display = DisplayStyle.Flex;
+                    _turnaroundText.style.color = AirsideTheme.SignalRed;
+                }
+                else
+                {
+                    _turnaroundText.text = string.Empty;
+                    _turnaroundText.style.display = DisplayStyle.None;
+                }
+
                 _priorityButton.style.display = priorityVisible ? DisplayStyle.Flex : DisplayStyle.None;
                 if (priorityVisible)
                 {
@@ -1166,6 +1184,60 @@ namespace Airside.Presentation
             ApplyLeftVisibility();
             ApplyEconomyVisibility();
             ApplySpeedVisibility();
+        }
+
+        /// <summary>
+        /// Turnaround task progress bars (REF-004) — one row per ground task.
+        /// </summary>
+        public void SyncTurnaroundBars(bool visible, string[] names, float[] progress01)
+        {
+            if (_turnaroundBars == null)
+                return;
+
+            _turnaroundBars.Clear();
+            if (!visible || names == null || progress01 == null)
+                return;
+
+            var count = Math.Min(names.Length, progress01.Length);
+            for (var i = 0; i < count; i++)
+            {
+                var row = new VisualElement { name = $"Task row {i}" };
+                row.style.marginTop = 3;
+                var label = MakePanelLabel($"Task {i}", 11, FontStyle.Normal);
+                label.text = names[i] ?? string.Empty;
+                label.style.marginBottom = 1;
+                row.Add(label);
+                var track = MakeProgressTrack($"Task track {i}");
+                track.style.marginTop = 1;
+                track.style.height = 7;
+                var fill = track.Q<VisualElement>("Fill");
+                if (fill != null)
+                {
+                    var p = Mathf.Clamp01(progress01[i]);
+                    fill.style.width = Length.Percent(p * 100f);
+                    fill.style.backgroundColor = p >= 0.999f
+                        ? AirsideTheme.ClearGreen
+                        : p > 0.01f
+                            ? AirsideTheme.CoastalBlue
+                            : new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.5f);
+                }
+
+                row.Add(track);
+                _turnaroundBars.Add(row);
+            }
+        }
+
+        private static string ExtractDelayLine(string turnaroundLines)
+        {
+            if (string.IsNullOrEmpty(turnaroundLines))
+                return null;
+            foreach (var line in turnaroundLines.Split('\n'))
+            {
+                if (line.IndexOf("DELAY", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return line.Trim();
+            }
+
+            return null;
         }
 
         /// <summary>

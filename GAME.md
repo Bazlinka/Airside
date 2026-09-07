@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (ground shadows + clouds)
-- **Branch / working tree:** `cursor/ground-shadows-clouds-ddad`
-- **Do this next:** Merge; Bailey Unity Play soak; next HUD Toolkit spike or denser coast props
-- **In progress / half-done:** aircraft ground shadows + cloud band drift
-- **Watch out for:** cloud blobs are translucent spheres, not authored skyboxes
+- **Last updated:** 2026-09-07 by Cursor (HUD contrast polish)
+- **Branch / working tree:** `cursor/hud-contrast-polish-ddad`
+- **Do this next:** Merge; Bailey Unity Play soak of #68–#70; Toolkit spike still open for 0025 item 6
+- **In progress / half-done:** denser IMGUI panels + frames (not Toolkit yet)
+- **Watch out for:** panel art nine-slice still preferred when MeanAlpha is high enough
 - **Open questions for Bailey:** none
-- **Visual assets:** materials on `main`; shadows/clouds on this branch
+- **Visual assets:** shadows/clouds on `main`; HUD contrast on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

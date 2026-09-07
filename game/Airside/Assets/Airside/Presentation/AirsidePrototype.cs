@@ -3932,12 +3932,15 @@ namespace Airside.Presentation
                 name => name switch
                 {
                     "door_opening" or "door_panel_l" or "door_panel_r" or "door_rib_l" or "door_rib_r"
+                        or "door_bar_l1" or "door_bar_l2" or "door_bar_r1" or "door_bar_r2"
                         or "personnel_door" => new Color(0.22f, 0.24f, 0.26f),
-                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam"
+                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
                         or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
-                        or "roof_rib_5" or "roof_rib_6" => new Color(0.4f, 0.44f, 0.48f),
+                        or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
+                        or "skylight_l" or "skylight_r" => new Color(0.4f, 0.44f, 0.48f),
                     "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "side_vent"
-                        or "side_vent_b" or "office_lean" or "office_window" or "side_window" => new Color(0.42f, 0.46f, 0.5f),
+                        or "side_vent_b" or "office_lean" or "office_window" or "side_window"
+                        or "column_ml" or "column_mr" => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
                 () =>
@@ -5004,13 +5007,17 @@ namespace Airside.Presentation
         {
             _hangarDoorPanels.Clear();
             // Authored / kit hangar doors — slide L/R panels instead of a single greybox slab.
-            foreach (var name in new[] { "door_panel_l", "door_panel_r", "door_rib_l", "door_rib_r" })
+            foreach (var name in new[]
+                     {
+                         "door_panel_l", "door_panel_r", "door_rib_l", "door_rib_r",
+                         "door_bar_l1", "door_bar_l2", "door_bar_r1", "door_bar_r2"
+                     })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
                     continue;
                 var t = go.transform;
-                var openDelta = name.EndsWith("_l", StringComparison.Ordinal) ? -3.6f : 3.6f;
+                var openDelta = name.Contains("_l", StringComparison.Ordinal) ? -3.6f : 3.6f;
                 _hangarDoorPanels.Add((t, t.localPosition.x, openDelta));
             }
 

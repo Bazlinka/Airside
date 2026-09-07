@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar + fuel truck densify (0025 item 2).** Authored hangar to 38 meshes
+  (door bars, skylights, crane trolley, extra columns); fuel truck to 18 meshes
+  (chassis, hose, denser tank). Door bars slide with hangar panels. Presentation
+  only. Evidence: `scripts/test-domain.sh`; art sync 159 files.
+
 - **Denser authored turboprop/terminal + sky discs (0025 items 2+5).** Hero
   turboprop regenerated to 74 meshes (more lathe stations, cabin windows,
   wing fences, prop hubs); terminal gains extra mullions/transom. Runtime sun

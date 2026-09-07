@@ -1,0 +1,538 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Airside Batch C procedural kit"
+  },
+  "buffers": [
+    {
+      "uri": "mdl_hangar_small_v02.bin",
+      "byteLength": 3600
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 648,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 720,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1008,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1080,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1368,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1440,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1728,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1800,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2088,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2160,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2448,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2520,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2808,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2880,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3168,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3240,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 3528,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.0,
+        5.0,
+        4.5
+      ],
+      "min": [
+        -7.0,
+        0.0,
+        -4.5
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        4.0,
+        4.0,
+        4.699999809265137
+      ],
+      "min": [
+        -4.0,
+        0.0,
+        4.5
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -4.074999809265137,
+        4.099999904632568,
+        4.675000190734863
+      ],
+      "min": [
+        -4.324999809265137,
+        -0.10000000149011612,
+        4.425000190734863
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        4.324999809265137,
+        4.099999904632568,
+        4.675000190734863
+      ],
+      "min": [
+        4.074999809265137,
+        -0.10000000149011612,
+        4.425000190734863
+      ]
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.199999809265137,
+        5.324999809265137,
+        0.699999988079071
+      ],
+      "min": [
+        -7.199999809265137,
+        4.974999904632568,
+        -0.699999988079071
+      ]
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        0.0,
+        4.800000190734863,
+        4.400000095367432
+      ],
+      "min": [
+        -7.0,
+        4.599999904632568,
+        -4.400000095367432
+      ]
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.0,
+        4.800000190734863,
+        4.400000095367432
+      ],
+      "min": [
+        0.0,
+        4.599999904632568,
+        -4.400000095367432
+      ]
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 14,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -6.949999809265137,
+        4.0,
+        4.25
+      ],
+      "min": [
+        -7.449999809265137,
+        0.0,
+        -4.25
+      ]
+    },
+    {
+      "bufferView": 15,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        7.449999809265137,
+        4.0,
+        4.25
+      ],
+      "min": [
+        6.949999809265137,
+        0.0,
+        -4.25
+      ]
+    },
+    {
+      "bufferView": 17,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 18,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        -7.074999809265137,
+        3.799999952316284,
+        3.5
+      ],
+      "min": [
+        -7.224999904632568,
+        2.5999999046325684,
+        1.5
+      ]
+    },
+    {
+      "bufferView": 19,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "hangar_shell",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "door_opening",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "door_track_l",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "door_track_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 6
+          },
+          "indices": 7,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "roof_ridge",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 8
+          },
+          "indices": 9,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "roof_panel_l",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 10
+          },
+          "indices": 11,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "roof_panel_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 12
+          },
+          "indices": 13,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "buttress_l",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 14
+          },
+          "indices": 15,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "buttress_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 16
+          },
+          "indices": 17,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "side_vent",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 18
+          },
+          "indices": 19,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "hangar_shell",
+      "mesh": 0
+    },
+    {
+      "name": "door_opening",
+      "mesh": 1
+    },
+    {
+      "name": "door_track_l",
+      "mesh": 2
+    },
+    {
+      "name": "door_track_r",
+      "mesh": 3
+    },
+    {
+      "name": "roof_ridge",
+      "mesh": 4
+    },
+    {
+      "name": "roof_panel_l",
+      "mesh": 5
+    },
+    {
+      "name": "roof_panel_r",
+      "mesh": 6
+    },
+    {
+      "name": "buttress_l",
+      "mesh": 7
+    },
+    {
+      "name": "buttress_r",
+      "mesh": 8
+    },
+    {
+      "name": "side_vent",
+      "mesh": 9
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mdl_hangar_small_v02",
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  ],
+  "scene": 0
+}

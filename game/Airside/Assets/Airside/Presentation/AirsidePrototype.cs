@@ -108,11 +108,14 @@ namespace Airside.Presentation
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
-                "Models/Vehicles/mdl_fuel_truck_small_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
+                    "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
-                "Models/Vehicles/mdl_baggage_tug_train_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
+                    "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
-                "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf");
+                PreferArtKit("Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
+                    "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
             _stairs = BuildStairs();
             _chocks = BuildChocks();
             _gpuCart = BuildGpuCart();
@@ -1754,15 +1757,18 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
-            // Batch C buildings (Approved glTF) with primitive silhouette fallback.
+            // Batch C buildings — prefer richer v02 kits (0025 item 2) with v01 fallback.
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_terminal_regional_small_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_terminal_regional_small_v02.gltf",
+                    "Models/Buildings/mdl_terminal_regional_small_v01.gltf"),
                 new Vector3(26f, 0f, 27f),
                 name => name switch
                 {
-                    "glass_front" => new Color(0.16f, 0.38f, 0.5f),
+                    "glass_front" or "windows" or "entrance" or "cabin_windows" => new Color(0.16f, 0.38f, 0.5f),
+                    "canopy" or "canopy_post_l" or "canopy_post_r" or "roof_slab" or "roof_plant" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" => new Color(0.62f, 0.66f, 0.69f),
-                    "service_wing" => new Color(0.58f, 0.62f, 0.64f),
+                    "service_wing" or "service_door" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
                 () =>
@@ -1783,12 +1789,15 @@ namespace Airside.Presentation
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_hangar_small_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_hangar_small_v02.gltf",
+                    "Models/Buildings/mdl_hangar_small_v01.gltf"),
                 new Vector3(-20f, 0f, 20f),
                 name => name switch
                 {
                     "door_opening" => new Color(0.22f, 0.24f, 0.26f),
-                    "roof_ridge" => new Color(0.4f, 0.44f, 0.48f),
+                    "roof_ridge" or "roof_panel_l" or "roof_panel_r" => new Color(0.4f, 0.44f, 0.48f),
+                    "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "side_vent" => new Color(0.42f, 0.46f, 0.5f),
                     _ => new Color(0.45f, 0.5f, 0.54f)
                 },
                 () =>
@@ -1801,9 +1810,17 @@ namespace Airside.Presentation
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof_ridge" });
             PlaceBuildingOrFallback(
-                "Models/Buildings/mdl_operations_shed_v01.gltf",
+                PreferArtKit(
+                    "Models/Buildings/mdl_operations_shed_v02.gltf",
+                    "Models/Buildings/mdl_operations_shed_v01.gltf"),
                 new Vector3(-8f, 0f, 26f),
-                _ => new Color(0.55f, 0.58f, 0.52f),
+                name => name switch
+                {
+                    "window_l" or "window_r" => new Color(0.2f, 0.4f, 0.5f),
+                    "door" => new Color(0.35f, 0.38f, 0.34f),
+                    "porch_roof" or "roof_ridge" => new Color(0.48f, 0.5f, 0.46f),
+                    _ => new Color(0.55f, 0.58f, 0.52f)
+                },
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
                     "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
@@ -1986,12 +2003,17 @@ namespace Airside.Presentation
             // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtGltfLoader.TryInstantiate(
-                "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf",
+                PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
+                    "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
                 root,
                 out _,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
                 localPosition: new Vector3(0f, -0.7f, 0f));
+
+            if (usedArt)
+                NestCrossPropellerBlades(root);
 
             if (!usedArt)
             {
@@ -2041,31 +2063,83 @@ namespace Airside.Presentation
         {
             "fuselage" => "Fuselage",
             "nose" => "Nose",
+            "cockpit" => "Cockpit",
+            "cabin_windows" => "Cabin windows",
             "wing_left" => "Wing L",
             "wing_right" => "Wing R",
+            "wingtip_left" => "Wingtip L",
+            "wingtip_right" => "Wingtip R",
             "engine_left" => "Engine L",
             "engine_right" => "Engine R",
+            "nacelle_left" => "Nacelle L",
+            "nacelle_right" => "Nacelle R",
             "propeller_left" => "Propeller L",
             "propeller_right" => "Propeller R",
+            "propeller_left_b" => "PropBlade L",
+            "propeller_right_b" => "PropBlade R",
+            "spinner_left" => "Spinner L",
+            "spinner_right" => "Spinner R",
             "tail_fin" => "Tail",
             "tailplane" => "Tailplane",
+            "rudder" => "Rudder",
             "gear_nose" => "Gear nose",
             "gear_left" => "Gear L",
             "gear_right" => "Gear R",
+            "tire_nose" => "Tire nose",
+            "tire_left" => "Tire L",
+            "tire_right" => "Tire R",
             "door_fwd" => "CabinDoor",
+            "antenna" => "Antenna",
             _ => kitName
         };
 
         private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
         {
             "fuselage" or "nose" => new Color(0.93f, 0.95f, 0.97f),
-            "wing_left" or "wing_right" or "tail_fin" or "tailplane" => accent,
-            "engine_left" or "engine_right" => accent * 0.85f,
-            "propeller_left" or "propeller_right" => new Color(0.2f, 0.2f, 0.22f),
+            "cockpit" or "cabin_windows" => new Color(0.18f, 0.35f, 0.48f),
+            "wing_left" or "wing_right" or "wingtip_left" or "wingtip_right"
+                or "tail_fin" or "tailplane" or "rudder" => accent,
+            "engine_left" or "engine_right" or "nacelle_left" or "nacelle_right" => accent * 0.85f,
+            "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
+                or "spinner_left" or "spinner_right" => new Color(0.2f, 0.2f, 0.22f),
             "gear_nose" or "gear_left" or "gear_right" => new Color(0.25f, 0.25f, 0.28f),
+            "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
+            "antenna" => new Color(0.35f, 0.35f, 0.38f),
             _ => null
         };
+
+        /// <summary>
+        /// Parent the second blade under each propeller so SpinPropellers rotates the
+        /// whole cross as one unit (v02 kits only).
+        /// </summary>
+        private static void NestCrossPropellerBlades(Transform aircraft)
+        {
+            Transform propL = null, propR = null, bladeL = null, bladeR = null;
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "Propeller L") propL = child;
+                else if (child.name == "Propeller R") propR = child;
+                else if (child.name == "PropBlade L") bladeL = child;
+                else if (child.name == "PropBlade R") bladeR = child;
+            }
+
+            if (propL != null && bladeL != null)
+            {
+                bladeL.SetParent(propL, true);
+                bladeL.name = "Blade";
+            }
+
+            if (propR != null && bladeR != null)
+            {
+                bladeR.SetParent(propR, true);
+                bladeR.name = "Blade";
+            }
+        }
+
+        /// <summary>Prefer a richer kit when present; otherwise the Approved v01 path.</summary>
+        private static string PreferArtKit(string preferredRelativePath, string fallbackRelativePath) =>
+            ArtGltfLoader.HasKit(preferredRelativePath) ? preferredRelativePath : fallbackRelativePath;
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
         {
@@ -2126,7 +2200,11 @@ namespace Airside.Presentation
                     "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr" => new Color(0.15f, 0.15f, 0.16f),
                     "hose_mount" => new Color(0.25f, 0.25f, 0.28f),
                     "door" => new Color(0.2f, 0.22f, 0.25f),
-                    "cab" => color * 0.82f,
+                    "cab" or "tug_cab" => color * 0.82f,
+                    "cab_window" or "windows" => new Color(0.2f, 0.4f, 0.55f),
+                    "beacon" => new Color(0.95f, 0.35f, 0.12f),
+                    "mirror_l" or "bumper_front" or "bumper_rear" or "tank_band" => color * 0.7f,
+                    "cargo_1" or "cargo_2" or "cargo_3" => new Color(0.75f, 0.55f, 0.2f),
                     _ => color
                 },
                 localPosition: new Vector3(0f, -0.55f, 0f));

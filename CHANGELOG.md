@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Richer Batch C v02 kits (0025 item 2).** Procedural `*_v02.gltf` turboprop,
+  terminal, hangar, ops shed and service vehicles with more readable parts.
+  Runtime prefers v02 and falls back to Approved v01; StreamingAssets synced.
+  Presentation only; `scripts/test-domain.sh` unchanged in behaviour.
+
 - **Regional airfield environment greybox (0025 item 3).** Outer paddock, coast
   sand/shallows, access road + car park, perimeter fence, eucalyptus clumps,
   distant hills and a soft horizon dome. Hangar/ops/terminal glTF kits now get

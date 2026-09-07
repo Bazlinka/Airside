@@ -10,18 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (regional environment greybox)
-- **Branch / working tree:** `cursor/regional-airfield-environment-ddad`
-- **Do this next:** After merge — richer Batch C v02 kits (0025 item 2) or Bailey
-  packaged Play soak of environment + prior Integration.
-- **In progress / half-done:** environment greybox on this branch (coast, fence,
-  roads, trees, horizon dome, building surface textures).
-- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes.
-  Batch C kits still low-poly placeholders; horizon dome is greybox not a skybox.
-- **Open questions for Bailey:** none — keep shipping presentation without Play gate.
-- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; StreamingAssets on `main`;
-  environment greybox pending merge; Play Verified still Bailey-owned
-
+- **Last updated:** 2026-09-07 by Cursor (merging presentation PRs onto main)
+- **Branch / working tree:** `main` — merging #51–#55 for Bailey Mac pull
+- **Do this next:** Finish merge wave, push `main`, Bailey `git pull` + Unity rebuild
+- **In progress / half-done:** merge of environment + Batch C v02 in progress
+- **Watch out for:** Re-run `scripts/sync-art-streaming-assets.sh` after Art changes
+- **Open questions for Bailey:** none
+- **Visual assets:** BRD-001 + UI-ILL-001 Integrated; env + v02 landing on main
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -125,9 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Replace placeholder 3D** (0025 item 2): richer turboprop / terminal / hangar /
-   vehicles — versioned kits or Unity-imported meshes; keep primitive fallbacks.
-2. **Bailey Unity Play soak** when convenient: environment greybox, Batch C/E/WLD,
-   first-session flow, dual commercials, insolvency at 1280×720 / 1440×900 / Retina.
-3. Then URP materials / lighting polish / HUD rebuild (0025 items 4–6). No new
-   economy systems. Companion / CloudKit / extra fleets stay deferred.
+1. **Finish merging** remaining presentation PRs (#53 HUD, #54 UVs, #55 camera).
+2. **Bailey `git pull` + Unity rebuild** on Mac — Play soak of env + v02 + HUD.
+3. Then URP materials / lighting / HUD Toolkit (0025 items 4–6). No new economy
+   systems. Companion / CloudKit / extra fleets stay deferred.

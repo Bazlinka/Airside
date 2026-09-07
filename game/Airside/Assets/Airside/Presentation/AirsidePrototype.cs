@@ -27,9 +27,8 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private Transform _horizonDome;
         private Transform _cloudRoot;
-        private Transform _hangarDoor;
-        private float _hangarDoorClosedX = -20f;
-        private float _touchdownSmokeRemaining;
+        private AirsideCanvasHud _canvasHud;
+        private bool _canvasHudActive;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
@@ -145,6 +144,16 @@ namespace Airside.Presentation
             EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
                 _cameraController.SetFollowTargets(_commercialAircraft);
+
+            _canvasHud = AirsideCanvasHud.Create(transform);
+            _canvasHud.BindActions(
+                () => TryAcceptPendingRouteFromHotkey(),
+                () =>
+                {
+                    if (_simulation.Routes.Pending != null && !_simulation.IsInsolvent)
+                        _session.DeclineRoute();
+                });
+            _canvasHudActive = _canvasHud.IsActive;
         }
 
         private void Update()
@@ -182,6 +191,58 @@ namespace Airside.Presentation
             UpdateTrafficWaitPresentation();
             UpdateCloudDrift();
             UpdateHangarDoor();
+            SyncCanvasHud();
+        }
+
+        private void SyncCanvasHud()
+        {
+            if (!_canvasHudActive || _canvasHud == null)
+                return;
+
+            // Hide canvas primary panels while full-screen overlays own the screen.
+            if (_showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent)
+            {
+                _canvasHud.SetVisible(false);
+                return;
+            }
+
+            _canvasHud.SetVisible(true);
+            var earlySession = _simulation.Routes.Accepted.Count == 0;
+            var proposal = _simulation.Routes.Pending;
+            if (proposal == null)
+            {
+                _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
+            }
+            else
+            {
+                var firstDecision = earlySession;
+                var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
+                var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount);
+                var blocked = !meetsReputation || !fitsCapacity;
+                string status;
+                if (!meetsReputation)
+                    status = $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})";
+                else if (!fitsCapacity)
+                    status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
+                else
+                    status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
+                var payout = proposal.IncomePerFlight + _simulation.Reputation.IncomeBonus;
+                var body = firstDecision
+                    ? $"Accept to earn cash on every completed flight.\n{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight"
+                    : $"{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight";
+                _canvasHud.SyncOffer(
+                    true,
+                    firstDecision,
+                    firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now",
+                    body,
+                    status,
+                    blocked,
+                    !_simulation.IsInsolvent && meetsReputation && fitsCapacity,
+                    firstDecision ? "Accept route  (Enter)" : "Accept route");
+            }
+
+            var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
+            _canvasHud.SyncToast(_opsToast, toastVisible);
         }
 
         private void ReadSimulationControls()
@@ -1388,10 +1449,11 @@ namespace Airside.Presentation
             var accepted = _simulation.Routes.Accepted;
             var pendingOffer = _simulation.Routes.Pending;
             var firstDecisionOffer = pendingOffer != null && accepted.Count == 0;
-            var offerHeight = pendingOffer == null ? 0f : (firstDecisionOffer ? 196f : 156f);
+            // Canvas HUD owns the offer panel when active; IMGUI ops sits at the top-right.
+            var offerHeight = (_canvasHudActive || pendingOffer == null) ? 0f : (firstDecisionOffer ? 196f : 156f);
             var opsTop = 22f + (offerHeight > 0f ? offerHeight + 12f : 0f);
             // Pin the actionable offer above operations so status detail never buries it.
-            if (pendingOffer != null)
+            if (pendingOffer != null && !_canvasHudActive)
                 DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f);
 
             var listedRoutes = accepted.Count == 0
@@ -1473,7 +1535,8 @@ namespace Airside.Presentation
 
             DrawResearchToast(scale, panel, onTime);
             DrawSaveIndicator(scale, panel, small, onTime);
-            DrawOpsToast(scale, panel, detail, onTime);
+            if (!_canvasHudActive)
+                DrawOpsToast(scale, panel, detail, onTime);
             if (_paused && !_showAwaySummary && !_showOpeningBriefing)
                 DrawPauseOverlay(scale, panel, title, caution, small, button);
 

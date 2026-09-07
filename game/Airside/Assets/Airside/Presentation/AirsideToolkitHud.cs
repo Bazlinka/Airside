@@ -161,6 +161,8 @@ namespace Airside.Presentation
             _saveChip.style.alignSelf = Align.FlexEnd;
             _saveChip.style.fontSize = 13;
             _saveChip.style.minWidth = 72;
+            _saveChip.style.borderLeftWidth = 3;
+            _saveChip.style.borderLeftColor = AirsideTheme.CoastalBlue;
             _saveChip.text = "Saved";
             _root.Add(_saveChip);
 
@@ -185,6 +187,9 @@ namespace Airside.Presentation
             // Coastal accent bar so the status panel reads as brand chrome, not a debug box.
             _leftPanel.style.borderLeftWidth = 3;
             _leftPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
+            _leftPanel.style.borderTopWidth = 2;
+            _leftPanel.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
 
             var wordmark = AirsideTheme.WordmarkLight;
             if (wordmark != null)
@@ -344,6 +349,9 @@ namespace Airside.Presentation
             // Match status panel brand chrome (0025 item 6).
             _opsPanel.style.borderLeftWidth = 3;
             _opsPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
+            _opsPanel.style.borderTopWidth = 2;
+            _opsPanel.style.borderTopColor = new Color(
+                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
 
             var title = MakePanelLabel("Ops title", 16, FontStyle.Bold);
             title.text = "OPERATIONS";
@@ -708,15 +716,15 @@ namespace Airside.Presentation
                 AirsideTheme.RunwayInk.g,
                 AirsideTheme.RunwayInk.b,
                 0.96f);
-            panel.style.borderTopLeftRadius = 6;
-            panel.style.borderTopRightRadius = 6;
-            panel.style.borderBottomLeftRadius = 6;
-            panel.style.borderBottomRightRadius = 6;
+            panel.style.borderTopLeftRadius = 8;
+            panel.style.borderTopRightRadius = 8;
+            panel.style.borderBottomLeftRadius = 8;
+            panel.style.borderBottomRightRadius = 8;
             panel.style.borderLeftWidth = 1;
             panel.style.borderRightWidth = 1;
             panel.style.borderTopWidth = 1;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f);
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.75f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
             panel.style.borderTopColor = border;

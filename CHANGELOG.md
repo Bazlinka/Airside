@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Terminal densify + HUD chrome (0025 items 2+6+7).** Authored terminal to 73
+  meshes (doors, boarding gate, canopy braces/lights, plinth, vents, flag);
+  toolkit status/ops panels gain Open Sky top accent; save chip coastal bar;
+  terminal flag flap motion. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105; art sync 159 files.
+
 - **Turboprop + coast/wet/day tip (0025 items 2–5).** Authored turboprop to 102
   meshes (spoilers, pylons, wicks, gear scissors, denser lathe); coast foam
   layers, six boats, rock outcrops, runway shoulders, 22 clouds; wet response

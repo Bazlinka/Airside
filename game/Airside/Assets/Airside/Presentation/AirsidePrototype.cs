@@ -73,6 +73,7 @@ namespace Airside.Presentation
         private Transform _gpuCart;
         private Transform _pushbackTug;
         private Transform _windsockSock;
+        private Transform _terminalFlag;
         private Transform _coastFoam;
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
@@ -196,6 +197,7 @@ namespace Airside.Presentation
             CollectHangarDoorPanels();
             CollectCoastalMotionTargets();
             _opsAntennaDish = GameObject.Find("antenna_dish")?.transform;
+            _terminalFlag = GameObject.Find("flag_cloth")?.transform;
 
             var hangarBayLightGo = GameObject.Find("Hangar bay light");
             if (hangarBayLightGo == null)
@@ -367,6 +369,7 @@ namespace Airside.Presentation
             UpdateServiceVehicles();
             UpdateStandEquipment();
             UpdateWindsock();
+            UpdateTerminalFlag();
             EnsureStandThreeVisual();
             UpdateEngineAudio();
             UpdateAmbientAudio();
@@ -1653,6 +1656,21 @@ namespace Airside.Presentation
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
             var stretch = 1f + 0.08f * Mathf.Sin(Time.unscaledTime * 3.1f);
             _windsockSock.localScale = new Vector3(0.55f * stretch, 0.55f, 1.35f);
+        }
+
+        private void UpdateTerminalFlag()
+        {
+            if (_terminalFlag == null)
+            {
+                _terminalFlag = GameObject.Find("flag_cloth")?.transform;
+                if (_terminalFlag == null)
+                    return;
+            }
+
+            // Soft flap on the terminal flag cloth (0025 item 7) — presentation only.
+            var flap = Mathf.Sin(Time.unscaledTime * 4.2f) * 12f;
+            var ripple = Mathf.Sin(Time.unscaledTime * 7.1f) * 4f;
+            _terminalFlag.localRotation = Quaternion.Euler(flap * 0.15f, 0f, flap + ripple);
         }
 
         private void EnsureStandThreeVisual()
@@ -3922,15 +3940,24 @@ namespace Airside.Presentation
                         or "window_mullion_4" or "window_mullion_5"
                         or "window_mullion_6" or "window_mullion_7"
                         or "window_mullion_8" or "window_mullion_9"
-                        or "window_transom" or "window_sill" or "window_header"
+                        or "window_mullion_10" or "window_mullion_11"
+                        or "window_transom" or "window_midrail" or "window_sill" or "window_header"
                         or "landside_mullion_1" or "landside_mullion_2" or "landside_mullion_3"
-                        or "entrance_transom" => new Color(0.16f, 0.38f, 0.5f),
+                        or "landside_mullion_4" or "landside_mullion_5"
+                        or "entrance_transom" or "entrance_door_l" or "entrance_door_r"
+                        or "boarding_gate" => new Color(0.16f, 0.38f, 0.5f),
                     "canopy" or "canopy_post_l" or "canopy_post_r" or "canopy_post_ml" or "canopy_post_mr"
-                        or "canopy_beam" or "canopy_edge" or "roof_slab" or "roof_plant" or "roof_plant_b"
-                        or "roof_plant_c" or "roof_parapet" or "landside_awning" or "signage_bar"
-                        or "signage_cap" or "hvac_duct" or "flag_pole" => new Color(0.55f, 0.58f, 0.6f),
+                        or "canopy_beam" or "canopy_edge" or "canopy_brace_l" or "canopy_brace_r"
+                        or "canopy_light_l" or "canopy_light_r"
+                        or "roof_slab" or "roof_plant" or "roof_plant_b"
+                        or "roof_plant_c" or "roof_parapet" or "roof_parapet_back"
+                        or "roof_vent_a" or "roof_vent_b"
+                        or "landside_awning" or "signage_bar"
+                        or "signage_cap" or "hvac_duct" or "flag_pole" or "flag_cloth"
+                        or "baggage_canopy" or "downpipe_l" or "downpipe_r" => new Color(0.55f, 0.58f, 0.6f),
                     "end_cap_left" or "end_cap_right" or "column_l" or "column_r" or "column_ml" or "column_mr"
-                        or "entrance_frame" or "buttress_r" => new Color(0.62f, 0.66f, 0.69f),
+                        or "entrance_frame" or "boarding_frame" or "entrance_handle_l" or "entrance_handle_r"
+                        or "buttress_r" or "plinth" => new Color(0.62f, 0.66f, 0.69f),
                     "service_wing" or "service_door" or "baggage_door" or "baggage_ramp" => new Color(0.58f, 0.62f, 0.64f),
                     _ => new Color(0.68f, 0.72f, 0.75f)
                 },
@@ -3946,7 +3973,7 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.2f),
-                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress" });
+                surfaceMeshNames: new[] { "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth" });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));

@@ -56,16 +56,13 @@ Australian airport. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
 
-<<<<<<< HEAD
 - Anti-aliasing is on: 4x MSAA on the PC pipeline asset plus SMAA (high) on the runtime camera.
 - The post stack runs a deliberate grade only — the template default profile's depth of field, motion blur, lens distortion, chromatic aberration, lens flare and panini are pinned off.
 - The simulation keeps running when the window loses focus (`runInBackground`).
-=======
 - Ground traffic only uses stands the airport has actually built; with every built stand occupied by a commercial it holds off-field (leaving the corridor free) rather than taxiing to an unbuilt Stand 3.
 - Every reported delay names a cause the player can act on — understaffing included, not only cabin-cleaning disruptions.
 - The daily finance brief projects income from every commercial aircraft currently operating, not just the first.
 - A player command issued before the first simulated tick (second 0) is replayed on load like any other.
->>>>>>> origin/main
 
 ## Invariants
 

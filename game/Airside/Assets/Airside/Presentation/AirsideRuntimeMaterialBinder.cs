@@ -29,7 +29,7 @@ namespace Airside.Presentation
                 if (n.Contains("rail") || n.Contains("accent") || n.Contains("beacon")
                     || n.Contains("collar") || n.Contains("stripe") || n.Contains("face")
                     || n.Contains("cargo") || n.Contains("hinge") || n.Contains("band")
-                    || n.Contains("pipe"))
+                    || n.Contains("pipe") || n.Contains("drawer") || n.Contains("drum"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
@@ -37,7 +37,8 @@ namespace Airside.Presentation
                 else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
                          || n.Contains("leg") || n.Contains("base") || n.Contains("post")
                          || n.Contains("plate") || n.Contains("pad") || n.Contains("bund")
-                         || n.Contains("pump") || n.Contains("gear") || n.Contains("prop"))
+                         || n.Contains("pump") || n.Contains("gear") || n.Contains("prop")
+                         || n.Contains("frame") || n.Contains("board"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

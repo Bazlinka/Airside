@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar bay props + runway aiming points (0025 items 1+3).** Resources prefab
+  `mdl_hangar_bay_props_v01` (workbench/shelves/drum/cart) fills the open hangar;
+  white aiming-point pairs on the runway. Presentation only.
+
 - **UI Toolkit toasts + aircraft nav/beacon lights (0025 items 5+6+7).** Runtime
   `AirsideToolkitHud` (UIDocument) owns ops/research toasts and the Saved chip;
   Canvas keeps panels/overlays. Wingtip nav and anti-collision beacon cast real

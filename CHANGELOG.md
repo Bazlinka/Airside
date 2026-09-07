@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Threshold approach lights + apron reflection probe (0025 item 5).** Point lights at
+  both runway ends plus a compact PAPI ladder; realtime apron ReflectionProbe so wet
+  Lit surfaces pick up floods at night. Presentation only.
+
 - **Batch B surface PBR maps (0025 item 4).** Authored normal / AO / metallic-smoothness
   masks for asphalt, concrete, grass and corrugated metal; `AirsideMaterialLibrary`
   prefers them via StreamingAssets with procedural fallbacks. Presentation only.

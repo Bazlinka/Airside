@@ -10,12 +10,12 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (keep-going session — Batch D + polish on `main`)
-- **Branch / working tree:** `main` (PRs #35, #37, #38, #39 landed)
-- **Do this next:** Bailey `git pull origin main` then Unity Play soak (C/E/WLD/D + tips + traffic pulse).
-- **In progress / half-done:** none; open docs PRs #36 (conflicts) and #34 (env draft).
-- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-- **Open questions for Bailey:** none — Play when ready.
+- **Last updated:** 2026-09-07 by Cursor (first-session flow)
+- **Branch / working tree:** `cursor/first-session-flow-38b9` (PR open) → merge then `main`
+- **Do this next:** Merge first-session flow; Bailey `git pull origin main` then Unity Play soak including new-game briefing + first route decision.
+- **In progress / half-done:** first-session opening briefing + new-airport reset + first-decision cues (this branch).
+- **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**. Delivery plan **0024**.
+- **Open questions for Bailey:** none — Play soak when ready after pull.
 - **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified pending
 
 

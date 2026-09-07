@@ -46,6 +46,9 @@ namespace Airside.Presentation
         private int _speed = 1;
         private long _nextAutosaveSecond;
         private bool _showAwaySummary;
+        private bool _showOpeningBriefing;
+        private bool _routeOfferToastShown;
+        private int _acceptedRouteCountSeen;
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
@@ -56,6 +59,8 @@ namespace Airside.Presentation
         private int _seenEventCount;
         private string _opsToast = string.Empty;
         private float _opsToastUntil;
+        private string _SavePath =>
+            Path.Combine(Application.persistentDataPath, "airside-save-v1.json");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
@@ -66,13 +71,17 @@ namespace Airside.Presentation
 
         private void Awake()
         {
-            var savePath = System.IO.Path.Combine(Application.persistentDataPath, "airside-save-v1.json");
-            _session = PersistentAirportSession.LoadOrCreate(savePath, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 24031996);
+            _session = PersistentAirportSession.LoadOrCreate(_SavePath, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 24031996);
             _clock = _session.Clock;
             _simulation = _session.Simulation;
             _preciseTime = _clock.Now.ElapsedSeconds;
             _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
             _showAwaySummary = _session.LastAwaySummary.HasReport;
+            // New-game / early session: no away report and no accepted routes yet.
+            _showOpeningBriefing = !_showAwaySummary && _simulation.Routes.Accepted.Count == 0;
+            if (_showOpeningBriefing)
+                _paused = true;
+            _acceptedRouteCountSeen = _simulation.Routes.Accepted.Count;
             _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
@@ -123,6 +132,7 @@ namespace Airside.Presentation
                 _simulation.Update();
                 MaybeShowResearchToast();
                 MaybeShowOpsToast();
+                MaybeShowFirstSessionDecisionToasts();
             }
 
             if (_clock.Now.ElapsedSeconds >= _nextAutosaveSecond)
@@ -154,6 +164,14 @@ namespace Airside.Presentation
             {
                 if (keyboard.enterKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame)
                     _showAwaySummary = false;
+                return;
+            }
+
+            if (_showOpeningBriefing)
+            {
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame
+                    || keyboard.escapeKey.wasPressedThisFrame)
+                    DismissOpeningBriefing();
                 return;
             }
 
@@ -1107,13 +1125,15 @@ namespace Airside.Presentation
             DrawResearchToast(scale, panel, onTime);
             DrawSaveIndicator(scale, panel, small, onTime);
             DrawOpsToast(scale, panel, detail, onTime);
-            if (_paused && !_showAwaySummary)
-                DrawPauseOverlay(scale, panel, title, caution);
+            if (_paused && !_showAwaySummary && !_showOpeningBriefing)
+                DrawPauseOverlay(scale, panel, title, caution, small, button);
 
+            if (_showOpeningBriefing)
+                DrawOpeningBriefing(scale, panel, title, detail, small, button);
             if (_showAwaySummary)
                 DrawAwaySummary(scale, panel, title, detail, small, button);
             if (_simulation.IsInsolvent)
-                DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed);
+                DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed, button);
             GUI.matrix = previousMatrix;
         }
 
@@ -1130,10 +1150,10 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 16f, top + 8f, width - 24f, 22f), "Saved", onTime);
         }
 
-        private void DrawInsolvencyOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle delayed)
+        private void DrawInsolvencyOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle delayed, GUIStyle button)
         {
             var width = 460f;
-            var height = 260f;
+            var height = 290f;
             var left = (Screen.width / scale - width) * 0.5f;
             var top = (Screen.height / scale - height) * 0.5f;
             GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
@@ -1145,8 +1165,8 @@ namespace Airside.Presentation
                 $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}", detail);
             GUI.Label(new Rect(left + 24, top + 180, width - 48, 22),
                 $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
-            GUI.Label(new Rect(left + 24, top + 210, width - 48, 22),
-                "Start a new save to try again.", small);
+            if (GUI.Button(new Rect(left + 100, top + 220, 260, 36), "Start a new airport", button))
+                ResetToNewAirport();
         }
 
         private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, GUIStyle caution, GUIStyle button, float offerTop = 244f)
@@ -1157,7 +1177,9 @@ namespace Airside.Presentation
 
             var left = Screen.width / scale - 362;
             var top = offerTop;
-            GUI.Box(new Rect(left, top, 340, 156), string.Empty, panel);
+            var firstDecision = _simulation.Routes.Accepted.Count == 0;
+            var height = firstDecision ? 176f : 156f;
+            GUI.Box(new Rect(left, top, 340, height), string.Empty, panel);
             var routeIcon = AirsideTheme.Icon("economy", "route");
             var titleX = left + 20f;
             if (routeIcon != null)
@@ -1165,12 +1187,21 @@ namespace Airside.Presentation
                 GUI.DrawTexture(new Rect(left + 20, top + 14, 20, 20), routeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
                 titleX = left + 46f;
             }
-            GUI.Label(new Rect(titleX, top + 14, 300, 24), "ROUTE OFFER — decide now", detail);
-            GUI.Label(new Rect(left + 20, top + 42, 310, 20), $"{proposal.Airline}", small);
-            GUI.Label(new Rect(left + 20, top + 62, 310, 20),
+
+            var offerTitle = firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now";
+            GUI.Label(new Rect(titleX, top + 14, 300, 24), offerTitle, firstDecision ? caution : detail);
+            if (firstDecision)
+            {
+                GUI.Label(new Rect(left + 20, top + 40, 310, 18),
+                    "Accept to earn cash on every completed flight.", small);
+            }
+
+            var bodyTop = firstDecision ? top + 60f : top + 42f;
+            GUI.Label(new Rect(left + 20, bodyTop, 310, 20), $"{proposal.Airline}", small);
+            GUI.Label(new Rect(left + 20, bodyTop + 20, 310, 20),
                 $"{proposal.FlightsPerDay}/day to {proposal.Destination}", small);
             var payout = proposal.IncomePerFlight + _simulation.Reputation.IncomeBonus;
-            GUI.Label(new Rect(left + 20, top + 82, 310, 20),
+            GUI.Label(new Rect(left + 20, bodyTop + 40, 310, 20),
                 $"+${payout:N0} per completed flight", small);
             var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
             var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount);
@@ -1182,13 +1213,14 @@ namespace Airside.Presentation
                 status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
             else
                 status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
-            GUI.Label(new Rect(left + 20, top + 102, 310, 20), status, blocked ? caution : small);
+            GUI.Label(new Rect(left + 20, bodyTop + 60, 310, 20), status, blocked ? caution : small);
 
+            var buttonTop = bodyTop + 82f;
             GUI.enabled = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
-            if (GUI.Button(new Rect(left + 20, top + 124, 150, 24), "Accept route", button))
+            if (GUI.Button(new Rect(left + 20, buttonTop, 150, 24), "Accept route", button))
                 _session.AcceptRoute();
             GUI.enabled = true;
-            if (GUI.Button(new Rect(left + 178, top + 124, 130, 24), "Decline", button))
+            if (GUI.Button(new Rect(left + 178, buttonTop, 130, 24), "Decline", button))
                 _session.DeclineRoute();
         }
 
@@ -1252,7 +1284,7 @@ namespace Airside.Presentation
         }
 
 
-        private static void DrawPauseOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle caution)
+        private void DrawPauseOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle caution, GUIStyle small, GUIStyle button)
         {
             // Presentation-only dimmer while simulation time is paused.
             var width = Screen.width / scale;
@@ -1262,13 +1294,92 @@ namespace Airside.Presentation
             GUI.DrawTexture(new Rect(0f, 0f, width, height), Texture2D.whiteTexture);
             GUI.color = prev;
 
-            var boxW = 220f;
-            var boxH = 72f;
+            var boxW = 320f;
+            var boxH = 140f;
             var left = (width - boxW) * 0.5f;
             var top = (height - boxH) * 0.5f;
             GUI.Box(new Rect(left, top, boxW, boxH), string.Empty, panel);
             GUI.Label(new Rect(left + 24f, top + 18f, boxW - 48f, 36f), "PAUSED", title);
-            GUI.Label(new Rect(left + 24f, top + 44f, boxW - 48f, 22f), "Space to resume", caution);
+            GUI.Label(new Rect(left + 24f, top + 52f, boxW - 48f, 22f), "Space to resume", caution);
+            if (GUI.Button(new Rect(left + 50f, top + 88f, 220f, 30f), "Start new airport", button))
+                ResetToNewAirport();
+        }
+
+        private void DrawOpeningBriefing(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
+        {
+            var width = 500f;
+            var height = 360f;
+            var left = (Screen.width / scale - width) * 0.5f;
+            var top = (Screen.height / scale - height) * 0.5f;
+            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
+            GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
+            GUI.Label(new Rect(left + 24, top + 56, width - 48, 24), "You run this regional airport", detail);
+            GUI.Label(new Rect(left + 24, top + 92, width - 48, 44),
+                $"Aircraft move on their own. Your job is cash, reputation and capacity at {_simulation.Location.Name}.", detail);
+            GUI.Label(new Rect(left + 24, top + 148, width - 48, 22), "First useful decision", detail);
+            GUI.Label(new Rect(left + 24, top + 176, width - 48, 44),
+                "In about 25 seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
+            GUI.Label(new Rect(left + 24, top + 230, width - 48, 40),
+                "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left.", small);
+            GUI.Label(new Rect(left + 24, top + 278, width - 48, 20),
+                "Space / Enter to begin  ·  Tab = 4× speed", small);
+            if (GUI.Button(new Rect(left + 140, top + 308, 220, 34), "Begin operations", button))
+                DismissOpeningBriefing();
+        }
+
+        private void DismissOpeningBriefing()
+        {
+            _showOpeningBriefing = false;
+            _paused = false;
+        }
+
+        private void MaybeShowFirstSessionDecisionToasts()
+        {
+            if (_showOpeningBriefing || _showAwaySummary)
+                return;
+
+            if (!_routeOfferToastShown && _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
+            {
+                _opsToast = "Route offer ready — Accept on the right for recurring income";
+                _opsToastUntil = Time.unscaledTime + 6f;
+                _routeOfferToastShown = true;
+            }
+
+            var accepted = _simulation.Routes.Accepted.Count;
+            if (accepted > _acceptedRouteCountSeen)
+            {
+                var latest = _simulation.Routes.Accepted[accepted - 1];
+                var bonus = _simulation.Research.RouteIncomeBonus;
+                _opsToast =
+                    $"Route accepted — +${latest.IncomePerFlight + bonus:N0} per completed flight";
+                _opsToastUntil = Time.unscaledTime + 6f;
+                _acceptedRouteCountSeen = accepted;
+            }
+            else if (accepted < _acceptedRouteCountSeen)
+            {
+                _acceptedRouteCountSeen = accepted;
+            }
+        }
+
+        private void ResetToNewAirport()
+        {
+            try
+            {
+                var path = _SavePath;
+                if (File.Exists(path))
+                    File.Delete(path);
+                if (File.Exists(path + ".previous"))
+                    File.Delete(path + ".previous");
+                if (File.Exists(path + ".temporary"))
+                    File.Delete(path + ".temporary");
+            }
+            catch (IOException)
+            {
+                // Best-effort wipe; reload still attempts a clean create.
+            }
+
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
 
         private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
@@ -2295,6 +2406,10 @@ private static GameObject CreateBlock(
         {
             if (_simulation.IsInsolvent)
                 return "Airport insolvent — operations frozen.";
+            if (_showOpeningBriefing)
+                return "Read the briefing, then begin — first route offer arrives soon.";
+            if (_simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
+                return "Tip: This is your first useful decision — Accept the route offer.";
             if (_simulation.Routes.Pending != null)
                 return "Tip: Accept a route offer to earn recurring flight income.";
             if (_simulation.Routes.Accepted.Count == 0)

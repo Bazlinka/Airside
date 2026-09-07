@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **First-session opening briefing and clean new-game path.** New games (no away
+  report, no accepted routes) open paused on a role + first-decision briefing;
+  first route offer is labelled FIRST DECISION with consequence toasts on offer and
+  accept; Pause / Insolvent offer Start new airport (wipes save and reloads).
+  Presentation only. `scripts/test-domain.sh` 97/97.
+
 - **Add review-ready brand and splash candidates.** Added the transparent
   `airside_wordmark_light_v01.png`, the 3840×2160
   `ui_splash_airport_dawn_v01.png`, exact generation evidence, and a compact AI

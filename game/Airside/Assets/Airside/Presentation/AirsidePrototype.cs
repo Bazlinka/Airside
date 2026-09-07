@@ -30,6 +30,7 @@ namespace Airside.Presentation
         private Transform _birdFlockRoot;
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
+        private Light _hangarBayLight;
         private float _touchdownSmokeRemaining;
         private AirsideCanvasHud _canvasHud;
         private bool _canvasHudActive;
@@ -139,6 +140,19 @@ namespace Airside.Presentation
                 _hangarDoor = hangarDoor.transform;
                 _hangarDoorClosedX = _hangarDoor.position.x;
             }
+
+            var hangarBayLightGo = GameObject.Find("Hangar bay light");
+            if (hangarBayLightGo == null)
+            {
+                hangarBayLightGo = new GameObject("Hangar bay light");
+                hangarBayLightGo.transform.position = new Vector3(-20f, 3.2f, 20.5f);
+                var bay = hangarBayLightGo.AddComponent<Light>();
+                bay.type = LightType.Point;
+                bay.color = new Color(1f, 0.88f, 0.62f);
+                bay.range = 14f;
+                bay.intensity = 0.2f;
+            }
+            _hangarBayLight = hangarBayLightGo.GetComponent<Light>();
             var dome = GameObject.Find("Horizon dome");
             if (dome != null)
                 _horizonDome = dome.transform;
@@ -2976,16 +2990,31 @@ namespace Airside.Presentation
 
         private void UpdateHangarDoor()
         {
-            if (_hangarDoor == null)
+            if (_hangarDoor == null && _hangarBayLight == null)
                 return;
 
             // Presentation-only: hangar door slides open by day, closes at night.
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
-            var targetX = Mathf.Lerp(_hangarDoorClosedX, _hangarDoorClosedX - 7.2f, openAmount);
-            var pos = _hangarDoor.position;
-            pos.x = Mathf.MoveTowards(pos.x, targetX, Time.unscaledDeltaTime * 1.8f);
-            _hangarDoor.position = pos;
+            if (_hangarDoor != null)
+            {
+                var targetX = Mathf.Lerp(_hangarDoorClosedX, _hangarDoorClosedX - 7.2f, openAmount);
+                var pos = _hangarDoor.position;
+                pos.x = Mathf.MoveTowards(pos.x, targetX, Time.unscaledDeltaTime * 1.8f);
+                _hangarDoor.position = pos;
+            }
+
+            // Warm bay spill: brighter when the door is open by day; soft night work-light when closed.
+            if (_hangarBayLight != null)
+            {
+                var daySpill = openAmount * 1.35f;
+                var nightGlow = (1f - daylight) * 0.55f;
+                _hangarBayLight.intensity = Mathf.Max(0.08f, daySpill + nightGlow);
+                _hangarBayLight.color = Color.Lerp(
+                    new Color(1f, 0.78f, 0.48f),
+                    new Color(1f, 0.92f, 0.72f),
+                    openAmount);
+            }
         }
 
         private void UpdateCloudDrift()

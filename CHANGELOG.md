@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar bay interior light.** Warm point light inside the hangar brightens with
+  the sliding door by day and keeps a soft night glow when closed. Presentation only.
+
 - **Canvas OPERATIONS panel (0025 item 6).** Runtime uGUI hosts the OPERATIONS log
   (routes, ground traffic, event tail) and daily report under the route offer;
   IMGUI ops panel gated when Canvas is active. Presentation only.

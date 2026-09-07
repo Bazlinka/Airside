@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Wet materials + day profiles + coast densify (0025 items 3–5).** URP Lit wet
+  variants darken albedo, flatten bump, raise gloss and enable clear-coat sheen;
+  day volume adds ShadowsMidtonesHighlights + rain/fog/storm gloom; coast foam
+  ribbon, service-lane markings and southern headlands. Tire binder no longer
+  paints wheels as metal before Rubber. Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
 - **Authored airfield props kit.** `mdl_airfield_props_kit_authored_v01` (cylindrical
   poles/cones/dolly wheels) preferred ahead of v02/v01 for PlaceWorldProps.
   Evidence: `scripts/test-domain.sh` 105/105.

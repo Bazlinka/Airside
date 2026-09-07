@@ -10,10 +10,10 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (authored kits + apron Spot floods / terminal probe)
+- **Last updated:** 2026-09-07 by Cursor (wet materials + day profiles + coast densify)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — wet/material tuning, props kit authored, or day-profile polish. No new economy systems.
-- **In progress / half-done:** Authored AIR/BLD/VEH/PRP + lighting kit; apron SpotLights + dual reflection probes.
-- **Watch out for:** Spot flood count vs Mac Play perf; Addressables settings.json log still OK.
+- **Do this next:** Continue 0025 — kit motion/life polish, further env densify, or URP material map coverage. No new economy systems.
+- **In progress / half-done:** Authored AIR/BLD/VEH/PRP + lighting/props kits; wet clear-coat variants; day volume tonal profiles + weather gloom; coast foam + headlands.
+- **Watch out for:** Spot flood count vs Mac Play perf; Addressables settings.json log still OK; ClearCoat on older URP paths is no-op if missing.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?
-- **Visual assets:** Authored Batch C set + lighting kit; Spot apron wash; terminal probe.
+- **Visual assets:** Authored Batch C set + lighting/props kits; wet/day profile polish on presentation track.

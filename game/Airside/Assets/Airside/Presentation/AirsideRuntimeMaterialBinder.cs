@@ -34,6 +34,13 @@ namespace Airside.Presentation
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
+                else if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber"))
+                {
+                    // Must run before the step/wheel metal branch — "wheel" names used to
+                    // steal Rubber and leave tyres as painted metal.
+                    color = stepColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.Rubber;
+                }
                 else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
                          || n.Contains("leg") || n.Contains("base") || n.Contains("post")
                          || n.Contains("plate") || n.Contains("pad") || n.Contains("bund")
@@ -51,15 +58,11 @@ namespace Airside.Presentation
                 }
                 else if (n.Contains("wing") || n.Contains("tail") || n.Contains("fuselage")
                          || n.Contains("nose") || n.Contains("rudder") || n.Contains("elevator")
-                         || n.Contains("flap") || n.Contains("aileron"))
+                         || n.Contains("flap") || n.Contains("aileron")
+                         || n.Contains("cabindoor") || n.Contains("cabin door"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
-                }
-                else if (n.Contains("tire") || n.Contains("wheel"))
-                {
-                    color = stepColor;
-                    kind = AirsideMaterialLibrary.SurfaceKind.Rubber;
                 }
                 else
                 {

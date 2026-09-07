@@ -55,7 +55,8 @@ namespace Airside.Presentation
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
-        private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness)> _wetSurfaces = new List<(Renderer, Color, float)>();
+        private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale)> _wetSurfaces =
+            new List<(Renderer, Color, float, float, float)>();
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
         private readonly List<Renderer> _airfieldLightRenderers = new List<Renderer>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
@@ -1918,13 +1919,14 @@ namespace Airside.Presentation
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
             // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
-            var wetness = wet ? (weather == WeatherKind.Storm ? 0.62f : raining ? 0.45f : 0.3f) : 0f;
+            var wetness = wet ? (weather == WeatherKind.Storm ? 0.72f : raining ? 0.52f : 0.34f) : 0f;
             for (var i = 0; i < _wetSurfaces.Count; i++)
             {
-                var (renderer, dry, drySmooth) = _wetSurfaces[i];
+                var (renderer, dry, drySmooth, dryMetallic, dryBump) = _wetSurfaces[i];
                 if (renderer == null)
                     continue;
-                AirsideMaterialLibrary.ApplyWetness(renderer.material, wetness, dry, drySmooth);
+                AirsideMaterialLibrary.ApplyWetness(
+                    renderer.material, wetness, dry, drySmooth, dryMetallic, dryBump);
             }
 
             UpdateWetPuddles(wetness, storm);
@@ -2171,8 +2173,11 @@ namespace Airside.Presentation
                      {
                          "Runway", "Taxiway A", "Apron", "Stand 3 apron pad",
                          "Access road", "Access road turn", "Car park", "Service lane",
-                         "Fuel pad", "Coast sand", "Outer paddock N", "Outer paddock S",
-                         "Relief berm N", "Relief berm S"
+                         "Fuel pad", "Coast sand", "Coast shallows", "Coast foam",
+                         "Outer paddock N", "Outer paddock S", "Outer paddock E", "Outer paddock W",
+                         "Relief berm N", "Relief berm S",
+                         "Access road shoulder L", "Access road shoulder R",
+                         "Grass"
                      })
             {
                 var go = GameObject.Find(name);
@@ -2181,12 +2186,15 @@ namespace Airside.Presentation
                 var renderer = go.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
+                var mat = renderer.material;
                 var drySmooth = 0.28f;
-                if (renderer.material.HasProperty("_Smoothness"))
-                    drySmooth = renderer.material.GetFloat("_Smoothness");
-                else if (renderer.material.HasProperty("_Glossiness"))
-                    drySmooth = renderer.material.GetFloat("_Glossiness");
-                _wetSurfaces.Add((renderer, renderer.material.color, drySmooth));
+                if (mat.HasProperty("_Smoothness"))
+                    drySmooth = mat.GetFloat("_Smoothness");
+                else if (mat.HasProperty("_Glossiness"))
+                    drySmooth = mat.GetFloat("_Glossiness");
+                var dryMetallic = mat.HasProperty("_Metallic") ? mat.GetFloat("_Metallic") : 0.02f;
+                var dryBump = mat.HasProperty("_BumpScale") ? mat.GetFloat("_BumpScale") : 0.5f;
+                _wetSurfaces.Add((renderer, mat.color, drySmooth, dryMetallic, dryBump));
             }
         }
 
@@ -2226,10 +2234,17 @@ namespace Airside.Presentation
                 var radius = 1.2f + (i % 3) * 0.55f;
                 puddle.transform.localScale = new Vector3(radius, 0.015f, radius * (0.7f + (i % 2) * 0.25f));
                 var material = AirsideMaterialLibrary.Create(
-                    new Color(0.25f, 0.32f, 0.38f, 0.28f),
+                    new Color(0.22f, 0.3f, 0.36f, 0.32f),
                     AirsideMaterialLibrary.SurfaceKind.Water);
                 if (material.HasProperty("_Smoothness"))
-                    material.SetFloat("_Smoothness", 0.92f);
+                    material.SetFloat("_Smoothness", 0.96f);
+                if (material.HasProperty("_ClearCoatMask"))
+                {
+                    material.SetFloat("_ClearCoatMask", 1f);
+                    if (material.HasProperty("_ClearCoatSmoothness"))
+                        material.SetFloat("_ClearCoatSmoothness", 0.98f);
+                    material.EnableKeyword("_CLEARCOAT");
+                }
                 puddle.GetComponent<Renderer>().material = material;
                 puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             }
@@ -3210,7 +3225,16 @@ namespace Airside.Presentation
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
             _sun.intensity = Mathf.Lerp(0.08f, 1.5f, daylight);
             _sun.shadowStrength = Mathf.Lerp(0.35f, 0.78f, daylight);
-            _dayVolume?.Apply(daylight, warm);
+
+            // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
+            var weather = _simulation.CurrentWeather;
+            var weatherGloom = weather == WeatherKind.Storm ? 0.55f
+                : weather == WeatherKind.Fog ? 0.42f
+                : weather == WeatherKind.Rain ? 0.28f
+                : 0f;
+            if (weatherGloom > 0f)
+                _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
+            _dayVolume?.Apply(daylight, warm, weatherGloom);
 
             if (_fillLight != null)
             {
@@ -3954,6 +3978,10 @@ namespace Airside.Presentation
             // Kangaroo Island coastal strip south of the runway (sand, not water physics).
             CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand,
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(20f, 2f));
+            // Surf foam ribbon so the sand/water join reads from overview (0025 item 3).
+            CreateBlock("Coast foam", new Vector3(0f, -0.62f, -54.5f), new Vector3(165f, 0.08f, 2.2f),
+                new Color(0.88f, 0.92f, 0.95f, 0.85f),
+                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(22f, 0.4f));
             CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f),
                 "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(16f, 1.5f));
             CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f),
@@ -3996,6 +4024,10 @@ namespace Airside.Presentation
             // Hangar service lane.
             CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
+            CreateBlock("Service lane centreline", new Vector3(-20f, 0.04f, 28.5f), new Vector3(14f, 0.02f, 0.1f),
+                new Color(0.95f, 0.85f, 0.2f));
+            CreateBlock("Service lane edge N", new Vector3(-20f, 0.04f, 29.9f), new Vector3(16f, 0.02f, 0.08f), Color.white);
+            CreateBlock("Service lane edge S", new Vector3(-20f, 0.04f, 27.1f), new Vector3(16f, 0.02f, 0.08f), Color.white);
 
             BuildPerimeterFence();
             BuildApproachLightBars();
@@ -4699,6 +4731,16 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
             CreateBlock("Hill far S", new Vector3(0f, 0.8f, -95f), new Vector3(70f, 3.5f, 18f), Shade(AirsideTheme.Sand, 0.75f),
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(8f, 2f));
+            // Extra coastal headlands so the southern horizon is not a single slab.
+            CreateBlock("Hill far SW headland", new Vector3(-55f, 1.4f, -88f), new Vector3(28f, 4.2f, 14f),
+                Shade(AirsideTheme.Sand, 0.68f),
+                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(4f, 2f));
+            CreateBlock("Hill far SE headland", new Vector3(58f, 1.2f, -90f), new Vector3(26f, 3.8f, 12f),
+                Shade(AirsideTheme.Sand, 0.72f),
+                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1.8f));
+            CreateBlock("Hill far N spur", new Vector3(12f, 3.8f, 78f), new Vector3(24f, 4.5f, 16f),
+                Shade(AirsideTheme.Eucalyptus, 0.5f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 2f));
         }
 
         private static void BuildHorizonDome()

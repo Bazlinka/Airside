@@ -50,18 +50,19 @@ namespace Airside.Presentation
 
         private static readonly Dictionary<SurfaceKind, Profile> Profiles = new()
         {
-            [SurfaceKind.Default] = new Profile(0.04f, 0.32f, 0.35f),
-            [SurfaceKind.Asphalt] = new Profile(0.02f, 0.22f, 0.55f, 0.92f),
-            [SurfaceKind.Concrete] = new Profile(0.03f, 0.28f, 0.45f, 0.94f),
-            [SurfaceKind.Grass] = new Profile(0.0f, 0.18f, 0.7f, 0.88f),
-            [SurfaceKind.Sand] = new Profile(0.0f, 0.2f, 0.5f, 0.9f),
-            [SurfaceKind.Metal] = new Profile(0.55f, 0.42f, 0.4f, 0.95f),
-            [SurfaceKind.PaintedMetal] = new Profile(0.25f, 0.48f, 0.3f, 0.96f),
-            [SurfaceKind.AircraftSkin] = new Profile(0.18f, 0.55f, 0.2f, 0.97f),
-            [SurfaceKind.Glass] = new Profile(0.05f, 0.85f, 0.05f, 1f, transparent: true),
-            [SurfaceKind.Rubber] = new Profile(0.02f, 0.15f, 0.6f, 0.9f),
-            [SurfaceKind.Plastic] = new Profile(0.05f, 0.4f, 0.25f, 0.96f),
-            [SurfaceKind.Water] = new Profile(0.02f, 0.78f, 0.15f, 1f, transparent: true),
+            // Dry profiles tuned so wet variants can raise gloss without starting shiny.
+            [SurfaceKind.Default] = new Profile(0.04f, 0.28f, 0.38f),
+            [SurfaceKind.Asphalt] = new Profile(0.015f, 0.16f, 0.62f, 0.9f),
+            [SurfaceKind.Concrete] = new Profile(0.025f, 0.22f, 0.5f, 0.93f),
+            [SurfaceKind.Grass] = new Profile(0.0f, 0.14f, 0.75f, 0.86f),
+            [SurfaceKind.Sand] = new Profile(0.0f, 0.16f, 0.55f, 0.88f),
+            [SurfaceKind.Metal] = new Profile(0.58f, 0.44f, 0.38f, 0.95f),
+            [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.46f, 0.28f, 0.96f),
+            [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.58f, 0.18f, 0.97f),
+            [SurfaceKind.Glass] = new Profile(0.04f, 0.88f, 0.04f, 1f, transparent: true),
+            [SurfaceKind.Rubber] = new Profile(0.02f, 0.12f, 0.65f, 0.88f),
+            [SurfaceKind.Plastic] = new Profile(0.05f, 0.38f, 0.28f, 0.96f),
+            [SurfaceKind.Water] = new Profile(0.02f, 0.9f, 0.22f, 1f, transparent: true),
             [SurfaceKind.UnlitSky] = new Profile(0f, 0f, 0f, 1f)
         };
 
@@ -165,6 +166,10 @@ namespace Airside.Presentation
                 material.SetFloat("_Smoothness", profile.Smoothness);
             if (material.HasProperty("_Glossiness"))
                 material.SetFloat("_Glossiness", profile.Smoothness);
+            if (material.HasProperty("_SpecularHighlights"))
+                material.SetFloat("_SpecularHighlights", 1f);
+            if (material.HasProperty("_EnvironmentReflections"))
+                material.SetFloat("_EnvironmentReflections", 1f);
 
             if (albedo != null)
             {
@@ -214,25 +219,57 @@ namespace Airside.Presentation
 
         public static float DrySmoothness(SurfaceKind kind) => GetProfile(kind).Smoothness;
 
+        public static float DryMetallic(SurfaceKind kind) => GetProfile(kind).Metallic;
+
+        public static float DryBumpScale(SurfaceKind kind) => GetProfile(kind).BumpScale;
+
         /// <summary>
         /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
-        /// albedo, raises smoothness and a touch of metallic so rain reads on Lit.
+        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
+        /// sheen so rain reads on URP Lit without authoring separate wet mats.
         /// </summary>
-        public static void ApplyWetness(Material material, float wetness01, Color dryColor, float drySmoothness)
+        public static void ApplyWetness(
+            Material material,
+            float wetness01,
+            Color dryColor,
+            float drySmoothness,
+            float dryMetallic = 0.02f,
+            float dryBumpScale = 0.5f)
         {
             if (material == null)
                 return;
             wetness01 = Mathf.Clamp01(wetness01);
-            var wetColor = Color.Lerp(dryColor, dryColor * 0.48f + new Color(0.05f, 0.08f, 0.12f, 0f), wetness01);
+            // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
+            var wetTint = new Color(0.04f, 0.07f, 0.11f, 0f);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.42f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
-            var smoothness = Mathf.Lerp(drySmoothness, Mathf.Max(drySmoothness, 0.86f), wetness01);
+
+            var targetSmooth = Mathf.Max(drySmoothness, 0.9f);
+            var smoothness = Mathf.Lerp(drySmoothness, targetSmooth, wetness01 * wetness01);
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", smoothness);
             if (material.HasProperty("_Glossiness"))
                 material.SetFloat("_Glossiness", smoothness);
+
+            var metallic = Mathf.Lerp(dryMetallic, Mathf.Max(dryMetallic, 0.18f), wetness01 * 0.85f);
             if (material.HasProperty("_Metallic"))
-                material.SetFloat("_Metallic", Mathf.Lerp(0.02f, 0.16f, wetness01));
+                material.SetFloat("_Metallic", metallic);
+
+            // Wet surfaces lose micro-relief — bump flattens toward a mirror sheen.
+            if (material.HasProperty("_BumpScale"))
+                material.SetFloat("_BumpScale", Mathf.Lerp(dryBumpScale, dryBumpScale * 0.28f, wetness01));
+
+            if (material.HasProperty("_ClearCoatMask"))
+            {
+                material.SetFloat("_ClearCoatMask", wetness01);
+                if (material.HasProperty("_ClearCoatSmoothness"))
+                    material.SetFloat("_ClearCoatSmoothness", Mathf.Lerp(0.15f, 0.95f, wetness01));
+                if (wetness01 > 0.02f)
+                    material.EnableKeyword("_CLEARCOAT");
+                else
+                    material.DisableKeyword("_CLEARCOAT");
+            }
         }
 
         private static Texture2D ResolveNormal(SurfaceKind kind) =>

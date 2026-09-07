@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **ALS / ARFF / GA densify (0025 items 3+5).** Approach light fan to 8 stations with
+  crossbars + far REIL; ARFF shed gains roof ridge/door ribs/hose/hydrant; five
+  denser parked GA with gear/struts and contact shadows. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **URP profile retune + apron life (0025 items 4+7).** Drier asphalt / richer
   aircraft-skin & glass dry profiles; denser apron figures; flood mast and dolly
   cluster contact shadows. Presentation only.

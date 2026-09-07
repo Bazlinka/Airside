@@ -4818,8 +4818,14 @@ namespace Airside.Presentation
                 light.shadows = LightShadows.None;
 
                 // Emissive lens proxy so bars read lit from overview without more spots.
-                CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
                     new Color(1f, 0.97f, 0.88f));
+                var lensRenderer = lens.GetComponent<Renderer>();
+                if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
+                {
+                    lensRenderer.material.EnableKeyword("_EMISSION");
+                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
+                }
             }
 
             // Far REIL pair — pulsed SpotLights at night (collected with runway edge REIL names).
@@ -6798,6 +6804,17 @@ namespace Airside.Presentation
                 var z = 11.2f + i * 0.85f;
                 CreateBlock($"Apron chevron {i}", new Vector3(14f + i * 0.4f, 0.04f, z), new Vector3(1.1f, 0.02f, 0.16f),
                     new Color(0.95f, 0.85f, 0.2f));
+            }
+
+            // Stand lead-in dashes for bays 1–3 so apron reads painted from overview (0025 item 3).
+            foreach (var standX in new[] { 14f, 22f, 30f })
+            {
+                for (var step = 0; step < 5; step++)
+                {
+                    var z = 12.2f + step * 0.75f;
+                    CreateBlock($"Stand lead {standX} {step}", new Vector3(standX, 0.04f, z),
+                        new Vector3(0.16f, 0.02f, 0.45f), new Color(0.95f, 0.85f, 0.2f));
+                }
             }
         }
 

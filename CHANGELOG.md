@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Stand lead dashes + calm coach + ALS lenses (0025 items 3+5+6).** Apron stand
+  lead-in dashes for bays 1–3; ALS lenses emissive; Toolkit coach only when urgent.
+  Presentation only. Evidence: `scripts/test-domain.sh` 105/105.
+
 - **URP volume + shadow/SSAO polish (0025 item 5).** Deactivate template
   DefaultVolumeProfile junk (DoF/motion blur/lens/test components); PC shadow
   distance 140; SSAO intensity/radius raised for apron contact. Presentation only.

@@ -1149,6 +1149,10 @@ namespace Airside.Presentation
 
             _coachText.text = coachLine ?? string.Empty;
             _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.OpenSky;
+            // REF-004 calm chrome: coach only when urgent; otherwise flight card stays sparse.
+            _coachText.style.display = coachUrgent && !string.IsNullOrEmpty(coachLine)
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
             _controlsText.text = controlsLine ?? string.Empty;
 
             _waitRow.style.display = showWaitMeter ? DisplayStyle.Flex : DisplayStyle.None;

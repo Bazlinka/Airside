@@ -177,11 +177,14 @@ namespace Airside.Presentation
             _leftPanel = MakePanel("Status panel", 410f);
             _leftPanel.style.left = 22;
             _leftPanel.style.top = 22;
-            _leftPanel.style.maxHeight = 620;
+            _leftPanel.style.maxHeight = 660;
             _leftPanel.style.paddingLeft = 16;
             _leftPanel.style.paddingRight = 16;
             _leftPanel.style.paddingTop = 12;
-            _leftPanel.style.paddingBottom = 12;
+            _leftPanel.style.paddingBottom = 14;
+            // Coastal accent bar so the status panel reads as brand chrome, not a debug box.
+            _leftPanel.style.borderLeftWidth = 3;
+            _leftPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
 
             var wordmark = AirsideTheme.WordmarkLight;
             if (wordmark != null)
@@ -203,10 +206,12 @@ namespace Airside.Presentation
             }
 
             _locationText = AddLeftLine(_leftPanel, "Location", 14, FontStyle.Normal);
-            _flightText = AddLeftLine(_leftPanel, "Flight", 16, FontStyle.Bold);
+            _locationText.style.color = AirsideTheme.OpenSky;
+            _flightText = AddLeftLine(_leftPanel, "Flight", 17, FontStyle.Bold);
             _phaseText = AddLeftLine(_leftPanel, "Phase", 15, FontStyle.Normal);
+            _phaseText.style.color = AirsideTheme.OpenSky;
             _clockText = AddLeftLine(_leftPanel, "Clock", 13, FontStyle.Normal);
-            _cashText = AddLeftLine(_leftPanel, "Cash", 13, FontStyle.Normal);
+            _cashText = AddLeftLine(_leftPanel, "Cash", 14, FontStyle.Bold);
             _financeText = AddLeftLine(_leftPanel, "Finance", 13, FontStyle.Normal);
             _warningText = AddLeftLine(_leftPanel, "Warning", 13, FontStyle.Bold);
             _warningText.style.color = AirsideTheme.SafetyYellow;
@@ -255,10 +260,11 @@ namespace Airside.Presentation
             _researchButton.clicked += () => _onStartResearch?.Invoke();
             _leftPanel.Add(_researchButton);
 
-            _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
-            _coachText.style.color = AirsideTheme.SafetyYellow;
+            _coachText = AddLeftLine(_leftPanel, "Coach", 15, FontStyle.Bold);
+            _coachText.style.color = AirsideTheme.OpenSky;
             _coachText.style.whiteSpace = WhiteSpace.Normal;
             _controlsText = AddLeftLine(_leftPanel, "Controls", 12, FontStyle.Normal);
+            _controlsText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.78f);
             _controlsText.style.whiteSpace = WhiteSpace.Normal;
 
             _waitRow = new VisualElement { name = "Wait row" };
@@ -697,7 +703,7 @@ namespace Airside.Presentation
                 AirsideTheme.RunwayInk.r,
                 AirsideTheme.RunwayInk.g,
                 AirsideTheme.RunwayInk.b,
-                0.94f);
+                0.96f);
             panel.style.borderTopLeftRadius = 6;
             panel.style.borderTopRightRadius = 6;
             panel.style.borderBottomLeftRadius = 6;
@@ -706,7 +712,7 @@ namespace Airside.Presentation
             panel.style.borderRightWidth = 1;
             panel.style.borderTopWidth = 1;
             panel.style.borderBottomWidth = 1;
-            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f);
+            var border = new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f);
             panel.style.borderLeftColor = border;
             panel.style.borderRightColor = border;
             panel.style.borderTopColor = border;
@@ -939,7 +945,7 @@ namespace Airside.Presentation
             }
 
             _coachText.text = coachLine ?? string.Empty;
-            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.OpenSky;
             _controlsText.text = controlsLine ?? string.Empty;
 
             _waitRow.style.display = showWaitMeter ? DisplayStyle.Flex : DisplayStyle.None;

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Toolkit HUD readability (0025 item 6).** Status panel gains a coastal accent
+  bar and stronger type hierarchy (location/phase Open Sky, cash bold, coach
+  urgent yellow vs calm Open Sky). Presentation only.
+  Evidence: `scripts/test-domain.sh`.
+
 - **Night glow flicker + hold-short polish (0025 items 5+7).** Building window
   PointLights and emissive quads flicker softly at dusk; hold-short bars C/D join
   the traffic-wait pulse with emission; touchdown-zone marks added beside aiming

@@ -23,6 +23,7 @@ namespace Airside.Presentation
         private Light[] _apronLights;
         private Light[] _landsideLights;
         private Light[] _thresholdLights;
+        private Light[] _runwayEdgeLights;
         private Light _aerodromeBeacon;
         private ReflectionProbe _apronProbe;
         private Transform _rainRoot;
@@ -116,6 +117,7 @@ namespace Airside.Presentation
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
             _thresholdLights = BuildThresholdApproachLights();
+            _runwayEdgeLights = BuildRunwayEdgePointLights();
             _apronProbe = BuildApronReflectionProbe();
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
@@ -2614,6 +2616,19 @@ namespace Airside.Presentation
                 }
             }
 
+            // Sparse runway-edge point lights so the strip reads as a lit ribbon at night.
+            if (_runwayEdgeLights != null)
+            {
+                var edge = Mathf.Lerp(0.95f, 0.02f, daylight);
+                for (var i = 0; i < _runwayEdgeLights.Length; i++)
+                {
+                    var light = _runwayEdgeLights[i];
+                    if (light == null)
+                        continue;
+                    light.intensity = edge;
+                }
+            }
+
             if (_apronProbe != null)
             {
                 // Brighter probe intensity at night so wet Lit surfaces pick up floods.
@@ -2720,6 +2735,42 @@ namespace Airside.Presentation
             }
 
             return lights;
+        }
+
+        /// <summary>
+        /// Decision 0025 item 5 — sparse PointLights along runway edges (every 12 m)
+        /// so the strip reads as a lit ribbon at dusk without one light per fixture.
+        /// Presentation only.
+        /// </summary>
+        private static Light[] BuildRunwayEdgePointLights()
+        {
+            var lights = new System.Collections.Generic.List<Light>();
+            for (var x = -36; x <= 36; x += 12)
+            {
+                lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
+                lights.Add(CreateEdgePointLight($"Runway edge point R {x}", new Vector3(x, 0.55f, 3.4f)));
+            }
+
+            // Green taxi centreline hints at the A1 hold.
+            lights.Add(CreateEdgePointLight("Taxi point A", new Vector3(-8f, 0.45f, 9f),
+                new Color(0.25f, 0.9f, 0.4f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi point B", new Vector3(8f, 0.45f, 9f),
+                new Color(0.25f, 0.9f, 0.4f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi point C", new Vector3(24f, 0.45f, 9f),
+                new Color(0.25f, 0.9f, 0.4f), range: 8f));
+            return lights.ToArray();
+        }
+
+        private static Light CreateEdgePointLight(string name, Vector3 position, Color? color = null, float range = 11f)
+        {
+            var go = new GameObject(name);
+            go.transform.position = position;
+            var light = go.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = color ?? new Color(1f, 0.96f, 0.78f);
+            light.range = range;
+            light.intensity = 0.02f;
+            return light;
         }
 
         /// <summary>

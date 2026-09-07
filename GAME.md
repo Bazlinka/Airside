@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (motion/brand/wet/coast stacked on #127+#128)
-- **Branch / working tree:** `cursor/materials-motion-brand-cc2d` (stack tip: HUD → Addressables/lofted → motion/brand)
-- **Do this next:** Bailey squash-merge #127 → #128 → #129 on Mac; `scripts/test-unity.sh` + Play soak (no Arial/PanelSettings warnings; lofted turboprop; gear/cargo doors; wordmark overlays; wet probe).
-- **In progress / half-done:** Full presentation stack on this tip — HUD fix, Addressables provider, lofted turboprop, env densify, motion/brand/wet/coast polish.
-- **Watch out for:** Linux cloud has no Unity — Mac EditMode required before merge. Do not force-push main. Keep StreamingAssets path intact.
+- **Last updated:** 2026-09-07 by Cursor (rebased presentation tip onto main after #127)
+- **Branch / working tree:** `cursor/presentation-stack-tip-8515` (Addressables/lofted + motion/brand; #127 already on main)
+- **Do this next:** On Mac — `git fetch && git checkout cursor/presentation-stack-tip-8515`, run `scripts/test-unity.sh`, Play soak (no Arial/PanelSettings warnings; lofted turboprop; denser env; gear/cargo doors; wordmark overlays; wet probe; Batch C/WLD/PRP present). Then squash-merge this PR. Close superseded #128/#129.
+- **In progress / half-done:** #128+#129 content rebased cleanly onto post-#127 main. Domain 105/105. Mac Unity still required.
+- **Watch out for:** Linux cloud cannot green `scripts/test-unity.sh`. Old #128/#129 conflict with main — use this tip only.
 - **Open questions for Bailey:** authored FBX next, or more procedural densify?
-- **Visual assets:** Lofted turboprop + Addressables **wired**; env densify; brand overlays; motion/life; wet/probe polish. Packaged Batch C/WLD/PRP path preserved.
+- **Visual assets:** Lofted turboprop + Addressables wired; env densify; brand overlays; motion/life; wet/probe polish. Packaged Batch C/WLD/PRP path preserved.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

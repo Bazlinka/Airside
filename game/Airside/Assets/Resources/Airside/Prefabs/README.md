@@ -7,8 +7,10 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 
 `ArtPresentationLoader` looks up:
 
-1. `Resources.Load("Airside/Prefabs/<key>")` — place prefabs here
-2. Addressables key `airside-prefab/<key>` (when a catalog locates it)
+1. Addressables key `airside-prefab/<key>` — runtime locator
+   (`AirsidePrefabAddressables`) exposes every prefab in this folder until Bailey
+   builds Editor Addressables groups
+2. `Resources.Load("Airside/Prefabs/<key>")` — direct fallback
 3. StreamingAssets / Editor glTF via `ArtGltfLoader`
 4. Caller procedural cuboid fallback
 
@@ -42,6 +44,7 @@ overwrite any with an authored FBX prefab of the same name.
 3. Create a prefab named exactly `<key>.prefab`.
 4. Copy or move it under `Assets/Resources/Airside/Prefabs/`.
 5. Optionally register the same asset in Addressables with key
-   `airside-prefab/<key>` — the loader already probes that key.
+   `airside-prefab/<key>` — the runtime locator already exposes Resources keys;
+   Editor groups can replace that bridge when Bailey builds them.
 
 Until a prefab is present for a kit, the existing v03/v02/v01 glTF kits keep working.

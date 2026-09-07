@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Addressables-first Resources locator (0025 item 1 / ADR 0026).** Runtime
+  `AirsidePrefabAddressables` exposes every `Resources/Airside/Prefabs` asset under
+  `airside-prefab/<key>` via LegacyResourcesProvider; loader prefers Addressables
+  then Resources then glTF. Presentation only.
+
 - **Landing skids + window PointLights + wet taxi spray (0025 items 5+7).** Rubber
   skid streaks fade after touchdown; denser smoke puffs; terminal/hangar/ops window
   PointLight spill at dusk; amber fuel-farm lamp; mist spray under gear when wet.

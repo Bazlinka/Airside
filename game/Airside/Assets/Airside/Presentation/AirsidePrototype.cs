@@ -4608,13 +4608,16 @@ namespace Airside.Presentation
             var bar = new Color(0.85f, 0.88f, 0.9f);
             var stem = new Color(0.35f, 0.36f, 0.38f);
             // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 8; i++)
             {
-                var x = -42f - i * 6f;
+                var x = -40f - i * 5f;
                 CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
                 CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
-                CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.15f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.2f), bar);
-                CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.15f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.2f), bar);
+                CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                // Crossbar densify every other station.
+                if (i % 2 == 0)
+                    CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
 
                 var lampGo = new GameObject($"ALS lamp {i}");
                 lampGo.transform.position = new Vector3(x, 0.95f, 0f);
@@ -4625,6 +4628,10 @@ namespace Airside.Presentation
                 light.intensity = 0f;
                 light.shadows = LightShadows.None;
             }
+
+            // Far REIL pair markers beyond the ALS fan.
+            CreateBlock("ALS REIL L", new Vector3(-78f, 0.8f, -2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
+            CreateBlock("ALS REIL R", new Vector3(-78f, 0.8f, 2.8f), new Vector3(0.4f, 0.4f, 0.4f), new Color(1f, 1f, 0.9f));
         }
 
         /// <summary>
@@ -4645,11 +4652,17 @@ namespace Airside.Presentation
                 var door = new Color(0.55f, 0.56f, 0.58f);
                 CreateBlock("ARFF shed", new Vector3(-28f, 1.4f, 30f), new Vector3(7f, 2.8f, 5.5f), body);
                 CreateBlock("ARFF roof", new Vector3(-28f, 3.0f, 30f), new Vector3(7.6f, 0.35f, 6.0f), roof);
+                CreateBlock("ARFF roof ridge", new Vector3(-28f, 3.25f, 30f), new Vector3(7.8f, 0.18f, 0.8f), Shade(roof, 0.85f));
                 CreateBlock("ARFF door L", new Vector3(-29.4f, 1.2f, 27.2f), new Vector3(2.4f, 2.2f, 0.12f), door);
                 CreateBlock("ARFF door R", new Vector3(-26.6f, 1.2f, 27.2f), new Vector3(2.4f, 2.2f, 0.12f), door);
+                CreateBlock("ARFF door rib L", new Vector3(-29.4f, 1.2f, 27.28f), new Vector3(0.1f, 2.1f, 0.06f), Shade(door, 0.8f));
+                CreateBlock("ARFF door rib R", new Vector3(-26.6f, 1.2f, 27.28f), new Vector3(0.1f, 2.1f, 0.06f), Shade(door, 0.8f));
+                CreateBlock("ARFF window", new Vector3(-25.2f, 2.0f, 30f), new Vector3(0.08f, 0.9f, 1.4f), new Color(0.2f, 0.4f, 0.5f));
                 CreateBlock("ARFF apron", new Vector3(-28f, 0.02f, 26.5f), new Vector3(9f, 0.06f, 4f), AirsideTheme.Concrete,
                     "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
                 CreateBlock("ARFF sign", new Vector3(-28f, 2.6f, 27.15f), new Vector3(2.2f, 0.45f, 0.08f), AirsideTheme.SafetyYellow);
+                CreateBlock("ARFF hose reel", new Vector3(-31.2f, 0.55f, 27.5f), new Vector3(0.7f, 0.9f, 0.7f), new Color(0.35f, 0.2f, 0.15f));
+                CreateBlock("ARFF hydrant", new Vector3(-24.8f, 0.35f, 27.8f), new Vector3(0.35f, 0.55f, 0.35f), new Color(0.75f, 0.2f, 0.15f));
             }
 
             // Soft bay spill at dusk.
@@ -6748,7 +6761,9 @@ namespace Airside.Presentation
             {
                 (x: -30f, z: 14f, yaw: 90f),
                 (x: -37f, z: 14f, yaw: 98f),
-                (x: -33.5f, z: 10.5f, yaw: 105f)
+                (x: -33.5f, z: 10.5f, yaw: 105f),
+                (x: -40.5f, z: 11.5f, yaw: 85f),
+                (x: -27f, z: 11f, yaw: 110f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -6764,14 +6779,22 @@ namespace Airside.Presentation
                     root = new GameObject($"Parked GA {i}").transform;
                     ParentBlock(root, "GA fuselage", Vector3.zero, new Vector3(0.55f, 0.55f, 2.4f), new Color(0.9f, 0.91f, 0.93f));
                     ParentBlock(root, "GA wing", new Vector3(0f, 0.05f, 0.2f), new Vector3(3.2f, 0.08f, 0.7f), new Color(0.85f, 0.55f, 0.2f));
+                    ParentBlock(root, "GA wing strut L", new Vector3(-0.9f, -0.15f, 0.15f), new Vector3(0.06f, 0.45f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
+                    ParentBlock(root, "GA wing strut R", new Vector3(0.9f, -0.15f, 0.15f), new Vector3(0.06f, 0.45f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
                     ParentBlock(root, "GA tail", new Vector3(0f, 0.55f, -1.0f), new Vector3(0.1f, 0.9f, 0.55f), new Color(0.85f, 0.55f, 0.2f));
+                    ParentBlock(root, "GA tailplane", new Vector3(0f, 0.35f, -1.05f), new Vector3(1.1f, 0.06f, 0.4f), new Color(0.85f, 0.55f, 0.2f));
+                    ParentBlock(root, "GA canopy", new Vector3(0f, 0.35f, 0.55f), new Vector3(0.45f, 0.28f, 0.7f), new Color(0.2f, 0.35f, 0.45f));
                     ParentBlock(root, "GA prop", new Vector3(0f, 0f, 1.25f), new Vector3(0.06f, 0.9f, 0.12f), new Color(0.2f, 0.2f, 0.22f));
+                    ParentBlock(root, "GA gear nose", new Vector3(0f, -0.35f, 0.85f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
+                    ParentBlock(root, "GA gear L", new Vector3(-0.55f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
+                    ParentBlock(root, "GA gear R", new Vector3(0.55f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
                 }
 
                 root.position = new Vector3(spot.x, 0.55f, spot.z);
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
+                PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);
             }
         }
 

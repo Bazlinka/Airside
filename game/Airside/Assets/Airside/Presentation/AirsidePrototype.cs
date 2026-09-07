@@ -1746,7 +1746,7 @@ namespace Airside.Presentation
         private static void BuildAirfield()
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
-            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), new Color(0.16f, 0.34f, 0.21f),
+            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
@@ -1774,7 +1774,10 @@ namespace Airside.Presentation
                     CreateBlock("Terminal end R", new Vector3(37.2f, 2.0f, 27f), new Vector3(1.2f, 4.0f, 5.2f), new Color(0.62f, 0.66f, 0.69f));
                     CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
                 },
-                "Textures/Environment/tx_terminal_glass_mask_v01.png");
+                "Textures/Environment/tx_terminal_glass_mask_v01.png",
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.2f),
+                surfaceMeshNames: new[] { "terminal_body", "end_cap_left", "end_cap_right", "service_wing" });
             // Warm interior spill at dusk/night (presentation only).
             CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -1793,13 +1796,19 @@ namespace Airside.Presentation
                     CreateBlock("Hangar", new Vector3(-20f, 2.5f, 20f), new Vector3(14f, 5f, 9f), new Color(0.45f, 0.5f, 0.54f),
                         "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.5f, 1.5f));
                     CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
-                });
+                },
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(2.5f, 1.5f),
+                surfaceMeshNames: new[] { "hangar_shell", "roof_ridge" });
             PlaceBuildingOrFallback(
                 "Models/Buildings/mdl_operations_shed_v01.gltf",
                 new Vector3(-8f, 0f, 26f),
                 _ => new Color(0.55f, 0.58f, 0.52f),
                 () => CreateBlock("Ops shed", new Vector3(-8f, 1.4f, 26f), new Vector3(6f, 2.8f, 4f), new Color(0.55f, 0.58f, 0.52f),
-                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)));
+                    "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(1.5f, 1.2f)),
+                surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
+                surfaceTextureTiling: new Vector2(1.5f, 1.2f),
+                surfaceMeshNames: new[] { "shed_body", "porch" });
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -1809,6 +1818,7 @@ namespace Airside.Presentation
             PlaceWorldMarkings();
             PlaceWorldLighting();
             PlaceWorldProps();
+            BuildEnvironmentContext();
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
@@ -1819,6 +1829,150 @@ namespace Airside.Presentation
             CreateBlock("Stand number 2 base", new Vector3(14.2f, 0.09f, 19.65f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
 
         }
+
+        /// <summary>
+        /// Decision 0025 item 3 — regional environment greybox around the operating
+        /// airfield: coast, access road, car park, fencing, vegetation and a soft
+        /// horizon dome. Presentation only; primitives + existing Batch B surfaces.
+        /// </summary>
+        private static void BuildEnvironmentContext()
+        {
+            // Outer paddock + dry-grass fringe so the airfield is not a floating island.
+            CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 48f), new Vector3(140f, 0.8f, 40f), Shade(AirsideTheme.DryGrass, 0.7f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 6f));
+            CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -36f), new Vector3(140f, 0.8f, 36f), Shade(AirsideTheme.DryGrass, 0.65f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 5f));
+            CreateBlock("Outer paddock E", new Vector3(68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+            CreateBlock("Outer paddock W", new Vector3(-68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+
+            // Kangaroo Island coastal strip south of the runway (sand, not water physics).
+            CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand);
+            CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f));
+            CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f));
+
+            // Landside access: terminal → car park road + bay.
+            CreateBlock("Access road", new Vector3(26f, -0.02f, 38f), new Vector3(6f, 0.1f, 22f), new Color(0.2f, 0.22f, 0.24f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1f, 4f));
+            CreateBlock("Access road turn", new Vector3(38f, -0.02f, 46f), new Vector3(28f, 0.1f, 5.5f), new Color(0.2f, 0.22f, 0.24f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(4f, 1f));
+            CreateBlock("Car park", new Vector3(48f, -0.01f, 46f), new Vector3(18f, 0.08f, 12f), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 2f));
+            for (var i = 0; i < 5; i++)
+            {
+                var z = 42f + i * 2.0f;
+                CreateBlock($"Bay line {i}", new Vector3(48f, 0.05f, z), new Vector3(14f, 0.02f, 0.08f), Color.white);
+            }
+
+            // Hangar service lane.
+            CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
+
+            BuildPerimeterFence();
+            BuildVegetation();
+            BuildDistantHills();
+            BuildHorizonDome();
+        }
+
+        private static void BuildPerimeterFence()
+        {
+            var post = new Color(0.55f, 0.56f, 0.58f);
+            var rail = new Color(0.72f, 0.74f, 0.76f);
+            // North landside fence (behind terminal / car park approach).
+            for (var x = -40; x <= 56; x += 4)
+            {
+                CreateBlock($"Fence post N {x}", new Vector3(x, 0.7f, 34f), new Vector3(0.12f, 1.4f, 0.12f), post);
+                if (x < 56)
+                    CreateBlock($"Fence rail N {x}", new Vector3(x + 2f, 1.05f, 34f), new Vector3(4f, 0.06f, 0.06f), rail);
+            }
+
+            // West and east airside boundaries (keep runway ends open).
+            for (var z = -18; z <= 32; z += 4)
+            {
+                CreateBlock($"Fence post W {z}", new Vector3(-44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
+                CreateBlock($"Fence post E {z}", new Vector3(44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
+                if (z < 32)
+                {
+                    CreateBlock($"Fence rail W {z}", new Vector3(-44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
+                    CreateBlock($"Fence rail E {z}", new Vector3(44f, 1.05f, z + 2f), new Vector3(0.06f, 0.06f, 4f), rail);
+                }
+            }
+
+            // Gate posts at the access road.
+            CreateBlock("Gate post L", new Vector3(23f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
+            CreateBlock("Gate post R", new Vector3(29f, 0.9f, 34f), new Vector3(0.2f, 1.8f, 0.2f), post);
+            CreateBlock("Gate rail", new Vector3(26f, 1.2f, 34.1f), new Vector3(5.5f, 0.08f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.85f));
+        }
+
+        private static void BuildVegetation()
+        {
+            // Stylised eucalyptus clumps — readable from overview, not botanical.
+            PlaceTree(new Vector3(-32f, 0f, 30f), 1.1f);
+            PlaceTree(new Vector3(-38f, 0f, 22f), 0.9f);
+            PlaceTree(new Vector3(-28f, 0f, 36f), 1.25f);
+            PlaceTree(new Vector3(40f, 0f, 30f), 1.0f);
+            PlaceTree(new Vector3(52f, 0f, 34f), 1.15f);
+            PlaceTree(new Vector3(58f, 0f, 28f), 0.85f);
+            PlaceTree(new Vector3(36f, 0f, 52f), 1.2f);
+            PlaceTree(new Vector3(-52f, 0f, 8f), 1.3f);
+            PlaceTree(new Vector3(-48f, 0f, -8f), 0.95f);
+            PlaceTree(new Vector3(50f, 0f, -10f), 1.05f);
+            PlaceTree(new Vector3(56f, 0f, 8f), 0.9f);
+            PlaceTree(new Vector3(-18f, 0f, 42f), 0.8f);
+            // Low scrub near the coast.
+            for (var x = -50; x <= 50; x += 10)
+            {
+                CreateBlock($"Coast scrub {x}", new Vector3(x, 0.25f, -40f), new Vector3(2.2f, 0.5f, 1.4f),
+                    Shade(AirsideTheme.Eucalyptus, 0.75f));
+            }
+        }
+
+        private static void PlaceTree(Vector3 basePosition, float scale)
+        {
+            var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            trunk.name = "Tree trunk";
+            Object.Destroy(trunk.GetComponent<Collider>());
+            trunk.transform.position = basePosition + new Vector3(0f, 1.1f * scale, 0f);
+            trunk.transform.localScale = new Vector3(0.28f * scale, 1.1f * scale, 0.28f * scale);
+            trunk.GetComponent<Renderer>().material = CreateMaterial(new Color(0.35f, 0.26f, 0.16f));
+
+            var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            canopy.name = "Tree canopy";
+            Object.Destroy(canopy.GetComponent<Collider>());
+            canopy.transform.position = basePosition + new Vector3(0f, 2.6f * scale, 0f);
+            canopy.transform.localScale = new Vector3(2.2f * scale, 1.8f * scale, 2.2f * scale);
+            canopy.GetComponent<Renderer>().material = CreateMaterial(Shade(AirsideTheme.Eucalyptus, 0.9f));
+        }
+
+        private static void BuildDistantHills()
+        {
+            CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f));
+            CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f));
+            CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f));
+            CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f));
+        }
+
+        private static void BuildHorizonDome()
+        {
+            // Soft inverted dome so the sky is not a flat camera clear-colour void.
+            // Unlit-ish pale Open Sky; day/dusk still tint via camera background underneath.
+            var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            dome.name = "Horizon dome";
+            Object.Destroy(dome.GetComponent<Collider>());
+            dome.transform.position = new Vector3(0f, 0f, 0f);
+            dome.transform.localScale = new Vector3(260f, 120f, 260f);
+            var material = CreateMaterial(AirsideTheme.OpenSky);
+            // Render inside of the sphere.
+            material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
+            dome.GetComponent<Renderer>().material = material;
+            dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            dome.GetComponent<Renderer>().receiveShadows = false;
+        }
+
+        /// <summary>Darken an opaque palette colour without dropping alpha into the transparent path.</summary>
+        private static Color Shade(Color color, float factor) =>
+            new Color(color.r * factor, color.g * factor, color.b * factor, 1f);
 
         private static void BuildStandMarking(float x, float z, string name)
         {
@@ -2173,7 +2327,10 @@ namespace Airside.Presentation
             Vector3 worldPosition,
             System.Func<string, Color?> colorFor,
             System.Action fallback,
-            string glassTextureRelativePath = null)
+            string glassTextureRelativePath = null,
+            string surfaceTextureRelativePath = null,
+            Vector2? surfaceTextureTiling = null,
+            string[] surfaceMeshNames = null)
         {
             if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
@@ -2192,6 +2349,41 @@ namespace Airside.Presentation
                         {
                             renderer.material.mainTexture = texture;
                             renderer.material.mainTextureScale = new Vector2(3f, 1.5f);
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(surfaceTextureRelativePath))
+                {
+                    var surface = TryLoadArtTexture(surfaceTextureRelativePath);
+                    if (surface != null)
+                    {
+                        var tiling = surfaceTextureTiling ?? new Vector2(2f, 1.5f);
+                        foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                        {
+                            if (child.name == "glass_front" || child.name == "door_opening")
+                                continue;
+                            if (surfaceMeshNames != null && surfaceMeshNames.Length > 0)
+                            {
+                                var match = false;
+                                for (var i = 0; i < surfaceMeshNames.Length; i++)
+                                {
+                                    if (child.name == surfaceMeshNames[i])
+                                    {
+                                        match = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!match)
+                                    continue;
+                            }
+
+                            var renderer = child.GetComponent<Renderer>();
+                            if (renderer == null)
+                                continue;
+                            renderer.material.mainTexture = surface;
+                            renderer.material.mainTextureScale = tiling;
                         }
                     }
                 }

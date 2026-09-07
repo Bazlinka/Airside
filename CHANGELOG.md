@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Regional airfield environment greybox (0025 item 3).** Outer paddock, coast
+  sand/shallows, access road + car park, perimeter fence, eucalyptus clumps,
+  distant hills and a soft horizon dome. Hangar/ops/terminal glTF kits now get
+  Batch B surface textures when present. Presentation only; simulation unchanged.
+
 - **Warm key / cool ambient lighting pass.** Soft directional shadows, warmer sun at
   day/dawn, cooler ambient fill, Open Sky camera backdrop. Presentation only —
   not a full URP post stack. `scripts/test-domain.sh` 97/97.

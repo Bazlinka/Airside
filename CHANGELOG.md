@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Pulse hold-short markings during traffic waits.** When the traffic wait monitor
+  warns, hold-short bars flash Safety Yellow → orange so the delay cause is visible
+  in-world, not only on the HUD. Presentation only. `scripts/test-domain.sh` 97/97.
+
 - **Touchdown chirp and day-est income icon.** Soft procedural squeal on landing
   transition plus income icon on the day-estimate HUD line. Presentation only.
   `scripts/test-domain.sh` 97/97.

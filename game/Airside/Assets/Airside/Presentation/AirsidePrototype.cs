@@ -28,6 +28,7 @@ namespace Airside.Presentation
         private AudioClip _touchdownClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly List<(Renderer Renderer, Color DryColor)> _wetSurfaces = new List<(Renderer, Color)>();
+        private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
@@ -87,6 +88,7 @@ namespace Airside.Presentation
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;
             CollectWetSurfaces();
+            CollectHoldShortMarkings();
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -139,6 +141,7 @@ namespace Airside.Presentation
             UpdateEngineAudio();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
+            UpdateTrafficWaitPresentation();
         }
 
         private void ReadSimulationControls()
@@ -729,6 +732,38 @@ namespace Airside.Presentation
                     color.a = t * 0.45f;
                     renderer.material.color = color;
                 }
+            }
+        }
+
+        private void CollectHoldShortMarkings()
+        {
+            _holdShortRenderers.Clear();
+            foreach (var name in new[] { "Hold short A", "Hold short B" })
+            {
+                var go = GameObject.Find(name);
+                if (go == null)
+                    continue;
+                var renderer = go.GetComponent<Renderer>();
+                if (renderer != null)
+                    _holdShortRenderers.Add(renderer);
+            }
+        }
+
+        private void UpdateTrafficWaitPresentation()
+        {
+            // Presentation-only: pulse hold-short bars when a traffic wait is active.
+            var warning = _simulation.TrafficWaits.HasWarning(_clock.Now);
+            var pulse = warning
+                ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4.5f))
+                : 1f;
+            var baseColor = new Color(0.95f, 0.82f, 0.12f);
+            var hot = new Color(1f, 0.45f, 0.12f);
+            var color = warning ? Color.Lerp(baseColor, hot, pulse) : baseColor;
+            for (var i = 0; i < _holdShortRenderers.Count; i++)
+            {
+                var renderer = _holdShortRenderers[i];
+                if (renderer != null)
+                    renderer.material.color = color;
             }
         }
 

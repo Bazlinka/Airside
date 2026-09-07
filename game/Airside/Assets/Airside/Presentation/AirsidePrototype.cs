@@ -7619,16 +7619,19 @@ namespace Airside.Presentation
                 {
                     root = new GameObject($"Parked GA {i}").transform;
                     ParentBlock(root, "GA fuselage", Vector3.zero, new Vector3(0.55f, 0.55f, 2.4f), new Color(0.9f, 0.91f, 0.93f));
-                    ParentBlock(root, "GA wing", new Vector3(0f, 0.05f, 0.2f), new Vector3(3.2f, 0.08f, 0.7f), new Color(0.85f, 0.55f, 0.2f));
-                    ParentBlock(root, "GA wing strut L", new Vector3(-0.9f, -0.15f, 0.15f), new Vector3(0.06f, 0.45f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
-                    ParentBlock(root, "GA wing strut R", new Vector3(0.9f, -0.15f, 0.15f), new Vector3(0.06f, 0.45f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
+                    ParentBlock(root, "GA nose", new Vector3(0f, 0f, 1.15f), new Vector3(0.42f, 0.42f, 0.55f), new Color(0.9f, 0.91f, 0.93f));
+                    ParentBlock(root, "GA wing", new Vector3(0f, 0.08f, 0.15f), new Vector3(3.2f, 0.08f, 0.7f), new Color(0.85f, 0.55f, 0.2f));
+                    ParentBlock(root, "GA wing strut L", new Vector3(-0.9f, -0.12f, 0.15f), new Vector3(0.06f, 0.42f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
+                    ParentBlock(root, "GA wing strut R", new Vector3(0.9f, -0.12f, 0.15f), new Vector3(0.06f, 0.42f, 0.06f), new Color(0.4f, 0.4f, 0.42f));
                     ParentBlock(root, "GA tail", new Vector3(0f, 0.55f, -1.0f), new Vector3(0.1f, 0.9f, 0.55f), new Color(0.85f, 0.55f, 0.2f));
-                    ParentBlock(root, "GA tailplane", new Vector3(0f, 0.35f, -1.05f), new Vector3(1.1f, 0.06f, 0.4f), new Color(0.85f, 0.55f, 0.2f));
-                    ParentBlock(root, "GA canopy", new Vector3(0f, 0.35f, 0.55f), new Vector3(0.45f, 0.28f, 0.7f), new Color(0.2f, 0.35f, 0.45f));
-                    ParentBlock(root, "GA prop", new Vector3(0f, 0f, 1.25f), new Vector3(0.06f, 0.9f, 0.12f), new Color(0.2f, 0.2f, 0.22f));
+                    ParentBlock(root, "GA tailplane", new Vector3(0f, 0.4f, -1.05f), new Vector3(1.4f, 0.06f, 0.4f), new Color(0.85f, 0.55f, 0.2f));
+                    ParentBlock(root, "GA canopy glass", new Vector3(0f, 0.32f, 0.45f), new Vector3(0.42f, 0.22f, 0.7f), new Color(0.2f, 0.35f, 0.45f, 0.42f));
+                    ParentBlock(root, "GA spinner", new Vector3(0f, 0f, 1.55f), new Vector3(0.22f, 0.22f, 0.28f), new Color(0.25f, 0.25f, 0.28f));
+                    ParentBlock(root, "GA prop blade A", new Vector3(0f, 0f, 1.48f), new Vector3(0.06f, 0.95f, 0.1f), new Color(0.2f, 0.2f, 0.22f));
                     ParentBlock(root, "GA gear nose", new Vector3(0f, -0.35f, 0.85f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
-                    ParentBlock(root, "GA gear L", new Vector3(-0.55f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
-                    ParentBlock(root, "GA gear R", new Vector3(0.55f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
+                    ParentBlock(root, "GA gear L", new Vector3(-0.5f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
+                    ParentBlock(root, "GA gear R", new Vector3(0.5f, -0.35f, -0.15f), new Vector3(0.08f, 0.35f, 0.08f), new Color(0.3f, 0.3f, 0.32f));
+                    ParentBlock(root, "GA stripe", new Vector3(0f, 0.05f, 0.1f), new Vector3(0.58f, 0.08f, 1.6f), new Color(0.85f, 0.55f, 0.2f));
                 }
 
                 root.position = new Vector3(spot.x, 0.55f, spot.z);

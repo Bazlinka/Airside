@@ -50,21 +50,29 @@ namespace Airside.Presentation
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("window") || n.Contains("glass")
+                else if (n.Contains("window") || n.Contains("glass") || n.Contains("canopy")
                          || n.Equals("cockpit") || n.Contains("cabin window"))
                 {
                     color = new Color(0.18f, 0.35f, 0.48f, 0.42f);
                     kind = AirsideMaterialLibrary.SurfaceKind.Glass;
                 }
-                else if (n.Contains("mullion") || n.Contains("transom") || n.Contains("frame"))
+                else if (n.Contains("mullion") || n.Contains("transom") || n.Contains("strut")
+                         || n.Contains("spinner") || n.Contains("hub") || n.Contains("scissor")
+                         || n.Contains("antenna") || n.Contains("pitot") || n.Contains("exhaust")
+                         || n.Contains("fairing"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("fuselage")
-                         || n.Contains("nose") || n.Contains("rudder") || n.Contains("elevator")
-                         || n.Contains("flap") || n.Contains("aileron")
-                         || n.Contains("cabindoor") || n.Contains("cabin door"))
+                else if (n.Contains("fuselage") || n.Contains("nose") || n.Contains("cowling")
+                         || (n.Contains("cabin") && !n.Contains("window")))
+                {
+                    color = baseColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
+                }
+                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("rudder")
+                         || n.Contains("elevator") || n.Contains("flap") || n.Contains("aileron")
+                         || n.Contains("cabindoor") || n.Contains("cabin door") || n.Contains("door"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;

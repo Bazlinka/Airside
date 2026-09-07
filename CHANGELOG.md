@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Parked GA densify + fuselage binder fix (0025 items 1–2).** `mdl_parked_ga_v01`
+  ~40 parts (canopy glass, struts, spinner, gear scissors/wheels); runtime binder
+  maps fuselage/nose to baseColor AircraftSkin; canopy→Glass. Presentation only.
+  Evidence: `scripts/test-domain.sh` 105/105.
+
 - **Hangar glass, service densify, day/wet polish (0025 items 2+4+5).** Hangar side/office/
   skylight glass panes + mullions (132); stairs posts/GPU grille/belt rollers (80);
   stronger noon midtone separation + dusk WB warmth; residual damp on roads/markings;

@@ -12,7 +12,7 @@ next session can continue without seeing the previous conversation. Keep it shor
 
 - **Last updated:** 2026-09-07 by Claude (correctness + visual review)
 - **Branch / working tree:** `feature/simulation-correctness-fixes`, 6 commits, not pushed
-- **Do this next:** Bailey Unity Play soak on the new layout. Then lofted geometry for the building / vehicle / prop kits (the aircraft has it, everything else is still boxes) — extend `scripts/generate-batch-c-models-v03.py`.
+- **Do this next:** Bailey Unity Play soak on the new layout. Then lofted geometry for the building / vehicle / prop kits (the aircraft has it, everything else is still boxes) — extend `scripts/generate-batch-c-models-v04-aircraft.py`.
 - **In progress / half-done:** AirsideMaterialLibrary + glTF/CreateBlock wiring (Cursor)
 - **Watch out for:** the whole layout is authored in units scaled by `AirportTaxiNetwork.WorldScale` (2.68). Anything placed in world space at runtime must apply it; anything under the airfield root gets it for free.
 - **Open questions for Bailey:** none
@@ -80,10 +80,10 @@ factor explicitly.
 
 ## Known visual gaps
 
-- The **aircraft** kit now carries lofted geometry (v03: lathed fuselage, tapered
+- The **aircraft** kit now carries lofted geometry (v04: lathed fuselage, tapered
   swept wings, T-tail, six-blade props — 4,300 triangles). The **building, vehicle
   and prop kits are still axis-aligned cubes**, 12 triangles per part, and are the
-  next thing to move the look. `scripts/generate-batch-c-models-v03.py` already has
+  next thing to move the look. `scripts/generate-batch-c-models-v04-aircraft.py` already has
   the primitives (`lathe`, `aerofoil_surface`, `band`, `tube`, `blades`).
 - Every glTF kit ships **POSITION only** — no normals, no UVs, no materials. The
   loader recalculates normals and guesses planar UVs, so authored textures land at

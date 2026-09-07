@@ -77,6 +77,23 @@ note it here in the same commit.
    (date, decision, reason, affected systems, migration impact). New ideas go to a
    backlog, not straight into the active milestone.
 
+## Working from a phone (cloud agents)
+
+ChatGPT (Codex), Cursor background agents and the Claude app can be driven from
+Bailey's phone while he is away from the Mac. They work **only through GitHub**:
+
+- They branch, commit and open a **pull request** against `origin`. They never
+  touch the Mac's working copy.
+- They have **no Unity install**, so they cannot run `scripts/test-unity.sh` or
+  confirm the project compiles. Any "build passes / tests pass" line from a cloud
+  agent is unverified — mark the PR accordingly and leave the Unity check to
+  Bailey on the Mac before merge.
+- Bailey reviews and merges PRs from the phone. The Mac stays on the old code
+  until he runs `git pull --rebase origin main` at home, builds in Unity 6.3 LTS
+  and play-tests. Only then is the change really "done".
+- Same rules as everyone else: update `GAME.md` and `CHANGELOG.md` in the same
+  commit, keep the PR to one acceptance criterion, fill in the handoff block.
+
 ## Session handoff protocol
 
 Only project state travels between tools — the git repository and the written

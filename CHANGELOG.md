@@ -29,10 +29,10 @@ change it describes.
 - **Trees.** Eucalypt-ish: leaning trunk, two limbs and four overlapping canopy masses
   with deterministic per-position variation, instead of one sphere on a stick.
 
-- **v03 aircraft kit: lofted geometry instead of boxes.** Every glTF part in the
+- **v04 aircraft kit: lofted geometry instead of boxes.** Every glTF part in the
   Batch C kits was a 24-vertex axis-aligned cube — the "regional turboprop" was 29
   boxes with no curvature and 15.05 x 9.82 proportions no turboprop has.
-  `scripts/generate-batch-c-models-v03.py` adds real shape primitives (lathed bodies
+  `scripts/generate-batch-c-models-v04-aircraft.py` adds real shape primitives (lathed bodies
   of revolution, tapered aerofoil panels, swept fins, twisted prop blades) and
   rebuilds the aircraft to ATR-72 proportions from REF-005: round tapered fuselage,
   nose cone, high wing, T-tail, six-blade props, round gear. 4,300 triangles vs 348.

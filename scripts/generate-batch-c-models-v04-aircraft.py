@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate the Batch C v03 aircraft kit: lofted geometry instead of boxes.
+"""Generate the Batch C v04 aircraft kit: lofted geometry instead of boxes.
 
-v01/v02 built every part from axis-aligned cubes, so the "regional turboprop" was
+v01/v02/v03 build every part from axis-aligned cubes, so the "regional turboprop" was
 29 boxes with no curvature and proportions (15.05 span x 9.82 long) that no
 turboprop has. This generator adds real shape primitives -- lathed bodies of
 revolution, tapered aerofoil slabs, swept fins -- and rebuilds the aircraft to
@@ -12,7 +12,12 @@ Output stays in the POSITION + uint16 index format ArtGltfLoader understands:
 it recalculates normals and generates planar UVs at load, so lathed parts come
 out smooth and slab parts come out flat-shaded.
 
-Run:  python3 scripts/generate-batch-c-models-v03.py
+v03 (generate-batch-c-models-v03.py) went denser -- 46 boxes instead of 29 -- but
+kept the cubes and the 15.05 x 9.82 proportions. This is the shape pass, so it sits
+alongside v03 as v04 rather than replacing it; v03's building and vehicle kits are
+untouched and still the ones the game loads.
+
+Run:  python3 scripts/generate-batch-c-models-v04-aircraft.py
 Then: scripts/sync-art-streaming-assets.sh
 """
 
@@ -483,7 +488,7 @@ def pack_gltf(path: Path, meshes: dict) -> None:
 
 
 def main() -> None:
-    target = ROOT / "Models" / "Aircraft" / "mdl_regional_turboprop_01_v03.gltf"
+    target = ROOT / "Models" / "Aircraft" / "mdl_regional_turboprop_01_v04.gltf"
     parts = turboprop()
     parts = {name: (np.asarray(v, np.float32) * OUTPUT_SCALE, i)
              for name, (v, i) in parts.items()}

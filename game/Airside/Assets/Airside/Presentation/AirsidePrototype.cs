@@ -2639,6 +2639,7 @@ namespace Airside.Presentation
             // carry buried the gear 0.38 below the apron surface.
             var usedArt = ArtGltfLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),

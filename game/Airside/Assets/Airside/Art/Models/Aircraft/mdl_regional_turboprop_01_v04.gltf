@@ -5,7 +5,7 @@
  },
  "buffers": [
   {
-   "uri": "mdl_regional_turboprop_01_v03.bin",
+   "uri": "mdl_regional_turboprop_01_v04.bin",
    "byteLength": 81816
   }
  ],
@@ -1419,7 +1419,7 @@
  ],
  "scenes": [
   {
-   "name": "mdl_regional_turboprop_01_v03",
+   "name": "mdl_regional_turboprop_01_v04",
    "nodes": [
     0,
     1,

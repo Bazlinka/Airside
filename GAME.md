@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-07 (Cursor overnight — Batch F1 BLD-001 v05 + MAT-001)
-- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — tip `042546c`; do not merge until Bailey review
+- **Branch:** `cursor/batch-f1-terminal-materials` (PR #134) — tip `129d7de`+; do not merge until Bailey review
 - **Do next:** Bailey playtest packaged `work/builds/Airside.app`; review PR for BLD-001/MAT-001.
   After accept: merge, then Batch F2 (vehicles/people) on a **new** branch only.
 - **In progress / half-done:** none once PR is open
@@ -11,7 +11,7 @@
   - MAT-001 `.mat` under Art + Resources; `AirsideMaterialLibrary` instances them when present
   - Prefab instantiate re-applies presentation materials (avoids grey FBX defaults)
   - Packaged build: Addressables `aa/settings.json` missing (known; Resources/glTF fallbacks still work)
-  - Soak: background logger `work/evidence/batch-f1/soak2.txt` (interrupted for rebuilds). Day lighting bumped; mat_glass blend modes fixed for true transparency. Do not claim full 30-min until soak2 shows `complete=`
+  - Soak: `work/evidence/batch-f1/soak4.txt` reached `complete=` (~30 min logger; RSS ~330–430 MB mid-run, no crash). Interrupted once ~16 min for shallower-roof Mac rebuild (23:04); app relaunched. Screenshots under `work/evidence/batch-f1/`
   - Night/dusk: terminal + AIR-001 visible; Addressables aa/settings.json missing (known)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch (it force-checkouts `main`); use `scripts/build-mac.sh` instead
   - `scripts/test-domain.sh` needs .NET SDK (not on this Mac)

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (rebased presentation tip onto main after #127)
-- **Branch / working tree:** `cursor/presentation-stack-tip-8515` (Addressables/lofted + motion/brand; #127 already on main)
-- **Do this next:** On Mac — checkout PR #130 (`cursor/presentation-stack-tip-8515`), run `scripts/test-unity.sh`, Play soak, then squash-merge #130.
-- **In progress / half-done:** #128+#129 superseded/closed; content lives on #130 rebased onto post-#127 main. Domain 105/105. Mac Unity still required.
-- **Watch out for:** Linux cloud cannot green `scripts/test-unity.sh`. Ignore closed #128/#129.
-- **Open questions for Bailey:** authored FBX next, or more procedural densify?
-- **Visual assets:** Lofted turboprop + Addressables wired; env densify; brand overlays; motion/life; wet/probe polish. Packaged Batch C/WLD/PRP path preserved.
+- **Last updated:** 2026-09-07 by Cursor (squash-merged #130 onto main)
+- **Branch / working tree:** `main`
+- **Do this next:** authored FBX overwrite for turboprop or terminal; Editor Addressables groups when ready. No new economy systems.
+- **In progress / half-done:** Resources prefab keys work without a built Addressables catalog; Unity still logs missing `Library/com.unity.addressables/aa/OSX/settings.json` at init (fallback path used).
+- **Watch out for:** more PointLights — Mac Play perf; greybox density ≠ final art; do not rebuild Addressables content until Bailey authors groups.
+- **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
+- **Visual assets:** Lofted turboprop + Addressables Resources provider; denser fence/vegetation/shoulders; gear/cargo doors; BRD-001 wordmark overlays; Batch C/WLD/PRP still loading. Verified Play soak.
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -94,7 +94,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh` compiles Domain/Simulation/Persistence and runs 96 deterministic NUnit tests (including concurrent-flight soak, research progression, and step identity) headlessly via `dotnet test`. Unity edit-mode via `scripts/test-unity.sh` still needs a Mac editor.
+- `scripts/test-unity.sh`: 116/116 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.
@@ -119,16 +119,15 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Fleet aircraft move identically under large and small time steps.
 - The project compiles in Unity 6.3 LTS and builds a macOS player.
 - The runtime HUD uses the approved REF-004 palette (`AirsideTheme`: Runway Ink panels, Cloud
-  text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay) —
-  **unverified in Unity**, written and reviewed without an editor available; needs a Play check.
+  text, Coastal Blue buttons, Safety Yellow caution, Clear Green on-time, Signal Red delay).
+  Unity 6.3 Play: no `Arial.ttf` / PanelSettings theme warnings; Toolkit wordmark overlays present.
 - Batch C / WLD / PRP glTF kits load at runtime via `ArtGltfLoader` with primitive fallbacks.
-  Batch E service icons and dark panel regenerated; operation/economy/service icons draw in the
-  HUD. **Integrated, not Verified** — Bailey Unity Play soak still required. See
-  `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` and `docs/art/prompts/batch-e-ui-generation-2026-09-06.md`.
+  Play soak (2026-09-07): lofted turboprop kit in hierarchy; gear/cargo doors present; denser
+  south fence / vegetation / road shoulders; WLD/PRP meshes still placed. Batch E icons remain
+  as previously integrated. See `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`.
 
 ## Next work
 
-1. Bailey squash-merge HUD fix (#127) then Addressables/lofted/env PR; Mac `scripts/test-unity.sh` + Play soak.
-2. Confirm lofted turboprop + denser fence/vegetation; Toolkit HUD without IMGUI; packaged StreamingAssets still shows Batch C/WLD/PRP.
-3. Next code track: URP materials/lighting polish, motion/life (gear/doors), brand splash on menu/load; authored FBX when ready.
-   No new economy systems; no Companion/CloudKit; no WorldScale re-layout until presentation PRs flow cleanly.
+1. Authored FBX overwrite for the lofted turboprop or regional terminal (still procedural greybox).
+2. Optional: build Editor Addressables groups so init stops looking for missing player content.
+3. Expand Toolkit to left/ops panels if needed. No new economy systems; no Companion/CloudKit.

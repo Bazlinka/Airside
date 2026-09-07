@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft attitude pitch + turn bank.** Takeoff nose-up, approach pitch and
+  landing flare; gentle bank into turns for commercials and ground traffic.
+  Presentation only (Batch D motion life).
+
 - **First-session UX polish.** Enter accepts a ready route offer; waiting countdown
   + progress bar before the first airline; taller Accept button with pulse stripe
   on the first-decision panel; clearer empty OPERATIONS copy. Presentation only.

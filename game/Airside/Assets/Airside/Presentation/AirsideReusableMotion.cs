@@ -38,6 +38,13 @@ namespace Airside.Presentation
         // ANM-AIR tire roll on ground phases (degrees/sec base before phase scale)
         public const float AircraftTireRpmTaxi = 380f;
 
+        // Shared presentation pulse rates (Hz) — beacon family + ALS/REIL
+        public const float ServicePulseHz = 2.5f;
+        public const float HeatPulseHz = 1.1f;
+        public const float ArffLightbarHz = 1.05f;
+        public const float AlsChaseHz = 3.1f;
+        public const float ReilFlashHz = 1.9f;
+
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
             AircraftPhase.Takeoff => PropRpmTakeoff,

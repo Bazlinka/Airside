@@ -1,6 +1,6 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 3)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 4)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal).
@@ -9,7 +9,7 @@
   - Quality PC `shadowDistance` aligned to URP 140; Mobile 90
   - Rain stamps from VFX-003 kit; engine heat prefers VFX-002 kit
   - ALS lateral bars reuse lighting-kit taxi/edge stems when kit stations land
-  - Forecourt kit owns parking sign + car-park kerbs (greybox gated)
+  - Forecourt kit owns parking sign + kerbs (greybox gated)
   - WLD-004 accents include coast_sand/shallows/water + paddock slabs
   - Aircraft/aerodrome beacon pulse uses `AirsideReusableMotion.BeaconHz`
   - Taxi centreline + REIL posts prefer lighting kit
@@ -22,6 +22,11 @@
   - Stand bay digits only via `PlaceRunwayDigit` (kit bars) at stand Z
   - GSE/aircraft tire spin uses `AirsideReusableMotion` wheel/tire rates
   - Contact/ground shadow + night glow sync URP `_BaseColor` alpha
+  - Night glow collects kit glass (`side_window`, `glass_pane_*`, etc.)
+  - GT props use `PropRpmTaxi`; service/heat/ARFF/ALS/REIL use motion Hz
+  - Stand box densify gated when markings `stand_stop_*` present
+  - WLD-004 accents skip secondary hill ridge/headland densify
+  - Airside planter strip prefers PRP-003; hangar door gated on `door_panel_*`
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

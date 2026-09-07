@@ -1403,14 +1403,16 @@ namespace Airside.Presentation
                 if (!enginesOn)
                     continue;
 
-                var pulse = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 7f + child.GetInstanceID() * 0.01f);
+                var pulse = 0.85f + 0.15f * Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f
+                    + child.GetInstanceID() * 0.01f);
                 child.localScale = new Vector3(0.35f * pulse * intensity, 0.35f * pulse * intensity, 0.7f);
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
                     var color = renderer.material.color;
                     color.a = (0.12f + 0.1f * pulse) * intensity;
-                    renderer.material.color = color;
+                    SetRendererColor(renderer, color);
                 }
             }
         }
@@ -1446,7 +1448,10 @@ namespace Airside.Presentation
                 return;
             }
 
-            var degrees = Time.unscaledDeltaTime * 520f;
+            // Match ANM-AIR taxi RPM so ground traffic props read with the fleet.
+            var rpm = AirsideReusableMotion.PropRpmTaxi;
+            var degrees = Time.unscaledDeltaTime * rpm;
+            var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -1454,7 +1459,7 @@ namespace Airside.Presentation
                 if (!child.name.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 child.Rotate(Vector3.forward, degrees, Space.Self);
-                ApplyPropBlurToHub(child, highRpm: false);
+                ApplyPropBlurToHub(child, highRpm);
             }
         }
 
@@ -1927,7 +1932,8 @@ namespace Airside.Presentation
                 return;
             light.enabled = active;
             if (active)
-                light.intensity = 0.35f + 0.2f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5f));
+                light.intensity = 0.35f + 0.2f * (0.5f + 0.5f * Mathf.Sin(
+                    Time.unscaledTime * AirsideReusableMotion.ServicePulseHz * Mathf.PI * 2f));
         }
 
         private static void ResetServiceLoopParts(Transform vehicle)
@@ -3680,7 +3686,7 @@ namespace Airside.Presentation
             {
                 var alsBase = Mathf.Lerp(2.1f, 0.03f, daylight);
                 var nightChase = daylight < 0.42f;
-                var chase = Time.unscaledTime * 3.1f;
+                var chase = Time.unscaledTime * AirsideReusableMotion.AlsChaseHz;
                 for (var i = 0; i < _alsLights.Length; i++)
                 {
                     var light = _alsLights[i];
@@ -3691,7 +3697,9 @@ namespace Airside.Presentation
                     if (light.name.StartsWith("REIL", StringComparison.Ordinal))
                     {
                         var flash = daylight < 0.42f
-                            && Mathf.Repeat(Time.unscaledTime * 1.9f + (light.name.EndsWith("R") ? 0.5f : 0f), 1f) < 0.18f;
+                            && Mathf.Repeat(
+                                Time.unscaledTime * AirsideReusableMotion.ReilFlashHz
+                                + (light.name.EndsWith("R") ? 0.5f : 0f), 1f) < 0.18f;
                         light.intensity = flash ? 4.2f : alsBase * 0.25f;
                         light.enabled = daylight < 0.55f;
                         continue;
@@ -3776,7 +3784,7 @@ namespace Airside.Presentation
                     : warmWhite;
                 var color = baseColor * intensity;
                 color.a = 1f;
-                renderer.material.color = color;
+                SetRendererColor(renderer, color);
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
                     renderer.material.EnableKeyword("_EMISSION");
@@ -3804,14 +3812,27 @@ namespace Airside.Presentation
                          "interior_glow",
                          "canopy_light_l",
                          "canopy_light_r",
-                         "canopy_light_mid"
+                         "canopy_light_mid",
+                         // Authored glass when greybox glow cubes were gated off.
+                         "side_window",
+                         "side_window_b",
+                         "office_window",
+                         "window_l",
+                         "window_r",
+                         "window_side",
+                         "window_side_b",
+                         "glass_pane",
+                         "glass_pane_l",
+                         "glass_pane_r",
+                         "glass_front",
+                         "landside_glass"
                      })
             {
                 var go = GameObject.Find(name);
                 if (go == null)
                     continue;
                 var renderer = go.GetComponent<Renderer>();
-                if (renderer != null)
+                if (renderer != null && !_nightGlowRenderers.Contains(renderer))
                     _nightGlowRenderers.Add(renderer);
 
                 // Real PointLight spill so dusk buildings light the apron (0025 item 5).
@@ -3821,12 +3842,18 @@ namespace Airside.Presentation
                     light = go.AddComponent<Light>();
                     light.type = LightType.Point;
                     light.color = new Color(1f, 0.78f, 0.45f);
-                    light.range = name.StartsWith("Hangar", StringComparison.Ordinal) ? 14f : 11f;
+                    light.range = name.StartsWith("Hangar", StringComparison.Ordinal)
+                        || name.StartsWith("side_window", StringComparison.Ordinal)
+                        || name.StartsWith("glass_pane", StringComparison.Ordinal)
+                        || name == "office_window"
+                        ? 14f
+                        : 11f;
                     light.shadows = LightShadows.None;
                     light.intensity = 0f;
                 }
 
-                lights.Add(light);
+                if (!lights.Contains(light))
+                    lights.Add(light);
             }
 
             _windowLights = lights.ToArray();
@@ -3850,9 +3877,7 @@ namespace Airside.Presentation
                 var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f) * flicker;
                 color.a = 1f;
                 var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f) * flicker;
-                renderer.material.color = color;
-                if (renderer.material.HasProperty("_BaseColor"))
-                    renderer.material.SetColor("_BaseColor", color);
+                SetRendererColor(renderer, color);
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
                     renderer.material.EnableKeyword("_EMISSION");
@@ -3917,9 +3942,10 @@ namespace Airside.Presentation
                 return;
 
             var night = 1f - daylight;
-            var blink = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6.5f));
+            var blink = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(
+                Time.unscaledTime * AirsideReusableMotion.ArffLightbarHz * Mathf.PI * 2f));
             var amber = new Color(1f, 0.35f, 0.12f) * (0.15f + night * 1.8f * blink);
-            _arffLightbarRenderer.material.color = Color.Lerp(new Color(0.95f, 0.85f, 0.2f), amber, night);
+            SetRendererColor(_arffLightbarRenderer, Color.Lerp(new Color(0.95f, 0.85f, 0.2f), amber, night));
             if (_arffLightbarRenderer.material.HasProperty("_EmissionColor"))
             {
                 _arffLightbarRenderer.material.EnableKeyword("_EMISSION");
@@ -4517,8 +4543,10 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth" });
-            // Sliding door slab always present (covers kit opening or fallback hangar).
-            if (GameObject.Find("Hangar door") == null)
+            // Sliding door slab only when the hangar kit did not ship panel doors.
+            if (GameObject.Find("Hangar door") == null
+                && GameObject.Find("door_panel_l") == null
+                && GameObject.Find("door_panel_r") == null)
                 CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
             // Prefer hangar-kit bay props (workbench / tool cabinet) over greybox densify.
             if (GameObject.Find("workbench") == null && GameObject.Find("tool_cabinet") == null)
@@ -4608,14 +4636,17 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
             CreateBlock("Apron fringe W", new Vector3(5.6f, -0.02f, 17f), new Vector3(1.2f, 0.06f, 15f), fringe,
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
-            // Planter strip between terminal glass and apron edge.
-            CreateBlock("Terminal planter bed", new Vector3(26f, 0.12f, 24.4f), new Vector3(14f, 0.28f, 1.1f),
-                new Color(0.28f, 0.22f, 0.16f));
-            PlaceShrub(new Vector3(20f, 0f, 24.4f), 0.55f);
-            PlaceShrub(new Vector3(23f, 0f, 24.5f), 0.62f);
-            PlaceShrub(new Vector3(26f, 0f, 24.35f), 0.58f);
-            PlaceShrub(new Vector3(29f, 0f, 24.45f), 0.65f);
-            PlaceShrub(new Vector3(32f, 0f, 24.4f), 0.5f);
+            // Planter strip between terminal glass and apron edge — prefer PRP-003 kit.
+            if (!TryPlaceAirsidePlanterStrip())
+            {
+                CreateBlock("Terminal planter bed", new Vector3(26f, 0.12f, 24.4f), new Vector3(14f, 0.28f, 1.1f),
+                    new Color(0.28f, 0.22f, 0.16f));
+                PlaceShrub(new Vector3(20f, 0f, 24.4f), 0.55f);
+                PlaceShrub(new Vector3(23f, 0f, 24.5f), 0.62f);
+                PlaceShrub(new Vector3(26f, 0f, 24.35f), 0.58f);
+                PlaceShrub(new Vector3(29f, 0f, 24.45f), 0.65f);
+                PlaceShrub(new Vector3(32f, 0f, 24.4f), 0.5f);
+            }
 
             PlaceWorldMarkings();
             PlaceWorldLighting();
@@ -5953,6 +5984,34 @@ namespace Airside.Presentation
             return placed >= 6;
         }
 
+        /// <summary>Airside planter strip in front of terminal glass — PRP-003 parts.</summary>
+        private static bool TryPlaceAirsidePlanterStrip()
+        {
+            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return false;
+
+            var soil = new Color(0.28f, 0.22f, 0.16f);
+            var placed = 0;
+            void Place(string mesh, Vector3 pos, Color color, string name)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, Quaternion.identity, color, out var part))
+                    return;
+                part.name = name;
+                placed++;
+            }
+
+            // Three planter clusters along the airside glass edge.
+            foreach (var x in new[] { 20f, 26f, 32f })
+            {
+                Place("planter", new Vector3(x, 0f, 24.4f), AirsideTheme.Concrete, $"Airside planter {x:0}");
+                Place("planter_soil", new Vector3(x, 0f, 24.4f), soil, $"Airside planter soil {x:0}");
+                Place("planter_scrub", new Vector3(x, 0f, 24.4f), Shade(AirsideTheme.Eucalyptus, 0.85f), $"Airside planter scrub {x:0}");
+            }
+
+            return placed >= 3;
+        }
+
         private static void BuildVegetation()
         {
             // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
@@ -6293,17 +6352,19 @@ namespace Airside.Presentation
         /// Batch F3 WLD-004 — soft hill/dune accents outside operational geometry.
         /// Does not replace runway/apron/stand code-owned surfaces.
         /// </summary>
-        private static void TryPlaceContextTerrainAccents()
+        private static bool TryPlaceContextTerrainAccents()
         {
             var kit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
-                return;
+                return false;
 
+            var placed = 0;
             void Place(string mesh, Vector3 pos, Quaternion rot, Color color, string name, float scale = 1f)
             {
                 if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, rot, color, out var part, localScale: Vector3.one * scale))
                     return;
                 part.name = name;
+                placed++;
             }
 
             var euc = Shade(AirsideTheme.Eucalyptus, 0.45f);
@@ -6326,33 +6387,39 @@ namespace Airside.Presentation
             Place("paddock_s", new Vector3(50f, -0.3f, 42f), Quaternion.Euler(0f, 180f, 0f), dry, "Context paddock NE", 1.5f);
             Place("paddock_e", new Vector3(62f, -0.3f, -20f), Quaternion.identity, euc, "Context paddock E", 1.3f);
             Place("paddock_w", new Vector3(-62f, -0.3f, -18f), Quaternion.Euler(0f, 20f, 0f), euc, "Context paddock W", 1.3f);
+            return placed > 0;
         }
 
         private static void BuildDistantHills()
         {
-            // Batch F3 WLD-004 — authored hill/dune accents; textured slabs remain for far horizon.
-            TryPlaceContextTerrainAccents();
+            // Batch F3 WLD-004 — authored hill/dune accents; far slabs fill the horizon.
+            var accents = TryPlaceContextTerrainAccents();
 
-            // Textured + segmented so the horizon is not four flat unlit slabs (0025 item 3).
+            // Textured far masses so the horizon is not a void (0025 item 3).
             CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 3f));
-            CreateBlock("Hill far NW ridge", new Vector3(-78f, 5.2f, 72f), new Vector3(22f, 3.5f, 12f), Shade(AirsideTheme.Eucalyptus, 0.48f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 1.5f));
             CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 2.5f));
-            CreateBlock("Hill far NE spur", new Vector3(108f, 3.2f, 58f), new Vector3(18f, 3.2f, 14f), Shade(AirsideTheme.DryGrass, 0.62f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2.5f, 1.5f));
             CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 5f));
-            CreateBlock("Hill far W shoulder", new Vector3(-88f, 2.8f, -8f), new Vector3(16f, 3.5f, 18f), Shade(AirsideTheme.Eucalyptus, 0.42f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2.2f));
             CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3.5f, 4.5f));
-            CreateBlock("Hill far E shoulder", new Vector3(92f, 2.4f, -12f), new Vector3(14f, 3.0f, 16f), Shade(AirsideTheme.DryGrass, 0.58f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
             CreateBlock("Hill far S", new Vector3(0f, 0.8f, -95f), new Vector3(70f, 3.5f, 18f), Shade(AirsideTheme.Sand, 0.75f),
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(8f, 2f));
-            // Extra coastal headlands so the southern horizon is not a single slab.
+
+            // Secondary ridges/shoulders/headlands densify only when WLD-004 accents missed
+            // (avoid mushy double silhouette next to authored hills/dunes).
+            if (accents)
+                return;
+
+            CreateBlock("Hill far NW ridge", new Vector3(-78f, 5.2f, 72f), new Vector3(22f, 3.5f, 12f), Shade(AirsideTheme.Eucalyptus, 0.48f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 1.5f));
+            CreateBlock("Hill far NE spur", new Vector3(108f, 3.2f, 58f), new Vector3(18f, 3.2f, 14f), Shade(AirsideTheme.DryGrass, 0.62f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+            CreateBlock("Hill far W shoulder", new Vector3(-88f, 2.8f, -8f), new Vector3(16f, 3.5f, 18f), Shade(AirsideTheme.Eucalyptus, 0.42f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2.2f));
+            CreateBlock("Hill far E shoulder", new Vector3(92f, 2.4f, -12f), new Vector3(14f, 3.0f, 16f), Shade(AirsideTheme.DryGrass, 0.58f),
+                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
             CreateBlock("Hill far SW headland", new Vector3(-55f, 1.4f, -88f), new Vector3(28f, 4.2f, 14f),
                 Shade(AirsideTheme.Sand, 0.68f),
                 "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(4f, 2f));
@@ -6933,7 +7000,7 @@ namespace Airside.Presentation
                         var blobTint = tint;
                         if (color.a > 0.01f)
                             blobTint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
-                        blobRenderer.material.color = blobTint;
+                        SetRendererColor(blobRenderer, blobTint);
                     }
                 }
                 else
@@ -6944,7 +7011,7 @@ namespace Airside.Presentation
                         var color = renderer.material.color;
                         if (color.a > 0.01f)
                             tint.a = Mathf.Max(tint.a, color.a * (overcast ? 1.35f : 1f));
-                        renderer.material.color = tint;
+                        SetRendererColor(renderer, tint);
                     }
                 }
 
@@ -7663,6 +7730,16 @@ namespace Airside.Presentation
             return false;
         }
 
+        /// <summary>URP Lit uses _BaseColor; keep legacy .color in sync for Built-in fallbacks.</summary>
+        private static void SetRendererColor(Renderer renderer, Color color)
+        {
+            if (renderer == null)
+                return;
+            renderer.material.color = color;
+            if (renderer.material.HasProperty("_BaseColor"))
+                renderer.material.SetColor("_BaseColor", color);
+        }
+
         /// <summary>
         /// Translucent prop disc under each propeller hub — shown only at high RPM.
         /// </summary>
@@ -7734,9 +7811,7 @@ namespace Airside.Presentation
             var color = renderer.material.color;
             // Softer contact so realtime URP shadows remain the primary read.
             color.a = Mathf.Lerp(0.28f, 0.04f, t);
-            renderer.material.color = color;
-            if (renderer.material.HasProperty("_BaseColor"))
-                renderer.material.SetColor("_BaseColor", color);
+            SetRendererColor(renderer, color);
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
 
@@ -8035,6 +8110,18 @@ namespace Airside.Presentation
                 new Color(0.2f, 0.2f, 0.22f), out var rope) || placed;
             placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_handle", Vector3.zero, Quaternion.identity,
                 new Color(0.25f, 0.26f, 0.28f), out var handle) || placed;
+            // v02 kit may ship a single combined "chocks" mesh.
+            if (!placed)
+            {
+                placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chocks", Vector3.zero, Quaternion.identity,
+                    new Color(0.85f, 0.2f, 0.15f), out var combined);
+                if (combined != null)
+                {
+                    combined.SetParent(root, false);
+                    combined.localPosition = new Vector3(0f, -0.55f, 0f);
+                }
+            }
+
             if (placed)
             {
                 if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, -0.55f, 0f); }
@@ -9029,13 +9116,19 @@ namespace Airside.Presentation
             PlaceFodBin("FOD bin B", new Vector3(10f, 0f, 11.2f), 0f);
             PlaceFodBin("FOD bin C", new Vector3(-24f, 0f, 16.5f), 90f);
 
-            // Stand lead-in / box paint so stands read as marked bays from overview.
-            foreach (var z in new[] { 14f, 20f, 26f })
+            // Stand lead-in / box paint — skip when markings kit already placed stand stops
+            // (avoid double-painted bays next to authored threshold/TDZ).
+            if (GameObject.Find("stand_stop_a") == null
+                && GameObject.Find("stand_stop_b") == null
+                && GameObject.Find("stand_stop_c") == null)
             {
-                CreateBlock($"Stand box front {z}", new Vector3(20f, 0.04f, z - 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
-                CreateBlock($"Stand box back {z}", new Vector3(20f, 0.04f, z + 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
-                CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
-                CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+                foreach (var z in new[] { 14f, 20f, 26f })
+                {
+                    CreateBlock($"Stand box front {z}", new Vector3(20f, 0.04f, z - 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
+                    CreateBlock($"Stand box back {z}", new Vector3(20f, 0.04f, z + 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
+                    CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+                    CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+                }
             }
         }
 

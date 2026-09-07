@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (merged presentation wave onto main)
-- **Branch / working tree:** `main` — ready for Bailey Mac `git pull`
-- **Do this next:** Bailey `git pull origin main`, Unity open `game/Airside`, Play soak
-- **In progress / half-done:** none — #51–#55 merged
-- **Watch out for:** First Unity open may reimport StreamingAssets; wait for import
+- **Last updated:** 2026-09-07 by Cursor (lighting + wet materials)
+- **Branch / working tree:** `cursor/lighting-wet-materials-ddad`
+- **Do this next:** Merge this PR, then denser props / motion polish; Bailey Play when ready
+- **In progress / half-done:** fill light, wet gloss, nav-light night punch
+- **Watch out for:** First Unity open may reimport StreamingAssets
 - **Open questions for Bailey:** none
-- **Visual assets:** env + Batch C v02 + HUD + kit UVs + follow camera on `main`
+- **Visual assets:** presentation wave on `main`; lighting/wet on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

@@ -1,15 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Mac FBX bake; Bailey accepted AIR-001 v05)
-- **Branch:** `cursor/air-001-v05-turboprop-8515` (PR #133) — AIR-001 v05 only; no BLD/MAT/F2–F4
-- **Do next:** Start **BLD-001 v05** on a **new** branch when ready. Do **not** start the terminal, MAT-001, or F2–F4 on this branch.
-- **In progress / half-done:** none
+- **Last updated:** 2026-09-07 (Codex — save/replay and insolvency bug audit)
+- **Branch:** `feature/major-bug-audit`, based on main `e7ecc01`; validated and ready for the authorized merge.
+- **Do next:** Resume the separate terminal/material art review in PR #134. PR #126's font fix is already on main via #127.
+- **In progress / half-done:** none; Unity tests and universal Mac build passed.
 - **Watch for:**
-  - PreferArtKit order is v05 → authored → lofted → v04 → …; lofted/authored source files untouched
-  - Mac bake wrote ModelImporter meshes into Resources prefabs (11 kits, including AIR-001 v05). Pipeline-proof Cube/Cylinder yield remains only for unbaked Resources proofs
-  - Domain EditMode: `scripts/test-unity.sh` 116/116 on this tip. `scripts/test-domain.sh` needs a .NET SDK (not installed on this Mac)
-  - Do **not** start terminal v05 / MAT-001 / F2–F4 on this branch
-- **Open question for Bailey:** none for AIR-001 v05 — accepted
+  - Same-second commands now replay in persisted player order, including old duplicate IDs; new commands receive unique IDs.
+  - Saving after recovery preserves the valid backup; unsupported versions are rejected before migration. Schema 1 still migrates to 2.
+  - Insolvency now stops traffic on the closing tick itself.
+  - Unity 6000.3.23f1 EditMode: 124/124 passed; `scripts/build-mac.sh` produced an arm64/x86_64 Mac player. Audit packet and pre-fix reproductions: `docs/testing/BUG_AUDIT_2026-09-07.md`.
+  - Existing Addressables player-catalog warning and visual acceptance are outside this bug-fix scope.
+  - Do not use `scripts/rebuild-and-open-mac.sh` on a feature branch; it checks out main. Use `scripts/build-mac.sh`.
+- **Open question for Bailey:** none for this bug fix; separate art review remains separate.
 
 ---
 
@@ -85,7 +87,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-unity.sh`: 116/116 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
+- `scripts/test-unity.sh`: 124/124 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
 - A fifty-cycle simulation completes without reservation conflicts (single and dual commercial).
 - Large and one-second time steps reach identical simulation state.
 - When scheduled demand ≥ 4 flights/day a second commercial operates on a half-cycle stagger; fleet yields to any commercial; HUD/world show both.

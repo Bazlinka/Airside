@@ -24,6 +24,85 @@ namespace Airside.Tests
                 Directory.Delete(_directory, true);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SameSecondCommands_ReplayInPlayerOrderAtStaffingLimit(bool legacyIds)
+        {
+            var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 42);
+            Assert.That(session.ReleaseGroundCrew(), Is.True);
+            Assert.That(session.ReleaseGroundCrew(), Is.True);
+            for (var i = 0; i < 6; i++)
+                Assert.That(session.HireGroundCrew(), Is.True);
+            session.Save(1000);
+
+            if (legacyIds)
+            {
+                var repository = new AirsideSaveRepository(_path);
+                Assert.That(repository.TryLoad(out var save, out _), Is.True);
+                foreach (var command in save.commands)
+                    command.commandId = command.commandType + "-1-0";
+                repository.Write(save);
+            }
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+            Assert.That(restored.Simulation.Staffing.GroundCrew,
+                Is.EqualTo(session.Simulation.Staffing.GroundCrew));
+            Assert.That(restored.Simulation.Economy.Cash, Is.EqualTo(session.Simulation.Economy.Cash));
+        }
+
+        [Test]
+        public void RepeatedSameSecondCommands_HaveDistinctPersistentIds()
+        {
+            var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 42);
+            Assert.That(session.HireGroundCrew(), Is.True);
+            Assert.That(session.HireGroundCrew(), Is.True);
+            session.Save(1000);
+
+            Assert.That(new AirsideSaveRepository(_path).TryLoad(out var save, out _), Is.True);
+            Assert.That(save.commands[0].commandId, Is.Not.EqualTo(save.commands[1].commandId));
+            var restored = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+            Assert.That(restored.Simulation.Staffing.GroundCrew, Is.EqualTo(6));
+        }
+
+        [Test]
+        public void SavingAfterRecovery_PreservesTheLastValidBackup()
+        {
+            var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 42);
+            session.AdvanceTo(20);
+            session.Save(1000);
+            session.AdvanceTo(60);
+            session.Save(1000);
+            File.WriteAllText(_path, "broken latest save");
+
+            var recovered = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+            Assert.That(recovered.LastAwaySummary.RecoveredPreviousSave, Is.True);
+            recovered.Save(1000);
+            File.WriteAllText(_path, "another interrupted save");
+
+            var recoveredAgain = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+            Assert.That(recoveredAgain.LastAwaySummary.RecoveredPreviousSave, Is.True);
+            Assert.That(recoveredAgain.Clock.Now.ElapsedSeconds, Is.EqualTo(20));
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        [TestCase(3)]
+        public void UnsupportedSchema_RecoversBackupInsteadOfMigratingInvalidData(int version)
+        {
+            var session = PersistentAirportSession.LoadOrCreate(_path, 1000, 42);
+            session.AdvanceTo(20);
+            session.Save(1000);
+            session.AdvanceTo(60);
+            session.Save(1000);
+            var invalid = File.ReadAllText(_path).Replace("\"schemaVersion\": 2", "\"schemaVersion\": " + version)
+                .Replace("\"schemaVersion\":2", "\"schemaVersion\":" + version);
+            File.WriteAllText(_path, invalid);
+
+            var restored = PersistentAirportSession.LoadOrCreate(_path, 1000, 99);
+            Assert.That(restored.LastAwaySummary.RecoveredPreviousSave, Is.True);
+            Assert.That(restored.Clock.Now.ElapsedSeconds, Is.EqualTo(20));
+        }
+
         [Test]
         public void CommandIssuedBeforeTheFirstTick_SurvivesReload()
         {

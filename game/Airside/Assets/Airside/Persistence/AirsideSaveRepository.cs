@@ -55,13 +55,17 @@ namespace Airside.Persistence
 
             if (File.Exists(_path))
             {
+                // A recovery write must not rotate a corrupt primary over the last
+                // known-good backup. Validate the actual file before replacing it.
+                var backupPath = TryRead(_path, out _) ? PreviousPath : null;
                 try
                 {
-                    File.Replace(temporaryPath, _path, PreviousPath, true);
+                    File.Replace(temporaryPath, _path, backupPath, true);
                 }
                 catch (PlatformNotSupportedException)
                 {
-                    File.Copy(_path, PreviousPath, true);
+                    if (backupPath != null)
+                        File.Copy(_path, backupPath, true);
                     File.Copy(temporaryPath, _path, true);
                     File.Delete(temporaryPath);
                 }

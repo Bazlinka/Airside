@@ -278,6 +278,10 @@ namespace Airside.Simulation
             }
 
             SettleDaysUpTo(now);
+            // The closing report can declare insolvency during this tick. Do not
+            // move aircraft or settle another flight after the terminal event.
+            if (IsInsolvent)
+                return;
             TrySpawnSecondCommercial(now);
 
             var active = _flights.ToArray();

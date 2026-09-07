@@ -28,6 +28,7 @@ namespace Airside.Presentation
         private Transform _horizonDome;
         private Transform _cloudRoot;
         private Transform _birdFlockRoot;
+        private Transform _apronLifeRoot;
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
         private Light _hangarBayLight;
@@ -262,6 +263,7 @@ namespace Airside.Presentation
             UpdateCloudDrift();
             UpdateBirdFlock();
             UpdateHangarDoor();
+            UpdateApronLife();
             SyncCanvasHud();
         }
 
@@ -1361,19 +1363,22 @@ namespace Airside.Presentation
 
             if (wet)
             {
-                // Cooler, denser atmosphere in adverse weather — still presentation only.
+                // Cooler, denser atmosphere in adverse weather — stacks on base day fog.
                 var fogDay = new Color(0.55f, 0.6f, 0.66f);
                 var fogNight = new Color(0.18f, 0.22f, 0.3f);
                 var daylight = (float)_simulation.TimeOfDay.Daylight;
                 RenderSettings.ambientLight *= 0.9f;
-                RenderSettings.fog = foggy || raining;
+                RenderSettings.fog = true;
+                RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
-                RenderSettings.fogDensity = weather == WeatherKind.Storm ? 0.014f : foggy ? 0.022f : raining ? 0.007f : 0.004f;
+                var baseDensity = Mathf.Lerp(0.0065f, 0.0032f, daylight);
+                RenderSettings.fogDensity = weather == WeatherKind.Storm
+                    ? Mathf.Max(baseDensity, 0.016f)
+                    : foggy ? Mathf.Max(baseDensity, 0.024f)
+                    : raining ? Mathf.Max(baseDensity, 0.009f)
+                    : baseDensity;
             }
-            else
-            {
-                RenderSettings.fog = false;
-            }
+            // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
             // Darken + gloss paved surfaces when wet (VFX-004 wet response, greybox).
             var wetness = wet ? (weather == WeatherKind.Storm ? 0.62f : raining ? 0.45f : 0.3f) : 0f;
@@ -2485,6 +2490,18 @@ namespace Airside.Presentation
                     domeRenderer.material.color = sky;
             }
 
+            // Soft exponential fog for depth on clear days; weather can thicken it later.
+            if (!Weather.IsAdverse(_simulation.CurrentWeather))
+            {
+                RenderSettings.fog = true;
+                RenderSettings.fogMode = FogMode.ExponentialSquared;
+                RenderSettings.fogColor = Color.Lerp(
+                    new Color(0.08f, 0.1f, 0.16f),
+                    Color.Lerp(skyDay * 0.92f, skyDusk * 0.85f, warm),
+                    Mathf.Clamp01(daylight + warm * 0.25f));
+                RenderSettings.fogDensity = Mathf.Lerp(0.0065f, 0.0032f, daylight);
+            }
+
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
@@ -2853,6 +2870,88 @@ namespace Airside.Presentation
             BuildDistantHills();
             BuildHorizonDome();
             BuildLandsideLife();
+            BuildApronLife();
+        }
+
+        /// <summary>
+        /// Stylised staff / passenger silhouettes — readable life, not characters.
+        /// </summary>
+        private static void BuildApronLife()
+        {
+            var root = new GameObject("Apron life").transform;
+            PlacePerson(root, "Marshaller", new Vector3(14.5f, 0f, 16.5f), 200f, new Color(0.85f, 0.55f, 0.12f));
+            PlacePerson(root, "Fueler", new Vector3(-3.2f, 0f, 13.2f), 90f, new Color(0.2f, 0.35f, 0.55f));
+            PlacePerson(root, "Ops walker", new Vector3(22f, 0f, 22.5f), 15f, new Color(0.25f, 0.28f, 0.32f));
+            PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
+            PlacePerson(root, "Landside passenger B", new Vector3(27.8f, 0f, 31.6f), 175f, new Color(0.2f, 0.35f, 0.4f));
+            PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
+            PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
+        }
+
+        private static void PlacePerson(Transform parent, string name, Vector3 position, float yaw, Color clothes, bool seated = false)
+        {
+            var root = new GameObject(name).transform;
+            root.SetParent(parent, false);
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yaw, 0f);
+            var bodyH = seated ? 0.55f : 0.85f;
+            var bodyY = seated ? 0.55f : 0.9f;
+            ParentBlock(root, $"{name} torso", new Vector3(0f, bodyY, 0f), new Vector3(0.38f, bodyH, 0.22f), clothes);
+            ParentBlock(root, $"{name} head", new Vector3(0f, bodyY + bodyH * 0.55f + 0.18f, 0f), new Vector3(0.22f, 0.22f, 0.22f),
+                new Color(0.78f, 0.62f, 0.5f));
+            if (!seated)
+            {
+                ParentBlock(root, $"{name} leg L", new Vector3(-0.1f, 0.35f, 0f), new Vector3(0.14f, 0.7f, 0.14f), Shade(clothes, 0.7f));
+                ParentBlock(root, $"{name} leg R", new Vector3(0.1f, 0.35f, 0f), new Vector3(0.14f, 0.7f, 0.14f), Shade(clothes, 0.7f));
+            }
+            else
+            {
+                ParentBlock(root, $"{name} legs", new Vector3(0f, 0.28f, 0.2f), new Vector3(0.4f, 0.2f, 0.55f), Shade(clothes, 0.7f));
+            }
+        }
+
+        private void UpdateApronLife()
+        {
+            if (_apronLifeRoot == null)
+            {
+                var found = GameObject.Find("Apron life");
+                if (found != null)
+                    _apronLifeRoot = found.transform;
+            }
+
+            if (_apronLifeRoot == null)
+                return;
+
+            // Soft idle lean on torsos so figures don't read as frozen props.
+            for (var i = 0; i < _apronLifeRoot.childCount; i++)
+            {
+                var person = _apronLifeRoot.GetChild(i);
+                if (person.name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0)
+                    continue;
+
+                var wave = false;
+                if (person.name.StartsWith("Marshaller", StringComparison.Ordinal))
+                {
+                    foreach (var flight in _simulation.Flights)
+                    {
+                        if (flight.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
+                        {
+                            wave = true;
+                            break;
+                        }
+                    }
+                }
+
+                foreach (var child in person.GetComponentsInChildren<Transform>(true))
+                {
+                    if (child == person || child.name.IndexOf("torso", StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    var lean = Mathf.Sin(Time.unscaledTime * 0.9f + i * 1.3f) * 4f;
+                    if (wave)
+                        lean += Mathf.Sin(Time.unscaledTime * 4f) * 16f;
+                    child.localEulerAngles = new Vector3(0f, 0f, lean);
+                }
+            }
         }
 
         /// <summary>

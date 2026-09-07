@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (day volume + GSE motion)
-- **Branch / working tree:** `cursor/lighting-service-motion-ddad`
-- **Do this next:** Merge URP day volume + richer service motion; Bailey Play soak dusk/night + turnaround
-- **In progress / half-done:** runtime ACES/bloom/color volume; GSE park + drive-in; stairs/chocks/GPU pulse
-- **Watch out for:** URP asmdef refs need Unity resolve; post-processing may need camera flag on Mac
+- **Last updated:** 2026-09-07 by Cursor (atmosphere + apron life)
+- **Branch / working tree:** `cursor/atmosphere-apron-life-ddad`
+- **Do this next:** Merge clear-day fog + apron/landside figures; Bailey Play soak depth + people
+- **In progress / half-done:** always-on exponential fog; seven stylised people with marshaller wave
+- **Watch out for:** fog density may need Mac tweak vs weather fog stack
 - **Open questions for Bailey:** none
-- **Visual assets:** Canvas HUD on main; lighting/GSE on this branch
+- **Visual assets:** day volume on main; atmosphere/people on this branch
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,7 +122,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm Canvas HUD + hangar bay light + **URP day volume** (dusk warmth / night bloom)
-   and **GSE drive-in** during turnaround (fuel/bag/bus park on apron when idle).
+2. Confirm Canvas HUD, URP day volume, GSE drive-in, **clear-day atmospheric fog**, and
+   **apron/landside people** (marshaller waves on approach).
 3. Next code track: Addressables/prefab path (0025 item 1–2), or authored material
    maps beyond the procedural spike. No new economy systems; no Companion/CloudKit.

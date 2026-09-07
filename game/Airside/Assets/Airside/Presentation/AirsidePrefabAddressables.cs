@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
@@ -69,8 +70,15 @@ namespace Airside.Presentation
 
             try
             {
-                // Initialize so ResourceManager exists before we add a provider/locator.
-                Addressables.InitializeAsync().WaitForCompletion();
+                // Packaged builds often lack StreamingAssets/aa/settings.json. Prefer
+                // attaching our Resources provider without a full catalog initialize
+                // when the player catalog is absent (avoids the known missing-settings spam).
+                var catalogSettings = Path.Combine(
+                    Application.streamingAssetsPath, "aa", "settings.json");
+                var hasCatalog = File.Exists(catalogSettings);
+                if (hasCatalog)
+                    Addressables.InitializeAsync().WaitForCompletion();
+
                 var providers = Addressables.ResourceManager.ResourceProviders;
                 for (var i = 0; i < providers.Count; i++)
                 {

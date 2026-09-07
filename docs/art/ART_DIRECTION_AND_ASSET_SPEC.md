@@ -238,9 +238,12 @@ references but **does not substitute a flat image for a 3D object**.
 | BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F1 authored small regional terminal: pitched roof, glazed airside frontage, canopy, service side, rooftop plant, soft end caps (~202 meshes) | Integrated (v05 preferred; Mac FBX bake in Resources; Bailey playtest pending) |
 | BLD-002 | `Models/Buildings/mdl_hangar_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Corrugated hangar with door panels/bars, tracks, skylights, crane trolley, buttresses, office lean | Integrated (authored preferred) |
 | BLD-003 | `Models/Buildings/mdl_operations_shed_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Compact service/crew building with porch, antenna, AC units | Integrated (authored preferred) |
-| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v02.gltf` (fallback `…_v01.gltf`) | Cab, wheels and hose connection separated | Integrated (v02 preferred; v01 Approved fallback) |
-| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v02.gltf` (fallback `…_v01.gltf`) | Tug plus three low-detail carts; articulation points defined | Integrated (v02 preferred; v01 Approved fallback) |
-| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v02.gltf` (fallback `…_v01.gltf`) | Compact apron bus with doors and wheels separated | Integrated (v02 preferred; v01 Approved fallback) |
+| VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F2 authored fuel truck: oval tank, hose reel/coils, Safety Yellow chevrons, separated doors/wheels (91 meshes) | Integrated (v05 preferred; Mac FBX bake) |
+| VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F2 tug + three carts with hitch pivots and removable cargo | Integrated (v05 preferred; Mac FBX bake) |
+| VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F2 apron bus: rounded nose/tail, Coastal Blue accent, dual glazing | Integrated (v05 preferred; Mac FBX bake) |
+| VEH-004 | `Models/Vehicles/mdl_pushback_tug_v02.gltf` (+ `.fbx`; fallback `mdl_pushback_tug_v01` prefab) | Batch F2 dedicated pushback tug with towbar pivots | Integrated (v02 preferred; Mac FBX bake) |
+| CHR-001 | `Models/Characters/mdl_ramp_crew_kit_v01.gltf` (+ `.fbx`) | Marshaller / fueler / ramp with hi-vis and wand sockets | Integrated (PlacePerson prefers kit) |
+| CHR-002 | `Models/Characters/mdl_passenger_kit_v01.gltf` (+ `.fbx`) | Six stand/walk/sit silhouettes; presentation-only | Integrated (PlacePerson prefers kit) |
 | PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Approved · Integrated |
 
 ### Batch D — animation, feedback and weather

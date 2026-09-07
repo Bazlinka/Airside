@@ -231,6 +231,7 @@ namespace Airside.Presentation
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
             _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
@@ -238,6 +239,7 @@ namespace Airside.Presentation
                     "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
@@ -245,6 +247,7 @@ namespace Airside.Presentation
                     "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
             _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
@@ -4678,6 +4681,12 @@ namespace Airside.Presentation
             root.SetParent(parent, false);
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+            // Batch F2 CHR-001/002 — prefer authored kit parts; keep torso/wand/arm/leg names
+            // so UpdateApronLife idle/wave animation still finds them.
+            if (TryPlaceCharacterFromKit(root, name, clothes, seated, hiVis, marshallerWand))
+                return;
+
             var bodyH = seated ? 0.55f : 0.85f;
             var bodyY = seated ? 0.55f : 0.9f;
             var torsoColor = hiVis ? new Color(0.95f, 0.72f, 0.12f) : clothes;
@@ -4710,6 +4719,93 @@ namespace Airside.Presentation
             {
                 ParentBlock(root, $"{name} legs", new Vector3(0f, 0.28f, 0.2f), new Vector3(0.4f, 0.2f, 0.55f), Shade(clothes, 0.7f));
             }
+        }
+
+        /// <summary>
+        /// Batch F2 — place CHR kit meshes renamed for UpdateApronLife heuristics.
+        /// Crew roles map to marshaller/fueler/ramp; passengers cycle stand/walk/sit variants.
+        /// </summary>
+        private static bool TryPlaceCharacterFromKit(
+            Transform root,
+            string name,
+            Color clothes,
+            bool seated,
+            bool hiVis,
+            bool marshallerWand)
+        {
+            string prefix;
+            string kitPath;
+            var lower = name.ToLowerInvariant();
+            if (lower.Contains("marshaller"))
+            {
+                prefix = "marshaller";
+                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+            }
+            else if (lower.Contains("fueler") || lower.Contains("baggage") || lower.Contains("stairs")
+                     || lower.Contains("ramp") || (hiVis && !seated))
+            {
+                prefix = lower.Contains("fueler") ? "fueler" : "ramp";
+                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+            }
+            else
+            {
+                kitPath = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+                if (seated)
+                    prefix = lower.Contains("sitter b") || lower.GetHashCode() % 2 == 0 ? "sit_f" : "sit_e";
+                else if (lower.Contains("walker"))
+                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "walk_c" : "walk_d";
+                else
+                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "stand_a" : "stand_b";
+            }
+
+            if (string.IsNullOrEmpty(kitPath) || !ArtGltfLoader.HasKit(kitPath))
+                return false;
+
+            var torsoColor = hiVis ? new Color(0.95f, 0.72f, 0.12f) : clothes;
+            var skin = new Color(0.78f, 0.62f, 0.5f);
+            var placed = 0;
+
+            void Place(string mesh, string displayName, Color color)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kitPath, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                    return;
+                part.SetParent(root, false);
+                part.localPosition = Vector3.zero;
+                part.name = displayName;
+                placed++;
+            }
+
+            Place($"{prefix}_torso", $"{name} torso", torsoColor);
+            Place($"{prefix}_head", $"{name} head", skin);
+            if (hiVis || prefix is "marshaller" or "fueler" or "ramp")
+            {
+                Place($"{prefix}_vest", $"{name} vest stripe", new Color(0.95f, 0.95f, 0.9f));
+                Place($"{prefix}_hat", $"{name} hard hat", new Color(0.95f, 0.78f, 0.15f));
+            }
+
+            if (seated || prefix.StartsWith("sit_", StringComparison.Ordinal))
+            {
+                Place($"{prefix}_legs", $"{name} legs", Shade(clothes, 0.7f));
+                Place($"{prefix}_arm_l", $"{name} arm L", Shade(torsoColor, 0.85f));
+                Place($"{prefix}_arm_r", $"{name} arm R", Shade(torsoColor, 0.85f));
+            }
+            else
+            {
+                Place($"{prefix}_leg_l", $"{name} leg L", Shade(clothes, 0.7f));
+                Place($"{prefix}_leg_r", $"{name} leg R", Shade(clothes, 0.7f));
+                Place($"{prefix}_arm_l", $"{name} arm L", Shade(torsoColor, 0.85f));
+                Place($"{prefix}_arm_r", $"{name} arm R", Shade(torsoColor, 0.85f));
+                Place($"{prefix}_shoe_l", $"{name} shoe L", new Color(0.15f, 0.15f, 0.16f));
+                Place($"{prefix}_shoe_r", $"{name} shoe R", new Color(0.15f, 0.15f, 0.16f));
+            }
+
+            if (marshallerWand || prefix == "marshaller")
+            {
+                Place($"{prefix}_wand", $"{name} wand", new Color(0.95f, 0.2f, 0.15f));
+                Place($"{prefix}_wand_tip", $"{name} wand tip", new Color(1f, 0.85f, 0.2f));
+            }
+
+            return placed >= 3;
         }
 
         private void UpdateApronLife()
@@ -7186,13 +7282,15 @@ namespace Airside.Presentation
                             or "wheel_hub_fl" or "wheel_hub_fr" or "wheel_hub_rl" or "wheel_hub_rr"
                             or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
                         "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
-                            or "hose_coil_a" or "hose_coil_b" or "pump_cabinet" or "pump_gauge" or "pump_valve"
+                            or "hose_coil_a" or "hose_coil_b" or "hose_coil_c" or "pump_cabinet" or "pump_cabinet_door"
+                            or "pump_gauge" or "pump_valve"
                             or "exhaust" or "pump_hose_out" => new Color(0.25f, 0.25f, 0.28f),
                         "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_handle"
                             or "door_handle_l" or "door_handle_r" or "door_hinge_t" or "door_hinge_b"
                             => new Color(0.2f, 0.22f, 0.25f),
                         "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
-                            or "tug_floor" or "tug_steering" or "counterweight" => color * 0.82f,
+                            or "tug_rollbar_top" or "tug_floor" or "tug_steering" or "tug_steering_wheel"
+                            or "counterweight" => color * 0.82f,
                         "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
                         "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
                         "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
@@ -7203,7 +7301,8 @@ namespace Airside.Presentation
                             or "grill" or "light_bar" or "fender_fl" or "fender_fr" or "fender_rl" or "fender_rr"
                             or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
                             or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
-                            or "number_plate" or "fuel_hazard" or "wiper" or "wiper_b"
+                            or "number_plate" or "fuel_hazard" or "hazard_chevron_1" or "hazard_chevron_2"
+                            or "wiper" or "wiper_b" or "nose_round" or "tail_round"
                             or "body_panel_l" or "body_panel_r" or "skirt_l" or "skirt_r"
                             => color * 0.7f,
                         "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
@@ -7220,7 +7319,11 @@ namespace Airside.Presentation
                             or "cart_canopy_1" or "cart_canopy_2" or "cart_canopy_3"
                             or "cart_post_1l" or "cart_post_1r" or "cart_post_2l" or "cart_post_2r"
                             or "cart_post_3l" or "cart_post_3r"
-                            or "hitch_1" or "hitch_2" or "hitch_3" => color * 0.6f,
+                            or "cart_post_1fl" or "cart_post_1fr" or "cart_post_2fl" or "cart_post_2fr"
+                            or "cart_post_3fl" or "cart_post_3fr"
+                            or "hitch_1" or "hitch_2" or "hitch_3"
+                            or "hitch_pin_1" or "hitch_pin_2" or "hitch_pin_3"
+                            or "tow_pivot_1" or "tow_pivot_2" or "tow_pivot_3" => color * 0.6f,
                         "seat_row_1" or "seat_row_2" or "seat_row_3" or "seat_row_4"
                             or "seat_back_1" or "seat_back_2" => new Color(0.35f, 0.38f, 0.42f),
                         _ => color
@@ -7462,11 +7565,61 @@ namespace Airside.Presentation
 
         private static Transform BuildPushbackTug()
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v01", out var prefabRoot))
+            // Batch F2 VEH-004 — prefer authored pushback tug v02, then pipeline-proof v01.
+            var pushbackKit = PreferArtKit(
+                "Models/Vehicles/mdl_pushback_tug_v02.gltf");
+            if (!string.IsNullOrEmpty(pushbackKit)
+                && ArtPresentationLoader.TryInstantiate(
+                    pushbackKit,
+                    null,
+                    out var artRoot,
+                    kitName => kitName switch
+                    {
+                        "towbar" => "Tug towbar",
+                        "towbar_head" => "Tug towbar head",
+                        "towbar_wheel" => "Tug towbar wheel",
+                        "towbar_handle" => "Tug towbar handle",
+                        "towbar_eye" => "Tug towbar eye",
+                        "tug_body" => "Tug body",
+                        "tug_cab" => "Tug cab",
+                        "beacon" => "Tug beacon",
+                        "wheel_fl" => "Tug wheel FL",
+                        "wheel_fr" => "Tug wheel FR",
+                        "wheel_rl" => "Tug wheel RL",
+                        "wheel_rr" => "Tug wheel RR",
+                        _ => $"Tug {kitName}"
+                    },
+                    kitName =>
+                    {
+                        if (kitName.StartsWith("glass", StringComparison.Ordinal))
+                            return new Color(0.2f, 0.4f, 0.55f, 0.42f);
+                        return kitName switch
+                        {
+                            "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
+                                or "hub_fl" or "hub_fr" or "hub_rl" or "hub_rr"
+                                or "towbar_wheel" => new Color(0.15f, 0.15f, 0.16f),
+                            "towbar" or "towbar_head" or "towbar_handle" or "towbar_eye" or "tow_pivot"
+                                => new Color(0.3f, 0.32f, 0.34f),
+                            "beacon" => new Color(0.95f, 0.35f, 0.12f),
+                            "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
+                            "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
+                            "stripe" => new Color(0.95f, 0.85f, 0.2f),
+                            _ => new Color(0.82f, 0.62f, 0.18f)
+                        };
+                    },
+                    localPosition: new Vector3(0f, -0.55f, 0f)))
             {
-                prefabRoot.name = "Pushback tug";
-                prefabRoot.gameObject.SetActive(false);
-                return prefabRoot;
+                artRoot.name = "Pushback tug";
+                artRoot.gameObject.SetActive(false);
+                return artRoot;
+            }
+
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v02", out var prefabV02)
+                || ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v01", out prefabV02))
+            {
+                prefabV02.name = "Pushback tug";
+                prefabV02.gameObject.SetActive(false);
+                return prefabV02;
             }
 
             var root = new GameObject("Pushback tug").transform;

@@ -46,7 +46,7 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 All use built-in cube/cylinder meshes + `AirsideRuntimeMaterialBinder`. Bailey may
 overwrite any with an authored FBX prefab of the same name.
 
-## Authored FBX kits (turboprop + terminal)
+## Authored FBX kits (turboprop + terminal + Batch F2)
 
 Source FBX (Unity ModelImporter):
 
@@ -56,6 +56,12 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v05.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v05.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v05.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Vehicles/mdl_pushback_tug_v02.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Characters/mdl_ramp_crew_kit_v01.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v01.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_authored_v01.fbx`
@@ -69,6 +75,12 @@ Resources prefabs (Addressables keys live now):
 |---|---|
 | `mdl_regional_turboprop_01_v05` | Mac bake (`Airside → Art → Bake Authored FBX Prefabs`); generator `scripts/generate-air-001-v05-prefab.py` is the pipeline-proof fallback |
 | `mdl_terminal_regional_small_v05` | Mac bake; `scripts/generate-bld-001-v05-prefab.py` is the pipeline-proof fallback |
+| `mdl_fuel_truck_small_v05` | Mac bake; `scripts/generate-batch-f2-prefabs.py` |
+| `mdl_baggage_tug_train_v05` | Mac bake; same |
+| `mdl_passenger_bus_apron_v05` | Mac bake; same |
+| `mdl_pushback_tug_v02` | Mac bake; same |
+| `mdl_ramp_crew_kit_v01` | Mac bake; same |
+| `mdl_passenger_kit_v01` | Mac bake; same |
 | `mdl_regional_turboprop_01_authored_v01` | Mac bake; `scripts/generate-authored-resources-prefabs.py` is the pipeline-proof fallback |
 | `mdl_terminal_regional_small_authored_v01` | Mac bake; same generator fallback |
 | `mdl_hangar_small_authored_v01` | Mac bake; same generator fallback |

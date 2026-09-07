@@ -73,11 +73,11 @@ instances; they do not reserve zones or complete tasks.
 
 | ID | Exact authoring/runtime paths | Required design | Priority |
 |---|---|---|---|
-| VEG-001 | `Art/Models/Environment/mdl_eucalyptus_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_eucalyptus_kit_v01.prefab` | Three eucalyptus silhouettes plus two LODs, shared leaf atlas and simple trunk material; readable as a belt from overview | P1 |
-| VEG-002 | `Art/Models/Environment/mdl_kingscote_scrub_kit_v01.fbx`; matching Resources prefab | Mallee/shrub/grass/rock cluster variants for fence and dune edges; no billboard-photo look | P1 |
-| PRP-002 | `Art/Models/Props/mdl_airfield_fence_gate_kit_v01.fbx`; matching Resources prefab | Modular chain-link bay, corner, end, pedestrian gate and two-leaf vehicle gate; mesh uses alpha/cutout rather than hundreds of bars | P1 |
-| PRP-003 | `Art/Models/Props/mdl_terminal_forecourt_kit_v01.fbx`; matching Resources prefab | Kerbs, bollards, planter, parking sign frame, bench and drop-off furniture matching the terminal scale | P2 |
-| WLD-004 | `Art/Models/Environment/mdl_kingscote_context_terrain_v01.fbx`; matching Resources prefab | Low-poly terrain/coast/hill context with smooth silhouette and zones for grass, dry grass, sand and water; no real map data | P2 |
+| VEG-001 | `Art/Models/Environment/mdl_eucalyptus_kit_v01.fbx`; `Resources/Airside/Prefabs/mdl_eucalyptus_kit_v01.prefab` | Three eucalyptus silhouettes plus two LODs, shared leaf atlas and simple trunk material; readable as a belt from overview | P1 — **Integrated** |
+| VEG-002 | `Art/Models/Environment/mdl_kingscote_scrub_kit_v01.fbx`; matching Resources prefab | Mallee/shrub/grass/rock cluster variants for fence and dune edges; no billboard-photo look | P1 — **Integrated** |
+| PRP-002 | `Art/Models/Props/mdl_airfield_fence_gate_kit_v01.fbx`; matching Resources prefab | Modular chain-link bay, corner, end, pedestrian gate and two-leaf vehicle gate; mesh uses alpha/cutout rather than hundreds of bars | P1 — **Integrated** |
+| PRP-003 | `Art/Models/Props/mdl_terminal_forecourt_kit_v01.fbx`; matching Resources prefab | Kerbs, bollards, planter, parking sign frame, bench and drop-off furniture matching the terminal scale | P2 — **Integrated** |
+| WLD-004 | `Art/Models/Environment/mdl_kingscote_context_terrain_v01.fbx`; matching Resources prefab | Low-poly terrain/coast/hill context with smooth silhouette and zones for grass, dry grass, sand and water; no real map data | P2 — **Integrated** |
 
 Road/runway/taxi/stand geometry remains code-owned for operational precision.
 WLD-004 replaces only non-operational context and may never change reservation
@@ -147,7 +147,6 @@ UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
 
 ## Cursor handoff: first task
 
-Batch F1 is on `main`. Batch F2 (vehicles/people) is integrated on
-`cursor/batch-f2-vehicles-people-a8ff`. Next tip after Bailey accepts the packaged
-Mac playtest of F2 is **Batch F3** (vegetation/boundary/landside) on a **new**
-branch. Do not begin F3–F4 on the F2 branch.
+Batch F1–F2 are on `main`. Batch F3 (setting modules) is on
+`cursor/batch-f3-setting-modules-a8ff`. Next tip after accept is **Batch F4**
+(motion/VFX/UI finish) on a **new** branch.

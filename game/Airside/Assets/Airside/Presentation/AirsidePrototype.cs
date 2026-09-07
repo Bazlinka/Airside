@@ -5200,8 +5200,90 @@ namespace Airside.Presentation
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
         }
 
+        /// <summary>
+        /// Batch F3 PRP-002 — place modular fence bay / corner / vehicle gate panels.
+        /// Returns false when the kit is missing so the CreateBlock ribbon remains the fallback.
+        /// </summary>
+        private static bool TryBuildPerimeterFenceFromKit()
+        {
+            var kit = PreferArtKit("Models/Props/mdl_airfield_fence_gate_kit_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return false;
+
+            var post = new Color(0.55f, 0.56f, 0.58f);
+            var panel = new Color(0.62f, 0.64f, 0.66f);
+            var yellow = Shade(AirsideTheme.SafetyYellow, 0.75f);
+            var placed = 0;
+
+            void PlacePart(string mesh, Vector3 pos, Quaternion rot, Color color, string name)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, rot, color, out var part))
+                    return;
+                part.name = name;
+                placed++;
+            }
+
+            void PlaceBay(Vector3 pos, float yawDeg, string tag)
+            {
+                var rot = Quaternion.Euler(0f, yawDeg, 0f);
+                PlacePart("fence_bay", pos, rot, panel, $"Fence bay {tag}");
+                PlacePart("fence_bay_rail_top", pos, rot, post, $"Fence bay rail {tag}");
+                PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
+                PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
+            }
+
+            // North landside (gap for vehicle gate at x≈22–30).
+            for (var x = -40; x <= 56; x += 4)
+            {
+                if (x >= 22 && x <= 30)
+                    continue;
+                PlaceBay(new Vector3(x + 2f, 0f, 34f), 0f, $"N {x}");
+            }
+
+            // West / east airside.
+            for (var z = -18; z <= 32; z += 4)
+            {
+                PlaceBay(new Vector3(-44f, 0f, z + 2f), 90f, $"W {z}");
+                PlaceBay(new Vector3(44f, 0f, z + 2f), 90f, $"E {z}");
+            }
+
+            // South above dunes (gap at runway strip).
+            for (var x = -40; x <= 40; x += 4)
+            {
+                if (x >= -12 && x <= 12)
+                    continue;
+                PlaceBay(new Vector3(x + 2f, 0f, -20f), 0f, $"S {x}");
+            }
+
+            PlacePart("fence_corner", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner NW");
+            PlacePart("fence_corner", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner NE");
+            PlacePart("fence_corner", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner SW");
+            PlacePart("fence_corner", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner SE");
+
+            // Vehicle gate at access road.
+            PlacePart("gate_post", new Vector3(23f, 0f, 34f), Quaternion.identity, post, "Gate post L");
+            PlacePart("gate_post", new Vector3(29f, 0f, 34f), Quaternion.identity, post, "Gate post R");
+            PlacePart("gate_vehicle_leaf_l", new Vector3(24.2f, 0f, 35.6f), Quaternion.Euler(0f, 12f, 0f), yellow, "Gate leaf L");
+            PlacePart("gate_vehicle_leaf_r", new Vector3(27.8f, 0f, 35.6f), Quaternion.Euler(0f, -12f, 0f), yellow, "Gate leaf R");
+            PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron L");
+            PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron R");
+            PlacePart("gate_sign", new Vector3(26f, 0f, 34.2f), Quaternion.identity, AirsideTheme.SafetyYellow, "Gate sign");
+            PlacePart("gate_sign_frame", new Vector3(26f, 0f, 34.15f), Quaternion.identity, post, "Gate sign frame");
+            PlacePart("gate_post_light", new Vector3(23f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light L");
+            PlacePart("gate_post_light", new Vector3(29f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light R");
+            PlacePart("gate_latch", new Vector3(26f, 0f, 35.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
+            PlacePart("gate_stop", new Vector3(23.1f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
+            PlacePart("gate_stop", new Vector3(28.9f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
+
+            return placed >= 20;
+        }
+
         private static void BuildPerimeterFence()
         {
+            // Batch F3 PRP-002 — modular fence/gate kit; dense CreateBlock ribbon remains fallback.
+            if (TryBuildPerimeterFenceFromKit())
+                return;
+
             var post = new Color(0.55f, 0.56f, 0.58f);
             var rail = new Color(0.72f, 0.74f, 0.76f);
             var mesh = new Color(0.62f, 0.64f, 0.66f);
@@ -5580,10 +5662,51 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(2.5f, 1.2f));
             CreateBlock("Terminal entrance frame", new Vector3(26f, 1.6f, 29.5f), new Vector3(3.2f, 2.8f, 0.18f), steel);
             CreateBlock("Terminal doors", new Vector3(26f, 1.45f, 29.35f), new Vector3(2.6f, 2.4f, 0.08f), new Color(0.22f, 0.28f, 0.32f));
-            CreateBlock("Terminal bench", new Vector3(21f, 0.35f, 31.6f), new Vector3(2.4f, 0.35f, 0.55f), new Color(0.4f, 0.32f, 0.22f));
-            CreateBlock("Terminal planter", new Vector3(31.5f, 0.35f, 31.8f), new Vector3(1.4f, 0.5f, 1.0f), AirsideTheme.Concrete);
-            CreateBlock("Terminal planter scrub", new Vector3(31.5f, 0.85f, 31.8f), new Vector3(1.1f, 0.55f, 0.7f), Shade(AirsideTheme.Eucalyptus, 0.85f));
             CreateBlock("Terminal canopy glow", new Vector3(26f, 3.35f, 31.2f), new Vector3(12f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
+
+            // Batch F3 PRP-003 — prefer forecourt kit for bench/planter/bollards/sign; blocks remain fallback.
+            if (!TryPlaceForecourtFromKit())
+            {
+                CreateBlock("Terminal bench", new Vector3(21f, 0.35f, 31.6f), new Vector3(2.4f, 0.35f, 0.55f), new Color(0.4f, 0.32f, 0.22f));
+                CreateBlock("Terminal planter", new Vector3(31.5f, 0.35f, 31.8f), new Vector3(1.4f, 0.5f, 1.0f), AirsideTheme.Concrete);
+                CreateBlock("Terminal planter scrub", new Vector3(31.5f, 0.85f, 31.8f), new Vector3(1.1f, 0.55f, 0.7f), Shade(AirsideTheme.Eucalyptus, 0.85f));
+            }
+        }
+
+        /// <summary>Batch F3 PRP-003 — kerbs, bollards, planter, bench, parking sign.</summary>
+        private static bool TryPlaceForecourtFromKit()
+        {
+            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return false;
+
+            var wood = new Color(0.4f, 0.32f, 0.22f);
+            var steel = new Color(0.45f, 0.46f, 0.48f);
+            var placed = 0;
+            void Place(string mesh, Vector3 pos, Color color, string name)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, Quaternion.identity, color, out var part))
+                    return;
+                part.name = name;
+                placed++;
+            }
+
+            Place("bench_seat", new Vector3(21f, 0f, 31.6f), wood, "Terminal bench");
+            Place("bench_back", new Vector3(21f, 0f, 31.6f), Shade(wood, 0.9f), "Terminal bench back");
+            Place("bench_leg_l", new Vector3(21f, 0f, 31.6f), steel, "Terminal bench leg L");
+            Place("bench_leg_r", new Vector3(21f, 0f, 31.6f), steel, "Terminal bench leg R");
+            Place("planter", new Vector3(31.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter");
+            Place("planter_soil", new Vector3(31.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil");
+            Place("planter_scrub", new Vector3(31.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub");
+            Place("bollard", new Vector3(23.5f, 0f, 33.2f), steel, "Drop-off bollard L");
+            Place("bollard", new Vector3(28.5f, 0f, 33.2f), steel, "Drop-off bollard R");
+            Place("bollard_cap", new Vector3(23.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap L");
+            Place("bollard_cap", new Vector3(28.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap R");
+            Place("kerb_straight", new Vector3(26f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb");
+            Place("trolley_rail", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley rail");
+            Place("trolley_post_l", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post L");
+            Place("trolley_post_r", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post R");
+            return placed >= 6;
         }
 
         private static void BuildVegetation()
@@ -5730,6 +5853,9 @@ namespace Airside.Presentation
 
         private static void PlaceShrubClump(Vector3 basePosition, float scale)
         {
+            if (TryPlaceScrubFromKit(basePosition, scale))
+                return;
+
             // Multi-sphere scrub clump so fence belts read as bumpy KI olive, not props.
             var colorA = Shade(AirsideTheme.DryGrass, 0.85f);
             var colorB = Shade(AirsideTheme.Eucalyptus, 0.72f);
@@ -5746,6 +5872,51 @@ namespace Airside.Presentation
                 new Vector3(0.65f * scale, 0.4f * scale, 0.6f * scale), Shade(colorB, 0.88f), "Shrub E");
         }
 
+        /// <summary>Batch F3 VEG-002 — place authored scrub cluster; sphere clumps remain fallback.</summary>
+        private static bool TryPlaceScrubFromKit(Vector3 basePosition, float scale)
+        {
+            var kit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return false;
+
+            var variants = new[] { "scrub_a", "scrub_b", "scrub_c", "scrub_d", "scrub_e" };
+            var prefix = variants[Math.Abs(basePosition.GetHashCode()) % variants.Length];
+            var yaw = (basePosition.x * 23f + basePosition.z * 11f) % 360f;
+            var root = new GameObject($"Scrub {prefix}").transform;
+            root.position = basePosition;
+            root.rotation = Quaternion.Euler(0f, yaw, 0f);
+            root.localScale = Vector3.one * scale;
+
+            var dry = Shade(AirsideTheme.DryGrass, 0.85f);
+            var euc = Shade(AirsideTheme.Eucalyptus, 0.72f);
+            var placed = 0;
+            void Place(string mesh, Color color)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                    return;
+                part.SetParent(root, false);
+                part.localPosition = Vector3.zero;
+                part.localRotation = Quaternion.identity;
+                part.name = mesh;
+                placed++;
+            }
+
+            Place($"{prefix}_core", dry);
+            Place($"{prefix}_side", euc);
+            Place($"{prefix}_side_b", Shade(dry, 0.9f));
+            Place($"{prefix}_tuft", Shade(euc, 0.88f));
+            if (Math.Abs(basePosition.GetHashCode()) % 5 == 0)
+                Place("rock_a", new Color(0.45f, 0.4f, 0.32f));
+
+            if (placed < 2)
+            {
+                Object.Destroy(root.gameObject);
+                return false;
+            }
+
+            return true;
+        }
+
         private static void PlaceShrubSphere(Vector3 position, Vector3 scale, Color color, string name)
         {
             var bush = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -5759,6 +5930,9 @@ namespace Airside.Presentation
 
         private static void PlaceTree(Vector3 basePosition, float scale)
         {
+            if (TryPlaceTreeFromKit(basePosition, scale))
+                return;
+
             // Eucalyptus clump: tall thin trunk + staggered canopies + bark rings (REF overview).
             var yaw = (basePosition.x * 17f + basePosition.z * 13f) % 360f;
             var lean = ((basePosition.x + basePosition.z) % 9f) - 4f;
@@ -5810,6 +5984,56 @@ namespace Airside.Presentation
                 new Vector3(0.95f * scale, 0.75f * scale, 0.9f * scale), Shade(canopyColorB, 0.92f), "Tree canopy E");
         }
 
+        /// <summary>Batch F3 VEG-001 — place authored eucalyptus silhouette; primitives remain fallback.</summary>
+        private static bool TryPlaceTreeFromKit(Vector3 basePosition, float scale)
+        {
+            var kit = PreferArtKit("Models/Environment/mdl_eucalyptus_kit_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return false;
+
+            var variants = new[] { "tree_a", "tree_b", "tree_c" };
+            var prefix = variants[Math.Abs(basePosition.GetHashCode()) % variants.Length];
+            var yaw = (basePosition.x * 17f + basePosition.z * 13f) % 360f;
+            var lean = ((basePosition.x + basePosition.z) % 9f) - 4f;
+            var root = new GameObject($"Eucalyptus {prefix}").transform;
+            root.position = basePosition;
+            root.rotation = Quaternion.Euler(lean * 0.35f, yaw, lean * 0.2f);
+            root.localScale = Vector3.one * scale;
+
+            var bark = new Color(0.32f, 0.24f, 0.15f);
+            var canopyA = Shade(AirsideTheme.Eucalyptus, 0.9f);
+            var canopyB = Shade(AirsideTheme.Eucalyptus, 0.78f);
+            var placed = 0;
+            void Place(string mesh, Color color)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
+                    return;
+                part.SetParent(root, false);
+                part.localPosition = Vector3.zero;
+                part.localRotation = Quaternion.identity;
+                part.name = mesh.Replace($"{prefix}_", "Tree ");
+                placed++;
+            }
+
+            Place($"{prefix}_trunk", bark);
+            Place($"{prefix}_flare", Shade(bark, 0.85f));
+            Place($"{prefix}_bark_low", new Color(0.38f, 0.28f, 0.16f));
+            Place($"{prefix}_bark_mid", new Color(0.36f, 0.26f, 0.15f));
+            Place($"{prefix}_fork", Shade(bark, 0.9f));
+            Place($"{prefix}_canopy", canopyA);
+            Place($"{prefix}_canopy_b", canopyB);
+            Place($"{prefix}_canopy_c", Shade(canopyA, 0.85f));
+            Place($"{prefix}_canopy_d", Shade(canopyB, 0.92f));
+
+            if (placed < 4)
+            {
+                Object.Destroy(root.gameObject);
+                return false;
+            }
+
+            return true;
+        }
+
         private static void PlaceTreeCanopy(Vector3 position, Vector3 scale, Color color, string name)
         {
             var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -5821,8 +6045,40 @@ namespace Airside.Presentation
                 color, AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
+        /// <summary>
+        /// Batch F3 WLD-004 — soft hill/dune accents outside operational geometry.
+        /// Does not replace runway/apron/stand code-owned surfaces.
+        /// </summary>
+        private static void TryPlaceContextTerrainAccents()
+        {
+            var kit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
+                return;
+
+            void Place(string mesh, Vector3 pos, Quaternion rot, Color color, string name, float scale = 1f)
+            {
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, rot, color, out var part, localScale: Vector3.one * scale))
+                    return;
+                part.name = name;
+            }
+
+            var euc = Shade(AirsideTheme.Eucalyptus, 0.45f);
+            var dry = Shade(AirsideTheme.DryGrass, 0.55f);
+            var sand = Shade(AirsideTheme.Sand, 0.75f);
+            Place("hill_a", new Vector3(-85f, 0f, 68f), Quaternion.identity, euc, "Context hill NW", 2.2f);
+            Place("hill_b", new Vector3(90f, 0f, 62f), Quaternion.Euler(0f, 25f, 0f), dry, "Context hill NE", 2.0f);
+            Place("hill_c", new Vector3(-95f, 0f, 8f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill W", 1.8f);
+            Place("hill_a", new Vector3(100f, 0f, 4f), Quaternion.Euler(0f, -30f, 0f), dry, "Context hill E", 1.7f);
+            Place("dune_a", new Vector3(-40f, 0f, -52f), Quaternion.identity, sand, "Context dune SW", 1.6f);
+            Place("dune_b", new Vector3(35f, 0f, -50f), Quaternion.Euler(0f, 15f, 0f), sand, "Context dune SE", 1.5f);
+            Place("berm", new Vector3(0f, 0f, -42f), Quaternion.identity, Shade(sand, 0.9f), "Context coast berm", 2.5f);
+        }
+
         private static void BuildDistantHills()
         {
+            // Batch F3 WLD-004 — authored hill/dune accents; textured slabs remain for far horizon.
+            TryPlaceContextTerrainAccents();
+
             // Textured + segmented so the horizon is not four flat unlit slabs (0025 item 3).
             CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 3f));

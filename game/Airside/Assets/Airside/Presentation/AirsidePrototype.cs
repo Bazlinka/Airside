@@ -224,7 +224,8 @@ namespace Airside.Presentation
                         _session.StartPassengerServicesResearch();
                 },
                 onBeginOperations: () => DismissOpeningBriefing(),
-                onResetAirport: () => ResetToNewAirport());
+                onResetAirport: () => ResetToNewAirport(),
+                onContinueAway: () => { _showAwaySummary = false; });
             _canvasHudActive = _canvasHud.IsActive;
         }
 
@@ -274,21 +275,47 @@ namespace Airside.Presentation
             if (!_canvasHudActive || _canvasHud == null)
                 return;
 
-            // Away summary / insolvency stay IMGUI full-screen for now.
-            if (_showAwaySummary || _simulation.IsInsolvent)
+            _canvasHud.SetVisible(true);
+
+            string awayBody = null;
+            if (_showAwaySummary)
             {
-                _canvasHud.SetVisible(false);
-                return;
+                var summary = _session.LastAwaySummary;
+                var note = summary.RecoveredPreviousSave
+                    ? "Recovered the previous safe copy."
+                    : summary.ClockMovedBackwards
+                        ? "Device clock moved backwards; no time was added."
+                        : $"{_simulation.Location.Name} · {_simulation.Location.Region}";
+                awayBody =
+                    $"Airport operated for {FormatDuration(summary.AwaySeconds)}\n" +
+                    $"Flights completed: {summary.FlightsCompleted}\n" +
+                    $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}\n" +
+                    $"Route income: ${summary.RouteIncome:N0}\n" +
+                    $"Delay + running costs: ${summary.DelayCost + summary.OperatingCost:N0}\n" +
+                    $"Reputation: {summary.ReputationChange:+0;-0;0}  (now {_simulation.Reputation.Score})\n\n" +
+                    note;
             }
 
-            _canvasHud.SetVisible(true);
-            _canvasHud.SyncOverlays(
-                showBriefing: _showOpeningBriefing,
-                showPause: _paused && !_showOpeningBriefing,
-                locationName: _simulation.Location.Name,
-                firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds);
+            string insolvencyBody = null;
+            if (_simulation.IsInsolvent)
+            {
+                insolvencyBody =
+                    $"Cash stayed negative across {AirportEconomy.InsolvencyConsecutiveDays} consecutive day closes. Operations have stopped; commands are refused.\n\n" +
+                    $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}\n" +
+                    $"{_simulation.Location.Name} · {_simulation.Location.Region}";
+            }
 
-            if (_showOpeningBriefing)
+            _canvasHud.SyncOverlays(
+                showBriefing: _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent,
+                showPause: _paused && !_showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent,
+                showAway: _showAwaySummary && !_simulation.IsInsolvent,
+                showInsolvency: _simulation.IsInsolvent,
+                locationName: _simulation.Location.Name,
+                firstOfferAfterSeconds: AirportRoutes.FirstOfferAfterSeconds,
+                awayBody: awayBody,
+                insolvencyBody: insolvencyBody);
+
+            if (_showOpeningBriefing || _showAwaySummary || _simulation.IsInsolvent)
                 return;
 
             SyncCanvasLeftPanel();
@@ -1990,11 +2017,11 @@ namespace Airside.Presentation
                     DrawPauseOverlay(scale, panel, title, caution, small, button);
                 if (_showOpeningBriefing)
                     DrawOpeningBriefing(scale, panel, title, detail, small, button);
+                if (_showAwaySummary)
+                    DrawAwaySummary(scale, panel, title, detail, small, button);
+                if (_simulation.IsInsolvent)
+                    DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed, button);
             }
-            if (_showAwaySummary)
-                DrawAwaySummary(scale, panel, title, detail, small, button);
-            if (_simulation.IsInsolvent)
-                DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed, button);
             GUI.matrix = previousMatrix;
         }
 

@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (prefab loader + wet mats + Canvas overlays)
-- **Branch / working tree:** `cursor/art-pipeline-materials-overlays-ddad`
-- **Do this next:** Merge art pipeline scaffold + wet variants + Canvas pause/briefing; Bailey drop first prefabs
-- **In progress / half-done:** ArtPresentationLoader + Addressables package; wet ApplyWetness; Canvas briefing/pause
-- **Watch out for:** Addressables package resolves on Mac Unity open; Resources prefab keys = glTF basenames
-- **Open questions for Bailey:** which kit to import as first real prefab (terminal vs turboprop)?
-- **Visual assets:** pipeline drop folder at `Assets/Resources/Airside/Prefabs/`
+- **Last updated:** 2026-09-07 by Cursor (Canvas away + insolvency)
+- **Branch / working tree:** `cursor/canvas-away-insolvency-ddad`
+- **Do this next:** Merge Canvas away-summary + insolvency overlays; Bailey Play soak full Canvas HUD
+- **In progress / half-done:** welcome-back and insolvency cards on Canvas; IMGUI gated
+- **Watch out for:** Space/Enter dismiss paths for away summary still via keyboard
+- **Open questions for Bailey:** none
+- **Visual assets:** full-screen overlays now Canvas (briefing/pause/away/insolvency)
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -122,6 +122,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS,
    let it import StreamingAssets / new glTF kits, then Play.
-2. Confirm Canvas pause/briefing overlays, wet-apron materials in rain, terrain berms.
+2. Confirm full Canvas HUD including welcome-back and insolvency overlays.
 3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2)
    matching a glTF basename, or authored PBR maps. No new economy systems; no Companion/CloudKit.

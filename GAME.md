@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (keep-going: Batch D merged + touchdown/HUD polish)
-- **Branch / working tree:** `cursor/playable-polish-round2-38b9` (Batch D already on `main` via #37)
-- **Do this next:** Bailey `git pull` + Unity Play soak. Merge round-2 polish when ready.
-- **In progress / half-done:** round-2 touchdown chirp + income icon.
+- **Last updated:** 2026-09-07 by Cursor (keep-going session — Batch D + polish on `main`)
+- **Branch / working tree:** `main` (PRs #35, #37, #38, #39 landed)
+- **Do this next:** Bailey `git pull origin main` then Unity Play soak (C/E/WLD/D + tips + traffic pulse).
+- **In progress / half-done:** none; open docs PRs #36 (conflicts) and #34 (env draft).
 - **Watch out for:** fleet corridor invariants (0006–0009). Art **0022**. Research **0023**.
-- **Open questions for Bailey:** none.
-- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified still pending
+- **Open questions for Bailey:** none — Play when ready.
+- **Visual assets:** Batch A–C + D(runtime) + E + WLD on `main`; Play Verified pending
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Unity Play soak** (Bailey): Batch C models, WLD, Batch E HUD, Batch D alive feel,
-   dual commercials, insolvency, first-session tips.
-2. Optional later: replace runtime Batch D with real Unity .anim/.prefab assets.
+1. **Unity Play soak** (Bailey): `git pull`, then verify Batch C/E/WLD/D, tips, touchdown,
+   traffic hold-short pulse, dual commercials, insolvency.
+2. Optional later: real Unity .anim/.prefab Batch D assets; resolve plan PR #36 conflicts.
 3. No unapproved economy systems. Keep the Mac first-playable focused.

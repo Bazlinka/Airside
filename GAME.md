@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (denser runway edge + REIL)
-- **Branch / working tree:** `cursor/runway-edge-pointlights-ddad`
-- **Do this next:** Merge this PR; Bailey Play soak denser edge ribbon + REIL blink at dusk
-- **In progress / half-done:** Batch C v04 on main; runway light density this PR; authored FBX still open
+- **Last updated:** 2026-09-07 by Cursor (landside parked-car prefab)
+- **Branch / working tree:** `cursor/landside-parking-cars-ddad`
+- **Do this next:** Merge this PR; Bailey Play soak car-park + drop-off cars; next greybox density or service-vehicle prefabs
+- **In progress / half-done:** 14 Resources prefabs on this PR; authored FBX + Editor Addressables still open
 - **Watch out for:** more PointLights — Mac Play perf; Editor Addressables + authored FBX still open
 - **Open questions for Bailey:** authored turboprop/terminal FBX next, or keep greybox density?
-- **Visual assets:** Batch C v04; denser edge/REIL; 13 Resources prefabs; Toolkit HUD
+- **Visual assets:** Batch C v04; denser edge/REIL; `mdl_parked_car_v01`; Toolkit HUD
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →

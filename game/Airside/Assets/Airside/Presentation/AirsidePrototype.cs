@@ -4109,12 +4109,12 @@ namespace Airside.Presentation
                 var slot = i % 4;
                 var x = 42f + slot * 3.6f;
                 var z = 43.2f + row * 4.2f;
-                PlaceParkedCar($"Parked car {i}", new Vector3(x, 0.45f, z), 90f, carColors[i]);
+                PlaceParkedCar($"Parked car {i}", new Vector3(x, 0f, z), 90f, carColors[i]);
             }
 
             // Kerbside drop-off on the access road.
-            PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0.45f, 36f), 0f, carColors[2]);
-            PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0.45f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
+            PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0f, 36f), 0f, carColors[2]);
+            PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
 
             // Landside furniture: luggage trolley cluster + bench near terminal doors.
             CreateBlock("Luggage trolley A", new Vector3(24f, 0.45f, 31.5f), new Vector3(0.9f, 0.7f, 0.55f), new Color(0.7f, 0.72f, 0.75f));
@@ -4135,19 +4135,50 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Decision 0025 items 1+3 — Resources landside parked car with procedural fallback.
+        /// </summary>
         private static void PlaceParkedCar(string name, Vector3 position, float yawDegrees, Color body)
         {
-            var root = new GameObject(name).transform;
+            Transform root;
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_parked_car_v01", out var prefabRoot))
+            {
+                prefabRoot.name = name;
+                root = prefabRoot;
+                TintParkedCarBody(root, body);
+            }
+            else
+            {
+                root = new GameObject(name).transform;
+                ParentBlock(root, $"{name} body", new Vector3(0f, 0.45f, 0f), new Vector3(1.7f, 0.55f, 3.6f), body);
+                ParentBlock(root, $"{name} roof", new Vector3(0f, 0.9f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), Shade(body, 0.85f));
+                ParentBlock(root, $"{name} window", new Vector3(0f, 1.0f, -0.1f), new Vector3(1.45f, 0.28f, 1.5f), new Color(0.2f, 0.35f, 0.45f));
+                var wheel = new Color(0.12f, 0.12f, 0.13f);
+                ParentBlock(root, $"{name} wheel FL", new Vector3(-0.7f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+                ParentBlock(root, $"{name} wheel FR", new Vector3(0.7f, 0.17f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+                ParentBlock(root, $"{name} wheel RL", new Vector3(-0.7f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+                ParentBlock(root, $"{name} wheel RR", new Vector3(0.7f, 0.17f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+            }
+
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
-            ParentBlock(root, $"{name} body", Vector3.zero, new Vector3(1.7f, 0.55f, 3.6f), body);
-            ParentBlock(root, $"{name} cabin", new Vector3(0f, 0.45f, -0.15f), new Vector3(1.55f, 0.5f, 1.8f), Shade(body, 0.85f));
-            ParentBlock(root, $"{name} window", new Vector3(0f, 0.55f, -0.1f), new Vector3(1.45f, 0.28f, 1.5f), new Color(0.2f, 0.35f, 0.45f));
-            var wheel = new Color(0.12f, 0.12f, 0.13f);
-            ParentBlock(root, $"{name} wheel FL", new Vector3(-0.7f, -0.28f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-            ParentBlock(root, $"{name} wheel FR", new Vector3(0.7f, -0.28f, 1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-            ParentBlock(root, $"{name} wheel RL", new Vector3(-0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
-            ParentBlock(root, $"{name} wheel RR", new Vector3(0.7f, -0.28f, -1.1f), new Vector3(0.28f, 0.28f, 0.35f), wheel);
+        }
+
+        private static void TintParkedCarBody(Transform root, Color body)
+        {
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+                var n = renderer.gameObject.name.ToLowerInvariant();
+                if (n.Contains("wheel") || n.Contains("window") || n.Contains("headlight") || n.Contains("stripe"))
+                    continue;
+                if (n.Contains("body") || n.Contains("roof") || n.Contains("bumper"))
+                {
+                    var color = n.Contains("roof") ? Shade(body, 0.85f) : body;
+                    renderer.material.color = color;
+                }
+            }
         }
 
         private static void BuildPerimeterFence()

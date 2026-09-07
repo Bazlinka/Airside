@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Landside parked-car Resources prefab (0025 items 1+3).** `mdl_parked_car_v01`
+  fills car-park bays and kerbside drop-off (tinted body colours; Addressables key
+  auto-registered). Presentation only.
+
 - **Denser runway edge lights + REIL blink (0025 items 3+5).** Edge PointLights every
   8 m, more taxi centreline lamps, REIL flashers at both thresholds, and a second
   hold-short pair. Presentation only.

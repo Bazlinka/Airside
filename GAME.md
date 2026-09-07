@@ -1,16 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 15)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 16; stopping per Bailey)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
-  Keep pushing first-playable visual polish (standing goal). Mac Play verify remaining.
-- **In progress / half-done:** none
+  Standing goal continues later: Mac Play verify premium miniature read; more polish if needed.
+- **In progress / half-done:** none — tip 16 shipped; session stopped on request
 - **Watch for / assumptions:**
-  - Lighting kit: edge Points every 16 m; skip z=9 taxi densify; edge/taxi fixtures stepped wider
-  - Wet kit thins puddle carpet; PRP-003 thins access paint / zebra / service lane lines
-  - Tips 13–14: props/cars/CHR/rain thin, window PointLight cap, overview 44 m / 48°
+  - Tip 16: Toolkit primary panels light chrome; one silhouette belt loader; flood/edge/taxi/obst
+    silhouette fixtures; ALS 5 stations when kit; FOV init 48°; dollies×2; coast Hz centralized
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge stack when happy; continue polish
+- **Open question for Bailey:** none — merge stack when happy; resume polish after Mac Play look
 
 ---
 

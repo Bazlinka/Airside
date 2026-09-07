@@ -48,7 +48,11 @@ change it describes.
   light chrome; overview framing ~44 m / 48° toward terminal; safety props
   thinned when kits present; softer night bloom + warmer dusk fill/midtones;
   lighting kit thins edge Points + taxi densify; wet kit thins puddles; PRP-003
-  thins access/service paint. Presentation only — simulation unchanged.
+  thins access/service paint; Toolkit status/ops/offer light chrome (UI-PNL-001)
+  with Runway Ink body text; one silhouette belt loader when service kit present;
+  flood/edge/taxi/obst silhouette fixtures; ALS 5 stations when lighting kit;
+  overview FOV init 48°; dollies×2 with props kit; coast yaw/pitch/roll Hz
+  centralized. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

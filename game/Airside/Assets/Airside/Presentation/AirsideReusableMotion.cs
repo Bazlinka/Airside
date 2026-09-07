@@ -57,7 +57,11 @@ namespace Airside.Presentation
         public const float BirdOrbitHz = 0.035f;
         public const float BirdFlapHz = 1.6f;
         public const float CoastBobHz = 0.85f;
+        public const float CoastYawHz = 0.35f;
+        public const float CoastPitchHz = 0.7f;
+        public const float CoastRollHz = 0.55f;
         public const float FoamPulseHz = 1.6f;
+        public const float FoamAlphaHz = 1.4f;
         public const float FloodFlickerHz = 0.33f;
         public const float StarTwinkleHz = 1.7f;
         // UI / chrome accent pulse

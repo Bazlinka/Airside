@@ -236,7 +236,8 @@ namespace Airside.Presentation
         private void BuildLeftPanel()
         {
             // REF-004: turnaround / flight card sits bottom-left; ops owns top-left.
-            _leftPanel = MakePanel("Status panel", 360f);
+            // UI-PNL-001 light chrome — dark ink on warm off-white (matches economy/speed strips).
+            _leftPanel = MakePanel("Status panel", 360f, lightChrome: true);
             _leftPanel.style.left = 22;
             _leftPanel.style.bottom = 22;
             _leftPanel.style.maxHeight = 460;
@@ -249,29 +250,18 @@ namespace Airside.Presentation
             _leftPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
             _leftPanel.style.borderTopWidth = 2;
             _leftPanel.style.borderTopColor = new Color(
-                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.55f);
 
-            var wordmark = AirsideTheme.WordmarkLight;
-            if (wordmark != null)
-            {
-                _brandImage = new VisualElement { name = "Wordmark" };
-                _brandImage.pickingMode = PickingMode.Ignore;
-                _brandImage.style.height = 36;
-                _brandImage.style.marginBottom = 4;
-                _brandImage.style.backgroundImage = new StyleBackground(wordmark);
-                _brandImage.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
-                _leftPanel.Add(_brandImage);
-            }
-            else
-            {
-                _brandLabel = MakePanelLabel("Brand", 20, FontStyle.Bold);
-                _brandLabel.text = "AIRSIDE";
-                _brandLabel.style.marginBottom = 4;
-                _leftPanel.Add(_brandLabel);
-            }
+            // Light chrome: text brand (WordmarkLight is for dark panels).
+            _brandLabel = MakePanelLabel("Brand", 20, FontStyle.Bold, inkOnLight: true);
+            _brandLabel.text = "AIRSIDE";
+            _brandLabel.style.marginBottom = 4;
+            _brandLabel.style.color = AirsideTheme.RunwayInk;
+            _leftPanel.Add(_brandLabel);
 
             _locationText = AddLeftLine(_leftPanel, "Location", 13, FontStyle.Normal);
-            _locationText.style.color = AirsideTheme.OpenSky;
+            _locationText.style.color = new Color(
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.95f);
             _flightText = AddLeftLine(_leftPanel, "Flight", 16, FontStyle.Bold);
 
             _phaseRow = new VisualElement { name = "Phase row" };
@@ -281,8 +271,9 @@ namespace Airside.Presentation
             _phaseRow.style.marginBottom = 2;
             _phaseIcon = MakeIconSlot("Phase icon", 20);
             _phaseRow.Add(_phaseIcon);
-            _phaseText = MakePanelLabel("Phase", 14, FontStyle.Normal);
-            _phaseText.style.color = AirsideTheme.OpenSky;
+            _phaseText = MakePanelLabel("Phase", 14, FontStyle.Normal, inkOnLight: true);
+            _phaseText.style.color = new Color(
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.95f);
             _phaseText.style.marginLeft = 8;
             _phaseRow.Add(_phaseText);
             _leftPanel.Add(_phaseRow);
@@ -294,7 +285,7 @@ namespace Airside.Presentation
             _clockRow.style.marginBottom = 2;
             _weatherIcon = MakeIconSlot("Weather icon", 18);
             _clockRow.Add(_weatherIcon);
-            _clockText = MakePanelLabel("Clock", 12, FontStyle.Normal);
+            _clockText = MakePanelLabel("Clock", 12, FontStyle.Normal, inkOnLight: true);
             _clockText.style.marginLeft = 8;
             _clockText.style.whiteSpace = WhiteSpace.Normal;
             _clockRow.Add(_clockText);
@@ -306,7 +297,7 @@ namespace Airside.Presentation
             _turnaroundBlock = new VisualElement { name = "Turnaround" };
             _turnaroundBlock.style.marginTop = 4;
             _turnaroundBlock.style.marginBottom = 4;
-            _turnaroundText = MakePanelLabel("Tasks", 11, FontStyle.Normal);
+            _turnaroundText = MakePanelLabel("Tasks", 11, FontStyle.Normal, inkOnLight: true);
             _turnaroundText.style.whiteSpace = WhiteSpace.Normal;
             _turnaroundText.style.display = DisplayStyle.None;
             _turnaroundBlock.Add(_turnaroundText);
@@ -352,16 +343,17 @@ namespace Airside.Presentation
             _leftPanel.Add(_researchButton);
 
             _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
-            _coachText.style.color = AirsideTheme.OpenSky;
+            _coachText.style.color = AirsideTheme.CoastalBlue;
             _coachText.style.whiteSpace = WhiteSpace.Normal;
             _controlsText = AddLeftLine(_leftPanel, "Controls", 11, FontStyle.Normal);
-            _controlsText.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.7f);
+            _controlsText.style.color = new Color(
+                AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.62f);
             _controlsText.style.whiteSpace = WhiteSpace.Normal;
             _controlsText.style.display = DisplayStyle.None;
 
             _waitRow = new VisualElement { name = "Wait row" };
             _waitRow.style.marginTop = 6;
-            _waitLabel = MakePanelLabel("Wait label", 12, FontStyle.Normal);
+            _waitLabel = MakePanelLabel("Wait label", 12, FontStyle.Normal, inkOnLight: true);
             _waitRow.Add(_waitLabel);
             var waitTrack = MakeProgressTrack("Wait track");
             _waitFill = waitTrack.Q<VisualElement>("Fill");
@@ -512,7 +504,7 @@ namespace Airside.Presentation
 
         private void BuildOfferPanel()
         {
-            _offerPanel = MakePanel("Offer panel", 340f);
+            _offerPanel = MakePanel("Offer panel", 340f, lightChrome: true);
             _offerPanel.style.top = 22;
             _offerPanel.style.right = 22;
             _offerPanel.style.minHeight = 156;
@@ -536,19 +528,19 @@ namespace Airside.Presentation
             _routeIcon = MakeIconSlot("Route icon", 18);
             _routeIcon.style.marginRight = 8;
             offerHeader.Add(_routeIcon);
-            _offerTitle = MakePanelLabel("Offer title", 16, FontStyle.Bold);
+            _offerTitle = MakePanelLabel("Offer title", 16, FontStyle.Bold, inkOnLight: true);
             _offerTitle.style.flexGrow = 1;
             offerHeader.Add(_offerTitle);
             _offerPanel.Add(offerHeader);
 
-            _offerBody = MakePanelLabel("Offer body", 14, FontStyle.Normal);
+            _offerBody = MakePanelLabel("Offer body", 14, FontStyle.Normal, inkOnLight: true);
             _offerBody.style.marginLeft = 14;
             _offerBody.style.marginRight = 14;
             _offerBody.style.marginTop = 8;
             _offerBody.style.whiteSpace = WhiteSpace.Normal;
             _offerPanel.Add(_offerBody);
 
-            _offerStatus = MakePanelLabel("Offer status", 13, FontStyle.Normal);
+            _offerStatus = MakePanelLabel("Offer status", 13, FontStyle.Normal, inkOnLight: true);
             _offerStatus.style.marginLeft = 14;
             _offerStatus.style.marginRight = 14;
             _offerStatus.style.marginTop = 8;
@@ -578,7 +570,7 @@ namespace Airside.Presentation
         private void BuildOpsPanel()
         {
             // REF-004: OPERATIONS card owns top-left (status/turnaround sits bottom-left).
-            _opsPanel = MakePanel("Ops panel", 340f);
+            _opsPanel = MakePanel("Ops panel", 340f, lightChrome: true);
             _opsPanel.style.left = 22;
             _opsPanel.style.top = 22;
             _opsPanel.pickingMode = PickingMode.Ignore;
@@ -587,38 +579,41 @@ namespace Airside.Presentation
             _opsPanel.style.borderLeftColor = AirsideTheme.CoastalBlue;
             _opsPanel.style.borderTopWidth = 2;
             _opsPanel.style.borderTopColor = new Color(
-                AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.55f);
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.55f);
 
-            var title = MakePanelLabel("Ops title", 16, FontStyle.Bold);
+            var title = MakePanelLabel("Ops title", 16, FontStyle.Bold, inkOnLight: true);
             title.text = "OPERATIONS";
-            title.style.color = AirsideTheme.OpenSky;
+            title.style.color = AirsideTheme.CoastalBlue;
             title.style.marginLeft = 14;
             title.style.marginTop = 12;
             title.style.marginRight = 14;
             _opsPanel.Add(title);
 
-            _opsSummary = MakePanelLabel("Ops summary", 12, FontStyle.Normal);
+            _opsSummary = MakePanelLabel("Ops summary", 12, FontStyle.Normal, inkOnLight: true);
             _opsSummary.style.marginLeft = 14;
             _opsSummary.style.marginRight = 14;
             _opsSummary.style.marginTop = 6;
             _opsSummary.style.whiteSpace = WhiteSpace.Normal;
-            _opsSummary.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.92f);
+            _opsSummary.style.color = new Color(
+                AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.92f);
             _opsPanel.Add(_opsSummary);
 
-            _metarText = MakePanelLabel("Metar", 11, FontStyle.Normal);
+            _metarText = MakePanelLabel("Metar", 11, FontStyle.Normal, inkOnLight: true);
             _metarText.style.marginLeft = 14;
             _metarText.style.marginRight = 14;
             _metarText.style.marginTop = 4;
-            _metarText.style.color = new Color(AirsideTheme.OpenSky.r, AirsideTheme.OpenSky.g, AirsideTheme.OpenSky.b, 0.9f);
+            _metarText.style.color = new Color(
+                AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.9f);
             _opsPanel.Add(_metarText);
 
-            _opsBody = MakePanelLabel("Ops body", 12, FontStyle.Normal);
+            _opsBody = MakePanelLabel("Ops body", 12, FontStyle.Normal, inkOnLight: true);
             _opsBody.style.marginLeft = 14;
             _opsBody.style.marginRight = 14;
             _opsBody.style.marginTop = 8;
             _opsBody.style.marginBottom = 8;
             _opsBody.style.whiteSpace = WhiteSpace.Normal;
-            _opsBody.style.color = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.88f);
+            _opsBody.style.color = new Color(
+                AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.88f);
             _opsPanel.Add(_opsBody);
 
             _reportBlock = new VisualElement { name = "Daily report" };
@@ -916,7 +911,7 @@ namespace Airside.Presentation
 
         private static Label AddLeftLine(VisualElement parent, string name, int fontSize, FontStyle style)
         {
-            var label = MakePanelLabel(name, fontSize, style);
+            var label = MakePanelLabel(name, fontSize, style, inkOnLight: true);
             label.style.marginTop = 2;
             label.style.marginBottom = 2;
             label.style.whiteSpace = WhiteSpace.Normal;
@@ -1036,6 +1031,20 @@ namespace Airside.Presentation
             label.style.unityFontStyleAndWeight = style;
             label.style.unityTextAlign = TextAnchor.UpperLeft;
             return label;
+        }
+
+        /// <summary>
+        /// Map dark-panel Cloud body ink to Runway Ink when primary Toolkit cards use light chrome.
+        /// Signal colours (green/yellow/red) pass through unchanged.
+        /// </summary>
+        private static Color OnLightChrome(Color color)
+        {
+            var cloud = AirsideTheme.Cloud;
+            if (Mathf.Abs(color.r - cloud.r) < 0.04f
+                && Mathf.Abs(color.g - cloud.g) < 0.04f
+                && Mathf.Abs(color.b - cloud.b) < 0.04f)
+                return AirsideTheme.RunwayInk;
+            return color;
         }
 
         private static Button MakeButton(string label, Color background, float width)
@@ -1235,11 +1244,11 @@ namespace Airside.Presentation
             _flightText.text = flightLine ?? string.Empty;
             _phaseText.text = phaseLine ?? string.Empty;
             _clockText.text = clockLine ?? string.Empty;
-            _clockText.style.color = clockColor;
+            _clockText.style.color = OnLightChrome(clockColor);
             _cashText.text = cashLine ?? string.Empty;
-            _cashText.style.color = cashColor;
+            _cashText.style.color = OnLightChrome(cashColor);
             _financeText.text = financeLine ?? string.Empty;
-            _financeText.style.color = financeColor;
+            _financeText.style.color = OnLightChrome(financeColor);
             if (_speedText != null)
             {
                 // Prefer a calm speed readout; fall back to the controls hint string.
@@ -1280,9 +1289,9 @@ namespace Airside.Presentation
             }
 
             _scheduleText.text = scheduleLine ?? string.Empty;
-            _scheduleText.style.color = scheduleColor;
+            _scheduleText.style.color = OnLightChrome(scheduleColor);
             _staffingText.text = staffingLine ?? string.Empty;
-            _staffingText.style.color = staffingColor;
+            _staffingText.style.color = OnLightChrome(staffingColor);
 
             _earlyHintText.style.display = earlySession ? DisplayStyle.Flex : DisplayStyle.None;
             if (earlySession)
@@ -1331,7 +1340,7 @@ namespace Airside.Presentation
             }
 
             _coachText.text = coachLine ?? string.Empty;
-            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.OpenSky;
+            _coachText.style.color = coachUrgent ? AirsideTheme.SafetyYellow : AirsideTheme.CoastalBlue;
             // REF-004 calm chrome: coach only when urgent; otherwise flight card stays sparse.
             _coachText.style.display = coachUrgent && !string.IsNullOrEmpty(coachLine)
                 ? DisplayStyle.Flex
@@ -1521,10 +1530,10 @@ namespace Airside.Presentation
             }
 
             _offerTitle.text = title ?? string.Empty;
-            _offerTitle.style.color = firstDecision ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _offerTitle.style.color = firstDecision ? AirsideTheme.SafetyYellow : AirsideTheme.RunwayInk;
             _offerBody.text = body ?? string.Empty;
             _offerStatus.text = status ?? string.Empty;
-            _offerStatus.style.color = statusCaution ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
+            _offerStatus.style.color = statusCaution ? AirsideTheme.SafetyYellow : AirsideTheme.RunwayInk;
             _acceptButton.SetEnabled(canAccept);
             _acceptButton.text = string.IsNullOrEmpty(acceptLabel) ? "Accept route" : acceptLabel;
             _offerAccent.style.display = firstDecision ? DisplayStyle.Flex : DisplayStyle.None;

@@ -96,7 +96,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// UI-PNL-001 light nine-slice for secondary chrome (economy strip / speed chip).
+        /// UI-PNL-001 light nine-slice for Toolkit chrome (status / ops / offer / economy / speed).
         /// Falls back to a soft Cloud fill when the art file is missing.
         /// </summary>
         public static Texture2D PanelBackgroundLight

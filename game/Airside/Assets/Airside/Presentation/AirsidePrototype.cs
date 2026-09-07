@@ -3531,7 +3531,7 @@ namespace Airside.Presentation
                 camera = new GameObject("Main Camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
             // Match overview framing (architectural miniature, decision 0022 / post-F polish).
-            camera.fieldOfView = 50f;
+            camera.fieldOfView = 48f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -5936,10 +5936,14 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
             // Reuse edge/taxi/obst lighting kit parts so stations read authored, not toy cubes.
+            // Kit path: fewer stations + silhouette fixtures so approach reads lit, not mesh soup.
+            var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
+            var stationCount = hasLightingKit ? 5 : 8;
+            var stationStep = hasLightingKit ? 7f : 5f;
             var anyKitStation = false;
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < stationCount; i++)
             {
-                var x = -40f - i * 5f;
+                var x = -40f - i * stationStep;
                 var origin = new Vector3(x, 0f, 0f);
                 var kitStation = false;
                 void AlsPart(string mesh, Color color)
@@ -5950,18 +5954,25 @@ namespace Airside.Presentation
 
                 AlsPart("edge_base", stem);
                 AlsPart("edge_stem", stem);
-                AlsPart("edge_collar", Shade(stem, 1.1f));
-                AlsPart("edge_gasket", new Color(0.2f, 0.21f, 0.22f));
                 AlsPart("edge_lens", bar);
-                AlsPart("edge_glare", new Color(1f, 0.97f, 0.88f));
-                AlsPart("edge_reflector", new Color(0.9f, 0.92f, 0.94f));
+                if (!hasLightingKit)
+                {
+                    AlsPart("edge_collar", Shade(stem, 1.1f));
+                    AlsPart("edge_gasket", new Color(0.2f, 0.21f, 0.22f));
+                    AlsPart("edge_glare", new Color(1f, 0.97f, 0.88f));
+                    AlsPart("edge_reflector", new Color(0.9f, 0.92f, 0.94f));
+                }
+
                 if (i % 2 == 0)
                 {
                     AlsPart("taxi_base", stem);
                     AlsPart("taxi_stem", stem);
                     AlsPart("taxi_lens", bar);
-                    AlsPart("taxi_collar", Shade(stem, 1.05f));
-                    AlsPart("taxi_reflector", new Color(0.9f, 0.92f, 0.94f));
+                    if (!hasLightingKit)
+                    {
+                        AlsPart("taxi_collar", Shade(stem, 1.05f));
+                        AlsPart("taxi_reflector", new Color(0.9f, 0.92f, 0.94f));
+                    }
                 }
 
                 if (!kitStation)
@@ -7179,12 +7190,12 @@ namespace Airside.Presentation
                 if (boat == null)
                     continue;
                 var bob = Mathf.Sin(t * AirsideReusableMotion.CoastBobHz + i * 1.4f) * 0.08f;
-                var yawSway = Mathf.Sin(t * 0.35f + i) * 2.2f;
+                var yawSway = Mathf.Sin(t * AirsideReusableMotion.CoastYawHz + i) * 2.2f;
                 boat.position = basePos + new Vector3(0f, bob, 0f);
                 boat.rotation = Quaternion.Euler(
-                    Mathf.Sin(t * 0.7f + i) * 2.5f,
+                    Mathf.Sin(t * AirsideReusableMotion.CoastPitchHz + i) * 2.5f,
                     baseYaw + yawSway,
-                    Mathf.Cos(t * 0.55f + i * 0.8f) * 3f);
+                    Mathf.Cos(t * AirsideReusableMotion.CoastRollHz + i * 0.8f) * 3f);
             }
 
             if (_coastFoam != null)
@@ -7197,7 +7208,7 @@ namespace Airside.Presentation
                 if (renderer != null)
                 {
                     var c = renderer.material.color;
-                    c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * 1.4f));
+                    c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * AirsideReusableMotion.FoamAlphaHz));
                     SetRendererColor(renderer, c);
                 }
             }
@@ -9239,13 +9250,10 @@ namespace Airside.Presentation
 
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)
         {
+            // Kit silhouette: base + stem + lens only (skip collar/gasket/glare/reflector soup).
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_stem", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_collar", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_gasket", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_glare", position, Quaternion.identity, new Color(1f, 1f, 0.9f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_reflector", position, Quaternion.identity, new Color(0.85f, 0.88f, 0.9f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_lens", position, Quaternion.identity, color, out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Runway edge", position + new Vector3(0f, 0.05f, 0f), new Vector3(0.25f, 0.1f, 0.25f), color);
@@ -9255,11 +9263,7 @@ namespace Airside.Presentation
         {
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_collar", position, Quaternion.identity, new Color(0.38f, 0.4f, 0.42f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_gasket", position, Quaternion.identity, new Color(0.18f, 0.2f, 0.22f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_glare", position, Quaternion.identity, new Color(0.55f, 0.75f, 1f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_reflector", position, Quaternion.identity, new Color(0.7f, 0.82f, 1f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Taxi light", position + new Vector3(0f, 0.18f, 0f), new Vector3(0.18f, 0.35f, 0.18f), color);
@@ -9269,12 +9273,7 @@ namespace Airside.Presentation
         {
             if (ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_guard", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_lens", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_ring", position, Quaternion.identity, new Color(0.9f, 0.4f, 0.15f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_beacon_ring", position, Quaternion.identity, new Color(0.95f, 0.45f, 0.12f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_cap", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_cable", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_lens", position, Quaternion.identity, color, out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", position, Quaternion.identity, color, out _))
                 CreateBlock(fallbackName, position + new Vector3(0f, 0.2f, 0f), new Vector3(0.22f, 0.22f, 0.22f), color);
@@ -9282,38 +9281,21 @@ namespace Airside.Presentation
 
         private static void PlaceFloodMast(string kit, Vector3 position, Color color)
         {
-            var placed = false;
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_pole", position, Quaternion.identity, color, out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_brace", position, Quaternion.identity, Shade(color, 0.9f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_brace_b", position, Quaternion.identity, Shade(color, 0.88f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_ladder", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_guy", position, Quaternion.identity, new Color(0.32f, 0.33f, 0.35f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_b", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_c", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base_bolt_d", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_junction", position, Quaternion.identity, new Color(0.28f, 0.3f, 0.32f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_cable_tray", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_transformer", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.38f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm_brace", position, Quaternion.identity, Shade(color, 0.85f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_platform", position, Quaternion.identity, Shade(color, 0.82f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_handrail", position, Quaternion.identity, new Color(0.55f, 0.56f, 0.58f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm_b", position, Quaternion.identity, Shade(color, 0.85f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head_b", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head_c", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_b", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_c", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp_d", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor_b", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
-            placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor_c", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
-            if (!placed)
-                ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _);
+            // Kit path: mast silhouette only — SpotLights in BuildApronLights still own night pools.
+            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_pole", position, Quaternion.identity, color, out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _)
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _))
+                return;
+
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _))
+            {
+                CreateBlock("Flood pole", position + new Vector3(0f, 4f, 0f), new Vector3(0.25f, 8f, 0.25f), color);
+                CreateBlock("Flood head", position + new Vector3(0f, 8.1f, 0f), new Vector3(1.2f, 0.35f, 0.55f), new Color(0.25f, 0.26f, 0.28f));
+            }
         }
 
         private static void PlaceWorldProps()
@@ -9372,30 +9354,34 @@ namespace Airside.Presentation
                 PlaceSignBoard(kit, new Vector3(-18f, 0f, 16f), 90f);
             }
 
+            // Hero dolly pair when props kit is dense; greybox keeps the fuller apron stack.
             PlaceBaggageDolly(kit, new Vector3(30f, 0f, 22f));
             PlaceBaggageDolly(kit, new Vector3(32.2f, 0f, 22f));
-            PlaceBaggageDolly(kit, new Vector3(28f, 0f, 19.5f));
             if (!hasPropsKit)
             {
+                PlaceBaggageDolly(kit, new Vector3(28f, 0f, 19.5f));
                 PlaceBaggageDolly(kit, new Vector3(34f, 0f, 19.5f));
                 PlaceBaggageDolly(kit, new Vector3(31f, 0f, 17.2f));
                 PlaceBaggageDolly(kit, new Vector3(33.5f, 0f, 17.2f));
             }
 
             // Belt loaders live in the service kit, not the props kit (0025 wiring bug).
+            // One authored hero loader when the kit is present; second only on greybox.
             var serviceKit = PreferArtKit(
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
-            PlaceBeltLoader(serviceKit, new Vector3(12.5f, 0f, 21.5f), 200f);
-            PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f);
+            var hasServiceKit = !string.IsNullOrEmpty(serviceKit) && ArtGltfLoader.HasKit(serviceKit);
+            PlaceBeltLoader(serviceKit, new Vector3(12.5f, 0f, 21.5f), 200f, silhouetteOnly: hasServiceKit);
+            if (!hasServiceKit)
+                PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f, silhouetteOnly: false);
 
             BuildApronSafetyProps();
             BuildFuelFarm();
             BuildParkedGaAircraft();
         }
 
-        private static void PlaceBeltLoader(string kit, Vector3 position, float yaw)
+        private static void PlaceBeltLoader(string kit, Vector3 position, float yaw, bool silhouetteOnly = false)
         {
             var rot = Quaternion.Euler(0f, yaw, 0f);
             var yellow = new Color(0.85f, 0.7f, 0.2f);
@@ -9410,27 +9396,31 @@ namespace Airside.Presentation
 
             Place("belt_loader_chassis", yellow);
             Place("belt_loader_cab", Shade(yellow, 0.85f));
-            Place("belt_loader_cab_glass", new Color(0.35f, 0.55f, 0.65f));
-            Place("belt_loader_stripe", new Color(0.15f, 0.16f, 0.18f));
             Place("belt_loader_boom", new Color(0.55f, 0.56f, 0.58f));
             Place("belt_loader_belt", new Color(0.25f, 0.25f, 0.26f));
-            Place("belt_loader_rail_l", dark);
-            Place("belt_loader_rail_r", dark);
-            Place("belt_loader_hinge", dark);
-            Place("belt_loader_support", dark);
-            Place("belt_loader_roller_1", new Color(0.35f, 0.36f, 0.38f));
-            Place("belt_loader_roller_2", new Color(0.35f, 0.36f, 0.38f));
-            Place("belt_loader_roller_3", new Color(0.35f, 0.36f, 0.38f));
-            Place("belt_loader_roller_4", new Color(0.35f, 0.36f, 0.38f));
-            Place("belt_loader_bumper", Shade(yellow, 0.7f));
             Place("belt_loader_wheel_fl", dark);
             Place("belt_loader_wheel_fr", dark);
             Place("belt_loader_wheel_rl", dark);
             Place("belt_loader_wheel_rr", dark);
-            Place("belt_loader_hub_fl", new Color(0.28f, 0.3f, 0.32f));
-            Place("belt_loader_hub_fr", new Color(0.28f, 0.3f, 0.32f));
-            Place("belt_loader_hitch", dark);
-            Place("belt_loader_light", new Color(0.95f, 0.9f, 0.6f));
+            if (!silhouetteOnly)
+            {
+                Place("belt_loader_cab_glass", new Color(0.35f, 0.55f, 0.65f));
+                Place("belt_loader_stripe", new Color(0.15f, 0.16f, 0.18f));
+                Place("belt_loader_rail_l", dark);
+                Place("belt_loader_rail_r", dark);
+                Place("belt_loader_hinge", dark);
+                Place("belt_loader_support", dark);
+                Place("belt_loader_roller_1", new Color(0.35f, 0.36f, 0.38f));
+                Place("belt_loader_roller_2", new Color(0.35f, 0.36f, 0.38f));
+                Place("belt_loader_roller_3", new Color(0.35f, 0.36f, 0.38f));
+                Place("belt_loader_roller_4", new Color(0.35f, 0.36f, 0.38f));
+                Place("belt_loader_bumper", Shade(yellow, 0.7f));
+                Place("belt_loader_hub_fl", new Color(0.28f, 0.3f, 0.32f));
+                Place("belt_loader_hub_fr", new Color(0.28f, 0.3f, 0.32f));
+                Place("belt_loader_hitch", dark);
+                Place("belt_loader_light", new Color(0.95f, 0.9f, 0.6f));
+            }
+
             if (!placed)
             {
                 CreateBlock("Belt loader body", position + new Vector3(0f, 0.4f, 0f), new Vector3(1.6f, 0.5f, 0.8f), yellow);

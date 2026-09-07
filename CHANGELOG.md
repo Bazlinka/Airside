@@ -14,7 +14,10 @@ change it describes.
   forecourt parking sign + kerbs from PRP-003; WLD-004 coast/paddock accents;
   landside flood-kit streetlights; taxi centreline + REIL kit fixtures;
   threshold side-stripe z-fight gate; aerodrome beacon + threshold lamps prefer
-  lighting kit. Presentation only — simulation unchanged.
+  lighting kit; gate terminal canopy / window-glow / hangar-bay densify when
+  kits already ship those parts; stand bay digits only via PlaceRunwayDigit at
+  stand centres; wire ANM wheel/tire RPM constants; sync URP `_BaseColor` on
+  contact shadows and night glow. Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

@@ -1,6 +1,6 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 2)
+- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 3)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
 - **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
   Keep pushing first-playable visual polish (standing goal).
@@ -16,6 +16,12 @@
   - Threshold side stripes only when kit sides miss (z-fight gate)
   - Cloud bands are multi-blob clusters (UpdateCloudDrift tints children)
   - Overview camera slightly tighter three-quarter (48 m / 52° FOV)
+  - Terminal landside canopy greybox gated when kit `canopy`/`canopy_soffit` present
+  - Window-glow cubes gated when kit `interior_glow_*` / glass present
+  - Hangar bay props gated when kit `workbench`/`tool_cabinet` present
+  - Stand bay digits only via `PlaceRunwayDigit` (kit bars) at stand Z
+  - GSE/aircraft tire spin uses `AirsideReusableMotion` wheel/tire rates
+  - Contact/ground shadow + night glow sync URP `_BaseColor` alpha
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none — merge stack when happy; continue polish
 

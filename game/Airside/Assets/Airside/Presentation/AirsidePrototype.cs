@@ -1507,7 +1507,7 @@ namespace Airside.Presentation
                 AircraftPhase.Pushback => 0.55f,
                 _ => 1f
             };
-            var degrees = Time.unscaledDeltaTime * 380f * speed;
+            var degrees = Time.unscaledDeltaTime * AirsideReusableMotion.AircraftTireRpmTaxi * speed;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -1760,9 +1760,7 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
             CreateCone(new Vector3(14.5f, 0.25f, 24.2f));
             CreateCone(new Vector3(14.5f, 0.25f, 27.8f));
-            CreateBlock("Stand number 3", new Vector3(14.2f, 0.09f, 26.4f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 3 mid", new Vector3(14.2f, 0.09f, 26f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 3 stem", new Vector3(14.55f, 0.09f, 25.7f), new Vector3(0.28f, 0.04f, 1.0f), Color.white);
+            // Digit paint comes from PlaceWorldMarkings / PlaceRunwayDigit (kit-prefer).
             _standThreeVisualBuilt = true;
             // Pad is created after the Awake wet collect — refresh so Stand 3 rains too.
             CollectWetSurfaces();
@@ -1803,8 +1801,11 @@ namespace Airside.Presentation
             if (!active && Vector3.Distance(vehicle.position, parkPosition) < 0.05f)
                 ResetServiceLoopParts(vehicle);
 
-            // Presentation-only: wheels roll while the vehicle is moving.
-            var degrees = travel * 120f + (active && travel > 0.001f ? Time.unscaledDeltaTime * 180f : 0f);
+            // Presentation-only: wheels roll while the vehicle is moving (ANM-VEH rates).
+            var spinRpm = active
+                ? AirsideReusableMotion.VehicleWheelRpmTaxi
+                : AirsideReusableMotion.VehicleWheelRpmService;
+            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
             if (degrees <= 0f)
                 return;
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
@@ -1831,7 +1832,7 @@ namespace Airside.Presentation
                 child.gameObject.SetActive(active);
                 if (!active)
                     continue;
-                var on = Mathf.FloorToInt(Time.unscaledTime * 3f) % 2 == 0;
+                var on = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
@@ -3799,7 +3800,11 @@ namespace Airside.Presentation
                          "interior_glow_l",
                          "interior_glow_r",
                          "interior_glow_mid",
-                         "interior_glow_desk"
+                         "interior_glow_desk",
+                         "interior_glow",
+                         "canopy_light_l",
+                         "canopy_light_r",
+                         "canopy_light_mid"
                      })
             {
                 var go = GameObject.Find(name);
@@ -3846,6 +3851,8 @@ namespace Airside.Presentation
                 color.a = 1f;
                 var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f) * flicker;
                 renderer.material.color = color;
+                if (renderer.material.HasProperty("_BaseColor"))
+                    renderer.material.SetColor("_BaseColor", color);
                 if (renderer.material.HasProperty("_EmissionColor"))
                 {
                     renderer.material.EnableKeyword("_EMISSION");
@@ -4428,13 +4435,19 @@ namespace Airside.Presentation
                     "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
                     "roof_panel", "roof_ridge", "roof_eave", "hvac"
                 });
-            // Warm interior spill at dusk/night (presentation only).
-            CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
+            // Warm interior spill at dusk/night — only when the terminal kit did not
+            // already ship interior glow meshes (avoid stacking cubes on authored glass).
+            if (GameObject.Find("interior_glow_l") == null
+                && GameObject.Find("interior_glow_r") == null
+                && GameObject.Find("interior_glow_mid") == null)
+            {
+                CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+                CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            }
+
+            if (GameObject.Find("landside_glass") == null && GameObject.Find("interior_glow_desk") == null)
+                CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             BuildTerminalLandsideCanopy();
-            CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
-            CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_hangar_small_authored_v01.gltf",
@@ -4507,7 +4520,16 @@ namespace Airside.Presentation
             // Sliding door slab always present (covers kit opening or fallback hangar).
             if (GameObject.Find("Hangar door") == null)
                 CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
-            BuildHangarBayInterior();
+            // Prefer hangar-kit bay props (workbench / tool cabinet) over greybox densify.
+            if (GameObject.Find("workbench") == null && GameObject.Find("tool_cabinet") == null)
+                BuildHangarBayInterior();
+            if (GameObject.Find("side_window") == null
+                && GameObject.Find("side_window_b") == null
+                && GameObject.Find("office_window") == null
+                && GameObject.Find("glass_pane") == null
+                && GameObject.Find("glass_pane_l") == null
+                && GameObject.Find("glass_pane_r") == null)
+                CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
                     "Models/Buildings/mdl_operations_shed_authored_v01.gltf",
@@ -4561,6 +4583,10 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(1.5f, 1.2f),
                 surfaceMeshNames: new[] { "shed_body", "porch", "roof", "cladding", "wall_rib", "girth" });
+            if (GameObject.Find("interior_glow") == null
+                && GameObject.Find("window_l") == null
+                && GameObject.Find("window_r") == null)
+                CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
 
             CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -4598,11 +4624,7 @@ namespace Airside.Presentation
 
             BuildStandMarking(17f, 14f, "Stand 1");
             BuildStandMarking(17f, 20f, "Stand 2");
-            // Simple painted stand digits (WLD-001 language; not real typography assets).
-            CreateBlock("Stand number 1", new Vector3(14.2f, 0.09f, 14f), new Vector3(0.35f, 0.04f, 1.2f), Color.white);
-            CreateBlock("Stand number 2 stem", new Vector3(14.2f, 0.09f, 20.35f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 2 mid", new Vector3(14.2f, 0.09f, 20f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
-            CreateBlock("Stand number 2 base", new Vector3(14.2f, 0.09f, 19.65f), new Vector3(0.9f, 0.04f, 0.28f), Color.white);
+            // Stand bay digits come from PlaceWorldMarkings / PlaceRunwayDigit (kit-prefer).
 
         }
 
@@ -5854,19 +5876,32 @@ namespace Airside.Presentation
             var steel = new Color(0.48f, 0.5f, 0.52f);
             var glass = new Color(0.18f, 0.42f, 0.55f);
             var soffit = new Color(0.62f, 0.64f, 0.66f);
-            CreateBlock("Terminal canopy slab", new Vector3(26f, 3.55f, 31.2f), new Vector3(16f, 0.18f, 4.2f), soffit);
-            CreateBlock("Terminal canopy edge", new Vector3(26f, 3.4f, 33.1f), new Vector3(16.2f, 0.22f, 0.25f), steel);
-            for (var i = 0; i < 5; i++)
+            // Terminal kits already carry canopy / landside glass — skip greybox densify.
+            var hasKitCanopy = GameObject.Find("canopy") != null
+                || GameObject.Find("canopy_soffit") != null
+                || GameObject.Find("canopy_beam") != null;
+            if (!hasKitCanopy)
             {
-                var x = 18.5f + i * 3.75f;
-                CreateBlock($"Terminal canopy post {i}", new Vector3(x, 1.7f, 32.6f), new Vector3(0.22f, 3.4f, 0.22f), steel);
-            }
+                CreateBlock("Terminal canopy slab", new Vector3(26f, 3.55f, 31.2f), new Vector3(16f, 0.18f, 4.2f), soffit);
+                CreateBlock("Terminal canopy edge", new Vector3(26f, 3.4f, 33.1f), new Vector3(16.2f, 0.22f, 0.25f), steel);
+                for (var i = 0; i < 5; i++)
+                {
+                    var x = 18.5f + i * 3.75f;
+                    CreateBlock($"Terminal canopy post {i}", new Vector3(x, 1.7f, 32.6f), new Vector3(0.22f, 3.4f, 0.22f), steel);
+                }
 
-            CreateBlock("Terminal landside glass", new Vector3(26f, 2.1f, 29.55f), new Vector3(14f, 2.6f, 0.1f), glass,
-                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(2.5f, 1.2f));
-            CreateBlock("Terminal entrance frame", new Vector3(26f, 1.6f, 29.5f), new Vector3(3.2f, 2.8f, 0.18f), steel);
-            CreateBlock("Terminal doors", new Vector3(26f, 1.45f, 29.35f), new Vector3(2.6f, 2.4f, 0.08f), new Color(0.22f, 0.28f, 0.32f));
-            CreateBlock("Terminal canopy glow", new Vector3(26f, 3.35f, 31.2f), new Vector3(12f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
+                CreateBlock("Terminal landside glass", new Vector3(26f, 2.1f, 29.55f), new Vector3(14f, 2.6f, 0.1f), glass,
+                    "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(2.5f, 1.2f));
+                CreateBlock("Terminal entrance frame", new Vector3(26f, 1.6f, 29.5f), new Vector3(3.2f, 2.8f, 0.18f), steel);
+                CreateBlock("Terminal doors", new Vector3(26f, 1.45f, 29.35f), new Vector3(2.6f, 2.4f, 0.08f), new Color(0.22f, 0.28f, 0.32f));
+                CreateBlock("Terminal canopy glow", new Vector3(26f, 3.35f, 31.2f), new Vector3(12f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
+            }
+            else if (GameObject.Find("canopy_light_l") == null
+                     && GameObject.Find("canopy_light_r") == null
+                     && GameObject.Find("canopy_light_mid") == null)
+            {
+                CreateBlock("Terminal canopy glow", new Vector3(26f, 3.35f, 31.2f), new Vector3(12f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
+            }
 
             // Batch F3 PRP-003 — prefer forecourt kit for bench/planter/bollards/sign; blocks remain fallback.
             if (!TryPlaceForecourtFromKit())
@@ -6628,9 +6663,10 @@ namespace Airside.Presentation
             Object.Destroy(shadow.GetComponent<Collider>());
             shadow.transform.position = position;
             shadow.transform.localScale = scale;
-            var material = AirsideMaterialLibrary.Create(
-                new Color(0.04f, 0.05f, 0.07f, alpha),
-                AirsideMaterialLibrary.SurfaceKind.Default);
+            var color = new Color(0.04f, 0.05f, 0.07f, alpha);
+            var material = AirsideMaterialLibrary.Create(color, AirsideMaterialLibrary.SurfaceKind.Default);
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
             shadow.GetComponent<Renderer>().material = material;
             shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             shadow.GetComponent<Renderer>().receiveShadows = false;
@@ -7699,6 +7735,8 @@ namespace Airside.Presentation
             // Softer contact so realtime URP shadows remain the primary read.
             color.a = Mathf.Lerp(0.28f, 0.04f, t);
             renderer.material.color = color;
+            if (renderer.material.HasProperty("_BaseColor"))
+                renderer.material.SetColor("_BaseColor", color);
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
 
@@ -8532,10 +8570,10 @@ namespace Airside.Presentation
                 if (!placedR)
                     CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
             }
-            // Stand bay numbers on the apron (readable from overview) — digits 1/3 were missing segments.
-            PlaceRunwayDigit('1', new Vector3(14f, 0.04f, 14f), yaw: 0f);
-            PlaceRunwayDigit('2', new Vector3(22f, 0.04f, 14f), yaw: 0f);
-            PlaceRunwayDigit('3', new Vector3(30f, 0.04f, 14f), yaw: 0f);
+            // Stand bay numbers on the apron (readable from overview) — kit digit bars preferred.
+            PlaceRunwayDigit('1', new Vector3(14.2f, 0.04f, 14f), yaw: 0f);
+            PlaceRunwayDigit('2', new Vector3(14.2f, 0.04f, 20f), yaw: 0f);
+            PlaceRunwayDigit('3', new Vector3(14.2f, 0.04f, 26f), yaw: 0f);
 
             var usedStandA = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "stand_stop_a", new Vector3(14f, 0.04f, 16.2f), Quaternion.identity,

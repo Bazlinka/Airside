@@ -35,6 +35,9 @@ namespace Airside.Presentation
         public const float VehicleWheelRpmTaxi = 180f;
         public const float VehicleWheelRpmService = 90f;
 
+        // ANM-AIR tire roll on ground phases (degrees/sec base before phase scale)
+        public const float AircraftTireRpmTaxi = 380f;
+
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
             AircraftPhase.Takeoff => PropRpmTakeoff,

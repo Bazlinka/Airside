@@ -31,6 +31,7 @@ namespace Airside.Presentation
         private Transform _touchdownSmoke;
         private Light _fuelFarmLight;
         private Light _arffBayLight;
+        private Renderer _arffLightbarRenderer;
         private Transform _skidMarkRoot;
         private Transform _taxiSprayRoot;
         private Light[] _windowLights;
@@ -3225,19 +3226,36 @@ namespace Airside.Presentation
                 }
             }
 
-            // ALS centreline / bar lamps west of threshold.
+            // ALS centreline / bar lamps — steady dusk base, sequential chase at night.
             if (_alsLights != null)
             {
-                var als = Mathf.Lerp(2.1f, 0.03f, daylight);
+                var alsBase = Mathf.Lerp(2.1f, 0.03f, daylight);
+                var nightChase = daylight < 0.42f;
+                var chase = Time.unscaledTime * 3.1f;
                 for (var i = 0; i < _alsLights.Length; i++)
                 {
                     var light = _alsLights[i];
                     if (light == null)
                         continue;
-                    light.intensity = als;
-                    light.enabled = als > 0.05f;
+                    if (!nightChase)
+                    {
+                        light.intensity = alsBase;
+                        light.enabled = alsBase > 0.05f;
+                        continue;
+                    }
+
+                    // Chase from far approach (high index) toward the threshold (index 0).
+                    var step = (_alsLights.Length - 1 - i) * 0.42f;
+                    var wave = Mathf.Repeat(chase - step, 2.4f);
+                    var pulse = wave < 0.4f
+                        ? Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(wave / 0.2f - 1f))
+                        : 0f;
+                    light.intensity = alsBase * (0.4f + 1.8f * pulse);
+                    light.enabled = true;
                 }
             }
+
+            UpdateArffLightbar(daylight);
 
             // Sparse runway-edge point lights so the strip reads as a lit ribbon at night.
             if (_runwayEdgeLights != null)
@@ -3374,6 +3392,42 @@ namespace Airside.Presentation
                 var bay = Mathf.Lerp(1.8f, 0.02f, daylight);
                 _arffBayLight.intensity = bay;
                 _arffBayLight.enabled = bay > 0.05f;
+            }
+        }
+
+        /// <summary>
+        /// Decision 0025 items 5+7 — ARFF lightbar blinks amber/red at dusk so the
+        /// rescue truck reads as active equipment, not a static prop.
+        /// </summary>
+        private void UpdateArffLightbar(float daylight)
+        {
+            if (_arffLightbarRenderer == null)
+            {
+                var truck = GameObject.Find("ARFF truck");
+                if (truck != null)
+                {
+                    foreach (var t in truck.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (t.name.IndexOf("lightbar", StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+                        _arffLightbarRenderer = t.GetComponent<Renderer>();
+                        break;
+                    }
+                }
+            }
+
+            if (_arffLightbarRenderer == null)
+                return;
+
+            var night = 1f - daylight;
+            var blink = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6.5f));
+            var amber = new Color(1f, 0.35f, 0.12f) * (0.15f + night * 1.8f * blink);
+            _arffLightbarRenderer.material.color = Color.Lerp(new Color(0.95f, 0.85f, 0.2f), amber, night);
+            if (_arffLightbarRenderer.material.HasProperty("_EmissionColor"))
+            {
+                _arffLightbarRenderer.material.EnableKeyword("_EMISSION");
+                _arffLightbarRenderer.material.SetColor("_EmissionColor", amber);
+                _arffLightbarRenderer.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             }
         }
 

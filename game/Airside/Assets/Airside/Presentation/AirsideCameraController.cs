@@ -1,14 +1,18 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Airside.Simulation;
 
 namespace Airside.Presentation
 {
+    /// <summary>
+    /// Overview orbit + follow camera. Decision 0025 first-playable: phase-aware
+    /// follow framing so taxi, approach, landing and takeoff each read differently.
+    /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
         private readonly Vector3 _overviewCenter = new(5f, 0f, 10f);
         private const float OverviewDistance = 52f;
-        private const float FollowDistanceGround = 22f;
-        private const float FollowDistanceAir = 34f;
+        private const float OverviewFov = 55f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
@@ -18,6 +22,10 @@ namespace Airside.Presentation
         private float _distance = OverviewDistance;
         private bool _following;
         private float _touchdownShake;
+        private AircraftPhase _followPhase = AircraftPhase.AtStand;
+        private float _followProgress;
+        private float _fov = OverviewFov;
+        private Camera _camera;
 
         public void SetFollowTarget(Transform target)
         {
@@ -40,6 +48,23 @@ namespace Airside.Presentation
             _followTarget = _followTargets[_followIndex];
         }
 
+        /// <summary>
+        /// Presentation-only: tell the follow camera which phase the tracked aircraft
+        /// is in so framing / FOV can lean into the beat.
+        /// </summary>
+        public void SetFollowPhase(AircraftPhase phase, float progress01)
+        {
+            _followPhase = phase;
+            _followProgress = Mathf.Clamp01(progress01);
+        }
+
+        private void Awake()
+        {
+            _camera = GetComponent<Camera>();
+            if (_camera != null)
+                _fov = _camera.fieldOfView;
+        }
+
         private void LateUpdate()
         {
             ReadInput();
@@ -56,20 +81,31 @@ namespace Airside.Presentation
                     ahead = Vector3.forward;
 
                 var altitude = Mathf.Max(0f, _followTarget.position.y);
-                var lookPoint = _followTarget.position
-                    + ahead * Mathf.Lerp(4.5f, 10f, Mathf.Clamp01(altitude / 12f))
-                    + Vector3.up * Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
-                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.8f));
+                var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude);
+                var lookHeight = LookHeightMetres(_followPhase, altitude);
+                var lookPoint = _followTarget.position + ahead * lookAhead + Vector3.up * lookHeight;
+                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 4.2f));
 
-                var followDistance = Mathf.Lerp(FollowDistanceGround, FollowDistanceAir, Mathf.Clamp01(altitude / 10f));
-                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2f));
+                var followDistance = FollowDistance(_followPhase, altitude, _followProgress);
+                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.4f));
 
                 // Ease yaw toward the aircraft heading without fighting player orbit.
-                var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + 28f;
-                _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.55f));
-                _pitch = Mathf.Lerp(_pitch, Mathf.Lerp(28f, 36f, Mathf.Clamp01(altitude / 10f)),
-                    1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
+                var yawBias = YawBiasDegrees(_followPhase);
+                var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
+                _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
+                var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
+                _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.85f));
+
+                var targetFov = FollowFov(_followPhase, _followProgress);
+                _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.6f));
             }
+            else
+            {
+                _fov = Mathf.Lerp(_fov, OverviewFov, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.2f));
+            }
+
+            if (_camera != null)
+                _camera.fieldOfView = _fov;
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             var shakeOffset = Vector3.zero;
@@ -85,6 +121,81 @@ namespace Airside.Presentation
 
             transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance + shakeOffset, rotation);
         }
+
+        private static float LookAheadMetres(AircraftPhase phase, float progress, float altitude)
+        {
+            var air = Mathf.Lerp(4.5f, 10f, Mathf.Clamp01(altitude / 12f));
+            return phase switch
+            {
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 3.2f,
+                AircraftPhase.AtStand => 1.5f,
+                AircraftPhase.Takeoff => Mathf.Lerp(5f, 12f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(8f, 14f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(10f, 4f, progress),
+                AircraftPhase.Departed => 12f,
+                _ => air
+            };
+        }
+
+        private static float LookHeightMetres(AircraftPhase phase, float altitude)
+        {
+            var air = Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
+            return phase switch
+            {
+                AircraftPhase.AtStand => 1.6f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 1.35f,
+                AircraftPhase.Landing => 1.1f,
+                AircraftPhase.Approach => 1.8f,
+                _ => air
+            };
+        }
+
+        private static float FollowDistance(AircraftPhase phase, float altitude, float progress)
+        {
+            var air = Mathf.Lerp(22f, 34f, Mathf.Clamp01(altitude / 10f));
+            return phase switch
+            {
+                AircraftPhase.AtStand => 16f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 18f,
+                AircraftPhase.Takeoff => Mathf.Lerp(20f, 36f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(30f, 38f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(28f, 18f, progress),
+                AircraftPhase.Departed => 38f,
+                _ => air
+            };
+        }
+
+        private static float FollowPitch(AircraftPhase phase, float altitude, float progress)
+        {
+            var air = Mathf.Lerp(28f, 36f, Mathf.Clamp01(altitude / 10f));
+            return phase switch
+            {
+                AircraftPhase.AtStand => 24f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 26f,
+                AircraftPhase.Takeoff => Mathf.Lerp(30f, 34f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(32f, 28f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(30f, 22f, progress),
+                _ => air
+            };
+        }
+
+        private static float YawBiasDegrees(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Takeoff => 42f,   // three-quarter chase
+            AircraftPhase.Approach => 22f,  // slightly rear-quarter
+            AircraftPhase.Landing => 18f,
+            AircraftPhase.AtStand => 55f,   // apron side angle
+            _ => 28f
+        };
+
+        private static float FollowFov(AircraftPhase phase, float progress) => phase switch
+        {
+            AircraftPhase.Approach => Mathf.Lerp(52f, 48f, progress),
+            AircraftPhase.Landing => Mathf.Lerp(50f, 54f, progress),
+            AircraftPhase.Takeoff => Mathf.Lerp(54f, 50f, progress),
+            AircraftPhase.AtStand => 52f,
+            _ => 54f
+        };
 
         private void ReadInput()
         {
@@ -127,7 +238,7 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.035f, 14f, 90f);
+                _distance = Mathf.Clamp(_distance - scroll * 0.035f, 12f, 90f);
         }
 
         private void CycleOrStartFollow()
@@ -166,5 +277,8 @@ namespace Airside.Presentation
         {
             _touchdownShake = 1f;
         }
+
+        public bool IsFollowing => _following;
+        public Transform FollowTarget => _followTarget;
     }
 }

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Phase-aware follow camera + fuel farm prefab + night windows (0025 items 1+5+7).**
+  Follow framing/FOV lean into taxi, stand, approach, landing and takeoff; Resources
+  prefab `mdl_fuel_farm_v01`; stronger terminal/hangar/ops window emission at dusk.
+  Presentation only.
+
 - **Sign/dolly/windsock prefabs + cabin glow + GSE headlights (0025 items 1+5+7).**
   Resources prefabs for airside sign, baggage dolly and windsock pole; denser apron
   placement; cabin/cockpit emissive at night/stand; fuel/baggage/bus/tug headlamp

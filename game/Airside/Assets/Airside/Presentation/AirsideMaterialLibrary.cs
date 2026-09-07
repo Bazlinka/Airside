@@ -120,20 +120,29 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
-            if (n.Contains("glass") || n.Contains("window") || n.Contains("cockpit") || n.Contains("cabin_windows"))
+            if (n.Contains("glass") || n.Contains("window") || n.Contains("mullion")
+                || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
-            if (n.Contains("propeller") || n.Contains("spinner") || n.Contains("gear") || n.Contains("nacelle")
-                || n.Contains("engine") || n.Contains("tank") || n.Contains("hose"))
+            if (n.Contains("propeller") || n.Contains("propblade") || n.Contains("spinner")
+                || n.Contains("gear") || n.Contains("nacelle") || n.Contains("engine")
+                || n.Contains("tank") || n.Contains("hose") || n.Contains("column")
+                || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
             if (n.Contains("fuselage") || n.Contains("nose") || n.Contains("wing") || n.Contains("tail")
-                || n.Contains("rudder") || n.Contains("door") || n.Contains("body") || n.Contains("cab"))
+                || n.Contains("rudder") || n.Contains("elevator") || n.Contains("flap")
+                || n.Contains("aileron") || n.Contains("cabindoor") || n.Contains("cabin door")
+                || n.Contains("cargo door") || n.Contains("body") || n.Contains("cab")
+                || n.Contains("bus_") || n.Equals("tug") || n.Contains("tug_"))
                 return SurfaceKind.AircraftSkin;
             if (n.Contains("roof") || n.Contains("corrugat") || n.Contains("hangar") || n.Contains("shed")
-                || n.Contains("buttress") || n.Contains("vent") || n.Contains("track"))
+                || n.Contains("buttress") || n.Contains("vent") || n.Contains("track")
+                || n.Contains("door_panel") || n.Contains("door_opening") || n.Contains("door_rib")
+                || n.Contains("door_track") || n.Contains("service_wing") || n.Contains("signage"))
                 return SurfaceKind.Metal;
-            if (n.Contains("terminal") || n.Contains("concrete") || n.Contains("apron") || n.Contains("canopy"))
+            if (n.Contains("terminal") || n.Contains("concrete") || n.Contains("apron")
+                || n.Contains("canopy") || n.Contains("end_cap") || n.Contains("entrance"))
                 return SurfaceKind.Concrete;
             return SurfaceKind.PaintedMetal;
         }

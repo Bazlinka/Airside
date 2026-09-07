@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Material binder fix for authored kits.** `AirsideRuntimeMaterialBinder` no
+  longer treats every name containing `cabin` as glass (CabinDoor was wrong);
+  fuselage/wing/tire kinds route correctly; InferFromMeshName covers authored
+  mullions, canopy posts, hangar door panels and vehicle tanks. Presentation only.
+
 - **Authored service vehicles (VEH-001…003).** Fuel truck (cylindrical tank), baggage
   tug train and apron bus ship as `*_authored_v01` FBX + glTF + Resources prefabs
   with PreferArtKit ahead of v04. Completes the Batch C first-playable model set

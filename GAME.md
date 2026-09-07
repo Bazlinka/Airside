@@ -12,7 +12,7 @@ next session can continue without seeing the previous conversation. Keep it shor
 
 - **Last updated:** 2026-09-07 by Cursor (authored Batch C set: aircraft, buildings, vehicles)
 - **Branch / working tree:** `cursor/authored-fbx-turboprop-terminal-8515` (PR #131)
-- **Do this next:** Continue 0025 — URP material library / lighting polish, or service-equipment kit. No new economy systems.
+- **Do this next:** Continue 0025 — lighting/probe polish, service-equipment kit, or wet/material tuning. No new economy systems.
 - **In progress / half-done:** Authored AIR-001 + BLD-001…003 + VEH-001…003: FBX + glTF + Resources Addressables keys.
 - **Watch out for:** Addressables missing `settings.json` log is still OK (Resources provider). More PointLights → Mac Play perf.
 - **Open questions for Bailey:** DCC-authored FBX replace later, or keep procedural authored kits rolling?

@@ -43,15 +43,23 @@ namespace Airside.Presentation
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("window") || n.Contains("glass") || n.Contains("cabin"))
+                else if (n.Contains("window") || n.Contains("glass") || n.Contains("mullion")
+                         || n.Equals("cockpit") || n.Contains("cabin window"))
                 {
                     color = new Color(0.18f, 0.35f, 0.48f, 1f);
                     kind = AirsideMaterialLibrary.SurfaceKind.Glass;
                 }
-                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("stripe"))
+                else if (n.Contains("wing") || n.Contains("tail") || n.Contains("fuselage")
+                         || n.Contains("nose") || n.Contains("rudder") || n.Contains("elevator")
+                         || n.Contains("flap") || n.Contains("aileron"))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.AircraftSkin;
+                }
+                else if (n.Contains("tire") || n.Contains("wheel"))
+                {
+                    color = stepColor;
+                    kind = AirsideMaterialLibrary.SurfaceKind.Rubber;
                 }
                 else
                 {

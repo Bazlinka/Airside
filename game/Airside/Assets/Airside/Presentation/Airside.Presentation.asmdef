@@ -8,7 +8,9 @@
     "Unity.InputSystem",
     "UnityEngine.UI",
     "Unity.RenderPipelines.Core.Runtime",
-    "Unity.RenderPipelines.Universal.Runtime"
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
   ],
   "autoReferenced": true
 }

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **First Resources prefab + Addressables try (0025 item 1).** `mdl_passenger_stairs_v01`
+  lands under `Resources/Airside/Prefabs/` with runtime Lit binder; loader probes
+  `airside-prefab/<key>` Addressables before glTF. Presentation only.
+
 - **Bird wing flaps (0025 item 7).** Coastal flock rebuilt as body + hinged wing quads
   (18 birds) with flap animation; denser orbit over the shore. Presentation only.
 

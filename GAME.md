@@ -10,13 +10,13 @@ This block is the first thing to read and the last thing to update. Any tool
 (Claude, Cursor, ChatGPT via a person) overwrites it when it stops work, so the
 next session can continue without seeing the previous conversation. Keep it short.
 
-- **Last updated:** 2026-09-07 by Cursor (bird wing flaps)
-- **Branch / working tree:** `cursor/bird-wing-flaps-ddad`
-- **Do this next:** Merge bird flaps; Bailey Play soak coastal flock silhouette
-- **In progress / half-done:** hinged wing birds (18) with flap animation
-- **Watch out for:** still greybox cubes — not authored bird meshes
-- **Open questions for Bailey:** first real prefab drop for terminal vs turboprop?
-- **Visual assets:** edge lights + umbras on main
+- **Last updated:** 2026-09-07 by Cursor (first Resources prefab + Addressables try)
+- **Branch / working tree:** `cursor/first-prefab-stairs-ddad`
+- **Do this next:** Merge first prefab; Bailey Play soak turnaround stairs; optionally overwrite with authored FBX
+- **In progress / half-done:** `mdl_passenger_stairs_v01.prefab` + Addressables key probe + material binder
+- **Watch out for:** stairs prefab is still greybox cubes — proof of pipeline, not final art
+- **Open questions for Bailey:** replace stairs prefab with authored mesh? terminal vs turboprop next?
+- **Visual assets:** first file under `Resources/Airside/Prefabs/`
 
 
 Full start-of-session and end-of-session checklists are in `AGENTS.md` →
@@ -120,7 +120,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play overview south.
-2. Confirm hinged bird wing flaps over the coast; dusk runway edge ribbon.
-3. Next code track: drop first Unity prefab into `Resources/Airside/Prefabs/` (0025 item 1–2).
+1. **Bailey `git pull origin main`** on the Mac, open `game/Airside` in Unity 6.3 LTS, Play a turnaround.
+2. Confirm passenger stairs load from `Resources/Airside/Prefabs/mdl_passenger_stairs_v01`
+   (greybox proof-of-pipeline); optionally overwrite with authored FBX of the same name.
+3. Next code track: authored prefab for terminal or turboprop; Addressables group when ready.
    No new economy systems; no Companion/CloudKit.

@@ -1,19 +1,22 @@
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 1–2 scaffold — production-facing art entry point.
-    /// Prefers Unity-imported prefabs under <c>Resources/Airside/Prefabs/</c>
-    /// (drop targets for Addressables / Prefab workflow), then falls back to the
-    /// interim StreamingAssets glTF kits via <see cref="ArtGltfLoader"/>.
-    /// Procedural cuboids remain the caller's last resort.
+    /// Decision 0025 item 1–2 — production-facing art entry point.
+    /// Prefers Unity-imported prefabs under <c>Resources/Airside/Prefabs/</c>,
+    /// then Addressables (when a catalog + key exist), then StreamingAssets glTF
+    /// via <see cref="ArtGltfLoader"/>. Procedural cuboids remain the caller's
+    /// last resort.
     /// </summary>
     public static class ArtPresentationLoader
     {
         public const string ResourcesPrefabRoot = "Airside/Prefabs";
+        public const string AddressablesKeyPrefix = "airside-prefab/";
 
         /// <summary>
         /// Stable prefab key from a kit path, e.g.
@@ -30,7 +33,9 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(prefabKey))
                 return false;
-            return Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}") != null;
+            if (Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}") != null)
+                return true;
+            return AddressablesKeyExists(prefabKey);
         }
 
         public static bool TryInstantiatePrefab(string prefabKey, out Transform root)
@@ -40,17 +45,19 @@ namespace Airside.Presentation
                 return false;
 
             var prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
-            if (prefab == null)
-                return false;
+            if (prefab != null)
+            {
+                var instance = UnityEngine.Object.Instantiate(prefab);
+                instance.name = prefabKey;
+                root = instance.transform;
+                return true;
+            }
 
-            var instance = UnityEngine.Object.Instantiate(prefab);
-            instance.name = prefabKey;
-            root = instance.transform;
-            return true;
+            return TryInstantiateAddressable(prefabKey, out root);
         }
 
         /// <summary>
-        /// Prefab first, then glTF kit. Returns false when neither source exists.
+        /// Prefab / Addressables first, then glTF kit. Returns false when neither source exists.
         /// </summary>
         public static bool TryInstantiate(
             string artRelativePath,
@@ -75,5 +82,55 @@ namespace Airside.Presentation
 
         public static bool HasPresentation(string artRelativePath) =>
             HasPrefab(PrefabKeyFromArtPath(artRelativePath)) || ArtGltfLoader.HasKit(artRelativePath);
+
+        private static bool TryInstantiateAddressable(string prefabKey, out Transform root)
+        {
+            root = null;
+            try
+            {
+                var key = AddressablesKeyPrefix + prefabKey;
+                if (!AddressablesKeyExists(prefabKey))
+                    return false;
+
+                var handle = Addressables.LoadAssetAsync<GameObject>(key);
+                var prefab = handle.WaitForCompletion();
+                if (handle.Status != AsyncOperationStatus.Succeeded || prefab == null)
+                {
+                    if (handle.IsValid())
+                        Addressables.Release(handle);
+                    return false;
+                }
+
+                var instance = UnityEngine.Object.Instantiate(prefab);
+                instance.name = prefabKey;
+                root = instance.transform;
+                // Keep the handle alive for the loaded asset; release with the instance if needed later.
+                return true;
+            }
+            catch (Exception)
+            {
+                // No catalog / key — Addressables is optional until Bailey builds groups.
+                return false;
+            }
+        }
+
+        private static bool AddressablesKeyExists(string prefabKey)
+        {
+            try
+            {
+                var key = AddressablesKeyPrefix + prefabKey;
+                foreach (var locator in Addressables.ResourceLocators)
+                {
+                    if (locator.Locate(key, typeof(GameObject), out _))
+                        return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return false;
+        }
     }
 }

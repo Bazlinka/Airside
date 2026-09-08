@@ -43,6 +43,7 @@ namespace Airside.Editor
             "Assets/Airside/Art/Models/Environment/mdl_kingscote_context_terrain_v01.fbx",
             "Assets/Airside/Art/Models/Props/mdl_airfield_fence_gate_kit_v02.fbx",
             "Assets/Airside/Art/Models/Props/mdl_airfield_fence_gate_kit_v01.fbx",
+            "Assets/Airside/Art/Models/Props/mdl_terminal_forecourt_kit_v02.fbx",
             "Assets/Airside/Art/Models/Props/mdl_terminal_forecourt_kit_v01.fbx",
             "Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx",
             "Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx",

@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Forecourt PRP-003 v02.** Prefer `mdl_terminal_forecourt_kit_v02` (18
+  meshes): slatted bench, nested trolley, rimmed planter, richer bollards/sign/
+  kerbs; placement densifies kerb_corner, mid bollard, second sign, west
+  planter; v01 remains fallback. Evidence: `scripts/test-domain.sh` 118/118;
+  Mac overview vs REF pending.
+
 - **Fence/gate PRP-002 v02.** Prefer `mdl_airfield_fence_gate_kit_v02` (24
   meshes): chain-link lattice bay, tubular rails/posts, frame+mesh gate leaves;
   PlaceBay densifies mid/bot rails, caps, brace; `gate_vehicle_rail` at vehicle

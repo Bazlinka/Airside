@@ -5758,7 +5758,9 @@ namespace Airside.Presentation
         private static void PlaceLuggageTrolley(string name, Vector3 position, float yawDegrees)
         {
             Transform root = null;
-            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Props/mdl_terminal_forecourt_kit_v02.gltf",
+                "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
             {
                 root = new GameObject(name).transform;
@@ -5807,7 +5809,9 @@ namespace Airside.Presentation
         private static void PlaceLandsideBench(string name, Vector3 position, float yawDegrees)
         {
             Transform root = null;
-            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Props/mdl_terminal_forecourt_kit_v02.gltf",
+                "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
             {
                 root = new GameObject(name).transform;
@@ -6421,7 +6425,9 @@ namespace Airside.Presentation
         /// <summary>Batch F3 PRP-003 — kerbs, bollards, planter, bench, parking sign.</summary>
         private static bool TryPlaceForecourtFromKit()
         {
-            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Props/mdl_terminal_forecourt_kit_v02.gltf",
+                "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 
@@ -6460,24 +6466,47 @@ namespace Airside.Presentation
                 placed++;
             }
 
+            // Extra mid-span bollards densify the drop-off line (same extract names).
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(26f, 0f, 33.2f), Quaternion.identity, steel, out var dropM))
+                Place("bollard", new Vector3(26f, 0f, 33.2f), steel, "Drop-off bollard M");
+            else
+            {
+                dropM.name = "Drop-off bollard M";
+                placed++;
+            }
+
             Place("bollard_cap", new Vector3(23.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap L");
+            Place("bollard_cap", new Vector3(26f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap M");
             Place("bollard_cap", new Vector3(28.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap R");
             Place("kerb_straight", new Vector3(26f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb");
+            Place("kerb_corner", new Vector3(23.2f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner L");
+            Place("kerb_corner", new Vector3(28.8f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner R");
             Place("trolley_rail", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley rail");
             Place("trolley_post_l", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post L");
             Place("trolley_post_r", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post R");
             Place("sign_post", new Vector3(39.5f, 0f, 40.5f), steel, "Parking sign post");
             Place("sign_face", new Vector3(39.5f, 0f, 40.5f), AirsideTheme.SafetyYellow, "Parking sign face");
             Place("sign_frame", new Vector3(39.5f, 0f, 40.5f), Shade(steel, 0.85f), "Parking sign frame");
+            // Second parking sign near access road.
+            Place("sign_post", new Vector3(44f, 0f, 36f), steel, "Access sign post");
+            Place("sign_face", new Vector3(44f, 0f, 36f), AirsideTheme.SafetyYellow, "Access sign face");
+            Place("sign_frame", new Vector3(44f, 0f, 36f), Shade(steel, 0.85f), "Access sign frame");
             Place("kerb_straight", new Vector3(48f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb N");
             Place("kerb_straight", new Vector3(48f, 0f, 39.8f), AirsideTheme.Concrete, "Car park kerb S");
+            Place("kerb_corner", new Vector3(42f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NW");
+            Place("kerb_corner", new Vector3(54f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NE");
+            Place("planter", new Vector3(18.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter W");
+            Place("planter_soil", new Vector3(18.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil W");
+            Place("planter_scrub", new Vector3(18.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub W");
             return placed >= 6;
         }
 
         /// <summary>Airside planter strip in front of terminal glass — PRP-003 parts.</summary>
         private static bool TryPlaceAirsidePlanterStrip()
         {
-            var kit = PreferArtKit("Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Props/mdl_terminal_forecourt_kit_v02.gltf",
+                "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 

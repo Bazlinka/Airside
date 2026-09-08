@@ -33,6 +33,12 @@
     compares/frame), item 9 (emit `material:` per mesh from the generators), item 10
     (replace the regex glTF parser). Plus ~9 per-frame `EnableKeyword("_EMISSION")`
     sites, and `door_frame_fwd` being a solid box that swallows `door_fwd`.
+  - `scripts/sync-art-streaming-assets.sh` starts with `rm -rf` on the whole
+    `StreamingAssets/Airside/Art` tree, which deletes the `.meta` files committed
+    in #141 along with the art. It currently looks harmless because Unity's Library
+    remembers path→GUID and restores them, but on a fresh clone or after clearing
+    Library it will mint 225 new GUIDs. It should delete art files and leave `.meta`
+    alone. It also left three empty `"<name> 2"` directories behind this run.
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** the high-wing vs mid-wing call above.
 

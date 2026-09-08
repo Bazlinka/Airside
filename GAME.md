@@ -1,32 +1,35 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Claude — kit vertex attributes on `feature/mesh-vertex-attributes`)
-- **Branch:** `feature/mesh-vertex-attributes`, branched from `feature/pin-midday-polish`
-- **Do next:** Bailey Mac Play review of both branches. `feature/pin-midday-polish`
-  still wants the review at `work/evidence/play-audit-2026-09-08/106-*.png`; this
-  branch then needs a Play look at the regenerated kits (smoothing and texel
-  density), since only the EditMode suite has run so far. Merge the polish branch
-  first — this one sits on top of it. Flip `DayCycle.PinMiddayForPolish` +
-  `Weather.PinClearForPolish` to `false` when night/weather work returns.
+- **Last updated:** 2026-09-08 (Claude — kit vertex attributes, merged with AIR-001 v06)
+- **Branch:** `feature/mesh-vertex-attributes` — `feature/pin-midday-polish` plus the
+  attribute work, with `origin/main` (v06, #145) merged in
+- **Do next:** Bailey Mac Play review. Three things stack here and none has had a
+  Play look yet: the midday polish, AIR-001 v06, and the regenerated kits
+  (smoothing, texel density, and v06 now carrying normals/UVs/tangents). Flip
+  `DayCycle.PinMiddayForPolish` + `Weather.PinClearForPolish` to `false` when
+  night/weather work returns.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - Midday + Clear still pinned for polish; days still advance
+  - v06 is the preferred aircraft; v05 and all older kits remain in the fallback chain
+  - ASCII FBX declares metre units (decision 0028) so Unity no longer imports at 1% scale
   - Fuselage winding fix, livery skip, flat-decal winding skip (`ArtGltfLoader`)
   - AircraftPartColor: white wings, teal fin/nacelles (REF-005); GPU Resident Drawer off
-  - Play 106: solid white+teal AIR-001; flat stand/runway decals OK; gear float /
-    stray fragments / dim grade / untextured sky blob still visible
-  - Kits now carry NORMAL/TEXCOORD_0/TANGENT from `scripts/mesh_attributes.py`.
-    UVs are in **metres**, so runtime tiling in `AirsideMaterialLibrary` now reads
+  - Kits now carry NORMAL/TEXCOORD_0/TANGENT from `scripts/mesh_attributes.py`, so
+    the `useTextures` guard from v06 no longer trips in practice — it stays as a
+    safety net for any mesh that reaches the renderer without UVs
+  - UVs are in **metres**, so runtime tiling in `AirsideMaterialLibrary` now reads
     as tiles-per-metre, not tiles-per-part — existing tiling values are unreviewed
-    against that change and may want a pass.
-  - The v01–v04 fallback kits are still POSITION-only: their generators keep the
-    old hard-coded `/workspace` paths, so they cannot be re-run here. Harmless —
-    the loader still derives attributes for them — but they will not match.
+    against that change and may want a pass
+  - `BuildAircraft` still applies the v05-derived `-0.82` ground offset to v06;
+    worth confirming the gear sits on the apron in Play
+  - The v01–v04 fallback kits are still POSITION-only and still declare the old FBX
+    unit scale: their generators keep the hard-coded `/workspace` paths, so they
+    cannot be re-run here. Harmless while they stay fallbacks, but they will not match.
   - Eight FBX models remain orphaned (no prefab or scene references them), so the
     vehicle/character/forecourt/fence `v05` prefabs are still Unity primitive stacks
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** merge the polish branch as-is, or more visual
-  polish later? And should the orphaned FBX pipeline be wired up or deleted?
+- **Open question for Bailey:** should the orphaned FBX pipeline be wired up or deleted?
 
 ---
 
@@ -102,7 +105,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-unity.sh`: 124/124 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
+- `scripts/test-unity.sh`: 126/126 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
 - Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
 - Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
   prefer authored kits with procedural fallbacks; operational geometry unchanged.
@@ -111,7 +114,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **visual polish** (#139) when ready.
+1. Review and merge **AIR-001 v06**.
 2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
    art fidelity) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.

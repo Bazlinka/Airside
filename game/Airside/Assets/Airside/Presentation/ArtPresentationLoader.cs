@@ -148,7 +148,11 @@ namespace Airside.Presentation
                 }
 
                 var color = new Color(0.61f, 0.64f, 0.63f);
-                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
+                var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
+                var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
+                // Shared — see ArtGltfLoader.CreateMeshObject.
+                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                    color, kind, useTextures: hasUsableUvs);
             }
         }
 

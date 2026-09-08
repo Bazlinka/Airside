@@ -44,7 +44,11 @@ def write_ascii_fbx(
         '        P: "FrontAxisSign", "int", "Integer", "",1',
         '        P: "CoordAxis", "int", "Integer", "",0',
         '        P: "CoordAxisSign", "int", "Integer", "",1',
-        '        P: "UnitScaleFactor", "double", "Number", "",1',
+        # FBX expresses this value in centimetres per authored unit. Airside
+        # geometry is authored in metres, so 100 prevents Unity from shrinking
+        # every imported kit to one percent of its intended size.
+        '        P: "UnitScaleFactor", "double", "Number", "",100',
+        '        P: "OriginalUnitScaleFactor", "double", "Number", "",100',
         "    }",
         "}",
         "Documents:  {",

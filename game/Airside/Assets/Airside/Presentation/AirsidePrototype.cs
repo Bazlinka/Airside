@@ -7458,6 +7458,7 @@ namespace Airside.Presentation
             // first so AircraftPartColor (REF-005 white wing / teal nacelle) always binds —
             // the Resources FBX bake can keep ModelImporter mats that read as toy blocks.
             var kitPath = PreferArtKit(
+                "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
                 "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
                 "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
                 "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",

@@ -236,15 +236,16 @@ namespace Airside.Presentation
             SurfaceKind kind = SurfaceKind.Default,
             Texture2D albedo = null,
             Vector2? tiling = null,
-            bool preferProcedural = false)
+            bool preferProcedural = false,
+            bool useTextures = true)
         {
-            var key = new SharedMaterialKey(color, kind, albedo, tiling, preferProcedural);
+            var key = new SharedMaterialKey(color, kind, albedo, tiling, preferProcedural, useTextures);
             // Play-mode exit destroys runtime materials while the static cache survives a
             // disabled domain reload, so a hit can be a destroyed object — rebuild those.
             if (SharedMaterials.TryGetValue(key, out var cached) && cached != null)
                 return cached;
 
-            var material = Create(color, kind, albedo, tiling, preferProcedural);
+            var material = Create(color, kind, albedo, tiling, preferProcedural, useTextures);
             SharedMaterials[key] = material;
             return material;
         }
@@ -257,8 +258,11 @@ namespace Airside.Presentation
             private readonly Vector2 _tiling;
             private readonly bool _hasTiling;
             private readonly bool _preferProcedural;
+            private readonly bool _useTextures;
 
-            public SharedMaterialKey(Color color, SurfaceKind kind, Texture2D albedo, Vector2? tiling, bool preferProcedural = false)
+            public SharedMaterialKey(
+                Color color, SurfaceKind kind, Texture2D albedo, Vector2? tiling,
+                bool preferProcedural = false, bool useTextures = true)
             {
                 _color = color;
                 _kind = kind;
@@ -266,6 +270,7 @@ namespace Airside.Presentation
                 _hasTiling = tiling.HasValue;
                 _tiling = tiling ?? Vector2.zero;
                 _preferProcedural = preferProcedural;
+                _useTextures = useTextures;
             }
 
             // Component-wise Equals, not == : Unity's Color and Vector2 equality operators
@@ -275,6 +280,7 @@ namespace Airside.Presentation
                 && _albedoId == other._albedoId
                 && _hasTiling == other._hasTiling
                 && _preferProcedural == other._preferProcedural
+                && _useTextures == other._useTextures
                 && _tiling.x.Equals(other._tiling.x)
                 && _tiling.y.Equals(other._tiling.y)
                 && _color.r.Equals(other._color.r)
@@ -299,6 +305,7 @@ namespace Airside.Presentation
                     hash = hash * 31 + _tiling.y.GetHashCode();
                     hash = hash * 31 + (_hasTiling ? 1 : 0);
                     hash = hash * 31 + (_preferProcedural ? 1 : 0);
+                    hash = hash * 31 + (_useTextures ? 1 : 0);
                     return hash;
                 }
             }
@@ -309,7 +316,8 @@ namespace Airside.Presentation
             SurfaceKind kind = SurfaceKind.Default,
             Texture2D albedo = null,
             Vector2? tiling = null,
-            bool preferProcedural = false)
+            bool preferProcedural = false,
+            bool useTextures = true)
         {
             var profile = GetProfile(kind);
             EnsureSharedMaps();
@@ -323,8 +331,10 @@ namespace Airside.Presentation
 
             // Batch F1 MAT-001 — prefer inspectable authored materials when present.
             // Aircraft kits pass preferProcedural so REF palette colours are not replaced by
-            // glass/metal authored mats that hollow out the fuselage.
-            if (!preferProcedural && TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
+            // glass/metal authored mats that hollow out the fuselage. A mesh with no usable
+            // UVs passes useTextures: false, because it would sample a single texel.
+            if (!preferProcedural && useTextures
+                && TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
                 return authoredInstance;
 
             Shader shader;
@@ -371,12 +381,13 @@ namespace Airside.Presentation
 
             var resolvedTiling = tiling ?? ResolveDefaultTiling(kind);
 
-            if (albedo != null)
+            if (useTextures && albedo != null)
             {
                 material.mainTexture = albedo;
                 material.mainTextureScale = resolvedTiling;
             }
             else if (!preferProcedural
+                     && useTextures
                      && AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo)
                      && authoredAlbedo != null)
             {
@@ -388,7 +399,8 @@ namespace Airside.Presentation
             if (!preferProcedural)
             {
                 var normal = ResolveNormal(kind);
-                if (kind != SurfaceKind.UnlitSky && normal != null && material.HasProperty("_BumpMap"))
+                if (useTextures && kind != SurfaceKind.UnlitSky && normal != null
+                    && material.HasProperty("_BumpMap"))
                 {
                     material.SetTexture("_BumpMap", normal);
                     material.EnableKeyword("_NORMALMAP");
@@ -398,7 +410,8 @@ namespace Airside.Presentation
                 }
 
                 var ao = ResolveAo(kind);
-                if (kind != SurfaceKind.UnlitSky && ao != null && material.HasProperty("_OcclusionMap"))
+                if (useTextures && kind != SurfaceKind.UnlitSky && ao != null
+                    && material.HasProperty("_OcclusionMap"))
                 {
                     material.SetTexture("_OcclusionMap", ao);
                     if (material.HasProperty("_OcclusionStrength"))
@@ -406,7 +419,7 @@ namespace Airside.Presentation
                     material.SetTextureScale("_OcclusionMap", resolvedTiling * 0.5f);
                 }
 
-                if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null
+                if (useTextures && AuthoredMasks.TryGetValue(kind, out var mask) && mask != null
                     && material.HasProperty("_MetallicGlossMap"))
                 {
                     material.SetTexture("_MetallicGlossMap", mask);

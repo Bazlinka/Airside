@@ -1,15 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — post-F visual polish tip 16; stopping per Bailey)
-- **Branch:** `cursor/batch-f-visual-polish-a8ff` (stacks on F4 tip)
-- **Do next:** Bailey merge F3 (#137) → F4 (#138) → polish (#139) when ready.
-  Standing goal continues later: Mac Play verify premium miniature read; more polish if needed.
-- **In progress / half-done:** none — tip 16 shipped; session stopped on request
+- **Last updated:** 2026-09-08 (Cursor — post-F polish tip 16; merged onto main w/ F3+F4)
+- **Branch:** `cursor/batch-f-visual-polish-a8ff`
+- **Do next:** Bailey merge polish (#139) when ready. Standing goal continues:
+  Mac Play verify premium miniature read; more polish if needed.
+- **In progress / half-done:** none — tip 16 shipped; conflicts with merged F3/F4 resolved
 - **Watch for / assumptions:**
+  - F3 (#137) + F4 (#138) are on `main`; this PR is presentation polish only
   - Tip 16: Toolkit primary panels light chrome; one silhouette belt loader; flood/edge/taxi/obst
     silhouette fixtures; ALS 5 stations when kit; FOV init 48°; dollies×2; coast Hz centralized
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge stack when happy; resume polish after Mac Play look
+- **Open question for Bailey:** none — merge #139 when happy; resume polish after Mac Play look
 
 ---
 
@@ -94,7 +95,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **Batch F3** (#137) then **Batch F4** (#138) then **visual polish** when ready.
+1. Merge **visual polish** (#139) when ready.
 2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
    art fidelity) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.

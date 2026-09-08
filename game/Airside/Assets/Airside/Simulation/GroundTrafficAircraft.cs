@@ -154,6 +154,8 @@ namespace Airside.Simulation
         /// <summary>
         /// Release any resource the commercial flights needs this tick. Called before the
         /// flight synchronises its own reservations so it never has to wait.
+        /// Drops held resources and pauses the leg, but keeps <c>_secondsOnLeg</c> so
+        /// progress resumes when the resources are free again.
         /// </summary>
         public void Yield(IEnumerable<StableId> primaryResources)
         {
@@ -169,7 +171,7 @@ namespace Airside.Simulation
                         _reservations.Release(Id);
                         _held = None;
                         _onLeg = false;
-                        _secondsOnLeg = 0;
+                        // Keep _secondsOnLeg — Reposition re-acquires without resetting it.
                         IsHolding = true;
                         return;
                     }
@@ -261,7 +263,8 @@ namespace Airside.Simulation
                 }
 
                 _onLeg = true;
-                _secondsOnLeg = 0;
+                // Do not zero _secondsOnLeg here — Yield pauses mid-leg and we resume.
+                // Fresh legs reset seconds when the previous leg completes below.
                 IsHolding = false;
                 monitor.Clear(Id);
             }
@@ -271,6 +274,7 @@ namespace Airside.Simulation
             {
                 _legIndex = (_legIndex + 1) % _circuit.Length;
                 _onLeg = false;
+                _secondsOnLeg = 0;
             }
         }
 
@@ -345,7 +349,8 @@ namespace Airside.Simulation
                 new Leg("Taxi in on A2", corridorA2, junction, alphaEnd, 14),
                 new Leg($"Taxi to {label}", new[] { leadIn, stand }, alphaEnd, standPoint, 10),
                 new Leg($"At {label}", new[] { stand }, standPoint, standPoint, 40, parks: true),
-                new Leg("Taxi out on A2", corridorA2, standPoint, junction, 16),
+                // First outbound leg must still hold the stand lead-in until clear of the bay.
+                new Leg("Taxi out on A2", new[] { leadIn, AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaTwo }, standPoint, junction, 16),
                 new Leg("Taxi out on A1", corridorA1, junction, runwayEnd, 14),
                 new Leg("Departing", None, runwayEnd, offField, 8),
                 new Leg("Away", None, away, away, 30)

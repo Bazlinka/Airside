@@ -68,7 +68,7 @@ namespace Airside.Tests
             Assert.That(AirportSimulation.AlternateStand(AirportSimulation.StandOne, 3),
                 Is.EqualTo(AirportSimulation.StandTwo));
             Assert.That(AirportSimulation.AlternateStand(AirportSimulation.StandTwo, 3),
-                Is.EqualTo(AirportSimulation.StandOne));
+                Is.EqualTo(AirportSimulation.StandThree));
             Assert.That(AirportSimulation.AlternateStand(AirportSimulation.StandThree, 3),
                 Is.EqualTo(AirportSimulation.StandOne));
         }

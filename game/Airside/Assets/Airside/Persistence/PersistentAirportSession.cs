@@ -58,11 +58,11 @@ namespace Airside.Persistence
             {
                 // AirsideSaveData.Validate() treats a zero seed as corruption (never a
                 // legitimate stored value), so a caller-supplied 0 must not reach disk —
-                // remap it the same way SeededRandomSource already tolerates a zero seed.
+                // remap it the same way SeededRandomSource remaps a zero seed.
                 save = new AirsideSaveData
                 {
                     savedUnixSeconds = currentUnixSeconds,
-                    randomSeed = newGameSeed == 0 ? 1u : newGameSeed
+                    randomSeed = newGameSeed == 0 ? SeededRandomSource.ZeroSeedSubstitute : newGameSeed
                 };
             }
 

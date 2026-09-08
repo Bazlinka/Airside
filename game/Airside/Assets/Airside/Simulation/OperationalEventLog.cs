@@ -26,7 +26,7 @@ namespace Airside.Simulation
         private readonly int _capacity;
         private readonly List<OperationalEvent> _events = new();
 
-        public OperationalEventLog(int capacity = 40)
+        public OperationalEventLog(int capacity = 80)
         {
             if (capacity < 1) throw new ArgumentOutOfRangeException(nameof(capacity));
             _capacity = capacity;
@@ -38,8 +38,35 @@ namespace Airside.Simulation
         {
             if (entry == null) throw new ArgumentNullException(nameof(entry));
             _events.Add(entry);
-            if (_events.Count > _capacity)
-                _events.RemoveRange(0, _events.Count - _capacity);
+            TrimToCapacity();
+        }
+
+        private void TrimToCapacity()
+        {
+            while (_events.Count > _capacity)
+            {
+                var removeAt = IndexOfFirstRemovable();
+                if (removeAt < 0)
+                    break;
+                _events.RemoveAt(removeAt);
+            }
+        }
+
+        /// <summary>
+        /// Prefer dropping ordinary events; keep titles that contain "Insolvent"
+        /// so the terminal outcome stays visible in the log.
+        /// </summary>
+        private int IndexOfFirstRemovable()
+        {
+            for (var i = 0; i < _events.Count; i++)
+            {
+                var title = _events[i].Title ?? string.Empty;
+                if (title.IndexOf("Insolvent", StringComparison.OrdinalIgnoreCase) >= 0)
+                    continue;
+                return i;
+            }
+
+            return -1;
         }
     }
 }

@@ -53,7 +53,7 @@ namespace Airside.Tests
                 if (simulation.Routes.Pending != null)
                     simulation.DeclinePendingRoute();
                 Assert.That(simulation.Flights.Count,
-                    Is.LessThanOrEqualTo(AirportSimulation.MaxConcurrentCommercialFlights));
+                    Is.LessThanOrEqualTo(simulation.MaxConcurrentCommercialFlights));
             }
 
             Assert.That(simulation.CompletedCycles, Is.EqualTo(50));

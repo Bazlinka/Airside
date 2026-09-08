@@ -9,11 +9,18 @@ namespace Airside.Simulation
 
     public sealed class SeededRandomSource : IRandomSource
     {
+        /// <summary>
+        /// Remap for a zero seed. Must stay aligned with
+        /// <c>PersistentAirportSession.LoadOrCreate</c> so a caller-supplied 0
+        /// produces the same sequence whether fresh or restored from disk.
+        /// </summary>
+        public const uint ZeroSeedSubstitute = 0x6D2B79F5u;
+
         private uint _state;
 
         public SeededRandomSource(uint seed)
         {
-            _state = seed == 0 ? 0x6D2B79F5u : seed;
+            _state = seed == 0 ? ZeroSeedSubstitute : seed;
         }
 
         public int NextInt(int minimumInclusive, int maximumExclusive)

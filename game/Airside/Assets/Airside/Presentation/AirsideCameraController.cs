@@ -248,9 +248,10 @@ namespace Airside.Presentation
 
             if (!_following)
             {
+                // Resume the last followed commercial instead of always restarting at 0.
                 _following = true;
-                _followIndex = 0;
-                _followTarget = _followTargets[0];
+                _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
+                _followTarget = _followTargets[_followIndex];
                 return;
             }
 

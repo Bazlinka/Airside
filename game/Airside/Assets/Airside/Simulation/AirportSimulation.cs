@@ -10,19 +10,12 @@ namespace Airside.Simulation
         public const long DepartureResetSeconds = 6;
         public const long BaseDailyOperatingCost = 400;
         public const int SecondFlightThreshold = 4;
-        public const int MaxConcurrentCommercialFlights = 2;
 
         public static readonly StableId Runway = new("RUNWAY-09-27");
         public static readonly StableId ApronLane = new("APRON-LANE");
         public static readonly StableId StandOne = new("STAND-1");
         public static readonly StableId StandTwo = new("STAND-2");
         public static readonly StableId StandThree = new("STAND-3");
-
-        /// <summary>
-        /// Physical stand count until a buildable capacity upgrade lands. Used to
-        /// gate route acceptance against schedule density.
-        /// </summary>
-        public const int StandCount = AirportRoutes.BaselineStandCount;
 
         private readonly ISimulationClock _clock;
         private readonly IRandomSource _random;
@@ -114,6 +107,9 @@ namespace Airside.Simulation
         public ReservationTable Reservations => _reservations;
         public int MaxScheduledFlightsPerDay => AirportRoutes.MaxScheduledFlightsPerDay(Capacity.StandCount);
 
+        /// <summary>Hard cap on concurrent commercials — one per built stand.</summary>
+        public int MaxConcurrentCommercialFlights => Capacity.StandCount;
+
         private CommercialFlight Primary => _flights[0];
 
         /// <summary>
@@ -155,10 +151,11 @@ namespace Airside.Simulation
                 return false;
             if (!Economy.TrySpend(AirportResearch.OperationsEfficiencyCost))
                 return false;
-            if (!Research.StartOperationsEfficiency(_lastUpdatedAt))
+            var startedAt = _clock.Now;
+            if (!Research.StartOperationsEfficiency(startedAt))
                 return false;
 
-            Record(_lastUpdatedAt, "Research started",
+            Record(startedAt, "Research started",
                 $"{AirportResearch.OperationsEfficiencyName} · {AirportResearch.OperationsEfficiencyDurationSeconds}s · -${AirportResearch.OperationsEfficiencyCost:N0}");
             return true;
         }
@@ -171,10 +168,11 @@ namespace Airside.Simulation
                 return false;
             if (!Economy.TrySpend(AirportResearch.PassengerServicesCost))
                 return false;
-            if (!Research.StartPassengerServices(_lastUpdatedAt))
+            var startedAt = _clock.Now;
+            if (!Research.StartPassengerServices(startedAt))
                 return false;
 
-            Record(_lastUpdatedAt, "Research started",
+            Record(startedAt, "Research started",
                 $"{AirportResearch.PassengerServicesName} · {AirportResearch.PassengerServicesDurationSeconds}s · -${AirportResearch.PassengerServicesCost:N0}");
             return true;
         }
@@ -223,7 +221,8 @@ namespace Airside.Simulation
             if (!Economy.PurchasePriorityCrew())
                 return false;
 
-            target.Turnaround.EnablePriorityCrew();
+            // Scale only remaining unfinished tasks from enable time (see TurnaroundWorkflow).
+            target.Turnaround.EnablePriorityCrew(_clock.Now);
             Record(_lastUpdatedAt, target.AircraftId, "Priority crew assigned", "$300 schedule recovery decision");
             return true;
         }
@@ -360,6 +359,18 @@ namespace Airside.Simulation
                 return;
             }
 
+            // Holding short after TaxiOut: ResourcesForPhase is empty, so TryReplace
+            // succeeded without claiming the runway. Surface the takeoff wait instead
+            // of silently clearing TrafficWaits.
+            if (flight.Operation.Phase == AircraftPhase.TaxiOut
+                && flight.Operation.SecondsRemaining(now) <= 0
+                && !_reservations.CanReplace(flight.OwnerId,
+                    flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out var runwayBlocked))
+            {
+                TrafficWaits.SetWaiting(flight.OwnerId, runwayBlocked, now);
+                return;
+            }
+
             TrafficWaits.Clear(flight.OwnerId);
 
             var previousPhase = flight.Operation.Phase;
@@ -386,8 +397,12 @@ namespace Airside.Simulation
 
             if (flight.Operation.Phase == AircraftPhase.AtStand)
             {
+                // Live staffing factor — hiring mid-turnaround takes effect immediately.
                 flight.Turnaround = new TurnaroundWorkflow(
-                    flight.Operation.PhaseStartedAt, _random.NextInt(0, 3) == 0, Staffing.TurnaroundSpeedFactor);
+                    flight.Operation.PhaseStartedAt,
+                    _random.NextInt(0, 3) == 0,
+                    () => Staffing.TurnaroundSpeedFactor);
+                flight.Operation.BindAtStandProgress(t => flight.Turnaround.Progress01(t));
                 Record(now, flight.AircraftId, "On stand", $"Arrived at {flight.AssignedStand.Value}");
             }
 
@@ -419,6 +434,7 @@ namespace Airside.Simulation
                 }
 
                 flight.FlightSettled = true;
+                CompletedCycles++;
                 Record(now, flight.AircraftId, "Departed",
                     $"Net flight result ${AirportEconomy.TurnaroundRevenue - flight.LastDelaySeconds * AirportEconomy.DelayCostPerSecond:N0}");
                 _reservations.Release(flight.OwnerId);
@@ -482,7 +498,6 @@ namespace Airside.Simulation
                 return;
 
             _reservations.Release(flight.OwnerId);
-            CompletedCycles++;
 
             var id = $"AS-{_nextAircraftNumber++:000}";
             var index = _flights.IndexOf(flight);
@@ -497,43 +512,39 @@ namespace Airside.Simulation
             return bySpawn != 0 ? bySpawn : string.CompareOrdinal(a.AircraftId, b.AircraftId);
         }
 
-        
-        
+        /// <summary>
+        /// Cycle to the next built stand after <paramref name="primaryStand"/>.
+        /// With three stands: 1→2→3→1.
+        /// </summary>
         public static StableId AlternateStand(StableId primaryStand, int standCount)
         {
             if (standCount < 3)
                 return primaryStand.Equals(StandOne) ? StandTwo : StandOne;
-            if (!primaryStand.Equals(StandOne)) return StandOne;
-            if (!primaryStand.Equals(StandTwo)) return StandTwo;
-            return StandThree;
+
+            if (primaryStand.Equals(StandOne))
+                return StandTwo;
+            if (primaryStand.Equals(StandTwo))
+                return StandThree;
+            return StandOne;
         }
 
-private StableId[] AvailableStands()
+        private StableId[] AvailableStands()
         {
             if (Capacity.StandCount >= 3)
                 return new[] { StandOne, StandTwo, StandThree };
             return new[] { StandOne, StandTwo };
         }
 
-private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
+        private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
         {
             var occupied = CommercialStandOccupancy();
             var stands = AvailableStands();
             var free = new List<StableId>(stands.Length);
             foreach (var candidate in stands)
             {
-                var taken = false;
-                foreach (var busy in occupied)
-                {
-                    if (busy.Equals(candidate))
-                    {
-                        taken = true;
-                        break;
-                    }
-                }
-
-                if (!taken)
-                    free.Add(candidate);
+                if (IsStandOccupied(candidate, occupied))
+                    continue;
+                free.Add(candidate);
             }
 
             if (free.Count == 0)
@@ -565,6 +576,47 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             return true;
         }
 
+        private bool IsStandOccupied(StableId candidate, List<StableId> commercialOccupied)
+        {
+            foreach (var busy in commercialOccupied)
+            {
+                if (busy.Equals(candidate))
+                    return true;
+            }
+
+            // Reservation-table holders (including GT parked on / taxiing onto the stand).
+            if (_reservations.IsReserved(candidate))
+            {
+                if (!_reservations.TryGetOwner(candidate, out var owner) || !IsFlightOwner(owner))
+                    return true;
+            }
+
+            foreach (var aircraft in _groundTraffic)
+            {
+                if (aircraft.CurrentSegment.Equals(candidate))
+                    return true;
+                if (aircraft.IsAtStand && aircraft.TargetStand.Equals(candidate))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsFlightOwner(StableId owner)
+        {
+            foreach (var flight in _flights)
+            {
+                if (flight.OwnerId.Equals(owner))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Stands claimed by any non-departed commercial, including Approach/Landing
+        /// assignments so GT does not park on an inbound stand.
+        /// </summary>
         private List<StableId> CommercialStandOccupancy()
         {
             var stands = new List<StableId>(_flights.Count);
@@ -645,11 +697,21 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
                 }
 
                 var owner = flight.OwnerId;
-                if (!_reservations.TryReplace(owner, flight.RequiredResources(_lastUpdatedAt), out var blocked))
+                var now = _lastUpdatedAt;
+                if (!_reservations.TryReplace(owner, flight.RequiredResources(now), out var blocked))
                 {
                     if (!IsCommercialOwner(blocked))
                         ReservationConflicts++;
-                    TrafficWaits.SetWaiting(owner, blocked, _lastUpdatedAt);
+                    TrafficWaits.SetWaiting(owner, blocked, now);
+                }
+                else if (flight.Operation.Phase == AircraftPhase.TaxiOut
+                    && flight.Operation.SecondsRemaining(now) <= 0
+                    && !_reservations.CanReplace(owner,
+                        flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out var runwayBlocked))
+                {
+                    // Holding short: RequiredResources is empty so TryReplace succeeded,
+                    // but takeoff is still blocked — keep the runway wait visible.
+                    TrafficWaits.SetWaiting(owner, runwayBlocked, now);
                 }
                 else
                 {
@@ -663,13 +725,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             if (!_reservations.TryGetOwner(resource, out var owner))
                 return false;
 
-            foreach (var flight in _flights)
-            {
-                if (flight.OwnerId.Equals(owner))
-                    return true;
-            }
-
-            return false;
+            return IsFlightOwner(owner);
         }
 
         private GroundTrafficAircraft ChooseCorridorGrantee(SimulationTime now)
@@ -707,7 +763,8 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
 
         private bool CanLeavePhase(CommercialFlight flight, AircraftPhase phase, SimulationTime now)
         {
-            if (phase == AircraftPhase.AtStand && (flight.Turnaround == null || !flight.Turnaround.IsComplete(_lastUpdatedAt)))
+            if (phase == AircraftPhase.AtStand
+                && (flight.Turnaround == null || !flight.Turnaround.IsComplete(now)))
                 return false;
 
             var next = (AircraftPhase)((int)phase + 1);
@@ -728,7 +785,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
         }
 
         private void Record(SimulationTime time, string title, string detail) =>
-            Record(time, Primary?.AircraftId ?? string.Empty, title, detail);
+            Record(time, string.Empty, title, detail);
 
         private void Record(SimulationTime time, string flightId, string title, string detail)
         {

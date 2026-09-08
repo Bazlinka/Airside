@@ -29,6 +29,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void UnderstaffedWithCleaning_PrefersUnderstaffingMessage()
+        {
+            var understaffed = new AirportStaffing();
+            Assert.That(understaffed.Release(), Is.True);
+            Assert.That(understaffed.Release(), Is.True);
+
+            var workflow = new TurnaroundWorkflow(
+                new SimulationTime(0), cleaningDisruption: true, understaffed.TurnaroundSpeedFactor);
+
+            Assert.That(workflow.HasCleaningDisruption, Is.True);
+            Assert.That(workflow.IsUnderstaffed, Is.True);
+            Assert.That(workflow.OverrunCause, Is.EqualTo("Understaffed ground crew"));
+            Assert.That(workflow.DelayCause(new SimulationTime(50)), Is.EqualTo("Understaffed ground crew"));
+        }
+
+        [Test]
         public void OnScheduleTurnaround_ReportsNoOverrunCause()
         {
             var workflow = new TurnaroundWorkflow(new SimulationTime(0), cleaningDisruption: false);

@@ -58,18 +58,25 @@ namespace Airside.Tests
             var routes = new AirportRoutes(new SimulationTime(0));
             // Walk forward until a proposal needs more than the starting reputation.
             RouteProposal demanding = null;
+            SimulationTime foundAt = default;
             for (long t = AirportRoutes.FirstOfferAfterSeconds; t <= 5000 && demanding == null; t++)
             {
-                routes.Update(new SimulationTime(t));
+                var now = new SimulationTime(t);
+                routes.Update(now);
                 if (routes.Pending != null && routes.Pending.ReputationRequired > AirportReputation.Starting)
+                {
                     demanding = routes.Pending;
+                    foundAt = now;
+                }
                 else if (routes.Pending != null)
-                    routes.Accept(new SimulationTime(t), reputationScore: 100); // clear easy offers
+                    routes.Accept(now, reputationScore: 100); // clear easy offers
             }
 
             Assert.That(demanding, Is.Not.Null);
-            Assert.That(routes.Accept(new SimulationTime(5001), reputationScore: AirportReputation.Starting), Is.False);
-            Assert.That(routes.Accept(new SimulationTime(5001), reputationScore: demanding.ReputationRequired), Is.True);
+            // Accept before expiry — the offer must still be standing.
+            Assert.That(foundAt.CompareTo(demanding.ExpiresAt) < 0, Is.True);
+            Assert.That(routes.Accept(foundAt, reputationScore: AirportReputation.Starting), Is.False);
+            Assert.That(routes.Accept(foundAt, reputationScore: demanding.ReputationRequired), Is.True);
         }
 
         [Test]

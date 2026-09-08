@@ -49,7 +49,14 @@ namespace Airside.Simulation
         public double Progress01(SimulationTime now)
         {
             if (!IsResearching)
-                return PassengerServicesComplete && OperationsEfficiencyComplete ? 1.0 : 0.0;
+            {
+                if (PassengerServicesComplete && OperationsEfficiencyComplete)
+                    return 1.0;
+                // Ops done, Passenger Services not started — completed half of the track.
+                if (OperationsEfficiencyComplete)
+                    return 0.5;
+                return 0.0;
+            }
 
             var duration = DurationFor(ActiveProjectId);
             var elapsed = now.ElapsedSeconds - ResearchStartedAt.ElapsedSeconds;

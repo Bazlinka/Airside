@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Stand stairs / GSE fidelity (PRP-001 v03).** Prefer
+  `mdl_service_equipment_kit_v03` (106 meshes: tubular rails, denser GPU/belt/
+  chocks) over authored/v02/v01; stairs Resources fallback
+  `mdl_passenger_stairs_v02`. Safety Yellow GPU + stairs rails/nosings, Coastal
+  Blue side panels. Evidence: `scripts/test-domain.sh` 118/118; Mac overview/
+  follow vs REF-003 pending.
+
 - **Hangar BLD-002 v05.** Prefer `mdl_hangar_small_v05` (193 meshes): dual-pitch
   roof, gable ends, denser corrugation, office lean; sliding-door motion names
   retained; authored_v01+ older kits remain fallbacks. Evidence:

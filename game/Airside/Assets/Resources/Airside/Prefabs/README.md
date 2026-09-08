@@ -21,6 +21,7 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 
 | Key | Regenerator |
 |---|---|
+| `mdl_passenger_stairs_v02` | `scripts/generate-prp-001-v03-prefab.py` |
 | `mdl_passenger_stairs_v01` | `scripts/generate-passenger-stairs-prefab.py` |
 | `mdl_wheel_chocks_v01` | `scripts/generate-gse-prefabs.py` |
 | `mdl_gpu_cart_v01` | `scripts/generate-gse-prefabs.py` |
@@ -101,7 +102,9 @@ Resources prefabs (Addressables keys live now):
 | `mdl_fuel_truck_small_authored_v01` | Mac bake |
 | `mdl_baggage_tug_train_authored_v01` | Mac bake |
 | `mdl_passenger_bus_apron_authored_v01` | Mac bake |
-| `mdl_service_equipment_kit_authored_v01` | Mac bake |
+| `mdl_passenger_stairs_v02` | Pipeline proof (`generate-prp-001-v03-prefab.py`); prefers over v01 |
+| `mdl_passenger_stairs_v01` | Pipeline proof; superseded by v02 when present |
+| `mdl_service_equipment_kit_authored_v01` | Mac bake; glTF PreferArtKit behind `mdl_service_equipment_kit_v03` |
 | `mdl_airfield_lighting_kit_authored_v01` | Mac bake |
 | `mdl_airfield_props_kit_authored_v01` | Mac bake |
 

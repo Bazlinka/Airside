@@ -1,15 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — hangar BLD-002 v05)
-- **Branch:** `cursor/hangar-bld-002-v05-3272` (off `main` after #149)
-- **Do next:** Mac Unity overview of hangar gable / sliding doors / office lean vs
-  REF-001 next to the v05 terminal; then merge. Optional follow-on: stand stairs
-  GSE fidelity or ops shed v05.
+- **Last updated:** 2026-09-08 (Cursor — stand stairs / GSE v03; rebased on #150)
+- **Branch:** `cursor/stand-stairs-gse-v02-3272` (off `main` after #150)
+- **Do next:** Mac Unity overview + follow-camera check of stand stairs, GPU,
+  belt loader and chocks vs REF-003 (tubular rails, Safety Yellow / Coastal Blue,
+  scale vs turboprop at stand). Then merge if the read holds. Parallel polish:
+  ops shed BLD-003 v05 (`cursor/ops-shed-bld-003-v05-3272` / #152).
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PreferArtKit hangar: `mdl_hangar_small_v05` → authored_v01 → v04…v01
-  - Door motion names unchanged (`door_panel_*` / `door_bar_*`) for day/night slide
-  - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefab shipped
+  - PreferArtKit: service kit `v03` → authored → v02 → v01; stairs prefab
+    `mdl_passenger_stairs_v02` → v01
+  - StreamingAssets copy-only for new kits (full sync wipes StreamingAssets metas)
+  - Hangar BLD-002 v05 is on `main` (#150)
   - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -88,16 +90,18 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 after hangar BLD-002 v05
-  (Mac overview vs REF-001 still required before merge).
-- Vehicle fleet v06 / landside car v02 merged via #149.
+- `scripts/test-domain.sh`: 118/118 after PRP-001 v03 stand GSE (Unity EditMode /
+  Mac overview+follow vs REF-003 still required before merge).
+- Hangar BLD-002 v05 is on `main` (#150).
+- Vehicle fleet v06 / landside car v02 is on `main` (#149).
 - #146 bug audit and #147/#148 flight/taxi polish are on `main`.
 
 ## Next work
 
-1. Mac overview: hangar BLD-002 v05 vs REF-001 on
-   `cursor/hangar-bld-002-v05-3272`, then merge.
-2. Optional: passenger stairs / stand GSE fidelity, then ops shed BLD-003 v05.
+1. Mac overview + follow-camera: stand stairs / GPU / belt / chocks vs REF-003 on
+   branch `cursor/stand-stairs-gse-v02-3272`, then merge.
+2. Mac overview: hangar (#150) and landside/fleet (#149) vs refs if not yet signed
+   off; ops shed BLD-003 v05 draft #152.
 3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
    Companion.
 4. Optional: Editor Addressables groups for player catalog.

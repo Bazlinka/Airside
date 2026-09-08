@@ -123,7 +123,8 @@ namespace Airside.Presentation
                 }
 
                 var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
-                renderer.sharedMaterial = AirsideMaterialLibrary.Create(color, kind);
+                // Shared — see ArtGltfLoader.CreateMeshObject.
+                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
             }
         }
 

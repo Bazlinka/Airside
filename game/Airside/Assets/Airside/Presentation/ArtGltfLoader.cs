@@ -104,7 +104,9 @@ namespace Airside.Presentation
             filter.sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
             var kind = AirsideMaterialLibrary.InferFromMeshName(name);
-            renderer.sharedMaterial = AirsideMaterialLibrary.Create(color, kind);
+            // Shared: kits build one renderer per mesh, and identical (colour, kind)
+            // pairs are overwhelmingly common. Runtime tinting clones via .material.
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
             return transform;
         }
 

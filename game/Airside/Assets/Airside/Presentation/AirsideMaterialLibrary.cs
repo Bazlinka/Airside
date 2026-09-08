@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -211,6 +212,91 @@ namespace Airside.Presentation
                 || n.Contains("canopy") || n.Contains("end_cap") || n.Contains("entrance"))
                 return SurfaceKind.Concrete;
             return SurfaceKind.PaintedMetal;
+        }
+
+        /// <summary>
+        /// Cache of materials handed out by <see cref="CreateShared"/>, keyed on every
+        /// input <see cref="Create"/> actually reads. Everything else Create consults is
+        /// static shared state, so identical inputs always produce an identical material.
+        /// </summary>
+        private static readonly Dictionary<SharedMaterialKey, Material> SharedMaterials = new();
+
+        /// <summary>
+        /// Shared, de-duplicated variant of <see cref="Create"/> for callers that assign
+        /// to <c>Renderer.sharedMaterial</c> — the kit loaders, which between them build a
+        /// material for every one of the ~2,662 meshes in the art library even though only
+        /// a few dozen are distinct.
+        ///
+        /// The returned material is shared: never mutate it. Runtime tinting already goes
+        /// through <c>Renderer.material</c>, whose first read clones the material for that
+        /// renderer, so per-object colour and emission updates stay correct and private.
+        /// </summary>
+        public static Material CreateShared(
+            Color color,
+            SurfaceKind kind = SurfaceKind.Default,
+            Texture2D albedo = null,
+            Vector2? tiling = null)
+        {
+            var key = new SharedMaterialKey(color, kind, albedo, tiling);
+            // Play-mode exit destroys runtime materials while the static cache survives a
+            // disabled domain reload, so a hit can be a destroyed object — rebuild those.
+            if (SharedMaterials.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+
+            var material = Create(color, kind, albedo, tiling);
+            SharedMaterials[key] = material;
+            return material;
+        }
+
+        private readonly struct SharedMaterialKey : IEquatable<SharedMaterialKey>
+        {
+            private readonly Color _color;
+            private readonly SurfaceKind _kind;
+            private readonly int _albedoId;
+            private readonly Vector2 _tiling;
+            private readonly bool _hasTiling;
+
+            public SharedMaterialKey(Color color, SurfaceKind kind, Texture2D albedo, Vector2? tiling)
+            {
+                _color = color;
+                _kind = kind;
+                _albedoId = albedo != null ? albedo.GetInstanceID() : 0;
+                _hasTiling = tiling.HasValue;
+                _tiling = tiling ?? Vector2.zero;
+            }
+
+            // Component-wise Equals, not == : Unity's Color and Vector2 equality operators
+            // are approximate, which would disagree with GetHashCode and corrupt lookups.
+            public bool Equals(SharedMaterialKey other) =>
+                _kind == other._kind
+                && _albedoId == other._albedoId
+                && _hasTiling == other._hasTiling
+                && _tiling.x.Equals(other._tiling.x)
+                && _tiling.y.Equals(other._tiling.y)
+                && _color.r.Equals(other._color.r)
+                && _color.g.Equals(other._color.g)
+                && _color.b.Equals(other._color.b)
+                && _color.a.Equals(other._color.a);
+
+            public override bool Equals(object obj) => obj is SharedMaterialKey other && Equals(other);
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = 17;
+                    hash = hash * 31 + _color.r.GetHashCode();
+                    hash = hash * 31 + _color.g.GetHashCode();
+                    hash = hash * 31 + _color.b.GetHashCode();
+                    hash = hash * 31 + _color.a.GetHashCode();
+                    hash = hash * 31 + (int)_kind;
+                    hash = hash * 31 + _albedoId;
+                    hash = hash * 31 + _tiling.x.GetHashCode();
+                    hash = hash * 31 + _tiling.y.GetHashCode();
+                    hash = hash * 31 + (_hasTiling ? 1 : 0);
+                    return hash;
+                }
+            }
         }
 
         public static Material Create(

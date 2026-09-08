@@ -5,6 +5,20 @@ change it describes.
 
 ## Unreleased
 
+- **Draw-call and material work (P1 audit items 4-5).** `AirsideMaterialLibrary`
+  gains `CreateShared`, a memoised material used by both kit loaders — the art
+  library's 2,662 meshes were each minting their own `new Material`, and one
+  turboprop alone drops from 163 materials to 33 distinct (colour, SurfaceKind)
+  pairs. Runtime tinting is untouched: it goes through `Renderer.material`, which
+  clones per renderer. Enabled the GPU Resident Drawer (InstancedDrawing) with
+  2% small-mesh culling on `PC_RPAsset`, set BatchRendererGroup Variants to
+  `KeepAll` (required, and `m_BrgStripping: 1` is `StripAll`, not `KeepAll`), and
+  turned off `m_RequireOpaqueTexture` — nothing under `Assets/` samples
+  `_CameraOpaqueTexture`. Also committed the 225 `StreamingAssets` `.meta`
+  sidecars that were never tracked, so clones stop starting dirty. Evidence:
+  `scripts/test-unity.sh` 124/124, 0 compile errors, no GRD/BRG warnings. Still
+  needs a Mac Play verify — batchmode does not exercise the resident drawer.
+
 - **Visual + performance fixes (P1 audit).** Cockpit windscreens render as glass
   again (`InferFromMeshName` only matched the American spelling "windshield", so
   `windscreen_c/l/r` fell through to an opaque PaintedMetal default and discarded

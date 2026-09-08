@@ -1,25 +1,33 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Claude — visual/perf audit P1 fixes)
-- **Branch:** `feature/visual-perf-p1` (PR open)
-- **Do next:** Bailey review + merge the P1 fixes, then Mac Play verify. The audit
-  in `work/VISUAL_PERF_AUDIT_2026-09-08.md` lists items 4–10 in priority order;
-  the next two are (4) memoise `AirsideMaterialLibrary.Create` + move runtime tints
-  to `MaterialPropertyBlock`, then (5) enable the GPU Resident Drawer.
-- **In progress / half-done:** none — P1 items landed and verified.
+- **Last updated:** 2026-09-08 (Claude — audit items 4–5)
+- **Branch:** `feature/visual-perf-p2`, stacked on `feature/visual-perf-p1` (PR #140)
+- **Do next:** **Mac Play verify** — items 4–5 change how the scene is submitted to
+  the GPU and batchmode cannot check that. Look for missing or flickering small
+  props (2% small-mesh culling) and any shared-material colour bleed. Then merge
+  #140 followed by the P2 PR.
+- **In progress / half-done:** none — items 4–5 landed, tests green, look unverified.
 - **Watch for / assumptions:**
-  - The six pinned-off post effects were found `active: 1` in the working tree.
-    A full Unity import does **not** re-dirty them, so that was a real edit, not
-    re-serialisation. If they reappear, something is enabling them deliberately.
-  - Generator scripts write hand-typed placeholder GUIDs into `.meta` files. Three
-    were the wrong length (29–31 hex chars) and Unity silently ignored those three
-    prefabs entirely. Generators should omit `guid:` and let Unity assign one.
-  - The aircraft is still 131 axis-aligned boxes out of 163 meshes, and the wing
-    control surfaces sit 9–23 cm below the wing (dihedral was added to the wing and
-    the surfaces were never moved). That is audit items 6 and 8, both in
-    `scripts/generate-air-001-v05.py` — one owner, one branch.
+  - `m_BrgStripping: 1` is **StripAll**, not KeepAll. KeepAll is `2`. Getting this
+    wrong strips every DOTS instancing shader from player builds and silently
+    disables the GPU Resident Drawer.
+  - Materials from `AirsideMaterialLibrary.CreateShared` are **shared** — never
+    mutate one. Per-object tinting must keep going through `Renderer.material`,
+    which clones. Anything new that assigns to `sharedMaterial` must use `Create`,
+    not `CreateShared`, if it intends to mutate it later.
+  - MaterialPropertyBlock was considered and rejected: it disables the SRP Batcher
+    for that renderer, working against the batching items 4–5 exist to enable.
+  - Still open from the audit: items 6 + 8 (the aircraft is 131 axis-aligned boxes
+    of 163 meshes, and flaps/ailerons/spoilers/gear float 9–44 cm below the wing —
+    both in `scripts/generate-air-001-v05.py`, one owner, one branch); item 7
+    (cache aircraft part transforms instead of a per-frame `GetComponentsInChildren`
+    + string match, ~20k string compares/frame); item 9 (emit `material:` per mesh
+    from the generators); item 10 (replace the regex glTF parser).
+  - ~9 per-frame `EnableKeyword("_EMISSION")` sites remain (nav lights, headlights,
+    night glow, ARFF lightbar, sun/moon) — same redundant-write pattern already
+    fixed for wetness, same one-line `SetKeyword` fix.
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — review and merge when happy.
+- **Open question for Bailey:** none — Play verify, then merge both PRs.
 
 ---
 

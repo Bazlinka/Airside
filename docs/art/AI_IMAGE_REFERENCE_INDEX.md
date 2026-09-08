@@ -25,13 +25,14 @@ All five files above are Approved. Do not overwrite or restyle them.
 
 ## Review candidates
 
-The following generated sheet is modelling/reference guidance only. It does not
-replace the existing VEG-002 runtime kit and is not Approved until Bailey accepts
-its visual direction.
+The following generated sheets are modelling/reference guidance only. They do
+not replace the existing VEG-002 or WLD-004 runtime kits and are not Approved
+until Bailey accepts their visual direction.
 
 | Related asset | Candidate source | Intended use | Status |
 |---|---|---|---|
 | VEG-002 | `docs/art/candidates/ref_kingscote_coastal_scrub_style_sheet_v01.png` | Five mallee/shrub forms, three grass patches, three rock groups and two dune-edge mixes at human scale | Generated · review required |
+| WLD-004 | `docs/art/candidates/ref_kingscote_context_terrain_catalogue_v01.png` | Modular paddock berms, low hills, dunes, turquoise shallows and deep-water context around a protected blank operational zone | Generated · review required |
 
 BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and promoted into
 runtime art (see production assets below).

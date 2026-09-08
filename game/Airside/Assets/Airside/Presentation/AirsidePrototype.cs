@@ -7455,6 +7455,7 @@ namespace Airside.Presentation
             // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
+                    "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
                     "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",

@@ -106,7 +106,9 @@ namespace Airside.Presentation
             var kind = AirsideMaterialLibrary.InferFromMeshName(name);
             // Shared: kits build one renderer per mesh, and identical (colour, kind)
             // pairs are overwhelmingly common. Runtime tinting clones via .material.
-            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
+            var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                color, kind, useTextures: hasUsableUvs);
             return transform;
         }
 

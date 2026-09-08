@@ -1,21 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — fussy visual bug-fix from Bailey Play notes)
-- **Branch:** `cursor/batch-f-fussy-bugfix-a8ff` (off `main` after #139–#143)
-- **Do next:** Bailey Mac Play verify this PR — black patches, night readability,
-  landing block soup. Prefer more fussy bug-fix over densify tips until premium read.
+- **Last updated:** 2026-09-08 (Codex — AIR-001 v06 aircraft replacement)
+- **Branch:** `feature/air-001-v06` (off `main` after #144)
+- **Do next:** Review AIR-001 v06 in the packaged Mac follow camera and merge the
+  focused replacement once CI is green.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Opaque apron/stand stain decals removed; joints/slabs/E-W fringe gone; stand leads gated
-  - Night exposure/ambient/floods lifted; contact + aircraft shadows softened
-  - FBX albedo maps preserved in `ApplyPresentationMaterials`
-  - Aircraft wing loft already on `main` via #142 — not reordered here
+  - v06 is a new asset id; v05 and all older aircraft remain in the fallback chain
+  - ASCII FBX metre units are now declared correctly so Unity does not import at 1% scale
+  - Meshes without UVs use flat lit materials instead of sampling one dark texture texel
+  - v06 uses outward face winding, a continuous body, high wing and refined prop/gear forms
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — Mac Play is the gate
-
---- It also left three empty `"<name> 2"` directories behind this run.
-  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** the high-wing vs mid-wing call above.
+- **Open question for Bailey:** none — v06 follows the approved high-wing reference.
 
 ---
 
@@ -91,7 +87,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-unity.sh`: 124/124 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
+- `scripts/test-unity.sh`: 126/126 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
 - Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
 - Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
   prefer authored kits with procedural fallbacks; operational geometry unchanged.
@@ -100,7 +96,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **visual polish** (#139) when ready.
+1. Review and merge **AIR-001 v06**.
 2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
    art fidelity) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.

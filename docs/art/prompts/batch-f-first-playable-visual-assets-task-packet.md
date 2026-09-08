@@ -48,11 +48,11 @@ Slice F1 is the only recommended first implementation task.
 
 | ID | Exact authoring/runtime paths | Required design | Priority |
 |---|---|---|---|
-| AIR-001 v05 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v05.prefab` | Authored fictional twin turboprop matching REF-003/005; rounded fuselage, readable cockpit/windows, six-blade propellers, separated gear/doors/control surfaces/lights; livery slots preserved | P0 — **Integrated** (prefer v05; Mac FBX bake upgrades Resources); Bailey accepted |
+| AIR-001 v06 | `Art/Models/Aircraft/mdl_regional_turboprop_01_v06.fbx`; `Resources/Airside/Prefabs/mdl_regional_turboprop_01_v06.prefab` | Fictional high-wing twin turboprop matching REF-003/005; continuous rounded fuselage, readable cockpit/windows, six twisted propeller blades, lofted lifting surfaces/nacelles and connected gear; livery slots preserved | P0 — **Integrated candidate** (prefer v06, then v05; Mac FBX bake and packaged visual pass); Bailey review pending |
 | BLD-001 v05 | `Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx`; `Resources/Airside/Prefabs/mdl_terminal_regional_small_v05.prefab` | Practical small regional terminal matching REF-001/005: glazed airside face, shallow roof, canopy, service side, rooftop plant and modular end caps | P0 — **Integrated** (prefer v05; Mac FBX bake); Bailey playtest pending |
 | MAT-001 | `Art/Materials/mat_{asphalt,concrete,grass,corrugated_metal,glass,painted_line,aircraft,wet}_v01.mat` | Shared URP Lit material family using existing Batch B maps; consistent roughness, restrained normal strength, glass/emission profiles and wet variants | P0 — **Integrated** (Art + Resources; runtime instantiate) |
 
-F1 must update preference order to v05 → current preferred kit → older fallbacks.
+F1 preference order is v06 → v05 → current preferred kit → older fallbacks.
 Do not overwrite the lofted or v04 files.
 
 ### F2 — turnaround read: vehicles, people and active equipment

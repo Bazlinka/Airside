@@ -2082,7 +2082,7 @@ namespace Airside.Presentation
                     var (renderer, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
                     if (renderer == null)
                         continue;
-                    var apply = wet ? rainWetness : (paved ? 0.22f : 0f);
+                    var apply = wet ? rainWetness : (paved ? 0.06f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
                         renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
                 }
@@ -3603,7 +3603,7 @@ namespace Airside.Presentation
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
             // Noon punch + readable night key so REF overview separation holds (post-F polish).
-            _sun.intensity = Mathf.Lerp(0.14f, 1.98f, daylight);
+            _sun.intensity = Mathf.Lerp(0.32f, 1.98f, daylight);
             _sun.shadowStrength = Mathf.Lerp(0.38f, 0.82f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -3625,26 +3625,26 @@ namespace Airside.Presentation
                     new Color(0.25f, 0.32f, 0.55f),
                     Color.Lerp(new Color(0.55f, 0.65f, 0.85f), new Color(1f, 0.78f, 0.62f), warm * 0.55f),
                     daylight);
-                _fillLight.intensity = Mathf.Lerp(0.35f, 0.18f, daylight) + warm * 0.06f;
+                _fillLight.intensity = Mathf.Lerp(0.55f, 0.18f, daylight) + warm * 0.06f;
             }
 
             var ambientDay = new Color(0.52f, 0.58f, 0.64f);
             var ambientDusk = new Color(0.58f, 0.38f, 0.32f);
-            var ambientNight = new Color(0.08f, 0.1f, 0.18f);
+            var ambientNight = new Color(0.14f, 0.16f, 0.26f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.85f);
             var ambientEquator = Color.Lerp(
-                new Color(0.12f, 0.14f, 0.22f),
+                new Color(0.2f, 0.22f, 0.32f),
                 Color.Lerp(new Color(0.42f, 0.46f, 0.48f), new Color(0.53f, 0.40f, 0.34f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
-                new Color(0.05f, 0.06f, 0.08f),
+                new Color(0.1f, 0.11f, 0.14f),
                 Color.Lerp(new Color(0.22f, 0.24f, 0.2f), new Color(0.28f, 0.18f, 0.14f), warm),
                 daylight);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(0.85f, 1.05f, daylight) + warm * 0.08f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.05f, daylight) + warm * 0.08f;
             RenderSettings.subtractiveShadowColor = Color.Lerp(
                 new Color(0.22f, 0.28f, 0.4f),
                 new Color(0.4f, 0.28f, 0.28f),
@@ -3694,7 +3694,7 @@ namespace Airside.Presentation
             if (_apronLights != null)
             {
                 // Stronger night punch so REF-002 warm pools read against scrub.
-                var flood = Mathf.Lerp(3.45f, 0.05f, daylight);
+                var flood = Mathf.Lerp(4.2f, 0.05f, daylight);
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -4141,8 +4141,8 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
-            // Kit edge fixtures already stamp geometry — thin PointLights so dusk isn't glitter.
-            var edgeStep = hasLightingKit ? 16 : 8;
+            // Keep PointLights denser than kit fixture spacing — silhouette meshes ≠ illumination.
+            var edgeStep = hasLightingKit ? 10 : 8;
             for (var x = -36; x <= 36; x += edgeStep)
             {
                 lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
@@ -4171,11 +4171,12 @@ namespace Airside.Presentation
             }
             else
             {
-                // Two hero taxi Points so A1 still has spill without a fixture ribbon.
-                lights.Add(CreateEdgePointLight("Taxi point hero W", new Vector3(-4f, 0.45f, 9f),
-                    new Color(0.3f, 0.55f, 1f), range: 8f));
-                lights.Add(CreateEdgePointLight("Taxi point hero E", new Vector3(20f, 0.45f, 9f),
-                    new Color(0.3f, 0.55f, 1f), range: 8f));
+                // Sparse taxi spill along A1 so night taxi still reads without fixture glitter.
+                for (var x = -8; x <= 24; x += 16)
+                {
+                    lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
+                        new Color(0.3f, 0.55f, 1f), range: 9f));
+                }
             }
 
             // REIL-style white flashers just beyond each threshold (blinked later).
@@ -4474,7 +4475,7 @@ namespace Airside.Presentation
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
             CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
-            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.105f, 0.12f, 0.14f),
+            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.16f, 0.18f, 0.2f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
             CreateBlock("Runway shoulder N", new Vector3(0f, -0.1f, 4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
@@ -4482,23 +4483,10 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
-            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.38f, 0.4f, 0.41f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
-            // Expansion-joint grid — sparse so MAT apron texture remains the read (not plastic grid).
-            var joint = new Color(0.22f, 0.23f, 0.24f);
-            for (var x = 10f; x <= 30f; x += 8f)
-                CreateBlock($"Apron joint X {x:0}", new Vector3(x, 0.065f, 17f), new Vector3(0.05f, 0.02f, 12f), joint);
-            for (var z = 12f; z <= 22f; z += 5f)
-                CreateBlock($"Apron joint Z {z:0}", new Vector3(20f, 0.065f, z), new Vector3(24f, 0.02f, 0.05f), joint);
-            // Moisture-varied slab overlays — three accents, not a full densify set.
-            var slabA = new Color(0.32f, 0.34f, 0.35f);
-            var slabB = new Color(0.36f, 0.37f, 0.38f);
-            CreateBlock("Apron slab A", new Vector3(14f, 0.02f, 14f), new Vector3(5.5f, 0.04f, 4.5f), slabA,
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
-            CreateBlock("Apron slab B", new Vector3(26f, 0.02f, 15f), new Vector3(6f, 0.04f, 5f), slabB,
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.3f, 1.1f));
-            CreateBlock("Apron slab C", new Vector3(18f, 0.02f, 20f), new Vector3(5f, 0.04f, 4f), Shade(slabA, 1.05f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.1f, 0.9f));
+            // Skip apron joint/slab densify — MAT concrete + soft wet residual carry the read;
+            // greybox joints read as scattered blocks from landing/follow cameras.
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -4738,26 +4726,16 @@ namespace Airside.Presentation
                 && GameObject.Find("window_r") == null)
                 CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
 
-            CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(60f, 1f, 2.4f),
+            // Soft wear accent only — large stain sheets were opaque black patches (PNG alpha ignored).
+            CreateDecalQuad("Runway wear", new Vector3(0f, 0.02f, 0f), new Vector3(36f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Apron stains", new Vector3(20f, 0.06f, 17f), new Vector3(18f, 1f, 10f),
-                "Textures/Decals/dc_apron_stains_v01.png");
-            CreateDecalQuad("Stand 1 stain", new Vector3(17f, 0.065f, 14f), new Vector3(5.5f, 1f, 3.2f),
-                "Textures/Decals/dc_apron_stains_v01.png");
-            CreateDecalQuad("Stand 2 stain", new Vector3(17f, 0.065f, 20f), new Vector3(5.5f, 1f, 3.2f),
-                "Textures/Decals/dc_apron_stains_v01.png");
-            CreateDecalQuad("Stand 3 stain", new Vector3(20f, 0.065f, 26f), new Vector3(5f, 1f, 2.8f),
-                "Textures/Decals/dc_apron_stains_v01.png");
             // Soft fringe so the apron doesn't float as a hard cutout (REF densify).
+            // N/S only — E/W fringe cubes read as blocks beside taxi/stand lead-ins.
             var fringe = Shade(AirsideTheme.DryGrass, 0.7f);
             CreateBlock("Apron fringe N", new Vector3(20f, -0.02f, 24.4f), new Vector3(29f, 0.06f, 1.2f), fringe,
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
             CreateBlock("Apron fringe S", new Vector3(20f, -0.02f, 9.6f), new Vector3(29f, 0.06f, 1.2f), fringe,
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
-            CreateBlock("Apron fringe E", new Vector3(34.4f, -0.02f, 17f), new Vector3(1.2f, 0.06f, 15f), fringe,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
-            CreateBlock("Apron fringe W", new Vector3(5.6f, -0.02f, 17f), new Vector3(1.2f, 0.06f, 15f), fringe,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(0.4f, 3f));
             // Planter strip between terminal glass and apron edge — prefer PRP-003 kit.
             if (!TryPlaceAirsidePlanterStrip())
             {
@@ -7050,19 +7028,13 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildBuildingContactShadows()
         {
-            PlaceContactShadow("Terminal contact", new Vector3(26f, 0.04f, 27f), new Vector3(24f, 0.03f, 7f), 0.28f);
-            PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.04f, 20f), new Vector3(16f, 0.03f, 11f), 0.3f);
-            PlaceContactShadow("Ops contact", new Vector3(-8f, 0.04f, 26f), new Vector3(8f, 0.03f, 5.5f), 0.26f);
-            PlaceContactShadow("Car park contact", new Vector3(48f, 0.04f, 46f), new Vector3(18f, 0.02f, 12f), 0.12f);
-            PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.04f, 22f), new Vector3(9f, 0.02f, 7f), 0.22f);
-            PlaceContactShadow("ARFF contact", new Vector3(-28f, 0.04f, 30f), new Vector3(9f, 0.02f, 7f), 0.2f);
-            PlaceContactShadow("Canopy contact", new Vector3(26f, 0.04f, 31.5f), new Vector3(16f, 0.02f, 5f), 0.14f);
-            PlaceContactShadow("Flood NE contact", new Vector3(32f, 0.04f, 22f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
-            PlaceContactShadow("Flood NW contact", new Vector3(8f, 0.04f, 22f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
-            PlaceContactShadow("Flood SE contact", new Vector3(32f, 0.04f, 12f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
-            PlaceContactShadow("Flood SW contact", new Vector3(8f, 0.04f, 12f), new Vector3(2.2f, 0.02f, 2.2f), 0.18f);
-            PlaceContactShadow("Windsock contact", new Vector3(-12f, 0.04f, 12f), new Vector3(1.4f, 0.02f, 1.4f), 0.16f);
-            PlaceContactShadow("Dolly cluster contact", new Vector3(31f, 0.04f, 20f), new Vector3(8f, 0.02f, 6f), 0.1f);
+            // Soft, tight discs — oversized near-black cylinders read as ground patches at night.
+            PlaceContactShadow("Terminal contact", new Vector3(26f, 0.035f, 27f), new Vector3(14f, 0.02f, 4.5f), 0.14f);
+            PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.035f, 20f), new Vector3(10f, 0.02f, 7f), 0.14f);
+            PlaceContactShadow("Ops contact", new Vector3(-8f, 0.035f, 26f), new Vector3(5f, 0.02f, 3.5f), 0.12f);
+            PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
+            PlaceContactShadow("ARFF contact", new Vector3(-28f, 0.035f, 30f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
+            PlaceContactShadow("Canopy contact", new Vector3(26f, 0.035f, 31.5f), new Vector3(10f, 0.015f, 3.2f), 0.08f);
         }
 
         private static void PlaceContactShadow(string name, Vector3 position, Vector3 scale, float alpha)
@@ -7072,7 +7044,8 @@ namespace Airside.Presentation
             Object.Destroy(shadow.GetComponent<Collider>());
             shadow.transform.position = position;
             shadow.transform.localScale = scale;
-            var color = new Color(0.04f, 0.05f, 0.07f, alpha);
+            var color = new Color(0.05f, 0.06f, 0.08f, Mathf.Clamp01(alpha));
+            // Alpha < 1 routes through URP transparent so discs do not stamp opaque black.
             var material = AirsideMaterialLibrary.Create(color, AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
             renderer.material = material;
@@ -8128,12 +8101,14 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(3.6f, 0.015f, 2.0f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.07f, 0.32f),
+            shadow.transform.localScale = new Vector3(2.8f, 0.012f, 1.5f);
+            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.16f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
-            shadow.GetComponent<Renderer>().material = material;
-            shadow.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            shadow.GetComponent<Renderer>().receiveShadows = false;
+            var renderer = shadow.GetComponent<Renderer>();
+            renderer.material = material;
+            SetRendererColor(renderer, new Color(0.05f, 0.06f, 0.08f, 0.16f));
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         private static void UpdateGroundShadow(Transform aircraft)
@@ -9086,14 +9061,20 @@ namespace Airside.Presentation
                     kit, "hold_short_f", new Vector3(-18f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _))
                 CreateBlock("Hold short F", new Vector3(-18f, 0.05f, 7.1f), new Vector3(3.2f, 0.03f, 0.2f), holdYellow);
 
-            // Stand lead-in dashes for bays 1–3 so apron reads painted from overview (0025 item 3).
-            foreach (var standX in new[] { 14f, 22f, 30f })
+            // Stand lead-in dashes — skip when markings kit already placed stand stops
+            // (otherwise landing/follow cameras see a carpet of yellow cubes).
+            if (GameObject.Find("stand_stop_a") == null
+                && GameObject.Find("stand_stop_b") == null
+                && GameObject.Find("stand_stop_c") == null)
             {
-                for (var step = 0; step < 5; step++)
+                foreach (var standX in new[] { 14f, 22f })
                 {
-                    var z = 12.2f + step * 0.75f;
-                    CreateBlock($"Stand lead {standX} {step}", new Vector3(standX, 0.04f, z),
-                        new Vector3(0.16f, 0.02f, 0.45f), new Color(0.95f, 0.85f, 0.2f));
+                    for (var step = 0; step < 3; step++)
+                    {
+                        var z = 12.4f + step * 1.1f;
+                        CreateBlock($"Stand lead {standX} {step}", new Vector3(standX, 0.04f, z),
+                            new Vector3(0.14f, 0.02f, 0.4f), new Color(0.95f, 0.85f, 0.2f));
+                    }
                 }
             }
         }
@@ -9894,14 +9875,16 @@ namespace Airside.Presentation
             quad.transform.position = position;
             quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             quad.transform.localScale = scale;
-            var material = CreateMaterial(Color.white, artTextureRelativePath, Vector2.one);
-            material.SetFloat("_Surface", 1f); // URP transparent hint when available
-            if (material.HasProperty("_Mode"))
-                material.SetFloat("_Mode", 3f);
-            material.mainTexture = texture;
+            // True URP transparent — wear PNGs are mostly alpha; opaque Lit ignored that and
+            // stamped dark RGB as black ground patches.
+            var tint = new Color(1f, 1f, 1f, 0.42f);
+            var material = AirsideMaterialLibrary.Create(
+                tint, AirsideMaterialLibrary.SurfaceKind.Default, texture, Vector2.one);
             var renderer = quad.GetComponent<Renderer>();
             renderer.material = material;
-            SetRendererColor(renderer, new Color(1f, 1f, 1f, 1f));
+            SetRendererColor(renderer, tint);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         private static Material CreateMaterial(Color color, string artTextureRelativePath = null, Vector2? textureTiling = null)

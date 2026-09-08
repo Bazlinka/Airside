@@ -195,12 +195,12 @@ namespace Airside.Presentation
         {
             weatherGloom = Mathf.Clamp01(weatherGloom);
 
-            // Day: slight lift; dusk: warmer filter; night: darker exposure + bloom;
-            // adverse weather: cooler filter + pulled exposure.
-            var exposure = Mathf.Lerp(-0.72f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.4f;
-            var contrast = Mathf.Lerp(12f, 5.5f, daylight) + weatherGloom * 4.8f;
+            // Day: slight lift; dusk: warmer filter; night: readable apron + flood pools
+            // (was crushed too dark — midtones and aircraft disappeared).
+            var exposure = Mathf.Lerp(-0.28f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.35f;
+            var contrast = Mathf.Lerp(7f, 5.5f, daylight) + weatherGloom * 4.2f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
-            var nightFilter = new Color(0.62f, 0.7f, 1f);
+            var nightFilter = new Color(0.7f, 0.76f, 1f);
             var stormFilter = new Color(0.68f, 0.74f, 0.84f);
             var filter = Color.Lerp(
                 Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.45f)),
@@ -210,16 +210,16 @@ namespace Airside.Presentation
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
+            _color.saturation.Override(Mathf.Lerp(10f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
             _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.38f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
+            _bloom.intensity.Override(Mathf.Lerp(0.42f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
                 + weatherGloom * 0.06f);
-            _bloom.threshold.Override(Mathf.Lerp(0.84f, 0.97f, daylight) - weatherGloom * 0.06f);
-            _vignette.intensity.Override(Mathf.Lerp(0.32f, 0.08f, daylight) + weatherGloom * 0.08f);
+            _bloom.threshold.Override(Mathf.Lerp(0.62f, 0.97f, daylight) - weatherGloom * 0.06f);
+            _vignette.intensity.Override(Mathf.Lerp(0.18f, 0.08f, daylight) + weatherGloom * 0.06f);
             // Night film grain for regional dusk grit; nearly off in bright day.
-            _grain.intensity.Override(Mathf.Lerp(0.28f, 0.015f, daylight) + weatherGloom * 0.05f);
-            _grain.response.Override(Mathf.Lerp(0.86f, 0.48f, daylight));
+            _grain.intensity.Override(Mathf.Lerp(0.12f, 0.015f, daylight) + weatherGloom * 0.05f);
+            _grain.response.Override(Mathf.Lerp(0.72f, 0.48f, daylight));
 
             // Lift cool night shadows; warm midtones at golden hour; soft highlight roll-off.
             // Noon keeps deeper shadows + lifted midtones so apron slabs separate from grass (REF-001).
@@ -238,15 +238,15 @@ namespace Airside.Presentation
                 daylight);
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
-                Mathf.Lerp(0.16f, -0.14f, daylight) - weatherGloom * 0.08f));
+                Mathf.Lerp(0.22f, -0.14f, daylight) - weatherGloom * 0.06f));
             // Dusk: lift midtones a touch more so hangar faces keep shape in warm light.
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(-0.06f, 0.12f, daylight) + warm * 0.2f));
+                Mathf.Lerp(0.04f, 0.12f, daylight) + warm * 0.2f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.1f, 0.01f, daylight) + warm * 0.08f));
+                Mathf.Lerp(-0.06f, 0.01f, daylight) + warm * 0.08f));
             _tonal.shadowsStart.Override(0f);
-            _tonal.shadowsEnd.Override(Mathf.Lerp(0.24f, 0.46f, daylight));
-            _tonal.highlightsStart.Override(Mathf.Lerp(0.4f, 0.58f, daylight));
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.28f, 0.46f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.42f, 0.58f, daylight));
             _tonal.highlightsEnd.Override(1f);
 
             // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
@@ -281,9 +281,9 @@ namespace Airside.Presentation
             _channelMixer.blueOutGreenIn.Override(coolPush * 0.15f);
             _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.25f - warmPush * 0.1f);
 
-            // Deeper night exposure so flood pools read against the apron (REF-002).
+            // Soft night deepen — keep apron/aircraft readable (was a second hard crush).
             if (daylight < 0.35f)
-                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.65f);
+                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.22f);
             // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
             else if (daylight > 0.75f && warm < 0.2f)
             {

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **VEG-002 coastal scrub modelling reference.** Add a 2048×1152 review
+  candidate covering five mallee/shrub silhouettes, three grass patches, three
+  rock groups and two dune-edge mixes at 1.8 m human scale, plus exact generation
+  evidence and AI-reference routing. Reference only; runtime kit unchanged.
+
 - **Ground / vehicle / smoothness (20).** GT yield keeps mid-leg position; pause
   and 4× apply to GSE/props/tires/GT catch-up/walkers; takeoff gear down until
   rotate; AtStand visuals follow turnaround; wet/fog/coast/berm/apron seams;

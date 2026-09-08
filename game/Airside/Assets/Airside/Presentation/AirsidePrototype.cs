@@ -234,8 +234,9 @@ namespace Airside.Presentation
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
-            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.92f, 0.78f, 0.18f), new Vector3(3.1f, 1.25f, 1.35f),
+            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
                     "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
@@ -244,14 +245,16 @@ namespace Airside.Presentation
                     "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
             _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
                     "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
-            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.17f, 0.58f, 0.78f), new Vector3(3.8f, 1.5f, 1.45f),
+            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.22f, 0.44f, 0.55f), new Vector3(3.8f, 1.5f, 1.45f),
                 PreferArtKit(
+                    "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
@@ -5514,8 +5517,10 @@ namespace Airside.Presentation
                 new Color(0.12f, 0.45f, 0.35f)
             };
 
-            // Car park bays — thin when parked-car prefab is a heavy silhouette.
-            var hasCarPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
+            // Car park bays — thin when parked-car prefab/kit is a heavy silhouette.
+            var hasCarPrefab = ArtPresentationLoader.HasPresentation("Models/Vehicles/mdl_parked_car_v02.gltf")
+                               || ArtPresentationLoader.HasPrefab("mdl_parked_car_v02")
+                               || ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
             var bayCarCount = hasCarPrefab ? 4 : 8;
             for (var i = 0; i < bayCarCount; i++)
             {
@@ -5619,12 +5624,65 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Decision 0025 items 1+3 — Resources landside parked car with procedural fallback.
+        /// Prefer landside car v02 kit/prefab, then v01, then procedural cuboids.
         /// </summary>
         private static void PlaceParkedCar(string name, Vector3 position, float yawDegrees, Color body)
         {
-            Transform root;
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_parked_car_v01", out var prefabRoot))
+            Transform root = null;
+            var kit = PreferArtKit(
+                "Models/Vehicles/mdl_parked_car_v02.gltf",
+                "Models/Vehicles/mdl_parked_car_v01.gltf");
+            if (!string.IsNullOrEmpty(kit)
+                && ArtPresentationLoader.TryInstantiate(
+                    kit,
+                    null,
+                    out root,
+                    kitName => kitName switch
+                    {
+                        "car_body" => $"{name} body",
+                        "car_roof" => $"{name} roof",
+                        "car_hood" => $"{name} hood",
+                        "car_boot" => $"{name} boot",
+                        "glass_front" => $"{name} glass front",
+                        "glass_rear" => $"{name} glass rear",
+                        "glass_side_l" => $"{name} glass side L",
+                        "glass_side_r" => $"{name} glass side R",
+                        "wheel_fl" => $"{name} wheel FL",
+                        "wheel_fr" => $"{name} wheel FR",
+                        "wheel_rl" => $"{name} wheel RL",
+                        "wheel_rr" => $"{name} wheel RR",
+                        _ => $"{name} {kitName}"
+                    },
+                    kitName =>
+                    {
+                        if (kitName.StartsWith("glass", StringComparison.Ordinal)
+                            || kitName.Contains("window", StringComparison.Ordinal))
+                            return new Color(0.18f, 0.35f, 0.48f, 0.42f);
+                        return kitName switch
+                        {
+                            "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr" => new Color(0.12f, 0.12f, 0.13f),
+                            "hub_fl" or "hub_fr" or "hub_rl" or "hub_rr" => new Color(0.45f, 0.46f, 0.48f),
+                            "car_headlight_l" or "car_headlight_r" => new Color(0.95f, 0.95f, 0.85f),
+                            "car_taillight_l" or "car_taillight_r" => new Color(0.85f, 0.15f, 0.12f),
+                            "car_stripe" => new Color(0.85f, 0.85f, 0.88f),
+                            "car_grille" or "car_grille_bar_1" or "car_grille_bar_2"
+                                or "car_bumper_front" or "car_bumper_rear"
+                                or "car_wheel_arch_fl" or "car_wheel_arch_fr"
+                                or "car_wheel_arch_rl" or "car_wheel_arch_rr"
+                                or "car_skirt_l" or "car_skirt_r" => Shade(body, 0.7f),
+                            "car_roof" => Shade(body, 0.85f),
+                            "car_mirror_l" or "car_mirror_r" or "car_number_plate"
+                                or "wiper" or "antenna" or "door_handle_l" or "door_handle_r"
+                                or "window_mullion_a" or "window_mullion_b"
+                                or "window_sill_l" or "window_sill_r" => new Color(0.25f, 0.26f, 0.28f),
+                            _ => body
+                        };
+                    }))
+            {
+                root.name = name;
+            }
+            else if (ArtPresentationLoader.TryInstantiatePrefab("mdl_parked_car_v02", out var prefabRoot)
+                     || ArtPresentationLoader.TryInstantiatePrefab("mdl_parked_car_v01", out prefabRoot))
             {
                 prefabRoot.name = name;
                 root = prefabRoot;
@@ -5660,16 +5718,18 @@ namespace Airside.Presentation
                 if (n.Contains("wheel") || n.Contains("window") || n.Contains("glass")
                     || n.Contains("headlight") || n.Contains("taillight") || n.Contains("stripe")
                     || n.Contains("grille") || n.Contains("mirror") || n.Contains("hub")
-                    || n.Contains("number"))
+                    || n.Contains("number") || n.Contains("wiper") || n.Contains("antenna"))
                     continue;
                 if (n.Contains("body") || n.Contains("roof") || n.Contains("bumper")
                     || n.Contains("hood") || n.Contains("boot") || n.Contains("door")
-                    || n.Contains("arch"))
+                    || n.Contains("arch") || n.Contains("skirt"))
                 {
                     var color = n.Contains("roof") ? Shade(body, 0.85f)
-                        : n.Contains("bumper") || n.Contains("arch") ? Shade(body, 0.7f)
+                        : n.Contains("bumper") || n.Contains("arch") || n.Contains("skirt") ? Shade(body, 0.7f)
                         : body;
-                    SetRendererColor(renderer, color);
+                    // Flat lit for UV-less prefab cubes — avoid black authored texels.
+                    renderer.material = AirsideMaterialLibrary.Create(color,
+                        AirsideMaterialLibrary.SurfaceKind.PaintedMetal, useTextures: false);
                 }
             }
         }
@@ -8473,20 +8533,25 @@ namespace Airside.Presentation
                     return kitName switch
                     {
                         "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
+                            or "wheel_ml" or "wheel_mr"
                             or "cart_wheel_1l" or "cart_wheel_1r" or "cart_wheel_2l" or "cart_wheel_2r"
                             or "cart_wheel_3l" or "cart_wheel_3r"
                             or "hub_fl" or "hub_fr" or "hub_rl" or "hub_rr"
+                            or "hub_ml" or "hub_mr"
                             or "wheel_hub_fl" or "wheel_hub_fr" or "wheel_hub_rl" or "wheel_hub_rr"
                             or "mudflap_l" or "mudflap_r" => new Color(0.15f, 0.15f, 0.16f),
                         "hose_mount" or "hose" or "hose_reel" or "hose_nozzle" or "hose_guard" or "hose_tray"
-                            or "hose_coil_a" or "hose_coil_b" or "hose_coil_c" or "pump_cabinet" or "pump_cabinet_door"
+                            or "hose_coil_a" or "hose_coil_b" or "hose_coil_c" or "hose_pivot"
+                            or "pump_cabinet" or "pump_cabinet_door"
                             or "pump_gauge" or "pump_valve"
                             or "exhaust" or "pump_hose_out" => new Color(0.25f, 0.25f, 0.28f),
                         "door" or "cab_door" or "cab_door_r" or "door_frame" or "door_handle"
                             or "door_handle_l" or "door_handle_r" or "door_hinge_t" or "door_hinge_b"
                             => new Color(0.2f, 0.22f, 0.25f),
-                        "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "tug_seat" or "tug_rollbar"
-                            or "tug_rollbar_top" or "tug_floor" or "tug_steering" or "tug_steering_wheel"
+                        "cab" or "tug_cab" or "cab_roof" or "cab_visor" or "cab_fairing"
+                            or "tug_seat" or "tug_seat_back" or "tug_rollbar"
+                            or "tug_rollbar_top" or "tug_rollbar_l" or "tug_rollbar_r"
+                            or "tug_floor" or "tug_steering" or "tug_steering_wheel"
                             or "counterweight" => color * 0.82f,
                         "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
                         "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
@@ -8496,6 +8561,7 @@ namespace Airside.Presentation
                             or "tank_cap" or "tank_cap_b" or "tank_ladder" or "tank_walkway"
                             or "tank_end_f" or "tank_end_r" or "tank_rail_l" or "tank_rail_r"
                             or "grill" or "light_bar" or "fender_fl" or "fender_fr" or "fender_rl" or "fender_rr"
+                            or "fender_ml" or "fender_mr"
                             or "wheel_arch_fl" or "wheel_arch_fr" or "wheel_arch_rl" or "wheel_arch_rr"
                             or "chassis" or "step" or "step_r" or "roof_rack" or "roof_vent"
                             or "number_plate" or "fuel_hazard" or "hazard_chevron_1" or "hazard_chevron_2"
@@ -8506,9 +8572,12 @@ namespace Airside.Presentation
                             or "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_1c"
                             or "cargo_bag_2a" or "cargo_bag_2b" or "cargo_bag_2c"
                             or "cargo_bag_3a" or "cargo_bag_3b" or "cargo_bag_3c"
-                            => new Color(0.75f, 0.55f, 0.2f),
+                            or "cargo_lid_1" or "cargo_lid_2" or "cargo_lid_3"
+                            or "cargo_latch_1" or "cargo_latch_2" or "cargo_latch_3"
+                            => new Color(0.22f, 0.44f, 0.55f),
                         "stripe" or "stripe_b" or "stripe_upper" or "cab_stripe" or "tank_stripe"
                             or "tug_stripe" => new Color(0.95f, 0.85f, 0.2f),
+                        "bus_body_upper" or "cabin_roof" => new Color(0.94f, 0.95f, 0.96f),
                         "cart_rail_1" or "cart_rail_2" or "cart_rail_3"
                             or "cart_rail_1b" or "cart_rail_2b" or "cart_rail_3b"
                             or "cart_gate_1" or "cart_gate_2" or "cart_gate_3"
@@ -8774,8 +8843,9 @@ namespace Airside.Presentation
 
         private static Transform BuildPushbackTug()
         {
-            // Batch F2 VEH-004 — prefer authored pushback tug v02, then pipeline-proof v01.
+            // VEH-004 — prefer pushback tug v03, then v02, then pipeline-proof v01.
             var pushbackKit = PreferArtKit(
+                "Models/Vehicles/mdl_pushback_tug_v03.gltf",
                 "Models/Vehicles/mdl_pushback_tug_v02.gltf");
             if (!string.IsNullOrEmpty(pushbackKit)
                 && ArtPresentationLoader.TryInstantiate(
@@ -8789,6 +8859,7 @@ namespace Airside.Presentation
                         "towbar_wheel" => "Tug towbar wheel",
                         "towbar_handle" => "Tug towbar handle",
                         "towbar_eye" => "Tug towbar eye",
+                        "tow_pivot" or "towbar_pivot_mid" => "Tug tow pivot",
                         "tug_body" => "Tug body",
                         "tug_cab" => "Tug cab",
                         "beacon" => "Tug beacon",
@@ -8808,6 +8879,7 @@ namespace Airside.Presentation
                                 or "hub_fl" or "hub_fr" or "hub_rl" or "hub_rr"
                                 or "towbar_wheel" => new Color(0.15f, 0.15f, 0.16f),
                             "towbar" or "towbar_head" or "towbar_handle" or "towbar_eye" or "tow_pivot"
+                                or "towbar_pivot_mid"
                                 => new Color(0.3f, 0.32f, 0.34f),
                             "beacon" => new Color(0.95f, 0.35f, 0.12f),
                             "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
@@ -8823,12 +8895,13 @@ namespace Airside.Presentation
                 return artRoot;
             }
 
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v02", out var prefabV02)
-                || ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v01", out prefabV02))
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v03", out var prefabV03)
+                || ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v02", out prefabV03)
+                || ArtPresentationLoader.TryInstantiatePrefab("mdl_pushback_tug_v01", out prefabV03))
             {
-                prefabV02.name = "Pushback tug";
-                prefabV02.gameObject.SetActive(false);
-                return prefabV02;
+                prefabV03.name = "Pushback tug";
+                prefabV03.gameObject.SetActive(false);
+                return prefabV03;
             }
 
             var root = new GameObject("Pushback tug").transform;

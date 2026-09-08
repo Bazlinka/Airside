@@ -35,6 +35,7 @@ prefabs (then Addressables) over the interim StreamingAssets glTF parser.
 | `mdl_hangar_bay_props_v01` | `scripts/generate-hangar-bay-props-prefab.py` |
 | `mdl_arff_truck_v01` | `scripts/generate-arff-truck-prefab.py` |
 | `mdl_parked_car_v01` | `scripts/generate-parked-car-prefab.py` |
+| `mdl_parked_car_v02` | `scripts/generate-veh-fleet-v06-prefabs.py` |
 | `mdl_luggage_trolley_v01` | `scripts/generate-landside-furniture-prefabs.py` |
 | `mdl_landside_bench_v01` | `scripts/generate-landside-furniture-prefabs.py` |
 | `mdl_coast_boat_v01` | `scripts/generate-landside-furniture-prefabs.py` |
@@ -56,6 +57,11 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v06.fbx` (fleet v06)
+- `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v06.fbx` (fleet v06)
+- `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v06.fbx` (fleet v06)
+- `Assets/Airside/Art/Models/Vehicles/mdl_pushback_tug_v03.fbx` (fleet v06)
+- `Assets/Airside/Art/Models/Vehicles/mdl_parked_car_v02.fbx` (landside car v02)
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v05.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v05.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v05.fbx` (Batch F2)
@@ -75,6 +81,11 @@ Resources prefabs (Addressables keys live now):
 |---|---|
 | `mdl_regional_turboprop_01_v05` | Mac bake (`Airside → Art → Bake Authored FBX Prefabs`); generator `scripts/generate-air-001-v05-prefab.py` is the pipeline-proof fallback |
 | `mdl_terminal_regional_small_v05` | Mac bake; `scripts/generate-bld-001-v05-prefab.py` is the pipeline-proof fallback |
+| `mdl_fuel_truck_small_v06` | Mac bake; `scripts/generate-veh-fleet-v06-prefabs.py` |
+| `mdl_baggage_tug_train_v06` | Mac bake; same |
+| `mdl_passenger_bus_apron_v06` | Mac bake; same |
+| `mdl_pushback_tug_v03` | Mac bake; same |
+| `mdl_parked_car_v02` | Mac bake; same |
 | `mdl_fuel_truck_small_v05` | Mac bake; `scripts/generate-batch-f2-prefabs.py` |
 | `mdl_baggage_tug_train_v05` | Mac bake; same |
 | `mdl_passenger_bus_apron_v05` | Mac bake; same |

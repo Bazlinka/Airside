@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Vehicle fleet fidelity (REF-003/005).** Landside `mdl_parked_car_v02` (lofted
+  regional car kit) prefers over cube v01; turnaround VEH-001…003 ship `*_v06`
+  and pushback `v03` ahead of v05/v02 with fallbacks retained. Safety Yellow /
+  Coastal Blue accents, glass/rubber/metal via `AirsideMaterialLibrary`; metre
+  ASCII FBX + StreamingAssets + Resources prefabs. Evidence:
+  `scripts/test-domain.sh` 118/118; Mac overview/follow vs REF-003 pending.
+
 - **Flight/taxi polish (pass 2).** Takeoff lines up from A1 instead of yaw-snapping;
   taxi-out leaves the pushback pad without reversing onto the stand; landing
   rolls out ~22 m with touchdown FX on ground contact; stand lead pads follow the

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **BLD-001…003 building fidelity reference.** Add a common-scale daylight
+  board for the terminal, hangar and ops shed matched to REF-001, including a
+  corrected gable-roof hangar and attached lean-to office. Exact generation and
+  edit evidence included; runtime v05 meshes unchanged.
+
 - **WLD-004 context terrain modelling reference.** Add a 2048×1152 review
   candidate for separated paddock berms, low hills, dunes, turquoise shallows
   and deep-water modules around a protected blank operational zone, with exact

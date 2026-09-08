@@ -39,6 +39,7 @@ _SPEC.loader.exec_module(_v01)
 box = _v01.box
 pack_gltf = _v01.pack_gltf
 write_default_meta = _v01.write_default_meta
+mesh_attributes = _v01.mesh_attributes
 
 
 def new_guid() -> str:
@@ -349,18 +350,33 @@ def prop_blade(
 
 
 def write_obj(path: Path, meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> None:
+    """Intermediate for the assimp export path.
+
+    Carries normals and UVs from the shared derivation so the assimp route and
+    the bundled ASCII FBX writer produce the same surface; positions alone left
+    assimp to invent smoothing and gave Unity no UVs to build tangents from.
+    """
     lines = ["# Airside authored kit", "mtllib none"]
     v_offset = 1
     for name, (verts, indices) in meshes.items():
+        positions, normals, uvs, _tangents, tris = mesh_attributes.build_attributes(
+            verts, indices
+        )
         lines.append(f"o {name}")
-        for v in verts:
+        for v in positions:
             lines.append(f"v {v[0]:.6f} {v[1]:.6f} {v[2]:.6f}")
-        for i in range(0, len(indices), 3):
-            a = int(indices[i]) + v_offset
-            b = int(indices[i + 1]) + v_offset
-            c = int(indices[i + 2]) + v_offset
-            lines.append(f"f {a} {b} {c}")
-        v_offset += len(verts)
+        for vt in uvs:
+            lines.append(f"vt {vt[0]:.6f} {vt[1]:.6f}")
+        for vn in normals:
+            lines.append(f"vn {vn[0]:.6f} {vn[1]:.6f} {vn[2]:.6f}")
+        for i in range(0, len(tris), 3):
+            # OBJ shares one index across v/vt/vn, which holds because
+            # build_attributes re-welds to exactly one of each per vertex.
+            a = int(tris[i]) + v_offset
+            b = int(tris[i + 1]) + v_offset
+            c = int(tris[i + 2]) + v_offset
+            lines.append(f"f {a}/{a}/{a} {b}/{b}/{b} {c}/{c}/{c}")
+        v_offset += len(positions)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

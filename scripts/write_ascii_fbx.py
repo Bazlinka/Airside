@@ -7,10 +7,19 @@ with Geometry/Model/Connections nodes. Coordinates are metres, Y-up.
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 from typing import Dict, Tuple
 
 import numpy as np
+
+_SCRIPTS = Path(__file__).resolve().parent
+_ATTR_SPEC = importlib.util.spec_from_file_location(
+    "mesh_attributes", _SCRIPTS / "mesh_attributes.py"
+)
+mesh_attributes = importlib.util.module_from_spec(_ATTR_SPEC)
+assert _ATTR_SPEC.loader is not None
+_ATTR_SPEC.loader.exec_module(mesh_attributes)
 
 
 def write_ascii_fbx(
@@ -71,6 +80,13 @@ def write_ascii_fbx(
         safe = "".join(c if c.isalnum() or c in "_-" else "_" for c in name)
         gid = geo_base + i
         mid = model_base + i
+        # Shared derivation, so the FBX and the glTF describe the same surface.
+        # This used to average every adjacent face unconditionally, which rounded
+        # off box corners that should have stayed hard, and wrote no UVs at all --
+        # leaving Unity's Mikktspace tangent step with nothing to work from.
+        verts, normals, uvs, _tangents, indices = mesh_attributes.build_attributes(
+            verts, indices
+        )
         verts = np.asarray(verts, dtype=np.float64)
         indices = np.asarray(indices, dtype=np.int64)
 
@@ -80,21 +96,10 @@ def write_ascii_fbx(
             a, b, c = int(indices[t]), int(indices[t + 1]), int(indices[t + 2])
             poly.extend([str(a), str(b), str(~c)])
 
-        # Area-weighted vertex normals so Unity can Import without warnings.
-        normals = np.zeros_like(verts)
-        for t in range(0, len(indices), 3):
-            a, b, c = int(indices[t]), int(indices[t + 1]), int(indices[t + 2])
-            ab = verts[b] - verts[a]
-            ac = verts[c] - verts[a]
-            face_n = np.cross(ab, ac)
-            normals[a] += face_n
-            normals[b] += face_n
-            normals[c] += face_n
-        lengths = np.linalg.norm(normals, axis=1, keepdims=True)
-        lengths = np.maximum(lengths, 1e-12)
-        normals = normals / lengths
         nflat = ", ".join(f"{v:.6f}" for xyz in normals for v in xyz)
         n_count = int(normals.size)
+        uvflat = ", ".join(f"{v:.6f}" for uv in uvs for v in uv)
+        uv_count = int(uvs.size)
 
         vflat = ", ".join(f"{v:.6f}" for xyz in verts for v in xyz)
         lines += [
@@ -115,10 +120,23 @@ def write_ascii_fbx(
             f"                a: {nflat}",
             "            }",
             "        }",
+            "        LayerElementUV: 0 {",
+            "            Version: 101",
+            '            Name: "UVMap"',
+            '            MappingInformationType: "ByControlPoint"',
+            '            ReferenceInformationType: "Direct"',
+            f"            UV: *{uv_count} {{",
+            f"                a: {uvflat}",
+            "            }",
+            "        }",
             "        Layer: 0 {",
             "            Version: 100",
             "            LayerElement:  {",
             '                Type: "LayerElementNormal"',
+            "                TypedIndex: 0",
+            "            }",
+            "            LayerElement:  {",
+            '                Type: "LayerElementUV"',
             "                TypedIndex: 0",
             "            }",
             "        }",

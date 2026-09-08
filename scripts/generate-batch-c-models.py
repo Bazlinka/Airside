@@ -49,7 +49,14 @@ def write_folder_meta(path: Path) -> None:
 
 
 def write_default_meta(path: Path) -> None:
-    Path(str(path) + ".meta").write_text(
+    # Never reissue a GUID for an asset Unity already knows about: a regenerate
+    # would silently break every reference to it. write_kit worked around this by
+    # saving and restoring the .meta around pack_gltf, but generators that call
+    # pack_gltf directly (generate-wld-prp-kits-v02.py) had no such guard.
+    meta = Path(str(path) + ".meta")
+    if meta.exists():
+        return
+    meta.write_text(
         "fileFormatVersion: 2\n"
         f"guid: {new_guid()}\n"
         "DefaultImporter:\n"

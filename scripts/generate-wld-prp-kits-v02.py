@@ -11,10 +11,15 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-ROOT = Path("/workspace/game/Airside/Assets/Airside/Art")
+# Repo-relative: these were hard-coded to the /workspace container path, so the
+# script could not run on a developer machine at all -- the same fix already
+# applied to generate-batch-c-models.py.
+SCRIPTS = Path(__file__).resolve().parent
+REPO = SCRIPTS.parent
+ROOT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art"
 
 _SPEC = importlib.util.spec_from_file_location(
-    "batch_c_v01", Path("/workspace/scripts/generate-batch-c-models.py")
+    "batch_c_v01", SCRIPTS / "generate-batch-c-models.py"
 )
 _v01 = importlib.util.module_from_spec(_SPEC)
 assert _SPEC.loader is not None

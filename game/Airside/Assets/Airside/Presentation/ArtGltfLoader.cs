@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -10,9 +9,12 @@ namespace Airside.Presentation
     /// Loads Airside Batch B/C procedural glTF kits from disk at runtime.
     /// Packaged builds read <c>StreamingAssets/Airside/Art</c> (see
     /// <see cref="ArtRuntimePaths"/> and <c>scripts/sync-art-streaming-assets.sh</c>).
-    /// Supports the project's POSITION+indices box/quad kits only — not a general
-    /// glTF importer. Missing files return false so callers keep primitive greybox
-    /// fallbacks. This is an interim pipeline until Unity-imported prefabs/Addressables.
+    /// Reads the project's own kits only — not a general glTF importer. Meshes take
+    /// POSITION plus, when the writer supplied them, NORMAL, TEXCOORD_0 and TANGENT;
+    /// kits generated before those existed still load, with the attributes derived
+    /// here as they always were. Missing files return false so callers keep primitive
+    /// greybox fallbacks. This is an interim pipeline until Unity-imported
+    /// prefabs/Addressables.
     /// </summary>
     public static class ArtGltfLoader
     {
@@ -145,8 +147,12 @@ namespace Airside.Presentation
 
         private static GltfKit ParseKit(string gltfPath)
         {
-            var json = File.ReadAllText(gltfPath);
-            var binUri = MatchFirst(json, "\"uri\"\\s*:\\s*\"([^\"]+)\"");
+            var root = GltfJson.AsObject(GltfJson.Parse(File.ReadAllText(gltfPath)));
+            if (root == null)
+                return null;
+
+            var buffers = GltfJson.Array(root, "buffers");
+            var binUri = GltfJson.String(GltfJson.ObjectAt(buffers, 0), "uri");
             if (string.IsNullOrEmpty(binUri))
                 return null;
 
@@ -155,58 +161,82 @@ namespace Airside.Presentation
                 return null;
 
             var blob = File.ReadAllBytes(binPath);
-
-            // Mesh "name" fields appear before node/scene names in our kits.
-            var allNames = MatchAll(json, "\"name\"\\s*:\\s*\"([^\"]+)\"");
-            var meshCount = allNames.Count / 2;
-            if (meshCount <= 0)
-                return null;
-
-            // Accessors alternate POSITION count then indices count per mesh.
-            var counts = MatchAllInts(json, "\"count\"\\s*:\\s*(\\d+)");
-            if (counts.Count < meshCount * 2)
+            var bufferViews = GltfJson.Array(root, "bufferViews");
+            var accessors = GltfJson.Array(root, "accessors");
+            var meshes = GltfJson.Array(root, "meshes");
+            if (bufferViews == null || accessors == null || meshes == null)
                 return null;
 
             var kit = new GltfKit();
-            var offset = 0;
-            for (var i = 0; i < meshCount; i++)
+            foreach (var meshValue in meshes)
             {
-                var name = allNames[i];
-                var vertCount = counts[i * 2];
-                var indexCount = counts[i * 2 + 1];
+                var meshObject = GltfJson.AsObject(meshValue);
+                var name = GltfJson.String(meshObject, "name");
+                var primitives = GltfJson.Array(meshObject, "primitives");
+                var primitive = GltfJson.ObjectAt(primitives, 0);
+                if (string.IsNullOrEmpty(name) || primitive == null)
+                    continue;
 
-                var vertByteLen = vertCount * 12;
-                var vertPadded = vertByteLen + ((4 - (vertByteLen % 4)) % 4);
-                var indexByteLen = indexCount * 2;
-                var indexPadded = indexByteLen + ((4 - (indexByteLen % 4)) % 4);
-                if (offset + vertPadded + indexPadded > blob.Length)
-                    break;
+                var attributes = GltfJson.AsObject(
+                    primitive.TryGetValue("attributes", out var a) ? a : null);
+                var positionIndex = GltfJson.Int(attributes, "POSITION", -1);
+                var indicesIndex = GltfJson.Int(primitive, "indices", -1);
 
-                var vertices = new Vector3[vertCount];
-                for (var v = 0; v < vertCount; v++)
+                var vertices = ReadVector3(blob, bufferViews, accessors, positionIndex);
+                var indices = ReadIndices(blob, bufferViews, accessors, indicesIndex);
+                if (vertices == null || indices == null)
+                    continue;
+
+                // Kits written before the generator emitted a full vertex format carry
+                // POSITION only; they still load, on the old derive-everything path.
+                var normals = ReadVector3(blob, bufferViews, accessors,
+                    GltfJson.Int(attributes, "NORMAL", -1));
+                var uvs = ReadVector2(blob, bufferViews, accessors,
+                    GltfJson.Int(attributes, "TEXCOORD_0", -1));
+                var tangents = ReadVector4(blob, bufferViews, accessors,
+                    GltfJson.Int(attributes, "TANGENT", -1));
+                if (normals != null && normals.Length != vertices.Length)
+                    normals = null;
+                if (uvs != null && uvs.Length != vertices.Length)
+                    uvs = null;
+                if (tangents != null && tangents.Length != vertices.Length)
+                    tangents = null;
+
+                // The generator does not guarantee outward winding per part, which is
+                // what left AIR-001's hull hollow. Supplied normals are derived from
+                // that same winding, so a part that needs flipping needs its normals
+                // and tangent handedness flipped with it -- correcting the triangles
+                // alone would light the surface from the inside.
+                // Flat apron/runway paint quads are already outward-up; the centroid test
+                // flips them face-down and they vanish under backface culling (black voids).
+                if (!IsFlatDecalMesh(vertices) && ShouldFlipWinding(vertices, indices))
                 {
-                    var o = offset + v * 12;
-                    vertices[v] = new Vector3(
-                        BitConverter.ToSingle(blob, o),
-                        BitConverter.ToSingle(blob, o + 4),
-                        BitConverter.ToSingle(blob, o + 8));
-                }
+                    for (var t = 0; t + 2 < indices.Length; t += 3)
+                        (indices[t], indices[t + 1]) = (indices[t + 1], indices[t]);
 
-                offset += vertPadded;
-                var indices = new int[indexCount];
-                for (var n = 0; n < indexCount; n++)
-                    indices[n] = BitConverter.ToUInt16(blob, offset + n * 2);
-                offset += indexPadded;
+                    if (normals != null)
+                        for (var v = 0; v < normals.Length; v++)
+                            normals[v] = -normals[v];
+
+                    if (tangents != null)
+                        for (var v = 0; v < tangents.Length; v++)
+                            tangents[v].w = -tangents[v].w;
+                }
 
                 var mesh = new Mesh { name = name };
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
-                // Flat apron/runway paint quads are already outward-up; the centroid test
-                // flips them face-down and they vanish under backface culling (black voids).
-                if (!IsFlatDecalMesh(vertices))
-                    EnsureOutwardWinding(mesh, vertices);
-                mesh.RecalculateNormals();
-                mesh.SetUVs(0, BuildPlanarUvs(vertices));
+
+                if (normals != null)
+                    mesh.SetNormals(normals);
+                else
+                    mesh.RecalculateNormals();
+
+                mesh.SetUVs(0, uvs ?? BuildPlanarUvs(vertices));
+
+                if (tangents != null)
+                    mesh.SetTangents(tangents);
+
                 mesh.RecalculateBounds();
 
                 var entry = new MeshEntry(name, mesh);
@@ -215,6 +245,127 @@ namespace Airside.Presentation
             }
 
             return kit.Meshes.Count > 0 ? kit : null;
+        }
+
+        /// <summary>
+        /// Resolves an accessor to its slice of the binary blob, or null when the
+        /// accessor is absent, malformed, or would read past the end of the buffer.
+        /// </summary>
+        private static bool TryResolve(
+            byte[] blob,
+            List<object> bufferViews,
+            List<object> accessors,
+            int accessorIndex,
+            int expectedComponentType,
+            int componentsPerElement,
+            int componentSize,
+            out int start,
+            out int count)
+        {
+            start = 0;
+            count = 0;
+            var accessor = GltfJson.ObjectAt(accessors, accessorIndex);
+            if (accessor == null)
+                return false;
+            if (GltfJson.Int(accessor, "componentType", 0) != expectedComponentType)
+                return false;
+
+            var view = GltfJson.ObjectAt(bufferViews, GltfJson.Int(accessor, "bufferView", -1));
+            if (view == null)
+                return false;
+
+            count = GltfJson.Int(accessor, "count", 0);
+            start = GltfJson.Int(view, "byteOffset", 0) + GltfJson.Int(accessor, "byteOffset", 0);
+            var length = (long)count * componentsPerElement * componentSize;
+            return count > 0 && start >= 0 && start + length <= blob.Length;
+        }
+
+        private static Vector3[] ReadVector3(
+            byte[] blob, List<object> bufferViews, List<object> accessors, int accessorIndex)
+        {
+            if (!TryResolve(blob, bufferViews, accessors, accessorIndex, 5126, 3, 4,
+                    out var start, out var count))
+                return null;
+
+            var result = new Vector3[count];
+            for (var i = 0; i < count; i++)
+            {
+                var o = start + i * 12;
+                result[i] = new Vector3(
+                    BitConverter.ToSingle(blob, o),
+                    BitConverter.ToSingle(blob, o + 4),
+                    BitConverter.ToSingle(blob, o + 8));
+            }
+
+            return result;
+        }
+
+        private static Vector2[] ReadVector2(
+            byte[] blob, List<object> bufferViews, List<object> accessors, int accessorIndex)
+        {
+            if (!TryResolve(blob, bufferViews, accessors, accessorIndex, 5126, 2, 4,
+                    out var start, out var count))
+                return null;
+
+            var result = new Vector2[count];
+            for (var i = 0; i < count; i++)
+            {
+                var o = start + i * 8;
+                result[i] = new Vector2(
+                    BitConverter.ToSingle(blob, o),
+                    BitConverter.ToSingle(blob, o + 4));
+            }
+
+            return result;
+        }
+
+        private static Vector4[] ReadVector4(
+            byte[] blob, List<object> bufferViews, List<object> accessors, int accessorIndex)
+        {
+            if (!TryResolve(blob, bufferViews, accessors, accessorIndex, 5126, 4, 4,
+                    out var start, out var count))
+                return null;
+
+            var result = new Vector4[count];
+            for (var i = 0; i < count; i++)
+            {
+                var o = start + i * 16;
+                result[i] = new Vector4(
+                    BitConverter.ToSingle(blob, o),
+                    BitConverter.ToSingle(blob, o + 4),
+                    BitConverter.ToSingle(blob, o + 8),
+                    BitConverter.ToSingle(blob, o + 12));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reads triangle indices, accepting both widths the writer emits: uint16 for
+        /// the common small mesh, uint32 once splitting pushes a part past 65535 verts.
+        /// </summary>
+        private static int[] ReadIndices(
+            byte[] blob, List<object> bufferViews, List<object> accessors, int accessorIndex)
+        {
+            if (TryResolve(blob, bufferViews, accessors, accessorIndex, 5123, 1, 2,
+                    out var start, out var count))
+            {
+                var shortResult = new int[count];
+                for (var i = 0; i < count; i++)
+                    shortResult[i] = BitConverter.ToUInt16(blob, start + i * 2);
+                return shortResult;
+            }
+
+            if (TryResolve(blob, bufferViews, accessors, accessorIndex, 5125, 1, 4,
+                    out start, out count))
+            {
+                var intResult = new int[count];
+                for (var i = 0; i < count; i++)
+                    intResult[i] = (int)BitConverter.ToUInt32(blob, start + i * 4);
+                return intResult;
+            }
+
+            return null;
         }
 
         private static bool IsFlatDecalMesh(Vector3[] vertices)
@@ -239,14 +390,16 @@ namespace Airside.Presentation
         /// backface culling that hollows fuselage roofs and tires from overview.
         /// Flip triangles when a majority of face normals point toward the centroid.
         /// </summary>
-        private static void EnsureOutwardWinding(Mesh mesh, Vector3[] vertices)
+        /// <summary>
+        /// True when most of a part's triangles face its own centre, i.e. the generator
+        /// wound it inside out. Callers flip the winding and every attribute derived
+        /// from it. Kept as a safety net: the fix belongs in the generator, but a part
+        /// that slips through would otherwise vanish under backface culling.
+        /// </summary>
+        private static bool ShouldFlipWinding(Vector3[] vertices, int[] indices)
         {
-            if (mesh == null || vertices == null || vertices.Length < 3)
-                return;
-
-            var tris = mesh.triangles;
-            if (tris == null || tris.Length < 3)
-                return;
+            if (vertices == null || vertices.Length < 3 || indices == null || indices.Length < 3)
+                return false;
 
             var center = Vector3.zero;
             for (var i = 0; i < vertices.Length; i++)
@@ -255,11 +408,11 @@ namespace Airside.Presentation
 
             var outward = 0;
             var inward = 0;
-            for (var i = 0; i < tris.Length; i += 3)
+            for (var i = 0; i + 2 < indices.Length; i += 3)
             {
-                var i0 = tris[i];
-                var i1 = tris[i + 1];
-                var i2 = tris[i + 2];
+                var i0 = indices[i];
+                var i1 = indices[i + 1];
+                var i2 = indices[i + 2];
                 if (i0 >= vertices.Length || i1 >= vertices.Length || i2 >= vertices.Length)
                     continue;
                 var v0 = vertices[i0];
@@ -273,17 +426,7 @@ namespace Airside.Presentation
                     inward++;
             }
 
-            if (inward <= outward)
-                return;
-
-            for (var i = 0; i < tris.Length; i += 3)
-            {
-                var swap = tris[i];
-                tris[i] = tris[i + 1];
-                tris[i + 1] = swap;
-            }
-
-            mesh.SetTriangles(tris, 0);
+            return inward > outward;
         }
 
         /// <summary>
@@ -337,28 +480,6 @@ namespace Airside.Presentation
             }
 
             return uvs;
-        }
-
-        private static string MatchFirst(string input, string pattern)
-        {
-            var match = Regex.Match(input, pattern);
-            return match.Success ? match.Groups[1].Value : null;
-        }
-
-        private static List<string> MatchAll(string input, string pattern)
-        {
-            var list = new List<string>();
-            foreach (Match match in Regex.Matches(input, pattern))
-                list.Add(match.Groups[1].Value);
-            return list;
-        }
-
-        private static List<int> MatchAllInts(string input, string pattern)
-        {
-            var list = new List<int>();
-            foreach (Match match in Regex.Matches(input, pattern))
-                list.Add(int.Parse(match.Groups[1].Value));
-            return list;
         }
 
         private sealed class GltfKit

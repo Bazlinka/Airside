@@ -1,9 +1,12 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — midday polish pushed on `feature/pin-midday-polish`)
-- **Branch:** `feature/pin-midday-polish`
-- **Do next:** Bailey Mac Play review (`work/evidence/play-audit-2026-09-08/106-*.png`),
-  then merge when happy. Flip `DayCycle.PinMiddayForPolish` +
+- **Last updated:** 2026-09-08 (Claude — kit vertex attributes on `feature/mesh-vertex-attributes`)
+- **Branch:** `feature/mesh-vertex-attributes`, branched from `feature/pin-midday-polish`
+- **Do next:** Bailey Mac Play review of both branches. `feature/pin-midday-polish`
+  still wants the review at `work/evidence/play-audit-2026-09-08/106-*.png`; this
+  branch then needs a Play look at the regenerated kits (smoothing and texel
+  density), since only the EditMode suite has run so far. Merge the polish branch
+  first — this one sits on top of it. Flip `DayCycle.PinMiddayForPolish` +
   `Weather.PinClearForPolish` to `false` when night/weather work returns.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
@@ -12,8 +15,18 @@
   - AircraftPartColor: white wings, teal fin/nacelles (REF-005); GPU Resident Drawer off
   - Play 106: solid white+teal AIR-001; flat stand/runway decals OK; gear float /
     stray fragments / dim grade / untextured sky blob still visible
+  - Kits now carry NORMAL/TEXCOORD_0/TANGENT from `scripts/mesh_attributes.py`.
+    UVs are in **metres**, so runtime tiling in `AirsideMaterialLibrary` now reads
+    as tiles-per-metre, not tiles-per-part — existing tiling values are unreviewed
+    against that change and may want a pass.
+  - The v01–v04 fallback kits are still POSITION-only: their generators keep the
+    old hard-coded `/workspace` paths, so they cannot be re-run here. Harmless —
+    the loader still derives attributes for them — but they will not match.
+  - Eight FBX models remain orphaned (no prefab or scene references them), so the
+    vehicle/character/forecourt/fence `v05` prefabs are still Unity primitive stacks
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** merge as-is, or more visual polish later?
+- **Open question for Bailey:** merge the polish branch as-is, or more visual
+  polish later? And should the orphaned FBX pipeline be wired up or deleted?
 
 ---
 

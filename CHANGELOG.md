@@ -5,6 +5,24 @@ change it describes.
 
 ## Unreleased
 
+- **Full vertex format on every procedural kit.** `pack_gltf` wrote `POSITION`
+  and nothing else, so the runtime invented the rest: `RecalculateNormals` (which
+  never smooths) hard-facetted every lathed hull, wheel and tree; per-part
+  bounding-box UVs made texel density vary between neighbouring objects; and with
+  no tangents the normal maps in `mat_*.mat` could not be sampled at all. New
+  `scripts/mesh_attributes.py` derives angle-smoothed normals, planar UVs measured
+  in metres, and tangents from the UV gradient, splitting and re-welding corners so
+  smoothing and projection seams survive. Because every generator shares that one
+  writer, aircraft, buildings, vehicles, props, characters and environment all gain
+  it together — 59 kits, 2662 meshes regenerated. The OBJ/FBX legs carry the same
+  data (the ASCII FBX writer had been smoothing box corners unconditionally and
+  writing no UVs). `ArtGltfLoader` reads the attributes through a real accessor
+  walk (`GltfJson`) instead of the regex + positional guess, which only ever worked
+  while kits had a single attribute; POSITION-only kits still load on the old
+  derive-everything path. The AIR-001 hollow-hull winding correction now flips
+  supplied normals and tangent handedness with the triangles. Evidence:
+  `scripts/test-unity.sh` 133 tests, 129 passed / 0 failed.
+
 - **Pin midday + Clear for visual polish.** `DayCycle.PinMiddayForPolish` and
   `Weather.PinClearForPolish` lock noon Clear skies so Play stays readable while
   apron/aircraft bugs are fixed. AircraftPartColor matches REF-005 (white wings,

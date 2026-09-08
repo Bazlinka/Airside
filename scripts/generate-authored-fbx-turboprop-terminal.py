@@ -12,6 +12,7 @@ Does not race lofted/v04 filenames.
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import subprocess
 import tempfile
 import uuid
@@ -19,14 +20,18 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path("/workspace/game/Airside/Assets/Airside/Art")
+# Repo-relative (was hard-coded to the /workspace container path, so this
+# module could not be imported or re-run on a developer machine).
+SCRIPTS = Path(__file__).resolve().parent
+REPO = SCRIPTS.parent
+ROOT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art"
 AIRCRAFT = ROOT / "Models" / "Aircraft"
 BUILDINGS = ROOT / "Models" / "Buildings"
 VEHICLES = ROOT / "Models" / "Vehicles"
 PROPS = ROOT / "Models" / "Props"
 
 _SPEC = importlib.util.spec_from_file_location(
-    "batch_c_v01", Path("/workspace/scripts/generate-batch-c-models.py")
+    "batch_c_v01", SCRIPTS / "generate-batch-c-models.py"
 )
 _v01 = importlib.util.module_from_spec(_SPEC)
 assert _SPEC.loader is not None
@@ -360,19 +365,37 @@ def write_obj(path: Path, meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> N
 
 
 def export_fbx(meshes: dict[str, tuple[np.ndarray, np.ndarray]], fbx_path: Path) -> None:
-    with tempfile.TemporaryDirectory() as tmp:
-        obj_path = Path(tmp) / (fbx_path.stem + ".obj")
-        write_obj(obj_path, meshes)
-        result = subprocess.run(
-            ["assimp", "export", str(obj_path), str(fbx_path)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0 or not fbx_path.exists():
-            raise RuntimeError(
-                f"assimp export failed for {fbx_path.name}: {result.stderr or result.stdout}"
+    """Export via the assimp CLI, falling back to the bundled ASCII FBX writer.
+
+    scripts/write_ascii_fbx.py exists precisely for machines without assimp but
+    was never wired in, so this raised FileNotFoundError and left the kit half
+    written -- the glTF regenerated, the FBX stale, and the .meta GUIDs clobbered
+    because the crash landed before write_kit could restore them.
+    """
+    if shutil.which("assimp") is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            obj_path = Path(tmp) / (fbx_path.stem + ".obj")
+            write_obj(obj_path, meshes)
+            result = subprocess.run(
+                ["assimp", "export", str(obj_path), str(fbx_path)],
+                capture_output=True,
+                text=True,
+                check=False,
             )
+            if result.returncode != 0 or not fbx_path.exists():
+                raise RuntimeError(
+                    f"assimp export failed for {fbx_path.name}: {result.stderr or result.stdout}"
+                )
+    else:
+        _spec = importlib.util.spec_from_file_location(
+            "write_ascii_fbx", SCRIPTS / "write_ascii_fbx.py"
+        )
+        _mod = importlib.util.module_from_spec(_spec)
+        assert _spec.loader is not None
+        _spec.loader.exec_module(_mod)
+        _mod.write_ascii_fbx(fbx_path, meshes)
+        if not fbx_path.exists():
+            raise RuntimeError(f"ASCII FBX export produced nothing for {fbx_path.name}")
     write_fbx_model_meta(fbx_path)
 
 

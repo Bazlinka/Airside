@@ -10,7 +10,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-ROOT = Path("/workspace/game/Airside/Assets/Airside/Art")
+# Repo-relative (was hard-coded to the /workspace container path, so this
+# module could not be imported or re-run on a developer machine).
+SCRIPTS = Path(__file__).resolve().parent
+REPO = SCRIPTS.parent
+ROOT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art"
 
 
 def new_guid() -> str:

@@ -61,8 +61,12 @@ namespace Airside.Presentation
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
-        private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale)> _wetSurfaces =
-            new List<(Renderer, Color, float, float, float)>();
+        private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
+            new List<(Renderer, Color, float, float, float, bool)>();
+
+        // Last wetness pushed into the wet-surface materials; NaN forces the next pass to
+        // re-apply (set on collect, so newly built surfaces such as Stand 3 pick up rain).
+        private float _lastAppliedWetness = float.NaN;
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
         private readonly List<Renderer> _airfieldLightRenderers = new List<Renderer>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
@@ -2066,66 +2070,22 @@ namespace Airside.Presentation
             var rainWetness = wet
                 ? (weather == WeatherKind.Storm ? 0.72f : raining ? 0.52f : 0.34f)
                 : 0f;
-            for (var i = 0; i < _wetSurfaces.Count; i++)
+            // Wetness only changes when the weather changes (four discrete values), and
+            // ApplyWetness toggles shader keywords — which invalidates the SRP Batcher
+            // batch for that material. Re-applying every frame tore the batcher down
+            // continuously, so only walk the surfaces when the target actually moves.
+            if (!Mathf.Approximately(rainWetness, _lastAppliedWetness))
             {
-                var (renderer, dry, drySmooth, dryMetallic, dryBump) = _wetSurfaces[i];
-                if (renderer == null)
-                    continue;
-                var name = renderer.gameObject.name;
-                var paved = (name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
-                        or "Access road" or "Access road turn" or "Car park" or "Service lane" or "Fuel pad")
-                    || name.StartsWith("Apron joint", StringComparison.Ordinal)
-                    || name.StartsWith("Apron slab", StringComparison.Ordinal)
-                    || name.StartsWith("Apron fringe", StringComparison.Ordinal)
-                    || name.StartsWith("Runway marking", StringComparison.Ordinal)
-                    || name.StartsWith("Runway edge", StringComparison.Ordinal)
-                    || name.StartsWith("Threshold", StringComparison.Ordinal)
-                    || name.StartsWith("Hold short", StringComparison.Ordinal)
-                    || name.StartsWith("Taxi edge", StringComparison.Ordinal)
-                    || name.StartsWith("Stand stop", StringComparison.Ordinal)
-                    || name.StartsWith("Stand number", StringComparison.Ordinal)
-                    || name.StartsWith("Access turn", StringComparison.Ordinal)
-                    || name.StartsWith("Drop-off zebra", StringComparison.Ordinal)
-                    || name.StartsWith("Overflow bay", StringComparison.Ordinal)
-                    || name.StartsWith("Bay line", StringComparison.Ordinal)
-                    || name.StartsWith("Taxi arrow", StringComparison.Ordinal)
-                    || name.StartsWith("Runway digit", StringComparison.Ordinal)
-                    || name.StartsWith("Stand lead", StringComparison.Ordinal)
-                    || name.StartsWith("Apron chevron", StringComparison.Ordinal)
-                    || name.StartsWith("Hold short", StringComparison.Ordinal)
-                    || name.StartsWith("Taxi centre", StringComparison.Ordinal)
-                    || name.StartsWith("Aiming point", StringComparison.Ordinal)
-                    || name.StartsWith("TDZ ", StringComparison.Ordinal)
-                    || name.StartsWith("Threshold stripe", StringComparison.Ordinal)
-                    || name.StartsWith("Jetty ", StringComparison.Ordinal)
-                    || name.StartsWith("ARFF apron", StringComparison.Ordinal)
-                    || name.StartsWith("Fuel ", StringComparison.Ordinal)
-                    || name.StartsWith("Terminal canopy", StringComparison.Ordinal)
-                    || name.StartsWith("Stand box", StringComparison.Ordinal)
-                    || name.StartsWith("Access road shoulder", StringComparison.Ordinal)
-                    || name.StartsWith("Runway shoulder", StringComparison.Ordinal)
-                    || name.StartsWith("Access turn shoulder", StringComparison.Ordinal)
-                    || name.StartsWith("Car park kerb", StringComparison.Ordinal)
-                    || name.StartsWith("Relief berm", StringComparison.Ordinal)
-                    || name.StartsWith("Relief mound", StringComparison.Ordinal)
-                    || name.StartsWith("runway_centre", StringComparison.Ordinal)
-                    || name.StartsWith("runway_edge_left", StringComparison.Ordinal)
-                    || name.StartsWith("runway_edge_right", StringComparison.Ordinal)
-                    || name.StartsWith("runway_threshold", StringComparison.Ordinal)
-                    || name.StartsWith("taxi_centreline", StringComparison.Ordinal)
-                    || name.StartsWith("taxi_edge_", StringComparison.Ordinal)
-                    || name.StartsWith("taxi_arrow_", StringComparison.Ordinal)
-                    || name.StartsWith("hold_short_", StringComparison.Ordinal)
-                    || name.StartsWith("threshold_", StringComparison.Ordinal)
-                    || name.StartsWith("stand_stop_", StringComparison.Ordinal)
-                    || name.StartsWith("aiming_", StringComparison.Ordinal)
-                    || name.StartsWith("tdz_", StringComparison.Ordinal)
-                    || name.StartsWith("chevron_", StringComparison.Ordinal)
-                    || name.StartsWith("digit_", StringComparison.Ordinal)
-                    || name.StartsWith("apron_arrow_", StringComparison.Ordinal);
-                var apply = wet ? rainWetness : (paved ? 0.22f : 0f);
-                AirsideMaterialLibrary.ApplyWetness(
-                    renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
+                _lastAppliedWetness = rainWetness;
+                for (var i = 0; i < _wetSurfaces.Count; i++)
+                {
+                    var (renderer, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
+                    if (renderer == null)
+                        continue;
+                    var apply = wet ? rainWetness : (paved ? 0.22f : 0f);
+                    AirsideMaterialLibrary.ApplyWetness(
+                        renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
+                }
             }
 
             UpdateWetPuddles(rainWetness, storm);
@@ -2385,9 +2345,72 @@ namespace Airside.Presentation
             }
         }
 
+
+        /// <summary>
+        /// True for paved / painted surfaces that keep a residual damp sheen in clear
+        /// weather. Constant for the lifetime of a renderer, so it is resolved once in
+        /// <see cref="CollectWetSurfaces"/> rather than re-tested every frame.
+        /// </summary>
+        private static bool IsPavedSurfaceName(string name)
+        {
+            return (name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                    or "Access road" or "Access road turn" or "Car park" or "Service lane" or "Fuel pad")
+                || name.StartsWith("Apron joint", StringComparison.Ordinal)
+                || name.StartsWith("Apron slab", StringComparison.Ordinal)
+                || name.StartsWith("Apron fringe", StringComparison.Ordinal)
+                || name.StartsWith("Runway marking", StringComparison.Ordinal)
+                || name.StartsWith("Runway edge", StringComparison.Ordinal)
+                || name.StartsWith("Threshold", StringComparison.Ordinal)
+                || name.StartsWith("Hold short", StringComparison.Ordinal)
+                || name.StartsWith("Taxi edge", StringComparison.Ordinal)
+                || name.StartsWith("Stand stop", StringComparison.Ordinal)
+                || name.StartsWith("Stand number", StringComparison.Ordinal)
+                || name.StartsWith("Access turn", StringComparison.Ordinal)
+                || name.StartsWith("Drop-off zebra", StringComparison.Ordinal)
+                || name.StartsWith("Overflow bay", StringComparison.Ordinal)
+                || name.StartsWith("Bay line", StringComparison.Ordinal)
+                || name.StartsWith("Taxi arrow", StringComparison.Ordinal)
+                || name.StartsWith("Runway digit", StringComparison.Ordinal)
+                || name.StartsWith("Stand lead", StringComparison.Ordinal)
+                || name.StartsWith("Apron chevron", StringComparison.Ordinal)
+                || name.StartsWith("Hold short", StringComparison.Ordinal)
+                || name.StartsWith("Taxi centre", StringComparison.Ordinal)
+                || name.StartsWith("Aiming point", StringComparison.Ordinal)
+                || name.StartsWith("TDZ ", StringComparison.Ordinal)
+                || name.StartsWith("Threshold stripe", StringComparison.Ordinal)
+                || name.StartsWith("Jetty ", StringComparison.Ordinal)
+                || name.StartsWith("ARFF apron", StringComparison.Ordinal)
+                || name.StartsWith("Fuel ", StringComparison.Ordinal)
+                || name.StartsWith("Terminal canopy", StringComparison.Ordinal)
+                || name.StartsWith("Stand box", StringComparison.Ordinal)
+                || name.StartsWith("Access road shoulder", StringComparison.Ordinal)
+                || name.StartsWith("Runway shoulder", StringComparison.Ordinal)
+                || name.StartsWith("Access turn shoulder", StringComparison.Ordinal)
+                || name.StartsWith("Car park kerb", StringComparison.Ordinal)
+                || name.StartsWith("Relief berm", StringComparison.Ordinal)
+                || name.StartsWith("Relief mound", StringComparison.Ordinal)
+                || name.StartsWith("runway_centre", StringComparison.Ordinal)
+                || name.StartsWith("runway_edge_left", StringComparison.Ordinal)
+                || name.StartsWith("runway_edge_right", StringComparison.Ordinal)
+                || name.StartsWith("runway_threshold", StringComparison.Ordinal)
+                || name.StartsWith("taxi_centreline", StringComparison.Ordinal)
+                || name.StartsWith("taxi_edge_", StringComparison.Ordinal)
+                || name.StartsWith("taxi_arrow_", StringComparison.Ordinal)
+                || name.StartsWith("hold_short_", StringComparison.Ordinal)
+                || name.StartsWith("threshold_", StringComparison.Ordinal)
+                || name.StartsWith("stand_stop_", StringComparison.Ordinal)
+                || name.StartsWith("aiming_", StringComparison.Ordinal)
+                || name.StartsWith("tdz_", StringComparison.Ordinal)
+                || name.StartsWith("chevron_", StringComparison.Ordinal)
+                || name.StartsWith("digit_", StringComparison.Ordinal)
+                || name.StartsWith("apron_arrow_", StringComparison.Ordinal);
+        }
+
         private void CollectWetSurfaces()
         {
             _wetSurfaces.Clear();
+            // New surfaces have never been wetted — force the next weather pass to apply.
+            _lastAppliedWetness = float.NaN;
             foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
                 if (renderer == null)
@@ -2466,7 +2489,8 @@ namespace Airside.Presentation
                     drySmooth = mat.GetFloat("_Glossiness");
                 var dryMetallic = mat.HasProperty("_Metallic") ? mat.GetFloat("_Metallic") : 0.02f;
                 var dryBump = mat.HasProperty("_BumpScale") ? mat.GetFloat("_BumpScale") : 0.5f;
-                _wetSurfaces.Add((renderer, mat.color, drySmooth, dryMetallic, dryBump));
+                _wetSurfaces.Add((renderer, mat.color, drySmooth, dryMetallic, dryBump,
+                    IsPavedSurfaceName(n)));
             }
         }
 

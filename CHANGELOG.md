@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Character kits CHR-001/002 v02.** Prefer `mdl_ramp_crew_kit_v02` (32 meshes)
+  and `mdl_passenger_kit_v02` (42 meshes): tapered limbs, hi-vis vest/hat brim,
+  marshaller wand; UpdateApronLife extract names retained; v01 fallbacks kept.
+  Evidence: `scripts/test-domain.sh` 118/118; Mac overview/follow vs REF-003
+  pending.
+
 - **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):
   dual-pitch roof, gable ends, denser porch/corrugation, antenna/AC silhouette;
   night-glow / glass / door names retained; authored_v01+ older kits remain

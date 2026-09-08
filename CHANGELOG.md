@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Ground / vehicle / smoothness (20).** GT yield keeps mid-leg position; pause
+  and 4× apply to GSE/props/tires/GT catch-up/walkers; takeoff gear down until
+  rotate; AtStand visuals follow turnaround; wet/fog/coast/berm/apron seams;
+  taxi spray and pushback tug logic; camera overview ease + orbit. Evidence:
+  `scripts/test-domain.sh` 136/136; `docs/testing/SMOOTH_PASS_20_2026-09-08.md`.
+
 - **50-fix bugfix pass.** Simulation: hold-short runway wait survives
   reservation sync; concurrent commercials = `Capacity.StandCount`; live staffing
   during AtStand; refuse expired route Accept; research/seed/location/GT/yield/

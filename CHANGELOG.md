@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):
+  dual-pitch roof, gable ends, denser porch/corrugation, antenna/AC silhouette;
+  night-glow / glass / door names retained; authored_v01+ older kits remain
+  fallbacks. Evidence: `scripts/test-domain.sh` 118/118; Mac overview vs REF-001
+  pending.
+
 - **Stand stairs / GSE fidelity (PRP-001 v03).** Prefer
   `mdl_service_equipment_kit_v03` (106 meshes: tubular rails, denser GPU/belt/
   chocks) over authored/v02/v01; stairs Resources fallback

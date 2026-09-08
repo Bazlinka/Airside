@@ -4768,6 +4768,7 @@ namespace Airside.Presentation
                 CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_operations_shed_v05.gltf",
                     "Models/Buildings/mdl_operations_shed_authored_v01.gltf",
                     "Models/Buildings/mdl_operations_shed_v04.gltf",
                     "Models/Buildings/mdl_operations_shed_v03.gltf",
@@ -4784,31 +4785,37 @@ namespace Airside.Presentation
                         || name is "window_transom_l" or "window_transom_r"
                         or "window_header_l" or "window_header_r"
                         or "window_sill_l" or "window_sill_r"
-                        or "girth_band_1" or "girth_band_2"
-                        or "cladding_face_l" or "cladding_face_r")
+                        or "girth_band_1" or "girth_band_2" or "girth_band_3"
+                        or "cladding_face_l" or "cladding_face_r"
+                        or "cladding_face_front" or "cladding_face_back")
                         return new Color(0.48f, 0.5f, 0.46f);
                     return name switch
                     {
                         "door" or "door_frame" or "door_knob" or "door_kick" => new Color(0.35f, 0.38f, 0.34f),
                         "interior_glow" => new Color(1f, 0.82f, 0.5f),
                         "interior_desk" => new Color(0.42f, 0.4f, 0.36f),
+                        "signage" => AirsideTheme.SafetyYellow,
+                        "signage_glyph" => new Color(0.12f, 0.18f, 0.28f),
                         "porch_roof" or "porch_beam" or "porch_light" or "porch_fascia" or "porch_soffit"
-                            or "porch_riser" or "roof_ridge" or "roof_panel" or "roof_gutter"
-                            or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
+                            or "porch_riser" or "porch_post_l" or "porch_post_r"
+                            or "porch_post_mid_l" or "porch_post_mid_r"
+                            or "roof_ridge" or "roof_ridge_cap" or "roof_panel" or "roof_panel_l" or "roof_panel_r"
+                            or "roof_gutter" or "roof_fascia" or "roof_downpipe_l" or "roof_downpipe_r"
                             or "roof_vent_a" or "roof_vent_b" or "roof_eave_back"
                             or "roof_flash_front" or "roof_flash_back"
+                            or "gable_front_l" or "gable_front_r" or "gable_back_l" or "gable_back_r"
+                            or "gable_apex_front" or "gable_apex_back"
                             or "antenna_mast" or "antenna_dish" or "antenna_boom" or "antenna_guy" or "antenna_guy_b"
                             or "radio_antenna_whip"
                             or "ac_unit" or "ac_unit_b" or "ac_grille" or "ac_pipe" or "ac_pipe_b" or "radio_rack"
-                            or "vent_pipe" or "wall_vent" or "signage" or "signage_glyph" or "flood_can" or "flood_can_b"
+                            or "vent_pipe" or "wall_vent" or "flood_can" or "flood_can_b"
                             or "flood_mount" or "flood_mount_b"
-                            or "porch_post_l" or "porch_post_r"
                             or "step_rail_l" or "step_rail_r"
                             or "side_louvre" or "side_louvre_b" or "mailbox" or "bench" or "plinth"
                             or "shed_corner_l" or "shed_corner_r"
                             or "window_ledge_l" or "window_ledge_r"
                             or "window_awning_l" or "window_awning_r"
-                            or "power_box" or "hose_reel" or "girth_band_3"
+                            or "power_box" or "hose_reel"
                             => new Color(0.48f, 0.5f, 0.46f),
                         _ => new Color(0.55f, 0.58f, 0.52f)
                     };

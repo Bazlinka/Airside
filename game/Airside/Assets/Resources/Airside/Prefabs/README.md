@@ -58,6 +58,7 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_v05.fbx` (BLD-002 v05)
 - `Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_v05.fbx` (BLD-003 v05)
 - `Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v06.fbx` (fleet v06)
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v06.fbx` (fleet v06)
@@ -98,6 +99,7 @@ Resources prefabs (Addressables keys live now):
 | `mdl_terminal_regional_small_authored_v01` | Mac bake; same generator fallback |
 | `mdl_hangar_small_v05` | Mac bake; `scripts/generate-bld-002-v05-prefab.py` |
 | `mdl_hangar_small_authored_v01` | Mac bake; same generator fallback |
+| `mdl_operations_shed_v05` | Mac bake; `scripts/generate-bld-003-v05-prefab.py` |
 | `mdl_operations_shed_authored_v01` | Mac bake; same generator fallback |
 | `mdl_fuel_truck_small_authored_v01` | Mac bake |
 | `mdl_baggage_tug_train_authored_v01` | Mac bake |

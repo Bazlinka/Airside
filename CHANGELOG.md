@@ -8,7 +8,7 @@ change it describes.
 - **Forecourt PRP-003 v02.** Prefer `mdl_terminal_forecourt_kit_v02` (18
   meshes): slatted bench, nested trolley, rimmed planter, richer bollards/sign/
   kerbs; placement densifies kerb_corner, mid bollard, second sign, west
-  planter; v01 remains fallback. Evidence: `scripts/test-domain.sh` pending;
+  planter; v01 remains fallback. Evidence: `scripts/test-domain.sh` 118/118;
   Mac overview vs REF pending.
 
 - **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):

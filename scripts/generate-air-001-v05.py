@@ -17,12 +17,17 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path("/workspace/game/Airside/Assets/Airside/Art")
+# Repo-relative so this runs on any checkout. It previously hard-coded
+# /workspace paths from the container it was first written in, which meant it
+# could not be re-run on a developer machine at all.
+SCRIPTS = Path(__file__).resolve().parent
+REPO = SCRIPTS.parent
+ROOT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art"
 AIRCRAFT = ROOT / "Models" / "Aircraft"
 BASENAME = "mdl_regional_turboprop_01_v05"
 
 _SPEC = importlib.util.spec_from_file_location(
-    "authored_fbx", Path("/workspace/scripts/generate-authored-fbx-turboprop-terminal.py")
+    "authored_fbx", SCRIPTS / "generate-authored-fbx-turboprop-terminal.py"
 )
 _auth = importlib.util.module_from_spec(_SPEC)
 assert _SPEC.loader is not None
@@ -146,6 +151,232 @@ def airfoil_wing(
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
+# --- Wing planform -----------------------------------------------------------
+# Single source of truth for the wing surface. Everything mounted on the wing is
+# derived from this rather than hard-coded, because hard-coding is exactly how
+# they drifted: dihedral was added to the wing and every flap, aileron, spoiler,
+# track, fairing and static wick stayed at its old flat-wing height, leaving them
+# floating 9-23 cm below the surface with clear air in between.
+WING = {
+    "root_x": 0.65,
+    "tip_x": 7.5,
+    "root_y": 1.22,
+    "dihedral": 0.04,
+    "cz": 0.35,
+    "root_chord": 2.05,
+    "tip_chord": 0.78,
+    "root_thickness": 0.18,
+    "tip_thickness": 0.08,
+    "root_le_frac": 0.35,
+    "tip_le_frac": 0.30,
+}
+
+
+# Main gear station. Matches nacelle_left/right (x=+-2.45, z centred 0.55) so the
+# leg runs up inside the nacelle instead of ending in mid-air.
+MAIN_GEAR_X = 2.45
+MAIN_GEAR_Z = 0.35
+
+
+def _lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
+
+
+def wing_station(x_abs: float) -> tuple[float, float, float, float]:
+    """Wing geometry at spanwise station |x|.
+
+    Returns (chord_line_y, leading_edge_z, chord, thickness). Stations outboard
+    of the tip clamp to the tip, so tip-mounted parts (winglet, wick, nav light)
+    can pass their own x without special-casing.
+    """
+    w = WING
+    span = w["tip_x"] - w["root_x"]
+    reach = min(max(abs(x_abs), w["root_x"]), w["tip_x"])
+    t = (reach - w["root_x"]) / span
+    y = w["root_y"] + (reach - w["root_x"]) * w["dihedral"]
+    chord = _lerp(w["root_chord"], w["tip_chord"], t)
+    le_frac = _lerp(w["root_le_frac"], w["tip_le_frac"], t)
+    thickness = _lerp(w["root_thickness"], w["tip_thickness"], t)
+    return y, w["cz"] + chord * le_frac, chord, thickness
+
+
+def naca_half_thickness(x_norm: np.ndarray, thickness_ratio: float) -> np.ndarray:
+    """NACA 4-digit symmetric half-thickness over normalised chord 0 (LE) to 1 (TE)."""
+    t = thickness_ratio
+    x = np.asarray(x_norm, np.float64)
+    yt = 5.0 * t * (
+        0.2969 * np.sqrt(np.clip(x, 0.0, None))
+        - 0.1260 * x
+        - 0.3516 * x**2
+        + 0.2843 * x**3
+        - 0.1015 * x**4
+    )
+    yt[-1] = 0.0  # close the trailing edge exactly
+    return yt
+
+
+def _orient_outward(
+    verts: np.ndarray, indices: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Flip triangle winding if a closed hull came out inside-out.
+
+    ArtGltfLoader calls RecalculateNormals, so winding alone decides which way a
+    surface faces. Deriving it from the signed volume keeps that correct whatever
+    sign or side the caller passed, instead of relying on the argument order.
+    """
+    tris = indices.reshape(-1, 3).astype(np.int64)
+    a, b, c = verts[tris[:, 0]], verts[tris[:, 1]], verts[tris[:, 2]]
+    volume = float(np.einsum("ij,ij->i", a, np.cross(b, c)).sum()) / 6.0
+    if volume < 0.0:
+        indices = np.ascontiguousarray(tris[:, ::-1]).reshape(-1).astype(np.uint16)
+    return verts, indices
+
+
+def _section_loop(
+    span_c: float,
+    offset_c: float,
+    z_le: float,
+    chord: float,
+    thickness: float,
+    chord_points: int,
+    vertical: bool,
+) -> np.ndarray:
+    """One closed aerofoil outline: upper LE->TE then lower TE->LE."""
+    beta = np.linspace(0.0, np.pi, chord_points)
+    xn = (1.0 - np.cos(beta)) / 2.0  # cosine spacing packs points at the leading edge
+    yt = naca_half_thickness(xn, thickness / chord) * chord
+    z = z_le - xn * chord
+    zs = np.concatenate([z, z[-2:0:-1]])
+    offs = np.concatenate([offset_c + yt, (offset_c - yt)[-2:0:-1]])
+    pts = np.empty((len(zs), 3), np.float32)
+    if vertical:
+        pts[:, 0] = offs
+        pts[:, 1] = span_c
+    else:
+        pts[:, 0] = span_c
+        pts[:, 1] = offs
+    pts[:, 2] = zs
+    return pts
+
+
+def lofted_aerofoil(
+    stations: list[tuple[float, float, float, float, float]],
+    *,
+    chord_points: int = 16,
+    vertical: bool = False,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Loft a real aerofoil section between stations.
+
+    stations: (span_coord, offset_coord, leading_edge_z, chord, thickness).
+    `vertical` swaps the span and thickness axes, for fins.
+
+    Replaces the previous 8-corner tapered slab, which carried only two chordwise
+    points and so read as a flat plank rather than a wing.
+    """
+    loops = [_section_loop(*st, chord_points, vertical) for st in stations]
+    n = len(loops[0])
+    verts: list = []
+    indices: list = []
+    for r in range(len(loops) - 1):
+        inner, outer = loops[r], loops[r + 1]
+        for i in range(n):
+            j = (i + 1) % n
+            base = len(verts)
+            verts.extend([inner[i], inner[j], outer[j], outer[i]])
+            indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
+    for ring in (loops[0], loops[-1]):
+        centre = ring.mean(axis=0)
+        for i in range(n):
+            j = (i + 1) % n
+            base = len(verts)
+            verts.extend([centre, ring[i], ring[j]])
+            indices.extend([base, base + 1, base + 2])
+    return _orient_outward(
+        np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
+    )
+
+
+def wing_slab(
+    x_in: float,
+    x_out: float,
+    side: float,
+    *,
+    from_te: float,
+    to_te: float,
+    thickness: float,
+    surface: str = "chord",
+    chord_frac: bool = False,
+) -> tuple[np.ndarray, np.ndarray]:
+    """A control surface / fairing / fence that tracks the wing.
+
+    `from_te` and `to_te` are distances forward of the *local* trailing edge (or
+    fractions of local chord when `chord_frac`), so a part follows chord taper and
+    leading-edge sweep as well as dihedral. `surface` sits it on the chord line,
+    or flush against the upper or lower skin at its own mid-chord.
+    """
+    rings = []
+    for x_abs in (x_in, x_out):
+        y, z_le, chord, thick_abs = wing_station(x_abs)
+        z_te = z_le - chord
+        a, b = (from_te * chord, to_te * chord) if chord_frac else (from_te, to_te)
+        z_a, z_b = z_te + a, z_te + b
+        if surface == "chord":
+            centre = y
+        else:
+            xn = min(max((z_le - (z_a + z_b) / 2.0) / chord, 0.0), 1.0)
+            skin = float(
+                naca_half_thickness(np.array([xn, 1.0]), thick_abs / chord)[0]
+            ) * chord
+            reach = skin + thickness / 2.0
+            centre = y + reach if surface == "upper" else y - reach
+        rings.append((side * x_abs, centre, z_a, z_b))
+
+    (x0, y0, z0a, z0b), (x1, y1, z1a, z1b) = rings
+    h = thickness / 2.0
+    corners = np.array(
+        [
+            [x0, y0 - h, z0a],
+            [x0, y0 - h, z0b],
+            [x1, y1 - h, z1b],
+            [x1, y1 - h, z1a],
+            [x0, y0 + h, z0a],
+            [x0, y0 + h, z0b],
+            [x1, y1 + h, z1b],
+            [x1, y1 + h, z1a],
+        ],
+        dtype=np.float32,
+    )
+    faces = [
+        (0, 1, 2, 3),
+        (4, 7, 6, 5),
+        (0, 4, 5, 1),
+        (3, 2, 6, 7),
+        (1, 5, 6, 2),
+        (0, 3, 7, 4),
+    ]
+    verts: list = []
+    indices: list = []
+    for a_i, b_i, c_i, d_i in faces:
+        base = len(verts)
+        verts.extend([corners[a_i], corners[b_i], corners[c_i], corners[d_i]])
+        indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
+    return _orient_outward(
+        np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
+    )
+
+
+def wing_aerofoil(side: float) -> tuple[np.ndarray, np.ndarray]:
+    """The main wing as a lofted aerofoil, root to tip."""
+    root_y, root_le, root_c, root_t = wing_station(WING["root_x"])
+    tip_y, tip_le, tip_c, tip_t = wing_station(WING["tip_x"])
+    return lofted_aerofoil(
+        [
+            (side * WING["root_x"], root_y, root_le, root_c, root_t),
+            (side * WING["tip_x"], tip_y, tip_le, tip_c, tip_t),
+        ]
+    )
+
+
 def six_blade_set(cx: float, cy: float, cz: float, prefix: str) -> dict:
     """Six tapered blades at 60° — Batch F AIR-001 requirement."""
     meshes = {}
@@ -240,32 +471,53 @@ def turboprop_v05_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     )
 
     wings = {
-        "wing_left": airfoil_wing(-0.65, 1.22, 0.35, 6.85, 2.05, 0.78, 0.18, 0.08, side=-1),
-        "wing_right": airfoil_wing(0.65, 1.22, 0.35, 6.85, 2.05, 0.78, 0.18, 0.08, side=1),
+        # Lofted aerofoil, not a tapered plank (see lofted_aerofoil). Same planform
+        # numbers as before, so nothing mounted on the wing shifts.
+        "wing_left": wing_aerofoil(-1),
+        "wing_right": wing_aerofoil(1),
         "wing_root_left": box(-1.4, 1.18, 0.4, 1.8, 0.26, 1.65),
         "wing_root_right": box(1.4, 1.18, 0.4, 1.8, 0.26, 1.65),
         "wing_fairing_left": box(-1.95, 1.05, 0.5, 1.15, 0.2, 1.15),
         "wing_fairing_right": box(1.95, 1.05, 0.5, 1.15, 0.2, 1.15),
-        "flap_left": box(-3.35, 1.14, -0.45, 3.1, 0.06, 0.45),
-        "flap_right": box(3.35, 1.14, -0.45, 3.1, 0.06, 0.45),
-        "flap_track_l1": box(-2.5, 1.05, -0.62, 0.07, 0.12, 0.32),
-        "flap_track_l2": box(-3.7, 1.05, -0.62, 0.07, 0.12, 0.32),
-        "flap_track_r1": box(2.5, 1.05, -0.62, 0.07, 0.12, 0.32),
-        "flap_track_r2": box(3.7, 1.05, -0.62, 0.07, 0.12, 0.32),
-        "flap_fairing_l": box(-3.35, 1.0, -0.28, 2.5, 0.09, 0.22),
-        "flap_fairing_r": box(3.35, 1.0, -0.28, 2.5, 0.09, 0.22),
-        "spoiler_left": box(-3.5, 1.3, 0.0, 2.5, 0.035, 0.32),
-        "spoiler_right": box(3.5, 1.3, 0.0, 2.5, 0.035, 0.32),
-        "aileron_left": box(-6.25, 1.2, 0.1, 1.75, 0.05, 0.48),
-        "aileron_right": box(6.25, 1.2, 0.1, 1.75, 0.05, 0.48),
-        "winglet_left": box(-7.55, 1.55, 0.4, 0.09, 0.55, 0.38),
-        "winglet_right": box(7.55, 1.55, 0.4, 0.09, 0.55, 0.38),
-        "wing_fence_left": box(-4.7, 1.35, 0.5, 0.05, 0.26, 0.85),
-        "wing_fence_right": box(4.7, 1.35, 0.5, 0.05, 0.26, 0.85),
-        "wing_fence_mid_l": box(-2.9, 1.32, 0.45, 0.045, 0.2, 0.65),
-        "wing_fence_mid_r": box(2.9, 1.32, 0.45, 0.045, 0.2, 0.65),
-        "static_wick_left": box(-7.7, 1.22, 0.12, 0.035, 0.035, 0.26),
-        "static_wick_right": box(7.7, 1.22, 0.12, 0.035, 0.035, 0.26),
+        # Everything below rides the wing surface via wing_slab, so it tracks
+        # dihedral, chord taper and leading-edge sweep instead of sitting at a
+        # fixed height the wing no longer has.
+        "flap_left": wing_slab(1.8, 4.9, -1, from_te=0.0, to_te=0.45, thickness=0.06),
+        "flap_right": wing_slab(1.8, 4.9, 1, from_te=0.0, to_te=0.45, thickness=0.06),
+        "flap_track_l1": wing_slab(2.465, 2.535, -1, from_te=-0.14, to_te=0.18,
+                                   thickness=0.12, surface="lower"),
+        "flap_track_l2": wing_slab(3.665, 3.735, -1, from_te=-0.14, to_te=0.18,
+                                   thickness=0.12, surface="lower"),
+        "flap_track_r1": wing_slab(2.465, 2.535, 1, from_te=-0.14, to_te=0.18,
+                                   thickness=0.12, surface="lower"),
+        "flap_track_r2": wing_slab(3.665, 3.735, 1, from_te=-0.14, to_te=0.18,
+                                   thickness=0.12, surface="lower"),
+        "flap_fairing_l": wing_slab(2.1, 4.6, -1, from_te=0.02, to_te=0.24,
+                                    thickness=0.09, surface="lower"),
+        "flap_fairing_r": wing_slab(2.1, 4.6, 1, from_te=0.02, to_te=0.24,
+                                    thickness=0.09, surface="lower"),
+        "spoiler_left": wing_slab(2.25, 4.75, -1, from_te=0.45, to_te=0.77,
+                                  thickness=0.035, surface="upper"),
+        "spoiler_right": wing_slab(2.25, 4.75, 1, from_te=0.45, to_te=0.77,
+                                   thickness=0.035, surface="upper"),
+        "aileron_left": wing_slab(5.375, 7.125, -1, from_te=0.0, to_te=0.48, thickness=0.05),
+        "aileron_right": wing_slab(5.375, 7.125, 1, from_te=0.0, to_te=0.48, thickness=0.05),
+        "winglet_left": wing_slab(7.455, 7.545, -1, from_te=0.45, to_te=1.0,
+                                  thickness=0.55, surface="upper", chord_frac=True),
+        "winglet_right": wing_slab(7.455, 7.545, 1, from_te=0.45, to_te=1.0,
+                                   thickness=0.55, surface="upper", chord_frac=True),
+        "wing_fence_left": wing_slab(4.675, 4.725, -1, from_te=0.35, to_te=1.0,
+                                     thickness=0.26, surface="upper", chord_frac=True),
+        "wing_fence_right": wing_slab(4.675, 4.725, 1, from_te=0.35, to_te=1.0,
+                                      thickness=0.26, surface="upper", chord_frac=True),
+        "wing_fence_mid_l": wing_slab(2.878, 2.922, -1, from_te=0.4, to_te=0.95,
+                                      thickness=0.2, surface="upper", chord_frac=True),
+        "wing_fence_mid_r": wing_slab(2.878, 2.922, 1, from_te=0.4, to_te=0.95,
+                                      thickness=0.2, surface="upper", chord_frac=True),
+        "static_wick_left": wing_slab(7.38, 7.42, -1, from_te=-0.26, to_te=0.02,
+                                      thickness=0.035),
+        "static_wick_right": wing_slab(7.38, 7.42, 1, from_te=-0.26, to_te=0.02,
+                                       thickness=0.035),
         "pitot": box(0.16, 1.38, 4.65, 0.035, 0.035, 0.32),
         "pitot_b": box(-0.18, 1.35, 4.6, 0.03, 0.03, 0.26),
         "vor_antenna": box(0, 0.32, -1.15, 0.48, 0.04, 0.04),
@@ -301,9 +553,16 @@ def turboprop_v05_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     engines.update(six_blade_set(2.45, 0.95, 2.32, "propeller_right"))
 
     empennage = {
-        "tail_fin": box(0, 2.55, -3.75, 0.11, 2.35, 1.55),
+        # Lofted sections; planform (span, chord, position) unchanged so the
+        # rudder, tip and beacon stay attached where they were placed.
+        "tail_fin": lofted_aerofoil(
+            [(1.375, 0.0, -2.975, 1.55, 0.11), (3.725, 0.0, -2.975, 1.55, 0.11)],
+            vertical=True,
+        ),
         "tail_fin_tip": box(0, 3.6, -3.45, 0.09, 0.32, 0.65),
-        "tailplane": box(0, 1.85, -3.95, 3.6, 0.09, 1.05),
+        "tailplane": lofted_aerofoil(
+            [(-1.8, 1.85, -3.425, 1.05, 0.09), (1.8, 1.85, -3.425, 1.05, 0.09)]
+        ),
         "tailplane_tip_l": box(-1.95, 1.88, -3.95, 0.32, 0.1, 0.65),
         "tailplane_tip_r": box(1.95, 1.88, -3.95, 0.32, 0.1, 0.65),
         "elevator_left": box(-1.15, 1.82, -4.35, 1.35, 0.045, 0.42),
@@ -316,37 +575,52 @@ def turboprop_v05_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
 
     gear = {
         "gear_nose": box(0, 0.4, 3.2, 0.11, 0.75, 0.3),
-        "gear_left": box(-1.2, 0.34, -0.3, 0.11, 0.75, 0.4),
-        "gear_right": box(1.2, 0.34, -0.3, 0.11, 0.75, 0.4),
+        # Main gear moved from x=+-1.2 / z=-0.3 to under the nacelles
+        # (x=+-MAIN_GEAR_X, z=MAIN_GEAR_Z). It used to hang 44 cm below the wing
+        # and 44 cm outboard of the fuselage, attached to nothing at all -- the
+        # aircraft read as hovering on disconnected stilts. The leg now runs up
+        # into the nacelle, which is where a turboprop's main gear retracts.
+        "gear_left": box(-MAIN_GEAR_X, 0.34, MAIN_GEAR_Z, 0.11, 0.75, 0.4),
+        "gear_right": box(MAIN_GEAR_X, 0.34, MAIN_GEAR_Z, 0.11, 0.75, 0.4),
         "gear_oleo_nose": cylinder(0, 0.36, 3.2, 0.045, 0.58, axis="y", segments=10),
-        "gear_oleo_left": cylinder(-1.2, 0.32, -0.3, 0.045, 0.58, axis="y", segments=10),
-        "gear_oleo_right": cylinder(1.2, 0.32, -0.3, 0.045, 0.58, axis="y", segments=10),
+        "gear_oleo_left": cylinder(-MAIN_GEAR_X, 0.32, MAIN_GEAR_Z, 0.045, 0.58, axis="y", segments=10),
+        "gear_oleo_right": cylinder(MAIN_GEAR_X, 0.32, MAIN_GEAR_Z, 0.045, 0.58, axis="y", segments=10),
         "gear_scissors_nose": box(0, 0.48, 3.05, 0.055, 0.32, 0.18),
-        "gear_scissors_left": box(-1.2, 0.42, -0.45, 0.055, 0.32, 0.2),
-        "gear_scissors_right": box(1.2, 0.42, -0.45, 0.055, 0.32, 0.2),
+        "gear_scissors_left": box(-MAIN_GEAR_X, 0.42, MAIN_GEAR_Z - 0.15, 0.055, 0.32, 0.2),
+        "gear_scissors_right": box(MAIN_GEAR_X, 0.42, MAIN_GEAR_Z - 0.15, 0.055, 0.32, 0.2),
         "gear_door_nose": box(0, 0.58, 3.2, 0.52, 0.045, 0.68),
-        "gear_door_left": box(-1.2, 0.58, -0.3, 0.62, 0.045, 0.82),
-        "gear_door_right": box(1.2, 0.58, -0.3, 0.62, 0.045, 0.82),
+        "gear_door_left": box(-MAIN_GEAR_X, 0.58, MAIN_GEAR_Z, 0.62, 0.045, 0.82),
+        "gear_door_right": box(MAIN_GEAR_X, 0.58, MAIN_GEAR_Z, 0.62, 0.045, 0.82),
         # tire_* nests under gear; wheel_* names preserved as packet contract aliases (rims).
         "tire_nose": cylinder(0, 0.12, 3.2, 0.13, 0.18, axis="x", segments=16),
-        "tire_left": cylinder(-1.2, 0.12, -0.3, 0.15, 0.17, axis="x", segments=16),
-        "tire_right": cylinder(1.2, 0.12, -0.3, 0.15, 0.17, axis="x", segments=16),
-        "wheel_nose": cylinder(0, 0.12, 3.2, 0.07, 0.1, axis="x", segments=12),
-        "wheel_left": cylinder(-1.2, 0.12, -0.3, 0.08, 0.09, axis="x", segments=12),
-        "wheel_right": cylinder(1.2, 0.12, -0.3, 0.08, 0.09, axis="x", segments=12),
-        "rim_nose": cylinder(0, 0.12, 3.2, 0.05, 0.06, axis="x", segments=10),
-        "rim_left": cylinder(-1.2, 0.12, -0.3, 0.055, 0.055, axis="x", segments=10),
-        "rim_right": cylinder(1.2, 0.12, -0.3, 0.055, 0.055, axis="x", segments=10),
+        "tire_left": cylinder(-MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.15, 0.17, axis="x", segments=16),
+        "tire_right": cylinder(MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.15, 0.17, axis="x", segments=16),
+        # wheel_* / rim_* are narrower and shorter than the tire that encloses
+        # them, so they were never visible. Stepped out past the tire tread so the
+        # hub actually reads, keeping the packet's contract names.
+        "wheel_nose": cylinder(0, 0.12, 3.2, 0.075, 0.2, axis="x", segments=12),
+        "wheel_left": cylinder(-MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.085, 0.19, axis="x", segments=12),
+        "wheel_right": cylinder(MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.085, 0.19, axis="x", segments=12),
+        "rim_nose": cylinder(0, 0.12, 3.2, 0.05, 0.21, axis="x", segments=10),
+        "rim_left": cylinder(-MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.055, 0.2, axis="x", segments=10),
+        "rim_right": cylinder(MAIN_GEAR_X, 0.12, MAIN_GEAR_Z, 0.055, 0.2, axis="x", segments=10),
         "door_fwd": box(-0.74, 1.12, 2.2, 0.06, 1.05, 1.2),
         "cargo_door": box(0.74, 1.02, -1.5, 0.06, 0.95, 1.55),
         "cargo_door_latch": box(0.8, 1.02, -1.15, 0.045, 0.14, 0.1),
         "antenna": box(0, 2.1, 1.15, 0.04, 0.48, 0.04),
         "antenna_aft": box(0, 2.0, -1.75, 0.035, 0.32, 0.035),
-        "nav_light_left": box(-7.55, 1.25, 0.45, 0.09, 0.09, 0.09),
-        "nav_light_right": box(7.55, 1.25, 0.45, 0.09, 0.09, 0.09),
+        # On the wing tip, touching it (was 24 cm below the tip and 5 cm outboard
+        # of it, so the lamp floated free of the wing entirely).
+        "nav_light_left": box(-7.5, 1.494, 0.45, 0.09, 0.09, 0.09),
+        "nav_light_right": box(7.5, 1.494, 0.45, 0.09, 0.09, 0.09),
         "beacon_top": box(0, 3.05, -3.4, 0.1, 0.1, 0.1),
-        "landing_light_l": box(-2.6, 1.05, 2.15, 0.15, 0.09, 0.09),
-        "landing_light_r": box(2.6, 1.05, 2.15, 0.15, 0.09, 0.09),
+        # Were buried entirely inside intake_left/right and could never be seen,
+        # while UpdateAircraftLightsAndGear drives their emission. Moved into the
+        # wing leading edge, where a turboprop carries them.
+        "landing_light_l": wing_slab(2.45, 2.75, -1, from_te=0.90, to_te=1.0,
+                                     thickness=0.09, surface="lower", chord_frac=True),
+        "landing_light_r": wing_slab(2.45, 2.75, 1, from_te=0.90, to_te=1.0,
+                                     thickness=0.09, surface="lower", chord_frac=True),
         "taxi_light": box(0, 0.58, 3.6, 0.13, 0.08, 0.09),
     }
 

@@ -1017,13 +1017,18 @@ namespace Airside.Presentation
 
         private static float PhasePitchDegrees(AircraftPhase phase, float progress)
         {
-            // Presentation-only attitude: nose-up takeoff, approach pitch, landing flare.
+            // Presentation-only attitude: nose-up takeoff, shallow approach, landing flare.
+            // Negative X euler = nose up with LookRotation-forward posing.
             var t = Mathf.Clamp01(progress);
             return phase switch
             {
-                AircraftPhase.Takeoff => Mathf.Lerp(0f, -11f, Mathf.SmoothStep(0f, 1f, t)),
-                AircraftPhase.Approach => Mathf.Lerp(-3f, -7f, t),
-                AircraftPhase.Landing => Mathf.Lerp(-6f, 1.5f, Mathf.SmoothStep(0f, 1f, t)),
+                AircraftPhase.Takeoff => t < 0.42f
+                    ? 0f
+                    : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.42f) / 0.58f)),
+                AircraftPhase.Approach => Mathf.Lerp(-2.5f, -3.5f, t),
+                AircraftPhase.Landing => t < 0.45f
+                    ? Mathf.Lerp(-3.5f, -5f, t / 0.45f)
+                    : Mathf.Lerp(-5f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.45f) / 0.55f)),
                 AircraftPhase.Departed => -8f,
                 _ => 0f
             };
@@ -1434,7 +1439,8 @@ namespace Airside.Presentation
             }
 
             var rpm = AirsideReusableMotion.PropRpmForPhase(phase);
-            var degrees = Time.unscaledDeltaTime * rpm;
+            // Constants are true RPM — convert to degrees/sec (×6) so blades read as spinning.
+            var degrees = Time.unscaledDeltaTime * rpm * 6f;
             var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -1457,7 +1463,7 @@ namespace Airside.Presentation
 
             // Match ANM-AIR taxi RPM so ground traffic props read with the fleet.
             var rpm = AirsideReusableMotion.PropRpmTaxi;
-            var degrees = Time.unscaledDeltaTime * rpm;
+            var degrees = Time.unscaledDeltaTime * rpm * 6f;
             var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -1514,8 +1520,8 @@ namespace Airside.Presentation
 
             var speed = phase switch
             {
-                AircraftPhase.Takeoff => 1.6f,
-                AircraftPhase.Landing => 1.35f,
+                AircraftPhase.Takeoff => 2.4f,
+                AircraftPhase.Landing => 1.9f,
                 AircraftPhase.Pushback => 0.55f,
                 _ => 1f
             };
@@ -4521,6 +4527,14 @@ namespace Airside.Presentation
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
+            // A1 runway exit / fillet — without this the taxi path (-24,0)→(-12,9) is grass.
+            CreateBlock("Taxiway A exit", new Vector3(-18f, -0.02f, 4.5f), new Vector3(16f, 0.12f, 9.5f), new Color(0.22f, 0.24f, 0.26f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 1.2f));
+            // Lead-in pads from Taxiway A onto the apron stands.
+            CreateBlock("Taxi lead Stand 1", new Vector3(14f, -0.01f, 12.5f), new Vector3(5f, 0.1f, 5.5f), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.2f, 1f));
+            CreateBlock("Taxi lead Stand 2", new Vector3(20f, -0.01f, 14.5f), new Vector3(6f, 0.1f, 7f), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.4f, 1.2f));
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.38f, 0.4f, 0.41f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
             // Skip apron joint/slab densify — MAT concrete + soft wet residual carry the read;
@@ -7510,6 +7524,9 @@ namespace Airside.Presentation
             if (usedArt)
             {
                 NestCrossPropellerBlades(root);
+                // glTF kits author prop verts at nacelle world positions while the
+                // Propeller transform sits at the kit origin — rebake so spin stays on-hub.
+                RebakePropellerPivots(root);
                 NestLandingGearParts(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
@@ -7909,6 +7926,118 @@ namespace Airside.Presentation
             NestUnderProp(propR, capR, "Hub cap");
             NestUnderProp(propL, stripeL, "Stripe");
             NestUnderProp(propR, stripeR, "Stripe");
+        }
+
+        /// <summary>
+        /// Move each Propeller transform to its hub centre and rebake mesh verts so
+        /// <see cref="SpinPropellers"/> rotates about the nacelle, not the airframe origin.
+        /// No-ops when the prop node is already at the hub (Resources/prefab path).
+        /// </summary>
+        private static void RebakePropellerPivots(Transform aircraft)
+        {
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                RebakePropellerPivot(child);
+            }
+        }
+
+        private static void RebakePropellerPivot(Transform prop)
+        {
+            if (!TryEstimatePropHubWorld(prop, out var hubWorld))
+                return;
+
+            // Already at the hub (Resources/prefab path with local blade verts).
+            if ((prop.position - hubWorld).sqrMagnitude < 0.0025f)
+                return;
+
+            var filters = prop.GetComponentsInChildren<MeshFilter>(true);
+            var worldVerts = new Vector3[filters.Length][];
+            for (var i = 0; i < filters.Length; i++)
+            {
+                var filter = filters[i];
+                if (filter == null || filter.sharedMesh == null)
+                {
+                    worldVerts[i] = null;
+                    continue;
+                }
+
+                var source = filter.sharedMesh;
+                var local = source.vertices;
+                var world = new Vector3[local.Length];
+                var xf = filter.transform;
+                for (var v = 0; v < local.Length; v++)
+                    world[v] = xf.TransformPoint(local[v]);
+                worldVerts[i] = world;
+            }
+
+            prop.position = hubWorld;
+
+            for (var i = 0; i < filters.Length; i++)
+            {
+                if (worldVerts[i] == null)
+                    continue;
+                var filter = filters[i];
+                var mesh = Object.Instantiate(filter.sharedMesh);
+                mesh.name = filter.sharedMesh.name + " hub-pivot";
+                var local = new Vector3[worldVerts[i].Length];
+                var xf = filter.transform;
+                for (var v = 0; v < local.Length; v++)
+                    local[v] = xf.InverseTransformPoint(worldVerts[i][v]);
+                mesh.vertices = local;
+                mesh.RecalculateBounds();
+                mesh.RecalculateNormals();
+                filter.sharedMesh = mesh;
+            }
+        }
+
+        private static bool TryEstimatePropHubWorld(Transform prop, out Vector3 hubWorld)
+        {
+            hubWorld = default;
+            var hub = prop.Find("Hub");
+            if (hub != null)
+            {
+                var hubRenderer = hub.GetComponent<Renderer>();
+                if (hubRenderer != null)
+                {
+                    hubWorld = hubRenderer.bounds.center;
+                    return true;
+                }
+            }
+
+            var spinner = prop.Find("Spinner");
+            if (spinner != null)
+            {
+                var spinnerRenderer = spinner.GetComponent<Renderer>();
+                if (spinnerRenderer != null)
+                {
+                    hubWorld = spinnerRenderer.bounds.center;
+                    return true;
+                }
+            }
+
+            var selfRenderer = prop.GetComponent<Renderer>();
+            if (selfRenderer != null)
+            {
+                hubWorld = selfRenderer.bounds.center;
+                return true;
+            }
+
+            var sum = Vector3.zero;
+            var count = 0;
+            foreach (var renderer in prop.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null || renderer.name == "PropDisc")
+                    continue;
+                sum += renderer.bounds.center;
+                count++;
+            }
+
+            if (count == 0)
+                return false;
+            hubWorld = sum / count;
+            return true;
         }
 
         private static void NestUnderProp(Transform prop, Transform part, string rename)
@@ -9045,22 +9174,35 @@ namespace Airside.Presentation
             if (!usedStandC)
                 CreateBlock("Stand stop 3", new Vector3(30f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
 
-            // Single dashed taxi centreline (kit or greybox) — no overlapping duplicate loop.
-            var usedTaxi = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_centreline", new Vector3(8f, 0.035f, 9f), Quaternion.Euler(0f, 90f, 0f),
-                new Color(0.95f, 0.85f, 0.2f), out _);
-            if (!usedTaxi)
+            // Taxi markings are authored along local X (see generate-batch-b-surfaces).
+            // Identity rotation keeps them on Taxiway A; Yaw 90 sent them across the apron
+            // and gated off the greybox dashes. Centreline mesh is 20 m — place two copies.
+            var taxiPaint = new Color(0.95f, 0.85f, 0.2f);
+            var usedTaxiWest = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(8f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
+            var usedTaxiEast = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(28f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
+            if (!usedTaxiWest && !usedTaxiEast)
             {
                 for (var x = -6; x <= 28; x += 5)
                     CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(2.2f, 0.02f, 0.16f),
-                        new Color(0.95f, 0.85f, 0.2f));
+                        taxiPaint);
+            }
+            else
+            {
+                // Extend paint onto the A1 exit fillet when the kit only covers Taxiway A.
+                for (var x = -22; x <= -14; x += 4)
+                    CreateBlock($"Taxi exit centre {x}", new Vector3(x, 0.035f, 4.5f + (x + 22f) * 0.35f),
+                        new Vector3(2.0f, 0.02f, 0.14f), taxiPaint);
             }
 
-            // Taxiway edge lines along Taxiway A — kit meshes when present.
+            // Edges: mesh already carries ±1.85 Z offset — place at taxi centre, identity yaw.
             var usedTaxiEdgeN = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_edge_n", new Vector3(8f, 0.035f, 10.85f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+                kit, "taxi_edge_n", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             var usedTaxiEdgeS = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_edge_s", new Vector3(8f, 0.035f, 7.15f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+                kit, "taxi_edge_s", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             if (!usedTaxiEdgeN)
                 CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             if (!usedTaxiEdgeS)
@@ -9862,19 +10004,58 @@ namespace Airside.Presentation
 
         private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute)
         {
+            // Air phases share the runway axis and meet the taxi network at (-24, 0)
+            // so takeoff no longer teleports 52 m after taxi-out, and landing rolls out
+            // to the same A1 entry TaxiIn uses.
+            var t = Mathf.Clamp01(progress);
             return phase switch
             {
-                AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
-                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
-                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, progress, false),
+                AircraftPhase.Approach => Smooth(
+                    new Vector3(-68f, 7.2f, 0f), new Vector3(-40f, 1.6f, 0f), t),
+                AircraftPhase.Landing => LandingPosition(t),
+                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
-                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
-                AircraftPhase.TaxiOut => progress < 0.15f
-                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), progress / 0.15f)
-                    : PositionAlongTaxiRoute(taxiRoute, (progress - 0.15f) / 0.85f, true),
-                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
-                _ => new Vector3(52f, 15f, 0f)
+                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), t),
+                AircraftPhase.TaxiOut => t < 0.15f
+                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), t / 0.15f)
+                    : PositionAlongTaxiRoute(taxiRoute, (t - 0.15f) / 0.85f, true),
+                AircraftPhase.Takeoff => TakeoffPosition(t),
+                _ => new Vector3(55f, 14f, 0f)
             };
+        }
+
+        /// <summary>
+        /// Flare then ground rollout along the runway to the west taxi exit (-24).
+        /// </summary>
+        private static Vector3 LandingPosition(float t)
+        {
+            if (t < 0.4f)
+            {
+                // Short final / flare: settle onto the runway near the west threshold.
+                return Smooth(new Vector3(-40f, 1.6f, 0f), new Vector3(-34f, 0.7f, 0f), t / 0.4f);
+            }
+
+            // Rollout decelerates toward the A1 taxi entry (matches AirportTaxiNetwork).
+            var u = (t - 0.4f) / 0.6f;
+            var eased = 1f - (1f - u) * (1f - u);
+            return Vector3.Lerp(new Vector3(-34f, 0.7f, 0f), new Vector3(-24f, 0.7f, 0f), eased);
+        }
+
+        /// <summary>
+        /// Ground roll from the taxi-out end (-24) then climb — continuous with the network.
+        /// </summary>
+        private static Vector3 TakeoffPosition(float t)
+        {
+            if (t < 0.42f)
+            {
+                // Accelerate along the runway (ease-in).
+                var u = t / 0.42f;
+                var eased = u * u;
+                return Vector3.Lerp(new Vector3(-24f, 0.7f, 0f), new Vector3(10f, 0.7f, 0f), eased);
+            }
+
+            var climb = (t - 0.42f) / 0.58f;
+            return Smooth(new Vector3(10f, 0.7f, 0f), new Vector3(52f, 12f, 0f), climb);
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)

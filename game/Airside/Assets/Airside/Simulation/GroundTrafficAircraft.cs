@@ -130,10 +130,26 @@ namespace Airside.Simulation
             return false;
         }
 
-        /// <summary>0..1 progress along the current leg.</summary>
-        public double Progress => _warmup == 0 && _onLeg
-            ? Math.Max(0d, Math.Min(1d, _secondsOnLeg / (double)_circuit[_legIndex].Seconds))
-            : 0d;
+        /// <summary>0..1 progress along the current leg (preserved across Yield holds).</summary>
+        public double Progress
+        {
+            get
+            {
+                if (_warmup > 0)
+                    return 0d;
+
+                var leg = _circuit[_legIndex];
+                if (leg.Seconds <= 0)
+                    return 0d;
+
+                // Yield clears _onLeg but keeps _secondsOnLeg — report mid-leg progress so
+                // Position does not snap back to the leg start (ADR 0008 cosmetic gap).
+                if (!_onLeg && _secondsOnLeg <= 0)
+                    return 0d;
+
+                return Math.Max(0d, Math.Min(1d, _secondsOnLeg / (double)leg.Seconds));
+            }
+        }
 
         /// <summary>World position along the taxiway for the presentation layer.</summary>
         public TaxiPoint Position

@@ -14,6 +14,8 @@ namespace Airside.Presentation
         private readonly Vector3 _overviewCenter = new(12f, 0f, 16f);
         private const float OverviewDistance = 44f;
         private const float OverviewFov = 48f;
+        private const float OverviewPitch = 38f;
+        private const float OverviewYaw = 138f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
@@ -22,6 +24,8 @@ namespace Airside.Presentation
         private float _pitch = 38f;
         private float _distance = OverviewDistance;
         private bool _following;
+        private bool _easingOverview;
+        private float _orbitSuppressUntil;
         private float _touchdownShake;
         private AircraftPhase _followPhase = AircraftPhase.AtStand;
         private float _followProgress;
@@ -91,9 +95,12 @@ namespace Airside.Presentation
                 _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.4f));
 
                 // Ease yaw toward the aircraft heading without fighting player orbit.
-                var yawBias = YawBiasDegrees(_followPhase);
-                var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
-                _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
+                if (Time.unscaledTime >= _orbitSuppressUntil)
+                {
+                    var yawBias = YawBiasDegrees(_followPhase);
+                    var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
+                    _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
+                }
                 var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
                 _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.85f));
 
@@ -102,7 +109,30 @@ namespace Airside.Presentation
             }
             else
             {
-                _fov = Mathf.Lerp(_fov, OverviewFov, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.2f));
+                if (_easingOverview)
+                {
+                    var k = 1f - Mathf.Exp(-Time.unscaledDeltaTime * 3.2f);
+                    _center = Vector3.Lerp(_center, _overviewCenter, k);
+                    _distance = Mathf.Lerp(_distance, OverviewDistance, k);
+                    _pitch = Mathf.Lerp(_pitch, OverviewPitch, k);
+                    _yaw = Mathf.LerpAngle(_yaw, OverviewYaw, k);
+                    _fov = Mathf.Lerp(_fov, OverviewFov, k);
+                    if (Vector3.Distance(_center, _overviewCenter) < 0.08f
+                        && Mathf.Abs(_distance - OverviewDistance) < 0.08f
+                        && Mathf.Abs(Mathf.DeltaAngle(_yaw, OverviewYaw)) < 0.4f)
+                    {
+                        _center = _overviewCenter;
+                        _distance = OverviewDistance;
+                        _pitch = OverviewPitch;
+                        _yaw = OverviewYaw;
+                        _fov = OverviewFov;
+                        _easingOverview = false;
+                    }
+                }
+                else
+                {
+                    _fov = Mathf.Lerp(_fov, OverviewFov, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.2f));
+                }
             }
 
             if (_camera != null)
@@ -230,6 +260,9 @@ namespace Airside.Presentation
                 var delta = mouse.delta.ReadValue();
                 _yaw += delta.x * 0.18f;
                 _pitch = Mathf.Clamp(_pitch - delta.y * 0.14f, 18f, 72f);
+                // Suppress follow yaw bias briefly so orbit is not fought every frame.
+                _orbitSuppressUntil = Time.unscaledTime + 0.9f;
+                _easingOverview = false;
             }
 
             var scroll = mouse.scroll.ReadValue().y;
@@ -264,11 +297,7 @@ namespace Airside.Presentation
         public void ReturnToOverview()
         {
             _following = false;
-            _center = _overviewCenter;
-            _distance = OverviewDistance;
-            _pitch = 38f;
-            _yaw = 138f;
-            _fov = OverviewFov;
+            _easingOverview = true;
         }
 
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>

@@ -1022,7 +1022,7 @@ namespace Airside.Presentation
                 RollLandingGearTires(view, phase);
                 UpdateControlSurfaces(view, phase, progress, bank);
                 UpdateGroundShadow(view);
-                UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight);
+                UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight, progress);
                 UpdateCabinDoor(view, phase);
                 UpdateCabinWindowGlow(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateEngineHeat(view, phase);
@@ -1195,9 +1195,12 @@ namespace Airside.Presentation
             }
         }
 
-        private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight)
+        private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f)
         {
-            var airborne = phase is AircraftPhase.Approach or AircraftPhase.Takeoff or AircraftPhase.Departed;
+            var gearBias = AirsideReusableMotion.GearBias(phase, progress01);
+            var airborne = phase == AircraftPhase.Departed
+                || phase == AircraftPhase.Approach
+                || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
             var night = daylight < 0.35f;
             var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff;
@@ -1213,7 +1216,7 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = airborne ? 0f : 78f;
+                    var target = gearBias < 0.5f ? 0f : 78f;
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
                     child.localEulerAngles = euler;
                 }
@@ -1224,7 +1227,6 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var gearBias = AirsideReusableMotion.GearBias(phase);
                     var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 140f);
                     child.localEulerAngles = euler;
@@ -1463,7 +1465,10 @@ namespace Airside.Presentation
             }
         }
 
-        private static void SpinPropellers(Transform aircraft, AircraftPhase phase)
+        /// <summary>Sim-rate presentation dt — freezes when paused, scales at 4×.</summary>
+        private float PresentationDeltaTime => _paused ? 0f : Time.unscaledDeltaTime * _speed;
+
+        private void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: RPM follows phase (Batch F4 ANM-AIR-001 via AirsideReusableMotion).
             if (!AirsideReusableMotion.PropellersSpinning(phase))
@@ -1474,7 +1479,9 @@ namespace Airside.Presentation
 
             var rpm = AirsideReusableMotion.PropRpmForPhase(phase);
             // Constants are true RPM — convert to degrees/sec (×6) so blades read as spinning.
-            var degrees = Time.unscaledDeltaTime * rpm * 6f;
+            var degrees = PresentationDeltaTime * rpm * 6f;
+            if (degrees <= 0f)
+                return;
             var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -1487,7 +1494,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
+        private void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
         {
             if (!enginesOn)
             {
@@ -1497,7 +1504,9 @@ namespace Airside.Presentation
 
             // Match ANM-AIR taxi RPM so ground traffic props read with the fleet.
             var rpm = AirsideReusableMotion.PropRpmTaxi;
-            var degrees = Time.unscaledDeltaTime * rpm * 6f;
+            var degrees = PresentationDeltaTime * rpm * 6f;
+            if (degrees <= 0f)
+                return;
             var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
@@ -1544,7 +1553,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
+        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: tires roll on the ground (Batch D motion life).
             var rolling = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
@@ -1559,7 +1568,9 @@ namespace Airside.Presentation
                 AircraftPhase.Pushback => 0.55f,
                 _ => 1f
             };
-            var degrees = Time.unscaledDeltaTime * AirsideReusableMotion.AircraftTireRpmTaxi * speed;
+            var degrees = PresentationDeltaTime * AirsideReusableMotion.AircraftTireRpmTaxi * speed;
+            if (degrees <= 0f)
+                return;
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
             {
                 if (child == aircraft)
@@ -1648,41 +1659,70 @@ namespace Airside.Presentation
                 var previous = view.position;
 
                 // A yield can snap the sim point back; do not lerp through released space.
-                view.position = TaxiVisualPath.MoveGroundTraffic(
-                    previous,
-                    target,
-                    traffic.IsHolding,
-                    Time.unscaledDeltaTime * 10f);
+                // Catch-up rate tracks pause / 1× / 4× so GT does not slide while frozen.
+                var catchUp = PresentationDeltaTime * 10f;
+                view.position = catchUp <= 0f
+                    ? previous
+                    : TaxiVisualPath.MoveGroundTraffic(
+                        previous,
+                        target,
+                        traffic.IsHolding,
+                        catchUp);
 
                 var direction = target - previous;
                 var targetRotation = direction.sqrMagnitude > 0.0004f
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
-                if (!traffic.IsHolding)
+                var visualPhase = GroundTrafficVisualPhase(traffic);
+                if (!traffic.IsHolding && visualPhase != AircraftPhase.AtStand)
                     targetRotation *= Quaternion.Euler(0f, 0f, TurnBankDegrees(view, targetRotation, AircraftPhase.TaxiIn));
-                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 4f);
+                if (PresentationDeltaTime > 0f)
+                    view.rotation = Quaternion.Slerp(view.rotation, targetRotation, PresentationDeltaTime * 4f);
 
-                SpinGroundTrafficPropellers(view, enginesOn: !traffic.IsHolding);
+                var enginesOn = GroundTrafficEnginesOn(traffic);
+                SpinGroundTrafficPropellers(view, enginesOn);
                 RollLandingGearTires(
                     view,
-                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
+                    traffic.IsHolding || traffic.IsAtStand ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
                 UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(
                     view,
-                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
+                    visualPhase,
                     (float)_simulation.TimeOfDay.Daylight);
                 UpdateCabinWindowGlow(
                     view,
-                    traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
+                    visualPhase,
                     (float)_simulation.TimeOfDay.Daylight);
-                UpdateEngineHeat(view, traffic.IsHolding ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
+                UpdateEngineHeat(view, visualPhase);
             }
+        }
+
+        private static AircraftPhase GroundTrafficVisualPhase(GroundTrafficAircraft traffic)
+        {
+            if (traffic.IsAtStand)
+                return AircraftPhase.AtStand;
+            var phase = traffic.CurrentPhase;
+            if (phase is "Away" or "Waiting for a slot" or "Run-up hold")
+                return AircraftPhase.AtStand;
+            return AircraftPhase.TaxiIn;
+        }
+
+        private static bool GroundTrafficEnginesOn(GroundTrafficAircraft traffic)
+        {
+            if (traffic.IsAtStand)
+                return false;
+            var phase = traffic.CurrentPhase;
+            return phase is not ("Away" or "Waiting for a slot");
         }
 
         private float VisualPhaseProgress(CommercialFlight flight, float lookAheadSeconds)
         {
             if (flight.Operation.IsComplete)
                 return 1f;
+
+            // At stand, follow turnaround-bound PhaseProgress so stairs/chocks match crew speed.
+            if (flight.Operation.Phase == AircraftPhase.AtStand && lookAheadSeconds <= 0f)
+                return (float)flight.Operation.PhaseProgress(new SimulationTime((long)Math.Floor(_preciseTime)));
 
             var elapsed = _preciseTime + lookAheadSeconds - flight.Operation.PhaseStartedAt.ElapsedSeconds;
             return Mathf.Clamp01((float)(elapsed / flight.Operation.PhaseDurationSeconds));
@@ -1776,11 +1816,16 @@ namespace Airside.Presentation
             {
                 var z = AirportTaxiNetwork.StandZ(pushing.AssignedStand);
                 var progress = VisualPhaseProgress(pushing, 0f);
-                var tugPos = Vector3.Lerp(
-                    new Vector3(15.2f, 0.4f, z),
-                    new Vector3(11.2f, 0.4f, z - 2f),
-                    Mathf.SmoothStep(0f, 1f, progress));
-                PlaceProp(_pushbackTug, true, tugPos, Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f)));
+                // Match commercial Pushback endpoints so the tug does not lag a parallel path.
+                var from = new Vector3(17f, 0.4f, z);
+                var to = new Vector3(12f, 0.4f, z - 2f);
+                var tugPos = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
+                var travel = to - from;
+                travel.y = 0f;
+                var facing = travel.sqrMagnitude > 0.0001f
+                    ? Quaternion.LookRotation(travel.normalized, Vector3.up)
+                    : Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f));
+                PlaceProp(_pushbackTug, true, tugPos, facing);
                 PulseServiceBeacon(_pushbackTug, true);
                 SyncVehicleHeadlights(_pushbackTug, true, (float)_simulation.TimeOfDay.Daylight);
             }
@@ -1843,12 +1888,12 @@ namespace Airside.Presentation
                 return;
 
             BuildStandMarking(17f, 26f, "Stand 3");
-            CreateBlock("Stand 3 apron pad", new Vector3(20f, 0.01f, 26f), new Vector3(16f, 0.08f, 6f),
+            CreateBlock("Stand 3 apron pad", new Vector3(20f, 0f, 26f), new Vector3(16f, 0.12f, 6f),
                 new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
             CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 26f);
             // Extend apron north so Stand 3 is not an island past the concrete edge.
-            CreateBlock("Apron north extension", new Vector3(20f, 0.005f, 24.5f), new Vector3(26f, 0.08f, 5f),
+            CreateBlock("Apron north extension", new Vector3(20f, 0f, 24.5f), new Vector3(26f, 0.12f, 5f),
                 new Color(0.36f, 0.38f, 0.39f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 1f));
             var propsKit = PreferArtKit(
@@ -1940,7 +1985,7 @@ namespace Airside.Presentation
                 child.SetParent(offset, false);
         }
 
-        private static void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
+        private void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
         {
             if (vehicle == null)
                 return;
@@ -1952,7 +1997,7 @@ namespace Airside.Presentation
                 vehicle.position = parkPosition;
 
             var previous = vehicle.position;
-            var speed = active ? 7.5f : 5.5f;
+            var speed = (active ? 7.5f : 5.5f) * (_paused ? 0f : _speed);
             vehicle.position = Vector3.MoveTowards(previous, target, Time.unscaledDeltaTime * speed);
             var travel = Vector3.Distance(previous, vehicle.position);
             if (travel > 0.001f)
@@ -1962,7 +2007,7 @@ namespace Airside.Presentation
                 if (flat.sqrMagnitude > 0.0001f)
                 {
                     var look = Quaternion.LookRotation(flat.normalized, Vector3.up);
-                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f);
+                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f * Mathf.Max(1, _speed));
                 }
             }
 
@@ -1973,7 +2018,7 @@ namespace Airside.Presentation
             var spinRpm = active
                 ? AirsideReusableMotion.VehicleWheelRpmTaxi
                 : AirsideReusableMotion.VehicleWheelRpmService;
-            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
+            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm * Mathf.Max(1, _speed) : 0f);
             if (degrees <= 0f)
                 return;
             foreach (var child in vehicle.GetComponentsInChildren<Transform>(true))
@@ -2201,7 +2246,6 @@ namespace Airside.Presentation
                 var fogDay = new Color(0.55f, 0.6f, 0.66f);
                 var fogNight = new Color(0.18f, 0.22f, 0.3f);
                 var daylight = (float)_simulation.TimeOfDay.Daylight;
-                RenderSettings.ambientLight *= 0.9f;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
@@ -2218,9 +2262,10 @@ namespace Airside.Presentation
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
             // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
+            // Fog alone thickens atmosphere — it does not soak the apron.
             // Clear weather keeps a soft residual damp on paved slabs (REF day apron).
-            var rainWetness = wet
-                ? (weather == WeatherKind.Storm ? 0.72f : raining ? 0.52f : 0.34f)
+            var rainWetness = raining
+                ? (weather == WeatherKind.Storm ? 0.72f : 0.52f)
                 : 0f;
             // Wetness only changes when the weather changes (four discrete values), and
             // ApplyWetness toggles shader keywords — which invalidates the SRP Batcher
@@ -2234,7 +2279,7 @@ namespace Airside.Presentation
                     var (renderer, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
                     if (renderer == null)
                         continue;
-                    var apply = wet ? rainWetness : (paved ? 0.06f : 0f);
+                    var apply = raining ? rainWetness : (paved ? 0.06f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
                         renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
                 }
@@ -2257,27 +2302,28 @@ namespace Airside.Presentation
             if (_taxiSprayRoot == null)
                 return;
 
-            var anyTaxi = false;
-            foreach (var flight in _simulation.Flights)
+            Transform lead = null;
+            for (var i = 0; i < _simulation.Flights.Count; i++)
             {
-                if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
-                    or AircraftPhase.Landing or AircraftPhase.Takeoff)
-                {
-                    anyTaxi = true;
+                var flight = _simulation.Flights[i];
+                var phase = flight.Operation.Phase;
+                var progress = VisualPhaseProgress(flight, 0f);
+                // Ground spray only — not climbing takeoff or airborne approach.
+                var onGround = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                    || phase == AircraftPhase.Landing
+                    || (phase == AircraftPhase.Takeoff && progress < 0.48f);
+                if (!onGround)
+                    continue;
+                if (_commercialAircraft == null || i >= _commercialAircraft.Length)
+                    continue;
+                lead = _commercialAircraft[i];
+                if (lead != null)
                     break;
-                }
             }
 
-            var show = wetness > 0.12f && anyTaxi;
+            var show = wetness > 0.12f && lead != null;
             _taxiSprayRoot.gameObject.SetActive(show);
             if (!show)
-                return;
-
-            // Follow the lead commercial gear so wet taxi throws mist.
-            Transform lead = null;
-            if (_commercialAircraft != null && _commercialAircraft.Length > 0)
-                lead = _commercialAircraft[0];
-            if (lead == null)
                 return;
 
             _taxiSprayRoot.position = lead.position + Vector3.up * 0.2f;
@@ -2513,7 +2559,8 @@ namespace Airside.Presentation
         /// </summary>
         private static bool IsPavedSurfaceName(string name)
         {
-            return (name is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+            return (name is "Runway" or "Taxiway A" or "Taxiway A exit" or "Apron" or "Stand 3 apron pad"
+                    or "Apron north extension"
                     or "Access road" or "Access road turn" or "Car park" or "Service lane" or "Fuel pad")
                 || name.StartsWith("Apron joint", StringComparison.Ordinal)
                 || name.StartsWith("Apron slab", StringComparison.Ordinal)
@@ -2523,6 +2570,7 @@ namespace Airside.Presentation
                 || name.StartsWith("Threshold", StringComparison.Ordinal)
                 || name.StartsWith("Hold short", StringComparison.Ordinal)
                 || name.StartsWith("Taxi edge", StringComparison.Ordinal)
+                || name.StartsWith("Taxi lead", StringComparison.Ordinal)
                 || name.StartsWith("Stand stop", StringComparison.Ordinal)
                 || name.StartsWith("Stand number", StringComparison.Ordinal)
                 || name.StartsWith("Access turn", StringComparison.Ordinal)
@@ -2547,8 +2595,6 @@ namespace Airside.Presentation
                 || name.StartsWith("Runway shoulder", StringComparison.Ordinal)
                 || name.StartsWith("Access turn shoulder", StringComparison.Ordinal)
                 || name.StartsWith("Car park kerb", StringComparison.Ordinal)
-                || name.StartsWith("Relief berm", StringComparison.Ordinal)
-                || name.StartsWith("Relief mound", StringComparison.Ordinal)
                 || name.StartsWith("runway_centre", StringComparison.Ordinal)
                 || name.StartsWith("runway_edge_left", StringComparison.Ordinal)
                 || name.StartsWith("runway_edge_right", StringComparison.Ordinal)
@@ -2576,7 +2622,8 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var n = renderer.gameObject.name;
-                if (!(n is "Runway" or "Taxiway A" or "Apron" or "Stand 3 apron pad"
+                if (!(n is "Runway" or "Taxiway A" or "Taxiway A exit" or "Apron" or "Stand 3 apron pad"
+                        or "Apron north extension"
                         or "Access road" or "Access road turn" or "Car park" or "Service lane"
                         or "Fuel pad" or "Grass"
                         or "Access road shoulder L" or "Access road shoulder R"
@@ -2591,6 +2638,7 @@ namespace Airside.Presentation
                     && !n.StartsWith("Apron joint", StringComparison.Ordinal)
                     && !n.StartsWith("Apron fringe", StringComparison.Ordinal)
                     && !n.StartsWith("Apron slab", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi lead", StringComparison.Ordinal)
                     && !n.StartsWith("Runway marking", StringComparison.Ordinal)
                     && !n.StartsWith("Runway edge", StringComparison.Ordinal)
                     && !n.StartsWith("Threshold", StringComparison.Ordinal)
@@ -3831,6 +3879,17 @@ namespace Airside.Presentation
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
             RenderSettings.ambientIntensity = Mathf.Lerp(0.45f, 1.05f, daylight) + warm * 0.08f;
+            if (weatherGloom > 0f)
+            {
+                // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.
+                ambientSky = Color.Lerp(ambientSky, ambientSky * 0.72f, weatherGloom);
+                ambientEquator = Color.Lerp(ambientEquator, ambientEquator * 0.7f, weatherGloom);
+                ambientGround = Color.Lerp(ambientGround, ambientGround * 0.65f, weatherGloom);
+                RenderSettings.ambientSkyColor = ambientSky;
+                RenderSettings.ambientEquatorColor = ambientEquator;
+                RenderSettings.ambientGroundColor = ambientGround;
+                RenderSettings.ambientIntensity *= Mathf.Lerp(1f, 0.78f, weatherGloom);
+            }
             RenderSettings.subtractiveShadowColor = Color.Lerp(
                 new Color(0.22f, 0.28f, 0.4f),
                 new Color(0.4f, 0.28f, 0.28f),
@@ -4669,13 +4728,14 @@ namespace Airside.Presentation
         /// </summary>
         private static void CreateTaxiLeadPad(string name, float standZ)
         {
-            var from = new Vector3(8f, -0.01f, 9f);
-            var to = new Vector3(17f, -0.01f, standZ);
+            // Match apron Y (0) so lead-ins do not sink under concrete edges.
+            var from = new Vector3(8f, 0f, 9f);
+            var to = new Vector3(17f, 0f, standZ);
             var mid = (from + to) * 0.5f;
             var delta = to - from;
             var length = delta.magnitude + 1.6f;
             var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
-            var pad = CreateBlock(name, mid, new Vector3(4.6f, 0.1f, length), new Color(0.28f, 0.3f, 0.32f),
+            var pad = CreateBlock(name, mid, new Vector3(4.6f, 0.12f, length), new Color(0.28f, 0.3f, 0.32f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.2f, 1.4f));
             pad.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
@@ -5018,22 +5078,27 @@ namespace Airside.Presentation
             }
 
             // Kangaroo Island coastal strip south of the runway (sand, not water physics).
-            CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand,
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(20f, 2f));
-            // Surf foam ribbon so the sand/water join reads from overview (0025 item 3).
-            CreateBlock("Coast foam", new Vector3(0f, -0.62f, -54.5f), new Vector3(165f, 0.08f, 2.2f),
-                new Color(0.88f, 0.92f, 0.95f, 0.85f),
-                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(22f, 0.4f));
-            CreateBlock("Coast foam inner", new Vector3(0f, -0.58f, -53.2f), new Vector3(150f, 0.05f, 1.1f),
-                new Color(0.92f, 0.95f, 0.97f, 0.55f),
-                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(18f, 0.25f));
-            CreateBlock("Coast foam outer", new Vector3(0f, -0.68f, -56.2f), new Vector3(170f, 0.04f, 1.4f),
-                new Color(0.78f, 0.86f, 0.92f, 0.45f),
-                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(20f, 0.3f));
-            CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f),
-                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(16f, 1.5f));
-            CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f),
-                "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(14f, 2f));
+            // When WLD-004 kit accents place coast_* meshes, skip procedural slabs to avoid Z-fight.
+            if (!hasTerrainKit)
+            {
+                CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand,
+                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(20f, 2f));
+                // Surf foam ribbon so the sand/water join reads from overview (0025 item 3).
+                CreateBlock("Coast foam", new Vector3(0f, -0.62f, -54.5f), new Vector3(165f, 0.08f, 2.2f),
+                    new Color(0.88f, 0.92f, 0.95f, 0.85f),
+                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(22f, 0.4f));
+                CreateBlock("Coast foam inner", new Vector3(0f, -0.58f, -53.2f), new Vector3(150f, 0.05f, 1.1f),
+                    new Color(0.92f, 0.95f, 0.97f, 0.55f),
+                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(18f, 0.25f));
+                CreateBlock("Coast foam outer", new Vector3(0f, -0.68f, -56.2f), new Vector3(170f, 0.04f, 1.4f),
+                    new Color(0.78f, 0.86f, 0.92f, 0.45f),
+                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(20f, 0.3f));
+                CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f),
+                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(16f, 1.5f));
+                CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f),
+                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(14f, 2f));
+            }
+
             BuildCoastalLife();
 
             // Landside access: terminal → car park road + bay.
@@ -5140,17 +5205,18 @@ namespace Airside.Presentation
             var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
             var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
 
-            // North/south berms framing the runway strip — thinner when WLD accents land.
+            // North/south berms framing the runway strip — north berm stays clear of the
+            // terminal/apron band (~z 24–32) so grass does not slice through buildings.
             if (hasTerrainKit)
             {
-                CreateBlock("Relief berm N", new Vector3(0f, 0.12f, 30f), new Vector3(55f, 0.35f, 3.2f), grass,
+                CreateBlock("Relief berm N", new Vector3(0f, 0.12f, 36f), new Vector3(55f, 0.35f, 3.2f), grass,
                     "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 1f));
                 CreateBlock("Relief berm S", new Vector3(0f, 0.1f, -22f), new Vector3(50f, 0.28f, 3.5f), dry,
                     "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5.5f, 0.9f));
             }
             else
             {
-                CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 30f), new Vector3(70f, 0.55f, 4.5f), grass,
+                CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 36f), new Vector3(70f, 0.55f, 4.5f), grass,
                     "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(8f, 1.2f));
                 CreateBlock("Relief berm S", new Vector3(0f, 0.12f, -22f), new Vector3(64f, 0.45f, 5f), dry,
                     "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(7f, 1f));
@@ -5465,6 +5531,10 @@ namespace Airside.Presentation
                 }
 
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
+                // Freeze when the sim is paused so apron life matches aircraft/GSE.
+                if (_paused)
+                    continue;
+
                 if (walker)
                 {
                     var ox = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWalkerHz * Mathf.PI * 2f + i) * 1.6f;
@@ -5675,23 +5745,35 @@ namespace Airside.Presentation
                 new Color(0.12f, 0.45f, 0.35f)
             };
 
-            // Car park bays — thin when parked-car prefab/kit is a heavy silhouette.
+            // Car park bays — place into the same row/column layout as Bay line paint.
             var hasCarPrefab = ArtPresentationLoader.HasPresentation("Models/Vehicles/mdl_parked_car_v02.gltf")
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v02")
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
-            var bayCarCount = hasCarPrefab ? 4 : 8;
+            var hasForecourtKerbsEarly = GameObject.Find("Car park kerb N") != null;
+            var bayCarCount = hasCarPrefab ? (hasForecourtKerbsEarly ? 6 : 4) : 8;
             for (var i = 0; i < bayCarCount; i++)
             {
                 if (hasCarPrefab)
                 {
-                    // North–south bay paint: nose into the stall (yaw 180), not east–west 90.
-                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + i * 3.6f, 0f, 43.2f), 180f, carColors[i]);
+                    if (hasForecourtKerbsEarly)
+                    {
+                        var cols = 3;
+                        var row = i / cols;
+                        var col = i % cols;
+                        var x = 42.5f + col * 5.0f;
+                        var z = 43f + row * 4.0f;
+                        PlaceParkedCar($"Parked car {i}", new Vector3(x, 0f, z), 180f, carColors[i % carColors.Length]);
+                    }
+                    else
+                    {
+                        PlaceParkedCar($"Parked car {i}", new Vector3(42f + i * 3.6f, 0f, 43.2f), 180f, carColors[i % carColors.Length]);
+                    }
                 }
                 else
                 {
                     var row = i < 4 ? 0 : 1;
                     var slot = i % 4;
-                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + slot * 3.6f, 0f, 43.2f + row * 4.2f), 180f, carColors[i]);
+                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + slot * 3.6f, 0f, 43.2f + row * 4.2f), 180f, carColors[i % carColors.Length]);
                 }
             }
 

@@ -53,6 +53,8 @@ namespace Airside.Persistence
                 throw new InvalidOperationException("Save random seed is missing.");
             if (string.IsNullOrWhiteSpace(locationId))
                 throw new InvalidOperationException("Save location is missing.");
+            if (!AirportLocation.TryFromId(locationId, out _))
+                throw new InvalidOperationException($"Save location '{locationId}' is unknown.");
 
             commands ??= new List<AirsideCommandRecord>();
             foreach (var command in commands)

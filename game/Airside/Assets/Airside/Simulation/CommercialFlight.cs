@@ -7,7 +7,7 @@ namespace Airside.Simulation
     /// <summary>
     /// One commercial aircraft loop: approach through departure, stand assignment,
     /// turnaround and settlement. <see cref="AirportSimulation"/> owns the list and
-    /// shared reservation / fleet orchestration.
+    /// shared reservation / traffic orchestration.
     /// </summary>
     public sealed class CommercialFlight
     {
@@ -67,7 +67,14 @@ namespace Airside.Simulation
         {
             switch (phase)
             {
+                case AircraftPhase.Approach:
                 case AircraftPhase.Landing:
+                    // Claim the assigned stand early so GT cannot park on an inbound stand
+                    // and so dual commercials never double-book before taxi-in.
+                    if (phase == AircraftPhase.Landing)
+                        yield return AirportSimulation.Runway;
+                    yield return AssignedStand;
+                    break;
                 case AircraftPhase.Takeoff:
                     yield return AirportSimulation.Runway;
                     break;

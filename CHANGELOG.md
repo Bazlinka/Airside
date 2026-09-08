@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **50-fix bugfix pass.** Simulation: hold-short runway wait survives
+  reservation sync; concurrent commercials = `Capacity.StandCount`; live staffing
+  during AtStand; refuse expired route Accept; research/seed/location/GT/yield/
+  stand-reservation/event-log/StableId hardenings. Presentation: GSE/+X facing,
+  chocks/GPU Y, stairs tip, marshaller L, fence/gate, camera follow, night
+  ambient, dual-stand focus GSE, PreferArtKit null-safe. Evidence:
+  `scripts/test-domain.sh` 135/135; `docs/testing/BUGFIX_PASS_50_2026-09-08.md`.
+
 - **Eucalyptus VEG-001 v02.** Prefer `mdl_eucalyptus_kit_v02` (30 meshes):
   multi-lobe canopies, tapered trunk/bark/fork, denser lod1; place full tree
   belt; far trees add lod1 crown; v01 remains fallback. Evidence:

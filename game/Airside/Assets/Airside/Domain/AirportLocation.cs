@@ -45,15 +45,38 @@ namespace Airside.Domain
 
         public static AirportLocation Default => Kingscote;
 
-        public static AirportLocation FromId(string id)
+        public static bool TryFromId(string id, out AirportLocation location)
         {
-            foreach (var location in Presets)
+            if (!string.IsNullOrWhiteSpace(id))
             {
-                if (string.Equals(location.Id, id, StringComparison.OrdinalIgnoreCase))
-                    return location;
+                foreach (var preset in Presets)
+                {
+                    if (string.Equals(preset.Id, id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        location = preset;
+                        return true;
+                    }
+                }
             }
 
-            return Default;
+            location = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Resolve a known location id. Unknown or empty ids throw — saves must not
+        /// silently fall back to Kingscote and continue with the wrong airport.
+        /// </summary>
+        public static AirportLocation FromId(string id)
+        {
+            if (TryFromId(id, out var location))
+                return location;
+
+            throw new ArgumentException(
+                string.IsNullOrWhiteSpace(id)
+                    ? "A location id is required."
+                    : $"Unknown airport location id '{id}'.",
+                nameof(id));
         }
 
         public bool Equals(AirportLocation other) => string.Equals(Id, other.Id, StringComparison.Ordinal);

@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -59,11 +60,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AirportLocation_ResolvesKnownIdsAndFallsBackForUnknown()
+        public void AirportLocation_ResolvesKnownIdsAndRejectsUnknown()
         {
             Assert.That(AirportLocation.FromId("PLO").Name, Is.EqualTo("Port Lincoln"));
             Assert.That(AirportLocation.FromId("kgc"), Is.EqualTo(AirportLocation.Kingscote));
-            Assert.That(AirportLocation.FromId("nonsense"), Is.EqualTo(AirportLocation.Default));
+            Assert.That(AirportLocation.TryFromId("nonsense", out _), Is.False);
+            Assert.Throws<ArgumentException>(() => AirportLocation.FromId("nonsense"));
+            Assert.Throws<ArgumentException>(() => AirportLocation.FromId(""));
             Assert.That(AirportLocation.Presets.Length, Is.GreaterThanOrEqualTo(3));
         }
 

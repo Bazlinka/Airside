@@ -18,7 +18,8 @@ namespace Airside.Domain
 
         public override bool Equals(object obj) => obj is StableId other && Equals(other);
 
-        public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Value);
+        public override int GetHashCode() =>
+            Value == null ? 0 : StringComparer.Ordinal.GetHashCode(Value);
 
         public override string ToString() => Value;
     }

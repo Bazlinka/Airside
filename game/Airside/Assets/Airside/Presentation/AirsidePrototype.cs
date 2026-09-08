@@ -261,10 +261,15 @@ namespace Airside.Presentation
                     "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
                     "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
+            // Authored GSE kits face +X; LookRotation travel aims +Z — nest a -90° yaw so they match.
+            OrientPlusXKitToForward(_fuelTruck);
+            OrientPlusXKitToForward(_baggageCart);
+            OrientPlusXKitToForward(_passengerBus);
             _stairs = BuildStairs();
             _chocks = BuildChocks();
             _gpuCart = BuildGpuCart();
             _pushbackTug = BuildPushbackTug();
+            OrientPlusXKitToForward(_pushbackTug);
             _windsockSock = BuildWindsock();
             EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
@@ -985,8 +990,12 @@ namespace Airside.Presentation
             SyncCommercialAircraftViews();
             for (var index = 0; index < _simulation.Flights.Count; index++)
             {
+                if (index >= _commercialAircraft.Length)
+                    break;
                 var flight = _simulation.Flights[index];
                 var view = _commercialAircraft[index];
+                if (view == null)
+                    continue;
                 var standZ = AirportTaxiNetwork.StandZ(flight.AssignedStand);
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
@@ -1224,9 +1233,7 @@ namespace Airside.Presentation
                 {
                     var navOn = enginesOn || night;
                     child.gameObject.SetActive(navOn);
-                    EnsureNavPointLight(child, navOn, child.name.EndsWith("R", StringComparison.Ordinal)
-                        || child.name.IndexOf(" R", StringComparison.Ordinal) >= 0
-                        || child.name.IndexOf("right", StringComparison.OrdinalIgnoreCase) >= 0);
+                    EnsureNavPointLight(child, navOn, IsNavLightRight(child.name));
                 }
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
@@ -1252,6 +1259,23 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
+        private static bool IsNavLightRight(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+            var lower = name.ToLowerInvariant();
+            if (lower.Contains("right") || lower.Contains("_r") || lower.EndsWith(" r") || lower.EndsWith("-r"))
+                return true;
+            if (lower.Contains("left") || lower.Contains("_l") || lower.EndsWith(" l") || lower.EndsWith("-l"))
+                return false;
+            // Exact trailing R/L after a separator — avoid matching bare "NavLight".
+            if (name.EndsWith(" R", StringComparison.Ordinal) || name.EndsWith("_R", StringComparison.Ordinal))
+                return true;
+            if (name.EndsWith(" L", StringComparison.Ordinal) || name.EndsWith("_L", StringComparison.Ordinal))
+                return false;
+            return false;
+        }
+
         private static void EnsureNavPointLight(Transform lamp, bool on, bool isRight)
         {
             var light = lamp.GetComponent<Light>();
@@ -1666,16 +1690,8 @@ namespace Airside.Presentation
 
         private void UpdateServiceVehicles()
         {
-            // Prefer any commercial currently in turnaround (supports dual flights).
-            CommercialFlight servicing = null;
-            foreach (var flight in _simulation.Flights)
-            {
-                if (flight.Operation.Phase == AircraftPhase.AtStand && flight.Turnaround != null)
-                {
-                    servicing = flight;
-                    break;
-                }
-            }
+            // Prefer the watched/focused commercial at stand so dual-stand activity matches the player view.
+            var servicing = PreferWatchedAtStandFlight(requireTurnaround: true);
 
             // Parked GSE stays visible on the apron edge so the field feels staffed.
             var fuelPark = new Vector3(-4.5f, 0.55f, 12.5f);
@@ -1714,26 +1730,32 @@ namespace Airside.Presentation
 
         private void UpdateStandEquipment()
         {
-            // Presentation-only stand props (Batch C PRP / Batch A REF scale language).
-            CommercialFlight atStand = null;
-            CommercialFlight pushing = null;
-            foreach (var flight in _simulation.Flights)
+            // Presentation-only stand props — prefer the flight the player is watching.
+            var atStand = PreferWatchedAtStandFlight(requireTurnaround: false);
+            CommercialFlight pushing = PreferWatchedFlightInPhase(AircraftPhase.Pushback);
+            if (pushing == null)
             {
-                if (flight.Operation.Phase == AircraftPhase.AtStand)
-                    atStand ??= flight;
-                if (flight.Operation.Phase == AircraftPhase.Pushback)
-                    pushing ??= flight;
+                foreach (var flight in _simulation.Flights)
+                {
+                    if (flight.Operation.Phase == AircraftPhase.Pushback)
+                    {
+                        pushing = flight;
+                        break;
+                    }
+                }
             }
 
             if (atStand != null)
             {
                 var z = AirportTaxiNetwork.StandZ(atStand.AssignedStand);
                 var progress = VisualPhaseProgress(atStand, 0f);
-                // Stairs roll in from apron edge, then pitch up against the cabin.
+                // Stairs roll in from apron edge, then tip up toward the cabin along kit long axis.
                 var arrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 5f));
                 var stairsX = Mathf.Lerp(20.5f, 17.9f, arrive);
                 var stairsPitch = Mathf.Lerp(-42f, -6f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f)));
-                PlaceProp(_stairs, true, new Vector3(stairsX, 0.55f, z + 0.15f), Quaternion.Euler(stairsPitch, -8f, 0f));
+                // Yaw ~90 so kit long axis (+Z) aims toward cabin (−X), then pitch about local X.
+                PlaceProp(_stairs, true, new Vector3(stairsX, 0.55f, z + 0.15f),
+                    Quaternion.Euler(0f, 90f, 0f) * Quaternion.Euler(stairsPitch, 0f, 0f));
                 // Chocks drop and settle with a slight roll into the tire.
                 var chockArrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f));
                 var chockY = Mathf.Lerp(0.42f, 0.12f, chockArrive);
@@ -1849,6 +1871,75 @@ namespace Airside.Presentation
                    flight.Turnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
         }
 
+        /// <summary>
+        /// Prefer the commercial the camera is following when it is at stand; otherwise
+        /// the first at-stand flight (matches FocusFlight intent for dual-stand play).
+        /// </summary>
+        private CommercialFlight PreferWatchedAtStandFlight(bool requireTurnaround)
+        {
+            var followed = PreferWatchedFlightInPhase(AircraftPhase.AtStand);
+            if (followed != null && (!requireTurnaround || followed.Turnaround != null))
+                return followed;
+
+            foreach (var flight in _simulation.Flights)
+            {
+                if (flight.Operation.Phase != AircraftPhase.AtStand)
+                    continue;
+                if (requireTurnaround && flight.Turnaround == null)
+                    continue;
+                return flight;
+            }
+
+            return null;
+        }
+
+        private CommercialFlight PreferWatchedFlightInPhase(AircraftPhase phase)
+        {
+            if (_cameraController == null || !_cameraController.IsFollowing || _cameraController.FollowTarget == null)
+                return null;
+            if (_commercialAircraft == null)
+                return null;
+
+            for (var i = 0; i < _commercialAircraft.Length && i < _simulation.Flights.Count; i++)
+            {
+                if (_commercialAircraft[i] != _cameraController.FollowTarget)
+                    continue;
+                var flight = _simulation.Flights[i];
+                return flight.Operation.Phase == phase ? flight : null;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Authored vehicle kits face along +X; nest a -90° yaw so LookRotation(+Z) travel
+        /// aligns the kit long axis / cab with the travel direction.
+        /// </summary>
+        private static void OrientPlusXKitToForward(Transform root)
+        {
+            if (root == null || root.childCount == 0)
+                return;
+            if (root.Find("FacingOffset") != null)
+                return;
+
+            var offset = new GameObject("FacingOffset").transform;
+            offset.SetParent(root, false);
+            offset.localPosition = Vector3.zero;
+            offset.localRotation = Quaternion.Euler(0f, -90f, 0f);
+            offset.localScale = Vector3.one;
+
+            var toReparent = new List<Transform>();
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var child = root.GetChild(i);
+                if (child != offset)
+                    toReparent.Add(child);
+            }
+
+            foreach (var child in toReparent)
+                child.SetParent(offset, false);
+        }
+
         private static void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
         {
             if (vehicle == null)
@@ -1954,8 +2045,10 @@ namespace Airside.Presentation
                     light.shadows = LightShadows.None;
                 }
 
-                // Authored GSE kits face along +X (cab/nose at +X); Unity SpotLights aim +Z.
-                light.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                // Authored GSE kits are oriented at build (OrientPlusXKitToForward) so
+                // SpotLights aim along vehicle +Z with the travel LookRotation — do not
+                // re-force a +X kit offset every frame.
+                light.transform.localRotation = Quaternion.identity;
                 light.enabled = on;
                 if (on)
                     light.intensity = night ? 2.8f : 1.1f;
@@ -1977,10 +2070,10 @@ namespace Airside.Presentation
             if (has)
                 return;
 
-            // Fallback lamps sit on the forward bumper (+X cab end), not mid-body.
-            ParentBlock(vehicle, "Headlight L", new Vector3(1.85f, 0.55f, 0.4f),
+            // Fallback lamps sit on the forward bumper (+Z after OrientPlusXKitToForward).
+            ParentBlock(vehicle, "Headlight L", new Vector3(-0.4f, 0.55f, 1.85f),
                 new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
-            ParentBlock(vehicle, "Headlight R", new Vector3(1.85f, 0.55f, -0.4f),
+            ParentBlock(vehicle, "Headlight R", new Vector3(0.4f, 0.55f, 1.85f),
                 new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
         }
 
@@ -3633,7 +3726,7 @@ namespace Airside.Presentation
             if (camera.GetComponent<AudioListener>() == null)
                 camera.gameObject.AddComponent<AudioListener>();
 
-            _sun = FindFirstObjectByType<Light>();
+            _sun = FindPreferredSunLight();
             if (_sun == null)
                 _sun = new GameObject("Sun").AddComponent<Light>();
             _sun.type = LightType.Directional;
@@ -3653,6 +3746,32 @@ namespace Airside.Presentation
             _fillLight.color = new Color(0.45f, 0.55f, 0.75f);
 
             ApplyDayCycle();
+        }
+
+        /// <summary>Prefer a Light named "Sun", else an existing DirectionalLight — not a random Spot.</summary>
+        private static Light FindPreferredSunLight()
+        {
+            var named = GameObject.Find("Sun");
+            if (named != null)
+            {
+                var sun = named.GetComponent<Light>();
+                if (sun != null)
+                    return sun;
+            }
+
+            var lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+            Light anyDirectional = null;
+            foreach (var light in lights)
+            {
+                if (light == null || light.type != LightType.Directional)
+                    continue;
+                if (string.Equals(light.name, "Sun", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(light.gameObject.name, "Sun", StringComparison.OrdinalIgnoreCase))
+                    return light;
+                anyDirectional ??= light;
+            }
+
+            return anyDirectional;
         }
 
         private void ApplyDayCycle()
@@ -3711,7 +3830,7 @@ namespace Airside.Presentation
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.05f, daylight) + warm * 0.08f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.45f, 1.05f, daylight) + warm * 0.08f;
             RenderSettings.subtractiveShadowColor = Color.Lerp(
                 new Color(0.22f, 0.28f, 0.4f),
                 new Color(0.4f, 0.28f, 0.28f),
@@ -5128,7 +5247,7 @@ namespace Airside.Presentation
             PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
             PlacePerson(root, "Landside passenger B", new Vector3(27.8f, 0f, 31.6f), 175f, new Color(0.2f, 0.35f, 0.4f));
             PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
-            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 16.8f), 185f, new Color(0.9f, 0.5f, 0.1f),
+            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 20f), 185f, new Color(0.9f, 0.5f, 0.1f),
                 hiVis: true, marshallerWand: true);
             PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
             PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
@@ -5380,18 +5499,39 @@ namespace Airside.Presentation
                     }
                     else if (wave && child.name.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
+                        var left = IsLeftSideLimb(child.name);
                         var swing = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.25f
-                            + (child.name.Contains("L") ? 0f : 1.2f)) * 35f;
-                        child.localEulerAngles = new Vector3(swing, 0f, child.name.Contains("L") ? -12f : 12f);
+                            + (left ? 0f : 1.2f)) * 35f;
+                        child.localEulerAngles = new Vector3(swing, 0f, left ? -12f : 12f);
                     }
                     else if (walker && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
+                        var left = IsLeftSideLimb(child.name);
                         var stride = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronStrideHz
-                            + (child.name.Contains("L") ? 0f : 3.14f)) * 18f;
+                            + (left ? 0f : 3.14f)) * 18f;
                         child.localEulerAngles = new Vector3(stride, 0f, 0f);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Left arm/leg detection — do not use name.Contains("L") (matches "Marshaller").
+        /// Prefer " arm L" / ends with " L" / "arm_l" / "leg_l".
+        /// </summary>
+        private static bool IsLeftSideLimb(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+            if (name.EndsWith(" L", StringComparison.Ordinal) || name.EndsWith("_L", StringComparison.Ordinal))
+                return true;
+            if (name.EndsWith(" R", StringComparison.Ordinal) || name.EndsWith("_R", StringComparison.Ordinal))
+                return false;
+            var lower = name.ToLowerInvariant();
+            if (lower.Contains(" arm l") || lower.Contains(" leg l") || lower.Contains("arm_l") || lower.Contains("leg_l")
+                || lower.EndsWith("_l") || lower.EndsWith(" l"))
+                return true;
+            return false;
         }
 
         /// <summary>
@@ -5544,14 +5684,14 @@ namespace Airside.Presentation
             {
                 if (hasCarPrefab)
                 {
-                    // Single calm row facing the terminal.
-                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + i * 3.6f, 0f, 43.2f), 90f, carColors[i]);
+                    // North–south bay paint: nose into the stall (yaw 180), not east–west 90.
+                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + i * 3.6f, 0f, 43.2f), 180f, carColors[i]);
                 }
                 else
                 {
                     var row = i < 4 ? 0 : 1;
                     var slot = i % 4;
-                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + slot * 3.6f, 0f, 43.2f + row * 4.2f), 90f, carColors[i]);
+                    PlaceParkedCar($"Parked car {i}", new Vector3(42f + slot * 3.6f, 0f, 43.2f + row * 4.2f), 180f, carColors[i]);
                 }
             }
 
@@ -5559,40 +5699,39 @@ namespace Airside.Presentation
             PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0f, 36f), 0f, carColors[2]);
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
 
-            // Landside furniture: luggage trolley cluster + bench near terminal doors.
-            PlaceLuggageTrolley("Luggage trolley A", new Vector3(24f, 0f, 31.5f), -15f);
-            PlaceLuggageTrolley("Luggage trolley B", new Vector3(25.2f, 0f, 31.5f), 8f);
-            if (!hasCarPrefab)
-                PlaceLuggageTrolley("Luggage trolley C", new Vector3(24.6f, 0f, 30.6f), 175f);
-            PlaceLandsideBench("Landside bench", new Vector3(29.5f, 0f, 31.2f), 0f);
+            // Landside furniture: skip near-terminal bench/trolley when PRP-003 forecourt already placed them.
+            var forecourtPlaced = GameObject.Find("Terminal bench") != null
+                                  || GameObject.Find("Trolley rail") != null;
+            if (!forecourtPlaced)
+            {
+                PlaceLuggageTrolley("Luggage trolley A", new Vector3(24f, 0f, 31.5f), -15f);
+                PlaceLuggageTrolley("Luggage trolley B", new Vector3(25.2f, 0f, 31.5f), 8f);
+                if (!hasCarPrefab)
+                    PlaceLuggageTrolley("Luggage trolley C", new Vector3(24.6f, 0f, 30.6f), 175f);
+                PlaceLandsideBench("Landside bench", new Vector3(29.5f, 0f, 31.2f), 0f);
+            }
+
             PlaceLandsideBench("Car park bench", new Vector3(40.5f, 0f, 40.2f), 90f);
 
-            // Extra trees framing the car park.
-            PlaceTree(new Vector3(58f, 0f, 48f), 1.1f);
-            PlaceTree(new Vector3(44f, 0f, 54f), 0.95f);
+            // Skip PlaceTree positions that overlap the BuildVegetation belt (already placed).
+            // Remaining landside trees: only drop-off fringe not covered by veg belt.
             PlaceTree(new Vector3(20f, 0f, 44f), 0.85f);
-            PlaceTree(new Vector3(56f, 0f, 40f), 0.9f);
-            PlaceTree(new Vector3(34f, 0f, 52f), 1.05f);
-            if (!hasCarPrefab)
-            {
-                PlaceTree(new Vector3(52f, 0f, 56f), 0.88f);
-                PlaceTree(new Vector3(38f, 0f, 56f), 1.0f);
-            }
 
             // Overflow bay row — one hero ute + visitor when prefab cars are present.
             if (hasCarPrefab)
             {
-                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
+                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 180f, new Color(0.55f, 0.55f, 0.22f));
                 PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
             }
             else
             {
-                PlaceParkedCar("Overflow car A", new Vector3(42f, 0f, 51.2f), 90f, new Color(0.45f, 0.2f, 0.18f));
-                PlaceParkedCar("Overflow car B", new Vector3(45.6f, 0f, 51.2f), 90f, new Color(0.7f, 0.72f, 0.75f));
-                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 90f, new Color(0.55f, 0.55f, 0.22f));
-                PlaceParkedCar("Overflow car C", new Vector3(52.8f, 0f, 51.2f), 90f, new Color(0.25f, 0.3f, 0.45f));
+                PlaceParkedCar("Overflow car A", new Vector3(42f, 0f, 51.2f), 180f, new Color(0.45f, 0.2f, 0.18f));
+                PlaceParkedCar("Overflow car B", new Vector3(45.6f, 0f, 51.2f), 180f, new Color(0.7f, 0.72f, 0.75f));
+                PlaceParkedCar("Staff ute", new Vector3(49.2f, 0f, 51.2f), 180f, new Color(0.55f, 0.55f, 0.22f));
+                PlaceParkedCar("Overflow car C", new Vector3(52.8f, 0f, 51.2f), 180f, new Color(0.25f, 0.3f, 0.45f));
                 PlaceParkedCar("Visitor car", new Vector3(38.5f, 0f, 47.5f), 0f, new Color(0.6f, 0.15f, 0.2f));
-                PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
+                if (!forecourtPlaced)
+                    PlaceLuggageTrolley("Luggage trolley D", new Vector3(23.4f, 0f, 30.2f), 40f);
             }
 
             PlaceLandsideBench("Access bench", new Vector3(22f, 0f, 40.5f), 90f);
@@ -5642,14 +5781,12 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Prefer landside car v02 kit/prefab, then v01, then procedural cuboids.
+        /// Prefer landside car v02 kit/prefab, then Resources prefab, then procedural cuboids.
         /// </summary>
         private static void PlaceParkedCar(string name, Vector3 position, float yawDegrees, Color body)
         {
             Transform root = null;
-            var kit = PreferArtKit(
-                "Models/Vehicles/mdl_parked_car_v02.gltf",
-                "Models/Vehicles/mdl_parked_car_v01.gltf");
+            var kit = PreferArtKit("Models/Vehicles/mdl_parked_car_v02.gltf");
             if (!string.IsNullOrEmpty(kit)
                 && ArtPresentationLoader.TryInstantiate(
                     kit,
@@ -5893,7 +6030,7 @@ namespace Airside.Presentation
                 PlacePart("fence_bay_cap_r", pos, rot, post, $"Fence bay cap R {tag}");
                 PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
                 PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
-                PlacePart("fence_corner_brace", pos, rot, post, $"Fence bay brace {tag}");
+                // fence_corner_brace only at PlacePart corner sites — not every bay.
             }
 
             // North landside (gap for vehicle gate at x≈22–30).
@@ -5904,11 +6041,11 @@ namespace Airside.Presentation
                 PlaceBay(new Vector3(x + 2f, 0f, 34f), 0f, $"N {x}");
             }
 
-            // West / east airside.
+            // West / east airside — east faces inward with -90 yaw.
             for (var z = -18; z <= 32; z += 4)
             {
                 PlaceBay(new Vector3(-44f, 0f, z + 2f), 90f, $"W {z}");
-                PlaceBay(new Vector3(44f, 0f, z + 2f), 90f, $"E {z}");
+                PlaceBay(new Vector3(44f, 0f, z + 2f), -90f, $"E {z}");
             }
 
             // South above dunes (gap at runway strip).
@@ -5920,9 +6057,13 @@ namespace Airside.Presentation
             }
 
             PlacePart("fence_corner", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner NW");
+            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NW");
             PlacePart("fence_corner", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner NE");
+            PlacePart("fence_corner_brace", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NE");
             PlacePart("fence_corner", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner SW");
+            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SW");
             PlacePart("fence_corner", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner SE");
+            PlacePart("fence_corner_brace", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SE");
 
             // Vehicle gate at access road.
             PlacePart("gate_post", new Vector3(23f, 0f, 34f), Quaternion.identity, post, "Gate post L");
@@ -5939,6 +6080,11 @@ namespace Airside.Presentation
             PlacePart("gate_latch", new Vector3(26f, 0f, 35.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
             PlacePart("gate_stop", new Vector3(23.1f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
             PlacePart("gate_stop", new Vector3(28.9f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
+            // Pedestrian gate fills the landside access gap beside the vehicle gate when kit meshes exist.
+            PlacePart("gate_pedestrian", new Vector3(20.6f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate");
+            PlacePart("gate_pedestrian_frame", new Vector3(20.6f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame");
+            PlacePart("gate_pedestrian", new Vector3(31.4f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate E");
+            PlacePart("gate_pedestrian_frame", new Vector3(31.4f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame E");
 
             return placed >= 20;
         }
@@ -6141,7 +6287,7 @@ namespace Airside.Presentation
                 AlsPart("edge_base", stem);
                 AlsPart("edge_stem", stem);
                 AlsPart("edge_lens", bar);
-                if (!hasLightingKit)
+                if (hasLightingKit)
                 {
                     AlsPart("edge_collar", Shade(stem, 1.1f));
                     AlsPart("edge_gasket", new Color(0.2f, 0.21f, 0.22f));
@@ -6154,7 +6300,7 @@ namespace Airside.Presentation
                     AlsPart("taxi_base", stem);
                     AlsPart("taxi_stem", stem);
                     AlsPart("taxi_lens", bar);
-                    if (!hasLightingKit)
+                    if (hasLightingKit)
                     {
                         AlsPart("taxi_collar", Shade(stem, 1.05f));
                         AlsPart("taxi_reflector", new Color(0.9f, 0.92f, 0.94f));
@@ -6434,9 +6580,9 @@ namespace Airside.Presentation
             var wood = new Color(0.4f, 0.32f, 0.22f);
             var steel = new Color(0.45f, 0.46f, 0.48f);
             var placed = 0;
-            void Place(string mesh, Vector3 pos, Color color, string name)
+            void Place(string mesh, Vector3 pos, Color color, string name, float yawDeg = 0f)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, Quaternion.identity, color, out var part))
+                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, pos, Quaternion.Euler(0f, yawDeg, 0f), color, out var part))
                     return;
                 part.name = name;
                 placed++;
@@ -6479,8 +6625,8 @@ namespace Airside.Presentation
             Place("bollard_cap", new Vector3(26f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap M");
             Place("bollard_cap", new Vector3(28.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap R");
             Place("kerb_straight", new Vector3(26f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb");
-            Place("kerb_corner", new Vector3(23.2f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner L");
-            Place("kerb_corner", new Vector3(28.8f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner R");
+            Place("kerb_corner", new Vector3(23.2f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner L", 0f);
+            Place("kerb_corner", new Vector3(28.8f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner R", 90f);
             Place("trolley_rail", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley rail");
             Place("trolley_post_l", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post L");
             Place("trolley_post_r", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post R");
@@ -6493,8 +6639,8 @@ namespace Airside.Presentation
             Place("sign_frame", new Vector3(44f, 0f, 36f), Shade(steel, 0.85f), "Access sign frame");
             Place("kerb_straight", new Vector3(48f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb N");
             Place("kerb_straight", new Vector3(48f, 0f, 39.8f), AirsideTheme.Concrete, "Car park kerb S");
-            Place("kerb_corner", new Vector3(42f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NW");
-            Place("kerb_corner", new Vector3(54f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NE");
+            Place("kerb_corner", new Vector3(42f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NW", 180f);
+            Place("kerb_corner", new Vector3(54f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NE", -90f);
             Place("planter", new Vector3(18.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter W");
             Place("planter_soil", new Vector3(18.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil W");
             Place("planter_scrub", new Vector3(18.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub W");
@@ -8487,7 +8633,7 @@ namespace Airside.Presentation
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
 
-        /// <summary>Prefer the richest present kit/prefab; last candidate is the Approved fallback.</summary>
+        /// <summary>Prefer the richest present kit/prefab; null when none are available.</summary>
         private static string PreferArtKit(params string[] candidates)
         {
             if (candidates == null || candidates.Length == 0)
@@ -8498,7 +8644,7 @@ namespace Airside.Presentation
                     return candidates[i];
             }
 
-            return candidates[candidates.Length - 1];
+            return null;
         }
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
@@ -8703,7 +8849,7 @@ namespace Airside.Presentation
                 if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
                     return null;
                 part.SetParent(root, false);
-                part.localPosition = new Vector3(0f, -0.55f, 0f);
+                part.localPosition = Vector3.zero;
                 placed = true;
                 return part;
             }
@@ -8747,7 +8893,7 @@ namespace Airside.Presentation
                     new Color(0.7f, 0.72f, 0.74f), out var stairs))
             {
                 stairs.SetParent(root, false);
-                stairs.localPosition = new Vector3(0f, -0.55f, 0f);
+                stairs.localPosition = Vector3.zero;
                 placed = true;
             }
 
@@ -8802,16 +8948,16 @@ namespace Airside.Presentation
                 if (combined != null)
                 {
                     combined.SetParent(root, false);
-                    combined.localPosition = new Vector3(0f, -0.55f, 0f);
+                    combined.localPosition = Vector3.zero;
                 }
             }
 
             if (placed)
             {
-                if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, -0.55f, 0f); }
-                if (b != null) { b.SetParent(root, false); b.localPosition = new Vector3(0.55f, -0.55f, 0f); }
-                if (rope != null) { rope.SetParent(root, false); rope.localPosition = new Vector3(0f, -0.55f, 0f); }
-                if (handle != null) { handle.SetParent(root, false); handle.localPosition = new Vector3(0f, -0.55f, 0f); }
+                if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, 0f, 0f); }
+                if (b != null) { b.SetParent(root, false); b.localPosition = new Vector3(0.55f, 0f, 0f); }
+                if (rope != null) { rope.SetParent(root, false); rope.localPosition = Vector3.zero; }
+                if (handle != null) { handle.SetParent(root, false); handle.localPosition = Vector3.zero; }
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -8845,7 +8991,7 @@ namespace Airside.Presentation
                 if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
                     return;
                 part.SetParent(root, false);
-                part.localPosition = new Vector3(0f, -0.55f, 0f);
+                part.localPosition = Vector3.zero;
                 placed = true;
             }
 
@@ -8879,7 +9025,7 @@ namespace Airside.Presentation
                     AirsideTheme.SafetyYellow, out var gpu))
             {
                 gpu.SetParent(root, false);
-                gpu.localPosition = new Vector3(0f, -0.55f, 0f);
+                gpu.localPosition = Vector3.zero;
                 placed = true;
             }
 

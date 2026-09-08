@@ -20,7 +20,9 @@ namespace Airside.Tests
 
             Assert.That(simulation.CompletedCycles, Is.EqualTo(50));
             Assert.That(simulation.ReservationConflicts, Is.Zero);
-            Assert.That(simulation.ActiveAircraft.AircraftId, Is.EqualTo("AS-151"));
+            // CompletedCycles increments on Departed; the 50th departure is still AS-150
+            // until the departure-reset window respawns AS-151.
+            Assert.That(simulation.ActiveAircraft.AircraftId, Is.EqualTo("AS-150"));
         }
 
         [Test]

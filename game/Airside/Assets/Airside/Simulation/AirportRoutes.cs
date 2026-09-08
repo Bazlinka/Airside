@@ -116,7 +116,10 @@ namespace Airside.Simulation
         public void Update(SimulationTime now)
         {
             if (Pending != null && now.CompareTo(Pending.ExpiresAt) >= 0)
+            {
                 Pending = null;
+                OffersDeclined++;
+            }
 
             // Replay every offer window due by `now`, so a large time step lands in
             // the same state as second-by-second stepping.
@@ -127,7 +130,10 @@ namespace Airside.Simulation
                 _nextOfferAt = offeredAt.Advance(OfferIntervalSeconds);
 
                 if (now.CompareTo(Pending.ExpiresAt) >= 0)
+                {
                     Pending = null;
+                    OffersDeclined++;
+                }
             }
         }
 
@@ -146,14 +152,16 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Accept the standing proposal at the given reputation. Fails when there is
-        /// no proposal, the airport's reputation is below what the route requires, or
-        /// accepting would exceed stand schedule capacity. The per-flight payment
-        /// locks in a reputation bonus at acceptance time.
+        /// no proposal, the offer has expired, the airport's reputation is below what
+        /// the route requires, or accepting would exceed stand schedule capacity.
+        /// The per-flight payment locks in a reputation bonus at acceptance time.
         /// </summary>
         public bool Accept(SimulationTime now, int reputationScore, long reputationBonus = 0,
             int standCount = BaselineStandCount)
         {
             if (Pending == null || reputationScore < Pending.ReputationRequired)
+                return false;
+            if (now.CompareTo(Pending.ExpiresAt) >= 0)
                 return false;
             if (!FitsScheduleCapacity(standCount))
                 return false;

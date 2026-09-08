@@ -1,19 +1,19 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — eucalyptus VEG-001 v02; rebased on #155)
-- **Branch:** `cursor/eucalyptus-veg-001-v02-3272` (off `main` after #155)
-- **Do next:** Mac Unity overview of denser multi-lobe eucalyptus belts vs REF
-  setting; then merge. Forecourt #155, fence #154, and characters #153 are on
-  `main`.
-- **In progress / half-done:** none
+- **Last updated:** 2026-09-08 (Cursor — 50-fix bugfix pass)
+- **Branch:** `cursor/massive-bugfix-pass-3272` (off `main` after #156)
+- **Do next:** Review/merge the 50-fix pass PR. Mac Unity smoke of presentation
+  fixes (GSE facing, fence/gate, camera follow, night ambient) when convenient.
+  PreferArtKit polish #153–#156 are already on `main`.
+- **In progress / half-done:** none — sim + presentation fixes landed; domain
+  tests green (135/135).
 - **Watch for / assumptions:**
-  - PreferArtKit eucalyptus: `mdl_eucalyptus_kit_v02` → `v01`
-  - Extract names unchanged (30); full belt placed; far trees add `lod1`
-  - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefab shipped
-  - PreferArtKit forecourt: `mdl_terminal_forecourt_kit_v02` → `v01` (merged #155)
-  - PreferArtKit fence: `mdl_airfield_fence_gate_kit_v02` → `v01` (merged #154)
-  - PreferArtKit crew/pax: `v02` → `v01` (merged #153)
-  - Simulation / reservations / save schema unchanged
+  - Tracking list: `docs/testing/BUGFIX_PASS_50_2026-09-08.md`
+  - Hold-short runway waits must survive `SynchronizeCommercialReservations`
+    (empty TaxiOut `RequiredResources` used to clear the wait)
+  - Concurrent commercials scale with `Capacity.StandCount`
+  - Live staffing factor during AtStand; refuse expired route Accept
+  - Presentation-only PreferArtKit / facing / HUD polish — save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
 
@@ -91,8 +91,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 after VEG-001 eucalyptus v02 (Mac overview
-  vs REF still required before merge).
+- `scripts/test-domain.sh`: **135/135** on `cursor/massive-bugfix-pass-3272`
+  (50 noticeable sim/presentation fixes + `BugfixPassTests`).
+- Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
 - Forecourt PRP-003 v02 merged via #155 (Mac overview vs REF still pending).
 - Fence/gate PRP-002 v02 merged via #154 (Mac overview vs REF still pending).
 - Character kits CHR-001/002 v02 merged via #153 (Mac overview/follow vs REF-003
@@ -105,11 +106,11 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac overview: eucalyptus VEG-001 v02 on
-   `cursor/eucalyptus-veg-001-v02-3272`, then merge.
-2. Mac overview backlog: forecourt (#155), fence (#154), characters (#153), ops
-   shed (#152), GSE (#151), hangar (#150), fleet (#149) vs refs if not yet signed
-   off.
+1. Merge `cursor/massive-bugfix-pass-3272` after review; Mac smoke of
+   presentation fixes when convenient.
+2. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
+   characters (#153), ops shed (#152), GSE (#151), hangar (#150), fleet (#149)
+   vs refs if not yet signed off.
 3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
    Companion. Ranked next: VEG-002 scrub densify (optional).
 4. Optional: Editor Addressables groups for player catalog.

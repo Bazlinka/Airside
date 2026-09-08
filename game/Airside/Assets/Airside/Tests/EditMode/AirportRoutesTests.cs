@@ -143,7 +143,7 @@ namespace Airside.Tests
                 if (simulation.Reputation.Score < simulation.Routes.Pending.ReputationRequired)
                     continue;
 
-                if (!simulation.Routes.FitsScheduleCapacity(AirportSimulation.StandCount))
+                if (!simulation.Routes.FitsScheduleCapacity(simulation.Capacity.StandCount))
                 {
                     Assert.That(simulation.AcceptPendingRoute(), Is.False);
                     refusedAtCap = true;

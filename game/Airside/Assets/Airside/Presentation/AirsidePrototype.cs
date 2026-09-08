@@ -4683,6 +4683,7 @@ namespace Airside.Presentation
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
                 PreferArtKit(
+                    "Models/Buildings/mdl_hangar_small_v05.gltf",
                     "Models/Buildings/mdl_hangar_small_authored_v01.gltf",
                     "Models/Buildings/mdl_hangar_small_v04.gltf",
                     "Models/Buildings/mdl_hangar_small_v03.gltf",
@@ -4708,7 +4709,8 @@ namespace Airside.Presentation
                             or "door_handle_l" or "door_handle_r"
                             or "door_warning_l" or "door_warning_r"
                             or "personnel_door" or "personnel_frame" or "rear_door" => new Color(0.22f, 0.24f, 0.26f),
-                        "roof_ridge" or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
+                        "roof_ridge" or "roof_ridge_cap" or "roof_vent_ridge"
+                            or "roof_panel_l" or "roof_panel_r" or "crane_beam" or "crane_trolley"
                             or "crane_hook" or "gutter_front" or "gutter_back" or "gutter_end_l" or "gutter_end_r"
                             or "roof_rib_1" or "roof_rib_2" or "roof_rib_3" or "roof_rib_4"
                             or "roof_rib_5" or "roof_rib_6" or "roof_rib_7"
@@ -4716,6 +4718,8 @@ namespace Airside.Presentation
                             or "sign_board" or "sign_glyph" or "rear_vent"
                             or "fascia_front" or "fascia_back" or "office_roof" or "office_fascia"
                             or "office_downpipe" or "crane_rail_l" or "crane_rail_r"
+                            or "gable_front_l" or "gable_front_r" or "gable_back_l" or "gable_back_r"
+                            or "gable_apex_front" or "gable_apex_back" or "door_header" or "door_threshold"
                             => new Color(0.4f, 0.44f, 0.48f),
                         "buttress_l" or "buttress_r" or "door_track_l" or "door_track_r" or "door_track_mid"
                             or "door_track_brace_l" or "door_track_brace_r"
@@ -4724,20 +4728,17 @@ namespace Airside.Presentation
                             or "side_vent" or "side_vent_b" or "office_lean" or "office_door"
                             or "column_ml" or "column_mr"
                             or "cladding_face_l" or "cladding_face_r"
+                            or "cladding_face_front" or "cladding_face_back"
                             or "girth_band_1" or "girth_band_2" or "girth_band_3"
                             or "corner_trim_fl" or "corner_trim_fr"
                             or "corner_trim_bl" or "corner_trim_br"
-                            or "wall_rib_l_1" or "wall_rib_l_2" or "wall_rib_l_3" or "wall_rib_l_4"
-                            or "wall_rib_l_5" or "wall_rib_l_6" or "wall_rib_l_7" or "wall_rib_l_8"
-                            or "wall_rib_l_9" or "wall_rib_l_10" or "wall_rib_l_11" or "wall_rib_l_12"
-                            or "wall_rib_r_1" or "wall_rib_r_2" or "wall_rib_r_3" or "wall_rib_r_4"
-                            or "wall_rib_r_5" or "wall_rib_r_6" or "wall_rib_r_7" or "wall_rib_r_8"
-                            or "wall_rib_r_9" or "wall_rib_r_10" or "wall_rib_r_11" or "wall_rib_r_12"
                             or "office_step" or "office_awning" or "roof_flash_front" or "roof_flash_back"
                             or "flood_mount_l" or "flood_mount_r" or "girth_band_4" or "service_door_step"
                             => new Color(0.42f, 0.46f, 0.5f),
                         "door_peek_l" or "door_peek_r" => new Color(0.18f, 0.36f, 0.48f, 0.42f),
-                        _ => new Color(0.45f, 0.5f, 0.54f)
+                        _ => name.StartsWith("wall_rib_", StringComparison.Ordinal)
+                            ? new Color(0.42f, 0.46f, 0.5f)
+                            : new Color(0.45f, 0.5f, 0.54f)
                     };
                 },
                 () =>
@@ -4749,7 +4750,7 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
-                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth" });
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" });
             // Sliding door slab only when the hangar kit did not ship panel doors.
             if (GameObject.Find("Hangar door") == null
                 && GameObject.Find("door_panel_l") == null

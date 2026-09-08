@@ -73,6 +73,15 @@ namespace Airside.Simulation
             return AdvanceToInternal(now, canLeavePhase, false);
         }
 
+        /// <summary>
+        /// Hold phase progress for one simulated second while waiting on a resource.
+        /// Pushes <see cref="PhaseStartedAt"/> forward so remaining duration is preserved.
+        /// </summary>
+        public void StallOneSecond()
+        {
+            PhaseStartedAt = PhaseStartedAt.Advance(1);
+        }
+
         private bool AdvanceToInternal(SimulationTime now, Func<AircraftPhase, bool> canLeavePhase, bool preserveSchedule)
         {
             if (now.CompareTo(PhaseStartedAt) < 0)

@@ -525,5 +525,38 @@ namespace Airside.Tests
             monitor.Clear(second);
             Assert.That(monitor.HasWarning(new SimulationTime(31)), Is.False);
         }
+
+        [Test]
+        public void TrafficWaitMonitor_UpdatesBlockedResourceWithoutResettingWaitStart()
+        {
+            var monitor = new TrafficWaitMonitor();
+            var aircraft = new StableId("AS-101");
+            monitor.SetWaiting(aircraft, AirportTaxiNetwork.AlphaOne, new SimulationTime(10));
+            monitor.SetWaiting(aircraft, AirportTaxiNetwork.AlphaTwo, new SimulationTime(15));
+
+            Assert.That(monitor.Describe(new SimulationTime(20)), Is.EqualTo("AS-101 waiting 10s for TAXI-A2"));
+        }
+
+        [Test]
+        public void DepartedFlight_ReleasesRunwayDuringResetWindow()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(7), new ReservationTable());
+
+            for (var second = 1; second <= 200; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                foreach (var flight in simulation.Flights)
+                {
+                    if (!flight.Operation.IsComplete)
+                        continue;
+                    Assert.That(simulation.Reservations.TryGetOwner(AirportSimulation.Runway, out var owner)
+                                && owner.Equals(flight.OwnerId),
+                        Is.False,
+                        $"departed {flight.AircraftId} still held the runway at t={clock.Now.ElapsedSeconds}");
+                }
+            }
+        }
     }
 }

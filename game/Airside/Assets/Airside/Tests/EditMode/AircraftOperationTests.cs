@@ -38,5 +38,16 @@ namespace Airside.Tests
             Assert.That(operation.SecondsRemaining(new SimulationTime(15)), Is.EqualTo(15));
             Assert.That(operation.PhaseProgress(new SimulationTime(15)), Is.EqualTo(0.25).Within(0.0001));
         }
+
+        [Test]
+        public void StallOneSecond_PreservesRemainingPhaseDuration()
+        {
+            var operation = new AircraftOperation("AS001", new SimulationTime(0));
+            operation.AdvanceTo(new SimulationTime(5));
+            var remainingBefore = operation.SecondsRemaining(new SimulationTime(5));
+            operation.StallOneSecond();
+            Assert.That(operation.SecondsRemaining(new SimulationTime(6)), Is.EqualTo(remainingBefore));
+            Assert.That(operation.Phase, Is.EqualTo(AircraftPhase.Approach));
+        }
     }
 }

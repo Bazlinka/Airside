@@ -26,7 +26,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Domain/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Simulation/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Persistence/**/*.cs" Exclude="../../game/Airside/Assets/Airside/Persistence/AirsideSaveRepository.cs" />
-    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs" />
   </ItemGroup>
 
 </Project>

@@ -1367,12 +1367,14 @@ namespace Airside.Presentation
                 if (child == aircraft)
                     continue;
                 var n = child.name;
-                // Exact glass only — densified Cockpit frame / pillars must not emit.
+                // Exact glass only — densified Cockpit frame / pillars / cabin window
+                // frames must not emit (InferFromMeshName treats those as Metal).
                 if (!(n == "Cockpit"
                       || n == "Cockpit glare"
-                      || n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
-                      || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
-                      || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0))
+                      || ((n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                           || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
+                           || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0)
+                          && n.IndexOf("frame", StringComparison.OrdinalIgnoreCase) < 0)))
                     continue;
 
                 var renderer = child.GetComponent<Renderer>();
@@ -1532,30 +1534,66 @@ namespace Airside.Presentation
 
         private void SyncCommercialAircraftViews()
         {
-            var needed = _simulation.Flights.Count;
-            if (_commercialAircraft.Length == needed)
-                return;
+            var flights = _simulation.Flights;
+            var needed = flights.Count;
 
-            foreach (var existing in _commercialAircraft)
+            // Keep each visual glued to its AircraftId across respawn reordering.
+            // Count-only rebuild left transforms at stale list indices after Sort.
+            var byId = new Dictionary<string, Transform>(needed);
+            if (_commercialAircraft != null)
             {
-                if (existing != null)
-                    Destroy(existing.gameObject);
+                foreach (var existing in _commercialAircraft)
+                {
+                    if (existing == null)
+                        continue;
+                    const string prefix = "Commercial ";
+                    if (existing.name.StartsWith(prefix, StringComparison.Ordinal))
+                        byId[existing.name.Substring(prefix.Length)] = existing;
+                }
             }
 
-            _commercialAircraft = new Transform[needed];
+            var next = new Transform[needed];
+            var kept = new HashSet<Transform>();
             for (var index = 0; index < needed; index++)
             {
-                var flight = _simulation.Flights[index];
+                var flight = flights[index];
+                if (byId.TryGetValue(flight.AircraftId, out var existing))
+                {
+                    next[index] = existing;
+                    kept.Add(existing);
+                    continue;
+                }
+
                 var color = index == 0
                     ? new Color(0.12f, 0.43f, 0.76f)
                     : new Color(0.18f, 0.55f, 0.48f);
                 var livery = index == 0
                     ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
                     : "Textures/Decals/dc_livery_emu_air_v01.png";
-                _commercialAircraft[index] = BuildAircraft($"Commercial {flight.AircraftId}", color, livery);
+                next[index] = BuildAircraft($"Commercial {flight.AircraftId}", color, livery);
             }
 
-            if (needed > 0)
+            foreach (var pair in byId)
+            {
+                if (!kept.Contains(pair.Value) && pair.Value != null)
+                    Destroy(pair.Value.gameObject);
+            }
+
+            var changed = _commercialAircraft == null || _commercialAircraft.Length != next.Length;
+            if (!changed)
+            {
+                for (var i = 0; i < next.Length; i++)
+                {
+                    if (_commercialAircraft[i] != next[i])
+                    {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            _commercialAircraft = next;
+            if (changed && needed > 0 && _cameraController != null)
                 _cameraController.SetFollowTargets(_commercialAircraft);
         }
 

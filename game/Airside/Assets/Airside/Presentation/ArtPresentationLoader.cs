@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -122,9 +123,14 @@ namespace Airside.Presentation
                         renderer.gameObject.name = renamed;
                 }
 
-                // Preserve FBX/authored materials that already carry albedo maps.
+                var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
+                var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
+
+                // Preserve FBX/authored materials that already carry albedo maps — but only
+                // when the mesh can sample them. UV-less meshes must not keep a textured
+                // material (one dark texel → black patches; decision 0028).
                 var existing = renderer.sharedMaterial;
-                if (existing != null)
+                if (existing != null && hasUsableUvs)
                 {
                     var hasMap = existing.mainTexture != null
                         || (existing.HasProperty("_BaseMap") && existing.GetTexture("_BaseMap") != null)
@@ -135,8 +141,6 @@ namespace Airside.Presentation
 
                 var color = colorFor?.Invoke(originalName) ?? new Color(0.61f, 0.64f, 0.63f);
                 var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
-                var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
-                var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
                 // Shared — see ArtGltfLoader.CreateMeshObject.
                 renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                     color, kind, useTextures: hasUsableUvs);
@@ -146,11 +150,16 @@ namespace Airside.Presentation
         public static bool HasPresentation(string artRelativePath) =>
             HasPrefab(PrefabKeyFromArtPath(artRelativePath)) || ArtGltfLoader.HasKit(artRelativePath);
 
+        private static readonly Dictionary<string, GameObject> PrefabCache = new();
+
         private static bool TryLoadPrefabAsset(string prefabKey, out GameObject prefab)
         {
             prefab = null;
             if (string.IsNullOrEmpty(prefabKey))
                 return false;
+
+            if (PrefabCache.TryGetValue(prefabKey, out prefab) && prefab != null)
+                return true;
 
             AirsidePrefabAddressables.EnsureRegistered();
             try
@@ -161,7 +170,12 @@ namespace Airside.Presentation
                     var handle = Addressables.LoadAssetAsync<GameObject>(key);
                     prefab = handle.WaitForCompletion();
                     if (handle.Status == AsyncOperationStatus.Succeeded && prefab != null)
+                    {
+                        // Cache for the session — releasing after every instantiate leaked
+                        // handles on the success path and re-loaded the same prefab repeatedly.
+                        PrefabCache[prefabKey] = prefab;
                         return true;
+                    }
                     if (handle.IsValid())
                         Addressables.Release(handle);
                     prefab = null;
@@ -173,6 +187,8 @@ namespace Airside.Presentation
             }
 
             prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
+            if (prefab != null)
+                PrefabCache[prefabKey] = prefab;
             return prefab != null;
         }
 
@@ -206,18 +222,10 @@ namespace Airside.Presentation
             root = null;
             try
             {
-                var key = AddressablesKeyPrefix + prefabKey;
                 if (!AddressablesKeyExists(prefabKey))
                     return false;
-
-                var handle = Addressables.LoadAssetAsync<GameObject>(key);
-                var prefab = handle.WaitForCompletion();
-                if (handle.Status != AsyncOperationStatus.Succeeded || prefab == null)
-                {
-                    if (handle.IsValid())
-                        Addressables.Release(handle);
+                if (!TryLoadPrefabAsset(prefabKey, out var prefab) || prefab == null)
                     return false;
-                }
 
                 var instance = UnityEngine.Object.Instantiate(prefab);
                 instance.name = prefabKey;

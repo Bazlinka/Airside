@@ -1,17 +1,21 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Codex — AIR-001 v06 aircraft replacement)
-- **Branch:** `feature/air-001-v06` (off `main` after #144)
-- **Do next:** Review AIR-001 v06 in the packaged Mac follow camera and merge the
-  focused replacement once CI is green.
+- **Last updated:** 2026-09-08 (Cursor — bug audit fixes)
+- **Branch:** `cursor/bug-audit-fixes-aa9f` (off `main` after #145)
+- **Do next:** Review and merge the bug-audit PR; then resume AIR-001 v06 packaged
+  Mac follow-camera review if still open.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - v06 is a new asset id; v05 and all older aircraft remain in the fallback chain
-  - ASCII FBX metre units are now declared correctly so Unity does not import at 1% scale
-  - Meshes without UVs use flat lit materials instead of sampling one dark texture texel
-  - v06 uses outward face winding, a continuous body, high wing and refined prop/gear forms
+  - Dual commercials now share the A1/A2 corridor lock and hold short (release
+    corridor) when taxi-out finishes, so head-on taxi and Landing↔TaxiOut deadlocks
+    are gone; phase progress stalls while waiting on a reserved resource
+  - Player P / delay HUD focus any commercial at stand, not only `_flights[0]`
+  - Commercial visuals remap by `AircraftId` across respawn reordering
+  - `AircraftAssetTests` is Unity-only — excluded from `scripts/test-domain.sh`
+  - Pre-v06 ASCII FBX may still declare `UnitScaleFactor=1` (1% import) on fallback
+    paths; v06 and the exporter are correct
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — v06 follows the approved high-wing reference.
+- **Open question for Bailey:** none
 
 ---
 
@@ -87,7 +91,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-unity.sh`: 126/126 EditMode on Unity 6000.3.23f1. `scripts/test-domain.sh` remains the headless Domain/Simulation/Persistence mirror.
+- `scripts/test-domain.sh`: 118/118 after the 2026-09-08 bug audit (Unity EditMode
+  still required before merge — `scripts/test-unity.sh` on a Mac).
 - Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
 - Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
   prefer authored kits with procedural fallbacks; operational geometry unchanged.
@@ -96,8 +101,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Review and merge **AIR-001 v06**.
-2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
+1. Merge **bug-audit fixes** (`cursor/bug-audit-fixes-aa9f`) after Unity EditMode.
+2. Review and merge **AIR-001 v06** if not already on `main`.
+3. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
    art fidelity) — standing goal; no new economy / Companion.
-3. Optional: Editor Addressables groups for player catalog.
-4. No new economy systems; no Companion/CloudKit.
+4. Optional: Editor Addressables groups for player catalog.
+5. No new economy systems; no Companion/CloudKit.

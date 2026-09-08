@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Bug audit (2026-09-08).** Dual commercials no longer occupy the same taxi
+  segment (corridor lock + hold-short release + phase stall while blocked);
+  priority crew / delay HUD focus any commercial at stand; departed flights
+  release the runway immediately; wait monitor updates the blocked resource;
+  commercial visuals remap by aircraft id across respawn reorder; approach gear
+  deploys; cabin window frames no longer emit at night; UV-less meshes cannot
+  keep textured materials; Addressables prefab loads are session-cached;
+  `AircraftAssetTests` excluded from `test-domain.sh`. Evidence:
+  `scripts/test-domain.sh` 118/118; probe same-taxi seconds 981→0.
+
 - **AIR-001 v06 aircraft replacement.** Add a new deterministic high-wing regional
   turboprop with a continuous 40-segment fuselage, three-station NACA wing,
   lofted nacelles, swept/tapered empennage, six twisted propeller blades per

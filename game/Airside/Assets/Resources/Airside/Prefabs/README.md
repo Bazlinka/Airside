@@ -74,6 +74,7 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_authored_v01.fbx`
+- `Assets/Airside/Art/Models/Props/mdl_terminal_forecourt_kit_v02.fbx` (PRP-003 v02)
 - `Assets/Airside/Art/Models/Props/mdl_service_equipment_kit_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Props/mdl_airfield_lighting_kit_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Props/mdl_airfield_props_kit_authored_v01.fbx`
@@ -106,6 +107,7 @@ Resources prefabs (Addressables keys live now):
 | `mdl_passenger_bus_apron_authored_v01` | Mac bake |
 | `mdl_passenger_stairs_v02` | Pipeline proof (`generate-prp-001-v03-prefab.py`); prefers over v01 |
 | `mdl_passenger_stairs_v01` | Pipeline proof; superseded by v02 when present |
+| `mdl_terminal_forecourt_kit_v02` | Mac bake; `scripts/generate-prp-003-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
 | `mdl_service_equipment_kit_authored_v01` | Mac bake; glTF PreferArtKit behind `mdl_service_equipment_kit_v03` |
 | `mdl_airfield_lighting_kit_authored_v01` | Mac bake |
 | `mdl_airfield_props_kit_authored_v01` | Mac bake |

@@ -298,7 +298,7 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 |---|---|---|---|
 | F1 hero read | AIR-001 v06, BLD-001…003 v05, MAT-001 | Authored turboprop + terminal/hangar/ops shed with a coherent URP material family | **AIR-001 v06 + BLD-001/002 v05 Integrated**; **BLD-003 v05 preferred** (Mac overview pending); MAT-001 Integrated |
 | F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002; landside `mdl_parked_car_v02` | Replace procedural turnaround vehicles and block people where activity must read; landside cars prefer lofted v02 | **Integrated** — fleet v06 / pushback v03 / car v02 preferred (Mac overview vs REF-003 pending) |
-| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **Integrated** (PR #137 pending merge) |
+| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **PRP-003 v02 preferred** (Mac overview pending); PRP-002 v02 in draft #154; VEG/terrain Integrated (PR #137) |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | **Integrated** — UI-ICO-005 + VFX prefabs + `AirsideReusableMotion` |
 
 Batch F is intentionally ordered. It does not authorise another broad procedural

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Stand stairs / GSE fidelity (PRP-001 v03).** Prefer
+  `mdl_service_equipment_kit_v03` (106 meshes: tubular rails, denser GPU/belt/
+  chocks) over authored/v02/v01; stairs Resources fallback
+  `mdl_passenger_stairs_v02`. Safety Yellow GPU + stairs rails/nosings, Coastal
+  Blue side panels. Evidence: `scripts/test-domain.sh` 118/118; Mac overview/
+  follow vs REF-003 pending.
+
 - **Vehicle fleet fidelity (REF-003/005).** Landside `mdl_parked_car_v02` (lofted
   regional car kit) prefers over cube v01; turnaround VEH-001…003 ship `*_v06`
   and pushback `v03` ahead of v05/v02 with fallbacks retained. Safety Yellow /

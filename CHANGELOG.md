@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Hangar BLD-002 v05.** Prefer `mdl_hangar_small_v05` (193 meshes): dual-pitch
+  roof, gable ends, denser corrugation, office lean; sliding-door motion names
+  retained; authored_v01+ older kits remain fallbacks. Evidence:
+  `scripts/test-domain.sh` 118/118; Mac overview vs REF-001 pending.
+
 - **Vehicle fleet fidelity (REF-003/005).** Landside `mdl_parked_car_v02` (lofted
   regional car kit) prefers over cube v01; turnaround VEH-001…003 ship `*_v06`
   and pushback `v03` ahead of v05/v02 with fallbacks retained. Safety Yellow /

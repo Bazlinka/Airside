@@ -26,13 +26,14 @@ All five files above are Approved. Do not overwrite or restyle them.
 ## Review candidates
 
 The following generated sheets are modelling/reference guidance only. They do
-not replace the existing VEG-002 or WLD-004 runtime kits and are not Approved
-until Bailey accepts their visual direction.
+not replace the existing VEG-002, WLD-004 or BLD-001…003 runtime assets and are
+not Approved until Bailey accepts their visual direction.
 
 | Related asset | Candidate source | Intended use | Status |
 |---|---|---|---|
 | VEG-002 | `docs/art/candidates/ref_kingscote_coastal_scrub_style_sheet_v01.png` | Five mallee/shrub forms, three grass patches, three rock groups and two dune-edge mixes at human scale | Generated · review required |
 | WLD-004 | `docs/art/candidates/ref_kingscote_context_terrain_catalogue_v01.png` | Modular paddock berms, low hills, dunes, turquoise shallows and deep-water context around a protected blank operational zone | Generated · review required |
+| BLD-001…003 | `docs/art/candidates/ref_regional_airport_building_fidelity_board_v01.png` | Common-scale terminal, hangar and ops-shed silhouette/material target matched to REF-001 | Generated · review required |
 
 BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and promoted into
 runtime art (see production assets below).

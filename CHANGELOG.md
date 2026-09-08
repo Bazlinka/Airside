@@ -8,7 +8,7 @@ change it describes.
 - **Fence/gate PRP-002 v02.** Prefer `mdl_airfield_fence_gate_kit_v02` (24
   meshes): chain-link lattice bay, tubular rails/posts, frame+mesh gate leaves;
   PlaceBay densifies mid/bot rails, caps, brace; `gate_vehicle_rail` at vehicle
-  gate; v01 remains fallback. Evidence: `scripts/test-domain.sh` pending; Mac
+  gate; v01 remains fallback. Evidence: `scripts/test-domain.sh` 118/118; Mac
   overview vs REF pending.
 
 - **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):

@@ -69,7 +69,9 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v05.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v05.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_pushback_tug_v02.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Characters/mdl_ramp_crew_kit_v02.fbx` (CHR-001 v02)
 - `Assets/Airside/Art/Models/Characters/mdl_ramp_crew_kit_v01.fbx` (Batch F2)
+- `Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v02.fbx` (CHR-002 v02)
 - `Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v01.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx`
@@ -93,7 +95,9 @@ Resources prefabs (Addressables keys live now):
 | `mdl_baggage_tug_train_v05` | Mac bake; same |
 | `mdl_passenger_bus_apron_v05` | Mac bake; same |
 | `mdl_pushback_tug_v02` | Mac bake; same |
+| `mdl_ramp_crew_kit_v02` | Mac bake; `scripts/generate-chr-kits-v02-prefab.py` |
 | `mdl_ramp_crew_kit_v01` | Mac bake; same |
+| `mdl_passenger_kit_v02` | Mac bake; `scripts/generate-chr-kits-v02-prefab.py` |
 | `mdl_passenger_kit_v01` | Mac bake; same |
 | `mdl_regional_turboprop_01_authored_v01` | Mac bake; `scripts/generate-authored-resources-prefabs.py` is the pipeline-proof fallback |
 | `mdl_terminal_regional_small_authored_v01` | Mac bake; same generator fallback |

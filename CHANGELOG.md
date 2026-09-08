@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Turnaround service-set fidelity reference.** Add a 2048×812 two-frame
+  daylight/dusk board matched to REF-003, covering AIR-001, VEH-001…004 and
+  PRP-001 placement, connections and overview readability. Exact generation
+  evidence included; runtime fleet unchanged.
+
 - **BLD-001…003 building fidelity reference.** Add a common-scale daylight
   board for the terminal, hangar and ops shed matched to REF-001, including a
   corrected gable-roof hangar and attached lean-to office. Exact generation and

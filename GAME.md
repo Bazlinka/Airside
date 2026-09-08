@@ -1,14 +1,16 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-08 (Cursor — ground/vehicle/smoothness 20-fix pass)
-- **Branch:** `cursor/ground-vehicle-smooth-20-3272` (off `main` after #157)
+- **Branch:** `cursor/ground-vehicle-smooth-20-3272` (off `main` after #158)
 - **Do next:** Mac Unity Play — pause/4× GSE, GT yield (no snap), takeoff gear
   roll, wet/fog apron, O overview ease, right-drag follow orbit. Then merge.
-  Day/night readability (#158) still pending Mac noon/midnight if not merged.
+  Day/night readability (#158) is on `main` — Mac noon/midnight sign-off still
+  useful.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - Tracking: `docs/testing/SMOOTH_PASS_20_2026-09-08.md`
   - Presentation motion uses `_paused` / `_speed`; GT Yield keeps Progress
+  - Day/night retune from #158 kept (ambient base + weather gloom dim)
   - Save schema / simulation reservations unchanged (GT Progress report only)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -89,8 +91,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 - `scripts/test-domain.sh`: **136/136** on `cursor/ground-vehicle-smooth-20-3272`
   (20 ground/vehicle/smoothness fixes + `SmoothPassTests`).
-- Day/night readability on `cursor/day-night-readability-3272` (#158) — Mac
-  noon/midnight overview pending.
+- Day/night readability merged via #158 (Mac noon/midnight overview pending).
 - 50-fix bugfix pass merged via #157.
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
 - Forecourt PRP-003 v02 merged via #155 (Mac overview vs REF still pending).
@@ -101,7 +102,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Next work
 
 1. Mac Play: ground/vehicle smoothness pass, then merge.
-2. Mac overview: day/night readability (#158) noon + midnight if still open.
+2. Mac overview: day/night readability (#158) noon + midnight sign-off.
 3. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153) vs refs if not yet signed off.
 4. Keep pushing first-playable **visual polish** — standing goal; no new economy /

@@ -3830,15 +3830,16 @@ namespace Airside.Presentation
             var elevation = (float)cycle.SunElevationDegrees;
             _sun.transform.rotation = Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
 
-            // Warm key light, cooler fill — closer to REF dawn/day without a full URP stack.
-            var day = new Color(1f, 0.94f, 0.82f);
-            var goldenHour = new Color(1f, 0.62f, 0.38f);
-            var night = new Color(0.28f, 0.36f, 0.58f);
-            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
-            _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            // Noon punch + readable night key so REF overview separation holds (post-F polish).
-            _sun.intensity = Mathf.Lerp(0.32f, 1.98f, daylight);
-            _sun.shadowStrength = Mathf.Lerp(0.38f, 0.82f, daylight);
+            // Warm key, cool fill — day must read bright coastal sun; night must yield to
+            // apron floods so the airfield silhouette stays obvious from overview.
+            var day = new Color(1f, 0.96f, 0.88f);
+            var goldenHour = new Color(1f, 0.68f, 0.42f);
+            var night = new Color(0.32f, 0.38f, 0.55f);
+            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
+            _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
+            // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
+            _sun.intensity = Mathf.Lerp(0.12f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
+            _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
             var weather = _simulation.CurrentWeather;
@@ -3855,30 +3856,33 @@ namespace Airside.Presentation
             if (_fillLight != null)
             {
                 _fillLight.transform.rotation = Quaternion.Euler(25f, 140f - (float)cycle.Fraction * 40f, 0f);
+                // Cool day fill opens shadows; night fill is soft blue-grey form light only.
                 _fillLight.color = Color.Lerp(
-                    new Color(0.25f, 0.32f, 0.55f),
-                    Color.Lerp(new Color(0.55f, 0.65f, 0.85f), new Color(1f, 0.78f, 0.62f), warm * 0.55f),
+                    new Color(0.28f, 0.34f, 0.52f),
+                    Color.Lerp(new Color(0.62f, 0.72f, 0.9f), new Color(1f, 0.82f, 0.68f), warm * 0.45f),
                     daylight);
-                _fillLight.intensity = Mathf.Lerp(0.55f, 0.18f, daylight) + warm * 0.06f;
+                _fillLight.intensity = Mathf.Lerp(0.38f, 0.22f, daylight) + warm * 0.05f;
             }
 
-            var ambientDay = new Color(0.52f, 0.58f, 0.64f);
-            var ambientDusk = new Color(0.58f, 0.38f, 0.32f);
-            var ambientNight = new Color(0.14f, 0.16f, 0.26f);
-            var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.85f);
+            // Trilight: day = bright cool sky / warm ground separation; night = deep blue-grey
+            // that still lets hangar/terminal silhouettes read outside flood pools.
+            var ambientDay = new Color(0.58f, 0.64f, 0.72f);
+            var ambientDusk = new Color(0.52f, 0.36f, 0.3f);
+            var ambientNight = new Color(0.12f, 0.14f, 0.22f);
+            var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.55f);
             var ambientEquator = Color.Lerp(
-                new Color(0.2f, 0.22f, 0.32f),
-                Color.Lerp(new Color(0.42f, 0.46f, 0.48f), new Color(0.53f, 0.40f, 0.34f), warm),
+                new Color(0.16f, 0.18f, 0.26f),
+                Color.Lerp(new Color(0.46f, 0.5f, 0.52f), new Color(0.5f, 0.38f, 0.32f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
-                new Color(0.1f, 0.11f, 0.14f),
-                Color.Lerp(new Color(0.22f, 0.24f, 0.2f), new Color(0.28f, 0.18f, 0.14f), warm),
+                new Color(0.08f, 0.09f, 0.11f),
+                Color.Lerp(new Color(0.26f, 0.28f, 0.22f), new Color(0.3f, 0.2f, 0.15f), warm),
                 daylight);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(0.45f, 1.05f, daylight) + warm * 0.08f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.72f, 1.12f, daylight) + warm * 0.06f;
             if (weatherGloom > 0f)
             {
                 // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.
@@ -3891,14 +3895,16 @@ namespace Airside.Presentation
                 RenderSettings.ambientIntensity *= Mathf.Lerp(1f, 0.78f, weatherGloom);
             }
             RenderSettings.subtractiveShadowColor = Color.Lerp(
-                new Color(0.22f, 0.28f, 0.4f),
-                new Color(0.4f, 0.28f, 0.28f),
+                new Color(0.18f, 0.24f, 0.36f),
+                new Color(0.38f, 0.28f, 0.26f),
                 warm);
 
-            var skyDay = new Color(0.50f, 0.55f, 0.56f); // REF-001 muted day sky (not OpenSky cyan)
-            var skyDusk = new Color(0.72f, 0.42f, 0.32f);
-            var skyNight = new Color(0.05f, 0.07f, 0.12f);
-            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.78f);
+            // REF-001 coastal day sky (clear blue, not grey mush); dusk warmth stays on the
+            // horizon without orange-fogging the whole overview (art direction).
+            var skyDay = new Color(0.55f, 0.68f, 0.82f);
+            var skyDusk = new Color(0.62f, 0.38f, 0.3f);
+            var skyNight = new Color(0.04f, 0.055f, 0.1f);
+            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.55f);
             if (_mainCamera != null)
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
@@ -3908,38 +3914,39 @@ namespace Airside.Presentation
                 {
                     SetRendererColor(domeRenderer, sky);
                     if (domeRenderer.material.HasProperty("_EmissionColor"))
-                        domeRenderer.material.SetColor("_EmissionColor", sky);
+                        domeRenderer.material.SetColor("_EmissionColor", sky * Mathf.Lerp(0.35f, 1f, daylight));
                 }
             }
 
             UpdateSunAndMoonDiscs(daylight, warm, elevation);
 
-            // Soft exponential fog for depth on clear days; weather can thicken it later.
+            // Soft depth fog only — thick enough for far hills, thin enough that runway,
+            // apron and buildings stay obvious from the default overview.
             if (!Weather.IsAdverse(_simulation.CurrentWeather))
             {
                 var cloudy = _simulation.CurrentWeather == WeatherKind.Cloudy;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 var clearFog = Color.Lerp(
-                    new Color(0.08f, 0.1f, 0.16f),
-                    Color.Lerp(skyDay * 0.92f, skyDusk * 0.85f, warm),
-                    Mathf.Clamp01(daylight + warm * 0.25f));
+                    new Color(0.06f, 0.08f, 0.14f),
+                    Color.Lerp(skyDay * 0.95f, new Color(0.7f, 0.55f, 0.48f), warm * 0.45f),
+                    Mathf.Clamp01(daylight + warm * 0.15f));
                 if (cloudy)
-                    clearFog = Color.Lerp(clearFog, new Color(0.55f, 0.6f, 0.66f), 0.28f);
+                    clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f);
                 RenderSettings.fogColor = clearFog;
-                var density = Mathf.Lerp(0.0058f, 0.0028f, daylight);
+                var density = Mathf.Lerp(0.0036f, 0.0016f, daylight);
                 if (cloudy)
-                    density = Mathf.Max(density, Mathf.Lerp(0.0072f, 0.0042f, daylight));
-                // Soft dusk thicken so warm horizon haze reads without washing ALS.
-                density += warm * 0.0009f;
+                    density = Mathf.Max(density, Mathf.Lerp(0.005f, 0.0028f, daylight));
+                // Tiny dusk haze only — do not orange-wash the whole scene.
+                density += warm * 0.00035f;
                 RenderSettings.fogDensity = density;
             }
 
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
-                // Stronger night punch so REF-002 warm pools read against scrub.
-                var flood = Mathf.Lerp(4.2f, 0.05f, daylight);
+                // Warm night pools so REF-002 apron reads; day floods stay off.
+                var flood = Mathf.Lerp(3.6f, 0.04f, Mathf.SmoothStep(0f, 1f, daylight));
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];

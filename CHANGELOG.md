@@ -11,6 +11,12 @@ change it describes.
   taxi spray and pushback tug logic; camera overview ease + orbit. Evidence:
   `scripts/test-domain.sh` 136/136; `docs/testing/SMOOTH_PASS_20_2026-09-08.md`.
 
+- **Day/night readability.** Clearer coastal day sky, thinner overview fog, dimmer
+  night sun key so apron floods define pools; softer post grade (less purple night
+  crush / orange dusk wash). Presentation only (`ApplyDayCycle`,
+  `AirsideDayVolume`). Evidence: `scripts/test-domain.sh`; Mac noon/midnight
+  overview pending.
+
 - **50-fix bugfix pass.** Simulation: hold-short runway wait survives
   reservation sync; concurrent commercials = `Capacity.StandCount`; live staffing
   during AtStand; refuse expired route Accept; research/seed/location/GT/yield/

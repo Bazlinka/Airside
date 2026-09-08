@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Fence/gate PRP-002 v02.** Prefer `mdl_airfield_fence_gate_kit_v02` (24
+  meshes): chain-link lattice bay, tubular rails/posts, frame+mesh gate leaves;
+  PlaceBay densifies mid/bot rails, caps, brace; `gate_vehicle_rail` at vehicle
+  gate; v01 remains fallback. Evidence: `scripts/test-domain.sh` 118/118; Mac
+  overview vs REF pending.
+
 - **Character kits CHR-001/002 v02.** Prefer `mdl_ramp_crew_kit_v02` (32 meshes)
   and `mdl_passenger_kit_v02` (42 meshes): tapered limbs, hi-vis vest/hat brim,
   marshaller wand; UpdateApronLife extract names retained; v01 fallbacks kept.

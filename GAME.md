@@ -1,16 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — CHR-001/002 character kits v02)
-- **Branch:** `cursor/character-kits-v02-3272` (off `main` after #152)
-- **Do next:** Mac Unity overview + follow-camera of marshallers / passengers vs
-  REF-003 next to v06 fleet and v03 GSE (tapered limbs, hi-vis, wand). Then merge
-  if the read holds. Next polish candidate: fence/gate PRP-002 v02.
+- **Last updated:** 2026-09-08 (Cursor — fence/gate PRP-002 v02; rebased on #153)
+- **Branch:** `cursor/fence-gate-prp-002-v02-3272` (off `main` after #153)
+- **Do next:** Mac Unity overview of chain-link fence bays + vehicle gate vs REF
+  setting; then merge. Characters #153 are on `main`.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PreferArtKit: crew/pax `v02` → `v01`
-  - Extract names unchanged (`marshaller_*` / `fueler_*` / `ramp_*` /
-    `stand_*` / `walk_*` / `sit_*`) for UpdateApronLife
-  - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefabs shipped
+  - PreferArtKit fence: `mdl_airfield_fence_gate_kit_v02` → `v01`
+  - PlaceBay densifies mid/bot rails, caps, corner brace; gate places
+    `gate_vehicle_rail`; extract names match v01
+  - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefab shipped
+  - PreferArtKit crew/pax: `v02` → `v01` (merged via #153)
   - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -89,8 +89,10 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 after CHR kits v02 (Mac overview/follow vs
-  REF-003 still required before merge).
+- `scripts/test-domain.sh`: 118/118 after PRP-002 fence/gate v02 (Mac overview
+  vs REF still required before merge).
+- Character kits CHR-001/002 v02 merged via #153 (Mac overview/follow vs REF-003
+  still pending).
 - Ops shed BLD-003 v05 merged via #152.
 - Stand GSE PRP-001 v03 / stairs v02 merged via #151.
 - Hangar BLD-002 v05 merged via #150.
@@ -99,10 +101,11 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac overview + follow: CHR kits v02 vs REF-003 on
-   `cursor/character-kits-v02-3272`, then merge.
-2. Mac overview backlog: ops shed (#152), GSE (#151), hangar (#150), fleet (#149).
-3. Keep pushing first-playable **visual polish** — next candidate fence/gate
-   PRP-002 v02; no new economy / Companion.
+1. Mac overview: fence/gate PRP-002 v02 on
+   `cursor/fence-gate-prp-002-v02-3272`, then merge.
+2. Mac overview backlog: characters (#153), ops shed (#152), GSE (#151), hangar
+   (#150), fleet (#149) vs refs if not yet signed off.
+3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
+   Companion. Ranked next: forecourt PRP-003 v02, then VEG-001 densify.
 4. Optional: Editor Addressables groups for player catalog.
 5. No new economy systems; no Companion/CloudKit.

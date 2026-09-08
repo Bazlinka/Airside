@@ -38,6 +38,7 @@ namespace Airside.Editor
             "Assets/Airside/Art/Models/Characters/mdl_ramp_crew_kit_v01.fbx",
             "Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v02.fbx",
             "Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v01.fbx",
+            "Assets/Airside/Art/Models/Environment/mdl_eucalyptus_kit_v02.fbx",
             "Assets/Airside/Art/Models/Environment/mdl_eucalyptus_kit_v01.fbx",
             "Assets/Airside/Art/Models/Environment/mdl_kingscote_scrub_kit_v01.fbx",
             "Assets/Airside/Art/Models/Environment/mdl_kingscote_context_terrain_v01.fbx",

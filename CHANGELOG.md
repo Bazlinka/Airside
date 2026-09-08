@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Eucalyptus VEG-001 v02.** Prefer `mdl_eucalyptus_kit_v02` (30 meshes):
+  multi-lobe canopies, tapered trunk/bark/fork, denser lod1; place full tree
+  belt; far trees add lod1 crown; v01 remains fallback. Evidence:
+  `scripts/test-domain.sh` 118/118; Mac overview vs REF pending.
+
 - **Forecourt PRP-003 v02.** Prefer `mdl_terminal_forecourt_kit_v02` (18
   meshes): slatted bench, nested trolley, rimmed planter, richer bollards/sign/
   kerbs; placement densifies kerb_corner, mid bollard, second sign, west

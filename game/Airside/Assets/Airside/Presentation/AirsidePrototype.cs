@@ -6534,10 +6534,8 @@ namespace Airside.Presentation
         private static void BuildVegetation()
         {
             // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
-            // a handful of props (0025 item 3). When VEG kits land, skip far densify carpets.
-            var eucKit = PreferArtKit("Models/Environment/mdl_eucalyptus_kit_v01.gltf");
+            // a handful of props (0025 item 3). PlaceTree prefers VEG-001 v02→v01.
             var scrubKit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
-            var hasEucKit = !string.IsNullOrEmpty(eucKit) && ArtGltfLoader.HasKit(eucKit);
             var hasScrubKit = !string.IsNullOrEmpty(scrubKit) && ArtGltfLoader.HasKit(scrubKit);
 
             var trees = new (Vector3 Pos, float Scale)[]
@@ -6616,8 +6614,10 @@ namespace Airside.Presentation
                 (new Vector3(-8f, 0f, -38f), 0.88f),
                 (new Vector3(36f, 0f, -36f), 1.02f)
             };
-            // Core + extra belt always; far densify only when eucalyptus kit is missing.
-            var treeCount = hasEucKit ? 41 : trees.Length;
+            // Place the full belt with authored VEG-001 silhouettes when the kit is
+            // present (v02 densifies far paddock too). Primitive greybox still covers
+            // every slot if the kit is missing.
+            var treeCount = trees.Length;
             for (var i = 0; i < treeCount; i++)
                 PlaceTree(trees[i].Pos, trees[i].Scale);
 
@@ -6819,7 +6819,9 @@ namespace Airside.Presentation
         /// <summary>Batch F3 VEG-001 — place authored eucalyptus silhouette; primitives remain fallback.</summary>
         private static bool TryPlaceTreeFromKit(Vector3 basePosition, float scale)
         {
-            var kit = PreferArtKit("Models/Environment/mdl_eucalyptus_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Environment/mdl_eucalyptus_kit_v02.gltf",
+                "Models/Environment/mdl_eucalyptus_kit_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 
@@ -6856,6 +6858,9 @@ namespace Airside.Presentation
             Place($"{prefix}_canopy_b", canopyB);
             Place($"{prefix}_canopy_c", Shade(canopyA, 0.85f));
             Place($"{prefix}_canopy_d", Shade(canopyB, 0.92f));
+            // Far-belt densify uses lod1 as an extra crown mass when present (v02).
+            if (Mathf.Abs(basePosition.x) > 55f || Mathf.Abs(basePosition.z) > 50f)
+                Place($"{prefix}_lod1", Shade(canopyA, 0.88f));
 
             if (placed < 4)
             {

@@ -195,106 +195,101 @@ namespace Airside.Presentation
         {
             weatherGloom = Mathf.Clamp01(weatherGloom);
 
-            // Day: slight lift; dusk: warmer filter; night: readable apron + flood pools
-            // (was crushed too dark — midtones and aircraft disappeared).
-            var exposure = Mathf.Lerp(-0.28f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.35f;
-            var contrast = Mathf.Lerp(7f, 5.5f, daylight) + weatherGloom * 4.2f;
-            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
-            var nightFilter = new Color(0.7f, 0.76f, 1f);
-            var stormFilter = new Color(0.68f, 0.74f, 0.84f);
+            // Day: slight lift + clear contrast so apron/grass/sky separate.
+            // Night: keep exposure readable — floods define pools; do not crush midtones
+            // into a purple soup (aircraft/hangar must stay identifiable).
+            var exposure = Mathf.Lerp(-0.12f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f;
+            var contrast = Mathf.Lerp(6f, 8.5f, daylight) + weatherGloom * 3.5f;
+            var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.82f, 0.68f), warm * 0.65f);
+            var nightFilter = new Color(0.86f, 0.9f, 1f); // soft cool, not heavy blue cast
+            var stormFilter = new Color(0.72f, 0.76f, 0.84f);
             var filter = Color.Lerp(
-                Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.45f)),
+                Color.Lerp(nightFilter, dayFilter, Mathf.Clamp01(daylight + warm * 0.35f)),
                 stormFilter,
                 weatherGloom);
 
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(10f, 3.5f, daylight) - weatherGloom * 8f + warm * 3f);
-            _color.hueShift.Override(Mathf.Lerp(0f, -6f, weatherGloom) + warm * 3.5f);
+            _color.saturation.Override(Mathf.Lerp(6f, 8f, daylight) - weatherGloom * 7f + warm * 2.5f);
+            _color.hueShift.Override(Mathf.Lerp(0f, -4f, weatherGloom) + warm * 2f);
 
-            _bloom.intensity.Override(Mathf.Lerp(0.42f, 0.11f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.08f
-                + weatherGloom * 0.06f);
-            _bloom.threshold.Override(Mathf.Lerp(0.62f, 0.97f, daylight) - weatherGloom * 0.06f);
-            _vignette.intensity.Override(Mathf.Lerp(0.18f, 0.08f, daylight) + weatherGloom * 0.06f);
-            // Night film grain for regional dusk grit; nearly off in bright day.
-            _grain.intensity.Override(Mathf.Lerp(0.12f, 0.015f, daylight) + weatherGloom * 0.05f);
-            _grain.response.Override(Mathf.Lerp(0.72f, 0.48f, daylight));
+            // Bloom: day barely; night only floods/windows (high threshold, modest intensity).
+            _bloom.intensity.Override(Mathf.Lerp(0.28f, 0.08f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f
+                + weatherGloom * 0.04f);
+            _bloom.threshold.Override(Mathf.Lerp(0.78f, 0.98f, daylight) - weatherGloom * 0.04f);
+            _vignette.intensity.Override(Mathf.Lerp(0.1f, 0.05f, daylight) + weatherGloom * 0.05f);
+            _grain.intensity.Override(Mathf.Lerp(0.06f, 0.01f, daylight) + weatherGloom * 0.04f);
+            _grain.response.Override(Mathf.Lerp(0.65f, 0.45f, daylight));
 
-            // Lift cool night shadows; warm midtones at golden hour; soft highlight roll-off.
-            // Noon keeps deeper shadows + lifted midtones so apron slabs separate from grass (REF-001).
+            // Lift cool night shadows just enough for form; noon keeps deeper shadows so
+            // apron slabs separate from grass (REF-001).
             var shadowTint = Color.Lerp(
-                new Color(0.48f, 0.56f, 0.9f),
-                Color.Lerp(new Color(0.95f, 0.95f, 1f), new Color(1f, 0.82f, 0.68f), warm),
+                new Color(0.55f, 0.62f, 0.85f),
+                Color.Lerp(new Color(0.96f, 0.96f, 1f), new Color(1f, 0.86f, 0.74f), warm),
                 daylight);
-            shadowTint = Color.Lerp(shadowTint, new Color(0.66f, 0.72f, 0.78f), weatherGloom);
+            shadowTint = Color.Lerp(shadowTint, new Color(0.68f, 0.74f, 0.8f), weatherGloom);
             var midTint = Color.Lerp(
-                new Color(0.8f, 0.84f, 1f),
-                Color.Lerp(Color.white, new Color(1f, 0.86f, 0.7f), warm * 0.9f),
+                new Color(0.9f, 0.92f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.9f, 0.78f), warm * 0.7f),
                 daylight);
             var hiTint = Color.Lerp(
-                new Color(0.86f, 0.88f, 1f),
-                Color.Lerp(Color.white, new Color(1f, 0.93f, 0.82f), warm * 0.55f),
+                new Color(0.92f, 0.94f, 1f),
+                Color.Lerp(Color.white, new Color(1f, 0.95f, 0.88f), warm * 0.45f),
                 daylight);
 
             _tonal.shadows.Override(new Vector4(shadowTint.r, shadowTint.g, shadowTint.b,
-                Mathf.Lerp(0.22f, -0.14f, daylight) - weatherGloom * 0.06f));
-            // Dusk: lift midtones a touch more so hangar faces keep shape in warm light.
+                Mathf.Lerp(0.18f, -0.12f, daylight) - weatherGloom * 0.05f));
             _tonal.midtones.Override(new Vector4(midTint.r, midTint.g, midTint.b,
-                Mathf.Lerp(0.04f, 0.12f, daylight) + warm * 0.2f));
+                Mathf.Lerp(0.06f, 0.1f, daylight) + warm * 0.12f));
             _tonal.highlights.Override(new Vector4(hiTint.r, hiTint.g, hiTint.b,
-                Mathf.Lerp(-0.06f, 0.01f, daylight) + warm * 0.08f));
+                Mathf.Lerp(-0.04f, 0.02f, daylight) + warm * 0.05f));
             _tonal.shadowsStart.Override(0f);
-            _tonal.shadowsEnd.Override(Mathf.Lerp(0.28f, 0.46f, daylight));
-            _tonal.highlightsStart.Override(Mathf.Lerp(0.42f, 0.58f, daylight));
+            _tonal.shadowsEnd.Override(Mathf.Lerp(0.26f, 0.44f, daylight));
+            _tonal.highlightsStart.Override(Mathf.Lerp(0.45f, 0.58f, daylight));
             _tonal.highlightsEnd.Override(1f);
 
-            // Owned dusk white-balance / split-toning (0025 item 5) — keep ranges modest
-            // so night blue survives and weather gloom stays cool.
-            var temperature = Mathf.Lerp(-8f, 5f, daylight) + warm * 52f - weatherGloom * 14f;
-            var tint = warm * 8.5f - weatherGloom * 3f;
+            // Modest white-balance / split-toning — dusk warmth without orange whole-frame wash.
+            var temperature = Mathf.Lerp(-4f, 4f, daylight) + warm * 28f - weatherGloom * 12f;
+            var tint = warm * 5f - weatherGloom * 2.5f;
             _whiteBalance.temperature.Override(temperature);
             _whiteBalance.tint.Override(tint);
 
             var shadows = Color.Lerp(
-                new Color(0.45f, 0.55f, 0.85f),
-                new Color(0.35f, 0.42f, 0.62f),
+                new Color(0.55f, 0.62f, 0.82f),
+                new Color(0.4f, 0.46f, 0.62f),
                 weatherGloom);
             var highlights = Color.Lerp(
                 Color.white,
-                new Color(1f, 0.68f, 0.4f),
-                warm * 1.05f);
+                new Color(1f, 0.78f, 0.55f),
+                warm * 0.75f);
             _splitToning.shadows.Override(shadows);
             _splitToning.highlights.Override(highlights);
-            _splitToning.balance.Override(Mathf.Lerp(-0.15f, 0.2f, warm) - weatherGloom * 0.1f);
+            _splitToning.balance.Override(Mathf.Lerp(-0.08f, 0.12f, warm) - weatherGloom * 0.08f);
 
-            // Channel mixer: dawn/dusk push warm reds into midtones; night cools greens into blue.
-            var warmPush = warm * 18f;
-            var coolPush = (1f - daylight) * 10f + weatherGloom * 6f;
-            _channelMixer.redOutRedIn.Override(100f + warmPush * 0.35f);
-            _channelMixer.redOutGreenIn.Override(warmPush * 0.25f);
-            _channelMixer.redOutBlueIn.Override(-coolPush * 0.15f);
-            _channelMixer.greenOutRedIn.Override(warmPush * 0.12f);
-            _channelMixer.greenOutGreenIn.Override(100f - weatherGloom * 4f);
-            _channelMixer.greenOutBlueIn.Override(coolPush * 0.2f);
-            _channelMixer.blueOutRedIn.Override(-warmPush * 0.2f);
-            _channelMixer.blueOutGreenIn.Override(coolPush * 0.15f);
-            _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.25f - warmPush * 0.1f);
+            // Light channel mixer — keep identity; avoid night purple / day mud.
+            var warmPush = warm * 10f;
+            var coolPush = (1f - daylight) * 5f + weatherGloom * 4f;
+            _channelMixer.redOutRedIn.Override(100f + warmPush * 0.25f);
+            _channelMixer.redOutGreenIn.Override(warmPush * 0.15f);
+            _channelMixer.redOutBlueIn.Override(-coolPush * 0.08f);
+            _channelMixer.greenOutRedIn.Override(warmPush * 0.08f);
+            _channelMixer.greenOutGreenIn.Override(100f - weatherGloom * 3f);
+            _channelMixer.greenOutBlueIn.Override(coolPush * 0.1f);
+            _channelMixer.blueOutRedIn.Override(-warmPush * 0.12f);
+            _channelMixer.blueOutGreenIn.Override(coolPush * 0.08f);
+            _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.12f - warmPush * 0.06f);
 
-            // Soft night deepen — keep apron/aircraft readable (was a second hard crush).
-            if (daylight < 0.35f)
-                _color.postExposure.Override(exposure - (0.35f - daylight) * 0.22f);
             // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
-            else if (daylight > 0.75f && warm < 0.2f)
+            if (daylight > 0.75f && warm < 0.2f)
             {
-                _color.contrast.Override(contrast + 2.2f);
-                _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
+                _color.contrast.Override(contrast + 1.8f);
+                _color.saturation.Override(Mathf.Lerp(6f, 10f, daylight) - weatherGloom * 7f);
             }
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
-            // Kept modest so capped window PointLights don't bloom into soup.
             else if (warm > 0.35f)
-                _bloom.intensity.Override(Mathf.Lerp(0.38f, 0.11f, daylight) * (1f - weatherGloom * 0.28f)
-                    + warm * 0.14f + weatherGloom * 0.06f);
+                _bloom.intensity.Override(Mathf.Lerp(0.24f, 0.08f, daylight) * (1f - weatherGloom * 0.28f)
+                    + warm * 0.1f + weatherGloom * 0.04f);
         }
     }
 }

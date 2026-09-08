@@ -1,21 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — 50-fix bugfix pass)
-- **Branch:** `cursor/massive-bugfix-pass-3272` (off `main` after #156)
-- **Do next:** Review/merge the 50-fix pass PR. Mac Unity smoke of presentation
-  fixes (GSE facing, fence/gate, camera follow, night ambient) when convenient.
-  PreferArtKit polish #153–#156 are already on `main`.
-- **In progress / half-done:** none — sim + presentation fixes landed; domain
-  tests green (135/135).
+- **Last updated:** 2026-09-08 (Cursor — day/night readability pass)
+- **Branch:** `cursor/day-night-readability-3272` (off `main` after #157)
+- **Do next:** Mac Unity Play overview at noon and midnight — confirm apron,
+  runway, hangar and terminal read clearly (no grey mush / purple crush). Then
+  merge.
+- **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Tracking list: `docs/testing/BUGFIX_PASS_50_2026-09-08.md`
-  - Hold-short runway waits must survive `SynchronizeCommercialReservations`
-    (empty TaxiOut `RequiredResources` used to clear the wait)
-  - Concurrent commercials scale with `Capacity.StandCount`
-  - Live staffing factor during AtStand; refuse expired route Accept
-  - Presentation-only PreferArtKit / facing / HUD polish — save schema unchanged
+  - Presentation only: `ApplyDayCycle` + `AirsideDayVolume` retuned toward REF-001/002
+  - Clearer day sky, thinner fog, dimmer night sun key, softer post grade
+  - Simulation / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none
+- **Open question for Bailey:** does noon/midnight overview still feel muddy after
+  this pass?
 
 ---
 
@@ -91,8 +88,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: **135/135** on `cursor/massive-bugfix-pass-3272`
-  (50 noticeable sim/presentation fixes + `BugfixPassTests`).
+- `scripts/test-domain.sh`: **135/135** on `cursor/day-night-readability-3272`
+  (presentation lighting retune; Mac noon/midnight overview pending).
+- 50-fix bugfix pass merged via #157 (`scripts/test-domain.sh` 135/135).
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
 - Forecourt PRP-003 v02 merged via #155 (Mac overview vs REF still pending).
 - Fence/gate PRP-002 v02 merged via #154 (Mac overview vs REF still pending).
@@ -102,12 +100,10 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Stand GSE PRP-001 v03 / stairs v02 merged via #151.
 - Hangar BLD-002 v05 merged via #150.
 - Vehicle fleet v06 / landside car v02 merged via #149.
-- #146 bug audit and #147/#148 flight/taxi polish are on `main`.
 
 ## Next work
 
-1. Merge `cursor/massive-bugfix-pass-3272` after review; Mac smoke of
-   presentation fixes when convenient.
+1. Mac overview: noon + midnight on `cursor/day-night-readability-3272`, then merge.
 2. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153), ops shed (#152), GSE (#151), hangar (#150), fleet (#149)
    vs refs if not yet signed off.

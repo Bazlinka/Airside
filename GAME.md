@@ -1,19 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — bug audit fixes)
-- **Branch:** `cursor/bug-audit-fixes-aa9f` (off `main` after #145)
-- **Do next:** Review and merge the bug-audit PR; then resume AIR-001 v06 packaged
-  Mac follow-camera review if still open.
+- **Last updated:** 2026-09-08 (Cursor — prop / landing / taxiway presentation)
+- **Branch:** `cursor/prop-landing-taxiway-aa9f` (off `main` after #146)
+- **Do next:** Mac Play follow-camera check — props spin on hubs, takeoff continuous
+  with taxi-out, taxi paint on Taxiway A, then merge.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Dual commercials now share the A1/A2 corridor lock and hold short (release
-    corridor) when taxi-out finishes, so head-on taxi and Landing↔TaxiOut deadlocks
-    are gone; phase progress stalls while waiting on a reserved resource
-  - Player P / delay HUD focus any commercial at stand, not only `_flights[0]`
-  - Commercial visuals remap by `AircraftId` across respawn reordering
-  - `AircraftAssetTests` is Unity-only — excluded from `scripts/test-domain.sh`
-  - Pre-v06 ASCII FBX may still declare `UnitScaleFactor=1` (1% import) on fallback
-    paths; v06 and the exporter are correct
+  - glTF prop nodes still author verts at nacelle world positions; runtime
+    `RebakePropellerPivots` moves the Propeller transform to the hub (prefab path
+    already hub-local and is skipped)
+  - Prop RPM constants are true RPM (×6 → deg/s); high-RPM disc blur unchanged
+  - Takeoff starts at taxi-out end `(-24, 0.7)`; landing rolls out to the same point
+  - Taxi centreline/edges use identity yaw (kit authored along X); A1 exit pavement added
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
 
@@ -91,19 +89,16 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 after the 2026-09-08 bug audit (Unity EditMode
-  still required before merge — `scripts/test-unity.sh` on a Mac).
-- Batch F1 (AIR/BLD/MAT) and Batch F2 (vehicles/people) are on `main`.
-- Batch F3 setting modules (eucalyptus, scrub, fence/gate, forecourt, context terrain)
-  prefer authored kits with procedural fallbacks; operational geometry unchanged.
-- Batch F4: UI-ICO-005 system icons on Toolkit chrome; VFX-001…004 Resources/Art
-  prefabs; `AirsideReusableMotion` for ANM rates.
+- `scripts/test-domain.sh`: 118/118 (presentation prop/landing/taxiway pass is Mac
+  Play — `scripts/test-unity.sh` still required before merge).
+- Bug audit #146 is on `main`. AIR-001 v06 is on `main`.
+- Batch F1–F4 visual kits remain the preferred presentation path.
 
 ## Next work
 
-1. Merge **bug-audit fixes** (`cursor/bug-audit-fixes-aa9f`) after Unity EditMode.
-2. Review and merge **AIR-001 v06** if not already on `main`.
-3. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
-   art fidelity) — standing goal; no new economy / Companion.
-4. Optional: Editor Addressables groups for player catalog.
-5. No new economy systems; no Companion/CloudKit.
+1. Merge **prop / landing / taxiway** presentation (`cursor/prop-landing-taxiway-aa9f`)
+   after a Mac follow-camera check.
+2. Keep pushing first-playable **visual polish** — standing goal; no new economy /
+   Companion.
+3. Optional: Editor Addressables groups for player catalog.
+4. No new economy systems; no Companion/CloudKit.

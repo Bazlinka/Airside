@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Prop / landing / taxiway presentation.** Rebake glTF propeller pivots to the
+  nacelle hub so blades spin in place (not around the airframe); drive prop
+  rotation from true RPM (×6 deg/s). Continuize takeoff with taxi-out at (-24),
+  add ground-roll then climb, shallow the approach, and flare/roll out landing to
+  the A1 entry. Fix taxi centreline/edge kit yaw (identity — meshes are X-authored)
+  and pave the A1 runway exit plus stand lead-ins so aircraft are not on grass.
+  Evidence: `scripts/test-domain.sh` 118/118; needs Mac Play follow-camera verify.
+
 - **Bug audit (2026-09-08).** Dual commercials no longer occupy the same taxi
   segment (corridor lock + hold-short release + phase stall while blocked);
   priority crew / delay HUD focus any commercial at stand; departed flights

@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **CHR-001/002 character silhouette reference.** Add a 2048×819 sheet with
+  three distinct ramp roles and six passenger stand/walk/sit poses at a common
+  overview-readable scale. Exact generation evidence included; runtime v02
+  character kits unchanged.
+
 - **Turnaround service-set fidelity reference.** Add a 2048×812 two-frame
   daylight/dusk board matched to REF-003, covering AIR-001, VEH-001…004 and
   PRP-001 placement, connections and overview readability. Exact generation

@@ -35,6 +35,7 @@ accepts their visual direction.
 | WLD-004 | `docs/art/candidates/ref_kingscote_context_terrain_catalogue_v01.png` | Modular paddock berms, low hills, dunes, turquoise shallows and deep-water context around a protected blank operational zone | Generated · review required |
 | BLD-001…003 | `docs/art/candidates/ref_regional_airport_building_fidelity_board_v01.png` | Common-scale terminal, hangar and ops-shed silhouette/material target matched to REF-001 | Generated · review required |
 | AIR-001 / VEH-001…004 / PRP-001 | `docs/art/candidates/ref_turnaround_service_set_day_dusk_v01.png` | Same safe turnaround arrangement at daylight and soft dusk, with overview-readable service fleet and connections | Generated · review required |
+| CHR-001 / CHR-002 | `docs/art/candidates/ref_airside_character_silhouette_kit_v01.png` | Three ramp roles plus six passenger stand/walk/sit silhouettes at one overview-readable miniature scale | Generated · review required |
 
 BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and promoted into
 runtime art (see production assets below).

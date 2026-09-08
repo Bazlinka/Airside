@@ -29,7 +29,8 @@ namespace Airside.Presentation
             out Transform root,
             Func<string, string> rename = null,
             Func<string, Color?> colorFor = null,
-            Vector3 localPosition = default)
+            Vector3 localPosition = default,
+            bool preferProceduralMaterials = false)
         {
             root = null;
             if (!TryLoadKit(artRelativePath, out var kit) || kit.Meshes.Count == 0)
@@ -45,7 +46,8 @@ namespace Airside.Presentation
             {
                 var name = rename != null ? rename(entry.Name) : entry.Name;
                 var color = colorFor?.Invoke(entry.Name) ?? new Color(0.61f, 0.64f, 0.63f);
-                CreateMeshObject(name, entry.Mesh, color, holder, Vector3.zero, Quaternion.identity);
+                CreateMeshObject(name, entry.Mesh, color, holder, Vector3.zero, Quaternion.identity,
+                    preferProceduralMaterials);
             }
 
             root = holder;
@@ -86,7 +88,8 @@ namespace Airside.Presentation
             Color color,
             Transform parent,
             Vector3 position,
-            Quaternion rotation)
+            Quaternion rotation,
+            bool preferProcedural = false)
         {
             var go = new GameObject(name);
             var transform = go.transform;
@@ -106,7 +109,8 @@ namespace Airside.Presentation
             var kind = AirsideMaterialLibrary.InferFromMeshName(name);
             // Shared: kits build one renderer per mesh, and identical (colour, kind)
             // pairs are overwhelmingly common. Runtime tinting clones via .material.
-            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                color, kind, preferProcedural: preferProcedural);
             return transform;
         }
 
@@ -197,6 +201,10 @@ namespace Airside.Presentation
                 var mesh = new Mesh { name = name };
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
+                // Flat apron/runway paint quads are already outward-up; the centroid test
+                // flips them face-down and they vanish under backface culling (black voids).
+                if (!IsFlatDecalMesh(vertices))
+                    EnsureOutwardWinding(mesh, vertices);
                 mesh.RecalculateNormals();
                 mesh.SetUVs(0, BuildPlanarUvs(vertices));
                 mesh.RecalculateBounds();
@@ -207,6 +215,75 @@ namespace Airside.Presentation
             }
 
             return kit.Meshes.Count > 0 ? kit : null;
+        }
+
+        private static bool IsFlatDecalMesh(Vector3[] vertices)
+        {
+            if (vertices == null || vertices.Length == 0)
+                return false;
+            var min = vertices[0];
+            var max = vertices[0];
+            for (var i = 1; i < vertices.Length; i++)
+            {
+                min = Vector3.Min(min, vertices[i]);
+                max = Vector3.Max(max, vertices[i]);
+            }
+
+            var size = max - min;
+            // Ground markings / lead-ins are thin in Y relative to footprint.
+            return size.y < 0.18f && size.x * size.z > 0.25f;
+        }
+
+        /// <summary>
+        /// AIR-001 / BLD authored kits sometimes store inverted winding. With URP
+        /// backface culling that hollows fuselage roofs and tires from overview.
+        /// Flip triangles when a majority of face normals point toward the centroid.
+        /// </summary>
+        private static void EnsureOutwardWinding(Mesh mesh, Vector3[] vertices)
+        {
+            if (mesh == null || vertices == null || vertices.Length < 3)
+                return;
+
+            var tris = mesh.triangles;
+            if (tris == null || tris.Length < 3)
+                return;
+
+            var center = Vector3.zero;
+            for (var i = 0; i < vertices.Length; i++)
+                center += vertices[i];
+            center /= vertices.Length;
+
+            var outward = 0;
+            var inward = 0;
+            for (var i = 0; i < tris.Length; i += 3)
+            {
+                var i0 = tris[i];
+                var i1 = tris[i + 1];
+                var i2 = tris[i + 2];
+                if (i0 >= vertices.Length || i1 >= vertices.Length || i2 >= vertices.Length)
+                    continue;
+                var v0 = vertices[i0];
+                var v1 = vertices[i1];
+                var v2 = vertices[i2];
+                var normal = Vector3.Cross(v1 - v0, v2 - v0);
+                var centroid = (v0 + v1 + v2) * (1f / 3f);
+                if (Vector3.Dot(normal, centroid - center) >= 0f)
+                    outward++;
+                else
+                    inward++;
+            }
+
+            if (inward <= outward)
+                return;
+
+            for (var i = 0; i < tris.Length; i += 3)
+            {
+                var swap = tris[i];
+                tris[i] = tris[i + 1];
+                tris[i + 1] = swap;
+            }
+
+            mesh.SetTriangles(tris, 0);
         }
 
         /// <summary>

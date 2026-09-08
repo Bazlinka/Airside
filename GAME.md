@@ -1,21 +1,19 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — fussy visual bug-fix from Bailey Play notes)
-- **Branch:** `cursor/batch-f-fussy-bugfix-a8ff` (off `main` after #139–#143)
-- **Do next:** Bailey Mac Play verify this PR — black patches, night readability,
-  landing block soup. Prefer more fussy bug-fix over densify tips until premium read.
+- **Last updated:** 2026-09-08 (Cursor — midday polish pushed on `feature/pin-midday-polish`)
+- **Branch:** `feature/pin-midday-polish`
+- **Do next:** Bailey Mac Play review (`work/evidence/play-audit-2026-09-08/106-*.png`),
+  then merge when happy. Flip `DayCycle.PinMiddayForPolish` +
+  `Weather.PinClearForPolish` to `false` when night/weather work returns.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Opaque apron/stand stain decals removed; joints/slabs/E-W fringe gone; stand leads gated
-  - Night exposure/ambient/floods lifted; contact + aircraft shadows softened
-  - FBX albedo maps preserved in `ApplyPresentationMaterials`
-  - Aircraft wing loft already on `main` via #142 — not reordered here
+  - Midday + Clear still pinned for polish; days still advance
+  - Fuselage winding fix, livery skip, flat-decal winding skip (`ArtGltfLoader`)
+  - AircraftPartColor: white wings, teal fin/nacelles (REF-005); GPU Resident Drawer off
+  - Play 106: solid white+teal AIR-001; flat stand/runway decals OK; gear float /
+    stray fragments / dim grade / untextured sky blob still visible
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — Mac Play is the gate
-
---- It also left three empty `"<name> 2"` directories behind this run.
-  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** the high-wing vs mid-wing call above.
+- **Open question for Bailey:** merge as-is, or more visual polish later?
 
 ---
 

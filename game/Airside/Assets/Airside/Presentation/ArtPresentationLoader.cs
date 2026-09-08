@@ -73,7 +73,8 @@ namespace Airside.Presentation
             out Transform root,
             Func<string, string> rename = null,
             Func<string, Color?> colorFor = null,
-            Vector3 localPosition = default)
+            Vector3 localPosition = default,
+            bool preferProceduralMaterials = false)
         {
             var key = PrefabKeyFromArtPath(artRelativePath);
             if (!string.IsNullOrEmpty(key) && TryLoadPrefabAsset(key, out var prefab))
@@ -87,25 +88,28 @@ namespace Airside.Presentation
                     if (parent != null)
                         root.SetParent(parent, false);
                     root.localPosition = localPosition;
-                    ApplyPresentationMaterials(root, rename, colorFor);
+                    ApplyPresentationMaterials(root, rename, colorFor, preferProceduralMaterials);
                     return true;
                 }
             }
 
             return ArtGltfLoader.TryInstantiate(
-                artRelativePath, parent, out root, rename, colorFor, localPosition);
+                artRelativePath, parent, out root, rename, colorFor, localPosition,
+                preferProceduralMaterials);
         }
 
         /// <summary>
         /// After a Mac FBX bake, Resources prefabs keep ModelImporter default materials.
-        /// Re-apply the same per-mesh colour / SurfaceKind mapping the glTF path uses so
-        /// glass, metal and painted surfaces stay readable — but keep authored albedo maps
-        /// when the bake already shipped them (flat replace made airframes look like toys).
+        /// When <paramref name="colorFor"/> names a mesh colour (aircraft kits), always
+        /// rebind to the presentation palette so REF-005 white wing / teal nacelle reads
+        /// win over Unity's toy-blue defaults. Otherwise keep authored albedo maps, but
+        /// still force glass/rubber kinds (opaque Lit on windscreens/tires).
         /// </summary>
         private static void ApplyPresentationMaterials(
             Transform root,
             Func<string, string> rename,
-            Func<string, Color?> colorFor)
+            Func<string, Color?> colorFor,
+            bool preferProceduralMaterials = false)
         {
             if (root == null)
                 return;
@@ -122,20 +126,28 @@ namespace Airside.Presentation
                         renderer.gameObject.name = renamed;
                 }
 
-                // Preserve FBX/authored materials that already carry albedo maps.
+                var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
+                var namedColor = colorFor?.Invoke(originalName);
+                if (namedColor.HasValue)
+                {
+                    renderer.sharedMaterial = AirsideMaterialLibrary.Create(
+                        namedColor.Value, kind, preferProcedural: preferProceduralMaterials);
+                    continue;
+                }
+
+                // No palette override — preserve mapped FBX materials except glass/rubber.
                 var existing = renderer.sharedMaterial;
                 if (existing != null)
                 {
                     var hasMap = existing.mainTexture != null
                         || (existing.HasProperty("_BaseMap") && existing.GetTexture("_BaseMap") != null)
                         || (existing.HasProperty("_MainTex") && existing.GetTexture("_MainTex") != null);
-                    if (hasMap)
+                    if (hasMap && kind is not (AirsideMaterialLibrary.SurfaceKind.Glass
+                        or AirsideMaterialLibrary.SurfaceKind.Rubber))
                         continue;
                 }
 
-                var color = colorFor?.Invoke(originalName) ?? new Color(0.61f, 0.64f, 0.63f);
-                var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
-                // Shared — see ArtGltfLoader.CreateMeshObject.
+                var color = new Color(0.61f, 0.64f, 0.63f);
                 renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
             }
         }

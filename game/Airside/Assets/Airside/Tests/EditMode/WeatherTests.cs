@@ -17,6 +17,9 @@ namespace Airside.Tests
         [Test]
         public void Weather_HoldsForABlockThenCanChange()
         {
+            Assume.That(!Weather.PinClearForPolish,
+                "Weather variation is masked while PinClearForPolish is on.");
+
             var start = Weather.At(new SimulationTime(0));
             Assert.That(Weather.At(new SimulationTime(Weather.BlockSeconds - 1)), Is.EqualTo(start));
 
@@ -24,6 +27,15 @@ namespace Airside.Tests
             for (long block = 0; block < 60; block++)
                 seen.Add(Weather.At(new SimulationTime(block * Weather.BlockSeconds)));
             Assert.That(seen.Count, Is.GreaterThan(1), "weather should vary across the day");
+        }
+
+        [Test]
+        public void Weather_PinClearForPolish_StaysClear()
+        {
+            Assume.That(Weather.PinClearForPolish);
+
+            for (long block = 0; block < 40; block++)
+                Assert.That(Weather.At(new SimulationTime(block * Weather.BlockSeconds)), Is.EqualTo(WeatherKind.Clear));
         }
 
         [Test]

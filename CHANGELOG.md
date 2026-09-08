@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Pin midday + Clear for visual polish.** `DayCycle.PinMiddayForPolish` and
+  `Weather.PinClearForPolish` lock noon Clear skies so Play stays readable while
+  apron/aircraft bugs are fixed. AircraftPartColor matches REF-005 (white wings,
+  teal nacelles/fin); closer overview framing; softer wet darken + contact shadow;
+  glass/rubber still rebind when FBX maps exist. Flip both consts to restore
+  night/weather. Evidence: Mac Play.
+
 - **Fussy visual bug-fix (Bailey Play).** Remove opaque apron/stand stain decals
   (true transparent wear only); drop apron joint/slab and E/W fringe densify; gate
   stand-lead cubes when kit stops present; lift night exposure/ambient/fill/sun/

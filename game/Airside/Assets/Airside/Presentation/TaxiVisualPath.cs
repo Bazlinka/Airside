@@ -10,7 +10,7 @@ namespace Airside.Presentation
     /// </summary>
     public static class TaxiVisualPath
     {
-        public static Vector3 PositionAt(TaxiRoute route, float phaseProgress, bool reverse, float height = 0.7f)
+        public static Vector3 PositionAt(TaxiRoute route, float phaseProgress, bool reverse, float height = 0.85f)
         {
             var segmentCount = route.SegmentIds.Count;
             var scaled = Mathf.Clamp01(phaseProgress) * segmentCount;

@@ -10,16 +10,16 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        // Slightly terminal-biased so overview reads apron + buildings as one miniature.
-        private readonly Vector3 _overviewCenter = new(12f, 0f, 16f);
-        private const float OverviewDistance = 44f;
+        // Terminal-biased overview — closer so turboprop + stands read as one miniature (REF-001).
+        private readonly Vector3 _overviewCenter = new(14f, 0f, 14f);
+        private const float OverviewDistance = 36f;
         private const float OverviewFov = 48f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(12f, 0f, 16f);
-        private float _yaw = 138f;
-        private float _pitch = 38f;
+        private Vector3 _center = new(14f, 0f, 14f);
+        private float _yaw = 142f;
+        private float _pitch = 36f;
         private float _distance = OverviewDistance;
         private bool _following;
         private float _touchdownShake;
@@ -156,12 +156,12 @@ namespace Airside.Presentation
             var air = Mathf.Lerp(20f, 32f, Mathf.Clamp01(altitude / 10f));
             return phase switch
             {
-                AircraftPhase.AtStand => 14f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
-                AircraftPhase.Takeoff => Mathf.Lerp(18f, 34f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(28f, 36f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(26f, 16f, progress),
-                AircraftPhase.Departed => 36f,
+                AircraftPhase.AtStand => 8.5f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 11f,
+                AircraftPhase.Takeoff => Mathf.Lerp(16f, 32f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(24f, 32f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(22f, 13f, progress),
+                AircraftPhase.Departed => 34f,
                 _ => air
             };
         }
@@ -171,11 +171,11 @@ namespace Airside.Presentation
             var air = Mathf.Lerp(26f, 34f, Mathf.Clamp01(altitude / 10f));
             return phase switch
             {
-                AircraftPhase.AtStand => 22f,
+                AircraftPhase.AtStand => 24f,
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 24f,
                 AircraftPhase.Takeoff => Mathf.Lerp(28f, 36f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(34f, 26f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(32f, 20f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(30f, 24f, progress),
                 _ => air
             };
         }
@@ -265,7 +265,8 @@ namespace Airside.Presentation
             _following = false;
             _center = _overviewCenter;
             _distance = OverviewDistance;
-            _pitch = 38f;
+            _yaw = 142f;
+            _pitch = 36f;
             _yaw = 138f;
             _fov = OverviewFov;
         }

@@ -1411,12 +1411,12 @@ namespace Airside.Presentation
                 var pulse = 0.85f + 0.15f * Mathf.Sin(
                     Time.unscaledTime * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f
                     + child.GetInstanceID() * 0.01f);
-                child.localScale = new Vector3(0.35f * pulse * intensity, 0.35f * pulse * intensity, 0.7f);
+                child.localScale = new Vector3(0.22f * pulse * intensity, 0.22f * pulse * intensity, 0.45f);
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
                     var color = renderer.material.color;
-                    color.a = (0.12f + 0.1f * pulse) * intensity;
+                    color.a = (0.06f + 0.05f * pulse) * intensity;
                     SetRendererColor(renderer, color);
                 }
             }
@@ -1547,8 +1547,8 @@ namespace Airside.Presentation
             {
                 var flight = _simulation.Flights[index];
                 var color = index == 0
-                    ? new Color(0.12f, 0.43f, 0.76f)
-                    : new Color(0.18f, 0.55f, 0.48f);
+                    ? new Color(0.22f, 0.48f, 0.56f)   // Coastal teal — REF-005 nacelle/tail
+                    : new Color(0.55f, 0.42f, 0.28f);  // Warm sand accent second commercial
                 var livery = index == 0
                     ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
                     : "Textures/Decals/dc_livery_emu_air_v01.png";
@@ -1566,7 +1566,7 @@ namespace Airside.Presentation
                 var view = _groundTraffic[index];
                 var traffic = _simulation.GroundTraffic[index];
                 var point = traffic.Position;
-                var target = new Vector3(point.X, 0.7f, point.Z);
+                var target = new Vector3(point.X, 0.85f, point.Z);
                 var previous = view.position;
 
                 // A yield can snap the sim point back; do not lerp through released space.
@@ -2082,7 +2082,7 @@ namespace Airside.Presentation
                     var (renderer, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
                     if (renderer == null)
                         continue;
-                    var apply = wet ? rainWetness : (paved ? 0.06f : 0f);
+                    var apply = wet ? rainWetness : 0f;
                     AirsideMaterialLibrary.ApplyWetness(
                         renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
                 }
@@ -3602,9 +3602,10 @@ namespace Airside.Presentation
             var night = new Color(0.28f, 0.36f, 0.58f);
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3.2f); // strong near dawn/dusk
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.15f));
-            // Noon punch + readable night key so REF overview separation holds (post-F polish).
-            _sun.intensity = Mathf.Lerp(0.32f, 1.98f, daylight);
-            _sun.shadowStrength = Mathf.Lerp(0.38f, 0.82f, daylight);
+            // Soften noon contrast so white AIR-001 / apron midtones stay readable (REF-001).
+            _sun.intensity = Mathf.Lerp(0.32f, 1.45f, daylight);
+            // Soften noon contact so apron midtones and airframes stay readable.
+            _sun.shadowStrength = Mathf.Lerp(0.38f, 0.36f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
             var weather = _simulation.CurrentWeather;
@@ -3625,7 +3626,7 @@ namespace Airside.Presentation
                     new Color(0.25f, 0.32f, 0.55f),
                     Color.Lerp(new Color(0.55f, 0.65f, 0.85f), new Color(1f, 0.78f, 0.62f), warm * 0.55f),
                     daylight);
-                _fillLight.intensity = Mathf.Lerp(0.55f, 0.18f, daylight) + warm * 0.06f;
+                _fillLight.intensity = Mathf.Lerp(0.55f, 0.58f, daylight) + warm * 0.06f;
             }
 
             var ambientDay = new Color(0.52f, 0.58f, 0.64f);
@@ -3644,7 +3645,7 @@ namespace Airside.Presentation
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.05f, daylight) + warm * 0.08f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.22f, daylight) + warm * 0.08f;
             RenderSettings.subtractiveShadowColor = Color.Lerp(
                 new Color(0.22f, 0.28f, 0.4f),
                 new Color(0.4f, 0.28f, 0.28f),
@@ -4473,18 +4474,19 @@ namespace Airside.Presentation
         private static void BuildAirfield()
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
-            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
+            CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.82f),
                 "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
-            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.16f, 0.18f, 0.2f),
+            CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.34f, 0.36f, 0.38f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
-            CreateBlock("Runway shoulder N", new Vector3(0f, -0.1f, 4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
+            CreateBlock("Runway shoulder N", new Vector3(0f, -0.1f, 4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.34f, 0.36f, 0.34f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
-            CreateBlock("Runway shoulder S", new Vector3(0f, -0.1f, -4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
+            CreateBlock("Runway shoulder S", new Vector3(0f, -0.1f, -4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.34f, 0.36f, 0.34f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
-            CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
-            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.38f, 0.4f, 0.41f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
+            CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.40f, 0.42f, 0.44f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(5f, 0.7f));
+            // REF-001 mid-grey concrete — avoid chalk blowout under noon fill.
+            CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.66f, 0.67f, 0.68f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2.4f, 1.2f));
             // Skip apron joint/slab densify — MAT concrete + soft wet residual carry the read;
             // greybox joints read as scattered blocks from landing/follow cameras.
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
@@ -7452,21 +7454,38 @@ namespace Airside.Presentation
         {
             var root = new GameObject(name).transform;
             // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
-            // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
-            var usedArt = ArtPresentationLoader.TryInstantiate(
-                PreferArtKit(
-                    "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
+            // offset the kit by -0.7 so gear sits on the ground. Prefer StreamingAssets glTF
+            // first so AircraftPartColor (REF-005 white wing / teal nacelle) always binds —
+            // the Resources FBX bake can keep ModelImporter mats that read as toy blocks.
+            var kitPath = PreferArtKit(
+                "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf");
+            Func<string, Color?> colorFor = kitName => AircraftPartColor(kitName, accent);
+            var usedArt = ArtGltfLoader.TryInstantiate(
+                kitPath,
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => AircraftPartColor(kitName, accent),
-                localPosition: new Vector3(0f, -0.7f, 0f));
+                colorFor,
+                // v05 tire bottoms sit near y≈−0.03; root rides at 0.85 — settle gear on apron.
+                localPosition: new Vector3(0f, -0.82f, 0f),
+                preferProceduralMaterials: true);
+            if (!usedArt)
+            {
+                usedArt = ArtPresentationLoader.TryInstantiate(
+                    kitPath,
+                    root,
+                    out _,
+                    RenameAircraftPart,
+                    colorFor,
+                    localPosition: new Vector3(0f, -0.82f, 0f),
+                    preferProceduralMaterials: true);
+            }
 
             if (usedArt)
             {
@@ -7474,6 +7493,7 @@ namespace Airside.Presentation
                 NestLandingGearParts(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                SeatCabinWindowPanes(root);
             }
 
             if (!usedArt)
@@ -7736,21 +7756,26 @@ namespace Airside.Presentation
                 or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
                 or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
                 or "belly_fairing" or "cargo_door" or "door_frame_fwd" => new Color(0.93f, 0.95f, 0.97f),
-            "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
+            // REF-005: dark tinted panes — opaque so window cutouts do not hollow the hull.
+            // cabin_window_band is a through-fuselage slab in v05; paint it skin-white so it
+            // never reads as an interior floor when the camera peeks through the cockpit.
+            "cabin_window_band" => new Color(0.93f, 0.95f, 0.97f, 1f),
+            "cockpit" or "cockpit_loft" or "cabin_windows"
                 or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
                 or "cabin_window_6" or "cabin_window_7"
                 or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
                 or "cabin_window_r6" or "cabin_window_r7" or "cockpit_glare"
                 or "windscreen_c" or "windscreen_l" or "windscreen_r"
-                => new Color(0.18f, 0.35f, 0.48f, 0.42f),
+                => new Color(0.10f, 0.14f, 0.20f, 1f),
             "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5" or "cabin_window_frame_7"
                 or "cabin_window_frame_r1" or "cabin_window_frame_r2" or "cabin_window_frame_r3"
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
                 or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
+            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => accent,
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill" => new Color(0.72f, 0.74f, 0.78f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
+            // REF-005: white wing airframe; teal reserved for nacelles + fin/tailplane tips.
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
@@ -7758,16 +7783,17 @@ namespace Airside.Presentation
                 or "flap_left" or "flap_right" or "flap_fairing_l" or "flap_fairing_r"
                 or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
-                or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
-                or "tailplane_tip_l" or "tailplane_tip_r"
-                or "elevator_left" or "elevator_right" or "rudder" => accent,
+                or "tailplane" or "tailplane_tip_l" or "tailplane_tip_r"
+                or "elevator_left" or "elevator_right"
+                => new Color(0.93f, 0.95f, 0.97f),
+            "tail_fin" or "tail_fin_tip" or "dorsal_fin" or "rudder" => accent,
             "flap_track_l1" or "flap_track_l2" or "flap_track_r1" or "flap_track_r2"
                 => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
                 or "nacelle_left" or "nacelle_right"
                 or "intake_left" or "intake_right"
                 or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r"
-                => new Color(0.15f, 0.38f, 0.55f),
+                => Color.Lerp(new Color(0.12f, 0.32f, 0.42f), accent, 0.65f),
             "exhaust_left" or "exhaust_right" or "exhaust_stack_l" or "exhaust_stack_r"
                 => new Color(0.35f, 0.36f, 0.38f),
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"
@@ -7789,10 +7815,10 @@ namespace Airside.Presentation
             "gear_nose" or "gear_left" or "gear_right"
                 or "gear_oleo_nose" or "gear_oleo_left" or "gear_oleo_right"
                 or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
-                or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
-            "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
+                or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.42f, 0.43f, 0.46f),
+            "tire_nose" or "tire_left" or "tire_right" => new Color(0.08f, 0.08f, 0.09f),
             "rim_nose" or "rim_left" or "rim_right"
-                or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.55f, 0.56f, 0.58f),
+                or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.72f, 0.73f, 0.75f),
             "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
             "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
@@ -7930,6 +7956,34 @@ namespace Airside.Presentation
             NestUnderProp(gearL, rimL, "Rim");
             NestUnderProp(gearR, rimR, "Rim");
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
+        }
+
+        /// <summary>
+        /// v05 cabin window panes sit in hull cutouts; nudge them slightly outward so
+        /// overview/follow never reads empty dark holes through the AIR-001 skin.
+        /// </summary>
+        private static void SeatCabinWindowPanes(Transform aircraft)
+        {
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft)
+                    continue;
+                var n = child.name;
+                if (n.StartsWith("Cabin window frame", StringComparison.Ordinal)
+                    || n == "Cabin window band"
+                    || n == "Cabin windows")
+                    continue;
+                if (n.StartsWith("Cabin window R", StringComparison.Ordinal))
+                    child.localPosition += new Vector3(0.06f, 0f, 0f);
+                else if (n.StartsWith("Cabin window", StringComparison.Ordinal))
+                    child.localPosition += new Vector3(-0.06f, 0f, 0f);
+                else if (n is "Windscreen L")
+                    child.localPosition += new Vector3(-0.03f, 0.02f, 0.02f);
+                else if (n is "Windscreen R")
+                    child.localPosition += new Vector3(0.03f, 0.02f, 0.02f);
+                else if (n is "Windscreen C" or "Cockpit" or "Cockpit glare")
+                    child.localPosition += new Vector3(0f, 0.02f, 0.03f);
+            }
         }
 
         /// <summary>
@@ -8134,7 +8188,7 @@ namespace Airside.Presentation
                 return;
             var color = renderer.material.color;
             // Softer contact so realtime URP shadows remain the primary read.
-            color.a = Mathf.Lerp(0.28f, 0.04f, t);
+            color.a = Mathf.Lerp(0.16f, 0.03f, t);
             SetRendererColor(renderer, color);
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
@@ -8155,29 +8209,12 @@ namespace Airside.Presentation
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
         {
-            if (string.IsNullOrEmpty(artRelativePath))
-                return;
-            var texture = TryLoadArtTexture(artRelativePath);
-            if (texture == null)
-                return;
-
-            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
-            {
-                var n = child.name;
-                // Cover segmented turboprop fuselage parts (v04 + lofted cabin rings / nose rings).
-                if (n != "Fuselage" && n != "FuselageMid" && n != "Fuselage mid" && n != "FuselageAft" && n != "Fuselage aft"
-                    && n != "Nose"
-                    && n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("tail_cone", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-                var renderer = child.GetComponent<Renderer>();
-                if (renderer == null)
-                    continue;
-                renderer.material.mainTexture = texture;
-                renderer.material.mainTextureScale = new Vector2(1f, 1f);
-            }
+            // Geometric livery_stripe / livery_tail_sweep already carry AircraftPartColor(accent).
+            // Batch B PNG liveries are mostly transparent; assigning them as fuselage
+            // mainTexture paints black/transparent holes through the white AIR-001 hull
+            // (REF-005 expects opaque white skin + teal accents only).
+            _ = aircraft;
+            _ = artRelativePath;
         }
 
         private static void ParentBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
@@ -8789,7 +8826,10 @@ namespace Airside.Presentation
             Vector2? surfaceTextureTiling = null,
             string[] surfaceMeshNames = null)
         {
-            if (ArtPresentationLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
+            // Prefer StreamingAssets glTF (BLD-001 v05) over Resources FBX so terminal
+            // mullions/glass read; FBX bake kept as fallback when glTF is missing.
+            if (ArtGltfLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor)
+                || ArtPresentationLoader.TryInstantiate(artRelativePath, null, out root, rename: null, colorFor: colorFor))
             {
                 root.position = worldPosition;
                 if (!string.IsNullOrEmpty(glassTextureRelativePath))
@@ -9466,19 +9506,17 @@ namespace Airside.Presentation
             if (!hasBinKit)
                 PlaceFodBin("FOD bin C", new Vector3(-24f, 0f, 16.5f), 90f);
 
-            // Stand lead-in / box paint — skip when markings kit already placed stand stops
-            // (avoid double-painted bays next to authored threshold/TDZ).
-            if (GameObject.Find("stand_stop_a") == null
-                && GameObject.Find("stand_stop_b") == null
-                && GameObject.Find("stand_stop_c") == null)
+            // Stand bay boxes + yellow lead-ins (REF-001) — always paint; kit stops alone are too thin.
+            var leadYellow = new Color(0.95f, 0.82f, 0.12f);
+            foreach (var z in new[] { 14f, 20f, 26f })
             {
-                foreach (var z in new[] { 14f, 20f, 26f })
-                {
-                    CreateBlock($"Stand box front {z}", new Vector3(20f, 0.04f, z - 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
-                    CreateBlock($"Stand box back {z}", new Vector3(20f, 0.04f, z + 2.6f), new Vector3(10f, 0.02f, 0.12f), Color.white);
-                    CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
-                    CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.04f, z), new Vector3(0.12f, 0.02f, 5.2f), Color.white);
-                }
+                CreateBlock($"Stand box front {z}", new Vector3(20f, 0.045f, z - 2.6f), new Vector3(10f, 0.02f, 0.14f), Color.white);
+                CreateBlock($"Stand box back {z}", new Vector3(20f, 0.045f, z + 2.6f), new Vector3(10f, 0.02f, 0.14f), Color.white);
+                CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.045f, z), new Vector3(0.14f, 0.02f, 5.2f), Color.white);
+                CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.045f, z), new Vector3(0.14f, 0.02f, 5.2f), Color.white);
+                // Lead-in from taxi edge up to the stand stop bar.
+                CreateBlock($"Stand lead {z}", new Vector3(14f, 0.046f, (9.4f + z) * 0.5f),
+                    new Vector3(0.22f, 0.02f, Mathf.Abs(z - 9.4f)), leadYellow);
             }
         }
 
@@ -9826,14 +9864,14 @@ namespace Airside.Presentation
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(new Vector3(-52f, 14f, 0f), new Vector3(-35f, 2f, 0f), progress),
-                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2f, 0f), new Vector3(-24f, 0.7f, 0f), progress),
+                AircraftPhase.Landing => Smooth(new Vector3(-35f, 2.2f, 0f), new Vector3(-24f, 0.85f, 0f), progress),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, progress, false),
-                AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
-                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), progress),
+                AircraftPhase.AtStand => new Vector3(17f, 0.85f, standZ),
+                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.85f, standZ), new Vector3(12f, 0.85f, standZ - 2f), progress),
                 AircraftPhase.TaxiOut => progress < 0.15f
-                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), progress / 0.15f)
+                    ? Smooth(new Vector3(12f, 0.85f, standZ - 2f), new Vector3(17f, 0.85f, standZ), progress / 0.15f)
                     : PositionAlongTaxiRoute(taxiRoute, (progress - 0.15f) / 0.85f, true),
-                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.7f, 0f), new Vector3(48f, 12f, 0f), progress),
+                AircraftPhase.Takeoff => Smooth(new Vector3(28f, 0.85f, 0f), new Vector3(48f, 12f, 0f), progress),
                 _ => new Vector3(52f, 15f, 0f)
             };
         }

@@ -23,8 +23,18 @@ namespace Airside.Simulation
     {
         public const long BlockSeconds = 300; // a new sky every five simulated minutes
 
+        /// <summary>
+        /// Polish lock — keep Clear skies so wet/gloom crush does not hide apron and
+        /// aircraft while Presentation bugs are fixed. Flip to <c>false</c> with
+        /// <see cref="DayCycle.PinMiddayForPolish"/> when weather work returns.
+        /// </summary>
+        public const bool PinClearForPolish = true;
+
         public static WeatherKind At(SimulationTime now)
         {
+            if (PinClearForPolish)
+                return WeatherKind.Clear;
+
             var block = (ulong)(now.ElapsedSeconds / BlockSeconds);
             // xorshift-style hash of the block index — stable, well spread.
             var h = (uint)(block * 2654435761UL);

@@ -197,8 +197,8 @@ namespace Airside.Presentation
 
             // Day: slight lift; dusk: warmer filter; night: readable apron + flood pools
             // (was crushed too dark — midtones and aircraft disappeared).
-            var exposure = Mathf.Lerp(-0.28f, 0.18f, daylight) + warm * 0.22f - weatherGloom * 0.35f;
-            var contrast = Mathf.Lerp(7f, 5.5f, daylight) + weatherGloom * 4.2f;
+            var exposure = Mathf.Lerp(-0.12f, 0.16f, daylight) + warm * 0.18f - weatherGloom * 0.35f;
+            var contrast = Mathf.Lerp(6f, 3.8f, daylight) + weatherGloom * 4.2f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.74f, 0.52f), warm);
             var nightFilter = new Color(0.7f, 0.76f, 1f);
             var stormFilter = new Color(0.68f, 0.74f, 0.84f);
@@ -287,7 +287,7 @@ namespace Airside.Presentation
             // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
             else if (daylight > 0.75f && warm < 0.2f)
             {
-                _color.contrast.Override(contrast + 2.2f);
+                _color.contrast.Override(contrast + 1.0f);
                 _color.saturation.Override(Mathf.Lerp(12f, 3.5f, daylight) - weatherGloom * 8f + 1.5f);
             }
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).

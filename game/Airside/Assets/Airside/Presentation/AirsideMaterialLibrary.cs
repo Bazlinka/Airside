@@ -235,15 +235,16 @@ namespace Airside.Presentation
             Color color,
             SurfaceKind kind = SurfaceKind.Default,
             Texture2D albedo = null,
-            Vector2? tiling = null)
+            Vector2? tiling = null,
+            bool preferProcedural = false)
         {
-            var key = new SharedMaterialKey(color, kind, albedo, tiling);
+            var key = new SharedMaterialKey(color, kind, albedo, tiling, preferProcedural);
             // Play-mode exit destroys runtime materials while the static cache survives a
             // disabled domain reload, so a hit can be a destroyed object — rebuild those.
             if (SharedMaterials.TryGetValue(key, out var cached) && cached != null)
                 return cached;
 
-            var material = Create(color, kind, albedo, tiling);
+            var material = Create(color, kind, albedo, tiling, preferProcedural);
             SharedMaterials[key] = material;
             return material;
         }
@@ -255,14 +256,16 @@ namespace Airside.Presentation
             private readonly int _albedoId;
             private readonly Vector2 _tiling;
             private readonly bool _hasTiling;
+            private readonly bool _preferProcedural;
 
-            public SharedMaterialKey(Color color, SurfaceKind kind, Texture2D albedo, Vector2? tiling)
+            public SharedMaterialKey(Color color, SurfaceKind kind, Texture2D albedo, Vector2? tiling, bool preferProcedural = false)
             {
                 _color = color;
                 _kind = kind;
                 _albedoId = albedo != null ? albedo.GetInstanceID() : 0;
                 _hasTiling = tiling.HasValue;
                 _tiling = tiling ?? Vector2.zero;
+                _preferProcedural = preferProcedural;
             }
 
             // Component-wise Equals, not == : Unity's Color and Vector2 equality operators
@@ -271,6 +274,7 @@ namespace Airside.Presentation
                 _kind == other._kind
                 && _albedoId == other._albedoId
                 && _hasTiling == other._hasTiling
+                && _preferProcedural == other._preferProcedural
                 && _tiling.x.Equals(other._tiling.x)
                 && _tiling.y.Equals(other._tiling.y)
                 && _color.r.Equals(other._color.r)
@@ -294,6 +298,7 @@ namespace Airside.Presentation
                     hash = hash * 31 + _tiling.x.GetHashCode();
                     hash = hash * 31 + _tiling.y.GetHashCode();
                     hash = hash * 31 + (_hasTiling ? 1 : 0);
+                    hash = hash * 31 + (_preferProcedural ? 1 : 0);
                     return hash;
                 }
             }
@@ -303,17 +308,23 @@ namespace Airside.Presentation
             Color color,
             SurfaceKind kind = SurfaceKind.Default,
             Texture2D albedo = null,
-            Vector2? tiling = null)
+            Vector2? tiling = null,
+            bool preferProcedural = false)
         {
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
             // Opaque RGB callers (terminal glass colors) still need real alpha panes.
-            if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
+            // Aircraft preferProcedural keeps authored window alphas (opaque dark REF panes).
+            if (!preferProcedural
+                && (kind == SurfaceKind.Glass || kind == SurfaceKind.Water)
+                && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
 
             // Batch F1 MAT-001 — prefer inspectable authored materials when present.
-            if (TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
+            // Aircraft kits pass preferProcedural so REF palette colours are not replaced by
+            // glass/metal authored mats that hollow out the fuselage.
+            if (!preferProcedural && TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
                 return authoredInstance;
 
             Shader shader;
@@ -365,39 +376,54 @@ namespace Airside.Presentation
                 material.mainTexture = albedo;
                 material.mainTextureScale = resolvedTiling;
             }
-            else if (AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo) && authoredAlbedo != null)
+            else if (!preferProcedural
+                     && AuthoredAlbedo.TryGetValue(kind, out var authoredAlbedo)
+                     && authoredAlbedo != null)
             {
                 material.mainTexture = authoredAlbedo;
                 material.mainTextureScale = resolvedTiling;
             }
 
-            var normal = ResolveNormal(kind);
-            if (kind != SurfaceKind.UnlitSky && normal != null && material.HasProperty("_BumpMap"))
+            // Flat REF palette on aircraft — skip noisy skin/glass maps that fragment the hull.
+            if (!preferProcedural)
             {
-                material.SetTexture("_BumpMap", normal);
-                material.EnableKeyword("_NORMALMAP");
-                if (material.HasProperty("_BumpScale"))
-                    material.SetFloat("_BumpScale", profile.BumpScale);
-                material.SetTextureScale("_BumpMap", resolvedTiling);
+                var normal = ResolveNormal(kind);
+                if (kind != SurfaceKind.UnlitSky && normal != null && material.HasProperty("_BumpMap"))
+                {
+                    material.SetTexture("_BumpMap", normal);
+                    material.EnableKeyword("_NORMALMAP");
+                    if (material.HasProperty("_BumpScale"))
+                        material.SetFloat("_BumpScale", profile.BumpScale);
+                    material.SetTextureScale("_BumpMap", resolvedTiling);
+                }
+
+                var ao = ResolveAo(kind);
+                if (kind != SurfaceKind.UnlitSky && ao != null && material.HasProperty("_OcclusionMap"))
+                {
+                    material.SetTexture("_OcclusionMap", ao);
+                    if (material.HasProperty("_OcclusionStrength"))
+                        material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
+                    material.SetTextureScale("_OcclusionMap", resolvedTiling * 0.5f);
+                }
+
+                if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null
+                    && material.HasProperty("_MetallicGlossMap"))
+                {
+                    material.SetTexture("_MetallicGlossMap", mask);
+                    material.EnableKeyword("_METALLICSPECGLOSSMAP");
+                    material.SetTextureScale("_MetallicGlossMap", resolvedTiling);
+                }
+            }
+            else if (material.HasProperty("_Cull"))
+            {
+                // Belt-and-suspenders for inverted authored kits until winding is trusted.
+                material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
             }
 
-            var ao = ResolveAo(kind);
-            if (kind != SurfaceKind.UnlitSky && ao != null && material.HasProperty("_OcclusionMap"))
-            {
-                material.SetTexture("_OcclusionMap", ao);
-                if (material.HasProperty("_OcclusionStrength"))
-                    material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
-                material.SetTextureScale("_OcclusionMap", resolvedTiling * 0.5f);
-            }
-
-            if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null && material.HasProperty("_MetallicGlossMap"))
-            {
-                material.SetTexture("_MetallicGlossMap", mask);
-                material.EnableKeyword("_METALLICSPECGLOSSMAP");
-                material.SetTextureScale("_MetallicGlossMap", resolvedTiling);
-            }
-
-            if (profile.Transparent || color.a < 0.99f)
+            // Opaque dark aircraft glazing (preferProcedural + full alpha) stays Opaque Lit.
+            var transparent = color.a < 0.99f
+                || (profile.Transparent && !(preferProcedural && color.a >= 0.99f));
+            if (transparent)
                 ApplyTransparent(material);
 
             return material;
@@ -440,9 +466,9 @@ namespace Airside.Presentation
             if (material == null)
                 return;
             wetness01 = Mathf.Clamp01(wetness01);
-            // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
-            var wetTint = new Color(0.02f, 0.05f, 0.1f, 0f);
-            var wetColor = Color.Lerp(dryColor, dryColor * 0.28f + wetTint, wetness01);
+            // Cool puddle tint + modest darken — keep apron readable (0.28 crushed pavement to ink).
+            var wetTint = new Color(0.04f, 0.07f, 0.12f, 0f);
+            var wetColor = Color.Lerp(dryColor, dryColor * 0.58f + wetTint, wetness01);
             wetColor.a = dryColor.a;
             material.color = wetColor;
             // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.

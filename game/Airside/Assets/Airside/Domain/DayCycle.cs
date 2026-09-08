@@ -21,6 +21,15 @@ namespace Airside.Domain
         public const long DaySeconds = 1200; // one simulated day every 20 minutes
         private const double StartHour = 8.0;
 
+        /// <summary>
+        /// Polish lock — pin local time to midday so Play stays in full daylight while
+        /// apron/aircraft presentation bugs are fixed. Days still advance for finance.
+        /// Flip to <c>false</c> to restore dawn / day / dusk / night.
+        /// </summary>
+        public const bool PinMiddayForPolish = true;
+
+        private const double MiddayFraction = 12.0 / 24.0;
+
         public DayCycle(SimulationTime now, long daySeconds = DaySeconds)
         {
             if (daySeconds <= 0)
@@ -29,7 +38,8 @@ namespace Airside.Domain
             DaysElapsed = (int)((now.ElapsedSeconds + StartHour / 24.0 * daySeconds) / daySeconds);
 
             var raw = (now.ElapsedSeconds + StartHour / 24.0 * daySeconds) / daySeconds;
-            Fraction = raw - Math.Floor(raw);
+            var natural = raw - Math.Floor(raw);
+            Fraction = PinMiddayForPolish ? MiddayFraction : natural;
         }
 
         /// <summary>0 at local midnight, 0.5 at midday, wrapping at 1.</summary>

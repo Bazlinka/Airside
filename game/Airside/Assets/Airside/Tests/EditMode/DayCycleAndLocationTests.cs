@@ -16,6 +16,9 @@ namespace Airside.Tests
         [Test]
         public void DayCycle_StartsAtEightInTheMorningOnDayOne()
         {
+            Assume.That(!DayCycle.PinMiddayForPolish,
+                "Natural start hour is masked while PinMiddayForPolish is on.");
+
             var cycle = new DayCycle(new SimulationTime(0));
 
             Assert.That(cycle.Hour, Is.EqualTo(8));
@@ -25,8 +28,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void DayCycle_PinMiddayForPolish_KeepsFullDaylightAtAnyElapsedTime()
+        {
+            Assume.That(DayCycle.PinMiddayForPolish);
+
+            var midnight = new DayCycle(At(0.0));
+            var dusk = new DayCycle(At(19.0));
+            var start = new DayCycle(new SimulationTime(0));
+
+            Assert.That(midnight.Hour, Is.EqualTo(12));
+            Assert.That(dusk.Hour, Is.EqualTo(12));
+            Assert.That(start.Hour, Is.EqualTo(12));
+            Assert.That(midnight.Daylight, Is.EqualTo(1.0).Within(0.001));
+            Assert.That(midnight.Phase, Is.EqualTo(DayPhase.Day));
+            Assert.That(start.DaysElapsed, Is.EqualTo(0), "days still advance from the natural clock");
+        }
+
+        [Test]
         public void DayCycle_ReachesMiddayMiddayAndMidnightAcrossOneSimulatedDay()
         {
+            Assume.That(!DayCycle.PinMiddayForPolish,
+                "Natural midnight is masked while PinMiddayForPolish is on.");
+
             var midday = new DayCycle(At(12.0));
             var midnight = new DayCycle(At(0.0));
 
@@ -43,12 +66,18 @@ namespace Airside.Tests
             var afterTwoDays = new DayCycle(new SimulationTime(DayCycle.DaySeconds * 2));
 
             Assert.That(afterTwoDays.DaysElapsed, Is.EqualTo(2));
-            Assert.That(afterTwoDays.Hour, Is.EqualTo(8), "same local time as the start, two days on");
+            if (DayCycle.PinMiddayForPolish)
+                Assert.That(afterTwoDays.Hour, Is.EqualTo(12));
+            else
+                Assert.That(afterTwoDays.Hour, Is.EqualTo(8), "same local time as the start, two days on");
         }
 
         [Test]
         public void DayCycle_MarksDawnAndDusk()
         {
+            Assume.That(!DayCycle.PinMiddayForPolish,
+                "Dawn/dusk phases are masked while PinMiddayForPolish is on.");
+
             var dawn = new DayCycle(At(6.0));
             var dusk = new DayCycle(At(19.0));
 
@@ -75,11 +104,13 @@ namespace Airside.Tests
                 clock, new SeededRandomSource(1), new ReservationTable(), AirportLocation.PortLincoln);
 
             Assert.That(simulation.Location, Is.EqualTo(AirportLocation.PortLincoln));
-            Assert.That(simulation.TimeOfDay.Hour, Is.EqualTo(8));
+            Assert.That(simulation.TimeOfDay.Hour,
+                Is.EqualTo(DayCycle.PinMiddayForPolish ? 12 : 8));
 
             clock.Advance(DayCycle.DaySeconds / 2);
             simulation.Update();
-            Assert.That(simulation.TimeOfDay.Hour, Is.EqualTo(20));
+            Assert.That(simulation.TimeOfDay.Hour,
+                Is.EqualTo(DayCycle.PinMiddayForPolish ? 12 : 20));
         }
     }
 }

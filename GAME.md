@@ -12,6 +12,14 @@
     `scripts/generate-air-001-v05.py`. Hard-coding a y is exactly how the flaps,
     ailerons, spoilers, tracks, fairings and wicks ended up floating under the wing.
   - `m_BrgStripping: 1` is **StripAll**, not KeepAll. KeepAll is `2`.
+  - **Correction to the note added in af1cf0e:** the six pinned-off post effects
+    turning up `active: 1` was *not* a human edit. Unity re-serialises
+    `DefaultVolumeProfile.asset` with all six active when it migrates render
+    pipeline settings — reproduced 2026-09-08, when a URP settings migration
+    flipped all six in a single run. Ordinary imports leave them alone, which is
+    why two earlier runs looked clean. Expect it again on the next Unity/URP
+    upgrade: re-assert `active: 0` and re-run. A guard EditMode test asserting the
+    six are inactive is the real fix and is **not yet written**.
   - Materials from `AirsideMaterialLibrary.CreateShared` are **shared** — never
     mutate one; per-object tinting goes through `Renderer.material`, which clones.
   - The art generators need `assimp` for the best FBX output but now fall back to
@@ -25,6 +33,12 @@
     compares/frame), item 9 (emit `material:` per mesh from the generators), item 10
     (replace the regex glTF parser). Plus ~9 per-frame `EnableKeyword("_EMISSION")`
     sites, and `door_frame_fwd` being a solid box that swallows `door_fwd`.
+  - `scripts/sync-art-streaming-assets.sh` starts with `rm -rf` on the whole
+    `StreamingAssets/Airside/Art` tree, which deletes the `.meta` files committed
+    in #141 along with the art. It currently looks harmless because Unity's Library
+    remembers path→GUID and restores them, but on a fresh clone or after clearing
+    Library it will mint 225 new GUIDs. It should delete art files and leave `.meta`
+    alone. It also left three empty `"<name> 2"` directories behind this run.
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** the high-wing vs mid-wing call above.
 

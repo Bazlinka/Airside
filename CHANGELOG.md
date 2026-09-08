@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):
+  dual-pitch roof, gable ends, denser porch/corrugation, antenna/AC silhouette;
+  night-glow / glass / door names retained; authored_v01+ older kits remain
+  fallbacks. Evidence: `scripts/test-domain.sh` 118/118; Mac overview vs REF-001
+  pending.
+
 - **Hangar BLD-002 v05.** Prefer `mdl_hangar_small_v05` (193 meshes): dual-pitch
   roof, gable ends, denser corrugation, office lean; sliding-door motion names
   retained; authored_v01+ older kits remain fallbacks. Evidence:

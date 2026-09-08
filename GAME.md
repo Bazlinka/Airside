@@ -1,16 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — stand stairs / GSE v03)
-- **Branch:** `cursor/stand-stairs-gse-v02-3272` (off `main`)
+- **Last updated:** 2026-09-08 (Cursor — stand stairs / GSE v03; rebased on #150)
+- **Branch:** `cursor/stand-stairs-gse-v02-3272` (off `main` after #150)
 - **Do next:** Mac Unity overview + follow-camera check of stand stairs, GPU,
   belt loader and chocks vs REF-003 (tubular rails, Safety Yellow / Coastal Blue,
-  scale vs turboprop at stand). Then merge if the read holds. Optional next polish:
-  ops shed BLD-003 v05 (hangar BLD-002 v05 may still be on its own draft branch).
+  scale vs turboprop at stand). Then merge if the read holds. Parallel polish:
+  ops shed BLD-003 v05 (`cursor/ops-shed-bld-003-v05-3272` / #152).
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - PreferArtKit: service kit `v03` → authored → v02 → v01; stairs prefab
     `mdl_passenger_stairs_v02` → v01
   - StreamingAssets copy-only for new kits (full sync wipes StreamingAssets metas)
+  - Hangar BLD-002 v05 is on `main` (#150)
   - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -91,17 +92,17 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 - `scripts/test-domain.sh`: 118/118 after PRP-001 v03 stand GSE (Unity EditMode /
   Mac overview+follow vs REF-003 still required before merge).
+- Hangar BLD-002 v05 is on `main` (#150).
 - Vehicle fleet v06 / landside car v02 is on `main` (#149).
-- #146 bug audit and #147 prop/landing/taxiway fixes are on `main`.
+- #146 bug audit and #147/#148 flight/taxi polish are on `main`.
 
 ## Next work
 
 1. Mac overview + follow-camera: stand stairs / GPU / belt / chocks vs REF-003 on
    branch `cursor/stand-stairs-gse-v02-3272`, then merge.
-2. Mac overview: landside cars + turnaround fleet vs REF-003/005 if not yet done
-   after #149.
+2. Mac overview: hangar (#150) and landside/fleet (#149) vs refs if not yet signed
+   off; ops shed BLD-003 v05 draft #152.
 3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
-   Companion. Candidate next: ops shed BLD-003 v05 (or hangar BLD-002 v05 if still
-   open).
+   Companion.
 4. Optional: Editor Addressables groups for player catalog.
 5. No new economy systems; no Companion/CloudKit.

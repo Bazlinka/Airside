@@ -21,6 +21,7 @@ namespace Airside.Editor
             "Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx",
             "Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_authored_v01.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_authored_v01.fbx",
+            "Assets/Airside/Art/Models/Buildings/mdl_hangar_small_v05.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_hangar_small_authored_v01.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_operations_shed_authored_v01.fbx",
             "Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v06.fbx",

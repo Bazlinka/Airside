@@ -236,7 +236,7 @@ references but **does not substitute a flat image for a 3D object**.
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
 | BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F1 authored small regional terminal: pitched roof, glazed airside frontage, canopy, service side, rooftop plant, soft end caps (~202 meshes) | Integrated (v05 preferred; Mac FBX bake in Resources; Bailey playtest pending) |
-| BLD-002 | `Models/Buildings/mdl_hangar_small_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Corrugated hangar with door panels/bars, tracks, skylights, crane trolley, buttresses, office lean | Integrated (authored preferred) |
+| BLD-002 | `Models/Buildings/mdl_hangar_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | REF-001 pitched corrugated hangar: dual-pitch roof, gable ends, sliding door panels/bars/tracks, skylights, office lean (193 meshes) | Integrated (v05 preferred; Mac FBX bake / overview pending) |
 | BLD-003 | `Models/Buildings/mdl_operations_shed_authored_v01.gltf` (+ `.fbx`; fallbacks v04→…→v01) | Compact service/crew building with porch, antenna, AC units | Integrated (authored preferred) |
 | VEH-001 | `Models/Vehicles/mdl_fuel_truck_small_v06.gltf` (+ `.fbx`; fallbacks v05→authored→v04→…→v01) | REF-003 fidelity jump: denser oval tank, cab fairing, mid axle, hose pivot, Safety Yellow (103 meshes) | Integrated (v06 preferred; Mac FBX bake / Play pending) |
 | VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v06.gltf` (+ `.fbx`; fallbacks v05→authored→v04→…→v01) | Open ROPS tug + three carts with Coastal Blue cargo crates and hitch pivots (108 meshes) | Integrated (v06 preferred; Mac FBX bake / Play pending) |
@@ -296,7 +296,7 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
-| F1 hero read | AIR-001 v06, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 v06 integrated candidate**; **BLD-001 v05 + MAT-001 Integrated** (Bailey playtest pending on packaged Mac build) |
+| F1 hero read | AIR-001 v06, BLD-001 v05, BLD-002 v05, MAT-001 | Authored turboprop, terminal and hangar with a coherent URP material family | **AIR-001 v06 + BLD-001 v05 Integrated**; **BLD-002 v05 preferred** (Mac overview pending); MAT-001 Integrated |
 | F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002; landside `mdl_parked_car_v02` | Replace procedural turnaround vehicles and block people where activity must read; landside cars prefer lofted v02 | **Integrated** — fleet v06 / pushback v03 / car v02 preferred (Mac overview vs REF-003 pending) |
 | F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **Integrated** (PR #137 pending merge) |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | **Integrated** — UI-ICO-005 + VFX prefabs + `AirsideReusableMotion` |

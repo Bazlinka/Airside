@@ -1,18 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Batch F4 motion/VFX/UI; rebased onto merged F3)
-- **Branch:** `cursor/batch-f4-motion-vfx-ui-a8ff`
-- **Do next:** Bailey merge F4 (#138) when ready (StreamingAssets glTF /
-  PNG path; no Mac bake required). Then keep pushing first-playable visual polish
-  (lighting, presentation bugs, art fidelity) — standing goal / #139.
-- **In progress / half-done:** none
+- **Last updated:** 2026-09-08 (Cursor — post-F polish tip 16; merged onto main w/ F3+F4)
+- **Branch:** `cursor/batch-f-visual-polish-a8ff`
+- **Do next:** Bailey merge polish (#139) when ready. Standing goal continues:
+  Mac Play verify premium miniature read; more polish if needed.
+- **In progress / half-done:** none — tip 16 shipped; conflicts with merged F3/F4 resolved
 - **Watch for / assumptions:**
-  - F3 is on `main`; F4 Toolkit chrome uses UI-ICO-005; text fallbacks remain if icons missing
-  - Touchdown smoke prefers `vfx_touchdown_smoke_v01`; dense rain stays procedural
-  - `AirsideReusableMotion` owns prop RPM table — do not re-inline rates
-  - Operational runway/taxi/stand geometry unchanged
+  - F3 (#137) + F4 (#138) are on `main`; this PR is presentation polish only
+  - Tip 16: Toolkit primary panels light chrome; one silhouette belt loader; flood/edge/taxi/obst
+    silhouette fixtures; ALS 5 stations when kit; FOV init 48°; dollies×2; coast Hz centralized
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge F4 when happy; continue visual polish
+- **Open question for Bailey:** none — merge #139 when happy; resume polish after Mac Play look
 
 ---
 
@@ -97,8 +95,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **Batch F4** (#138) when ready.
+1. Merge **visual polish** (#139) when ready.
 2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
-   art fidelity) — standing goal / #139; no new economy / Companion.
+   art fidelity) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.
 4. No new economy systems; no Companion/CloudKit.

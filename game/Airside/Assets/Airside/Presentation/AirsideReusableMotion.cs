@@ -35,6 +35,39 @@ namespace Airside.Presentation
         public const float VehicleWheelRpmTaxi = 180f;
         public const float VehicleWheelRpmService = 90f;
 
+        // ANM-AIR tire roll on ground phases (degrees/sec base before phase scale)
+        public const float AircraftTireRpmTaxi = 380f;
+
+        // Shared presentation pulse rates (Hz) — beacon family + ALS/REIL
+        public const float ServicePulseHz = 2.5f;
+        public const float HeatPulseHz = 1.1f;
+        public const float ArffLightbarHz = 1.05f;
+        public const float AlsChaseHz = 3.1f;
+        public const float ReilFlashHz = 1.9f;
+
+        // Environmental life motion (presentation only)
+        public const float WindsockSwayHz = 0.38f;
+        public const float WindsockRippleHz = 0.54f;
+        public const float FlagFlapHz = 0.67f;
+        public const float FlagRippleHz = 1.13f;
+        public const float ApronWalkerHz = 0.045f;
+        public const float ApronIdleSwayHz = 0.09f;
+        public const float ApronWaveHz = 0.64f;
+        public const float ApronStrideHz = 5.5f;
+        public const float BirdOrbitHz = 0.035f;
+        public const float BirdFlapHz = 1.6f;
+        public const float CoastBobHz = 0.85f;
+        public const float CoastYawHz = 0.35f;
+        public const float CoastPitchHz = 0.7f;
+        public const float CoastRollHz = 0.55f;
+        public const float FoamPulseHz = 1.6f;
+        public const float FoamAlphaHz = 1.4f;
+        public const float FloodFlickerHz = 0.33f;
+        public const float StarTwinkleHz = 1.7f;
+        // UI / chrome accent pulse
+        public const float UiPulseHz = 0.51f;
+        public const float WindowFlickerHz = 0.27f;
+
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
             AircraftPhase.Takeoff => PropRpmTakeoff,

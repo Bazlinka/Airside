@@ -147,5 +147,5 @@ UI Toolkit/uGUI/USS constructs. Do not generate raster screenshots for them.
 
 ## Cursor handoff: first task
 
-Batch F1–F3 are on `main`. Next tip after F4 accept is **post-F visual polish**
-(lighting soak, presentation bugs, art fidelity) — not economy or Companion.
+Batch F1–F4 are on `main`. This tip is **post-F visual polish** (lighting soak,
+presentation bugs, art fidelity) — not economy or Companion.

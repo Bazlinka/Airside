@@ -5,6 +5,56 @@ change it describes.
 
 ## Unreleased
 
+- **Post-F visual polish.** Align Quality shadow distance with URP (PC 140 /
+  Mobile 90); rain field stamps from VFX-003 kit; aircraft prefer VFX-002 heat
+  kit; softer contact shadows; windsock fabric segment ripple; tighter overview
+  camera; day/night sun/flood/fog soak; thinner bird silhouettes; ALS lateral
+  bars from lighting-kit stems; layered cloud clusters; closer phase-aware
+  follow framing; warmer hangar bay spill; BeaconHz for aircraft/aerodrome;
+  forecourt parking sign + kerbs from PRP-003; WLD-004 coast/paddock accents;
+  landside flood-kit streetlights; taxi centreline + REIL kit fixtures;
+  threshold side-stripe z-fight gate; aerodrome beacon + threshold lamps prefer
+  lighting kit; gate terminal canopy / window-glow / hangar-bay densify when
+  kits already ship those parts; stand bay digits only via PlaceRunwayDigit at
+  stand centres; wire ANM wheel/tire RPM constants; sync URP `_BaseColor` on
+  contact shadows, night glow, airfield lights, clouds and ARFF; collect kit
+  glass for dusk glow; GT props use PropRpmTaxi; shared service/heat/ALS/REIL
+  pulse Hz; gate stand-box densify when stand_stop present; skip WLD ridge
+  densify when terrain accents land; airside planter strip from PRP-003;
+  hangar door gated on door_panel; chocks accept singular kit mesh; gate coast
+  dune densify when WLD-004 terrain kit present; PC quality 4 cascades + High
+  shadows + MSAA 2 + probes; overview framing toward terminal (46 m / 50° FOV);
+  stronger soft sun shadows; fix orphaned UpdateCoastalMotion foam scale
+  (Unity compile); hold-short wait pulse collects kit hold_short meshes;
+  skip BuildStandMarking when stand_stop present; wet VFX + foam sync
+  `_BaseColor`; WLD-004 accents own near horizon (skip far greybox hills);
+  centralize windsock/flag/apron/bird life Hz; collect hangar glass_pane_* for
+  night glow; thin apron joints/slabs; restrain jetty densify; scale up terrain
+  accents; landside benches/trolleys prefer PRP-003; dropoff_bollard preferred;
+  UI offer pulse + window flicker via AirsideReusableMotion; restore
+  BirdOrbitHz/BirdFlapHz (tip-8 compile break); Flood/Star/Coast/ApronStride Hz
+  centralized; WLD-004 thins outer paddock + skips relief mounds/ribbons;
+  VEG-002 coast rocks; scaled landside kit streetlights; thin bay/overflow paint
+  when forecourt kerbs present; dusk flood/landside/window flicker share rates;
+  VEG kits thin far tree/scrub densify; coast scrub via PlaceShrub; UI-PNL-001
+  light chrome on economy/speed; Toolkit hides Canvas when active; Cloudy soft
+  fog + cloud umbra; horizon/sun/moon SetRendererColor; Cloudy/Overcast soft sun
+  gloom; contact shadows SetRendererColor; light toast/save chrome; parked GA
+  capped at 3 when prefab present; fuel farm kit skips cone/barrier densify;
+  ARFF kit softens bay Point; coast boats capped at 3 with prefab; cloud bands
+  thinned to 9×1–2 blobs; props kit thins cones/barriers/dollies/signs; night
+  glow PointLights capped to hero + ≤6 panes; parked cars / CHR people / rain
+  stamps thinned when kits present; decal SetRendererColor; speed chip ink on
+  light chrome; overview framing ~44 m / 48° toward terminal; safety props
+  thinned when kits present; softer night bloom + warmer dusk fill/midtones;
+  lighting kit thins edge Points + taxi densify; wet kit thins puddles; PRP-003
+  thins access/service paint; Toolkit status/ops/offer light chrome (UI-PNL-001)
+  with Runway Ink body text; one silhouette belt loader when service kit present;
+  flood/edge/taxi/obst silhouette fixtures; ALS 5 stations when lighting kit;
+  overview FOV init 48°; dollies×2 with props kit; coast yaw/pitch/roll Hz
+  centralized. Presentation only — simulation unchanged.
+  Evidence: `scripts/test-domain.sh` 113/113.
+
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control
   icons (play/pause/speed/follow/overview/audio/save) wired into Toolkit chrome;
   VFX-001…004 Resources + Art/VFX prefabs; touchdown smoke prefers kit; wet kit

@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Flight/taxi polish (pass 2).** Takeoff lines up from A1 instead of yaw-snapping;
+  taxi-out leaves the pushback pad without reversing onto the stand; landing
+  rolls out ~22 m with touchdown FX on ground contact; stand lead pads follow the
+  real taxi chords (incl. Stand 3 + apron extension); A1 fillet gets night taxi
+  lights and a hold-short across the exit; prop blur discs size from blade bounds;
+  taxi edge paint covers the full Taxiway A. Evidence: `scripts/test-domain.sh`
+  118/118; needs Mac Play follow-camera verify.
+
 - **Prop / landing / taxiway presentation.** Rebake glTF propeller pivots to the
   nacelle hub so blades spin in place (not around the airframe); drive prop
   rotation from true RPM (×6 deg/s). Continuize takeoff with taxi-out at (-24),

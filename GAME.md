@@ -1,17 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — prop / landing / taxiway presentation)
-- **Branch:** `cursor/prop-landing-taxiway-aa9f` (off `main` after #146)
-- **Do next:** Mac Play follow-camera check — props spin on hubs, takeoff continuous
-  with taxi-out, taxi paint on Taxiway A, then merge.
+- **Last updated:** 2026-09-08 (Cursor — flight/taxi polish pass 2)
+- **Branch:** `cursor/flight-taxi-polish-aa9f` (off `main` after #147)
+- **Do next:** Mac Play follow-camera — lineup after taxi-out, touchdown FX on
+  contact, Stand 2/3 leads paved, A1 night lights, then merge.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - glTF prop nodes still author verts at nacelle world positions; runtime
-    `RebakePropellerPivots` moves the Propeller transform to the hub (prefab path
-    already hub-local and is skipped)
-  - Prop RPM constants are true RPM (×6 → deg/s); high-RPM disc blur unchanged
-  - Takeoff starts at taxi-out end `(-24, 0.7)`; landing rolls out to the same point
-  - Taxi centreline/edges use identity yaw (kit authored along X); A1 exit pavement added
+  - Takeoff starts with a short bezier lineup; look-ahead is shortened so yaw
+    does not skip the curve
+  - Touchdown smoke/chirp/skids latch at landing progress ≥ 0.28 (ground contact)
+  - Taxi-out no longer drives back onto the stand after pushback
+  - Stand lead pads follow `(8,9)→(17,standZ)`; Stand 3 adds a lead + apron extension
+  - A1 fillet has blue taxi lamps/points; hold-short crosses the exit path
+  - Prop blur discs size from blade bounds after hub rebake
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
 
@@ -89,15 +90,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 (presentation prop/landing/taxiway pass is Mac
-  Play — `scripts/test-unity.sh` still required before merge).
-- Bug audit #146 is on `main`. AIR-001 v06 is on `main`.
-- Batch F1–F4 visual kits remain the preferred presentation path.
+- `scripts/test-domain.sh`: 118/118. Flight/taxi presentation needs Mac Play verify
+  (`scripts/test-unity.sh`) before merge.
+- #146 bug audit and #147 prop/landing/taxiway fixes are on `main`.
 
 ## Next work
 
-1. Merge **prop / landing / taxiway** presentation (`cursor/prop-landing-taxiway-aa9f`)
-   after a Mac follow-camera check.
+1. Merge **flight/taxi polish** (`cursor/flight-taxi-polish-aa9f`) after Mac Play.
 2. Keep pushing first-playable **visual polish** — standing goal; no new economy /
    Companion.
 3. Optional: Editor Addressables groups for player catalog.

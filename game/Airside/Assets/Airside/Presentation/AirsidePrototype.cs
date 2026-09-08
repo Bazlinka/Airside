@@ -61,6 +61,7 @@ namespace Airside.Presentation
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
+        private readonly HashSet<string> _touchdownFired = new HashSet<string>();
         private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
             new List<(Renderer, Color, float, float, float, bool)>();
 
@@ -987,7 +988,12 @@ namespace Airside.Presentation
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var position = PositionFor(phase, progress, standZ, flight.TaxiRoute);
-                var next = PositionFor(phase, VisualPhaseProgress(flight, 0.15f), standZ, flight.TaxiRoute);
+                // Short look-ahead during takeoff lineup / early taxi so we do not skip the
+                // whole curve and snap yaw onto the next straight.
+                var lookAhead = phase == AircraftPhase.Takeoff && progress < 0.2f ? 0.04f
+                    : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.08f
+                    : 0.15f;
+                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), standZ, flight.TaxiRoute);
                 view.position = position;
 
                 var direction = next - position;
@@ -997,7 +1003,8 @@ namespace Airside.Presentation
                 var pitch = PhasePitchDegrees(phase, progress);
                 var bank = TurnBankDegrees(view, targetRotation, phase);
                 targetRotation *= Quaternion.Euler(pitch, 0f, bank);
-                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * 5f);
+                var turnRate = phase == AircraftPhase.Takeoff && progress < 0.2f ? 8f : 5f;
+                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * turnRate);
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
@@ -1022,13 +1029,13 @@ namespace Airside.Presentation
             var t = Mathf.Clamp01(progress);
             return phase switch
             {
-                AircraftPhase.Takeoff => t < 0.42f
+                AircraftPhase.Takeoff => t < 0.48f
                     ? 0f
-                    : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.42f) / 0.58f)),
+                    : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.48f) / 0.52f)),
                 AircraftPhase.Approach => Mathf.Lerp(-2.5f, -3.5f, t),
-                AircraftPhase.Landing => t < 0.45f
-                    ? Mathf.Lerp(-3.5f, -5f, t / 0.45f)
-                    : Mathf.Lerp(-5f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.45f) / 0.55f)),
+                AircraftPhase.Landing => t < 0.28f
+                    ? Mathf.Lerp(-3.5f, -5f, t / 0.28f)
+                    : Mathf.Lerp(-5f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.28f) / 0.72f)),
                 AircraftPhase.Departed => -8f,
                 _ => 0f
             };
@@ -1814,6 +1821,11 @@ namespace Airside.Presentation
             CreateBlock("Stand 3 apron pad", new Vector3(20f, 0.01f, 26f), new Vector3(16f, 0.08f, 6f),
                 new Color(0.34f, 0.36f, 0.37f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
+            CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 26f);
+            // Extend apron north so Stand 3 is not an island past the concrete edge.
+            CreateBlock("Apron north extension", new Vector3(20f, 0.005f, 24.5f), new Vector3(26f, 0.08f, 5f),
+                new Color(0.36f, 0.38f, 0.39f),
+                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 1f));
             var propsKit = PreferArtKit(
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
@@ -2226,11 +2238,15 @@ namespace Airside.Presentation
                 var flight = _simulation.Flights[index];
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
-                if (_previousPhases.TryGetValue(id, out var previous) &&
-                    previous == AircraftPhase.Approach &&
-                    phase == AircraftPhase.Landing &&
-                    index < _commercialAircraft.Length)
+
+                // Fire once when the visual path actually meets the runway — not at the
+                // Approach→Landing phase change (that is still ~1.5 m AGL after the path fix).
+                if (phase == AircraftPhase.Landing
+                    && index < _commercialAircraft.Length
+                    && !_touchdownFired.Contains(id)
+                    && VisualPhaseProgress(flight, 0f) >= 0.28f)
                 {
+                    _touchdownFired.Add(id);
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
                     _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
                     _touchdownSmoke.localScale = Vector3.one;
@@ -2253,6 +2269,10 @@ namespace Airside.Presentation
 
                     if (_cameraController != null)
                         _cameraController.PulseTouchdown();
+                }
+                else if (phase != AircraftPhase.Landing)
+                {
+                    _touchdownFired.Remove(id);
                 }
 
                 _previousPhases[id] = phase;
@@ -4215,13 +4235,21 @@ namespace Airside.Presentation
             }
             else
             {
-                // Sparse taxi spill along A1 so night taxi still reads without fixture glitter.
+                // Sparse taxi spill along Taxiway A so night taxi still reads without fixture glitter.
                 for (var x = -8; x <= 24; x += 16)
                 {
                     lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                         new Color(0.3f, 0.55f, 1f), range: 9f));
                 }
             }
+
+            // Always light the A1 runway exit fillet — kit thinning used to leave it dark.
+            lights.Add(CreateEdgePointLight("Taxi A1 point W", new Vector3(-22f, 0.45f, 2.2f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi A1 point M", new Vector3(-18f, 0.45f, 4.5f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi A1 point E", new Vector3(-14f, 0.45f, 7f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
 
             // REIL-style white flashers just beyond each threshold (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(-44f, 1.6f, -2.8f),
@@ -4514,6 +4542,22 @@ namespace Airside.Presentation
                 : new Color(0.35f, 0.95f, 0.55f);
         }
 
+        /// <summary>
+        /// Paved lead-in along the taxi chord from Taxiway A (8,9) to the stand bay.
+        /// </summary>
+        private static void CreateTaxiLeadPad(string name, float standZ)
+        {
+            var from = new Vector3(8f, -0.01f, 9f);
+            var to = new Vector3(17f, -0.01f, standZ);
+            var mid = (from + to) * 0.5f;
+            var delta = to - from;
+            var length = delta.magnitude + 1.6f;
+            var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
+            var pad = CreateBlock(name, mid, new Vector3(4.6f, 0.1f, length), new Color(0.28f, 0.3f, 0.32f),
+                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.2f, 1.4f));
+            pad.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
         private static void BuildAirfield()
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
@@ -4530,11 +4574,9 @@ namespace Airside.Presentation
             // A1 runway exit / fillet — without this the taxi path (-24,0)→(-12,9) is grass.
             CreateBlock("Taxiway A exit", new Vector3(-18f, -0.02f, 4.5f), new Vector3(16f, 0.12f, 9.5f), new Color(0.22f, 0.24f, 0.26f),
                 "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 1.2f));
-            // Lead-in pads from Taxiway A onto the apron stands.
-            CreateBlock("Taxi lead Stand 1", new Vector3(14f, -0.01f, 12.5f), new Vector3(5f, 0.1f, 5.5f), new Color(0.28f, 0.3f, 0.32f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.2f, 1f));
-            CreateBlock("Taxi lead Stand 2", new Vector3(20f, -0.01f, 14.5f), new Vector3(6f, 0.1f, 7f), new Color(0.28f, 0.3f, 0.32f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.4f, 1.2f));
+            // Lead-in pads follow the actual taxi chord (8,9)→(17, standZ).
+            CreateTaxiLeadPad("Taxi lead Stand 1", standZ: 14f);
+            CreateTaxiLeadPad("Taxi lead Stand 2", standZ: 20f);
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.38f, 0.4f, 0.41f),
                 "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
             // Skip apron joint/slab densify — MAT concrete + soft wet residual carry the read;
@@ -8242,6 +8284,24 @@ namespace Airside.Presentation
                 if (child.Find("PropDisc") != null)
                     continue;
 
+                // Size the blur disc from blade/tip bounds (v06 radial ~1.27 m — fixed 1.2
+                // diameter read as a hub pancake after pivot rebake).
+                var radius = 0.6f;
+                foreach (var renderer in child.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer == null)
+                        continue;
+                    var n = renderer.name;
+                    if (n.IndexOf("blade", StringComparison.OrdinalIgnoreCase) < 0
+                        && n.IndexOf("tip", StringComparison.OrdinalIgnoreCase) < 0
+                        && !n.StartsWith("Propeller", StringComparison.Ordinal))
+                        continue;
+                    var extents = renderer.bounds.extents;
+                    var planar = Mathf.Max(extents.x, extents.y, extents.z);
+                    radius = Mathf.Max(radius, planar);
+                }
+
+                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 2.8f);
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "PropDisc";
                 Object.Destroy(disc.GetComponent<Collider>());
@@ -8249,7 +8309,7 @@ namespace Airside.Presentation
                 disc.transform.localPosition = Vector3.zero;
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                disc.transform.localScale = new Vector3(1.2f, 0.012f, 1.2f);
+                disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
                 disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.56f, 0.6f, 0.32f));
                 disc.SetActive(false);
             }
@@ -9199,10 +9259,15 @@ namespace Airside.Presentation
             }
 
             // Edges: mesh already carries ±1.85 Z offset — place at taxi centre, identity yaw.
+            // Two copies match the dual centreline coverage along Taxiway A.
             var usedTaxiEdgeN = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_n", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             var usedTaxiEdgeS = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_s", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             if (!usedTaxiEdgeN)
                 CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f), new Vector3(44f, 0.02f, 0.14f), Color.white);
             if (!usedTaxiEdgeS)
@@ -9234,13 +9299,23 @@ namespace Airside.Presentation
             ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_arrow_b", new Vector3(16f, 0.04f, 12.8f), Quaternion.identity,
                 new Color(0.95f, 0.85f, 0.2f), out _);
 
-            // Extra hold-short bars on the west taxi entry when kit densified.
+            // Hold-short across the A1 fillet (path (-24,0)→(-12,9)), not beside it.
+            var holdPos = new Vector3(-18f, 0.05f, 4.5f);
+            var holdYaw = Mathf.Atan2(12f, 9f) * Mathf.Rad2Deg + 90f;
+            var holdRot = Quaternion.Euler(0f, holdYaw, 0f);
+            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "hold_short_e", holdPos, holdRot, holdYellow, out _))
+            {
+                var bar = CreateBlock("Hold short A1", holdPos, new Vector3(3.4f, 0.03f, 0.22f), holdYellow);
+                bar.transform.rotation = holdRot;
+            }
+
             if (!ArtGltfLoader.TryPlaceNamedMesh(
-                    kit, "hold_short_e", new Vector3(-18f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out _))
-                CreateBlock("Hold short E", new Vector3(-18f, 0.05f, 6.6f), new Vector3(3.2f, 0.03f, 0.2f), holdYellow);
-            if (!ArtGltfLoader.TryPlaceNamedMesh(
-                    kit, "hold_short_f", new Vector3(-18f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out _))
-                CreateBlock("Hold short F", new Vector3(-18f, 0.05f, 7.1f), new Vector3(3.2f, 0.03f, 0.2f), holdYellow);
+                    kit, "hold_short_f", holdPos + holdRot * new Vector3(0f, 0f, 0.45f), holdRot, holdYellow, out _))
+            {
+                var bar2 = CreateBlock("Hold short A1 b", holdPos + holdRot * new Vector3(0f, 0f, 0.45f),
+                    new Vector3(3.4f, 0.03f, 0.22f), holdYellow);
+                bar2.transform.rotation = holdRot;
+            }
 
             // Stand lead-in dashes — skip when markings kit already placed stand stops
             // (otherwise landing/follow cameras see a carpet of yellow cubes).
@@ -9421,6 +9496,11 @@ namespace Airside.Presentation
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 6.9f), taxiColor);
             }
+
+            // A1 exit fillet fixtures — path (-24,0)→(-12,9).
+            PlaceTaxiLamp(kit, new Vector3(-22f, 0f, 2.2f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(-18f, 0f, 4.5f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(-14f, 0f, 7f), taxiColor);
 
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
@@ -10011,50 +10091,75 @@ namespace Airside.Presentation
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(
-                    new Vector3(-68f, 7.2f, 0f), new Vector3(-40f, 1.6f, 0f), t),
+                    new Vector3(-72f, 7.5f, 0f), new Vector3(-50f, 1.55f, 0f), t),
                 AircraftPhase.Landing => LandingPosition(t),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
                 AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), t),
-                AircraftPhase.TaxiOut => t < 0.15f
-                    ? Smooth(new Vector3(12f, 0.7f, standZ - 2f), new Vector3(17f, 0.7f, standZ), t / 0.15f)
-                    : PositionAlongTaxiRoute(taxiRoute, (t - 0.15f) / 0.85f, true),
+                AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
                 AircraftPhase.Takeoff => TakeoffPosition(t),
                 _ => new Vector3(55f, 14f, 0f)
             };
         }
 
         /// <summary>
-        /// Flare then ground rollout along the runway to the west taxi exit (-24).
+        /// Leave the pushback pad toward the lead-in — do not drive back onto the stand.
         /// </summary>
-        private static Vector3 LandingPosition(float t)
+        private Vector3 TaxiOutPosition(TaxiRoute route, float t, float standZ)
         {
-            if (t < 0.4f)
+            var pushEnd = new Vector3(12f, 0.7f, standZ - 2f);
+            // Reverse route: 0 = stand, 1 = runway exit. Join mid lead-in (~0.30).
+            const float joinT = 0.30f;
+            if (t < 0.18f)
             {
-                // Short final / flare: settle onto the runway near the west threshold.
-                return Smooth(new Vector3(-40f, 1.6f, 0f), new Vector3(-34f, 0.7f, 0f), t / 0.4f);
+                var join = PositionAlongTaxiRoute(route, joinT, true);
+                return Smooth(pushEnd, join, t / 0.18f);
             }
 
-            // Rollout decelerates toward the A1 taxi entry (matches AirportTaxiNetwork).
-            var u = (t - 0.4f) / 0.6f;
-            var eased = 1f - (1f - u) * (1f - u);
-            return Vector3.Lerp(new Vector3(-34f, 0.7f, 0f), new Vector3(-24f, 0.7f, 0f), eased);
+            var routeT = joinT + ((t - 0.18f) / 0.82f) * (1f - joinT);
+            return PositionAlongTaxiRoute(route, routeT, true);
         }
 
         /// <summary>
-        /// Ground roll from the taxi-out end (-24) then climb — continuous with the network.
+        /// Flare then a real ground rollout (~22 m) to the west taxi exit (-24).
+        /// </summary>
+        private static Vector3 LandingPosition(float t)
+        {
+            const float touchdownT = 0.28f;
+            if (t < touchdownT)
+            {
+                return Smooth(new Vector3(-50f, 1.55f, 0f), new Vector3(-46f, 0.7f, 0f), t / touchdownT);
+            }
+
+            var u = (t - touchdownT) / (1f - touchdownT);
+            var eased = 1f - (1f - u) * (1f - u);
+            return Vector3.Lerp(new Vector3(-46f, 0.7f, 0f), new Vector3(-24f, 0.7f, 0f), eased);
+        }
+
+        /// <summary>
+        /// Line up from the A1 entry heading, ground-roll, then climb — continuous with taxi-out.
         /// </summary>
         private static Vector3 TakeoffPosition(float t)
         {
-            if (t < 0.42f)
+            // First ~14%: bezier lineup so LookRotation does not snap ~140° onto +X.
+            if (t < 0.14f)
             {
-                // Accelerate along the runway (ease-in).
-                var u = t / 0.42f;
-                var eased = u * u;
-                return Vector3.Lerp(new Vector3(-24f, 0.7f, 0f), new Vector3(10f, 0.7f, 0f), eased);
+                var u = Mathf.SmoothStep(0f, 1f, t / 0.14f);
+                var start = new Vector3(-24f, 0.7f, 0f);
+                var bend = new Vector3(-23.2f, 0.7f, -0.85f);
+                var aligned = new Vector3(-20.5f, 0.7f, 0f);
+                var omu = 1f - u;
+                return omu * omu * start + 2f * omu * u * bend + u * u * aligned;
             }
 
-            var climb = (t - 0.42f) / 0.58f;
+            if (t < 0.48f)
+            {
+                var u = (t - 0.14f) / 0.34f;
+                var eased = u * u;
+                return Vector3.Lerp(new Vector3(-20.5f, 0.7f, 0f), new Vector3(10f, 0.7f, 0f), eased);
+            }
+
+            var climb = (t - 0.48f) / 0.52f;
             return Smooth(new Vector3(10f, 0.7f, 0f), new Vector3(52f, 12f, 0f), climb);
         }
 

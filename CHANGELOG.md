@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **WLD-004 context terrain modelling reference.** Add a 2048×1152 review
+  candidate for separated paddock berms, low hills, dunes, turquoise shallows
+  and deep-water modules around a protected blank operational zone, with exact
+  generation and corrective-edit evidence. Reference only; runtime kit and
+  gameplay surfaces unchanged.
+
 - **VEG-002 coastal scrub modelling reference.** Add a 2048×1152 review
   candidate covering five mallee/shrub silhouettes, three grass patches, three
   rock groups and two dune-edge mixes at 1.8 m human scale, plus exact generation

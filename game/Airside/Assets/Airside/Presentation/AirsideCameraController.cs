@@ -206,12 +206,7 @@ namespace Airside.Presentation
                 if (keyboard.fKey.wasPressedThisFrame)
                     CycleOrStartFollow();
                 if (keyboard.oKey.wasPressedThisFrame)
-                {
-                    _following = false;
-                    _center = _overviewCenter;
-                    _distance = OverviewDistance;
-                    _pitch = 38f;
-                }
+                    ReturnToOverview();
 
                 if (!_following)
                 {
@@ -241,7 +236,8 @@ namespace Airside.Presentation
                 _distance = Mathf.Clamp(_distance - scroll * 0.035f, 12f, 90f);
         }
 
-        private void CycleOrStartFollow()
+        /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>
+        public void CycleOrStartFollow()
         {
             if (_followTargets.Length == 0)
             {
@@ -260,6 +256,15 @@ namespace Airside.Presentation
             // Already following: cycle through commercials (and wrap).
             _followIndex = (_followIndex + 1) % _followTargets.Length;
             _followTarget = _followTargets[_followIndex];
+        }
+
+        /// <summary>HUD / hotkey: return to the default overview framing.</summary>
+        public void ReturnToOverview()
+        {
+            _following = false;
+            _center = _overviewCenter;
+            _distance = OverviewDistance;
+            _pitch = 38f;
         }
 
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control
+  icons (play/pause/speed/follow/overview/audio/save) wired into Toolkit chrome;
+  VFX-001…004 Resources + Art/VFX prefabs; touchdown smoke prefers kit; wet kit
+  accent; `AirsideReusableMotion` extracts ANM phase rates. Presentation only —
+  simulation unchanged.
+  Evidence: `scripts/test-domain.sh`; art sync; `docs/art/prompts/batch-f4-motion-vfx-ui-2026-09-07.md`.
+
 - **Batch F3 setting modules.** Authored eucalyptus + Kingscote scrub kits, modular
   fence/gate, terminal forecourt furniture, and context terrain accents; PlaceTree /
   PlaceShrub / BuildPerimeterFence / landside canopy / distant hills prefer kits with

@@ -257,18 +257,18 @@ simulation timing or resource ownership.
 
 | ID | Clip/prefab | Trigger and behaviour | Status |
 |---|---|---|---|
-| ANM-AIR-001 | `Animation/Aircraft/anm_propeller_spin_v01.anim` | Loops while engines are active; visual speed may smooth but follows phase state | **Integrated (runtime)** — phase RPM in `SpinPropellers`; clip file still Planned |
-| ANM-AIR-002 | `Animation/Aircraft/anm_gear_cycle_v01.anim` | Deploy/retract only at explicit presentation phase boundaries | **Integrated (runtime)** — soft pitch retract/deploy; clip file still Planned |
-| ANM-AIR-003 | `Animation/Aircraft/anm_cabin_door_cycle_v01.anim` | Opens at stand after safe arrival; closes before pushback | **Integrated (runtime)** — existing door swing; clip file still Planned |
+| ANM-AIR-001 | `Animation/Aircraft/anm_propeller_spin_v01.anim` | Loops while engines are active; visual speed may smooth but follows phase state | **Integrated** — `AirsideReusableMotion` + `SpinPropellers`; Unity `.anim` optional later |
+| ANM-AIR-002 | `Animation/Aircraft/anm_gear_cycle_v01.anim` | Deploy/retract only at explicit presentation phase boundaries | **Integrated** — `AirsideReusableMotion.GearBias`; soft pitch retract/deploy |
+| ANM-AIR-003 | `Animation/Aircraft/anm_cabin_door_cycle_v01.anim` | Opens at stand after safe arrival; closes before pushback | **Integrated** — `CabinDoorBias` + existing door swing |
 | ANM-AIR-004 | `Animation/Aircraft/anm_aircraft_lights_v01.controller` | Nav steady, beacon pulse, landing/taxi lights by phase and day/night | **Integrated (runtime)** — landing vs taxi lights split; controller file still Planned |
-| ANM-VEH-001 | `Animation/Vehicles/anm_vehicle_wheels_v01.anim` | Wheel rotation derived from presentation movement | **Integrated (runtime)** — wheel spin from travel; clip file still Planned |
+| ANM-VEH-001 | `Animation/Vehicles/anm_vehicle_wheels_v01.anim` | Wheel rotation derived from presentation movement | **Integrated (runtime)** — wheel spin from travel; rates in `AirsideReusableMotion` |
 | ANM-VEH-002 | `Animation/Vehicles/anm_fuel_service_v01.anim` | Park, deploy hose, service loop, retract; duration mapped to task progress | **Integrated (runtime)** — hose loop; clip file still Planned |
 | ANM-VEH-003 | `Animation/Vehicles/anm_baggage_service_v01.anim` | Tug arrival, cart activity and departure mapped to baggage task | **Integrated (runtime)** — cargo bob; clip file still Planned |
 | ANM-VEH-004 | `Animation/Vehicles/anm_bus_service_v01.anim` | Door open/close and subtle suspension settle mapped to boarding/deboarding | **Integrated (runtime)** — door swing; clip file still Planned |
-| VFX-001 | `VFX/vfx_touchdown_smoke_v01.prefab` | Brief restrained wheel smoke on touchdown | **Integrated (runtime)** — dual wheel puffs; prefab file still Planned |
-| VFX-002 | `VFX/vfx_engine_heat_v01.prefab` | Subtle close-view heat distortion only | **Integrated (runtime)** — heat quads + takeoff boost; prefab still Planned |
-| VFX-003 | `VFX/vfx_rain_airfield_v01.prefab` | Camera/world rain with performance tier; weather state controls it | **Integrated (runtime)** — denser rain + storm intensity; prefab still Planned |
-| VFX-004 | `VFX/vfx_wet_surface_response_v01.prefab` | Material wetness and muted reflection, not a full-screen filter | **Integrated (runtime)** — paved surface darken incl. Stand 3; prefab still Planned |
+| VFX-001 | `VFX/vfx_touchdown_smoke_v01.prefab` | Brief restrained wheel smoke on touchdown | **Integrated** — Resources + Art/VFX prefab; `BuildTouchdownSmoke` prefers kit |
+| VFX-002 | `VFX/vfx_engine_heat_v01.prefab` | Subtle close-view heat distortion only | **Integrated** — Resources + Art/VFX prefab; runtime heat quads remain |
+| VFX-003 | `VFX/vfx_rain_airfield_v01.prefab` | Camera/world rain with performance tier; weather state controls it | **Integrated** — Resources + Art/VFX prefab; dense procedural rain remains primary |
+| VFX-004 | `VFX/vfx_wet_surface_response_v01.prefab` | Material wetness and muted reflection, not a full-screen filter | **Integrated** — Resources + Art/VFX prefab; material wet response remains |
 | VFX-005 | `VFX/vfx_construction_dust_v01.prefab` | Reserved for visible construction milestone, not integrated early | Planned |
 
 ### Batch E — operational interface
@@ -297,9 +297,9 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
 | F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 accepted**; **BLD-001 v05 + MAT-001 Integrated** (Bailey playtest pending on packaged Mac build) |
-| F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | Planned |
-| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | Planned |
-| F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | Planned |
+| F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | **Integrated** (PR #136) |
+| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **Integrated** (PR #137 pending merge) |
+| F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | **Integrated** — UI-ICO-005 + VFX prefabs + `AirsideReusableMotion` |
 
 Batch F is intentionally ordered. It does not authorise another broad procedural
 kit pass: each slice must improve silhouette/material fidelity against

@@ -5111,8 +5111,12 @@ namespace Airside.Presentation
         private static void BuildApronLife()
         {
             var root = new GameObject("Apron life").transform;
-            var crewKit = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
-            var paxKit = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+            var crewKit = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+            var paxKit = PreferArtKit(
+                "Models/Characters/mdl_passenger_kit_v02.gltf",
+                "Models/Characters/mdl_passenger_kit_v01.gltf");
             var hasChrKits = (!string.IsNullOrEmpty(crewKit) && ArtGltfLoader.HasKit(crewKit))
                              || (!string.IsNullOrEmpty(paxKit) && ArtGltfLoader.HasKit(paxKit));
 
@@ -5222,17 +5226,23 @@ namespace Airside.Presentation
             if (lower.Contains("marshaller"))
             {
                 prefix = "marshaller";
-                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
             }
             else if (lower.Contains("fueler") || lower.Contains("baggage") || lower.Contains("stairs")
                      || lower.Contains("ramp") || (hiVis && !seated))
             {
                 prefix = lower.Contains("fueler") ? "fueler" : "ramp";
-                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
             }
             else
             {
-                kitPath = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_passenger_kit_v02.gltf",
+                "Models/Characters/mdl_passenger_kit_v01.gltf");
                 if (seated)
                     prefix = lower.Contains("sitter b") || lower.GetHashCode() % 2 == 0 ? "sit_f" : "sit_e";
                 else if (lower.Contains("walker"))

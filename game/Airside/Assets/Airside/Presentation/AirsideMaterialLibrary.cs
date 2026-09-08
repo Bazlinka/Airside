@@ -149,15 +149,21 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
+            // Frame / pillar members must beat the glass rule below: they carry "window" or
+            // "windscreen" in their name but are painted metal mullions, not glazing.
             if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
                 || n.Contains("entrance_frame") || n.Contains("boarding_frame") || n.Contains("handle")
                 || n.Contains("skylight_frame") || n.Equals("entrance") || n.Contains("entrance_door")
-                || n.Contains("boarding_gate"))
+                || n.Contains("boarding_gate")
+                || n.Contains("window_frame") || n.Contains("window frame")
+                || n.Contains("windscreen_pillar") || n.Contains("windscreen pillar")
+                || n.Contains("cockpit_frame") || n.Contains("cockpit frame"))
                 return SurfaceKind.Metal;
             if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
                 || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
                 || n.Contains("landside_glass") || n.Contains("door_glass")
-                || n.Contains("windshield") || n.Equals("rear_window") || n.Contains("skylight"))
+                || n.Contains("windshield") || n.Contains("windscreen")
+                || n.Equals("rear_window") || n.Contains("skylight"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
                 return SurfaceKind.Rubber;
@@ -322,6 +328,21 @@ namespace Airside.Presentation
         /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
         /// sheen so rain reads on URP Lit without authoring separate wet mats.
         /// </summary>
+        /// <summary>
+        /// Toggles a shader keyword only when it actually changes. A keyword write forces
+        /// Unity to re-resolve the shader variant and drops the material out of its SRP
+        /// Batcher batch, so a redundant set is far from free.
+        /// </summary>
+        private static void SetKeyword(Material material, string keyword, bool enabled)
+        {
+            if (material.IsKeywordEnabled(keyword) == enabled)
+                return;
+            if (enabled)
+                material.EnableKeyword(keyword);
+            else
+                material.DisableKeyword(keyword);
+        }
+
         public static void ApplyWetness(
             Material material,
             float wetness01,
@@ -356,10 +377,7 @@ namespace Airside.Presentation
             // _Smoothness reads (0025 item 4). Re-enable when dry.
             if (material.HasProperty("_MetallicGlossMap") && material.GetTexture("_MetallicGlossMap") != null)
             {
-                if (wetness01 > 0.2f)
-                    material.DisableKeyword("_METALLICSPECGLOSSMAP");
-                else
-                    material.EnableKeyword("_METALLICSPECGLOSSMAP");
+                SetKeyword(material, "_METALLICSPECGLOSSMAP", wetness01 <= 0.2f);
             }
 
             if (material.HasProperty("_Smoothness"))
@@ -384,10 +402,7 @@ namespace Airside.Presentation
                 material.SetFloat("_ClearCoatMask", wetness01);
                 if (material.HasProperty("_ClearCoatSmoothness"))
                     material.SetFloat("_ClearCoatSmoothness", Mathf.Lerp(0.12f, 0.99f, wetness01));
-                if (wetness01 > 0.02f)
-                    material.EnableKeyword("_CLEARCOAT");
-                else
-                    material.DisableKeyword("_CLEARCOAT");
+                SetKeyword(material, "_CLEARCOAT", wetness01 > 0.02f);
             }
             else if (wetness01 > 0.02f)
             {

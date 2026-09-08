@@ -1,16 +1,14 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — ops shed BLD-003 v05; rebased on #151)
-- **Branch:** `cursor/ops-shed-bld-003-v05-3272` (off `main` after #151)
-- **Do next:** Mac Unity overview of ops shed pitched roof / porch / antenna vs
-  REF-001 next to v05 terminal + hangar; then merge. GSE #151 is on `main`.
+- **Last updated:** 2026-09-08 (Cursor — eucalyptus VEG-001 v02)
+- **Branch:** `cursor/eucalyptus-veg-001-v02-3272` (off `main` after #152)
+- **Do next:** Mac Unity overview of denser multi-lobe eucalyptus belts vs REF
+  setting; then merge. Parallel drafts: fence #154, forecourt #155, characters #153.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PreferArtKit ops shed: `mdl_operations_shed_v05` → authored_v01 → v04…v01
-  - Night-glow / glass / door names unchanged (`interior_glow`, `window_*`,
-    `glass_pane*`, `door*`)
+  - PreferArtKit eucalyptus: `mdl_eucalyptus_kit_v02` → `v01`
+  - Extract names unchanged (30); full belt placed; far trees add `lod1`
   - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefab shipped
-  - Stand GSE kit v03 + stairs v02 are on `main` (#151)
   - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -89,8 +87,10 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118 after BLD-003 v05 (Mac overview vs REF-001
-  still required before merge).
+- `scripts/test-domain.sh`: 118/118 after VEG-001 eucalyptus v02 (Mac overview
+  vs REF still required before merge).
+- Parallel drafts: fence #154, forecourt #155, characters #153.
+- Ops shed BLD-003 v05 merged via #152.
 - Stand GSE PRP-001 v03 / stairs v02 merged via #151.
 - Hangar BLD-002 v05 merged via #150.
 - Vehicle fleet v06 / landside car v02 merged via #149.
@@ -98,11 +98,12 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac overview: ops shed BLD-003 v05 vs REF-001 on
-   `cursor/ops-shed-bld-003-v05-3272`, then merge.
-2. Mac overview backlog: GSE (#151), hangar (#150), fleet (#149) vs refs if not
-   yet signed off.
+1. Mac overview: eucalyptus VEG-001 v02 on
+   `cursor/eucalyptus-veg-001-v02-3272`, then merge; likewise fence #154 /
+   forecourt #155 / characters #153.
+2. Mac overview backlog: ops shed (#152), GSE (#151), hangar (#150), fleet
+   (#149) vs refs if not yet signed off.
 3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
-   Companion.
+   Companion. Ranked next: VEG-002 scrub densify (optional).
 4. Optional: Editor Addressables groups for player catalog.
 5. No new economy systems; no Companion/CloudKit.

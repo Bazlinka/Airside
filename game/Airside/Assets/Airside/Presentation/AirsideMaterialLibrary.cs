@@ -166,11 +166,17 @@ namespace Airside.Presentation
                 || n.Contains("windshield") || n.Contains("windscreen")
                 || n.Equals("rear_window") || n.Contains("skylight"))
                 return SurfaceKind.Glass;
-            if (n.Contains("tire") || n.Contains("wheel") || n.Contains("rubber"))
+            if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber")
+                || (n.Contains("wheel") && !n.Contains("hub") && !n.Contains("arch")
+                    && !n.Contains("steering")))
                 return SurfaceKind.Rubber;
+            if (n.Contains("hub") || n.Contains("grille") || n.Contains("bumper")
+                || n.Contains("chassis") || n.Contains("towbar") || n.Contains("hitch")
+                || n.Contains("hose") || n.Contains("exhaust") || n.Contains("mirror"))
+                return SurfaceKind.Metal;
             if (n.Contains("propeller") || n.Contains("propblade") || n.Contains("spinner")
                 || n.Contains("gear") || n.Contains("nacelle") || n.Contains("engine")
-                || n.Contains("tank") || n.Contains("hose") || n.Contains("column")
+                || n.Contains("tank") || n.Contains("column")
                 || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
             if (n.Contains("marking") || n.Contains("centreline") || n.Contains("centerline")
@@ -184,7 +190,8 @@ namespace Airside.Presentation
                 || n.Contains("aileron") || n.Contains("cabindoor") || n.Contains("cabin door")
                 || n.Contains("cargo door") || n.Contains("body") || n.Contains("cab")
                 || n.Contains("bus_") || n.Equals("tug") || n.Contains("tug_")
-                || n.Contains("livery") || n.Contains("stripe") || n.Contains("fairing"))
+                || n.Contains("car_") || n.Contains("livery") || n.Contains("stripe")
+                || n.Contains("fairing") || n.Contains("hood") || n.Contains("boot"))
                 return SurfaceKind.AircraftSkin;
             if (n.Contains("roof") || n.Contains("corrugat") || n.Contains("hangar") || n.Contains("shed")
                 || n.Contains("buttress") || n.Contains("vent") || n.Contains("track")

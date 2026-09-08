@@ -1,18 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — flight/taxi polish pass 2)
-- **Branch:** `cursor/flight-taxi-polish-aa9f` (off `main` after #147)
-- **Do next:** Mac Play follow-camera — lineup after taxi-out, touchdown FX on
-  contact, Stand 2/3 leads paved, A1 night lights, then merge.
+- **Last updated:** 2026-09-08 (Cursor — vehicle fleet fidelity)
+- **Branch:** `cursor/vehicle-fleet-fidelity-3272` (off `main`)
+- **Do next:** Mac Unity overview + follow-camera check of landside cars and
+  turnaround fleet vs REF-003 / REF-005 (glass, wheels, Safety Yellow / Coastal
+  Blue, scale vs turboprop at stand). Then merge if the read holds.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Takeoff starts with a short bezier lineup; look-ahead is shortened so yaw
-    does not skip the curve
-  - Touchdown smoke/chirp/skids latch at landing progress ≥ 0.28 (ground contact)
-  - Taxi-out no longer drives back onto the stand after pushback
-  - Stand lead pads follow `(8,9)→(17,standZ)`; Stand 3 adds a lead + apron extension
-  - A1 fillet has blue taxi lamps/points; hold-short crosses the exit path
-  - Prop blur discs size from blade bounds after hub rebake
+  - PreferArtKit: fuel/baggage/bus `*_v06` → v05→…; pushback `v03`→v02→v01;
+    parked car `mdl_parked_car_v02`→v01→cuboids
+  - ASCII FBX `UnitScaleFactor=100`; StreamingAssets synced; Resources prefabs
+    are pipeline-proof until Mac FBX bake
+  - UV-less vehicle meshes use flat Lit (`useTextures: false`); wheel→Rubber
+  - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
 
@@ -90,14 +90,17 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: 118/118. Flight/taxi presentation needs Mac Play verify
-  (`scripts/test-unity.sh`) before merge.
+- `scripts/test-domain.sh`: 118/118 after vehicle fleet v06 / landside car v02
+  (Unity EditMode / Mac overview+follow vs REF-003 still required before merge).
 - #146 bug audit and #147 prop/landing/taxiway fixes are on `main`.
 
 ## Next work
 
-1. Merge **flight/taxi polish** (`cursor/flight-taxi-polish-aa9f`) after Mac Play.
-2. Keep pushing first-playable **visual polish** — standing goal; no new economy /
+1. Mac overview + follow-camera: landside cars + turnaround fleet vs REF-003/005
+   on branch `cursor/vehicle-fleet-fidelity-3272`, then merge.
+2. Merge **flight/taxi polish** (`cursor/flight-taxi-polish-aa9f`) after Mac Play if
+   still open.
+3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
    Companion.
-3. Optional: Editor Addressables groups for player catalog.
-4. No new economy systems; no Companion/CloudKit.
+4. Optional: Editor Addressables groups for player catalog.
+5. No new economy systems; no Companion/CloudKit.

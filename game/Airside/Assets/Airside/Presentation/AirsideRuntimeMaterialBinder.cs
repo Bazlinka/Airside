@@ -34,18 +34,20 @@ namespace Airside.Presentation
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber"))
+                else if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber")
+                         || (n.Contains("wheel") && !n.Contains("hub") && !n.Contains("arch")
+                             && !n.Contains("steering")))
                 {
-                    // Must run before the step/wheel metal branch — "wheel" names used to
-                    // steal Rubber and leave tyres as painted metal.
+                    // Must run before the step/metal branch — wheel tyres are Rubber
+                    // (MAT-001), hubs stay Metal below.
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Rubber;
                 }
-                else if (n.Contains("step") || n.Contains("tread") || n.Contains("wheel")
+                else if (n.Contains("step") || n.Contains("tread")
                          || n.Contains("leg") || n.Contains("base") || n.Contains("post")
                          || n.Contains("plate") || n.Contains("pad") || n.Contains("bund")
                          || n.Contains("pump") || n.Contains("gear") || n.Contains("prop")
-                         || n.Contains("frame") || n.Contains("board"))
+                         || n.Contains("frame") || n.Contains("board") || n.Contains("hub"))
                 {
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

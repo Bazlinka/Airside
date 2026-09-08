@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import uuid
 from pathlib import Path
@@ -15,6 +16,14 @@ from PIL import Image, ImageDraw
 SCRIPTS = Path(__file__).resolve().parent
 REPO = SCRIPTS.parent
 ROOT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art"
+
+# Loaded by path because the generators are hyphenated scripts, not a package.
+_ATTR_SPEC = importlib.util.spec_from_file_location(
+    "mesh_attributes", SCRIPTS / "mesh_attributes.py"
+)
+mesh_attributes = importlib.util.module_from_spec(_ATTR_SPEC)
+assert _ATTR_SPEC.loader is not None
+_ATTR_SPEC.loader.exec_module(mesh_attributes)
 
 
 def new_guid() -> str:
@@ -165,51 +174,69 @@ def box(cx: float, cy: float, cz: float, sx: float, sy: float, sz: float):
 
 
 def pack_gltf(path: Path, meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> None:
+    """Write a kit as glTF with a full vertex format.
+
+    Generators hand in bare (positions, indices); normals, UVs and tangents are
+    derived here by ``mesh_attributes`` so every kit in the project gains them
+    from the one writer. See that module for what each pass does.
+    """
     bin_parts: list[bytes] = []
     buffer_views, accessors, gltf_meshes, nodes = [], [], [], []
     offset = 0
-    for name, (verts, indices) in meshes.items():
-        v = np.asarray(verts, dtype=np.float32)
-        i = np.asarray(indices, dtype=np.uint16)
-        v_bytes = v.tobytes()
-        v_bytes += b"\x00" * ((4 - (len(v_bytes) % 4)) % 4)
-        i_bytes = i.tobytes()
-        i_bytes += b"\x00" * ((4 - (len(i_bytes) % 4)) % 4)
 
-        bv_v = len(buffer_views)
+    def add_accessor(data: np.ndarray, kind: str, target: int, with_bounds: bool) -> int:
+        """Append one bufferView + accessor, keeping the 4-byte alignment glTF wants."""
+        nonlocal offset
+        raw = data.tobytes()
+        padding = (4 - (len(raw) % 4)) % 4
         buffer_views.append(
-            {"buffer": 0, "byteOffset": offset, "byteLength": len(v) * 12, "target": 34962}
-        )
-        bin_parts.append(v_bytes)
-        accessors.append(
             {
-                "bufferView": bv_v,
-                "componentType": 5126,
-                "count": len(v),
-                "type": "VEC3",
-                "max": v.max(axis=0).tolist(),
-                "min": v.min(axis=0).tolist(),
+                "buffer": 0,
+                "byteOffset": offset,
+                "byteLength": len(raw),
+                "target": target,
             }
         )
-        offset += len(v_bytes)
-        acc_v = len(accessors) - 1
+        bin_parts.append(raw + b"\x00" * padding)
+        offset += len(raw) + padding
 
-        bv_i = len(buffer_views)
-        buffer_views.append(
-            {"buffer": 0, "byteOffset": offset, "byteLength": len(i) * 2, "target": 34963}
-        )
-        bin_parts.append(i_bytes)
-        accessors.append(
-            {"bufferView": bv_i, "componentType": 5123, "count": len(i), "type": "SCALAR"}
-        )
-        offset += len(i_bytes)
-        acc_i = len(accessors) - 1
+        component = {
+            np.dtype(np.float32): 5126,
+            np.dtype(np.uint16): 5123,
+            np.dtype(np.uint32): 5125,
+        }[data.dtype]
+        accessor = {
+            "bufferView": len(buffer_views) - 1,
+            "componentType": component,
+            "count": len(data),
+            "type": kind,
+        }
+        if with_bounds:
+            accessor["min"] = data.min(axis=0).tolist()
+            accessor["max"] = data.max(axis=0).tolist()
+        accessors.append(accessor)
+        return len(accessors) - 1
+
+    for name, (verts, indices) in meshes.items():
+        pos, nrm, uv, tan, idx = mesh_attributes.build_attributes(verts, indices)
+        if len(idx) == 0:
+            continue
+        # uint16 wherever it fits, as before; wider only when a split mesh needs it.
+        idx = idx.astype(np.uint32 if len(pos) > 65535 else np.uint16)
+
+        attributes = {
+            "POSITION": add_accessor(pos, "VEC3", 34962, with_bounds=True),
+            "NORMAL": add_accessor(nrm, "VEC3", 34962, with_bounds=False),
+            "TEXCOORD_0": add_accessor(uv, "VEC2", 34962, with_bounds=False),
+            "TANGENT": add_accessor(tan, "VEC4", 34962, with_bounds=False),
+        }
+        acc_i = add_accessor(idx, "SCALAR", 34963, with_bounds=False)
 
         mesh_index = len(gltf_meshes)
         gltf_meshes.append(
             {
                 "name": name,
-                "primitives": [{"attributes": {"POSITION": acc_v}, "indices": acc_i, "mode": 4}],
+                "primitives": [{"attributes": attributes, "indices": acc_i, "mode": 4}],
             }
         )
         nodes.append({"name": name, "mesh": mesh_index})

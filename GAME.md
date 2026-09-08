@@ -1,18 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-07 (Cursor — Batch F4 motion/VFX/UI)
-- **Branch:** `cursor/batch-f4-motion-vfx-ui-a8ff` (stacks on F3 tip)
-- **Do next:** Bailey merge F3 (#137) then F4 when ready (StreamingAssets glTF /
+- **Last updated:** 2026-09-07 (Cursor — Batch F4 motion/VFX/UI; rebased onto merged F3)
+- **Branch:** `cursor/batch-f4-motion-vfx-ui-a8ff`
+- **Do next:** Bailey merge F4 (#138) when ready (StreamingAssets glTF /
   PNG path; no Mac bake required). Then keep pushing first-playable visual polish
-  (lighting, presentation bugs, art fidelity) — standing goal.
+  (lighting, presentation bugs, art fidelity) — standing goal / #139.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - F4 Toolkit chrome uses UI-ICO-005; text fallbacks remain if icons missing
+  - F3 is on `main`; F4 Toolkit chrome uses UI-ICO-005; text fallbacks remain if icons missing
   - Touchdown smoke prefers `vfx_touchdown_smoke_v01`; dense rain stays procedural
   - `AirsideReusableMotion` owns prop RPM table — do not re-inline rates
   - Operational runway/taxi/stand geometry unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge F3/F4 when happy; continue visual polish
+- **Open question for Bailey:** none — merge F4 when happy; continue visual polish
 
 ---
 
@@ -97,8 +97,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **Batch F3** (#137) then **Batch F4** when ready.
+1. Merge **Batch F4** (#138) when ready.
 2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
-   art fidelity) — standing goal; no new economy / Companion.
+   art fidelity) — standing goal / #139; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.
 4. No new economy systems; no Companion/CloudKit.

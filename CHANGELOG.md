@@ -8,7 +8,7 @@ change it describes.
 - **Eucalyptus VEG-001 v02.** Prefer `mdl_eucalyptus_kit_v02` (30 meshes):
   multi-lobe canopies, tapered trunk/bark/fork, denser lod1; place full tree
   belt; far trees add lod1 crown; v01 remains fallback. Evidence:
-  `scripts/test-domain.sh` pending; Mac overview vs REF pending.
+  `scripts/test-domain.sh` 118/118; Mac overview vs REF pending.
 
 - **Ops shed BLD-003 v05.** Prefer `mdl_operations_shed_v05` (160 meshes):
   dual-pitch roof, gable ends, denser porch/corrugation, antenna/AC silhouette;

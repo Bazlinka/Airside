@@ -8641,6 +8641,7 @@ namespace Airside.Presentation
             // Prefer denser authored service kit over thin Resources prefab (0025 item 2).
             var root = new GameObject("Passenger stairs").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -8656,31 +8657,31 @@ namespace Airside.Presentation
             }
 
             PlacePart("stairs_base", new Color(0.55f, 0.56f, 0.58f));
-            PlacePart("stairs_rail_l", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_rail_r", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_rail_mid", new Color(0.85f, 0.55f, 0.15f));
+            PlacePart("stairs_rail_l", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_rail_r", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_rail_mid", AirsideTheme.SafetyYellow);
             PlacePart("stairs_tread_1", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_2", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_3", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_4", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_5", new Color(0.62f, 0.63f, 0.65f));
             PlacePart("stairs_tread_6", new Color(0.62f, 0.63f, 0.65f));
-            PlacePart("stairs_rail_cross", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_1l", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_1r", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_2l", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_2r", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_3l", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_post_3r", new Color(0.85f, 0.55f, 0.15f));
-            PlacePart("stairs_nosing_1", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_nosing_2", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_nosing_3", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_nosing_4", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_nosing_5", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_side_panel_l", new Color(0.6f, 0.61f, 0.63f));
-            PlacePart("stairs_side_panel_r", new Color(0.6f, 0.61f, 0.63f));
+            PlacePart("stairs_rail_cross", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_1l", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_1r", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_2l", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_2r", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_3l", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_post_3r", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_nosing_1", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_nosing_2", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_nosing_3", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_nosing_4", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_nosing_5", AirsideTheme.SafetyYellow);
+            PlacePart("stairs_side_panel_l", AirsideTheme.CoastalBlue);
+            PlacePart("stairs_side_panel_r", AirsideTheme.CoastalBlue);
             PlacePart("stairs_platform", new Color(0.7f, 0.72f, 0.74f));
-            PlacePart("stairs_handle", new Color(0.75f, 0.5f, 0.15f));
+            PlacePart("stairs_handle", Shade(AirsideTheme.CoastalBlue, 0.9f));
             PlacePart("stairs_brace", new Color(0.5f, 0.5f, 0.52f));
             PlacePart("stairs_wheel_l", new Color(0.15f, 0.15f, 0.16f));
             PlacePart("stairs_wheel_r", new Color(0.15f, 0.15f, 0.16f));
@@ -8705,7 +8706,8 @@ namespace Airside.Presentation
             }
 
             Object.Destroy(root.gameObject);
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out var prefabRoot))
+            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v02", out var prefabRoot)
+                || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
                 prefabRoot.name = "Passenger stairs";
                 prefabRoot.gameObject.SetActive(false);
@@ -8728,6 +8730,7 @@ namespace Airside.Presentation
         {
             var root = new GameObject("Wheel chocks").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -8780,6 +8783,7 @@ namespace Airside.Presentation
         {
             var root = new GameObject("GPU cart").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -8793,8 +8797,9 @@ namespace Airside.Presentation
                 placed = true;
             }
 
-            PlaceGpu("gpu_body", new Color(0.25f, 0.55f, 0.35f));
-            PlaceGpu("gpu_cab", new Color(0.22f, 0.48f, 0.32f));
+            // REF-003 GSE palette — Safety Yellow chassis, dark metal vents/wheels.
+            PlaceGpu("gpu_body", AirsideTheme.SafetyYellow);
+            PlaceGpu("gpu_cab", Shade(AirsideTheme.SafetyYellow, 0.85f));
             PlaceGpu("gpu_vent", new Color(0.35f, 0.38f, 0.36f));
             PlaceGpu("gpu_panel", new Color(0.2f, 0.22f, 0.24f));
             PlaceGpu("gpu_panel_b", new Color(0.2f, 0.22f, 0.24f));
@@ -8809,7 +8814,7 @@ namespace Airside.Presentation
             PlaceGpu("gpu_exhaust", new Color(0.3f, 0.32f, 0.3f));
             PlaceGpu("gpu_light", new Color(0.95f, 0.9f, 0.6f));
             PlaceGpu("gpu_handle", new Color(0.28f, 0.3f, 0.32f));
-            PlaceGpu("gpu_stripe", new Color(0.85f, 0.75f, 0.2f));
+            PlaceGpu("gpu_stripe", new Color(0.15f, 0.16f, 0.18f));
             PlaceGpu("gpu_wheel_fl", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_fr", new Color(0.15f, 0.15f, 0.16f));
             PlaceGpu("gpu_wheel_rl", new Color(0.15f, 0.15f, 0.16f));
@@ -8819,7 +8824,7 @@ namespace Airside.Presentation
             PlaceGpu("gpu_hub_rl", new Color(0.25f, 0.26f, 0.28f));
             PlaceGpu("gpu_hub_rr", new Color(0.25f, 0.26f, 0.28f));
             if (!placed && ArtGltfLoader.TryPlaceNamedMesh(kit, "gpu", Vector3.zero, Quaternion.identity,
-                    new Color(0.25f, 0.55f, 0.35f), out var gpu))
+                    AirsideTheme.SafetyYellow, out var gpu))
             {
                 gpu.SetParent(root, false);
                 gpu.localPosition = new Vector3(0f, -0.55f, 0f);
@@ -8841,7 +8846,7 @@ namespace Airside.Presentation
             }
 
             root = new GameObject("GPU cart").transform;
-            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), new Color(0.25f, 0.55f, 0.35f));
+            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
             ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
             ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
             ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
@@ -8914,6 +8919,7 @@ namespace Airside.Presentation
 
             var root = new GameObject("Pushback tug").transform;
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -9715,6 +9721,7 @@ namespace Airside.Presentation
             // Belt loaders live in the service kit, not the props kit (0025 wiring bug).
             // One authored hero loader when the kit is present; second only on greybox.
             var serviceKit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -9785,6 +9792,7 @@ namespace Airside.Presentation
             var hasHydrant = ArtPresentationLoader.HasPrefab("mdl_fire_hydrant_v01");
             var hasCabinet = ArtPresentationLoader.HasPrefab("mdl_extinguisher_cabinet_v01");
             var serviceKit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
@@ -9865,6 +9873,7 @@ namespace Airside.Presentation
         private static void PlaceFodBin(string name, Vector3 position, float yawDegrees)
         {
             var kit = PreferArtKit(
+                "Models/Props/mdl_service_equipment_kit_v03.gltf",
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");

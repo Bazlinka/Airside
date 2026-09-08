@@ -244,7 +244,7 @@ references but **does not substitute a flat image for a 3D object**.
 | VEH-004 | `Models/Vehicles/mdl_pushback_tug_v03.gltf` (+ `.fbx`; fallbacks v02→v01 prefab) | Pushback tug with readable glass, mid towbar pivot and separated wheels | Integrated (v03 preferred; Mac FBX bake / Play pending) |
 | CHR-001 | `Models/Characters/mdl_ramp_crew_kit_v01.gltf` (+ `.fbx`) | Marshaller / fueler / ramp with hi-vis and wand sockets | Integrated (PlacePerson prefers kit) |
 | CHR-002 | `Models/Characters/mdl_passenger_kit_v01.gltf` (+ `.fbx`) | Six stand/walk/sit silhouettes; presentation-only | Integrated (PlacePerson prefers kit) |
-| PRP-001 | `Models/Props/mdl_service_equipment_kit_v01.gltf` | Stairs, chocks, cones, towbar, bins and ground-power unit | Approved · Integrated |
+| PRP-001 | `Models/Props/mdl_service_equipment_kit_v03.gltf` (+ stairs `mdl_passenger_stairs_v02`; fallbacks authored→v02→v01) | Stand GSE: tubular-rail stairs, GPU, belt loader, chocks, cones, towbar, bins (106 meshes) | Integrated (v03 preferred; Mac overview/follow pending) |
 
 ### Batch D — animation, feedback and weather
 

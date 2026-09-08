@@ -1,16 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — ops shed BLD-003 v05)
-- **Branch:** `cursor/ops-shed-bld-003-v05-3272` (off `main` after #150)
+- **Last updated:** 2026-09-08 (Cursor — ops shed BLD-003 v05; rebased on #151)
+- **Branch:** `cursor/ops-shed-bld-003-v05-3272` (off `main` after #151)
 - **Do next:** Mac Unity overview of ops shed pitched roof / porch / antenna vs
-  REF-001 next to v05 terminal + hangar; then merge. Open polish still in flight:
-  stand GSE draft #151 (`cursor/stand-stairs-gse-v02-3272`).
+  REF-001 next to v05 terminal + hangar; then merge. GSE #151 is on `main`.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - PreferArtKit ops shed: `mdl_operations_shed_v05` → authored_v01 → v04…v01
   - Night-glow / glass / door names unchanged (`interior_glow`, `window_*`,
     `glass_pane*`, `door*`)
   - ASCII FBX `UnitScaleFactor=100`; StreamingAssets + Resources prefab shipped
+  - Stand GSE kit v03 + stairs v02 are on `main` (#151)
   - Simulation / reservations / save schema unchanged
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -91,6 +91,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 - `scripts/test-domain.sh`: 118/118 after BLD-003 v05 (Mac overview vs REF-001
   still required before merge).
+- Stand GSE PRP-001 v03 / stairs v02 merged via #151.
 - Hangar BLD-002 v05 merged via #150.
 - Vehicle fleet v06 / landside car v02 merged via #149.
 - #146 bug audit and #147/#148 flight/taxi polish are on `main`.
@@ -99,9 +100,9 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. Mac overview: ops shed BLD-003 v05 vs REF-001 on
    `cursor/ops-shed-bld-003-v05-3272`, then merge.
-2. Merge stand GSE draft #151 after Mac overview/follow vs REF-003.
-3. Mac overview backlog: hangar (#150), fleet (#149) vs refs if not yet signed off.
-4. Keep pushing first-playable **visual polish** — standing goal; no new economy /
+2. Mac overview backlog: GSE (#151), hangar (#150), fleet (#149) vs refs if not
+   yet signed off.
+3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
    Companion.
-5. Optional: Editor Addressables groups for player catalog.
-6. No new economy systems; no Companion/CloudKit.
+4. Optional: Editor Addressables groups for player catalog.
+5. No new economy systems; no Companion/CloudKit.

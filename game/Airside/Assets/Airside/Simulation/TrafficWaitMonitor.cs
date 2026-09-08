@@ -27,8 +27,16 @@ namespace Airside.Simulation
 
         public void SetWaiting(StableId aircraft, StableId resource, SimulationTime now)
         {
-            if (!_waits.ContainsKey(aircraft))
-                _waits[aircraft] = new TrafficWait(aircraft, resource, now);
+            if (_waits.TryGetValue(aircraft, out var existing))
+            {
+                // Keep the original start time so a continuous hold still warns after 10s,
+                // but always surface the resource that is blocking right now.
+                if (!existing.Resource.Equals(resource))
+                    _waits[aircraft] = new TrafficWait(aircraft, resource, existing.StartedAt);
+                return;
+            }
+
+            _waits[aircraft] = new TrafficWait(aircraft, resource, now);
         }
 
         public void Clear(StableId aircraft) => _waits.Remove(aircraft);

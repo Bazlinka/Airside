@@ -61,6 +61,67 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void DualFlight_NeverSharesATaxiSegment()
+        {
+            var simulation = RunUntilDual(out var clock);
+            for (var second = 1; second <= 15000; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.Routes.Pending != null)
+                    simulation.DeclinePendingRoute();
+
+                StableId? occupied = null;
+                foreach (var flight in simulation.Flights)
+                {
+                    if (flight.Operation.IsComplete)
+                        continue;
+                    var segment = flight.SegmentFor(clock.Now);
+                    if (segment.Equals(default(StableId)))
+                        continue;
+                    if (occupied.HasValue && occupied.Value.Equals(segment))
+                        Assert.Fail($"{flight.AircraftId} shares {segment.Value} at t={clock.Now.ElapsedSeconds}");
+                    occupied = segment;
+                }
+            }
+        }
+
+        [Test]
+        public void PriorityCrew_AppliesToSecondaryWhenPrimaryIsNotAtStand()
+        {
+            var simulation = RunUntilDual(out var clock);
+            for (var second = 1; second <= 8000; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.Routes.Pending != null)
+                    simulation.DeclinePendingRoute();
+
+                var primary = simulation.Flights[0];
+                CommercialFlight atStand = null;
+                foreach (var flight in simulation.Flights)
+                {
+                    if (flight.Operation.Phase == AircraftPhase.AtStand && flight.Turnaround != null)
+                        atStand = flight;
+                }
+
+                if (atStand == null || primary.Operation.Phase == AircraftPhase.AtStand)
+                    continue;
+                if (ReferenceEquals(atStand, primary))
+                    continue;
+
+                var cashBefore = simulation.Economy.Cash;
+                Assert.That(simulation.EnablePriorityCrew(), Is.True,
+                    $"P should target {atStand.AircraftId} at stand while primary is {primary.Operation.Phase}");
+                Assert.That(atStand.Turnaround.PriorityCrewEnabled, Is.True);
+                Assert.That(simulation.Economy.Cash, Is.EqualTo(cashBefore - AirportEconomy.PriorityCrewCost));
+                return;
+            }
+
+            Assert.Fail("expected a tick where primary was not at stand but another commercial was");
+        }
+
+        [Test]
         public void DualFlight_LargeAndSmallTimeSteps_Match()
         {
             var small = RunDualComparable(4217, step: 1);

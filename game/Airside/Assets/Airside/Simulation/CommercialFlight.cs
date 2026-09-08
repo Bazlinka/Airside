@@ -43,6 +43,10 @@ namespace Airside.Simulation
             if (phase != AircraftPhase.TaxiIn && phase != AircraftPhase.TaxiOut)
                 return default;
 
+            // Holding short after taxi-out: no longer occupying a taxi segment.
+            if (phase == AircraftPhase.TaxiOut && Operation.SecondsRemaining(at) <= 0)
+                return default;
+
             var progress = Operation.PhaseProgress(at);
             var count = TaxiRoute.SegmentIds.Count;
             var index = Math.Min(count - 1, (int)(Math.Max(0, Math.Min(0.999999, progress)) * count));
@@ -51,16 +55,26 @@ namespace Airside.Simulation
             return TaxiRoute.SegmentIds[index];
         }
 
-        public IEnumerable<StableId> RequiredResources(SimulationTime at)
+        public IEnumerable<StableId> RequiredResources(SimulationTime at) =>
+            ResourcesForPhase(Operation.Phase, at);
+
+        /// <summary>
+        /// Resources a commercial must hold while in <paramref name="phase"/>. Used both for
+        /// the live phase and to gate the next transition so taxiways/runways are reserved
+        /// before use.
+        /// </summary>
+        public IEnumerable<StableId> ResourcesForPhase(AircraftPhase phase, SimulationTime at)
         {
-            switch (Operation.Phase)
+            switch (phase)
             {
                 case AircraftPhase.Landing:
                 case AircraftPhase.Takeoff:
                     yield return AirportSimulation.Runway;
                     break;
                 case AircraftPhase.TaxiIn:
-                    yield return SegmentFor(at);
+                    // Single-file A1/A2 corridor — dual commercials must not meet head-on.
+                    yield return AirportTaxiNetwork.Corridor;
+                    yield return SegmentForPhase(AircraftPhase.TaxiIn, at);
                     yield return AssignedStand;
                     break;
                 case AircraftPhase.AtStand:
@@ -71,9 +85,33 @@ namespace Airside.Simulation
                     yield return AirportSimulation.ApronLane;
                     break;
                 case AircraftPhase.TaxiOut:
-                    yield return SegmentFor(at);
+                    // Finished taxi, holding short: release the corridor so a landing
+                    // aircraft can vacate the runway without deadlocking against takeoff.
+                    if (Operation.Phase == AircraftPhase.TaxiOut
+                        && Operation.SecondsRemaining(at) <= 0)
+                        yield break;
+                    yield return AirportTaxiNetwork.Corridor;
+                    yield return SegmentForPhase(AircraftPhase.TaxiOut, at);
                     break;
             }
+        }
+
+        private StableId SegmentForPhase(AircraftPhase phase, SimulationTime at)
+        {
+            if (phase != AircraftPhase.TaxiIn && phase != AircraftPhase.TaxiOut)
+                return default;
+
+            // When asking about a future taxi phase before we have entered it, use the
+            // entry end of the route (first segment inbound / last outbound).
+            if (Operation.Phase != phase)
+            {
+                var count = TaxiRoute.SegmentIds.Count;
+                return phase == AircraftPhase.TaxiOut
+                    ? TaxiRoute.SegmentIds[count - 1]
+                    : TaxiRoute.SegmentIds[0];
+            }
+
+            return SegmentFor(at);
         }
     }
 }

@@ -80,14 +80,14 @@ namespace Airside.Simulation
         public IReadOnlyList<CommercialFlight> Flights => _flights;
 
         /// <summary>Migration accessor for the first commercial flight's operation.</summary>
-        public AircraftOperation ActiveAircraft => Primary.Operation;
+        public AircraftOperation ActiveAircraft => FocusFlight.Operation;
 
         /// <summary>Migration accessor for the first commercial flight's stand.</summary>
-        public StableId AssignedStand => Primary.AssignedStand;
+        public StableId AssignedStand => FocusFlight.AssignedStand;
 
         public int CompletedCycles { get; private set; }
         public int ReservationConflicts { get; private set; }
-        public TurnaroundWorkflow ActiveTurnaround => Primary.Turnaround;
+        public TurnaroundWorkflow ActiveTurnaround => FocusFlight.Turnaround;
         public AirportEconomy Economy { get; }
         public AirportRoutes Routes { get; }
         public AirportReputation Reputation { get; }
@@ -97,18 +97,18 @@ namespace Airside.Simulation
         public AirportDailyReports DailyReports { get; }
         public bool IsInsolvent => Economy.IsInsolvent;
         public AirportTaxiNetwork TaxiNetwork { get; }
-        public TaxiRoute ActiveTaxiRoute => Primary.TaxiRoute;
+        public TaxiRoute ActiveTaxiRoute => FocusFlight.TaxiRoute;
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
         public IReadOnlyList<GroundTrafficAircraft> GroundTraffic => _groundTraffic;
-        public StableId CurrentTaxiSegment => Primary.SegmentFor(_clock.Now);
+        public StableId CurrentTaxiSegment => FocusFlight.SegmentFor(_clock.Now);
         public long LastDelaySeconds { get; private set; }
         public string LastDelayCause { get; private set; } = string.Empty;
-        public long CurrentDelaySeconds => Primary.Operation.Phase == AircraftPhase.AtStand && Primary.Turnaround != null
-            ? Primary.Turnaround.DelaySeconds(_clock.Now)
+        public long CurrentDelaySeconds => FocusFlight.Operation.Phase == AircraftPhase.AtStand && FocusFlight.Turnaround != null
+            ? FocusFlight.Turnaround.DelaySeconds(_clock.Now)
             : 0;
-        public string CurrentDelayCause => Primary.Operation.Phase == AircraftPhase.AtStand && Primary.Turnaround != null
-            ? Primary.Turnaround.DelayCause(_clock.Now)
+        public string CurrentDelayCause => FocusFlight.Operation.Phase == AircraftPhase.AtStand && FocusFlight.Turnaround != null
+            ? FocusFlight.Turnaround.DelayCause(_clock.Now)
             : string.Empty;
         public SimulationTime CycleStartedAt => Primary.CycleStartedAt;
         public ReservationTable Reservations => _reservations;
@@ -116,7 +116,23 @@ namespace Airside.Simulation
 
         private CommercialFlight Primary => _flights[0];
 
-        
+        /// <summary>
+        /// Player-facing focus: prefer any commercial currently at stand (turnaround /
+        /// priority crew / delay HUD), otherwise the earliest-spawned flight.
+        /// </summary>
+        private CommercialFlight FocusFlight
+        {
+            get
+            {
+                foreach (var flight in _flights)
+                {
+                    if (flight.Operation.Phase == AircraftPhase.AtStand && flight.Turnaround != null)
+                        return flight;
+                }
+
+                return Primary;
+            }
+        }
         public bool BuildThirdStand()
         {
             if (IsInsolvent)
@@ -200,13 +216,15 @@ namespace Airside.Simulation
         {
             if (IsInsolvent)
                 return false;
-            if (Primary.Operation.Phase != AircraftPhase.AtStand || Primary.Turnaround == null || Primary.Turnaround.PriorityCrewEnabled)
+
+            var target = FocusFlight;
+            if (target.Operation.Phase != AircraftPhase.AtStand || target.Turnaround == null || target.Turnaround.PriorityCrewEnabled)
                 return false;
             if (!Economy.PurchasePriorityCrew())
                 return false;
 
-            Primary.Turnaround.EnablePriorityCrew();
-            Record(_lastUpdatedAt, Primary.AircraftId, "Priority crew assigned", "$300 schedule recovery decision");
+            target.Turnaround.EnablePriorityCrew();
+            Record(_lastUpdatedAt, target.AircraftId, "Priority crew assigned", "$300 schedule recovery decision");
             return true;
         }
 
@@ -284,6 +302,10 @@ namespace Airside.Simulation
                 return;
             TrySpawnSecondCommercial(now);
 
+            // Ground traffic yields before commercials move, so a commercial never
+            // stalls on a segment a fleet aircraft would have released this tick.
+            YieldGroundTrafficToCommercials(now);
+
             var active = _flights.ToArray();
             foreach (var flight in active)
                 AdvanceCommercial(flight, now);
@@ -291,17 +313,73 @@ namespace Airside.Simulation
             SynchronizeAllTraffic(now);
         }
 
+        private void YieldGroundTrafficToCommercials(SimulationTime now)
+        {
+            var required = new List<StableId>();
+            foreach (var flight in _flights)
+            {
+                if (flight.Operation.IsComplete)
+                    continue;
+
+                foreach (var resource in flight.RequiredResources(now))
+                    required.Add(resource);
+
+                // Also clear the next phase so CanLeavePhase is not blocked by GT.
+                var next = (AircraftPhase)((int)flight.Operation.Phase + 1);
+                if (next <= AircraftPhase.Departed)
+                {
+                    foreach (var resource in flight.ResourcesForPhase(next, now))
+                        required.Add(resource);
+                }
+            }
+
+            foreach (var aircraft in _groundTraffic)
+                aircraft.Yield(required);
+        }
+
         private void AdvanceCommercial(CommercialFlight flight, SimulationTime now)
         {
             if (flight.Operation.IsComplete)
             {
+                // Departed aircraft must not keep the runway for the reset window.
+                _reservations.Release(flight.OwnerId);
+                TrafficWaits.Clear(flight.OwnerId);
                 if (now.CompareTo(flight.Operation.PhaseStartedAt.Advance(DepartureResetSeconds)) >= 0)
                     TryRespawnCommercial(flight, now);
                 return;
             }
 
+            // Hold current resources before advancing. If another commercial owns a
+            // shared taxi/runway segment, stall schedule progress rather than occupy it.
+            if (!_reservations.TryReplace(flight.OwnerId, flight.RequiredResources(now), out var blocked))
+            {
+                if (!IsCommercialOwner(blocked))
+                    ReservationConflicts++;
+                TrafficWaits.SetWaiting(flight.OwnerId, blocked, now);
+                flight.Operation.StallOneSecond();
+                return;
+            }
+
+            TrafficWaits.Clear(flight.OwnerId);
+
             var previousPhase = flight.Operation.Phase;
-            flight.Operation.AdvanceTo(now, phase => CanLeavePhase(flight, phase));
+            flight.Operation.AdvanceTo(now, phase => CanLeavePhase(flight, phase, now));
+
+            if (previousPhase != flight.Operation.Phase)
+            {
+                // Re-acquire resources for the new phase. CanLeavePhase already checked
+                // availability against the table at transition time.
+                if (!_reservations.TryReplace(flight.OwnerId, flight.RequiredResources(now), out blocked))
+                {
+                    if (!IsCommercialOwner(blocked))
+                        ReservationConflicts++;
+                    TrafficWaits.SetWaiting(flight.OwnerId, blocked, now);
+                }
+                else
+                {
+                    TrafficWaits.Clear(flight.OwnerId);
+                }
+            }
 
             if (previousPhase == flight.Operation.Phase)
                 return;
@@ -343,6 +421,8 @@ namespace Airside.Simulation
                 flight.FlightSettled = true;
                 Record(now, flight.AircraftId, "Departed",
                     $"Net flight result ${AirportEconomy.TurnaroundRevenue - flight.LastDelaySeconds * AirportEconomy.DelayCostPerSecond:N0}");
+                _reservations.Release(flight.OwnerId);
+                TrafficWaits.Clear(flight.OwnerId);
             }
             else if (flight.Operation.Phase == AircraftPhase.Landing)
             {
@@ -541,22 +621,9 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
 
         private void SynchronizeAllTraffic(SimulationTime now)
         {
-            // Commercials have priority: every ground-traffic aircraft releases any
-            // resource any commercial needs this tick, commercials then take their
-            // reservations in SpawnedAt FIFO order, and the fleet moves into whatever
-            // space is left. Fleet aircraft queue through the shared corridor lock.
-            var required = new List<StableId>();
-            foreach (var flight in _flights)
-            {
-                if (flight.Operation.IsComplete)
-                    continue;
-                foreach (var resource in flight.RequiredResources(now))
-                    required.Add(resource);
-            }
-
-            foreach (var aircraft in _groundTraffic)
-                aircraft.Yield(required);
-
+            // Commercials already advanced and held their resources this tick. Reconcile
+            // the table (in case a segment changed mid-taxi), then let the fleet move
+            // into whatever space is left. Fleet aircraft queue through the corridor lock.
             SynchronizeCommercialReservations();
 
             var grantee = ChooseCorridorGrantee(now);
@@ -572,6 +639,7 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             {
                 if (flight.Operation.IsComplete)
                 {
+                    _reservations.Release(flight.OwnerId);
                     TrafficWaits.Clear(flight.OwnerId);
                     continue;
                 }
@@ -637,9 +705,16 @@ private bool TryPickStand(out StableId stand, bool consumeRandomWhenChoosing)
             return best;
         }
 
-        private bool CanLeavePhase(CommercialFlight flight, AircraftPhase phase)
+        private bool CanLeavePhase(CommercialFlight flight, AircraftPhase phase, SimulationTime now)
         {
-            return phase != AircraftPhase.AtStand || flight.Turnaround == null || flight.Turnaround.IsComplete(_lastUpdatedAt);
+            if (phase == AircraftPhase.AtStand && (flight.Turnaround == null || !flight.Turnaround.IsComplete(_lastUpdatedAt)))
+                return false;
+
+            var next = (AircraftPhase)((int)phase + 1);
+            if (next >= AircraftPhase.Departed)
+                return true;
+
+            return _reservations.CanReplace(flight.OwnerId, flight.ResourcesForPhase(next, now), out _);
         }
 
         private void CaptureDayBaseline()

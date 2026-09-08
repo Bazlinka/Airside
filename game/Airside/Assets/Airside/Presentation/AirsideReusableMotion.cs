@@ -82,8 +82,11 @@ namespace Airside.Presentation
 
         public static float GearBias(AircraftPhase phase) => phase switch
         {
-            AircraftPhase.Takeoff or AircraftPhase.Approach => GearRetracted,
-            AircraftPhase.Landing => Mathf.Lerp(GearRetracted, GearDeployed, 0.65f),
+            // Gear down for approach and landing; retract after rotate on takeoff.
+            AircraftPhase.Takeoff => GearRetracted,
+            AircraftPhase.Approach => GearDeployed,
+            AircraftPhase.Landing => GearDeployed,
+            AircraftPhase.Departed => GearRetracted,
             _ => GearDeployed
         };
 

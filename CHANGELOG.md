@@ -52,7 +52,10 @@ change it describes.
   with Runway Ink body text; one silhouette belt loader when service kit present;
   flood/edge/taxi/obst silhouette fixtures; ALS 5 stations when lighting kit;
   overview FOV init 48°; dollies×2 with props kit; coast yaw/pitch/roll Hz
-  centralized. Presentation only — simulation unchanged.
+  centralized; tip 17 fussy bug-fix — remove opaque stain/joint/slab densify,
+  gate stand-lead cubes, lift night exposure/ambient/floods, soften contact
+  shadows, prefer lofted turboprop silhouette, preserve FBX albedo maps.
+  Presentation only — simulation unchanged.
   Evidence: `scripts/test-domain.sh` 113/113.
 
 - **Batch F4 motion / VFX / UI system icons.** Eight UI-ICO-005 system-control

@@ -99,7 +99,8 @@ namespace Airside.Presentation
         /// <summary>
         /// After a Mac FBX bake, Resources prefabs keep ModelImporter default materials.
         /// Re-apply the same per-mesh colour / SurfaceKind mapping the glTF path uses so
-        /// glass, metal and painted surfaces stay readable.
+        /// glass, metal and painted surfaces stay readable — but keep authored albedo maps
+        /// when the bake already shipped them (flat replace made airframes look like toys).
         /// </summary>
         private static void ApplyPresentationMaterials(
             Transform root,
@@ -114,7 +115,6 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var originalName = renderer.gameObject.name;
-                var color = colorFor?.Invoke(originalName) ?? new Color(0.61f, 0.64f, 0.63f);
                 if (rename != null)
                 {
                     var renamed = rename(originalName);
@@ -122,6 +122,18 @@ namespace Airside.Presentation
                         renderer.gameObject.name = renamed;
                 }
 
+                // Preserve FBX/authored materials that already carry albedo maps.
+                var existing = renderer.sharedMaterial;
+                if (existing != null)
+                {
+                    var hasMap = existing.mainTexture != null
+                        || (existing.HasProperty("_BaseMap") && existing.GetTexture("_BaseMap") != null)
+                        || (existing.HasProperty("_MainTex") && existing.GetTexture("_MainTex") != null);
+                    if (hasMap)
+                        continue;
+                }
+
+                var color = colorFor?.Invoke(originalName) ?? new Color(0.61f, 0.64f, 0.63f);
                 var kind = AirsideMaterialLibrary.InferFromMeshName(originalName);
                 renderer.sharedMaterial = AirsideMaterialLibrary.Create(color, kind);
             }

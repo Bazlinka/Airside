@@ -1,16 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — post-F polish tip 16; merged onto main w/ F3+F4)
+- **Last updated:** 2026-09-08 (Cursor — tip 17 fussy visual bug-fix)
 - **Branch:** `cursor/batch-f-visual-polish-a8ff`
-- **Do next:** Bailey merge polish (#139) when ready. Standing goal continues:
-  Mac Play verify premium miniature read; more polish if needed.
-- **In progress / half-done:** none — tip 16 shipped; conflicts with merged F3/F4 resolved
+- **Do next:** Bailey Mac Play verify tip 17 (black patches / night / block soup / aircraft).
+  Merge #139 when happy; more fussy polish if needed. Prefer bug-fix over densify tips.
+- **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - F3 (#137) + F4 (#138) are on `main`; this PR is presentation polish only
-  - Tip 16: Toolkit primary panels light chrome; one silhouette belt loader; flood/edge/taxi/obst
-    silhouette fixtures; ALS 5 stations when kit; FOV init 48°; dollies×2; coast Hz centralized
+  - Tip 17: opaque stain decals removed; joints/slabs/E-W fringe gone; stand leads gated;
+    night exposure/ambient lifted; contact/aircraft shadows softened; lofted turboprop preferred;
+    FBX albedo maps preserved
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge #139 when happy; resume polish after Mac Play look
+- **Open question for Bailey:** none — Mac Play is the gate for premium-miniature read
 
 ---
 
@@ -95,8 +95,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Merge **visual polish** (#139) when ready.
-2. Keep pushing first-playable **visual polish** (lighting soak, presentation bugs,
-   art fidelity) — standing goal; no new economy / Companion.
+1. Merge **visual polish** (#139) when ready — prefer fussy bug-fix over densify tips.
+2. Keep pushing first-playable **visual polish** (black patches, night readability,
+   greybox clutter, aircraft silhouette) — standing goal; no new economy / Companion.
 3. Optional: Editor Addressables groups for player catalog.
 4. No new economy systems; no Companion/CloudKit.

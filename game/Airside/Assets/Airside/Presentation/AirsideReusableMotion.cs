@@ -80,10 +80,13 @@ namespace Airside.Presentation
         public static bool PropellersSpinning(AircraftPhase phase) =>
             phase is not (AircraftPhase.AtStand or AircraftPhase.Departed);
 
-        public static float GearBias(AircraftPhase phase) => phase switch
+        /// <summary>
+        /// Gear bias 0..1. Takeoff keeps gear down through ground roll and retracts
+        /// after rotate (~0.48 phase progress — matches <c>TakeoffPosition</c>).
+        /// </summary>
+        public static float GearBias(AircraftPhase phase, float progress01 = 1f) => phase switch
         {
-            // Gear down for approach and landing; retract after rotate on takeoff.
-            AircraftPhase.Takeoff => GearRetracted,
+            AircraftPhase.Takeoff => progress01 < 0.48f ? GearDeployed : GearRetracted,
             AircraftPhase.Approach => GearDeployed,
             AircraftPhase.Landing => GearDeployed,
             AircraftPhase.Departed => GearRetracted,

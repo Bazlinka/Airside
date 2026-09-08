@@ -167,7 +167,8 @@ namespace Airside.Tests
             Assert.That(progressBefore, Is.GreaterThan(0));
 
             aircraft.Yield(new[] { AirportTaxiNetwork.Corridor });
-            Assert.That(aircraft.Progress, Is.EqualTo(0).Or.GreaterThanOrEqualTo(0));
+            Assert.That(aircraft.Progress, Is.EqualTo(progressBefore).Within(0.0001),
+                "Yield must keep mid-leg progress so Position does not snap to the leg start");
 
             // Re-acquire and continue — progress must not restart from zero.
             aircraft.Reposition(new SimulationTime(10), monitor, AirportSimulation.StandOne, 2, true);

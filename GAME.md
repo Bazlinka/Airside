@@ -1,18 +1,19 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — day/night readability pass)
-- **Branch:** `cursor/day-night-readability-3272` (off `main` after #157)
-- **Do next:** Mac Unity Play overview at noon and midnight — confirm apron,
-  runway, hangar and terminal read clearly (no grey mush / purple crush). Then
-  merge.
+- **Last updated:** 2026-09-08 (Cursor — ground/vehicle/smoothness 20-fix pass)
+- **Branch:** `cursor/ground-vehicle-smooth-20-3272` (off `main` after #158)
+- **Do next:** Mac Unity Play — pause/4× GSE, GT yield (no snap), takeoff gear
+  roll, wet/fog apron, O overview ease, right-drag follow orbit. Then merge.
+  Day/night readability (#158) is on `main` — Mac noon/midnight sign-off still
+  useful.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Presentation only: `ApplyDayCycle` + `AirsideDayVolume` retuned toward REF-001/002
-  - Clearer day sky, thinner fog, dimmer night sun key, softer post grade
-  - Simulation / save schema unchanged
+  - Tracking: `docs/testing/SMOOTH_PASS_20_2026-09-08.md`
+  - Presentation motion uses `_paused` / `_speed`; GT Yield keeps Progress
+  - Day/night retune from #158 kept (ambient base + weather gloom dim)
+  - Save schema / simulation reservations unchanged (GT Progress report only)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** does noon/midnight overview still feel muddy after
-  this pass?
+- **Open question for Bailey:** none
 
 ---
 
@@ -88,26 +89,22 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: **135/135** on `cursor/day-night-readability-3272`
-  (presentation lighting retune; Mac noon/midnight overview pending).
-- 50-fix bugfix pass merged via #157 (`scripts/test-domain.sh` 135/135).
+- `scripts/test-domain.sh`: **136/136** on `cursor/ground-vehicle-smooth-20-3272`
+  (20 ground/vehicle/smoothness fixes + `SmoothPassTests`).
+- Day/night readability merged via #158 (Mac noon/midnight overview pending).
+- 50-fix bugfix pass merged via #157.
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
 - Forecourt PRP-003 v02 merged via #155 (Mac overview vs REF still pending).
 - Fence/gate PRP-002 v02 merged via #154 (Mac overview vs REF still pending).
 - Character kits CHR-001/002 v02 merged via #153 (Mac overview/follow vs REF-003
   still pending).
-- Ops shed BLD-003 v05 merged via #152.
-- Stand GSE PRP-001 v03 / stairs v02 merged via #151.
-- Hangar BLD-002 v05 merged via #150.
-- Vehicle fleet v06 / landside car v02 merged via #149.
 
 ## Next work
 
-1. Mac overview: noon + midnight on `cursor/day-night-readability-3272`, then merge.
-2. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
-   characters (#153), ops shed (#152), GSE (#151), hangar (#150), fleet (#149)
-   vs refs if not yet signed off.
-3. Keep pushing first-playable **visual polish** — standing goal; no new economy /
-   Companion. Ranked next: VEG-002 scrub densify (optional).
-4. Optional: Editor Addressables groups for player catalog.
+1. Mac Play: ground/vehicle smoothness pass, then merge.
+2. Mac overview: day/night readability (#158) noon + midnight sign-off.
+3. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
+   characters (#153) vs refs if not yet signed off.
+4. Keep pushing first-playable **visual polish** — standing goal; no new economy /
+   Companion.
 5. No new economy systems; no Companion/CloudKit.

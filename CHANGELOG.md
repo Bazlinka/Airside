@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Ground / vehicle / smoothness (20).** GT yield keeps mid-leg position; pause
+  and 4× apply to GSE/props/tires/GT catch-up/walkers; takeoff gear down until
+  rotate; AtStand visuals follow turnaround; wet/fog/coast/berm/apron seams;
+  taxi spray and pushback tug logic; camera overview ease + orbit. Evidence:
+  `scripts/test-domain.sh` 136/136; `docs/testing/SMOOTH_PASS_20_2026-09-08.md`.
+
 - **Day/night readability.** Clearer coastal day sky, thinner overview fog, dimmer
   night sun key so apron floods define pools; softer post grade (less purple night
   crush / orange dusk wash). Presentation only (`ApplyDayCycle`,

@@ -1,16 +1,25 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — post-F polish tip 16; merged onto main w/ F3+F4)
-- **Branch:** `cursor/batch-f-visual-polish-a8ff`
-- **Do next:** Bailey merge polish (#139) when ready. Standing goal continues:
-  Mac Play verify premium miniature read; more polish if needed.
-- **In progress / half-done:** none — tip 16 shipped; conflicts with merged F3/F4 resolved
+- **Last updated:** 2026-09-08 (Claude — visual/perf audit P1 fixes)
+- **Branch:** `feature/visual-perf-p1` (PR open)
+- **Do next:** Bailey review + merge the P1 fixes, then Mac Play verify. The audit
+  in `work/VISUAL_PERF_AUDIT_2026-09-08.md` lists items 4–10 in priority order;
+  the next two are (4) memoise `AirsideMaterialLibrary.Create` + move runtime tints
+  to `MaterialPropertyBlock`, then (5) enable the GPU Resident Drawer.
+- **In progress / half-done:** none — P1 items landed and verified.
 - **Watch for / assumptions:**
-  - F3 (#137) + F4 (#138) are on `main`; this PR is presentation polish only
-  - Tip 16: Toolkit primary panels light chrome; one silhouette belt loader; flood/edge/taxi/obst
-    silhouette fixtures; ALS 5 stations when kit; FOV init 48°; dollies×2; coast Hz centralized
+  - The six pinned-off post effects were found `active: 1` in the working tree.
+    A full Unity import does **not** re-dirty them, so that was a real edit, not
+    re-serialisation. If they reappear, something is enabling them deliberately.
+  - Generator scripts write hand-typed placeholder GUIDs into `.meta` files. Three
+    were the wrong length (29–31 hex chars) and Unity silently ignored those three
+    prefabs entirely. Generators should omit `guid:` and let Unity assign one.
+  - The aircraft is still 131 axis-aligned boxes out of 163 meshes, and the wing
+    control surfaces sit 9–23 cm below the wing (dihedral was added to the wing and
+    the surfaces were never moved). That is audit items 6 and 8, both in
+    `scripts/generate-air-001-v05.py` — one owner, one branch.
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — merge #139 when happy; resume polish after Mac Play look
+- **Open question for Bailey:** none — review and merge when happy.
 
 ---
 

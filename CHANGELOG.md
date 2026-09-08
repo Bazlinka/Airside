@@ -5,6 +5,26 @@ change it describes.
 
 ## Unreleased
 
+- **Visual + performance fixes (P1 audit).** Cockpit windscreens render as glass
+  again (`InferFromMeshName` only matched the American spelling "windshield", so
+  `windscreen_c/l/r` fell through to an opaque PaintedMetal default and discarded
+  their 0.42 alpha); cabin window frames, windscreen pillars and the cockpit frame
+  move to Metal (they matched the glass rule on the substring "window" and rendered
+  translucent). Wet-surface materials are no longer re-applied every frame — the
+  `paved` flag is cached at collect time and the apply loop is gated on `rainWetness`
+  actually changing, so `ApplyWetness` stops toggling `_CLEARCOAT` /
+  `_METALLICSPECGLOSSMAP` on every paved renderer every frame and the SRP Batcher
+  is no longer invalidated continuously; keyword writes additionally no-op when the
+  keyword already holds the requested state. Restored the six post-process effects
+  `GAME.md` pins off (motion blur, panini, lens flare, depth of field, chromatic
+  aberration, lens distortion) — they were left `active: 1` in the working tree.
+  Fixed three malformed prefab GUIDs (29–31 hex chars instead of 32) that made Unity
+  ignore the airfield fence/gate kit, terminal forecourt kit and Kingscote context
+  terrain entirely, silently demoting all three to the greybox glTF fallback path;
+  committed the four Batch F4 VFX prefab GUIDs Unity had regenerated. Evidence:
+  `scripts/test-unity.sh` 124/124 EditMode tests pass, 0 compile errors, clean tree
+  after a full Unity import.
+
 - **Post-F visual polish.** Align Quality shadow distance with URP (PC 140 /
   Mobile 90); rain field stamps from VFX-003 kit; aircraft prefer VFX-002 heat
   kit; softer contact shadows; windsock fabric segment ripple; tighter overview

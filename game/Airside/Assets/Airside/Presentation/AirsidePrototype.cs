@@ -5111,8 +5111,12 @@ namespace Airside.Presentation
         private static void BuildApronLife()
         {
             var root = new GameObject("Apron life").transform;
-            var crewKit = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
-            var paxKit = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+            var crewKit = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+            var paxKit = PreferArtKit(
+                "Models/Characters/mdl_passenger_kit_v02.gltf",
+                "Models/Characters/mdl_passenger_kit_v01.gltf");
             var hasChrKits = (!string.IsNullOrEmpty(crewKit) && ArtGltfLoader.HasKit(crewKit))
                              || (!string.IsNullOrEmpty(paxKit) && ArtGltfLoader.HasKit(paxKit));
 
@@ -5222,17 +5226,23 @@ namespace Airside.Presentation
             if (lower.Contains("marshaller"))
             {
                 prefix = "marshaller";
-                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
             }
             else if (lower.Contains("fueler") || lower.Contains("baggage") || lower.Contains("stairs")
                      || lower.Contains("ramp") || (hiVis && !seated))
             {
                 prefix = lower.Contains("fueler") ? "fueler" : "ramp";
-                kitPath = PreferArtKit("Models/Characters/mdl_ramp_crew_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_ramp_crew_kit_v02.gltf",
+                "Models/Characters/mdl_ramp_crew_kit_v01.gltf");
             }
             else
             {
-                kitPath = PreferArtKit("Models/Characters/mdl_passenger_kit_v01.gltf");
+                kitPath = PreferArtKit(
+                "Models/Characters/mdl_passenger_kit_v02.gltf",
+                "Models/Characters/mdl_passenger_kit_v01.gltf");
                 if (seated)
                     prefix = lower.Contains("sitter b") || lower.GetHashCode() % 2 == 0 ? "sit_f" : "sit_e";
                 else if (lower.Contains("walker"))
@@ -5853,7 +5863,9 @@ namespace Airside.Presentation
         /// </summary>
         private static bool TryBuildPerimeterFenceFromKit()
         {
-            var kit = PreferArtKit("Models/Props/mdl_airfield_fence_gate_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Props/mdl_airfield_fence_gate_kit_v02.gltf",
+                "Models/Props/mdl_airfield_fence_gate_kit_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 
@@ -5874,9 +5886,14 @@ namespace Airside.Presentation
             {
                 var rot = Quaternion.Euler(0f, yawDeg, 0f);
                 PlacePart("fence_bay", pos, rot, panel, $"Fence bay {tag}");
-                PlacePart("fence_bay_rail_top", pos, rot, post, $"Fence bay rail {tag}");
+                PlacePart("fence_bay_rail_top", pos, rot, post, $"Fence bay rail top {tag}");
+                PlacePart("fence_bay_rail_mid", pos, rot, post, $"Fence bay rail mid {tag}");
+                PlacePart("fence_bay_rail_bot", pos, rot, post, $"Fence bay rail bot {tag}");
+                PlacePart("fence_bay_cap_l", pos, rot, post, $"Fence bay cap L {tag}");
+                PlacePart("fence_bay_cap_r", pos, rot, post, $"Fence bay cap R {tag}");
                 PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
                 PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
+                PlacePart("fence_corner_brace", pos, rot, post, $"Fence bay brace {tag}");
             }
 
             // North landside (gap for vehicle gate at x≈22–30).
@@ -5912,6 +5929,7 @@ namespace Airside.Presentation
             PlacePart("gate_post", new Vector3(29f, 0f, 34f), Quaternion.identity, post, "Gate post R");
             PlacePart("gate_vehicle_leaf_l", new Vector3(24.2f, 0f, 35.6f), Quaternion.Euler(0f, 12f, 0f), yellow, "Gate leaf L");
             PlacePart("gate_vehicle_leaf_r", new Vector3(27.8f, 0f, 35.6f), Quaternion.Euler(0f, -12f, 0f), yellow, "Gate leaf R");
+            PlacePart("gate_vehicle_rail", new Vector3(26f, 0f, 35.55f), Quaternion.identity, post, "Gate vehicle rail");
             PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron L");
             PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron R");
             PlacePart("gate_sign", new Vector3(26f, 0f, 34.2f), Quaternion.identity, AirsideTheme.SafetyYellow, "Gate sign");

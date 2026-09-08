@@ -242,8 +242,8 @@ references but **does not substitute a flat image for a 3D object**.
 | VEH-002 | `Models/Vehicles/mdl_baggage_tug_train_v06.gltf` (+ `.fbx`; fallbacks v05→authored→v04→…→v01) | Open ROPS tug + three carts with Coastal Blue cargo crates and hitch pivots (108 meshes) | Integrated (v06 preferred; Mac FBX bake / Play pending) |
 | VEH-003 | `Models/Vehicles/mdl_passenger_bus_apron_v06.gltf` (+ `.fbx`; fallbacks v05→authored→v04→…→v01) | Two-tone Coastal Blue / white apron bus; ribbon glazing; rounded nose/tail (97 meshes) | Integrated (v06 preferred; Mac FBX bake / Play pending) |
 | VEH-004 | `Models/Vehicles/mdl_pushback_tug_v03.gltf` (+ `.fbx`; fallbacks v02→v01 prefab) | Pushback tug with readable glass, mid towbar pivot and separated wheels | Integrated (v03 preferred; Mac FBX bake / Play pending) |
-| CHR-001 | `Models/Characters/mdl_ramp_crew_kit_v01.gltf` (+ `.fbx`) | Marshaller / fueler / ramp with hi-vis and wand sockets | Integrated (PlacePerson prefers kit) |
-| CHR-002 | `Models/Characters/mdl_passenger_kit_v01.gltf` (+ `.fbx`) | Six stand/walk/sit silhouettes; presentation-only | Integrated (PlacePerson prefers kit) |
+| CHR-001 | `Models/Characters/mdl_ramp_crew_kit_v02.gltf` (+ `.fbx`; fallback v01) | Marshaller / fueler / ramp with denser limbs, hi-vis vest/hat, wand sockets (32 meshes) | Integrated (v02 preferred; Mac overview/follow pending) |
+| CHR-002 | `Models/Characters/mdl_passenger_kit_v02.gltf` (+ `.fbx`; fallback v01) | Six stand/walk/sit silhouettes with tapered limbs (42 meshes); presentation-only | Integrated (v02 preferred; Mac overview/follow pending) |
 | PRP-001 | `Models/Props/mdl_service_equipment_kit_v03.gltf` (+ stairs `mdl_passenger_stairs_v02`; fallbacks authored→v02→v01) | Stand GSE: tubular-rail stairs, GPU, belt loader, chocks, cones, towbar, bins (106 meshes) | Integrated (v03 preferred; Mac overview/follow pending) |
 
 ### Batch D — animation, feedback and weather
@@ -297,8 +297,8 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
 | F1 hero read | AIR-001 v06, BLD-001…003 v05, MAT-001 | Authored turboprop + terminal/hangar/ops shed with a coherent URP material family | **AIR-001 v06 + BLD-001/002 v05 Integrated**; **BLD-003 v05 preferred** (Mac overview pending); MAT-001 Integrated |
-| F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002; landside `mdl_parked_car_v02` | Replace procedural turnaround vehicles and block people where activity must read; landside cars prefer lofted v02 | **Integrated** — fleet v06 / pushback v03 / car v02 preferred (Mac overview vs REF-003 pending) |
-| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **PRP-003 v02 preferred** (Mac overview pending); PRP-002 v02 in draft #154; VEG/terrain Integrated (PR #137) |
+| F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 v02; landside `mdl_parked_car_v02` | Replace procedural turnaround vehicles and block people where activity must read; landside cars prefer lofted v02 | **Integrated** — fleet v06 / pushback v03 / car v02 / CHR v02 preferred (Mac overview vs REF-003 pending) |
+| F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **PRP-003 v02 preferred** (Mac overview pending); **PRP-002 v02 preferred** (merged #154); VEG/terrain Integrated (PR #137) |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | **Integrated** — UI-ICO-005 + VFX prefabs + `AirsideReusableMotion` |
 
 Batch F is intentionally ordered. It does not authorise another broad procedural

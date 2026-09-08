@@ -5,6 +5,24 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft geometry (P1 audit items 6 + 8).** The wing, tailplane and fin are now
+  lofted NACA sections instead of 12-triangle planks (`lofted_aerofoil`), and every
+  wing-mounted part derives from one `WING` planform via `wing_station` /
+  `wing_slab` instead of hard-coded constants. They had drifted badly: dihedral was
+  added to the wing and the flaps, ailerons, spoilers, flap tracks, fairings and
+  static wicks all stayed at their old flat-wing height, leaving 88–226 mm of clear
+  air; the flap fairings and static wicks touched nothing at all. The main gear,
+  441 mm below the wing and attached to nothing, moves to the nacelle station where
+  the leg runs up inside the nacelle (ground contact unchanged). Also fixed two
+  never-visible meshes: landing lights buried inside the engine intakes, and
+  wheel/rim hubs fully enclosed by their tires. 4,356 → 4,788 triangles, mesh count
+  unchanged at 163 so the Resources prefab is unaffected. The art generators are
+  also runnable outside their original container again — the `/workspace` paths are
+  now repo-relative and `export_fbx` falls back to the bundled ASCII FBX exporter
+  when `assimp` is absent, instead of dying part-way and clobbering .meta GUIDs.
+  Evidence: parts-touching-nothing 4 → 0, Unity resolves 163/163 mesh filters with
+  0 missing, `scripts/test-unity.sh` 124/124. Look still needs a Mac Play verify.
+
 - **Draw-call and material work (P1 audit items 4-5).** `AirsideMaterialLibrary`
   gains `CreateShared`, a memoised material used by both kit loaders — the art
   library's 2,662 meshes were each minting their own `new Material`, and one

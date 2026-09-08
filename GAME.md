@@ -1,33 +1,32 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Claude — audit items 4–5)
-- **Branch:** `feature/visual-perf-p2`, stacked on `feature/visual-perf-p1` (PR #140)
-- **Do next:** **Mac Play verify** — items 4–5 change how the scene is submitted to
-  the GPU and batchmode cannot check that. Look for missing or flickering small
-  props (2% small-mesh culling) and any shared-material colour bleed. Then merge
-  #140 followed by the P2 PR.
-- **In progress / half-done:** none — items 4–5 landed, tests green, look unverified.
+- **Last updated:** 2026-09-08 (Claude — audit items 6 + 8)
+- **Branch:** `feature/visual-perf-p3`, stacked on `p2` → `p1` (PRs #140, #141, #142)
+- **Do next:** **Mac Play verify all three PRs together**, then merge #140, #141, #142
+  in that order. Look at: the aircraft silhouette (wing/tail are lofted now, gear
+  sits under the nacelles), small props popping (2% small-mesh culling), and any
+  colour bleed between objects (would mean a shared material got mutated).
+- **In progress / half-done:** none — items 1–8 landed, tests green, look unverified.
 - **Watch for / assumptions:**
-  - `m_BrgStripping: 1` is **StripAll**, not KeepAll. KeepAll is `2`. Getting this
-    wrong strips every DOTS instancing shader from player builds and silently
-    disables the GPU Resident Drawer.
+  - Anything mounted on the wing must come from `wing_station` / `wing_slab` in
+    `scripts/generate-air-001-v05.py`. Hard-coding a y is exactly how the flaps,
+    ailerons, spoilers, tracks, fairings and wicks ended up floating under the wing.
+  - `m_BrgStripping: 1` is **StripAll**, not KeepAll. KeepAll is `2`.
   - Materials from `AirsideMaterialLibrary.CreateShared` are **shared** — never
-    mutate one. Per-object tinting must keep going through `Renderer.material`,
-    which clones. Anything new that assigns to `sharedMaterial` must use `Create`,
-    not `CreateShared`, if it intends to mutate it later.
-  - MaterialPropertyBlock was considered and rejected: it disables the SRP Batcher
-    for that renderer, working against the batching items 4–5 exist to enable.
-  - Still open from the audit: items 6 + 8 (the aircraft is 131 axis-aligned boxes
-    of 163 meshes, and flaps/ailerons/spoilers/gear float 9–44 cm below the wing —
-    both in `scripts/generate-air-001-v05.py`, one owner, one branch); item 7
-    (cache aircraft part transforms instead of a per-frame `GetComponentsInChildren`
-    + string match, ~20k string compares/frame); item 9 (emit `material:` per mesh
-    from the generators); item 10 (replace the regex glTF parser).
-  - ~9 per-frame `EnableKeyword("_EMISSION")` sites remain (nav lights, headlights,
-    night glow, ARFF lightbar, sun/moon) — same redundant-write pattern already
-    fixed for wetness, same one-line `SetKeyword` fix.
+    mutate one; per-object tinting goes through `Renderer.material`, which clones.
+  - The art generators need `assimp` for the best FBX output but now fall back to
+    `scripts/write_ascii_fbx.py`. The fallback writes per-face normals, so lofted
+    surfaces are faceted — consistent with the fuselage, which is faceted too.
+  - **Open art-direction question:** the AIR-001 docstring says "high-wing regional
+    silhouette", but the wing sits at y≈1.22 against a fuselage centred on y≈1.18 —
+    that is a mid-wing. Not changed here; it is Bailey's call, and it also decides
+    whether the main gear belongs in the nacelles (as now) or on fuselage sponsons.
+  - Still open from the audit: item 7 (cache aircraft part transforms; ~20k string
+    compares/frame), item 9 (emit `material:` per mesh from the generators), item 10
+    (replace the regex glTF parser). Plus ~9 per-frame `EnableKeyword("_EMISSION")`
+    sites, and `door_frame_fwd` being a solid box that swallows `door_fwd`.
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
-- **Open question for Bailey:** none — Play verify, then merge both PRs.
+- **Open question for Bailey:** the high-wing vs mid-wing call above.
 
 ---
 

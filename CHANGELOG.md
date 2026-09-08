@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Fussy visual bug-fix (Bailey Play).** Remove opaque apron/stand stain decals
+  (true transparent wear only); drop apron joint/slab and E/W fringe densify; gate
+  stand-lead cubes when kit stops present; lift night exposure/ambient/fill/sun/
+  floods; soften contact + aircraft ground shadows; denser runway edge Points;
+  preserve FBX albedo maps in `ApplyPresentationMaterials`. Presentation only.
+  Evidence: `scripts/test-domain.sh` 113/113.
+
 - **Aircraft geometry (P1 audit items 6 + 8).** The wing, tailplane and fin are now
   lofted NACA sections instead of 12-triangle planks (`lofted_aerofoil`), and every
   wing-mounted part derives from one `WING` planform via `wing_station` /

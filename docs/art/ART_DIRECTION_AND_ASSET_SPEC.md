@@ -231,7 +231,7 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v05.gltf` (+ `.fbx`; fallbacks authored→lofted→v04→…→v01) | Batch F1 authored twin turboprop: oval lathe, six-blade props with yellow tips, tilted windscreen, separated gear/doors/control surfaces/lights (163 meshes) | Integrated (v05 preferred; Mac FBX bake in Resources; Bailey accepted) |
+| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v06.gltf` (+ `.fbx`; fallbacks v05→authored→lofted→v04→…→v01) | High-wing regional twin turboprop: continuous body, lofted wing/nacelles/tail, six twisted blades per engine, attached gear and readable glazing (141 named meshes) | Integrated candidate (v06 preferred; Mac FBX bake and packaged visual pass; Bailey review pending) |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
@@ -296,7 +296,7 @@ the remaining first-playable visual assets after the repository-wide gap audit.
 
 | Slice | Asset IDs | Player-visible purpose | Status |
 |---|---|---|---|
-| F1 hero read | AIR-001 v05, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 accepted**; **BLD-001 v05 + MAT-001 Integrated** (Bailey playtest pending on packaged Mac build) |
+| F1 hero read | AIR-001 v06, BLD-001 v05, MAT-001 | Authored turboprop and terminal with a coherent URP material family | **AIR-001 v06 integrated candidate**; **BLD-001 v05 + MAT-001 Integrated** (Bailey playtest pending on packaged Mac build) |
 | F2 turnaround read | VEH-001…004 authored revisions, CHR-001…002 | Replace procedural turnaround vehicles and block people where activity must read | **Integrated** (PR #136) |
 | F3 setting read | VEG-001…002, PRP-002…003, WLD-004 | Replace sphere vegetation, block fencing/forecourt and slab-like context | **Integrated** (PR #137 pending merge) |
 | F4 reusable finish | Existing Batch D asset files, UI-ICO-005 | Promote runtime motion/VFX to reusable assets and add system-control icons | **Integrated** — UI-ICO-005 + VFX prefabs + `AirsideReusableMotion` |

@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **AIR-001 v06 aircraft replacement.** Add a new deterministic high-wing regional
+  turboprop with a continuous 40-segment fuselage, three-station NACA wing,
+  lofted nacelles, swept/tapered empennage, six twisted propeller blades per
+  engine, connected gear and cleaner glazing/livery details. Prefer v06 while
+  retaining v05 and every older fallback. Correct the ASCII FBX metre declaration
+  that made Unity import generated models at 1% scale, enforce outward winding,
+  and keep UV-less meshes bright by omitting textures they cannot map. Evidence:
+  deterministic FBX/glTF hashes; 15.09 m × 3.89 m × 10.70 m Unity bounds; packaged
+  Mac overview/follow visual pass; `scripts/test-unity.sh` 126/126.
+
 - **Fussy visual bug-fix (Bailey Play).** Remove opaque apron/stand stain decals
   (true transparent wear only); drop apron joint/slab and E/W fringe densify; gate
   stand-lead cubes when kit stops present; lift night exposure/ambient/fill/sun/

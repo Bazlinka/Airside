@@ -4686,6 +4686,14 @@ namespace Airside.Presentation
                     new Color(0.3f, 0.55f, 1f), range: 8f));
             }
 
+            for (var z = -8; z <= 40; z += 16)
+            {
+                if (z >= 20 && z <= 28)
+                    continue;
+                lights.Add(CreateEdgePointLight($"Taxi Charlie point {z}", new Vector3(51.2f, 0.45f, z),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+            }
+
             // REIL-style white flashers just beyond each blast pad (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(VisualRunwayWestX - 10f, 1.6f, -2.8f),
                 new Color(1f, 1f, 0.95f), range: 16f));
@@ -5930,7 +5938,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Parked cars, kerbside drop-off and a few landside props so the terminal
-        /// approach reads as a working regional airfield (presentation only).
+        /// approach reads as a working city airport (presentation only).
         /// </summary>
         private static void BuildLandsideLife()
         {
@@ -5951,18 +5959,18 @@ namespace Airside.Presentation
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v02")
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
             var hasForecourtKerbsEarly = GameObject.Find("Car park kerb N") != null;
-            var bayCarCount = hasCarPrefab ? (hasForecourtKerbsEarly ? 6 : 4) : 8;
+            var bayCarCount = hasCarPrefab ? (hasForecourtKerbsEarly ? 8 : 6) : 8;
             for (var i = 0; i < bayCarCount; i++)
             {
                 if (hasCarPrefab)
                 {
                     if (hasForecourtKerbsEarly)
                     {
-                        var cols = 3;
+                        var cols = 4;
                         var row = i / cols;
                         var col = i % cols;
-                        var x = 42.5f + col * 5.0f;
-                        var z = 43f + row * 4.0f;
+                        var x = 40.5f + col * 4.4f;
+                        var z = 42.8f + row * 4.0f;
                         PlaceParkedCar($"Parked car {i}", new Vector3(x, 0f, z), 180f, carColors[i % carColors.Length]);
                     }
                     else
@@ -6021,16 +6029,20 @@ namespace Airside.Presentation
 
             // Painted parking bay chevrons — thin when PRP-003 kerbs already frame the park.
             var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
-            var bayCount = hasForecourtKerbs ? 2 : 4;
+            var bayCount = 4;
+            var rowZs = hasForecourtKerbs ? new[] { 43.0f, 47.0f } : new[] { 43.2f };
             for (var bay = 0; bay < bayCount; bay++)
             {
-                var x = hasForecourtKerbs ? 43.5f + bay * 5.5f : 42f + bay * 3.6f;
-                CreateBlock($"Bay line L {bay}", new Vector3(x - 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Bay line R {bay}", new Vector3(x + 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Bay stop {bay}", new Vector3(x, 0.06f, 41.6f), new Vector3(2.8f, 0.02f, 0.08f),
-                    new Color(0.92f, 0.92f, 0.88f));
+                var x = hasForecourtKerbs ? 40.5f + bay * 4.4f : 42f + bay * 3.6f;
+                foreach (var z in rowZs)
+                {
+                    CreateBlock($"Bay line L {bay} {z}", new Vector3(x - 1.5f, 0.06f, z), new Vector3(0.08f, 0.02f, 3.4f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                    CreateBlock($"Bay line R {bay} {z}", new Vector3(x + 1.5f, 0.06f, z), new Vector3(0.08f, 0.02f, 3.4f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                    CreateBlock($"Bay stop {bay} {z}", new Vector3(x, 0.06f, z - 1.6f), new Vector3(2.8f, 0.02f, 0.08f),
+                        new Color(0.92f, 0.92f, 0.88f));
+                }
                 if (!hasForecourtKerbs)
                 {
                     // Overflow row chevrons under the north kerb cars.
@@ -10496,6 +10508,13 @@ namespace Airside.Presentation
 
             for (var x = -56; x <= 72; x += 24)
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, -11.4f), taxiColor);
+
+            for (var z = -8; z <= 40; z += 16)
+            {
+                if (z >= 20 && z <= 28)
+                    continue;
+                PlaceTaxiLamp(kit, new Vector3(51.2f, 0f, z), taxiColor);
+            }
 
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");

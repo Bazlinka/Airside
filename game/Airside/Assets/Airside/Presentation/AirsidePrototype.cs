@@ -1422,7 +1422,7 @@ namespace Airside.Presentation
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
-                light.range = 118f;
+                light.range = 145f;
                 light.spotAngle = 42f;
                 light.innerSpotAngle = 18f;
                 light.shadows = lamp.name.EndsWith(" R", StringComparison.Ordinal)
@@ -1434,7 +1434,7 @@ namespace Airside.Presentation
             SetLampMeshEmission(lamp, new Color(1f, 0.97f, 0.88f), on);
             if (!on)
                 return;
-            light.intensity = night ? 10.2f : 6.2f;
+            light.intensity = night ? 12.0f : 7.6f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -5184,7 +5184,7 @@ namespace Airside.Presentation
             // Presentation-only aerodrome beacon on the ATC cab so night Adelaide
             // reads as a city airport, not an apron pole.
             var mast = new GameObject("Aerodrome beacon").transform;
-            mast.position = new Vector3(56f, 18.9f, 34f);
+            mast.position = new Vector3(56f, 24.15f, 34f);
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
@@ -7589,18 +7589,18 @@ namespace Airside.Presentation
             var shaft = new Color(0.72f, 0.74f, 0.76f);
             var cab = new Color(0.18f, 0.36f, 0.48f, 0.55f);
             var roof = new Color(0.32f, 0.34f, 0.36f);
-            CreateBlock("ATC tower shaft", new Vector3(56f, 8.2f, 34f), new Vector3(2.6f, 16.4f, 2.6f), shaft);
-            CreateBlock("ATC tower flare", new Vector3(56f, 15.6f, 34f), new Vector3(3.4f, 1.2f, 3.4f), Shade(shaft, 0.92f));
-            CreateBlock("ATC tower walkway", new Vector3(56f, 16.15f, 34f), new Vector3(6.4f, 0.18f, 6.4f), Shade(shaft, 0.88f));
-            CreateBlock("ATC tower cab", new Vector3(56f, 17.4f, 34f), new Vector3(5.2f, 2.6f, 5.2f), cab);
-            CreateBlock("ATC tower glass N", new Vector3(56f, 17.5f, 36.55f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass S", new Vector3(56f, 17.5f, 31.45f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass E", new Vector3(58.55f, 17.5f, 34f), new Vector3(0.1f, 1.8f, 4.4f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass W", new Vector3(53.45f, 17.5f, 34f), new Vector3(0.1f, 1.8f, 4.4f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower roof", new Vector3(56f, 18.9f, 34f), new Vector3(5.6f, 0.35f, 5.6f), roof);
-            CreateBlock("ATC tower mast", new Vector3(56f, 20.4f, 34f), new Vector3(0.18f, 2.6f, 0.18f), new Color(0.45f, 0.46f, 0.48f));
-            CreateBlock("ATC dish", new Vector3(56.85f, 19.55f, 34.5f), new Vector3(1.15f, 0.12f, 1.15f), new Color(0.72f, 0.74f, 0.76f));
-            PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.2f, 0.02f, 4.2f), 0.18f);
+            CreateBlock("ATC tower shaft", new Vector3(56f, 10.8f, 34f), new Vector3(2.8f, 21.6f, 2.8f), shaft);
+            CreateBlock("ATC tower flare", new Vector3(56f, 20.8f, 34f), new Vector3(3.6f, 1.3f, 3.6f), Shade(shaft, 0.92f));
+            CreateBlock("ATC tower walkway", new Vector3(56f, 21.4f, 34f), new Vector3(6.8f, 0.2f, 6.8f), Shade(shaft, 0.88f));
+            CreateBlock("ATC tower cab", new Vector3(56f, 22.7f, 34f), new Vector3(5.6f, 2.8f, 5.6f), cab);
+            CreateBlock("ATC tower glass N", new Vector3(56f, 22.8f, 36.75f), new Vector3(4.8f, 2.0f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass S", new Vector3(56f, 22.8f, 31.25f), new Vector3(4.8f, 2.0f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass E", new Vector3(58.75f, 22.8f, 34f), new Vector3(0.1f, 2.0f, 4.8f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass W", new Vector3(53.25f, 22.8f, 34f), new Vector3(0.1f, 2.0f, 4.8f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower roof", new Vector3(56f, 24.15f, 34f), new Vector3(6.0f, 0.38f, 6.0f), roof);
+            CreateBlock("ATC tower mast", new Vector3(56f, 25.7f, 34f), new Vector3(0.2f, 2.8f, 0.2f), new Color(0.45f, 0.46f, 0.48f));
+            CreateBlock("ATC dish", new Vector3(56.9f, 24.85f, 34.55f), new Vector3(1.25f, 0.12f, 1.25f), new Color(0.72f, 0.74f, 0.76f));
+            PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.6f, 0.02f, 4.6f), 0.18f);
         }
 
         /// <summary>

@@ -4923,6 +4923,10 @@ namespace Airside.Presentation
                 new Color(0.3f, 0.55f, 1f), range: 8f));
             lights.Add(CreateEdgePointLight("Taxi Bravo 12-30 S B", new Vector3(26.5f, 0.45f, -50f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Bravo 12-30 S C", new Vector3(24.4f, 0.45f, -38f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Bravo 12-30 S D", new Vector3(27.4f, 0.45f, -58f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
             lights.Add(CreateEdgePointLight("ARFF standby lamp", new Vector3(-66f, 0.55f, 12.8f),
                 new Color(1f, 0.85f, 0.45f), range: 10f));
 
@@ -5875,6 +5879,8 @@ namespace Airside.Presentation
             PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
             PlacePerson(root, "West drop passenger A", new Vector3(9.4f, 0f, 34.8f), 10f, new Color(0.42f, 0.28f, 0.22f));
             PlacePerson(root, "West drop passenger B", new Vector3(14.8f, 0f, 34.6f), -8f, new Color(0.22f, 0.32f, 0.42f));
+            PlacePerson(root, "West drop passenger C", new Vector3(11.6f, 0f, 35.1f), 4f, new Color(0.55f, 0.48f, 0.36f));
+            PlacePerson(root, "Hangar tech B", new Vector3(-26.2f, 0f, 15.4f), 80f, new Color(0.32f, 0.38f, 0.42f), hiVis: true);
 
             if (hasChrKits)
             {
@@ -11534,8 +11540,10 @@ namespace Airside.Presentation
             PlaceTaxiLamp(kit, new Vector3(-48f, 0f, 12.2f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(74f, 0f, 18f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(74f, 0f, 26f), taxiColor);
-            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 18f), taxiColor);
-            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 26f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(23f, 0f, -28f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(24.4f, 0f, -38f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(26.5f, 0f, -50f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(27.4f, 0f, -58f), taxiColor);
 
             PlaceObstructionLamp(kit, new Vector3(12f, 4.6f, 29.2f), obstruction, "Terminal west obstruction");
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
@@ -11690,6 +11698,7 @@ namespace Airside.Presentation
             PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
+            PlaceBaggageDolly(kit, new Vector3(-24.5f, 0f, 16.4f));
 
             BuildApronSafetyProps();
             BuildFuelFarm();

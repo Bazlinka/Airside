@@ -7,16 +7,16 @@
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
   A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.26,
-  offset −0.70) sit height is unverified. Taxiway Echo / far-east apron and
-  305 m overview are new this pass. Gulf final now starts further west; Glenelg
-  Holdfast cluster and west drop-off canopy are new. EditMode 193/193 earlier
-  this session.
+  offset −0.70) sit height is unverified. **12/30 should sit inside a south
+  fence pocket** (not cut by the old gap at x=0). Takeoff climb continues
+  east of 23 toward the CBD. Overview is ~318 m. A second ARFF truck sits on
+  the 05 Alpha. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha now runs the full
   23/05 length inside the fence; paint/lights/holds follow. Grass stops at the
-  West Beach dune belt so Gulf St Vincent reads on first overview (~305 m).
+  West Beach dune belt so Gulf St Vincent reads on first overview (~318 m).
   Sand and shallows run the same north-south span as the gulf so the beach
   does not drop out at the edges. Car park fills the bigger pad. Night floods
   cover Stand 3 and the east satellite.
@@ -41,7 +41,11 @@
   emissive nav/strobes. Taxiway Echo and a far-east apron widen the satellite
   side. Follow approach pulls further back over the gulf. Final starts further
   west over water. Glenelg has a denser Holdfast hotel cluster; the west hall
-  has a drop-off canopy. Save schema unchanged.
+  has a drop-off canopy. A south fence pocket encloses 12/30; Bravo extends
+  a visual taxi down that strip. Takeoff climb-out continues toward the CBD.
+  A standby ARFF truck sits on the 05 Alpha. West hall has an extra storey;
+  drop-off cars sit under the west canopy. Overview is ~318 m. Save schema
+  unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

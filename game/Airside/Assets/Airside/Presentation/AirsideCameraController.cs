@@ -10,16 +10,16 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        // West-biased so first frame shows Gulf St Vincent, Glenelg south, and the long 23/05 strip.
-        private readonly Vector3 _overviewCenter = new(-16f, 0f, -6f);
-        private const float OverviewDistance = 305f;
+        // West-biased so first frame shows Gulf St Vincent, Glenelg south, 12/30 pocket, and the long 23/05 strip.
+        private readonly Vector3 _overviewCenter = new(-14f, 0f, -12f);
+        private const float OverviewDistance = 318f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
         private const float OverviewYaw = 132f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(-16f, 0f, -6f);
+        private Vector3 _center = new(-14f, 0f, -12f);
         private float _yaw = 132f;
         private float _pitch = 34f;
         private float _distance = OverviewDistance;
@@ -188,10 +188,10 @@ namespace Airside.Presentation
             {
                 AircraftPhase.AtStand => 14f,
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
-                AircraftPhase.Takeoff => Mathf.Lerp(22f, 42f, progress),
+                AircraftPhase.Takeoff => Mathf.Lerp(22f, 52f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(52f, 74f, progress),
                 AircraftPhase.Landing => Mathf.Lerp(48f, 22f, progress),
-                AircraftPhase.Departed => 64f,
+                AircraftPhase.Departed => 72f,
                 _ => air
             };
         }

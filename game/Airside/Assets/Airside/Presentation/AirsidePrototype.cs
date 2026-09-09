@@ -129,6 +129,11 @@ namespace Airside.Presentation
         private const float FenceEastX = 108f;
         private const float FenceNorthZ = 54f;
         private const float FenceSouthZ = -52f;
+        // 12/30 leaves the south fence near x=17 and ends around (39, -88).
+        // A pocket south of the main ribbon encloses the strip without swallowing Glenelg.
+        private const float FenceSouthPocketWestX = 14f;
+        private const float FenceSouthPocketEastX = 50f;
+        private const float FenceSouthPocketZ = -94f;
         // Parallel Alpha stays inside the fence and matches the long 23/05 strip.
         private const float VisualAlphaWestX = -76f;
         private const float VisualAlphaEastX = 86f;
@@ -1611,12 +1616,12 @@ namespace Airside.Presentation
                     continue;
                 var pulse = 0.9f + 0.1f * Mathf.Sin(
                     Time.unscaledTime * 2.4f * Mathf.PI * 2f + child.GetInstanceID() * 0.02f);
-                child.localScale = new Vector3(0.28f * pulse, 0.28f * pulse, 3.4f * stretch);
+                child.localScale = new Vector3(0.34f * pulse, 0.34f * pulse, 4.6f * stretch);
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
                 var color = renderer.material.color;
-                color.a = (0.08f + 0.07f * pulse) * stretch;
+                color.a = (0.1f + 0.08f * pulse) * stretch;
                 SetRendererColor(renderer, color);
             }
         }
@@ -2855,7 +2860,9 @@ namespace Airside.Presentation
                 || name.StartsWith("Apron chevron", StringComparison.Ordinal)
                 || name.StartsWith("Hold short", StringComparison.Ordinal)
                 || name.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
-                || name.StartsWith("Taxi Bravo W", StringComparison.Ordinal)
+                || name.StartsWith("Taxi Bravo 12-30", StringComparison.Ordinal)
+                || name.StartsWith("ARFF standby pad", StringComparison.Ordinal)
+                || name.StartsWith("ARFF standby bay", StringComparison.Ordinal)
                 || name.StartsWith("Taxi Bravo E", StringComparison.Ordinal)
                 || name.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                 || name.StartsWith("Taxi centre", StringComparison.Ordinal)
@@ -2962,6 +2969,9 @@ namespace Airside.Presentation
                     && !n.StartsWith("Hold short", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Bravo W", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi Bravo 12-30", StringComparison.Ordinal)
+                    && !n.StartsWith("ARFF standby pad", StringComparison.Ordinal)
+                    && !n.StartsWith("ARFF standby bay", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Bravo E", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi centre", StringComparison.Ordinal)
@@ -4484,6 +4494,8 @@ namespace Airside.Presentation
                          "Terminal east ident accent",
                          "Terminal west glow",
                          "Terminal west ident accent",
+                         "Terminal west hall upper glow",
+                         "West drop canopy glow",
                          "Adelaide monument bar",
                          "Freight office glow",
                          "West Beach surf club glass",
@@ -4529,6 +4541,8 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal west ident accent", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal west hall upper", StringComparison.Ordinal)
+                                   || name.StartsWith("West drop canopy glow", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
@@ -4890,6 +4904,12 @@ namespace Airside.Presentation
                 new Color(0.3f, 0.55f, 1f), range: 8f));
             lights.Add(CreateEdgePointLight("Taxi Echo point 26", new Vector3(74f, 0.45f, 26f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Bravo 12-30 S A", new Vector3(23f, 0.45f, -28f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Bravo 12-30 S B", new Vector3(26.5f, 0.45f, -50f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("ARFF standby lamp", new Vector3(-66f, 0.55f, 12.8f),
+                new Color(1f, 0.85f, 0.45f), range: 10f));
 
             // REIL-style white flashers just beyond each blast pad (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(VisualRunwayWestX - 10f, 1.6f, -2.8f),
@@ -5307,6 +5327,8 @@ namespace Airside.Presentation
             var cross = PlaceLevelPad("Runway 12-30", 8f, -38f, 118f, 7.2f, tarmac, asphalt, new Vector2(22f, 1.4f), top: 0.02f);
             cross.transform.rotation = Quaternion.Euler(0f, 58f, 0f);
             PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 9.6f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 1.8f), top: 0.015f).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
+            PlaceLevelPad("Runway 12-30 blast S", 39f, -88f, 12f, 9.2f, Shade(tarmac, 0.88f), asphalt, new Vector2(2.2f, 1.6f), top: 0.02f)
+                .transform.rotation = Quaternion.Euler(0f, 58f, 0f);
 
             PlaceLevelPad("Taxiway Alpha", 5f, 9f, 162f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(32f, 1.2f));
             PlaceLevelPad("Taxiway Bravo", 6f, -9.2f, 170f, 4.8f, Shade(tarmac, 1.02f), asphalt, new Vector2(32f, 1f));
@@ -5317,6 +5339,7 @@ namespace Airside.Presentation
             CreateTaxiChordPad("Taxiway Bravo Charlie", new Vector3(48f, 0.02f, -6f), new Vector3(48f, 0.02f, -9.2f), 5.4f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo 12-30", new Vector3(26f, 0.02f, -9.2f), new Vector3(21f, 0.02f, -17f), 5.6f, asphalt, new Vector2(1.6f, 1.4f));
             CreateTaxiChordPad("Taxiway Bravo 12-30 E", new Vector3(48f, 0.02f, -9.2f), new Vector3(40f, 0.02f, -22f), 5.4f, asphalt, new Vector2(1.5f, 1.4f));
+            CreateTaxiChordPad("Taxiway Bravo 12-30 S", new Vector3(21f, 0.02f, -17f), new Vector3(28f, 0.02f, -62f), 5.2f, asphalt, new Vector2(1.6f, 8f));
             CreateTaxiChordPad("Taxiway Bravo W exit", new Vector3(-60f, 0.02f, -9.2f), new Vector3(-60f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo E exit", new Vector3(70f, 0.02f, -9.2f), new Vector3(70f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Alpha W stub", new Vector3(-70f, 0.02f, 9f), new Vector3(-70f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
@@ -5486,6 +5509,9 @@ namespace Airside.Presentation
             CreateBlock("Terminal west ident", new Vector3(12f, 4.4f, 32.6f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
             CreateBlock("Terminal west ident accent", new Vector3(12f, 4.4f, 32.7f), new Vector3(7.2f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
             CreateBlock("Terminal west link", new Vector3(18.4f, 2.0f, 28.2f), new Vector3(4.8f, 3.5f, 5.0f), new Color(0.64f, 0.68f, 0.71f));
+            CreateBlock("Terminal west hall upper", new Vector3(12f, 5.45f, 29.3f), new Vector3(10.8f, 1.9f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
+            CreateBlock("Terminal west hall upper glass", new Vector3(12f, 5.5f, 32.05f), new Vector3(9.2f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
+            CreateBlock("Terminal west hall upper glow", new Vector3(12f, 5.4f, 31.92f), new Vector3(7.8f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
             PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
             BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
@@ -5740,6 +5766,7 @@ namespace Airside.Presentation
             CreateBlock("West drop canopy", new Vector3(12f, 3.55f, 35.2f), new Vector3(14.5f, 0.16f, 5.2f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("West drop canopy post L", new Vector3(6.2f, 1.7f, 37.4f), new Vector3(0.22f, 3.2f, 0.22f), new Color(0.4f, 0.42f, 0.44f));
             CreateBlock("West drop canopy post R", new Vector3(17.8f, 1.7f, 37.4f), new Vector3(0.22f, 3.2f, 0.22f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("West drop canopy glow", new Vector3(12f, 3.42f, 35.2f), new Vector3(12f, 0.06f, 4.4f), new Color(1f, 0.85f, 0.55f));
             for (var x = 7; x <= 17; x += 5)
                 CreateBlock($"West drop bollard {x}", new Vector3(x, 0.5f, 38.9f), new Vector3(0.18f, 0.95f, 0.18f), new Color(0.45f, 0.46f, 0.48f));
             CreateTaxiChordPad("Access road elbow", new Vector3(26f, 0.02f, 46f), new Vector3(34f, 0.02f, 46f), 6.2f, asphalt, new Vector2(1.8f, 1.2f));
@@ -6342,8 +6369,12 @@ namespace Airside.Presentation
             // Kerbside drop-off on the access road.
             PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0f, 36f), 0f, carColors[2]);
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
-            PlaceParkedCar("Arterial car A", new Vector3(118f, 0f, 43.6f), 90f, carColors[3]);
-            PlaceParkedCar("Arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
+            PlaceParkedCar("West drop car", new Vector3(8.2f, 0f, 36.2f), 0f, carColors[1]);
+            PlaceParkedCar("West drop taxi", new Vector3(15.6f, 0f, 36.4f), -6f, new Color(0.92f, 0.78f, 0.15f));
+            PlaceParkedCar("Eastern arterial car A", new Vector3(118f, 0f, 43.6f), 90f, carColors[3]);
+            PlaceParkedCar("Eastern arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
+            PlaceParkedCar("Eastern arterial car C", new Vector3(132f, 0f, 43.8f), 88f, carColors[4]);
+            PlaceParkedCar("Eastern arterial car D", new Vector3(164f, 0f, 48.4f), -92f, carColors[2]);
             BuildAdelaideLandsideMonument();
             PlaceArterialDirectionSign();
 
@@ -6462,6 +6493,8 @@ namespace Airside.Presentation
 
             PlaceParkedCar("MSCP roof car A", new Vector3(66f, 6.35f, 46f), 90f, new Color(0.2f, 0.32f, 0.55f));
             PlaceParkedCar("MSCP roof car B", new Vector3(73.5f, 6.35f, 47.2f), 90f, new Color(0.85f, 0.85f, 0.82f));
+            PlaceParkedCar("MSCP roof car C", new Vector3(69.8f, 6.35f, 43.6f), 90f, new Color(0.62f, 0.18f, 0.16f));
+            PlaceParkedCar("MSCP roof car D", new Vector3(64.4f, 6.35f, 48.4f), 88f, new Color(0.18f, 0.18f, 0.2f));
             PlaceContactShadow("MSCP contact", new Vector3(70f, 0.035f, 46f), new Vector3(17.5f, 0.02f, 12.5f), 0.16f);
         }
 
@@ -6765,13 +6798,22 @@ namespace Airside.Presentation
                 PlaceBay(new Vector3(FenceEastX, 0f, z + 2f), -90f, $"E {z}");
             }
 
-            // South gap at 12/30 so the visual cross runway is not fenced through.
+            // South gap where 12/30 actually leaves the ribbon (near x=17), then a pocket.
             for (var x = -76; x <= 104; x += 4)
             {
-                if (x >= -12 && x <= 12)
+                if (x + 2f >= FenceSouthPocketWestX && x <= FenceSouthPocketEastX)
                     continue;
                 PlaceBay(new Vector3(x + 2f, 0f, FenceSouthZ), 0f, $"S {x}");
             }
+
+            for (var z = (int)FenceSouthPocketZ; z <= (int)FenceSouthZ - 4; z += 4)
+            {
+                PlaceBay(new Vector3(FenceSouthPocketWestX, 0f, z + 2f), 90f, $"12-30 W {z}");
+                PlaceBay(new Vector3(FenceSouthPocketEastX, 0f, z + 2f), -90f, $"12-30 E {z}");
+            }
+
+            for (var x = (int)FenceSouthPocketWestX; x <= (int)FenceSouthPocketEastX - 4; x += 4)
+                PlaceBay(new Vector3(x + 2f, 0f, FenceSouthPocketZ), 0f, $"12-30 S {x}");
 
             PlacePart("fence_corner", new Vector3(FenceWestX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner NW");
             PlacePart("fence_corner_brace", new Vector3(FenceWestX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner brace NW");
@@ -6860,15 +6902,30 @@ namespace Airside.Presentation
                 CreateBlock($"Outer cap N {x}", new Vector3(x, 1.38f, FenceNorthZ), new Vector3(0.18f, 0.12f, 0.18f), post);
             }
 
-            // South ribbons with a gap for visual 12/30.
-            Wall("Outer fence S W", -46f, FenceSouthZ, 56f, 0.1f);
-            Wall("Outer fence S E", 62f, FenceSouthZ, 88f, 0.1f);
+            // South ribbons with a pocket that encloses visual 12/30 (south end ~x=39, z=-88).
+            Wall("Outer fence S W", (FenceWestX + FenceSouthPocketWestX) * 0.5f, FenceSouthZ,
+                FenceSouthPocketWestX - FenceWestX, 0.1f);
+            Wall("Outer fence S E", (FenceSouthPocketEastX + FenceEastX) * 0.5f, FenceSouthZ,
+                FenceEastX - FenceSouthPocketEastX, 0.1f);
+            Wall("Outer fence 12-30 W", FenceSouthPocketWestX, (FenceSouthZ + FenceSouthPocketZ) * 0.5f,
+                0.1f, FenceSouthZ - FenceSouthPocketZ);
+            Wall("Outer fence 12-30 E", FenceSouthPocketEastX, (FenceSouthZ + FenceSouthPocketZ) * 0.5f,
+                0.1f, FenceSouthZ - FenceSouthPocketZ);
+            Wall("Outer fence 12-30 S", (FenceSouthPocketWestX + FenceSouthPocketEastX) * 0.5f, FenceSouthPocketZ,
+                FenceSouthPocketEastX - FenceSouthPocketWestX, 0.1f);
             for (var x = -74f; x <= 104f; x += 12f)
             {
-                if (x > -14f && x < 14f)
+                if (x > FenceSouthPocketWestX && x < FenceSouthPocketEastX)
                     continue;
                 CreateBlock($"Outer cap S {x}", new Vector3(x, 1.38f, FenceSouthZ), new Vector3(0.18f, 0.12f, 0.18f), post);
             }
+            for (var z = FenceSouthPocketZ + 6f; z < FenceSouthZ; z += 12f)
+            {
+                CreateBlock($"Outer cap 12-30 W {z}", new Vector3(FenceSouthPocketWestX, 1.38f, z), new Vector3(0.18f, 0.12f, 0.18f), post);
+                CreateBlock($"Outer cap 12-30 E {z}", new Vector3(FenceSouthPocketEastX, 1.38f, z), new Vector3(0.18f, 0.12f, 0.18f), post);
+            }
+            for (var x = FenceSouthPocketWestX + 6f; x < FenceSouthPocketEastX; x += 12f)
+                CreateBlock($"Outer cap 12-30 S {x}", new Vector3(x, 1.38f, FenceSouthPocketZ), new Vector3(0.18f, 0.12f, 0.18f), post);
 
             CreateBlock("Gate post L", new Vector3(23f, 0.9f, FenceNorthZ), new Vector3(0.22f, 1.8f, 0.22f), post);
             CreateBlock("Gate post R", new Vector3(29f, 0.9f, FenceNorthZ), new Vector3(0.22f, 1.8f, 0.22f), post);
@@ -7404,6 +7461,36 @@ namespace Airside.Presentation
 
             root.position = new Vector3(-28f, 0f, 25.2f);
             root.rotation = Quaternion.Euler(0f, 180f, 0f);
+            PlaceArffStandbyWest();
+        }
+
+        /// <summary>
+        /// Second red truck on the 05 Alpha so gulf final reads ARFF, not empty grass.
+        /// Presentation only — not on the sim network.
+        /// </summary>
+        private static void PlaceArffStandbyWest()
+        {
+            PlaceLevelPad("ARFF standby pad", -66f, 12.8f, 6.4f, 4.2f, new Color(0.34f, 0.36f, 0.37f),
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.4f, 1f));
+            CreateBlock("ARFF standby bay", new Vector3(-66f, 0.055f, 12.8f), new Vector3(5.2f, 0.02f, 0.12f), AirsideTheme.SafetyYellow);
+
+            Transform root;
+            if (TryInstantiatePreferredPrefab(out var prefabRoot, "mdl_arff_truck_v02", "mdl_arff_truck_v01"))
+            {
+                prefabRoot.name = "ARFF standby";
+                root = prefabRoot;
+            }
+            else
+            {
+                root = new GameObject("ARFF standby").transform;
+                ParentBlock(root, "ARFF standby chassis", new Vector3(0f, 0.55f, 0f), new Vector3(1.8f, 0.55f, 4.2f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF standby cab", new Vector3(0f, 1.35f, 1.2f), new Vector3(1.7f, 1.0f, 1.6f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF standby tank", new Vector3(0f, 1.4f, -0.9f), new Vector3(1.55f, 1.1f, 2.4f), new Color(0.78f, 0.18f, 0.14f));
+                ParentBlock(root, "ARFF standby stripe", new Vector3(0f, 0.85f, 0f), new Vector3(1.85f, 0.18f, 3.6f), AirsideTheme.SafetyYellow);
+            }
+
+            root.position = new Vector3(-66f, 0f, 12.8f);
+            root.rotation = Quaternion.Euler(0f, 90f, 0f);
         }
 
         /// <summary>
@@ -8095,7 +8182,7 @@ namespace Airside.Presentation
                 grass, new Vector2(5f, 4f), top: 4.6f, height: 9f);
             PlaceLevelPad("Hill far SE", 96f, -70f, 28f, 18f, Shade(AirsideTheme.DryGrass, 0.55f),
                 grass, new Vector2(5f, 3.5f), top: 3.8f, height: 7.5f);
-            PlaceLevelPad("Hill far SW", 18f, -92f, 30f, 18f, Shade(AirsideTheme.Eucalyptus, 0.38f),
+            PlaceLevelPad("Hill far SW", 62f, -112f, 30f, 18f, Shade(AirsideTheme.Eucalyptus, 0.38f),
                 grass, new Vector2(5f, 3.5f), top: 4.2f, height: 8.2f);
             BuildAdelaideSkyline();
         }
@@ -8127,6 +8214,9 @@ namespace Airside.Presentation
             CreateBlock("CBD tower P", new Vector3(126f, 8.6f, 90f), new Vector3(3.6f, 17.2f, 3.2f), glass);
             CreateBlock("CBD tower Q", new Vector3(134f, 6.4f, 82f), new Vector3(4.8f, 12.8f, 4.0f), pale);
             CreateBlock("CBD midrise R", new Vector3(118f, 4.2f, 96f), new Vector3(8.6f, 8.4f, 6.2f), stone);
+            CreateBlock("CBD tower S", new Vector3(198f, 10.2f, 102f), new Vector3(3.2f, 20.4f, 2.8f), glass);
+            CreateBlock("CBD tower T", new Vector3(186f, 7.8f, 122f), new Vector3(4.0f, 15.6f, 3.4f), pale);
+            CreateBlock("CBD midrise U", new Vector3(170f, 5.2f, 76f), new Vector3(7.8f, 10.4f, 5.6f), stone);
             PlaceCbdWindowGlow("CBD glow B", new Vector3(156f, 11f, 106.35f), new Vector3(2.6f, 16f, 0.12f));
             PlaceCbdWindowGlow("CBD glow E", new Vector3(172f, 8.4f, 112.45f), new Vector3(2.4f, 12f, 0.12f));
             PlaceCbdWindowGlow("CBD glow H", new Vector3(168f, 12.4f, 116.75f), new Vector3(2.0f, 18f, 0.12f));
@@ -8134,6 +8224,8 @@ namespace Airside.Presentation
             PlaceCbdWindowGlow("CBD glow A", new Vector3(148f, 9f, 100.15f), new Vector3(3.2f, 12f, 0.12f));
             PlaceCbdWindowGlow("CBD glow P", new Vector3(126f, 8.6f, 88.35f), new Vector3(2.6f, 12f, 0.12f));
             PlaceCbdWindowGlow("CBD glow Q", new Vector3(134f, 6.4f, 79.95f), new Vector3(3.4f, 9f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow S", new Vector3(198f, 10.2f, 100.55f), new Vector3(2.4f, 14f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow T", new Vector3(186f, 7.8f, 120.25f), new Vector3(3.0f, 11f, 0.12f));
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
@@ -9011,8 +9103,8 @@ namespace Airside.Presentation
 
             if (!HasNamedChild(root, "ClimbVapor L"))
             {
-                ParentBlock(root, "ClimbVapor L", new Vector3(-1.45f, 0.08f, -2.1f), new Vector3(0.28f, 0.28f, 3.2f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
-                ParentBlock(root, "ClimbVapor R", new Vector3(1.45f, 0.08f, -2.1f), new Vector3(0.28f, 0.28f, 3.2f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
+                ParentBlock(root, "ClimbVapor L", new Vector3(-1.45f, 0.08f, -2.4f), new Vector3(0.32f, 0.32f, 4.4f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
+                ParentBlock(root, "ClimbVapor R", new Vector3(1.45f, 0.08f, -2.4f), new Vector3(0.32f, 0.32f, 4.4f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
                 var vaporL = root.Find("ClimbVapor L");
                 var vaporR = root.Find("ClimbVapor R");
                 if (vaporL != null)
@@ -10844,6 +10936,14 @@ namespace Airside.Presentation
 
             for (var x = -70; x <= 80; x += 6)
                 CreateBlock($"Taxi Bravo centre {x}", new Vector3(x, 0.05f, -9.2f), new Vector3(2.6f, 0.02f, 0.14f), taxiPaint);
+            var bravoSouthAlong = Quaternion.Euler(0f, Mathf.Atan2(7f, -45f) * Mathf.Rad2Deg, 0f);
+            for (var t = 0; t <= 5; t++)
+            {
+                var u = t / 5f;
+                var p = Vector3.Lerp(new Vector3(21f, 0.05f, -17f), new Vector3(28f, 0.05f, -62f), u);
+                CreateBlock($"Taxi Bravo 12-30 S {t}", p, new Vector3(0.14f, 0.02f, 2.8f), taxiPaint)
+                    .transform.rotation = bravoSouthAlong;
+            }
             for (var z = -6; z <= 40; z += 6)
             {
                 if (z >= 20 && z <= 28)
@@ -11292,6 +11392,7 @@ namespace Airside.Presentation
             PlaceFloodMast(kit, new Vector3(40f, 0f, 14f), flood);
             PlaceFloodMast(kit, new Vector3(20f, 0f, 32f), flood);
             PlaceFloodMast(kit, new Vector3(58f, 0f, 20f), flood);
+            PlaceFloodMast(kit, new Vector3(-66f, 0f, 14.6f), flood);
         }
 
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)
@@ -11908,7 +12009,7 @@ namespace Airside.Presentation
                     new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ), t),
                 AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
                 AircraftPhase.Takeoff => TakeoffPosition(t),
-                _ => new Vector3(VisualRunwayEastX + 52f, 24f, 0f)
+                _ => new Vector3(VisualRunwayEastX + 96f, 32f, 0f)
             };
         }
 
@@ -11986,7 +12087,7 @@ namespace Airside.Presentation
             }
 
             var climb = (t - 0.48f) / 0.52f;
-            return Smooth(new Vector3(62f, 0.7f, 0f), new Vector3(VisualRunwayEastX + 40f, 18f, 0f), climb);
+            return Smooth(new Vector3(62f, 0.7f, 0f), new Vector3(VisualRunwayEastX + 88f, 28f, 0f), climb);
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)

@@ -102,7 +102,9 @@ change it describes.
   hall is not a flat box from the gulf; the 12/30 pocket is coastal green;
   the turboprop kit is 1.38. 12/30 is a wider dual-runway strip; 23 has
   blast-pad chevrons and a jet blast fence; an east hangar fills the
-  satellite side. Dual runways now wet in rain. Unity EditMode 193/193.
+  satellite side. Dual runways now wet in rain. Adelaide Hills are folded
+  instead of one slab; aiming bars and aircraft ground shadows match the
+  1.38 kit. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

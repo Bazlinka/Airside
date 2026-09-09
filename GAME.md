@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 24 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 25 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**

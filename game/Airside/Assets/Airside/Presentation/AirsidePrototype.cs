@@ -8523,6 +8523,12 @@ namespace Airside.Presentation
                 grass, new Vector2(8f, 9f), top: 14f, height: 26f);
             PlaceLevelPad("Adelaide Hills foothill", 268f, 18f, 28f, 64f, Shade(AirsideTheme.Eucalyptus, 0.42f),
                 grass, new Vector2(6f, 10f), top: 8f, height: 16f);
+            PlaceLevelPad("Adelaide Hills fold A", 304f, 8f, 48f, 92f, Shade(AirsideTheme.Eucalyptus, 0.36f),
+                grass, new Vector2(8f, 14f), top: 18f, height: 28f).transform.rotation = Quaternion.Euler(0f, 22f, 0f);
+            PlaceLevelPad("Adelaide Hills fold B", 334f, 52f, 36f, 68f, Shade(AirsideTheme.Eucalyptus, 0.24f),
+                grass, new Vector2(6f, 10f), top: 24f, height: 34f).transform.rotation = Quaternion.Euler(0f, -16f, 0f);
+            PlaceLevelPad("Adelaide Hills fold C", 292f, -38f, 52f, 70f, Shade(AirsideTheme.DryGrass, 0.4f),
+                grass, new Vector2(9f, 12f), top: 15f, height: 22f).transform.rotation = Quaternion.Euler(0f, 12f, 0f);
             BuildAdelaideSkyline();
         }
 
@@ -10195,7 +10201,7 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(5.2f, 0.012f, 2.8f);
+            shadow.transform.localScale = new Vector3(6.6f, 0.012f, 3.4f);
             var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.32f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -10216,7 +10222,7 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(5.2f, 8.8f, t);
+            var width = Mathf.Lerp(6.6f, 10.4f, t);
             var depth = width * 0.52f;
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
@@ -11235,9 +11241,9 @@ namespace Airside.Presentation
                 var placedR = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "aiming_point_r", new Vector3(x, 0.035f, 1.55f), Quaternion.identity, Color.white, out _);
                 if (!placedL)
-                    CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+                    CreateBlock($"Aiming point {x} L", new Vector3(x, 0.035f, -1.55f), new Vector3(3.6f, 0.025f, 1.45f), Color.white);
                 if (!placedR)
-                    CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
+                    CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(3.6f, 0.025f, 1.45f), Color.white);
             }
 
             // Touchdown zone marks between threshold and aiming points.
@@ -11248,9 +11254,9 @@ namespace Airside.Presentation
                 var placedR = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "tdz_mark_r", new Vector3(x, 0.03f, 1.4f), Quaternion.identity, Color.white, out _);
                 if (!placedL)
-                    CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
+                    CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(2.0f, 0.02f, 0.7f), Color.white);
                 if (!placedR)
-                    CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(1.4f, 0.02f, 0.5f), Color.white);
+                    CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(2.0f, 0.02f, 0.7f), Color.white);
             }
             // Stand bay numbers on the apron (readable from overview) — kit digit bars preferred.
             PlaceRunwayDigit('1', new Vector3(14.2f, 0.04f, 14f), yaw: 0f);
@@ -12351,7 +12357,7 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(false);
             }
 
-            PlaceContactShadow($"{name} contact", new Vector3(position.x, 0.04f, position.z), new Vector3(8.5f, 0.02f, 6.2f), 0.16f);
+            PlaceContactShadow($"{name} contact", new Vector3(position.x, 0.04f, position.z), new Vector3(10f, 0.02f, 7.4f), 0.16f);
         }
 
 

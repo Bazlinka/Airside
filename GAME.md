@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 20 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 21 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -37,6 +37,8 @@
   club sits on the beach west of the fence; Holdfast towers read taller from
   the gulf. T1 airside has stub aerobridges short of stands 14/24/34.
   Idle fleet wears licensed liveries; Mt Lofty has a darker cap.
+  Live-stand GSE stages on the apron when no flight is parked. CBD west
+  glass faces the gulf opening shot.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -86,7 +88,8 @@
   Gulf water is glossier; the west apron is not empty. ATC tower is taller
   with the beacon on the cab. West Beach has a coastal road west of the
   fence. Operating grass is coastal green. T1 has airside aerobridge stubs.
-  Idle fleet wears licensed liveries. Save schema
+  Idle fleet wears licensed liveries. Live-stand GSE stays on the apron
+  when the sim is empty. CBD west glass faces the gulf. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

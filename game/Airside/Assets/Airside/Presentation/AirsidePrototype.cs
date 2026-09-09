@@ -2043,12 +2043,13 @@ namespace Airside.Presentation
             }
             else
             {
-                PlaceProp(_stairs, false, Vector3.zero, Quaternion.identity);
-                PlaceProp(_chocks, false, Vector3.zero, Quaternion.identity);
-                PlaceProp(_gpuCart, false, Vector3.zero, Quaternion.identity);
+                // Stage GSE east of the live stands so the main apron is not a blank
+                // slab when no flight is parked. Keep clear of x=17 / z=14,24,34.
+                PlaceProp(_stairs, true, new Vector3(24.2f, 0.55f, 18.8f),
+                    Quaternion.Euler(0f, 90f, 0f) * Quaternion.Euler(-42f, 0f, 0f));
+                PlaceProp(_chocks, true, new Vector3(24.8f, 0.12f, 17.6f), Quaternion.identity);
+                PlaceProp(_gpuCart, true, new Vector3(23.4f, 0.35f, 20.6f), Quaternion.Euler(0f, 90f, 0f));
                 PulseGpuCart(_gpuCart, false);
-                if (pushing == null)
-                    PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
             }
 
             if (pushing != null)
@@ -2070,7 +2071,11 @@ namespace Airside.Presentation
             }
             else if (atStand == null)
             {
-                PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
+                PlaceProp(_pushbackTug, true, new Vector3(21.8f, 0.4f, 17.4f),
+                    Quaternion.Euler(0f, 180f, 0f));
+                PulseServiceBeacon(_pushbackTug, false);
+                SyncVehicleHeadlights(_pushbackTug, (float)_simulation.TimeOfDay.Daylight < 0.38f,
+                    (float)_simulation.TimeOfDay.Daylight);
             }
         }
 
@@ -8452,6 +8457,8 @@ namespace Airside.Presentation
             CreateBlock("CBD tower W", new Vector3(174f, 14.6f, 132f), new Vector3(2.8f, 29.2f, 2.6f), pale);
             CreateBlock("CBD tower X", new Vector3(148f, 13.4f, 128f), new Vector3(4.2f, 26.8f, 3.8f), stone);
             CreateBlock("CBD tower Y", new Vector3(192f, 15.8f, 118f), new Vector3(3.0f, 31.6f, 2.8f), glass);
+            CreateBlock("CBD tower Z", new Vector3(166f, 21.2f, 108f), new Vector3(3.6f, 42.4f, 3.4f), glass);
+            CreateBlock("CBD tower AA", new Vector3(182f, 19.6f, 128f), new Vector3(3.2f, 39.2f, 3.0f), pale);
             PlaceCbdWindowGlow("CBD glow V", new Vector3(160f, 16.2f, 122.35f), new Vector3(2.6f, 24f, 0.12f));
             PlaceCbdWindowGlow("CBD glow W", new Vector3(174f, 14.6f, 130.65f), new Vector3(2.2f, 22f, 0.12f));
             PlaceCbdWindowGlow("CBD glow Y", new Vector3(192f, 15.8f, 116.55f), new Vector3(2.2f, 24f, 0.12f));
@@ -8464,6 +8471,15 @@ namespace Airside.Presentation
             PlaceCbdWindowGlow("CBD glow Q", new Vector3(134f, 6.4f, 79.95f), new Vector3(3.4f, 9f, 0.12f));
             PlaceCbdWindowGlow("CBD glow S", new Vector3(198f, 10.2f, 100.55f), new Vector3(2.4f, 14f, 0.12f));
             PlaceCbdWindowGlow("CBD glow T", new Vector3(186f, 7.8f, 120.25f), new Vector3(3.0f, 11f, 0.12f));
+            // West faces so the gulf opening shot (yaw 132) sees city glass, not blank stone.
+            PlaceCbdWindowGlow("CBD glow V west", new Vector3(158.25f, 16.2f, 124f), new Vector3(0.12f, 24f, 2.6f));
+            PlaceCbdWindowGlow("CBD glow W west", new Vector3(172.55f, 14.6f, 132f), new Vector3(0.12f, 22f, 2.0f));
+            PlaceCbdWindowGlow("CBD glow X west", new Vector3(145.85f, 13.4f, 128f), new Vector3(0.12f, 20f, 3.0f));
+            PlaceCbdWindowGlow("CBD glow Y west", new Vector3(190.45f, 15.8f, 118f), new Vector3(0.12f, 24f, 2.2f));
+            PlaceCbdWindowGlow("CBD glow Z west", new Vector3(164.15f, 21.2f, 108f), new Vector3(0.12f, 32f, 2.6f));
+            PlaceCbdWindowGlow("CBD glow AA west", new Vector3(180.35f, 19.6f, 128f), new Vector3(0.12f, 28f, 2.4f));
+            PlaceCbdWindowGlow("CBD glow H west", new Vector3(166.65f, 12.4f, 118f), new Vector3(0.12f, 18f, 1.8f));
+            PlaceCbdWindowGlow("CBD glow S west", new Vector3(196.35f, 10.2f, 102f), new Vector3(0.12f, 14f, 2.2f));
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
@@ -11811,11 +11827,16 @@ namespace Airside.Presentation
             PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(42.5f, 0f, 20.2f), 175f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(8.2f, 0f, 22.4f), 195f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(23.2f, 0f, 19.0f), 185f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(23.2f, 0f, 29.0f), 175f, silhouetteOnly: true);
             PlaceBaggageDolly(kit, new Vector3(6.4f, 0f, 19.6f));
             PlaceBaggageDolly(kit, new Vector3(44f, 0f, 16.8f));
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
             PlaceBaggageDolly(kit, new Vector3(-24.5f, 0f, 16.4f));
+            PlaceBaggageDolly(kit, new Vector3(25.4f, 0f, 18.2f));
+            PlaceBaggageDolly(kit, new Vector3(25.4f, 0f, 28.2f));
+            PlaceBaggageDolly(kit, new Vector3(27.2f, 0f, 19.0f));
 
             BuildApronSafetyProps();
             BuildFuelFarm();

@@ -93,7 +93,10 @@ change it describes.
   green, not dry Kingscote paddock; the surf club sits on West Beach; Glenelg
   towers read from the gulf. T1 airside has stub aerobridges that stop short
   of the live turboprop stands. Idle turboprops wear the licensed Coastline /
-  Emu / traffic liveries; Mt Lofty has a darker cap. Unity EditMode 193/193.
+  Emu / traffic liveries; Mt Lofty has a darker cap. Live-stand stairs, GPU
+  and tug stage on the apron when no flight is parked; extra belts and
+  dollies sit between 14/24/34. CBD west glass faces the gulf opening shot
+  and two taller signature towers read from 318 m. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

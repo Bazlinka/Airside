@@ -122,6 +122,8 @@ change it describes.
   TDZ fills the long strip; extra clouds sit over gulf and Hills.
   T1 landside curve is taller and longer; a wave sits under the
   ADL letters; a kerbside coach waits east of the porte-cochere.
+  Idle fleet tails and stripes use each airframe's accent;
+  spinners catch the sun; parked nav lamps stay lit.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

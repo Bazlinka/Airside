@@ -9999,7 +9999,7 @@ namespace Airside.Presentation
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
                 or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
+            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => accent,
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill" => new Color(0.72f, 0.74f, 0.78f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
@@ -10026,9 +10026,10 @@ namespace Airside.Presentation
                 or "propeller_left_d" or "propeller_right_d"
                 or "propeller_left_e" or "propeller_right_e"
                 or "propeller_left_f" or "propeller_right_f"
-                or "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
-                or "hub_cap_left" or "hub_cap_right"
                 => new Color(0.2f, 0.2f, 0.22f),
+            "spinner_left" or "spinner_right" or "prop_hub_left" or "prop_hub_right"
+                or "hub_cap_left" or "hub_cap_right"
+                => new Color(0.88f, 0.9f, 0.92f),
             "propeller_left_tip" or "propeller_right_tip"
                 or "propeller_left_tip_b" or "propeller_right_tip_b"
                 or "propeller_left_tip_c" or "propeller_right_tip_c"
@@ -12671,7 +12672,17 @@ namespace Airside.Presentation
                     || child.name.StartsWith("EngineHeat", StringComparison.Ordinal)
                     || child.name.StartsWith("LandingLight", StringComparison.Ordinal)
                     || child.name.StartsWith("Strobe", StringComparison.Ordinal))
+                {
                     child.gameObject.SetActive(false);
+                    continue;
+                }
+
+                if (child.name.StartsWith("NavLight", StringComparison.Ordinal)
+                    || child.name.IndexOf("nav_light", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    child.gameObject.SetActive(true);
+                    EnsureNavPointLight(child, true, IsNavLightRight(child.name));
+                }
             }
 
             PlaceContactShadow($"{name} contact", new Vector3(position.x, 0.04f, position.z), new Vector3(10f, 0.02f, 7.4f), 0.16f);

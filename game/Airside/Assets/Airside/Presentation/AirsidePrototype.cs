@@ -5156,19 +5156,19 @@ namespace Airside.Presentation
         private static ReflectionProbe BuildTerminalReflectionProbe()
         {
             var go = new GameObject("Terminal reflection probe");
-            go.transform.position = new Vector3(44f, 4.4f, 26f);
+            go.transform.position = new Vector3(32f, 5.2f, 30f);
             var probe = go.AddComponent<ReflectionProbe>();
             probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
-            probe.resolution = 64;
-            probe.size = new Vector3(72f, 26f, 36f);
+            probe.resolution = 128;
+            probe.size = new Vector3(56f, 24f, 28f);
             probe.center = Vector3.zero;
-            probe.intensity = 0.95f;
+            probe.intensity = 1.05f;
             probe.boxProjection = true;
-            probe.shadowDistance = 28f;
+            probe.shadowDistance = 36f;
             probe.nearClipPlane = 0.3f;
-            probe.farClipPlane = 100f;
+            probe.farClipPlane = 140f;
             probe.RenderProbe();
             return probe;
         }

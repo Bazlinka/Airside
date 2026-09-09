@@ -1,8 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 37 commits ahead of
-  `origin` — push was blocked overnight; publish before another tool starts)
+- **Branch:** `feature/adelaide-overnight-visual` (pushed to `origin`)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
@@ -64,6 +63,7 @@
   letters; a kerbside coach waits east of the porte-cochere.
   Idle fleet tails and stripes use each airframe's accent; spinners
   catch the sun; parked nav lamps stay lit so the fleet reads from 318 m.
+  Terminal reflection probe sits on the landside curve the opening shot sees.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -132,7 +132,7 @@
   a wave sits under the ADL letters; a kerbside coach waits
   east of the porte. Idle fleet stripes match each airframe
   accent; spinners catch the sun; parked nav lamps stay lit.
-  Save schema
+  Terminal probe sits on the landside curve. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

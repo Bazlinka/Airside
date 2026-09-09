@@ -5452,12 +5452,12 @@ namespace Airside.Presentation
                 water, new Vector2(20f, 36f), top: -0.35f, height: 0.5f);
             PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.14f, 0.34f, 0.46f, 0.96f),
                 water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
-            PlaceLevelPad("West Beach sand", -96f, 6f, 36f, 280f, Shade(AirsideTheme.Sand, 0.95f),
-                sand, new Vector2(10f, 48f), top: -0.02f, height: 0.28f);
-            PlaceLevelPad("Dune belt", -80f, 6f, 8f, 260f, Shade(AirsideTheme.Sand, 0.9f),
-                sand, new Vector2(2.2f, 44f), top: 0.02f, height: 0.28f);
-            PlaceLevelPad("Coast shallows", -116f, 6f, 22f, 280f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
-                water, new Vector2(8f, 36f), top: -0.18f, height: 0.28f);
+            PlaceLevelPad("West Beach sand", -96f, 8f, 36f, 340f, Shade(AirsideTheme.Sand, 0.95f),
+                sand, new Vector2(10f, 56f), top: -0.02f, height: 0.28f);
+            PlaceLevelPad("Dune belt", -80f, 8f, 8f, 340f, Shade(AirsideTheme.Sand, 0.9f),
+                sand, new Vector2(2.2f, 56f), top: 0.02f, height: 0.28f);
+            PlaceLevelPad("Coast shallows", -116f, 8f, 22f, 340f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
+                water, new Vector2(8f, 44f), top: -0.18f, height: 0.28f);
             PlaceLevelPad("Coast foam A", -102f, 10f, 6f, 90f, new Color(0.92f, 0.96f, 0.97f, 0.42f),
                 null, null, top: -0.06f, height: 0.08f);
             PlaceLevelPad("Coast foam B", -104f, -24f, 5f, 70f, new Color(0.9f, 0.94f, 0.96f, 0.32f),

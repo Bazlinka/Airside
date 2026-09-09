@@ -161,9 +161,9 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 3.2f,
                 AircraftPhase.AtStand => 1.5f,
                 AircraftPhase.Takeoff => Mathf.Lerp(8f, 18f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(14f, 22f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(16f, 6f, progress),
-                AircraftPhase.Departed => 18f,
+                AircraftPhase.Approach => Mathf.Lerp(16f, 26f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(18f, 6f, progress),
+                AircraftPhase.Departed => 20f,
                 _ => air
             };
         }
@@ -189,9 +189,9 @@ namespace Airside.Presentation
                 AircraftPhase.AtStand => 14f,
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
                 AircraftPhase.Takeoff => Mathf.Lerp(22f, 42f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(36f, 48f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(34f, 18f, progress),
-                AircraftPhase.Departed => 46f,
+                AircraftPhase.Approach => Mathf.Lerp(42f, 58f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(40f, 20f, progress),
+                AircraftPhase.Departed => 52f,
                 _ => air
             };
         }

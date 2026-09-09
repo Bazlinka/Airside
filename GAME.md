@@ -13,7 +13,9 @@
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha now runs the full
   23/05 length inside the fence; paint/lights/holds follow. Grass stops at the
   West Beach dune belt so Gulf St Vincent reads on first overview (~268 m).
-  Car park fills the bigger pad. Night floods cover Stand 3 and the east satellite.
+  Sand and shallows run the same north-south span as the gulf so the beach
+  does not drop out at the edges. Car park fills the bigger pad. Night floods
+  cover Stand 3 and the east satellite.
   Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Night
   beacon is on the ATC tower. Save schema unchanged.
 - **Watch for / assumptions:**

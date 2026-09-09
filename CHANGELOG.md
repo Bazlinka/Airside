@@ -104,7 +104,9 @@ change it describes.
   blast-pad chevrons and a jet blast fence; an east hangar fills the
   satellite side. Dual runways now wet in rain. Adelaide Hills are folded
   instead of one slab; aiming bars and aircraft ground shadows match the
-  1.38 kit. Unity EditMode 193/193.
+  1.38 kit. Follow camera pulled back so the bigger airframe reads in
+  full; east hangar trees moved off the roof; kit gets winglets if the
+  glTF has none. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

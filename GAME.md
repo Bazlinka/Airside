@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 25 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 26 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -42,7 +42,10 @@
   probe; aircraft skins keep bump/AO under licensed liveries.
   T1 has an airside wave roof; the 12/30 pocket is coastal green; kit is 1.38.
   12/30 is wider; 23 has a jet blast fence; an east hangar fills the satellite
-  side. Dual runways wet in rain.
+  side. Dual runways wet in rain. Hills ridge is folded, not one slab.
+  Aiming bars and aircraft ground shadows match the 1.38 kit.
+  Follow camera pulled back for the bigger airframe; east hangar no longer
+  has trees through the roof. Kit winglets inject if the glTF has none.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -96,7 +99,8 @@
   when the sim is empty. CBD west glass faces the gulf. Gulf water
   reflects the opening shot; aircraft keep skin maps under liveries.
   T1 has an airside wave roof; 12/30 infield is coastal green; kit is 1.38.
-  12/30 is wider with a 23 blast fence and east hangar. Save schema
+  12/30 is wider with a 23 blast fence and east hangar. Hills ridge is
+  folded. Follow camera frames the 1.38 kit. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

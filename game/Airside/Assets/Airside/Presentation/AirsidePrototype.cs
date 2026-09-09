@@ -8105,7 +8105,7 @@ namespace Airside.Presentation
                 (new Vector3(-72f, 0f, 38f), 1.05f),
                 (new Vector3(-68f, 0f, 48f), 0.95f),
                 (new Vector3(96f, 0f, 22f), 1.15f),
-                (new Vector3(100f, 0f, 40f), 1.05f),
+                (new Vector3(104f, 0f, 48f), 1.05f),
                 (new Vector3(92f, 0f, 54f), 1.22f),
                 (new Vector3(-40f, 0f, 72f), 1.3f),
                 (new Vector3(8f, 0f, 74f), 1.1f),
@@ -8181,7 +8181,7 @@ namespace Airside.Presentation
                 new Vector3(40f, 0f, 58f), new Vector3(62f, 0f, 52f), new Vector3(68f, 0f, 42f),
                 new Vector3(72f, 0f, 22f), new Vector3(70f, 0f, -8f), new Vector3(-70f, 0f, -6f),
                 new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f),
-                new Vector3(-74f, 0f, 16f), new Vector3(98f, 0f, 32f), new Vector3(90f, 0f, 60f)
+                new Vector3(-74f, 0f, 16f), new Vector3(104f, 0f, 28f), new Vector3(90f, 0f, 60f)
             };
             var inlandCount = inlandScrub.Length;
             for (var i = 0; i < inlandCount; i++)
@@ -9443,6 +9443,15 @@ namespace Airside.Presentation
                 ParentBlock(root, "Belly fairing", new Vector3(0f, -0.28f, 0.15f), new Vector3(0.42f, 0.12f, 1.6f), new Color(0.88f, 0.9f, 0.92f));
                 ParentBlock(root, "Dorsal antenna", new Vector3(0f, 0.78f, 0.55f), new Vector3(0.04f, 0.38f, 0.08f), new Color(0.22f, 0.22f, 0.24f));
             }
+
+            var kitHolder = usedArt && root.childCount > 0 ? root.GetChild(0) : root;
+            if (!HasNamedChild(root, "Winglet L") && !HasNamedChild(root, "Wingtip L"))
+            {
+                ParentBlock(kitHolder, "Winglet L", new Vector3(-4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
+                ParentBlock(kitHolder, "Winglet R", new Vector3(4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
+            }
+            if (!HasNamedChild(root, "Dorsal antenna") && !HasNamedChild(root, "Antenna"))
+                ParentBlock(kitHolder, "Dorsal antenna", new Vector3(0f, 0.78f, 0.55f), new Vector3(0.04f, 0.38f, 0.08f), new Color(0.22f, 0.22f, 0.24f));
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
             PolishAircraftSurfaces(root);

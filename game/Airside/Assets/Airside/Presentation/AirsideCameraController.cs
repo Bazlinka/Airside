@@ -173,8 +173,8 @@ namespace Airside.Presentation
             var air = Mathf.Lerp(1.2f, 2.5f, Mathf.Clamp01(altitude / 12f));
             return phase switch
             {
-                AircraftPhase.AtStand => 1.6f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 1.35f,
+                AircraftPhase.AtStand => 1.85f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 1.5f,
                 AircraftPhase.Landing => 1.1f,
                 AircraftPhase.Approach => 1.8f,
                 _ => air
@@ -186,12 +186,12 @@ namespace Airside.Presentation
             var air = Mathf.Lerp(20f, 32f, Mathf.Clamp01(altitude / 10f));
             return phase switch
             {
-                AircraftPhase.AtStand => 14f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
-                AircraftPhase.Takeoff => Mathf.Lerp(22f, 52f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(52f, 74f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(48f, 22f, progress),
-                AircraftPhase.Departed => 72f,
+                AircraftPhase.AtStand => 18f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 19f,
+                AircraftPhase.Takeoff => Mathf.Lerp(26f, 58f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(56f, 80f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(52f, 24f, progress),
+                AircraftPhase.Departed => 80f,
                 _ => air
             };
         }

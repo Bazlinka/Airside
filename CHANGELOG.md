@@ -40,8 +40,8 @@ change it describes.
   final; an eastern arterial runs to the CBD; Glenelg towers sit south on the
   gulf. CBD and Holdfast windows glow at dusk; aircraft leave climb vapor on
   23; the apron is wider. Taxiway Delta, east 23 ALS, a bigger terminal with
-  ochre idents, a West Beach surf club, and glossier night-lit aircraft.
-  Unity EditMode 193/193.
+  ochre idents and satellite aerobridges, a West Beach surf club, and glossier
+  night-lit aircraft. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

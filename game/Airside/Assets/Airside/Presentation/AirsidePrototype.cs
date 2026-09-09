@@ -4424,8 +4424,12 @@ namespace Airside.Presentation
                          "Terminal east glow",
                          "Terminal east concourse glow",
                          "Terminal east concourse upper glow",
+                         "Terminal ident accent",
+                         "Terminal east ident accent",
                          "Freight office glow",
                          "West Beach surf club glass",
+                         "Satellite bridge A glass",
+                         "Satellite bridge B glass",
                          "Holdfast glass A",
                          "Holdfast glass B",
                          "Holdfast glass C",
@@ -4454,7 +4458,10 @@ namespace Airside.Presentation
                                    || name.StartsWith("ATC tower glass", StringComparison.Ordinal)
                                    || name.StartsWith("CBD glow", StringComparison.Ordinal)
                                    || name.StartsWith("West Beach surf club glass", StringComparison.Ordinal)
-                                   || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal));
+                                   || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal)
+                                   || name.StartsWith("Satellite bridge", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal));
                 if (!wantsPoint)
                     continue;
 
@@ -5376,6 +5383,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal east concourse upper", new Vector3(60f, 5.35f, 22.5f), new Vector3(10.4f, 1.9f, 5.6f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal east concourse upper glass", new Vector3(60f, 5.4f, 19.65f), new Vector3(8.8f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal east concourse upper glow", new Vector3(60f, 5.3f, 19.78f), new Vector3(7.4f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            BuildSatelliteAerobridges();
             // Extra storey so the main hall is not a one-box regional shed from overview.
             CreateBlock("Terminal hall upper", new Vector3(26f, 5.9f, 27.2f), new Vector3(16.5f, 2.4f, 5.2f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
@@ -5666,7 +5674,7 @@ namespace Airside.Presentation
             var grass = PreferSurfaceBasecolor("tx_grass_kingscote");
             PlaceLevelPad("Relief berm north", -8f, 58f, 48f, 8f, Shade(AirsideTheme.Eucalyptus, 0.62f),
                 grass, new Vector2(10f, 2f), top: 0.55f, height: 1.1f);
-            PlaceLevelPad("Relief berm east", 78f, 12f, 10f, 36f, Shade(AirsideTheme.DryGrass, 0.85f),
+            PlaceLevelPad("Relief berm east", 88f, 12f, 10f, 36f, Shade(AirsideTheme.DryGrass, 0.85f),
                 grass, new Vector2(2f, 8f), top: 0.45f, height: 0.9f);
             PlaceLevelPad("Relief berm west dune", -72f, -8f, 16f, 22f, Shade(AirsideTheme.Sand, 0.95f),
                 PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(4f, 5f), top: 0.38f, height: 0.8f);
@@ -7259,6 +7267,25 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Idle aerobridges on the east satellite so the hall reads as a city gate,
+        /// not a regional shed. Presentation only — turboprop stands still use stairs.
+        /// </summary>
+        private static void BuildSatelliteAerobridges()
+        {
+            var steel = new Color(0.55f, 0.58f, 0.62f);
+            var hood = new Color(0.74f, 0.76f, 0.78f);
+            var glass = new Color(0.2f, 0.38f, 0.5f, 0.4f);
+            CreateBlock("Satellite bridge A", new Vector3(56.5f, 2.15f, 17.4f), new Vector3(1.35f, 1.7f, 7.2f), steel);
+            CreateBlock("Satellite bridge A hood", new Vector3(56.5f, 2.05f, 13.4f), new Vector3(2.6f, 2.2f, 2.4f), hood);
+            CreateBlock("Satellite bridge A glass", new Vector3(56.5f, 2.25f, 17.4f), new Vector3(1.05f, 1.1f, 6.6f), glass);
+            CreateBlock("Satellite bridge B", new Vector3(64.5f, 2.15f, 17.4f), new Vector3(1.35f, 1.7f, 7.2f), steel);
+            CreateBlock("Satellite bridge B hood", new Vector3(64.5f, 2.05f, 13.4f), new Vector3(2.6f, 2.2f, 2.4f), hood);
+            CreateBlock("Satellite bridge B glass", new Vector3(64.5f, 2.25f, 17.4f), new Vector3(1.05f, 1.1f, 6.6f), glass);
+            PlaceContactShadow("Satellite bridge A contact", new Vector3(56.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
+            PlaceContactShadow("Satellite bridge B contact", new Vector3(64.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
+        }
+
+        /// <summary>
         /// Decision 0025 item 3 — landside canopy, posts and glass so the terminal
         /// entrance reads as a building, not a flat box, from overview and landside.
         /// </summary>
@@ -7459,7 +7486,7 @@ namespace Airside.Presentation
                 (new Vector3(28f, 0f, -30f), 0.95f),
                 (new Vector3(40f, 0f, -26f), 1.1f),
                 (new Vector3(-60f, 0f, 20f), 1.2f),
-                (new Vector3(68f, 0f, 16f), 1.05f),
+                (new Vector3(66f, 0f, 22f), 1.05f),
                 // Extra belt density so overview reads as continuous coastal bush.
                 (new Vector3(-34f, 0f, 48f), 1.0f),
                 (new Vector3(-20f, 0f, 52f), 1.15f),
@@ -7478,7 +7505,7 @@ namespace Airside.Presentation
                 (new Vector3(74f, 0f, 38f), 1.15f),
                 (new Vector3(72f, 0f, 48f), 0.95f),
                 (new Vector3(-72f, 0f, 8f), 1.1f),
-                (new Vector3(76f, 0f, 6f), 1.0f),
+                (new Vector3(82f, 0f, 20f), 1.0f),
                 (new Vector3(-12f, 0f, 58f), 1.2f),
                 (new Vector3(30f, 0f, 58f), 1.08f),
                 // Inland paddock densify — close the gaps between belts (0025 item 3).
@@ -7518,7 +7545,16 @@ namespace Airside.Presentation
                 (new Vector3(80f, 0f, -46f), 1.0f),
                 (new Vector3(104f, 0f, 8f), 1.12f),
                 (new Vector3(-74f, 0f, -36f), 0.95f),
-                (new Vector3(58f, 0f, -50f), 1.08f)
+                (new Vector3(58f, 0f, -50f), 1.08f),
+                // Arterial eucalyptus so the CBD road is not bare asphalt from overview.
+                (new Vector3(96f, 0f, 52f), 1.15f),
+                (new Vector3(112f, 0f, 54f), 1.05f),
+                (new Vector3(128f, 0f, 52f), 1.22f),
+                (new Vector3(144f, 0f, 54f), 1.1f),
+                (new Vector3(160f, 0f, 50f), 0.95f),
+                (new Vector3(108f, 0f, 40f), 0.88f),
+                (new Vector3(-76f, 0f, -52f), 1.12f),
+                (new Vector3(-68f, 0f, -64f), 1.0f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers

@@ -1401,16 +1401,16 @@ namespace Airside.Presentation
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
-                light.range = 42f;
-                light.spotAngle = 48f;
-                light.innerSpotAngle = 22f;
+                light.range = 78f;
+                light.spotAngle = 42f;
+                light.innerSpotAngle = 18f;
                 light.shadows = LightShadows.Soft;
             }
 
             light.enabled = on;
             if (!on)
                 return;
-            light.intensity = night ? 6.5f : 3.2f;
+            light.intensity = night ? 7.4f : 4.4f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -5157,6 +5157,12 @@ namespace Airside.Presentation
                 CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             if (GameObject.Find("Terminal ident") == null)
                 CreateBlock("Terminal ident", new Vector3(26f, 5.15f, 24.05f), new Vector3(10.5f, 0.55f, 0.16f), new Color(0.1f, 0.18f, 0.32f));
+            // East pier on the expanded apron so the landside matches the bigger field.
+            CreateBlock("Terminal east wing", new Vector3(40f, 2.15f, 24.5f), new Vector3(10f, 4.3f, 7.4f), new Color(0.66f, 0.7f, 0.73f));
+            CreateBlock("Terminal east glass", new Vector3(40f, 2.35f, 20.85f), new Vector3(8f, 2.4f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal east roof", new Vector3(40f, 4.45f, 24.5f), new Vector3(10.6f, 0.22f, 7.8f), new Color(0.52f, 0.55f, 0.58f));
+            CreateBlock("Terminal link", new Vector3(34.4f, 2.0f, 26.2f), new Vector3(5.2f, 3.6f, 5.2f), new Color(0.64f, 0.68f, 0.71f));
+            CreateBlock("Terminal east glow", new Vector3(40f, 2.2f, 21.0f), new Vector3(6.5f, 1.4f, 0.08f), new Color(1f, 0.82f, 0.45f));
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -5373,6 +5379,8 @@ namespace Airside.Presentation
 
             PlaceLevelPad("Gulf St Vincent", -168f, 8f, 160f, 340f, new Color(0.18f, 0.4f, 0.5f, 0.94f),
                 water, new Vector2(20f, 36f), top: -0.35f, height: 0.5f);
+            PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.14f, 0.34f, 0.46f, 0.96f),
+                water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
             PlaceLevelPad("West Beach sand", -96f, 6f, 36f, 280f, Shade(AirsideTheme.Sand, 0.95f),
                 sand, new Vector2(10f, 48f), top: -0.02f, height: 0.28f);
             PlaceLevelPad("Coast shallows", -116f, 6f, 22f, 280f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
@@ -5381,6 +5389,8 @@ namespace Airside.Presentation
                 null, null, top: -0.06f, height: 0.08f);
             PlaceLevelPad("Coast foam B", -104f, -24f, 5f, 70f, new Color(0.9f, 0.94f, 0.96f, 0.32f),
                 null, null, top: -0.07f, height: 0.08f);
+            PlaceLevelPad("Coast foam C", -100f, 48f, 5f, 50f, new Color(0.93f, 0.96f, 0.98f, 0.28f),
+                null, null, top: -0.06f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -7480,6 +7490,29 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(8f, 3f), top: 0.12f, height: 0.24f);
+            PlaceSuburbanHouses();
+        }
+
+        /// <summary>West Beach / Mile End house massing so the city airport is not empty plains.</summary>
+        private static void PlaceSuburbanHouses()
+        {
+            var roof = new Color(0.42f, 0.38f, 0.34f);
+            var wall = new Color(0.82f, 0.8f, 0.74f);
+            var brick = new Color(0.62f, 0.48f, 0.4f);
+            var spots = new[]
+            {
+                new Vector3(114f, 1.05f, 70f), new Vector3(122f, 1.15f, 68f), new Vector3(130f, 0.95f, 72f),
+                new Vector3(118f, 1.2f, 62f), new Vector3(126f, 1.0f, 78f), new Vector3(134f, 1.1f, 80f),
+                new Vector3(140f, 1.25f, 74f), new Vector3(112f, 0.9f, 78f), new Vector3(136f, 1.05f, 64f),
+                new Vector3(128f, 0.95f, 88f)
+            };
+            for (var i = 0; i < spots.Length; i++)
+            {
+                var p = spots[i];
+                var body = i % 3 == 0 ? brick : wall;
+                CreateBlock($"Suburb house {i}", p, new Vector3(3.4f, 2.1f, 2.6f), body);
+                CreateBlock($"Suburb roof {i}", p + new Vector3(0f, 1.25f, 0f), new Vector3(3.8f, 0.45f, 3.0f), roof);
+            }
         }
 
         private static void BuildHorizonDome()
@@ -7490,7 +7523,7 @@ namespace Airside.Presentation
             dome.name = "Horizon dome";
             Object.Destroy(dome.GetComponent<Collider>());
             dome.transform.position = new Vector3(0f, 0f, 0f);
-            dome.transform.localScale = new Vector3(620f, 220f, 620f);
+            dome.transform.localScale = new Vector3(760f, 240f, 760f);
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
             material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
@@ -7830,7 +7863,8 @@ namespace Airside.Presentation
                         _coastFoam = renderer.transform;
                 }
                 else if (n.StartsWith("Coast water", StringComparison.Ordinal)
-                    || n.StartsWith("Coast shallows", StringComparison.Ordinal))
+                    || n.StartsWith("Coast shallows", StringComparison.Ordinal)
+                    || n.StartsWith("Gulf", StringComparison.Ordinal))
                 {
                     _coastWaterRenderers.Add(renderer);
                 }
@@ -10009,6 +10043,11 @@ namespace Airside.Presentation
                     taxiPaint);
             }
 
+            for (var x = -70; x <= 80; x += 6)
+                CreateBlock($"Taxi Bravo centre {x}", new Vector3(x, 0.05f, -9.2f), new Vector3(2.6f, 0.02f, 0.14f), taxiPaint);
+            for (var z = -6; z <= 40; z += 6)
+                CreateBlock($"Taxi Charlie centre {z}", new Vector3(48f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.6f), taxiPaint);
+
             // Extend paint onto the A1 exit fillet toward the runway.
             for (var x = -24; x <= -12; x += 1)
                 CreateBlock($"Taxi exit centre {x}", new Vector3(x, 0.035f, 4.5f + (x + 24f) * 0.32f),
@@ -10272,6 +10311,14 @@ namespace Airside.Presentation
             PlaceRunwayDigit('2', end12 + along * 1.15f, yaw + 90f);
             PlaceRunwayDigit('3', end30 - along * 1.15f, yaw - 90f);
             PlaceRunwayDigit('0', end30 + along * 1.15f, yaw - 90f);
+            for (var i = -5; i <= 5; i++)
+            {
+                if (Mathf.Abs(i) >= 5)
+                    continue;
+                var mark = CreateBlock($"12-30 centre {i}", center + along * (i * 8f) + new Vector3(0f, 0.01f, 0f),
+                    new Vector3(2.4f, 0.02f, 0.22f), Color.white);
+                mark.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
         }
 
         /// <summary>

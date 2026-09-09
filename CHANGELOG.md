@@ -18,7 +18,9 @@ change it describes.
   the gulf, flare on the 05 numbers, long rollout to A1; takeoff uses more of
   23/05. Bravo joins Charlie and 12/30 with visual runway exits. Overview starts
   a little further out so gulf, both runways and the CBD read in one frame.
-  Runway wear is spread along the full 23/05 strip. Unity EditMode 193/193.
+  Runway wear is spread along the full 23/05 strip. Terminal has an east pier;
+  Bravo/Charlie/12-30 have centreline paint; gulf water goes further west; West
+  Beach houses sit outside the east fence. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

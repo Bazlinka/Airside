@@ -4375,7 +4375,7 @@ namespace Airside.Presentation
                     var idx = 0;
                     if (space >= 0)
                         int.TryParse(lampName[(space + 1)..], out idx);
-                    var step = (7 - idx) * 0.42f;
+                    var step = (11 - idx) * 0.42f;
                     var wave = Mathf.Repeat(chase - step, 2.4f);
                     var pulse = wave < 0.4f
                         ? Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(wave / 0.2f - 1f))
@@ -4736,7 +4736,7 @@ namespace Airside.Presentation
         private static Light[] CollectAlsLights()
         {
             var lights = new List<Light>();
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < 12; i++)
             {
                 var go = GameObject.Find($"ALS lamp {i}");
                 if (go == null)
@@ -7156,8 +7156,8 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Decision 0025 items 3+5 — short approach light bars west of the threshold
-        /// so night approaches read as a lit path, not a bare runway end.
+        /// Decision 0025 items 3+5 — 05 ALS west of the threshold, including gulf
+        /// piers, so night approaches and the opening shot read as a lit final.
         /// </summary>
         private static void BuildApproachLightBars()
         {
@@ -7167,22 +7167,31 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
-            // Simple ALS centreline + bar pairs west of runway 05 threshold.
-            // Reuse edge/taxi/obst lighting kit parts so stations read authored, not toy cubes.
-            // Kit path: fewer stations + silhouette fixtures so approach reads lit, not mesh soup.
+            // Long 05 ALS over Gulf St Vincent so the opening shot has a lit final,
+            // not a short beach ladder. Kit still stamps fixtures at each station.
             var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
-            var stationCount = hasLightingKit ? 5 : 8;
-            var stationStep = hasLightingKit ? 7f : 5f;
+            const int stationCount = 12;
+            const float stationStep = 8f;
             var anyKitStation = false;
             for (var i = 0; i < stationCount; i++)
             {
                 var x = VisualThresholdWestX - 8f - i * stationStep;
-                var origin = new Vector3(x, 0f, 0f);
+                var overGulf = x < -114f;
+                var pierLift = overGulf ? 1.85f : 0f;
+                var origin = new Vector3(x, pierLift, 0f);
                 var kitStation = false;
                 void AlsPart(string mesh, Color color)
                 {
                     if (ArtGltfLoader.TryPlaceNamedMesh(lightingKit, mesh, origin, Quaternion.identity, color, out _))
                         kitStation = true;
+                }
+
+                if (overGulf)
+                {
+                    CreateBlock($"ALS pier {i}", new Vector3(x, 0.95f, 0f), new Vector3(0.22f, 2.3f, 0.22f), stem);
+                    CreateBlock($"ALS pier cap {i}", new Vector3(x, 2.12f, 0f), new Vector3(0.85f, 0.12f, 0.85f), Shade(stem, 1.12f));
+                    CreateBlock($"ALS pier pile L {i}", new Vector3(x, 0.4f, -0.55f), new Vector3(0.14f, 1.5f, 0.14f), Shade(stem, 0.92f));
+                    CreateBlock($"ALS pier pile R {i}", new Vector3(x, 0.4f, 0.55f), new Vector3(0.14f, 1.5f, 0.14f), Shade(stem, 0.92f));
                 }
 
                 AlsPart("edge_base", stem);
@@ -7210,44 +7219,44 @@ namespace Airside.Presentation
 
                 if (!kitStation)
                 {
-                    CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
-                    CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
-                    CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f, -1.4f - i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
-                    CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
+                    CreateBlock($"ALS stem {i}", new Vector3(x, 0.35f + pierLift, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
+                    CreateBlock($"ALS centre {i}", new Vector3(x, 0.75f + pierLift, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
+                    CreateBlock($"ALS bar L {i}", new Vector3(x, 0.7f + pierLift, -1.6f - i * 0.22f), new Vector3(0.28f, 0.14f, 2.4f + i * 0.32f), bar);
+                    CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f + pierLift, 1.6f + i * 0.22f), new Vector3(0.28f, 0.14f, 2.4f + i * 0.32f), bar);
                     if (i % 2 == 0)
-                        CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
+                        CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f + pierLift, 0f), new Vector3(0.2f, 0.12f, 4.2f + i * 0.28f), bar);
                 }
                 else
                 {
                     // Lateral bars from lighting kit stems rotated across the approach axis
                     // (kit has no dedicated ALS wing meshes).
-                    var barHalf = 1.4f + i * 0.12f;
-                    var barLen = 2.2f + i * 0.18f;
+                    var barHalf = 1.6f + i * 0.22f;
+                    var barLen = 2.4f + i * 0.32f;
                     ArtGltfLoader.TryPlaceNamedMesh(
                         lightingKit, "taxi_stem",
-                        new Vector3(x, 0.55f, -barHalf),
+                        new Vector3(x, 0.55f + pierLift, -barHalf),
                         Quaternion.Euler(0f, 90f, 0f), stem, out _,
                         new Vector3(0.35f, barLen * 0.35f, 0.35f));
                     ArtGltfLoader.TryPlaceNamedMesh(
                         lightingKit, "taxi_stem",
-                        new Vector3(x, 0.55f, barHalf),
+                        new Vector3(x, 0.55f + pierLift, barHalf),
                         Quaternion.Euler(0f, 90f, 0f), stem, out _,
                         new Vector3(0.35f, barLen * 0.35f, 0.35f));
                     ArtGltfLoader.TryPlaceNamedMesh(
                         lightingKit, "taxi_lens",
-                        new Vector3(x, 0.72f, -barHalf),
+                        new Vector3(x, 0.72f + pierLift, -barHalf),
                         Quaternion.identity, bar, out _,
                         new Vector3(0.55f, 0.55f, 0.55f));
                     ArtGltfLoader.TryPlaceNamedMesh(
                         lightingKit, "taxi_lens",
-                        new Vector3(x, 0.72f, barHalf),
+                        new Vector3(x, 0.72f + pierLift, barHalf),
                         Quaternion.identity, bar, out _,
                         new Vector3(0.55f, 0.55f, 0.55f));
                     if (i % 2 == 0)
                     {
                         ArtGltfLoader.TryPlaceNamedMesh(
                             lightingKit, "edge_stem",
-                            new Vector3(x, 0.5f, 0f),
+                            new Vector3(x, 0.5f + pierLift, 0f),
                             Quaternion.Euler(0f, 90f, 0f), stem, out _,
                             new Vector3(0.3f, (3.6f + i * 0.15f) * 0.28f, 0.3f));
                     }
@@ -7257,13 +7266,13 @@ namespace Airside.Presentation
                     anyKitStation = true;
 
                 var lampGo = new GameObject($"ALS lamp {i}");
-                lampGo.transform.position = new Vector3(x, 0.95f, 0f);
+                lampGo.transform.position = new Vector3(x, 0.95f + pierLift, 0f);
                 // Aim SpotLights toward the 05 threshold so gulf final washes the real strip.
                 lampGo.transform.rotation = Quaternion.LookRotation(new Vector3(VisualThresholdWestX - x, -0.7f, 0f).normalized);
                 var light = lampGo.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.95f, 0.85f);
-                light.range = 14f + i * 0.6f;
+                light.range = 16f + i * 0.9f;
                 light.spotAngle = 42f;
                 light.innerSpotAngle = 18f;
                 light.intensity = 0f;
@@ -7272,7 +7281,7 @@ namespace Airside.Presentation
                 // Emissive lens proxy only on greybox path — kit stations already ship edge_lens.
                 if (!kitStation)
                 {
-                    var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                    var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f + pierLift, 0f), new Vector3(0.28f, 0.12f, 0.28f),
                         new Color(1f, 0.97f, 0.88f));
                     var lensRenderer = lens.GetComponent<Renderer>();
                     if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
@@ -7946,7 +7955,13 @@ namespace Airside.Presentation
                 (new Vector3(262f, 0f, 62f), 1.22f),
                 (new Vector3(254f, 0f, -18f), 1.18f),
                 (new Vector3(270f, 0f, 96f), 1.4f),
-                (new Vector3(242f, 0f, -48f), 1.1f)
+                (new Vector3(242f, 0f, -48f), 1.1f),
+                (new Vector3(236f, 0f, 8f), 1.28f),
+                (new Vector3(244f, 0f, 48f), 1.16f),
+                (new Vector3(258f, 0f, -36f), 1.32f),
+                (new Vector3(266f, 0f, 18f), 1.2f),
+                (new Vector3(238f, 0f, 78f), 1.08f),
+                (new Vector3(250f, 0f, 110f), 1.24f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers
@@ -8310,6 +8325,10 @@ namespace Airside.Presentation
                 grass, new Vector2(12f, 14f), top: 12f, height: 24f);
             PlaceLevelPad("Mt Lofty", 348f, 58f, 34f, 28f, Shade(AirsideTheme.Eucalyptus, 0.28f),
                 grass, new Vector2(6f, 5f), top: 28f, height: 44f);
+            PlaceLevelPad("Adelaide Hills ridge N", 332f, 88f, 42f, 54f, Shade(AirsideTheme.Eucalyptus, 0.31f),
+                grass, new Vector2(8f, 8f), top: 22f, height: 36f);
+            PlaceLevelPad("Adelaide Hills spur S", 306f, -22f, 38f, 56f, Shade(AirsideTheme.DryGrass, 0.44f),
+                grass, new Vector2(8f, 9f), top: 14f, height: 26f);
             BuildAdelaideSkyline();
         }
 
@@ -11702,6 +11721,8 @@ namespace Airside.Presentation
             if (!hasServiceKit)
                 PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f, silhouetteOnly: false);
             PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(42.5f, 0f, 20.2f), 175f, silhouetteOnly: true);
+            PlaceBaggageDolly(kit, new Vector3(44f, 0f, 16.8f));
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
             PlaceBaggageDolly(kit, new Vector3(-24.5f, 0f, 16.4f));
@@ -12081,6 +12102,7 @@ namespace Airside.Presentation
             PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f));
             PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f));
             PlaceIdleApronAircraft("Idle Bravo", new Vector3(-52f, 0.7f, -9.2f), 90f, new Color(0.16f, 0.42f, 0.32f));
+            PlaceIdleApronAircraft("Idle Bravo east", new Vector3(42f, 0.7f, -14.5f), 90f, new Color(0.62f, 0.28f, 0.18f));
         }
 
         /// <summary>

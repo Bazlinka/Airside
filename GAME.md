@@ -21,8 +21,12 @@
   houses sit outside the fence.   West Beach sand meets the grass deck level.
   Terminal roofs carry plant boxes. Adelaide Hills sit east of the CBD.
   A visual turboprop holds on the 12/30 taxi. Night taxi lamps follow that
-  south strip. A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.32.
-  URP sun shadows reach 420 m with overview-biased cascades. EditMode 193/193 earlier this session.
+  south strip.   A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.32.
+  URP sun shadows reach 420 m with overview-biased cascades. 05 ALS now
+  runs 12 stations out over the gulf on piers so the opening shot has a
+  lit final. Day grade is punchier. Bravo east infield holds a sixth idle
+  turboprop; Charlie has apron GSE. Hills ridge is a bit more broken up.
+  EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -66,7 +70,8 @@
   freight aprons hold idle turboprops. Airside ident carries ADL. Adelaide
   Hills / Mt Lofty sit east of the CBD. A visual turboprop holds on the
   12/30 taxi with night lamps along that strip. Bravo west holds another
-  idle turboprop. Save schema
+  idle turboprop. 05 ALS extends over the gulf on piers. Bravo east infield
+  holds a sixth idle turboprop. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

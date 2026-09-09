@@ -177,7 +177,9 @@ B–D may now use REF masters as production targets. UI-ILL-001 inherits that
 approved design rather than reinventing it.
 
 For a machine-friendly map of the approved references, candidates and remaining
-gaps, see `docs/art/AI_IMAGE_REFERENCE_INDEX.md`.
+gaps, see `docs/art/AI_IMAGE_REFERENCE_INDEX.md`. For Bailey’s source-everything
+refine pass (every wheel, prop, engine, tree, GSE part, audio bed, …), see
+`docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`.
 
 ### Batch B — world surfaces, markings and environment
 

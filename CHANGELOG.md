@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Art sourcing checklist.** `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
+  lists every first-playable item to source (wheels, props, engines, trees, GSE,
+  audio, …) with in-git / quality / target-path columns; linked from the art
+  index and `GAME.md`.
+
 - **Layering / collision / routes (100-fix).** Stand centres 14/24/34; dogleg lead-ins +
   `APRON-THROAT`; GT off-field Away hold; run-up bay off Alpha; selective Yield; length-
   weighted taxi; soft commercial motion; dual approach lanes; ATC vacated/respawn/GT-hold

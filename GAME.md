@@ -1,17 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — layering/collision 100-fix squash-merged via #170)
-- **Branch:** `main`
-- **Do next:** Mac Play audit — quit Unity, run `scripts/rebuild-and-open-mac.sh`
-  (or `scripts/build-mac.sh` then open `work/builds/Airside.app`). Confirm: dual
-  commercials no wingtip clip at stands 14/24/34; GT off-field Away hold; dogleg
-  taxi-out; run-up bay north of Alpha; soft taxi holds.
-- **In progress / half-done:** Deferred items in `docs/testing/BUGFIX_PASS_100_2026-09-09.md`
-  (puddles, flaps, per-stand GSE, windsock pause) — optional follow-up.
+- **Last updated:** 2026-09-09 (Cursor — art sourcing checklist)
+- **Branch:** `cursor/art-sourcing-checklist-d7f0` (merge to `main`)
+- **Do next:** Bailey sources assets from
+  `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md` (P0 aircraft parts →
+  buildings → vehicles/GSE → veg/characters). Mac Play audit of #170 collision
+  pass remains when convenient.
+- **In progress / half-done:** First-playable **refine / art sourcing** — no new
+  economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
 - **Watch for / assumptions:**
-  - Stand Z is now 14/24/34 — third-stand apron pads shifted +8 Z
+  - Checklist rows marked Placeholder still need authored replacements
+  - Register + StreamingAssets sync required with every new runtime art commit
   - Save schema unchanged
-  - `scripts/test-domain.sh` 178 passed on the fix branch before merge
 - **Open question for Bailey:** none
 
 ---
@@ -104,11 +104,11 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac Play: fidelity densify (#167) vs Approved modelling boards — sign off or
-   list concrete gaps.
-2. Mac overview: day/night readability (#158) noon + midnight sign-off.
-3. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
+1. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
+   in priority order (props/gear/wheels/engines → buildings → GSE → trees → CHR).
+2. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
+   off or list concrete gaps.
+3. Mac overview: day/night readability (#158) noon + midnight sign-off.
+4. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153) vs refs if not yet signed off.
-4. Keep pushing first-playable **visual polish** — standing goal; no new economy /
-   Companion.
 5. No new economy systems; no Companion/CloudKit.

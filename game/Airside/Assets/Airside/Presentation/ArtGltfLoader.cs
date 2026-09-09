@@ -115,6 +115,7 @@ namespace Airside.Presentation
             var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);
             renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 color, kind, useTextures: hasUsableUvs);
+            AirsideSceneIndex.Remember(transform);
             return transform;
         }
 

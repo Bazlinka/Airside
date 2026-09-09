@@ -33,5 +33,31 @@ namespace Airside.Presentation
                 return;
             Cache.Remove(root.GetInstanceID());
         }
+
+        public static bool HasName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name))
+                return false;
+            foreach (var child in Get(root))
+            {
+                if (child != null && child != root && child.name == name)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static Transform FindContains(Transform root, string fragment)
+        {
+            if (root == null || string.IsNullOrEmpty(fragment))
+                return null;
+            foreach (var child in Get(root))
+            {
+                if (child != null && child.name.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return child;
+            }
+
+            return null;
+        }
     }
 }

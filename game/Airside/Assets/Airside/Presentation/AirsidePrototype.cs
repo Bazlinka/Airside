@@ -72,6 +72,10 @@ namespace Airside.Presentation
         private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
             new List<(Material, Color, float, float, float, bool)>();
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly Dictionary<string, string> SurfaceBasecolorCache = new();
         private static Transform _airfieldRoot;
 
@@ -160,13 +164,10 @@ namespace Airside.Presentation
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
+            AirsideSceneIndex.Capture();
             CollectNightGlowWindows();
-            var fuelLamp = GameObject.Find("Fuel farm light");
-            if (fuelLamp != null)
-                _fuelFarmLight = fuelLamp.GetComponent<Light>();
-            var arffLamp = GameObject.Find("ARFF bay light");
-            if (arffLamp != null)
-                _arffBayLight = arffLamp.GetComponent<Light>();
+            _fuelFarmLight = AirsideSceneIndex.FindLight("Fuel farm light");
+            _arffBayLight = AirsideSceneIndex.FindLight("ARFF bay light");
             _apronLights = BuildApronLights();
             _landsideLights = BuildLandsideStreetlights();
             _thresholdLights = BuildThresholdApproachLights();
@@ -213,24 +214,25 @@ namespace Airside.Presentation
             _uiAudio.playOnAwake = false;
             _uiAudio.spatialBlend = 0f;
             _uiAudio.volume = 0.3f;
-            var worldRenderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            AirsideSceneIndex.Capture();
+            var worldRenderers = AirsideSceneIndex.Renderers;
             CollectWetSurfaces(worldRenderers);
             BuildWetPuddles();
             CollectHoldShortMarkings(worldRenderers);
             CollectAirfieldLights(worldRenderers);
-            var hangarDoor = GameObject.Find("Hangar door");
+            var hangarDoor = AirsideSceneIndex.Find("Hangar door");
             if (hangarDoor != null)
             {
-                _hangarDoor = hangarDoor.transform;
+                _hangarDoor = hangarDoor;
                 _hangarDoorClosedX = _hangarDoor.position.x;
             }
 
             CollectHangarDoorPanels();
             CollectCoastalMotionTargets();
-            _opsAntennaDish = GameObject.Find("antenna_dish")?.transform;
-            _terminalFlag = GameObject.Find("flag_cloth")?.transform;
+            _opsAntennaDish = AirsideSceneIndex.Find("antenna_dish");
+            _terminalFlag = AirsideSceneIndex.Find("flag_cloth");
 
-            var hangarBayLightGo = GameObject.Find("Hangar bay light");
+            var hangarBayLightGo = AirsideSceneIndex.FindGameObject("Hangar bay light");
             if (hangarBayLightGo == null)
             {
                 hangarBayLightGo = new GameObject("Hangar bay light");
@@ -240,17 +242,12 @@ namespace Airside.Presentation
                 bay.color = new Color(1f, 0.88f, 0.62f);
                 bay.range = 14f;
                 bay.intensity = 0.2f;
+                AirsideSceneIndex.Remember(hangarBayLightGo);
             }
             _hangarBayLight = hangarBayLightGo.GetComponent<Light>();
-            var dome = GameObject.Find("Horizon dome");
-            if (dome != null)
-                _horizonDome = dome.transform;
-            var clouds = GameObject.Find("Cloud bands");
-            if (clouds != null)
-                _cloudRoot = clouds.transform;
-            var umbras = GameObject.Find("Cloud umbras");
-            if (umbras != null)
-                _cloudUmbraRoot = umbras.transform;
+            _horizonDome = AirsideSceneIndex.Find("Horizon dome");
+            _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
+            _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
@@ -1503,7 +1500,7 @@ namespace Airside.Presentation
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    var color = renderer.material.color;
+                    var color = GetRendererColor(renderer);
                     color.a = (0.12f + 0.1f * pulse) * intensity;
                     SetRendererColor(renderer, color);
                 }
@@ -1995,7 +1992,7 @@ namespace Airside.Presentation
         {
             if (_terminalFlag == null)
             {
-                _terminalFlag = GameObject.Find("flag_cloth")?.transform;
+                _terminalFlag = AirsideSceneIndex.Find("flag_cloth");
                 if (_terminalFlag == null)
                     return;
             }
@@ -2454,7 +2451,7 @@ namespace Airside.Presentation
                 var renderer = puff.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    var color = renderer.material.color;
+                    var color = GetRendererColor(renderer);
                     color.a = (0.18f + wetness * 0.28f) * pulse;
                     SetRendererColor(renderer, color);
                 }
@@ -2479,7 +2476,7 @@ namespace Airside.Presentation
                     var renderer = puddle.GetComponent<Renderer>();
                     if (renderer == null)
                         continue;
-                    var color = renderer.material.color;
+                    var color = GetRendererColor(renderer);
                     color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i + b * 0.4f));
                     SetRendererColor(renderer, color);
                 }
@@ -2552,7 +2549,7 @@ namespace Airside.Presentation
                     var renderer = puff.GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        var color = renderer.material.color;
+                        var color = GetRendererColor(renderer);
                         color.a = t * 0.5f;
                         SetRendererColor(renderer, color);
                     }
@@ -2584,7 +2581,9 @@ namespace Airside.Presentation
                     fwd = Vector3.forward;
                 mark.transform.rotation = Quaternion.LookRotation(fwd.normalized, Vector3.up);
                 mark.transform.localScale = new Vector3(0.22f, 0.02f, 3.6f);
-                mark.GetComponent<Renderer>().material = CreateMaterial(new Color(0.12f, 0.11f, 0.1f, 0.7f));
+                var markRenderer = mark.GetComponent<Renderer>();
+                markRenderer.sharedMaterial = CreateMaterial(new Color(0.12f, 0.11f, 0.1f, 0.7f));
+                SetRendererColor(markRenderer, new Color(0.12f, 0.11f, 0.1f, 0.7f));
             }
         }
 
@@ -2603,7 +2602,7 @@ namespace Airside.Presentation
                     continue;
                 }
 
-                var color = renderer.material.color;
+                var color = GetRendererColor(renderer);
                 color.a -= Time.unscaledDeltaTime / 22f;
                 if (color.a <= 0.02f)
                 {
@@ -2623,7 +2622,7 @@ namespace Airside.Presentation
         {
             _holdShortRenderers.Clear();
             // Prefix scan — A1/A2 fillet bars and kit meshes rename often; exact lists go stale.
-            renderers ??= Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
             {
                 if (renderer == null)
@@ -2762,7 +2761,7 @@ namespace Airside.Presentation
             // New surfaces have never been wetted — force the next weather pass to apply.
             _lastAppliedWetness = float.NaN;
             var seenMaterials = new HashSet<int>();
-            renderers ??= Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
             {
                 if (renderer == null)
@@ -2948,15 +2947,16 @@ namespace Airside.Presentation
                     var rz = rx * (0.45f + (b % 3) * 0.22f);
                     puddle.transform.localScale = new Vector3(rx, 0.012f, rz);
                     puddle.transform.localRotation = Quaternion.Euler(0f, (i * 23 + b * 41) % 360, 0f);
-                    var material = AirsideMaterialLibrary.Create(
+                    var puddleRenderer = puddle.GetComponent<Renderer>();
+                    puddleRenderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                         new Color(0.2f, 0.28f, 0.34f, 0.28f),
                         AirsideMaterialLibrary.SurfaceKind.Water);
-                    if (material.HasProperty("_Smoothness"))
-                        material.SetFloat("_Smoothness", 0.96f);
-                    if (material.HasProperty("_Metallic"))
-                        material.SetFloat("_Metallic", 0.35f);
-                    puddle.GetComponent<Renderer>().material = material;
-                    puddle.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    SetRendererColor(puddleRenderer, new Color(0.2f, 0.28f, 0.34f, 0.28f));
+                    puddleRenderer.GetPropertyBlock(RendererTintBlock);
+                    RendererTintBlock.SetFloat("_Smoothness", 0.96f);
+                    RendererTintBlock.SetFloat("_Metallic", 0.35f);
+                    puddleRenderer.SetPropertyBlock(RendererTintBlock);
+                    puddleRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
             }
 
@@ -2966,7 +2966,7 @@ namespace Airside.Presentation
         private void CollectAirfieldLights(Renderer[] renderers = null)
         {
             _airfieldLightRenderers.Clear();
-            renderers ??= Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
             {
                 if (renderer == null)
@@ -3024,7 +3024,7 @@ namespace Airside.Presentation
                     drop.transform.SetParent(root, false);
                     drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
                     drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-                    drop.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    drop.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                         new Color(0.7f, 0.78f, 0.88f, 0.35f),
                         AirsideMaterialLibrary.SurfaceKind.Default);
                     var collider = drop.GetComponent<Collider>();
@@ -3064,7 +3064,9 @@ namespace Airside.Presentation
                 var side = i % 2 == 0 ? -0.75f : 0.75f;
                 smoke.transform.localPosition = new Vector3(side, 0.12f, -0.15f * (i / 2));
                 smoke.transform.localScale = new Vector3(1.1f, 0.35f, 1.1f);
-                smoke.GetComponent<Renderer>().material = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
+                var smokeRenderer = smoke.GetComponent<Renderer>();
+                smokeRenderer.sharedMaterial = CreateMaterial(new Color(0.85f, 0.85f, 0.88f, 0.4f));
+                SetRendererColor(smokeRenderer, new Color(0.85f, 0.85f, 0.88f, 0.4f));
                 var collider = smoke.GetComponent<Collider>();
                 if (collider != null)
                     Object.Destroy(collider);
@@ -3090,7 +3092,9 @@ namespace Airside.Presentation
                 Object.Destroy(puff.GetComponent<Collider>());
                 puff.transform.SetParent(root, false);
                 puff.transform.localScale = new Vector3(0.5f, 0.22f, 0.5f);
-                puff.GetComponent<Renderer>().material = CreateMaterial(new Color(0.75f, 0.8f, 0.85f, 0.25f));
+                var puffRenderer = puff.GetComponent<Renderer>();
+                puffRenderer.sharedMaterial = CreateMaterial(new Color(0.75f, 0.8f, 0.85f, 0.25f));
+                SetRendererColor(puffRenderer, new Color(0.75f, 0.8f, 0.85f, 0.25f));
             }
 
             root.gameObject.SetActive(false);
@@ -4089,11 +4093,7 @@ namespace Airside.Presentation
             {
                 var domeRenderer = _horizonDome.GetComponent<Renderer>();
                 if (domeRenderer != null)
-                {
-                    SetRendererColor(domeRenderer, sky);
-                    if (domeRenderer.material.HasProperty("_EmissionColor"))
-                        domeRenderer.material.SetColor("_EmissionColor", sky * Mathf.Lerp(0.35f, 1f, daylight));
-                }
+                    SetRendererColor(domeRenderer, sky, sky * Mathf.Lerp(0.35f, 1f, daylight));
             }
 
             UpdateSunAndMoonDiscs(daylight, warm, elevation);
@@ -4295,7 +4295,6 @@ namespace Airside.Presentation
                          "canopy_light_l",
                          "canopy_light_r",
                          "canopy_light_mid",
-                         // Authored glass when greybox glow cubes were gated off.
                          "side_window",
                          "side_window_b",
                          "office_window",
@@ -4310,15 +4309,13 @@ namespace Airside.Presentation
                          "landside_glass"
                      })
             {
-                var go = GameObject.Find(name);
+                var go = AirsideSceneIndex.FindGameObject(name);
                 if (go == null)
                     continue;
                 var renderer = go.GetComponent<Renderer>();
                 if (renderer != null && !_nightGlowRenderers.Contains(renderer))
                     _nightGlowRenderers.Add(renderer);
 
-                // Real PointLight spill so dusk buildings light the apron (0025 item 5).
-                // Skip glass_pane* here — prefix collect below attaches emission only.
                 var wantsPoint = !(name.StartsWith("glass_pane", StringComparison.Ordinal)
                                    || name is "glass_front" or "landside_glass"
                                    || name.StartsWith("side_window", StringComparison.Ordinal)
@@ -4344,11 +4341,9 @@ namespace Airside.Presentation
 
             _windowLights = lights.ToArray();
 
-            // Authored hangar/terminal glass often uses numbered pane names — emission glow only.
-            // Do not stamp a PointLight on every glass_pane* (dusk wash / overlapping soup).
             var paneLights = 0;
             const int maxPaneLights = 6;
-            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            foreach (var renderer in AirsideSceneIndex.Renderers)
             {
                 if (renderer == null || _nightGlowRenderers.Contains(renderer))
                     continue;
@@ -4363,7 +4358,6 @@ namespace Airside.Presentation
                     continue;
 
                 _nightGlowRenderers.Add(renderer);
-                // Sparse hero PointLights only — every ~7th pane, max six.
                 if (paneLights >= maxPaneLights || (_nightGlowRenderers.Count % 7) != 0)
                     continue;
 
@@ -4450,16 +4444,12 @@ namespace Airside.Presentation
         {
             if (_arffLightbarRenderer == null)
             {
-                var truck = GameObject.Find("ARFF truck");
+                var truck = AirsideSceneIndex.Find("ARFF truck");
                 if (truck != null)
                 {
-                    foreach (var t in truck.GetComponentsInChildren<Transform>(true))
-                    {
-                        if (t.name.IndexOf("lightbar", StringComparison.OrdinalIgnoreCase) < 0)
-                            continue;
-                        _arffLightbarRenderer = t.GetComponent<Renderer>();
-                        break;
-                    }
+                    var bar = AirsideNamedChildren.FindContains(truck, "lightbar");
+                    if (bar != null)
+                        _arffLightbarRenderer = bar.GetComponent<Renderer>();
                 }
             }
 
@@ -4470,13 +4460,7 @@ namespace Airside.Presentation
             var blink = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(
                 Time.unscaledTime * AirsideReusableMotion.ArffLightbarHz * Mathf.PI * 2f));
             var amber = new Color(1f, 0.35f, 0.12f) * (0.15f + night * 1.8f * blink);
-            SetRendererColor(_arffLightbarRenderer, Color.Lerp(new Color(0.95f, 0.85f, 0.2f), amber, night));
-            if (_arffLightbarRenderer.material.HasProperty("_EmissionColor"))
-            {
-                _arffLightbarRenderer.material.EnableKeyword("_EMISSION");
-                _arffLightbarRenderer.material.SetColor("_EmissionColor", amber);
-                _arffLightbarRenderer.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            }
+            SetRendererColor(_arffLightbarRenderer, Color.Lerp(new Color(0.95f, 0.85f, 0.2f), amber, night), amber);
         }
 
         private static Light[] CollectAlsLights()
@@ -4484,20 +4468,14 @@ namespace Airside.Presentation
             var lights = new List<Light>();
             for (var i = 0; i < 8; i++)
             {
-                var go = GameObject.Find($"ALS lamp {i}");
-                if (go == null)
-                    continue;
-                var light = go.GetComponent<Light>();
+                var light = AirsideSceneIndex.FindLight($"ALS lamp {i}");
                 if (light != null)
                     lights.Add(light);
             }
 
             foreach (var name in new[] { "REIL lamp L", "REIL lamp R" })
             {
-                var go = GameObject.Find(name);
-                if (go == null)
-                    continue;
-                var light = go.GetComponent<Light>();
+                var light = AirsideSceneIndex.FindLight(name);
                 if (light != null)
                     lights.Add(light);
             }
@@ -5538,11 +5516,7 @@ namespace Airside.Presentation
         private void UpdateApronLife()
         {
             if (_apronLifeRoot == null)
-            {
-                var found = GameObject.Find("Apron life");
-                if (found != null)
-                    _apronLifeRoot = found.transform;
-            }
+                _apronLifeRoot = AirsideSceneIndex.Find("Apron life");
 
             if (_apronLifeRoot == null)
                 return;
@@ -5600,7 +5574,7 @@ namespace Airside.Presentation
                     person.position = new Vector3(basePos.x + sway, basePos.y, basePos.z);
                 }
 
-                foreach (var child in person.GetComponentsInChildren<Transform>(true))
+                foreach (var child in AirsideNamedChildren.Get(person))
                 {
                     if (child == person)
                         continue;
@@ -5731,7 +5705,7 @@ namespace Airside.Presentation
                         continue;
                     var n = renderer.gameObject.name.ToLowerInvariant();
                     if (n.Contains("window"))
-                        renderer.material = AirsideMaterialLibrary.Create(
+                        renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                             new Color(0.35f, 0.55f, 0.7f, 0.55f), AirsideMaterialLibrary.SurfaceKind.Glass);
                     else if (n.Contains("stripe"))
                         SetRendererColor(renderer, new Color(0.2f, 0.45f, 0.65f));
@@ -5861,36 +5835,25 @@ namespace Airside.Presentation
 
             // Painted parking bay chevrons — thin when PRP-003 kerbs already frame the park.
             var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
-            var bayCount = hasForecourtKerbs ? 2 : 4;
-            for (var bay = 0; bay < bayCount; bay++)
+            var bayPaint = new Color(0.92f, 0.92f, 0.88f);
+            if (hasForecourtKerbs)
             {
-                var x = hasForecourtKerbs ? 43.5f + bay * 5.5f : 42f + bay * 3.6f;
-                CreateBlock($"Bay line L {bay}", new Vector3(x - 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Bay line R {bay}", new Vector3(x + 1.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                CreateBlock($"Bay stop {bay}", new Vector3(x, 0.06f, 41.6f), new Vector3(2.8f, 0.02f, 0.08f),
-                    new Color(0.92f, 0.92f, 0.88f));
-                if (!hasForecourtKerbs)
-                {
-                    // Overflow row chevrons under the north kerb cars.
-                    CreateBlock($"Overflow bay L {bay}", new Vector3(x - 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
-                        new Color(0.92f, 0.92f, 0.88f));
-                    CreateBlock($"Overflow bay R {bay}", new Vector3(x + 1.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f),
-                        new Color(0.92f, 0.92f, 0.88f));
-                    CreateBlock($"Overflow stop {bay}", new Vector3(x, 0.06f, 52.6f), new Vector3(2.8f, 0.02f, 0.08f),
-                        new Color(0.92f, 0.92f, 0.88f));
-                }
+                CreateBlock("Bay line W", new Vector3(42.0f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f), bayPaint);
+                CreateBlock("Bay line E", new Vector3(50.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f), bayPaint);
+                CreateBlock("Bay stop", new Vector3(46.25f, 0.06f, 41.6f), new Vector3(8.5f, 0.02f, 0.08f), bayPaint);
+            }
+            else
+            {
+                CreateBlock("Bay line W", new Vector3(40.5f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f), bayPaint);
+                CreateBlock("Bay line E", new Vector3(54.3f, 0.06f, 43.2f), new Vector3(0.08f, 0.02f, 3.4f), bayPaint);
+                CreateBlock("Bay stop", new Vector3(47.4f, 0.06f, 41.6f), new Vector3(14.4f, 0.02f, 0.08f), bayPaint);
+                CreateBlock("Overflow bay W", new Vector3(40.5f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f), bayPaint);
+                CreateBlock("Overflow bay E", new Vector3(54.3f, 0.06f, 51.2f), new Vector3(0.08f, 0.02f, 3.0f), bayPaint);
+                CreateBlock("Overflow stop", new Vector3(47.4f, 0.06f, 52.6f), new Vector3(14.4f, 0.02f, 0.08f), bayPaint);
             }
 
-            // Access-road centre dashes toward the terminal (0025 item 3).
-            var dashCount = hasForecourtKerbs ? 4 : 8;
-            for (var i = 0; i < dashCount; i++)
-            {
-                var z = hasForecourtKerbs ? 38.5f + i * 3.2f : 38f + i * 1.8f;
-                CreateBlock($"Access dash {i}", new Vector3(26f, 0.06f, z),
-                    new Vector3(0.35f, 0.02f, 0.9f), new Color(0.95f, 0.9f, 0.35f));
-            }
+            CreateBlock("Access dash", new Vector3(26f, 0.06f, hasForecourtKerbs ? 43.3f : 44.3f),
+                new Vector3(0.35f, 0.02f, hasForecourtKerbs ? 12.8f : 14.4f), new Color(0.95f, 0.9f, 0.35f));
 
             // Small general-aviation tie-down markers west of hangar (life, not sim).
             var tieCount = 3;
@@ -6006,7 +5969,7 @@ namespace Airside.Presentation
                         : n.Contains("bumper") || n.Contains("arch") || n.Contains("skirt") ? Shade(body, 0.7f)
                         : body;
                     // Flat lit for UV-less prefab cubes — avoid black authored texels.
-                    renderer.material = AirsideMaterialLibrary.Create(color,
+                    renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color,
                         AirsideMaterialLibrary.SurfaceKind.PaintedMetal, useTextures: false);
                 }
             }
@@ -6293,12 +6256,7 @@ namespace Airside.Presentation
                 AlsPart("edge_stem", stem);
                 AlsPart("edge_lens", bar);
                 if (hasLightingKit)
-                {
                     AlsPart("edge_collar", Shade(stem, 1.1f));
-                    AlsPart("edge_gasket", new Color(0.2f, 0.21f, 0.22f));
-                    AlsPart("edge_glare", new Color(1f, 0.97f, 0.88f));
-                    AlsPart("edge_reflector", new Color(0.9f, 0.92f, 0.94f));
-                }
 
                 if (i % 2 == 0)
                 {
@@ -6306,10 +6264,7 @@ namespace Airside.Presentation
                     AlsPart("taxi_stem", stem);
                     AlsPart("taxi_lens", bar);
                     if (hasLightingKit)
-                    {
                         AlsPart("taxi_collar", Shade(stem, 1.05f));
-                        AlsPart("taxi_reflector", new Color(0.9f, 0.92f, 0.94f));
-                    }
                 }
 
                 if (!kitStation)
@@ -6320,41 +6275,6 @@ namespace Airside.Presentation
                     CreateBlock($"ALS bar R {i}", new Vector3(x, 0.7f, 1.4f + i * 0.12f), new Vector3(0.25f, 0.14f, 2.2f + i * 0.18f), bar);
                     if (i % 2 == 0)
                         CreateBlock($"ALS cross {i}", new Vector3(x, 0.68f, 0f), new Vector3(0.18f, 0.12f, 3.6f + i * 0.15f), bar);
-                }
-                else
-                {
-                    // Lateral bars from lighting kit stems rotated across the approach axis
-                    // (kit has no dedicated ALS wing meshes).
-                    var barHalf = 1.4f + i * 0.12f;
-                    var barLen = 2.2f + i * 0.18f;
-                    ArtGltfLoader.TryPlaceNamedMesh(
-                        lightingKit, "taxi_stem",
-                        new Vector3(x, 0.55f, -barHalf),
-                        Quaternion.Euler(0f, 90f, 0f), stem, out _,
-                        new Vector3(0.35f, barLen * 0.35f, 0.35f));
-                    ArtGltfLoader.TryPlaceNamedMesh(
-                        lightingKit, "taxi_stem",
-                        new Vector3(x, 0.55f, barHalf),
-                        Quaternion.Euler(0f, 90f, 0f), stem, out _,
-                        new Vector3(0.35f, barLen * 0.35f, 0.35f));
-                    ArtGltfLoader.TryPlaceNamedMesh(
-                        lightingKit, "taxi_lens",
-                        new Vector3(x, 0.72f, -barHalf),
-                        Quaternion.identity, bar, out _,
-                        new Vector3(0.55f, 0.55f, 0.55f));
-                    ArtGltfLoader.TryPlaceNamedMesh(
-                        lightingKit, "taxi_lens",
-                        new Vector3(x, 0.72f, barHalf),
-                        Quaternion.identity, bar, out _,
-                        new Vector3(0.55f, 0.55f, 0.55f));
-                    if (i % 2 == 0)
-                    {
-                        ArtGltfLoader.TryPlaceNamedMesh(
-                            lightingKit, "edge_stem",
-                            new Vector3(x, 0.5f, 0f),
-                            Quaternion.Euler(0f, 90f, 0f), stem, out _,
-                            new Vector3(0.3f, (3.6f + i * 0.15f) * 0.28f, 0.3f));
-                    }
                 }
 
                 if (kitStation)
@@ -6379,11 +6299,8 @@ namespace Airside.Presentation
                     var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
                         new Color(1f, 0.97f, 0.88f));
                     var lensRenderer = lens.GetComponent<Renderer>();
-                    if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
-                    {
-                        lensRenderer.material.EnableKeyword("_EMISSION");
-                        lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
-                    }
+                    if (lensRenderer != null)
+                        SetRendererColor(lensRenderer, new Color(1f, 0.97f, 0.88f), new Color(1f, 0.95f, 0.8f) * 1.4f);
                 }
             }
 
@@ -6953,7 +6870,7 @@ namespace Airside.Presentation
             Object.Destroy(bush.GetComponent<Collider>());
             bush.transform.position = position;
             bush.transform.localScale = scale;
-            bush.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            bush.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 color, AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
@@ -6971,7 +6888,7 @@ namespace Airside.Presentation
             trunk.transform.position = basePosition + new Vector3(0f, 1.55f * scale, 0f);
             trunk.transform.localScale = new Vector3(0.22f * scale, 1.55f * scale, 0.22f * scale);
             trunk.transform.rotation = Quaternion.Euler(lean * 0.6f, yaw, lean * 0.35f);
-            trunk.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            trunk.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 new Color(0.32f, 0.24f, 0.15f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
 
             // Root flare + bark rings so trunks do not read as perfect cylinders.
@@ -6980,7 +6897,7 @@ namespace Airside.Presentation
             Object.Destroy(flare.GetComponent<Collider>());
             flare.transform.position = basePosition + new Vector3(0f, 0.12f * scale, 0f);
             flare.transform.localScale = new Vector3(0.42f * scale, 0.12f * scale, 0.42f * scale);
-            flare.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            flare.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 new Color(0.28f, 0.2f, 0.12f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
             CreateBlock("Tree bark low", basePosition + new Vector3(0f, 0.85f * scale, 0f),
                 new Vector3(0.28f * scale, 0.08f * scale, 0.28f * scale), new Color(0.38f, 0.28f, 0.16f));
@@ -6994,7 +6911,7 @@ namespace Airside.Presentation
             fork.transform.position = basePosition + new Vector3(0.25f * scale, 2.4f * scale, -0.15f * scale);
             fork.transform.localScale = new Vector3(0.12f * scale, 0.55f * scale, 0.12f * scale);
             fork.transform.rotation = Quaternion.Euler(18f + lean, yaw + 35f, -12f);
-            fork.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            fork.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 new Color(0.3f, 0.22f, 0.14f), AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
 
             var canopyColorA = Shade(AirsideTheme.Eucalyptus, 0.9f);
@@ -7075,7 +6992,7 @@ namespace Airside.Presentation
             Object.Destroy(canopy.GetComponent<Collider>());
             canopy.transform.position = position;
             canopy.transform.localScale = scale;
-            canopy.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            canopy.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 color, AirsideMaterialLibrary.SurfaceKind.Grass);
         }
 
@@ -7156,9 +7073,10 @@ namespace Airside.Presentation
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
             material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
-            dome.GetComponent<Renderer>().material = material;
-            dome.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            dome.GetComponent<Renderer>().receiveShadows = false;
+            var domeRenderer = dome.GetComponent<Renderer>();
+            domeRenderer.sharedMaterial = material;
+            domeRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            domeRenderer.receiveShadows = false;
             BuildCloudBands();
             BuildSunAndMoonDiscs();
             BuildStarField();
@@ -7184,28 +7102,31 @@ namespace Airside.Presentation
                 var s = 0.22f + (float)rng.NextDouble() * 0.42f;
                 star.transform.localScale = Vector3.one * s;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
-                var mat = AirsideMaterialLibrary.Create(
-                    new Color(bright, bright, 0.95f * bright, 1f),
-                    AirsideMaterialLibrary.SurfaceKind.UnlitSky);
-                if (mat.HasProperty("_EmissionColor"))
-                {
-                    mat.EnableKeyword("_EMISSION");
-                    mat.SetColor("_EmissionColor", new Color(bright, bright, 1f) * 1.35f);
-                }
-
-                star.GetComponent<Renderer>().material = mat;
-                star.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                star.GetComponent<Renderer>().receiveShadows = false;
+                var starRenderer = star.GetComponent<Renderer>();
+                starRenderer.sharedMaterial = StarSharedMaterial();
+                SetRendererColor(starRenderer, new Color(bright, bright, 0.95f * bright, 1f),
+                    new Color(bright, bright, 1f) * 1.35f);
+                starRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                starRenderer.receiveShadows = false;
             }
 
             root.gameObject.SetActive(false);
+        }
+
+        private static Material StarSharedMaterial()
+        {
+            var mat = AirsideMaterialLibrary.CreateShared(
+                Color.white, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
+            if (mat.HasProperty("_EmissionColor"))
+                mat.EnableKeyword("_EMISSION");
+            return mat;
         }
 
         private void UpdateOpsAntenna()
         {
             if (_opsAntennaDish == null)
             {
-                _opsAntennaDish = GameObject.Find("antenna_dish")?.transform;
+                _opsAntennaDish = AirsideSceneIndex.Find("antenna_dish");
                 if (_opsAntennaDish == null)
                     return;
             }
@@ -7218,9 +7139,7 @@ namespace Airside.Presentation
         {
             if (_starFieldRoot == null)
             {
-                var found = GameObject.Find("Star field");
-                if (found != null)
-                    _starFieldRoot = found.transform;
+                _starFieldRoot = AirsideSceneIndex.Find("Star field");
             }
 
             if (_starFieldRoot == null)
@@ -7254,35 +7173,31 @@ namespace Airside.Presentation
             sun.name = "Sun disc";
             Object.Destroy(sun.GetComponent<Collider>());
             sun.transform.localScale = new Vector3(6.5f, 6.5f, 6.5f);
-            var sunMat = AirsideMaterialLibrary.Create(
+            var sunMat = AirsideMaterialLibrary.CreateShared(
                 new Color(1f, 0.92f, 0.65f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             if (sunMat.HasProperty("_EmissionColor"))
-            {
                 sunMat.EnableKeyword("_EMISSION");
-                sunMat.SetColor("_EmissionColor", new Color(1.4f, 1.1f, 0.55f));
-            }
-
-            sun.GetComponent<Renderer>().material = sunMat;
-            sun.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            sun.GetComponent<Renderer>().receiveShadows = false;
+            var sunRenderer = sun.GetComponent<Renderer>();
+            sunRenderer.sharedMaterial = sunMat;
+            SetRendererColor(sunRenderer, new Color(1f, 0.92f, 0.65f, 1f), new Color(1.4f, 1.1f, 0.55f));
+            sunRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            sunRenderer.receiveShadows = false;
 
             var moon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             moon.name = "Moon disc";
             Object.Destroy(moon.GetComponent<Collider>());
             moon.transform.localScale = new Vector3(4.2f, 4.2f, 4.2f);
-            var moonMat = AirsideMaterialLibrary.Create(
+            var moonMat = AirsideMaterialLibrary.CreateShared(
                 new Color(0.82f, 0.86f, 0.95f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             if (moonMat.HasProperty("_EmissionColor"))
-            {
                 moonMat.EnableKeyword("_EMISSION");
-                moonMat.SetColor("_EmissionColor", new Color(0.55f, 0.6f, 0.75f));
-            }
-
-            moon.GetComponent<Renderer>().material = moonMat;
-            moon.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            moon.GetComponent<Renderer>().receiveShadows = false;
+            var moonRenderer = moon.GetComponent<Renderer>();
+            moonRenderer.sharedMaterial = moonMat;
+            SetRendererColor(moonRenderer, new Color(0.82f, 0.86f, 0.95f, 1f), new Color(0.55f, 0.6f, 0.75f));
+            moonRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            moonRenderer.receiveShadows = false;
             moon.SetActive(false);
         }
 
@@ -7290,16 +7205,12 @@ namespace Airside.Presentation
         {
             if (_sunDisc == null)
             {
-                var found = GameObject.Find("Sun disc");
-                if (found != null)
-                    _sunDisc = found.transform;
+                _sunDisc = AirsideSceneIndex.Find("Sun disc");
             }
 
             if (_moonDisc == null)
             {
-                var foundMoon = GameObject.Find("Moon disc");
-                if (foundMoon != null)
-                    _moonDisc = foundMoon.transform;
+                _moonDisc = AirsideSceneIndex.Find("Moon disc");
             }
 
             // Place discs opposite the light direction on a large sky sphere.
@@ -7318,11 +7229,7 @@ namespace Airside.Presentation
                     sunColor = Color.Lerp(sunColor, new Color(1f, 0.7f, 0.4f), warm * 0.55f);
                     var renderer = _sunDisc.GetComponent<Renderer>();
                     if (renderer != null)
-                    {
-                        SetRendererColor(renderer, sunColor);
-                        if (renderer.material.HasProperty("_EmissionColor"))
-                            renderer.material.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
-                    }
+                        SetRendererColor(renderer, sunColor, sunColor * (1.1f + warm * 0.6f));
 
                     var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
                     _sunDisc.localScale = Vector3.one * scale;
@@ -7345,9 +7252,7 @@ namespace Airside.Presentation
                     if (renderer != null)
                     {
                         var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
-                        SetRendererColor(renderer, c);
-                        if (renderer.material.HasProperty("_EmissionColor"))
-                            renderer.material.SetColor("_EmissionColor", c * 0.7f);
+                        SetRendererColor(renderer, c, c * 0.7f);
                     }
                 }
             }
@@ -7389,11 +7294,13 @@ namespace Airside.Presentation
                         sx * (0.65f + b * 0.14f),
                         sy * (0.75f + (b % 2) * 0.2f),
                         sz * (0.65f + b * 0.12f));
-                    cloud.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                    var cloudRenderer = cloud.GetComponent<Renderer>();
+                    cloudRenderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                         new Color(0.95f, 0.96f, 0.98f, alpha),
                         AirsideMaterialLibrary.SurfaceKind.Default);
-                    cloud.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    cloud.GetComponent<Renderer>().receiveShadows = false;
+                    SetRendererColor(cloudRenderer, new Color(0.95f, 0.96f, 0.98f, alpha));
+                    cloudRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    cloudRenderer.receiveShadows = false;
                 }
 
                 // Soft ground umbra under each cloud cluster — drifts with UpdateCloudDrift.
@@ -7403,10 +7310,12 @@ namespace Airside.Presentation
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
                 umbra.transform.localScale = new Vector3(sx * 0.9f, 0.02f, sz * 0.9f);
-                var umbraMat = AirsideMaterialLibrary.Create(
+                var umbraMat = AirsideMaterialLibrary.CreateShared(
                     new Color(0.05f, 0.07f, 0.1f, 0.18f),
                     AirsideMaterialLibrary.SurfaceKind.Default);
-                umbra.GetComponent<Renderer>().material = umbraMat;
+                var umbraRenderer = umbra.GetComponent<Renderer>();
+                umbraRenderer.sharedMaterial = umbraMat;
+                SetRendererColor(umbraRenderer, new Color(0.05f, 0.07f, 0.1f, 0.18f));
                 umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 umbra.GetComponent<Renderer>().receiveShadows = false;
             }
@@ -7436,9 +7345,9 @@ namespace Airside.Presentation
             shadow.transform.localScale = scale;
             var color = new Color(0.05f, 0.06f, 0.08f, Mathf.Clamp01(alpha));
             // Alpha < 1 routes through URP transparent so discs do not stamp opaque black.
-            var material = AirsideMaterialLibrary.Create(color, AirsideMaterialLibrary.SurfaceKind.Default);
+            var material = AirsideMaterialLibrary.CreateShared(color, AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
-            renderer.material = material;
+            renderer.sharedMaterial = material;
             SetRendererColor(renderer, color);
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
@@ -7457,10 +7366,9 @@ namespace Airside.Presentation
                          "door_warning_l", "door_warning_r"
                      })
             {
-                var go = GameObject.Find(name);
-                if (go == null)
+                var t = AirsideSceneIndex.Find(name);
+                if (t == null)
                     continue;
-                var t = go.transform;
                 var openDelta = name.Contains("_l", StringComparison.Ordinal) ? -3.6f : 3.6f;
                 _hangarDoorPanels.Add((t, t.localPosition.x, openDelta));
             }
@@ -7480,7 +7388,7 @@ namespace Airside.Presentation
             _coastWaterRenderers.Clear();
             _coastFoam = null;
             // Prefix scan — foam/water pads are subdivided often; exact name lists go stale.
-            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            foreach (var renderer in AirsideSceneIndex.Renderers)
             {
                 if (renderer == null)
                     continue;
@@ -7498,17 +7406,17 @@ namespace Airside.Presentation
                 }
             }
 
-            _jettyDeck = GameObject.Find("Jetty deck")?.transform;
+            _jettyDeck = AirsideSceneIndex.Find("Jetty deck");
             foreach (var name in new[]
                      {
                          "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D",
                          "Coast boat E", "Coast boat F"
                      })
             {
-                var go = GameObject.Find(name);
-                if (go == null)
+                var boat = AirsideSceneIndex.Find(name);
+                if (boat == null)
                     continue;
-                _coastBoats.Add((go.transform, go.transform.position, go.transform.eulerAngles.y));
+                _coastBoats.Add((boat, boat.position, boat.eulerAngles.y));
             }
         }
 
@@ -7597,7 +7505,7 @@ namespace Airside.Presentation
                 var renderer = _coastFoam.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    var c = renderer.material.color;
+                    var c = GetRendererColor(renderer);
                     c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * AirsideReusableMotion.FoamAlphaHz));
                     SetRendererColor(renderer, c);
                 }
@@ -7613,7 +7521,7 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 var wave = 0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f);
-                var c = renderer.material.color;
+                var c = GetRendererColor(renderer);
                 c.a = 0.3f + 0.35f * wave;
                 SetRendererColor(renderer, c);
                 // Soft Z pulse so the surf edge breathes toward shore.
@@ -7635,11 +7543,7 @@ namespace Airside.Presentation
                 var renderer = _coastWaterRenderers[i];
                 if (renderer == null)
                     continue;
-                var mat = renderer.material;
-                var scroll = new Vector2(t * (0.012f + i * 0.004f), t * 0.008f);
-                mat.mainTextureOffset = scroll;
-                if (mat.HasProperty("_BaseMap"))
-                    mat.SetTextureOffset("_BaseMap", scroll);
+                ApplyRendererTextureOffset(renderer, new Vector2(t * (0.012f + i * 0.004f), t * 0.008f));
                 if (renderer.gameObject.name.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     var p = renderer.transform.position;
@@ -7653,16 +7557,12 @@ namespace Airside.Presentation
         {
             if (_cloudRoot == null)
             {
-                var found = GameObject.Find("Cloud bands");
-                if (found != null)
-                    _cloudRoot = found.transform;
+                _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
             }
 
             if (_cloudUmbraRoot == null)
             {
-                var foundUmbra = GameObject.Find("Cloud umbras");
-                if (foundUmbra != null)
-                    _cloudUmbraRoot = foundUmbra.transform;
+                _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             }
 
             if (_cloudRoot == null)
@@ -7705,7 +7605,7 @@ namespace Airside.Presentation
                         var blobRenderer = cloud.GetChild(b).GetComponent<Renderer>();
                         if (blobRenderer == null)
                             continue;
-                        var color = blobRenderer.material.color;
+                        var color = GetRendererColor(blobRenderer);
                         var blobTint = tint;
                         if (color.a > 0.01f)
                             blobTint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
@@ -7717,7 +7617,7 @@ namespace Airside.Presentation
                     var renderer = cloud.GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        var color = renderer.material.color;
+                        var color = GetRendererColor(renderer);
                         if (color.a > 0.01f)
                             tint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
                         SetRendererColor(renderer, tint);
@@ -7733,7 +7633,7 @@ namespace Airside.Presentation
                 var umbraRenderer = umbra.GetComponent<Renderer>();
                 if (umbraRenderer == null)
                     continue;
-                var umbraColor = umbraRenderer.material.color;
+                var umbraColor = GetRendererColor(umbraRenderer);
                 umbraColor.a = umbraAlpha;
                 SetRendererColor(umbraRenderer, umbraColor);
             }
@@ -7757,10 +7657,11 @@ namespace Airside.Presentation
                 Object.Destroy(body.GetComponent<Collider>());
                 body.transform.SetParent(bird, false);
                 body.transform.localScale = new Vector3(0.12f, 0.05f, 0.55f);
-                body.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+                var bodyRenderer = body.GetComponent<Renderer>();
+                bodyRenderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                     new Color(0.1f, 0.1f, 0.12f),
                     AirsideMaterialLibrary.SurfaceKind.Plastic);
-                body.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                bodyRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                 PlaceBirdWing(bird, "Wing L", new Vector3(-0.22f, 0.02f, 0.05f), true);
                 PlaceBirdWing(bird, "Wing R", new Vector3(0.22f, 0.02f, 0.05f), false);
@@ -7775,10 +7676,11 @@ namespace Airside.Presentation
             wing.transform.SetParent(bird, false);
             wing.transform.localPosition = localPos;
             wing.transform.localScale = new Vector3(0.55f, 0.02f, 0.14f);
-            wing.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            var wingRenderer = wing.GetComponent<Renderer>();
+            wingRenderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 new Color(0.18f, 0.18f, 0.2f),
                 AirsideMaterialLibrary.SurfaceKind.Plastic);
-            wing.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            wingRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             // Pivot hint stored as unused local euler y sign for flap direction.
             wing.transform.localEulerAngles = new Vector3(0f, left ? -8f : 8f, 0f);
         }
@@ -7787,9 +7689,7 @@ namespace Airside.Presentation
         {
             if (_birdFlockRoot == null)
             {
-                var found = GameObject.Find("Bird flock");
-                if (found != null)
-                    _birdFlockRoot = found.transform;
+                _birdFlockRoot = AirsideSceneIndex.Find("Bird flock");
             }
 
             if (_birdFlockRoot == null)
@@ -7881,7 +7781,7 @@ namespace Airside.Presentation
                 body.transform.SetParent(root, false);
                 body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 body.transform.localScale = new Vector3(0.72f, 2.8f, 0.72f);
-                body.GetComponent<Renderer>().material = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
+                body.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
                 ParentBlock(root, "Livery stripe", new Vector3(0f, 0.12f, 0.05f), new Vector3(0.76f, 0.08f, 2.2f), accent);
                 ParentBlock(root, "Wing L", new Vector3(-2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
                 ParentBlock(root, "Wing R", new Vector3(2.1f, 0.05f, 0.35f), new Vector3(3.6f, 0.12f, 1.5f), accent);
@@ -8550,15 +8450,26 @@ namespace Airside.Presentation
                 NestUnderProp(door, extra, extra.name);
         }
 
-        private static bool HasNamedChild(Transform root, string name)
-        {
-            foreach (var child in root.GetComponentsInChildren<Transform>(true))
-            {
-                if (child != root && child.name == name)
-                    return true;
-            }
+        private static bool HasNamedChild(Transform root, string name) =>
+            AirsideNamedChildren.HasName(root, name);
 
-            return false;
+        private static Color GetRendererColor(Renderer renderer)
+        {
+            if (renderer == null)
+                return Color.white;
+
+            renderer.GetPropertyBlock(RendererTintBlock);
+            if (RendererTintBlock.HasProperty(BaseColorId))
+                return RendererTintBlock.GetColor(BaseColorId);
+            if (RendererTintBlock.HasProperty(ColorId))
+                return RendererTintBlock.GetColor(ColorId);
+
+            var shared = renderer.sharedMaterial;
+            if (shared == null)
+                return Color.white;
+            if (shared.HasProperty(BaseColorId))
+                return shared.GetColor(BaseColorId);
+            return shared.color;
         }
 
         /// <summary>URP Lit uses _BaseColor; keep legacy .color in sync for Built-in fallbacks.
@@ -8581,6 +8492,17 @@ namespace Airside.Presentation
                 }
             }
 
+            renderer.SetPropertyBlock(RendererTintBlock);
+        }
+
+        private static void ApplyRendererTextureOffset(Renderer renderer, Vector2 offset)
+        {
+            if (renderer == null)
+                return;
+
+            renderer.GetPropertyBlock(RendererTintBlock);
+            RendererTintBlock.SetTextureOffset(BaseMapId, offset);
+            RendererTintBlock.SetTextureOffset(MainTexId, offset);
             renderer.SetPropertyBlock(RendererTintBlock);
         }
 
@@ -8691,7 +8613,7 @@ namespace Airside.Presentation
             var renderer = shadow.GetComponent<Renderer>();
             if (renderer == null)
                 return;
-            var color = renderer.material.color;
+            var color = GetRendererColor(renderer);
             // Softer contact so realtime URP shadows remain the primary read.
             color.a = Mathf.Lerp(0.28f, 0.04f, t);
             SetRendererColor(renderer, color);
@@ -9314,7 +9236,7 @@ namespace Airside.Presentation
                 cylinder.transform.localPosition = Vector3.zero;
                 cylinder.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
                 cylinder.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                cylinder.GetComponent<Renderer>().material = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
+                cylinder.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
                 var stripe = CreateBlock("Windsock stripe", new Vector3(-10.6f, 3.05f, 12f), new Vector3(0.35f, 0.52f, 0.52f),
                     new Color(0.95f, 0.95f, 0.92f));
                 stripe.transform.SetParent(sock, true);
@@ -9354,7 +9276,7 @@ namespace Airside.Presentation
             Object.Destroy(cone.GetComponent<Collider>());
             cone.transform.position = position;
             cone.transform.localScale = new Vector3(0.28f, 0.35f, 0.28f);
-            cone.GetComponent<Renderer>().material = CreateMaterial(new Color(0.95f, 0.45f, 0.08f));
+            cone.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.95f, 0.45f, 0.08f));
             CreateBlock("Cone collar", position + new Vector3(0f, 0.12f, 0f), new Vector3(0.32f, 0.06f, 0.32f), Color.white);
         }
 
@@ -9491,17 +9413,17 @@ namespace Airside.Presentation
             ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_b", new Vector3(-12f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_c", new Vector3(12f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_d", new Vector3(28f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            // Extra mid-strip dashes for denser authenticity when kit only ships four.
-            CreateBlock("Runway marking mid W", new Vector3(-20f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
-            CreateBlock("Runway marking mid E", new Vector3(20f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
-            CreateBlock("Runway marking mid 0", new Vector3(0f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
-            CreateBlock("Runway marking mid W2", new Vector3(-34f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
-            CreateBlock("Runway marking mid W3", new Vector3(-6f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
-            CreateBlock("Runway marking mid E2", new Vector3(6f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
-            CreateBlock("Runway marking mid E3", new Vector3(34f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
-
             if (!usedCentre)
+            {
+                CreateBlock("Runway marking mid W", new Vector3(-20f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
+                CreateBlock("Runway marking mid E", new Vector3(20f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
+                CreateBlock("Runway marking mid 0", new Vector3(0f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
+                CreateBlock("Runway marking mid W2", new Vector3(-34f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
+                CreateBlock("Runway marking mid W3", new Vector3(-6f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
+                CreateBlock("Runway marking mid E2", new Vector3(6f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
+                CreateBlock("Runway marking mid E3", new Vector3(34f, 0.022f, 0f), new Vector3(2.0f, 0.025f, 0.22f), Color.white);
                 CreateBlock("Runway marking", new Vector3(0f, 0.02f, 0f), new Vector3(86f, 0.03f, 0.26f), Color.white);
+            }
 
             // Kit edge / threshold strips when present; greybox fallbacks keep the strip readable.
             var usedEdgeL = ArtGltfLoader.TryPlaceNamedMesh(
@@ -10399,41 +10321,16 @@ namespace Airside.Presentation
             }
             else
             {
-                CreateBlock("Fuel pad WNW", new Vector3(-35.9175f, 0.018f, 23.33f), new Vector3(1.248f, 0.0768f, 1.843f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad WNE", new Vector3(-34.6825f, 0.02f, 23.37f), new Vector3(1.248f, 0.0768f, 1.843f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad WSW", new Vector3(-35.8628f, 0.016f, 21.4f), new Vector3(1.1981f, 0.0745f, 1.7693f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad WSE", new Vector3(-34.6772f, 0.018f, 21.44f), new Vector3(1.1981f, 0.0745f, 1.7693f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad ENW", new Vector3(-33.2866f, 0.02f, 23.3515f), new Vector3(1.1856f, 0.0737f, 1.7877f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad ENE", new Vector3(-32.1134f, 0.022f, 23.3915f), new Vector3(1.1856f, 0.0737f, 1.7877f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad ESW", new Vector3(-33.2332f, 0.018f, 21.4785f), new Vector3(1.1382f, 0.0715f, 1.7162f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad ESE", new Vector3(-32.1068f, 0.02f, 21.5185f), new Vector3(1.1382f, 0.0715f, 1.7162f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad apron WW", new Vector3(-36.2862f, 0.018f, 19.78f), new Vector3(1.488f, 0.0672f, 2.328f), new Color(0.3f, 0.32f, 0.34f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron WE", new Vector3(-34.8137f, 0.02f, 19.82f), new Vector3(1.488f, 0.0672f, 2.328f), new Color(0.3f, 0.32f, 0.34f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron EW", new Vector3(-33.1494f, 0.02f, 19.83f), new Vector3(1.4136f, 0.0645f, 2.2582f), new Color(0.31f, 0.33f, 0.35f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron EE", new Vector3(-31.7506f, 0.022f, 19.87f), new Vector3(1.4136f, 0.0645f, 2.2582f), new Color(0.31f, 0.33f, 0.35f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                // Fuel pad bay paint — readable from overview / follow.
+                CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 21.5f), new Vector3(6.5f, 0.08f, 5.6f), new Color(0.29f, 0.31f, 0.33f),
+                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(2.2f, 1.8f));
                 CreateBlock("Fuel pad centre", new Vector3(-34f, 0.05f, 21.5f), new Vector3(0.12f, 0.02f, 3.6f), new Color(0.95f, 0.85f, 0.2f));
                 CreateBlock("Fuel pad edge N", new Vector3(-34f, 0.05f, 24.2f), new Vector3(4.2f, 0.02f, 0.1f), Color.white);
                 CreateBlock("Fuel pad edge S", new Vector3(-34f, 0.05f, 18.8f), new Vector3(4.2f, 0.02f, 0.1f), Color.white);
                 CreateBlock("Fuel pad stop", new Vector3(-34f, 0.05f, 20.2f), new Vector3(2.4f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));
                 CreateTaxiChordPad("Fuel pad link", new Vector3(-30f, 0.02f, 22f), new Vector3(-24f, 0.02f, 18f), 3.6f,
                     PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.1f, 1f));
-                // Cylindrical tanks read as storage vessels, not cargo cubes (0025 item 2/3).
                 PlaceFuelTank("Fuel tank A", new Vector3(-35.5f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
                 PlaceFuelTank("Fuel tank B", new Vector3(-32.2f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
-                // Low bund walls — containment lip, not a solid 6×5 greybox slab.
                 var bund = new Color(0.4f, 0.42f, 0.4f);
                 CreateBlock("Fuel bund N", new Vector3(-34f, 0.35f, 24.15f), new Vector3(6.4f, 0.55f, 0.35f), bund);
                 CreateBlock("Fuel bund S", new Vector3(-34f, 0.35f, 19.85f), new Vector3(6.4f, 0.55f, 0.35f), bund);
@@ -10441,7 +10338,6 @@ namespace Airside.Presentation
                 CreateBlock("Fuel bund E", new Vector3(-30.95f, 0.35f, 22f), new Vector3(0.35f, 0.55f, 4.0f), bund);
                 CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
                 CreateBlock("Fuel hose reel", new Vector3(-33.1f, 0.45f, 19.8f), new Vector3(0.55f, 0.55f, 0.55f), new Color(0.35f, 0.2f, 0.12f));
-                // Cones/barrier only when the farm is greybox — kit ships its own safety fringe.
                 CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
                 CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
                 CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
@@ -10465,7 +10361,7 @@ namespace Airside.Presentation
             Object.Destroy(tank.GetComponent<Collider>());
             tank.transform.position = position;
             tank.transform.localScale = new Vector3(2.0f, 1.15f, 2.0f);
-            tank.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
+            tank.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 color, AirsideMaterialLibrary.SurfaceKind.PaintedMetal);
             // Cap + ladder stub for silhouette.
             CreateBlock($"{name} cap", position + new Vector3(0f, 1.25f, 0f), new Vector3(0.9f, 0.18f, 0.9f), Shade(color, 0.85f));
@@ -10741,6 +10637,7 @@ namespace Airside.Presentation
             renderer.sharedMaterial = CreateSharedSurfaceMaterial(color, artTextureRelativePath, textureTiling);
             if (_airfieldRoot != null)
                 block.transform.SetParent(_airfieldRoot, true);
+            AirsideSceneIndex.Remember(block);
             return block;
         }
 

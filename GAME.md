@@ -1,14 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — runtime airfield performance pass)
+- **Last updated:** 2026-09-09 (Cursor — runtime airfield performance pass, GPU-state)
 - **Branch:** `cursor/game-performance-pass-c1bb`
 - **Do next:** Mac Play / packaged player — confirm visual first frame with combined
   runway/taxi/apron pads + WLD-004 terrain kit (no tile airfield). Sign off High
   (4× MSAA + SMAA) vs Medium on a 2 GB GPU. Then continue art sourcing: P0 aircraft
   parts → buildings → vehicles/GSE → veg/characters.
-- **In progress / half-done:** Presentation performance P0–P2 landed on this branch
-  (decision 0029). StreamingAssets glTF copies remain until a Mac Addressables bake
-  is proven. Keep hunting leftover fallback cubes (ALS, fuel farm, landside).
+- **In progress / half-done:** Presentation performance P0–P2 plus GPU-state pass
+  (no per-frame `Renderer.material` clones; scene index; shared stars/birds;
+  combined fuel/landside/ALS leftovers). StreamingAssets glTF copies remain until
+  a Mac Addressables bake is proven. Keep hunting leftover fallback cubes and
+  during-build Finds.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`)
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
@@ -91,11 +93,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- Runtime airfield performance **P0–P2 on `cursor/game-performance-pass-c1bb`**:
-  combined operational pads (6) replace 745 Terrain11 tiles; terrain-kit cube
-  dump removed; textures/materials cached; Addressables on demand; High/Medium
-  ladder; probe bands. `AirsidePrototype.cs` ~11k lines, brace depth 0.
-  Decision 0029. Mac Play visual-first-frame still required.
+- Runtime airfield performance **P0–P2 plus GPU-state on `cursor/game-performance-pass-c1bb`**:
+  combined operational pads (6) replace 745 Terrain11 tiles; textures/materials
+  cached; Addressables on demand; High/Medium ladder; probe bands. Per-frame
+  `Renderer.material` clones removed (MPB reads); one scene index instead of
+  Awake/Update Finds; shared star/bird materials; combined fuel pad and landside
+  paint; ALS kit laterals dropped. Decision 0029. Mac Play visual-first-frame
+  still required.
 
 - Layering / collision / route **100-fix** on `cursor/layering-collision-bugfix-100-d7f0`: dogleg lead-ins, apron throat, stand spacing 14/24/34, GT off-field + run-up bay, selective yield, `scripts/test-domain.sh` **177 passed** (`CollisionPass100Tests`).
 

@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime airfield GPU-state.** Per-frame `Renderer.material` clones (heat,
+  spray, puddles, smoke, skids, foam, clouds, shadows, sun/moon, ARFF bar)
+  now read and write through `MaterialPropertyBlock`. One `AirsideSceneIndex`
+  scan replaces Awake/Update `GameObject.Find` / `FindObjectsByType`. Stars
+  share one UnlitSky material; birds, trees, clouds, binder and greybox props
+  use `sharedMaterial`. Greybox fuel pad is one slab; landside bay/access paint
+  is combined; kit ALS laterals and extra runway mid-dashes are skipped.
+  High remains 4× MSAA + SMAA. Decision 0029. `scripts/test-domain.sh` pending
+  in this commit's evidence.
+
 - **Runtime airfield performance (P0–P2).** Retired the tile-built operational
   airfield and terrain-kit cube dump in favour of combined runway/taxi/apron
   pads plus the WLD-004 kit. Streamed textures and Lit materials are cached and

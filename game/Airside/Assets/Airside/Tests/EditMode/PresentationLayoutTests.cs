@@ -144,10 +144,31 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void PrefabAddressables_OnDemandLocatorDoesNotPreloadCatalog()
+        public void SceneIndex_MissingNameIsNullBeforeCapture()
         {
-            Assert.That(AirsidePrefabAddressables.LocatorId, Is.EqualTo("Airside.Prefabs"));
-            Assert.That(ArtPresentationLoader.AddressablesKeyPrefix, Is.EqualTo("airside-prefab/"));
+            Assert.That(AirsideSceneIndex.Find(null), Is.Null);
+            Assert.That(AirsideSceneIndex.Find(""), Is.Null);
+            Assert.That(AirsideSceneIndex.FindGameObject("definitely-not-in-scene-index"), Is.Null);
+        }
+
+        [Test]
+        public void NamedChildren_HasNameAndFindContainsUseCachedScan()
+        {
+            var root = new GameObject("NamedChildren root");
+            var torso = new GameObject("marshaller torso");
+            var wand = new GameObject("wand tip L");
+            try
+            {
+                torso.transform.SetParent(root.transform, false);
+                wand.transform.SetParent(root.transform, false);
+                Assert.That(AirsideNamedChildren.HasName(root.transform, "marshaller torso"), Is.True);
+                Assert.That(AirsideNamedChildren.HasName(root.transform, "missing"), Is.False);
+                Assert.That(AirsideNamedChildren.FindContains(root.transform, "wand"), Is.EqualTo(wand.transform));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
     }
 }

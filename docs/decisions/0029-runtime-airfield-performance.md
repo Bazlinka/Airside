@@ -62,3 +62,7 @@ Kingscote at overview and follow, day/dusk/night.
   once the player loads only from those groups
 - Author LOD meshes for kit buildings instead of runtime combine
 - Bake the terminal probe; keep one apron probe for rain/night
+- Remaining during-build `GameObject.Find` probes (kit-presence gates) can use
+  the incremental `AirsideSceneIndex.Remember` path once every kit placer
+  registers names
+- Author a single fuel-farm / ALS mesh instead of greybox fallbacks

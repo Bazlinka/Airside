@@ -102,7 +102,7 @@ namespace Airside.Presentation
                     kind = AirsideMaterialLibrary.InferFromMeshName(n);
                 }
 
-                renderer.material = AirsideMaterialLibrary.Create(color, kind);
+                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
             }
         }
     }

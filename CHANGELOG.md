@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime kit combine + deferred audio.** Fence bays, edge/taxi/flood lamps,
+  taxi arrows, VEG-002 scrub and VEG-001 eucalyptus stamp one cached combined
+  mesh per instance instead of 3–9 kit GameObjects. Ambient wind/rain/coast and
+  UI click `Resources.Load` after first frame. Sun lookup no longer scans every
+  Light. High stays 4× MSAA + SMAA, four cascades, 12 additional lights, two
+  probes. Decision 0029. Evidence: brace depth 0; `AirsidePrototype.cs` 257
+  `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
+
 - **Runtime airfield paint + probe pass.** Taxi Alpha / A1 / A2 / edge paint is
   one strip per run instead of a 1 m cube dump; aiming points, TDZ, chevrons and
   taxi arrows are thinned to the readable set. Stars are one inward-quad mesh.

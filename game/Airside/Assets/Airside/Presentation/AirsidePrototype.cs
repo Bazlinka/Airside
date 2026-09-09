@@ -186,30 +186,20 @@ namespace Airside.Presentation
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;
             _ambientWindAudio = gameObject.AddComponent<AudioSource>();
-            var externalWindClip = Resources.Load<AudioClip>("Airside/Audio/wind_whoosh_loop");
-            _ambientWindAudio.clip = externalWindClip != null ? externalWindClip : CreateWindClip();
             _ambientWindAudio.loop = true;
             _ambientWindAudio.playOnAwake = false;
             _ambientWindAudio.spatialBlend = 0f;
             _ambientWindAudio.volume = 0f;
-            _ambientWindAudio.Play();
             _ambientRainAudio = gameObject.AddComponent<AudioSource>();
-            var externalRainClip = Resources.Load<AudioClip>("Airside/Audio/rain_loop_03");
-            _ambientRainAudio.clip = externalRainClip != null ? externalRainClip : CreateRainClip();
             _ambientRainAudio.loop = true;
             _ambientRainAudio.playOnAwake = false;
             _ambientRainAudio.spatialBlend = 0f;
             _ambientRainAudio.volume = 0f;
-            _ambientRainAudio.Play();
             _ambientCoastAudio = gameObject.AddComponent<AudioSource>();
-            var externalCoastClip = Resources.Load<AudioClip>("Airside/Audio/coast_wave_01");
-            _ambientCoastAudio.clip = externalCoastClip != null ? externalCoastClip : CreateCoastClip();
             _ambientCoastAudio.loop = true;
             _ambientCoastAudio.playOnAwake = false;
             _ambientCoastAudio.spatialBlend = 0f;
             _ambientCoastAudio.volume = 0f;
-            _ambientCoastAudio.Play();
-            _uiClickClip = Resources.Load<AudioClip>("Airside/Audio/ui_select_005");
             _uiAudio = gameObject.AddComponent<AudioSource>();
             _uiAudio.playOnAwake = false;
             _uiAudio.spatialBlend = 0f;
@@ -1190,7 +1180,11 @@ namespace Airside.Presentation
 
         private void PlayUiClick()
         {
-            if (_audioMuted || _uiAudio == null || _uiClickClip == null)
+            if (_audioMuted || _uiAudio == null)
+                return;
+            if (_uiClickClip == null)
+                _uiClickClip = Resources.Load<AudioClip>("Airside/Audio/ui_select_005");
+            if (_uiClickClip == null)
                 return;
 
             _uiAudio.PlayOneShot(_uiClickClip);
@@ -1222,6 +1216,8 @@ namespace Airside.Presentation
             if (_ambientWindAudio == null || _ambientRainAudio == null)
                 return;
 
+            EnsureAmbientClips();
+
             var weather = _simulation.CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
@@ -1247,6 +1243,33 @@ namespace Airside.Presentation
                 _ambientCoastAudio.volume = Mathf.MoveTowards(
                     _ambientCoastAudio.volume, coastTarget, Time.unscaledDeltaTime * 0.15f);
                 _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
+            }
+        }
+
+        private void EnsureAmbientClips()
+        {
+            if (_ambientWindAudio != null && _ambientWindAudio.clip == null)
+            {
+                var clip = Resources.Load<AudioClip>("Airside/Audio/wind_whoosh_loop") ?? CreateWindClip();
+                _ambientWindAudio.clip = clip;
+                if (clip != null && !_ambientWindAudio.isPlaying)
+                    _ambientWindAudio.Play();
+            }
+
+            if (_ambientRainAudio != null && _ambientRainAudio.clip == null)
+            {
+                var clip = Resources.Load<AudioClip>("Airside/Audio/rain_loop_03") ?? CreateRainClip();
+                _ambientRainAudio.clip = clip;
+                if (clip != null && !_ambientRainAudio.isPlaying)
+                    _ambientRainAudio.Play();
+            }
+
+            if (_ambientCoastAudio != null && _ambientCoastAudio.clip == null)
+            {
+                var clip = Resources.Load<AudioClip>("Airside/Audio/coast_wave_01") ?? CreateCoastClip();
+                _ambientCoastAudio.clip = clip;
+                if (clip != null && !_ambientCoastAudio.isPlaying)
+                    _ambientCoastAudio.Play();
             }
         }
 
@@ -3984,27 +4007,8 @@ namespace Airside.Presentation
         /// <summary>Prefer a Light named "Sun", else an existing DirectionalLight — not a random Spot.</summary>
         private static Light FindPreferredSunLight()
         {
-            var named = FindBuilt("Sun");
-            if (named != null)
-            {
-                var sun = named.GetComponent<Light>();
-                if (sun != null)
-                    return sun;
-            }
-
-            var lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
-            Light anyDirectional = null;
-            foreach (var light in lights)
-            {
-                if (light == null || light.type != LightType.Directional)
-                    continue;
-                if (string.Equals(light.name, "Sun", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(light.gameObject.name, "Sun", StringComparison.OrdinalIgnoreCase))
-                    return light;
-                anyDirectional ??= light;
-            }
-
-            return anyDirectional;
+            var named = FindBuilt("Sun") ?? FindBuilt("Directional Light");
+            return named != null ? named.GetComponent<Light>() : null;
         }
 
         private void ApplyDayCycle()
@@ -6133,9 +6137,33 @@ namespace Airside.Presentation
                 placed++;
             }
 
-            void             PlaceBay(Vector3 pos, float yawDeg, string tag)
+            void PlaceBay(Vector3 pos, float yawDeg, string tag)
             {
                 var rot = Quaternion.Euler(0f, yawDeg, 0f);
+                var parts = AirsideRuntimeQuality.PlaceFenceRails
+                    ? new[]
+                    {
+                        ("fence_bay", panel),
+                        ("fence_bay_post_l", post),
+                        ("fence_bay_post_r", post),
+                        ("fence_bay_rail_top", post),
+                        ("fence_bay_rail_mid", post),
+                        ("fence_bay_rail_bot", post),
+                        ("fence_bay_cap_l", post),
+                        ("fence_bay_cap_r", post)
+                    }
+                    : new[]
+                    {
+                        ("fence_bay", panel),
+                        ("fence_bay_post_l", post),
+                        ("fence_bay_post_r", post)
+                    };
+                if (ArtGltfLoader.TryPlaceCombined(kit, parts, pos, rot, $"Fence bay {tag}", out _))
+                {
+                    placed++;
+                    return;
+                }
+
                 PlacePart("fence_bay", pos, rot, panel, $"Fence bay {tag}");
                 PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
                 PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
@@ -6146,7 +6174,6 @@ namespace Airside.Presentation
                 PlacePart("fence_bay_rail_bot", pos, rot, post, $"Fence bay rail bot {tag}");
                 PlacePart("fence_bay_cap_l", pos, rot, post, $"Fence bay cap L {tag}");
                 PlacePart("fence_bay_cap_r", pos, rot, post, $"Fence bay cap R {tag}");
-                // fence_corner_brace only at PlacePart corner sites — not every bay.
             }
 
             // North landside (gap for vehicle gate at x≈22–30).
@@ -6846,59 +6873,37 @@ namespace Airside.Presentation
             var variants = new[] { "scrub_a", "scrub_b", "scrub_c", "scrub_d", "scrub_e" };
             var prefix = variants[Math.Abs(basePosition.GetHashCode()) % variants.Length];
             var yaw = (basePosition.x * 23f + basePosition.z * 11f) % 360f;
-            var root = new GameObject($"Scrub {prefix}").transform;
-            root.position = basePosition;
-            root.rotation = Quaternion.Euler(0f, yaw, 0f);
-            root.localScale = Vector3.one * scale;
-
             var dry = Shade(AirsideTheme.DryGrass, 0.85f);
             var euc = Shade(AirsideTheme.Eucalyptus, 0.72f);
-            var placed = 0;
-            void Place(string mesh, Color color)
+            var parts = new List<(string Name, Color Color)>(8)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
-                    return;
-                part.SetParent(root, false);
-                part.localPosition = Vector3.zero;
-                part.localRotation = Quaternion.identity;
-                part.name = mesh;
-                placed++;
-            }
-
-            Place($"{prefix}_core", dry);
-            Place($"{prefix}_side", euc);
-            Place($"{prefix}_side_b", Shade(dry, 0.9f));
-            Place($"{prefix}_tuft", Shade(euc, 0.88f));
-            // VEG-002 v02 fidelity board — grass tufts, third rock, dune-edge mixes.
+                ($"{prefix}_core", dry),
+                ($"{prefix}_side", euc),
+                ($"{prefix}_side_b", Shade(dry, 0.9f)),
+                ($"{prefix}_tuft", Shade(euc, 0.88f))
+            };
             var hash = Math.Abs(basePosition.GetHashCode());
             if (hash % 4 == 0)
             {
                 var grass = hash % 3 == 0 ? "grass_tuft_c" : (hash % 3 == 1 ? "grass_tuft_a" : "grass_tuft_b");
-                Place(grass, Shade(AirsideTheme.DryGrass, 0.95f));
+                parts.Add((grass, Shade(AirsideTheme.DryGrass, 0.95f)));
             }
 
             if (hash % 5 == 0)
             {
-                // Pale limestone / laterite — scrub style sheet, not warm brown.
                 var rock = hash % 15 == 0 ? "rock_c" : (hash % 10 == 0 ? "rock_b" : "rock_a");
                 var limestone = rock == "rock_b"
                     ? new Color(0.62f, 0.42f, 0.32f)
                     : new Color(0.82f, 0.78f, 0.72f);
-                Place(rock, limestone);
+                parts.Add((rock, limestone));
             }
 
             if (basePosition.z < -34f && hash % 2 == 0)
-            {
-                Place(hash % 2 == 0 ? "dune_mix_a" : "dune_mix_b", Shade(AirsideTheme.Sand, 0.85f));
-            }
+                parts.Add((hash % 2 == 0 ? "dune_mix_a" : "dune_mix_b", Shade(AirsideTheme.Sand, 0.85f)));
 
-            if (placed < 2)
-            {
-                Object.Destroy(root.gameObject);
-                return false;
-            }
-
-            return true;
+            return ArtGltfLoader.TryPlaceCombined(
+                kit, parts.ToArray(), basePosition, Quaternion.Euler(0f, yaw, 0f),
+                $"Scrub {prefix}", out _, Vector3.one * scale);
         }
 
         private static void PlaceShrubSphere(Vector3 position, Vector3 scale, Color color, string name)
@@ -6981,46 +6986,28 @@ namespace Airside.Presentation
             var prefix = variants[Math.Abs(basePosition.GetHashCode()) % variants.Length];
             var yaw = (basePosition.x * 17f + basePosition.z * 13f) % 360f;
             var lean = ((basePosition.x + basePosition.z) % 9f) - 4f;
-            var root = new GameObject($"Eucalyptus {prefix}").transform;
-            root.position = basePosition;
-            root.rotation = Quaternion.Euler(lean * 0.35f, yaw, lean * 0.2f);
-            root.localScale = Vector3.one * scale;
-
             var bark = new Color(0.32f, 0.24f, 0.15f);
             var canopyA = Shade(AirsideTheme.Eucalyptus, 0.9f);
             var canopyB = Shade(AirsideTheme.Eucalyptus, 0.78f);
-            var placed = 0;
-            void Place(string mesh, Color color)
+            var parts = new List<(string Name, Color Color)>(12)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
-                    return;
-                part.SetParent(root, false);
-                part.localPosition = Vector3.zero;
-                part.localRotation = Quaternion.identity;
-                part.name = mesh.Replace($"{prefix}_", "Tree ");
-                placed++;
-            }
-
-            Place($"{prefix}_trunk", bark);
-            Place($"{prefix}_flare", Shade(bark, 0.85f));
-            Place($"{prefix}_bark_low", new Color(0.38f, 0.28f, 0.16f));
-            Place($"{prefix}_bark_mid", new Color(0.36f, 0.26f, 0.15f));
-            Place($"{prefix}_fork", Shade(bark, 0.9f));
-            Place($"{prefix}_canopy", canopyA);
-            Place($"{prefix}_canopy_b", canopyB);
-            Place($"{prefix}_canopy_c", Shade(canopyA, 0.85f));
-            Place($"{prefix}_canopy_d", Shade(canopyB, 0.92f));
-            // Far-belt densify uses lod1 as an extra crown mass when present (v02).
+                ($"{prefix}_trunk", bark),
+                ($"{prefix}_flare", Shade(bark, 0.85f)),
+                ($"{prefix}_bark_low", new Color(0.38f, 0.28f, 0.16f)),
+                ($"{prefix}_bark_mid", new Color(0.36f, 0.26f, 0.15f)),
+                ($"{prefix}_fork", Shade(bark, 0.9f)),
+                ($"{prefix}_canopy", canopyA),
+                ($"{prefix}_canopy_b", canopyB),
+                ($"{prefix}_canopy_c", Shade(canopyA, 0.85f)),
+                ($"{prefix}_canopy_d", Shade(canopyB, 0.92f))
+            };
             if (Mathf.Abs(basePosition.x) > 55f || Mathf.Abs(basePosition.z) > 50f)
-                Place($"{prefix}_lod1", Shade(canopyA, 0.88f));
+                parts.Add(($"{prefix}_lod1", Shade(canopyA, 0.88f)));
 
-            if (placed < 4)
-            {
-                Object.Destroy(root.gameObject);
-                return false;
-            }
-
-            return true;
+            return ArtGltfLoader.TryPlaceCombined(
+                kit, parts.ToArray(), basePosition,
+                Quaternion.Euler(lean * 0.35f, yaw, lean * 0.2f),
+                $"Eucalyptus {prefix}", out _, Vector3.one * scale);
         }
 
         private static void PlaceTreeCanopy(Vector3 position, Vector3 scale, Color color, string name)
@@ -9808,27 +9795,22 @@ namespace Airside.Presentation
 
         private static void PlaceTaxiArrow(string kit, Vector3 position, float yaw)
         {
-            var root = new GameObject("Taxi arrow").transform;
-            root.position = position;
-            root.rotation = Quaternion.Euler(0f, yaw, 0f);
             var yellow = new Color(0.95f, 0.85f, 0.2f);
-            var used = false;
-            void PlacePart(string mesh, Vector3 local)
-            {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, yellow, out var part))
-                    return;
-                part.SetParent(root, false);
-                part.localPosition = local;
-                part.localRotation = Quaternion.identity;
-                used = true;
-            }
-
-            PlacePart("taxi_arrow_shaft", Vector3.zero);
-            PlacePart("taxi_arrow_head_l", Vector3.zero);
-            PlacePart("taxi_arrow_head_r", Vector3.zero);
-            if (used)
+            var rot = Quaternion.Euler(0f, yaw, 0f);
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("taxi_arrow_shaft", yellow),
+                        ("taxi_arrow_head_l", yellow),
+                        ("taxi_arrow_head_r", yellow)
+                    },
+                    position, rot, "Taxi arrow", out _))
                 return;
 
+            var root = new GameObject("Taxi arrow").transform;
+            root.position = position;
+            root.rotation = rot;
             ParentBlock(root, "shaft", new Vector3(0f, 0f, -0.2f), new Vector3(0.28f, 0.03f, 1.6f), yellow);
             ParentBlock(root, "head L", new Vector3(-0.35f, 0f, 0.7f), new Vector3(0.55f, 0.03f, 0.35f), yellow);
             ParentBlock(root, "head R", new Vector3(0.35f, 0f, 0.7f), new Vector3(0.55f, 0.03f, 0.35f), yellow);
@@ -9992,9 +9974,15 @@ namespace Airside.Presentation
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)
         {
             // Kit silhouette: base + stem + lens only (skip collar/gasket/glare/reflector soup).
-            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_stem", position, Quaternion.identity, new Color(0.45f, 0.46f, 0.48f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "edge_lens", position, Quaternion.identity, color, out _))
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("edge_base", new Color(0.35f, 0.36f, 0.38f)),
+                        ("edge_stem", new Color(0.45f, 0.46f, 0.48f)),
+                        ("edge_lens", color)
+                    },
+                    position, Quaternion.identity, "Runway edge", out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_edge_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Runway edge", position + new Vector3(0f, 0.05f, 0f), new Vector3(0.25f, 0.1f, 0.25f), color);
@@ -10002,9 +9990,15 @@ namespace Airside.Presentation
 
         private static void PlaceTaxiLamp(string kit, Vector3 position, Color color)
         {
-            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "taxi_lens", position, Quaternion.identity, color, out _))
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("taxi_base", new Color(0.3f, 0.32f, 0.34f)),
+                        ("taxi_stem", new Color(0.4f, 0.42f, 0.44f)),
+                        ("taxi_lens", color)
+                    },
+                    position, Quaternion.identity, "Taxi light", out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "taxiway_light", position, Quaternion.identity, color, out _))
                 CreateBlock("Taxi light", position + new Vector3(0f, 0.18f, 0f), new Vector3(0.18f, 0.35f, 0.18f), color);
@@ -10012,9 +10006,15 @@ namespace Airside.Presentation
 
         private static void PlaceObstructionLamp(string kit, Vector3 position, Color color, string fallbackName)
         {
-            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_base", position, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_stem", position, Quaternion.identity, new Color(0.4f, 0.42f, 0.44f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "obst_lens", position, Quaternion.identity, color, out _))
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("obst_base", new Color(0.35f, 0.36f, 0.38f)),
+                        ("obst_stem", new Color(0.4f, 0.42f, 0.44f)),
+                        ("obst_lens", color)
+                    },
+                    position, Quaternion.identity, fallbackName, out _))
                 return;
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "obstruction_light", position, Quaternion.identity, color, out _))
                 CreateBlock(fallbackName, position + new Vector3(0f, 0.2f, 0f), new Vector3(0.22f, 0.22f, 0.22f), color);
@@ -10023,18 +10023,24 @@ namespace Airside.Presentation
         private static void PlaceFloodMast(string kit, Vector3 position, Color color)
         {
             // Kit path: mast silhouette only — SpotLights in BuildApronLights still own night pools.
-            var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_pole", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
-            if (AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High)
-            {
-                placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _)
-                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _)
-                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _)
-                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
-            }
-
-            if (placed)
+            var floodParts = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High
+                ? new[]
+                {
+                    ("flood_base", new Color(0.3f, 0.32f, 0.34f)),
+                    ("flood_pole", color),
+                    ("flood_head", new Color(0.25f, 0.26f, 0.28f)),
+                    ("flood_crossarm", Shade(color, 0.9f)),
+                    ("flood_arm", Shade(color, 0.85f)),
+                    ("flood_lamp", new Color(1f, 0.95f, 0.8f)),
+                    ("flood_visor", new Color(0.2f, 0.21f, 0.22f))
+                }
+                : new[]
+                {
+                    ("flood_base", new Color(0.3f, 0.32f, 0.34f)),
+                    ("flood_pole", color),
+                    ("flood_head", new Color(0.25f, 0.26f, 0.28f))
+                };
+            if (ArtGltfLoader.TryPlaceCombined(kit, floodParts, position, Quaternion.identity, "Apron flood", out _))
                 return;
 
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _))

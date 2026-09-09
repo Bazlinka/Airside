@@ -1,16 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — runtime airfield performance pass, paint/probes)
+- **Last updated:** 2026-09-09 (Cursor — runtime airfield performance pass, kit combine)
 - **Branch:** `cursor/game-performance-pass-c1bb`
 - **Do next:** Mac Play / packaged player — confirm visual first frame with combined
   runway/taxi/apron pads + WLD-004 terrain kit (no tile airfield). Sign off High
   (4× MSAA + SMAA) vs Medium on a 2 GB GPU. Then continue art sourcing: P0 aircraft
   parts → buildings → vehicles/GSE → veg/characters.
 - **In progress / half-done:** Presentation performance P0–P2 plus GPU-state, scene
-  index, combined star mesh, deferred probe bake, taxi-paint strips (no 1 m
-  cube dump), Medium light/fence/scrub thinning. StreamingAssets glTF copies remain
-  until a Mac Addressables bake is proven. Keep hunting leftover fallback cubes,
-  unique materials, and during-build Finds.
+  index, combined star mesh, deferred probe bake, taxi-paint strips, cached kit
+  combine (fence/lamps/scrub/trees), deferred ambient `Resources.Load`. StreamingAssets
+  glTF copies remain until a Mac Addressables bake is proven. Keep hunting leftover
+  fallback cubes, unique materials, and during-build Finds.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
@@ -98,10 +98,10 @@ supplementary check, not a replacement for a real Unity run before merging.
   Terrain11 tiles; textures/materials cached; Addressables on demand;
   High/Medium ladder; probe bands. Per-frame `Renderer.material` clones removed;
   scene index; one star mesh; probes `RenderProbe` after world combine. Taxi
-  paint is strips not 1 m cubes; aiming/TDZ/arrows thinned; Medium thins fillet
-  lights, fence rails, window PointLights and scrub. `AirsidePrototype.cs` 257
-  `CreateBlock` sites; brace depth 0. Decision 0029. Mac Play
-  visual-first-frame still required.
+  paint is strips not 1 m cubes; kit fence/lamps/scrub/trees stamp cached combined
+  meshes; ambient audio `Resources.Load` is deferred off Awake. Medium thins fillet
+  lights, fence rails, window PointLights and scrub. `AirsidePrototype.cs` brace
+  depth 0. Decision 0029. Mac Play visual-first-frame still required.
 
 - Layering / collision / route **100-fix** on `cursor/layering-collision-bugfix-100-d7f0`: dogleg lead-ins, apron throat, stand spacing 14/24/34, GT off-field + run-up bay, selective yield, `scripts/test-domain.sh` **177 passed** (`CollisionPass100Tests`).
 

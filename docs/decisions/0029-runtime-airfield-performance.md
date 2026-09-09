@@ -66,5 +66,6 @@ Kingscote at overview and follow, day/dusk/night.
   the incremental `AirsideSceneIndex.Remember` path once every kit placer
   registers names
 - Author a single fuel-farm / ALS mesh instead of greybox fallbacks
-- Author combined taxi-paint / fence-bay meshes so High can drop remaining
-  kit-part soup without a greybox look
+- Runtime `ArtGltfLoader.TryPlaceCombined` now stamps fence bays, lamps,
+  scrub and eucalyptus as cached combined meshes; authored single-mesh
+  kits would still cut remaining submeshes

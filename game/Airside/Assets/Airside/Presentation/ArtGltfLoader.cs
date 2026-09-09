@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -17,6 +18,7 @@ namespace Airside.Presentation
     public static class ArtGltfLoader
     {
         private static readonly Dictionary<string, GltfKit> KitCache = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, CombinedTemplate> CombinedCache = new(StringComparer.Ordinal);
 
         /// <summary>
         /// Instantiates every mesh node in the kit as a child of <paramref name="parent"/>.
@@ -74,6 +76,54 @@ namespace Airside.Presentation
             instance = CreateMeshObject(meshName, entry.Mesh, color, null, worldPosition, worldRotation);
             if (localScale.HasValue)
                 instance.localScale = localScale.Value;
+            return true;
+        }
+
+        /// <summary>
+        /// One GameObject for co-located kit parts that share a pose (fence bays,
+        /// edge lamps, scrub clumps). Combined meshes are cached per kit+part set
+        /// so High stamps the same silhouette without 8 GameObjects per bay.
+        /// </summary>
+        public static bool TryPlaceCombined(
+            string artRelativePath,
+            (string Name, Color Color)[] parts,
+            Vector3 worldPosition,
+            Quaternion worldRotation,
+            string instanceName,
+            out Transform instance,
+            Vector3? localScale = null)
+        {
+            instance = null;
+            if (parts == null || parts.Length == 0)
+                return false;
+            if (!TryLoadKit(artRelativePath, out var kit))
+                return false;
+
+            var key = CombinedKey(artRelativePath, parts);
+            if (!CombinedCache.TryGetValue(key, out var template) || template == null)
+            {
+                template = BuildCombined(kit, parts);
+                CombinedCache[key] = template;
+            }
+
+            if (template == null || template.Mesh == null)
+                return false;
+
+            var go = new GameObject(string.IsNullOrEmpty(instanceName) ? "Combined kit" : instanceName);
+            var transform = go.transform;
+            var parent = AirsideStaticWorld.WorldRoot;
+            if (parent != null)
+                transform.SetParent(parent, false);
+            transform.position = worldPosition;
+            transform.rotation = worldRotation;
+            if (localScale.HasValue)
+                transform.localScale = localScale.Value;
+
+            go.AddComponent<MeshFilter>().sharedMesh = template.Mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = template.Materials;
+            AirsideSceneIndex.Remember(transform);
+            instance = transform;
             return true;
         }
 
@@ -207,17 +257,117 @@ namespace Airside.Presentation
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
                 mesh.RecalculateNormals();
-                mesh.SetUVs(0, BuildPlanarUvs(vertices));
+                var uvs = BuildPlanarUvs(vertices);
+                mesh.SetUVs(0, uvs);
                 mesh.RecalculateBounds();
                 AirsideMeshUtil.UploadStatic(mesh);
 
-                var entry = new MeshEntry(name, mesh);
+                var entry = new MeshEntry(name, mesh, vertices, indices, uvs);
                 kit.Meshes.Add(entry);
                 kit.ByName[name] = entry;
             }
 
             return kit.Meshes.Count > 0 ? kit : null;
         }
+
+        private static string CombinedKey(string artRelativePath, (string Name, Color Color)[] parts)
+        {
+            var sb = new StringBuilder(artRelativePath.Length + parts.Length * 24);
+            sb.Append(artRelativePath);
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var part = parts[i];
+                sb.Append('|').Append(part.Name).Append('#');
+                sb.Append(part.Color.r).Append(',').Append(part.Color.g).Append(',')
+                    .Append(part.Color.b).Append(',').Append(part.Color.a);
+            }
+
+            return sb.ToString();
+        }
+
+        private static CombinedTemplate BuildCombined(GltfKit kit, (string Name, Color Color)[] parts)
+        {
+            var groups = new List<CombineGroup>(4);
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var part = parts[i];
+                if (string.IsNullOrEmpty(part.Name) || !kit.ByName.TryGetValue(part.Name, out var entry))
+                    continue;
+                var kind = AirsideMaterialLibrary.InferFromMeshName(part.Name);
+                CombineGroup group = null;
+                for (var g = 0; g < groups.Count; g++)
+                {
+                    if (SameColor(groups[g].Color, part.Color) && groups[g].Kind == kind)
+                    {
+                        group = groups[g];
+                        break;
+                    }
+                }
+
+                if (group == null)
+                {
+                    group = new CombineGroup(part.Color, kind);
+                    groups.Add(group);
+                }
+
+                group.Entries.Add(entry);
+            }
+
+            if (groups.Count == 0)
+                return null;
+
+            var vertCount = 0;
+            for (var g = 0; g < groups.Count; g++)
+            {
+                for (var e = 0; e < groups[g].Entries.Count; e++)
+                    vertCount += groups[g].Entries[e].Vertices.Length;
+            }
+
+            var vertices = new Vector3[vertCount];
+            var uvs = new Vector2[vertCount];
+            var materials = new Material[groups.Count];
+            var trianglesPerGroup = new int[groups.Count][];
+            var vertOffset = 0;
+            for (var g = 0; g < groups.Count; g++)
+            {
+                var group = groups[g];
+                var triCount = 0;
+                for (var e = 0; e < group.Entries.Count; e++)
+                    triCount += group.Entries[e].Indices.Length;
+                var triangles = new int[triCount];
+                var triOffset = 0;
+                for (var e = 0; e < group.Entries.Count; e++)
+                {
+                    var entry = group.Entries[e];
+                    var count = entry.Vertices.Length;
+                    Array.Copy(entry.Vertices, 0, vertices, vertOffset, count);
+                    if (entry.Uvs != null && entry.Uvs.Length == count)
+                        Array.Copy(entry.Uvs, 0, uvs, vertOffset, count);
+                    var indices = entry.Indices;
+                    for (var t = 0; t < indices.Length; t++)
+                        triangles[triOffset + t] = indices[t] + vertOffset;
+                    triOffset += indices.Length;
+                    vertOffset += count;
+                }
+
+                trianglesPerGroup[g] = triangles;
+                materials[g] = AirsideMaterialLibrary.CreateShared(group.Color, group.Kind);
+            }
+
+            var combined = new Mesh { name = "Combined kit" };
+            combined.SetVertices(vertices);
+            combined.SetUVs(0, uvs);
+            combined.subMeshCount = groups.Count;
+            for (var g = 0; g < groups.Count; g++)
+                combined.SetTriangles(trianglesPerGroup[g], g);
+            combined.RecalculateNormals();
+            combined.RecalculateBounds();
+            AirsideMeshUtil.UploadStatic(combined);
+            return new CombinedTemplate(combined, materials);
+        }
+
+        private static bool SameColor(Color a, Color b) =>
+            a.r.Equals(b.r) && a.g.Equals(b.g) && a.b.Equals(b.b) && a.a.Equals(b.a);
 
         /// <summary>
         /// Simple planar UVs from dominant axes so Batch B basecolours tile on
@@ -300,16 +450,47 @@ namespace Airside.Presentation
             public Dictionary<string, MeshEntry> ByName { get; } = new(StringComparer.Ordinal);
         }
 
+        private sealed class CombinedTemplate
+        {
+            public CombinedTemplate(Mesh mesh, Material[] materials)
+            {
+                Mesh = mesh;
+                Materials = materials;
+            }
+
+            public Mesh Mesh { get; }
+            public Material[] Materials { get; }
+        }
+
+        private sealed class CombineGroup
+        {
+            public CombineGroup(Color color, AirsideMaterialLibrary.SurfaceKind kind)
+            {
+                Color = color;
+                Kind = kind;
+            }
+
+            public Color Color { get; }
+            public AirsideMaterialLibrary.SurfaceKind Kind { get; }
+            public List<MeshEntry> Entries { get; } = new();
+        }
+
         private sealed class MeshEntry
         {
-            public MeshEntry(string name, Mesh mesh)
+            public MeshEntry(string name, Mesh mesh, Vector3[] vertices, int[] indices, Vector2[] uvs)
             {
                 Name = name;
                 Mesh = mesh;
+                Vertices = vertices;
+                Indices = indices;
+                Uvs = uvs;
             }
 
             public string Name { get; }
             public Mesh Mesh { get; }
+            public Vector3[] Vertices { get; }
+            public int[] Indices { get; }
+            public Vector2[] Uvs { get; }
         }
     }
 }

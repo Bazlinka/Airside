@@ -162,6 +162,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void GltfLoader_CombinedPlaceMissesWhenKitMissing()
+        {
+            Assert.That(
+                ArtGltfLoader.TryPlaceCombined(
+                    "Models/missing_kit.gltf",
+                    new[] { ("fence_bay", Color.white) },
+                    Vector3.zero,
+                    Quaternion.identity,
+                    "Fence bay test",
+                    out var instance),
+                Is.False);
+            Assert.That(instance, Is.Null);
+        }
+
+        [Test]
         public void NamedChildren_HasNameAndFindContainsUseCachedScan()
         {
             var root = new GameObject("NamedChildren root");

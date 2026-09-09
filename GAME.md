@@ -13,7 +13,9 @@
   east of 23 toward the CBD. Overview is ~318 m. A second ARFF truck sits on
   the 05 Alpha. Far-east and freight aprons hold idle turboprops. Sun shadows
   reach 380 m. Curved T1 landside glass faces the drop-off. Sky disc/stars
-  sit on the far dome. EditMode 193/193 earlier this session.
+  sit on the far dome. Clouds sit at ~90–150 m so they no longer rest on the
+  tower. 12/30 pocket has eucalyptus outside the fence. CBD signature towers
+  should read from the opening shot. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -51,7 +53,9 @@
   kit offset is −0.65 so v06 tires meet pavement top. Far-east and freight
   aprons hold idle turboprops; 12/30 infield grass fills the south pocket.
   Sun shadows reach 380 m. Curved T1 landside glass faces the drop-off.
-  Sky disc and stars sit on the far dome. Save schema
+  Sky disc and stars sit on the far dome. Clouds sit at ~90–150 m off the
+  dual-runway core. Eucalyptus fringes the 12/30 pocket. CBD signature towers
+  and extra Holdfast massing read from the opening shot. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

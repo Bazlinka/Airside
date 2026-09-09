@@ -4508,6 +4508,8 @@ namespace Airside.Presentation
                          "Holdfast glass D",
                          "Holdfast glass E",
                          "Holdfast glass F",
+                         "Holdfast glass G",
+                         "Holdfast glass H",
                          "Holdfast hotel glass",
                          "ATC tower glass N",
                          "ATC tower glass S",
@@ -6239,6 +6241,12 @@ namespace Airside.Presentation
             CreateBlock("Holdfast glass E", new Vector3(-62f, 7.4f, -74.05f), new Vector3(3.6f, 9.2f, 0.12f), glass);
             CreateBlock("Holdfast glass F", new Vector3(-84f, 9.2f, -109.75f), new Vector3(2.8f, 12f, 0.12f), glass);
             CreateBlock("Holdfast hotel glass", new Vector3(-70f, 5.6f, -80.95f), new Vector3(7.4f, 7.2f, 0.12f), glass);
+            CreateBlock("Holdfast tower G", new Vector3(-58f, 8.4f, -114f), new Vector3(4.0f, 16.8f, 3.6f), pale);
+            CreateBlock("Holdfast glass G", new Vector3(-58f, 8.6f, -115.85f), new Vector3(3.2f, 11.2f, 0.12f), glass);
+            CreateBlock("Holdfast tower H", new Vector3(-88f, 6.8f, -96f), new Vector3(5.0f, 13.6f, 4.2f), cream);
+            CreateBlock("Holdfast glass H", new Vector3(-90.55f, 7.0f, -96f), new Vector3(0.12f, 9.2f, 3.4f), glass);
+            PlaceContactShadow("Holdfast contact G", new Vector3(-58f, 0.04f, -114f), new Vector3(4.8f, 0.02f, 4.4f), 0.14f);
+            PlaceContactShadow("Holdfast contact H", new Vector3(-88f, 0.04f, -96f), new Vector3(5.8f, 0.02f, 5.0f), 0.14f);
             CreateBlock("Glenelg pavilion", new Vector3(-112f, 1.35f, -90f), new Vector3(4.2f, 2.5f, 3.6f), cream);
             PlaceContactShadow("Holdfast contact E", new Vector3(-62f, 0.04f, -72f), new Vector3(5.4f, 0.02f, 4.8f), 0.14f);
             PlaceContactShadow("Holdfast contact F", new Vector3(-84f, 0.04f, -108f), new Vector3(4.4f, 0.02f, 4.2f), 0.16f);
@@ -7865,7 +7873,15 @@ namespace Airside.Presentation
                 (new Vector3(-77f, 0f, -22f), 0.98f),
                 (new Vector3(-75f, 0f, -44f), 1.12f),
                 (new Vector3(-76f, 0f, 58f), 1.08f),
-                (new Vector3(-74f, 0f, -80f), 1.15f)
+                (new Vector3(-74f, 0f, -80f), 1.15f),
+                // 12/30 pocket fringe — trees outside the south fence, not on the strip.
+                (new Vector3(8f, 0f, -62f), 1.12f),
+                (new Vector3(6f, 0f, -82f), 1.05f),
+                (new Vector3(56f, 0f, -68f), 1.18f),
+                (new Vector3(60f, 0f, -88f), 0.98f),
+                (new Vector3(32f, 0f, -102f), 1.22f),
+                (new Vector3(44f, 0f, -108f), 1.08f),
+                (new Vector3(20f, 0f, -98f), 1.0f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers
@@ -7881,7 +7897,8 @@ namespace Airside.Presentation
                 new Vector3(12f, 0f, 34.5f), new Vector3(34f, 0f, 33f), new Vector3(40f, 0f, 36f),
                 new Vector3(54f, 0f, 50f), new Vector3(50f, 0f, 54f), new Vector3(60f, 0f, 44f),
                 new Vector3(-50f, 0f, 4f), new Vector3(-54f, 0f, -12f), new Vector3(48f, 0f, -16f),
-                new Vector3(-36f, 0f, -24f), new Vector3(32f, 0f, -22f), new Vector3(0f, 0f, 38f)
+                new Vector3(-36f, 0f, -24f), new Vector3(32f, 0f, -22f), new Vector3(0f, 0f, 38f),
+                new Vector3(10f, 0f, -70f), new Vector3(54f, 0f, -78f), new Vector3(36f, 0f, -100f)
             };
             for (var i = 0; i < shrubs.Length; i++)
                 PlaceShrub(shrubs[i], 0.7f + (i % 4) * 0.12f);
@@ -8251,6 +8268,14 @@ namespace Airside.Presentation
             CreateBlock("CBD tower S", new Vector3(198f, 10.2f, 102f), new Vector3(3.2f, 20.4f, 2.8f), glass);
             CreateBlock("CBD tower T", new Vector3(186f, 7.8f, 122f), new Vector3(4.0f, 15.6f, 3.4f), pale);
             CreateBlock("CBD midrise U", new Vector3(170f, 5.2f, 76f), new Vector3(7.8f, 10.4f, 5.6f), stone);
+            // Taller signature towers so the CBD still reads from the 318 m opening shot.
+            CreateBlock("CBD tower V", new Vector3(160f, 16.2f, 124f), new Vector3(3.4f, 32.4f, 3.2f), glass);
+            CreateBlock("CBD tower W", new Vector3(174f, 14.6f, 132f), new Vector3(2.8f, 29.2f, 2.6f), pale);
+            CreateBlock("CBD tower X", new Vector3(148f, 13.4f, 128f), new Vector3(4.2f, 26.8f, 3.8f), stone);
+            CreateBlock("CBD tower Y", new Vector3(192f, 15.8f, 118f), new Vector3(3.0f, 31.6f, 2.8f), glass);
+            PlaceCbdWindowGlow("CBD glow V", new Vector3(160f, 16.2f, 122.35f), new Vector3(2.6f, 24f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow W", new Vector3(174f, 14.6f, 130.65f), new Vector3(2.2f, 22f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow Y", new Vector3(192f, 15.8f, 116.55f), new Vector3(2.2f, 24f, 0.12f));
             PlaceCbdWindowGlow("CBD glow B", new Vector3(156f, 11f, 106.35f), new Vector3(2.6f, 16f, 0.12f));
             PlaceCbdWindowGlow("CBD glow E", new Vector3(172f, 8.4f, 112.45f), new Vector3(2.4f, 12f, 0.12f));
             PlaceCbdWindowGlow("CBD glow H", new Vector3(168f, 12.4f, 116.75f), new Vector3(2.0f, 18f, 0.12f));
@@ -8292,7 +8317,9 @@ namespace Airside.Presentation
                 new Vector3(150f, 1.05f, 38f), new Vector3(162f, 1.1f, 54f), new Vector3(174f, 1.0f, 40f),
                 new Vector3(138f, 0.95f, 34f), new Vector3(-58f, 1.0f, -78f), new Vector3(-50f, 1.1f, -88f),
                 new Vector3(-56f, 1.05f, -70f), new Vector3(-46f, 1.0f, -82f), new Vector3(-64f, 1.12f, -96f),
-                new Vector3(-52f, 0.95f, -104f)
+                new Vector3(-52f, 0.95f, -104f),
+                new Vector3(70f, 1.0f, -102f), new Vector3(82f, 1.1f, -96f), new Vector3(94f, 0.95f, -108f),
+                new Vector3(76f, 1.05f, -118f), new Vector3(88f, 1.0f, -88f), new Vector3(102f, 1.12f, -78f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -8515,24 +8542,27 @@ namespace Airside.Presentation
 
         private static void BuildCloudBands()
         {
-            // Soft translucent cloud clusters so the sky reads layered — presentation only.
-            // Keep the count calm for a miniature sky; UpdateCloudDrift thickens tint for weather.
+            // High translucent clusters so the 318 m overview does not find clouds on the tower.
+            // UpdateCloudDrift thickens tint for weather. Umbra stays off the operational strip.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            const int clusterCount = 12;
+            const int clusterCount = 16;
             for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
-                var x = (float)(rng.NextDouble() * 480f - 240f);
-                var z = (float)(rng.NextDouble() * 360f - 160f);
-                var y = 32f + (float)rng.NextDouble() * 36f;
+                var x = (float)(rng.NextDouble() * 720f - 360f);
+                var z = (float)(rng.NextDouble() * 560f - 240f);
+                // Keep the ring off the dual-runway core so umbras do not stamp 23/05.
+                if (Mathf.Abs(x) < 110f && Mathf.Abs(z) < 90f)
+                    x += x >= 0f ? 140f : -140f;
+                var y = 92f + (float)rng.NextDouble() * 58f;
                 cluster.position = new Vector3(x, y, z);
 
-                var sx = 16f + (float)rng.NextDouble() * 30f;
-                var sy = 3.4f + (float)rng.NextDouble() * 4.5f;
-                var sz = 9f + (float)rng.NextDouble() * 18f;
+                var sx = 28f + (float)rng.NextDouble() * 42f;
+                var sy = 6.5f + (float)rng.NextDouble() * 7.5f;
+                var sz = 16f + (float)rng.NextDouble() * 28f;
                 var alpha = 0.14f + (float)rng.NextDouble() * 0.14f;
                 var blobs = 1 + (i % 2);
                 for (var b = 0; b < blobs; b++)
@@ -8562,9 +8592,9 @@ namespace Airside.Presentation
                 Object.Destroy(umbra.GetComponent<Collider>());
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
-                umbra.transform.localScale = new Vector3(sx * 0.9f, 0.02f, sz * 0.9f);
+                umbra.transform.localScale = new Vector3(sx * 0.55f, 0.02f, sz * 0.55f);
                 var umbraMat = AirsideMaterialLibrary.Create(
-                    new Color(0.05f, 0.07f, 0.1f, 0.18f),
+                    new Color(0.05f, 0.07f, 0.1f, 0.12f),
                     AirsideMaterialLibrary.SurfaceKind.Default);
                 umbra.GetComponent<Renderer>().material = umbraMat;
                 umbra.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -8923,14 +8953,14 @@ namespace Airside.Presentation
                 body.name = "Body";
                 Object.Destroy(body.GetComponent<Collider>());
                 body.transform.SetParent(bird, false);
-                body.transform.localScale = new Vector3(0.12f, 0.05f, 0.55f);
+                body.transform.localScale = new Vector3(0.22f, 0.09f, 1.0f);
                 body.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                     new Color(0.1f, 0.1f, 0.12f),
                     AirsideMaterialLibrary.SurfaceKind.Plastic);
                 body.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
-                PlaceBirdWing(bird, "Wing L", new Vector3(-0.22f, 0.02f, 0.05f), true);
-                PlaceBirdWing(bird, "Wing R", new Vector3(0.22f, 0.02f, 0.05f), false);
+                PlaceBirdWing(bird, "Wing L", new Vector3(-0.4f, 0.03f, 0.08f), true);
+                PlaceBirdWing(bird, "Wing R", new Vector3(0.4f, 0.03f, 0.08f), false);
             }
         }
 
@@ -8941,7 +8971,7 @@ namespace Airside.Presentation
             Object.Destroy(wing.GetComponent<Collider>());
             wing.transform.SetParent(bird, false);
             wing.transform.localPosition = localPos;
-            wing.transform.localScale = new Vector3(0.55f, 0.02f, 0.14f);
+            wing.transform.localScale = new Vector3(1.0f, 0.03f, 0.26f);
             wing.GetComponent<Renderer>().material = AirsideMaterialLibrary.Create(
                 new Color(0.18f, 0.18f, 0.2f),
                 AirsideMaterialLibrary.SurfaceKind.Plastic);
@@ -8968,10 +8998,10 @@ namespace Airside.Presentation
             {
                 var bird = _birdFlockRoot.GetChild(i);
                 var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.35f;
-                var radius = 22f + (i % 5) * 3.2f;
-                var x = VisualRunwayWestX - 38f + Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
-                var z = 8f + Mathf.Sin(phase) * radius * 0.55f;
-                var y = 8.5f + Mathf.Sin(phase * 2.1f + i) * 1.8f + (i % 3) * 0.8f;
+                var radius = 36f + (i % 5) * 4.5f;
+                var x = VisualRunwayWestX - 48f + Mathf.Cos(phase) * radius + (i % 3) * 2.2f;
+                var z = 4f + Mathf.Sin(phase) * radius * 0.62f;
+                var y = 16.5f + Mathf.Sin(phase * 2.1f + i) * 2.4f + (i % 3) * 1.1f;
                 var next = new Vector3(x, y, z);
                 var prev = bird.position;
                 bird.position = next;

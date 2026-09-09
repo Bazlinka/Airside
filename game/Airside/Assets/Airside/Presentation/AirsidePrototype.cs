@@ -180,7 +180,8 @@ namespace Airside.Presentation
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;
             _ambientWindAudio = gameObject.AddComponent<AudioSource>();
-            _ambientWindAudio.clip = CreateWindClip();
+            var externalWindClip = Resources.Load<AudioClip>("Airside/Audio/wind_whoosh_loop");
+            _ambientWindAudio.clip = externalWindClip != null ? externalWindClip : CreateWindClip();
             _ambientWindAudio.loop = true;
             _ambientWindAudio.playOnAwake = false;
             _ambientWindAudio.spatialBlend = 0f;

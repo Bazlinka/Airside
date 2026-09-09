@@ -112,7 +112,10 @@ change it describes.
   bay props; west hall has a small wave roof. Holdfast towers show
   north/east glass from the gulf opening shot; extra foam sits in the
   05 shore gap. Mile End houses and cars fill the eastern arterial
-  foreground of the opening shot.
+  foreground of the opening shot. 05 ALS has larger gulf piers and
+  emissive beads; aircraft polish covers flaps, pylons and belly;
+  the landside car park is three storeys with north openings; the
+  Adelaide A monument is larger.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

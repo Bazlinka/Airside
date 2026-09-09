@@ -5079,12 +5079,12 @@ namespace Airside.Presentation
                 var west = new Vector3(VisualThresholdWestX + 10f + i * 1.5f, 1.05f, -5.2f);
                 var east = new Vector3(VisualThresholdEastX - 10f - i * 1.5f, 1.05f, 5.2f);
                 var lens = i < 2 ? new Color(1f, 0.28f, 0.22f) : new Color(1f, 0.94f, 0.72f);
-                CreateBlock($"PAPI 05 box {i}", west, new Vector3(0.7f, 0.42f, 0.7f), papiBox);
-                CreateBlock($"PAPI 05 lens {i}", west + new Vector3(0f, 0.12f, 0f), new Vector3(0.42f, 0.22f, 0.42f), lens);
-                CreateBlock($"PAPI 05 stem {i}", west + new Vector3(0f, -0.55f, 0f), new Vector3(0.14f, 0.7f, 0.14f), papiBox);
-                CreateBlock($"PAPI 23 box {i}", east, new Vector3(0.7f, 0.42f, 0.7f), papiBox);
-                CreateBlock($"PAPI 23 lens {i}", east + new Vector3(0f, 0.12f, 0f), new Vector3(0.42f, 0.22f, 0.42f), lens);
-                CreateBlock($"PAPI 23 stem {i}", east + new Vector3(0f, -0.55f, 0f), new Vector3(0.14f, 0.7f, 0.14f), papiBox);
+                CreateBlock($"PAPI 05 box {i}", west, new Vector3(0.95f, 0.52f, 0.95f), papiBox);
+                CreateBlock($"PAPI 05 lens {i}", west + new Vector3(0f, 0.16f, 0f), new Vector3(0.55f, 0.28f, 0.55f), lens);
+                CreateBlock($"PAPI 05 stem {i}", west + new Vector3(0f, -0.7f, 0f), new Vector3(0.16f, 0.9f, 0.16f), papiBox);
+                CreateBlock($"PAPI 23 box {i}", east, new Vector3(0.95f, 0.52f, 0.95f), papiBox);
+                CreateBlock($"PAPI 23 lens {i}", east + new Vector3(0f, 0.16f, 0f), new Vector3(0.55f, 0.28f, 0.55f), lens);
+                CreateBlock($"PAPI 23 stem {i}", east + new Vector3(0f, -0.7f, 0f), new Vector3(0.16f, 0.9f, 0.16f), papiBox);
             }
 
             return lights;
@@ -6686,9 +6686,11 @@ namespace Airside.Presentation
                 concrete, new Vector2(5f, 3.5f));
             CreateBlock("MSCP L1", new Vector3(70f, 1.55f, 46f), new Vector3(16.4f, 3.1f, 11.6f), shell);
             CreateBlock("MSCP L2", new Vector3(70f, 4.55f, 46f), new Vector3(16.6f, 2.9f, 11.8f), Shade(shell, 0.97f));
-            CreateBlock("MSCP roof", new Vector3(70f, 6.15f, 46f), new Vector3(17.0f, 0.28f, 12.2f), slab);
-            CreateBlock("MSCP parapet N", new Vector3(70f, 6.55f, 51.9f), new Vector3(17.0f, 0.55f, 0.22f), Shade(shell, 0.92f));
-            CreateBlock("MSCP parapet S", new Vector3(70f, 6.55f, 40.1f), new Vector3(17.0f, 0.55f, 0.22f), Shade(shell, 0.92f));
+            CreateBlock("MSCP L3", new Vector3(70f, 7.45f, 46f), new Vector3(16.8f, 2.8f, 12.0f), Shade(shell, 0.94f));
+            CreateBlock("MSCP roof", new Vector3(70f, 8.95f, 46f), new Vector3(17.2f, 0.28f, 12.4f), slab);
+            CreateBlock("MSCP parapet N", new Vector3(70f, 9.35f, 52.1f), new Vector3(17.2f, 0.55f, 0.22f), Shade(shell, 0.92f));
+            CreateBlock("MSCP parapet S", new Vector3(70f, 9.35f, 39.9f), new Vector3(17.2f, 0.55f, 0.22f), Shade(shell, 0.92f));
+            CreateBlock("MSCP parapet E", new Vector3(78.55f, 9.35f, 46f), new Vector3(0.22f, 0.55f, 12.4f), Shade(shell, 0.92f));
             CreateBlock("MSCP ramp", new Vector3(60.6f, 2.4f, 46f), new Vector3(4.2f, 0.28f, 4.8f), slab)
                 .transform.rotation = Quaternion.Euler(0f, 0f, -22f);
             for (var i = 0; i < 4; i++)
@@ -6696,12 +6698,18 @@ namespace Airside.Presentation
                 var x = 64.2f + i * 3.8f;
                 CreateBlock($"MSCP slot L1 {i}", new Vector3(x, 1.65f, 40.35f), new Vector3(2.6f, 1.4f, 0.12f), voidDark);
                 CreateBlock($"MSCP slot L2 {i}", new Vector3(x, 4.55f, 40.35f), new Vector3(2.6f, 1.3f, 0.12f), voidDark);
+                CreateBlock($"MSCP slot L3 {i}", new Vector3(x, 7.45f, 40.35f), new Vector3(2.6f, 1.3f, 0.12f), voidDark);
+                // North voids so yaw 132 sees a car park, not a blank box.
+                CreateBlock($"MSCP slot N L1 {i}", new Vector3(x, 1.65f, 51.75f), new Vector3(2.6f, 1.4f, 0.12f), voidDark);
+                CreateBlock($"MSCP slot N L2 {i}", new Vector3(x, 4.55f, 51.85f), new Vector3(2.6f, 1.3f, 0.12f), voidDark);
+                CreateBlock($"MSCP slot N L3 {i}", new Vector3(x, 7.45f, 51.95f), new Vector3(2.6f, 1.3f, 0.12f), voidDark);
             }
 
-            PlaceParkedCar("MSCP roof car A", new Vector3(66f, 6.35f, 46f), 90f, new Color(0.2f, 0.32f, 0.55f));
-            PlaceParkedCar("MSCP roof car B", new Vector3(73.5f, 6.35f, 47.2f), 90f, new Color(0.85f, 0.85f, 0.82f));
-            PlaceParkedCar("MSCP roof car C", new Vector3(69.8f, 6.35f, 43.6f), 90f, new Color(0.62f, 0.18f, 0.16f));
-            PlaceParkedCar("MSCP roof car D", new Vector3(64.4f, 6.35f, 48.4f), 88f, new Color(0.18f, 0.18f, 0.2f));
+            PlaceParkedCar("MSCP roof car A", new Vector3(66f, 9.15f, 46f), 90f, new Color(0.2f, 0.32f, 0.55f));
+            PlaceParkedCar("MSCP roof car B", new Vector3(73.5f, 9.15f, 47.2f), 90f, new Color(0.85f, 0.85f, 0.82f));
+            PlaceParkedCar("MSCP roof car C", new Vector3(69.8f, 9.15f, 43.6f), 90f, new Color(0.62f, 0.18f, 0.16f));
+            PlaceParkedCar("MSCP roof car D", new Vector3(64.4f, 9.15f, 48.4f), 88f, new Color(0.18f, 0.18f, 0.2f));
+            PlaceParkedCar("MSCP roof car E", new Vector3(75.2f, 9.15f, 44.8f), 92f, new Color(0.15f, 0.42f, 0.32f));
             PlaceContactShadow("MSCP contact", new Vector3(70f, 0.035f, 46f), new Vector3(17.5f, 0.02f, 12.5f), 0.16f);
         }
 
@@ -6714,13 +6722,13 @@ namespace Airside.Presentation
             var plinth = Shade(AirsideTheme.Concrete, 0.92f);
             var navy = new Color(0.12f, 0.2f, 0.34f);
             var ochre = new Color(0.86f, 0.5f, 0.16f);
-            CreateBlock("Adelaide monument plinth", new Vector3(34f, 0.22f, 37.4f), new Vector3(3.8f, 0.44f, 1.9f), plinth);
-            var legL = CreateBlock("Adelaide monument leg L", new Vector3(33.15f, 2.15f, 37.4f), new Vector3(0.55f, 3.9f, 0.42f), navy);
+            CreateBlock("Adelaide monument plinth", new Vector3(34f, 0.28f, 37.4f), new Vector3(5.2f, 0.56f, 2.4f), plinth);
+            var legL = CreateBlock("Adelaide monument leg L", new Vector3(32.85f, 3.35f, 37.4f), new Vector3(0.7f, 6.2f, 0.52f), navy);
             legL.transform.rotation = Quaternion.Euler(0f, 0f, 16f);
-            var legR = CreateBlock("Adelaide monument leg R", new Vector3(34.85f, 2.15f, 37.4f), new Vector3(0.55f, 3.9f, 0.42f), navy);
+            var legR = CreateBlock("Adelaide monument leg R", new Vector3(35.15f, 3.35f, 37.4f), new Vector3(0.7f, 6.2f, 0.52f), navy);
             legR.transform.rotation = Quaternion.Euler(0f, 0f, -16f);
-            CreateBlock("Adelaide monument bar", new Vector3(34f, 1.85f, 37.55f), new Vector3(1.7f, 0.22f, 0.28f), ochre);
-            PlaceContactShadow("Adelaide monument contact", new Vector3(34f, 0.04f, 37.4f), new Vector3(4.2f, 0.02f, 2.2f), 0.14f);
+            CreateBlock("Adelaide monument bar", new Vector3(34f, 2.85f, 37.6f), new Vector3(2.3f, 0.28f, 0.36f), ochre);
+            PlaceContactShadow("Adelaide monument contact", new Vector3(34f, 0.04f, 37.4f), new Vector3(5.6f, 0.02f, 2.8f), 0.14f);
         }
 
         /// <summary>Yellow fingerboard on the eastern arterial — city airport approach, not empty asphalt.</summary>
@@ -7348,10 +7356,11 @@ namespace Airside.Presentation
 
                 if (overGulf)
                 {
-                    CreateBlock($"ALS pier {i}", new Vector3(x, 0.95f, 0f), new Vector3(0.22f, 2.3f, 0.22f), stem);
-                    CreateBlock($"ALS pier cap {i}", new Vector3(x, 2.12f, 0f), new Vector3(0.85f, 0.12f, 0.85f), Shade(stem, 1.12f));
-                    CreateBlock($"ALS pier pile L {i}", new Vector3(x, 0.4f, -0.55f), new Vector3(0.14f, 1.5f, 0.14f), Shade(stem, 0.92f));
-                    CreateBlock($"ALS pier pile R {i}", new Vector3(x, 0.4f, 0.55f), new Vector3(0.14f, 1.5f, 0.14f), Shade(stem, 0.92f));
+                    CreateBlock($"ALS pier {i}", new Vector3(x, 0.95f, 0f), new Vector3(0.28f, 2.3f, 0.28f), stem);
+                    CreateBlock($"ALS pier cap {i}", new Vector3(x, 2.18f, 0f), new Vector3(1.55f, 0.16f, 1.55f), Shade(stem, 1.12f));
+                    CreateBlock($"ALS pier deck {i}", new Vector3(x, 1.85f, 0f), new Vector3(0.7f, 0.1f, 2.4f), Shade(stem, 1.05f));
+                    CreateBlock($"ALS pier pile L {i}", new Vector3(x, 0.4f, -0.7f), new Vector3(0.16f, 1.5f, 0.16f), Shade(stem, 0.92f));
+                    CreateBlock($"ALS pier pile R {i}", new Vector3(x, 0.4f, 0.7f), new Vector3(0.16f, 1.5f, 0.16f), Shade(stem, 0.92f));
                 }
 
                 AlsPart("edge_base", stem);
@@ -7432,23 +7441,21 @@ namespace Airside.Presentation
                 var light = lampGo.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.95f, 0.85f);
-                light.range = 16f + i * 0.9f;
+                light.range = 28f + i * 1.4f;
                 light.spotAngle = 42f;
                 light.innerSpotAngle = 18f;
                 light.intensity = 0f;
                 light.shadows = LightShadows.None;
 
-                // Emissive lens proxy only on greybox path — kit stations already ship edge_lens.
-                if (!kitStation)
+                // Emissive bead even when the kit stamped a fixture — 318 m gulf
+                // shot needs a readable ladder, not a 10 cm edge_lens.
+                var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.92f + pierLift, 0f), new Vector3(0.48f, 0.16f, 0.48f),
+                    new Color(1f, 0.97f, 0.88f));
+                var lensRenderer = lens.GetComponent<Renderer>();
+                if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
                 {
-                    var lens = CreateBlock($"ALS lens {i}", new Vector3(x, 0.78f + pierLift, 0f), new Vector3(0.28f, 0.12f, 0.28f),
-                        new Color(1f, 0.97f, 0.88f));
-                    var lensRenderer = lens.GetComponent<Renderer>();
-                    if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
-                    {
-                        lensRenderer.material.EnableKeyword("_EMISSION");
-                        lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
-                    }
+                    lensRenderer.material.EnableKeyword("_EMISSION");
+                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.8f);
                 }
             }
 
@@ -10468,6 +10475,18 @@ namespace Airside.Presentation
                     && n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("spinner", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("flap", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("aileron", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("spoiler", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("pylon", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("belly", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("livery", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("rudder", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("dorsal", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("cowl", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("intake", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("fairing", StringComparison.OrdinalIgnoreCase) < 0
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))

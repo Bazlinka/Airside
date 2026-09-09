@@ -5,6 +5,526 @@ change it describes.
 
 ## Unreleased
 
+- **Ground authenticity + aerodrome ATC (cycle 136).** Apron→Alpha mid fillets; vacated cue now
+  hands off to Kingscote Ground / taxi-to-stand; taxi-to-stand phrases add surface wind + remain
+  this frequency. Evidence: Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 135).** Hold bars K/L + Alpha edge east near A2;
+  soft taxi-lead throat/mouth fillets; departure hold traffic names real arrivals / lined-up /
+  FIFO leaders (no fake "on approach"). Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 134).** Outer far rim to ±152 for overview 155
+  (240 tiles, then subdivided); runway blast pads refined; mid-downwind / base / final / cleared-to-
+  land deepened. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 133).** Overview camera 155 + larger horizon dome
+  (330×150); established-final phrase deepened. Evidence: brace depth 0; Unity Editor open — Press
+  Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 132).** Jetty/service/car-park pads ≥3.7 subdivided
+  (Jetty deck Find target kept); denser service-lane paint; short-final clearance deepened.
+  Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 131).** Car-park/grass/coast/outer pads ≥4.8
+  subdivided (~2169); apron corner chord fillets; denser runway edge fallback; arrivals name
+  lined-up / hold-short departures; on-stand + continue-approach deepened. Evidence: brace depth 0;
+  Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 130).** Apron/fringe/fuel/stand pads ≥4 subdivided
+  (~33); takeoff clearance acknowledges prior line-up-and-wait. Evidence: brace depth 0; Unity
+  Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 129).** Denser access centre/edge paint; extra runway
+  mid dashes; denser stand lead-ins; traffic advisory names number-two departure. Evidence: brace
+  depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 128).** Taxiway/access/fuel/apron pads ≥4.5
+  subdivided (~77); denser Alpha centreline + edge paint; LUAW window 6s + conditional landing 5s;
+  mid-roll radar contact cue. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 127).** Remaining hangar-apron tiles ≥5 subdivided;
+  hold-short Alpha deepened (surface wind + vehicle caution). Evidence: brace depth 0; Unity Editor
+  open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 126).** Join-downwind adds squawk VFR; go-around
+  highlights in ATC hot HUD with left-circuit label. Evidence: brace depth 0; Unity Editor open —
+  Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 125).** Hangar/runway/stand pads ≥5 subdivided (~54);
+  denser car-park bay/stall paint even with kerbs; give-way taxi phrase deepened. Evidence: brace
+  depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 124).** West-mid Alpha hold bars I/J; denser aiming
+  points (−6/6); conditional landing deepened (surface wind + acknowledge). Evidence: brace depth 0;
+  Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 123).** Hangar apron lead/edge/stop paint; ground-hold
+  and expect-landing clearances deepened (vehicle caution / vacate via Alpha). Evidence: brace
+  depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 122).** Pads ≥5.8 then grass/paddock ≥5.5 subdivided
+  (~2600 parents; CreateBlock ~19496); ARFF apron tiles + bay paint; fuel-pad paint retained;
+  go-around adds airborne report / no turns below circuit height; frequency change + apron hold
+  deepened. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 121).** Taxiway/runway-mid/access/grass pads ≥5.5–6.2
+  subdivided (~1054); service-lane paint always drawn (was skipped with kerbs); fuel-pad bay paint;
+  engine-start / pushback deepened; short-roll airborne cue. Evidence: brace depth 0; Unity Editor
+  open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 120).** Pads ≥6.5 + jetty approach subdivided
+  (~963); denser access-road centre paint; continue-taxi inbound/outbound phrases deepened.
+  Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 119).** Pads/shoulders/coast ≥7 subdivided (~913);
+  denser Alpha centreline + Stand 2/3 chevrons; vacated phrase no longer duplicates Contact Ground
+  (expects Ground taxi next). Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 118).** Denser Alpha taxi edge paint; radar contact
+  includes squawk VFR. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 117).** Pads ≥7.5 subdivided (~708); jetty mid
+  tiles + apron bay joints; duplicate Contact Ground on taxi-in removed; number-two traffic still
+  gets established/short-final cues; ready-for-departure expects clearance when number one.
+  Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 116).** Far rim tiles subdivided; taxi-in now issues
+  Contact Ground before taxi-to-stand; takeoff clearance includes circuit height 1000 ft. Evidence:
+  brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 115).** Overview camera 145 + far grass rim (~168
+  tiles) + larger horizon dome; jetty deck subdivided; pads ≥8 subdivided (~634); go-around /
+  orbit / radar / airborne use circuit height 1000 ft. Evidence: brace depth 0; Unity Editor open —
+  Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 114).** Pads ≥8.5 subdivided (~409); join-downwind
+  phrases circuit height 1000 ft. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 113).** Denser runway centre/edge paint; Ground
+  contact phrase adds apron vehicle caution. Evidence: brace depth 0; Unity Editor open — Press Play.
+
+- **Ground authenticity + aerodrome ATC (cycle 112).** Pads ≥9 further subdivided (~819); HUD
+  mid-downwind / hold-short-runway labels (brace fix). Evidence: brace depth 0; Unity Editor open —
+  Press Play to audit.
+
+- **Ground authenticity + aerodrome ATC (cycle 111).** Remaining pads ≥10 subdivided (~386);
+  HUD adds mid-downwind + hold-short-runway clearance labels. Evidence: brace/string checks;
+  Unity Editor open — Press Play to audit.
+
+- **Ground authenticity + aerodrome ATC (cycle 110).** Outer paddock tiles further subdivided
+  (~657); apron-hold phrase adds vehicle caution. Evidence: brace/string checks; Unity Editor
+  open — Press Play to audit.
+
+- **Ground authenticity + aerodrome ATC (cycle 109).** Large grass/coast/runway pads subdivided
+  (~572); taxi-to-hold includes surface wind. Evidence: brace/string checks; Unity Editor open —
+  Press Play to audit.
+
+- **Ground authenticity + aerodrome ATC (cycle 108).** Apron/access/car-park/service/grass pads
+  further subdivided (~537); established / airborne / traffic-advisory / hold-short / LUAW
+  include QNH. Evidence: brace/string checks; capture blocked on macOS 15.
+
+- **Ground authenticity + aerodrome ATC (cycle 107).** Further subdivided runway shoulders /
+  infield / coast / far grass (~354 pads); mid-Alpha taxi paint + denser TDZ; circuit /
+  frequency-change / number-two / conditional-land phraseology includes QNH. Evidence:
+  brace/string checks; capture blocked on macOS 15.
+
+- **Ground authenticity + aerodrome ATC (cycle 106).** E/W outer horizon + shoulders/infield/far grass
+  further subdivided; mid-Alpha hold bars G/H; short-final / taxi-to-stand / vacate / on-stand
+  phraseology deepened. Evidence: brace/string checks; capture blocked on macOS 15.
+
+- **Ground authenticity + aerodrome ATC (cycle 105).** Outer E/W horizon rim at ±132; continue-approach
+  includes QNH. Evidence: brace/string checks; capture blocked on macOS 15.
+
+- **Ground authenticity + aerodrome ATC (cycle 104).** Subdivided blocky outer horizon rim (18×6 →
+  ~13.5 max); further runway/apron/fuel/coast tiling; takeoff / go-around / number-two departure /
+  expect-landing phraseology deepened. Evidence: brace/string checks; capture blocked on macOS 15.
+
+- **Ground authenticity + aerodrome ATC (cycle 103).** Outer N/S horizon rim beyond overview 132;
+  min-approach / conditional-land / radar-contact / apron-hold phraseology deepened with QNH and
+  vacate reports. Evidence: brace/string checks; window capture blocked on macOS 15 ScreenCaptureKit.
+
+- **Ground authenticity + aerodrome ATC (cycle 102).** Runway/stand/grass/coast tiles further subdivided;
+  denser runway edge paint; larger horizon dome for overview 132; vacated/join/orbit/Alpha-hold
+  phraseology deepened; Alpha holds against ground traffic now name the opposing callsign.
+  Evidence: brace/string checks; screen capture still black (TCC); batchmode blocked by Editor.
+
+- **Ground authenticity + aerodrome ATC (cycle 101).** Overview camera 132; denser runway centreline;
+  inbound continue-taxi HUD label; give-way includes QNH; number-two landing expects Alpha vacate.
+  Evidence: brace/string checks; screen capture still solid black (TCC); batchmode blocked by Editor.
+
+- **Ground authenticity + aerodrome ATC (cycle 100).** Further grass/coast/apron tiling; engine-start /
+  pushback / traffic-advisory / hold-short include surface wind / frequency / apron vehicle cautions.
+  Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 99).** Apron/access/grass/coast pads further subdivided;
+  denser Alpha edge paint, apron chevrons, taxi arrows; ready/mid-downwind/base/ground-hold/taxi-out
+  phraseology deepened. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 98).** Continue-taxi after inbound holds directs to the
+  apron/stand (not runway 09 hold-short). Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 97).** Taxiway Alpha main slabs ≥10 subdivided;
+  frequency change signs off from Kingscote Tower; turning-final reports runway is clear. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 96).** Coast sand/berms ≥20 subdivided; denser Alpha/
+  A1/A2 taxi centre dashes; LUAW holds position on the runway and asks for acknowledge. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 95).** Grass/paddock tiles ≥22 subdivided; cleared-to-land
+  says runway is clear; established final expects landing clearance. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 94).** Apron/car-park/access pads ≥14 subdivided;
+  denser threshold bars/side stripes; apron contention uses HoldApron with named traffic (no longer
+  mis-phrased as Alpha give-way); airborne reports no turns below circuit height; continue-taxi
+  includes QNH. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 93).** Denser perimeter fence posts/rails; ARFF apron
+  split; Ground contact includes QNH. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 92).** Denser runway centreline / aiming / TDZ paint;
+  min approach speed reports base then short final. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 91).** Blast pads + remaining apron/access pads
+  subdivided; overview 128; apron hold is a real clearance (HoldApron) with HUD/pulse; Adelaide
+  Centre 125.3 on frequency change. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 90).** More apron/car-park/access pads subdivided;
+  join-downwind names Kingscote Tower; weather remarks say surface wind calm. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 89).** Runway edge paint segmented (no 88 m slabs);
+  service lane pads + paint dashed; opposing taxi traffic says “taxiing opposite”; hold-short Alpha
+  continues via Alpha. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 88).** Stand 3 / apron bay pads subdivided; cleared
+  to land asks report runway vacated; continue approach includes number one expected. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 87).** Taxiway A shoulders + S2 berms subdivided;
+  fuel pads split; wet matching uses Fuel pad prefix; give-way / ground-hold / expect-landing
+  phraseology deepened. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 86).** Stand bay box paint segmented; arrival traffic
+  advisories can name mid-downwind callsigns. Evidence: brace/string checks; batchmode blocked by
+  Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 85).** Car-park kerbs split W/E; pushback advises
+  taxi via Alpha; radar contact asks report frequency change when clear. Evidence: brace/string
+  checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 84).** Terminal canopy slab/edge/glow/glass
+  subdivided (night glow collect includes W/E); conditional landing says “when the runway is
+  vacated”. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 83).** Overview camera 125; access turn/road
+  shoulders subdivided; mid-downwind number-one expected; engine-start taxi via Alpha. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 82).** Hangar apron pads subdivided; taxi-to-stand /
+  hold-short / on-stand phraseology names Alpha and chocks. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 81).** Car-park bay/stall paint segmented; terminal
+  planter split; wet-paint prefixes for access/exit centre paint; number-two landing + short-final
+  phraseology tightened. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 80).** Landside access paint dashed (centreline/
+  edges/turn); hold-short Alpha / orbit / go-around phraseology aligned with mid-downwind
+  reports. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 79).** Split long runway shoulders; jetty deck/rails
+  segmented; A2 exit centreline dashes; base/final/vacate/Ground contact phraseology deepened.
+  Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 78).** A2 exit night lights; apron fringe W/E
+  tiles; fuel bund as four walls (not a solid slab); number-two / ready / traffic advisory name
+  holding point Alpha. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 77).** Eastern Taxiway A2 exit chord + hold bars;
+  infield grass between runway and Alpha subdivided; hold-short pulse collects by prefix (fixes
+  A1/A2 bars); LUAW / hold-short / continue-taxi / takeoff name holding point Alpha. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 76).** Denser Taxiway Alpha dashed centreline and
+  segmented edge paint; eastern hold-short bars; mid-downwind clearance accepted through the
+  short-final chain; minimum approach speed includes wind. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 75).** Fixed coast foam/water bobbing — collect by
+  prefix instead of stale exact names; further split foam pads (~5029 CreateBlocks); arrival/
+  leading traffic advisories name the other aircraft’s callsign. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 74).** Split pads ≥24 including dunes/coast
+  (~5020 CreateBlocks); coast bob rebuilt; mid-downwind report clearance + sim wiring;
+  go-around climbs to circuit height; number-two departure includes wind. Evidence:
+  brace/bob sync checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 73).** Split pads ≥28 and remaining Taxiway A
+  (~4203 CreateBlocks); Access road / car-park aisle wet prefixes; landing/takeoff weather
+  remarks include QNH; frequency change says radar service terminated; apron hold names
+  apron traffic. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 72).** Split coast water/shallows ≥30 (~3658
+  CreateBlocks); coast bob list rebuilt; pushback asks report clear of stand; established
+  final asks report short final. Evidence: brace/bob sync checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 71).** Added horizon rim (72 tiles); map
+  ~268×244; split grass/outer/sand ≥32 (~3577 CreateBlocks); overview camera 120; climb-out
+  and radar contact to circuit height; engine start asks contact Ground for taxi; ground
+  hold includes wind. Evidence: brace/bob sync checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 70).** Split paved/infield/taxi pads ≥24
+  (~3346 CreateBlocks); overview camera 110; join downwind asks mid-downwind then base;
+  line-up-and-wait can name arrival traffic. Evidence: brace checks; batchmode blocked by
+  Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 69).** Cleared ≥35 ground pads (~3305
+  CreateBlocks); coast bob list rebuilt; taxi-to-stand cautions vehicles on apron; report
+  turning final; short final says runway is yours shortly. Evidence: brace/bob sync checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 68).** Cleared ≥40 ground pads (~3026
+  CreateBlocks); wet helpers use Stand 3 / car-park bay prefixes; hold-short runway can
+  name arrival traffic; contact Ground taxis via Alpha; ready-for-departure includes QNH;
+  report turning base. Evidence: brace/string/bob sync checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 67).** Cleared ≥45 ground pads (~2831
+  CreateBlocks); continue-taxi after hold says traffic clear; hold-short Alpha can name
+  traffic + wind; vacated warns wake for following; taxi-out asks report ready for
+  departure. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 66).** Cleared ≥50 ground pads and finer
+  apron quarters; overview camera 100; on-stand welcomes to Kingscote; taxi give-way
+  names opposing callsign; reasoned go-around asks acknowledge. Evidence: brace/string
+  checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 65).** Cleared ≥60 ground pads; subdivided
+  blast pads, apron bays, grass ribbons; outer NW/NE/SW/SE rim corners; Runway blast
+  wet/paved prefix; continue-approach can caution wake; engine start says park brake set;
+  landing-block reason names landing traffic. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 64).** Cleared ≥65 ground pads; removed stale
+  apron-north exact wet names (covered by Apron prefix); pushback cautions jet blast
+  behind. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 63).** Cleared ≥70 ground pads; further
+  subdivided runway slabs; hangar apron N/S split with Hangar apron wet/paved prefix;
+  departure radar contact is climb-out (not report downwind); frequency change contacts
+  Adelaide Centre; report-airborne includes wind. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 62).** Cleared remaining ≥80 ground pads
+  including relief berms; conditional landing confirms number one. Evidence: brace/string
+  checks; desktop capture black (TCC); batchmode blocked by Editor.
+
+- **Ground authenticity + aerodrome ATC (cycle 61).** Cleared remaining ≥90 ground pads;
+  expect-landing says number one expected; ground-hold asks report when clear.
+  Evidence: brace/string checks; desktop capture black (TCC); batchmode blocked by Editor.
+
+- **Ground authenticity + aerodrome ATC (cycle 60).** Cleared ≥100 ground pads and
+  subdivided apron quarters/north extensions; outer N/S/E/W rim shelves; overview
+  camera 96; report-established / ready-for-departure / taxi-to-stand / contact-ground
+  phrase polish. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 59).** Cleared remaining ≥110 ground pads;
+  join-left-downwind says make left circuit; coast bob list kept synced (72 water/
+  shallows). Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 58).** Cleared remaining ≥120 ground pads
+  (hangar left intact); coast water/shallows bob list kept in sync; report-base asks
+  expect further clearance. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 57).** Cleared remaining ≥140 pads; rebuilt
+  coast water/shallows bob list after renames; further subdivided runway W/E/mid and apron
+  bays; short-final confirms number one. Evidence: brace/string checks; batchmode blocked
+  by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 56).** Cleared remaining ≥160 pads; fixed
+  coast shallows bobbing names after mid-WW split; continue-approach can name lead
+  traffic. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 55).** Cleared remaining ≥180 pads
+  (paddocks, fringes, hills, coast sand, far shelves); left-orbit phrase can name
+  lead traffic. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 54).** Cleared remaining ≥200 grass /
+  paddock / fringe / hill pads; number-two landing and min-approach-speed phrases name
+  leading traffic progress. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 53).** Taxiway A main + shoulders subdivided;
+  remaining ≥220 grass/paddock/hill pads cleared; wet/paved matching uses Taxiway A prefix;
+  number-two departure traffic phrase follows arrival progress. Evidence: brace/string
+  checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 52).** Runway W/mid/E and apron quarters
+  further subdivided; runway shoulder mids + coast water E2 split; wet/paved name matching
+  uses Runway/Apron prefixes; LUAW “behind landing” only on wake caution; taxi-to-hold and
+  apron-hold phrases ask report ready/clear. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 51).** Outer paddocks + mid/corner *b grass
+  cleared below area 240; apron bay N/S halved; departure traffic advisories name arrival
+  progress (circuit/base/final/short final/landing); approach report cues resume after
+  orbit/go-around. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 50).** Cleared remaining ≥250 far mid/corner
+  pads + fringe NW1W; SW2a/SE1a/NW2a/NE1a grass halved; far E/W map shelves (then N/S
+  halved); overview 92; join/orbit wind; go-around report downwind; traffic-advisory
+  report ready. Evidence: brace/string checks; Unity AX windows=0; batchmode blocked by
+  Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 49).** Corner grass pads SW1a/SE2a/NW1a/NE2a
+  halved W/E; fallback S1a/N2a/N1b paddocks + coast water W2 + hills NW1E/SW W split; LUAW
+  report ready for departure; number-two wind; min-approach report base; radar report
+  downwind. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 48).** Coast water E1 + shallows W2 + kit
+  E/W paddock N + far-N grass W2/E1 halved; far-S map shelf; overview camera 88; conditional
+  land / on-stand / hold-short runway phrase polish. Evidence: brace/string checks; Unity
+  AX windows=0 (no Game capture); batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 47).** Kit N1a + far-N grass W1/E2 + hills
+  WS/NW1/EN + coast shallows E2 + far-S E paddocks halved; expedite taxi report-on-stand;
+  give-way / continue-taxi report polish. Evidence: brace/string checks; batchmode blocked
+  by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 46).** Last ≥300 fringe WS2/ES2 + coast
+  shallows W1/E1 + coast water mid-E/W1 halved; water bobbing name list resynced; ready-
+  for-departure and hold-short Alpha phrase polish. Evidence: brace/string checks;
+  Unity window not AX-accessible for Game capture; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 45).** Fallback W/E paddocks + far-S grass
+  W2/E1 + hills WS/EN + coast water mid-W halved; expect-landing asks report short final.
+  Evidence: brace/string checks; desktop capture black (Editor not Game-view); batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 44).** Fallback N1a + far-S grass/paddocks +
+  kit S1b halved; continue-approach asks report short final; report-final number one
+  expected; number-two departure names traffic on final. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 43).** Far-N paddocks/shelf + kit/fallback
+  S1a/N2b/E1a/W1a and S2 paddocks halved; coast sand E + shallows mid + E/W fringes split;
+  hills NE2/WN refined; land/takeoff/vacate phraseology adds vacate-via-Alpha / report-
+  airborne when able. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 42).** Fallback south S1b/S2a paddocks halved;
+  SW/SE grass fringes + coast sand mid split; departure LUAW/number-two/ready/hold now
+  log on clearance change; LUAW asks report ready. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 41).** Mid-belt and mid-column *b grass
+  halved; kit N1b/N2a paddocks + EN/WN fringes split; approach sequencing and taxi holds
+  now log ATC on clearance change (not every stall tick); expect-landing wind; short-
+  final “shortly”. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 40).** Remaining corner *b grass pads halved;
+  fallback N2b paddocks + Hill ES + coast water E2; far SW/SE map corners; taxi/pushback
+  QNH; contact-ground after vacate; squawk VFR on frequency change; established wind.
+  Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 39).** Fallback N/S outer paddocks halved;
+  mid-column and mid-belt grass pads refined; engine-start QNH; min-approach traffic
+  ahead; orbit at circuit height; number-two departure expect further. Evidence:
+  brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 38).** Corner grass pads halved N/S; far
+  NW/NE map corner extensions; fringe NE2/SW1 split; left-hand circuit height join;
+  report-base wind; radar identified; give-way on Alpha. Evidence: brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 37).** North paddock N1a split; coast water
+  ribbons halved N/S; far E/W mid grass + NW fringes refined; NW/NE hills halved; report-
+  airborne/final and number-two phrase polish. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 36).** Outer S/E/W paddocks further split
+  (kit + fallback); Hill far SW/SE halved; hold-short Alpha names opposing traffic; LUAW
+  includes surface wind. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 35).** Mid-column grass pads halved; far
+  N/S outer paddocks split (kit + fallback); foam inner/outer ribbons; taxi QNH 1013;
+  go-around calls left circuit. Evidence: brace/string checks; batchmode blocked by
+  Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 34).** Remaining wide grass pads halved;
+  coast foam into six ribbons; Hill far WS/EN split; taxi-to-hold fog caution; continue-
+  taxi and ready-for-departure phrase polish. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 33).** N/S paddocks further split; runway
+  wear into three decals; overview camera 80; short-final ATC cue on approach.
+  Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 32).** Far E/W mid-band grass for bigger
+  map; Taxiway Alpha into six segments; join-downwind monitors frequency; pushback
+  warns jet blast. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 31).** Far-north grass fill; fallback E/W
+  paddocks split; commercials blocked by other commercials get give-way-taxiing ATC.
+  Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 30).** Far-south grass fill; hangar apron
+  split W/E; continue-taxi clearance after a commercial hold clears. Evidence:
+  coverage/brace checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 29).** Fixed mid-band grass gap under the
+  runway/taxi belt; apron split into NW/SW/NE/SE; far-south paddock extension; taxi-to-
+  hold remarks wet surface in rain. Evidence: geometry check; brace/string checks;
+  batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 28).** North paddocks refined + far-north
+  map extension; car park bays split; number-two escalates to min approach speed then
+  orbit; Alpha holds say hold short Alpha. Evidence: brace/string checks; batchmode
+  blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 27).** Runway shoulders further segmented;
+  overview camera pulled back to 72; line-up-and-wait says "behind the landing" when
+  separation is still draining. Evidence: brace/string checks; screen capture still
+  black (macOS -10827); batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 26).** Grass pads to 16 tiles; apron split
+  W/E; number-two waits escalate to left orbit; departure gets radar contact before
+  frequency change. Evidence: brace/string checks; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 25).** Grass pads refined to 8 tiles; runway
+  segmented W/mid/E; coast shallows/water further split; approach asks report final;
+  conditional land-when-vacated HUD + tests. Evidence: brace/string checks; batchmode
+  blocked by Editor lock; screen capture blocked (macOS -10827).
+
+- **Ground authenticity + aerodrome ATC (cycle 24).** Outer N/S paddocks split (kit + fallback);
+  landing clearances in the wake window say traffic vacating via Alpha. Evidence: string/brace
+  checks; display capture blocked (macOS -10827); batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 23).** Main grass pad tiled into NW/NE/SW/SE;
+  coast sand and outer paddocks further segmented; inbound ATC joins left downwind and
+  reports base (also after go-around). Fixed duplicate ReportAirborne EditMode test.
+  Evidence: brace/string checks; display capture blocked (macOS -10827); batchmode blocked
+  by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 22).** GT holds say "give way to
+  commercial" when blocked by airline traffic; remaining S/E/W grass fringes
+  segmented. Evidence: Editor Play audit; batchmode blocked by Editor lock.
+
+- **Ground authenticity + aerodrome ATC (cycle 21).** Takeoff asks to report airborne;
+  kit-path outer E/W paddocks and north grass fringes further segmented. Evidence:
+  Editor Play audit; batchmode blocked by Editor lock.
+
+- **Fix three visible aircraft bugs.** (1) Fleet aircraft (GT-201) taxiing out
+  from a stand cut the corner straight to the A1/A2 junction and drove across the
+  infield grass — the outbound route now reverses the arrival path exactly (down
+  the lead-in to the A2 join, then along the taxiway). (2) Commercial liveries
+  were assigned by transient flight-list index, so a respawn-driven re-sort could
+  repaint an aircraft mid-life or leave both commercials in the same paint; each
+  aircraft now holds a stable livery slot keyed by its id. (3) Landing-gear doors
+  keyed off "airborne" and shut on approach while the legs were still extended
+  (struts clipping through closed doors); doors now track gear deployment.
+  Evidence: Unity EditMode 131/131.
 - **Session handoff after fidelity #167.** Point resume at `main`; Mac overview
   vs Approved modelling boards is the next sign-off. No behaviour change.
 

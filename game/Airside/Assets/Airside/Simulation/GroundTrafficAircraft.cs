@@ -365,8 +365,12 @@ namespace Airside.Simulation
                 new Leg("Taxi in on A2", corridorA2, junction, alphaEnd, 14),
                 new Leg($"Taxi to {label}", new[] { leadIn, stand }, alphaEnd, standPoint, 10),
                 new Leg($"At {label}", new[] { stand }, standPoint, standPoint, 40, parks: true),
-                // First outbound leg must still hold the stand lead-in until clear of the bay.
-                new Leg("Taxi out on A2", new[] { leadIn, AirportTaxiNetwork.Corridor, AirportTaxiNetwork.AlphaTwo }, standPoint, junction, 16),
+                // Reverse the arrival path exactly: down the lead-in to the A2 join,
+                // then along the taxiway. A single stand → junction leg cut the
+                // corner and drove the model across the infield grass. Keep the
+                // lead-in reserved until clear of the bay.
+                new Leg($"Taxi out from {label}", new[] { leadIn, stand }, standPoint, alphaEnd, 10),
+                new Leg("Taxi out on A2", corridorA2, alphaEnd, junction, 14),
                 new Leg("Taxi out on A1", corridorA1, junction, runwayEnd, 14),
                 new Leg("Departing", None, runwayEnd, offField, 8),
                 new Leg("Away", None, away, away, 30)

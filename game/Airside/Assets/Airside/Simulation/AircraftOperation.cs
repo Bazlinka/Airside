@@ -94,6 +94,17 @@ namespace Airside.Simulation
             PhaseStartedAt = PhaseStartedAt.Advance(1);
         }
 
+        /// <summary>
+        /// Restart the approach phase clock (go-around / missed approach). Does not
+        /// change the phase enum — presentation and saves stay compatible.
+        /// </summary>
+        public void RestartApproach(SimulationTime now)
+        {
+            if (Phase != AircraftPhase.Approach)
+                throw new InvalidOperationException("Only an approach can be restarted as a go-around.");
+            PhaseStartedAt = now;
+        }
+
         private bool AdvanceToInternal(SimulationTime now, Func<AircraftPhase, bool> canLeavePhase, bool preserveSchedule)
         {
             if (now.CompareTo(PhaseStartedAt) < 0)

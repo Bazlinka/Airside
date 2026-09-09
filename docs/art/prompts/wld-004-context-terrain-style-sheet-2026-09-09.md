@@ -1,6 +1,6 @@
 # WLD-004 context terrain style-sheet candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime asset:** WLD-004 `mdl_kingscote_context_terrain_v01`
 
@@ -8,7 +8,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_kingscote_context_terrain_catalogue_v01.png`
+- **Output:** `docs/art/reference/ref_kingscote_context_terrain_catalogue_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1680×945 RGB
 - **Prepared dimensions:** 2048×1152 RGB
@@ -54,5 +54,5 @@ Edit the generated terrain catalogue sheet while preserving its overall camera, 
 - No runway, taxiway, markings, roads, buildings, vehicles, aircraft, people,
   labels, logos, UI, watermark or real-map coastline.
 
-This image is reference evidence for a future WLD-004 fidelity pass. It is not
+This image is the Approved modelling target for the WLD-004 fidelity pass. It is not
 a runtime texture, terrain mesh, material set or approval decision.

@@ -1,6 +1,6 @@
 # Turnaround service-set day/dusk candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime assets:** AIR-001, VEH-001…004 and PRP-001
 
@@ -8,7 +8,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_turnaround_service_set_day_dusk_v01.png`
+- **Output:** `docs/art/reference/ref_turnaround_service_set_day_dusk_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1991×790 RGB
 - **Prepared dimensions:** 2048×812 RGB

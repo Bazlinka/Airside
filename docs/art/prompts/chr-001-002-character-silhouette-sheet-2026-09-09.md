@@ -1,6 +1,6 @@
 # CHR-001 / CHR-002 character silhouette-sheet candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime assets:** CHR-001 `mdl_ramp_crew_kit_v02` and CHR-002
 `mdl_passenger_kit_v02`
@@ -9,7 +9,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_airside_character_silhouette_kit_v01.png`
+- **Output:** `docs/art/reference/ref_airside_character_silhouette_kit_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1983×793 RGB
 - **Prepared dimensions:** 2048×819 RGB

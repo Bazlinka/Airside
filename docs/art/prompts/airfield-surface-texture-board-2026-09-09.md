@@ -1,6 +1,6 @@
 # Airfield surface texture-board candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime assets:** TEX-SRF-001…003, `tx_sand_coast_*` and MAT-001 wet
 
@@ -8,7 +8,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_airfield_surface_texture_board_v01.png`
+- **Output:** `docs/art/reference/ref_airfield_surface_texture_board_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1536×1024 RGB
 - **Prepared dimensions:** 2048×1365 RGB

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Integrate Bailey-approved fidelity boards.** Promote seven modelling boards
+  into `docs/art/reference/`. Prefer denser runtime art against them: VEG-002
+  scrub kit v02 (grass/rock/dune mixes), WLD-004 terrain kit v02, seamless
+  surface maps `tx_*_v02`, ARFF truck/shed Resources prefabs v02, CHR apron
+  silhouette coverage, and existing BLD v05 / turnaround fleet v06 as the
+  approved building and service targets. v01 kits/maps remain fallbacks.
+
 - **Regional ARFF facility fidelity reference.** Add a 2048×1152 scene with a
   fictional compact rescue truck, modest open-bay corrugated shed and larger
   background-hangar scale cue. A corrective pass removes recognisable branding

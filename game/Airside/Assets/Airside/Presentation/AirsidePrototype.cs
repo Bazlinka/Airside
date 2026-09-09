@@ -1890,12 +1890,12 @@ namespace Airside.Presentation
             BuildStandMarking(17f, 26f, "Stand 3");
             CreateBlock("Stand 3 apron pad", new Vector3(20f, 0f, 26f), new Vector3(16f, 0.12f, 6f),
                 new Color(0.34f, 0.36f, 0.37f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(2f, 1f));
             CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 26f);
             // Extend apron north so Stand 3 is not an island past the concrete edge.
             CreateBlock("Apron north extension", new Vector3(20f, 0f, 24.5f), new Vector3(26f, 0.12f, 5f),
                 new Color(0.36f, 0.38f, 0.39f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 1f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(3f, 1f));
             var propsKit = PreferArtKit(
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
@@ -4743,7 +4743,7 @@ namespace Airside.Presentation
             var length = delta.magnitude + 1.6f;
             var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
             var pad = CreateBlock(name, mid, new Vector3(4.6f, 0.12f, length), new Color(0.28f, 0.3f, 0.32f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1.2f, 1.4f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
             pad.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
@@ -4751,23 +4751,23 @@ namespace Airside.Presentation
         {
             // Batch B surfaces (Approved): textured when Art PNGs load; solid colours remain fallback.
             CreateBlock("Grass", new Vector3(0f, -0.65f, 4f), new Vector3(94f, 1f, 66f), Shade(AirsideTheme.Eucalyptus, 0.55f),
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 8f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(12f, 8f));
             CreateBlock("Runway", new Vector3(0f, -0.08f, 0f), new Vector3(78f, 0.15f, 7f), new Color(0.16f, 0.18f, 0.2f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(10f, 1.2f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(10f, 1.2f));
             CreateBlock("Runway shoulder N", new Vector3(0f, -0.1f, 4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(8f, 0.3f));
             CreateBlock("Runway shoulder S", new Vector3(0f, -0.1f, -4.2f), new Vector3(76f, 0.08f, 1.4f), new Color(0.28f, 0.3f, 0.28f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(8f, 0.3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(8f, 0.3f));
             CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(48f, 0.12f, 4f), new Color(0.22f, 0.24f, 0.26f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(6f, 0.8f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(6f, 0.8f));
             // A1 runway exit / fillet — without this the taxi path (-24,0)→(-12,9) is grass.
             CreateBlock("Taxiway A exit", new Vector3(-18f, -0.02f, 4.5f), new Vector3(16f, 0.12f, 9.5f), new Color(0.22f, 0.24f, 0.26f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 1.2f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(3f, 1.2f));
             // Lead-in pads follow the actual taxi chord (8,9)→(17, standZ).
             CreateTaxiLeadPad("Taxi lead Stand 1", standZ: 14f);
             CreateTaxiLeadPad("Taxi lead Stand 2", standZ: 20f);
             CreateBlock("Apron", new Vector3(20f, 0f, 17f), new Vector3(28f, 0.12f, 14f), new Color(0.38f, 0.4f, 0.41f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(4f, 2f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(4f, 2f));
             // Skip apron joint/slab densify — MAT concrete + soft wet residual carry the read;
             // greybox joints read as scattered blocks from landing/follow cameras.
             // Batch C buildings — prefer richer v03 kits (0025 item 2) with v02/v01 fallback.
@@ -4846,7 +4846,7 @@ namespace Airside.Presentation
                     CreateBlock("Terminal service", new Vector3(32f, 1.4f, 30.5f), new Vector3(8f, 2.8f, 3f), new Color(0.58f, 0.62f, 0.64f));
                 },
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
-                surfaceTextureRelativePath: "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png",
+                surfaceTextureRelativePath: PreferSurfaceBasecolor("tx_concrete_apron"),
                 surfaceTextureTiling: new Vector2(2.5f, 1.2f),
                 surfaceMeshNames: new[]
                 {
@@ -5024,9 +5024,9 @@ namespace Airside.Presentation
             // N/S only — E/W fringe cubes read as blocks beside taxi/stand lead-ins.
             var fringe = Shade(AirsideTheme.DryGrass, 0.7f);
             CreateBlock("Apron fringe N", new Vector3(20f, -0.02f, 24.4f), new Vector3(29f, 0.06f, 1.2f), fringe,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(4f, 0.4f));
             CreateBlock("Apron fringe S", new Vector3(20f, -0.02f, 9.6f), new Vector3(29f, 0.06f, 1.2f), fringe,
-                "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 0.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(4f, 0.4f));
             // Planter strip between terminal glass and apron edge — prefer PRP-003 kit.
             if (!TryPlaceAirsidePlanterStrip())
             {
@@ -5059,29 +5059,31 @@ namespace Airside.Presentation
         {
             // Outer paddock + dry-grass fringe so the airfield is not a floating island.
             // When WLD-004 terrain accents own paddock_* meshes, keep thin fringe only.
-            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var terrainKit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_context_terrain_v02.gltf",
+                "Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
             var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
             if (hasTerrainKit)
             {
                 CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 58f), new Vector3(90f, 0.55f, 14f), Shade(AirsideTheme.DryGrass, 0.7f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 2f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(12f, 2f));
                 CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -40f), new Vector3(90f, 0.55f, 12f), Shade(AirsideTheme.DryGrass, 0.65f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(12f, 1.8f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(12f, 1.8f));
                 CreateBlock("Outer paddock E", new Vector3(72f, -0.85f, 4f), new Vector3(14f, 0.55f, 60f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 8f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 8f));
                 CreateBlock("Outer paddock W", new Vector3(-72f, -0.85f, 4f), new Vector3(14f, 0.55f, 60f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 8f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 8f));
             }
             else
             {
                 CreateBlock("Outer paddock N", new Vector3(0f, -0.85f, 48f), new Vector3(140f, 0.8f, 40f), Shade(AirsideTheme.DryGrass, 0.7f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 6f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(18f, 6f));
                 CreateBlock("Outer paddock S", new Vector3(0f, -0.85f, -36f), new Vector3(140f, 0.8f, 36f), Shade(AirsideTheme.DryGrass, 0.65f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(18f, 5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(18f, 5f));
                 CreateBlock("Outer paddock E", new Vector3(68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(5f, 12f));
                 CreateBlock("Outer paddock W", new Vector3(-68f, -0.85f, 4f), new Vector3(36f, 0.8f, 90f), Shade(AirsideTheme.Eucalyptus, 0.45f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 12f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(5f, 12f));
             }
 
             // Kangaroo Island coastal strip south of the runway (sand, not water physics).
@@ -5089,32 +5091,32 @@ namespace Airside.Presentation
             if (!hasTerrainKit)
             {
                 CreateBlock("Coast sand", new Vector3(0f, -0.55f, -48f), new Vector3(160f, 0.35f, 14f), AirsideTheme.Sand,
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(20f, 2f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(20f, 2f));
                 // Surf foam ribbon so the sand/water join reads from overview (0025 item 3).
                 CreateBlock("Coast foam", new Vector3(0f, -0.62f, -54.5f), new Vector3(165f, 0.08f, 2.2f),
                     new Color(0.88f, 0.92f, 0.95f, 0.85f),
-                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(22f, 0.4f));
+                    PreferSurfaceBasecolor("tx_water_coast"), new Vector2(22f, 0.4f));
                 CreateBlock("Coast foam inner", new Vector3(0f, -0.58f, -53.2f), new Vector3(150f, 0.05f, 1.1f),
                     new Color(0.92f, 0.95f, 0.97f, 0.55f),
-                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(18f, 0.25f));
+                    PreferSurfaceBasecolor("tx_water_coast"), new Vector2(18f, 0.25f));
                 CreateBlock("Coast foam outer", new Vector3(0f, -0.68f, -56.2f), new Vector3(170f, 0.04f, 1.4f),
                     new Color(0.78f, 0.86f, 0.92f, 0.45f),
-                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(20f, 0.3f));
+                    PreferSurfaceBasecolor("tx_water_coast"), new Vector2(20f, 0.3f));
                 CreateBlock("Coast shallows", new Vector3(0f, -0.9f, -58f), new Vector3(170f, 0.2f, 12f), new Color(0.45f, 0.68f, 0.78f),
-                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(16f, 1.5f));
+                    PreferSurfaceBasecolor("tx_water_coast"), new Vector2(16f, 1.5f));
                 CreateBlock("Coast water", new Vector3(0f, -1.15f, -72f), new Vector3(180f, 0.15f, 20f), new Color(0.22f, 0.42f, 0.58f),
-                    "Textures/Surfaces/tx_water_coast_basecolor_v01.png", new Vector2(14f, 2f));
+                    PreferSurfaceBasecolor("tx_water_coast"), new Vector2(14f, 2f));
             }
 
             BuildCoastalLife();
 
             // Landside access: terminal → car park road + bay.
             CreateBlock("Access road", new Vector3(26f, -0.02f, 38f), new Vector3(6f, 0.1f, 22f), new Color(0.2f, 0.22f, 0.24f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(1f, 4f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 4f));
             CreateBlock("Access road turn", new Vector3(38f, -0.02f, 46f), new Vector3(28f, 0.1f, 5.5f), new Color(0.2f, 0.22f, 0.24f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(4f, 1f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(4f, 1f));
             CreateBlock("Car park", new Vector3(48f, -0.01f, 46f), new Vector3(18f, 0.08f, 12f), new Color(0.28f, 0.3f, 0.32f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 2f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(3f, 2f));
             // Bay/stall paint — thin when PRP-003 kerbs already frame the park.
             var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
             var bayRows = hasForecourtKerbs ? 2 : 5;
@@ -5153,9 +5155,9 @@ namespace Airside.Presentation
             }
 
             CreateBlock("Access turn shoulder N", new Vector3(38f, -0.01f, 49.4f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(3f, 0.3f));
             CreateBlock("Access turn shoulder S", new Vector3(38f, -0.01f, 42.6f), new Vector3(24f, 0.06f, 1.0f), Shade(AirsideTheme.Concrete, 0.85f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(3f, 0.3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(3f, 0.3f));
             var turnDashes = hasForecourtKerbs ? 3 : 6;
             for (var i = 0; i < turnDashes; i++)
             {
@@ -5165,9 +5167,9 @@ namespace Airside.Presentation
             }
 
             CreateBlock("Access road shoulder L", new Vector3(22.2f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.4f, 3f));
             CreateBlock("Access road shoulder R", new Vector3(29.8f, -0.01f, 38f), new Vector3(1.2f, 0.06f, 20f), Shade(AirsideTheme.Concrete, 0.85f),
-                "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(0.4f, 3f));
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.4f, 3f));
             // One zebra when PRP-003 drop-off kerb/bollards already mark the curb.
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             if (!hasForecourtKerbs)
@@ -5179,7 +5181,7 @@ namespace Airside.Presentation
 
             // Hangar service lane.
             CreateBlock("Service lane", new Vector3(-20f, -0.02f, 28.5f), new Vector3(18f, 0.08f, 3.2f), new Color(0.24f, 0.26f, 0.28f),
-                "Textures/Surfaces/tx_asphalt_runway_basecolor_v01.png", new Vector2(3f, 0.6f));
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(3f, 0.6f));
             if (!hasForecourtKerbs)
             {
                 CreateBlock("Service lane centreline", new Vector3(-20f, 0.04f, 28.5f), new Vector3(14f, 0.02f, 0.1f),
@@ -5209,7 +5211,9 @@ namespace Airside.Presentation
             var grass = Shade(AirsideTheme.Eucalyptus, 0.62f);
             var dry = Shade(AirsideTheme.DryGrass, 0.9f);
             var sand = Shade(AirsideTheme.Sand, 0.95f);
-            var terrainKit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var terrainKit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_context_terrain_v02.gltf",
+                "Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
             var hasTerrainKit = !string.IsNullOrEmpty(terrainKit) && ArtGltfLoader.HasKit(terrainKit);
 
             // North/south berms framing the runway strip — north berm stays clear of the
@@ -5217,16 +5221,16 @@ namespace Airside.Presentation
             if (hasTerrainKit)
             {
                 CreateBlock("Relief berm N", new Vector3(0f, 0.12f, 36f), new Vector3(55f, 0.35f, 3.2f), grass,
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 1f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(6f, 1f));
                 CreateBlock("Relief berm S", new Vector3(0f, 0.1f, -22f), new Vector3(50f, 0.28f, 3.5f), dry,
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5.5f, 0.9f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(5.5f, 0.9f));
             }
             else
             {
                 CreateBlock("Relief berm N", new Vector3(0f, 0.15f, 36f), new Vector3(70f, 0.55f, 4.5f), grass,
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(8f, 1.2f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(8f, 1.2f));
                 CreateBlock("Relief berm S", new Vector3(0f, 0.12f, -22f), new Vector3(64f, 0.45f, 5f), dry,
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(7f, 1f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(7f, 1f));
             }
 
             // Scattered mounds — skip dense field when WLD-004 paddock/hill accents own the fringe.
@@ -5267,7 +5271,7 @@ namespace Airside.Presentation
                     var size = new Vector3(4.5f + (i % 3) * 1.2f, 0.35f + (i % 4) * 0.08f, 3.2f + (i % 2) * 1.1f);
                     var color = i % 3 == 0 ? sand : i % 3 == 1 ? dry : grass;
                     CreateBlock($"Relief mound {i}", pos, size, color,
-                        "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(1.5f, 1.2f));
+                        PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.5f, 1.2f));
                 }
             }
 
@@ -5276,24 +5280,24 @@ namespace Airside.Presentation
             if (!hasTerrainKit)
             {
                 CreateBlock("Coast dune L", new Vector3(-28f, 0.35f, -42f), new Vector3(18f, 0.9f, 5f), sand,
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3f, 1.2f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(3f, 1.2f));
                 CreateBlock("Coast dune R", new Vector3(24f, 0.3f, -43f), new Vector3(16f, 0.75f, 4.5f), sand,
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2.8f, 1.1f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(2.8f, 1.1f));
                 CreateBlock("Coast dune mid", new Vector3(0f, 0.22f, -41f), new Vector3(22f, 0.55f, 3.5f), Shade(sand, 0.9f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(3.5f, 1f));
                 CreateBlock("Coast dune L crest", new Vector3(-30f, 0.7f, -43.5f), new Vector3(10f, 0.45f, 2.2f), Shade(sand, 1.05f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(2f, 0.8f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(2f, 0.8f));
                 CreateBlock("Coast dune R crest", new Vector3(26f, 0.55f, -44f), new Vector3(9f, 0.35f, 2f), Shade(sand, 1.02f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(1.8f, 0.7f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(1.8f, 0.7f));
                 // Soft grass ribbons so the main Grass slab is not a single flat plane.
                 CreateBlock("Grass ribbon N", new Vector3(0f, -0.4f, 26f), new Vector3(80f, 0.35f, 8f), Shade(grass, 0.95f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(10f, 1.5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(10f, 1.5f));
                 CreateBlock("Grass ribbon S", new Vector3(0f, -0.42f, -16f), new Vector3(72f, 0.3f, 7f), Shade(dry, 0.92f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(9f, 1.3f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(9f, 1.3f));
                 CreateBlock("Grass ribbon W", new Vector3(-40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(grass, 0.88f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 6f));
                 CreateBlock("Grass ribbon E", new Vector3(40f, -0.38f, 4f), new Vector3(10f, 0.32f, 40f), Shade(dry, 0.9f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 6f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 6f));
             }
         }
 
@@ -5327,8 +5331,11 @@ namespace Airside.Presentation
 
             if (hasChrKits)
             {
-                // One calm walker so life still moves without a CHR carpet.
+                // Fidelity board CHR sheet — keep nine readable silhouettes, not a carpet:
+                // hero set already covers three ramp roles + stand/sit passengers; add one
+                // walker and one seated passenger so stand/walk/sit all read from overview.
                 PlacePerson(root, "Ramp walker", new Vector3(18.5f, 0f, 14.2f), 95f, new Color(0.55f, 0.35f, 0.18f), hiVis: true);
+                PlacePerson(root, "Bench sitter B", new Vector3(30.8f, 0.15f, 31.2f), 10f, new Color(0.25f, 0.35f, 0.4f), seated: true);
                 return;
             }
 
@@ -5653,17 +5660,20 @@ namespace Airside.Presentation
                 PlaceCoastBoat("Coast boat F", new Vector3(-58f, -0.52f, -66f), -15f, new Color(0.15f, 0.28f, 0.22f));
             }
 
-            // Rock outcrops along the sand — prefer VEG-002 scrub kit rocks.
-            var rock = new Color(0.42f, 0.4f, 0.38f);
+            // Rock outcrops along the sand — prefer VEG-002 scrub kit rocks (v02 adds rock_c).
+            var rock = new Color(0.52f, 0.48f, 0.42f);
             PlaceCoastRock("Coast rock A", new Vector3(-28f, -0.25f, -50f), "rock_a", rock, 4.2f, 18f);
             PlaceCoastRock("Coast rock B", new Vector3(18f, -0.2f, -49f), "rock_b", Shade(rock, 0.9f), 3.6f, -12f);
-            PlaceCoastRock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), "rock_a", Shade(rock, 1.1f), 5.0f, 40f);
+            PlaceCoastRock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), "rock_c", Shade(rock, 1.05f), 4.4f, 40f);
+            PlaceCoastRock("Coast rock D", new Vector3(-8f, -0.22f, -50.5f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
         }
 
         /// <summary>VEG-002 rock accents on the KI shoreline; cube blocks remain fallback.</summary>
         private static void PlaceCoastRock(string name, Vector3 position, string mesh, Color color, float scale, float yawDegrees)
         {
-            var kit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_scrub_kit_v02.gltf",
+                "Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
             if (!string.IsNullOrEmpty(kit)
                 && ArtGltfLoader.TryPlaceNamedMesh(
                     kit, mesh, position, Quaternion.Euler(0f, yawDegrees, 0f), color, out var part,
@@ -5673,7 +5683,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var size = mesh == "rock_b"
+            var size = mesh == "rock_b" || mesh == "rock_c"
                 ? new Vector3(2.2f, 0.7f, 1.8f)
                 : new Vector3(2.8f, 0.9f, 2.2f);
             if (scale > 4.5f)
@@ -6541,7 +6551,7 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildArffRescueShed()
         {
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_arff_shed_v01", out var shed))
+            if (TryInstantiatePreferredPrefab(out var shed, "mdl_arff_shed_v02", "mdl_arff_shed_v01"))
             {
                 shed.name = "ARFF rescue shed";
                 shed.position = new Vector3(-28f, 0f, 30f);
@@ -6569,7 +6579,7 @@ namespace Airside.Presentation
                 CreateBlock("ARFF door rib R", new Vector3(-26.6f, 1.2f, 27.28f), new Vector3(0.1f, 2.1f, 0.06f), Shade(door, 0.8f));
                 CreateBlock("ARFF window", new Vector3(-25.2f, 2.0f, 30f), new Vector3(0.08f, 0.9f, 1.4f), new Color(0.2f, 0.4f, 0.5f));
                 CreateBlock("ARFF apron", new Vector3(-28f, 0.02f, 26.5f), new Vector3(9f, 0.06f, 4f), AirsideTheme.Concrete,
-                    "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(2f, 1f));
+                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(2f, 1f));
                 CreateBlock("ARFF sign", new Vector3(-28f, 2.6f, 27.15f), new Vector3(2.2f, 0.45f, 0.08f), AirsideTheme.SafetyYellow);
                 CreateBlock("ARFF hose reel", new Vector3(-31.2f, 0.55f, 27.5f), new Vector3(0.7f, 0.9f, 0.7f), new Color(0.35f, 0.2f, 0.15f));
                 CreateBlock("ARFF hydrant", new Vector3(-24.8f, 0.35f, 27.8f), new Vector3(0.35f, 0.55f, 0.35f), new Color(0.75f, 0.2f, 0.15f));
@@ -6594,7 +6604,7 @@ namespace Airside.Presentation
         private static void PlaceArffTruck()
         {
             Transform root;
-            if (ArtPresentationLoader.TryInstantiatePrefab("mdl_arff_truck_v01", out var prefabRoot))
+            if (TryInstantiatePreferredPrefab(out var prefabRoot, "mdl_arff_truck_v02", "mdl_arff_truck_v01"))
             {
                 prefabRoot.name = "ARFF truck";
                 root = prefabRoot;
@@ -6770,7 +6780,9 @@ namespace Airside.Presentation
         {
             // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
             // a handful of props (0025 item 3). PlaceTree prefers VEG-001 v02→v01.
-            var scrubKit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            var scrubKit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_scrub_kit_v02.gltf",
+                "Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
             var hasScrubKit = !string.IsNullOrEmpty(scrubKit) && ArtGltfLoader.HasKit(scrubKit);
 
             var trees = new (Vector3 Pos, float Scale)[]
@@ -6942,7 +6954,9 @@ namespace Airside.Presentation
         /// <summary>Batch F3 VEG-002 — place authored scrub cluster; sphere clumps remain fallback.</summary>
         private static bool TryPlaceScrubFromKit(Vector3 basePosition, float scale)
         {
-            var kit = PreferArtKit("Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_scrub_kit_v02.gltf",
+                "Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 
@@ -6972,8 +6986,24 @@ namespace Airside.Presentation
             Place($"{prefix}_side", euc);
             Place($"{prefix}_side_b", Shade(dry, 0.9f));
             Place($"{prefix}_tuft", Shade(euc, 0.88f));
-            if (Math.Abs(basePosition.GetHashCode()) % 5 == 0)
-                Place("rock_a", new Color(0.45f, 0.4f, 0.32f));
+            // VEG-002 v02 fidelity board — grass tufts, third rock, dune-edge mixes.
+            var hash = Math.Abs(basePosition.GetHashCode());
+            if (hash % 4 == 0)
+            {
+                var grass = hash % 3 == 0 ? "grass_tuft_c" : (hash % 3 == 1 ? "grass_tuft_a" : "grass_tuft_b");
+                Place(grass, Shade(AirsideTheme.DryGrass, 0.95f));
+            }
+
+            if (hash % 5 == 0)
+            {
+                var rock = hash % 15 == 0 ? "rock_c" : (hash % 10 == 0 ? "rock_b" : "rock_a");
+                Place(rock, new Color(0.55f, 0.5f, 0.42f));
+            }
+
+            if (basePosition.z < -34f && hash % 3 == 0)
+            {
+                Place(hash % 2 == 0 ? "dune_mix_a" : "dune_mix_b", Shade(AirsideTheme.Sand, 0.85f));
+            }
 
             if (placed < 2)
             {
@@ -7123,7 +7153,9 @@ namespace Airside.Presentation
         /// </summary>
         private static bool TryPlaceContextTerrainAccents()
         {
-            var kit = PreferArtKit("Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
+            var kit = PreferArtKit(
+                "Models/Environment/mdl_kingscote_context_terrain_v02.gltf",
+                "Models/Environment/mdl_kingscote_context_terrain_v01.gltf");
             if (string.IsNullOrEmpty(kit) || !ArtGltfLoader.HasKit(kit))
                 return false;
 
@@ -7143,8 +7175,13 @@ namespace Airside.Presentation
             Place("hill_b", new Vector3(90f, 0f, 62f), Quaternion.Euler(0f, 25f, 0f), dry, "Context hill NE", 2.6f);
             Place("hill_c", new Vector3(-95f, 0f, 8f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill W", 2.4f);
             Place("hill_a", new Vector3(100f, 0f, 4f), Quaternion.Euler(0f, -30f, 0f), dry, "Context hill E", 2.3f);
+            // WLD-004 v02 densify — extra mid-horizon hills kept clear of ops.
+            Place("hill_b", new Vector3(-78f, 0f, 48f), Quaternion.Euler(0f, 12f, 0f), dry, "Context hill NW mid", 1.9f);
+            Place("hill_c", new Vector3(82f, 0f, 46f), Quaternion.Euler(0f, -18f, 0f), euc, "Context hill NE mid", 1.85f);
             Place("dune_a", new Vector3(-40f, 0f, -52f), Quaternion.identity, sand, "Context dune SW", 2.0f);
             Place("dune_b", new Vector3(35f, 0f, -50f), Quaternion.Euler(0f, 15f, 0f), sand, "Context dune SE", 1.9f);
+            Place("dune_a", new Vector3(-12f, 0f, -54f), Quaternion.Euler(0f, -8f, 0f), Shade(sand, 0.92f), "Context dune S mid", 1.55f);
+            Place("dune_b", new Vector3(12f, 0f, -53f), Quaternion.Euler(0f, 22f, 0f), Shade(sand, 0.95f), "Context dune S mid E", 1.5f);
             Place("berm", new Vector3(0f, 0f, -42f), Quaternion.identity, Shade(sand, 0.9f), "Context coast berm", 2.8f);
             // Near-field coast / paddock accents from the same WLD-004 kit (textured slabs remain).
             Place("coast_sand", new Vector3(-55f, -0.2f, -48f), Quaternion.identity, sand, "Context coast sand W", 1.8f);
@@ -7168,39 +7205,39 @@ namespace Airside.Presentation
             {
                 // Textured far masses so the horizon is not a void (0025 item 3).
                 CreateBlock("Hill far NW", new Vector3(-90f, 2f, 70f), new Vector3(50f, 8f, 28f), Shade(AirsideTheme.Eucalyptus, 0.4f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(6f, 3f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(6f, 3f));
                 CreateBlock("Hill far NE", new Vector3(95f, 1.5f, 65f), new Vector3(44f, 6f, 24f), Shade(AirsideTheme.DryGrass, 0.55f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(5f, 2.5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(5f, 2.5f));
                 CreateBlock("Hill far W", new Vector3(-100f, 1.2f, 10f), new Vector3(30f, 5f, 40f), Shade(AirsideTheme.Eucalyptus, 0.35f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(4f, 5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(4f, 5f));
                 CreateBlock("Hill far E", new Vector3(105f, 1.0f, 5f), new Vector3(28f, 4.5f, 36f), Shade(AirsideTheme.DryGrass, 0.5f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3.5f, 4.5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3.5f, 4.5f));
                 CreateBlock("Hill far S", new Vector3(0f, 0.8f, -95f), new Vector3(70f, 3.5f, 18f), Shade(AirsideTheme.Sand, 0.75f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(8f, 2f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(8f, 2f));
                 CreateBlock("Hill far NW ridge", new Vector3(-78f, 5.2f, 72f), new Vector3(22f, 3.5f, 12f), Shade(AirsideTheme.Eucalyptus, 0.48f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 1.5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3f, 1.5f));
                 CreateBlock("Hill far NE spur", new Vector3(108f, 3.2f, 58f), new Vector3(18f, 3.2f, 14f), Shade(AirsideTheme.DryGrass, 0.62f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2.5f, 1.5f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.5f, 1.5f));
                 CreateBlock("Hill far W shoulder", new Vector3(-88f, 2.8f, -8f), new Vector3(16f, 3.5f, 18f), Shade(AirsideTheme.Eucalyptus, 0.42f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2.2f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 2.2f));
                 CreateBlock("Hill far E shoulder", new Vector3(92f, 2.4f, -12f), new Vector3(14f, 3.0f, 16f), Shade(AirsideTheme.DryGrass, 0.58f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(2f, 2f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2f, 2f));
                 CreateBlock("Hill far SW headland", new Vector3(-55f, 1.4f, -88f), new Vector3(28f, 4.2f, 14f),
                     Shade(AirsideTheme.Sand, 0.68f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(4f, 2f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(4f, 2f));
                 CreateBlock("Hill far SE headland", new Vector3(58f, 1.2f, -90f), new Vector3(26f, 3.8f, 12f),
                     Shade(AirsideTheme.Sand, 0.72f),
-                    "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(3.5f, 1.8f));
+                    PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(3.5f, 1.8f));
                 CreateBlock("Hill far N spur", new Vector3(12f, 3.8f, 78f), new Vector3(24f, 4.5f, 16f),
                     Shade(AirsideTheme.Eucalyptus, 0.5f),
-                    "Textures/Surfaces/tx_grass_kingscote_basecolor_v01.png", new Vector2(3f, 2f));
+                    PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3f, 2f));
                 return;
             }
 
             // Kit accents own the near horizon — one thin far sand ring only so the south
             // skyline does not open into a void behind the dunes.
             CreateBlock("Hill far S", new Vector3(0f, 0.6f, -102f), new Vector3(90f, 2.4f, 12f), Shade(AirsideTheme.Sand, 0.7f),
-                "Textures/Surfaces/tx_sand_coast_basecolor_v01.png", new Vector2(10f, 1.5f));
+                PreferSurfaceBasecolor("tx_sand_coast"), new Vector2(10f, 1.5f));
         }
 
         private static void BuildHorizonDome()
@@ -8734,6 +8771,34 @@ namespace Airside.Presentation
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Prefer denser surface basecolours (v02 fidelity board) when present; keep v01 fallback.
+        /// </summary>
+        private static string PreferSurfaceBasecolor(string stem)
+        {
+            if (string.IsNullOrEmpty(stem))
+                return null;
+            var v02 = $"Textures/Surfaces/{stem}_basecolor_v02.png";
+            if (ArtRuntimePaths.ResolveExisting(v02) != null)
+                return v02;
+            return $"Textures/Surfaces/{stem}_basecolor_v01.png";
+        }
+
+        /// <summary>Prefer denser Resources prefab keys when present.</summary>
+        private static bool TryInstantiatePreferredPrefab(out Transform root, params string[] prefabKeys)
+        {
+            root = null;
+            if (prefabKeys == null)
+                return false;
+            for (var i = 0; i < prefabKeys.Length; i++)
+            {
+                if (ArtPresentationLoader.TryInstantiatePrefab(prefabKeys[i], out root))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void ApplyLiveryDecal(Transform aircraft, string artRelativePath)
@@ -10276,7 +10341,7 @@ namespace Airside.Presentation
             else
             {
                 CreateBlock("Fuel pad", new Vector3(-34f, 0.02f, 22f), new Vector3(8f, 0.08f, 6f), new Color(0.28f, 0.3f, 0.32f),
-                    "Textures/Surfaces/tx_concrete_apron_basecolor_v01.png", new Vector2(1.2f, 1f));
+                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 1f));
                 // Cylindrical tanks read as storage vessels, not cargo cubes (0025 item 2/3).
                 PlaceFuelTank("Fuel tank A", new Vector3(-35.5f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
                 PlaceFuelTank("Fuel tank B", new Vector3(-32.2f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));

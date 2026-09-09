@@ -74,6 +74,8 @@ Source FBX (Unity ModelImporter):
 - `Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v02.fbx` (CHR-002 v02)
 - `Assets/Airside/Art/Models/Characters/mdl_passenger_kit_v01.fbx` (Batch F2)
 - `Assets/Airside/Art/Models/Environment/mdl_eucalyptus_kit_v02.fbx` (VEG-001 v02)
+- `Assets/Airside/Art/Models/Environment/mdl_kingscote_scrub_kit_v02.fbx` (VEG-002 v02)
+- `Assets/Airside/Art/Models/Environment/mdl_kingscote_context_terrain_v02.fbx` (WLD-004 v02)
 - `Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_authored_v01.fbx`
 - `Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_authored_v01.fbx`
@@ -114,6 +116,10 @@ Resources prefabs (Addressables keys live now):
 | `mdl_passenger_stairs_v02` | Pipeline proof (`generate-prp-001-v03-prefab.py`); prefers over v01 |
 | `mdl_passenger_stairs_v01` | Pipeline proof; superseded by v02 when present |
 | `mdl_eucalyptus_kit_v02` | Mac bake; `scripts/generate-veg-001-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
+| `mdl_kingscote_scrub_kit_v02` | Mac bake; `scripts/generate-veg-002-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
+| `mdl_kingscote_context_terrain_v02` | Mac bake; `scripts/generate-wld-004-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
+| `mdl_arff_truck_v02` | Pipeline proof (`generate-arff-truck-prefab-v02.py`); Prefer ahead of v01 |
+| `mdl_arff_shed_v02` | Pipeline proof (`generate-arff-shed-prefab-v02.py`); Prefer ahead of v01 |
 | `mdl_terminal_forecourt_kit_v02` | Mac bake; `scripts/generate-prp-003-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
 | `mdl_airfield_fence_gate_kit_v02` | Mac bake; `scripts/generate-prp-002-v02-prefab.py` pipeline-proof; PreferArtKit ahead of v01 |
 | `mdl_service_equipment_kit_authored_v01` | Mac bake; glTF PreferArtKit behind `mdl_service_equipment_kit_v03` |

@@ -196,7 +196,8 @@ namespace Airside.Presentation
             _ambientRainAudio.volume = 0f;
             _ambientRainAudio.Play();
             _ambientCoastAudio = gameObject.AddComponent<AudioSource>();
-            _ambientCoastAudio.clip = CreateCoastClip();
+            var externalCoastClip = Resources.Load<AudioClip>("Airside/Audio/coast_wave_01");
+            _ambientCoastAudio.clip = externalCoastClip != null ? externalCoastClip : CreateCoastClip();
             _ambientCoastAudio.loop = true;
             _ambientCoastAudio.playOnAwake = false;
             _ambientCoastAudio.spatialBlend = 0f;

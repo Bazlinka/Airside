@@ -1,20 +1,22 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — fidelity densify vs approved boards)
-- **Branch:** `cursor/fidelity-densify-boards-4536` (off integrate-fidelity-boards)
-- **Do next:** Mac Unity Play — overview vs Approved boards (pale-grey open-bay
-  ARFF, red/white truck with yellow conspicuity only, surface v02 hue + wet
-  concrete, scrub/terrain/CHR/BLD/turnaround). Parent wires wetness if needed.
-  Then merge into integrate branch / main.
+- **Last updated:** 2026-09-09 (Cursor — handoff after fidelity #167)
+- **Branch:** `main` (fidelity-board integration merged via #167)
+- **Do next:** Mac Unity Play — overview / follow / day+dusk vs the seven
+  Approved modelling boards in `docs/art/reference/`:
+  pale-grey open-bay ARFF + red/white truck; joint-free apron + wet concrete;
+  denser scrub belt + limestone rocks; turquoise shallows; turnaround GSE
+  zones; CHR dual wands; buildings v05 / fleet v06. Note gaps, then densify
+  only where Mac shows misses.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - PreferArtKit: scrub/terrain `*_v02` ahead of v01; surfaces PreferSurface /
-    MaterialLibrary PreferAuthoredMap; ARFF `mdl_arff_*_v02`→v01
-  - `tx_wet_concrete_*_v02` shipped; parent owns wetness wiring in prototype
-  - Boards live under `docs/art/reference/` (not candidates); do not crop the
-    surface board into runtime maps
-  - Additive StreamingAssets copy only — do **not** run full
-    `sync-art-streaming-assets.sh` (wipes metas)
+  - PreferArtKit: scrub/terrain `*_v02` → v01; surfaces PreferSurface /
+    PreferAuthoredMap (`tx_*_v02` + `tx_wet_concrete_*_v02`); ARFF
+    `mdl_arff_*_v02` → v01
+  - Boards are modelling targets only — do **not** crop the surface board into
+    runtime maps
+  - Additive StreamingAssets copies only — do **not** run full
+    `scripts/sync-art-streaming-assets.sh` (wipes metas)
   - Save schema / simulation reservations unchanged (presentation only)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
@@ -93,10 +95,10 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- Fidelity-board integration on `cursor/integrate-fidelity-boards-3272`: scrub /
-  terrain v02 kits, surface `tx_*_v02`, ARFF prefab v02, docs promoted to
-  Approved · Integrated (densify tighten pass included).
-- `scripts/test-domain.sh`: **136/136** on `cursor/integrate-fidelity-boards-3272`.
+- Fidelity-board integration **merged via #167**: scrub/terrain v02, surface
+  `tx_*_v02` + wet concrete, ARFF prefab v02 densify, CHR dual wands,
+  turnaround GSE zone layout, docs Approved · Integrated.
+- `scripts/test-domain.sh`: **136/136** on the integrate branch before merge.
 - Day/night readability merged via #158 (Mac noon/midnight overview pending).
 - 50-item bugfix pass merged via #157.
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
@@ -107,8 +109,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac Play: fidelity-board densify (scrub/terrain/surfaces/ARFF/CHR) vs Approved
-   modelling boards, then merge.
+1. Mac Play: fidelity densify (#167) vs Approved modelling boards — sign off or
+   list concrete gaps.
 2. Mac overview: day/night readability (#158) noon + midnight sign-off.
 3. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153) vs refs if not yet signed off.

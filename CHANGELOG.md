@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Session handoff after fidelity #167.** Point resume at `main`; Mac overview
+  vs Approved modelling boards is the next sign-off. No behaviour change.
+
 - **Tighten fidelity densify vs Approved boards.** Pale-grey open-bay ARFF shed,
   red/white truck accents, joint-free concrete + wet-concrete maps, denser scrub
   belts with pale limestone rocks, turquoise shallows, turnaround GSE zones

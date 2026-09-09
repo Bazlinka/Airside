@@ -6,15 +6,15 @@
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
-  A1. Night beacon should sit on the tower. Wingtip strobes, 05 GS/localizer,
-  and fuel farm west of freight are new this pass. EditMode 193/193 earlier
-  this session.
+  A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.26,
+  offset −0.70) sit height is unverified. Taxiway Echo / far-east apron and
+  305 m overview are new this pass. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha now runs the full
   23/05 length inside the fence; paint/lights/holds follow. Grass stops at the
-  West Beach dune belt so Gulf St Vincent reads on first overview (~282 m).
+  West Beach dune belt so Gulf St Vincent reads on first overview (~305 m).
   Sand and shallows run the same north-south span as the gulf so the beach
   does not drop out at the edges. Car park fills the bigger pad. Night floods
   cover Stand 3 and the east satellite.
@@ -35,7 +35,9 @@
   Extra coast foam toward Glenelg; 12/30 has aiming bars; windsock is on the
   05 Alpha.   Rapid 23 and the GA apron have centreline paint and night lamps.
   A west arrivals hall balances the east pier. Parked GA fills the west ties.
-  Landside has a zebra drop-off at the west hall. Save schema unchanged.
+  Landside has a zebra drop-off at the west hall. Aircraft kit is larger with
+  emissive nav/strobes. Taxiway Echo and a far-east apron widen the satellite
+  side. Follow approach pulls further back over the gulf. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

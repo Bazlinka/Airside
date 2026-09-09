@@ -12,7 +12,7 @@ namespace Airside.Presentation
     {
         // West-biased so first frame shows Gulf St Vincent, Glenelg south, and the long 23/05 strip.
         private readonly Vector3 _overviewCenter = new(-16f, 0f, -6f);
-        private const float OverviewDistance = 282f;
+        private const float OverviewDistance = 305f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
         private const float OverviewYaw = 132f;
@@ -161,7 +161,7 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 3.2f,
                 AircraftPhase.AtStand => 1.5f,
                 AircraftPhase.Takeoff => Mathf.Lerp(8f, 18f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(16f, 26f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(22f, 34f, progress),
                 AircraftPhase.Landing => Mathf.Lerp(18f, 6f, progress),
                 AircraftPhase.Departed => 20f,
                 _ => air
@@ -189,9 +189,9 @@ namespace Airside.Presentation
                 AircraftPhase.AtStand => 14f,
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
                 AircraftPhase.Takeoff => Mathf.Lerp(22f, 42f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(42f, 58f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(40f, 20f, progress),
-                AircraftPhase.Departed => 52f,
+                AircraftPhase.Approach => Mathf.Lerp(52f, 74f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(48f, 22f, progress),
+                AircraftPhase.Departed => 64f,
                 _ => air
             };
         }
@@ -267,7 +267,7 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 18f, 360f);
+                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 18f, 400f);
         }
 
         /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>

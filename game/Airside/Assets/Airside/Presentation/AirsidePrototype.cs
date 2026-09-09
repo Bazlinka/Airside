@@ -1375,13 +1375,14 @@ namespace Airside.Presentation
                 light.color = isRight
                     ? new Color(0.95f, 0.15f, 0.12f)
                     : new Color(0.12f, 0.95f, 0.28f);
-                light.range = 12f;
+                light.range = 16f;
                 light.shadows = LightShadows.None;
             }
 
             light.enabled = on;
             if (on)
                 light.intensity = 2.6f * AirsideReusableMotion.NavSteady;
+            SetLampMeshEmission(lamp, light.color, on);
         }
 
         private static void EnsureBeaconPointLight(Transform lamp, bool on)
@@ -1399,6 +1400,7 @@ namespace Airside.Presentation
             light.enabled = on;
             if (on)
                 light.intensity = 2.6f;
+            SetLampMeshEmission(lamp, light.color, on);
         }
 
         /// <summary>
@@ -1462,6 +1464,23 @@ namespace Airside.Presentation
             light.enabled = on;
             if (on)
                 light.intensity = 5.4f;
+            SetLampMeshEmission(lamp, new Color(0.95f, 0.97f, 1f), on);
+        }
+
+        private static void SetLampMeshEmission(Transform lamp, Color color, bool on)
+        {
+            var renderer = lamp.GetComponent<Renderer>();
+            if (renderer == null || renderer.material == null || !renderer.material.HasProperty("_EmissionColor"))
+                return;
+            if (on)
+            {
+                renderer.material.EnableKeyword("_EMISSION");
+                renderer.material.SetColor("_EmissionColor", color * 2.4f);
+            }
+            else
+            {
+                renderer.material.SetColor("_EmissionColor", Color.black);
+            }
         }
 
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
@@ -2834,6 +2853,8 @@ namespace Airside.Presentation
                 || name.StartsWith("Apron chevron", StringComparison.Ordinal)
                 || name.StartsWith("Hold short", StringComparison.Ordinal)
                 || name.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
+                || name.StartsWith("Taxi Bravo W", StringComparison.Ordinal)
+                || name.StartsWith("Taxi Bravo E", StringComparison.Ordinal)
                 || name.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                 || name.StartsWith("Taxi centre", StringComparison.Ordinal)
                 || name.StartsWith("Aiming point", StringComparison.Ordinal)
@@ -2938,6 +2959,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Apron chevron", StringComparison.Ordinal)
                     && !n.StartsWith("Hold short", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi Bravo W", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi Bravo E", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi centre", StringComparison.Ordinal)
                     && !n.StartsWith("Aiming point", StringComparison.Ordinal)
@@ -4729,7 +4752,8 @@ namespace Airside.Presentation
                 (new Vector3(70f, 9.4f, 40f), new Vector3(70f, 0.2f, 46f)),
                 (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f)),
                 (new Vector3(-64f, 7.2f, 18f), new Vector3(-64f, 0.2f, 22f)),
-                (new Vector3(-48f, 6.8f, 12f), new Vector3(-48f, 0.2f, 15.4f))
+                (new Vector3(-48f, 6.8f, 12f), new Vector3(-48f, 0.2f, 15.4f)),
+                (new Vector3(76f, 8.2f, 26f), new Vector3(76f, 0.2f, 30f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -4855,6 +4879,10 @@ namespace Airside.Presentation
             lights.Add(CreateEdgePointLight("Taxi Rapid 23 B", new Vector3(69.6f, 0.45f, 6.4f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
             lights.Add(CreateEdgePointLight("Taxi GA point", new Vector3(-48f, 0.45f, 12.2f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Echo point 18", new Vector3(74f, 0.45f, 18f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Echo point 26", new Vector3(74f, 0.45f, 26f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
 
             // REIL-style white flashers just beyond each blast pad (blinked later).
@@ -5294,7 +5322,9 @@ namespace Airside.Presentation
             PlaceLevelPad("Apron north expansion", 20f, 36f, 32f, 16f, Shade(pad, 0.98f), concrete, new Vector2(7f, 3.2f));
             PlaceLevelPad("Apron west expansion", 2f, 18f, 22f, 16f, Shade(pad, 0.96f), concrete, new Vector2(5f, 3.6f));
             PlaceLevelPad("Apron satellite", 62f, 16f, 16f, 14f, Shade(pad, 0.97f), concrete, new Vector2(3.6f, 3.2f));
-            PlaceLevelPad("GA apron", -48f, 15.4f, 24f, 7.2f, Shade(pad, 0.94f), concrete, new Vector2(5f, 1.6f));
+            PlaceLevelPad("GA apron", -48f, 15.4f, 28f, 8.4f, Shade(pad, 0.94f), concrete, new Vector2(5.4f, 1.8f));
+            PlaceLevelPad("Apron far east", 76f, 30f, 12f, 10f, Shade(pad, 0.96f), concrete, new Vector2(2.8f, 2.2f));
+            PlaceLevelPad("Taxiway Echo", 74f, 22f, 5.0f, 16f, Shade(tarmac, 1.03f), asphalt, new Vector2(1.1f, 3.2f));
 
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, 0.02f, 0f), new Vector3(-12f, 0.02f, 9f), 5.4f, asphalt, new Vector2(1.8f, 1.4f));
             CreateTaxiChordPad("Taxiway A1 throat", new Vector3(-28f, 0.02f, 0f), new Vector3(-22f, 0.02f, 0.6f), 5.8f, asphalt, new Vector2(1.6f, 1.2f));
@@ -5396,7 +5426,7 @@ namespace Airside.Presentation
                     "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
                     "roof_panel", "roof_ridge", "roof_eave", "hvac"
                 },
-                uniformScale: 1.14f);
+                uniformScale: 1.20f);
         }
 
         private static void BuildAirfieldTerrain12()
@@ -5523,7 +5553,7 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" },
-                uniformScale: 1.18f);
+                uniformScale: 1.26f);
             // Sliding door slab only when the hangar kit did not ship panel doors.
             if (GameObject.Find("Hangar door") == null
                 && GameObject.Find("door_panel_l") == null
@@ -8823,7 +8853,7 @@ namespace Airside.Presentation
         {
             var root = new GameObject(name).transform;
             // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7f, so
-            // offset the kit by -0.7f so gear sits on the ground. Primitive fallback below.
+            // offset the kit by -0.70f so the 1.26 scale gear sits on the pavement.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
                     "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
@@ -8838,7 +8868,7 @@ namespace Airside.Presentation
                 out _,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
-                localPosition: new Vector3(0f, -0.64f, 0f));
+                localPosition: new Vector3(0f, -0.70f, 0f));
 
             if (usedArt)
             {
@@ -8850,7 +8880,7 @@ namespace Airside.Presentation
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
                 if (root.childCount > 0)
-                    root.GetChild(0).localScale *= 1.18f;
+                    root.GetChild(0).localScale *= 1.26f;
             }
 
             if (!usedArt)
@@ -9795,6 +9825,7 @@ namespace Airside.Presentation
                     && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("spinner", StringComparison.OrdinalIgnoreCase) < 0
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))
@@ -9803,7 +9834,8 @@ namespace Airside.Presentation
                     renderer.material.SetFloat("_Metallic",
                         n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) >= 0
                         || n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) >= 0
-                            ? 0.32f
+                        || n.IndexOf("spinner", StringComparison.OrdinalIgnoreCase) >= 0
+                            ? 0.42f
                             : 0.18f);
             }
         }
@@ -9979,7 +10011,7 @@ namespace Airside.Presentation
             {
                 NestServiceDoorParts(root);
                 NestCargoBags(root);
-                root.localScale = Vector3.one * 1.08f;
+                root.localScale = Vector3.one * 1.16f;
             }
 
             root.gameObject.SetActive(false);
@@ -10052,7 +10084,7 @@ namespace Airside.Presentation
 
             if (placed)
             {
-                root.localScale = Vector3.one * 1.12f;
+                root.localScale = Vector3.one * 1.20f;
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -10062,7 +10094,7 @@ namespace Airside.Presentation
                 || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
                 prefabRoot.name = "Passenger stairs";
-                prefabRoot.localScale = Vector3.one * 1.12f;
+                prefabRoot.localScale = Vector3.one * 1.20f;
                 prefabRoot.gameObject.SetActive(false);
                 return prefabRoot;
             }
@@ -10797,6 +10829,16 @@ namespace Airside.Presentation
                     new Vector3(0.14f, 0.02f, 2.2f), taxiPaint);
                 dash.transform.rotation = Quaternion.Euler(0f, rapidYaw, 0f);
             }
+            CreateBlock("Hold short Rapid", new Vector3(70.4f, 0.05f, 7.6f), new Vector3(3.2f, 0.03f, 0.2f), new Color(0.95f, 0.85f, 0.2f));
+            for (var z = 16; z <= 28; z += 4)
+                CreateBlock($"Taxiway Echo centre {z}", new Vector3(74f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.2f), taxiPaint);
+            for (var z = -8; z <= -5; z += 1)
+            {
+                var west = CreateBlock($"Taxi Bravo W exit {z}", new Vector3(-60f, 0.05f, z), new Vector3(0.14f, 0.02f, 1.6f), taxiPaint);
+                var east = CreateBlock($"Taxi Bravo E exit {z}", new Vector3(70f, 0.05f, z), new Vector3(0.14f, 0.02f, 1.6f), taxiPaint);
+                west.transform.rotation = Quaternion.identity;
+                east.transform.rotation = Quaternion.identity;
+            }
 
             for (var z = 10; z <= 14; z += 2)
                 CreateBlock($"Taxiway GA centre {z}", new Vector3(-48f, 0.05f, z), new Vector3(0.14f, 0.02f, 1.6f), taxiPaint);
@@ -11195,6 +11237,10 @@ namespace Airside.Presentation
             PlaceTaxiLamp(kit, new Vector3(66.2f, 0f, 2.5f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(69.6f, 0f, 6.4f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(-48f, 0f, 12.2f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 18f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 26f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 18f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(74f, 0f, 26f), taxiColor);
 
             PlaceObstructionLamp(kit, new Vector3(12f, 4.6f, 29.2f), obstruction, "Terminal west obstruction");
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
@@ -11703,10 +11749,11 @@ namespace Airside.Presentation
                 root.position = new Vector3(spot.x, 0.48f, spot.z);
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 if (hasGaPrefab)
-                    root.localScale = Vector3.one * 1.1f;
+                    root.localScale = Vector3.one * 1.18f;
                 PolishAircraftSurfaces(root);
                 PolishAircraftGlass(root);
                 EnsurePropDiscs(root);
+                EnsureGroundShadow(root);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"GA apron T {i}", new Vector3(spot.x, 0.055f, spot.z + 1.6f), new Vector3(2.2f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));

@@ -5755,8 +5755,8 @@ namespace Airside.Presentation
                 water, new Vector2(20f, 36f), top: -0.35f, height: 0.5f);
             PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.1f, 0.28f, 0.42f, 0.97f),
                 water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
-            PlaceLevelPad("West Beach sand", -96f, 8f, 36f, 340f, Shade(AirsideTheme.Sand, 0.95f),
-                sand, new Vector2(10f, 56f), top: -0.02f, height: 0.28f);
+            PlaceLevelPad("West Beach sand", -95f, 8f, 38f, 340f, Shade(AirsideTheme.Sand, 0.95f),
+                sand, new Vector2(10f, 56f), top: 0f, height: 0.28f);
             PlaceLevelPad("Dune belt", -80f, 8f, 8f, 340f, Shade(AirsideTheme.Sand, 0.9f),
                 sand, new Vector2(2.2f, 56f), top: 0.02f, height: 0.28f);
             PlaceLevelPad("Coast shallows", -116f, 8f, 22f, 340f, new Color(0.32f, 0.55f, 0.58f, 0.85f),

@@ -127,7 +127,8 @@ change it describes.
   terminal reflection probe sits on the landside curve. An
   ochre fascia bands the landside glass and west hall.
   West and east hall glass uses the glass material instead of
-  the water heuristic.
+  the water heuristic. The kerbside coach fallback is painted
+  metal, not water.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

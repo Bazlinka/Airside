@@ -6857,7 +6857,7 @@ namespace Airside.Presentation
                 "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
                 "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf");
             Transform root = null;
-            var body = new Color(0.18f, 0.38f, 0.52f);
+            var body = new Color(0.22f, 0.46f, 0.5f);
             if (!string.IsNullOrEmpty(kit)
                 && ArtPresentationLoader.TryInstantiate(
                     kit,

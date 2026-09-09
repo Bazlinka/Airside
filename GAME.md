@@ -67,6 +67,7 @@
   An ochre fascia bands the landside glass so T1 reads Adelaide from yaw 132.
   West hall gets the same ochre band.
   West/east hall glass uses the glass material, not the water heuristic.
+  The kerbside coach fallback is painted metal, not water.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -137,7 +138,8 @@
   accent; spinners catch the sun; parked nav lamps stay lit.
   Terminal probe sits on the landside curve. An ochre fascia
   bands the hall glass and west hall. West/east hall glass is
-  actually glass, not water. Save schema
+  actually glass, not water. Coach fallback is painted metal, not water.
+  Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

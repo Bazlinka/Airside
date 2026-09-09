@@ -1324,6 +1324,14 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
+                else if (child.name.StartsWith("Strobe", StringComparison.Ordinal))
+                {
+                    var phaseOffset = child.name.IndexOf(" R", StringComparison.Ordinal) >= 0 ? 0.5f : 0f;
+                    var strobeOn = enginesOn &&
+                        Mathf.Repeat(Time.unscaledTime * AirsideReusableMotion.StrobeHz + phaseOffset, 1f) < 0.12f;
+                    child.gameObject.SetActive(strobeOn);
+                    EnsureStrobePointLight(child, strobeOn);
+                }
                 else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
                 {
                     child.gameObject.SetActive(landingLights);
@@ -1437,6 +1445,23 @@ namespace Airside.Presentation
             }
 
             light.enabled = on;
+        }
+
+        private static void EnsureStrobePointLight(Transform lamp, bool on)
+        {
+            var light = lamp.GetComponent<Light>();
+            if (light == null)
+            {
+                light = lamp.gameObject.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(0.95f, 0.97f, 1f);
+                light.range = 16f;
+                light.shadows = LightShadows.None;
+            }
+
+            light.enabled = on;
+            if (on)
+                light.intensity = 5.4f;
         }
 
         private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
@@ -2993,7 +3018,7 @@ namespace Airside.Presentation
                 new Vector3(44f, 0.07f, 44f),
                 new Vector3(26f, 0.07f, 38f),
                 new Vector3(-20f, 0.07f, 28.5f),
-                new Vector3(-34f, 0.07f, 22f),
+                new Vector3(-64f, 0.07f, 22f),
                 new Vector3(0f, 0.07f, 2f),
                 new Vector3(-6f, 0.07f, 0.5f),
                 new Vector3(6f, 0.07f, -0.5f),
@@ -4442,7 +4467,9 @@ namespace Airside.Presentation
                          "ATC tower glass N",
                          "ATC tower glass S",
                          "ATC tower glass E",
-                         "ATC tower glass W"
+                         "ATC tower glass W",
+                         "ILS GS glass",
+                         "ILS loc hut glow"
                      })
             {
                 var go = GameObject.Find(name);
@@ -4467,7 +4494,9 @@ namespace Airside.Presentation
                                    || name.StartsWith("Satellite bridge", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
-                                   || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal));
+                                   || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal)
+                                   || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
+                                   || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
                     continue;
 
@@ -4693,7 +4722,8 @@ namespace Airside.Presentation
                 (new Vector3(40f, 9.0f, 18f), new Vector3(40f, 0.2f, 24f)),
                 (new Vector3(58f, 8.2f, 20f), new Vector3(60f, 0.2f, 22f)),
                 (new Vector3(70f, 9.4f, 40f), new Vector3(70f, 0.2f, 46f)),
-                (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f))
+                (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f)),
+                (new Vector3(-64f, 7.2f, 18f), new Vector3(-64f, 0.2f, 22f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -5636,6 +5666,10 @@ namespace Airside.Presentation
                 null, null, top: -0.07f, height: 0.08f);
             PlaceLevelPad("Coast foam E", -108f, 78f, 6f, 44f, new Color(0.94f, 0.97f, 0.98f, 0.24f),
                 null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam F", -110f, -88f, 6f, 52f, new Color(0.93f, 0.96f, 0.98f, 0.26f),
+                null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam G", -104f, -64f, 5f, 40f, new Color(0.91f, 0.95f, 0.97f, 0.22f),
+                null, null, top: -0.07f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -7123,6 +7157,7 @@ namespace Airside.Presentation
             }
 
             BuildEastApproachLightBars();
+            PlaceAdelaideNavaids();
         }
 
         /// <summary>
@@ -7168,6 +7203,37 @@ namespace Airside.Presentation
                     lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
                 }
             }
+        }
+
+        /// <summary>
+        /// Visual-only 05 glideslope (gulf final) and 05 localizer (east of 23).
+        /// Not a sim navaid — silhouette for approach and overview.
+        /// </summary>
+        private static void PlaceAdelaideNavaids()
+        {
+            var hut = new Color(0.78f, 0.8f, 0.82f);
+            var lattice = new Color(0.55f, 0.57f, 0.6f);
+            var glass = new Color(0.2f, 0.42f, 0.52f, 0.45f);
+            CreateBlock("ILS GS hut", new Vector3(-76f, 1.05f, -14.2f), new Vector3(2.4f, 2.1f, 1.8f), hut);
+            CreateBlock("ILS GS glass", new Vector3(-76f, 1.35f, -13.28f), new Vector3(1.6f, 0.7f, 0.08f), glass);
+            CreateBlock("ILS GS mast", new Vector3(-76f, 4.4f, -14.2f), new Vector3(0.16f, 4.6f, 0.16f), lattice);
+            CreateBlock("ILS GS array", new Vector3(-76f, 5.6f, -14.2f), new Vector3(0.12f, 3.4f, 2.8f), lattice);
+            CreateBlock("ILS GS dipoles", new Vector3(-76f, 5.4f, -14.2f), new Vector3(0.35f, 2.2f, 0.12f), new Color(0.72f, 0.74f, 0.76f));
+            PlaceContactShadow("ILS GS contact", new Vector3(-76f, 0.035f, -14.2f), new Vector3(3.2f, 0.015f, 2.6f), 0.12f);
+
+            var locX = VisualThresholdEastX + 48f;
+            CreateBlock("ILS loc hut", new Vector3(locX, 0.85f, 0f), new Vector3(2.2f, 1.7f, 1.6f), hut);
+            CreateBlock("ILS loc hut glow", new Vector3(locX, 1.05f, 0.78f), new Vector3(1.4f, 0.55f, 0.08f), new Color(1f, 0.78f, 0.42f));
+            CreateBlock("ILS loc rail", new Vector3(locX, 1.35f, 0f), new Vector3(0.18f, 0.12f, 7.6f), lattice);
+            for (var i = -3; i <= 3; i++)
+            {
+                CreateBlock($"ILS loc dipole {i}", new Vector3(locX, 1.7f, i * 1.05f),
+                    new Vector3(0.08f, 1.35f, 0.08f), lattice);
+                CreateBlock($"ILS loc board {i}", new Vector3(locX, 2.15f, i * 1.05f),
+                    new Vector3(0.06f, 0.7f, 0.55f), new Color(0.88f, 0.9f, 0.92f));
+            }
+
+            PlaceContactShadow("ILS loc contact", new Vector3(locX, 0.035f, 0f), new Vector3(3.2f, 0.015f, 8.2f), 0.1f);
         }
 
         /// <summary>
@@ -8303,7 +8369,7 @@ namespace Airside.Presentation
             PlaceContactShadow("Terminal concourse contact", new Vector3(60f, 0.035f, 22.4f), new Vector3(12f, 0.02f, 7.4f), 0.14f);
             PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.035f, 20f), new Vector3(10f, 0.02f, 7f), 0.14f);
             PlaceContactShadow("Ops contact", new Vector3(-8f, 0.035f, 26f), new Vector3(5f, 0.02f, 3.5f), 0.12f);
-            PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
+            PlaceContactShadow("Fuel farm contact", new Vector3(-64f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
             PlaceContactShadow("ARFF contact", new Vector3(-28f, 0.035f, 30f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
             PlaceContactShadow("Canopy contact", new Vector3(26f, 0.035f, 31.5f), new Vector3(10f, 0.015f, 3.2f), 0.08f);
         }
@@ -8830,6 +8896,11 @@ namespace Airside.Presentation
             }
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, -0.18f, 2.45f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
+            if (!HasNamedChild(root, "Strobe L"))
+            {
+                ParentBlock(root, "Strobe L", new Vector3(-4.35f, 0.18f, 0.05f), new Vector3(0.1f, 0.1f, 0.1f), new Color(0.95f, 0.97f, 1f));
+                ParentBlock(root, "Strobe R", new Vector3(4.35f, 0.18f, 0.05f), new Vector3(0.1f, 0.1f, 0.1f), new Color(0.95f, 0.97f, 1f));
+            }
             if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
             {
                 // Batch F4 VFX-002 — prefer reusable heat kit; fall back to translucent quads.
@@ -9540,7 +9611,7 @@ namespace Airside.Presentation
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
-                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.55f, 0.56f, 0.6f, 0.32f));
+                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.4f));
                 disc.SetActive(false);
             }
         }
@@ -9683,6 +9754,7 @@ namespace Airside.Presentation
                 if (n.IndexOf("window", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("glass", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("light", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("strobe", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("prop", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("tire", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
@@ -10216,7 +10288,7 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_props_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_props_kit_v02.gltf",
                 "Models/Props/mdl_airfield_props_kit_v01.gltf");
-            var poleOrigin = new Vector3(-12f, 0f, 12f);
+            var poleOrigin = new Vector3(-74f, 0f, 13.6f);
             var placedPole = ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_base", poleOrigin, Quaternion.identity, new Color(0.35f, 0.36f, 0.38f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "sock_pole", poleOrigin, Quaternion.identity, new Color(0.75f, 0.75f, 0.72f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(propsKit, "windsock_pole", poleOrigin, Quaternion.identity, new Color(0.75f, 0.75f, 0.72f), out _)
@@ -10235,12 +10307,12 @@ namespace Airside.Presentation
             }
             else if (!placedPole)
             {
-                CreateBlock("Windsock pole", new Vector3(-12f, 1.6f, 12f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
-                CreateBlock("Windsock hinge", new Vector3(-12f, 3.15f, 12f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.55f, 0.55f, 0.52f));
+                CreateBlock("Windsock pole", new Vector3(-74f, 1.6f, 13.6f), new Vector3(0.12f, 3.2f, 0.12f), new Color(0.75f, 0.75f, 0.72f));
+                CreateBlock("Windsock hinge", new Vector3(-74f, 3.15f, 13.6f), new Vector3(0.22f, 0.22f, 0.22f), new Color(0.55f, 0.55f, 0.52f));
             }
 
             var sock = new GameObject("Windsock sock").transform;
-            sock.position = new Vector3(-11.2f, 3.05f, 12f);
+            sock.position = new Vector3(-73.2f, 3.05f, 13.6f);
             sock.rotation = Quaternion.Euler(0f, 12f, 0f);
             var fabricPlaced = false;
             void PlaceFabric(string mesh, Color color)
@@ -10266,7 +10338,7 @@ namespace Airside.Presentation
                 cylinder.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
                 cylinder.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
                 cylinder.GetComponent<Renderer>().material = CreateMaterial(new Color(0.92f, 0.55f, 0.12f));
-                var stripe = CreateBlock("Windsock stripe", new Vector3(-10.6f, 3.05f, 12f), new Vector3(0.35f, 0.52f, 0.52f),
+                var stripe = CreateBlock("Windsock stripe", new Vector3(-72.6f, 3.05f, 13.6f), new Vector3(0.35f, 0.52f, 0.52f),
                     new Color(0.95f, 0.95f, 0.92f));
                 stripe.transform.SetParent(sock, true);
             }
@@ -10970,6 +11042,17 @@ namespace Airside.Presentation
             PlaceRunwayDigit('2', end12 + along * 1.15f, yaw + 90f);
             PlaceRunwayDigit('3', end30 - along * 1.15f, yaw - 90f);
             PlaceRunwayDigit('0', end30 + along * 1.15f, yaw - 90f);
+            var across = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
+            foreach (var dist in new[] { -26f, 26f })
+            {
+                var p = center + along * dist;
+                var left = CreateBlock($"12-30 aiming {dist} L", p - across * 1.55f,
+                    new Vector3(2.6f, 0.02f, 1.05f), Color.white);
+                var right = CreateBlock($"12-30 aiming {dist} R", p + across * 1.55f,
+                    new Vector3(2.6f, 0.02f, 1.05f), Color.white);
+                left.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                right.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
             for (var i = -5; i <= 5; i++)
             {
                 if (Mathf.Abs(i) >= 5)
@@ -11463,68 +11546,39 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Small fuel farm west of the hangar — readable silhouette, not a sim system.
+        /// Small fuel farm west of the freight shed — readable silhouette, not a sim system.
         /// </summary>
         private static void BuildFuelFarm()
         {
+            var farmPos = new Vector3(-64f, 0f, 22f);
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_fuel_farm_v01", out var farm))
             {
                 farm.name = "Fuel farm";
-                farm.position = new Vector3(-34f, 0f, 22f);
+                farm.position = farmPos;
             }
             else
             {
-                CreateBlock("Fuel pad WNW", new Vector3(-35.9175f, 0.018f, 23.33f), new Vector3(1.248f, 0.0768f, 1.843f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad WNE", new Vector3(-34.6825f, 0.02f, 23.37f), new Vector3(1.248f, 0.0768f, 1.843f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad WSW", new Vector3(-35.8628f, 0.016f, 21.4f), new Vector3(1.1981f, 0.0745f, 1.7693f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad WSE", new Vector3(-34.6772f, 0.018f, 21.44f), new Vector3(1.1981f, 0.0745f, 1.7693f), new Color(0.28f, 0.3f, 0.32f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad ENW", new Vector3(-33.2866f, 0.02f, 23.3515f), new Vector3(1.1856f, 0.0737f, 1.7877f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad ENE", new Vector3(-32.1134f, 0.022f, 23.3915f), new Vector3(1.1856f, 0.0737f, 1.7877f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad ESW", new Vector3(-33.2332f, 0.018f, 21.4785f), new Vector3(1.1382f, 0.0715f, 1.7162f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-            CreateBlock("Fuel pad ESE", new Vector3(-32.1068f, 0.02f, 21.5185f), new Vector3(1.1382f, 0.0715f, 1.7162f), new Color(0.29f, 0.31f, 0.33f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.45f, 0.7f));
-                CreateBlock("Fuel pad apron WW", new Vector3(-36.2862f, 0.018f, 19.78f), new Vector3(1.488f, 0.0672f, 2.328f), new Color(0.3f, 0.32f, 0.34f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron WE", new Vector3(-34.8137f, 0.02f, 19.82f), new Vector3(1.488f, 0.0672f, 2.328f), new Color(0.3f, 0.32f, 0.34f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron EW", new Vector3(-33.1494f, 0.02f, 19.83f), new Vector3(1.4136f, 0.0645f, 2.2582f), new Color(0.31f, 0.33f, 0.35f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                CreateBlock("Fuel pad apron EE", new Vector3(-31.7506f, 0.022f, 19.87f), new Vector3(1.4136f, 0.0645f, 2.2582f), new Color(0.31f, 0.33f, 0.35f),
-                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(0.5f, 0.45f));
-                // Fuel pad bay paint — readable from overview / follow.
-                CreateBlock("Fuel pad centre", new Vector3(-34f, 0.05f, 21.5f), new Vector3(0.12f, 0.02f, 3.6f), new Color(0.95f, 0.85f, 0.2f));
-                CreateBlock("Fuel pad edge N", new Vector3(-34f, 0.05f, 24.2f), new Vector3(4.2f, 0.02f, 0.1f), Color.white);
-                CreateBlock("Fuel pad edge S", new Vector3(-34f, 0.05f, 18.8f), new Vector3(4.2f, 0.02f, 0.1f), Color.white);
-                CreateBlock("Fuel pad stop", new Vector3(-34f, 0.05f, 20.2f), new Vector3(2.4f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));
-                CreateTaxiChordPad("Fuel pad link", new Vector3(-30f, 0.02f, 22f), new Vector3(-24f, 0.02f, 18f), 3.6f,
-                    PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.1f, 1f));
-                // Cylindrical tanks read as storage vessels, not cargo cubes (0025 item 2/3).
-                PlaceFuelTank("Fuel tank A", new Vector3(-35.5f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
-                PlaceFuelTank("Fuel tank B", new Vector3(-32.2f, 1.15f, 22.5f), new Color(0.72f, 0.55f, 0.18f));
-                // Low bund walls — containment lip, not a solid 6×5 greybox slab.
+                PlaceLevelPad("Fuel pad", -64f, 22f, 8.4f, 6.6f, new Color(0.3f, 0.32f, 0.34f),
+                    PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(2f, 1.6f));
+                PlaceLevelPad("Fuel pad access", -56f, 20.6f, 10f, 3.2f, new Color(0.28f, 0.3f, 0.32f),
+                    PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(2.4f, 0.8f));
+                PlaceFuelTank("Fuel tank A", new Vector3(-66.2f, 1.15f, 22.6f), new Color(0.72f, 0.55f, 0.18f));
+                PlaceFuelTank("Fuel tank B", new Vector3(-62.2f, 1.15f, 22.6f), new Color(0.72f, 0.55f, 0.18f));
                 var bund = new Color(0.4f, 0.42f, 0.4f);
-                CreateBlock("Fuel bund N", new Vector3(-34f, 0.35f, 24.15f), new Vector3(6.4f, 0.55f, 0.35f), bund);
-                CreateBlock("Fuel bund S", new Vector3(-34f, 0.35f, 19.85f), new Vector3(6.4f, 0.55f, 0.35f), bund);
-                CreateBlock("Fuel bund W", new Vector3(-37.05f, 0.35f, 22f), new Vector3(0.35f, 0.55f, 4.0f), bund);
-                CreateBlock("Fuel bund E", new Vector3(-30.95f, 0.35f, 22f), new Vector3(0.35f, 0.55f, 4.0f), bund);
-                CreateBlock("Fuel pump", new Vector3(-34f, 0.7f, 19.6f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
-                CreateBlock("Fuel hose reel", new Vector3(-33.1f, 0.45f, 19.8f), new Vector3(0.55f, 0.55f, 0.55f), new Color(0.35f, 0.2f, 0.12f));
-                // Cones/barrier only when the farm is greybox — kit ships its own safety fringe.
-                CreateCone(new Vector3(-30.5f, 0.25f, 19.2f));
-                CreateCone(new Vector3(-37.5f, 0.25f, 19.2f));
-                CreateBarrier(new Vector3(-34f, 0.45f, 18.6f), 0f);
+                CreateBlock("Fuel bund N", new Vector3(-64f, 0.35f, 25.1f), new Vector3(7.2f, 0.55f, 0.35f), bund);
+                CreateBlock("Fuel bund S", new Vector3(-64f, 0.35f, 18.9f), new Vector3(7.2f, 0.55f, 0.35f), bund);
+                CreateBlock("Fuel bund W", new Vector3(-67.7f, 0.35f, 22f), new Vector3(0.35f, 0.55f, 6.0f), bund);
+                CreateBlock("Fuel bund E", new Vector3(-60.3f, 0.35f, 22f), new Vector3(0.35f, 0.55f, 6.0f), bund);
+                CreateBlock("Fuel pump", new Vector3(-64f, 0.7f, 19.8f), new Vector3(1.2f, 1.2f, 0.8f), new Color(0.25f, 0.28f, 0.3f));
+                CreateBlock("Fuel hose reel", new Vector3(-63.1f, 0.45f, 20f), new Vector3(0.55f, 0.55f, 0.55f), new Color(0.35f, 0.2f, 0.12f));
+                CreateCone(new Vector3(-60.2f, 0.25f, 19.4f));
+                CreateCone(new Vector3(-67.6f, 0.25f, 19.4f));
+                CreateBarrier(new Vector3(-64f, 0.45f, 18.4f), 0f);
             }
 
             // Amber safety flood over the fuel pad at night (presentation only).
             var lamp = new GameObject("Fuel farm light");
-            lamp.transform.position = new Vector3(-34f, 4.2f, 22f);
+            lamp.transform.position = farmPos + new Vector3(0f, 4.2f, 0f);
             var light = lamp.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(1f, 0.72f, 0.28f);

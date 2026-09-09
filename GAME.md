@@ -6,7 +6,9 @@
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
-  A1. Night beacon should sit on the tower. EditMode 193/193 earlier this session.
+  A1. Night beacon should sit on the tower. Wingtip strobes, 05 GS/localizer,
+  and fuel farm west of freight are new this pass. EditMode 193/193 earlier
+  this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -27,7 +29,11 @@
   ALS. The terminal is larger with ochre idents and idle aerobridges on the
   satellite. A West Beach surf club sits by the jetty. Aircraft skin is
   glossier and cabin windows glow at night. A landside A monument and GA apron
-  sit west of the hangar; 23 has a rapid-exit taxi. Save schema unchanged.
+  sit west of the hangar; 23 has a rapid-exit taxi. Wingtip strobes pulse on
+  live aircraft. A 05 glideslope sits south of the gulf threshold; the 05
+  localizer sits east of the 23 ALS. Fuel farm is west of the freight shed.
+  Extra coast foam toward Glenelg; 12/30 has aiming bars; windsock is on the
+  05 Alpha. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

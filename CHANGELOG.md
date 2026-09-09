@@ -42,7 +42,10 @@ change it describes.
   23; the apron is wider. Taxiway Delta, east 23 ALS, a bigger terminal with
   ochre idents and satellite aerobridges, a West Beach surf club, and glossier
   night-lit aircraft. Landside has a sculptural A; GA parks on its own apron;
-  23 has a rapid-exit taxi. Unity EditMode 193/193.
+  23 has a rapid-exit taxi. Wingtip strobes pulse in flight; 05 has a
+  glideslope on the gulf side and a localizer east of 23; the fuel farm sits
+  west of freight; Glenelg foam and 12/30 aiming bars read from overview.
+  Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

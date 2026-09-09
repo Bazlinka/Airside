@@ -30,6 +30,7 @@ namespace Airside.Presentation
         // ANM-AIR-004 nav/beacon pulse
         public const float BeaconHz = 1.4f;
         public const float NavSteady = 1f;
+        public const float StrobeHz = 1.15f;
 
         // ANM-VEH wheel spin scale (presentation)
         public const float VehicleWheelRpmTaxi = 180f;

@@ -76,7 +76,9 @@ change it describes.
   Terminal roofs carry extra plant so the halls are not flat slabs from overview.
   Adelaide Hills / Mt Lofty sit east of the CBD; a visual turboprop holds on
   the 12/30 taxi; day fog is thinner so gulf and hills stay crisp. Night taxi
-  lamps follow the 12/30 south taxi. Unity EditMode 193/193.
+  lamps follow the 12/30 south taxi. A fifth idle turboprop sits on Bravo
+  west so 23/05 is not a single empty strip from overview. Unity EditMode
+  193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

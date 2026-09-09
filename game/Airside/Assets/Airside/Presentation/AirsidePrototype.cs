@@ -12074,6 +12074,7 @@ namespace Airside.Presentation
             PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f));
             PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f));
             PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f));
+            PlaceIdleApronAircraft("Idle Bravo", new Vector3(-52f, 0.7f, -9.2f), 90f, new Color(0.16f, 0.42f, 0.32f));
         }
 
         /// <summary>

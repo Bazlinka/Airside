@@ -49,7 +49,7 @@ namespace Airside.Simulation
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
-            Atc = new AerodromeAtc();
+            Atc = new AerodromeAtc(location);
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
@@ -444,7 +444,7 @@ namespace Airside.Simulation
                 Record(now, flight.AircraftId, "ATC", Atc.IssueRadarContact(flight.AircraftId));
             }
 
-            // Mid-downwind: ask once before base on the short Kingscote circuit.
+            // Mid-downwind: ask once before base on the short circuit.
             if (flight.Operation.Phase == AircraftPhase.Approach
                 && flight.Operation.SecondsRemaining(now) == AerodromeAtc.MidDownwindReportSeconds
                 && Atc.ActiveClearance is AtcClearance.JoinLeftDownwind or AtcClearance.ContinueApproach
@@ -1345,7 +1345,7 @@ namespace Airside.Simulation
                     return $"{other.AircraftId} departing on the runway";
                 if (Atc.ActiveClearance == AtcClearance.LineUpAndWait
                     && string.Equals(Atc.LastClearedFlight, other.AircraftId, StringComparison.Ordinal))
-                    return $"{other.AircraftId} lining up runway 09";
+                    return $"{other.AircraftId} lining up runway {Atc.RunwayIdent}";
             }
 
             // FIFO: name the earlier taxi-out waiter at the hold.
@@ -1396,7 +1396,7 @@ namespace Airside.Simulation
                     return $"{other.AircraftId} departing on the runway";
                 if (Atc.ActiveClearance == AtcClearance.LineUpAndWait
                     && string.Equals(Atc.LastClearedFlight, other.AircraftId, StringComparison.Ordinal))
-                    return $"{other.AircraftId} lining up runway 09";
+                    return $"{other.AircraftId} lining up runway {Atc.RunwayIdent}";
                 if (other.Operation.Phase == AircraftPhase.TaxiOut
                     && other.Operation.SecondsRemaining(now) <= 0)
                     return $"{other.AircraftId} holding short for departure";

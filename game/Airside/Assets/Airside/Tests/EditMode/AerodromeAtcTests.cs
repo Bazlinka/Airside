@@ -22,7 +22,7 @@ namespace Airside.Tests
 
             Assert.That(simulation.ActiveAircraft.Phase, Is.EqualTo(AircraftPhase.Landing));
             Assert.That(simulation.Atc.ActiveClearance, Is.EqualTo(AtcClearance.ClearedToLand));
-            Assert.That(simulation.Atc.LastInstruction, Does.Contain("cleared to land runway 09"));
+            Assert.That(simulation.Atc.LastInstruction, Does.Contain("cleared to land runway 23"));
             Assert.That(HasAtcEvent(simulation, "cleared to land"), Is.True);
         }
 
@@ -138,7 +138,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueHoldShortRunway("AS-101", "runway occupied", "on short final"),
                 Does.Contain("traffic on short final"));
             Assert.That(atc.IssueHoldShortRunway("AS-101", "runway occupied", "on short final"),
-                Does.Contain("hold short runway 09"));
+                Does.Contain("hold short runway 23"));
             Assert.That(atc.IssueHoldShortRunway("AS-101", "runway occupied", "on short final"),
                 Does.Contain("holding point Alpha"));
             Assert.That(atc.IssueHoldShortRunway("AS-101", "runway occupied", "on short final"),
@@ -151,7 +151,7 @@ namespace Airside.Tests
         {
             var atc = new AerodromeAtc();
             Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("expect landing clearance"));
-            Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("continue approach runway 09"));
+            Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("continue approach runway 23"));
             Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("wind calm"));
             Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("QNH 1013"));
             Assert.That(atc.IssueExpectLandingClearance("AS-101", 7), Does.Contain("report short final"));
@@ -188,7 +188,7 @@ namespace Airside.Tests
 
             atc.NotifyRunwayVacated(new SimulationTime(80), "AS-101");
             Assert.That(atc.LastInstruction, Does.Contain("via Alpha"));
-            Assert.That(atc.LastInstruction, Does.Contain("contact Kingscote Ground"));
+            Assert.That(atc.LastInstruction, Does.Contain("contact Adelaide Ground"));
             Assert.That(atc.LastInstruction, Does.Contain("expect taxi to stand"));
             Assert.That(atc.LastInstruction, Does.Contain("first available"));
             Assert.That(atc.LastInstruction, Does.Contain("caution wake"));
@@ -252,7 +252,7 @@ namespace Airside.Tests
             var atc = new AerodromeAtc();
             Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("number two"));
             Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("traffic ahead on final"));
-            Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("continue approach runway 09"));
+            Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("continue approach runway 23"));
             Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("report short final"));
             Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("vacate via Alpha when landed"));
             Assert.That(atc.IssueNumberTwoForLanding("AS-102"), Does.Contain("wind calm"));
@@ -344,7 +344,7 @@ namespace Airside.Tests
         {
             var atc = new AerodromeAtc();
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("join left"));
-            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("Kingscote Tower"));
+            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("Adelaide Tower"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("make left circuit"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("circuit height"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("1000 ft"));
@@ -354,7 +354,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("monitor this frequency"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("squawk VFR"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.JoinLeftDownwind));
-            Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("report mid-downwind runway 09"));
+            Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("report mid-downwind runway 23"));
             Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("number one expected"));
             Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("expect base report"));
             Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("remain this frequency"));
@@ -362,7 +362,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("surface wind calm"));
             Assert.That(atc.IssueReportMidDownwind("AS-101"), Does.Contain("QNH 1013"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.ReportMidDownwind));
-            Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("report turning base runway 09"));
+            Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("report turning base runway 23"));
             Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("continue approach"));
             Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("expect further clearance on final"));
             Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("number one expected"));
@@ -371,7 +371,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("vacate via Alpha when landed"));
             Assert.That(atc.IssueReportBase("AS-101"), Does.Contain("QNH 1013"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.ReportBase));
-            Assert.That(atc.IssueReportFinal("AS-101"), Does.Contain("report turning final runway 09"));
+            Assert.That(atc.IssueReportFinal("AS-101"), Does.Contain("report turning final runway 23"));
             Assert.That(atc.IssueReportFinal("AS-101"), Does.Contain("wind calm"));
             Assert.That(atc.IssueReportFinal("AS-101"), Does.Contain("surface wind calm"));
             Assert.That(atc.IssueReportFinal("AS-101"), Does.Contain("QNH 1013"));
@@ -448,7 +448,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueHoldShortAlpha("AS-101", "AS-102 on Alpha"), Does.Contain("AS-102 on Alpha"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.HoldShortAlpha));
             Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("continue taxi"));
-            Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("hold short runway 09"));
+            Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("hold short runway 23"));
             Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("holding point Alpha"));
             Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("QNH 1013"));
             Assert.That(atc.IssueContinueTaxi("AS-101"), Does.Contain("report ready when number one"));
@@ -463,7 +463,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueContinueTaxi("AS-101", afterGiveWay: true, inbound: true),
                 Does.Contain("report on stand when parked"));
             Assert.That(atc.IssueContinueTaxi("AS-101", afterGiveWay: true, inbound: true),
-                Does.Not.Contain("hold short runway 09"));
+                Does.Not.Contain("hold short runway 23"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.ContinueTaxi));
             Assert.That(atc.IssueGiveWayTaxiing("AS-102"), Does.Contain("give way to taxiing"));
             Assert.That(atc.IssueGiveWayTaxiing("AS-102"), Does.Contain("on Alpha"));
@@ -533,7 +533,7 @@ namespace Airside.Tests
         {
             var atc = new AerodromeAtc();
             Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("marshaller"));
-            Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("welcome to Kingscote"));
+            Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("welcome to Adelaide"));
             Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("shutdown approved"));
             Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("chocks in"));
             Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("QNH 1013"));
@@ -584,7 +584,7 @@ namespace Airside.Tests
         {
             var atc = new AerodromeAtc();
             Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("runway vacated"));
-            Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("Kingscote Ground"));
+            Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("Adelaide Ground"));
             Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("taxi via Alpha"));
             Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("hold short of the stand"));
             Assert.That(atc.IssueContactGround("AS-101"), Does.Contain("caution vehicles on the apron"));
@@ -600,12 +600,12 @@ namespace Airside.Tests
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("frequency change approved"));
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("radar service terminated"));
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("QNH 1013"));
-            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("contact Adelaide Centre"));
-            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("125.3"));
+            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("contact Adelaide Departures"));
+            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("118.2"));
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("squawk VFR"));
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("leave the circuit when able"));
             Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("remain clear of cloud"));
-            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("good day from Kingscote Tower"));
+            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("good day from Adelaide Tower"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.FrequencyChange));
             Assert.That(atc.IssueHoldApron("AS-101"), Does.Contain("hold on the apron"));
             Assert.That(atc.IssueHoldApron("AS-101"), Does.Contain("give way to apron traffic"));
@@ -629,6 +629,17 @@ namespace Airside.Tests
             Assert.That(atc.IssueContinueApproach("AS-101", "on short final"), Does.Contain("traffic on short final"));
             Assert.That(atc.IssueContinueApproach("AS-101", "landing on the runway", wakeCaution: true),
                 Does.Contain("caution wake turbulence"));
+        }
+
+        [Test]
+        public void Kingscote_KeepsRegionalPhraseology()
+        {
+            var atc = new AerodromeAtc(AirportLocation.Kingscote);
+            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("Kingscote Tower"));
+            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("runway 09"));
+            Assert.That(atc.IssueOnStand("AS-101", "Stand 1"), Does.Contain("welcome to Kingscote"));
+            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("contact Adelaide Centre"));
+            Assert.That(atc.IssueFrequencyChangeApproved("AS-101"), Does.Contain("125.3"));
         }
 
         private static bool HasAtcEvent(AirportSimulation simulation, string phrase)

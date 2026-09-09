@@ -1,20 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Codex — free CC0 asset intake / startup safeguard)
-- **Branch:** `art/free-concrete-surface` (startup-safeguard PR pending)
-- **Do next:** Have Cursor diagnose the packaged-player visual-first-frame issue
-  before more art sourcing. The previous `InvalidProgramException` is removed and
-  the dense outer grass field is replaced by one textured base, but a visible frame
-  was not captured from the local Mac player. Then continue the checklist in
-  priority order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters.
-- **In progress / half-done:** First-playable **refine / art sourcing** — no new
-  economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
+- **Last updated:** 2026-09-09 (Cursor — overnight Adelaide visual rebuild)
+- **Branch:** `feature/adelaide-overnight-visual`
+- **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
+  Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint.
+  Then merge if Play is clean.
+- **In progress / half-done:** Overnight visual pass — Adelaide default, level
+  slabs, bigger field, aircraft polish, CBD skyline. Save schema unchanged.
 - **Watch for / assumptions:**
-  - Checklist rows marked Placeholder still need authored replacements; AUD-005 remains partial (click only)
-  - Register + StreamingAssets sync required with every new runtime art commit
-  - The generated `double` to `float` source errors, `BugfixPassTests` StableId assertion mismatch, packaged-player `BuildAirfield` IL fault, and unreachable dense outer-ground field were repaired in this intake. Unity EditMode passes 192/192; `scripts/test-domain.sh` remains unavailable on this Mac because no .NET SDK is installed
-  - Packaged-player visual-first-frame QA is still outstanding. The latest player log has repeated non-fatal `mesh isReadable is false` UV warnings while it initialises; treat the player as unresolved until a visible interactive frame is captured.
-  - Save schema unchanged
+  - New games are Adelaide (`ADL`). Existing `KGC` saves stay Kingscote.
+  - Sim taxi/stand coords unchanged (14/24/34). Cross runway 12/30 is visual only.
+  - Airfield construction dropped from ~10k cubes to a few hundred level pads
+    so Awake can reach a first frame.
 - **Open question for Bailey:** none
 
 ---
@@ -22,7 +19,7 @@
 ## Current milestone
 
 Toward the first playable airport. The airport sits at a named location
-(Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
+(Adelaide, West Beach by default; Kingscote, Port Lincoln and Coober Pedy also
 available) and runs a day/night cycle — one simulated day every 20 real minutes,
 driving the sun and ambient light and shown on the HUD. Airlines propose scheduled routes on a timer; the player accepts (or declines) an offer and every
 completed flight then pays a recurring per-flight amount. Schedule demand is capped by stand
@@ -107,11 +104,12 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
+1. **Mac Play** the Adelaide overnight rebuild on
+   `feature/adelaide-overnight-visual` — first frame, level ground, dual runway,
+   Gulf west, Adelaide HUD/ATC. Merge if clean.
+2. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
    in priority order (props/gear/wheels/engines → buildings → GSE → trees → CHR).
-2. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
+3. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
    off or list concrete gaps.
-3. Mac overview: day/night readability (#158) noon + midnight sign-off.
-4. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
-   characters (#153) vs refs if not yet signed off.
+4. Mac overview: day/night readability (#158) noon + midnight sign-off.
 5. No new economy systems; no Companion/CloudKit.

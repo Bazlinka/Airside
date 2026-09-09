@@ -83,7 +83,7 @@ namespace Airside.Simulation
 
         private static readonly string[] Destinations =
         {
-            "Adelaide", "Whyalla", "Mount Gambier", "Ceduna", "Broken Hill", "Melbourne"
+            "Melbourne", "Sydney", "Perth", "Alice Springs", "Whyalla", "Port Lincoln"
         };
 
         private readonly List<AcceptedRoute> _accepted = new();

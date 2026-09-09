@@ -64,10 +64,12 @@ namespace Airside.Tests
         {
             Assert.That(AirportLocation.FromId("PLO").Name, Is.EqualTo("Port Lincoln"));
             Assert.That(AirportLocation.FromId("kgc"), Is.EqualTo(AirportLocation.Kingscote));
+            Assert.That(AirportLocation.FromId("ADL"), Is.EqualTo(AirportLocation.Adelaide));
+            Assert.That(AirportLocation.Default, Is.EqualTo(AirportLocation.Adelaide));
             Assert.That(AirportLocation.TryFromId("nonsense", out _), Is.False);
             Assert.Throws<ArgumentException>(() => AirportLocation.FromId("nonsense"));
             Assert.Throws<ArgumentException>(() => AirportLocation.FromId(""));
-            Assert.That(AirportLocation.Presets.Length, Is.GreaterThanOrEqualTo(3));
+            Assert.That(AirportLocation.Presets.Length, Is.GreaterThanOrEqualTo(4));
         }
 
         [Test]

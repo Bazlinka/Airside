@@ -891,7 +891,7 @@ namespace Airside.Presentation
             {
                 _briefingOverlay.style.display = DisplayStyle.Flex;
                 _briefingBody.text =
-                    "You run this regional airport\n\n" +
+                    $"You run {locationName}\n\n" +
                     $"Aircraft move on their own. Your job is cash, reputation and capacity at {locationName}.\n\n" +
                     "First useful decision\n" +
                     $"In about {firstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.\n\n" +

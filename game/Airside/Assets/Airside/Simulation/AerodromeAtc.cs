@@ -38,14 +38,40 @@ namespace Airside.Simulation
         /// <summary>Seconds of number-two wait before tower asks for a left orbit.</summary>
         public const long OrbitAfterNumberTwoSeconds = 8;
 
+        private readonly string _airportName;
+        private readonly string _tower;
+        private readonly string _ground;
+        private readonly string _runway;
+        private readonly string _departureHandoff;
         private long _runwayAvailableAt;
-        private string _lastInstruction = "Kingscote Tower — frequency open";
+        private string _lastInstruction;
         private string _lastClearedFlight = string.Empty;
         private AtcClearance _active = AtcClearance.None;
+
+        public AerodromeAtc() : this(AirportLocation.Default)
+        {
+        }
+
+        public AerodromeAtc(AirportLocation location)
+        {
+            if (string.IsNullOrWhiteSpace(location.Name))
+                location = AirportLocation.Default;
+            _airportName = location.Name;
+            _tower = _airportName + " Tower";
+            _ground = _airportName + " Ground";
+            var adelaide = string.Equals(location.Id, "ADL", StringComparison.OrdinalIgnoreCase);
+            _runway = adelaide ? "23" : "09";
+            _departureHandoff = adelaide
+                ? "contact Adelaide Departures on 118.2"
+                : "contact Adelaide Centre on 125.3";
+            _lastInstruction = $"{_tower} — frequency open";
+        }
 
         public string LastInstruction => _lastInstruction;
         public string LastClearedFlight => _lastClearedFlight;
         public AtcClearance ActiveClearance => _active;
+        public string RunwayIdent => _runway;
+        public string TowerName => _tower;
 
         public bool RunwaySeparationOpen(SimulationTime now) =>
             now.ElapsedSeconds >= _runwayAvailableAt;
@@ -61,11 +87,11 @@ namespace Airside.Simulation
             {
                 _lastClearedFlight = callsign;
                 _lastInstruction =
-                    $"{callsign}, runway vacated via Alpha, first available, caution wake for following traffic, separation {RunwaySeparationSeconds}s, surface wind calm, QNH 1013, contact Kingscote Ground, expect taxi to stand";
+                    $"{callsign}, runway vacated via Alpha, first available, caution wake for following traffic, separation {RunwaySeparationSeconds}s, surface wind calm, QNH 1013, contact {_ground}, expect taxi to stand";
             }
             else
             {
-                _lastInstruction = $"Runway 09 vacated — separation {RunwaySeparationSeconds}s, wake caution active, QNH 1013";
+                _lastInstruction = $"Runway {_runway} vacated — separation {RunwaySeparationSeconds}s, wake caution active, QNH 1013";
             }
         }
 
@@ -74,7 +100,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ReadyForDeparture;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, roger ready, hold short runway 09 at holding point Alpha, surface wind calm, QNH 1013, remain this frequency, expect departure clearance when number one, report when number one";
+                $"{callsign}, roger ready, hold short runway {_runway} at holding point Alpha, surface wind calm, QNH 1013, remain this frequency, expect departure clearance when number one, report when number one";
             return _lastInstruction;
         }
 
@@ -98,12 +124,12 @@ namespace Airside.Simulation
             if (conditional)
             {
                 _lastInstruction =
-                    $"{callsign}, number one, cleared to land runway 09, traffic vacating via Alpha, caution wake turbulence, vacate via Alpha when able, report runway vacated, remain this frequency, {remark}";
+                    $"{callsign}, number one, cleared to land runway {_runway}, traffic vacating via Alpha, caution wake turbulence, vacate via Alpha when able, report runway vacated, remain this frequency, {remark}";
             }
             else
             {
                 _lastInstruction =
-                    $"{callsign}, number one, cleared to land runway 09, runway is clear, vacate via Alpha when able, report runway vacated, remain this frequency, {remark}";
+                    $"{callsign}, number one, cleared to land runway {_runway}, runway is clear, vacate via Alpha when able, report runway vacated, remain this frequency, {remark}";
             }
 
             return _lastInstruction;
@@ -114,7 +140,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ReportEstablished;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, report established final runway 09, continue approach, surface wind calm, QNH 1013, number one expected, runway is clear, expect landing clearance, report short final, vacate via Alpha when landed";
+                $"{callsign}, report established final runway {_runway}, continue approach, surface wind calm, QNH 1013, number one expected, runway is clear, expect landing clearance, report short final, vacate via Alpha when landed";
             return _lastInstruction;
         }
 
@@ -123,7 +149,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ShortFinal;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, short final runway 09, surface wind calm, QNH 1013, number one, runway is clear, cleared to land expected shortly, vacate via Alpha when able, report runway vacated, acknowledge";
+                $"{callsign}, short final runway {_runway}, surface wind calm, QNH 1013, number one, runway is clear, cleared to land expected shortly, vacate via Alpha when able, report runway vacated, acknowledge";
             return _lastInstruction;
         }
 
@@ -142,14 +168,14 @@ namespace Airside.Simulation
             if (fromLuaw)
             {
                 _lastInstruction = afterLanding
-                    ? $"{callsign}, number one, cleared for takeoff runway 09, from line up and wait, after the landing, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}"
-                    : $"{callsign}, number one, cleared for takeoff runway 09, from line up and wait, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}";
+                    ? $"{callsign}, number one, cleared for takeoff runway {_runway}, from line up and wait, after the landing, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}"
+                    : $"{callsign}, number one, cleared for takeoff runway {_runway}, from line up and wait, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}";
             }
             else
             {
                 _lastInstruction = afterLanding
-                    ? $"{callsign}, number one, cleared for takeoff runway 09 from Alpha, after the landing, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}"
-                    : $"{callsign}, number one, cleared for takeoff runway 09 from Alpha, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}";
+                    ? $"{callsign}, number one, cleared for takeoff runway {_runway} from Alpha, after the landing, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}"
+                    : $"{callsign}, number one, cleared for takeoff runway {_runway} from Alpha, climb straight ahead to circuit height 1000 ft, no turns below circuit height, report airborne when able, {remark}";
             }
 
             return _lastInstruction;
@@ -171,7 +197,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ContactGround;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, runway vacated, contact Kingscote Ground on this frequency, taxi via Alpha to the apron, hold short of the stand until marshaller, caution vehicles on the apron, QNH 1013, report on stand when parked";
+                $"{callsign}, runway vacated, contact {_ground} on this frequency, taxi via Alpha to the apron, hold short of the stand until marshaller, caution vehicles on the apron, QNH 1013, report on stand when parked";
             return _lastInstruction;
         }
 
@@ -180,7 +206,7 @@ namespace Airside.Simulation
             _active = AtcClearance.OnStand;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, marshaller in sight, taxi onto {standLabel}, welcome to Kingscote, parking brake set, shutdown approved, chocks in, surface wind calm, QNH 1013, report engines stopped, remain this frequency for departure";
+                $"{callsign}, marshaller in sight, taxi onto {standLabel}, welcome to {_airportName}, parking brake set, shutdown approved, chocks in, surface wind calm, QNH 1013, report engines stopped, remain this frequency for departure";
             return _lastInstruction;
         }
 
@@ -208,7 +234,7 @@ namespace Airside.Simulation
                 _ => string.Empty
             };
             _lastInstruction =
-                $"{callsign}, taxi via Alpha to holding point runway 09, hold short at Alpha, caution vehicles on the apron, surface wind calm, QNH 1013{caution}, report ready for departure";
+                $"{callsign}, taxi via Alpha to holding point runway {_runway}, hold short at Alpha, caution vehicles on the apron, surface wind calm, QNH 1013{caution}, report ready for departure";
             return _lastInstruction;
         }
 
@@ -246,8 +272,8 @@ namespace Airside.Simulation
             _active = AtcClearance.TrafficAdvisory;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction = string.IsNullOrWhiteSpace(traffic)
-                ? $"{callsign}, traffic advisory, hold short runway 09 at holding point Alpha, surface wind calm, QNH 1013, number two for departure, report ready when clear, expect further clearance"
-                : $"{callsign}, traffic {traffic}, hold short runway 09 at holding point Alpha, surface wind calm, QNH 1013, number two for departure, report ready when clear, expect further clearance";
+                ? $"{callsign}, traffic advisory, hold short runway {_runway} at holding point Alpha, surface wind calm, QNH 1013, number two for departure, report ready when clear, expect further clearance"
+                : $"{callsign}, traffic {traffic}, hold short runway {_runway} at holding point Alpha, surface wind calm, QNH 1013, number two for departure, report ready when clear, expect further clearance";
             return _lastInstruction;
         }
 
@@ -259,8 +285,8 @@ namespace Airside.Simulation
                 ? string.Empty
                 : $", traffic {traffic}";
             _lastInstruction = string.IsNullOrWhiteSpace(reason)
-                ? $"{callsign}, hold short runway 09 at holding point Alpha{trafficPhrase}, surface wind calm, QNH 1013, report ready when clear"
-                : $"{callsign}, hold short runway 09 at holding point Alpha — {reason}{trafficPhrase}, surface wind calm, QNH 1013, report ready when clear";
+                ? $"{callsign}, hold short runway {_runway} at holding point Alpha{trafficPhrase}, surface wind calm, QNH 1013, report ready when clear"
+                : $"{callsign}, hold short runway {_runway} at holding point Alpha — {reason}{trafficPhrase}, surface wind calm, QNH 1013, report ready when clear";
             return _lastInstruction;
         }
 
@@ -273,7 +299,7 @@ namespace Airside.Simulation
                 : $", traffic {traffic}";
             var wakePhrase = wakeCaution ? ", caution wake turbulence" : string.Empty;
             _lastInstruction =
-                $"{callsign}, continue approach runway 09{trafficPhrase}{wakePhrase}, surface wind calm, QNH 1013, report short final, number one expected, expect landing clearance, vacate via Alpha when landed";
+                $"{callsign}, continue approach runway {_runway}{trafficPhrase}{wakePhrase}, surface wind calm, QNH 1013, report short final, number one expected, expect landing clearance, vacate via Alpha when landed";
             return _lastInstruction;
         }
 
@@ -282,7 +308,7 @@ namespace Airside.Simulation
             _active = AtcClearance.JoinLeftDownwind;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, Kingscote Tower, join left hand downwind runway 09, make left circuit, circuit height 1000 ft, wind calm, QNH 1013, report mid-downwind then base, monitor this frequency, squawk VFR";
+                $"{callsign}, {_tower}, join left hand downwind runway {_runway}, make left circuit, circuit height 1000 ft, wind calm, QNH 1013, report mid-downwind then base, monitor this frequency, squawk VFR";
             return _lastInstruction;
         }
 
@@ -291,7 +317,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ReportMidDownwind;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, report mid-downwind runway 09, surface wind calm, QNH 1013, number one expected, continue, expect base report, remain this frequency, look for traffic in the circuit";
+                $"{callsign}, report mid-downwind runway {_runway}, surface wind calm, QNH 1013, number one expected, continue, expect base report, remain this frequency, look for traffic in the circuit";
             return _lastInstruction;
         }
 
@@ -300,7 +326,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ReportBase;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, report turning base runway 09, surface wind calm, QNH 1013, number one expected, continue approach, expect further clearance on final, vacate via Alpha when landed";
+                $"{callsign}, report turning base runway {_runway}, surface wind calm, QNH 1013, number one expected, continue approach, expect further clearance on final, vacate via Alpha when landed";
             return _lastInstruction;
         }
 
@@ -309,7 +335,7 @@ namespace Airside.Simulation
             _active = AtcClearance.ReportFinal;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, report turning final runway 09, surface wind calm, QNH 1013, number one expected, continue approach, runway is clear, expect landing clearance shortly, vacate via Alpha when landed";
+                $"{callsign}, report turning final runway {_runway}, surface wind calm, QNH 1013, number one expected, continue approach, runway is clear, expect landing clearance shortly, vacate via Alpha when landed";
             return _lastInstruction;
         }
 
@@ -318,7 +344,7 @@ namespace Airside.Simulation
             _active = AtcClearance.FrequencyChange;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction =
-                $"{callsign}, frequency change approved, radar service terminated, leave the circuit when able, QNH 1013, contact Adelaide Centre on 125.3, squawk VFR, remain clear of cloud, good day from Kingscote Tower";
+                $"{callsign}, frequency change approved, radar service terminated, leave the circuit when able, QNH 1013, {_departureHandoff}, squawk VFR, remain clear of cloud, good day from {_tower}";
             return _lastInstruction;
         }
 
@@ -332,12 +358,12 @@ namespace Airside.Simulation
             if (behindLanding)
             {
                 _lastInstruction =
-                    $"{callsign}, behind the landing, from holding point Alpha line up and wait runway 09{trafficPhrase}, surface wind calm, QNH 1013, hold position on the runway, report ready for departure, acknowledge";
+                    $"{callsign}, behind the landing, from holding point Alpha line up and wait runway {_runway}{trafficPhrase}, surface wind calm, QNH 1013, hold position on the runway, report ready for departure, acknowledge";
             }
             else
             {
                 _lastInstruction =
-                    $"{callsign}, from holding point Alpha line up and wait runway 09{trafficPhrase}, surface wind calm, QNH 1013, hold position on the runway, report ready for departure when number one, acknowledge";
+                    $"{callsign}, from holding point Alpha line up and wait runway {_runway}{trafficPhrase}, surface wind calm, QNH 1013, hold position on the runway, report ready for departure when number one, acknowledge";
             }
             return _lastInstruction;
         }
@@ -350,7 +376,7 @@ namespace Airside.Simulation
                 ? "traffic ahead on final"
                 : $"traffic ahead {traffic}";
             _lastInstruction =
-                $"{callsign}, number two, continue approach runway 09, {trafficPhrase}, wind calm, QNH 1013, report short final, expect further clearance, vacate via Alpha when landed";
+                $"{callsign}, number two, continue approach runway {_runway}, {trafficPhrase}, wind calm, QNH 1013, report short final, expect further clearance, vacate via Alpha when landed";
             return _lastInstruction;
         }
 
@@ -360,7 +386,7 @@ namespace Airside.Simulation
             _lastClearedFlight = callsign ?? string.Empty;
             var trafficPhrase = string.IsNullOrWhiteSpace(traffic) ? "traffic ahead" : $"traffic {traffic}";
             _lastInstruction =
-                $"{callsign}, number two, reduce to minimum approach speed, {trafficPhrase}, continue approach runway 09, wind calm, QNH 1013, report base then short final, expect further clearance";
+                $"{callsign}, number two, reduce to minimum approach speed, {trafficPhrase}, continue approach runway {_runway}, wind calm, QNH 1013, report base then short final, expect further clearance";
             return _lastInstruction;
         }
 
@@ -389,8 +415,8 @@ namespace Airside.Simulation
             else
             {
                 _lastInstruction = afterGiveWay
-                    ? $"{callsign}, traffic clear, continue taxi via Alpha, hold short runway 09 at holding point Alpha, QNH 1013, report ready when number one"
-                    : $"{callsign}, continue taxi via Alpha, hold short runway 09 at holding point Alpha, QNH 1013, report ready when number one";
+                    ? $"{callsign}, traffic clear, continue taxi via Alpha, hold short runway {_runway} at holding point Alpha, QNH 1013, report ready when number one"
+                    : $"{callsign}, continue taxi via Alpha, hold short runway {_runway} at holding point Alpha, QNH 1013, report ready when number one";
             }
 
             return _lastInstruction;
@@ -436,7 +462,7 @@ namespace Airside.Simulation
             _lastClearedFlight = callsign ?? string.Empty;
             var trafficPhrase = string.IsNullOrWhiteSpace(traffic) ? "traffic on final" : $"traffic {traffic}";
             _lastInstruction =
-                $"{callsign}, number two for departure, hold short runway 09 at holding point Alpha, {trafficPhrase}, surface wind calm, QNH 1013, report ready when clear, expect further clearance, remain this frequency";
+                $"{callsign}, number two for departure, hold short runway {_runway} at holding point Alpha, {trafficPhrase}, surface wind calm, QNH 1013, report ready when clear, expect further clearance, remain this frequency";
             return _lastInstruction;
         }
 
@@ -455,8 +481,8 @@ namespace Airside.Simulation
             _active = AtcClearance.ExpectLanding;
             _lastClearedFlight = callsign ?? string.Empty;
             _lastInstruction = separationSeconds > 0
-                ? $"{callsign}, continue approach runway 09, expect landing clearance in {separationSeconds}s, wind calm, QNH 1013, report short final, number one expected, vacate via Alpha when landed"
-                : $"{callsign}, continue approach runway 09, expect landing clearance, wind calm, QNH 1013, report short final, number one expected, vacate via Alpha when landed";
+                ? $"{callsign}, continue approach runway {_runway}, expect landing clearance in {separationSeconds}s, wind calm, QNH 1013, report short final, number one expected, vacate via Alpha when landed"
+                : $"{callsign}, continue approach runway {_runway}, expect landing clearance, wind calm, QNH 1013, report short final, number one expected, vacate via Alpha when landed";
             return _lastInstruction;
         }
 

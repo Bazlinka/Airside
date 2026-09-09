@@ -26,10 +26,20 @@ namespace Airside.Presentation
                 var n = renderer.gameObject.name.ToLowerInvariant();
                 Color color;
                 var kind = AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
-                if (n.Contains("rail") || n.Contains("accent") || n.Contains("beacon")
+                // Safety Yellow conspicuity only — bollards / chevrons / grab points
+                // (ARFF board: yellow never as a large body colour).
+                if (n.Contains("bollard") || n.Contains("chevron") || n.Contains("grab"))
+                {
+                    color = new Color(0.949f, 0.757f, 0.294f, 1f); // #F2C14B
+                    kind = AirsideMaterialLibrary.SurfaceKind.Metal;
+                }
+                else if (n.Contains("rail") || n.Contains("accent") || n.Contains("beacon")
                     || n.Contains("collar") || n.Contains("stripe") || n.Contains("face")
                     || n.Contains("cargo") || n.Contains("hinge") || n.Contains("band")
-                    || n.Contains("pipe") || n.Contains("drawer") || n.Contains("drum"))
+                    || n.Contains("pipe") || n.Contains("drawer") || n.Contains("drum")
+                    // White roof / upper panels (ARFF truck accent binding).
+                    || n.Contains("white") || n.Contains("cab roof")
+                    || (n.Contains("panel") && n.Contains("roof")))
                 {
                     color = accentColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;

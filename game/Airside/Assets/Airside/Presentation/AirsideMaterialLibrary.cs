@@ -448,7 +448,8 @@ namespace Airside.Presentation
             Color dryColor,
             float drySmoothness,
             float dryMetallic = 0.02f,
-            float dryBumpScale = 0.5f)
+            float dryBumpScale = 0.5f,
+            bool preferWetConcreteAlbedo = false)
         {
             if (material == null)
                 return;
@@ -461,6 +462,20 @@ namespace Airside.Presentation
             // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", wetColor);
+
+            // Approved surface board wet-concrete swatch — swap apron albedo when wet enough.
+            if (preferWetConcreteAlbedo && wetness01 > 0.12f)
+            {
+                var wetMap = PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false);
+                if (wetMap != null)
+                {
+                    if (material.HasProperty("_BaseMap"))
+                        material.SetTexture("_BaseMap", wetMap);
+                    if (material.HasProperty("_MainTex"))
+                        material.SetTexture("_MainTex", wetMap);
+                    material.mainTexture = wetMap;
+                }
+            }
             if (material.HasProperty("_SpecColor"))
             {
                 var spec = Color.Lerp(
@@ -662,10 +677,10 @@ namespace Airside.Presentation
             {
                 var kind = pair.Key;
                 var stem = pair.Value;
-                var normal = TryLoadArtTexture($"Textures/Surfaces/{stem}_normal_v01.png", linear: true);
-                var ao = TryLoadArtTexture($"Textures/Surfaces/{stem}_ao_v01.png", linear: true);
-                var mask = TryLoadArtTexture($"Textures/Surfaces/{stem}_mask_v01.png", linear: true);
-                var albedo = TryLoadArtTexture($"Textures/Surfaces/{stem}_basecolor_v01.png", linear: false);
+                var normal = PreferAuthoredMap(stem, "normal", linear: true);
+                var ao = PreferAuthoredMap(stem, "ao", linear: true);
+                var mask = PreferAuthoredMap(stem, "mask", linear: true);
+                var albedo = PreferAuthoredMap(stem, "basecolor", linear: false);
                 if (normal != null)
                     AuthoredNormals[kind] = normal;
                 if (ao != null)
@@ -675,6 +690,15 @@ namespace Airside.Presentation
                 if (albedo != null)
                     AuthoredAlbedo[kind] = albedo;
             }
+        }
+
+        /// <summary>Prefer denser v02 surface maps from the approved fidelity board; keep v01 fallback.</summary>
+        private static Texture2D PreferAuthoredMap(string stem, string mapKind, bool linear)
+        {
+            var v02 = TryLoadArtTexture($"Textures/Surfaces/{stem}_{mapKind}_v02.png", linear: linear);
+            if (v02 != null)
+                return v02;
+            return TryLoadArtTexture($"Textures/Surfaces/{stem}_{mapKind}_v01.png", linear: linear);
         }
 
         private static Texture2D TryLoadArtTexture(string artRelativePath, bool linear)

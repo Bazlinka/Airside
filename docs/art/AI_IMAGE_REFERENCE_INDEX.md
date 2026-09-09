@@ -23,21 +23,21 @@ Add these only when the task needs them:
 
 All five files above are Approved. Do not overwrite or restyle them.
 
-## Review candidates
+## Approved modelling boards (Bailey 2026-09-09)
 
-The following generated sheets are modelling/reference guidance only. They do
-not replace their related runtime assets and are not Approved until Bailey
-accepts their visual direction.
+Bailey accepted these fidelity / style sheets. They are modelling and material
+targets only — not runtime textures, billboards or mesh substitutes. Runtime
+kits densify against them via PreferArtKit / PreferSurface / ARFF prefab prefer.
 
-| Related asset | Candidate source | Intended use | Status |
+| Related asset | Approved reference | Intended use | Status |
 |---|---|---|---|
-| VEG-002 | `docs/art/candidates/ref_kingscote_coastal_scrub_style_sheet_v01.png` | Five mallee/shrub forms, three grass patches, three rock groups and two dune-edge mixes at human scale | Generated · review required |
-| WLD-004 | `docs/art/candidates/ref_kingscote_context_terrain_catalogue_v01.png` | Modular paddock berms, low hills, dunes, turquoise shallows and deep-water context around a protected blank operational zone | Generated · review required |
-| BLD-001…003 | `docs/art/candidates/ref_regional_airport_building_fidelity_board_v01.png` | Common-scale terminal, hangar and ops-shed silhouette/material target matched to REF-001 | Generated · review required |
-| AIR-001 / VEH-001…004 / PRP-001 | `docs/art/candidates/ref_turnaround_service_set_day_dusk_v01.png` | Same safe turnaround arrangement at daylight and soft dusk, with overview-readable service fleet and connections | Generated · review required |
-| CHR-001 / CHR-002 | `docs/art/candidates/ref_airside_character_silhouette_kit_v01.png` | Three ramp roles plus six passenger stand/walk/sit silhouettes at one overview-readable miniature scale | Generated · review required |
-| TEX-SRF-001…003 / coast sand / MAT-001 wet | `docs/art/candidates/ref_airfield_surface_texture_board_v01.png` | Five top-down square surface targets; labels remain outside crops; visual tiling guidance only | Generated · review required |
-| ARFF truck / rescue shed | `docs/art/candidates/ref_regional_arff_facility_fidelity_v01.png` | Compact fictional red/white rescue appliance at a modest open-bay shed, with background hangar scale cue | Generated · review required |
+| VEG-002 | `docs/art/reference/ref_kingscote_coastal_scrub_style_sheet_v01.png` | Five mallee/shrub forms, three grass patches, three rock groups and two dune-edge mixes at human scale | Approved · Integrated (`mdl_kingscote_scrub_kit_v02`) |
+| WLD-004 | `docs/art/reference/ref_kingscote_context_terrain_catalogue_v01.png` | Modular paddock berms, low hills, dunes, turquoise shallows and deep-water context around a protected blank operational zone | Approved · Integrated (`mdl_kingscote_context_terrain_v02`) |
+| BLD-001…003 | `docs/art/reference/ref_regional_airport_building_fidelity_board_v01.png` | Common-scale terminal, hangar and ops-shed silhouette/material target matched to REF-001 | Approved · Integrated (runtime v05 preferred) |
+| AIR-001 / VEH-001…004 / PRP-001 | `docs/art/reference/ref_turnaround_service_set_day_dusk_v01.png` | Same safe turnaround arrangement at daylight and soft dusk, with overview-readable service fleet and connections | Approved · Integrated (fleet v06 / GSE v03 preferred) |
+| CHR-001 / CHR-002 | `docs/art/reference/ref_airside_character_silhouette_kit_v01.png` | Three ramp roles plus six passenger stand/walk/sit silhouettes at one overview-readable miniature scale | Approved · Integrated (CHR kits v02 preferred) |
+| TEX-SRF-001…003 / coast sand / MAT-001 wet | `docs/art/reference/ref_airfield_surface_texture_board_v01.png` | Five top-down square surface targets; labels remain outside crops; visual tiling guidance only — do not crop into runtime | Approved · Integrated (`tx_*_v02` preferred over v01) |
+| ARFF truck / rescue shed | `docs/art/reference/ref_regional_arff_facility_fidelity_v01.png` | Compact fictional red/white rescue appliance at a modest open-bay shed, with background hangar scale cue | Approved · Integrated (`mdl_arff_*_v02` preferred) |
 
 BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and promoted into
 runtime art (see production assets below).
@@ -63,22 +63,15 @@ new style authority; the individual runtime icons are the prepared outputs.
 
 ## What is still missing
 
-- Batch F1 authored AIR-001 v05 turboprop (**Integrated** — Mac FBX bake in Resources;
-  Bailey accepted), then BLD-001 v05 terminal and MAT-001 material family
-  (**Integrated** on `cursor/batch-f1-terminal-materials`; Bailey packaged playtest pending). Current
-  glTF/runtime materials remain fallbacks for unfinished F1 items.
-- Batch F2 turnaround vehicle and character replacements.
-- Batch F3 vegetation, fence/gate, terminal forecourt and non-operational context.
-- Batch D's actual `.anim`, controller and VFX prefab deliverables, grouped into
-  Batch F4 with UI-ICO-005 system-control icons — **Integrated** (Toolkit chrome).
-- Packaged Mac camera-matrix verification of each replacement before the next
-  Batch F slice begins.
+- Mac overview / follow / day-dusk matrix verification of each densify pass
+  against the Approved modelling boards above.
+- Batch F1 Mac FBX bake verification for unfinished F1 items where glTF remains
+  the runtime fallback.
+- Later fleets, interiors, passengers, construction illustrations and companion
+  art remain out of scope until their gameplay milestones are approved.
 
 The exact paths, hierarchy, budgets, hooks and acceptance checks are in
 `docs/art/prompts/batch-f-first-playable-visual-assets-task-packet.md`.
-
-Later fleets, interiors, passengers, construction illustrations and companion art
-are deliberately out of scope until their gameplay milestones are approved.
 
 ## Naming and prompt guardrails
 

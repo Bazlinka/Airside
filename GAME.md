@@ -1,17 +1,21 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-08 (Cursor — ground/vehicle/smoothness 20-fix pass)
-- **Branch:** `cursor/ground-vehicle-smooth-20-3272` (off `main` after #158)
-- **Do next:** Mac Unity Play — pause/4× GSE, GT yield (no snap), takeoff gear
-  roll, wet/fog apron, O overview ease, right-drag follow orbit. Then merge.
-  Day/night readability (#158) is on `main` — Mac noon/midnight sign-off still
-  useful.
+- **Last updated:** 2026-09-09 (Cursor — fidelity densify vs approved boards)
+- **Branch:** `cursor/fidelity-densify-boards-4536` (off integrate-fidelity-boards)
+- **Do next:** Mac Unity Play — overview vs Approved boards (pale-grey open-bay
+  ARFF, red/white truck with yellow conspicuity only, surface v02 hue + wet
+  concrete, scrub/terrain/CHR/BLD/turnaround). Parent wires wetness if needed.
+  Then merge into integrate branch / main.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
-  - Tracking: `docs/testing/SMOOTH_PASS_20_2026-09-08.md`
-  - Presentation motion uses `_paused` / `_speed`; GT Yield keeps Progress
-  - Day/night retune from #158 kept (ambient base + weather gloom dim)
-  - Save schema / simulation reservations unchanged (GT Progress report only)
+  - PreferArtKit: scrub/terrain `*_v02` ahead of v01; surfaces PreferSurface /
+    MaterialLibrary PreferAuthoredMap; ARFF `mdl_arff_*_v02`→v01
+  - `tx_wet_concrete_*_v02` shipped; parent owns wetness wiring in prototype
+  - Boards live under `docs/art/reference/` (not candidates); do not crop the
+    surface board into runtime maps
+  - Additive StreamingAssets copy only — do **not** run full
+    `sync-art-streaming-assets.sh` (wipes metas)
+  - Save schema / simulation reservations unchanged (presentation only)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none
 
@@ -89,10 +93,12 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
-- `scripts/test-domain.sh`: **136/136** on `cursor/ground-vehicle-smooth-20-3272`
-  (20 ground/vehicle/smoothness fixes + `SmoothPassTests`).
+- Fidelity-board integration on `cursor/integrate-fidelity-boards-3272`: scrub /
+  terrain v02 kits, surface `tx_*_v02`, ARFF prefab v02, docs promoted to
+  Approved · Integrated (densify tighten pass included).
+- `scripts/test-domain.sh`: **136/136** on `cursor/integrate-fidelity-boards-3272`.
 - Day/night readability merged via #158 (Mac noon/midnight overview pending).
-- 50-fix bugfix pass merged via #157.
+- 50-item bugfix pass merged via #157.
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).
 - Forecourt PRP-003 v02 merged via #155 (Mac overview vs REF still pending).
 - Fence/gate PRP-002 v02 merged via #154 (Mac overview vs REF still pending).
@@ -101,7 +107,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. Mac Play: ground/vehicle smoothness pass, then merge.
+1. Mac Play: fidelity-board densify (scrub/terrain/surfaces/ARFF/CHR) vs Approved
+   modelling boards, then merge.
 2. Mac overview: day/night readability (#158) noon + midnight sign-off.
 3. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153) vs refs if not yet signed off.

@@ -1,6 +1,6 @@
 # BLD-001…003 building fidelity-board candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime assets:** BLD-001 `mdl_terminal_regional_small_v05`, BLD-002
 `mdl_hangar_small_v05`, BLD-003 `mdl_operations_shed_v05`
@@ -9,7 +9,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_regional_airport_building_fidelity_board_v01.png`
+- **Output:** `docs/art/reference/ref_regional_airport_building_fidelity_board_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1942×809 RGB
 - **Prepared dimensions:** 2048×853 RGB

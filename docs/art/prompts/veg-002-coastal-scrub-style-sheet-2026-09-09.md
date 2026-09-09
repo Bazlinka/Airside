@@ -1,12 +1,12 @@
 # VEG-002 coastal scrub style-sheet candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.  
+**Status:** Approved by Bailey 2026-09-09 · Integrated.  
 **Related runtime asset:** VEG-002 `mdl_kingscote_scrub_kit_v01`  
 **Visual authority:** Approved REF-001, REF-003 and REF-005
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_kingscote_coastal_scrub_style_sheet_v01.png`
+- **Output:** `docs/art/reference/ref_kingscote_coastal_scrub_style_sheet_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1672×941 RGB
 - **Prepared dimensions:** 2048×1152 RGB
@@ -47,5 +47,5 @@ Avoid: photoreal billboard trees, flowers, tropical jungle, lush rainforest, pal
 - Includes one plain human silhouette for approximate 1.8 m scale.
 - No runway, apron, aircraft, buildings, roads, tropical plants or flowers.
 
-This image is reference evidence for a future VEG-002 fidelity pass. It is not a
-runtime texture, billboard, mesh or approval decision.
+This image is the Approved modelling target for the VEG-002 fidelity pass. It is not a
+runtime texture or billboard; denser runtime kits prefer against it.

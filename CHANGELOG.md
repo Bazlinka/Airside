@@ -5,6 +5,27 @@ change it describes.
 
 ## Unreleased
 
+- **Tighten fidelity densify vs Approved boards.** Pale-grey open-bay ARFF shed,
+  red/white truck accents, joint-free concrete + wet-concrete maps, denser scrub
+  belts with pale limestone rocks, turquoise shallows, turnaround GSE zones
+  (fuel port / bus starboard / GPU nose / tug at stand), dual marshaller wands,
+  and clearer residual apron damp.
+
+- **Fidelity densify against approved boards.** ARFF shed v02 is a pale-grey
+  hollow open bay (bollards, fluorescents, dark void; no sign glyphs). ARFF
+  truck v02 keeps deep red body with white roof/panel accents and Safety Yellow
+  only on chevrons/steps/grabs (no number plate / oversized stripe). Surface
+  v02 drops concrete joints, densifies grass/asphalt aggregate, and adds
+  `tx_wet_concrete_*_v02` (cooler damp sheen, no puddles). Binder recognizes
+  white/panel/cab-roof and bollard/chevron/grab. Additive StreamingAssets sync.
+
+- **Integrate Bailey-approved fidelity boards.** Promote seven modelling boards
+  into `docs/art/reference/`. Prefer denser runtime art against them: VEG-002
+  scrub kit v02 (grass/rock/dune mixes), WLD-004 terrain kit v02, seamless
+  surface maps `tx_*_v02`, ARFF truck/shed Resources prefabs v02, CHR apron
+  silhouette coverage, and existing BLD v05 / turnaround fleet v06 as the
+  approved building and service targets. v01 kits/maps remain fallbacks.
+
 - **Regional ARFF facility fidelity reference.** Add a 2048×1152 scene with a
   fictional compact rescue truck, modest open-bay corrugated shed and larger
   background-hangar scale cue. A corrective pass removes recognisable branding

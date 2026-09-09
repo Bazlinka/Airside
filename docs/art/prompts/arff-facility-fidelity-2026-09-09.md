@@ -1,6 +1,6 @@
 # Regional ARFF facility fidelity candidate — 2026-09-09
 
-**Status:** Generated; Bailey review required. Reference only; not integrated.
+**Status:** Approved by Bailey 2026-09-09 · Integrated.
 
 **Related runtime assets:** `mdl_arff_truck_v01` and `mdl_arff_shed_v01`
 
@@ -8,7 +8,7 @@
 
 ## Output and provenance
 
-- **Output:** `docs/art/candidates/ref_regional_arff_facility_fidelity_v01.png`
+- **Output:** `docs/art/reference/ref_regional_arff_facility_fidelity_v01.png`
 - **Generator:** OpenAI built-in image generation
 - **Generated dimensions:** 1672×941 RGB
 - **Prepared dimensions:** 2048×1152 RGB
@@ -59,5 +59,5 @@ Edit the generated ARFF facility image while preserving the exact composition, e
 - Faceted miniature treatment, readable open bay and no extra vehicles, people,
   text, logos, UI, smoke, watermark or signature.
 
-This image is reference evidence for a future ARFF asset fidelity pass and
+This image is the Approved modelling target for the ARFF asset fidelity pass and
 packaged-build comparison. It is not a runtime texture, mesh or approval decision.

@@ -296,6 +296,10 @@ namespace Airside.Presentation
 
             AirsideRuntimeQuality.AfterWorldBuilt();
             AirsideStaticWorld.Finalize(_airfieldRoot);
+            if (_apronProbe != null)
+                _apronProbe.RenderProbe();
+            if (_terminalProbe != null)
+                _terminalProbe.RenderProbe();
             _canvasHud = AirsideCanvasHud.Create(transform);
             _toolkitHud = AirsideToolkitHud.Create(transform);
             Action onAccept = () => TryAcceptPendingRouteFromHotkey();
@@ -3005,8 +3009,7 @@ namespace Airside.Presentation
             }
 
             var rng = new System.Random(42);
-            // Kit drops already read; keep a calmer field so rain is weather, not soup.
-            var dropCount = seed != null ? 40 : 96;
+            var dropCount = AirsideRuntimeQuality.RainDropCount(seed != null);
             for (var i = 0; i < dropCount; i++)
             {
                 GameObject drop;
@@ -4316,7 +4319,8 @@ namespace Airside.Presentation
                 if (renderer != null && !_nightGlowRenderers.Contains(renderer))
                     _nightGlowRenderers.Add(renderer);
 
-                var wantsPoint = !(name.StartsWith("glass_pane", StringComparison.Ordinal)
+                var wantsPoint = AirsideRuntimeQuality.WindowPointLights
+                    && !(name.StartsWith("glass_pane", StringComparison.Ordinal)
                                    || name is "glass_front" or "landside_glass"
                                    || name.StartsWith("side_window", StringComparison.Ordinal)
                                    || name.StartsWith("window_", StringComparison.Ordinal)
@@ -4342,7 +4346,7 @@ namespace Airside.Presentation
             _windowLights = lights.ToArray();
 
             var paneLights = 0;
-            const int maxPaneLights = 6;
+            var maxPaneLights = AirsideRuntimeQuality.PanePointLights;
             foreach (var renderer in AirsideSceneIndex.Renderers)
             {
                 if (renderer == null || _nightGlowRenderers.Contains(renderer))
@@ -4499,8 +4503,8 @@ namespace Airside.Presentation
                 (new Vector3(-8f, 5.8f, 22f), new Vector3(-8f, 0.2f, 26f)),
                 (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f))
             };
-            var lights = new Light[specs.Length];
-            for (var i = 0; i < specs.Length; i++)
+            var lights = new Light[AirsideRuntimeQuality.ApronFloodCount(specs.Length)];
+            for (var i = 0; i < lights.Length; i++)
             {
                 var (pos, lookAt) = specs[i];
                 var go = new GameObject($"Apron flood {i + 1}");
@@ -4534,8 +4538,9 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
-            // Keep PointLights denser than kit fixture spacing — silhouette meshes ≠ illumination.
-            var edgeStep = hasLightingKit ? 10 : 8;
+            var edgeStep = AirsideRuntimeQuality.EdgeLightStep;
+            if (hasLightingKit)
+                edgeStep = Mathf.Max(edgeStep, 10);
             for (var x = -44; x <= 44; x += edgeStep)
             {
                 lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
@@ -4562,7 +4567,7 @@ namespace Airside.Presentation
                     ArtGltfLoader.TryPlaceNamedMesh(lightingKit, "taxi_base", origin, Quaternion.identity, taxiStem, out _);
                 }
             }
-            else
+            else if (AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High)
             {
                 // Sparse taxi spill along Taxiway A so night taxi still reads without fixture glitter.
                 for (var x = -8; x <= 24; x += 16)
@@ -4573,19 +4578,30 @@ namespace Airside.Presentation
             }
 
             // Always light the A1 runway exit fillet — kit thinning used to leave it dark.
-            lights.Add(CreateEdgePointLight("Taxi A1 point W", new Vector3(-22f, 0.45f, 2.2f),
-                new Color(0.3f, 0.55f, 1f), range: 8f));
+            var fillet = AirsideRuntimeQuality.FilletLightCount;
+            if (fillet >= 3)
+            {
+                lights.Add(CreateEdgePointLight("Taxi A1 point W", new Vector3(-22f, 0.45f, 2.2f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+            }
+
             lights.Add(CreateEdgePointLight("Taxi A1 point M", new Vector3(-18f, 0.45f, 4.5f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
-            lights.Add(CreateEdgePointLight("Taxi A1 point E", new Vector3(-14f, 0.45f, 7f),
-                new Color(0.3f, 0.55f, 1f), range: 8f));
-            // Mirror A2 eastern exit so night overview is not one-sided.
-            lights.Add(CreateEdgePointLight("Taxi A2 point E", new Vector3(26f, 0.45f, 2.2f),
-                new Color(0.3f, 0.55f, 1f), range: 8f));
+            if (fillet >= 3)
+            {
+                lights.Add(CreateEdgePointLight("Taxi A1 point E", new Vector3(-14f, 0.45f, 7f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+                lights.Add(CreateEdgePointLight("Taxi A2 point E", new Vector3(26f, 0.45f, 2.2f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+            }
+
             lights.Add(CreateEdgePointLight("Taxi A2 point M", new Vector3(22f, 0.45f, 4.5f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
-            lights.Add(CreateEdgePointLight("Taxi A2 point W", new Vector3(18f, 0.45f, 7f),
-                new Color(0.3f, 0.55f, 1f), range: 8f));
+            if (fillet >= 3)
+            {
+                lights.Add(CreateEdgePointLight("Taxi A2 point W", new Vector3(18f, 0.45f, 7f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+            }
 
             // REIL-style white flashers just beyond each blast pad (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(-54f, 1.6f, -2.8f),
@@ -4650,13 +4666,13 @@ namespace Airside.Presentation
                 (new Vector3(-29.5f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f)
             };
 
-            var lights = new Light[specs.Length];
+            var lights = new Light[AirsideRuntimeQuality.ThresholdLightCount(specs.Length)];
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
             var stem = new Color(0.35f, 0.36f, 0.38f);
-            for (var i = 0; i < specs.Length; i++)
+            for (var i = 0; i < lights.Length; i++)
             {
                 var spec = specs[i];
                 var origin = new Vector3(spec.Pos.x, 0f, spec.Pos.z);
@@ -4713,7 +4729,6 @@ namespace Airside.Presentation
             probe.shadowDistance = 28f;
             probe.nearClipPlane = 0.3f;
             probe.farClipPlane = 90f;
-            probe.RenderProbe();
             return probe;
         }
 
@@ -4739,7 +4754,6 @@ namespace Airside.Presentation
             probe.shadowDistance = 18f;
             probe.nearClipPlane = 0.3f;
             probe.farClipPlane = 60f;
-            probe.RenderProbe();
             return probe;
         }
 
@@ -4764,8 +4778,9 @@ namespace Airside.Presentation
             var lampColor = new Color(1f, 0.92f, 0.7f);
             // Apron flood masts are oversized for drop-off — shrink landside kit stems.
             var landsideMastScale = Vector3.one * 0.62f;
-            var lights = new Light[positions.Length];
-            for (var i = 0; i < positions.Length; i++)
+            var count = AirsideRuntimeQuality.LandsideLightCount(positions.Length);
+            var lights = new Light[count];
+            for (var i = 0; i < count; i++)
             {
                 var pos = positions[i];
                 var kitPole = ArtGltfLoader.TryPlaceNamedMesh(
@@ -4904,6 +4919,19 @@ namespace Airside.Presentation
             var pad = CreateBlock(name, mid, new Vector3(width, 0.12f, length), new Color(0.22f, 0.24f, 0.26f),
                 textureRelativePath, tiling);
             pad.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
+        /// <summary>
+        /// One rotated paint slab instead of a cube-per-metre dash dump.
+        /// </summary>
+        private static void CreatePaintStrip(string name, Vector3 from, Vector3 to, float width, Color color)
+        {
+            var mid = (from + to) * 0.5f;
+            var delta = to - from;
+            var length = Mathf.Max(delta.magnitude, 0.5f);
+            var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
+            var strip = CreateBlock(name, mid, new Vector3(width, 0.02f, length), color);
+            strip.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         /// <summary>
@@ -6105,17 +6133,19 @@ namespace Airside.Presentation
                 placed++;
             }
 
-            void PlaceBay(Vector3 pos, float yawDeg, string tag)
+            void             PlaceBay(Vector3 pos, float yawDeg, string tag)
             {
                 var rot = Quaternion.Euler(0f, yawDeg, 0f);
                 PlacePart("fence_bay", pos, rot, panel, $"Fence bay {tag}");
+                PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
+                PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
+                if (!AirsideRuntimeQuality.PlaceFenceRails)
+                    return;
                 PlacePart("fence_bay_rail_top", pos, rot, post, $"Fence bay rail top {tag}");
                 PlacePart("fence_bay_rail_mid", pos, rot, post, $"Fence bay rail mid {tag}");
                 PlacePart("fence_bay_rail_bot", pos, rot, post, $"Fence bay rail bot {tag}");
                 PlacePart("fence_bay_cap_l", pos, rot, post, $"Fence bay cap L {tag}");
                 PlacePart("fence_bay_cap_r", pos, rot, post, $"Fence bay cap R {tag}");
-                PlacePart("fence_bay_post_l", pos, rot, post, $"Fence bay post L {tag}");
-                PlacePart("fence_bay_post_r", pos, rot, post, $"Fence bay post R {tag}");
                 // fence_corner_brace only at PlacePart corner sites — not every bay.
             }
 
@@ -6737,6 +6767,8 @@ namespace Airside.Presentation
 
             // Fence-line scrub carpet — denser when VEG-002 kit stamps authored clumps.
             var fenceStep = hasScrubKit ? 5 : 4;
+            if (AirsideRuntimeQuality.Current != AirsideRuntimeQuality.Ladder.High)
+                fenceStep += 3;
             for (var x = -70; x <= 70; x += fenceStep)
             {
                 PlaceShrubClump(new Vector3(x, 0f, 36f + (x % 5) * 0.2f), 0.55f + (Mathf.Abs(x) % 4) * 0.08f);
@@ -6745,6 +6777,8 @@ namespace Airside.Presentation
             }
 
             var sideStep = hasScrubKit ? 6 : 5;
+            if (AirsideRuntimeQuality.Current != AirsideRuntimeQuality.Ladder.High)
+                sideStep += 3;
             for (var z = -20; z <= 50; z += sideStep)
             {
                 PlaceShrubClump(new Vector3(-48f - (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
@@ -6753,11 +6787,15 @@ namespace Airside.Presentation
 
             // Between apron fringe and N fence.
             var fringeStep = hasScrubKit ? 3 : 3;
+            if (AirsideRuntimeQuality.Current != AirsideRuntimeQuality.Ladder.High)
+                fringeStep += 3;
             for (var x = 6; x <= 34; x += fringeStep)
                 PlaceShrubClump(new Vector3(x, 0f, 28.5f + (x % 2) * 0.4f), 0.5f);
 
             // Dense coastal scrub belt — prefer VEG-002 clumps over greybox cubes.
             var coastStep = hasScrubKit ? 4 : 5;
+            if (AirsideRuntimeQuality.Current != AirsideRuntimeQuality.Ladder.High)
+                coastStep += 3;
             for (var x = -55; x <= 55; x += coastStep)
             {
                 var zJitter = ((x * 13) % 7) * 0.15f;
@@ -6765,7 +6803,7 @@ namespace Airside.Presentation
                 if (x % (coastStep * 2) == 0)
                     PlaceShrub(new Vector3(x + 1.5f, 0f, -37.5f), 0.65f);
                 // Extra dune-edge stamp so overview matches the scrub style sheet belt.
-                if (hasScrubKit && x % 8 == 0)
+                if (hasScrubKit && AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High && x % 8 == 0)
                     PlaceShrub(new Vector3(x + 0.8f, 0f, -41.2f + zJitter * 0.5f), 0.85f);
             }
         }
@@ -7085,31 +7123,58 @@ namespace Airside.Presentation
 
         private static void BuildStarField()
         {
-            // Sparse night stars on the sky dome — presentation only (0025 item 5).
+            // One mesh of inward quads — 72 spheres were 72 UnlitSky draw calls.
             var root = new GameObject("Star field").transform;
             var rng = new System.Random(31415);
-            for (var i = 0; i < 72; i++)
+            const int count = 72;
+            var vertices = new Vector3[count * 4];
+            var triangles = new int[count * 6];
+            var colors = new Color[count * 4];
+            for (var i = 0; i < count; i++)
             {
-                var star = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                star.name = $"Star {i}";
-                Object.Destroy(star.GetComponent<Collider>());
-                star.transform.SetParent(root, false);
-                // Hemisphere above the horizon, inward-facing.
                 var yaw = (float)rng.NextDouble() * 360f;
                 var pitch = 10f + (float)rng.NextDouble() * 72f;
-                var dir = Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward;
-                star.transform.position = dir.normalized * 128f;
+                var dir = (Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward).normalized;
+                var pos = dir * 128f;
                 var s = 0.22f + (float)rng.NextDouble() * 0.42f;
-                star.transform.localScale = Vector3.one * s;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
-                var starRenderer = star.GetComponent<Renderer>();
-                starRenderer.sharedMaterial = StarSharedMaterial();
-                SetRendererColor(starRenderer, new Color(bright, bright, 0.95f * bright, 1f),
-                    new Color(bright, bright, 1f) * 1.35f);
-                starRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                starRenderer.receiveShadows = false;
+                var color = new Color(bright, bright, 0.95f * bright, 1f);
+                var right = Vector3.Cross(dir, Vector3.up);
+                if (right.sqrMagnitude < 0.001f)
+                    right = Vector3.right;
+                right.Normalize();
+                var up = Vector3.Cross(right, dir).normalized;
+                var v = i * 4;
+                vertices[v] = pos + (-right - up) * s;
+                vertices[v + 1] = pos + (right - up) * s;
+                vertices[v + 2] = pos + (right + up) * s;
+                vertices[v + 3] = pos + (-right + up) * s;
+                var t = i * 6;
+                triangles[t] = v;
+                triangles[t + 1] = v + 1;
+                triangles[t + 2] = v + 2;
+                triangles[t + 3] = v;
+                triangles[t + 4] = v + 2;
+                triangles[t + 5] = v + 3;
+                for (var k = 0; k < 4; k++)
+                    colors[v + k] = color;
             }
 
+            var mesh = new Mesh { name = "Star field" };
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0);
+            mesh.SetColors(colors);
+            mesh.RecalculateBounds();
+            AirsideMeshUtil.UploadStatic(mesh);
+
+            var go = new GameObject("Star mesh");
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = StarSharedMaterial();
+            SetRendererColor(renderer, Color.white, new Color(1.2f, 1.2f, 1.35f));
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
             root.gameObject.SetActive(false);
         }
 
@@ -7151,19 +7216,15 @@ namespace Airside.Presentation
             if (!show)
                 return;
 
-            // Soft twinkle — alpha via emission intensity.
+            // Soft twinkle — one mesh, one property block.
             var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.StarTwinkleHz);
-            for (var i = 0; i < _starFieldRoot.childCount; i++)
-            {
-                var star = _starFieldRoot.GetChild(i);
-                var renderer = star.GetComponent<Renderer>();
-                if (renderer == null)
-                    continue;
-                var phase = 0.7f + 0.3f * Mathf.Sin(
-                    Time.unscaledTime * (AirsideReusableMotion.StarTwinkleHz * 0.7f + i * 0.11f) + i);
-                var c = new Color(phase, phase, 1f) * (twinkle * (1.1f - daylight));
-                SetRendererColor(renderer, c, c);
-            }
+            var renderer = _starFieldRoot.childCount > 0
+                ? _starFieldRoot.GetChild(0).GetComponent<Renderer>()
+                : _starFieldRoot.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+            var c = new Color(twinkle, twinkle, 1f) * (1.1f - daylight);
+            SetRendererColor(renderer, c, c);
         }
 
         private static void BuildSunAndMoonDiscs()
@@ -7645,7 +7706,7 @@ namespace Airside.Presentation
             // (0025 item 7). Presentation only.
             var root = new GameObject("Bird flock").transform;
             var rng = new System.Random(4242);
-            for (var i = 0; i < 28; i++)
+            for (var i = 0; i < AirsideRuntimeQuality.BirdCount; i++)
             {
                 var bird = new GameObject($"Bird {i}").transform;
                 bird.SetParent(root, false);
@@ -9423,11 +9484,7 @@ namespace Airside.Presentation
             const string kit = "Models/Props/mdl_airfield_markings_kit_v01.gltf";
             var usedCentre = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "runway_centreline", Vector3.zero, Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            // Centreline dashes densify the strip when kit ships them (0025 item 3).
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_a", new Vector3(-28f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_b", new Vector3(-12f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_c", new Vector3(12f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-            ArtGltfLoader.TryPlaceNamedMesh(kit, "runway_centre_dash_d", new Vector3(28f, 0.022f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+            // Extra dash meshes only when the strip missed — otherwise they double the GPU.
             if (!usedCentre)
             {
                 CreateBlock("Runway marking mid W", new Vector3(-20f, 0.022f, 0f), new Vector3(2.2f, 0.025f, 0.24f), Color.white);
@@ -9455,11 +9512,16 @@ namespace Airside.Presentation
                 kit, "runway_threshold", new Vector3(-44f, 0.03f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
             var usedThresholdE = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "runway_threshold", new Vector3(44f, 0.03f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
-            // Threshold bar densify + side bars when kit present.
-            foreach (var bar in new[] { "threshold_bar_a", "threshold_bar_b", "threshold_bar_c", "threshold_bar_d" })
+            // Extra bar meshes only when a threshold strip missed.
+            if (!usedThresholdW || !usedThresholdE)
             {
-                ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(-44f, 0.032f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
-                ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(44f, 0.032f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+                foreach (var bar in new[] { "threshold_bar_a", "threshold_bar_b", "threshold_bar_c", "threshold_bar_d" })
+                {
+                    if (!usedThresholdW)
+                        ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(-44f, 0.032f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+                    if (!usedThresholdE)
+                        ArtGltfLoader.TryPlaceNamedMesh(kit, bar, new Vector3(44f, 0.032f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+                }
             }
 
             var usedSideWL = ArtGltfLoader.TryPlaceNamedMesh(
@@ -9551,8 +9613,8 @@ namespace Airside.Presentation
                 CreateBlock("Threshold stripe E R2", new Vector3(38.2f, 0.03f, 3.05f), new Vector3(1.8f, 0.02f, 0.4f), Color.white);
             }
 
-            // Aiming-point pairs (WLD markings language) — kit first, greybox fallback.
-            foreach (var x in new[] { -18f, -12f, -6f, 6f, 12f, 18f })
+            // One aiming pair per end — six pairs were densify, not ICAO aiming points.
+            foreach (var x in new[] { -12f, 12f })
             {
                 var placedL = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "aiming_point_l", new Vector3(x, 0.035f, -1.55f), Quaternion.identity, Color.white, out _);
@@ -9564,8 +9626,8 @@ namespace Airside.Presentation
                     CreateBlock($"Aiming point {x} R", new Vector3(x, 0.035f, 1.55f), new Vector3(2.8f, 0.025f, 1.1f), Color.white);
             }
 
-            // Touchdown zone marks between threshold and aiming points.
-            foreach (var x in new[] { -32f, -30f, -28f, -26f, -24f, -22f, -20f, 20f, 22f, 24f, 26f, 28f, 30f, 32f })
+            // Two TDZ pairs per end instead of a 14-pair carpet.
+            foreach (var x in new[] { -30f, -24f, 24f, 30f })
             {
                 var placedL = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "tdz_mark_l", new Vector3(x, 0.03f, -1.4f), Quaternion.identity, Color.white, out _);
@@ -9599,8 +9661,8 @@ namespace Airside.Presentation
 
             // Taxi markings are authored along local X (see generate-batch-b-surfaces).
             // Identity rotation keeps them on Taxiway A; Yaw 90 sent them across the apron
-            // and gated off the greybox dashes. Centreline mesh is 20 m — place three copies
-            // and always densify dashed paint so Alpha reads as a continuous taxi route.
+            // and gated off the greybox dashes. Centreline mesh is 20 m — place three copies.
+            // Skip 1 m cube densify when any kit segment landed; greybox is one Alpha strip.
             var taxiPaint = new Color(0.95f, 0.85f, 0.2f);
             var usedTaxiFarWest = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_centreline", new Vector3(-8f, 0.035f, 9f), Quaternion.identity,
@@ -9611,28 +9673,16 @@ namespace Airside.Presentation
             var usedTaxiEast = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_centreline", new Vector3(28f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
-            // Dashed centreline along the full Alpha span (and A1 exit fillet).
-            for (var x = -22; x <= 38; x += 1)
+            if (!usedTaxiFarWest && !usedTaxiWest && !usedTaxiEast)
             {
-                // Skip under a successfully placed kit segment (±10 m around each kit centre).
-                if (usedTaxiFarWest && Mathf.Abs(x + 8f) < 10f)
-                    continue;
-                if (usedTaxiWest && Mathf.Abs(x - 8f) < 10f)
-                    continue;
-                if (usedTaxiEast && Mathf.Abs(x - 28f) < 10f)
-                    continue;
-                CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(0.85f, 0.02f, 0.11f),
-                    taxiPaint);
+                CreateBlock("Taxi centre Alpha", new Vector3(8f, 0.035f, 9f),
+                    new Vector3(60f, 0.02f, 0.11f), taxiPaint);
             }
 
-            // Extend paint onto the A1 exit fillet toward the runway.
-            for (var x = -24; x <= -12; x += 1)
-                CreateBlock($"Taxi exit centre {x}", new Vector3(x, 0.035f, 4.5f + (x + 24f) * 0.32f),
-                    new Vector3(1.2f, 0.02f, 0.12f), taxiPaint);
-            // Mirror dashes onto the A2 eastern exit fillet.
-            for (var x = 12; x <= 24; x += 1)
-                CreateBlock($"Taxi exit centre {x}", new Vector3(x, 0.035f, 4.5f + (24f - x) * 0.32f),
-                    new Vector3(1.2f, 0.02f, 0.12f), taxiPaint);
+            CreatePaintStrip("Taxi exit centre A1",
+                new Vector3(-24f, 0.035f, 4.5f), new Vector3(-12f, 0.035f, 8.34f), 0.12f, taxiPaint);
+            CreatePaintStrip("Taxi exit centre A2",
+                new Vector3(12f, 0.035f, 8.34f), new Vector3(24f, 0.035f, 4.5f), 0.12f, taxiPaint);
 
             // Edges: mesh already carries ±1.85f Z offset — place at taxi centre, identity yaw.
             // Two copies match the dual centreline coverage along Taxiway A.
@@ -9646,23 +9696,22 @@ namespace Airside.Presentation
                 kit, "taxi_edge_s", new Vector3(28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             if (!usedTaxiEdgeN)
             {
-                for (var x = -20; x <= 36; x += 2)
-                    CreateBlock($"Taxi edge N {x}", new Vector3(x, 0.035f, 10.85f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
+                CreateBlock("Taxi edge N", new Vector3(8f, 0.035f, 10.85f),
+                    new Vector3(56f, 0.02f, 0.12f), Color.white);
             }
 
             if (!usedTaxiEdgeS)
             {
-                for (var x = -20; x <= 36; x += 2)
-                    CreateBlock($"Taxi edge S {x}", new Vector3(x, 0.035f, 7.15f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
+                CreateBlock("Taxi edge S", new Vector3(8f, 0.035f, 7.15f),
+                    new Vector3(56f, 0.02f, 0.12f), Color.white);
             }
             // Apron lead-in chevrons from taxi to stand lead — kit chevrons when present.
-            for (var i = 0; i < 6; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var z = 11.0f + i * 0.7f;
                 var pos = new Vector3(13.6f + i * 0.35f, 0.04f, z);
                 var mesh = i % 2 == 0 ? "chevron_lead_a" : "chevron_lead_b";
-                if (i == 2 || i == 4) mesh = "chevron_lead_c";
-                if (i == 3 || i == 5) mesh = "chevron_lead_d";
+                if (i == 2) mesh = "chevron_lead_c";
                 if (!ArtGltfLoader.TryPlaceNamedMesh(
                         kit, mesh, pos, Quaternion.Euler(0f, 25f, 0f),
                         new Color(0.95f, 0.85f, 0.2f), out _))
@@ -9672,7 +9721,7 @@ namespace Airside.Presentation
                 }
             }
             // Second lead path toward Stand 2 / 3 for denser apron authenticity.
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 2; i++)
             {
                 var z = 11.2f + i * 0.85f;
                 var pos = new Vector3(21.5f + i * 0.4f, 0.04f, z);
@@ -9685,11 +9734,9 @@ namespace Airside.Presentation
                 }
             }
 
-            // Taxi direction arrows on Taxiway A (kit shaft+head or greybox).
+            // Taxi direction arrows on Taxiway A (west / mid / east + one apron lead).
             PlaceTaxiArrow(kit, new Vector3(-12f, 0.04f, 9f), 90f);
-            PlaceTaxiArrow(kit, new Vector3(-4f, 0.04f, 9f), 90f);
             PlaceTaxiArrow(kit, new Vector3(8f, 0.04f, 9f), 90f);
-            PlaceTaxiArrow(kit, new Vector3(12f, 0.04f, 9f), 90f);
             PlaceTaxiArrow(kit, new Vector3(18f, 0.04f, 9f), 90f);
             PlaceTaxiArrow(kit, new Vector3(14f, 0.04f, 12.5f), 0f);
             // Mid-Alpha edge dashes flanking hold bars G/H.
@@ -9753,12 +9800,8 @@ namespace Airside.Presentation
             {
                 foreach (var standX in new[] { 14f, 22f, 30f })
                 {
-                    for (var step = 0; step < 6; step++)
-                    {
-                        var z = 11.6f + step * 0.85f;
-                        CreateBlock($"Stand lead {standX} {step}", new Vector3(standX, 0.04f, z),
-                            new Vector3(0.12f, 0.02f, 0.35f), new Color(0.95f, 0.85f, 0.2f));
-                    }
+                    CreateBlock($"Stand lead {standX}", new Vector3(standX, 0.04f, 13.7f),
+                        new Vector3(0.12f, 0.02f, 5.1f), new Color(0.95f, 0.85f, 0.2f));
                 }
             }
         }
@@ -9783,7 +9826,6 @@ namespace Airside.Presentation
             PlacePart("taxi_arrow_shaft", Vector3.zero);
             PlacePart("taxi_arrow_head_l", Vector3.zero);
             PlacePart("taxi_arrow_head_r", Vector3.zero);
-            PlacePart("taxi_arrow_head_cap", Vector3.zero);
             if (used)
                 return;
 
@@ -9911,14 +9953,16 @@ namespace Airside.Presentation
             var taxiColor = new Color(0.25f, 0.55f, 1f);
             var obstruction = new Color(0.95f, 0.35f, 0.12f);
 
-            var edgeStep = hasLightingKit ? 12 : 6;
+            var edgeStep = AirsideRuntimeQuality.LightingFixtureStep;
+            if (!hasLightingKit)
+                edgeStep = Mathf.Min(edgeStep, 10);
             for (var x = -44; x <= 44; x += edgeStep)
             {
                 PlaceEdgeLamp(kit, new Vector3(x, 0f, -3.4f), edgeColor);
                 PlaceEdgeLamp(kit, new Vector3(x, 0f, 3.4f), edgeColor);
             }
 
-            var taxiStep = hasLightingKit ? 12 : 8;
+            var taxiStep = AirsideRuntimeQuality.LightingFixtureStep;
             for (var x = -8; x <= 28; x += taxiStep)
             {
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
@@ -9926,9 +9970,12 @@ namespace Airside.Presentation
             }
 
             // A1 exit fillet fixtures — path (-24,0)→(-12,9).
-            PlaceTaxiLamp(kit, new Vector3(-22f, 0f, 2.2f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(-18f, 0f, 4.5f), taxiColor);
-            PlaceTaxiLamp(kit, new Vector3(-14f, 0f, 7f), taxiColor);
+            if (AirsideRuntimeQuality.FilletLightCount >= 3)
+            {
+                PlaceTaxiLamp(kit, new Vector3(-22f, 0f, 2.2f), taxiColor);
+                PlaceTaxiLamp(kit, new Vector3(-14f, 0f, 7f), taxiColor);
+            }
 
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
@@ -9976,13 +10023,18 @@ namespace Airside.Presentation
         private static void PlaceFloodMast(string kit, Vector3 position, Color color)
         {
             // Kit path: mast silhouette only — SpotLights in BuildApronLights still own night pools.
-            if (ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
+            var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_base", position, Quaternion.identity, new Color(0.3f, 0.32f, 0.34f), out _)
                 | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_pole", position, Quaternion.identity, color, out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _)
-                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _))
+                | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_head", position, Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), out _);
+            if (AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High)
+            {
+                placed |= ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_crossarm", position, Quaternion.identity, Shade(color, 0.9f), out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_arm", position, Quaternion.identity, Shade(color, 0.85f), out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_lamp", position, Quaternion.identity, new Color(1f, 0.95f, 0.8f), out _)
+                    | ArtGltfLoader.TryPlaceNamedMesh(kit, "flood_visor", position, Quaternion.identity, new Color(0.2f, 0.21f, 0.22f), out _);
+            }
+
+            if (placed)
                 return;
 
             if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "apron_floodlight", position, Quaternion.identity, color, out _))
@@ -10165,17 +10217,14 @@ namespace Airside.Presentation
             {
                 foreach (var z in new[] { 14f, 20f, 26f })
                 {
-                    for (var x = 16; x <= 24; x += 4)
-                    {
-                        CreateBlock($"Stand box front {z} {x}", new Vector3(x, 0.04f, z - 2.6f), new Vector3(3.2f, 0.02f, 0.12f), Color.white);
-                        CreateBlock($"Stand box back {z} {x}", new Vector3(x, 0.04f, z + 2.6f), new Vector3(3.2f, 0.02f, 0.12f), Color.white);
-                    }
-
-                    for (var step = -2; step <= 2; step += 2)
-                    {
-                        CreateBlock($"Stand box L {z} {step}", new Vector3(14.8f, 0.04f, z + step), new Vector3(0.12f, 0.02f, 1.6f), Color.white);
-                        CreateBlock($"Stand box R {z} {step}", new Vector3(25.2f, 0.04f, z + step), new Vector3(0.12f, 0.02f, 1.6f), Color.white);
-                    }
+                    CreateBlock($"Stand box front {z}", new Vector3(20f, 0.04f, z - 2.6f),
+                        new Vector3(11.2f, 0.02f, 0.12f), Color.white);
+                    CreateBlock($"Stand box back {z}", new Vector3(20f, 0.04f, z + 2.6f),
+                        new Vector3(11.2f, 0.02f, 0.12f), Color.white);
+                    CreateBlock($"Stand box L {z}", new Vector3(14.8f, 0.04f, z),
+                        new Vector3(0.12f, 0.02f, 5.2f), Color.white);
+                    CreateBlock($"Stand box R {z}", new Vector3(25.2f, 0.04f, z),
+                        new Vector3(0.12f, 0.02f, 5.2f), Color.white);
                 }
             }
         }

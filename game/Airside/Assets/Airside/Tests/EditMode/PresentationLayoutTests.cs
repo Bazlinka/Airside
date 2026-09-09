@@ -108,6 +108,14 @@ namespace Airside.Tests
             Assert.That(AirsideRuntimeQuality.MediumShadowCascades, Is.EqualTo(2));
             Assert.That(AirsideRuntimeQuality.HighAdditionalLights, Is.EqualTo(12));
             Assert.That(AirsideRuntimeQuality.MediumAdditionalLights, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.HighEdgeLightStep, Is.EqualTo(10));
+            Assert.That(AirsideRuntimeQuality.MediumEdgeLightStep, Is.EqualTo(16));
+            Assert.That(AirsideRuntimeQuality.HighRainDrops, Is.EqualTo(28));
+            Assert.That(AirsideRuntimeQuality.MediumRainDrops, Is.EqualTo(16));
+            Assert.That(AirsideRuntimeQuality.HighFilletLights, Is.EqualTo(3));
+            Assert.That(AirsideRuntimeQuality.MediumFilletLights, Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.HighBirdCount, Is.EqualTo(28));
+            Assert.That(AirsideRuntimeQuality.MediumBirdCount, Is.EqualTo(12));
         }
 
         [Test]

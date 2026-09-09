@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime airfield paint + probe pass.** Taxi Alpha / A1 / A2 / edge paint is
+  one strip per run instead of a 1 m cube dump; aiming points, TDZ, chevrons and
+  taxi arrows are thinned to the readable set. Stars are one inward-quad mesh.
+  Reflection probes `RenderProbe` after static combine, not mid-Awake. Medium
+  thins fillet PointLights, fence rails, window/pane lights, rain drops, edge
+  fixtures and scrub; High stays 4× MSAA + SMAA, four cascades, 12 additional
+  lights, two probes. Decision 0029. Evidence: brace depth 0;
+  `AirsidePrototype.cs` 257 `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
+
 - **Runtime airfield GPU-state.** Per-frame `Renderer.material` clones (heat,
   spray, puddles, smoke, skids, foam, clouds, shadows, sun/moon, ARFF bar)
   now read and write through `MaterialPropertyBlock`. One `AirsideSceneIndex`

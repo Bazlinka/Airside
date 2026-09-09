@@ -8406,10 +8406,14 @@ namespace Airside.Presentation
                 grass, new Vector2(12f, 14f), top: 12f, height: 24f);
             PlaceLevelPad("Mt Lofty", 348f, 58f, 34f, 28f, Shade(AirsideTheme.Eucalyptus, 0.28f),
                 grass, new Vector2(6f, 5f), top: 28f, height: 44f);
+            PlaceLevelPad("Mt Lofty cap", 352f, 62f, 16f, 14f, Shade(AirsideTheme.Eucalyptus, 0.18f),
+                grass, new Vector2(3f, 3f), top: 36f, height: 16f);
             PlaceLevelPad("Adelaide Hills ridge N", 332f, 88f, 42f, 54f, Shade(AirsideTheme.Eucalyptus, 0.31f),
                 grass, new Vector2(8f, 8f), top: 22f, height: 36f);
             PlaceLevelPad("Adelaide Hills spur S", 306f, -22f, 38f, 56f, Shade(AirsideTheme.DryGrass, 0.44f),
                 grass, new Vector2(8f, 9f), top: 14f, height: 26f);
+            PlaceLevelPad("Adelaide Hills foothill", 268f, 18f, 28f, 64f, Shade(AirsideTheme.Eucalyptus, 0.42f),
+                grass, new Vector2(6f, 10f), top: 8f, height: 16f);
             BuildAdelaideSkyline();
         }
 
@@ -12183,22 +12187,30 @@ namespace Airside.Presentation
                 PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);
             }
 
-            PlaceIdleApronAircraft("Idle satellite", new Vector3(82f, 0.7f, 32f), 255f, new Color(0.18f, 0.32f, 0.52f));
-            PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f));
-            PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f));
-            PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f));
-            PlaceIdleApronAircraft("Idle Bravo", new Vector3(-52f, 0.7f, -9.2f), 90f, new Color(0.16f, 0.42f, 0.32f));
-            PlaceIdleApronAircraft("Idle Bravo east", new Vector3(42f, 0.7f, -14.5f), 90f, new Color(0.62f, 0.28f, 0.18f));
-            PlaceIdleApronAircraft("Idle west apron", new Vector3(2f, 0.7f, 20.4f), 90f, new Color(0.14f, 0.22f, 0.48f));
+            PlaceIdleApronAircraft("Idle satellite", new Vector3(82f, 0.7f, 32f), 255f, new Color(0.18f, 0.32f, 0.52f),
+                "Textures/Decals/dc_livery_coastline_regional_v01.png");
+            PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f),
+                "Textures/Decals/dc_livery_emu_air_v01.png");
+            PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f),
+                "Textures/Decals/dc_livery_airside_traffic_v01.png");
+            PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f),
+                "Textures/Decals/dc_livery_coastline_regional_v01.png");
+            PlaceIdleApronAircraft("Idle Bravo", new Vector3(-52f, 0.7f, -9.2f), 90f, new Color(0.16f, 0.42f, 0.32f),
+                "Textures/Decals/dc_livery_emu_air_v01.png");
+            PlaceIdleApronAircraft("Idle Bravo east", new Vector3(42f, 0.7f, -14.5f), 90f, new Color(0.62f, 0.28f, 0.18f),
+                "Textures/Decals/dc_livery_airside_traffic_v01.png");
+            PlaceIdleApronAircraft("Idle west apron", new Vector3(2f, 0.7f, 20.4f), 90f, new Color(0.14f, 0.22f, 0.48f),
+                "Textures/Decals/dc_livery_coastline_regional_v01.png");
         }
 
         /// <summary>
         /// Static polished turboprop on a visual apron so the bigger field is not empty
         /// grass from overview. Not on the sim network and has no engine bed.
         /// </summary>
-        private static void PlaceIdleApronAircraft(string name, Vector3 position, float yawDegrees, Color accent)
+        private static void PlaceIdleApronAircraft(string name, Vector3 position, float yawDegrees, Color accent,
+            string liveryDecalRelativePath = null)
         {
-            var root = BuildAircraft(name, accent, withEngineAudio: false);
+            var root = BuildAircraft(name, accent, liveryDecalRelativePath, withEngineAudio: false);
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
             foreach (var child in root.GetComponentsInChildren<Transform>(true))

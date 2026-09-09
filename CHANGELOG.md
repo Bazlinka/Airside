@@ -92,7 +92,8 @@ change it describes.
   prop discs and ground shadows are stronger. Operating grass is coastal
   green, not dry Kingscote paddock; the surf club sits on West Beach; Glenelg
   towers read from the gulf. T1 airside has stub aerobridges that stop short
-  of the live turboprop stands. Unity EditMode 193/193.
+  of the live turboprop stands. Idle turboprops wear the licensed Coastline /
+  Emu / traffic liveries; Mt Lofty has a darker cap. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

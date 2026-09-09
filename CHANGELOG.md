@@ -37,7 +37,8 @@ change it describes.
   back to 268 m; the West Beach ribbon matches the gulf's length; a multi-storey
   car park sits on the landside; a freight shed sits west of the hangar; the
   terminal has an extra storey; aircraft throw dual landing beams down the 05
-  final. Unity EditMode 193/193.
+  final; an eastern arterial runs to the CBD; Glenelg towers sit south on the
+  gulf. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

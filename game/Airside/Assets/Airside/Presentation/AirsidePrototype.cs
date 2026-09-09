@@ -2732,6 +2732,9 @@ namespace Airside.Presentation
                 || name.StartsWith("Service lane", StringComparison.Ordinal)
                 || name.StartsWith("Fuel pad", StringComparison.Ordinal)
                 || name.StartsWith("Access road", StringComparison.Ordinal)
+                || name.StartsWith("Arterial link", StringComparison.Ordinal)
+                || name.StartsWith("Arterial dash", StringComparison.Ordinal)
+                || name.StartsWith("Eastern arterial", StringComparison.Ordinal)
                 || name.StartsWith("Car park aisle", StringComparison.Ordinal)
                 || name.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                 || name.StartsWith("Car park bay", StringComparison.Ordinal)
@@ -2816,6 +2819,9 @@ namespace Airside.Presentation
                     && !n.StartsWith("Service lane", StringComparison.Ordinal)
                     && !n.StartsWith("Fuel pad", StringComparison.Ordinal)
                     && !n.StartsWith("Access road", StringComparison.Ordinal)
+                    && !n.StartsWith("Arterial link", StringComparison.Ordinal)
+                    && !n.StartsWith("Arterial dash", StringComparison.Ordinal)
+                    && !n.StartsWith("Eastern arterial", StringComparison.Ordinal)
                     && !n.StartsWith("Car park aisle", StringComparison.Ordinal)
                     && !n.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                     && !n.StartsWith("Car park bay", StringComparison.Ordinal)
@@ -4872,7 +4878,12 @@ namespace Airside.Presentation
                 new Vector3(60f, 0f, 46f),
                 new Vector3(68f, 0f, 40f),
                 new Vector3(76f, 0f, 46f),
-                new Vector3(70f, 0f, 52f)
+                new Vector3(70f, 0f, 52f),
+                new Vector3(90f, 0f, 46f),
+                new Vector3(110f, 0f, 46f),
+                new Vector3(130f, 0f, 46f),
+                new Vector3(150f, 0f, 46f),
+                new Vector3(168f, 0f, 46f)
             };
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -4883,7 +4894,7 @@ namespace Airside.Presentation
             var lampColor = new Color(1f, 0.92f, 0.7f);
             // Apron flood masts are oversized for drop-off — shrink landside kit stems.
             var landsideMastScale = Vector3.one * 0.62f;
-            var lights = new Light[positions.Length];
+            var lights = new System.Collections.Generic.List<Light>(positions.Length + 4);
             for (var i = 0; i < positions.Length; i++)
             {
                 var pos = positions[i];
@@ -4916,10 +4927,33 @@ namespace Airside.Presentation
                 light.color = new Color(1f, 0.9f, 0.7f);
                 light.range = 16f;
                 light.intensity = 0.02f;
-                lights[i] = light;
+                lights.Add(light);
             }
 
-            return lights;
+            // Small jetty lamps — no flood masts. West Beach + Glenelg so the gulf edge
+            // still reads at night from the opening overview.
+            var jettyLamps = new[]
+            {
+                new Vector3(-88f, 1.15f, 6f),
+                new Vector3(-94f, 1.15f, 6f),
+                new Vector3(-104f, 1.15f, -90f),
+                new Vector3(-112f, 1.15f, -90f)
+            };
+            for (var i = 0; i < jettyLamps.Length; i++)
+            {
+                CreateBlock($"Jetty lamp post {i}", jettyLamps[i], new Vector3(0.1f, 1.1f, 0.1f), steel);
+                CreateBlock($"Jetty lamp {i}", jettyLamps[i] + new Vector3(0f, 0.55f, 0f), new Vector3(0.22f, 0.16f, 0.22f), lampColor);
+                var go = new GameObject($"Jetty streetlight {i + 1}");
+                go.transform.position = jettyLamps[i] + new Vector3(0f, 0.5f, 0f);
+                var light = go.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(1f, 0.86f, 0.62f);
+                light.range = 12f;
+                light.intensity = 0.02f;
+                lights.Add(light);
+            }
+
+            return lights.ToArray();
         }
 
         private static Light BuildAerodromeBeacon()
@@ -5490,6 +5524,11 @@ namespace Airside.Presentation
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
             CreateTaxiChordPad("Access road elbow", new Vector3(26f, 0.02f, 46f), new Vector3(34f, 0.02f, 46f), 6.2f, asphalt, new Vector2(1.8f, 1.2f));
             PlaceLevelPad("Car park", 46f, 46f, 22f, 16f, Shade(AirsideTheme.Concrete, 0.85f), concrete, new Vector2(5f, 4f));
+            PlaceLevelPad("Arterial link", 90f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
+            PlaceLevelPad("Eastern arterial", 142f, 46f, 72f, 9.2f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(14f, 2f));
+            for (var x = 80; x <= 174; x += 8)
+                CreateBlock($"Arterial dash {x}", new Vector3(x, 0.06f, 46f), new Vector3(3.2f, 0.02f, 0.28f),
+                    new Color(0.95f, 0.9f, 0.35f));
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
             if (GameObject.Find("Parking sign post") == null)
@@ -5907,6 +5946,30 @@ namespace Airside.Presentation
             PlaceCoastRock("Coast rock B", new Vector3(-80f, -0.1f, -12f), "rock_b", new Color(0.62f, 0.42f, 0.32f), 3.6f, -12f);
             PlaceCoastRock("Coast rock C", new Vector3(-76f, -0.14f, 48f), "rock_c", Shade(rock, 1.05f), 4.4f, 40f);
             PlaceCoastRock("Coast rock D", new Vector3(-82f, -0.12f, -32f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
+            BuildGlenelgCoast();
+        }
+
+        /// <summary>
+        /// Glenelg / Holdfast Shores massing south along the gulf so the coast is not
+        /// empty sand. Presentation only; not on the sim network.
+        /// </summary>
+        private static void BuildGlenelgCoast()
+        {
+            var cream = new Color(0.86f, 0.84f, 0.78f);
+            var pale = new Color(0.74f, 0.76f, 0.78f);
+            var glass = new Color(0.22f, 0.38f, 0.5f, 0.5f);
+            var timber = new Color(0.45f, 0.32f, 0.18f);
+            PlaceLevelPad("Glenelg jetty", -104f, -90f, 22f, 2.8f, timber, null, null, top: 0.06f, height: 0.16f);
+            CreateBlock("Glenelg jetty rail N", new Vector3(-108f, 0.45f, -88.7f), new Vector3(16f, 0.6f, 0.1f), Shade(timber, 0.85f));
+            CreateBlock("Glenelg jetty rail S", new Vector3(-108f, 0.45f, -91.3f), new Vector3(16f, 0.6f, 0.1f), Shade(timber, 0.85f));
+            CreateBlock("Holdfast tower A", new Vector3(-74f, 8.2f, -92f), new Vector3(4.4f, 16.4f, 3.8f), cream);
+            CreateBlock("Holdfast tower B", new Vector3(-66f, 6.6f, -100f), new Vector3(3.8f, 13.2f, 3.4f), pale);
+            CreateBlock("Holdfast tower C", new Vector3(-80f, 5.4f, -84f), new Vector3(5.2f, 10.8f, 4.2f), cream);
+            CreateBlock("Holdfast glass A", new Vector3(-74f, 8.4f, -93.95f), new Vector3(3.6f, 10f, 0.12f), glass);
+            CreateBlock("Holdfast glass B", new Vector3(-66f, 6.8f, -101.75f), new Vector3(3.0f, 8f, 0.12f), glass);
+            PlaceContactShadow("Holdfast contact A", new Vector3(-74f, 0.04f, -92f), new Vector3(5.2f, 0.02f, 4.6f), 0.16f);
+            PlaceContactShadow("Holdfast contact B", new Vector3(-66f, 0.04f, -100f), new Vector3(4.6f, 0.02f, 4.2f), 0.14f);
+            PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
         }
 
         /// <summary>VEG-002 rock accents on the West Beach shoreline; cube blocks remain fallback.</summary>
@@ -6038,6 +6101,8 @@ namespace Airside.Presentation
             // Kerbside drop-off on the access road.
             PlaceParkedCar("Drop-off car", new Vector3(23.5f, 0f, 36f), 0f, carColors[2]);
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
+            PlaceParkedCar("Arterial car A", new Vector3(118f, 0f, 43.6f), 90f, carColors[3]);
+            PlaceParkedCar("Arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
 
             // Landside furniture: skip near-terminal bench/trolley when PRP-003 forecourt already placed them.
             var forecourtPlaced = GameObject.Find("Terminal bench") != null
@@ -6423,6 +6488,9 @@ namespace Airside.Presentation
                 if (z > -10 && z < 8)
                     continue;
                 PlaceBay(new Vector3(FenceWestX, 0f, z + 2f), 90f, $"W {z}");
+                // Gap for the eastern arterial at z=46.
+                if (z >= 42 && z <= 50)
+                    continue;
                 PlaceBay(new Vector3(FenceEastX, 0f, z + 2f), -90f, $"E {z}");
             }
 
@@ -6462,6 +6530,13 @@ namespace Airside.Presentation
             PlacePart("gate_pedestrian_frame", new Vector3(20.6f, 0f, FenceNorthZ), Quaternion.identity, post, "Pedestrian gate frame");
             PlacePart("gate_pedestrian", new Vector3(31.4f, 0f, FenceNorthZ), Quaternion.identity, panel, "Pedestrian gate E");
             PlacePart("gate_pedestrian_frame", new Vector3(31.4f, 0f, FenceNorthZ), Quaternion.identity, post, "Pedestrian gate frame E");
+            // East vehicle gate onto the city arterial.
+            var eastYaw = Quaternion.Euler(0f, -90f, 0f);
+            PlacePart("gate_post", new Vector3(FenceEastX, 0f, 42.6f), eastYaw, post, "East gate post S");
+            PlacePart("gate_post", new Vector3(FenceEastX, 0f, 49.4f), eastYaw, post, "East gate post N");
+            PlacePart("gate_vehicle_leaf_l", new Vector3(FenceEastX + 1.6f, 0f, 43.8f), Quaternion.Euler(0f, -78f, 0f), yellow, "East gate leaf S");
+            PlacePart("gate_vehicle_leaf_r", new Vector3(FenceEastX + 1.6f, 0f, 48.2f), Quaternion.Euler(0f, -102f, 0f), yellow, "East gate leaf N");
+            PlacePart("gate_sign", new Vector3(FenceEastX + 0.2f, 0f, 46f), eastYaw, AirsideTheme.SafetyYellow, "East gate sign");
 
             return placed >= 20;
         }
@@ -6499,7 +6574,8 @@ namespace Airside.Presentation
             Posts("Outer cap W N", FenceWestX, 10f, 50f);
             Posts("Outer cap W S", FenceWestX, -50f, -10f);
             // East of blast pad, same runway gap.
-            Wall("Outer fence E N", FenceEastX, 30f, 0.1f, 44f);
+            Wall("Outer fence E N S", FenceEastX, 24f, 0.1f, 28f);
+            Wall("Outer fence E N N", FenceEastX, 53f, 0.1f, 6f);
             Wall("Outer fence E S", FenceEastX, -30f, 0.1f, 44f);
             Posts("Outer cap E N", FenceEastX, 10f, 50f);
             Posts("Outer cap E S", FenceEastX, -50f, -10f);
@@ -7364,7 +7440,7 @@ namespace Airside.Presentation
             if (TryPlaceScrubFromKit(basePosition, scale))
                 return;
 
-            // Multi-sphere scrub clump so fence belts read as bumpy KI olive, not props.
+            // Multi-sphere scrub clump so fence belts read as coastal olive, not props.
             var colorA = Shade(AirsideTheme.DryGrass, 0.85f);
             var colorB = Shade(AirsideTheme.Eucalyptus, 0.72f);
             var colorC = Shade(AirsideTheme.DryGrass, 0.95f);
@@ -7686,7 +7762,9 @@ namespace Airside.Presentation
                 new Vector3(116f, 0.95f, -36f), new Vector3(124f, 1.1f, -42f), new Vector3(132f, 1.05f, -30f),
                 new Vector3(110f, 0.9f, 52f), new Vector3(142f, 1.15f, 56f),
                 new Vector3(120f, 1.0f, -48f), new Vector3(138f, 1.1f, -38f), new Vector3(148f, 1.05f, 48f),
-                new Vector3(156f, 1.2f, 62f), new Vector3(108f, 0.95f, -28f), new Vector3(160f, 1.08f, 76f)
+                new Vector3(156f, 1.2f, 62f), new Vector3(108f, 0.95f, -28f), new Vector3(160f, 1.08f, 76f),
+                new Vector3(150f, 1.05f, 38f), new Vector3(162f, 1.1f, 54f), new Vector3(174f, 1.0f, 40f),
+                new Vector3(138f, 0.95f, 34f), new Vector3(-58f, 1.0f, -78f), new Vector3(-50f, 1.1f, -88f)
             };
             for (var i = 0; i < spots.Length; i++)
             {

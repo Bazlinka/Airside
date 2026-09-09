@@ -16,7 +16,7 @@
   sit on the far dome. Clouds sit at ~90–150 m so they no longer rest on the
   tower. 12/30 pocket has eucalyptus outside the fence. CBD signature towers
   should read from the opening shot. Hangar apron holds a third idle turboprop.
-  EditMode 193/193 earlier this session.
+  Airside ident shows ADL. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -57,7 +57,7 @@
   Sky disc and stars sit on the far dome. Clouds sit at ~90–150 m off the
   dual-runway core. Eucalyptus fringes the 12/30 pocket. CBD signature towers
   and extra Holdfast massing read from the opening shot. Hangar, satellite and
-  freight aprons hold idle turboprops. Save schema
+  freight aprons hold idle turboprops. Airside ident carries ADL. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

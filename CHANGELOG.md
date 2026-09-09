@@ -69,7 +69,8 @@ change it describes.
   suburbs fringe the 12/30 pocket; gulf birds orbit higher; CBD and Holdfast
   massing is taller from the 318 m overview. An idle turboprop sits beside
   the hangar; satellite GSE, extra gulf foam and arterial cars fill empty
-  overview gaps. Unity EditMode 193/193.
+  overview gaps. Airside ident carries rooftop ADL letters. Aircraft skin is
+  glossier so the fleet catches the sun from overview. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

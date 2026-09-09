@@ -4491,6 +4491,15 @@ namespace Airside.Presentation
                          "Terminal east concourse glow",
                          "Terminal east concourse upper glow",
                          "Terminal ident accent",
+                         "Ident A L",
+                         "Ident A R",
+                         "Ident A bar",
+                         "Ident D stem",
+                         "Ident D top",
+                         "Ident D bot",
+                         "Ident D bow",
+                         "Ident L stem",
+                         "Ident L base",
                          "Terminal east ident accent",
                          "Terminal west glow",
                          "Terminal west ident accent",
@@ -4541,6 +4550,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal)
                                    || name.StartsWith("Satellite bridge", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
+                                   || name.StartsWith("Ident ", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal west ident accent", StringComparison.Ordinal)
@@ -5485,6 +5495,7 @@ namespace Airside.Presentation
                 CreateBlock("Terminal ident", new Vector3(26f, 5.15f, 24.05f), new Vector3(10.5f, 0.55f, 0.16f), new Color(0.12f, 0.2f, 0.34f));
                 CreateBlock("Terminal ident accent", new Vector3(26f, 5.15f, 23.94f), new Vector3(10.5f, 0.18f, 0.06f), new Color(0.86f, 0.5f, 0.16f));
             }
+            PlaceAdelaideIdentLetters();
             // East pier on the expanded apron so the landside matches the bigger field.
             CreateBlock("Terminal east wing", new Vector3(40f, 2.15f, 24.5f), new Vector3(10f, 4.3f, 7.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal east glass", new Vector3(40f, 2.35f, 20.85f), new Vector3(8f, 2.4f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
@@ -7579,6 +7590,29 @@ namespace Airside.Presentation
             CreateBlock("Satellite bridge B glass", new Vector3(64.5f, 2.25f, 17.4f), new Vector3(1.05f, 1.1f, 6.6f), glass);
             PlaceContactShadow("Satellite bridge A contact", new Vector3(56.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
             PlaceContactShadow("Satellite bridge B contact", new Vector3(64.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
+        }
+
+        /// <summary>
+        /// Block ADL letters on the airside ident — geometry, not a baked HUD texture.
+        /// </summary>
+        private static void PlaceAdelaideIdentLetters()
+        {
+            if (GameObject.Find("Ident A L") != null)
+                return;
+
+            var ochre = new Color(0.86f, 0.5f, 0.16f);
+            // Rooftop scale so ADL still reads from the 318 m opening shot.
+            const float y = 7.45f;
+            const float z = 24.32f;
+            CreateBlock("Ident A L", new Vector3(21.35f, y, z), new Vector3(0.38f, 2.7f, 0.24f), ochre);
+            CreateBlock("Ident A R", new Vector3(23.25f, y, z), new Vector3(0.38f, 2.7f, 0.24f), ochre);
+            CreateBlock("Ident A bar", new Vector3(22.3f, y - 0.12f, z), new Vector3(1.7f, 0.38f, 0.24f), ochre);
+            CreateBlock("Ident D stem", new Vector3(25.05f, y, z), new Vector3(0.4f, 2.7f, 0.24f), ochre);
+            CreateBlock("Ident D top", new Vector3(26.4f, y + 1.18f, z), new Vector3(2.1f, 0.34f, 0.24f), ochre);
+            CreateBlock("Ident D bot", new Vector3(26.4f, y - 1.18f, z), new Vector3(2.1f, 0.34f, 0.24f), ochre);
+            CreateBlock("Ident D bow", new Vector3(27.35f, y, z), new Vector3(0.4f, 2.05f, 0.24f), ochre);
+            CreateBlock("Ident L stem", new Vector3(29.25f, y, z), new Vector3(0.4f, 2.7f, 0.24f), ochre);
+            CreateBlock("Ident L base", new Vector3(30.5f, y - 1.18f, z), new Vector3(2.2f, 0.38f, 0.24f), ochre);
         }
 
         /// <summary>
@@ -10030,14 +10064,14 @@ namespace Airside.Presentation
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))
-                    renderer.material.SetFloat("_Smoothness", 0.82f);
+                    renderer.material.SetFloat("_Smoothness", 0.88f);
                 if (renderer.material.HasProperty("_Metallic"))
                     renderer.material.SetFloat("_Metallic",
                         n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) >= 0
                         || n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) >= 0
                         || n.IndexOf("spinner", StringComparison.OrdinalIgnoreCase) >= 0
-                            ? 0.42f
-                            : 0.18f);
+                            ? 0.48f
+                            : 0.26f);
             }
         }
 

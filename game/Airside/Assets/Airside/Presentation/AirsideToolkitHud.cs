@@ -114,6 +114,7 @@ namespace Airside.Presentation
         private Action _onFollow;
         private Action _onOverview;
         private Action _onToggleMute;
+        private Action _onUiClick;
 
         private Button _followButton;
         private Button _overviewButton;
@@ -147,7 +148,8 @@ namespace Airside.Presentation
             Action onSpeed4 = null,
             Action onFollow = null,
             Action onOverview = null,
-            Action onToggleMute = null)
+            Action onToggleMute = null,
+            Action onUiClick = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -165,6 +167,7 @@ namespace Airside.Presentation
             _onFollow = onFollow;
             _onOverview = onOverview;
             _onToggleMute = onToggleMute;
+            _onUiClick = onUiClick;
         }
 
         private void Build()
@@ -306,7 +309,7 @@ namespace Airside.Presentation
             _turnaroundBlock.Add(_turnaroundBars);
             _priorityButton = MakeButton("Hire priority crew", AirsideTheme.CoastalBlue, 180f);
             _priorityButton.style.marginTop = 6;
-            _priorityButton.clicked += () => _onPriorityCrew?.Invoke();
+            BindClick(_priorityButton, () => _onPriorityCrew?.Invoke());
             _turnaroundBlock.Add(_priorityButton);
             _leftPanel.Add(_turnaroundBlock);
 
@@ -319,18 +322,18 @@ namespace Airside.Presentation
             _crewRow.style.marginTop = 2;
             _crewRow.style.marginBottom = 2;
             _hireCrewButton = MakeButton("Hire", AirsideTheme.CoastalBlue, 100f);
-            _hireCrewButton.clicked += () => _onHireCrew?.Invoke();
+            BindClick(_hireCrewButton, () => _onHireCrew?.Invoke());
             _crewRow.Add(_hireCrewButton);
             _releaseCrewButton = MakeButton("Release", AirsideTheme.Tarmac, 90f);
             _releaseCrewButton.style.marginLeft = 6;
-            _releaseCrewButton.clicked += () => _onReleaseCrew?.Invoke();
+            BindClick(_releaseCrewButton, () => _onReleaseCrew?.Invoke());
             _crewRow.Add(_releaseCrewButton);
             _leftPanel.Add(_crewRow);
 
             _standsText = AddLeftLine(_leftPanel, "Stands", 12, FontStyle.Normal);
             _buildStandButton = MakeButton("Build stand 3", AirsideTheme.CoastalBlue, 180f);
             _buildStandButton.style.marginTop = 2;
-            _buildStandButton.clicked += () => _onBuildStand?.Invoke();
+            BindClick(_buildStandButton, () => _onBuildStand?.Invoke());
             _leftPanel.Add(_buildStandButton);
 
             _researchText = AddLeftLine(_leftPanel, "Research", 12, FontStyle.Normal);
@@ -339,7 +342,7 @@ namespace Airside.Presentation
             _leftPanel.Add(_researchTrack);
             _researchButton = MakeButton("Start research", AirsideTheme.CoastalBlue, 200f);
             _researchButton.style.marginTop = 2;
-            _researchButton.clicked += () => _onStartResearch?.Invoke();
+            BindClick(_researchButton, () => _onStartResearch?.Invoke());
             _leftPanel.Add(_researchButton);
 
             _coachText = AddLeftLine(_leftPanel, "Coach", 14, FontStyle.Bold);
@@ -466,32 +469,32 @@ namespace Airside.Presentation
                 AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.7f);
 
             _pauseButton = MakeIconChromeButton("Pause", AirsideTheme.Tarmac, 56f);
-            _pauseButton.clicked += () => _onTogglePause?.Invoke();
+            BindClick(_pauseButton, () => _onTogglePause?.Invoke());
             _speedChip.Add(_pauseButton);
 
             _speed1Button = MakeIconChromeButton("1×", AirsideTheme.CoastalBlue, 48f);
             _speed1Button.style.marginLeft = 6;
-            _speed1Button.clicked += () => _onSpeed1?.Invoke();
+            BindClick(_speed1Button, () => _onSpeed1?.Invoke());
             _speedChip.Add(_speed1Button);
 
             _speed4Button = MakeIconChromeButton("4×", AirsideTheme.CoastalBlue, 48f);
             _speed4Button.style.marginLeft = 6;
-            _speed4Button.clicked += () => _onSpeed4?.Invoke();
+            BindClick(_speed4Button, () => _onSpeed4?.Invoke());
             _speedChip.Add(_speed4Button);
 
             _followButton = MakeIconChromeButton("Follow", AirsideTheme.Tarmac, 56f);
             _followButton.style.marginLeft = 10;
-            _followButton.clicked += () => _onFollow?.Invoke();
+            BindClick(_followButton, () => _onFollow?.Invoke());
             _speedChip.Add(_followButton);
 
             _overviewButton = MakeIconChromeButton("Overview", AirsideTheme.Tarmac, 64f);
             _overviewButton.style.marginLeft = 6;
-            _overviewButton.clicked += () => _onOverview?.Invoke();
+            BindClick(_overviewButton, () => _onOverview?.Invoke());
             _speedChip.Add(_overviewButton);
 
             _muteButton = MakeIconChromeButton("Audio", AirsideTheme.Tarmac, 52f);
             _muteButton.style.marginLeft = 6;
-            _muteButton.clicked += () => _onToggleMute?.Invoke();
+            BindClick(_muteButton, () => _onToggleMute?.Invoke());
             _speedChip.Add(_muteButton);
 
             _speedText = MakePanelLabel("Speed", 11, FontStyle.Normal, inkOnLight: true);
@@ -555,12 +558,12 @@ namespace Airside.Presentation
             row.style.justifyContent = Justify.FlexStart;
 
             _acceptButton = MakeButton("Accept route", AirsideTheme.CoastalBlue, 190f);
-            _acceptButton.clicked += () => _onAccept?.Invoke();
+            BindClick(_acceptButton, () => _onAccept?.Invoke());
             row.Add(_acceptButton);
 
             _declineButton = MakeButton("Decline", AirsideTheme.Tarmac, 100f);
             _declineButton.style.marginLeft = 10;
-            _declineButton.clicked += () => _onDecline?.Invoke();
+            BindClick(_declineButton, () => _onDecline?.Invoke());
             row.Add(_declineButton);
 
             _offerPanel.Add(row);
@@ -688,7 +691,7 @@ namespace Airside.Presentation
             briefingCard.Add(_briefingBody);
             var begin = MakeButton("Begin operations", AirsideTheme.CoastalBlue, 220f);
             begin.style.alignSelf = Align.Center;
-            begin.clicked += () => _onBeginOperations?.Invoke();
+            BindClick(begin, () => _onBeginOperations?.Invoke());
             briefingCard.Add(begin);
             _briefingOverlay.Add(briefingCard);
             _root.Add(_briefingOverlay);
@@ -708,7 +711,7 @@ namespace Airside.Presentation
             pauseCard.Add(pauseHint);
             var resetPause = MakeButton("Start new airport", AirsideTheme.Tarmac, 220f);
             resetPause.style.alignSelf = Align.Center;
-            resetPause.clicked += () => _onResetAirport?.Invoke();
+            BindClick(resetPause, () => _onResetAirport?.Invoke());
             pauseCard.Add(resetPause);
             _pauseOverlay.Add(pauseCard);
             _root.Add(_pauseOverlay);
@@ -733,7 +736,7 @@ namespace Airside.Presentation
             awayCard.Add(_awayBody);
             var continueBtn = MakeButton("Continue operations", AirsideTheme.CoastalBlue, 220f);
             continueBtn.style.alignSelf = Align.Center;
-            continueBtn.clicked += () => _onContinueAway?.Invoke();
+            BindClick(continueBtn, () => _onContinueAway?.Invoke());
             awayCard.Add(continueBtn);
             _awayOverlay.Add(awayCard);
             _root.Add(_awayOverlay);
@@ -759,7 +762,7 @@ namespace Airside.Presentation
             insolventCard.Add(_insolvencyBody);
             var newAirport = MakeButton("Start a new airport", AirsideTheme.CoastalBlue, 260f);
             newAirport.style.alignSelf = Align.Center;
-            newAirport.clicked += () => _onResetAirport?.Invoke();
+            BindClick(newAirport, () => _onResetAirport?.Invoke());
             insolventCard.Add(newAirport);
             _insolvencyOverlay.Add(insolventCard);
             _root.Add(_insolvencyOverlay);
@@ -1072,6 +1075,15 @@ namespace Airside.Presentation
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
             button.style.letterSpacing = 0.4f;
             return button;
+        }
+
+        private void BindClick(Button button, Action action)
+        {
+            button.clicked += () =>
+            {
+                _onUiClick?.Invoke();
+                action?.Invoke();
+            };
         }
 
         /// <summary>

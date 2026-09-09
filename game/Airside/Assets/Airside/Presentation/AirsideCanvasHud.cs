@@ -84,6 +84,7 @@ namespace Airside.Presentation
         private Action _onBeginOperations;
         private Action _onResetAirport;
         private Action _onContinueAway;
+        private Action _onUiClick;
 
         private AirsideCanvasHud(
             RectTransform root,
@@ -408,13 +409,13 @@ namespace Airside.Presentation
             hud._savePanel = savePanel;
             hud._saveText = saveText;
 
-            accept.onClick.AddListener(() => hud._onAccept?.Invoke());
-            decline.onClick.AddListener(() => hud._onDecline?.Invoke());
-            priority.onClick.AddListener(() => hud._onPriorityCrew?.Invoke());
-            hireCrew.onClick.AddListener(() => hud._onHireCrew?.Invoke());
-            releaseCrew.onClick.AddListener(() => hud._onReleaseCrew?.Invoke());
-            buildStand.onClick.AddListener(() => hud._onBuildStand?.Invoke());
-            researchButton.onClick.AddListener(() => hud._onStartResearch?.Invoke());
+            hud.BindClick(accept, () => hud._onAccept?.Invoke());
+            hud.BindClick(decline, () => hud._onDecline?.Invoke());
+            hud.BindClick(priority, () => hud._onPriorityCrew?.Invoke());
+            hud.BindClick(hireCrew, () => hud._onHireCrew?.Invoke());
+            hud.BindClick(releaseCrew, () => hud._onReleaseCrew?.Invoke());
+            hud.BindClick(buildStand, () => hud._onBuildStand?.Invoke());
+            hud.BindClick(researchButton, () => hud._onStartResearch?.Invoke());
             hud.EnsureOverlays(root);
 
             if (UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
@@ -475,7 +476,7 @@ namespace Airside.Presentation
 
             _briefingBody = AddText(briefingCard, "Briefing body", 15, FontStyle.Normal, new Vector2(24f, -96f), new Vector2(450f, 200f));
             var begin = AddButton(briefingCard, "Begin operations", new Vector2(140f, -318f), new Vector2(220f, 30f), AirsideTheme.CoastalBlue);
-            begin.onClick.AddListener(() => _onBeginOperations?.Invoke());
+            BindClick(begin, () => _onBeginOperations?.Invoke());
             _briefingPanel = splashRt;
             splashGo.SetActive(false);
 
@@ -498,7 +499,7 @@ namespace Airside.Presentation
             pauseHint.text = "Space to resume";
             pauseHint.color = AirsideTheme.SafetyYellow;
             var reset = AddButton(pauseCard, "Start new airport", new Vector2(50f, -88f), new Vector2(220f, 30f), AirsideTheme.Tarmac);
-            reset.onClick.AddListener(() => _onResetAirport?.Invoke());
+            BindClick(reset, () => _onResetAirport?.Invoke());
             _pausePanel = pauseRt;
             pauseGo.SetActive(false);
 
@@ -521,7 +522,7 @@ namespace Airside.Presentation
             awaySub.text = "Welcome back to operations";
             _awayBody = AddText(awayCard, "Away body", 14, FontStyle.Normal, new Vector2(24f, -86f), new Vector2(410f, 200f));
             var continueBtn = AddButton(awayCard, "Continue operations", new Vector2(130f, -292f), new Vector2(200f, 32f), AirsideTheme.CoastalBlue);
-            continueBtn.onClick.AddListener(() => _onContinueAway?.Invoke());
+            BindClick(continueBtn, () => _onContinueAway?.Invoke());
             _awayPanel = awayRt;
             awayGo.SetActive(false);
 
@@ -545,7 +546,7 @@ namespace Airside.Presentation
             insolventHead.color = AirsideTheme.SignalRed;
             _insolvencyBody = AddText(insolventCard, "Insolvency body", 14, FontStyle.Normal, new Vector2(24f, -96f), new Vector2(410f, 110f));
             var newAirport = AddButton(insolventCard, "Start a new airport", new Vector2(100f, -220f), new Vector2(260f, 36f), AirsideTheme.CoastalBlue);
-            newAirport.onClick.AddListener(() => _onResetAirport?.Invoke());
+            BindClick(newAirport, () => _onResetAirport?.Invoke());
             _insolvencyPanel = insolventRt;
             insolventGo.SetActive(false);
         }
@@ -560,7 +561,8 @@ namespace Airside.Presentation
             Action onStartResearch = null,
             Action onBeginOperations = null,
             Action onResetAirport = null,
-            Action onContinueAway = null)
+            Action onContinueAway = null,
+            Action onUiClick = null)
         {
             _onAccept = onAccept;
             _onDecline = onDecline;
@@ -572,6 +574,16 @@ namespace Airside.Presentation
             _onBeginOperations = onBeginOperations;
             _onResetAirport = onResetAirport;
             _onContinueAway = onContinueAway;
+            _onUiClick = onUiClick;
+        }
+
+        private void BindClick(Button button, Action action)
+        {
+            button.onClick.AddListener(() =>
+            {
+                _onUiClick?.Invoke();
+                action?.Invoke();
+            });
         }
 
         public void SyncOverlays(

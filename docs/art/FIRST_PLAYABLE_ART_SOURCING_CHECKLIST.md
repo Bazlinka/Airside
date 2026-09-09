@@ -192,7 +192,7 @@ animation clips → P3 audio.
 | AUD-002 | Ambient wind / coast bed | No | Missing | Same | `Audio/` |
 | AUD-003 | Touchdown / rollout one-shot | No | Missing | Same | `Audio/` |
 | AUD-004 | Soft rain bed | No | Missing | Same | `Audio/` |
-| AUD-005 | UI click / alert (minimal) | No | Missing | Same | `Audio/` |
+| AUD-005 | UI click / alert (minimal) | Yes (`Resources/Airside/Audio/ui_select_005.ogg`) | Partial — click integrated; alert still missing | Kenney Interface Sounds (CC0); register row | `../../Resources/Airside/Audio/` (runtime-loadable AudioClip path) |
 
 ## Reference boards (keep in git — modelling targets, not runtime meshes)
 

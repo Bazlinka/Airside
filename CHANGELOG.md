@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Free CC0 UI audio.** Kenney `ui_select_005.ogg` is packaged through Resources and plays on all UI Toolkit and Canvas HUD button actions, respecting mute. Licence, source hash and fallback are recorded in the asset register. Unity imported the asset; local EditMode execution is still blocked while the Unity package resolver initialises its dependencies.
+
+- **Presentation compile repair.** Restored the presentation-clock backing field and converted malformed generated decimal literals to C# float literals, removing the prior source-level conversion errors from `AirsidePrototype.cs`.
+
 - **Art sourcing checklist.** `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
   lists every first-playable item to source (wheels, props, engines, trees, GSE,
   audio, …) with in-git / quality / target-path columns; linked from the art

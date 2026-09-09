@@ -65,6 +65,8 @@ namespace Airside.Presentation
         private AudioSource _ambientWindAudio;
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
+        private AudioSource _uiAudio;
+        private AudioClip _uiClickClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly HashSet<string> _touchdownFired = new HashSet<string>();
         private readonly List<(Renderer Renderer, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
@@ -98,6 +100,7 @@ namespace Airside.Presentation
         private Camera _mainCamera;
         private AirsideCameraController _cameraController;
         private double _preciseTime;
+        private float _presentationClock;
         private bool _paused;
         private bool _audioMuted;
         private int _speed = 1;
@@ -197,6 +200,11 @@ namespace Airside.Presentation
             _ambientCoastAudio.spatialBlend = 0f;
             _ambientCoastAudio.volume = 0f;
             _ambientCoastAudio.Play();
+            _uiClickClip = Resources.Load<AudioClip>("Airside/Audio/ui_select_005");
+            _uiAudio = gameObject.AddComponent<AudioSource>();
+            _uiAudio.playOnAwake = false;
+            _uiAudio.spatialBlend = 0f;
+            _uiAudio.volume = 0.3f;
             CollectWetSurfaces();
             BuildWetPuddles();
             CollectHoldShortMarkings();
@@ -323,7 +331,8 @@ namespace Airside.Presentation
                 },
                 onBeginOperations: () => DismissOpeningBriefing(),
                 onResetAirport: () => ResetToNewAirport(),
-                onContinueAway: () => { _showAwaySummary = false; });
+                onContinueAway: () => { _showAwaySummary = false; },
+                onUiClick: PlayUiClick);
             if (_toolkitHud != null)
             {
                 _toolkitHud.BindActions(
@@ -367,7 +376,8 @@ namespace Airside.Presentation
                     onSpeed4: () => { _speed = 4; },
                     onFollow: () => _cameraController?.CycleOrStartFollow(),
                     onOverview: () => _cameraController?.ReturnToOverview(),
-                    onToggleMute: () => { _audioMuted = !_audioMuted; });
+                    onToggleMute: () => { _audioMuted = !_audioMuted; },
+                    onUiClick: PlayUiClick);
             }
             _canvasHudActive = _canvasHud.IsActive;
         }
@@ -1166,6 +1176,14 @@ namespace Airside.Presentation
             }
         }
 
+        private void PlayUiClick()
+        {
+            if (_audioMuted || _uiAudio == null || _uiClickClip == null)
+                return;
+
+            _uiAudio.PlayOneShot(_uiClickClip);
+        }
+
         private void ApplyEngineAudio(Transform aircraft, bool enginesOn)
         {
             if (aircraft == null)
@@ -1269,7 +1287,7 @@ namespace Airside.Presentation
                 {
                     // ANM-AIR-004 — pulse rate from AirsideReusableMotion (not a hard-coded 2 Hz).
                     var beaconOn = enginesOn &&
-                        (Mathf.FloorToInt(PresentationClock * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
+                        (Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
@@ -1828,9 +1846,9 @@ namespace Airside.Presentation
             var servicing = PreferWatchedAtStandFlight(requireTurnaround: true);
 
             // Parked GSE stays visible on the apron edge so the field feels staffed.
-            var fuelPark = new Vector3(-2.5, 0.55, 24.5f);
-            var bagPark = new Vector3(0.5, 0.42, 25.2f);
-            var busPark = new Vector3(2.5, 0.68, 26f);
+            var fuelPark = new Vector3(-2.5f, 0.55f, 24.5f);
+            var bagPark = new Vector3(0.5f, 0.42f, 25.2f);
+            var busPark = new Vector3(2.5f, 0.68f, 26f);
 
             if (servicing == null)
             {
@@ -1992,69 +2010,69 @@ namespace Airside.Presentation
                 return;
 
             BuildStandMarking(17f, 34f, "Stand 3");
-                        CreateBlock("Stand 3 apron pad WWaWN", new Vector3(11.98, -0.002, 31.8613f), new Vector3(1.94, 0.1152, 9.392f), new Color(0.34f, 0.36f, 0.37f),
+                        CreateBlock("Stand 3 apron pad WWaWN", new Vector3(11.98f, -0.002f, 31.8613f), new Vector3(1.94f, 0.1152f, 9.392f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-                        CreateBlock("Stand 3 apron pad WWaWS", new Vector3(12.02, 0.0, 33.2387f), new Vector3(1.94, 0.1152, 9.392f), new Color(0.34f, 0.36f, 0.37f),
+                        CreateBlock("Stand 3 apron pad WWaWS", new Vector3(12.02f, 0.0f, 33.2387f), new Vector3(1.94f, 0.1152f, 9.392f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWaEN", new Vector3(13.998, -0.0035, 31.8939f), new Vector3(1.8818, 0.1117, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWaEN", new Vector3(13.998f, -0.0035f, 31.8939f), new Vector3(1.8818f, 0.1117f, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWaES", new Vector3(14.038, -0.0015, 33.2301f), new Vector3(1.8818, 0.1117, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWaES", new Vector3(14.038f, -0.0015f, 33.2301f), new Vector3(1.8818f, 0.1117f, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbWN", new Vector3(12.03, 0.0, 34.8157f), new Vector3(1.8818, 0.1106, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbWN", new Vector3(12.03f, 0.0f, 34.8157f), new Vector3(1.8818f, 0.1106f, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbWS", new Vector3(12.07, 0.002, 36.1243f), new Vector3(1.8818, 0.1106, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbWS", new Vector3(12.07f, 0.002f, 36.1243f), new Vector3(1.8818f, 0.1106f, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbEN", new Vector3(13.988, -0.0015, 34.8473f), new Vector3(1.8253, 0.1072, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbEN", new Vector3(13.988f, -0.0015f, 34.8473f), new Vector3(1.8253f, 0.1072f, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbES", new Vector3(14.028, 0.0005, 36.1167f), new Vector3(1.8253, 0.1072, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbES", new Vector3(14.028f, 0.0005f, 36.1167f), new Vector3(1.8253f, 0.1072f, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaWN", new Vector3(15.98, 0.0, 31.9982f), new Vector3(1.94, 0.1114, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaWN", new Vector3(15.98f, 0.0f, 31.9982f), new Vector3(1.94f, 0.1114f, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaWS", new Vector3(16.02, 0.002, 33.3068f), new Vector3(1.94, 0.1114, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaWS", new Vector3(16.02f, 0.002f, 33.3068f), new Vector3(1.94f, 0.1114f, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaEN", new Vector3(17.998, -0.0015, 32.0298f), new Vector3(1.8818, 0.108, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaEN", new Vector3(17.998f, -0.0015f, 32.0298f), new Vector3(1.8818f, 0.108f, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaES", new Vector3(18.038, 0.0005, 33.2992f), new Vector3(1.8818, 0.108, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaES", new Vector3(18.038f, 0.0005f, 33.2992f), new Vector3(1.8818f, 0.108f, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbWN", new Vector3(16.03, 0.002, 34.8059f), new Vector3(1.8818, 0.1069, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbWN", new Vector3(16.03f, 0.002f, 34.8059f), new Vector3(1.8818f, 0.1069f, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbWS", new Vector3(16.07, 0.004, 36.0491f), new Vector3(1.8818, 0.1069, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbWS", new Vector3(16.07f, 0.004f, 36.0491f), new Vector3(1.8818f, 0.1069f, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbEN", new Vector3(17.988, 0.0005, 34.8366f), new Vector3(1.8253, 0.1037, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbEN", new Vector3(17.988f, 0.0005f, 34.8366f), new Vector3(1.8253f, 0.1037f, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbES", new Vector3(18.028, 0.0025, 36.0424f), new Vector3(1.8253, 0.1037, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbES", new Vector3(18.028f, 0.0025f, 36.0424f), new Vector3(1.8253f, 0.1037f, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad EWaWN", new Vector3(21.98, -0.002, 32.135f), new Vector3(1.94, 0.1056, 9.344f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaWN", new Vector3(21.98f, -0.002f, 32.135f), new Vector3(1.94f, 0.1056f, 9.344f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaWS", new Vector3(22.02, 0.0, 33.465f), new Vector3(1.94, 0.1056, 9.344f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaWS", new Vector3(22.02f, 0.0f, 33.465f), new Vector3(1.94f, 0.1056f, 9.344f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaEN", new Vector3(23.998, -0.0035, 32.1669f), new Vector3(1.8818, 0.1024, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaEN", new Vector3(23.998f, -0.0035f, 32.1669f), new Vector3(1.8818f, 0.1024f, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaES", new Vector3(24.038, -0.0015, 33.4571f), new Vector3(1.8818, 0.1024, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaES", new Vector3(24.038f, -0.0015f, 33.4571f), new Vector3(1.8818f, 0.1024f, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbWN", new Vector3(22.03, 0.0, 34.9883f), new Vector3(1.8818, 0.1014, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbWN", new Vector3(22.03f, 0.0f, 34.9883f), new Vector3(1.8818f, 0.1014f, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbWS", new Vector3(22.07, 0.002, 36.2518f), new Vector3(1.8818, 0.1014, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbWS", new Vector3(22.07f, 0.002f, 36.2518f), new Vector3(1.8818f, 0.1014f, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbEN", new Vector3(23.988, -0.0015, 35.0192f), new Vector3(1.8253, 0.0983, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbEN", new Vector3(23.988f, -0.0015f, 35.0192f), new Vector3(1.8253f, 0.0983f, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbES", new Vector3(24.028, 0.0005, 36.2448f), new Vector3(1.8253, 0.0983, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbES", new Vector3(24.028f, 0.0005f, 36.2448f), new Vector3(1.8253f, 0.0983f, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaWN", new Vector3(26.03, 0.0, 32.2269f), new Vector3(1.843, 0.1014, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaWN", new Vector3(26.03f, 0.0f, 32.2269f), new Vector3(1.843f, 0.1014f, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaWS", new Vector3(26.07, 0.002, 33.5171f), new Vector3(1.843, 0.1014, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaWS", new Vector3(26.07f, 0.002f, 33.5171f), new Vector3(1.843f, 0.1014f, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaEN", new Vector3(27.948, -0.0015, 32.2583f), new Vector3(1.7877, 0.0983, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaEN", new Vector3(27.948f, -0.0015f, 32.2583f), new Vector3(1.7877f, 0.0983f, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaES", new Vector3(27.988, 0.0005, 33.5097f), new Vector3(1.7877, 0.0983, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaES", new Vector3(27.988f, 0.0005f, 33.5097f), new Vector3(1.7877f, 0.0983f, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbWN", new Vector3(26.0785, 0.002, 34.9952f), new Vector3(1.7877, 0.0973, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbWN", new Vector3(26.0785f, 0.002f, 34.9952f), new Vector3(1.7877f, 0.0973f, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbWS", new Vector3(26.1185, 0.004, 36.2208f), new Vector3(1.7877, 0.0973, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbWS", new Vector3(26.1185f, 0.004f, 36.2208f), new Vector3(1.7877f, 0.0973f, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbEN", new Vector3(27.9715, 0.0, 35.0497f), new Vector3(1.7162, 0.0944, 9.189f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbEN", new Vector3(27.9715f, 0.0f, 35.0497f), new Vector3(1.7162f, 0.0944f, 9.189f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbES", new Vector3(28.0115, 0.002, 36.2263f), new Vector3(1.7162, 0.0944, 9.189f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbES", new Vector3(28.0115f, 0.002f, 36.2263f), new Vector3(1.7162f, 0.0944f, 9.189f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
             CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 34f);
             // Extend apron north so Stand 3 is not an island past the concrete edge.
@@ -2271,7 +2289,7 @@ namespace Airside.Presentation
                 child.gameObject.SetActive(active);
                 if (!active)
                     continue;
-                var on = Mathf.FloorToInt(PresentationClock * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
+                var on = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
@@ -4923,7 +4941,7 @@ namespace Airside.Presentation
                 }
 
                 var go = new GameObject($"Landside streetlight {i + 1}");
-                // Kit masts are scaled ~0.62 — keep the point light near the shorter head.
+                // Kit masts are scaled ~0.62f — keep the point light near the shorter head.
                 var lightHeight = kitPole || kitHead ? 2.55f : 4.1f;
                 go.transform.position = pos + new Vector3(0.35f, lightHeight, 0f);
                 var light = go.AddComponent<Light>();
@@ -20911,165 +20929,165 @@ namespace Airside.Presentation
             CreateBlock("Grass pad rim SEESES", new Vector3(121.4112f, -0.583f, -99.0169f), new Vector3(2.0323f, 0.5051f, 1.6635f), Shade(AirsideTheme.DryGrass, 0.47f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
             // Horizon rim — extends countryside past overview distance 132.
-            CreateBlock("Grass pad horizon N0WWN", new Vector3(-93.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0WWN", new Vector3(-93.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0WWS", new Vector3(-93.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0WWS", new Vector3(-93.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0WEN", new Vector3(-91.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0WEN", new Vector3(-91.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0WES", new Vector3(-91.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0WES", new Vector3(-91.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0EWN", new Vector3(-88.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0EWN", new Vector3(-88.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0EWS", new Vector3(-88.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0EWS", new Vector3(-88.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0EEN", new Vector3(-86.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0EEN", new Vector3(-86.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N0EES", new Vector3(-86.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N0EES", new Vector3(-86.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1WWN", new Vector3(-73.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1WWN", new Vector3(-73.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1WWS", new Vector3(-73.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1WWS", new Vector3(-73.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1WEN", new Vector3(-71.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1WEN", new Vector3(-71.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1WES", new Vector3(-71.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1WES", new Vector3(-71.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1EWN", new Vector3(-68.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1EWN", new Vector3(-68.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1EWS", new Vector3(-68.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1EWS", new Vector3(-68.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1EEN", new Vector3(-66.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1EEN", new Vector3(-66.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N1EES", new Vector3(-66.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N1EES", new Vector3(-66.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2WWN", new Vector3(-53.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2WWN", new Vector3(-53.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2WWS", new Vector3(-53.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2WWS", new Vector3(-53.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2WEN", new Vector3(-51.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2WEN", new Vector3(-51.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2WES", new Vector3(-51.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2WES", new Vector3(-51.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2EWN", new Vector3(-48.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2EWN", new Vector3(-48.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2EWS", new Vector3(-48.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2EWS", new Vector3(-48.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2EEN", new Vector3(-46.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2EEN", new Vector3(-46.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N2EES", new Vector3(-46.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N2EES", new Vector3(-46.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3WWN", new Vector3(-33.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3WWN", new Vector3(-33.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3WWS", new Vector3(-33.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3WWS", new Vector3(-33.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3WEN", new Vector3(-31.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3WEN", new Vector3(-31.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3WES", new Vector3(-31.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3WES", new Vector3(-31.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3EWN", new Vector3(-28.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3EWN", new Vector3(-28.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3EWS", new Vector3(-28.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3EWS", new Vector3(-28.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3EEN", new Vector3(-26.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3EEN", new Vector3(-26.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N3EES", new Vector3(-26.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N3EES", new Vector3(-26.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4WWN", new Vector3(-13.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4WWN", new Vector3(-13.77f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4WWS", new Vector3(-13.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4WWS", new Vector3(-13.73f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4WEN", new Vector3(-11.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4WEN", new Vector3(-11.245f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4WES", new Vector3(-11.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4WES", new Vector3(-11.205f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4EWN", new Vector3(-8.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4EWN", new Vector3(-8.7075f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4EWS", new Vector3(-8.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4EWS", new Vector3(-8.6675f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4EEN", new Vector3(-6.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4EEN", new Vector3(-6.3125f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N4EES", new Vector3(-6.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N4EES", new Vector3(-6.2725f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5WWN", new Vector3(6.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5WWN", new Vector3(6.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5WWS", new Vector3(6.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5WWS", new Vector3(6.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5WEN", new Vector3(8.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5WEN", new Vector3(8.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5WES", new Vector3(8.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5WES", new Vector3(8.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5EWN", new Vector3(11.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5EWN", new Vector3(11.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5EWS", new Vector3(11.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5EWS", new Vector3(11.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5EEN", new Vector3(13.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5EEN", new Vector3(13.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N5EES", new Vector3(13.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N5EES", new Vector3(13.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6WWN", new Vector3(26.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6WWN", new Vector3(26.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6WWS", new Vector3(26.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6WWS", new Vector3(26.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6WEN", new Vector3(28.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6WEN", new Vector3(28.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6WES", new Vector3(28.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6WES", new Vector3(28.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6EWN", new Vector3(31.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6EWN", new Vector3(31.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6EWS", new Vector3(31.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6EWS", new Vector3(31.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6EEN", new Vector3(33.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6EEN", new Vector3(33.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N6EES", new Vector3(33.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N6EES", new Vector3(33.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7WWN", new Vector3(46.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7WWN", new Vector3(46.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7WWS", new Vector3(46.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7WWS", new Vector3(46.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7WEN", new Vector3(48.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7WEN", new Vector3(48.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7WES", new Vector3(48.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7WES", new Vector3(48.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7EWN", new Vector3(51.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7EWN", new Vector3(51.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7EWS", new Vector3(51.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7EWS", new Vector3(51.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7EEN", new Vector3(53.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7EEN", new Vector3(53.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N7EES", new Vector3(53.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon N7EES", new Vector3(53.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8WWN", new Vector3(66.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8WWN", new Vector3(66.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8WWS", new Vector3(66.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8WWS", new Vector3(66.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8WEN", new Vector3(68.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8WEN", new Vector3(68.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8WES", new Vector3(68.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8WES", new Vector3(68.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8EWN", new Vector3(71.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8EWN", new Vector3(71.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8EWS", new Vector3(71.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8EWS", new Vector3(71.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8EEN", new Vector3(73.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8EEN", new Vector3(73.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N8EES", new Vector3(73.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon N8EES", new Vector3(73.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9WWN", new Vector3(86.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9WWN", new Vector3(86.23f, -0.522f, 121.05f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9WWS", new Vector3(86.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9WWS", new Vector3(86.27f, -0.52f, 122.95f), new Vector3(2.425f, 0.5568f, 1.92f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9WEN", new Vector3(88.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9WEN", new Vector3(88.755f, -0.5194f, 121.108f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9WES", new Vector3(88.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9WES", new Vector3(88.795f, -0.5174f, 122.932f), new Vector3(2.328f, 0.5401f, 1.8432f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9EWN", new Vector3(91.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9EWN", new Vector3(91.2925f, -0.52f, 121.1275f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9EWS", new Vector3(91.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9EWS", new Vector3(91.3325f, -0.518f, 122.9325f), new Vector3(2.3037f, 0.5338f, 1.824f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9EEN", new Vector3(93.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9EEN", new Vector3(93.6875f, -0.5174f, 121.1786f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon N9EES", new Vector3(93.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32),
+            CreateBlock("Grass pad horizon N9EES", new Vector3(93.7275f, -0.5154f, 122.9114f), new Vector3(2.2116f, 0.5177f, 1.751f), Shade(AirsideTheme.Eucalyptus, 0.32f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
             CreateBlock("Grass pad horizon outer N0WWaWN", new Vector3(-97.8387f, -0.504f, 132.7889f), new Vector3(2.0952f, 0.5069f, 1.3968f), Shade(AirsideTheme.Eucalyptus, 0.28f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3.5f, 1.2f));
@@ -21711,165 +21729,165 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3.5f, 1.2f));
             CreateBlock("Grass pad horizon outer N9EEbES", new Vector3(97.7256f, -0.506f, 131.2691f), new Vector3(1.8537f, 0.4626f, 1.2358f), Shade(AirsideTheme.Eucalyptus, 0.28f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3.5f, 1.2f));
-            CreateBlock("Grass pad horizon S0WWN", new Vector3(-93.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0WWN", new Vector3(-93.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0WWS", new Vector3(-93.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0WWS", new Vector3(-93.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0WEN", new Vector3(-91.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0WEN", new Vector3(-91.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0WES", new Vector3(-91.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0WES", new Vector3(-91.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0EWN", new Vector3(-88.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0EWN", new Vector3(-88.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0EWS", new Vector3(-88.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0EWS", new Vector3(-88.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0EEN", new Vector3(-86.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0EEN", new Vector3(-86.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S0EES", new Vector3(-86.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S0EES", new Vector3(-86.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1WWN", new Vector3(-73.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1WWN", new Vector3(-73.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1WWS", new Vector3(-73.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1WWS", new Vector3(-73.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1WEN", new Vector3(-71.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1WEN", new Vector3(-71.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1WES", new Vector3(-71.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1WES", new Vector3(-71.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1EWN", new Vector3(-68.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1EWN", new Vector3(-68.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1EWS", new Vector3(-68.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1EWS", new Vector3(-68.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1EEN", new Vector3(-66.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1EEN", new Vector3(-66.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S1EES", new Vector3(-66.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S1EES", new Vector3(-66.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2WWN", new Vector3(-53.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2WWN", new Vector3(-53.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2WWS", new Vector3(-53.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2WWS", new Vector3(-53.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2WEN", new Vector3(-51.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2WEN", new Vector3(-51.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2WES", new Vector3(-51.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2WES", new Vector3(-51.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2EWN", new Vector3(-48.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2EWN", new Vector3(-48.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2EWS", new Vector3(-48.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2EWS", new Vector3(-48.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2EEN", new Vector3(-46.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2EEN", new Vector3(-46.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S2EES", new Vector3(-46.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S2EES", new Vector3(-46.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3WWN", new Vector3(-33.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3WWN", new Vector3(-33.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3WWS", new Vector3(-33.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3WWS", new Vector3(-33.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3WEN", new Vector3(-31.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3WEN", new Vector3(-31.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3WES", new Vector3(-31.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3WES", new Vector3(-31.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3EWN", new Vector3(-28.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3EWN", new Vector3(-28.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3EWS", new Vector3(-28.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3EWS", new Vector3(-28.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3EEN", new Vector3(-26.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3EEN", new Vector3(-26.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S3EES", new Vector3(-26.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S3EES", new Vector3(-26.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4WWN", new Vector3(-13.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4WWN", new Vector3(-13.77f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4WWS", new Vector3(-13.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4WWS", new Vector3(-13.73f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4WEN", new Vector3(-11.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4WEN", new Vector3(-11.245f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4WES", new Vector3(-11.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4WES", new Vector3(-11.205f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4EWN", new Vector3(-8.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4EWN", new Vector3(-8.7075f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4EWS", new Vector3(-8.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4EWS", new Vector3(-8.6675f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4EEN", new Vector3(-6.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4EEN", new Vector3(-6.3125f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S4EES", new Vector3(-6.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S4EES", new Vector3(-6.2725f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5WWN", new Vector3(6.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5WWN", new Vector3(6.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5WWS", new Vector3(6.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5WWS", new Vector3(6.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5WEN", new Vector3(8.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5WEN", new Vector3(8.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5WES", new Vector3(8.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5WES", new Vector3(8.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5EWN", new Vector3(11.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5EWN", new Vector3(11.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5EWS", new Vector3(11.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5EWS", new Vector3(11.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5EEN", new Vector3(13.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5EEN", new Vector3(13.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S5EES", new Vector3(13.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S5EES", new Vector3(13.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6WWN", new Vector3(26.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6WWN", new Vector3(26.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6WWS", new Vector3(26.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6WWS", new Vector3(26.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6WEN", new Vector3(28.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6WEN", new Vector3(28.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6WES", new Vector3(28.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6WES", new Vector3(28.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6EWN", new Vector3(31.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6EWN", new Vector3(31.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6EWS", new Vector3(31.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6EWS", new Vector3(31.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6EEN", new Vector3(33.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6EEN", new Vector3(33.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S6EES", new Vector3(33.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S6EES", new Vector3(33.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7WWN", new Vector3(46.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7WWN", new Vector3(46.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7WWS", new Vector3(46.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7WWS", new Vector3(46.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7WEN", new Vector3(48.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7WEN", new Vector3(48.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7WES", new Vector3(48.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7WES", new Vector3(48.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7EWN", new Vector3(51.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7EWN", new Vector3(51.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7EWS", new Vector3(51.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7EWS", new Vector3(51.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7EEN", new Vector3(53.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7EEN", new Vector3(53.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S7EES", new Vector3(53.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003),
+            CreateBlock("Grass pad horizon S7EES", new Vector3(53.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.47000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8WWN", new Vector3(66.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8WWN", new Vector3(66.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8WWS", new Vector3(66.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8WWS", new Vector3(66.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8WEN", new Vector3(68.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8WEN", new Vector3(68.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8WES", new Vector3(68.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8WES", new Vector3(68.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8EWN", new Vector3(71.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8EWN", new Vector3(71.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8EWS", new Vector3(71.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8EWS", new Vector3(71.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8EEN", new Vector3(73.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8EEN", new Vector3(73.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S8EES", new Vector3(73.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004),
+            CreateBlock("Grass pad horizon S8EES", new Vector3(73.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.48000000000000004f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9WWN", new Vector3(86.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9WWN", new Vector3(86.23f, -0.582f, -118.95f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9WWS", new Vector3(86.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9WWS", new Vector3(86.27f, -0.58f, -117.05f), new Vector3(2.425f, 0.528f, 1.92f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9WEN", new Vector3(88.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9WEN", new Vector3(88.755f, -0.5791f, -118.892f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9WES", new Vector3(88.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9WES", new Vector3(88.795f, -0.5771f, -117.068f), new Vector3(2.328f, 0.5122f, 1.8432f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9EWN", new Vector3(91.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9EWN", new Vector3(91.2925f, -0.58f, -118.9325f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9EWS", new Vector3(91.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9EWS", new Vector3(91.3325f, -0.578f, -117.1275f), new Vector3(2.3037f, 0.5069f, 1.824f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9EEN", new Vector3(93.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9EEN", new Vector3(93.6875f, -0.5771f, -118.8814f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
-            CreateBlock("Grass pad horizon S9EES", new Vector3(93.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46),
+            CreateBlock("Grass pad horizon S9EES", new Vector3(93.7275f, -0.5751f, -117.1486f), new Vector3(2.2116f, 0.4917f, 1.751f), Shade(AirsideTheme.DryGrass, 0.46f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.1f, 1.0f));
             CreateBlock("Grass pad horizon outer S0WWaWN", new Vector3(-97.8387f, -0.564f, -127.2111f), new Vector3(2.0952f, 0.4792f, 1.3968f), Shade(AirsideTheme.DryGrass, 0.30f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(3.5f, 1.2f));
@@ -24306,1365 +24324,1365 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.2f));
             // Outer+ far rim for overview 155 — fills ground past the 145 rim.
             CreateBlock("Grass pad far rim outer N0Wa", new Vector3(-153.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N0Wb", new Vector3(-151.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N0Ea", new Vector3(-148.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N0Eb", new Vector3(-146.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N1Wa", new Vector3(-143.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N1Wb", new Vector3(-141.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N1Ea", new Vector3(-138.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N1Eb", new Vector3(-136.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N2Wa", new Vector3(-133.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N2Wb", new Vector3(-131.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N2Ea", new Vector3(-128.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N2Eb", new Vector3(-126.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N3Wa", new Vector3(-123.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N3Wb", new Vector3(-121.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N3Ea", new Vector3(-118.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N3Eb", new Vector3(-116.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N4Wa", new Vector3(-113.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N4Wb", new Vector3(-111.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N4Ea", new Vector3(-108.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N4Eb", new Vector3(-106.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N5Wa", new Vector3(-103.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N5Wb", new Vector3(-101.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N5Ea", new Vector3(-98.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N5Eb", new Vector3(-96.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N6Wa", new Vector3(-93.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N6Wb", new Vector3(-91.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N6Ea", new Vector3(-88.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N6Eb", new Vector3(-86.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N7Wa", new Vector3(-83.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N7Wb", new Vector3(-81.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N7Ea", new Vector3(-78.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N7Eb", new Vector3(-76.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N8Wa", new Vector3(-73.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N8Wb", new Vector3(-71.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N8Ea", new Vector3(-68.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N8Eb", new Vector3(-66.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N9Wa", new Vector3(-63.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N9Wb", new Vector3(-61.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N9Ea", new Vector3(-58.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N9Eb", new Vector3(-56.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N10Wa", new Vector3(-53.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N10Wb", new Vector3(-51.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N10Ea", new Vector3(-48.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N10Eb", new Vector3(-46.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N11Wa", new Vector3(-43.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N11Wb", new Vector3(-41.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N11Ea", new Vector3(-38.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N11Eb", new Vector3(-36.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N12Wa", new Vector3(-33.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N12Wb", new Vector3(-31.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N12Ea", new Vector3(-28.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N12Eb", new Vector3(-26.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N13Wa", new Vector3(-23.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N13Wb", new Vector3(-21.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N13Ea", new Vector3(-18.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N13Eb", new Vector3(-16.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N14Wa", new Vector3(-13.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N14Wb", new Vector3(-11.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N14Ea", new Vector3(-8.645f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N14Eb", new Vector3(-6.555f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N15Wa", new Vector3(-3.4925f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N15Wb", new Vector3(-1.3075f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N15Ea", new Vector3(1.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N15Eb", new Vector3(3.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N16Wa", new Vector3(6.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N16Wb", new Vector3(8.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N16Ea", new Vector3(11.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N16Eb", new Vector3(13.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N17Wa", new Vector3(16.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N17Wb", new Vector3(18.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N17Ea", new Vector3(21.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N17Eb", new Vector3(23.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N18Wa", new Vector3(26.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N18Wb", new Vector3(28.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N18Ea", new Vector3(31.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N18Eb", new Vector3(33.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N19Wa", new Vector3(36.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N19Wb", new Vector3(38.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N19Ea", new Vector3(41.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N19Eb", new Vector3(43.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N20Wa", new Vector3(46.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N20Wb", new Vector3(48.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N20Ea", new Vector3(51.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N20Eb", new Vector3(53.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N21Wa", new Vector3(56.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N21Wb", new Vector3(58.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N21Ea", new Vector3(61.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N21Eb", new Vector3(63.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N22Wa", new Vector3(66.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N22Wb", new Vector3(68.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N22Ea", new Vector3(71.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N22Eb", new Vector3(73.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N23Wa", new Vector3(76.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N23Wb", new Vector3(78.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N23Ea", new Vector3(81.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N23Eb", new Vector3(83.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N24Wa", new Vector3(86.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N24Wb", new Vector3(88.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N24Ea", new Vector3(91.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N24Eb", new Vector3(93.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N25Wa", new Vector3(96.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N25Wb", new Vector3(98.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N25Ea", new Vector3(101.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N25Eb", new Vector3(103.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N26Wa", new Vector3(106.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N26Wb", new Vector3(108.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N26Ea", new Vector3(111.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N26Eb", new Vector3(113.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N27Wa", new Vector3(116.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N27Wb", new Vector3(118.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N27Ea", new Vector3(121.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N27Eb", new Vector3(123.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N28Wa", new Vector3(126.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N28Wb", new Vector3(128.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N28Ea", new Vector3(131.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N28Eb", new Vector3(133.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N29Wa", new Vector3(136.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N29Wb", new Vector3(138.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N29Ea", new Vector3(141.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N29Eb", new Vector3(143.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N30Wa", new Vector3(146.5075f, -0.522f, 151.18f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N30Wb", new Vector3(148.6925f, -0.52f, 151.22f), new Vector3(2.208f, 0.4032f, 2.716f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N30Ea", new Vector3(151.355f, -0.52f, 152.78f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer N30Eb", new Vector3(153.445f, -0.518f, 152.82f), new Vector3(2.112f, 0.384f, 2.522f), Shade(AirsideTheme.Eucalyptus, 0.220f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S0Wa", new Vector3(-153.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S0Wb", new Vector3(-151.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S0Ea", new Vector3(-148.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S0Eb", new Vector3(-146.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S1Wa", new Vector3(-143.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S1Wb", new Vector3(-141.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S1Ea", new Vector3(-138.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S1Eb", new Vector3(-136.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S2Wa", new Vector3(-133.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S2Wb", new Vector3(-131.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S2Ea", new Vector3(-128.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S2Eb", new Vector3(-126.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S3Wa", new Vector3(-123.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S3Wb", new Vector3(-121.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S3Ea", new Vector3(-118.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S3Eb", new Vector3(-116.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S4Wa", new Vector3(-113.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S4Wb", new Vector3(-111.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S4Ea", new Vector3(-108.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S4Eb", new Vector3(-106.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S5Wa", new Vector3(-103.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S5Wb", new Vector3(-101.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S5Ea", new Vector3(-98.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S5Eb", new Vector3(-96.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S6Wa", new Vector3(-93.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S6Wb", new Vector3(-91.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S6Ea", new Vector3(-88.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S6Eb", new Vector3(-86.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S7Wa", new Vector3(-83.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S7Wb", new Vector3(-81.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S7Ea", new Vector3(-78.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S7Eb", new Vector3(-76.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S8Wa", new Vector3(-73.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S8Wb", new Vector3(-71.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S8Ea", new Vector3(-68.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S8Eb", new Vector3(-66.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S9Wa", new Vector3(-63.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S9Wb", new Vector3(-61.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S9Ea", new Vector3(-58.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S9Eb", new Vector3(-56.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S10Wa", new Vector3(-53.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S10Wb", new Vector3(-51.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S10Ea", new Vector3(-48.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S10Eb", new Vector3(-46.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S11Wa", new Vector3(-43.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S11Wb", new Vector3(-41.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S11Ea", new Vector3(-38.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S11Eb", new Vector3(-36.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S12Wa", new Vector3(-33.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S12Wb", new Vector3(-31.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S12Ea", new Vector3(-28.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S12Eb", new Vector3(-26.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S13Wa", new Vector3(-23.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S13Wb", new Vector3(-21.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S13Ea", new Vector3(-18.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S13Eb", new Vector3(-16.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S14Wa", new Vector3(-13.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S14Wb", new Vector3(-11.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S14Ea", new Vector3(-8.645f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S14Eb", new Vector3(-6.555f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S15Wa", new Vector3(-3.4925f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S15Wb", new Vector3(-1.3075f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S15Ea", new Vector3(1.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S15Eb", new Vector3(3.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S16Wa", new Vector3(6.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S16Wb", new Vector3(8.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S16Ea", new Vector3(11.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S16Eb", new Vector3(13.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S17Wa", new Vector3(16.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S17Wb", new Vector3(18.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S17Ea", new Vector3(21.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S17Eb", new Vector3(23.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S18Wa", new Vector3(26.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S18Wb", new Vector3(28.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S18Ea", new Vector3(31.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S18Eb", new Vector3(33.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S19Wa", new Vector3(36.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S19Wb", new Vector3(38.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S19Ea", new Vector3(41.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S19Eb", new Vector3(43.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S20Wa", new Vector3(46.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S20Wb", new Vector3(48.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S20Ea", new Vector3(51.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S20Eb", new Vector3(53.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S21Wa", new Vector3(56.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S21Wb", new Vector3(58.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S21Ea", new Vector3(61.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S21Eb", new Vector3(63.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S22Wa", new Vector3(66.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S22Wb", new Vector3(68.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S22Ea", new Vector3(71.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S22Eb", new Vector3(73.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S23Wa", new Vector3(76.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S23Wb", new Vector3(78.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S23Ea", new Vector3(81.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S23Eb", new Vector3(83.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S24Wa", new Vector3(86.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S24Wb", new Vector3(88.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S24Ea", new Vector3(91.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S24Eb", new Vector3(93.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S25Wa", new Vector3(96.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S25Wb", new Vector3(98.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S25Ea", new Vector3(101.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S25Eb", new Vector3(103.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S26Wa", new Vector3(106.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S26Wb", new Vector3(108.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S26Ea", new Vector3(111.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S26Eb", new Vector3(113.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S27Wa", new Vector3(116.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S27Wb", new Vector3(118.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S27Ea", new Vector3(121.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S27Eb", new Vector3(123.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S28Wa", new Vector3(126.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S28Wb", new Vector3(128.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S28Ea", new Vector3(131.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S28Eb", new Vector3(133.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.400f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S29Wa", new Vector3(136.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S29Wb", new Vector3(138.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S29Ea", new Vector3(141.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S29Eb", new Vector3(143.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.420f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S30Wa", new Vector3(146.5075f, -0.562f, -152.82f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S30Wb", new Vector3(148.6925f, -0.56f, -152.78f), new Vector3(2.208f, 0.384f, 2.716f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S30Ea", new Vector3(151.355f, -0.56f, -151.22f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer S30Eb", new Vector3(153.445f, -0.558f, -151.18f), new Vector3(2.112f, 0.3648f, 2.522f), Shade(AirsideTheme.DryGrass, 0.380f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4, 1.6f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.4f, 1.6f));
             CreateBlock("Grass pad far rim outer W0Na", new Vector3(-152.82f, -0.532f, -143.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W0Nb", new Vector3(-152.78f, -0.53f, -141.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W0Sa", new Vector3(-151.22f, -0.53f, -138.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W0Sb", new Vector3(-151.18f, -0.528f, -136.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W1Na", new Vector3(-152.82f, -0.532f, -133.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W1Nb", new Vector3(-152.78f, -0.53f, -131.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W1Sa", new Vector3(-151.22f, -0.53f, -128.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W1Sb", new Vector3(-151.18f, -0.528f, -126.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W2Na", new Vector3(-152.82f, -0.532f, -123.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W2Nb", new Vector3(-152.78f, -0.53f, -121.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W2Sa", new Vector3(-151.22f, -0.53f, -118.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W2Sb", new Vector3(-151.18f, -0.528f, -116.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W3Na", new Vector3(-152.82f, -0.532f, -113.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W3Nb", new Vector3(-152.78f, -0.53f, -111.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W3Sa", new Vector3(-151.22f, -0.53f, -108.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W3Sb", new Vector3(-151.18f, -0.528f, -106.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W4Na", new Vector3(-152.82f, -0.532f, -103.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W4Nb", new Vector3(-152.78f, -0.53f, -101.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W4Sa", new Vector3(-151.22f, -0.53f, -98.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W4Sb", new Vector3(-151.18f, -0.528f, -96.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W5Na", new Vector3(-152.82f, -0.532f, -93.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W5Nb", new Vector3(-152.78f, -0.53f, -91.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W5Sa", new Vector3(-151.22f, -0.53f, -88.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W5Sb", new Vector3(-151.18f, -0.528f, -86.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W6Na", new Vector3(-152.82f, -0.532f, -83.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W6Nb", new Vector3(-152.78f, -0.53f, -81.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W6Sa", new Vector3(-151.22f, -0.53f, -78.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W6Sb", new Vector3(-151.18f, -0.528f, -76.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W7Na", new Vector3(-152.82f, -0.532f, -73.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W7Nb", new Vector3(-152.78f, -0.53f, -71.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W7Sa", new Vector3(-151.22f, -0.53f, -68.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W7Sb", new Vector3(-151.18f, -0.528f, -66.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W8Na", new Vector3(-152.82f, -0.532f, -63.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W8Nb", new Vector3(-152.78f, -0.53f, -61.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W8Sa", new Vector3(-151.22f, -0.53f, -58.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W8Sb", new Vector3(-151.18f, -0.528f, -56.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W9Na", new Vector3(-152.82f, -0.532f, -53.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W9Nb", new Vector3(-152.78f, -0.53f, -51.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W9Sa", new Vector3(-151.22f, -0.53f, -48.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W9Sb", new Vector3(-151.18f, -0.528f, -46.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W10Na", new Vector3(-152.82f, -0.532f, -43.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W10Nb", new Vector3(-152.78f, -0.53f, -41.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W10Sa", new Vector3(-151.22f, -0.53f, -38.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W10Sb", new Vector3(-151.18f, -0.528f, -36.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W11Na", new Vector3(-152.82f, -0.532f, -33.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W11Nb", new Vector3(-152.78f, -0.53f, -31.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W11Sa", new Vector3(-151.22f, -0.53f, -28.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W11Sb", new Vector3(-151.18f, -0.528f, -26.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W12Na", new Vector3(-152.82f, -0.532f, -23.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W12Nb", new Vector3(-152.78f, -0.53f, -21.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W12Sa", new Vector3(-151.22f, -0.53f, -18.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W12Sb", new Vector3(-151.18f, -0.528f, -16.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W13Na", new Vector3(-152.82f, -0.532f, -13.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W13Nb", new Vector3(-152.78f, -0.53f, -11.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W13Sa", new Vector3(-151.22f, -0.53f, -8.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W13Sb", new Vector3(-151.18f, -0.528f, -6.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W14Na", new Vector3(-152.82f, -0.532f, -3.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W14Nb", new Vector3(-152.78f, -0.53f, -1.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W14Sa", new Vector3(-151.22f, -0.53f, 1.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W14Sb", new Vector3(-151.18f, -0.528f, 3.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W15Na", new Vector3(-152.82f, -0.532f, 6.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W15Nb", new Vector3(-152.78f, -0.53f, 8.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W15Sa", new Vector3(-151.22f, -0.53f, 11.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W15Sb", new Vector3(-151.18f, -0.528f, 13.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W16Na", new Vector3(-152.82f, -0.532f, 16.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W16Nb", new Vector3(-152.78f, -0.53f, 18.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W16Sa", new Vector3(-151.22f, -0.53f, 21.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W16Sb", new Vector3(-151.18f, -0.528f, 23.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W17Na", new Vector3(-152.82f, -0.532f, 26.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W17Nb", new Vector3(-152.78f, -0.53f, 28.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W17Sa", new Vector3(-151.22f, -0.53f, 31.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W17Sb", new Vector3(-151.18f, -0.528f, 33.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W18Na", new Vector3(-152.82f, -0.532f, 36.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W18Nb", new Vector3(-152.78f, -0.53f, 38.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W18Sa", new Vector3(-151.22f, -0.53f, 41.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W18Sb", new Vector3(-151.18f, -0.528f, 43.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W19Na", new Vector3(-152.82f, -0.532f, 46.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W19Nb", new Vector3(-152.78f, -0.53f, 48.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W19Sa", new Vector3(-151.22f, -0.53f, 51.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W19Sb", new Vector3(-151.18f, -0.528f, 53.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W20Na", new Vector3(-152.82f, -0.532f, 56.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W20Nb", new Vector3(-152.78f, -0.53f, 58.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W20Sa", new Vector3(-151.22f, -0.53f, 61.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W20Sb", new Vector3(-151.18f, -0.528f, 63.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W21Na", new Vector3(-152.82f, -0.532f, 66.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W21Nb", new Vector3(-152.78f, -0.53f, 68.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W21Sa", new Vector3(-151.22f, -0.53f, 71.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W21Sb", new Vector3(-151.18f, -0.528f, 73.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W22Na", new Vector3(-152.82f, -0.532f, 76.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W22Nb", new Vector3(-152.78f, -0.53f, 78.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W22Sa", new Vector3(-151.22f, -0.53f, 81.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W22Sb", new Vector3(-151.18f, -0.528f, 83.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W23Na", new Vector3(-152.82f, -0.532f, 86.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W23Nb", new Vector3(-152.78f, -0.53f, 88.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W23Sa", new Vector3(-151.22f, -0.53f, 91.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W23Sb", new Vector3(-151.18f, -0.528f, 93.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W24Na", new Vector3(-152.82f, -0.532f, 96.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W24Nb", new Vector3(-152.78f, -0.53f, 98.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W24Sa", new Vector3(-151.22f, -0.53f, 101.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W24Sb", new Vector3(-151.18f, -0.528f, 103.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W25Na", new Vector3(-152.82f, -0.532f, 106.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W25Nb", new Vector3(-152.78f, -0.53f, 108.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W25Sa", new Vector3(-151.22f, -0.53f, 111.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W25Sb", new Vector3(-151.18f, -0.528f, 113.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W26Na", new Vector3(-152.82f, -0.532f, 116.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W26Nb", new Vector3(-152.78f, -0.53f, 118.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W26Sa", new Vector3(-151.22f, -0.53f, 121.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W26Sb", new Vector3(-151.18f, -0.528f, 123.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.240f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W27Na", new Vector3(-152.82f, -0.532f, 126.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W27Nb", new Vector3(-152.78f, -0.53f, 128.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W27Sa", new Vector3(-151.22f, -0.53f, 131.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W27Sb", new Vector3(-151.18f, -0.528f, 133.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.260f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W28Na", new Vector3(-152.82f, -0.532f, 136.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W28Nb", new Vector3(-152.78f, -0.53f, 138.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W28Sa", new Vector3(-151.22f, -0.53f, 141.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer W28Sb", new Vector3(-151.18f, -0.528f, 143.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.Eucalyptus, 0.280f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E0Na", new Vector3(151.18f, -0.522f, -143.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E0Nb", new Vector3(151.22f, -0.52f, -141.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E0Sa", new Vector3(152.78f, -0.52f, -138.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E0Sb", new Vector3(152.82f, -0.518f, -136.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E1Na", new Vector3(151.18f, -0.522f, -133.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E1Nb", new Vector3(151.22f, -0.52f, -131.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E1Sa", new Vector3(152.78f, -0.52f, -128.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E1Sb", new Vector3(152.82f, -0.518f, -126.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E2Na", new Vector3(151.18f, -0.522f, -123.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E2Nb", new Vector3(151.22f, -0.52f, -121.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E2Sa", new Vector3(152.78f, -0.52f, -118.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E2Sb", new Vector3(152.82f, -0.518f, -116.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E3Na", new Vector3(151.18f, -0.522f, -113.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E3Nb", new Vector3(151.22f, -0.52f, -111.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E3Sa", new Vector3(152.78f, -0.52f, -108.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E3Sb", new Vector3(152.82f, -0.518f, -106.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E4Na", new Vector3(151.18f, -0.522f, -103.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E4Nb", new Vector3(151.22f, -0.52f, -101.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E4Sa", new Vector3(152.78f, -0.52f, -98.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E4Sb", new Vector3(152.82f, -0.518f, -96.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E5Na", new Vector3(151.18f, -0.522f, -93.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E5Nb", new Vector3(151.22f, -0.52f, -91.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E5Sa", new Vector3(152.78f, -0.52f, -88.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E5Sb", new Vector3(152.82f, -0.518f, -86.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E6Na", new Vector3(151.18f, -0.522f, -83.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E6Nb", new Vector3(151.22f, -0.52f, -81.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E6Sa", new Vector3(152.78f, -0.52f, -78.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E6Sb", new Vector3(152.82f, -0.518f, -76.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E7Na", new Vector3(151.18f, -0.522f, -73.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E7Nb", new Vector3(151.22f, -0.52f, -71.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E7Sa", new Vector3(152.78f, -0.52f, -68.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E7Sb", new Vector3(152.82f, -0.518f, -66.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E8Na", new Vector3(151.18f, -0.522f, -63.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E8Nb", new Vector3(151.22f, -0.52f, -61.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E8Sa", new Vector3(152.78f, -0.52f, -58.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E8Sb", new Vector3(152.82f, -0.518f, -56.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E9Na", new Vector3(151.18f, -0.522f, -53.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E9Nb", new Vector3(151.22f, -0.52f, -51.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E9Sa", new Vector3(152.78f, -0.52f, -48.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E9Sb", new Vector3(152.82f, -0.518f, -46.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E10Na", new Vector3(151.18f, -0.522f, -43.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E10Nb", new Vector3(151.22f, -0.52f, -41.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E10Sa", new Vector3(152.78f, -0.52f, -38.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E10Sb", new Vector3(152.82f, -0.518f, -36.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E11Na", new Vector3(151.18f, -0.522f, -33.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E11Nb", new Vector3(151.22f, -0.52f, -31.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E11Sa", new Vector3(152.78f, -0.52f, -28.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E11Sb", new Vector3(152.82f, -0.518f, -26.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E12Na", new Vector3(151.18f, -0.522f, -23.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E12Nb", new Vector3(151.22f, -0.52f, -21.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E12Sa", new Vector3(152.78f, -0.52f, -18.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E12Sb", new Vector3(152.82f, -0.518f, -16.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E13Na", new Vector3(151.18f, -0.522f, -13.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E13Nb", new Vector3(151.22f, -0.52f, -11.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E13Sa", new Vector3(152.78f, -0.52f, -8.7975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E13Sb", new Vector3(152.82f, -0.518f, -6.8025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E14Na", new Vector3(151.18f, -0.522f, -3.245f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E14Nb", new Vector3(151.22f, -0.52f, -1.155f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E14Sa", new Vector3(152.78f, -0.52f, 1.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E14Sb", new Vector3(152.82f, -0.518f, 3.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E15Na", new Vector3(151.18f, -0.522f, 6.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E15Nb", new Vector3(151.22f, -0.52f, 8.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E15Sa", new Vector3(152.78f, -0.52f, 11.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E15Sb", new Vector3(152.82f, -0.518f, 13.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E16Na", new Vector3(151.18f, -0.522f, 16.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E16Nb", new Vector3(151.22f, -0.52f, 18.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E16Sa", new Vector3(152.78f, -0.52f, 21.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E16Sb", new Vector3(152.82f, -0.518f, 23.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E17Na", new Vector3(151.18f, -0.522f, 26.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E17Nb", new Vector3(151.22f, -0.52f, 28.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E17Sa", new Vector3(152.78f, -0.52f, 31.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E17Sb", new Vector3(152.82f, -0.518f, 33.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E18Na", new Vector3(151.18f, -0.522f, 36.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E18Nb", new Vector3(151.22f, -0.52f, 38.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E18Sa", new Vector3(152.78f, -0.52f, 41.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E18Sb", new Vector3(152.82f, -0.518f, 43.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E19Na", new Vector3(151.18f, -0.522f, 46.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E19Nb", new Vector3(151.22f, -0.52f, 48.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E19Sa", new Vector3(152.78f, -0.52f, 51.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E19Sb", new Vector3(152.82f, -0.518f, 53.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E20Na", new Vector3(151.18f, -0.522f, 56.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E20Nb", new Vector3(151.22f, -0.52f, 58.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E20Sa", new Vector3(152.78f, -0.52f, 61.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E20Sb", new Vector3(152.82f, -0.518f, 63.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E21Na", new Vector3(151.18f, -0.522f, 66.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E21Nb", new Vector3(151.22f, -0.52f, 68.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E21Sa", new Vector3(152.78f, -0.52f, 71.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E21Sb", new Vector3(152.82f, -0.518f, 73.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E22Na", new Vector3(151.18f, -0.522f, 76.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E22Nb", new Vector3(151.22f, -0.52f, 78.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E22Sa", new Vector3(152.78f, -0.52f, 81.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E22Sb", new Vector3(152.82f, -0.518f, 83.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E23Na", new Vector3(151.18f, -0.522f, 86.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E23Nb", new Vector3(151.22f, -0.52f, 88.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E23Sa", new Vector3(152.78f, -0.52f, 91.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E23Sb", new Vector3(152.82f, -0.518f, 93.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E24Na", new Vector3(151.18f, -0.522f, 96.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E24Nb", new Vector3(151.22f, -0.52f, 98.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E24Sa", new Vector3(152.78f, -0.52f, 101.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E24Sb", new Vector3(152.82f, -0.518f, 103.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E25Na", new Vector3(151.18f, -0.522f, 106.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E25Nb", new Vector3(151.22f, -0.52f, 108.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E25Sa", new Vector3(152.78f, -0.52f, 111.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E25Sb", new Vector3(152.82f, -0.518f, 113.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E26Na", new Vector3(151.18f, -0.522f, 116.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E26Nb", new Vector3(151.22f, -0.52f, 118.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E26Sa", new Vector3(152.78f, -0.52f, 121.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E26Sb", new Vector3(152.82f, -0.518f, 123.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.300f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E27Na", new Vector3(151.18f, -0.522f, 126.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E27Nb", new Vector3(151.22f, -0.52f, 128.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E27Sa", new Vector3(152.78f, -0.52f, 131.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E27Sb", new Vector3(152.82f, -0.518f, 133.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.320f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E28Na", new Vector3(151.18f, -0.522f, 136.755f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E28Nb", new Vector3(151.22f, -0.52f, 138.845f), new Vector3(2.716f, 0.3936f, 2.112f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E28Sa", new Vector3(152.78f, -0.52f, 141.2025f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
             CreateBlock("Grass pad far rim outer E28Sb", new Vector3(152.82f, -0.518f, 143.1975f), new Vector3(2.522f, 0.3744f, 2.016f), Shade(AirsideTheme.DryGrass, 0.340f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6, 1.4f));
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.6f, 1.4f));
 
-            CreateBlock("Grass pad horizon E0NNWN", new Vector3(130.9113f, -0.534f, -76.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NNWN", new Vector3(130.9113f, -0.534f, -76.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NNWS", new Vector3(130.9513f, -0.532f, -75.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NNWS", new Vector3(130.9513f, -0.532f, -75.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NNEN", new Vector3(133.0487f, -0.532f, -76.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NNEN", new Vector3(133.0487f, -0.532f, -76.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NNES", new Vector3(133.0887f, -0.53f, -75.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NNES", new Vector3(133.0887f, -0.53f, -75.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NSWN", new Vector3(130.984f, -0.5287f, -79.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NSWN", new Vector3(130.984f, -0.5287f, -79.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NSWS", new Vector3(131.024f, -0.5267f, -78.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NSWS", new Vector3(131.024f, -0.5267f, -78.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NSEN", new Vector3(133.036f, -0.5267f, -79.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NSEN", new Vector3(133.036f, -0.5267f, -79.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0NSES", new Vector3(133.076f, -0.5247f, -78.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0NSES", new Vector3(133.076f, -0.5247f, -78.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0SNW", new Vector3(131.0147f, -0.53f, -81.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0SNW", new Vector3(131.0147f, -0.53f, -81.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0SNE", new Vector3(133.0453f, -0.528f, -81.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0SNE", new Vector3(133.0453f, -0.528f, -81.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0SSW", new Vector3(131.0753f, -0.5274f, -83.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0SSW", new Vector3(131.0753f, -0.5274f, -83.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E0SSE", new Vector3(133.0247f, -0.5254f, -83.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E0SSE", new Vector3(133.0247f, -0.5254f, -83.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NNWN", new Vector3(130.9113f, -0.534f, -46.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NNWN", new Vector3(130.9113f, -0.534f, -46.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NNWS", new Vector3(130.9513f, -0.532f, -45.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NNWS", new Vector3(130.9513f, -0.532f, -45.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NNEN", new Vector3(133.0487f, -0.532f, -46.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NNEN", new Vector3(133.0487f, -0.532f, -46.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NNES", new Vector3(133.0887f, -0.53f, -45.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NNES", new Vector3(133.0887f, -0.53f, -45.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NSWN", new Vector3(130.984f, -0.5287f, -49.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NSWN", new Vector3(130.984f, -0.5287f, -49.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NSWS", new Vector3(131.024f, -0.5267f, -48.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NSWS", new Vector3(131.024f, -0.5267f, -48.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NSEN", new Vector3(133.036f, -0.5267f, -49.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NSEN", new Vector3(133.036f, -0.5267f, -49.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1NSES", new Vector3(133.076f, -0.5247f, -48.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1NSES", new Vector3(133.076f, -0.5247f, -48.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1SNW", new Vector3(131.0147f, -0.53f, -51.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1SNW", new Vector3(131.0147f, -0.53f, -51.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1SNE", new Vector3(133.0453f, -0.528f, -51.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1SNE", new Vector3(133.0453f, -0.528f, -51.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1SSW", new Vector3(131.0753f, -0.5274f, -53.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1SSW", new Vector3(131.0753f, -0.5274f, -53.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E1SSE", new Vector3(133.0247f, -0.5254f, -53.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E1SSE", new Vector3(133.0247f, -0.5254f, -53.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NNWN", new Vector3(130.9113f, -0.534f, -16.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NNWN", new Vector3(130.9113f, -0.534f, -16.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NNWS", new Vector3(130.9513f, -0.532f, -15.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NNWS", new Vector3(130.9513f, -0.532f, -15.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NNEN", new Vector3(133.0487f, -0.532f, -16.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NNEN", new Vector3(133.0487f, -0.532f, -16.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NNES", new Vector3(133.0887f, -0.53f, -15.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NNES", new Vector3(133.0887f, -0.53f, -15.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NSWN", new Vector3(130.984f, -0.5287f, -19.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NSWN", new Vector3(130.984f, -0.5287f, -19.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NSWS", new Vector3(131.024f, -0.5267f, -18.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NSWS", new Vector3(131.024f, -0.5267f, -18.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NSEN", new Vector3(133.036f, -0.5267f, -19.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NSEN", new Vector3(133.036f, -0.5267f, -19.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2NSES", new Vector3(133.076f, -0.5247f, -18.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2NSES", new Vector3(133.076f, -0.5247f, -18.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2SNW", new Vector3(131.0147f, -0.53f, -21.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2SNW", new Vector3(131.0147f, -0.53f, -21.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2SNE", new Vector3(133.0453f, -0.528f, -21.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2SNE", new Vector3(133.0453f, -0.528f, -21.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2SSW", new Vector3(131.0753f, -0.5274f, -23.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2SSW", new Vector3(131.0753f, -0.5274f, -23.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E2SSE", new Vector3(133.0247f, -0.5254f, -23.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E2SSE", new Vector3(133.0247f, -0.5254f, -23.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NNWN", new Vector3(130.9113f, -0.534f, 13.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NNWN", new Vector3(130.9113f, -0.534f, 13.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NNWS", new Vector3(130.9513f, -0.532f, 14.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NNWS", new Vector3(130.9513f, -0.532f, 14.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NNEN", new Vector3(133.0487f, -0.532f, 13.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NNEN", new Vector3(133.0487f, -0.532f, 13.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NNES", new Vector3(133.0887f, -0.53f, 14.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NNES", new Vector3(133.0887f, -0.53f, 14.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NSWN", new Vector3(130.984f, -0.5287f, 10.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NSWN", new Vector3(130.984f, -0.5287f, 10.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NSWS", new Vector3(131.024f, -0.5267f, 11.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NSWS", new Vector3(131.024f, -0.5267f, 11.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NSEN", new Vector3(133.036f, -0.5267f, 10.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NSEN", new Vector3(133.036f, -0.5267f, 10.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3NSES", new Vector3(133.076f, -0.5247f, 11.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3NSES", new Vector3(133.076f, -0.5247f, 11.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3SNW", new Vector3(131.0147f, -0.53f, 8.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3SNW", new Vector3(131.0147f, -0.53f, 8.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3SNE", new Vector3(133.0453f, -0.528f, 8.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3SNE", new Vector3(133.0453f, -0.528f, 8.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3SSW", new Vector3(131.0753f, -0.5274f, 6.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3SSW", new Vector3(131.0753f, -0.5274f, 6.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E3SSE", new Vector3(133.0247f, -0.5254f, 6.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E3SSE", new Vector3(133.0247f, -0.5254f, 6.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NNWN", new Vector3(130.9113f, -0.534f, 43.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NNWN", new Vector3(130.9113f, -0.534f, 43.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NNWS", new Vector3(130.9513f, -0.532f, 44.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NNWS", new Vector3(130.9513f, -0.532f, 44.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NNEN", new Vector3(133.0487f, -0.532f, 43.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NNEN", new Vector3(133.0487f, -0.532f, 43.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NNES", new Vector3(133.0887f, -0.53f, 44.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NNES", new Vector3(133.0887f, -0.53f, 44.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NSWN", new Vector3(130.984f, -0.5287f, 40.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NSWN", new Vector3(130.984f, -0.5287f, 40.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NSWS", new Vector3(131.024f, -0.5267f, 41.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NSWS", new Vector3(131.024f, -0.5267f, 41.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NSEN", new Vector3(133.036f, -0.5267f, 40.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NSEN", new Vector3(133.036f, -0.5267f, 40.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4NSES", new Vector3(133.076f, -0.5247f, 41.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4NSES", new Vector3(133.076f, -0.5247f, 41.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4SNW", new Vector3(131.0147f, -0.53f, 38.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4SNW", new Vector3(131.0147f, -0.53f, 38.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4SNE", new Vector3(133.0453f, -0.528f, 38.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4SNE", new Vector3(133.0453f, -0.528f, 38.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4SSW", new Vector3(131.0753f, -0.5274f, 36.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4SSW", new Vector3(131.0753f, -0.5274f, 36.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E4SSE", new Vector3(133.0247f, -0.5254f, 36.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34),
+            CreateBlock("Grass pad horizon E4SSE", new Vector3(133.0247f, -0.5254f, 36.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.34f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NNWN", new Vector3(130.9113f, -0.534f, 73.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NNWN", new Vector3(130.9113f, -0.534f, 73.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NNWS", new Vector3(130.9513f, -0.532f, 74.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NNWS", new Vector3(130.9513f, -0.532f, 74.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NNEN", new Vector3(133.0487f, -0.532f, 73.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NNEN", new Vector3(133.0487f, -0.532f, 73.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NNES", new Vector3(133.0887f, -0.53f, 74.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NNES", new Vector3(133.0887f, -0.53f, 74.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NSWN", new Vector3(130.984f, -0.5287f, 70.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NSWN", new Vector3(130.984f, -0.5287f, 70.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NSWS", new Vector3(131.024f, -0.5267f, 71.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NSWS", new Vector3(131.024f, -0.5267f, 71.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NSEN", new Vector3(133.036f, -0.5267f, 70.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NSEN", new Vector3(133.036f, -0.5267f, 70.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5NSES", new Vector3(133.076f, -0.5247f, 71.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5NSES", new Vector3(133.076f, -0.5247f, 71.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5SNW", new Vector3(131.0147f, -0.53f, 68.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5SNW", new Vector3(131.0147f, -0.53f, 68.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5SNE", new Vector3(133.0453f, -0.528f, 68.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5SNE", new Vector3(133.0453f, -0.528f, 68.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5SSW", new Vector3(131.0753f, -0.5274f, 66.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5SSW", new Vector3(131.0753f, -0.5274f, 66.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E5SSE", new Vector3(133.0247f, -0.5254f, 66.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003),
+            CreateBlock("Grass pad horizon E5SSE", new Vector3(133.0247f, -0.5254f, 66.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.35000000000000003f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NNWN", new Vector3(130.9113f, -0.534f, 98.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NNWN", new Vector3(130.9113f, -0.534f, 98.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NNWS", new Vector3(130.9513f, -0.532f, 99.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NNWS", new Vector3(130.9513f, -0.532f, 99.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NNEN", new Vector3(133.0487f, -0.532f, 98.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NNEN", new Vector3(133.0487f, -0.532f, 98.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NNES", new Vector3(133.0887f, -0.53f, 99.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NNES", new Vector3(133.0887f, -0.53f, 99.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NSWN", new Vector3(130.984f, -0.5287f, 95.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NSWN", new Vector3(130.984f, -0.5287f, 95.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NSWS", new Vector3(131.024f, -0.5267f, 96.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NSWS", new Vector3(131.024f, -0.5267f, 96.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NSEN", new Vector3(133.036f, -0.5267f, 95.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NSEN", new Vector3(133.036f, -0.5267f, 95.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6NSES", new Vector3(133.076f, -0.5247f, 96.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6NSES", new Vector3(133.076f, -0.5247f, 96.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6SNW", new Vector3(131.0147f, -0.53f, 93.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6SNW", new Vector3(131.0147f, -0.53f, 93.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6SNE", new Vector3(133.0453f, -0.528f, 93.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6SNE", new Vector3(133.0453f, -0.528f, 93.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6SSW", new Vector3(131.0753f, -0.5274f, 91.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6SSW", new Vector3(131.0753f, -0.5274f, 91.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon E6SSE", new Vector3(133.0247f, -0.5254f, 91.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33),
+            CreateBlock("Grass pad horizon E6SSE", new Vector3(133.0247f, -0.5254f, 91.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.33f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NNWN", new Vector3(-133.0887f, -0.554f, -76.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NNWN", new Vector3(-133.0887f, -0.554f, -76.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NNWS", new Vector3(-133.0487f, -0.552f, -75.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NNWS", new Vector3(-133.0487f, -0.552f, -75.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NNEN", new Vector3(-130.9513f, -0.552f, -76.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NNEN", new Vector3(-130.9513f, -0.552f, -76.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NNES", new Vector3(-130.9113f, -0.55f, -75.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NNES", new Vector3(-130.9113f, -0.55f, -75.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NSWN", new Vector3(-133.016f, -0.5485f, -79.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NSWN", new Vector3(-133.016f, -0.5485f, -79.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NSWS", new Vector3(-132.976f, -0.5465f, -78.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NSWS", new Vector3(-132.976f, -0.5465f, -78.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NSEN", new Vector3(-130.964f, -0.5465f, -79.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NSEN", new Vector3(-130.964f, -0.5465f, -79.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0NSES", new Vector3(-130.924f, -0.5445f, -78.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0NSES", new Vector3(-130.924f, -0.5445f, -78.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0SNW", new Vector3(-132.9853f, -0.55f, -81.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0SNW", new Vector3(-132.9853f, -0.55f, -81.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0SNE", new Vector3(-130.9547f, -0.548f, -81.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0SNE", new Vector3(-130.9547f, -0.548f, -81.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0SSW", new Vector3(-132.9247f, -0.5473f, -83.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0SSW", new Vector3(-132.9247f, -0.5473f, -83.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W0SSE", new Vector3(-130.9753f, -0.5453f, -83.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W0SSE", new Vector3(-130.9753f, -0.5453f, -83.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NNWN", new Vector3(-133.0887f, -0.554f, -46.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NNWN", new Vector3(-133.0887f, -0.554f, -46.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NNWS", new Vector3(-133.0487f, -0.552f, -45.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NNWS", new Vector3(-133.0487f, -0.552f, -45.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NNEN", new Vector3(-130.9513f, -0.552f, -46.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NNEN", new Vector3(-130.9513f, -0.552f, -46.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NNES", new Vector3(-130.9113f, -0.55f, -45.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NNES", new Vector3(-130.9113f, -0.55f, -45.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NSWN", new Vector3(-133.016f, -0.5485f, -49.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NSWN", new Vector3(-133.016f, -0.5485f, -49.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NSWS", new Vector3(-132.976f, -0.5465f, -48.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NSWS", new Vector3(-132.976f, -0.5465f, -48.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NSEN", new Vector3(-130.964f, -0.5465f, -49.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NSEN", new Vector3(-130.964f, -0.5465f, -49.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1NSES", new Vector3(-130.924f, -0.5445f, -48.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1NSES", new Vector3(-130.924f, -0.5445f, -48.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1SNW", new Vector3(-132.9853f, -0.55f, -51.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1SNW", new Vector3(-132.9853f, -0.55f, -51.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1SNE", new Vector3(-130.9547f, -0.548f, -51.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1SNE", new Vector3(-130.9547f, -0.548f, -51.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1SSW", new Vector3(-132.9247f, -0.5473f, -53.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1SSW", new Vector3(-132.9247f, -0.5473f, -53.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W1SSE", new Vector3(-130.9753f, -0.5453f, -53.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W1SSE", new Vector3(-130.9753f, -0.5453f, -53.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NNWN", new Vector3(-133.0887f, -0.554f, -16.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NNWN", new Vector3(-133.0887f, -0.554f, -16.8459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NNWS", new Vector3(-133.0487f, -0.552f, -15.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NNWS", new Vector3(-133.0487f, -0.552f, -15.6941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NNEN", new Vector3(-130.9513f, -0.552f, -16.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NNEN", new Vector3(-130.9513f, -0.552f, -16.8059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NNES", new Vector3(-130.9113f, -0.55f, -15.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NNES", new Vector3(-130.9113f, -0.55f, -15.6541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NSWN", new Vector3(-133.016f, -0.5485f, -19.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NSWN", new Vector3(-133.016f, -0.5485f, -19.3529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NSWS", new Vector3(-132.976f, -0.5465f, -18.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NSWS", new Vector3(-132.976f, -0.5465f, -18.2471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NSEN", new Vector3(-130.964f, -0.5465f, -19.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NSEN", new Vector3(-130.964f, -0.5465f, -19.3129f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2NSES", new Vector3(-130.924f, -0.5445f, -18.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2NSES", new Vector3(-130.924f, -0.5445f, -18.2071f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2SNW", new Vector3(-132.9853f, -0.55f, -21.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2SNW", new Vector3(-132.9853f, -0.55f, -21.3325f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2SNE", new Vector3(-130.9547f, -0.548f, -21.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2SNE", new Vector3(-130.9547f, -0.548f, -21.2925f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2SSW", new Vector3(-132.9247f, -0.5473f, -23.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2SSW", new Vector3(-132.9247f, -0.5473f, -23.7325f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W2SSE", new Vector3(-130.9753f, -0.5453f, -23.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W2SSE", new Vector3(-130.9753f, -0.5453f, -23.6925f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NNWN", new Vector3(-133.0887f, -0.554f, 13.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NNWN", new Vector3(-133.0887f, -0.554f, 13.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NNWS", new Vector3(-133.0487f, -0.552f, 14.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NNWS", new Vector3(-133.0487f, -0.552f, 14.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NNEN", new Vector3(-130.9513f, -0.552f, 13.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NNEN", new Vector3(-130.9513f, -0.552f, 13.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NNES", new Vector3(-130.9113f, -0.55f, 14.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NNES", new Vector3(-130.9113f, -0.55f, 14.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NSWN", new Vector3(-133.016f, -0.5485f, 10.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NSWN", new Vector3(-133.016f, -0.5485f, 10.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NSWS", new Vector3(-132.976f, -0.5465f, 11.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NSWS", new Vector3(-132.976f, -0.5465f, 11.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NSEN", new Vector3(-130.964f, -0.5465f, 10.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NSEN", new Vector3(-130.964f, -0.5465f, 10.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3NSES", new Vector3(-130.924f, -0.5445f, 11.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3NSES", new Vector3(-130.924f, -0.5445f, 11.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3SNW", new Vector3(-132.9853f, -0.55f, 8.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3SNW", new Vector3(-132.9853f, -0.55f, 8.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3SNE", new Vector3(-130.9547f, -0.548f, 8.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3SNE", new Vector3(-130.9547f, -0.548f, 8.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3SSW", new Vector3(-132.9247f, -0.5473f, 6.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3SSW", new Vector3(-132.9247f, -0.5473f, 6.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W3SSE", new Vector3(-130.9753f, -0.5453f, 6.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W3SSE", new Vector3(-130.9753f, -0.5453f, 6.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NNWN", new Vector3(-133.0887f, -0.554f, 43.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NNWN", new Vector3(-133.0887f, -0.554f, 43.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NNWS", new Vector3(-133.0487f, -0.552f, 44.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NNWS", new Vector3(-133.0487f, -0.552f, 44.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NNEN", new Vector3(-130.9513f, -0.552f, 43.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NNEN", new Vector3(-130.9513f, -0.552f, 43.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NNES", new Vector3(-130.9113f, -0.55f, 44.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NNES", new Vector3(-130.9113f, -0.55f, 44.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NSWN", new Vector3(-133.016f, -0.5485f, 40.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NSWN", new Vector3(-133.016f, -0.5485f, 40.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NSWS", new Vector3(-132.976f, -0.5465f, 41.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NSWS", new Vector3(-132.976f, -0.5465f, 41.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NSEN", new Vector3(-130.964f, -0.5465f, 40.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NSEN", new Vector3(-130.964f, -0.5465f, 40.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4NSES", new Vector3(-130.924f, -0.5445f, 41.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4NSES", new Vector3(-130.924f, -0.5445f, 41.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4SNW", new Vector3(-132.9853f, -0.55f, 38.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4SNW", new Vector3(-132.9853f, -0.55f, 38.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4SNE", new Vector3(-130.9547f, -0.548f, 38.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4SNE", new Vector3(-130.9547f, -0.548f, 38.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4SSW", new Vector3(-132.9247f, -0.5473f, 36.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4SSW", new Vector3(-132.9247f, -0.5473f, 36.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W4SSE", new Vector3(-130.9753f, -0.5453f, 36.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39),
+            CreateBlock("Grass pad horizon W4SSE", new Vector3(-130.9753f, -0.5453f, 36.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.39f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NNWN", new Vector3(-133.0887f, -0.554f, 73.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NNWN", new Vector3(-133.0887f, -0.554f, 73.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NNWS", new Vector3(-133.0487f, -0.552f, 74.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NNWS", new Vector3(-133.0487f, -0.552f, 74.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NNEN", new Vector3(-130.9513f, -0.552f, 73.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NNEN", new Vector3(-130.9513f, -0.552f, 73.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NNES", new Vector3(-130.9113f, -0.55f, 74.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NNES", new Vector3(-130.9113f, -0.55f, 74.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NSWN", new Vector3(-133.016f, -0.5485f, 70.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NSWN", new Vector3(-133.016f, -0.5485f, 70.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NSWS", new Vector3(-132.976f, -0.5465f, 71.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NSWS", new Vector3(-132.976f, -0.5465f, 71.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NSEN", new Vector3(-130.964f, -0.5465f, 70.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NSEN", new Vector3(-130.964f, -0.5465f, 70.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5NSES", new Vector3(-130.924f, -0.5445f, 71.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5NSES", new Vector3(-130.924f, -0.5445f, 71.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5SNW", new Vector3(-132.9853f, -0.55f, 68.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5SNW", new Vector3(-132.9853f, -0.55f, 68.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5SNE", new Vector3(-130.9547f, -0.548f, 68.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5SNE", new Vector3(-130.9547f, -0.548f, 68.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5SSW", new Vector3(-132.9247f, -0.5473f, 66.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5SSW", new Vector3(-132.9247f, -0.5473f, 66.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W5SSE", new Vector3(-130.9753f, -0.5453f, 66.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4),
+            CreateBlock("Grass pad horizon W5SSE", new Vector3(-130.9753f, -0.5453f, 66.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.4f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NNWN", new Vector3(-133.0887f, -0.554f, 98.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NNWN", new Vector3(-133.0887f, -0.554f, 98.1541f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NNWS", new Vector3(-133.0487f, -0.552f, 99.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NNWS", new Vector3(-133.0487f, -0.552f, 99.3059f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NNEN", new Vector3(-130.9513f, -0.552f, 98.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NNEN", new Vector3(-130.9513f, -0.552f, 98.1941f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NNES", new Vector3(-130.9113f, -0.55f, 99.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NNES", new Vector3(-130.9113f, -0.55f, 99.3459f), new Vector3(2.0952f, 0.5161f, 1.164f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NSWN", new Vector3(-133.016f, -0.5485f, 95.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NSWN", new Vector3(-133.016f, -0.5485f, 95.6471f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NSWS", new Vector3(-132.976f, -0.5465f, 96.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NSWS", new Vector3(-132.976f, -0.5465f, 96.7529f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NSEN", new Vector3(-130.964f, -0.5465f, 95.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NSEN", new Vector3(-130.964f, -0.5465f, 95.6871f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6NSES", new Vector3(-130.924f, -0.5445f, 96.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6NSES", new Vector3(-130.924f, -0.5445f, 96.7929f), new Vector3(2.0114f, 0.5006f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6SNW", new Vector3(-132.9853f, -0.55f, 93.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6SNW", new Vector3(-132.9853f, -0.55f, 93.6675f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6SNE", new Vector3(-130.9547f, -0.548f, 93.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6SNE", new Vector3(-130.9547f, -0.548f, 93.7075f), new Vector3(2.052f, 0.5165f, 2.3037f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6SSW", new Vector3(-132.9247f, -0.5473f, 91.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6SSW", new Vector3(-132.9247f, -0.5473f, 91.2675f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon W6SSE", new Vector3(-130.9753f, -0.5453f, 91.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38),
+            CreateBlock("Grass pad horizon W6SSE", new Vector3(-130.9753f, -0.5453f, 91.3075f), new Vector3(1.9699f, 0.501f, 2.2116f), Shade(AirsideTheme.Eucalyptus, 0.38f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(1.8f, 1.1f));
-            CreateBlock("Grass pad horizon NWWNW", new Vector3(-129.8459f, -0.544f, 116.7925f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWWNW", new Vector3(-129.8459f, -0.544f, 116.7925f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWWNE", new Vector3(-128.6941f, -0.542f, 116.8325f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWWNE", new Vector3(-128.6941f, -0.542f, 116.8325f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWWSW", new Vector3(-129.8059f, -0.542f, 119.1675f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWWSW", new Vector3(-129.8059f, -0.542f, 119.1675f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWWSE", new Vector3(-128.6541f, -0.54f, 119.2075f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWWSE", new Vector3(-128.6541f, -0.54f, 119.2075f), new Vector3(1.164f, 0.5069f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWENN", new Vector3(-126.79f, -0.542f, 116.3152f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWENN", new Vector3(-126.79f, -0.542f, 116.3152f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWENS", new Vector3(-126.75f, -0.54f, 117.421f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWENS", new Vector3(-126.75f, -0.54f, 117.421f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWESN", new Vector3(-126.75f, -0.54f, 118.619f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWESN", new Vector3(-126.75f, -0.54f, 118.619f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NWESS", new Vector3(-126.71f, -0.538f, 119.7248f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31),
+            CreateBlock("Grass pad horizon NWESS", new Vector3(-126.71f, -0.538f, 119.7248f), new Vector3(2.2346f, 0.4866f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.31f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEWNW", new Vector3(126.1541f, -0.539f, 116.7925f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEWNW", new Vector3(126.1541f, -0.539f, 116.7925f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEWNE", new Vector3(127.3059f, -0.537f, 116.8325f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEWNE", new Vector3(127.3059f, -0.537f, 116.8325f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEWSW", new Vector3(126.1941f, -0.537f, 119.1675f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEWSW", new Vector3(126.1941f, -0.537f, 119.1675f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEWSE", new Vector3(127.3459f, -0.535f, 119.2075f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEWSE", new Vector3(127.3459f, -0.535f, 119.2075f), new Vector3(1.164f, 0.4977f, 2.328f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEENN", new Vector3(129.21f, -0.537f, 116.3152f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEENN", new Vector3(129.21f, -0.537f, 116.3152f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEENS", new Vector3(129.25f, -0.535f, 117.421f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEENS", new Vector3(129.25f, -0.535f, 117.421f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEESN", new Vector3(129.25f, -0.535f, 118.619f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEESN", new Vector3(129.25f, -0.535f, 118.619f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon NEESS", new Vector3(129.29f, -0.533f, 119.7248f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3),
+            CreateBlock("Grass pad horizon NEESS", new Vector3(129.29f, -0.533f, 119.7248f), new Vector3(2.2346f, 0.4778f, 1.1174f), Shade(AirsideTheme.Eucalyptus, 0.3f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWWNW", new Vector3(-129.8459f, -0.594f, -115.2075f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWWNW", new Vector3(-129.8459f, -0.594f, -115.2075f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWWNE", new Vector3(-128.6941f, -0.592f, -115.1675f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWWNE", new Vector3(-128.6941f, -0.592f, -115.1675f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWWSW", new Vector3(-129.8059f, -0.592f, -112.8325f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWWSW", new Vector3(-129.8059f, -0.592f, -112.8325f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWWSE", new Vector3(-128.6541f, -0.59f, -112.7925f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWWSE", new Vector3(-128.6541f, -0.59f, -112.7925f), new Vector3(1.164f, 0.4884f, 2.328f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWENN", new Vector3(-126.79f, -0.592f, -115.6848f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWENN", new Vector3(-126.79f, -0.592f, -115.6848f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWENS", new Vector3(-126.75f, -0.59f, -114.579f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWENS", new Vector3(-126.75f, -0.59f, -114.579f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWESN", new Vector3(-126.75f, -0.59f, -113.381f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWESN", new Vector3(-126.75f, -0.59f, -113.381f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SWESS", new Vector3(-126.71f, -0.588f, -112.2752f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45),
+            CreateBlock("Grass pad horizon SWESS", new Vector3(-126.71f, -0.588f, -112.2752f), new Vector3(2.2346f, 0.4689f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.45f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEWNW", new Vector3(126.1541f, -0.589f, -115.2075f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEWNW", new Vector3(126.1541f, -0.589f, -115.2075f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEWNE", new Vector3(127.3059f, -0.587f, -115.1675f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEWNE", new Vector3(127.3059f, -0.587f, -115.1675f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEWSW", new Vector3(126.1941f, -0.587f, -112.8325f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEWSW", new Vector3(126.1941f, -0.587f, -112.8325f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEWSE", new Vector3(127.3459f, -0.585f, -112.7925f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEWSE", new Vector3(127.3459f, -0.585f, -112.7925f), new Vector3(1.164f, 0.4792f, 2.328f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEENN", new Vector3(129.21f, -0.587f, -115.6848f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEENN", new Vector3(129.21f, -0.587f, -115.6848f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEENS", new Vector3(129.25f, -0.585f, -114.579f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEENS", new Vector3(129.25f, -0.585f, -114.579f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEESN", new Vector3(129.25f, -0.585f, -113.381f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEESN", new Vector3(129.25f, -0.585f, -113.381f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
-            CreateBlock("Grass pad horizon SEESS", new Vector3(129.29f, -0.583f, -112.2752f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44),
+            CreateBlock("Grass pad horizon SEESS", new Vector3(129.29f, -0.583f, -112.2752f), new Vector3(2.2346f, 0.46f, 1.1174f), Shade(AirsideTheme.DryGrass, 0.44f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(2.0f, 1.0f));
             // Soft outer fringe so the airfield pad is not one hard 168×118 rectangle.
                                                                                                 CreateBlock("Grass fringe NW1WNWWNWN", new Vector3(-68.895f, -0.622f, 52.4188f), new Vector3(2.1825f, 0.5952f, 1.68f), Shade(AirsideTheme.Eucalyptus, 0.5f),
@@ -29797,7 +29815,7 @@ namespace Airside.Presentation
             CreateBlock("Taxiway A shoulder SE EbE", new Vector3(30.3738f, -0.037f, 6.79f), new Vector3(2.736f, 0.0507f, 0.8468f), new Color(0.305f, 0.325f, 0.305f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.9f, 0.2f));
             // A1 runway exit follows the real taxi chord (-24,0)→(-12,9) instead of one
-            // 16×9.5 greybox block that painted over the infield.
+            // 16×9.5f greybox block that painted over the infield.
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, -0.02f, 0f), new Vector3(-12f, -0.02f, 9f), 5.4f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(2.2f, 1.4f));
             // Short fillets at each end of the chord — oriented pads, not axis-aligned slabs.
@@ -52280,8 +52298,8 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7, so
-            // offset the kit by -0.7 so gear sits on the ground. Primitive fallback below.
+            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7f, so
+            // offset the kit by -0.7f so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
                     "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
@@ -53019,7 +53037,7 @@ namespace Airside.Presentation
                 if (child.Find("PropDisc") != null)
                     continue;
 
-                // Size the blur disc from blade/tip bounds (v06 radial ~1.27 m — fixed 1.2
+                // Size the blur disc from blade/tip bounds (v06 radial ~1.27f m — fixed 1.2f
                 // diameter read as a hub pancake after pivot rebake).
                 var radius = 0.6f;
                 foreach (var renderer in child.GetComponentsInChildren<Renderer>(true))
@@ -54108,7 +54126,7 @@ namespace Airside.Presentation
                 CreateBlock($"Taxi exit centre {x}", new Vector3(x, 0.035f, 4.5f + (24f - x) * 0.32f),
                     new Vector3(1.2f, 0.02f, 0.12f), taxiPaint);
 
-            // Edges: mesh already carries ±1.85 Z offset — place at taxi centre, identity yaw.
+            // Edges: mesh already carries ±1.85f Z offset — place at taxi centre, identity yaw.
             // Two copies match the dual centreline coverage along Taxiway A.
             var usedTaxiEdgeN = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_n", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);

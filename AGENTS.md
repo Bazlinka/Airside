@@ -31,6 +31,8 @@ Airside/
       Persistence/           Save schema, load/catch-up
       Presentation/          MonoBehaviours, camera, visuals — Unity-facing only
       Art/                   Approved runtime models, textures, UI, animation and VFX
+    Assets/Resources/Airside/Audio/
+                             Runtime-loadable approved AudioClips; record every source in the asset register
       Editor/                Editor-only startup helpers
       Tests/EditMode/        Deterministic NUnit tests
       Scenes/AirsidePrototype.unity

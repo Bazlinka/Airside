@@ -9035,18 +9035,34 @@ namespace Airside.Presentation
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            const int clusterCount = 16;
-            for (var i = 0; i < clusterCount; i++)
+            var clusterPositions = new List<Vector3>(24);
+            const int randomCount = 16;
+            for (var i = 0; i < randomCount; i++)
             {
-                var cluster = new GameObject($"Cloud {i}").transform;
-                cluster.SetParent(cloudRoot, false);
                 var x = (float)(rng.NextDouble() * 720f - 360f);
                 var z = (float)(rng.NextDouble() * 560f - 240f);
                 // Keep the ring off the dual-runway core so umbras do not stamp 23/05.
                 if (Mathf.Abs(x) < 110f && Mathf.Abs(z) < 90f)
                     x += x >= 0f ? 140f : -140f;
                 var y = 92f + (float)rng.NextDouble() * 58f;
-                cluster.position = new Vector3(x, y, z);
+                clusterPositions.Add(new Vector3(x, y, z));
+            }
+            // Authored gulf / Hills / Holdfast sky so the 318 m opening shot is not empty west and east.
+            clusterPositions.Add(new Vector3(-210f, 118f, -40f));
+            clusterPositions.Add(new Vector3(-190f, 132f, 80f));
+            clusterPositions.Add(new Vector3(-240f, 108f, -120f));
+            clusterPositions.Add(new Vector3(-168f, 140f, 24f));
+            clusterPositions.Add(new Vector3(-80f, 128f, -180f));
+            clusterPositions.Add(new Vector3(280f, 125f, -20f));
+            clusterPositions.Add(new Vector3(320f, 145f, 40f));
+            clusterPositions.Add(new Vector3(260f, 110f, 90f));
+            for (var i = 0; i < clusterPositions.Count; i++)
+            {
+                var cluster = new GameObject($"Cloud {i}").transform;
+                cluster.SetParent(cloudRoot, false);
+                var x = clusterPositions[i].x;
+                var z = clusterPositions[i].z;
+                cluster.position = clusterPositions[i];
 
                 var sx = 28f + (float)rng.NextDouble() * 42f;
                 var sy = 6.5f + (float)rng.NextDouble() * 7.5f;
@@ -11447,16 +11463,16 @@ namespace Airside.Presentation
             }
 
             // Touchdown zone marks between threshold and aiming points.
-            foreach (var x in new[] { -76f, -72f, -68f, 68f, 72f, 76f, 84f, 88f })
+            foreach (var x in new[] { -76f, -72f, -68f, -60f, -52f, -44f, 44f, 52f, 60f, 68f, 72f, 76f, 84f, 88f })
             {
                 var placedL = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "tdz_mark_l", new Vector3(x, 0.03f, -1.4f), Quaternion.identity, Color.white, out _);
                 var placedR = ArtGltfLoader.TryPlaceNamedMesh(
                     kit, "tdz_mark_r", new Vector3(x, 0.03f, 1.4f), Quaternion.identity, Color.white, out _);
                 if (!placedL)
-                    CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(2.0f, 0.02f, 0.7f), Color.white);
+                    CreateBlock($"TDZ {x} L", new Vector3(x, 0.03f, -1.4f), new Vector3(2.4f, 0.022f, 0.85f), Color.white);
                 if (!placedR)
-                    CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(2.0f, 0.02f, 0.7f), Color.white);
+                    CreateBlock($"TDZ {x} R", new Vector3(x, 0.03f, 1.4f), new Vector3(2.4f, 0.022f, 0.85f), Color.white);
             }
             // Stand bay numbers on the apron (readable from overview) — kit digit bars preferred.
             PlaceRunwayDigit('1', new Vector3(14.2f, 0.04f, 14f), yaw: 0f);
@@ -11851,27 +11867,37 @@ namespace Airside.Presentation
             var along = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
             var end12 = center - along * 48f;
             var end30 = center + along * 48f;
-            PlaceRunwayDigit('1', end12 - along * 1.85f, yaw + 90f);
-            PlaceRunwayDigit('2', end12 + along * 1.85f, yaw + 90f);
-            PlaceRunwayDigit('3', end30 - along * 1.85f, yaw - 90f);
-            PlaceRunwayDigit('0', end30 + along * 1.85f, yaw - 90f);
+            PlaceRunwayDigit('1', end12 - along * 2.45f, yaw + 90f);
+            PlaceRunwayDigit('2', end12 + along * 2.45f, yaw + 90f);
+            PlaceRunwayDigit('3', end30 - along * 2.45f, yaw - 90f);
+            PlaceRunwayDigit('0', end30 + along * 2.45f, yaw - 90f);
             var across = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
             for (var i = -3; i <= 3; i++)
             {
-                var bar12 = CreateBlock($"12 threshold {i}", end12 + along * 2.4f + across * (i * 0.85f),
-                    new Vector3(2.0f, 0.02f, 0.28f), Color.white);
-                var bar30 = CreateBlock($"30 threshold {i}", end30 - along * 2.4f + across * (i * 0.85f),
-                    new Vector3(2.0f, 0.02f, 0.28f), Color.white);
+                var bar12 = CreateBlock($"Threshold stripe 12 {i}", end12 + along * 2.8f + across * (i * 0.95f),
+                    new Vector3(2.6f, 0.02f, 0.36f), Color.white);
+                var bar30 = CreateBlock($"Threshold stripe 30 {i}", end30 - along * 2.8f + across * (i * 0.95f),
+                    new Vector3(2.6f, 0.02f, 0.36f), Color.white);
                 bar12.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
                 bar30.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
             foreach (var dist in new[] { -26f, 26f })
             {
                 var p = center + along * dist;
-                var left = CreateBlock($"12-30 aiming {dist} L", p - across * 1.55f,
-                    new Vector3(2.6f, 0.02f, 1.05f), Color.white);
-                var right = CreateBlock($"12-30 aiming {dist} R", p + across * 1.55f,
-                    new Vector3(2.6f, 0.02f, 1.05f), Color.white);
+                var left = CreateBlock($"Aiming point 12-30 {dist} L", p - across * 1.7f,
+                    new Vector3(3.6f, 0.025f, 1.45f), Color.white);
+                var right = CreateBlock($"Aiming point 12-30 {dist} R", p + across * 1.7f,
+                    new Vector3(3.6f, 0.025f, 1.45f), Color.white);
+                left.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                right.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
+            foreach (var dist in new[] { -38f, -32f, 32f, 38f })
+            {
+                var p = center + along * dist;
+                var left = CreateBlock($"TDZ 12-30 {dist} L", p - across * 1.45f,
+                    new Vector3(2.2f, 0.02f, 0.75f), Color.white);
+                var right = CreateBlock($"TDZ 12-30 {dist} R", p + across * 1.45f,
+                    new Vector3(2.2f, 0.02f, 0.75f), Color.white);
                 left.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
                 right.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
@@ -11879,8 +11905,8 @@ namespace Airside.Presentation
             {
                 if (Mathf.Abs(i) >= 5)
                     continue;
-                var mark = CreateBlock($"12-30 centre {i}", center + along * (i * 8f) + new Vector3(0f, 0.01f, 0f),
-                    new Vector3(2.4f, 0.02f, 0.22f), Color.white);
+                var mark = CreateBlock($"runway_centre 12-30 {i}", center + along * (i * 8f) + new Vector3(0f, 0.01f, 0f),
+                    new Vector3(3.2f, 0.02f, 0.28f), Color.white);
                 mark.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
 
@@ -11888,12 +11914,16 @@ namespace Airside.Presentation
             for (var i = 0; i < 4; i++)
             {
                 var red = i < 2;
-                var box = CreateBlock($"12-30 PAPI {i}", papi + along * (i * 1.45f),
-                    new Vector3(0.45f, 0.28f, 0.55f),
-                    red ? new Color(1f, 0.28f, 0.22f) : new Color(1f, 0.95f, 0.72f));
+                var lens = red ? new Color(1f, 0.28f, 0.22f) : new Color(1f, 0.95f, 0.72f);
+                var offset = along * (i * 1.45f);
+                var box = CreateBlock($"PAPI 12-30 box {i}", papi + offset,
+                    new Vector3(0.95f, 0.52f, 0.95f), new Color(0.18f, 0.18f, 0.2f));
                 box.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                CreateBlock($"12-30 PAPI stem {i}", papi + along * (i * 1.45f) + new Vector3(0f, -0.35f, 0f),
-                    new Vector3(0.12f, 0.7f, 0.12f), new Color(0.35f, 0.36f, 0.38f))
+                var lensGo = CreateBlock($"PAPI 12-30 lens {i}", papi + offset + new Vector3(0f, 0.16f, 0f),
+                    new Vector3(0.55f, 0.28f, 0.55f), lens);
+                lensGo.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                CreateBlock($"PAPI 12-30 stem {i}", papi + offset + new Vector3(0f, -0.7f, 0f),
+                    new Vector3(0.16f, 0.9f, 0.16f), new Color(0.35f, 0.36f, 0.38f))
                     .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
         }

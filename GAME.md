@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 34 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 35 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -57,6 +57,9 @@
   landside A is larger. 23 ALS beads match the 05 ladder.
   Landside ADL and a porte-cochere face the opening shot; aircraft
   ground shadows match the 1.38 kit.
+  12/30 aiming, TDZ, threshold bars and PAPI now match 23/05 from
+  318 m; extra 23/05 TDZ fills the long strip; gulf/Hills clouds
+  sit off the dual-runway core.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -119,7 +122,9 @@
   and cars fill the arterial foreground. 05 ALS beads read from 318 m;
   flaps and pylons share the glossy skin; MSCP is three storeys;
   landside A is larger. 23 ALS beads match the 05 ladder. Landside ADL
-  and a porte-cochere face the opening shot. Save schema
+  and a porte-cochere face the opening shot. 12/30 paint and PAPI
+  match 23/05 from 318 m; extra TDZ fills the long strip; extra
+  clouds sit over gulf and Hills. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

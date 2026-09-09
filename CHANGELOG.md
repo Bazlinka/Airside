@@ -117,7 +117,9 @@ change it describes.
   the landside car park is three storeys with north openings; the
   Adelaide A monument is larger. 23 ALS beads match the gulf ladder.
   Landside ADL letters and a porte-cochere face the opening shot;
-  aircraft ground shadows match the 1.38 kit.
+  aircraft ground shadows match the 1.38 kit. 12/30 aiming, TDZ,
+  threshold bars and PAPI match 23/05 from 318 m; extra 23/05
+  TDZ fills the long strip; extra clouds sit over gulf and Hills.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

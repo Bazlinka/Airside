@@ -67,7 +67,7 @@ namespace Airside.Presentation
             [SurfaceKind.Glass] = new Profile(0.04f, 0.88f, 0.02f, 1f, transparent: true),
             [SurfaceKind.Rubber] = new Profile(0.012f, 0.08f, 0.75f, 0.84f),
             [SurfaceKind.Plastic] = new Profile(0.04f, 0.38f, 0.28f, 0.95f),
-            [SurfaceKind.Water] = new Profile(0.025f, 0.94f, 0.18f, 1f, transparent: true),
+            [SurfaceKind.Water] = new Profile(0.06f, 0.97f, 0.12f, 1f, transparent: true),
             [SurfaceKind.UnlitSky] = new Profile(0f, 0f, 0f, 1f)
         };
 

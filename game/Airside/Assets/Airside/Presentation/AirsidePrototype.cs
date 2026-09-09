@@ -5768,9 +5768,9 @@ namespace Airside.Presentation
             var asphalt = PreferSurfaceBasecolor("tx_asphalt_runway");
             var concrete = PreferSurfaceBasecolor("tx_concrete_apron");
 
-            PlaceLevelPad("Gulf St Vincent", -168f, 8f, 160f, 340f, new Color(0.14f, 0.36f, 0.48f, 0.95f),
+            PlaceLevelPad("Gulf St Vincent", -168f, 8f, 160f, 340f, new Color(0.12f, 0.34f, 0.5f, 0.95f),
                 water, new Vector2(20f, 36f), top: -0.35f, height: 0.5f);
-            PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.1f, 0.28f, 0.42f, 0.97f),
+            PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.08f, 0.26f, 0.44f, 0.97f),
                 water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
             PlaceLevelPad("West Beach sand", -95f, 8f, 38f, 340f, Shade(AirsideTheme.Sand, 0.95f),
                 sand, new Vector2(10f, 56f), top: 0f, height: 0.28f);
@@ -11726,6 +11726,8 @@ namespace Airside.Presentation
                 PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f, silhouetteOnly: false);
             PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(42.5f, 0f, 20.2f), 175f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(8.2f, 0f, 22.4f), 195f, silhouetteOnly: true);
+            PlaceBaggageDolly(kit, new Vector3(6.4f, 0f, 19.6f));
             PlaceBaggageDolly(kit, new Vector3(44f, 0f, 16.8f));
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
@@ -12107,6 +12109,7 @@ namespace Airside.Presentation
             PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f));
             PlaceIdleApronAircraft("Idle Bravo", new Vector3(-52f, 0.7f, -9.2f), 90f, new Color(0.16f, 0.42f, 0.32f));
             PlaceIdleApronAircraft("Idle Bravo east", new Vector3(42f, 0.7f, -14.5f), 90f, new Color(0.62f, 0.28f, 0.18f));
+            PlaceIdleApronAircraft("Idle west apron", new Vector3(2f, 0.7f, 20.4f), 90f, new Color(0.14f, 0.22f, 0.48f));
         }
 
         /// <summary>

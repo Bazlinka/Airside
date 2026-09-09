@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — art sourcing checklist)
-- **Branch:** `cursor/art-sourcing-checklist-d7f0` (merge to `main`)
+- **Last updated:** 2026-09-09 (Cursor — handoff after art checklist merge)
+- **Branch:** `main`
 - **Do next:** Bailey sources assets from
   `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md` (P0 aircraft parts →
   buildings → vehicles/GSE → veg/characters). Mac Play audit of #170 collision

@@ -6105,6 +6105,39 @@ namespace Airside.Presentation
                 CreateBlock($"Tie-down rope {i}", new Vector3(-30f - i * 5.5f, 0.04f, 14.55f),
                     new Vector3(0.06f, 0.04f, 0.9f), new Color(0.35f, 0.35f, 0.32f));
             }
+
+            BuildAdelaideMultiStoreyCarPark();
+        }
+
+        /// <summary>
+        /// Multi-level landside car park east of the surface bays — Adelaide Airport
+        /// silhouette, not a regional at-grade pad. Presentation only.
+        /// </summary>
+        private static void BuildAdelaideMultiStoreyCarPark()
+        {
+            var concrete = PreferSurfaceBasecolor("tx_concrete_apron");
+            var shell = new Color(0.72f, 0.73f, 0.74f);
+            var slab = new Color(0.62f, 0.63f, 0.64f);
+            var voidDark = new Color(0.22f, 0.23f, 0.24f);
+            PlaceLevelPad("MSCP apron", 70f, 46f, 20f, 14f, Shade(AirsideTheme.Concrete, 0.88f),
+                concrete, new Vector2(5f, 3.5f));
+            CreateBlock("MSCP L1", new Vector3(70f, 1.55f, 46f), new Vector3(16.4f, 3.1f, 11.6f), shell);
+            CreateBlock("MSCP L2", new Vector3(70f, 4.55f, 46f), new Vector3(16.6f, 2.9f, 11.8f), Shade(shell, 0.97f));
+            CreateBlock("MSCP roof", new Vector3(70f, 6.15f, 46f), new Vector3(17.0f, 0.28f, 12.2f), slab);
+            CreateBlock("MSCP parapet N", new Vector3(70f, 6.55f, 51.9f), new Vector3(17.0f, 0.55f, 0.22f), Shade(shell, 0.92f));
+            CreateBlock("MSCP parapet S", new Vector3(70f, 6.55f, 40.1f), new Vector3(17.0f, 0.55f, 0.22f), Shade(shell, 0.92f));
+            CreateBlock("MSCP ramp", new Vector3(60.6f, 2.4f, 46f), new Vector3(4.2f, 0.28f, 4.8f), slab)
+                .transform.rotation = Quaternion.Euler(0f, 0f, -22f);
+            for (var i = 0; i < 4; i++)
+            {
+                var x = 64.2f + i * 3.8f;
+                CreateBlock($"MSCP slot L1 {i}", new Vector3(x, 1.65f, 40.35f), new Vector3(2.6f, 1.4f, 0.12f), voidDark);
+                CreateBlock($"MSCP slot L2 {i}", new Vector3(x, 4.55f, 40.35f), new Vector3(2.6f, 1.3f, 0.12f), voidDark);
+            }
+
+            PlaceParkedCar("MSCP roof car A", new Vector3(66f, 6.35f, 46f), 90f, new Color(0.2f, 0.32f, 0.55f));
+            PlaceParkedCar("MSCP roof car B", new Vector3(73.5f, 6.35f, 47.2f), 90f, new Color(0.85f, 0.85f, 0.82f));
+            PlaceContactShadow("MSCP contact", new Vector3(70f, 0.035f, 46f), new Vector3(17.5f, 0.02f, 12.5f), 0.16f);
         }
 
         /// <summary>

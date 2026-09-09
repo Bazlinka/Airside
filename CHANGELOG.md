@@ -34,8 +34,8 @@ change it describes.
   sits on the ATC tower. 23 has a PAPI ladder; gulf water is glossier; hangar
   is a little larger. Grass deck stops at West Beach so Gulf St Vincent is
   actually visible; Alpha taxi runs the full 23/05 length; first overview pulls
-  back to 268 m; the West Beach ribbon matches the gulf's length. Unity EditMode
-  193/193.
+  back to 268 m; the West Beach ribbon matches the gulf's length; a multi-storey
+  car park sits on the landside. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

@@ -3990,7 +3990,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = 0.78f;
             _sun.shadowBias = 0.035f;
             _sun.shadowNormalBias = 0.4f;
-            QualitySettings.shadowDistance = 260f;
+            QualitySettings.shadowDistance = 320f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
             var fillGo = GameObject.Find("Fill light");
@@ -5056,7 +5056,7 @@ namespace Airside.Presentation
 
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
-            PlaceLevelPad("Apron north expansion", 22f, 38f, 28f, 10f, Shade(pad, 0.98f), concrete, new Vector2(6f, 2.2f));
+            PlaceLevelPad("Apron north expansion", 20f, 36f, 32f, 16f, Shade(pad, 0.98f), concrete, new Vector2(7f, 3.2f));
 
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, 0.02f, 0f), new Vector3(-12f, 0.02f, 9f), 5.4f, asphalt, new Vector2(1.8f, 1.4f));
             CreateTaxiChordPad("Taxiway A1 throat", new Vector3(-28f, 0.02f, 0f), new Vector3(-22f, 0.02f, 0.6f), 5.8f, asphalt, new Vector2(1.6f, 1.2f));
@@ -10055,20 +10055,20 @@ namespace Airside.Presentation
             PlaceCrossRunwayIdents();
 
             var usedStandA = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "stand_stop_a", new Vector3(14f, 0.04f, 16.2f), Quaternion.identity,
+                kit, "stand_stop_a", new Vector3(17f, 0.04f, 14f), Quaternion.identity,
                 new Color(0.95f, 0.85f, 0.2f), out _);
             var usedStandB = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "stand_stop_b", new Vector3(22f, 0.04f, 16.2f), Quaternion.identity,
+                kit, "stand_stop_b", new Vector3(17f, 0.04f, 24f), Quaternion.identity,
                 new Color(0.95f, 0.85f, 0.2f), out _);
             if (!usedStandA)
-                CreateBlock("Stand stop 1", new Vector3(14f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+                CreateBlock("Stand stop 1", new Vector3(17f, 0.04f, 15.9f), new Vector3(3.4f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
             if (!usedStandB)
-                CreateBlock("Stand stop 2", new Vector3(22f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+                CreateBlock("Stand stop 2", new Vector3(17f, 0.04f, 25.9f), new Vector3(3.4f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
             var usedStandC = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "stand_stop_c", new Vector3(30f, 0.04f, 16.2f), Quaternion.identity,
+                kit, "stand_stop_c", new Vector3(17f, 0.04f, 34f), Quaternion.identity,
                 new Color(0.95f, 0.85f, 0.2f), out _);
             if (!usedStandC)
-                CreateBlock("Stand stop 3", new Vector3(30f, 0.04f, 16.2f), new Vector3(2.8f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
+                CreateBlock("Stand stop 3", new Vector3(17f, 0.04f, 35.9f), new Vector3(3.4f, 0.02f, 0.18f), new Color(0.95f, 0.85f, 0.2f));
 
             // Taxi markings are authored along local X (see generate-batch-b-surfaces).
             // Identity rotation keeps them on Taxiway A; Yaw 90 sent them across the apron

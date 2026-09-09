@@ -21,7 +21,9 @@ change it describes.
   Runway wear is spread along the full 23/05 strip. Terminal has an east pier;
   Bravo/Charlie/12-30 have centreline paint; gulf water goes further west; West
   Beach houses sit outside the east fence. Aircraft skin is glossier; 12/30 and
-  Bravo pick up dusk edge lights. Unity EditMode 193/193.
+  Bravo pick up dusk edge lights. Sun shadows reach 320 m so the gulf and CBD
+  still catch the key light. Stand stop bars sit on the real 14/24/34 bays.
+  Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

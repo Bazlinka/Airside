@@ -11664,9 +11664,9 @@ namespace Airside.Presentation
                 (x: -54f, z: 13.8f, yaw: 84f),
                 (x: -39f, z: 13.0f, yaw: 112f)
             };
-            // Prefab GA reads heavier than greybox — three airframes keep the bay calm.
+            // Five airframes fill the west bay; prefab GA is scaled down so they do not read as airliners.
             var hasGaPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_ga_v01");
-            var count = hasGaPrefab ? 3 : spots.Length;
+            var count = spots.Length;
             for (var i = 0; i < count; i++)
             {
                 var spot = spots[i];
@@ -11699,7 +11699,9 @@ namespace Airside.Presentation
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 if (hasGaPrefab)
                     root.localScale = Vector3.one * 1.1f;
+                PolishAircraftSurfaces(root);
                 PolishAircraftGlass(root);
+                EnsurePropDiscs(root);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"GA apron T {i}", new Vector3(spot.x, 0.055f, spot.z + 1.6f), new Vector3(2.2f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));

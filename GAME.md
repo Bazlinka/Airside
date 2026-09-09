@@ -1,16 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — layering/collision/route 100-fix)
-- **Branch:** `cursor/layering-collision-bugfix-100-d7f0` (PR → squash-merge to main)
-- **Do next:** Mac Play audit after merge — quit Unity, `scripts/rebuild-and-open-mac.sh`.
-  Confirm dual commercials no longer wingtip-clip, GT off-field hold is away from A1 entry,
-  taxi-out follows dogleg lead-ins, run-up bay north of Alpha.
-- **In progress / half-done:** Deferred presentation polish from BUGFIX_PASS_100 (puddles,
-  flaps, per-stand GSE props, windsock pause) — optional follow-up.
+- **Last updated:** 2026-09-09 (Cursor — layering/collision 100-fix squash-merged via #170)
+- **Branch:** `main`
+- **Do next:** Mac Play audit — quit Unity, run `scripts/rebuild-and-open-mac.sh`
+  (or `scripts/build-mac.sh` then open `work/builds/Airside.app`). Confirm: dual
+  commercials no wingtip clip at stands 14/24/34; GT off-field Away hold; dogleg
+  taxi-out; run-up bay north of Alpha; soft taxi holds.
+- **In progress / half-done:** Deferred items in `docs/testing/BUGFIX_PASS_100_2026-09-09.md`
+  (puddles, flaps, per-stand GSE, windsock pause) — optional follow-up.
 - **Watch for / assumptions:**
   - Stand Z is now 14/24/34 — third-stand apron pads shifted +8 Z
   - Save schema unchanged
-  - `scripts/test-domain.sh` 177 passed on the fix branch
+  - `scripts/test-domain.sh` 178 passed on the fix branch before merge
 - **Open question for Bailey:** none
 
 ---

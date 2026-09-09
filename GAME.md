@@ -21,8 +21,9 @@
   bays. West freight shed fills the hangar side. Terminal has an upper hall.
   Dual landing lights reach further down the 05 final. An eastern arterial
   leaves through an east gate toward the CBD. Glenelg/Holdfast towers sit
-  south along the gulf. Jetty lamps light both jetties at night. Save schema
-  unchanged.
+  south along the gulf. Jetty lamps light both jetties at night. CBD and
+  Holdfast windows glow at dusk. Climb vapor on 23. Apron is wider west and
+  under the satellite. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

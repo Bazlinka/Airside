@@ -38,7 +38,8 @@ change it describes.
   car park sits on the landside; a freight shed sits west of the hangar; the
   terminal has an extra storey; aircraft throw dual landing beams down the 05
   final; an eastern arterial runs to the CBD; Glenelg towers sit south on the
-  gulf. Unity EditMode 193/193.
+  gulf. CBD and Holdfast windows glow at dusk; aircraft leave climb vapor on
+  23; the apron is wider. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

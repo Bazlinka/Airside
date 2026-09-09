@@ -1090,6 +1090,7 @@ namespace Airside.Presentation
                 UpdateCabinDoor(view, phase);
                 UpdateCabinWindowGlow(view, phase, (float)_simulation.TimeOfDay.Daylight);
                 UpdateEngineHeat(view, phase);
+                UpdateClimbVapor(view, phase, progress);
 
                 if (_cameraController != null
                     && _cameraController.IsFollowing
@@ -1542,6 +1543,33 @@ namespace Airside.Presentation
                     color.a = (0.12f + 0.1f * pulse) * intensity;
                     SetRendererColor(renderer, color);
                 }
+            }
+        }
+
+        private static void UpdateClimbVapor(Transform aircraft, AircraftPhase phase, float progress)
+        {
+            var t = Mathf.Clamp01(progress);
+            var show = phase == AircraftPhase.Departed
+                       || (phase == AircraftPhase.Takeoff && t > 0.48f);
+            var stretch = phase == AircraftPhase.Departed
+                ? 1.35f
+                : Mathf.Lerp(0.55f, 1.15f, (t - 0.48f) / 0.52f);
+            foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == aircraft || !child.name.StartsWith("ClimbVapor", StringComparison.Ordinal))
+                    continue;
+                child.gameObject.SetActive(show);
+                if (!show)
+                    continue;
+                var pulse = 0.9f + 0.1f * Mathf.Sin(
+                    Time.unscaledTime * 2.4f * Mathf.PI * 2f + child.GetInstanceID() * 0.02f);
+                child.localScale = new Vector3(0.28f * pulse, 0.28f * pulse, 3.4f * stretch);
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+                var color = renderer.material.color;
+                color.a = (0.08f + 0.07f * pulse) * stretch;
+                SetRendererColor(renderer, color);
             }
         }
 
@@ -4374,7 +4402,18 @@ namespace Airside.Presentation
                          "glass_pane_l",
                          "glass_pane_r",
                          "glass_front",
-                         "landside_glass"
+                         "landside_glass",
+                         "Terminal hall upper glow",
+                         "Terminal east glow",
+                         "Terminal east concourse glow",
+                         "Freight office glow",
+                         "Holdfast glass A",
+                         "Holdfast glass B",
+                         "Holdfast glass C",
+                         "ATC tower glass N",
+                         "ATC tower glass S",
+                         "ATC tower glass E",
+                         "ATC tower glass W"
                      })
             {
                 var go = GameObject.Find(name);
@@ -4390,7 +4429,10 @@ namespace Airside.Presentation
                                    || name is "glass_front" or "landside_glass"
                                    || name.StartsWith("side_window", StringComparison.Ordinal)
                                    || name.StartsWith("window_", StringComparison.Ordinal)
-                                   || name == "office_window");
+                                   || name == "office_window"
+                                   || name.StartsWith("Holdfast glass", StringComparison.Ordinal)
+                                   || name.StartsWith("ATC tower glass", StringComparison.Ordinal)
+                                   || name.StartsWith("CBD glow", StringComparison.Ordinal));
                 if (!wantsPoint)
                     continue;
 
@@ -4410,6 +4452,15 @@ namespace Airside.Presentation
             }
 
             _windowLights = lights.ToArray();
+
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                    continue;
+                if (!renderer.gameObject.name.StartsWith("CBD glow", StringComparison.Ordinal))
+                    continue;
+                _nightGlowRenderers.Add(renderer);
+            }
 
             // Authored hangar/terminal glass often uses numbered pane names — emission glow only.
             // Do not stamp a PointLight on every glass_pane* (dusk wash / overlapping soup).
@@ -5142,6 +5193,8 @@ namespace Airside.Presentation
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
             PlaceLevelPad("Apron north expansion", 20f, 36f, 32f, 16f, Shade(pad, 0.98f), concrete, new Vector2(7f, 3.2f));
+            PlaceLevelPad("Apron west expansion", 2f, 18f, 22f, 16f, Shade(pad, 0.96f), concrete, new Vector2(5f, 3.6f));
+            PlaceLevelPad("Apron satellite", 62f, 16f, 16f, 14f, Shade(pad, 0.97f), concrete, new Vector2(3.6f, 3.2f));
 
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, 0.02f, 0f), new Vector3(-12f, 0.02f, 9f), 5.4f, asphalt, new Vector2(1.8f, 1.4f));
             CreateTaxiChordPad("Taxiway A1 throat", new Vector3(-28f, 0.02f, 0f), new Vector3(-22f, 0.02f, 0.6f), 5.8f, asphalt, new Vector2(1.6f, 1.2f));
@@ -5967,6 +6020,7 @@ namespace Airside.Presentation
             CreateBlock("Holdfast tower C", new Vector3(-80f, 5.4f, -84f), new Vector3(5.2f, 10.8f, 4.2f), cream);
             CreateBlock("Holdfast glass A", new Vector3(-74f, 8.4f, -93.95f), new Vector3(3.6f, 10f, 0.12f), glass);
             CreateBlock("Holdfast glass B", new Vector3(-66f, 6.8f, -101.75f), new Vector3(3.0f, 8f, 0.12f), glass);
+            CreateBlock("Holdfast glass C", new Vector3(-80f, 5.6f, -86.15f), new Vector3(4.2f, 7.2f, 0.12f), glass);
             PlaceContactShadow("Holdfast contact A", new Vector3(-74f, 0.04f, -92f), new Vector3(5.2f, 0.02f, 4.6f), 0.16f);
             PlaceContactShadow("Holdfast contact B", new Vector3(-66f, 0.04f, -100f), new Vector3(4.6f, 0.02f, 4.2f), 0.14f);
             PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
@@ -7740,11 +7794,22 @@ namespace Airside.Presentation
             CreateBlock("CBD midrise O", new Vector3(154f, 4.6f, 78f), new Vector3(9.2f, 9.2f, 6.8f), stone);
             CreateBlock("CBD midrise K", new Vector3(146f, 3.6f, 86f), new Vector3(8.8f, 7.2f, 6.4f), stone);
             CreateBlock("CBD midrise L", new Vector3(160f, 4.2f, 88f), new Vector3(5.4f, 8.4f, 4.6f), pale);
+            PlaceCbdWindowGlow("CBD glow B", new Vector3(156f, 11f, 106.35f), new Vector3(2.6f, 16f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow E", new Vector3(172f, 8.4f, 112.45f), new Vector3(2.4f, 12f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow H", new Vector3(168f, 12.4f, 116.75f), new Vector3(2.0f, 18f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow M", new Vector3(190f, 8.8f, 108.55f), new Vector3(2.2f, 13f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow A", new Vector3(148f, 9f, 100.15f), new Vector3(3.2f, 12f, 0.12f));
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(8f, 3f), top: 0.12f, height: 0.24f);
             PlaceSuburbanHouses();
+        }
+
+        /// <summary>Warm night window strip on a CBD tower face. Emission is driven by night glow.</summary>
+        private static void PlaceCbdWindowGlow(string name, Vector3 position, Vector3 scale)
+        {
+            CreateBlock(name, position, scale, new Color(1f, 0.82f, 0.45f, 0.55f));
         }
 
         /// <summary>West Beach / Mile End house massing so the city airport is not empty plains.</summary>
@@ -8602,6 +8667,18 @@ namespace Airside.Presentation
                 }
             }
 
+            if (!HasNamedChild(root, "ClimbVapor L"))
+            {
+                ParentBlock(root, "ClimbVapor L", new Vector3(-1.45f, 0.08f, -2.1f), new Vector3(0.28f, 0.28f, 3.2f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
+                ParentBlock(root, "ClimbVapor R", new Vector3(1.45f, 0.08f, -2.1f), new Vector3(0.28f, 0.28f, 3.2f), new Color(0.92f, 0.94f, 0.97f, 0.1f));
+                var vaporL = root.Find("ClimbVapor L");
+                var vaporR = root.Find("ClimbVapor R");
+                if (vaporL != null)
+                    vaporL.gameObject.SetActive(false);
+                if (vaporR != null)
+                    vaporR.gameObject.SetActive(false);
+            }
+
             var source = root.gameObject.AddComponent<AudioSource>();
             source.clip = CreateEngineClip();
             source.loop = true;
@@ -9427,7 +9504,8 @@ namespace Airside.Presentation
                     || n.IndexOf("tire", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("heat", StringComparison.OrdinalIgnoreCase) >= 0
-                    || n.IndexOf("shadow", StringComparison.OrdinalIgnoreCase) >= 0)
+                    || n.IndexOf("shadow", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("vapor", StringComparison.OrdinalIgnoreCase) >= 0)
                     continue;
                 if (n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0

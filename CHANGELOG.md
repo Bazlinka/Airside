@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Regional ARFF facility fidelity reference.** Add a 2048×1152 scene with a
+  fictional compact rescue truck, modest open-bay corrugated shed and larger
+  background-hangar scale cue. A corrective pass removes recognisable branding
+  and restores the faceted miniature language; runtime prefabs unchanged.
+
 - **Airfield surface texture reference.** Add a 2048×1365 board with five
   labelled square top-down material targets for dry grass, apron concrete,
   runway asphalt, coastal sand and wet concrete. Visual tiling guidance only;

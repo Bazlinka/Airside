@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 31 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 32 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -116,7 +116,7 @@
   opening shot; extra foam sits in the 05 shore gap. Mile End houses
   and cars fill the arterial foreground. 05 ALS beads read from 318 m;
   flaps and pylons share the glossy skin; MSCP is three storeys;
-  landside A is larger. Save schema
+  landside A is larger. 23 ALS beads match the 05 ladder. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

@@ -7534,17 +7534,17 @@ namespace Airside.Presentation
         {
             var bar = new Color(0.85f, 0.88f, 0.9f);
             var stem = new Color(0.35f, 0.36f, 0.38f);
-            const int stationCount = 6;
+            const int stationCount = 8;
             const float stationStep = 6.5f;
             for (var i = 0; i < stationCount; i++)
             {
                 var x = VisualThresholdEastX + 8f + i * stationStep;
-                CreateBlock($"ALS east stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
-                CreateBlock($"ALS east centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
+                CreateBlock($"ALS east stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.14f, 0.7f, 0.14f), stem);
+                CreateBlock($"ALS east centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.42f, 0.18f, 0.42f), bar);
                 if (i % 2 == 0)
                 {
-                    CreateBlock($"ALS east bar L {i}", new Vector3(x, 0.7f, -1.5f - i * 0.1f), new Vector3(0.25f, 0.14f, 2.4f + i * 0.16f), bar);
-                    CreateBlock($"ALS east bar R {i}", new Vector3(x, 0.7f, 1.5f + i * 0.1f), new Vector3(0.25f, 0.14f, 2.4f + i * 0.16f), bar);
+                    CreateBlock($"ALS east bar L {i}", new Vector3(x, 0.7f, -1.5f - i * 0.1f), new Vector3(0.28f, 0.14f, 2.6f + i * 0.16f), bar);
+                    CreateBlock($"ALS east bar R {i}", new Vector3(x, 0.7f, 1.5f + i * 0.1f), new Vector3(0.28f, 0.14f, 2.6f + i * 0.16f), bar);
                 }
 
                 var lampGo = new GameObject($"ALS east lamp {i}");
@@ -7554,19 +7554,19 @@ namespace Airside.Presentation
                 var light = lampGo.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.95f, 0.85f);
-                light.range = 14f + i * 0.55f;
+                light.range = 22f + i * 0.8f;
                 light.spotAngle = 42f;
                 light.innerSpotAngle = 18f;
                 light.intensity = 0f;
                 light.shadows = LightShadows.None;
 
-                var lens = CreateBlock($"ALS east lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                var lens = CreateBlock($"ALS east lens {i}", new Vector3(x, 0.92f, 0f), new Vector3(0.48f, 0.16f, 0.48f),
                     new Color(1f, 0.97f, 0.88f));
                 var lensRenderer = lens.GetComponent<Renderer>();
                 if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
                 {
                     lensRenderer.material.EnableKeyword("_EMISSION");
-                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
+                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.8f);
                 }
             }
         }

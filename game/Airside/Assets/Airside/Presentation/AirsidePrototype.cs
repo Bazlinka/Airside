@@ -1424,6 +1424,7 @@ namespace Airside.Presentation
             }
 
             light.enabled = on;
+            SetLampMeshEmission(lamp, new Color(1f, 0.97f, 0.88f), on);
             if (!on)
                 return;
             light.intensity = night ? 8.6f : 5.0f;
@@ -1447,6 +1448,7 @@ namespace Airside.Presentation
             }
 
             light.enabled = on;
+            SetLampMeshEmission(lamp, new Color(1f, 0.94f, 0.78f), on);
         }
 
         private static void EnsureStrobePointLight(Transform lamp, bool on)
@@ -4491,6 +4493,9 @@ namespace Airside.Presentation
                          "Holdfast glass B",
                          "Holdfast glass C",
                          "Holdfast glass D",
+                         "Holdfast glass E",
+                         "Holdfast glass F",
+                         "Holdfast hotel glass",
                          "ATC tower glass N",
                          "ATC tower glass S",
                          "ATC tower glass E",
@@ -4514,6 +4519,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("window_", StringComparison.Ordinal)
                                    || name == "office_window"
                                    || name.StartsWith("Holdfast glass", StringComparison.Ordinal)
+                                   || name.StartsWith("Holdfast hotel glass", StringComparison.Ordinal)
                                    || name.StartsWith("ATC tower glass", StringComparison.Ordinal)
                                    || name.StartsWith("CBD glow", StringComparison.Ordinal)
                                    || name.StartsWith("West Beach surf club glass", StringComparison.Ordinal)
@@ -5310,6 +5316,7 @@ namespace Airside.Presentation
             CreateTaxiChordPad("Taxiway Delta satellite", new Vector3(72f, 0.02f, 16f), new Vector3(64f, 0.02f, 16f), 5.0f, asphalt, new Vector2(1.2f, 1f));
             CreateTaxiChordPad("Taxiway Bravo Charlie", new Vector3(48f, 0.02f, -6f), new Vector3(48f, 0.02f, -9.2f), 5.4f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo 12-30", new Vector3(26f, 0.02f, -9.2f), new Vector3(21f, 0.02f, -17f), 5.6f, asphalt, new Vector2(1.6f, 1.4f));
+            CreateTaxiChordPad("Taxiway Bravo 12-30 E", new Vector3(48f, 0.02f, -9.2f), new Vector3(40f, 0.02f, -22f), 5.4f, asphalt, new Vector2(1.5f, 1.4f));
             CreateTaxiChordPad("Taxiway Bravo W exit", new Vector3(-60f, 0.02f, -9.2f), new Vector3(-60f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo E exit", new Vector3(70f, 0.02f, -9.2f), new Vector3(70f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Alpha W stub", new Vector3(-70f, 0.02f, 9f), new Vector3(-70f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
@@ -5729,6 +5736,12 @@ namespace Airside.Presentation
             PlaceLevelPad("Access road west drop", 12f, 36.2f, 16f, 5.2f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(4f, 1.4f));
             for (var x = 6; x <= 18; x += 2)
                 CreateBlock($"Drop-off zebra {x}", new Vector3(x, 0.06f, 36.2f), new Vector3(0.7f, 0.02f, 3.4f), Color.white);
+            CreateBlock("West drop kerb", new Vector3(12f, 0.08f, 38.7f), new Vector3(16f, 0.14f, 0.32f), Shade(AirsideTheme.Concrete, 0.9f));
+            CreateBlock("West drop canopy", new Vector3(12f, 3.55f, 35.2f), new Vector3(14.5f, 0.16f, 5.2f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("West drop canopy post L", new Vector3(6.2f, 1.7f, 37.4f), new Vector3(0.22f, 3.2f, 0.22f), new Color(0.4f, 0.42f, 0.44f));
+            CreateBlock("West drop canopy post R", new Vector3(17.8f, 1.7f, 37.4f), new Vector3(0.22f, 3.2f, 0.22f), new Color(0.4f, 0.42f, 0.44f));
+            for (var x = 7; x <= 17; x += 5)
+                CreateBlock($"West drop bollard {x}", new Vector3(x, 0.5f, 38.9f), new Vector3(0.18f, 0.95f, 0.18f), new Color(0.45f, 0.46f, 0.48f));
             CreateTaxiChordPad("Access road elbow", new Vector3(26f, 0.02f, 46f), new Vector3(34f, 0.02f, 46f), 6.2f, asphalt, new Vector2(1.8f, 1.2f));
             PlaceLevelPad("Car park", 46f, 46f, 22f, 16f, Shade(AirsideTheme.Concrete, 0.85f), concrete, new Vector2(5f, 4f));
             PlaceLevelPad("Arterial link", 90f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -6142,6 +6155,7 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat A", new Vector3(-118f, -0.45f, 18f), 95f, new Color(0.85f, 0.88f, 0.9f));
             PlaceCoastBoat("Coast boat B", new Vector3(-124f, -0.42f, -8f), 110f, new Color(0.75f, 0.35f, 0.22f));
             PlaceCoastBoat("Coast boat C", new Vector3(-112f, -0.4f, 42f), 80f, new Color(0.92f, 0.9f, 0.82f));
+            PlaceCoastBoat("Coast boat F", new Vector3(-126f, -0.42f, -78f), 102f, new Color(0.88f, 0.86f, 0.78f));
             if (!hasBoatPrefab)
             {
                 PlaceCoastBoat("Coast boat D", new Vector3(-130f, -0.4f, -28f), 100f, new Color(0.2f, 0.35f, 0.45f));
@@ -6183,6 +6197,16 @@ namespace Airside.Presentation
             CreateBlock("Holdfast glass B", new Vector3(-66f, 6.8f, -101.75f), new Vector3(3.0f, 8f, 0.12f), glass);
             CreateBlock("Holdfast glass C", new Vector3(-80f, 5.6f, -86.15f), new Vector3(4.2f, 7.2f, 0.12f), glass);
             CreateBlock("Holdfast glass D", new Vector3(-72f, 5.0f, -59.85f), new Vector3(3.2f, 6.4f, 0.12f), glass);
+            CreateBlock("Holdfast tower E", new Vector3(-62f, 7.2f, -72f), new Vector3(4.6f, 14.4f, 4.0f), pale);
+            CreateBlock("Holdfast tower F", new Vector3(-84f, 9.0f, -108f), new Vector3(3.6f, 18.0f, 3.4f), cream);
+            CreateBlock("Holdfast hotel", new Vector3(-70f, 5.4f, -78f), new Vector3(8.8f, 10.8f, 5.8f), pale);
+            CreateBlock("Holdfast glass E", new Vector3(-62f, 7.4f, -74.05f), new Vector3(3.6f, 9.2f, 0.12f), glass);
+            CreateBlock("Holdfast glass F", new Vector3(-84f, 9.2f, -109.75f), new Vector3(2.8f, 12f, 0.12f), glass);
+            CreateBlock("Holdfast hotel glass", new Vector3(-70f, 5.6f, -80.95f), new Vector3(7.4f, 7.2f, 0.12f), glass);
+            CreateBlock("Glenelg pavilion", new Vector3(-112f, 1.35f, -90f), new Vector3(4.2f, 2.5f, 3.6f), cream);
+            PlaceContactShadow("Holdfast contact E", new Vector3(-62f, 0.04f, -72f), new Vector3(5.4f, 0.02f, 4.8f), 0.14f);
+            PlaceContactShadow("Holdfast contact F", new Vector3(-84f, 0.04f, -108f), new Vector3(4.4f, 0.02f, 4.2f), 0.16f);
+            PlaceContactShadow("Holdfast hotel contact", new Vector3(-70f, 0.04f, -78f), new Vector3(9.6f, 0.02f, 6.6f), 0.16f);
             PlaceContactShadow("Holdfast contact A", new Vector3(-74f, 0.04f, -92f), new Vector3(5.2f, 0.02f, 4.6f), 0.16f);
             PlaceContactShadow("Holdfast contact B", new Vector3(-66f, 0.04f, -100f), new Vector3(4.6f, 0.02f, 4.2f), 0.14f);
             PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
@@ -7714,7 +7738,13 @@ namespace Airside.Presentation
                 (new Vector3(160f, 0f, 50f), 0.95f),
                 (new Vector3(108f, 0f, 40f), 0.88f),
                 (new Vector3(-76f, 0f, -52f), 1.12f),
-                (new Vector3(-68f, 0f, -64f), 1.0f)
+                (new Vector3(-68f, 0f, -64f), 1.0f),
+                (new Vector3(-76f, 0f, 32f), 1.18f),
+                (new Vector3(-75f, 0f, 46f), 1.05f),
+                (new Vector3(-77f, 0f, -22f), 0.98f),
+                (new Vector3(-75f, 0f, -44f), 1.12f),
+                (new Vector3(-76f, 0f, 58f), 1.08f),
+                (new Vector3(-74f, 0f, -80f), 1.15f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers
@@ -8134,7 +8164,9 @@ namespace Airside.Presentation
                 new Vector3(120f, 1.0f, -48f), new Vector3(138f, 1.1f, -38f), new Vector3(148f, 1.05f, 48f),
                 new Vector3(156f, 1.2f, 62f), new Vector3(108f, 0.95f, -28f), new Vector3(160f, 1.08f, 76f),
                 new Vector3(150f, 1.05f, 38f), new Vector3(162f, 1.1f, 54f), new Vector3(174f, 1.0f, 40f),
-                new Vector3(138f, 0.95f, 34f), new Vector3(-58f, 1.0f, -78f), new Vector3(-50f, 1.1f, -88f)
+                new Vector3(138f, 0.95f, 34f), new Vector3(-58f, 1.0f, -78f), new Vector3(-50f, 1.1f, -88f),
+                new Vector3(-56f, 1.05f, -70f), new Vector3(-46f, 1.0f, -82f), new Vector3(-64f, 1.12f, -96f),
+                new Vector3(-52f, 0.95f, -104f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -8500,9 +8532,9 @@ namespace Airside.Presentation
                 {
                     _coastWaterRenderers.Add(renderer);
                     if (renderer.material.HasProperty("_Smoothness"))
-                        renderer.material.SetFloat("_Smoothness", 0.88f);
+                        renderer.material.SetFloat("_Smoothness", 0.92f);
                     if (renderer.material.HasProperty("_Metallic"))
-                        renderer.material.SetFloat("_Metallic", 0.16f);
+                        renderer.material.SetFloat("_Metallic", 0.18f);
                 }
             }
 
@@ -11865,7 +11897,7 @@ namespace Airside.Presentation
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(
-                    new Vector3(VisualRunwayWestX - 52f, 16f, laneOffset),
+                    new Vector3(VisualRunwayWestX - 88f, 20f, laneOffset),
                     new Vector3(VisualThresholdWestX, 1.55f, laneOffset * 0.35f),
                     t),
                 AircraftPhase.Landing => LandingPosition(t, laneOffset),

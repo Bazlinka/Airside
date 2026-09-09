@@ -51,7 +51,9 @@ change it describes.
   Landside has a zebra drop-off in front of the west hall. Aircraft, hangar,
   stairs and GSE are larger; nav/beacon/strobes emit on the mesh. Taxiway Echo
   and a far-east apron widen the satellite; follow approach pulls back over
-  the gulf; first overview is 305 m.
+  the gulf; first overview is 305 m. Approach starts further west over the
+  gulf; Glenelg has a denser Holdfast cluster; the west hall has a drop-off
+  canopy. Landing lamps emit on the mesh.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

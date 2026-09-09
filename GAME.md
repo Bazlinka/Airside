@@ -8,7 +8,9 @@
   tower + east satellite, aircraft on final over the gulf then rolling out to
   A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.26,
   offset −0.70) sit height is unverified. Taxiway Echo / far-east apron and
-  305 m overview are new this pass. EditMode 193/193 earlier this session.
+  305 m overview are new this pass. Gulf final now starts further west; Glenelg
+  Holdfast cluster and west drop-off canopy are new. EditMode 193/193 earlier
+  this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -37,7 +39,9 @@
   A west arrivals hall balances the east pier. Parked GA fills the west ties.
   Landside has a zebra drop-off at the west hall. Aircraft kit is larger with
   emissive nav/strobes. Taxiway Echo and a far-east apron widen the satellite
-  side. Follow approach pulls further back over the gulf. Save schema unchanged.
+  side. Follow approach pulls further back over the gulf. Final starts further
+  west over water. Glenelg has a denser Holdfast hotel cluster; the west hall
+  has a drop-off canopy. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

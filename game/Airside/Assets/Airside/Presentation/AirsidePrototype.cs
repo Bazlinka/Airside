@@ -3966,7 +3966,7 @@ namespace Airside.Presentation
             _sun.shadowNormalBias = 0.4f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
-            var fillGo = GameObject.Find("Fill light");
+            var fillGo = FindBuilt("Fill light");
             _fillLight = fillGo != null ? fillGo.GetComponent<Light>() : null;
             if (_fillLight == null)
                 _fillLight = new GameObject("Fill light").AddComponent<Light>();
@@ -3981,7 +3981,7 @@ namespace Airside.Presentation
         /// <summary>Prefer a Light named "Sun", else an existing DirectionalLight — not a random Spot.</summary>
         private static Light FindPreferredSunLight()
         {
-            var named = GameObject.Find("Sun");
+            var named = FindBuilt("Sun");
             if (named != null)
             {
                 var sun = named.GetComponent<Light>();
@@ -4980,15 +4980,15 @@ namespace Airside.Presentation
         {
             // Warm interior spill at dusk/night — only when the terminal kit did not
             // already ship interior glow meshes (avoid stacking cubes on authored glass).
-            if (GameObject.Find("interior_glow_l") == null
-                && GameObject.Find("interior_glow_r") == null
-                && GameObject.Find("interior_glow_mid") == null)
+            if (FindBuilt("interior_glow_l") == null
+                && FindBuilt("interior_glow_r") == null
+                && FindBuilt("interior_glow_mid") == null)
             {
                 CreateBlock("Terminal window glow L", new Vector3(20f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
                 CreateBlock("Terminal window glow R", new Vector3(32f, 2.35f, 24.5f), new Vector3(5.5f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
             }
 
-            if (GameObject.Find("landside_glass") == null && GameObject.Find("interior_glow_desk") == null)
+            if (FindBuilt("landside_glass") == null && FindBuilt("interior_glow_desk") == null)
                 CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
@@ -5062,19 +5062,19 @@ namespace Airside.Presentation
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" });
             // Sliding door slab only when the hangar kit did not ship panel doors.
-            if (GameObject.Find("Hangar door") == null
-                && GameObject.Find("door_panel_l") == null
-                && GameObject.Find("door_panel_r") == null)
+            if (FindBuilt("Hangar door") == null
+                && FindBuilt("door_panel_l") == null
+                && FindBuilt("door_panel_r") == null)
                 CreateBlock("Hangar door", new Vector3(-20f, 2.0f, 24.6f), new Vector3(8f, 4f, 0.2f), new Color(0.22f, 0.24f, 0.26f));
             // Prefer hangar-kit bay props (workbench / tool cabinet) over greybox densify.
-            if (GameObject.Find("workbench") == null && GameObject.Find("tool_cabinet") == null)
+            if (FindBuilt("workbench") == null && FindBuilt("tool_cabinet") == null)
                 BuildHangarBayInterior();
-            if (GameObject.Find("side_window") == null
-                && GameObject.Find("side_window_b") == null
-                && GameObject.Find("office_window") == null
-                && GameObject.Find("glass_pane") == null
-                && GameObject.Find("glass_pane_l") == null
-                && GameObject.Find("glass_pane_r") == null)
+            if (FindBuilt("side_window") == null
+                && FindBuilt("side_window_b") == null
+                && FindBuilt("office_window") == null
+                && FindBuilt("glass_pane") == null
+                && FindBuilt("glass_pane_l") == null
+                && FindBuilt("glass_pane_r") == null)
                 CreateBlock("Hangar window glow", new Vector3(-20f, 3.2f, 24.55f), new Vector3(4.5f, 1.8f, 0.08f), new Color(1f, 0.75f, 0.35f));
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -5136,9 +5136,9 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(1.5f, 1.2f),
                 surfaceMeshNames: new[] { "shed_body", "porch", "roof", "cladding", "wall_rib", "girth" });
-            if (GameObject.Find("interior_glow") == null
-                && GameObject.Find("window_l") == null
-                && GameObject.Find("window_r") == null)
+            if (FindBuilt("interior_glow") == null
+                && FindBuilt("window_l") == null
+                && FindBuilt("window_r") == null)
                 CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
 
             // Soft wear accent only — large stain sheets were opaque black patches (PNG alpha ignored).
@@ -5234,13 +5234,13 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(2f, 2f));
             CreateBlock("Car park aisle", new Vector3(48f, -0.02f, 46f), new Vector3(16f, 0.08f, 12f), asphalt,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(4f, 3f));
-            var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
+            var hasForecourtKerbs = FindBuilt("Car park kerb N") != null;
             CreateBlock("Drop-off zebra", new Vector3(26f, 0.05f, 34.5f), new Vector3(5.5f, 0.02f, 0.35f), Color.white);
             if (!hasForecourtKerbs)
                 CreateBlock("Drop-off zebra 2", new Vector3(26f, 0.05f, 33.8f), new Vector3(5.5f, 0.02f, 0.28f), Color.white);
-            if (GameObject.Find("Parking sign post") == null)
+            if (FindBuilt("Parking sign post") == null)
                 CreateBlock("Parking sign post", new Vector3(39.5f, 1.1f, 40.5f), new Vector3(0.12f, 2.2f, 0.12f), new Color(0.45f, 0.46f, 0.48f));
-            if (GameObject.Find("Parking sign face") == null)
+            if (FindBuilt("Parking sign face") == null)
                 CreateBlock("Parking sign face", new Vector3(39.5f, 2.0f, 40.5f), new Vector3(0.08f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
 
             CreateBlock("Service lane", new Vector3(-22f, -0.02f, 28.5f), new Vector3(16f, 0.08f, 2.8f), new Color(0.24f, 0.26f, 0.28f),
@@ -5764,7 +5764,7 @@ namespace Airside.Presentation
             var hasCarPrefab = ArtPresentationLoader.HasPresentation("Models/Vehicles/mdl_parked_car_v02.gltf")
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v02")
                                || ArtPresentationLoader.HasPrefab("mdl_parked_car_v01");
-            var hasForecourtKerbsEarly = GameObject.Find("Car park kerb N") != null;
+            var hasForecourtKerbsEarly = FindBuilt("Car park kerb N") != null;
             var bayCarCount = hasCarPrefab ? (hasForecourtKerbsEarly ? 6 : 4) : 8;
             for (var i = 0; i < bayCarCount; i++)
             {
@@ -5797,8 +5797,8 @@ namespace Airside.Presentation
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
 
             // Landside furniture: skip near-terminal bench/trolley when PRP-003 forecourt already placed them.
-            var forecourtPlaced = GameObject.Find("Terminal bench") != null
-                                  || GameObject.Find("Trolley rail") != null;
+            var forecourtPlaced = FindBuilt("Terminal bench") != null
+                                  || FindBuilt("Trolley rail") != null;
             if (!forecourtPlaced)
             {
                 PlaceLuggageTrolley("Luggage trolley A", new Vector3(24f, 0f, 31.5f), -15f);
@@ -5834,7 +5834,7 @@ namespace Airside.Presentation
             PlaceLandsideBench("Access bench", new Vector3(22f, 0f, 40.5f), 90f);
 
             // Painted parking bay chevrons — thin when PRP-003 kerbs already frame the park.
-            var hasForecourtKerbs = GameObject.Find("Car park kerb N") != null;
+            var hasForecourtKerbs = FindBuilt("Car park kerb N") != null;
             var bayPaint = new Color(0.92f, 0.92f, 0.88f);
             if (hasForecourtKerbs)
             {
@@ -6468,9 +6468,9 @@ namespace Airside.Presentation
             var glass = new Color(0.18f, 0.42f, 0.55f);
             var soffit = new Color(0.62f, 0.64f, 0.66f);
             // Terminal kits already carry canopy / landside glass — skip greybox densify.
-            var hasKitCanopy = GameObject.Find("canopy") != null
-                || GameObject.Find("canopy_soffit") != null
-                || GameObject.Find("canopy_beam") != null;
+            var hasKitCanopy = FindBuilt("canopy") != null
+                || FindBuilt("canopy_soffit") != null
+                || FindBuilt("canopy_beam") != null;
             if (!hasKitCanopy)
             {
                 CreateBlock("Terminal canopy slab W", new Vector3(22f, 3.55f, 31.2f), new Vector3(8f, 0.18f, 4.2f), soffit);
@@ -6492,9 +6492,9 @@ namespace Airside.Presentation
                 CreateBlock("Terminal canopy glow W", new Vector3(22.5f, 3.35f, 31.2f), new Vector3(6f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
                 CreateBlock("Terminal canopy glow E", new Vector3(29.5f, 3.35f, 31.25f), new Vector3(5.7f, 0.0576f, 3.104f), new Color(1f, 0.85f, 0.55f));
             }
-            else if (GameObject.Find("canopy_light_l") == null
-                     && GameObject.Find("canopy_light_r") == null
-                     && GameObject.Find("canopy_light_mid") == null)
+            else if (FindBuilt("canopy_light_l") == null
+                     && FindBuilt("canopy_light_r") == null
+                     && FindBuilt("canopy_light_mid") == null)
             {
                 CreateBlock("Terminal canopy glow W", new Vector3(22.5f, 3.35f, 31.2f), new Vector3(6f, 0.06f, 3.2f), new Color(1f, 0.85f, 0.55f));
                 CreateBlock("Terminal canopy glow E", new Vector3(29.5f, 3.35f, 31.25f), new Vector3(5.7f, 0.0576f, 3.104f), new Color(1f, 0.85f, 0.55f));
@@ -7732,9 +7732,9 @@ namespace Airside.Presentation
         private static void BuildStandMarking(float x, float z, string name)
         {
             // Markings kit already paints stand_stop + digits + chevrons — skip yellow densify.
-            if (GameObject.Find("stand_stop_a") != null
-                || GameObject.Find("stand_stop_b") != null
-                || GameObject.Find("stand_stop_c") != null)
+            if (FindBuilt("stand_stop_a") != null
+                || FindBuilt("stand_stop_b") != null
+                || FindBuilt("stand_stop_c") != null)
                 return;
 
             CreateBlock(name, new Vector3(x, 0.08f, z), new Vector3(0.18f, 0.03f, 4.2f), new Color(0.96f, 0.77f, 0.12f));
@@ -8452,6 +8452,21 @@ namespace Airside.Presentation
 
         private static bool HasNamedChild(Transform root, string name) =>
             AirsideNamedChildren.HasName(root, name);
+
+        private static GameObject FindBuilt(string name)
+        {
+            var found = AirsideSceneIndex.FindGameObject(name);
+            if (found != null)
+                return found;
+            if (AirsideSceneIndex.IsKnownMissing(name))
+                return null;
+            found = UnityEngine.GameObject.Find(name);
+            if (found != null)
+                AirsideSceneIndex.Remember(found);
+            else
+                AirsideSceneIndex.RememberMiss(name);
+            return found;
+        }
 
         private static Color GetRendererColor(Renderer renderer)
         {
@@ -9732,9 +9747,9 @@ namespace Airside.Presentation
 
             // Stand lead-in dashes — skip when markings kit already placed stand stops
             // (otherwise landing/follow cameras see a carpet of yellow cubes).
-            if (GameObject.Find("stand_stop_a") == null
-                && GameObject.Find("stand_stop_b") == null
-                && GameObject.Find("stand_stop_c") == null)
+            if (FindBuilt("stand_stop_a") == null
+                && FindBuilt("stand_stop_b") == null
+                && FindBuilt("stand_stop_c") == null)
             {
                 foreach (var standX in new[] { 14f, 22f, 30f })
                 {
@@ -10144,9 +10159,9 @@ namespace Airside.Presentation
 
             // Stand lead-in / box paint — skip when markings kit already placed stand stops
             // (avoid double-painted bays next to authored threshold/TDZ).
-            if (GameObject.Find("stand_stop_a") == null
-                && GameObject.Find("stand_stop_b") == null
-                && GameObject.Find("stand_stop_c") == null)
+            if (FindBuilt("stand_stop_a") == null
+                && FindBuilt("stand_stop_b") == null
+                && FindBuilt("stand_stop_c") == null)
             {
                 foreach (var z in new[] { 14f, 20f, 26f })
                 {

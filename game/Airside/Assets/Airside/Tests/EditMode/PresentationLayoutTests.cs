@@ -149,6 +149,8 @@ namespace Airside.Tests
             Assert.That(AirsideSceneIndex.Find(null), Is.Null);
             Assert.That(AirsideSceneIndex.Find(""), Is.Null);
             Assert.That(AirsideSceneIndex.FindGameObject("definitely-not-in-scene-index"), Is.Null);
+            AirsideSceneIndex.RememberMiss("known-missing-airside-name");
+            Assert.That(AirsideSceneIndex.IsKnownMissing("known-missing-airside-name"), Is.True);
         }
 
         [Test]

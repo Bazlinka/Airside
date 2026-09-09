@@ -45,7 +45,10 @@ namespace Airside.Presentation
 
             AirsidePrefabAddressables.EnsureRegistered();
             if (TryInstantiateAddressable(prefabKey, out root))
+            {
+                AirsideSceneIndex.Remember(root);
                 return true;
+            }
 
             var prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
             if (prefab != null)
@@ -53,6 +56,7 @@ namespace Airside.Presentation
                 var instance = UnityEngine.Object.Instantiate(prefab);
                 instance.name = prefabKey;
                 root = instance.transform;
+                AirsideSceneIndex.Remember(root);
                 return true;
             }
 

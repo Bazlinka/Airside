@@ -12,8 +12,8 @@ change it describes.
   share one UnlitSky material; birds, trees, clouds, binder and greybox props
   use `sharedMaterial`. Greybox fuel pad is one slab; landside bay/access paint
   is combined; kit ALS laterals and extra runway mid-dashes are skipped.
-  High remains 4× MSAA + SMAA. Decision 0029. `scripts/test-domain.sh` pending
-  in this commit's evidence.
+  High remains 4× MSAA + SMAA. Decision 0029. Evidence: brace depth 0;
+  `AirsidePrototype.cs` 258 `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime airfield performance (P0–P2).** Retired the tile-built operational
   airfield and terrain-kit cube dump in favour of combined runway/taxi/apron

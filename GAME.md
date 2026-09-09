@@ -96,10 +96,10 @@ supplementary check, not a replacement for a real Unity run before merging.
 - Runtime airfield performance **P0–P2 plus GPU-state on `cursor/game-performance-pass-c1bb`**:
   combined operational pads (6) replace 745 Terrain11 tiles; textures/materials
   cached; Addressables on demand; High/Medium ladder; probe bands. Per-frame
-  `Renderer.material` clones removed (MPB reads); one scene index instead of
+  `Renderer.material` clones removed (MPB reads); scene index instead of
   Awake/Update Finds; shared star/bird materials; combined fuel pad and landside
-  paint; ALS kit laterals dropped. Decision 0029. Mac Play visual-first-frame
-  still required.
+  paint; ALS kit laterals dropped. `AirsidePrototype.cs` 258 `CreateBlock` sites,
+  brace depth 0. Decision 0029. Mac Play visual-first-frame still required.
 
 - Layering / collision / route **100-fix** on `cursor/layering-collision-bugfix-100-d7f0`: dogleg lead-ins, apron throat, stand spacing 14/24/34, GT off-field + run-up bay, selective yield, `scripts/test-domain.sh` **177 passed** (`CollisionPass100Tests`).
 

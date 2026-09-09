@@ -12,6 +12,7 @@ namespace Airside.Presentation
     public static class AirsideSceneIndex
     {
         private static readonly Dictionary<string, Transform> ByName = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> Missing = new(StringComparer.Ordinal);
 
         public static Renderer[] Renderers { get; private set; } = Array.Empty<Renderer>();
 
@@ -21,7 +22,9 @@ namespace Airside.Presentation
         {
             if (transform == null)
                 return;
-            ByName.TryAdd(transform.gameObject.name, transform);
+            var name = transform.gameObject.name;
+            ByName[name] = transform;
+            Missing.Remove(name);
         }
 
         public static void Remember(GameObject go)
@@ -36,6 +39,7 @@ namespace Airside.Presentation
             Lights = Object.FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             var transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             ByName.Clear();
+            Missing.Clear();
             for (var i = 0; i < transforms.Length; i++)
             {
                 var transform = transforms[i];
@@ -53,6 +57,15 @@ namespace Airside.Presentation
         }
 
         public static GameObject FindGameObject(string name) => Find(name)?.gameObject;
+
+        public static bool IsKnownMissing(string name) =>
+            !string.IsNullOrEmpty(name) && Missing.Contains(name);
+
+        public static void RememberMiss(string name)
+        {
+            if (!string.IsNullOrEmpty(name))
+                Missing.Add(name);
+        }
 
         public static Light FindLight(string name)
         {

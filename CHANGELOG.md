@@ -120,6 +120,8 @@ change it describes.
   aircraft ground shadows match the 1.38 kit. 12/30 aiming, TDZ,
   threshold bars and PAPI match 23/05 from 318 m; extra 23/05
   TDZ fills the long strip; extra clouds sit over gulf and Hills.
+  T1 landside curve is taller and longer; a wave sits under the
+  ADL letters; a kerbside coach waits east of the porte-cochere.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

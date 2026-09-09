@@ -5642,11 +5642,11 @@ namespace Airside.Presentation
             CreateBlock("Terminal east roof plant", new Vector3(57.2f, 7.55f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 7.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
             CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
-            CreateBlock("Terminal west glass", new Vector3(12f, 2.25f, 32.65f), new Vector3(10.4f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal west glass", new Vector3(12f, 3.55f, 32.65f), new Vector3(10.4f, 5.0f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Terminal west roof", new Vector3(12f, 4.25f, 29.2f), new Vector3(13.1f, 0.22f, 7.4f), new Color(0.5f, 0.53f, 0.56f));
-            CreateBlock("Terminal west glow", new Vector3(12f, 2.15f, 32.5f), new Vector3(8.8f, 1.3f, 0.08f), new Color(1f, 0.8f, 0.42f));
-            CreateBlock("Terminal west ident", new Vector3(12f, 4.4f, 32.6f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
-            CreateBlock("Terminal west ident accent", new Vector3(12f, 4.4f, 32.7f), new Vector3(7.2f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
+            CreateBlock("Terminal west glow", new Vector3(12f, 3.35f, 32.5f), new Vector3(8.8f, 3.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
+            CreateBlock("Terminal west ident", new Vector3(12f, 7.15f, 32.72f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
+            CreateBlock("Terminal west ident accent", new Vector3(12f, 7.15f, 32.82f), new Vector3(7.2f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
             CreateBlock("Terminal west link", new Vector3(18.4f, 2.0f, 28.2f), new Vector3(4.8f, 3.5f, 5.0f), new Color(0.64f, 0.68f, 0.71f));
             CreateBlock("Terminal west hall upper", new Vector3(12f, 5.45f, 29.3f), new Vector3(10.8f, 1.9f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal west hall upper glass", new Vector3(12f, 5.5f, 32.05f), new Vector3(9.2f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
@@ -5655,6 +5655,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal west roof plant", new Vector3(9.2f, 7.45f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
             BuildAdelaideLandsideCurve();
+            BuildAdelaideLandsideWaveRoof();
             BuildAdelaideLandsidePorteCochere();
             PlaceAdelaideLandsideIdentLetters();
             BuildAdelaideFreightShed();
@@ -6576,6 +6577,7 @@ namespace Airside.Presentation
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
             PlaceParkedCar("West drop car", new Vector3(8.2f, 0f, 36.2f), 0f, carColors[1]);
             PlaceParkedCar("West drop taxi", new Vector3(15.6f, 0f, 36.4f), -6f, new Color(0.92f, 0.78f, 0.15f));
+            PlaceLandsideCoach();
             PlaceParkedCar("Eastern arterial car A", new Vector3(118f, 0f, 43.6f), 90f, carColors[3]);
             PlaceParkedCar("Eastern arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
             PlaceParkedCar("Eastern arterial car C", new Vector3(132f, 0f, 43.8f), 88f, carColors[4]);
@@ -6833,6 +6835,62 @@ namespace Airside.Presentation
 
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        /// <summary>
+        /// Kerbside coach east of the porte-cochere so the opening shot sees a city
+        /// drop-off, not only compact cars. Licensed apron-bus kit; not on the sim network.
+        /// </summary>
+        private static void PlaceLandsideCoach()
+        {
+            var kit = PreferArtKit(
+                "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
+                "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf");
+            Transform root = null;
+            var body = new Color(0.18f, 0.38f, 0.52f);
+            if (!string.IsNullOrEmpty(kit)
+                && ArtPresentationLoader.TryInstantiate(
+                    kit,
+                    null,
+                    out root,
+                    kitName => kitName switch
+                    {
+                        "bus_body" or "cab" or "tank" => "Landside coach body",
+                        _ => $"Landside coach {kitName}"
+                    },
+                    kitName =>
+                    {
+                        if (kitName.StartsWith("glass", StringComparison.Ordinal)
+                            || kitName.Contains("window", StringComparison.Ordinal))
+                            return new Color(0.18f, 0.35f, 0.48f, 0.42f);
+                        if (kitName.Contains("wheel", StringComparison.Ordinal)
+                            || kitName.Contains("tire", StringComparison.Ordinal))
+                            return new Color(0.12f, 0.12f, 0.13f);
+                        return body;
+                    }))
+            {
+                root.name = "Landside coach";
+                OrientPlusXKitToForward(root);
+            }
+            else
+            {
+                root = new GameObject("Landside coach").transform;
+                ParentBlock(root, "Landside coach body", new Vector3(0f, 0.85f, 0f), new Vector3(2.2f, 1.55f, 7.4f), body);
+                ParentBlock(root, "Landside coach glass", new Vector3(0f, 1.25f, 2.4f), new Vector3(1.9f, 0.7f, 0.08f),
+                    new Color(0.18f, 0.35f, 0.48f, 0.42f));
+                ParentBlock(root, "Landside coach stripe", new Vector3(0f, 0.55f, 0f), new Vector3(2.25f, 0.18f, 7.2f),
+                    new Color(0.86f, 0.5f, 0.16f));
+            }
+
+            // East of the A monument (34, 37.4) and porte, on the drop-off kerb.
+            root.position = new Vector3(41.4f, 0f, 36.35f);
+            root.rotation = Quaternion.Euler(0f, 90f, 0f);
+            PlaceContactShadow("Landside coach contact", new Vector3(41.4f, 0.035f, 36.35f), new Vector3(7.8f, 0.02f, 2.6f), 0.14f);
         }
 
         private static void TintParkedCarBody(Transform root, Color body)
@@ -7947,20 +8005,39 @@ namespace Airside.Presentation
             var glass = new Color(0.16f, 0.4f, 0.52f, 0.5f);
             var mullion = new Color(0.72f, 0.75f, 0.78f);
             var soffit = new Color(0.52f, 0.55f, 0.58f);
-            for (var i = -3; i <= 5; i++)
+            for (var i = -5; i <= 6; i++)
             {
                 var yaw = i * 7.5f;
                 var x = 26f + i * 2.4f;
                 var z = 32.95f - Mathf.Abs(i) * 0.32f;
-                CreateBlock($"T1 curve glass {i}", new Vector3(x, 3.65f, z), new Vector3(2.55f, 5.6f, 0.12f), glass)
+                CreateBlock($"T1 curve glass {i}", new Vector3(x, 3.85f, z), new Vector3(2.55f, 6.0f, 0.12f), glass)
                     .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                CreateBlock($"T1 curve mullion {i}", new Vector3(x, 3.65f, z - 0.08f), new Vector3(0.12f, 5.75f, 0.16f), mullion)
+                CreateBlock($"T1 curve mullion {i}", new Vector3(x, 3.85f, z - 0.08f), new Vector3(0.12f, 6.15f, 0.16f), mullion)
                     .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
 
-            CreateBlock("T1 curve roof", new Vector3(28.4f, 6.55f, 32.15f), new Vector3(20.4f, 0.22f, 3.6f), soffit);
-            CreateBlock("T1 curve glow", new Vector3(28.4f, 3.45f, 33.18f), new Vector3(17.6f, 3.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            PlaceContactShadow("T1 curve contact", new Vector3(28.4f, 0.035f, 32.4f), new Vector3(20.8f, 0.02f, 4.4f), 0.12f);
+            CreateBlock("T1 curve roof", new Vector3(27.2f, 6.95f, 32.15f), new Vector3(26.8f, 0.22f, 3.6f), soffit);
+            CreateBlock("T1 curve glow", new Vector3(27.2f, 3.65f, 33.18f), new Vector3(24.2f, 3.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            PlaceContactShadow("T1 curve contact", new Vector3(27.2f, 0.035f, 32.4f), new Vector3(27.2f, 0.02f, 4.4f), 0.12f);
+        }
+
+        /// <summary>
+        /// Landside wave under the ADL letters so yaw 132 sees a city roof, not a
+        /// flat curve slab. Stays south of the letters (z 33.52) so it does not hide them.
+        /// </summary>
+        private static void BuildAdelaideLandsideWaveRoof()
+        {
+            var soffit = new Color(0.52f, 0.55f, 0.58f);
+            var pale = new Color(0.78f, 0.8f, 0.82f);
+            for (var i = -4; i <= 4; i++)
+            {
+                var x = 26f + i * 2.55f;
+                var crest = 7.35f + Mathf.Sin((i + 4) * 0.62f) * 0.7f;
+                CreateBlock($"T1 landside wave {i}", new Vector3(x, crest, 31.95f), new Vector3(2.7f, 0.32f, 2.6f),
+                    i % 2 == 0 ? soffit : pale);
+            }
+
+            CreateBlock("T1 landside wave fascia", new Vector3(26f, 7.15f, 33.18f), new Vector3(21.6f, 0.24f, 0.18f), soffit);
         }
 
         /// <summary>
@@ -7993,7 +8070,7 @@ namespace Airside.Presentation
                 return;
 
             var ochre = new Color(0.86f, 0.5f, 0.16f);
-            const float y = 8.05f;
+            const float y = 8.55f;
             const float z = 33.52f;
             CreateBlock("Ident landside A L", new Vector3(21.35f, y, z), new Vector3(0.42f, 2.9f, 0.26f), ochre);
             CreateBlock("Ident landside A R", new Vector3(23.35f, y, z), new Vector3(0.42f, 2.9f, 0.26f), ochre);

@@ -35,6 +35,7 @@ namespace Airside.Presentation
         private Light _aerodromeBeacon;
         private ReflectionProbe _apronProbe;
         private ReflectionProbe _terminalProbe;
+        private ReflectionProbe _gulfProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private Light _fuelFarmLight;
@@ -205,6 +206,7 @@ namespace Airside.Presentation
             _runwayEdgeLights = BuildRunwayEdgePointLights();
             _apronProbe = BuildApronReflectionProbe();
             _terminalProbe = BuildTerminalReflectionProbe();
+            _gulfProbe = BuildGulfReflectionProbe();
             _aerodromeBeacon = BuildAerodromeBeacon();
             _rainRoot = BuildRainRoot();
             _touchdownSmoke = BuildTouchdownSmoke();
@@ -4433,6 +4435,13 @@ namespace Airside.Presentation
                     _terminalProbe.RenderProbe();
             }
 
+            if (_gulfProbe != null)
+            {
+                _gulfProbe.intensity = Mathf.Lerp(1.2f, 0.95f, daylight);
+                if (daylight < 0.45f && Time.frameCount % 90 == 0)
+                    _gulfProbe.RenderProbe();
+            }
+
             UpdateAirfieldNavLights(daylight);
             UpdateNightGlow(daylight);
             UpdateAerodromeBeacon(daylight);
@@ -5084,6 +5093,31 @@ namespace Airside.Presentation
             probe.shadowDistance = 42f;
             probe.nearClipPlane = 0.3f;
             probe.farClipPlane = 140f;
+            probe.RenderProbe();
+            return probe;
+        }
+
+        /// <summary>
+        /// Realtime probe over Gulf St Vincent so the opening-shot water reflects
+        /// sky, ALS piers and the West Beach field instead of a flat skybox sample.
+        /// </summary>
+        private static ReflectionProbe BuildGulfReflectionProbe()
+        {
+            var go = new GameObject("Gulf reflection probe");
+            go.transform.position = new Vector3(-140f, 8f, 8f);
+            var probe = go.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            probe.resolution = 128;
+            probe.size = new Vector3(200f, 48f, 320f);
+            probe.center = Vector3.zero;
+            probe.intensity = 1.1f;
+            probe.importance = 2;
+            probe.boxProjection = true;
+            probe.shadowDistance = 80f;
+            probe.nearClipPlane = 0.5f;
+            probe.farClipPlane = 520f;
             probe.RenderProbe();
             return probe;
         }
@@ -10242,6 +10276,8 @@ namespace Airside.Presentation
                         || n.IndexOf("spinner", StringComparison.OrdinalIgnoreCase) >= 0
                             ? 0.48f
                             : 0.26f);
+                AirsideMaterialLibrary.EnsureDetailMaps(renderer.material,
+                    AirsideMaterialLibrary.SurfaceKind.AircraftSkin);
             }
         }
 
@@ -11827,16 +11863,16 @@ namespace Airside.Presentation
             PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(42.5f, 0f, 20.2f), 175f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(8.2f, 0f, 22.4f), 195f, silhouetteOnly: true);
-            PlaceBeltLoader(serviceKit, new Vector3(23.2f, 0f, 19.0f), 185f, silhouetteOnly: true);
-            PlaceBeltLoader(serviceKit, new Vector3(23.2f, 0f, 29.0f), 175f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(26.8f, 0f, 19.0f), 185f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(26.8f, 0f, 29.0f), 175f, silhouetteOnly: true);
             PlaceBaggageDolly(kit, new Vector3(6.4f, 0f, 19.6f));
             PlaceBaggageDolly(kit, new Vector3(44f, 0f, 16.8f));
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
             PlaceBaggageDolly(kit, new Vector3(-24.5f, 0f, 16.4f));
-            PlaceBaggageDolly(kit, new Vector3(25.4f, 0f, 18.2f));
-            PlaceBaggageDolly(kit, new Vector3(25.4f, 0f, 28.2f));
-            PlaceBaggageDolly(kit, new Vector3(27.2f, 0f, 19.0f));
+            PlaceBaggageDolly(kit, new Vector3(28.4f, 0f, 18.2f));
+            PlaceBaggageDolly(kit, new Vector3(28.4f, 0f, 28.2f));
+            PlaceBaggageDolly(kit, new Vector3(30.0f, 0f, 19.0f));
 
             BuildApronSafetyProps();
             BuildFuelFarm();

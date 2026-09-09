@@ -423,6 +423,51 @@ namespace Airside.Presentation
         public static float DryBumpScale(SurfaceKind kind) => GetProfile(kind).BumpScale;
 
         /// <summary>
+        /// Attach bump / AO / mask maps without replacing albedo, so licensed
+        /// liveries keep their decal while the airframe still reads as painted metal.
+        /// </summary>
+        public static void EnsureDetailMaps(Material material, SurfaceKind kind)
+        {
+            if (material == null || kind == SurfaceKind.UnlitSky)
+                return;
+            EnsureSharedMaps();
+            EnsureAuthoredMaps();
+            var profile = GetProfile(kind);
+            var tiling = ResolveDefaultTiling(kind);
+            if (material.HasProperty("_EnvironmentReflections"))
+                material.SetFloat("_EnvironmentReflections", 1f);
+            if (material.HasProperty("_SpecularHighlights"))
+                material.SetFloat("_SpecularHighlights", 1f);
+
+            var normal = ResolveNormal(kind);
+            if (normal != null && material.HasProperty("_BumpMap") && material.GetTexture("_BumpMap") == null)
+            {
+                material.SetTexture("_BumpMap", normal);
+                SetKeyword(material, "_NORMALMAP", true);
+                if (material.HasProperty("_BumpScale"))
+                    material.SetFloat("_BumpScale", profile.BumpScale);
+                material.SetTextureScale("_BumpMap", tiling);
+            }
+
+            var ao = ResolveAo(kind);
+            if (ao != null && material.HasProperty("_OcclusionMap") && material.GetTexture("_OcclusionMap") == null)
+            {
+                material.SetTexture("_OcclusionMap", ao);
+                if (material.HasProperty("_OcclusionStrength"))
+                    material.SetFloat("_OcclusionStrength", Mathf.Clamp01(profile.Occlusion));
+                material.SetTextureScale("_OcclusionMap", tiling * 0.5f);
+            }
+
+            if (AuthoredMasks.TryGetValue(kind, out var mask) && mask != null
+                && material.HasProperty("_MetallicGlossMap")
+                && material.GetTexture("_MetallicGlossMap") == null)
+            {
+                material.SetTexture("_MetallicGlossMap", mask);
+                SetKeyword(material, "_METALLICSPECGLOSSMAP", true);
+            }
+        }
+
+        /// <summary>
         /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
         /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
         /// sheen so rain reads on URP Lit without authoring separate wet mats.

@@ -5575,7 +5575,7 @@ namespace Airside.Presentation
                 () =>
                 {
                     CreateBlock("Terminal", new Vector3(26f, 2.6f, 27f), new Vector3(28f, 5.2f, 6.2f), new Color(0.68f, 0.72f, 0.75f));
-                    CreateBlock("Terminal glass", new Vector3(26f, 2.8f, 23.85f), new Vector3(22f, 2.8f, 0.12f), new Color(0.16f, 0.38f, 0.5f),
+                    CreateBlock("Terminal glass", new Vector3(26f, 2.8f, 23.85f), new Vector3(22f, 2.8f, 0.12f), new Color(0.16f, 0.38f, 0.5f, 0.48f),
                         "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(4f, 1.8f));
                     CreateBlock("Terminal end L", new Vector3(11.6f, 2.4f, 27f), new Vector3(1.4f, 4.8f, 6.4f), new Color(0.62f, 0.66f, 0.69f));
                     CreateBlock("Terminal end R", new Vector3(40.4f, 2.4f, 27f), new Vector3(1.4f, 4.8f, 6.4f), new Color(0.62f, 0.66f, 0.69f));
@@ -5615,7 +5615,7 @@ namespace Airside.Presentation
             PlaceAdelaideIdentLetters();
             // East pier on the expanded apron so the landside matches the bigger field.
             CreateBlock("Terminal east wing", new Vector3(40f, 2.15f, 24.5f), new Vector3(10f, 4.3f, 7.4f), new Color(0.66f, 0.7f, 0.73f));
-            CreateBlock("Terminal east glass", new Vector3(40f, 2.35f, 20.85f), new Vector3(8f, 2.4f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal east glass", new Vector3(40f, 2.35f, 20.85f), new Vector3(8f, 2.4f, 0.12f), new Color(0.16f, 0.38f, 0.5f, 0.48f));
             CreateBlock("Terminal east roof", new Vector3(40f, 4.45f, 24.5f), new Vector3(10.6f, 0.22f, 7.8f), new Color(0.52f, 0.55f, 0.58f));
             CreateBlock("Terminal link", new Vector3(34.4f, 2.0f, 26.2f), new Vector3(5.2f, 3.6f, 5.2f), new Color(0.64f, 0.68f, 0.71f));
             CreateBlock("Terminal east glow", new Vector3(40f, 2.2f, 21.0f), new Vector3(6.5f, 1.4f, 0.08f), new Color(1f, 0.82f, 0.45f));
@@ -5623,7 +5623,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal skybridge", new Vector3(50.5f, 3.5f, 24.2f), new Vector3(9.2f, 1.5f, 2.6f), new Color(0.6f, 0.64f, 0.67f));
             CreateBlock("Terminal skybridge glass", new Vector3(50.5f, 3.55f, 25.45f), new Vector3(8.4f, 1.0f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal east concourse", new Vector3(60f, 1.95f, 22.4f), new Vector3(12f, 3.9f, 7.2f), new Color(0.64f, 0.68f, 0.71f));
-            CreateBlock("Terminal east concourse glass", new Vector3(60f, 2.15f, 18.85f), new Vector3(10f, 2.3f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal east concourse glass", new Vector3(60f, 2.15f, 18.85f), new Vector3(10f, 2.3f, 0.12f), new Color(0.16f, 0.38f, 0.5f, 0.48f));
             CreateBlock("Terminal east concourse roof", new Vector3(60f, 4.0f, 22.4f), new Vector3(12.6f, 0.22f, 7.6f), new Color(0.5f, 0.53f, 0.56f));
             CreateBlock("Terminal east concourse glow", new Vector3(60f, 2.05f, 19.0f), new Vector3(8.5f, 1.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal east ident", new Vector3(60f, 4.15f, 18.95f), new Vector3(6.4f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
@@ -5646,7 +5646,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal east roof plant", new Vector3(57.2f, 7.55f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 7.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
             CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
-            CreateBlock("Terminal west glass", new Vector3(12f, 3.55f, 32.65f), new Vector3(10.4f, 5.0f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal west glass", new Vector3(12f, 3.55f, 32.65f), new Vector3(10.4f, 5.0f, 0.12f), new Color(0.16f, 0.38f, 0.5f, 0.48f));
             CreateBlock("Terminal west roof", new Vector3(12f, 4.25f, 29.2f), new Vector3(13.1f, 0.22f, 7.4f), new Color(0.5f, 0.53f, 0.56f));
             CreateBlock("Terminal west glow", new Vector3(12f, 3.35f, 32.5f), new Vector3(8.8f, 3.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             CreateBlock("Terminal west ident", new Vector3(12f, 7.15f, 32.72f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));

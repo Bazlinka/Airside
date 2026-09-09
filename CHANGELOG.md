@@ -126,6 +126,8 @@ change it describes.
   spinners catch the sun; parked nav lamps stay lit. The
   terminal reflection probe sits on the landside curve. An
   ochre fascia bands the landside glass and west hall.
+  West and east hall glass uses the glass material instead of
+  the water heuristic.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

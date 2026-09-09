@@ -343,6 +343,7 @@ namespace Airside.Presentation
             }
 
             var material = new Material(shader) { color = color };
+            material.enableInstancing = true;
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", color);
 
@@ -715,14 +716,7 @@ namespace Airside.Presentation
 
             try
             {
-                var bytes = File.ReadAllBytes(fullPath);
-                var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
-                if (!texture.LoadImage(bytes))
-                    return null;
-                texture.name = Path.GetFileNameWithoutExtension(artRelativePath);
-                texture.wrapMode = TextureWrapMode.Repeat;
-                texture.filterMode = FilterMode.Bilinear;
-                return texture;
+                return AirsideArtTextures.Load(artRelativePath, linear: linear);
             }
             catch
             {

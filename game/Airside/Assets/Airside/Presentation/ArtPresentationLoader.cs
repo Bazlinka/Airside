@@ -34,10 +34,7 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(prefabKey))
                 return false;
-            AirsidePrefabAddressables.EnsureRegistered();
-            if (AddressablesKeyExists(prefabKey))
-                return true;
-            return Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}") != null;
+            return TryLoadPrefabAsset(prefabKey, out _);
         }
 
         public static bool TryInstantiatePrefab(string prefabKey, out Transform root)
@@ -48,7 +45,10 @@ namespace Airside.Presentation
 
             AirsidePrefabAddressables.EnsureRegistered();
             if (TryInstantiateAddressable(prefabKey, out root))
+            {
+                AirsideSceneIndex.Remember(root);
                 return true;
+            }
 
             var prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
             if (prefab != null)
@@ -56,6 +56,7 @@ namespace Airside.Presentation
                 var instance = UnityEngine.Object.Instantiate(prefab);
                 instance.name = prefabKey;
                 root = instance.transform;
+                AirsideSceneIndex.Remember(root);
                 return true;
             }
 
@@ -124,7 +125,7 @@ namespace Airside.Presentation
                 }
 
                 var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
-                var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
+                var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);
 
                 // Preserve FBX/authored materials that already carry albedo maps — but only
                 // when the mesh can sample them. UV-less meshes must not keep a textured
@@ -165,7 +166,7 @@ namespace Airside.Presentation
             try
             {
                 var key = AddressablesKeyPrefix + prefabKey;
-                if (AddressablesKeyExists(prefabKey))
+                if (AirsidePrefabAddressables.HasPackagedCatalog && AddressablesKeyExists(prefabKey))
                 {
                     var handle = Addressables.LoadAssetAsync<GameObject>(key);
                     prefab = handle.WaitForCompletion();

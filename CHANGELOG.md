@@ -5,6 +5,63 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/
+  bollards, airside planter strip, luggage trolleys, landside benches, fence
+  corners, pedestrian gates, vehicle-gate furniture, chocks, belt loader, tug
+  towbar fallback and windsock fabric stamp one cached combined mesh (with
+  per-part local offsets where poses differ). Dome/sun/moon/stars/foam/spray/
+  puddles/smoke/engine audio cache renderers instead of `GetComponent` every
+  frame. Ops `antenna_dish` stays off the static batch so it still rotates.
+  High stays 4× MSAA + SMAA, four cascades, 12 additional lights, two probes.
+  Decision 0029. Evidence: brace depth 0; `scripts/test-domain.sh` **178 passed**.
+
+- **Runtime kit combine + static-batch skip.** ALS stations, REIL, cones,
+  barriers, signs, FOD bins, dollies, windsock poles, stairs and GPU carts
+  stamp one cached combined mesh per instance. Greybox shrubs/trees/clouds
+  share combined primitive meshes. Cloud umbras keep drifting when tint is
+  unchanged; bird wings are cached. Static combine skips GSE, clouds,
+  birds, boats and foam so those transforms still move. High stays 4× MSAA
+  + SMAA, four cascades, 12 additional lights, two probes. Decision 0029.
+  Evidence: brace depth 0; `AirsidePrototype.cs` 255 `CreateBlock` sites;
+  `scripts/test-domain.sh` **178 passed**.
+
+- **Runtime kit combine + deferred audio.** Fence bays, edge/taxi/flood lamps,
+  taxi arrows, VEG-002 scrub and VEG-001 eucalyptus stamp one cached combined
+  mesh per instance instead of 3–9 kit GameObjects. Ambient wind/rain/coast and
+  UI click `Resources.Load` after first frame. Sun lookup no longer scans every
+  Light. High stays 4× MSAA + SMAA, four cascades, 12 additional lights, two
+  probes. Decision 0029. Evidence: brace depth 0; `AirsidePrototype.cs` 257
+  `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
+
+- **Runtime airfield paint + probe pass.** Taxi Alpha / A1 / A2 / edge paint is
+  one strip per run instead of a 1 m cube dump; aiming points, TDZ, chevrons and
+  taxi arrows are thinned to the readable set. Stars are one inward-quad mesh.
+  Reflection probes `RenderProbe` after static combine, not mid-Awake. Medium
+  thins fillet PointLights, fence rails, window/pane lights, rain drops, edge
+  fixtures and scrub; High stays 4× MSAA + SMAA, four cascades, 12 additional
+  lights, two probes. Decision 0029. Evidence: brace depth 0;
+  `AirsidePrototype.cs` 257 `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
+
+- **Runtime airfield GPU-state.** Per-frame `Renderer.material` clones (heat,
+  spray, puddles, smoke, skids, foam, clouds, shadows, sun/moon, ARFF bar)
+  now read and write through `MaterialPropertyBlock`. One `AirsideSceneIndex`
+  scan replaces Awake/Update `GameObject.Find` / `FindObjectsByType`. Stars
+  share one UnlitSky material; birds, trees, clouds, binder and greybox props
+  use `sharedMaterial`. Greybox fuel pad is one slab; landside bay/access paint
+  is combined; kit ALS laterals and extra runway mid-dashes are skipped.
+  High remains 4× MSAA + SMAA. Decision 0029. Evidence: brace depth 0;
+  `AirsidePrototype.cs` 258 `CreateBlock` sites; `scripts/test-domain.sh` **178 passed**.
+
+- **Runtime airfield performance (P0–P2).** Retired the tile-built operational
+  airfield and terrain-kit cube dump in favour of combined runway/taxi/apron
+  pads plus the WLD-004 kit. Streamed textures and Lit materials are cached and
+  shared; tints use `MaterialPropertyBlock`. Scenery is marked static and combined.
+  Prefabs load on demand through Addressables keys (no `Resources.LoadAll`).
+  High keeps 4× MSAA / four cascades / two probes; Medium is 2× MSAA, two
+  cascades, one 64px apron probe. Probes refresh only on weather/time bands.
+  Decision 0029. Evidence: `AirsidePrototype.cs` ~11k lines / 266 `CreateBlock`
+  call sites (was ~18k / 3,500+); brace depth 0; `scripts/test-domain.sh` **178 passed**.
+
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its
   unreachable tens-of-thousands of outer grass primitives with a textured terrain

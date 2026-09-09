@@ -89,5 +89,148 @@ namespace Airside.Tests
 
             Assert.That(visible, Is.EqualTo(resetBySimulation));
         }
+
+        [Test]
+        public void CombinedSurfaces_TileAirfieldIsRetired()
+        {
+            Assert.That(AirsideCombinedSurfaces.UseTileOperational, Is.False);
+            Assert.That(AirsideCombinedSurfaces.UseTilePaddock, Is.False);
+            Assert.That(AirsideCombinedSurfaces.CombinedPadCount, Is.EqualTo(6));
+        }
+
+        [Test]
+        public void RuntimeQuality_HighKeepsDocumentedMsaaAndAddsMediumLadder()
+        {
+            Assert.That(AirsideRuntimeQuality.HighMsaa, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.MediumMsaa, Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.VSyncCount, Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.HighShadowCascades, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.MediumShadowCascades, Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.HighAdditionalLights, Is.EqualTo(12));
+            Assert.That(AirsideRuntimeQuality.MediumAdditionalLights, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.HighEdgeLightStep, Is.EqualTo(10));
+            Assert.That(AirsideRuntimeQuality.MediumEdgeLightStep, Is.EqualTo(16));
+            Assert.That(AirsideRuntimeQuality.HighRainDrops, Is.EqualTo(28));
+            Assert.That(AirsideRuntimeQuality.MediumRainDrops, Is.EqualTo(16));
+            Assert.That(AirsideRuntimeQuality.HighFilletLights, Is.EqualTo(3));
+            Assert.That(AirsideRuntimeQuality.MediumFilletLights, Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.HighBirdCount, Is.EqualTo(28));
+            Assert.That(AirsideRuntimeQuality.MediumBirdCount, Is.EqualTo(12));
+        }
+
+        [Test]
+        public void RuntimeQuality_ProbeBandChangesOnlyOnWeatherAndTimeThresholds()
+        {
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.8f, 0f), Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.4f, 0f), Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.1f, 0f), Is.EqualTo(0));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.8f, 0.3f), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void MeshUtil_NullMeshHasNoUvsWithoutReadingUvArray()
+        {
+            Assert.That(AirsideMeshUtil.HasUsableUvs(null), Is.False);
+        }
+
+        [Test]
+        public void StaticWorld_HoldShortAndAircraftStayDynamic()
+        {
+            Assert.That(AirsideStaticWorld.IsDynamic(null), Is.True);
+            var hold = new GameObject("Hold short 09");
+            var apron = new GameObject("Apron ");
+            try
+            {
+                Assert.That(AirsideStaticWorld.IsDynamic(hold), Is.True);
+                Assert.That(AirsideStaticWorld.IsDynamic(apron), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(hold);
+                UnityEngine.Object.DestroyImmediate(apron);
+            }
+        }
+
+        [Test]
+        public void SceneIndex_MissingNameIsNullBeforeCapture()
+        {
+            Assert.That(AirsideSceneIndex.Find(null), Is.Null);
+            Assert.That(AirsideSceneIndex.Find(""), Is.Null);
+            Assert.That(AirsideSceneIndex.FindGameObject("definitely-not-in-scene-index"), Is.Null);
+            AirsideSceneIndex.RememberMiss("known-missing-airside-name");
+            Assert.That(AirsideSceneIndex.IsKnownMissing("known-missing-airside-name"), Is.True);
+        }
+
+        [Test]
+        public void GltfLoader_CombinedPlaceMissesWhenKitMissing()
+        {
+            Assert.That(
+                ArtGltfLoader.TryPlaceCombined(
+                    "Models/missing_kit.gltf",
+                    new[] { ("fence_bay", Color.white) },
+                    Vector3.zero,
+                    Quaternion.identity,
+                    "Fence bay test",
+                    out var instance),
+                Is.False);
+            Assert.That(instance, Is.Null);
+            Assert.That(ArtGltfLoader.HasMesh("Models/missing_kit.gltf", "fence_bay"), Is.False);
+        }
+
+        [Test]
+        public void StaticWorld_MovingRootsStayOffTheStaticBatch()
+        {
+            var moving = new[]
+            {
+                "Ground traffic GT-201",
+                "Fuel truck",
+                "Passenger stairs",
+                "GPU cart",
+                "Cloud 0",
+                "Coast boat A",
+                "Windsock sock",
+                "Jetty deck",
+                "antenna_dish"
+            };
+            var created = new List<GameObject>();
+            try
+            {
+                foreach (var name in moving)
+                {
+                    var go = new GameObject(name);
+                    created.Add(go);
+                    Assert.That(AirsideStaticWorld.IsDynamic(go), Is.True, name);
+                }
+
+                var slab = new GameObject("Runway W");
+                created.Add(slab);
+                Assert.That(AirsideStaticWorld.IsDynamic(slab), Is.False);
+            }
+            finally
+            {
+                foreach (var go in created)
+                    UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void NamedChildren_HasNameAndFindContainsUseCachedScan()
+        {
+            var root = new GameObject("NamedChildren root");
+            var torso = new GameObject("marshaller torso");
+            var wand = new GameObject("wand tip L");
+            try
+            {
+                torso.transform.SetParent(root.transform, false);
+                wand.transform.SetParent(root.transform, false);
+                Assert.That(AirsideNamedChildren.HasName(root.transform, "marshaller torso"), Is.True);
+                Assert.That(AirsideNamedChildren.HasName(root.transform, "missing"), Is.False);
+                Assert.That(AirsideNamedChildren.FindContains(root.transform, "wand"), Is.EqualTo(wand.transform));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
     }
 }

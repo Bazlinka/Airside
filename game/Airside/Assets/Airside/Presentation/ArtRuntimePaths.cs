@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -5,21 +6,13 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Resolves runtime art files for both the Editor and packaged players.
-    ///
-    /// Packaged macOS/Windows/Linux builds do <b>not</b> ship the Unity
-    /// <c>Assets/</c> tree as loose files under <see cref="Application.dataPath"/>.
-    /// Runtime filesystem loaders must therefore read from
-    /// <see cref="Application.streamingAssetsPath"/> (populated by
-    /// <c>scripts/sync-art-streaming-assets.sh</c>).
-    ///
-    /// Editor play mode still falls back to <c>Assets/Airside/Art</c> so artists
-    /// can iterate before re-syncing StreamingAssets.
-    ///
-    /// Long-term production path: Unity-imported meshes/prefabs or Addressables.
-    /// This helper keeps the interim glTF/PNG filesystem pipeline honest in builds.
+    /// Existence checks are cached — the tile airfield used to hit disk for
+    /// the same PNG thousands of times during Awake.
     /// </summary>
     public static class ArtRuntimePaths
     {
+        private static readonly Dictionary<string, string> ExistingCache = new(System.StringComparer.Ordinal);
+
         public static string StreamingArtRoot =>
             Path.Combine(Application.streamingAssetsPath, "Airside", "Art");
 
@@ -36,14 +29,24 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(artRelativePath))
                 return null;
 
+            if (ExistingCache.TryGetValue(artRelativePath, out var cached))
+                return string.IsNullOrEmpty(cached) ? null : cached;
+
             var streaming = Path.Combine(StreamingArtRoot, artRelativePath);
             if (File.Exists(streaming))
+            {
+                ExistingCache[artRelativePath] = streaming;
                 return streaming;
+            }
 
             var editor = Path.Combine(EditorArtRoot, artRelativePath);
             if (File.Exists(editor))
+            {
+                ExistingCache[artRelativePath] = editor;
                 return editor;
+            }
 
+            ExistingCache[artRelativePath] = string.Empty;
             return null;
         }
     }

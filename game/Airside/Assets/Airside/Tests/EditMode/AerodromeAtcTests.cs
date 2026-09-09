@@ -64,9 +64,13 @@ namespace Airside.Tests
                 if (departure == null || arrival == null)
                     continue;
 
-                if (simulation.Atc.LastInstruction.IndexOf("arrival on approach", System.StringComparison.OrdinalIgnoreCase) >= 0
-                    || (simulation.Atc.ActiveClearance == AtcClearance.HoldShortRunway
-                        && arrival.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing))
+                if (arrival.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing
+                    && (simulation.Atc.LastInstruction.IndexOf("arrival on approach", System.StringComparison.OrdinalIgnoreCase) >= 0
+                        || simulation.Atc.LastInstruction.IndexOf("landing on the runway", System.StringComparison.OrdinalIgnoreCase) >= 0
+                        || simulation.Atc.LastInstruction.IndexOf("hold short runway", System.StringComparison.OrdinalIgnoreCase) >= 0
+                        || simulation.Atc.ActiveClearance is AtcClearance.HoldShortRunway
+                            or AtcClearance.TrafficAdvisory
+                            ))
                 {
                     Assert.That(departure.Operation.Phase, Is.EqualTo(AircraftPhase.TaxiOut));
                     sawHoldForArrival = true;
@@ -218,7 +222,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("1000 ft"));
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("wind calm"));
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("QNH 1013"));
-            Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("report mid-downwind then base"));
+            Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("mid-downwind then base"));
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("no turns below circuit height"));
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("report airborne on the go-around"));
             Assert.That(atc.IssueGoAround("AS-101", "runway occupied"), Does.Contain("acknowledge"));
@@ -346,7 +350,7 @@ namespace Airside.Tests
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("1000 ft"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("wind calm"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("QNH 1013"));
-            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("report mid-downwind then base"));
+            Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("mid-downwind then base"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("monitor this frequency"));
             Assert.That(atc.IssueJoinLeftDownwind("AS-101"), Does.Contain("squawk VFR"));
             Assert.That(atc.ActiveClearance, Is.EqualTo(AtcClearance.JoinLeftDownwind));

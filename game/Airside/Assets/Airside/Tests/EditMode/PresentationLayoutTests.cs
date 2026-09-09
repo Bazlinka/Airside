@@ -52,22 +52,31 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void TaxiVisualPath_ChangesSegmentsAtReservationBoundariesNotGeometricLength()
+        public void TaxiVisualPath_ChangesSegmentsByChordLengthMatchingReservations()
         {
             var route = new TaxiRoute(
                 "Unequal test route",
                 new[] { new StableId("A"), new StableId("B"), new StableId("C") },
                 new[] { new TaxiPoint(0f, 0f), new TaxiPoint(1f, 0f), new TaxiPoint(101f, 0f), new TaxiPoint(102f, 0f) });
 
-            var first = TaxiVisualPath.PositionAt(route, 0.32f, reverse: false);
-            var second = TaxiVisualPath.PositionAt(route, 0.34f, reverse: false);
-            var third = TaxiVisualPath.PositionAt(route, 0.67f, reverse: false);
-            var reverseSecond = TaxiVisualPath.PositionAt(route, 0.34f, reverse: true);
+            // Lengths 1 / 100 / 1 — progress 0.02 is still on A; 0.50 mid B; 0.995 on C.
+            var first = TaxiVisualPath.PositionAt(route, 0.005f, reverse: false);
+            var second = TaxiVisualPath.PositionAt(route, 0.50f, reverse: false);
+            var third = TaxiVisualPath.PositionAt(route, 0.995f, reverse: false);
+            var reverseEarly = TaxiVisualPath.PositionAt(route, 0.005f, reverse: true);
 
-            Assert.That(first.x, Is.InRange(0f, 1f), "first reservation window stays on A");
-            Assert.That(second.x, Is.InRange(1f, 101f), "second reservation window stays on B");
-            Assert.That(third.x, Is.InRange(101f, 102f), "third reservation window stays on C");
-            Assert.That(reverseSecond.x, Is.InRange(1f, 101f), "reverse second window also stays on B");
+            Assert.That(first.x, Is.InRange(0f, 1f), "early progress stays on short A");
+            Assert.That(second.x, Is.InRange(1f, 101f), "mid progress stays on long B");
+            Assert.That(third.x, Is.InRange(101f, 102f), "late progress reaches C");
+            Assert.That(reverseEarly.x, Is.InRange(101f, 102f), "reverse early stays on C");
+            Assert.That(route.SegmentIndexAt(0.50, reverse: false), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void HudScale_SmallWindowsCanDropBelowOldMin()
+        {
+            Assert.That(HudLayout.ScaleFor(800, 500), Is.LessThan(0.8f));
+            Assert.That(HudLayout.ScaleFor(800, 500), Is.GreaterThanOrEqualTo(0.55f));
         }
 
         [Test]

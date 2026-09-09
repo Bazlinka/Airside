@@ -32,8 +32,9 @@ namespace Airside.Tests
             Assert.That(simulation.BuildThirdStand(), Is.False);
 
             var route = simulation.TaxiNetwork.RouteTo(AirportSimulation.StandThree);
-            Assert.That(route.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
-            Assert.That(route.Points[route.Points.Count - 1].Z, Is.EqualTo(26f));
+            Assert.That(route.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
+            Assert.That(route.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(route.Points[route.Points.Count - 1].Z, Is.EqualTo(34f));
         }
 
         [Test]

@@ -127,14 +127,15 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void ExpiredOffer_IncrementsOffersDeclined()
+        public void ExpiredOffer_IncrementsMissedOffers()
         {
             var routes = new AirportRoutes(new SimulationTime(0));
             routes.Update(new SimulationTime(AirportRoutes.FirstOfferAfterSeconds));
             Assert.That(routes.OffersDeclined, Is.EqualTo(0));
             routes.Update(new SimulationTime(AirportRoutes.FirstOfferAfterSeconds + AirportRoutes.OfferWindowSeconds));
             Assert.That(routes.Pending, Is.Null);
-            Assert.That(routes.OffersDeclined, Is.EqualTo(1));
+            Assert.That(routes.MissedOffers, Is.EqualTo(1));
+            Assert.That(routes.OffersDeclined, Is.EqualTo(0));
         }
 
         [Test]

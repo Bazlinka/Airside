@@ -48,11 +48,8 @@ namespace Airside.Simulation
                 return default;
 
             var progress = Operation.PhaseProgress(at);
-            var count = TaxiRoute.SegmentIds.Count;
-            var index = Math.Min(count - 1, (int)(Math.Max(0, Math.Min(0.999999, progress)) * count));
-            if (phase == AircraftPhase.TaxiOut)
-                index = count - 1 - index;
-            return TaxiRoute.SegmentIds[index];
+            var reverse = phase == AircraftPhase.TaxiOut;
+            return TaxiRoute.SegmentIds[TaxiRoute.SegmentIndexAt(progress, reverse)];
         }
 
         public IEnumerable<StableId> RequiredResources(SimulationTime at) =>
@@ -82,6 +79,8 @@ namespace Airside.Simulation
                     // Single-file A1/A2 corridor — dual commercials must not meet head-on.
                     yield return AirportTaxiNetwork.Corridor;
                     yield return SegmentForPhase(AircraftPhase.TaxiIn, at);
+                    if (OnApronThroat(AircraftPhase.TaxiIn, at))
+                        yield return AirportTaxiNetwork.ApronThroat;
                     yield return AssignedStand;
                     break;
                 case AircraftPhase.AtStand:
@@ -99,8 +98,36 @@ namespace Airside.Simulation
                         yield break;
                     yield return AirportTaxiNetwork.Corridor;
                     yield return SegmentForPhase(AircraftPhase.TaxiOut, at);
+                    if (OnApronThroat(AircraftPhase.TaxiOut, at))
+                        yield return AirportTaxiNetwork.ApronThroat;
+                    // Keep the stand reserved until the lead-in / throat is clear so GT
+                    // cannot inbound while this airframe is still on the bay chord.
+                    if (StillOccupyingStandOnTaxiOut(at))
+                        yield return AssignedStand;
                     break;
             }
+        }
+
+        private bool StillOccupyingStandOnTaxiOut(SimulationTime at)
+        {
+            if (Operation.Phase != AircraftPhase.TaxiOut)
+                return true;
+
+            var segment = SegmentFor(at);
+            return segment.Equals(AirportTaxiNetwork.LeadInFor(AssignedStand))
+                || segment.Equals(AirportTaxiNetwork.ApronThroat)
+                || segment.Equals(default(StableId));
+        }
+
+        private bool OnApronThroat(AircraftPhase phase, SimulationTime at)
+        {
+            var segment = Operation.Phase == phase
+                ? SegmentFor(at)
+                : (phase == AircraftPhase.TaxiOut
+                    ? TaxiRoute.SegmentIds[TaxiRoute.SegmentIds.Count - 1]
+                    : TaxiRoute.SegmentIds[0]);
+            return segment.Equals(AirportTaxiNetwork.ApronThroat)
+                || segment.Equals(AirportTaxiNetwork.LeadInFor(AssignedStand));
         }
 
         private StableId SegmentForPhase(AircraftPhase phase, SimulationTime at)

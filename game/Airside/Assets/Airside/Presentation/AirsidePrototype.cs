@@ -395,6 +395,7 @@ namespace Airside.Presentation
             }
 
             ApplyDayCycle();
+            AdvancePresentationClock();
             UpdateAircraftVisual();
             UpdateGroundTrafficVisual();
             UpdateServiceVehicles();
@@ -1007,14 +1008,27 @@ namespace Airside.Presentation
                 var standZ = AirportTaxiNetwork.StandZ(flight.AssignedStand);
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
-                var position = PositionFor(phase, progress, standZ, flight.TaxiRoute);
-                // Short look-ahead during takeoff lineup / early taxi so we do not skip the
-                // whole curve and snap yaw onto the next straight.
+                var lane = ApproachLaneOffset(flight);
+                var position = PositionFor(phase, progress, standZ, flight.TaxiRoute, lane);
+                // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff && progress < 0.2f ? 0.04f
-                    : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.08f
+                    : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
-                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), standZ, flight.TaxiRoute);
-                view.position = position;
+                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), standZ, flight.TaxiRoute, lane);
+                // Soft catch-up on ground so stalls do not teleport through another airframe.
+                if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                    or AircraftPhase.AtStand or AircraftPhase.Landing)
+                {
+                    var catchUp = PresentationDeltaTime * 12f;
+                    var holding = _simulation.TrafficWaits.TryGetWaitStart(flight.OwnerId, out _);
+                    view.position = catchUp <= 0f
+                        ? view.position
+                        : TaxiVisualPath.MoveGroundTraffic(view.position, position, holding, catchUp);
+                }
+                else
+                {
+                    view.position = position;
+                }
 
                 var direction = next - position;
                 var targetRotation = direction.sqrMagnitude > 0.001f
@@ -1054,8 +1068,8 @@ namespace Airside.Presentation
                     : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.48f) / 0.52f)),
                 AircraftPhase.Approach => Mathf.Lerp(-2.5f, -3.5f, t),
                 AircraftPhase.Landing => t < 0.28f
-                    ? Mathf.Lerp(-3.5f, -5f, t / 0.28f)
-                    : Mathf.Lerp(-5f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.28f) / 0.72f)),
+                    ? Mathf.Lerp(-2.5f, -3.2f, t / 0.28f)
+                    : Mathf.Lerp(-3.2f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.28f) / 0.72f)),
                 AircraftPhase.Departed => -8f,
                 _ => 0f
             };
@@ -1066,10 +1080,13 @@ namespace Airside.Presentation
             if (phase is AircraftPhase.AtStand or AircraftPhase.Departed)
                 return 0f;
 
+            // Ground phases stay wings-level so wingtips do not dig into the apron.
+            if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                or AircraftPhase.Landing or AircraftPhase.AtStand)
+                return 0f;
+
             var yawDelta = Mathf.DeltaAngle(view.eulerAngles.y, targetRotation.eulerAngles.y);
-            var limit = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
-                ? 8f
-                : 16f;
+            var limit = 16f;
             return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
         }
 
@@ -1211,7 +1228,8 @@ namespace Airside.Presentation
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
             var night = daylight < 0.35f;
-            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff;
+            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing
+                || (phase == AircraftPhase.Takeoff && progress01 < 0.48f);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             foreach (var child in aircraft.GetComponentsInChildren<Transform>(true))
@@ -1251,7 +1269,7 @@ namespace Airside.Presentation
                 {
                     // ANM-AIR-004 — pulse rate from AirsideReusableMotion (not a hard-coded 2 Hz).
                     var beaconOn = enginesOn &&
-                        (Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
+                        (Mathf.FloorToInt(PresentationClock * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
@@ -1717,10 +1735,21 @@ namespace Airside.Presentation
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
                 var visualPhase = GroundTrafficVisualPhase(traffic);
-                if (!traffic.IsHolding && visualPhase != AircraftPhase.AtStand)
-                    targetRotation *= Quaternion.Euler(0f, 0f, TurnBankDegrees(view, targetRotation, AircraftPhase.TaxiIn));
+                if (traffic.IsHolding)
+                {
+                    // Keep last travel heading on a yield snap (zero-length move).
+                    targetRotation = view.rotation;
+                }
                 if (PresentationDeltaTime > 0f)
                     view.rotation = Quaternion.Slerp(view.rotation, targetRotation, PresentationDeltaTime * 4f);
+
+                if (traffic.CurrentPhase is "Away" or "Away hold")
+                {
+                    view.gameObject.SetActive(false);
+                    continue;
+                }
+                if (!view.gameObject.activeSelf)
+                    view.gameObject.SetActive(true);
 
                 var enginesOn = GroundTrafficEnginesOn(traffic);
                 SpinGroundTrafficPropellers(view, enginesOn);
@@ -1745,8 +1774,10 @@ namespace Airside.Presentation
             if (traffic.IsAtStand)
                 return AircraftPhase.AtStand;
             var phase = traffic.CurrentPhase;
-            if (phase is "Away" or "Waiting for a slot" or "Run-up hold")
-                return AircraftPhase.AtStand;
+            if (phase is "Away" or "Away hold" or "Waiting for a slot")
+                return AircraftPhase.Departed;
+            if (phase == "Run-up hold")
+                return AircraftPhase.Pushback;
             return AircraftPhase.TaxiIn;
         }
 
@@ -1758,17 +1789,37 @@ namespace Airside.Presentation
             return phase is not ("Away" or "Waiting for a slot");
         }
 
+                private float PresentationClock
+        {
+            get
+            {
+                // Accumulates only while the sim is presenting motion (pauses freeze beacons/flags).
+                return _presentationClock;
+            }
+        }
+
+        private void AdvancePresentationClock()
+        {
+            _presentationClock += PresentationDeltaTime;
+        }
+
         private float VisualPhaseProgress(CommercialFlight flight, float lookAheadSeconds)
         {
             if (flight.Operation.IsComplete)
                 return 1f;
 
-            // At stand, follow turnaround-bound PhaseProgress so stairs/chocks match crew speed.
-            if (flight.Operation.Phase == AircraftPhase.AtStand && lookAheadSeconds <= 0f)
-                return (float)flight.Operation.PhaseProgress(new SimulationTime((long)Math.Floor(_preciseTime)));
+            // Drive all phases from the stalled operation clock so taxi holds do not
+            // creep toward the aircraft ahead between whole-second stalls.
+            var simNow = new SimulationTime((long)Math.Floor(_preciseTime));
+            var baseProgress = (float)flight.Operation.PhaseProgress(simNow);
+            if (lookAheadSeconds <= 0f)
+                return baseProgress;
 
-            var elapsed = _preciseTime + lookAheadSeconds - flight.Operation.PhaseStartedAt.ElapsedSeconds;
-            return Mathf.Clamp01((float)(elapsed / flight.Operation.PhaseDurationSeconds));
+            var duration = flight.Operation.PhaseDurationSeconds;
+            if (duration <= 0 || duration == long.MaxValue)
+                return baseProgress;
+
+            return Mathf.Clamp01(baseProgress + lookAheadSeconds / duration);
         }
 
         private void UpdateServiceVehicles()
@@ -1777,9 +1828,9 @@ namespace Airside.Presentation
             var servicing = PreferWatchedAtStandFlight(requireTurnaround: true);
 
             // Parked GSE stays visible on the apron edge so the field feels staffed.
-            var fuelPark = new Vector3(-4.5f, 0.55f, 12.5f);
-            var bagPark = new Vector3(-1.5f, 0.42f, 11.8f);
-            var busPark = new Vector3(2f, 0.68f, 11.2f);
+            var fuelPark = new Vector3(-2.5, 0.55, 24.5f);
+            var bagPark = new Vector3(0.5, 0.42, 25.2f);
+            var busPark = new Vector3(2.5, 0.68, 26f);
 
             if (servicing == null)
             {
@@ -1798,9 +1849,9 @@ namespace Airside.Presentation
             var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
             // Approved turnaround day/dusk board: fuel at port wing, baggage port-forward,
             // bus starboard clear of props.
-            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(14.6f, 0.55f, standZ + 3.1f), fuelPark);
+            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(18.8f, 0.55f, standZ + 2.4f), fuelPark);
             UpdateVehicle(_baggageCart, bagActive, new Vector3(19.4f, 0.42f, standZ + 2.4f), bagPark);
-            UpdateVehicle(_passengerBus, paxActive, new Vector3(14.2f, 0.68f, standZ - 3.4f), busPark);
+            UpdateVehicle(_passengerBus, paxActive, new Vector3(15.6f, 0.68f, standZ + 4.2f), busPark);
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             SyncVehicleHeadlights(_fuelTruck, fuelActive || daylight < 0.38f, daylight);
             SyncVehicleHeadlights(_baggageCart, bagActive || daylight < 0.38f, daylight);
@@ -1847,11 +1898,11 @@ namespace Airside.Presentation
                 var chockRoll = Mathf.Lerp(35f, 0f, chockArrive);
                 PlaceProp(_chocks, true, new Vector3(16.6f, chockY, z + 1.55f), Quaternion.Euler(0f, 0f, chockRoll));
                 // GPU at nose in Coastal Blue (board); cable toward aircraft.
-                PlaceProp(_gpuCart, true, new Vector3(14.2f, 0.35f, z + 0.15f), Quaternion.Euler(0f, 90f, 0f));
+                PlaceProp(_gpuCart, true, new Vector3(15.6f, 0.35f, z + 2.1f), Quaternion.Euler(0f, 90f, 0f));
                 PulseGpuCart(_gpuCart, true);
                 // Pushback tug waits at nose during AtStand so the service set matches the board.
                 PlaceProp(_pushbackTug, true, new Vector3(13.4f, 0.4f, z - 0.2f),
-                    Quaternion.LookRotation(new Vector3(-1f, 0f, -0.15f)));
+                    Quaternion.LookRotation(new Vector3(-1, 0, 7.85f)));
                 SyncVehicleHeadlights(_pushbackTug, (float)_simulation.TimeOfDay.Daylight < 0.38f,
                     (float)_simulation.TimeOfDay.Daylight);
             }
@@ -1877,7 +1928,7 @@ namespace Airside.Presentation
                 travel.y = 0f;
                 var facing = travel.sqrMagnitude > 0.0001f
                     ? Quaternion.LookRotation(travel.normalized, Vector3.up)
-                    : Quaternion.LookRotation(new Vector3(-1f, 0f, -0.35f));
+                    : Quaternion.LookRotation(new Vector3(-1, 0, 7.65f));
                 PlaceProp(_pushbackTug, true, tugPos, facing);
                 PulseServiceBeacon(_pushbackTug, true);
                 SyncVehicleHeadlights(_pushbackTug, true, (float)_simulation.TimeOfDay.Daylight);
@@ -1940,72 +1991,72 @@ namespace Airside.Presentation
             if (_standThreeVisualBuilt || !_simulation.Capacity.HasThirdStand)
                 return;
 
-            BuildStandMarking(17f, 26f, "Stand 3");
-                        CreateBlock("Stand 3 apron pad WWaWN", new Vector3(11.98f, -0.002f, 23.8613f), new Vector3(1.94f, 0.1152f, 1.392f), new Color(0.34f, 0.36f, 0.37f),
+            BuildStandMarking(17f, 34f, "Stand 3");
+                        CreateBlock("Stand 3 apron pad WWaWN", new Vector3(11.98, -0.002, 31.8613f), new Vector3(1.94, 0.1152, 9.392f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-                        CreateBlock("Stand 3 apron pad WWaWS", new Vector3(12.02f, 0.0f, 25.2387f), new Vector3(1.94f, 0.1152f, 1.392f), new Color(0.34f, 0.36f, 0.37f),
+                        CreateBlock("Stand 3 apron pad WWaWS", new Vector3(12.02, 0.0, 33.2387f), new Vector3(1.94, 0.1152, 9.392f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWaEN", new Vector3(13.998f, -0.0035f, 23.8939f), new Vector3(1.8818f, 0.1117f, 1.3502f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWaEN", new Vector3(13.998, -0.0035, 31.8939f), new Vector3(1.8818, 0.1117, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWaES", new Vector3(14.038f, -0.0015f, 25.2301f), new Vector3(1.8818f, 0.1117f, 1.3502f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWaES", new Vector3(14.038, -0.0015, 33.2301f), new Vector3(1.8818, 0.1117, 9.3502f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbWN", new Vector3(12.03f, 0.0f, 26.8157f), new Vector3(1.8818f, 0.1106f, 1.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbWN", new Vector3(12.03, 0.0, 34.8157f), new Vector3(1.8818, 0.1106, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbWS", new Vector3(12.07f, 0.002f, 28.1243f), new Vector3(1.8818f, 0.1106f, 1.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbWS", new Vector3(12.07, 0.002, 36.1243f), new Vector3(1.8818, 0.1106, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbEN", new Vector3(13.988f, -0.0015f, 26.8473f), new Vector3(1.8253f, 0.1072f, 1.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbEN", new Vector3(13.988, -0.0015, 34.8473f), new Vector3(1.8253, 0.1072, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WWbES", new Vector3(14.028f, 0.0005f, 28.1167f), new Vector3(1.8253f, 0.1072f, 1.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WWbES", new Vector3(14.028, 0.0005, 36.1167f), new Vector3(1.8253, 0.1072, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaWN", new Vector3(15.98f, 0.0f, 23.9982f), new Vector3(1.94f, 0.1114f, 1.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaWN", new Vector3(15.98, 0.0, 31.9982f), new Vector3(1.94, 0.1114, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaWS", new Vector3(16.02f, 0.002f, 25.3068f), new Vector3(1.94f, 0.1114f, 1.3224f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaWS", new Vector3(16.02, 0.002, 33.3068f), new Vector3(1.94, 0.1114, 9.3224f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaEN", new Vector3(17.998f, -0.0015f, 24.0298f), new Vector3(1.8818f, 0.108f, 1.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaEN", new Vector3(17.998, -0.0015, 32.0298f), new Vector3(1.8818, 0.108, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEaES", new Vector3(18.038f, 0.0005f, 25.2992f), new Vector3(1.8818f, 0.108f, 1.2827f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEaES", new Vector3(18.038, 0.0005, 33.2992f), new Vector3(1.8818, 0.108, 9.2827f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbWN", new Vector3(16.03f, 0.002f, 26.8059f), new Vector3(1.8818f, 0.1069f, 1.2563f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbWN", new Vector3(16.03, 0.002, 34.8059f), new Vector3(1.8818, 0.1069, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbWS", new Vector3(16.07f, 0.004f, 28.0491f), new Vector3(1.8818f, 0.1069f, 1.2563f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbWS", new Vector3(16.07, 0.004, 36.0491f), new Vector3(1.8818, 0.1069, 9.2563f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbEN", new Vector3(17.988f, 0.0005f, 26.8366f), new Vector3(1.8253f, 0.1037f, 1.2186f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbEN", new Vector3(17.988, 0.0005, 34.8366f), new Vector3(1.8253, 0.1037, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad WEbES", new Vector3(18.028f, 0.0025f, 28.0424f), new Vector3(1.8253f, 0.1037f, 1.2186f), new Color(0.34f, 0.36f, 0.37f),
+            CreateBlock("Stand 3 apron pad WEbES", new Vector3(18.028, 0.0025, 36.0424f), new Vector3(1.8253, 0.1037, 9.2186f), new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.9f));
-            CreateBlock("Stand 3 apron pad EWaWN", new Vector3(21.98f, -0.002f, 24.135f), new Vector3(1.94f, 0.1056f, 1.344f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaWN", new Vector3(21.98, -0.002, 32.135f), new Vector3(1.94, 0.1056, 9.344f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaWS", new Vector3(22.02f, 0.0f, 25.465f), new Vector3(1.94f, 0.1056f, 1.344f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaWS", new Vector3(22.02, 0.0, 33.465f), new Vector3(1.94, 0.1056, 9.344f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaEN", new Vector3(23.998f, -0.0035f, 24.1669f), new Vector3(1.8818f, 0.1024f, 1.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaEN", new Vector3(23.998, -0.0035, 32.1669f), new Vector3(1.8818, 0.1024, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWaES", new Vector3(24.038f, -0.0015f, 25.4571f), new Vector3(1.8818f, 0.1024f, 1.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWaES", new Vector3(24.038, -0.0015, 33.4571f), new Vector3(1.8818, 0.1024, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbWN", new Vector3(22.03f, 0.0f, 26.9883f), new Vector3(1.8818f, 0.1014f, 1.2768f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbWN", new Vector3(22.03, 0.0, 34.9883f), new Vector3(1.8818, 0.1014, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbWS", new Vector3(22.07f, 0.002f, 28.2518f), new Vector3(1.8818f, 0.1014f, 1.2768f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbWS", new Vector3(22.07, 0.002, 36.2518f), new Vector3(1.8818, 0.1014, 9.2768f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbEN", new Vector3(23.988f, -0.0015f, 27.0192f), new Vector3(1.8253f, 0.0983f, 1.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbEN", new Vector3(23.988, -0.0015, 35.0192f), new Vector3(1.8253, 0.0983, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EWbES", new Vector3(24.028f, 0.0005f, 28.2448f), new Vector3(1.8253f, 0.0983f, 1.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EWbES", new Vector3(24.028, 0.0005, 36.2448f), new Vector3(1.8253, 0.0983, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaWN", new Vector3(26.03f, 0.0f, 24.2269f), new Vector3(1.843f, 0.1014f, 1.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaWN", new Vector3(26.03, 0.0, 32.2269f), new Vector3(1.843, 0.1014, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaWS", new Vector3(26.07f, 0.002f, 25.5171f), new Vector3(1.843f, 0.1014f, 1.3037f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaWS", new Vector3(26.07, 0.002, 33.5171f), new Vector3(1.843, 0.1014, 9.3037f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaEN", new Vector3(27.948f, -0.0015f, 24.2583f), new Vector3(1.7877f, 0.0983f, 1.2646f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaEN", new Vector3(27.948, -0.0015, 32.2583f), new Vector3(1.7877, 0.0983, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEaES", new Vector3(27.988f, 0.0005f, 25.5097f), new Vector3(1.7877f, 0.0983f, 1.2646f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEaES", new Vector3(27.988, 0.0005, 33.5097f), new Vector3(1.7877, 0.0983, 9.2646f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbWN", new Vector3(26.0785f, 0.002f, 26.9952f), new Vector3(1.7877f, 0.0973f, 1.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbWN", new Vector3(26.0785, 0.002, 34.9952f), new Vector3(1.7877, 0.0973, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbWS", new Vector3(26.1185f, 0.004f, 28.2208f), new Vector3(1.7877f, 0.0973f, 1.2385f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbWS", new Vector3(26.1185, 0.004, 36.2208f), new Vector3(1.7877, 0.0973, 9.2385f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbEN", new Vector3(27.9715f, 0.0f, 27.0497f), new Vector3(1.7162f, 0.0944f, 1.189f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbEN", new Vector3(27.9715, 0.0, 35.0497f), new Vector3(1.7162, 0.0944, 9.189f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateBlock("Stand 3 apron pad EEbES", new Vector3(28.0115f, 0.002f, 28.2263f), new Vector3(1.7162f, 0.0944f, 1.189f), new Color(0.33f, 0.35f, 0.36f),
+            CreateBlock("Stand 3 apron pad EEbES", new Vector3(28.0115, 0.002, 36.2263f), new Vector3(1.7162, 0.0944, 9.189f), new Color(0.33f, 0.35f, 0.36f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.2f, 0.85f));
-            CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 26f);
+            CreateTaxiLeadPad("Taxi lead Stand 3", standZ: 34f);
             // Extend apron north so Stand 3 is not an island past the concrete edge.
                                                 CreateBlock("Apron north extension WWWNW", new Vector3(7.9188f, -0.002f, 25.68f), new Vector3(1.68f, 0.1152f, 2.328f), new Color(0.36f, 0.38f, 0.39f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1.8f, 0.9f));
@@ -2220,7 +2271,7 @@ namespace Airside.Presentation
                 child.gameObject.SetActive(active);
                 if (!active)
                     continue;
-                var on = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
+                var on = Mathf.FloorToInt(PresentationClock * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                 {
@@ -4967,9 +5018,9 @@ namespace Airside.Presentation
                 return;
             }
 
-            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * (AirsideReusableMotion.BeaconHz * Mathf.PI)));
+            var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(PresentationClock * (AirsideReusableMotion.BeaconHz * Mathf.PI)));
             _aerodromeBeacon.intensity = pulse * Mathf.Lerp(2.4f, 0.2f, daylight / 0.38f);
-            _aerodromeBeacon.color = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz) % 2 == 0
+            _aerodromeBeacon.color = Mathf.FloorToInt(PresentationClock * AirsideReusableMotion.BeaconHz) % 2 == 0
                 ? new Color(0.95f, 0.98f, 1f)
                 : new Color(0.35f, 0.95f, 0.55f);
         }
@@ -4994,13 +5045,15 @@ namespace Airside.Presentation
         /// </summary>
         private static void CreateTaxiLeadPad(string name, float standZ)
         {
-            // Match apron Y (0) so lead-ins do not sink under concrete edges.
-            CreateTaxiChordPad(name, new Vector3(8f, 0f, 9f), new Vector3(17f, 0f, standZ), 4.6f,
+            // Dogleg matching AirportTaxiNetwork: Alpha (8,9) → throat (12,standZ) → stand (17,standZ).
+            // Narrower chords so Stand 3 does not pave through Stand 1/2 boxes.
+            CreateTaxiChordPad($"{name} throat leg", new Vector3(8f, 0.01f, 9f), new Vector3(12f, 0.01f, standZ), 3.2f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
-            // Soft throat + stand-mouth fillets so leads do not read as one diagonal slab.
-            CreateTaxiChordPad($"{name} throat", new Vector3(8f, 0f, 9f), new Vector3(11f, 0f, 11f), 3.4f,
+            CreateTaxiChordPad($"{name} stand leg", new Vector3(12f, 0.01f, standZ), new Vector3(17f, 0.01f, standZ), 3.4f,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
+            CreateTaxiChordPad($"{name} throat", new Vector3(8f, 0.01f, 9f), new Vector3(10f, 0.01f, 9f + (standZ - 9f) * 0.25f), 2.8f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
-            CreateTaxiChordPad($"{name} mouth", new Vector3(15f, 0f, standZ - 1.5f), new Vector3(17f, 0f, standZ), 3.8f,
+            CreateTaxiChordPad($"{name} mouth", new Vector3(15f, 0.01f, standZ), new Vector3(17f, 0.01f, standZ), 3.2f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
         }
 
@@ -29775,7 +29828,10 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(1f, 0.9f));
             // Lead-in pads follow the actual taxi chord (8,9)→(17, standZ).
             CreateTaxiLeadPad("Taxi lead Stand 1", standZ: 14f);
-            CreateTaxiLeadPad("Taxi lead Stand 2", standZ: 20f);
+            CreateTaxiLeadPad("Taxi lead Stand 2", standZ: 24f);
+            // GT-202 run-up bay stub north of Alpha centreline.
+            CreateTaxiChordPad("Run-up bay stub", new Vector3(5f, 0.01f, 9f), new Vector3(5f, 0.01f, 13f), 3.0f,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
             // Overlapping bay pads (same Y) so overview is not one 30×15 concrete slab.
             // Slight UV/tint variance; no raised joints (those read as greybox blocks).
                                                 CreateBlock("Apron NW WWNWN", new Vector3(4.98f, -0.002f, 21.05f), new Vector3(1.94f, 0.1056f, 1.92f), new Color(0.37f, 0.39f, 0.4f),
@@ -30684,7 +30740,7 @@ namespace Airside.Presentation
             BuildEnvironmentContext();
 
             BuildStandMarking(17f, 14f, "Stand 1");
-            BuildStandMarking(17f, 20f, "Stand 2");
+            BuildStandMarking(17f, 24f, "Stand 2");
             // Stand bay digits come from PlaceWorldMarkings / PlaceRunwayDigit (kit-prefer).
 
         }
@@ -49044,7 +49100,7 @@ namespace Airside.Presentation
             PlacePerson(root, "Landside passenger A", new Vector3(26.5f, 0f, 31.8f), 180f, new Color(0.45f, 0.22f, 0.2f));
             PlacePerson(root, "Landside passenger B", new Vector3(27.8f, 0f, 31.6f), 175f, new Color(0.2f, 0.35f, 0.4f));
             PlacePerson(root, "Gate attendant", new Vector3(24.2f, 0f, 30.8f), 200f, new Color(0.55f, 0.58f, 0.62f));
-            PlacePerson(root, "Stand 2 marshaller", new Vector3(22.5f, 0f, 20f), 185f, new Color(0.9f, 0.5f, 0.1f),
+            PlacePerson(root, "Stand 2 marshaller", new Vector3(19.8f, 0f, 24f), 185f, new Color(0.9f, 0.5f, 0.1f),
                 hiVis: true, marshallerWand: true);
             PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
             PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
@@ -53006,7 +53062,7 @@ namespace Airside.Presentation
             shadow.name = "GroundShadow";
             Object.Destroy(shadow.GetComponent<Collider>());
             shadow.transform.SetParent(aircraft, false);
-            shadow.transform.localPosition = new Vector3(0f, -0.65f, 0f);
+            shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
             shadow.transform.localScale = new Vector3(2.8f, 0.012f, 1.5f);
             var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.16f),
@@ -53024,7 +53080,7 @@ namespace Airside.Presentation
             if (shadow == null)
                 return;
 
-            var ground = new Vector3(aircraft.position.x, 0.05f, aircraft.position.z);
+            var ground = new Vector3(aircraft.position.x, 0.09f, aircraft.position.z);
             shadow.position = ground;
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
@@ -53996,8 +54052,8 @@ namespace Airside.Presentation
             }
             // Stand bay numbers on the apron (readable from overview) — kit digit bars preferred.
             PlaceRunwayDigit('1', new Vector3(14.2f, 0.04f, 14f), yaw: 0f);
-            PlaceRunwayDigit('2', new Vector3(14.2f, 0.04f, 20f), yaw: 0f);
-            PlaceRunwayDigit('3', new Vector3(14.2f, 0.04f, 26f), yaw: 0f);
+            PlaceRunwayDigit('2', new Vector3(14.2f, 0.04f, 24f), yaw: 0f);
+            PlaceRunwayDigit('3', new Vector3(14.2f, 0.04f, 34f), yaw: 0f);
 
             var usedStandA = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "stand_stop_a", new Vector3(14f, 0.04f, 16.2f), Quaternion.identity,
@@ -54972,58 +55028,74 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute, float laneOffset = 0f)
         {
             // Air phases share the runway axis and meet the taxi network at (-24, 0)
             // so takeoff no longer teleports 52 m after taxi-out, and landing rolls out
             // to the same A1 entry TaxiIn uses.
             var t = Mathf.Clamp01(progress);
+            // Number-two stays further out on final while waiting so it does not stack
+            // on the leader at the flare start.
+            if (phase == AircraftPhase.Approach && laneOffset != 0f && t > 0.82f)
+                t = 0.82f;
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(
-                    new Vector3(-72f, 7.5f, 0f), new Vector3(-50f, 1.55f, 0f), t),
-                AircraftPhase.Landing => LandingPosition(t),
+                    new Vector3(-72f, 7.5f, laneOffset), new Vector3(-50f, 1.55f, laneOffset * 0.35f), t),
+                AircraftPhase.Landing => LandingPosition(t, laneOffset),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
-                AircraftPhase.Pushback => Smooth(new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ - 2f), t),
+                // Push back along the stand centreline onto the throat (x=12, standZ).
+                AircraftPhase.Pushback => Smooth(
+                    new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ), t),
                 AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
                 AircraftPhase.Takeoff => TakeoffPosition(t),
-                _ => new Vector3(55f, 14f, 0f)
+                _ => new Vector3(72f, 18f, 0f)
             };
         }
 
+        private float ApproachLaneOffset(CommercialFlight flight)
+        {
+            if (_simulation.Flights.Count < 2)
+                return 0f;
+            // Number-two / later flights take a parallel final left of centreline.
+            var index = 0;
+            for (var i = 0; i < _simulation.Flights.Count; i++)
+            {
+                if (ReferenceEquals(_simulation.Flights[i], flight))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            return index == 0 ? 0f : -4.5f * index;
+        }
+
         /// <summary>
-        /// Leave the pushback pad toward the lead-in — do not drive back onto the stand.
+        /// Follow the reverse taxi polyline from the first sample — no apron chord cut.
         /// </summary>
         private Vector3 TaxiOutPosition(TaxiRoute route, float t, float standZ)
         {
-            var pushEnd = new Vector3(12f, 0.7f, standZ - 2f);
-            // Reverse route: 0 = stand, 1 = runway exit. Join mid lead-in (~0.30).
-            const float joinT = 0.30f;
-            if (t < 0.18f)
-            {
-                var join = PositionAlongTaxiRoute(route, joinT, true);
-                return Smooth(pushEnd, join, t / 0.18f);
-            }
-
-            var routeT = joinT + ((t - 0.18f) / 0.82f) * (1f - joinT);
-            return PositionAlongTaxiRoute(route, routeT, true);
+            // Pushback already ends on the throat; taxi-out is pure reverse route.
+            return PositionAlongTaxiRoute(route, t, true);
         }
 
         /// <summary>
         /// Flare then a real ground rollout (~22 m) to the west taxi exit (-24).
         /// </summary>
-        private static Vector3 LandingPosition(float t)
+        private static Vector3 LandingPosition(float t, float laneOffset = 0f)
         {
             const float touchdownT = 0.28f;
+            var z = laneOffset * 0.2f;
             if (t < touchdownT)
             {
-                return Smooth(new Vector3(-50f, 1.55f, 0f), new Vector3(-46f, 0.7f, 0f), t / touchdownT);
+                // Softer flare pitch companion: stay slightly higher longer.
+                return Smooth(new Vector3(-50f, 1.7f, z), new Vector3(-46f, 0.75f, z * 0.5f), t / touchdownT);
             }
 
             var u = (t - touchdownT) / (1f - touchdownT);
             var eased = 1f - (1f - u) * (1f - u);
-            return Vector3.Lerp(new Vector3(-46f, 0.7f, 0f), new Vector3(-24f, 0.7f, 0f), eased);
+            return Vector3.Lerp(new Vector3(-46f, 0.7f, z * 0.5f), new Vector3(-24f, 0.7f, 0f), eased);
         }
 
         /// <summary>
@@ -55036,7 +55108,8 @@ namespace Airside.Presentation
             {
                 var u = Mathf.SmoothStep(0f, 1f, t / 0.14f);
                 var start = new Vector3(-24f, 0.7f, 0f);
-                var bend = new Vector3(-23.2f, 0.7f, -0.85f);
+                // Bend north, away from the GT departing / off-field exit south of Alpha.
+                var bend = new Vector3(-23.2f, 0.7f, 0.85f);
                 var aligned = new Vector3(-20.5f, 0.7f, 0f);
                 var omu = 1f - u;
                 return omu * omu * start + 2f * omu * u * bend + u * u * aligned;

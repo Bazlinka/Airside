@@ -109,11 +109,14 @@ namespace Airside.Tests
 
             Assert.That(standOne.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.AlphaOne));
             Assert.That(standOne.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
-            Assert.That(standOne.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
-            Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
-            Assert.That(standThree.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
+            Assert.That(standOne.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standOne.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
+            Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standTwo.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
+            Assert.That(standThree.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standThree.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
             Assert.That(standOne.Points.Count, Is.EqualTo(standOne.SegmentIds.Count + 1));
-            Assert.That(standThree.Points[standThree.Points.Count - 1].Z, Is.EqualTo(26f));
+            Assert.That(standThree.Points[standThree.Points.Count - 1].Z, Is.EqualTo(34f));
         }
 
         [Test]
@@ -138,19 +141,48 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
 
-            clock.Advance(33);
-            simulation.Update();
-            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaOne), Is.True);
+            var sawA1 = false;
+            var sawA2 = false;
+            var sawThroat = false;
+            var sawLead = false;
+            StableId previous = default;
+            for (var second = 1; second <= 80; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                if (simulation.ActiveAircraft.Phase != AircraftPhase.TaxiIn)
+                    continue;
 
-            clock.Advance(9);
-            simulation.Update();
-            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaOne), Is.False);
-            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaTwo), Is.True);
+                var segment = simulation.CurrentTaxiSegment;
+                if (segment.Equals(AirportTaxiNetwork.AlphaOne)) sawA1 = true;
+                if (segment.Equals(AirportTaxiNetwork.AlphaTwo)) sawA2 = true;
+                if (segment.Equals(AirportTaxiNetwork.ApronThroat)) sawThroat = true;
+                if (segment.Equals(AirportTaxiNetwork.StandOneLeadIn)
+                    || segment.Equals(AirportTaxiNetwork.StandTwoLeadIn)
+                    || segment.Equals(AirportTaxiNetwork.StandThreeLeadIn))
+                    sawLead = true;
 
-            clock.Advance(8);
-            simulation.Update();
-            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.AlphaTwo), Is.False);
-            Assert.That(FlightOwns(simulation, AirportTaxiNetwork.StandOneLeadIn), Is.True);
+                if (!previous.Equals(default(StableId))
+                    && !previous.Equals(segment)
+                    && !segment.Equals(default(StableId)))
+                {
+                    // Apron throat is intentionally co-held with the stand lead-in.
+                    if (!(previous.Equals(AirportTaxiNetwork.ApronThroat)
+                        && (segment.Equals(AirportTaxiNetwork.StandOneLeadIn)
+                            || segment.Equals(AirportTaxiNetwork.StandTwoLeadIn)
+                            || segment.Equals(AirportTaxiNetwork.StandThreeLeadIn))))
+                    {
+                        Assert.That(FlightOwns(simulation, previous), Is.False,
+                            $"previous segment {previous.Value} should release before {segment.Value}");
+                    }
+                }
+
+                if (!segment.Equals(default(StableId)))
+                    previous = segment;
+            }
+
+            Assert.That(sawA1 && sawA2 && sawThroat && sawLead, Is.True,
+                "taxi-in should visit A1, A2, throat and lead-in in order");
         }
 
         private static bool FlightOwns(AirportSimulation simulation, StableId segment)

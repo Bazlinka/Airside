@@ -66,13 +66,20 @@ namespace Airside.Simulation
 
         public string Describe(SimulationTime now)
         {
+            var parts = new List<string>();
             foreach (var wait in _waits.Values)
             {
                 var elapsed = Math.Max(0, now.ElapsedSeconds - wait.StartedAt.ElapsedSeconds);
                 if (elapsed >= WarningAfterSeconds)
-                    return $"{wait.Aircraft.Value} waiting {elapsed}s for {wait.Resource.Value}";
+                {
+                    var resource = string.IsNullOrEmpty(wait.Resource.Value)
+                        ? "clearance"
+                        : wait.Resource.Value;
+                    parts.Add($"{wait.Aircraft.Value} waiting {elapsed}s for {resource}");
+                }
             }
-            return string.Empty;
+
+            return parts.Count == 0 ? string.Empty : string.Join("; ", parts);
         }
     }
 }

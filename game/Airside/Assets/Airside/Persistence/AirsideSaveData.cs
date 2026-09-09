@@ -35,6 +35,7 @@ namespace Airside.Persistence
             // Reject unsupported input before migration can erase its original version.
             if (schemaVersion < MinimumSupportedSchemaVersion || schemaVersion > CurrentSchemaVersion)
                 throw new InvalidOperationException($"Unsupported save schema {schemaVersion}.");
+            commands ??= new List<AirsideCommandRecord>();
             if (schemaVersion < 2)
             {
                 if (string.IsNullOrWhiteSpace(locationId))

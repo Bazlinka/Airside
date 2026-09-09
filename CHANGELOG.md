@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
+  body (which threw `InvalidProgramException` in the packaged player) and its
+  unreachable tens-of-thousands of outer grass primitives with a textured terrain
+  base. The operational runway, taxi, apron, building and prop construction stays
+  intact. Unity EditMode is 192/192; packaged visual-first-frame QA remains open.
+
 - **Free CC0 runway asphalt.** Poly Haven's Asphalt 01 diffuse, OpenGL normal and
   roughness maps are resized to the existing 1024px budget and wired as the
   preferred `tx_asphalt_runway_*_v03` source. The roughness map becomes the

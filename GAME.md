@@ -1,18 +1,19 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Codex — free CC0 runway-surface intake)
-- **Branch:** `art/free-industrial-props` (PR pending)
-- **Do next:** Merge the runway-surface PR, then continue the checklist in priority
-  order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters. AUD-002
-  wind/coast, AUD-004 rain, AUD-005 click and TEX-SRF-001 runway asphalt are
-  integrated; source distinct cleared alert, touchdown and engine assets after
-  higher-priority visual kits.
+- **Last updated:** 2026-09-09 (Codex — free CC0 asset intake / startup safeguard)
+- **Branch:** `art/free-concrete-surface` (startup-safeguard PR pending)
+- **Do next:** Have Cursor diagnose the packaged-player visual-first-frame issue
+  before more art sourcing. The previous `InvalidProgramException` is removed and
+  the dense outer grass field is replaced by one textured base, but a visible frame
+  was not captured from the local Mac player. Then continue the checklist in
+  priority order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters.
 - **In progress / half-done:** First-playable **refine / art sourcing** — no new
   economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
 - **Watch for / assumptions:**
   - Checklist rows marked Placeholder still need authored replacements; AUD-005 remains partial (click only)
   - Register + StreamingAssets sync required with every new runtime art commit
-  - The generated `double` to `float` source errors in `AirsidePrototype.cs` and the `BugfixPassTests` StableId assertion mismatch were repaired in this intake. Unity EditMode passes 192/192; `scripts/test-domain.sh` remains unavailable on this Mac because no .NET SDK is installed
+  - The generated `double` to `float` source errors, `BugfixPassTests` StableId assertion mismatch, packaged-player `BuildAirfield` IL fault, and unreachable dense outer-ground field were repaired in this intake. Unity EditMode passes 192/192; `scripts/test-domain.sh` remains unavailable on this Mac because no .NET SDK is installed
+  - Packaged-player visual-first-frame QA is still outstanding. The latest player log has repeated non-fatal `mesh isReadable is false` UV warnings while it initialises; treat the player as unresolved until a visible interactive frame is captured.
   - Save schema unchanged
 - **Open question for Bailey:** none
 

@@ -6572,6 +6572,10 @@ namespace Airside.Presentation
             PlaceParkedCar("Eastern arterial car E", new Vector3(108f, 0f, 48.0f), -88f, carColors[1]);
             PlaceParkedCar("Eastern arterial car F", new Vector3(176f, 0f, 43.4f), 92f, carColors[4]);
             PlaceParkedCar("Eastern arterial car G", new Vector3(154f, 0f, 43.9f), 86f, new Color(0.15f, 0.16f, 0.18f));
+            PlaceParkedCar("Mile End car A", new Vector3(98f, 0f, 43.5f), 90f, carColors[5]);
+            PlaceParkedCar("Mile End car B", new Vector3(140f, 0f, 48.3f), -90f, carColors[6]);
+            PlaceParkedCar("Mile End car C", new Vector3(170f, 0f, 43.7f), 94f, carColors[7]);
+            PlaceParkedCar("Mile End car D", new Vector3(126f, 0f, 48.1f), -86f, carColors[0]);
             PlaceParkedCar("Military Rd car A", new Vector3(-87.5f, 0f, 28f), 0f, carColors[0]);
             PlaceParkedCar("Military Rd car B", new Vector3(-87.5f, 0f, 52f), 180f, carColors[2]);
             PlaceParkedCar("Military Rd car C", new Vector3(-87.5f, 0f, 68f), 8f, carColors[4]);
@@ -8738,7 +8742,11 @@ namespace Airside.Presentation
                 new Vector3(70f, 1.0f, -102f), new Vector3(82f, 1.1f, -96f), new Vector3(94f, 0.95f, -108f),
                 new Vector3(76f, 1.05f, -118f), new Vector3(88f, 1.0f, -88f), new Vector3(102f, 1.12f, -78f),
                 new Vector3(-62f, 1.05f, 68f), new Vector3(-52f, 1.1f, 76f), new Vector3(-44f, 0.95f, 84f),
-                new Vector3(-58f, 1.0f, 88f), new Vector3(-48f, 1.12f, 96f), new Vector3(-36f, 1.05f, 72f)
+                new Vector3(-58f, 1.0f, 88f), new Vector3(-48f, 1.12f, 96f), new Vector3(-36f, 1.05f, 72f),
+                new Vector3(104f, 1.05f, 58f), new Vector3(168f, 1.1f, 66f), new Vector3(180f, 1.0f, 34f),
+                new Vector3(100f, 0.95f, 62f), new Vector3(188f, 1.12f, 58f), new Vector3(96f, 1.05f, 70f),
+                new Vector3(172f, 1.0f, 72f), new Vector3(158f, 1.08f, 34f), new Vector3(106f, 0.9f, 28f),
+                new Vector3(184f, 1.15f, 34f), new Vector3(92f, 1.0f, 62f), new Vector3(166f, 0.95f, 28f)
             };
             for (var i = 0; i < spots.Length; i++)
             {

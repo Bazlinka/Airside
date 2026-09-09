@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 29 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 30 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -51,7 +51,8 @@
   ATC cab is cantilevered with gulf-facing glass; east hangar has a west
   window and bay props; west hall has a small wave roof.
   Holdfast towers show north/east glass to the opening shot; extra foam
-  sits in the 05 shore gap.
+  sits in the 05 shore gap. Mile End houses and cars fill the arterial
+  foreground.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -110,7 +111,8 @@
   roof; Rapid 23 infield holds an eighth idle turboprop; Hills ridge
   carries eucalyptus. ATC cab cantilevers west over Charlie; east hangar
   faces the gulf; west hall has a wave roof. Holdfast glass faces the
-  opening shot; extra foam sits in the 05 shore gap. Save schema
+  opening shot; extra foam sits in the 05 shore gap. Mile End houses
+  and cars fill the arterial foreground. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

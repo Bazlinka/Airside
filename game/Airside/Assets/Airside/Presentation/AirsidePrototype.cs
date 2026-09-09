@@ -4519,6 +4519,9 @@ namespace Airside.Presentation
                          "West Beach surf club glass",
                          "Satellite bridge A glass",
                          "Satellite bridge B glass",
+                         "T1 bridge A glass",
+                         "T1 bridge B glass",
+                         "T1 bridge C glass",
                          "Holdfast glass A",
                          "Holdfast glass B",
                          "Holdfast glass C",
@@ -4558,6 +4561,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("West Beach surf club glass", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal)
                                    || name.StartsWith("Satellite bridge", StringComparison.Ordinal)
+                                   || name.StartsWith("T1 bridge", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Ident ", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
@@ -7662,8 +7666,9 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Idle aerobridges on the east satellite so the hall reads as a city gate,
-        /// not a regional shed. Presentation only — turboprop stands still use stairs.
+        /// Idle aerobridges on T1 and the east satellite so the hall reads as a city
+        /// gate, not a regional shed. Presentation only — turboprop stands still use
+        /// stairs, and these stubs stop short of 14/24/34.
         /// </summary>
         private static void BuildSatelliteAerobridges()
         {
@@ -7678,6 +7683,20 @@ namespace Airside.Presentation
             CreateBlock("Satellite bridge B glass", new Vector3(64.5f, 2.25f, 17.4f), new Vector3(1.05f, 1.1f, 6.6f), glass);
             PlaceContactShadow("Satellite bridge A contact", new Vector3(56.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
             PlaceContactShadow("Satellite bridge B contact", new Vector3(64.5f, 0.04f, 15.4f), new Vector3(2.8f, 0.02f, 8.4f), 0.12f);
+
+            // Short T1 airside stubs — east of stand centreline x=17, north of stand z=14.
+            CreateBlock("T1 bridge A", new Vector3(28f, 2.35f, 21.6f), new Vector3(1.45f, 1.85f, 4.4f), steel);
+            CreateBlock("T1 bridge A hood", new Vector3(28f, 2.25f, 19.0f), new Vector3(2.8f, 2.35f, 2.4f), hood);
+            CreateBlock("T1 bridge A glass", new Vector3(28f, 2.45f, 21.6f), new Vector3(1.15f, 1.2f, 3.8f), glass);
+            CreateBlock("T1 bridge B", new Vector3(36f, 2.35f, 20.4f), new Vector3(1.45f, 1.85f, 4.6f), steel);
+            CreateBlock("T1 bridge B hood", new Vector3(36f, 2.25f, 17.6f), new Vector3(2.8f, 2.35f, 2.4f), hood);
+            CreateBlock("T1 bridge B glass", new Vector3(36f, 2.45f, 20.4f), new Vector3(1.15f, 1.2f, 4.0f), glass);
+            CreateBlock("T1 bridge C", new Vector3(42f, 2.3f, 19.6f), new Vector3(1.4f, 1.8f, 4.2f), steel);
+            CreateBlock("T1 bridge C hood", new Vector3(42f, 2.2f, 17.0f), new Vector3(2.7f, 2.3f, 2.3f), hood);
+            CreateBlock("T1 bridge C glass", new Vector3(42f, 2.4f, 19.6f), new Vector3(1.1f, 1.15f, 3.6f), glass);
+            PlaceContactShadow("T1 bridge A contact", new Vector3(28f, 0.04f, 20.4f), new Vector3(3.0f, 0.02f, 6.4f), 0.12f);
+            PlaceContactShadow("T1 bridge B contact", new Vector3(36f, 0.04f, 19.0f), new Vector3(3.0f, 0.02f, 6.6f), 0.12f);
+            PlaceContactShadow("T1 bridge C contact", new Vector3(42f, 0.04f, 18.4f), new Vector3(2.9f, 0.02f, 6.2f), 0.12f);
         }
 
         /// <summary>

@@ -1,14 +1,15 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-09 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual`
+- **Branch:** `feature/adelaide-overnight-visual` (origin through `c8a10cd`; local foam commit may be one ahead)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint.
   EditMode already 193/193 on this branch. Merge if Play is clean.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, aircraft polish, CBD skyline. Save schema unchanged.
 - **Watch for / assumptions:**
-  - New games are Adelaide (`ADL`). Existing `KGC` saves stay Kingscote.
+  - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
+    the 3D airfield is the Adelaide-shaped presentation for all locations.
   - Sim taxi/stand coords unchanged (14/24/34). Cross runway 12/30 is visual only.
   - Airfield construction dropped from ~10k cubes to a few hundred level pads
     so Awake can reach a first frame.

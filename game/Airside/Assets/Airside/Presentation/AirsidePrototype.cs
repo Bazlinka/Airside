@@ -4527,6 +4527,7 @@ namespace Airside.Presentation
                          "Holdfast glass F",
                          "Holdfast glass G",
                          "Holdfast glass H",
+                         "Holdfast glass I",
                          "Holdfast hotel glass",
                          "ATC tower glass N",
                          "ATC tower glass S",
@@ -5125,7 +5126,11 @@ namespace Airside.Presentation
                 new Vector3(150f, 0f, 46f),
                 new Vector3(168f, 0f, 46f),
                 new Vector3(6f, 0f, 36.2f),
-                new Vector3(18f, 0f, 36.2f)
+                new Vector3(18f, 0f, 36.2f),
+                new Vector3(-85.6f, 0f, 28f),
+                new Vector3(-85.6f, 0f, 52f),
+                new Vector3(-85.6f, 0f, -32f),
+                new Vector3(-85.6f, 0f, -56f)
             };
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -5339,11 +5344,11 @@ namespace Airside.Presentation
             // stays visible. Extra plains pads keep the east/north/south floor seamless
             // without paving over the water.
             var grass = PreferSurfaceBasecolor("tx_grass_kingscote");
-            var dry = Shade(AirsideTheme.DryGrass, 0.62f);
-            PlaceLevelPad("Airfield terrain base", 70f, 8f, 296f, 220f, dry, grass, new Vector2(42f, 32f), top: 0f, height: 0.8f);
-            PlaceLevelPad("Adelaide plains N", 80f, 148f, 316f, 88f, Shade(dry, 0.97f), grass, new Vector2(44f, 12f), top: 0f, height: 0.8f);
-            PlaceLevelPad("Adelaide plains S", 80f, -138f, 316f, 76f, Shade(dry, 0.95f), grass, new Vector2(44f, 11f), top: 0f, height: 0.8f);
-            PlaceLevelPad("Adelaide plains E", 280f, 10f, 220f, 280f, Shade(dry, 1.02f), grass, new Vector2(28f, 40f), top: 0f, height: 0.8f);
+            var coastal = Shade(AirsideTheme.Eucalyptus, 0.78f);
+            PlaceLevelPad("Airfield terrain base", 70f, 8f, 296f, 220f, coastal, grass, new Vector2(42f, 32f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains N", 80f, 148f, 316f, 88f, Shade(AirsideTheme.DryGrass, 0.88f), grass, new Vector2(44f, 12f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains S", 80f, -138f, 316f, 76f, Shade(AirsideTheme.DryGrass, 0.86f), grass, new Vector2(44f, 11f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains E", 280f, 10f, 220f, 280f, Shade(AirsideTheme.DryGrass, 0.92f), grass, new Vector2(28f, 40f), top: 0f, height: 0.8f);
         }
 
 
@@ -5357,8 +5362,8 @@ namespace Airside.Presentation
             var tarmac = new Color(0.16f, 0.18f, 0.2f);
             var pad = new Color(0.34f, 0.36f, 0.37f);
 
-            PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 184f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
-            PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 184f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.58f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 184f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.7f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 184f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.66f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
             PlaceLevelPad("Infield Bravo 12-30 W", -6f, -24f, 44f, 26f, Shade(AirsideTheme.Eucalyptus, 0.5f), grass, new Vector2(10f, 6f), top: 0f, height: 0.32f);
             PlaceLevelPad("Infield Bravo 12-30 E", 56f, -30f, 36f, 32f, Shade(AirsideTheme.Eucalyptus, 0.48f), grass, new Vector2(8f, 7f), top: 0f, height: 0.32f);
             PlaceLevelPad("Infield 12-30 pocket", 32f, -72f, 30f, 38f, Shade(AirsideTheme.DryGrass, 0.7f), grass, new Vector2(7f, 8f), top: 0f, height: 0.32f);
@@ -6275,10 +6280,17 @@ namespace Airside.Presentation
             PlaceCoastRock("Coast rock D", new Vector3(-82f, -0.12f, -32f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
             var cream = new Color(0.86f, 0.82f, 0.74f);
             var surfGlass = new Color(0.22f, 0.42f, 0.55f, 0.5f);
-            CreateBlock("West Beach surf club", new Vector3(-70f, 2.2f, 18f), new Vector3(6.8f, 4.4f, 5.0f), cream);
-            CreateBlock("West Beach surf club glass", new Vector3(-73.35f, 2.4f, 18f), new Vector3(0.12f, 2.6f, 3.6f), surfGlass);
-            CreateBlock("West Beach surf club roof", new Vector3(-70f, 4.55f, 18f), new Vector3(7.4f, 0.28f, 5.5f), new Color(0.42f, 0.28f, 0.2f));
-            PlaceContactShadow("West Beach surf club contact", new Vector3(-70f, 0.04f, 18f), new Vector3(7.6f, 0.02f, 5.6f), 0.14f);
+            CreateBlock("West Beach surf club", new Vector3(-94f, 2.2f, 36f), new Vector3(6.8f, 4.4f, 5.0f), cream);
+            CreateBlock("West Beach surf club glass", new Vector3(-97.35f, 2.4f, 36f), new Vector3(0.12f, 2.6f, 3.6f), surfGlass);
+            CreateBlock("West Beach surf club roof", new Vector3(-94f, 4.55f, 36f), new Vector3(7.4f, 0.28f, 5.5f), new Color(0.42f, 0.28f, 0.2f));
+            CreateBlock("West Beach surf club deck", new Vector3(-97.2f, 0.55f, 36f), new Vector3(3.4f, 0.12f, 4.2f), new Color(0.62f, 0.5f, 0.36f));
+            PlaceContactShadow("West Beach surf club contact", new Vector3(-94f, 0.04f, 36f), new Vector3(7.6f, 0.02f, 5.6f), 0.14f);
+            CreateBlock("Beach house A", new Vector3(-93.8f, 1.15f, 52f), new Vector3(4.2f, 2.3f, 3.4f), cream);
+            CreateBlock("Beach house A roof", new Vector3(-93.8f, 2.45f, 52f), new Vector3(4.6f, 0.4f, 3.8f), new Color(0.42f, 0.28f, 0.2f));
+            CreateBlock("Beach house B", new Vector3(-94.2f, 1.05f, 64f), new Vector3(3.8f, 2.1f, 3.2f), Shade(cream, 0.94f));
+            CreateBlock("Beach house B roof", new Vector3(-94.2f, 2.25f, 64f), new Vector3(4.2f, 0.38f, 3.6f), new Color(0.48f, 0.32f, 0.22f));
+            CreateBlock("Beach house C", new Vector3(-93.4f, 1.1f, 76f), new Vector3(4.0f, 2.2f, 3.0f), cream);
+            CreateBlock("Beach house C roof", new Vector3(-93.4f, 2.35f, 76f), new Vector3(4.4f, 0.36f, 3.4f), new Color(0.4f, 0.3f, 0.24f));
             BuildGlenelgCoast();
         }
 
@@ -6304,25 +6316,28 @@ namespace Airside.Presentation
             CreateBlock("Holdfast glass C", new Vector3(-80f, 5.6f, -86.15f), new Vector3(4.2f, 7.2f, 0.12f), glass);
             CreateBlock("Holdfast glass D", new Vector3(-72f, 5.0f, -59.85f), new Vector3(3.2f, 6.4f, 0.12f), glass);
             CreateBlock("Holdfast tower E", new Vector3(-62f, 7.2f, -72f), new Vector3(4.6f, 14.4f, 4.0f), pale);
-            CreateBlock("Holdfast tower F", new Vector3(-84f, 9.0f, -108f), new Vector3(3.6f, 18.0f, 3.4f), cream);
+            CreateBlock("Holdfast tower F", new Vector3(-84f, 12.2f, -108f), new Vector3(3.8f, 24.4f, 3.6f), cream);
             CreateBlock("Holdfast hotel", new Vector3(-70f, 5.4f, -78f), new Vector3(8.8f, 10.8f, 5.8f), pale);
             CreateBlock("Holdfast glass E", new Vector3(-62f, 7.4f, -74.05f), new Vector3(3.6f, 9.2f, 0.12f), glass);
-            CreateBlock("Holdfast glass F", new Vector3(-84f, 9.2f, -109.75f), new Vector3(2.8f, 12f, 0.12f), glass);
+            CreateBlock("Holdfast glass F", new Vector3(-84f, 12.4f, -109.85f), new Vector3(3.0f, 16f, 0.12f), glass);
             CreateBlock("Holdfast hotel glass", new Vector3(-70f, 5.6f, -80.95f), new Vector3(7.4f, 7.2f, 0.12f), glass);
-            CreateBlock("Holdfast tower G", new Vector3(-58f, 8.4f, -114f), new Vector3(4.0f, 16.8f, 3.6f), pale);
-            CreateBlock("Holdfast glass G", new Vector3(-58f, 8.6f, -115.85f), new Vector3(3.2f, 11.2f, 0.12f), glass);
+            CreateBlock("Holdfast tower G", new Vector3(-58f, 11.2f, -114f), new Vector3(4.2f, 22.4f, 3.8f), pale);
+            CreateBlock("Holdfast glass G", new Vector3(-58f, 11.4f, -115.95f), new Vector3(3.4f, 14.8f, 0.12f), glass);
             CreateBlock("Holdfast tower H", new Vector3(-88f, 6.8f, -96f), new Vector3(5.0f, 13.6f, 4.2f), cream);
             CreateBlock("Holdfast glass H", new Vector3(-90.55f, 7.0f, -96f), new Vector3(0.12f, 9.2f, 3.4f), glass);
+            CreateBlock("Holdfast tower I", new Vector3(-76f, 10.4f, -122f), new Vector3(3.4f, 20.8f, 3.2f), pale);
+            CreateBlock("Holdfast glass I", new Vector3(-76f, 10.6f, -123.65f), new Vector3(2.6f, 13.6f, 0.12f), glass);
             PlaceContactShadow("Holdfast contact G", new Vector3(-58f, 0.04f, -114f), new Vector3(4.8f, 0.02f, 4.4f), 0.14f);
             PlaceContactShadow("Holdfast contact H", new Vector3(-88f, 0.04f, -96f), new Vector3(5.8f, 0.02f, 5.0f), 0.14f);
             CreateBlock("Glenelg pavilion", new Vector3(-112f, 1.35f, -90f), new Vector3(4.2f, 2.5f, 3.6f), cream);
             PlaceContactShadow("Holdfast contact E", new Vector3(-62f, 0.04f, -72f), new Vector3(5.4f, 0.02f, 4.8f), 0.14f);
-            PlaceContactShadow("Holdfast contact F", new Vector3(-84f, 0.04f, -108f), new Vector3(4.4f, 0.02f, 4.2f), 0.16f);
+            PlaceContactShadow("Holdfast contact F", new Vector3(-84f, 0.04f, -108f), new Vector3(4.6f, 0.02f, 4.4f), 0.16f);
             PlaceContactShadow("Holdfast hotel contact", new Vector3(-70f, 0.04f, -78f), new Vector3(9.6f, 0.02f, 6.6f), 0.16f);
             PlaceContactShadow("Holdfast contact A", new Vector3(-74f, 0.04f, -92f), new Vector3(5.2f, 0.02f, 4.6f), 0.16f);
             PlaceContactShadow("Holdfast contact B", new Vector3(-66f, 0.04f, -100f), new Vector3(4.6f, 0.02f, 4.2f), 0.14f);
             PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
             PlaceContactShadow("Holdfast contact D", new Vector3(-72f, 0.04f, -58f), new Vector3(4.8f, 0.02f, 4.4f), 0.14f);
+            PlaceContactShadow("Holdfast contact I", new Vector3(-76f, 0.04f, -122f), new Vector3(4.2f, 0.02f, 4.0f), 0.14f);
         }
 
         /// <summary>VEG-002 rock accents on the West Beach shoreline; cube blocks remain fallback.</summary>

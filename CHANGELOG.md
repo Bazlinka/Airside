@@ -89,7 +89,9 @@ change it describes.
   The ATC tower reads from 318 m; landing beams wash further down the 05
   final; SSAO contact is stronger. A West Beach coastal road with cars sits
   west of the gulf fence; 05/23 digits and PAPI boxes read from overview;
-  prop discs and ground shadows are stronger. Unity EditMode 193/193.
+  prop discs and ground shadows are stronger. Operating grass is coastal
+  green, not dry Kingscote paddock; the surf club sits on West Beach; Glenelg
+  towers read from the gulf. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

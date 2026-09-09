@@ -1,7 +1,8 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual`
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 5 commits ahead of
+  `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
@@ -16,7 +17,8 @@
   sit on the far dome. Clouds sit at ~90–150 m so they no longer rest on the
   tower. 12/30 pocket has eucalyptus outside the fence. CBD signature towers
   should read from the opening shot. Hangar apron holds a third idle turboprop.
-  Airside ident shows ADL. Noon sun is a bit punchier. EditMode 193/193 earlier this session.
+  Airside ident shows ADL. Noon sun is a bit punchier. North West Beach
+  houses sit outside the fence. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.

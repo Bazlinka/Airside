@@ -71,7 +71,8 @@ change it describes.
   the hangar; satellite GSE, extra gulf foam and arterial cars fill empty
   overview gaps. Airside ident carries rooftop ADL letters. Aircraft skin is
   glossier so the fleet catches the sun from overview. Gulf boats all bob.
-  Noon sun is punchier. Unity EditMode 193/193.
+  Noon sun is punchier. North West Beach houses sit outside the fence.
+  Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

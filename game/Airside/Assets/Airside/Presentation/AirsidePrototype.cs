@@ -8331,6 +8331,8 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(8f, 3f), top: 0.12f, height: 0.24f);
+            PlaceLevelPad("Suburban band N", -48f, 78f, 36f, 22f, Shade(AirsideTheme.DryGrass, 0.76f),
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(7f, 4f), top: 0.12f, height: 0.24f);
             PlaceSuburbanHouses();
         }
 
@@ -8361,7 +8363,9 @@ namespace Airside.Presentation
                 new Vector3(-56f, 1.05f, -70f), new Vector3(-46f, 1.0f, -82f), new Vector3(-64f, 1.12f, -96f),
                 new Vector3(-52f, 0.95f, -104f),
                 new Vector3(70f, 1.0f, -102f), new Vector3(82f, 1.1f, -96f), new Vector3(94f, 0.95f, -108f),
-                new Vector3(76f, 1.05f, -118f), new Vector3(88f, 1.0f, -88f), new Vector3(102f, 1.12f, -78f)
+                new Vector3(76f, 1.05f, -118f), new Vector3(88f, 1.0f, -88f), new Vector3(102f, 1.12f, -78f),
+                new Vector3(-62f, 1.05f, 68f), new Vector3(-52f, 1.1f, 76f), new Vector3(-44f, 0.95f, 84f),
+                new Vector3(-58f, 1.0f, 88f), new Vector3(-48f, 1.12f, 96f), new Vector3(-36f, 1.05f, 72f)
             };
             for (var i = 0; i < spots.Length; i++)
             {

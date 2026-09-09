@@ -1,11 +1,11 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Codex — free CC0 ambient-wind intake)
-- **Branch:** `art/free-wind-audio` (PR pending)
-- **Do next:** Merge the ambient-wind PR, then continue the checklist in priority
-  order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters.
-  AUD-002 wind and AUD-005 click are integrated; source distinct cleared alert,
-  coast, rain, touchdown and engine assets after higher-priority visual kits.
+- **Last updated:** 2026-09-09 (Codex — free CC0 rain intake)
+- **Branch:** `art/free-touchdown-audio` (PR pending)
+- **Do next:** Merge the rain PR, then continue the checklist in priority order:
+  P0 aircraft parts → buildings → vehicles/GSE → veg/characters. AUD-002 wind,
+  AUD-004 rain and AUD-005 click are integrated; source distinct cleared alert,
+  coast, touchdown and engine assets after higher-priority visual kits.
 - **In progress / half-done:** First-playable **refine / art sourcing** — no new
   economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
 - **Watch for / assumptions:**

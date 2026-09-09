@@ -5,6 +5,8 @@ change it describes.
 
 ## Unreleased
 
+- **Free CC0 ambient rain.** Ylmir's 45-second loopable OpenGameArt rain bed is packaged through Resources and replaces generated rain crackle when available; the procedural clip remains as a fallback. Source checksum and licence are recorded in the asset register.
+
 - **Free CC0 ambient wind.** SketchMan3's loopable OpenGameArt wind bed is packaged through Resources and replaces generated wind noise when available; the procedural clip remains as a fallback. Source checksum and licence are recorded in the asset register.
 
 - **Free CC0 UI audio.** Kenney `ui_select_005.ogg` is packaged through Resources and plays on all UI Toolkit and Canvas HUD button actions, respecting mute. Licence, source hash and fallback are recorded in the asset register. Unity imported the asset; local EditMode execution is still blocked while the Unity package resolver initialises its dependencies.

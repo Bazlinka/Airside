@@ -1,24 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — handoff after fidelity #167)
-- **Branch:** `main` (fidelity-board integration merged via #167)
-- **Do next:** Mac Unity Play — overview / follow / day+dusk vs the seven
-  Approved modelling boards in `docs/art/reference/`:
-  pale-grey open-bay ARFF + red/white truck; joint-free apron + wet concrete;
-  denser scrub belt + limestone rocks; turquoise shallows; turnaround GSE
-  zones; CHR dual wands; buildings v05 / fleet v06. Note gaps, then densify
-  only where Mac shows misses.
-- **In progress / half-done:** none
+- **Last updated:** 2026-09-09 (Cursor — continuous ground + ATC goal, cycle 136)
+- **Branch:** `feature/ground-atc-authenticity`
+- **Do next:** Press Play — overview 155; hold K/L + east Alpha edges; soft taxi-lead / apron–Alpha
+  fillets; vacated → Ground handoff; departure hold traffic naming. Continue until stop.
+- **In progress / half-done:** Continuous goal active. Cycle 136 in progress (docs/tests caught up).
 - **Watch for / assumptions:**
-  - PreferArtKit: scrub/terrain `*_v02` → v01; surfaces PreferSurface /
-    PreferAuthoredMap (`tx_*_v02` + `tx_wet_concrete_*_v02`); ARFF
-    `mdl_arff_*_v02` → v01
-  - Boards are modelling targets only — do **not** crop the surface board into
-    runtime maps
-  - Additive StreamingAssets copies only — do **not** run full
-    `scripts/sync-art-streaming-assets.sh` (wipes metas)
-  - Save schema / simulation reservations unchanged (presentation only)
-  - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
+  - Do **not** run `scripts/rebuild-and-open-mac.sh` on this feature branch
+  - Batchmode tests blocked while Editor has the project open
+  - Screen/window capture blocked on macOS 15 — visual audit needs Bailey Play
+  - Save schema unchanged; CreateBlock ~22370 — prefer prefix matching over exact names
 - **Open question for Bailey:** none
 
 ---

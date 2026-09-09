@@ -12,8 +12,8 @@ namespace Airside.Presentation
     {
         // Slightly terminal-biased so overview reads apron + buildings as one miniature.
         private readonly Vector3 _overviewCenter = new(12f, 0f, 16f);
-        private const float OverviewDistance = 44f;
-        private const float OverviewFov = 48f;
+        private const float OverviewDistance = 155f;
+        private const float OverviewFov = 50f;
         private const float OverviewPitch = 38f;
         private const float OverviewYaw = 138f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
@@ -267,7 +267,7 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.035f, 12f, 90f);
+                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 12f, 130f);
         }
 
         /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>

@@ -49,6 +49,7 @@ namespace Airside.Simulation
             TaxiNetwork = new AirportTaxiNetwork();
             EventLog = new OperationalEventLog();
             TrafficWaits = new TrafficWaitMonitor();
+            Atc = new AerodromeAtc();
             Routes = new AirportRoutes(clock.Now);
             Reputation = new AirportReputation();
             Staffing = new AirportStaffing();
@@ -93,6 +94,7 @@ namespace Airside.Simulation
         public TaxiRoute ActiveTaxiRoute => FocusFlight.TaxiRoute;
         public OperationalEventLog EventLog { get; }
         public TrafficWaitMonitor TrafficWaits { get; }
+        public AerodromeAtc Atc { get; }
         public IReadOnlyList<GroundTrafficAircraft> GroundTraffic => _groundTraffic;
         public StableId CurrentTaxiSegment => FocusFlight.SegmentFor(_clock.Now);
         public long LastDelaySeconds { get; private set; }
@@ -350,24 +352,205 @@ namespace Airside.Simulation
 
             // Hold current resources before advancing. If another commercial owns a
             // shared taxi/runway segment, stall schedule progress rather than occupy it.
+            var wasHolding = TrafficWaits.TryGetWaitStart(flight.OwnerId, out _);
             if (!_reservations.TryReplace(flight.OwnerId, flight.RequiredResources(now), out var blocked))
             {
                 if (!IsCommercialOwner(blocked))
                     ReservationConflicts++;
                 TrafficWaits.SetWaiting(flight.OwnerId, blocked, now);
+                var before = Atc.LastInstruction;
+                var phrase = PhraseForBlockedResource(flight.AircraftId, blocked, now);
+                if (!string.Equals(before, phrase, StringComparison.Ordinal))
+                    Record(now, flight.AircraftId, "ATC", phrase);
                 flight.Operation.StallOneSecond();
                 return;
+            }
+
+            if (wasHolding
+                && flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
+                    or AircraftPhase.Pushback)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueContinueTaxi(
+                    flight.AircraftId,
+                    afterGiveWay: true,
+                    inbound: flight.Operation.Phase == AircraftPhase.TaxiIn));
             }
 
             // Holding short after TaxiOut: ResourcesForPhase is empty, so TryReplace
             // succeeded without claiming the runway. Surface the takeoff wait instead
             // of silently clearing TrafficWaits.
             if (flight.Operation.Phase == AircraftPhase.TaxiOut
-                && flight.Operation.SecondsRemaining(now) <= 0
-                && !_reservations.CanReplace(flight.OwnerId,
-                    flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out var runwayBlocked))
+                && flight.Operation.SecondsRemaining(now) <= 0)
             {
-                TrafficWaits.SetWaiting(flight.OwnerId, runwayBlocked, now);
+                if (!CanIssueTakeoffClearance(flight, now, out var holdReason, out var runwayBlocked))
+                {
+                    TrafficWaits.SetWaiting(flight.OwnerId, runwayBlocked.Equals(default) ? Runway : runwayBlocked, now);
+                    // Line up and wait when the runway itself is free but separation is
+                    // almost open — more authentic than repeating "hold short" only.
+                    var before = Atc.LastInstruction;
+                    if (!ArrivalHasRunwayPriority(flight, now)
+                        && Atc.SeparationRemainingSeconds(now) > 0
+                        && Atc.SeparationRemainingSeconds(now) <= AerodromeAtc.LineUpAndWaitWindowSeconds
+                        && _reservations.CanReplace(flight.OwnerId,
+                            flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out _))
+                    {
+                        Atc.IssueLineUpAndWait(
+                            flight.AircraftId,
+                            behindLanding: Atc.IsWakeCautionActive(now),
+                            traffic: DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else if (holdReason.IndexOf("number two", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        Atc.IssueNumberTwoForDeparture(flight.AircraftId, DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else if (Atc.SeparationRemainingSeconds(now) > AerodromeAtc.LineUpAndWaitWindowSeconds)
+                    {
+                        Atc.IssueReadyForDeparture(flight.AircraftId);
+                    }
+                    else if (holdReason.IndexOf("arrival", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        Atc.IssueTrafficAdvisory(flight.AircraftId, DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else
+                    {
+                        Atc.IssueHoldShortRunway(
+                            flight.AircraftId,
+                            holdReason,
+                            DescribeDepartureHoldTraffic(flight, now));
+                    }
+
+                    if (!string.Equals(before, Atc.LastInstruction, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
+                    return;
+                }
+            }
+
+            // Short-roll cue: restate airborne report once before lift-off.
+            if (flight.Operation.Phase == AircraftPhase.Takeoff
+                && flight.Operation.SecondsRemaining(now) == 2
+                && Atc.ActiveClearance is AtcClearance.ClearedForTakeoff or AtcClearance.ReportAirborne)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportAirborne(flight.AircraftId));
+            }
+
+            // Mid-roll: radar contact once the takeoff roll is established.
+            if (flight.Operation.Phase == AircraftPhase.Takeoff
+                && flight.Operation.SecondsRemaining(now) == 8
+                && Atc.ActiveClearance is AtcClearance.ClearedForTakeoff or AtcClearance.ReportAirborne)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueRadarContact(flight.AircraftId));
+            }
+
+            // Mid-downwind: ask once before base on the short Kingscote circuit.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) == AerodromeAtc.MidDownwindReportSeconds
+                && Atc.ActiveClearance is AtcClearance.JoinLeftDownwind or AtcClearance.ContinueApproach
+                    or AtcClearance.OrbitLeft or AtcClearance.GoAround or AtcClearance.NumberTwoLanding
+                    or AtcClearance.None)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportMidDownwind(flight.AircraftId));
+            }
+
+            // Late downwind / early base: ask for base report once.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) == AerodromeAtc.ApproachNumberTwoWindowSeconds - 4
+                && Atc.ActiveClearance is AtcClearance.JoinLeftDownwind or AtcClearance.ContinueApproach
+                    or AtcClearance.OrbitLeft or AtcClearance.GoAround or AtcClearance.NumberTwoLanding
+                    or AtcClearance.ReportMidDownwind or AtcClearance.None)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportBase(flight.AircraftId));
+            }
+
+            // Turning final: ask for final report once after base.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) == AerodromeAtc.ArrivalPriorityWindowSeconds + 4
+                && Atc.ActiveClearance is AtcClearance.ReportBase or AtcClearance.ContinueApproach
+                    or AtcClearance.JoinLeftDownwind or AtcClearance.OrbitLeft or AtcClearance.GoAround
+                    or AtcClearance.ReportMidDownwind or AtcClearance.None)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportFinal(flight.AircraftId));
+            }
+
+            // Short final / established: also accept MinimumApproachSpeed so number-two traffic
+            // still gets the final cues once sequenced.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) == AerodromeAtc.ArrivalPriorityWindowSeconds + 2
+                && Atc.ActiveClearance is AtcClearance.ContinueApproach or AtcClearance.ReportBase
+                    or AtcClearance.ReportFinal or AtcClearance.JoinLeftDownwind
+                    or AtcClearance.ReportMidDownwind or AtcClearance.MinimumApproachSpeed
+                    or AtcClearance.NumberTwoLanding or AtcClearance.None)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportEstablished(flight.AircraftId));
+            }
+
+            // Short final: cue once before the priority window closes.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) == 4
+                && Atc.ActiveClearance is AtcClearance.ReportEstablished or AtcClearance.ReportFinal
+                    or AtcClearance.ContinueApproach or AtcClearance.ExpectLanding
+                    or AtcClearance.ReportMidDownwind or AtcClearance.ReportBase
+                    or AtcClearance.MinimumApproachSpeed or AtcClearance.NumberTwoLanding
+                    or AtcClearance.None)
+            {
+                Record(now, flight.AircraftId, "ATC", Atc.IssueShortFinal(flight.AircraftId));
+            }
+
+            // Approach overdue but not yet cleared to land — keep ATC hold visible,
+            // or issue a go-around after a prolonged runway block so traffic unsticks.
+            if (flight.Operation.Phase == AircraftPhase.Approach
+                && flight.Operation.SecondsRemaining(now) <= 0
+                && !CanIssueLandingClearance(flight, now, out var approachReason, out _))
+            {
+                TrafficWaits.SetWaiting(flight.OwnerId, Runway, now);
+                var waitSeconds = TrafficWaits.TryGetWaitStart(flight.OwnerId, out var waitStart)
+                    ? Math.Max(0, now.ElapsedSeconds - waitStart.ElapsedSeconds)
+                    : 0;
+                if (waitSeconds >= AerodromeAtc.GoAroundAfterSeconds)
+                {
+                    var phrase = Atc.IssueGoAround(flight.AircraftId, approachReason);
+                    Record(now, flight.AircraftId, "ATC", phrase);
+                    flight.Operation.RestartApproach(now);
+                    TrafficWaits.Clear(flight.OwnerId);
+                    // After the missed approach, tower re-sequences into the circuit.
+                    Record(now, flight.AircraftId, "ATC", Atc.IssueJoinLeftDownwind(flight.AircraftId));
+                    return;
+                }
+
+                if (approachReason.IndexOf("number two", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var before = Atc.LastInstruction;
+                    var lead = DescribeLeadingArrivalTraffic(flight, now);
+                    if (waitSeconds >= AerodromeAtc.OrbitAfterNumberTwoSeconds)
+                        Atc.IssueOrbitLeft(flight.AircraftId, lead);
+                    else if (waitSeconds >= 3)
+                        Atc.IssueMinimumApproachSpeed(flight.AircraftId, lead);
+                    else
+                        Atc.IssueNumberTwoForLanding(flight.AircraftId, lead);
+                    if (!string.Equals(before, Atc.LastInstruction, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
+                }
+                else if (Atc.SeparationRemainingSeconds(now) > 0)
+                {
+                    var before = Atc.LastInstruction;
+                    var sep = Atc.SeparationRemainingSeconds(now);
+                    if (sep <= AerodromeAtc.ConditionalLandingWindowSeconds)
+                        Atc.IssueConditionalLanding(flight.AircraftId, sep);
+                    else
+                        Atc.IssueExpectLandingClearance(flight.AircraftId, sep);
+                    if (!string.Equals(before, Atc.LastInstruction, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
+                }
+                else
+                {
+                    var before = Atc.LastInstruction;
+                    Atc.IssueContinueApproach(
+                        flight.AircraftId,
+                        DescribeLeadingArrivalTraffic(flight, now),
+                        wakeCaution: Atc.IsWakeCautionActive(now));
+                    if (!string.Equals(before, Atc.LastInstruction, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
+                }
+                flight.Operation.StallOneSecond();
                 return;
             }
 
@@ -385,6 +568,10 @@ namespace Airside.Simulation
                     if (!IsCommercialOwner(blocked))
                         ReservationConflicts++;
                     TrafficWaits.SetWaiting(flight.OwnerId, blocked, now);
+                    var before = Atc.LastInstruction;
+                    var phrase = PhraseForBlockedResource(flight.AircraftId, blocked, now);
+                    if (!string.Equals(before, phrase, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", phrase);
                 }
                 else
                 {
@@ -395,6 +582,8 @@ namespace Airside.Simulation
             if (previousPhase == flight.Operation.Phase)
                 return;
 
+            RecordPhaseClearance(flight, now);
+
             if (flight.Operation.Phase == AircraftPhase.AtStand)
             {
                 // Live staffing factor — hiring mid-turnaround takes effect immediately.
@@ -403,6 +592,8 @@ namespace Airside.Simulation
                     _random.NextInt(0, 3) == 0,
                     () => Staffing.TurnaroundSpeedFactor);
                 flight.Operation.BindAtStandProgress(t => flight.Turnaround.Progress01(t));
+                Record(now, flight.AircraftId, "ATC",
+                    Atc.IssueOnStand(flight.AircraftId, StandLabel(flight.AssignedStand)));
                 Record(now, flight.AircraftId, "On stand", $"Arrived at {flight.AssignedStand.Value}");
             }
 
@@ -418,7 +609,8 @@ namespace Airside.Simulation
                 LastDelayCause = flight.LastDelayCause;
                 if (flight.LastDelaySeconds > 0)
                     Record(now, flight.AircraftId, $"Delayed {flight.LastDelaySeconds}s", flight.LastDelayCause);
-                Record(now, flight.AircraftId, "Turnaround complete", "Pushback approved");
+                Record(now, flight.AircraftId, "ATC", Atc.IssueEngineStartApproved(flight.AircraftId));
+                Record(now, flight.AircraftId, "ATC", Atc.IssuePushbackApproved(flight.AircraftId));
             }
 
             if (flight.Operation.Phase == AircraftPhase.Departed && !flight.FlightSettled)
@@ -435,14 +627,18 @@ namespace Airside.Simulation
 
                 flight.FlightSettled = true;
                 CompletedCycles++;
+                Atc.NotifyRunwayVacated(now);
+                Record(now, flight.AircraftId, "ATC", Atc.IssueRadarContact(flight.AircraftId));
+                Record(now, flight.AircraftId, "ATC", Atc.IssueFrequencyChangeApproved(flight.AircraftId));
                 Record(now, flight.AircraftId, "Departed",
                     $"Net flight result ${AirportEconomy.TurnaroundRevenue - flight.LastDelaySeconds * AirportEconomy.DelayCostPerSecond:N0}");
                 _reservations.Release(flight.OwnerId);
                 TrafficWaits.Clear(flight.OwnerId);
             }
-            else if (flight.Operation.Phase == AircraftPhase.Landing)
+            else if (previousPhase == AircraftPhase.Landing && flight.Operation.Phase == AircraftPhase.TaxiIn)
             {
-                Record(now, flight.AircraftId, "Landing", Runway.Value);
+                Atc.NotifyRunwayVacated(now, flight.AircraftId);
+                Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
             }
         }
 
@@ -490,6 +686,7 @@ namespace Airside.Simulation
             _flights.Add(flight);
             _flights.Sort(CompareFlights);
             Record(at, id, "Flight inbound", $"Assigned {stand.Value}");
+            Record(at, id, "ATC", Atc.IssueJoinLeftDownwind(id));
         }
 
         private void TryRespawnCommercial(CommercialFlight flight, SimulationTime now)
@@ -683,6 +880,29 @@ namespace Airside.Simulation
             foreach (var aircraft in _groundTraffic)
                 aircraft.Reposition(now, TrafficWaits, occupied, Capacity.StandCount,
                     mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
+
+            // Surface ground-traffic holds in ATC phraseology when no commercial is mid-clearance.
+            foreach (var aircraft in _groundTraffic)
+            {
+                if (!aircraft.IsHolding)
+                    continue;
+                string reason;
+                if (aircraft.DesiredSegment.Equals(default))
+                {
+                    reason = "awaiting corridor — give way to commercial";
+                }
+                else if (IsCommercialOwner(aircraft.DesiredSegment))
+                {
+                    reason = $"give way to commercial on {aircraft.DesiredSegment.Value}";
+                }
+                else
+                {
+                    reason = $"{aircraft.DesiredSegment.Value} busy";
+                }
+
+                Atc.IssueGroundHold(aircraft.Id.Value, reason);
+                break;
+            }
         }
 
         private void SynchronizeCommercialReservations()
@@ -706,12 +926,45 @@ namespace Airside.Simulation
                 }
                 else if (flight.Operation.Phase == AircraftPhase.TaxiOut
                     && flight.Operation.SecondsRemaining(now) <= 0
-                    && !_reservations.CanReplace(owner,
-                        flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out var runwayBlocked))
+                    && !CanIssueTakeoffClearance(flight, now, out var holdReason, out var runwayBlocked))
                 {
                     // Holding short: RequiredResources is empty so TryReplace succeeded,
                     // but takeoff is still blocked — keep the runway wait visible.
-                    TrafficWaits.SetWaiting(owner, runwayBlocked, now);
+                    TrafficWaits.SetWaiting(owner, runwayBlocked.Equals(default) ? Runway : runwayBlocked, now);
+                    var before = Atc.LastInstruction;
+                    if (!ArrivalHasRunwayPriority(flight, now)
+                        && Atc.SeparationRemainingSeconds(now) > 0
+                        && Atc.SeparationRemainingSeconds(now) <= AerodromeAtc.LineUpAndWaitWindowSeconds
+                        && _reservations.CanReplace(owner,
+                            flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out _))
+                    {
+                        Atc.IssueLineUpAndWait(
+                            flight.AircraftId,
+                            behindLanding: Atc.IsWakeCautionActive(now),
+                            traffic: DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else if (holdReason.IndexOf("number two", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        Atc.IssueNumberTwoForDeparture(flight.AircraftId, DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else if (Atc.SeparationRemainingSeconds(now) > AerodromeAtc.LineUpAndWaitWindowSeconds)
+                    {
+                        Atc.IssueReadyForDeparture(flight.AircraftId);
+                    }
+                    else if (holdReason.IndexOf("arrival", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        Atc.IssueTrafficAdvisory(flight.AircraftId, DescribeDepartureHoldTraffic(flight, now));
+                    }
+                    else
+                    {
+                        Atc.IssueHoldShortRunway(
+                            flight.AircraftId,
+                            holdReason,
+                            DescribeDepartureHoldTraffic(flight, now));
+                    }
+
+                    if (!string.Equals(before, Atc.LastInstruction, StringComparison.Ordinal))
+                        Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
                 }
                 else
                 {
@@ -726,6 +979,77 @@ namespace Airside.Simulation
                 return false;
 
             return IsFlightOwner(owner);
+        }
+
+        /// <summary>
+        /// Phrase fragment for taxi give-way — names the aircraft holding the blocked resource.
+        /// </summary>
+        private string DescribeOpposingTaxiTraffic(StableId blockedResource)
+        {
+            if (!_reservations.TryGetOwner(blockedResource, out var owner))
+                return "opposing taxiing traffic on Alpha";
+
+            foreach (var other in _flights)
+            {
+                if (other.OwnerId.Equals(owner))
+                    return $"{other.AircraftId} taxiing opposite on Alpha";
+            }
+
+            foreach (var aircraft in _groundTraffic)
+            {
+                if (aircraft.Id.Equals(owner))
+                    return $"{aircraft.Id.Value} taxiing opposite on Alpha";
+            }
+
+            return "opposing taxiing traffic on Alpha";
+        }
+
+        /// <summary>
+        /// Phrase fragment for apron give-way — names the aircraft holding the apron lane.
+        /// </summary>
+        private string DescribeOpposingApronTraffic(StableId blockedResource)
+        {
+            if (!_reservations.TryGetOwner(blockedResource, out var owner))
+                return "apron traffic";
+
+            foreach (var other in _flights)
+            {
+                if (other.OwnerId.Equals(owner))
+                    return $"{other.AircraftId} on the apron";
+            }
+
+            foreach (var aircraft in _groundTraffic)
+            {
+                if (aircraft.Id.Equals(owner))
+                    return $"{aircraft.Id.Value} on the apron";
+            }
+
+            return "apron traffic";
+        }
+
+        /// <summary>
+        /// Choose hold / give-way phraseology for the blocked resource — apron holds must
+        /// not fall through to Alpha taxi give-way when another commercial owns the apron,
+        /// and Alpha holds should name opposing traffic (commercial or ground).
+        /// </summary>
+        private string PhraseForBlockedResource(string callsign, StableId blocked, SimulationTime now)
+        {
+            if (blocked.Equals(ApronLane))
+                return Atc.IssueHoldApron(callsign, DescribeOpposingApronTraffic(blocked));
+
+            if (blocked.Equals(AirportTaxiNetwork.Corridor)
+                || blocked.Equals(AirportTaxiNetwork.AlphaOne)
+                || blocked.Equals(AirportTaxiNetwork.AlphaTwo))
+            {
+                if (IsCommercialOwner(blocked))
+                    return Atc.IssueGiveWayTaxiing(callsign, DescribeOpposingTaxiTraffic(blocked));
+                return Atc.IssueHoldShortAlpha(callsign, DescribeOpposingTaxiTraffic(blocked));
+            }
+
+            if (IsCommercialOwner(blocked))
+                return Atc.IssueGiveWayTaxiing(callsign, DescribeOpposingTaxiTraffic(blocked));
+
+            return Atc.DescribeHold(callsign, blocked, now);
         }
 
         private GroundTrafficAircraft ChooseCorridorGrantee(SimulationTime now)
@@ -771,7 +1095,324 @@ namespace Airside.Simulation
             if (next >= AircraftPhase.Departed)
                 return true;
 
+            if (phase == AircraftPhase.Approach
+                && !CanIssueLandingClearance(flight, now, out _, out _))
+                return false;
+
+            if (phase == AircraftPhase.TaxiOut
+                && !CanIssueTakeoffClearance(flight, now, out _, out _))
+                return false;
+
             return _reservations.CanReplace(flight.OwnerId, flight.ResourcesForPhase(next, now), out _);
+        }
+
+        private bool CanIssueLandingClearance(
+            CommercialFlight flight, SimulationTime now, out string reason, out StableId blocked)
+        {
+            blocked = default;
+            reason = string.Empty;
+
+            if (!Atc.RunwaySeparationOpen(now))
+            {
+                reason = $"runway separation {Atc.SeparationRemainingSeconds(now)}s";
+                blocked = Runway;
+                return false;
+            }
+
+            if (!_reservations.CanReplace(flight.OwnerId, flight.ResourcesForPhase(AircraftPhase.Landing, now), out blocked))
+            {
+                reason = "runway occupied";
+                return false;
+            }
+
+            // FIFO approach sequencing: an earlier approach that is also ready stays number one.
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, flight) || other.Operation.IsComplete)
+                    continue;
+
+                if (other.Operation.Phase == AircraftPhase.Landing)
+                {
+                    reason = "landing traffic on the runway";
+                    blocked = Runway;
+                    return false;
+                }
+
+                if (other.Operation.Phase == AircraftPhase.Approach
+                    && other.Operation.SecondsRemaining(now) <= AerodromeAtc.ApproachNumberTwoWindowSeconds
+                    && other.Operation.PhaseStartedAt.ElapsedSeconds < flight.Operation.PhaseStartedAt.ElapsedSeconds)
+                {
+                    reason = "number two for landing";
+                    blocked = Runway;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool CanIssueTakeoffClearance(
+            CommercialFlight flight, SimulationTime now, out string reason, out StableId blocked)
+        {
+            blocked = default;
+            reason = string.Empty;
+
+            if (ArrivalHasRunwayPriority(flight, now))
+            {
+                reason = "arrival on approach";
+                blocked = Runway;
+                return false;
+            }
+
+            if (!Atc.RunwaySeparationOpen(now))
+            {
+                reason = $"runway separation {Atc.SeparationRemainingSeconds(now)}s";
+                blocked = Runway;
+                return false;
+            }
+
+            if (!_reservations.CanReplace(flight.OwnerId, flight.ResourcesForPhase(AircraftPhase.Takeoff, now), out blocked))
+            {
+                reason = "runway occupied";
+                return false;
+            }
+
+            // FIFO departure queue at the hold short: earlier waiter stays number one.
+            var ourWait = TrafficWaits.TryGetWaitStart(flight.OwnerId, out var ourStart)
+                ? ourStart.ElapsedSeconds
+                : now.ElapsedSeconds;
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, flight) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase != AircraftPhase.TaxiOut
+                    || other.Operation.SecondsRemaining(now) > 0)
+                    continue;
+                if (ArrivalHasRunwayPriority(other, now))
+                    continue;
+
+                var theirWait = TrafficWaits.TryGetWaitStart(other.OwnerId, out var theirStart)
+                    ? theirStart.ElapsedSeconds
+                    : other.Operation.PhaseStartedAt.ElapsedSeconds;
+                if (theirWait < ourWait)
+                {
+                    reason = "number two for departure";
+                    blocked = Runway;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Departures yield when another commercial is landing or about to need the runway.
+        /// </summary>
+        private bool ArrivalHasRunwayPriority(CommercialFlight departing, SimulationTime now)
+        {
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, departing) || other.Operation.IsComplete)
+                    continue;
+
+                var phase = other.Operation.Phase;
+                if (phase == AircraftPhase.Landing)
+                    return true;
+
+                if (phase == AircraftPhase.Approach
+                    && other.Operation.SecondsRemaining(now) <= AerodromeAtc.ArrivalPriorityWindowSeconds)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Phrase fragment for departure traffic advisories based on the priority arrival's progress.
+        /// </summary>
+        private string DescribeArrivalTraffic(CommercialFlight departing, SimulationTime now)
+        {
+            CommercialFlight nearest = null;
+            var nearestRemaining = long.MaxValue;
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, departing) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase == AircraftPhase.Landing)
+                    return $"{other.AircraftId} landing on the runway";
+                if (other.Operation.Phase != AircraftPhase.Approach)
+                    continue;
+                var remaining = other.Operation.SecondsRemaining(now);
+                if (remaining < nearestRemaining)
+                {
+                    nearestRemaining = remaining;
+                    nearest = other;
+                }
+            }
+
+            if (nearest == null)
+                return null;
+            if (nearestRemaining <= AerodromeAtc.LineUpAndWaitWindowSeconds)
+                return $"{nearest.AircraftId} on short final";
+            if (nearestRemaining <= AerodromeAtc.ArrivalPriorityWindowSeconds)
+                return $"{nearest.AircraftId} on final";
+            if (nearestRemaining <= AerodromeAtc.ApproachNumberTwoWindowSeconds)
+                return $"{nearest.AircraftId} on base";
+            if (nearestRemaining <= AerodromeAtc.MidDownwindReportSeconds + AerodromeAtc.ApproachNumberTwoWindowSeconds)
+                return $"{nearest.AircraftId} mid-downwind";
+            return $"{nearest.AircraftId} in the circuit";
+        }
+
+        /// <summary>
+        /// Traffic phrase for a departure holding short — prefers real arrivals, then leading
+        /// departures (LUAW / takeoff / earlier FIFO waiter), never a fake "on approach".
+        /// </summary>
+        private string DescribeDepartureHoldTraffic(CommercialFlight departing, SimulationTime now)
+        {
+            var arrival = DescribeArrivalTraffic(departing, now);
+            if (!string.IsNullOrEmpty(arrival))
+                return arrival;
+
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, departing) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase == AircraftPhase.Takeoff)
+                    return $"{other.AircraftId} departing on the runway";
+                if (Atc.ActiveClearance == AtcClearance.LineUpAndWait
+                    && string.Equals(Atc.LastClearedFlight, other.AircraftId, StringComparison.Ordinal))
+                    return $"{other.AircraftId} lining up runway 09";
+            }
+
+            // FIFO: name the earlier taxi-out waiter at the hold.
+            var ourWait = TrafficWaits.TryGetWaitStart(departing.OwnerId, out var ourStart)
+                ? ourStart.ElapsedSeconds
+                : now.ElapsedSeconds;
+            CommercialFlight leader = null;
+            var leaderWait = long.MaxValue;
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, departing) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase != AircraftPhase.TaxiOut
+                    || other.Operation.SecondsRemaining(now) > 0)
+                    continue;
+                if (ArrivalHasRunwayPriority(other, now))
+                    continue;
+                var theirWait = TrafficWaits.TryGetWaitStart(other.OwnerId, out var theirStart)
+                    ? theirStart.ElapsedSeconds
+                    : other.Operation.PhaseStartedAt.ElapsedSeconds;
+                if (theirWait < ourWait && theirWait < leaderWait)
+                {
+                    leaderWait = theirWait;
+                    leader = other;
+                }
+            }
+
+            if (leader != null)
+                return $"{leader.AircraftId} holding short for departure";
+            return "ahead at holding point Alpha";
+        }
+
+        /// <summary>
+        /// Phrase fragment for number-two approach traffic — the arrival closer to the runway.
+        /// </summary>
+        private string DescribeLeadingArrivalTraffic(CommercialFlight following, SimulationTime now)
+        {
+            CommercialFlight nearest = null;
+            var nearestRemaining = long.MaxValue;
+            var followingRemaining = following.Operation.SecondsRemaining(now);
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, following) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase == AircraftPhase.Landing)
+                    return $"{other.AircraftId} landing on the runway";
+                if (other.Operation.Phase == AircraftPhase.Takeoff)
+                    return $"{other.AircraftId} departing on the runway";
+                if (Atc.ActiveClearance == AtcClearance.LineUpAndWait
+                    && string.Equals(Atc.LastClearedFlight, other.AircraftId, StringComparison.Ordinal))
+                    return $"{other.AircraftId} lining up runway 09";
+                if (other.Operation.Phase == AircraftPhase.TaxiOut
+                    && other.Operation.SecondsRemaining(now) <= 0)
+                    return $"{other.AircraftId} holding short for departure";
+                if (other.Operation.Phase != AircraftPhase.Approach)
+                    continue;
+                var remaining = other.Operation.SecondsRemaining(now);
+                if (remaining >= followingRemaining)
+                    continue;
+                if (remaining < nearestRemaining)
+                {
+                    nearestRemaining = remaining;
+                    nearest = other;
+                }
+            }
+
+            if (nearest == null)
+                return "on final";
+            if (nearestRemaining <= AerodromeAtc.LineUpAndWaitWindowSeconds)
+                return $"{nearest.AircraftId} on short final";
+            if (nearestRemaining <= AerodromeAtc.ArrivalPriorityWindowSeconds)
+                return $"{nearest.AircraftId} on final";
+            if (nearestRemaining <= AerodromeAtc.ApproachNumberTwoWindowSeconds)
+                return $"{nearest.AircraftId} on base";
+            if (nearestRemaining <= AerodromeAtc.MidDownwindReportSeconds + AerodromeAtc.ApproachNumberTwoWindowSeconds)
+                return $"{nearest.AircraftId} mid-downwind";
+            return $"{nearest.AircraftId} in the circuit";
+        }
+
+        private void RecordPhaseClearance(CommercialFlight flight, SimulationTime now)
+        {
+            switch (flight.Operation.Phase)
+            {
+                case AircraftPhase.Landing:
+                    Record(now, flight.AircraftId, "ATC",
+                        Atc.IssueClearedToLand(flight.AircraftId, CurrentWeather, now));
+                    Record(now, flight.AircraftId, "ATC", Atc.IssueReportRunwayVacated(flight.AircraftId));
+                    Record(now, flight.AircraftId, "Landing", Runway.Value);
+                    break;
+                case AircraftPhase.TaxiIn:
+                    Record(now, flight.AircraftId, "ATC", Atc.IssueContactGround(flight.AircraftId));
+                    Record(now, flight.AircraftId, "ATC",
+                        Atc.IssueTaxiToStand(
+                            flight.AircraftId,
+                            StandLabel(flight.AssignedStand),
+                            expedite: ArrivalTrafficNeedsExpediteVacate(flight, now)));
+                    break;
+                case AircraftPhase.TaxiOut:
+                    Record(now, flight.AircraftId, "ATC",
+                        Atc.IssueTaxiToHoldShort(flight.AircraftId, CurrentWeather));
+                    break;
+                case AircraftPhase.Takeoff:
+                    Record(now, flight.AircraftId, "ATC",
+                        Atc.IssueClearedForTakeoff(flight.AircraftId, CurrentWeather, now));
+                    Record(now, flight.AircraftId, "ATC", Atc.IssueReportAirborne(flight.AircraftId));
+                    break;
+            }
+        }
+
+        private bool ArrivalTrafficNeedsExpediteVacate(CommercialFlight vacating, SimulationTime now)
+        {
+            foreach (var other in _flights)
+            {
+                if (ReferenceEquals(other, vacating) || other.Operation.IsComplete)
+                    continue;
+                if (other.Operation.Phase == AircraftPhase.Approach
+                    && other.Operation.SecondsRemaining(now) <= AerodromeAtc.ApproachNumberTwoWindowSeconds)
+                    return true;
+                if (other.Operation.Phase == AircraftPhase.Landing)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string StandLabel(StableId stand)
+        {
+            if (stand.Equals(StandOne)) return "Stand 1";
+            if (stand.Equals(StandTwo)) return "Stand 2";
+            if (stand.Equals(StandThree)) return "Stand 3";
+            return stand.Value;
         }
 
         private void CaptureDayBaseline()

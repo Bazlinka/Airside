@@ -4577,7 +4577,10 @@ namespace Airside.Presentation
                 (new Vector3(-18f, 6.5f, 16f), new Vector3(-20f, 0.2f, 20f)),
                 (new Vector3(17f, 6.8f, 26f), new Vector3(26f, 0.5f, 27f)),
                 (new Vector3(-8f, 5.8f, 22f), new Vector3(-8f, 0.2f, 26f)),
-                (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f))
+                (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f)),
+                (new Vector3(20f, 9.0f, 34f), new Vector3(17f, 0.2f, 34f)),
+                (new Vector3(40f, 9.0f, 18f), new Vector3(40f, 0.2f, 24f)),
+                (new Vector3(58f, 8.2f, 20f), new Vector3(60f, 0.2f, 22f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -4847,7 +4850,10 @@ namespace Airside.Presentation
                 new Vector3(29f, 0f, 46f),
                 new Vector3(40f, 0f, 46f),
                 new Vector3(52f, 0f, 46f),
-                new Vector3(48f, 0f, 40f)
+                new Vector3(48f, 0f, 40f),
+                new Vector3(56f, 0f, 34f),
+                new Vector3(40f, 0f, 40f),
+                new Vector3(60f, 0f, 46f)
             };
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -10055,6 +10061,10 @@ namespace Airside.Presentation
             // East-mid Alpha hold bars near A2 exit for denser taxi authenticity.
             CreateBlock("Hold short K", new Vector3(28f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             CreateBlock("Hold short L", new Vector3(28f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short M", new Vector3(42f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short N", new Vector3(42f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short O", new Vector3(-36f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short P", new Vector3(-36f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             // Readable block digits for 05 / 23 (facing inbound traffic).
             PlaceRunwayDigit('0', new Vector3(VisualThresholdWestX + 8.4f, 0.04f, 0f), yaw: 90f);
             PlaceRunwayDigit('5', new Vector3(VisualThresholdWestX + 10.4f, 0.04f, 0f), yaw: 90f);
@@ -10549,6 +10559,8 @@ namespace Airside.Presentation
             PlaceFloodMast(kit, new Vector3(32f, 0f, 22f), flood);
             PlaceFloodMast(kit, new Vector3(40f, 0f, 22f), flood);
             PlaceFloodMast(kit, new Vector3(40f, 0f, 14f), flood);
+            PlaceFloodMast(kit, new Vector3(20f, 0f, 32f), flood);
+            PlaceFloodMast(kit, new Vector3(58f, 0f, 20f), flood);
         }
 
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)

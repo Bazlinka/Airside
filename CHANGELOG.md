@@ -27,8 +27,8 @@ change it describes.
   Landside has a control tower and an east satellite hall linked by a skybridge
   over Charlie. Stairs and parked GA are scaled to the larger aircraft kit.
   Taxi edge lights run the full Alpha length and Charlie. Alpha centreline
-  paint now covers the long taxi. The landside car park is filled across the
-  bigger pad. Unity EditMode 193/193.
+  paint now covers the long taxi, with hold bars at both far ends. Night floods
+  cover Stand 3 and the east satellite. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

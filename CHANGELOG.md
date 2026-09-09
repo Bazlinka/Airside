@@ -129,7 +129,8 @@ change it describes.
   West and east hall glass uses the glass material instead of
   the water heuristic. The kerbside coach fallback is painted
   metal, not water. CBD glass towers use the glass material
-  instead of the water heuristic.
+  instead of the water heuristic. East hangar north glass
+  faces the gulf opening shot.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

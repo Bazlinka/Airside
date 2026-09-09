@@ -4560,6 +4560,7 @@ namespace Airside.Presentation
                          "ATC tower glass W",
                          "ATC tower cab glow",
                          "East hangar west glass",
+                         "East hangar north glass",
                          "ILS GS glass",
                          "ILS loc hut glow"
                      })
@@ -4597,6 +4598,8 @@ namespace Airside.Presentation
                                    || name.StartsWith("T1 curve glow", StringComparison.Ordinal)
                                    || name.StartsWith("T1 curve ochre", StringComparison.Ordinal)
                                    || name.StartsWith("T1 porte glow", StringComparison.Ordinal)
+                                   || name.StartsWith("East hangar west glass", StringComparison.Ordinal)
+                                   || name.StartsWith("East hangar north glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
@@ -7862,6 +7865,8 @@ namespace Airside.Presentation
             CreateBlock("East hangar door", new Vector3(96f, 2.9f, 32.5f), new Vector3(11.2f, 5.6f, 0.18f), door);
             CreateBlock("East hangar window glow", new Vector3(96f, 4.6f, 32.42f), new Vector3(6.4f, 1.6f, 0.08f), new Color(1f, 0.75f, 0.35f));
             CreateBlock("East hangar west glass", new Vector3(87.72f, 4.2f, 38f), new Vector3(0.1f, 3.6f, 8.4f),
+                new Color(0.18f, 0.36f, 0.48f, 0.42f));
+            CreateBlock("East hangar north glass", new Vector3(96f, 4.4f, 43.65f), new Vector3(10.8f, 3.8f, 0.1f),
                 new Color(0.18f, 0.36f, 0.48f, 0.42f));
             CreateBlock("East hangar workbench", new Vector3(90.2f, 0.85f, 36.4f), new Vector3(2.6f, 0.12f, 0.9f),
                 new Color(0.45f, 0.42f, 0.38f));

@@ -4496,6 +4496,7 @@ namespace Airside.Presentation
                          "Terminal west ident accent",
                          "Terminal west hall upper glow",
                          "West drop canopy glow",
+                         "T1 curve glow",
                          "Adelaide monument bar",
                          "Freight office glow",
                          "West Beach surf club glass",
@@ -4543,6 +4544,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal west ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal west hall upper", StringComparison.Ordinal)
                                    || name.StartsWith("West drop canopy glow", StringComparison.Ordinal)
+                                   || name.StartsWith("T1 curve glow", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
@@ -5516,6 +5518,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal west hall upper glass", new Vector3(12f, 5.5f, 32.05f), new Vector3(9.2f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal west hall upper glow", new Vector3(12f, 5.4f, 31.92f), new Vector3(7.8f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
             PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
+            BuildAdelaideLandsideCurve();
             BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
             BuildTerminalLandsideCanopy();
@@ -5735,9 +5738,9 @@ namespace Airside.Presentation
             var asphalt = PreferSurfaceBasecolor("tx_asphalt_runway");
             var concrete = PreferSurfaceBasecolor("tx_concrete_apron");
 
-            PlaceLevelPad("Gulf St Vincent", -168f, 8f, 160f, 340f, new Color(0.18f, 0.4f, 0.5f, 0.94f),
+            PlaceLevelPad("Gulf St Vincent", -168f, 8f, 160f, 340f, new Color(0.14f, 0.36f, 0.48f, 0.95f),
                 water, new Vector2(20f, 36f), top: -0.35f, height: 0.5f);
-            PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.14f, 0.34f, 0.46f, 0.96f),
+            PlaceLevelPad("Gulf far", -268f, 12f, 140f, 380f, new Color(0.1f, 0.28f, 0.42f, 0.97f),
                 water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
             PlaceLevelPad("West Beach sand", -96f, 8f, 36f, 340f, Shade(AirsideTheme.Sand, 0.95f),
                 sand, new Vector2(10f, 56f), top: -0.02f, height: 0.28f);
@@ -6187,6 +6190,8 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat B", new Vector3(-124f, -0.42f, -8f), 110f, new Color(0.75f, 0.35f, 0.22f));
             PlaceCoastBoat("Coast boat C", new Vector3(-112f, -0.4f, 42f), 80f, new Color(0.92f, 0.9f, 0.82f));
             PlaceCoastBoat("Coast boat F", new Vector3(-126f, -0.42f, -78f), 102f, new Color(0.88f, 0.86f, 0.78f));
+            PlaceCoastBoat("Coast boat G", new Vector3(-132f, -0.44f, -96f), 108f, new Color(0.22f, 0.38f, 0.48f));
+            PlaceCoastBoat("Coast boat H", new Vector3(-118f, -0.4f, -52f), 88f, new Color(0.9f, 0.55f, 0.2f));
             if (!hasBoatPrefab)
             {
                 PlaceCoastBoat("Coast boat D", new Vector3(-130f, -0.4f, -28f), 100f, new Color(0.2f, 0.35f, 0.45f));
@@ -7561,6 +7566,31 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Curved landside glass so the main hall reads as Adelaide T1 from overview,
+        /// not a flat regional box. Presentation only.
+        /// </summary>
+        private static void BuildAdelaideLandsideCurve()
+        {
+            var glass = new Color(0.16f, 0.4f, 0.52f, 0.5f);
+            var mullion = new Color(0.72f, 0.75f, 0.78f);
+            var soffit = new Color(0.52f, 0.55f, 0.58f);
+            for (var i = -3; i <= 3; i++)
+            {
+                var yaw = i * 8f;
+                var x = 26f + i * 2.35f;
+                var z = 32.9f - Mathf.Abs(i) * 0.38f;
+                CreateBlock($"T1 curve glass {i}", new Vector3(x, 3.15f, z), new Vector3(2.45f, 4.5f, 0.12f), glass)
+                    .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                CreateBlock($"T1 curve mullion {i}", new Vector3(x, 3.15f, z - 0.08f), new Vector3(0.12f, 4.6f, 0.16f), mullion)
+                    .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
+
+            CreateBlock("T1 curve roof", new Vector3(26f, 5.55f, 32.1f), new Vector3(16.8f, 0.2f, 3.4f), soffit);
+            CreateBlock("T1 curve glow", new Vector3(26f, 3.05f, 33.05f), new Vector3(14.2f, 2.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            PlaceContactShadow("T1 curve contact", new Vector3(26f, 0.035f, 32.4f), new Vector3(17.2f, 0.02f, 4.2f), 0.12f);
+        }
+
+        /// <summary>
         /// Decision 0025 item 3 — landside canopy, posts and glass so the terminal
         /// entrance reads as a building, not a flat box, from overview and landside.
         /// </summary>
@@ -8281,7 +8311,7 @@ namespace Airside.Presentation
             dome.name = "Horizon dome";
             Object.Destroy(dome.GetComponent<Collider>());
             dome.transform.position = new Vector3(0f, 0f, 0f);
-            dome.transform.localScale = new Vector3(760f, 240f, 760f);
+            dome.transform.localScale = new Vector3(960f, 300f, 960f);
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
             material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
@@ -8309,8 +8339,8 @@ namespace Airside.Presentation
                 var yaw = (float)rng.NextDouble() * 360f;
                 var pitch = 10f + (float)rng.NextDouble() * 72f;
                 var dir = Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward;
-                star.transform.position = dir.normalized * 128f;
-                var s = 0.22f + (float)rng.NextDouble() * 0.42f;
+                star.transform.position = dir.normalized * 430f;
+                var s = 1.15f + (float)rng.NextDouble() * 1.7f;
                 star.transform.localScale = Vector3.one * s;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
                 var mat = AirsideMaterialLibrary.Create(
@@ -8439,7 +8469,7 @@ namespace Airside.Presentation
                 _sunDisc.gameObject.SetActive(showSun);
                 if (showSun)
                 {
-                    _sunDisc.position = sunDir.normalized * 95f + Vector3.up * 8f;
+                    _sunDisc.position = sunDir.normalized * 380f + Vector3.up * 28f;
                     var sunColor = Color.Lerp(
                         new Color(1f, 0.55f, 0.28f),
                         new Color(1f, 0.95f, 0.78f),
@@ -8453,7 +8483,7 @@ namespace Airside.Presentation
                             renderer.material.SetColor("_EmissionColor", sunColor * (1.1f + warm * 0.6f));
                     }
 
-                    var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
+                    var scale = Mathf.Lerp(28f, 18f, daylight);
                     _sunDisc.localScale = Vector3.one * scale;
                 }
             }
@@ -8468,7 +8498,8 @@ namespace Airside.Presentation
                     var moonDir = Quaternion.Euler(0f, 180f, 0f) * sunDir;
                     if (moonDir.y < 0.05f)
                         moonDir.y = 0.15f;
-                    _moonDisc.position = moonDir.normalized * 90f + Vector3.up * 6f;
+                    _moonDisc.position = moonDir.normalized * 360f + Vector3.up * 22f;
+                    _moonDisc.localScale = Vector3.one * 16f;
                     var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
                     var renderer = _moonDisc.GetComponent<Renderer>();
                     if (renderer != null)
@@ -8628,9 +8659,9 @@ namespace Airside.Presentation
                 {
                     _coastWaterRenderers.Add(renderer);
                     if (renderer.material.HasProperty("_Smoothness"))
-                        renderer.material.SetFloat("_Smoothness", 0.92f);
+                        renderer.material.SetFloat("_Smoothness", 0.96f);
                     if (renderer.material.HasProperty("_Metallic"))
-                        renderer.material.SetFloat("_Metallic", 0.18f);
+                        renderer.material.SetFloat("_Metallic", 0.26f);
                 }
             }
 
@@ -8638,7 +8669,7 @@ namespace Airside.Presentation
             foreach (var name in new[]
                      {
                          "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D",
-                         "Coast boat E", "Coast boat F"
+                         "Coast boat E", "Coast boat F", "Coast boat G", "Coast boat H"
                      })
             {
                 var go = GameObject.Find(name);
@@ -10143,7 +10174,7 @@ namespace Airside.Presentation
             {
                 NestServiceDoorParts(root);
                 NestCargoBags(root);
-                root.localScale = Vector3.one * 1.16f;
+                root.localScale = Vector3.one * 1.22f;
             }
 
             root.gameObject.SetActive(false);
@@ -10216,7 +10247,7 @@ namespace Airside.Presentation
 
             if (placed)
             {
-                root.localScale = Vector3.one * 1.20f;
+                root.localScale = Vector3.one * 1.24f;
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -10226,7 +10257,7 @@ namespace Airside.Presentation
                 || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
                 prefabRoot.name = "Passenger stairs";
-                prefabRoot.localScale = Vector3.one * 1.20f;
+                prefabRoot.localScale = Vector3.one * 1.24f;
                 prefabRoot.gameObject.SetActive(false);
                 return prefabRoot;
             }
@@ -10239,6 +10270,7 @@ namespace Airside.Presentation
                 ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
                     new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
 
+            root.localScale = Vector3.one * 1.24f;
             root.gameObject.SetActive(false);
             return root;
         }
@@ -11290,6 +11322,19 @@ namespace Airside.Presentation
                 var mark = CreateBlock($"12-30 centre {i}", center + along * (i * 8f) + new Vector3(0f, 0.01f, 0f),
                     new Vector3(2.4f, 0.02f, 0.22f), Color.white);
                 mark.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
+
+            var papi = end30 - along * 10f + across * 5.4f;
+            for (var i = 0; i < 4; i++)
+            {
+                var red = i < 2;
+                var box = CreateBlock($"12-30 PAPI {i}", papi + along * (i * 1.45f),
+                    new Vector3(0.45f, 0.28f, 0.55f),
+                    red ? new Color(1f, 0.28f, 0.22f) : new Color(1f, 0.95f, 0.72f));
+                box.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                CreateBlock($"12-30 PAPI stem {i}", papi + along * (i * 1.45f) + new Vector3(0f, -0.35f, 0f),
+                    new Vector3(0.12f, 0.7f, 0.12f), new Color(0.35f, 0.36f, 0.38f))
+                    .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
         }
 

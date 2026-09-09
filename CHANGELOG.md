@@ -62,7 +62,9 @@ change it describes.
   Dual landing beams reach further down the gulf final. Idle turboprops sit
   on the far-east and freight aprons. 12/30 infield grass fills the south
   pocket. Sun shadows reach 380 m so the 318 m overview still keys the gulf
-  and CBD.
+  and CBD. Curved T1 landside glass faces the drop-off. Gulf water is
+  glossier; sun/moon/stars sit on the far sky dome instead of hovering over
+  the field. 12/30 has a PAPI ladder. GSE and stairs match the larger kit.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

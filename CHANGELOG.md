@@ -73,6 +73,7 @@ change it describes.
   glossier so the fleet catches the sun from overview. Gulf boats all bob.
   Noon sun is punchier. North West Beach houses sit outside the fence.
   West Beach sand meets the grass deck level so the dune seam is not a crack.
+  Terminal roofs carry extra plant so the halls are not flat slabs from overview.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

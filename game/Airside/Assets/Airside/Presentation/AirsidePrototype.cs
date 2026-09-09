@@ -5520,6 +5520,10 @@ namespace Airside.Presentation
             CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal hall upper glow", new Vector3(26f, 5.85f, 24.7f), new Vector3(12f, 1.1f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal roof plant", new Vector3(22f, 7.25f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal roof plant B", new Vector3(30.4f, 7.22f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
+            CreateBlock("Terminal east roof plant", new Vector3(57.2f, 6.5f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 6.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
+            CreateBlock("Terminal west roof plant", new Vector3(9.2f, 6.55f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
             CreateBlock("Terminal west glass", new Vector3(12f, 2.25f, 32.65f), new Vector3(10.4f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Terminal west roof", new Vector3(12f, 4.25f, 29.2f), new Vector3(13.1f, 0.22f, 7.4f), new Color(0.5f, 0.53f, 0.56f));

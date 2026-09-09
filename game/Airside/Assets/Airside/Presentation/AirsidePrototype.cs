@@ -5909,7 +5909,7 @@ namespace Airside.Presentation
             PlaceCoastRock("Coast rock D", new Vector3(-82f, -0.12f, -32f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
         }
 
-        /// <summary>VEG-002 rock accents on the KI shoreline; cube blocks remain fallback.</summary>
+        /// <summary>VEG-002 rock accents on the West Beach shoreline; cube blocks remain fallback.</summary>
         private static void PlaceCoastRock(string name, Vector3 position, string mesh, Color color, float scale, float yawDegrees)
         {
             var kit = PreferArtKit(

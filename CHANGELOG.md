@@ -59,6 +59,10 @@ change it describes.
   CBD. A standby ARFF truck sits on the 05 Alpha; the west hall has an
   extra storey and cars under the drop-off canopy. Live aircraft kit offset
   is −0.65 so v06 tires meet pavement top instead of sitting 5 cm in it.
+  Dual landing beams reach further down the gulf final. Idle turboprops sit
+  on the far-east and freight aprons. 12/30 infield grass fills the south
+  pocket. Sun shadows reach 380 m so the 318 m overview still keys the gulf
+  and CBD.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

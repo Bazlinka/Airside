@@ -1420,9 +1420,9 @@ namespace Airside.Presentation
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
-                light.range = 96f;
-                light.spotAngle = 38f;
-                light.innerSpotAngle = 16f;
+                light.range = 118f;
+                light.spotAngle = 42f;
+                light.innerSpotAngle = 18f;
                 light.shadows = lamp.name.EndsWith(" R", StringComparison.Ordinal)
                     ? LightShadows.None
                     : LightShadows.Soft;
@@ -1432,7 +1432,7 @@ namespace Airside.Presentation
             SetLampMeshEmission(lamp, new Color(1f, 0.97f, 0.88f), on);
             if (!on)
                 return;
-            light.intensity = night ? 8.6f : 5.0f;
+            light.intensity = night ? 10.2f : 6.2f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -4121,7 +4121,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = 0.78f;
             _sun.shadowBias = 0.035f;
             _sun.shadowNormalBias = 0.4f;
-            QualitySettings.shadowDistance = 320f;
+            QualitySettings.shadowDistance = 380f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
             var fillGo = GameObject.Find("Fill light");
@@ -5316,6 +5316,9 @@ namespace Airside.Presentation
 
             PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 184f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
             PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 184f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.58f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield Bravo 12-30 W", -6f, -24f, 44f, 26f, Shade(AirsideTheme.Eucalyptus, 0.5f), grass, new Vector2(10f, 6f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield Bravo 12-30 E", 56f, -30f, 36f, 32f, Shade(AirsideTheme.Eucalyptus, 0.48f), grass, new Vector2(8f, 7f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield 12-30 pocket", 32f, -72f, 30f, 38f, Shade(AirsideTheme.DryGrass, 0.7f), grass, new Vector2(7f, 8f), top: 0f, height: 0.32f);
 
             PlaceLevelPad("Runway 23-05", VisualRunwayCenterX, 0f, 184f, 8.2f, tarmac, asphalt, new Vector2(36f, 1.6f));
             PlaceLevelPad("Runway shoulder N", VisualRunwayCenterX, 4.85f, 184f, 1.7f, Shade(tarmac, 0.92f), asphalt, new Vector2(36f, 0.4f));
@@ -5353,7 +5356,7 @@ namespace Airside.Presentation
             PlaceLevelPad("Apron west expansion", 2f, 18f, 22f, 16f, Shade(pad, 0.96f), concrete, new Vector2(5f, 3.6f));
             PlaceLevelPad("Apron satellite", 62f, 16f, 16f, 14f, Shade(pad, 0.97f), concrete, new Vector2(3.6f, 3.2f));
             PlaceLevelPad("GA apron", -48f, 15.4f, 28f, 8.4f, Shade(pad, 0.94f), concrete, new Vector2(5.4f, 1.8f));
-            PlaceLevelPad("Apron far east", 76f, 30f, 12f, 10f, Shade(pad, 0.96f), concrete, new Vector2(2.8f, 2.2f));
+            PlaceLevelPad("Apron far east", 78f, 30f, 16f, 12f, Shade(pad, 0.96f), concrete, new Vector2(3.2f, 2.6f));
             PlaceLevelPad("Taxiway Echo", 74f, 22f, 5.0f, 16f, Shade(tarmac, 1.03f), asphalt, new Vector2(1.1f, 3.2f));
 
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, 0.02f, 0f), new Vector3(-12f, 0.02f, 9f), 5.4f, asphalt, new Vector2(1.8f, 1.4f));
@@ -5456,7 +5459,7 @@ namespace Airside.Presentation
                     "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
                     "roof_panel", "roof_ridge", "roof_eave", "hvac"
                 },
-                uniformScale: 1.20f);
+                uniformScale: 1.28f);
         }
 
         private static void BuildAirfieldTerrain12()
@@ -5845,7 +5848,8 @@ namespace Airside.Presentation
             PlacePerson(root, "Stand 2 marshaller", new Vector3(19.8f, 0f, 24f), 185f, new Color(0.9f, 0.5f, 0.1f),
                 hiVis: true, marshallerWand: true);
             PlacePerson(root, "Baggage handler", new Vector3(20.5f, 0f, 19.5f), 250f, new Color(0.3f, 0.45f, 0.55f), hiVis: true);
-            PlacePerson(root, "Bench sitter", new Vector3(29.5f, 0.15f, 31.5f), 0f, new Color(0.35f, 0.3f, 0.28f), seated: true);
+            PlacePerson(root, "West drop passenger A", new Vector3(9.4f, 0f, 34.8f), 10f, new Color(0.42f, 0.28f, 0.22f));
+            PlacePerson(root, "West drop passenger B", new Vector3(14.8f, 0f, 34.6f), -8f, new Color(0.22f, 0.32f, 0.42f));
 
             if (hasChrKits)
             {
@@ -8973,7 +8977,7 @@ namespace Airside.Presentation
             CreateBlock($"{name} stop", new Vector3(x, 0.08f, z + 1.9f), new Vector3(3.4f, 0.03f, 0.18f), new Color(0.96f, 0.77f, 0.12f));
         }
 
-        private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
+        private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null, bool withEngineAudio = true)
         {
             var root = new GameObject(name).transform;
             // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.26 is on
@@ -9113,14 +9117,18 @@ namespace Airside.Presentation
                     vaporR.gameObject.SetActive(false);
             }
 
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.clip = CreateEngineClip();
-            source.loop = true;
-            source.volume = 0.11f;
-            source.spatialBlend = 0.75f;
-            source.minDistance = 8f;
-            source.maxDistance = 75f;
-            source.Play();
+            if (withEngineAudio)
+            {
+                var source = root.gameObject.AddComponent<AudioSource>();
+                source.clip = CreateEngineClip();
+                source.loop = true;
+                source.volume = 0.11f;
+                source.spatialBlend = 0.75f;
+                source.minDistance = 8f;
+                source.maxDistance = 75f;
+                source.Play();
+            }
+
             return root;
         }
 
@@ -9791,7 +9799,7 @@ namespace Airside.Presentation
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
-                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.4f));
+                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.52f));
                 disc.SetActive(false);
             }
         }
@@ -11393,6 +11401,7 @@ namespace Airside.Presentation
             PlaceFloodMast(kit, new Vector3(20f, 0f, 32f), flood);
             PlaceFloodMast(kit, new Vector3(58f, 0f, 20f), flood);
             PlaceFloodMast(kit, new Vector3(-66f, 0f, 14.6f), flood);
+            PlaceFloodMast(kit, new Vector3(78f, 0f, 30f), flood);
         }
 
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)
@@ -11893,6 +11902,32 @@ namespace Airside.Presentation
                 CreateBlock($"GA apron stem {i}", new Vector3(spot.x, 0.055f, spot.z + 0.7f), new Vector3(0.12f, 0.02f, 1.6f), new Color(0.95f, 0.85f, 0.2f));
                 PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);
             }
+
+            PlaceIdleApronAircraft("Idle satellite", new Vector3(82f, 0.7f, 32f), 255f, new Color(0.18f, 0.32f, 0.52f));
+            PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f));
+        }
+
+        /// <summary>
+        /// Static polished turboprop on a visual apron so the bigger field is not empty
+        /// grass from overview. Not on the sim network and has no engine bed.
+        /// </summary>
+        private static void PlaceIdleApronAircraft(string name, Vector3 position, float yawDegrees, Color accent)
+        {
+            var root = BuildAircraft(name, accent, withEngineAudio: false);
+            root.position = position;
+            root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+            foreach (var child in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (child == root)
+                    continue;
+                if (child.name.StartsWith("ClimbVapor", StringComparison.Ordinal)
+                    || child.name.StartsWith("EngineHeat", StringComparison.Ordinal)
+                    || child.name.StartsWith("LandingLight", StringComparison.Ordinal)
+                    || child.name.StartsWith("Strobe", StringComparison.Ordinal))
+                    child.gameObject.SetActive(false);
+            }
+
+            PlaceContactShadow($"{name} contact", new Vector3(position.x, 0.04f, position.z), new Vector3(8.5f, 0.02f, 6.2f), 0.16f);
         }
 
 

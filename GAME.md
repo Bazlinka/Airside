@@ -11,7 +11,8 @@
   but still needs a Play glance. **12/30 should sit inside a south
   fence pocket** (not cut by the old gap at x=0). Takeoff climb continues
   east of 23 toward the CBD. Overview is ~318 m. A second ARFF truck sits on
-  the 05 Alpha. EditMode 193/193 earlier this session.
+  the 05 Alpha. Far-east and freight aprons hold idle turboprops. Sun shadows
+  reach 380 m. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -46,7 +47,9 @@
   a visual taxi down that strip. Takeoff climb-out continues toward the CBD.
   A standby ARFF truck sits on the 05 Alpha. West hall has an extra storey;
   drop-off cars sit under the west canopy. Overview is ~318 m. Live aircraft
-  kit offset is −0.65 so v06 tires meet pavement top. Save schema
+  kit offset is −0.65 so v06 tires meet pavement top. Far-east and freight
+  aprons hold idle turboprops; 12/30 infield grass fills the south pocket.
+  Sun shadows reach 380 m. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

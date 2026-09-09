@@ -4863,11 +4863,11 @@ namespace Airside.Presentation
             lights.Add(CreateEdgePointLight("Taxi A2 point W", new Vector3(18f, 0.45f, 7f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
 
-            // Visual 12/30 edge spill — sparse so dusk still reads the cross strip.
+            // Visual 12/30 edge spill — sparse, covering the south pocket as well as Bravo.
             var crossCenter = new Vector3(8f, 0.55f, -38f);
             var crossAlong = Quaternion.Euler(0f, 58f, 0f) * Vector3.right;
             var crossAcross = Quaternion.Euler(0f, 58f, 0f) * Vector3.forward;
-            for (var i = -6; i <= 6; i += 2)
+            for (var i = -8; i <= 8; i += 2)
             {
                 var p = crossCenter + crossAlong * (i * 8f);
                 lights.Add(CreateEdgePointLight($"12-30 edge L {i}", p - crossAcross * 3.6f,
@@ -8976,8 +8976,8 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7f, so
-            // offset the kit by -0.70f so the 1.26 scale gear sits on the pavement.
+            // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.26 is on
+            // the kit holder (does not scale this offset). −0.65 puts rubber on pavement top 0.04.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
                     "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
@@ -8992,7 +8992,7 @@ namespace Airside.Presentation
                 out _,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
-                localPosition: new Vector3(0f, -0.70f, 0f));
+                localPosition: new Vector3(0f, -0.65f, 0f));
 
             if (usedArt)
             {
@@ -11349,7 +11349,7 @@ namespace Airside.Presentation
             var crossCenter = new Vector3(8f, 0f, -38f);
             var crossAlong = Quaternion.Euler(0f, 58f, 0f) * Vector3.right;
             var crossAcross = Quaternion.Euler(0f, 58f, 0f) * Vector3.forward;
-            for (var i = -6; i <= 6; i += 2)
+            for (var i = -8; i <= 8; i += 2)
             {
                 var p = crossCenter + crossAlong * (i * 8f);
                 PlaceEdgeLamp(kit, p - crossAcross * 3.6f, edgeColor);

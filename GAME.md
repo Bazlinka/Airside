@@ -7,7 +7,8 @@
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
   A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.26,
-  offset −0.70) sit height is unverified. **12/30 should sit inside a south
+  offset −0.65) sit height is computed from v06 tire min vs pavement 0.04 m
+  but still needs a Play glance. **12/30 should sit inside a south
   fence pocket** (not cut by the old gap at x=0). Takeoff climb continues
   east of 23 toward the CBD. Overview is ~318 m. A second ARFF truck sits on
   the 05 Alpha. EditMode 193/193 earlier this session.
@@ -44,7 +45,8 @@
   has a drop-off canopy. A south fence pocket encloses 12/30; Bravo extends
   a visual taxi down that strip. Takeoff climb-out continues toward the CBD.
   A standby ARFF truck sits on the 05 Alpha. West hall has an extra storey;
-  drop-off cars sit under the west canopy. Overview is ~318 m. Save schema
+  drop-off cars sit under the west canopy. Overview is ~318 m. Live aircraft
+  kit offset is −0.65 so v06 tires meet pavement top. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

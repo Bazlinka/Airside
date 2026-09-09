@@ -57,7 +57,8 @@ change it describes.
   12/30 so the ribbon no longer cuts the cross runway; Bravo has a visual
   taxi down that strip. Takeoff climb-out continues east of 23 toward the
   CBD. A standby ARFF truck sits on the 05 Alpha; the west hall has an
-  extra storey and cars under the drop-off canopy.
+  extra storey and cars under the drop-off canopy. Live aircraft kit offset
+  is −0.65 so v06 tires meet pavement top instead of sitting 5 cm in it.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

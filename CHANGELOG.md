@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield surface texture reference.** Add a 2048×1365 board with five
+  labelled square top-down material targets for dry grass, apron concrete,
+  runway asphalt, coastal sand and wet concrete. Visual tiling guidance only;
+  procedural runtime maps remain unchanged and authoritative for seamlessness.
+
 - **CHR-001/002 character silhouette reference.** Add a 2048×819 sheet with
   three distinct ramp roles and six passenger stand/walk/sit poses at a common
   overview-readable scale. Exact generation evidence included; runtime v02

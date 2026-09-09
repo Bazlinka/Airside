@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 11 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 12 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -22,7 +22,7 @@
   Terminal roofs carry plant boxes. Adelaide Hills sit east of the CBD.
   A visual turboprop holds on the 12/30 taxi. Night taxi lamps follow that
   south strip. A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.32.
-  URP sun shadows reach 420 m. EditMode 193/193 earlier this session.
+  URP sun shadows reach 420 m with overview-biased cascades. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.

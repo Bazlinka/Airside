@@ -5019,9 +5019,9 @@ namespace Airside.Presentation
             PlaceLevelPad("Runway blast E", VisualRunwayEastX + 4f, 0f, 12f, 9.4f, Shade(tarmac, 0.88f), asphalt, new Vector2(2.2f, 1.8f));
 
             // Visual-only cross runway 12/30 — Adelaide character, not on the sim network.
-            var cross = PlaceLevelPad("Runway 12-30", 8f, -38f, 118f, 7.2f, tarmac, asphalt, new Vector2(22f, 1.4f));
+            var cross = PlaceLevelPad("Runway 12-30", 8f, -38f, 118f, 7.2f, tarmac, asphalt, new Vector2(22f, 1.4f), top: 0.02f);
             cross.transform.rotation = Quaternion.Euler(0f, 58f, 0f);
-            PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 9.6f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 1.8f)).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
+            PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 9.6f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 1.8f), top: 0.015f).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
 
             PlaceLevelPad("Taxiway Alpha", 4f, 9f, 110f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(22f, 1.2f));
             PlaceLevelPad("Taxiway Bravo", 6f, -9.2f, 170f, 4.8f, Shade(tarmac, 1.02f), asphalt, new Vector2(32f, 1f));
@@ -10825,7 +10825,7 @@ namespace Airside.Presentation
                     ParentBlock(root, "GA stripe", new Vector3(0f, 0.05f, 0.1f), new Vector3(0.58f, 0.08f, 1.6f), new Color(0.85f, 0.55f, 0.2f));
                 }
 
-                root.position = new Vector3(spot.x, 0.55f, spot.z);
+                root.position = new Vector3(spot.x, 0.48f, spot.z);
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));

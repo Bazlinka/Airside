@@ -36,6 +36,7 @@ accepts their visual direction.
 | BLD-001…003 | `docs/art/candidates/ref_regional_airport_building_fidelity_board_v01.png` | Common-scale terminal, hangar and ops-shed silhouette/material target matched to REF-001 | Generated · review required |
 | AIR-001 / VEH-001…004 / PRP-001 | `docs/art/candidates/ref_turnaround_service_set_day_dusk_v01.png` | Same safe turnaround arrangement at daylight and soft dusk, with overview-readable service fleet and connections | Generated · review required |
 | CHR-001 / CHR-002 | `docs/art/candidates/ref_airside_character_silhouette_kit_v01.png` | Three ramp roles plus six passenger stand/walk/sit silhouettes at one overview-readable miniature scale | Generated · review required |
+| TEX-SRF-001…003 / coast sand / MAT-001 wet | `docs/art/candidates/ref_airfield_surface_texture_board_v01.png` | Five top-down square surface targets; labels remain outside crops; visual tiling guidance only | Generated · review required |
 
 BRD-001 and UI-ILL-001 were Approved by Bailey on 2026-09-07 and promoted into
 runtime art (see production assets below).

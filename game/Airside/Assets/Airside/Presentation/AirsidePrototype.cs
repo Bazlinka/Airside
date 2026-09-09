@@ -2818,6 +2818,7 @@ namespace Airside.Presentation
                 || name.StartsWith("Arterial link", StringComparison.Ordinal)
                 || name.StartsWith("Arterial dash", StringComparison.Ordinal)
                 || name.StartsWith("Eastern arterial", StringComparison.Ordinal)
+                || name.StartsWith("Coastal road", StringComparison.Ordinal)
                 || name.StartsWith("Car park aisle", StringComparison.Ordinal)
                 || name.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                 || name.StartsWith("Car park bay", StringComparison.Ordinal)
@@ -2917,6 +2918,7 @@ namespace Airside.Presentation
                     && !n.StartsWith("Arterial link", StringComparison.Ordinal)
                     && !n.StartsWith("Arterial dash", StringComparison.Ordinal)
                     && !n.StartsWith("Eastern arterial", StringComparison.Ordinal)
+                    && !n.StartsWith("Coastal road", StringComparison.Ordinal)
                     && !n.StartsWith("Car park aisle", StringComparison.Ordinal)
                     && !n.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                     && !n.StartsWith("Car park bay", StringComparison.Ordinal)
@@ -3126,6 +3128,7 @@ namespace Airside.Presentation
                 if (n.StartsWith("Runway edge", StringComparison.Ordinal) ||
                     n.StartsWith("Taxi light", StringComparison.Ordinal) ||
                     n.StartsWith("ALS", StringComparison.Ordinal) ||
+                    n.StartsWith("PAPI", StringComparison.Ordinal) ||
                     n.StartsWith("REIL", StringComparison.Ordinal) ||
                     n.StartsWith("Apron flood", StringComparison.Ordinal) ||
                     n.StartsWith("edge_", StringComparison.Ordinal) ||
@@ -5031,6 +5034,22 @@ namespace Airside.Presentation
                 lights[i] = light;
             }
 
+            // Solid PAPI boxes so the 05 ladder reads from the 318 m gulf shot,
+            // not only as PointLights. Kit stems stay; these sit beside them.
+            var papiBox = new Color(0.18f, 0.19f, 0.21f);
+            for (var i = 0; i < 4; i++)
+            {
+                var west = new Vector3(VisualThresholdWestX + 10f + i * 1.5f, 1.05f, -5.2f);
+                var east = new Vector3(VisualThresholdEastX - 10f - i * 1.5f, 1.05f, 5.2f);
+                var lens = i < 2 ? new Color(1f, 0.28f, 0.22f) : new Color(1f, 0.94f, 0.72f);
+                CreateBlock($"PAPI 05 box {i}", west, new Vector3(0.7f, 0.42f, 0.7f), papiBox);
+                CreateBlock($"PAPI 05 lens {i}", west + new Vector3(0f, 0.12f, 0f), new Vector3(0.42f, 0.22f, 0.42f), lens);
+                CreateBlock($"PAPI 05 stem {i}", west + new Vector3(0f, -0.55f, 0f), new Vector3(0.14f, 0.7f, 0.14f), papiBox);
+                CreateBlock($"PAPI 23 box {i}", east, new Vector3(0.7f, 0.42f, 0.7f), papiBox);
+                CreateBlock($"PAPI 23 lens {i}", east + new Vector3(0f, 0.12f, 0f), new Vector3(0.42f, 0.22f, 0.42f), lens);
+                CreateBlock($"PAPI 23 stem {i}", east + new Vector3(0f, -0.55f, 0f), new Vector3(0.14f, 0.7f, 0.14f), papiBox);
+            }
+
             return lights;
         }
 
@@ -5776,6 +5795,18 @@ namespace Airside.Presentation
                 sand, new Vector2(10f, 56f), top: 0f, height: 0.28f);
             PlaceLevelPad("Dune belt", -80f, 8f, 8f, 340f, Shade(AirsideTheme.Sand, 0.9f),
                 sand, new Vector2(2.2f, 56f), top: 0.02f, height: 0.28f);
+            // Military Rd / West Beach ribbon west of the fence, gap at 05 so ALS stays
+            // over sand and water. Opening shot should read beach → road → fence → field.
+            PlaceLevelPad("Coastal road N", -87.5f, 48f, 5.2f, 72f, new Color(0.22f, 0.24f, 0.26f),
+                asphalt, new Vector2(1.4f, 16f), top: 0.04f, height: 0.16f);
+            PlaceLevelPad("Coastal road S", -87.5f, -48f, 5.2f, 72f, new Color(0.22f, 0.24f, 0.26f),
+                asphalt, new Vector2(1.4f, 16f), top: 0.04f, height: 0.16f);
+            for (var z = 18; z <= 78; z += 8)
+                CreateBlock($"Coastal road dash N {z}", new Vector3(-87.5f, 0.06f, z), new Vector3(0.22f, 0.02f, 3.2f),
+                    new Color(0.95f, 0.9f, 0.35f));
+            for (var z = -78; z <= -18; z += 8)
+                CreateBlock($"Coastal road dash S {z}", new Vector3(-87.5f, 0.06f, z), new Vector3(0.22f, 0.02f, 3.2f),
+                    new Color(0.95f, 0.9f, 0.35f));
             PlaceLevelPad("Coast shallows", -116f, 8f, 22f, 340f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
                 water, new Vector2(8f, 44f), top: -0.18f, height: 0.28f);
             PlaceLevelPad("Coast foam A", -102f, 10f, 6f, 90f, new Color(0.92f, 0.96f, 0.97f, 0.42f),
@@ -6432,6 +6463,12 @@ namespace Airside.Presentation
             PlaceParkedCar("Eastern arterial car E", new Vector3(108f, 0f, 48.0f), -88f, carColors[1]);
             PlaceParkedCar("Eastern arterial car F", new Vector3(176f, 0f, 43.4f), 92f, carColors[4]);
             PlaceParkedCar("Eastern arterial car G", new Vector3(154f, 0f, 43.9f), 86f, new Color(0.15f, 0.16f, 0.18f));
+            PlaceParkedCar("Military Rd car A", new Vector3(-87.5f, 0f, 28f), 0f, carColors[0]);
+            PlaceParkedCar("Military Rd car B", new Vector3(-87.5f, 0f, 52f), 180f, carColors[2]);
+            PlaceParkedCar("Military Rd car C", new Vector3(-87.5f, 0f, 68f), 8f, carColors[4]);
+            PlaceParkedCar("Military Rd car D", new Vector3(-87.5f, 0f, -32f), 180f, carColors[1]);
+            PlaceParkedCar("Military Rd car E", new Vector3(-87.5f, 0f, -56f), 0f, carColors[3]);
+            PlaceParkedCar("Military Rd car F", new Vector3(-87.5f, 0f, -72f), 172f, new Color(0.82f, 0.82f, 0.78f));
             BuildAdelaideLandsideMonument();
             PlaceArterialDirectionSign();
 
@@ -6932,17 +6969,23 @@ namespace Airside.Presentation
                 CreateBlock(name, new Vector3(x, 0.72f, z), new Vector3(sx, 1.28f, sz), mesh);
             }
 
-            void Posts(string prefix, float x, float z0, float z1)
+            void WestWall(string name, float z, float sz)
             {
-                for (var z = z0; z <= z1; z += 10f)
-                    CreateBlock($"{prefix} {z}", new Vector3(x, 1.38f, z), new Vector3(0.18f, 0.12f, 0.18f), post);
+                CreateBlock(name, new Vector3(FenceWestX, 0.95f, z), new Vector3(0.16f, 1.72f, sz), mesh);
             }
 
-            // West grass/sand seam, gap across 23/05.
-            Wall("Outer fence W N", FenceWestX, 30f, 0.1f, 44f);
-            Wall("Outer fence W S", FenceWestX, -30f, 0.1f, 44f);
-            Posts("Outer cap W N", FenceWestX, 10f, 50f);
-            Posts("Outer cap W S", FenceWestX, -50f, -10f);
+            void Posts(string prefix, float x, float z0, float z1, float y = 1.38f)
+            {
+                for (var z = z0; z <= z1; z += 10f)
+                    CreateBlock($"{prefix} {z}", new Vector3(x, y, z), new Vector3(0.18f, 0.12f, 0.18f), post);
+            }
+
+            // West grass/sand seam, gap across 23/05. Taller so the gulf opening shot
+            // reads a fence, not a hairline on the dune.
+            WestWall("Outer fence W N", 30f, 44f);
+            WestWall("Outer fence W S", -30f, 44f);
+            Posts("Outer cap W N", FenceWestX, 10f, 50f, 1.82f);
+            Posts("Outer cap W S", FenceWestX, -50f, -10f, 1.82f);
             // East of blast pad, same runway gap.
             Wall("Outer fence E N S", FenceEastX, 24f, 0.1f, 28f);
             Wall("Outer fence E N N", FenceEastX, 53f, 0.1f, 6f);
@@ -9966,7 +10009,7 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, planar);
                 }
 
-                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 2.8f);
+                var diameter = Mathf.Clamp(radius * 2.15f, 1.35f, 3.2f);
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "PropDisc";
                 Object.Destroy(disc.GetComponent<Collider>());
@@ -9975,7 +10018,7 @@ namespace Airside.Presentation
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
-                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.62f));
+                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.58f, 0.6f, 0.64f, 0.78f));
                 disc.SetActive(false);
             }
         }
@@ -9994,12 +10037,12 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(4.4f, 0.012f, 2.35f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.22f),
+            shadow.transform.localScale = new Vector3(5.2f, 0.012f, 2.8f);
+            var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.32f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
             renderer.material = material;
-            SetRendererColor(renderer, new Color(0.04f, 0.05f, 0.06f, 0.22f));
+            SetRendererColor(renderer, new Color(0.04f, 0.05f, 0.06f, 0.32f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
         }
@@ -10015,7 +10058,7 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(4.4f, 8.2f, t);
+            var width = Mathf.Lerp(5.2f, 8.8f, t);
             var depth = width * 0.52f;
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
@@ -10027,7 +10070,7 @@ namespace Airside.Presentation
                 return;
             var color = renderer.material.color;
             // Softer contact so realtime URP shadows remain the primary read.
-            color.a = Mathf.Lerp(0.28f, 0.04f, t);
+            color.a = Mathf.Lerp(0.38f, 0.05f, t);
             SetRendererColor(renderer, color);
             shadow.gameObject.SetActive(aircraft.gameObject.activeInHierarchy);
         }
@@ -10998,10 +11041,10 @@ namespace Airside.Presentation
             CreateBlock("Hold short S", new Vector3(72f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             CreateBlock("Hold short T", new Vector3(72f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             // Readable block digits for 05 / 23 (facing inbound traffic).
-            PlaceRunwayDigit('0', new Vector3(VisualThresholdWestX + 8.4f, 0.04f, 0f), yaw: 90f);
-            PlaceRunwayDigit('5', new Vector3(VisualThresholdWestX + 10.4f, 0.04f, 0f), yaw: 90f);
-            PlaceRunwayDigit('2', new Vector3(VisualThresholdEastX - 10.4f, 0.04f, 0f), yaw: -90f);
-            PlaceRunwayDigit('3', new Vector3(VisualThresholdEastX - 8.4f, 0.04f, 0f), yaw: -90f);
+            PlaceRunwayDigit('0', new Vector3(VisualThresholdWestX + 7.6f, 0.04f, 0f), yaw: 90f);
+            PlaceRunwayDigit('5', new Vector3(VisualThresholdWestX + 11.4f, 0.04f, 0f), yaw: 90f);
+            PlaceRunwayDigit('2', new Vector3(VisualThresholdEastX - 11.4f, 0.04f, 0f), yaw: -90f);
+            PlaceRunwayDigit('3', new Vector3(VisualThresholdEastX - 7.6f, 0.04f, 0f), yaw: -90f);
             // Side stripes beside threshold bars — only when kit sides missed (avoid z-fight).
             if (!usedSideWL)
             {
@@ -11426,6 +11469,9 @@ namespace Airside.Presentation
                     Seg("lr", 0.55f, -0.5f, 0.28f, 0.9f);
                     break;
             }
+
+            // Larger block digits so 05/23 still read from the 318 m opening shot.
+            root.localScale = new Vector3(1.55f, 1f, 1.55f);
         }
 
         /// <summary>Visual-only 12/30 idents on the rotated cross runway.</summary>
@@ -11436,10 +11482,10 @@ namespace Airside.Presentation
             var along = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
             var end12 = center - along * 48f;
             var end30 = center + along * 48f;
-            PlaceRunwayDigit('1', end12 - along * 1.15f, yaw + 90f);
-            PlaceRunwayDigit('2', end12 + along * 1.15f, yaw + 90f);
-            PlaceRunwayDigit('3', end30 - along * 1.15f, yaw - 90f);
-            PlaceRunwayDigit('0', end30 + along * 1.15f, yaw - 90f);
+            PlaceRunwayDigit('1', end12 - along * 1.85f, yaw + 90f);
+            PlaceRunwayDigit('2', end12 + along * 1.85f, yaw + 90f);
+            PlaceRunwayDigit('3', end30 - along * 1.85f, yaw - 90f);
+            PlaceRunwayDigit('0', end30 + along * 1.85f, yaw - 90f);
             var across = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
             for (var i = -3; i <= 3; i++)
             {

@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 12 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 17 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -31,7 +31,9 @@
   west apron holds a seventh idle turboprop. ATC tower cab sits at ~24 m
   with the night beacon on the new roof. Dual landing beams reach 145 m
   down the gulf final. SSAO is stronger for the 318 m overview.
-  EditMode 193/193 earlier this session.
+  A West Beach coastal road with cars sits west of the fence (gap at 05).
+  05/23 digits and PAPI boxes are larger. Prop discs and ground shadows
+  are stronger. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -78,7 +80,8 @@
   idle turboprop. 05 ALS extends over the gulf on piers. Bravo east infield
   holds a sixth idle turboprop. T1 glass is taller with an airside curtain.
   Gulf water is glossier; the west apron is not empty. ATC tower is taller
-  with the beacon on the cab. Save schema
+  with the beacon on the cab. West Beach has a coastal road west of the
+  fence. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

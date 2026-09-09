@@ -1,16 +1,20 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — integrate approved fidelity boards)
-- **Branch:** `cursor/integrate-fidelity-boards-3272` (off `main` after #166)
-- **Do next:** Mac Unity Play — overview vs Approved modelling boards (scrub
-  belt, terrain accents, surface v02 hue, open-bay ARFF, CHR silhouettes,
-  buildings v05, turnaround fleet). Then merge.
+- **Last updated:** 2026-09-09 (Cursor — fidelity densify vs approved boards)
+- **Branch:** `cursor/fidelity-densify-boards-4536` (off integrate-fidelity-boards)
+- **Do next:** Mac Unity Play — overview vs Approved boards (pale-grey open-bay
+  ARFF, red/white truck with yellow conspicuity only, surface v02 hue + wet
+  concrete, scrub/terrain/CHR/BLD/turnaround). Parent wires wetness if needed.
+  Then merge into integrate branch / main.
 - **In progress / half-done:** none
 - **Watch for / assumptions:**
   - PreferArtKit: scrub/terrain `*_v02` ahead of v01; surfaces PreferSurface /
     MaterialLibrary PreferAuthoredMap; ARFF `mdl_arff_*_v02`→v01
+  - `tx_wet_concrete_*_v02` shipped; parent owns wetness wiring in prototype
   - Boards live under `docs/art/reference/` (not candidates); do not crop the
     surface board into runtime maps
+  - Additive StreamingAssets copy only — do **not** run full
+    `sync-art-streaming-assets.sh` (wipes metas)
   - Save schema / simulation reservations unchanged (presentation only)
   - Do **not** run `scripts/rebuild-and-open-mac.sh` on a feature branch
 - **Open question for Bailey:** none

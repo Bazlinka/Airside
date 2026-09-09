@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Fidelity densify against approved boards.** ARFF shed v02 is a pale-grey
+  hollow open bay (bollards, fluorescents, dark void; no sign glyphs). ARFF
+  truck v02 keeps deep red body with white roof/panel accents and Safety Yellow
+  only on chevrons/steps/grabs (no number plate / oversized stripe). Surface
+  v02 drops concrete joints, densifies grass/asphalt aggregate, and adds
+  `tx_wet_concrete_*_v02` (cooler damp sheen, no puddles). Binder recognizes
+  white/panel/cab-roof and bollard/chevron/grab. Additive StreamingAssets sync.
+
 - **Integrate Bailey-approved fidelity boards.** Promote seven modelling boards
   into `docs/art/reference/`. Prefer denser runtime art against them: VEG-002
   scrub kit v02 (grass/rock/dune mixes), WLD-004 terrain kit v02, seamless

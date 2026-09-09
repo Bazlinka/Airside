@@ -7,6 +7,8 @@ using Airside.Persistence;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Object = UnityEngine.Object;
 
 namespace Airside.Presentation
@@ -1616,12 +1618,12 @@ namespace Airside.Presentation
                     continue;
                 var pulse = 0.9f + 0.1f * Mathf.Sin(
                     Time.unscaledTime * 2.4f * Mathf.PI * 2f + child.GetInstanceID() * 0.02f);
-                child.localScale = new Vector3(0.34f * pulse, 0.34f * pulse, 4.6f * stretch);
+                child.localScale = new Vector3(0.38f * pulse, 0.38f * pulse, 5.4f * stretch);
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)
                     continue;
                 var color = renderer.material.color;
-                color.a = (0.1f + 0.08f * pulse) * stretch;
+                color.a = (0.18f + 0.12f * pulse) * stretch;
                 SetRendererColor(renderer, color);
             }
         }
@@ -4121,7 +4123,9 @@ namespace Airside.Presentation
             _sun.shadowStrength = 0.78f;
             _sun.shadowBias = 0.035f;
             _sun.shadowNormalBias = 0.4f;
-            QualitySettings.shadowDistance = 380f;
+            QualitySettings.shadowDistance = 420f;
+            if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
+                urp.shadowDistance = 420f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
             var fillGo = GameObject.Find("Fill light");
@@ -5614,7 +5618,7 @@ namespace Airside.Presentation
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
                 surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" },
-                uniformScale: 1.26f);
+                uniformScale: 1.34f);
             // Sliding door slab only when the hangar kit did not ship panel doors.
             if (GameObject.Find("Hangar door") == null
                 && GameObject.Find("door_panel_l") == null
@@ -6221,6 +6225,8 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat G", new Vector3(-132f, -0.44f, -96f), 108f, new Color(0.22f, 0.38f, 0.48f));
             PlaceCoastBoat("Coast boat H", new Vector3(-118f, -0.4f, -52f), 88f, new Color(0.9f, 0.55f, 0.2f));
             PlaceCoastBoat("Coast boat I", new Vector3(-128f, -0.43f, 88f), 76f, new Color(0.18f, 0.42f, 0.38f));
+            PlaceCoastBoat("Coast boat J", new Vector3(-188f, -0.46f, 22f), 102f, new Color(0.78f, 0.42f, 0.22f));
+            PlaceCoastBoat("Coast boat K", new Vector3(-198f, -0.44f, -18f), 86f, new Color(0.2f, 0.28f, 0.36f));
             if (!hasBoatPrefab)
             {
                 PlaceCoastBoat("Coast boat D", new Vector3(-130f, -0.4f, -28f), 100f, new Color(0.2f, 0.35f, 0.45f));
@@ -9127,7 +9133,7 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null, bool withEngineAudio = true)
         {
             var root = new GameObject(name).transform;
-            // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.26 is on
+            // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.32 is on
             // the kit holder (does not scale this offset). −0.65 puts rubber on pavement top 0.04.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
@@ -9155,7 +9161,7 @@ namespace Airside.Presentation
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
                 if (root.childCount > 0)
-                    root.GetChild(0).localScale *= 1.26f;
+                    root.GetChild(0).localScale *= 1.32f;
             }
 
             if (!usedArt)
@@ -10290,7 +10296,7 @@ namespace Airside.Presentation
             {
                 NestServiceDoorParts(root);
                 NestCargoBags(root);
-                root.localScale = Vector3.one * 1.22f;
+                root.localScale = Vector3.one * 1.28f;
             }
 
             root.gameObject.SetActive(false);
@@ -10363,7 +10369,7 @@ namespace Airside.Presentation
 
             if (placed)
             {
-                root.localScale = Vector3.one * 1.24f;
+                root.localScale = Vector3.one * 1.30f;
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -10373,7 +10379,7 @@ namespace Airside.Presentation
                 || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
                 prefabRoot.name = "Passenger stairs";
-                prefabRoot.localScale = Vector3.one * 1.24f;
+                prefabRoot.localScale = Vector3.one * 1.30f;
                 prefabRoot.gameObject.SetActive(false);
                 return prefabRoot;
             }
@@ -10386,7 +10392,7 @@ namespace Airside.Presentation
                 ParentBlock(root, $"Step {i}", new Vector3(0f, 0.15f + i * 0.18f, -0.9f + i * 0.35f),
                     new Vector3(0.95f, 0.08f, 0.32f), new Color(0.55f, 0.56f, 0.58f));
 
-            root.localScale = Vector3.one * 1.24f;
+            root.localScale = Vector3.one * 1.30f;
             root.gameObject.SetActive(false);
             return root;
         }
@@ -12058,7 +12064,7 @@ namespace Airside.Presentation
                 root.position = new Vector3(spot.x, 0.48f, spot.z);
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 if (hasGaPrefab)
-                    root.localScale = Vector3.one * 1.18f;
+                    root.localScale = Vector3.one * 1.24f;
                 PolishAircraftSurfaces(root);
                 PolishAircraftGlass(root);
                 EnsurePropDiscs(root);

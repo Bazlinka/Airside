@@ -77,8 +77,10 @@ change it describes.
   Adelaide Hills / Mt Lofty sit east of the CBD; a visual turboprop holds on
   the 12/30 taxi; day fog is thinner so gulf and hills stay crisp. Night taxi
   lamps follow the 12/30 south taxi. A fifth idle turboprop sits on Bravo
-  west so 23/05 is not a single empty strip from overview. Unity EditMode
-  193/193.
+  west so 23/05 is not a single empty strip from overview. Live aircraft kit
+  is 1.32; hangar, stairs and GSE match. URP sun shadows reach 420 m so the
+  318 m overview keys gulf and Hills. Climb vapor is stronger. Extra gulf
+  boats sit in the opening-shot water. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

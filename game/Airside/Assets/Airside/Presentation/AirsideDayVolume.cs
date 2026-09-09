@@ -215,7 +215,7 @@ namespace Airside.Presentation
             _color.hueShift.Override(Mathf.Lerp(0f, -4f, weatherGloom) + warm * 2f);
 
             // Bloom: day barely; night only floods/windows (high threshold, modest intensity).
-            _bloom.intensity.Override(Mathf.Lerp(0.28f, 0.08f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f
+            _bloom.intensity.Override(Mathf.Lerp(0.28f, 0.16f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f
                 + weatherGloom * 0.04f);
             _bloom.threshold.Override(Mathf.Lerp(0.78f, 0.98f, daylight) - weatherGloom * 0.04f);
             _vignette.intensity.Override(Mathf.Lerp(0.1f, 0.05f, daylight) + weatherGloom * 0.05f);
@@ -288,7 +288,7 @@ namespace Airside.Presentation
             }
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
             else if (warm > 0.35f)
-                _bloom.intensity.Override(Mathf.Lerp(0.24f, 0.08f, daylight) * (1f - weatherGloom * 0.28f)
+                _bloom.intensity.Override(Mathf.Lerp(0.24f, 0.16f, daylight) * (1f - weatherGloom * 0.28f)
                     + warm * 0.1f + weatherGloom * 0.04f);
         }
     }

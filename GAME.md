@@ -1,19 +1,19 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 10 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 11 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
-  A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.26,
+  A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.32,
   offset −0.65) sit height is computed from v06 tire min vs pavement 0.04 m
   but still needs a Play glance. **12/30 should sit inside a south
   fence pocket** (not cut by the old gap at x=0). Takeoff climb continues
   east of 23 toward the CBD. Overview is ~318 m. A second ARFF truck sits on
   the 05 Alpha. Far-east and freight aprons hold idle turboprops. Sun shadows
-  reach 380 m. Curved T1 landside glass faces the drop-off. Sky disc/stars
+  reach 420 m (URP asset, not only QualitySettings). Curved T1 landside glass faces the drop-off. Sky disc/stars
   sit on the far dome. Clouds sit at ~90–150 m so they no longer rest on the
   tower. 12/30 pocket has eucalyptus outside the fence. CBD signature towers
   should read from the opening shot. Hangar apron holds a third idle turboprop.
@@ -21,7 +21,8 @@
   houses sit outside the fence.   West Beach sand meets the grass deck level.
   Terminal roofs carry plant boxes. Adelaide Hills sit east of the CBD.
   A visual turboprop holds on the 12/30 taxi. Night taxi lamps follow that
-  south strip. A fifth idle turboprop sits on Bravo west. EditMode 193/193 earlier this session.
+  south strip. A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.32.
+  URP sun shadows reach 420 m. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -58,7 +59,7 @@
   drop-off cars sit under the west canopy. Overview is ~318 m. Live aircraft
   kit offset is −0.65 so v06 tires meet pavement top. Far-east and freight
   aprons hold idle turboprops; 12/30 infield grass fills the south pocket.
-  Sun shadows reach 380 m. Curved T1 landside glass faces the drop-off.
+  Sun shadows reach 420 m. Curved T1 landside glass faces the drop-off.
   Sky disc and stars sit on the far dome. Clouds sit at ~90–150 m off the
   dual-runway core. Eucalyptus fringes the 12/30 pocket. CBD signature towers
   and extra Holdfast massing read from the opening shot. Hangar, satellite and

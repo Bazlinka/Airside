@@ -28,7 +28,10 @@ change it describes.
   over Charlie. Stairs and parked GA are scaled to the larger aircraft kit.
   Taxi edge lights run the full Alpha length and Charlie. Alpha centreline
   paint now covers the long taxi, with hold bars at both far ends. Night floods
-  cover Stand 3 and the east satellite. Unity EditMode 193/193.
+  cover Stand 3 and the east satellite. Approach lights aim at the real 05
+  threshold over the gulf. Aircraft glass is glossier; fallback airframes have
+  winglets and extra windows; GSE is scaled to the larger kit. Unity EditMode
+  193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

@@ -5213,6 +5213,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal east concourse glass", new Vector3(60f, 2.15f, 18.85f), new Vector3(10f, 2.3f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Terminal east concourse roof", new Vector3(60f, 4.0f, 22.4f), new Vector3(12.6f, 0.22f, 7.6f), new Color(0.5f, 0.53f, 0.56f));
             CreateBlock("Terminal east concourse glow", new Vector3(60f, 2.05f, 19.0f), new Vector3(8.5f, 1.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal east ident", new Vector3(60f, 4.15f, 18.95f), new Vector3(6.4f, 0.4f, 0.14f), new Color(0.1f, 0.18f, 0.32f));
             BuildAdelaideControlTower();
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
@@ -6725,8 +6726,8 @@ namespace Airside.Presentation
 
                 var lampGo = new GameObject($"ALS lamp {i}");
                 lampGo.transform.position = new Vector3(x, 0.95f, 0f);
-                // Aim SpotLights toward threshold (~x=-36) so approach washes asphalt (0025 item 5).
-                lampGo.transform.rotation = Quaternion.LookRotation(new Vector3(-36f - x, -0.7f, 0f).normalized);
+                // Aim SpotLights toward the 05 threshold so gulf final washes the real strip.
+                lampGo.transform.rotation = Quaternion.LookRotation(new Vector3(VisualThresholdWestX - x, -0.7f, 0f).normalized);
                 var light = lampGo.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.95f, 0.85f);
@@ -6787,13 +6788,13 @@ namespace Airside.Presentation
             {
                 // Kit path — reuse taxi stems for the approach wing / lead-in read.
                 ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "taxi_stem", new Vector3(-58f, 0.5f, 0f),
+                    lightingKit, "taxi_stem", new Vector3(VisualThresholdWestX - 16f, 0.5f, 0f),
                     Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.35f, 1.2f, 0.35f));
                 ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "taxi_stem", new Vector3(-52f, 0.5f, -3.2f),
+                    lightingKit, "taxi_stem", new Vector3(VisualThresholdWestX - 10f, 0.5f, -3.2f),
                     Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.3f, 0.7f, 0.3f));
                 ArtGltfLoader.TryPlaceNamedMesh(
-                    lightingKit, "taxi_stem", new Vector3(-52f, 0.5f, 3.2f),
+                    lightingKit, "taxi_stem", new Vector3(VisualThresholdWestX - 10f, 0.5f, 3.2f),
                     Quaternion.Euler(0f, 90f, 0f), stem, out _, new Vector3(0.3f, 0.7f, 0.3f));
             }
 
@@ -6801,7 +6802,7 @@ namespace Airside.Presentation
             {
                 var z = side == 0 ? -2.8f : 2.8f;
                 var reilGo = new GameObject(side == 0 ? "REIL lamp L" : "REIL lamp R");
-                reilGo.transform.position = new Vector3(-78f, 1.1f, z);
+                reilGo.transform.position = new Vector3(VisualRunwayWestX - 8f, 1.1f, z);
                 reilGo.transform.rotation = Quaternion.LookRotation(new Vector3(1f, -0.15f, 0f));
                 var reil = reilGo.AddComponent<Light>();
                 reil.type = LightType.Spot;
@@ -6816,7 +6817,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Decision 0025 items 1+3 — small ARFF / rescue shed so landside reads as a
-        /// working regional airfield, not only terminal + hangar.
+        /// working city airport, not only terminal + hangar.
         /// </summary>
         private static void BuildArffRescueShed()
         {
@@ -7810,14 +7811,14 @@ namespace Airside.Presentation
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            const int clusterCount = 9;
+            const int clusterCount = 12;
             for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
-                var x = (float)(rng.NextDouble() * 360f - 180f);
-                var z = (float)(rng.NextDouble() * 280f - 120f);
-                var y = 28f + (float)rng.NextDouble() * 32f;
+                var x = (float)(rng.NextDouble() * 480f - 240f);
+                var z = (float)(rng.NextDouble() * 360f - 160f);
+                var y = 32f + (float)rng.NextDouble() * 36f;
                 cluster.position = new Vector3(x, y, z);
 
                 var sx = 16f + (float)rng.NextDouble() * 30f;
@@ -8363,23 +8364,30 @@ namespace Airside.Presentation
                 ParentBlock(root, "Window R1", new Vector3(0.36f, 0.2f, 0.9f), new Vector3(0.05f, 0.16f, 0.32f), new Color(0.1f, 0.16f, 0.28f));
                 ParentBlock(root, "Window R2", new Vector3(0.36f, 0.2f, 0.35f), new Vector3(0.05f, 0.16f, 0.32f), new Color(0.1f, 0.16f, 0.28f));
                 ParentBlock(root, "Window R3", new Vector3(0.36f, 0.2f, -0.2f), new Vector3(0.05f, 0.16f, 0.32f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Window L4", new Vector3(-0.36f, 0.2f, -0.75f), new Vector3(0.05f, 0.16f, 0.28f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Window R4", new Vector3(0.36f, 0.2f, -0.75f), new Vector3(0.05f, 0.16f, 0.28f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Winglet L", new Vector3(-4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
+                ParentBlock(root, "Winglet R", new Vector3(4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
+                ParentBlock(root, "Belly fairing", new Vector3(0f, -0.28f, 0.15f), new Vector3(0.42f, 0.12f, 1.6f), new Color(0.88f, 0.9f, 0.92f));
+                ParentBlock(root, "Dorsal antenna", new Vector3(0f, 0.78f, 0.55f), new Vector3(0.04f, 0.38f, 0.08f), new Color(0.22f, 0.22f, 0.24f));
             }
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
             PolishAircraftSurfaces(root);
+            PolishAircraftGlass(root);
             EnsurePropDiscs(root);
             EnsureGroundShadow(root);
             // Only inject lamp / heat proxies when the authored kit did not already ship them.
             if (!HasNamedChild(root, "NavLight L"))
-                ParentBlock(root, "NavLight L", new Vector3(-3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
+                ParentBlock(root, "NavLight L", new Vector3(-4.2f, 0.1f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
             if (!HasNamedChild(root, "NavLight R"))
-                ParentBlock(root, "NavLight R", new Vector3(3.7f, 0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
+                ParentBlock(root, "NavLight R", new Vector3(4.2f, 0.1f, 0.2f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
             if (!HasNamedChild(root, "Beacon"))
-                ParentBlock(root, "Beacon", new Vector3(0f, 0.85f, 0.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
+                ParentBlock(root, "Beacon", new Vector3(0f, 1.05f, 0.15f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
-                ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+                ParentBlock(root, "LandingLight", new Vector3(0f, -0.12f, 2.85f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
             if (!HasNamedChild(root, "TaxiLight"))
-                ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
+                ParentBlock(root, "TaxiLight", new Vector3(0f, -0.18f, 2.45f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
             if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
             {
                 // Batch F4 VFX-002 — prefer reusable heat kit; fall back to translucent quads.
@@ -9243,6 +9251,24 @@ namespace Airside.Presentation
             }
         }
 
+        private static void PolishAircraftGlass(Transform aircraft)
+        {
+            foreach (var renderer in aircraft.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+                var n = renderer.gameObject.name;
+                if (n.IndexOf("window", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("glass", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("cockpit", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                if (renderer.material.HasProperty("_Smoothness"))
+                    renderer.material.SetFloat("_Smoothness", 0.94f);
+                if (renderer.material.HasProperty("_Metallic"))
+                    renderer.material.SetFloat("_Metallic", 0.06f);
+            }
+        }
+
         private static void ParentBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
         {
             var block = CreateBlock(name, localPosition, scale, color);
@@ -9396,6 +9422,7 @@ namespace Airside.Presentation
             {
                 NestServiceDoorParts(root);
                 NestCargoBags(root);
+                root.localScale = Vector3.one * 1.08f;
             }
 
             root.gameObject.SetActive(false);

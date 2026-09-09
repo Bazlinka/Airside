@@ -12,7 +12,8 @@
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha and Charlie
   edge lights run the full taxi; Alpha paint matches the long strip. Car park
   fills the bigger pad. Night floods cover Stand 3 and the east satellite.
-  Save schema unchanged.
+  Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Save
+  schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

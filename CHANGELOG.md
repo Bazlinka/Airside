@@ -70,7 +70,8 @@ change it describes.
   massing is taller from the 318 m overview. An idle turboprop sits beside
   the hangar; satellite GSE, extra gulf foam and arterial cars fill empty
   overview gaps. Airside ident carries rooftop ADL letters. Aircraft skin is
-  glossier so the fleet catches the sun from overview. Unity EditMode 193/193.
+  glossier so the fleet catches the sun from overview. Gulf boats all bob.
+  Noon sun is punchier. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

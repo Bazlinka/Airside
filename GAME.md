@@ -16,7 +16,7 @@
   sit on the far dome. Clouds sit at ~90–150 m so they no longer rest on the
   tower. 12/30 pocket has eucalyptus outside the fence. CBD signature towers
   should read from the opening shot. Hangar apron holds a third idle turboprop.
-  Airside ident shows ADL. EditMode 193/193 earlier this session.
+  Airside ident shows ADL. Noon sun is a bit punchier. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.

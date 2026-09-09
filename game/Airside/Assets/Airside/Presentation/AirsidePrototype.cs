@@ -4178,8 +4178,8 @@ namespace Airside.Presentation
             var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
-            _sun.intensity = Mathf.Lerp(0.12f, 2.35f, Mathf.SmoothStep(0f, 1f, daylight));
-            _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
+            _sun.intensity = Mathf.Lerp(0.12f, 2.55f, Mathf.SmoothStep(0f, 1f, daylight));
+            _sun.shadowStrength = Mathf.Lerp(0.28f, 0.84f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
             var weather = _simulation.CurrentWeather;
@@ -8738,16 +8738,29 @@ namespace Airside.Presentation
             }
 
             _jettyDeck = GameObject.Find("Jetty deck")?.transform;
-            foreach (var name in new[]
-                     {
-                         "Coast boat A", "Coast boat B", "Coast boat C", "Coast boat D",
-                         "Coast boat E", "Coast boat F", "Coast boat G", "Coast boat H"
-                     })
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
-                var go = GameObject.Find(name);
-                if (go == null)
+                if (renderer == null)
                     continue;
-                _coastBoats.Add((go.transform, go.transform.position, go.transform.eulerAngles.y));
+                var n = renderer.gameObject.name;
+                if (!n.StartsWith("Coast boat", StringComparison.Ordinal))
+                    continue;
+                var root = renderer.transform;
+                while (root.parent != null && root.parent.name.StartsWith("Coast boat", StringComparison.Ordinal))
+                    root = root.parent;
+                var already = false;
+                for (var i = 0; i < _coastBoats.Count; i++)
+                {
+                    if (_coastBoats[i].Boat == root)
+                    {
+                        already = true;
+                        break;
+                    }
+                }
+
+                if (already)
+                    continue;
+                _coastBoats.Add((root, root.position, root.eulerAngles.y));
             }
         }
 

@@ -1367,13 +1367,13 @@ namespace Airside.Presentation
                 light.color = isRight
                     ? new Color(0.95f, 0.15f, 0.12f)
                     : new Color(0.12f, 0.95f, 0.28f);
-                light.range = 8f;
+                light.range = 12f;
                 light.shadows = LightShadows.None;
             }
 
             light.enabled = on;
             if (on)
-                light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
+                light.intensity = 2.6f * AirsideReusableMotion.NavSteady;
         }
 
         private static void EnsureBeaconPointLight(Transform lamp, bool on)
@@ -1429,11 +1429,11 @@ namespace Airside.Presentation
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.94f, 0.78f);
-                light.range = 18f;
+                light.range = 26f;
                 light.spotAngle = 55f;
                 light.innerSpotAngle = 28f;
                 light.shadows = LightShadows.None;
-                light.intensity = 2.4f;
+                light.intensity = 3.1f;
             }
 
             light.enabled = on;
@@ -2787,6 +2787,8 @@ namespace Airside.Presentation
                 || name.StartsWith("Taxiway B", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway C", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway D", StringComparison.Ordinal)
+                || name.StartsWith("Taxiway Rapid", StringComparison.Ordinal)
+                || name.StartsWith("GA apron", StringComparison.Ordinal)
                 || name.StartsWith("Hangar apron", StringComparison.Ordinal)
                 || name.StartsWith("Freight", StringComparison.Ordinal)
                 || name.StartsWith("MSCP apron", StringComparison.Ordinal)
@@ -2883,6 +2885,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Taxiway B", StringComparison.Ordinal)
                     && !n.StartsWith("Taxiway C", StringComparison.Ordinal)
                     && !n.StartsWith("Taxiway D", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxiway Rapid", StringComparison.Ordinal)
+                    && !n.StartsWith("GA apron", StringComparison.Ordinal)
                     && !n.StartsWith("Hangar apron", StringComparison.Ordinal)
                     && !n.StartsWith("Runway marking", StringComparison.Ordinal)
                     && !n.StartsWith("Runway edge", StringComparison.Ordinal)
@@ -4426,6 +4430,7 @@ namespace Airside.Presentation
                          "Terminal east concourse upper glow",
                          "Terminal ident accent",
                          "Terminal east ident accent",
+                         "Adelaide monument bar",
                          "Freight office glow",
                          "West Beach surf club glass",
                          "Satellite bridge A glass",
@@ -4461,7 +4466,8 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal)
                                    || name.StartsWith("Satellite bridge", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
-                                   || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal));
+                                   || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
+                                   || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal));
                 if (!wantsPoint)
                     continue;
 
@@ -5236,12 +5242,14 @@ namespace Airside.Presentation
             CreateTaxiChordPad("Taxiway Bravo E exit", new Vector3(70f, 0.02f, -9.2f), new Vector3(70f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Alpha W stub", new Vector3(-70f, 0.02f, 9f), new Vector3(-70f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Alpha E stub", new Vector3(80f, 0.02f, 9f), new Vector3(80f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
+            CreateTaxiChordPad("Taxiway Rapid 23", new Vector3(64f, 0.02f, 0f), new Vector3(72f, 0.02f, 9f), 5.6f, asphalt, new Vector2(1.8f, 1.4f));
 
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
             PlaceLevelPad("Apron north expansion", 20f, 36f, 32f, 16f, Shade(pad, 0.98f), concrete, new Vector2(7f, 3.2f));
             PlaceLevelPad("Apron west expansion", 2f, 18f, 22f, 16f, Shade(pad, 0.96f), concrete, new Vector2(5f, 3.6f));
             PlaceLevelPad("Apron satellite", 62f, 16f, 16f, 14f, Shade(pad, 0.97f), concrete, new Vector2(3.6f, 3.2f));
+            PlaceLevelPad("GA apron", -48f, 15.4f, 24f, 7.2f, Shade(pad, 0.94f), concrete, new Vector2(5f, 1.6f));
 
             CreateTaxiChordPad("Taxiway A1 chord", new Vector3(-24f, 0.02f, 0f), new Vector3(-12f, 0.02f, 9f), 5.4f, asphalt, new Vector2(1.8f, 1.4f));
             CreateTaxiChordPad("Taxiway A1 throat", new Vector3(-28f, 0.02f, 0f), new Vector3(-22f, 0.02f, 0.6f), 5.8f, asphalt, new Vector2(1.6f, 1.2f));
@@ -6222,6 +6230,8 @@ namespace Airside.Presentation
             PlaceParkedCar("Taxi wait", new Vector3(28.5f, 0f, 36.5f), 8f, new Color(0.92f, 0.78f, 0.15f));
             PlaceParkedCar("Arterial car A", new Vector3(118f, 0f, 43.6f), 90f, carColors[3]);
             PlaceParkedCar("Arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
+            BuildAdelaideLandsideMonument();
+            PlaceArterialDirectionSign();
 
             // Landside furniture: skip near-terminal bench/trolley when PRP-003 forecourt already placed them.
             var forecourtPlaced = GameObject.Find("Terminal bench") != null
@@ -6301,9 +6311,9 @@ namespace Airside.Presentation
             var tieCount = 3;
             for (var i = 0; i < tieCount; i++)
             {
-                CreateBlock($"Tie-down {i}", new Vector3(-30f - i * 5.5f, 0.08f, 14f), new Vector3(0.35f, 0.08f, 0.35f),
+                CreateBlock($"Tie-down {i}", new Vector3(-42f - i * 6f, 0.08f, 14.6f), new Vector3(0.35f, 0.08f, 0.35f),
                     new Color(0.55f, 0.55f, 0.5f));
-                CreateBlock($"Tie-down rope {i}", new Vector3(-30f - i * 5.5f, 0.04f, 14.55f),
+                CreateBlock($"Tie-down rope {i}", new Vector3(-42f - i * 6f, 0.04f, 15.15f),
                     new Vector3(0.06f, 0.04f, 0.9f), new Color(0.35f, 0.35f, 0.32f));
             }
 
@@ -6339,6 +6349,34 @@ namespace Airside.Presentation
             PlaceParkedCar("MSCP roof car A", new Vector3(66f, 6.35f, 46f), 90f, new Color(0.2f, 0.32f, 0.55f));
             PlaceParkedCar("MSCP roof car B", new Vector3(73.5f, 6.35f, 47.2f), 90f, new Color(0.85f, 0.85f, 0.82f));
             PlaceContactShadow("MSCP contact", new Vector3(70f, 0.035f, 46f), new Vector3(17.5f, 0.02f, 12.5f), 0.16f);
+        }
+
+        /// <summary>
+        /// Sculptural landside A so Adelaide Airport reads from the opening overview
+        /// without baking HUD text into a texture.
+        /// </summary>
+        private static void BuildAdelaideLandsideMonument()
+        {
+            var plinth = Shade(AirsideTheme.Concrete, 0.92f);
+            var navy = new Color(0.12f, 0.2f, 0.34f);
+            var ochre = new Color(0.86f, 0.5f, 0.16f);
+            CreateBlock("Adelaide monument plinth", new Vector3(34f, 0.22f, 37.4f), new Vector3(3.8f, 0.44f, 1.9f), plinth);
+            var legL = CreateBlock("Adelaide monument leg L", new Vector3(33.15f, 2.15f, 37.4f), new Vector3(0.55f, 3.9f, 0.42f), navy);
+            legL.transform.rotation = Quaternion.Euler(0f, 0f, 16f);
+            var legR = CreateBlock("Adelaide monument leg R", new Vector3(34.85f, 2.15f, 37.4f), new Vector3(0.55f, 3.9f, 0.42f), navy);
+            legR.transform.rotation = Quaternion.Euler(0f, 0f, -16f);
+            CreateBlock("Adelaide monument bar", new Vector3(34f, 1.85f, 37.55f), new Vector3(1.7f, 0.22f, 0.28f), ochre);
+            PlaceContactShadow("Adelaide monument contact", new Vector3(34f, 0.04f, 37.4f), new Vector3(4.2f, 0.02f, 2.2f), 0.14f);
+        }
+
+        /// <summary>Yellow fingerboard on the eastern arterial — city airport approach, not empty asphalt.</summary>
+        private static void PlaceArterialDirectionSign()
+        {
+            var steel = new Color(0.45f, 0.46f, 0.48f);
+            CreateBlock("Arterial sign post", new Vector3(102f, 1.7f, 50.4f), new Vector3(0.16f, 3.4f, 0.16f), steel);
+            CreateBlock("Arterial sign face", new Vector3(102f, 2.95f, 50.4f), new Vector3(0.12f, 1.35f, 2.6f), AirsideTheme.SafetyYellow);
+            CreateBlock("Arterial sign cap", new Vector3(102f, 3.7f, 50.4f), new Vector3(0.18f, 0.12f, 2.7f), new Color(0.12f, 0.2f, 0.34f));
+            CreateBlock("Arterial sign chevron", new Vector3(102.08f, 2.95f, 50.4f), new Vector3(0.06f, 0.55f, 1.4f), new Color(0.12f, 0.2f, 0.34f));
         }
 
         /// <summary>
@@ -11518,11 +11556,11 @@ namespace Airside.Presentation
         {
             var spots = new[]
             {
-                (x: -30f, z: 14f, yaw: 90f),
-                (x: -37f, z: 14f, yaw: 98f),
-                (x: -33.5f, z: 10.5f, yaw: 105f),
-                (x: -40.5f, z: 11.5f, yaw: 85f),
-                (x: -27f, z: 11f, yaw: 110f)
+                (x: -42f, z: 14.6f, yaw: 92f),
+                (x: -48f, z: 15.0f, yaw: 100f),
+                (x: -45f, z: 12.4f, yaw: 108f),
+                (x: -54f, z: 13.8f, yaw: 84f),
+                (x: -39f, z: 13.0f, yaw: 112f)
             };
             // Prefab GA reads heavier than greybox — three airframes keep the bay calm.
             var hasGaPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_ga_v01");
@@ -11559,6 +11597,7 @@ namespace Airside.Presentation
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
                 if (hasGaPrefab)
                     root.localScale = Vector3.one * 1.1f;
+                PolishAircraftGlass(root);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);

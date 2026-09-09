@@ -12,7 +12,7 @@
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha now runs the full
   23/05 length inside the fence; paint/lights/holds follow. Grass stops at the
-  West Beach dune belt so Gulf St Vincent reads on first overview (~268 m).
+  West Beach dune belt so Gulf St Vincent reads on first overview (~282 m).
   Sand and shallows run the same north-south span as the gulf so the beach
   does not drop out at the edges. Car park fills the bigger pad. Night floods
   cover Stand 3 and the east satellite.
@@ -26,7 +26,8 @@
   under the satellite. Taxiway Delta feeds the east satellite. 23 has its own
   ALS. The terminal is larger with ochre idents and idle aerobridges on the
   satellite. A West Beach surf club sits by the jetty. Aircraft skin is
-  glossier and cabin windows glow at night. Save schema unchanged.
+  glossier and cabin windows glow at night. A landside A monument and GA apron
+  sit west of the hangar; 23 has a rapid-exit taxi. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

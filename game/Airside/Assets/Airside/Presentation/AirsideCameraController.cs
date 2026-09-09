@@ -10,17 +10,17 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        // West-biased so first frame shows Gulf St Vincent plus the long 23/05 strip.
-        private readonly Vector3 _overviewCenter = new(-18f, 0f, 4f);
-        private const float OverviewDistance = 268f;
+        // West-biased so first frame shows Gulf St Vincent, Glenelg south, and the long 23/05 strip.
+        private readonly Vector3 _overviewCenter = new(-16f, 0f, -6f);
+        private const float OverviewDistance = 282f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
-        private const float OverviewYaw = 128f;
+        private const float OverviewYaw = 132f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(-18f, 0f, 4f);
-        private float _yaw = 128f;
+        private Vector3 _center = new(-16f, 0f, -6f);
+        private float _yaw = 132f;
         private float _pitch = 34f;
         private float _distance = OverviewDistance;
         private bool _following;

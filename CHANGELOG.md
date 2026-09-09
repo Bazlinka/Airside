@@ -34,14 +34,15 @@ change it describes.
   sits on the ATC tower. 23 has a PAPI ladder; gulf water is glossier; hangar
   is a little larger. Grass deck stops at West Beach so Gulf St Vincent is
   actually visible; Alpha taxi runs the full 23/05 length; first overview pulls
-  back to 268 m; the West Beach ribbon matches the gulf's length; a multi-storey
+  back to 282 m; the West Beach ribbon matches the gulf's length; a multi-storey
   car park sits on the landside; a freight shed sits west of the hangar; the
   terminal has an extra storey; aircraft throw dual landing beams down the 05
   final; an eastern arterial runs to the CBD; Glenelg towers sit south on the
   gulf. CBD and Holdfast windows glow at dusk; aircraft leave climb vapor on
   23; the apron is wider. Taxiway Delta, east 23 ALS, a bigger terminal with
   ochre idents and satellite aerobridges, a West Beach surf club, and glossier
-  night-lit aircraft. Unity EditMode 193/193.
+  night-lit aircraft. Landside has a sculptural A; GA parks on its own apron;
+  23 has a rapid-exit taxi. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

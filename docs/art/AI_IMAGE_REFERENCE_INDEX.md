@@ -8,11 +8,14 @@ only maps the image evidence and prevents tools from treating every PNG as equal
 
 1. `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` — palette, camera, style, paths,
    lifecycle and exact asset IDs.
-2. `docs/art/reference/ref_airport_first_playable_day_v01.png` — authoritative
+2. `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md` — every first-playable
+   item to source/author (wheels, props, engines, trees, GSE, audio, …) with
+   in-git / quality / target-path columns for the refine pass.
+3. `docs/art/reference/ref_airport_first_playable_day_v01.png` — authoritative
    daytime composition, airport layout and world design.
-3. `docs/art/reference/ref_airport_first_playable_dusk_v01.png` — authoritative
+4. `docs/art/reference/ref_airport_first_playable_dusk_v01.png` — authoritative
    dusk, apron and runway-lighting treatment.
-4. `docs/art/reference/ref_asset_scale_and_palette_v01.png` — authoritative
+5. `docs/art/reference/ref_asset_scale_and_palette_v01.png` — authoritative
    silhouettes, proportions, materials and palette.
 
 Add these only when the task needs them:

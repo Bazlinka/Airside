@@ -5,15 +5,16 @@
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint,
   one outer fence, ATC tower + east satellite, aircraft on final over the gulf
-  then rolling out to A1. EditMode 193/193 earlier this session.
+  then rolling out to A1. Night beacon should sit on the tower. EditMode 193/193
+  earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha and Charlie
   edge lights run the full taxi; Alpha paint matches the long strip. Car park
   fills the bigger pad. Night floods cover Stand 3 and the east satellite.
-  Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Save
-  schema unchanged.
+  Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Night
+  beacon is on the ATC tower. First overview is 252 m. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

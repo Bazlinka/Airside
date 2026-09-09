@@ -4757,7 +4757,12 @@ namespace Airside.Presentation
                 (new Vector3(VisualThresholdWestX + 10f, 1.4f, -5.2f), new Color(1f, 0.35f, 0.28f), 9f),
                 (new Vector3(VisualThresholdWestX + 11.5f, 1.4f, -5.2f), new Color(1f, 0.35f, 0.28f), 9f),
                 (new Vector3(VisualThresholdWestX + 13f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f),
-                (new Vector3(VisualThresholdWestX + 14.5f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f)
+                (new Vector3(VisualThresholdWestX + 14.5f, 1.4f, -5.2f), new Color(1f, 0.95f, 0.75f), 9f),
+                // East PAPI-style ladder north of 23 so takeoff/overview is not one-sided.
+                (new Vector3(VisualThresholdEastX - 10f, 1.4f, 5.2f), new Color(1f, 0.35f, 0.28f), 9f),
+                (new Vector3(VisualThresholdEastX - 11.5f, 1.4f, 5.2f), new Color(1f, 0.35f, 0.28f), 9f),
+                (new Vector3(VisualThresholdEastX - 13f, 1.4f, 5.2f), new Color(1f, 0.95f, 0.75f), 9f),
+                (new Vector3(VisualThresholdEastX - 14.5f, 1.4f, 5.2f), new Color(1f, 0.95f, 0.75f), 9f)
             };
 
             var lights = new Light[specs.Length];
@@ -4905,9 +4910,10 @@ namespace Airside.Presentation
 
         private static Light BuildAerodromeBeacon()
         {
-            // Presentation-only aerodrome beacon — prefer lighting-kit obst mast.
+            // Presentation-only aerodrome beacon on the ATC cab so night Adelaide
+            // reads as a city airport, not an apron pole.
             var mast = new GameObject("Aerodrome beacon").transform;
-            mast.position = new Vector3(38f, 0f, 18f);
+            mast.position = new Vector3(56f, 18.9f, 34f);
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
@@ -4947,8 +4953,8 @@ namespace Airside.Presentation
                 pole.name = "Beacon mast";
                 Object.Destroy(pole.GetComponent<Collider>());
                 pole.transform.SetParent(mast, false);
-                pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
-                pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
+                pole.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+                pole.transform.localScale = new Vector3(0.16f, 1.35f, 0.16f);
                 if (pole.GetComponent<Renderer>() != null)
                     SetRendererColor(pole.GetComponent<Renderer>(), steel);
 
@@ -4956,18 +4962,18 @@ namespace Airside.Presentation
                 head.name = "Beacon head";
                 Object.Destroy(head.GetComponent<Collider>());
                 head.transform.SetParent(mast, false);
-                head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
-                head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
+                head.transform.localPosition = new Vector3(0f, 2.7f, 0f);
+                head.transform.localScale = new Vector3(0.48f, 0.48f, 0.48f);
                 SetRendererColor(head.GetComponent<Renderer>(), new Color(0.95f, 0.95f, 0.9f));
             }
 
             var lightGo = new GameObject("Beacon light");
             lightGo.transform.SetParent(mast, false);
-            lightGo.transform.localPosition = new Vector3(0f, kitMast ? 6.5f : 9.1f, 0f);
+            lightGo.transform.localPosition = new Vector3(0f, kitMast ? 2.8f : 2.7f, 0f);
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = new Color(0.85f, 1f, 0.9f);
-            light.range = 42f;
+            light.range = 56f;
             light.intensity = 0f;
             return light;
         }
@@ -5285,7 +5291,8 @@ namespace Airside.Presentation
                 "Textures/Environment/tx_terminal_glass_mask_v01.png",
                 surfaceTextureRelativePath: "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png",
                 surfaceTextureTiling: new Vector2(2.5f, 1.5f),
-                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" });
+                surfaceMeshNames: new[] { "hangar_shell", "roof", "buttress", "door_track", "side_vent", "cladding", "wall_rib", "girth", "gable" },
+                uniformScale: 1.18f);
             // Sliding door slab only when the hangar kit did not ship panel doors.
             if (GameObject.Find("Hangar door") == null
                 && GameObject.Find("door_panel_l") == null
@@ -5373,7 +5380,9 @@ namespace Airside.Presentation
                 "Textures/Decals/dc_runway_wear_v01.png");
             CreateDecalQuad("Runway wear mid", new Vector3(VisualRunwayCenterX, 0.02f, 0f), new Vector3(14f, 1f, 1.15f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Runway wear A2", new Vector3(28f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+            CreateDecalQuad("Runway wear A2", new Vector3(32f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+                "Textures/Decals/dc_runway_wear_v01.png");
+            CreateDecalQuad("Runway wear roll", new Vector3(52f, 0.02f, 0f), new Vector3(16f, 1f, 1.18f),
                 "Textures/Decals/dc_runway_wear_v01.png");
             CreateDecalQuad("Runway wear E", new Vector3(VisualThresholdEastX - 18f, 0.02f, 0f), new Vector3(16f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
@@ -7949,6 +7958,10 @@ namespace Airside.Presentation
                     || n.StartsWith("Gulf", StringComparison.Ordinal))
                 {
                     _coastWaterRenderers.Add(renderer);
+                    if (renderer.material.HasProperty("_Smoothness"))
+                        renderer.material.SetFloat("_Smoothness", 0.82f);
+                    if (renderer.material.HasProperty("_Metallic"))
+                        renderer.material.SetFloat("_Metallic", 0.12f);
                 }
             }
 
@@ -9898,11 +9911,14 @@ namespace Airside.Presentation
             string glassTextureRelativePath = null,
             string surfaceTextureRelativePath = null,
             Vector2? surfaceTextureTiling = null,
-            string[] surfaceMeshNames = null)
+            string[] surfaceMeshNames = null,
+            float uniformScale = 1f)
         {
             if (ArtPresentationLoader.TryInstantiate(artRelativePath, null, out var root, rename: null, colorFor: colorFor))
             {
                 root.position = worldPosition;
+                if (Mathf.Abs(uniformScale - 1f) > 0.001f)
+                    root.localScale = Vector3.one * uniformScale;
                 if (!string.IsNullOrEmpty(glassTextureRelativePath))
                 {
                     foreach (var child in root.GetComponentsInChildren<Transform>(true))

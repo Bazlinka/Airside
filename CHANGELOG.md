@@ -30,8 +30,9 @@ change it describes.
   paint now covers the long taxi, with hold bars at both far ends. Night floods
   cover Stand 3 and the east satellite. Approach lights aim at the real 05
   threshold over the gulf. Aircraft glass is glossier; fallback airframes have
-  winglets and extra windows; GSE is scaled to the larger kit. Unity EditMode
-  193/193.
+  winglets and extra windows; GSE is scaled to the larger kit. Night beacon
+  sits on the ATC tower. 23 has a PAPI ladder; gulf water is glossier; hangar
+  is a little larger; first overview pulls back to 252 m. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

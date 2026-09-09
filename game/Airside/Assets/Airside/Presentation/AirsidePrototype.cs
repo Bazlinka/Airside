@@ -8097,7 +8097,7 @@ namespace Airside.Presentation
         private static void BuildTerminalLandsideCanopy()
         {
             var steel = new Color(0.48f, 0.5f, 0.52f);
-            var glass = new Color(0.18f, 0.42f, 0.55f);
+            var glass = new Color(0.18f, 0.42f, 0.55f, 0.48f);
             var soffit = new Color(0.62f, 0.64f, 0.66f);
             // Terminal kits already carry canopy / landside glass — skip greybox densify.
             var hasKitCanopy = GameObject.Find("canopy") != null
@@ -8797,7 +8797,7 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildAdelaideSkyline()
         {
-            var glass = new Color(0.22f, 0.32f, 0.42f);
+            var glass = new Color(0.22f, 0.32f, 0.42f, 0.72f);
             var stone = new Color(0.62f, 0.6f, 0.56f);
             var pale = new Color(0.78f, 0.76f, 0.72f);
             CreateBlock("CBD tower A", new Vector3(148f, 9f, 102f), new Vector3(4.2f, 18f, 3.6f), pale);

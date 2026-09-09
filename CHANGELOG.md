@@ -128,7 +128,8 @@ change it describes.
   ochre fascia bands the landside glass and west hall.
   West and east hall glass uses the glass material instead of
   the water heuristic. The kerbside coach fallback is painted
-  metal, not water.
+  metal, not water. CBD glass towers use the glass material
+  instead of the water heuristic.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

@@ -2833,6 +2833,8 @@ namespace Airside.Presentation
                 || name.StartsWith("Runway E", StringComparison.Ordinal)
                 || name.StartsWith("Runway mid", StringComparison.Ordinal)
                 || name.StartsWith("Runway blast", StringComparison.Ordinal)
+                || name.StartsWith("Runway 23", StringComparison.Ordinal)
+                || name.StartsWith("Runway 12", StringComparison.Ordinal)
                 || name.StartsWith("Apron ", StringComparison.Ordinal)
                 || name.StartsWith("Apron joint", StringComparison.Ordinal)
                 || name.StartsWith("Apron slab", StringComparison.Ordinal)
@@ -2933,6 +2935,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Runway E", StringComparison.Ordinal)
                     && !n.StartsWith("Runway mid", StringComparison.Ordinal)
                     && !n.StartsWith("Runway blast", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway 23", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway 12", StringComparison.Ordinal)
                     && !n.StartsWith("Apron ", StringComparison.Ordinal)
                     && !n.StartsWith("Grass", StringComparison.Ordinal)
                     && !n.StartsWith("Infield grass", StringComparison.Ordinal)
@@ -4485,6 +4489,7 @@ namespace Airside.Presentation
                          "Terminal canopy glow W",
                          "Terminal canopy glow E",
                          "Hangar window glow",
+                         "East hangar window glow",
                          "Ops shed window glow",
                          "interior_glow_l",
                          "interior_glow_r",
@@ -5416,11 +5421,20 @@ namespace Airside.Presentation
             PlaceLevelPad("Runway shoulder S", VisualRunwayCenterX, -4.85f, 184f, 1.7f, Shade(tarmac, 0.92f), asphalt, new Vector2(36f, 0.4f));
             PlaceLevelPad("Runway blast W", VisualRunwayWestX - 4f, 0f, 12f, 9.4f, Shade(tarmac, 0.88f), asphalt, new Vector2(2.2f, 1.8f));
             PlaceLevelPad("Runway blast E", VisualRunwayEastX + 4f, 0f, 12f, 9.4f, Shade(tarmac, 0.88f), asphalt, new Vector2(2.2f, 1.8f));
+            for (var i = 0; i < 4; i++)
+            {
+                CreateBlock($"Runway blast chevron W {i}",
+                    new Vector3(VisualRunwayWestX - 6f - i * 1.5f, 0.055f, 0f),
+                    new Vector3(1.2f, 0.02f, 6.4f), new Color(0.96f, 0.78f, 0.12f));
+                CreateBlock($"Runway blast chevron E {i}",
+                    new Vector3(VisualRunwayEastX + 6f + i * 1.5f, 0.055f, 0f),
+                    new Vector3(1.2f, 0.02f, 6.4f), new Color(0.96f, 0.78f, 0.12f));
+            }
 
             // Visual-only cross runway 12/30 — Adelaide character, not on the sim network.
-            var cross = PlaceLevelPad("Runway 12-30", 8f, -38f, 118f, 7.2f, tarmac, asphalt, new Vector2(22f, 1.4f), top: 0.02f);
+            var cross = PlaceLevelPad("Runway 12-30", 8f, -38f, 118f, 8.8f, tarmac, asphalt, new Vector2(22f, 1.6f), top: 0.02f);
             cross.transform.rotation = Quaternion.Euler(0f, 58f, 0f);
-            PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 9.6f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 1.8f), top: 0.015f).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
+            PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 11.4f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 2.0f), top: 0.015f).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
             PlaceLevelPad("Runway 12-30 blast S", 39f, -88f, 12f, 9.2f, Shade(tarmac, 0.88f), asphalt, new Vector2(2.2f, 1.6f), top: 0.02f)
                 .transform.rotation = Quaternion.Euler(0f, 58f, 0f);
 
@@ -5619,6 +5633,8 @@ namespace Airside.Presentation
             BuildAdelaideLandsideCurve();
             BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
+            BuildAdelaideEastHangar();
+            BuildAdelaideJetBlastFence();
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -7703,6 +7719,41 @@ namespace Airside.Presentation
             CreateBlock("ATC tower mast", new Vector3(56f, 25.7f, 34f), new Vector3(0.2f, 2.8f, 0.2f), new Color(0.45f, 0.46f, 0.48f));
             CreateBlock("ATC dish", new Vector3(56.9f, 24.85f, 34.55f), new Vector3(1.25f, 0.12f, 1.25f), new Color(0.72f, 0.74f, 0.76f));
             PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.6f, 0.02f, 4.6f), 0.18f);
+        }
+
+        /// <summary>
+        /// Second maintenance hangar on the far-east apron so the satellite side is
+        /// not empty grass from the gulf opening shot. Presentation only.
+        /// </summary>
+        private static void BuildAdelaideEastHangar()
+        {
+            var shell = new Color(0.42f, 0.48f, 0.52f);
+            var roof = new Color(0.32f, 0.36f, 0.38f);
+            var door = new Color(0.2f, 0.22f, 0.24f);
+            CreateBlock("East hangar", new Vector3(96f, 3.5f, 38f), new Vector3(16.5f, 7.0f, 11.2f), shell,
+                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.8f, 1.6f));
+            CreateBlock("East hangar roof", new Vector3(96f, 7.15f, 38f), new Vector3(17.4f, 0.38f, 12.0f), roof);
+            CreateBlock("East hangar ridge", new Vector3(96f, 7.45f, 38f), new Vector3(17.6f, 0.22f, 1.1f), Shade(roof, 0.85f));
+            CreateBlock("East hangar door", new Vector3(96f, 2.9f, 32.5f), new Vector3(11.2f, 5.6f, 0.18f), door);
+            CreateBlock("East hangar window glow", new Vector3(96f, 4.6f, 32.42f), new Vector3(6.4f, 1.6f, 0.08f), new Color(1f, 0.75f, 0.35f));
+            PlaceContactShadow("East hangar contact", new Vector3(96f, 0.035f, 38f), new Vector3(17.2f, 0.02f, 12.0f), 0.16f);
+        }
+
+        /// <summary>
+        /// Jet blast vanes beyond 23 so the east end reads as a jet runway from
+        /// overview, not an open grass strip. Open through the centreline.
+        /// </summary>
+        private static void BuildAdelaideJetBlastFence()
+        {
+            var vane = new Color(0.92f, 0.42f, 0.12f);
+            var pale = new Color(0.88f, 0.88f, 0.84f);
+            var x = VisualRunwayEastX + 10f;
+            for (var i = 0; i < 6; i++)
+            {
+                var z = 5.4f + i * 1.35f;
+                CreateBlock($"Jet blast vane N {i}", new Vector3(x, 1.15f, z), new Vector3(0.16f, 2.2f, 1.1f), i % 2 == 0 ? vane : pale);
+                CreateBlock($"Jet blast vane S {i}", new Vector3(x, 1.15f, -z), new Vector3(0.16f, 2.2f, 1.1f), i % 2 == 0 ? pale : vane);
+            }
         }
 
         /// <summary>

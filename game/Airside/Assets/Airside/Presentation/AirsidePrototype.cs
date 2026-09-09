@@ -4457,6 +4457,8 @@ namespace Airside.Presentation
                          "Terminal east concourse upper glow",
                          "Terminal ident accent",
                          "Terminal east ident accent",
+                         "Terminal west glow",
+                         "Terminal west ident accent",
                          "Adelaide monument bar",
                          "Freight office glow",
                          "West Beach surf club glass",
@@ -4497,6 +4499,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal west ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
@@ -5437,6 +5440,14 @@ namespace Airside.Presentation
             CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal hall upper glow", new Vector3(26f, 5.85f, 24.7f), new Vector3(12f, 1.1f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal roof plant", new Vector3(22f, 7.25f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
+            CreateBlock("Terminal west glass", new Vector3(12f, 2.25f, 32.65f), new Vector3(10.4f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal west roof", new Vector3(12f, 4.25f, 29.2f), new Vector3(13.1f, 0.22f, 7.4f), new Color(0.5f, 0.53f, 0.56f));
+            CreateBlock("Terminal west glow", new Vector3(12f, 2.15f, 32.5f), new Vector3(8.8f, 1.3f, 0.08f), new Color(1f, 0.8f, 0.42f));
+            CreateBlock("Terminal west ident", new Vector3(12f, 4.4f, 32.6f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
+            CreateBlock("Terminal west ident accent", new Vector3(12f, 4.4f, 32.7f), new Vector3(7.2f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
+            CreateBlock("Terminal west link", new Vector3(18.4f, 2.0f, 28.2f), new Vector3(4.8f, 3.5f, 5.0f), new Color(0.64f, 0.68f, 0.71f));
+            PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
             BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
             BuildTerminalLandsideCanopy();
@@ -11066,6 +11077,15 @@ namespace Airside.Presentation
             PlaceRunwayDigit('3', end30 - along * 1.15f, yaw - 90f);
             PlaceRunwayDigit('0', end30 + along * 1.15f, yaw - 90f);
             var across = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
+            for (var i = -3; i <= 3; i++)
+            {
+                var bar12 = CreateBlock($"12 threshold {i}", end12 + along * 2.4f + across * (i * 0.85f),
+                    new Vector3(2.0f, 0.02f, 0.28f), Color.white);
+                var bar30 = CreateBlock($"30 threshold {i}", end30 - along * 2.4f + across * (i * 0.85f),
+                    new Vector3(2.0f, 0.02f, 0.28f), Color.white);
+                bar12.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+                bar30.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            }
             foreach (var dist in new[] { -26f, 26f })
             {
                 var p = center + along * dist;
@@ -11171,6 +11191,7 @@ namespace Airside.Presentation
             PlaceTaxiLamp(kit, new Vector3(69.6f, 0f, 6.4f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(-48f, 0f, 12.2f), taxiColor);
 
+            PlaceObstructionLamp(kit, new Vector3(12f, 4.6f, 29.2f), obstruction, "Terminal west obstruction");
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
             PlaceObstructionLamp(kit, new Vector3(40f, 4.8f, 24.5f), obstruction, "Terminal east obstruction");

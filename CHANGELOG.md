@@ -46,6 +46,7 @@ change it describes.
   glideslope on the gulf side and a localizer east of 23; the fuel farm sits
   west of freight; Glenelg foam and 12/30 aiming bars read from overview.
   Rapid 23 and the GA apron have painted centreline and night taxi lamps.
+  A west arrivals hall balances the east pier; 12/30 has threshold bars.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

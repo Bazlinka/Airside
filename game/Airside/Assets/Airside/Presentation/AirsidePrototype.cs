@@ -5407,9 +5407,9 @@ namespace Airside.Presentation
 
             PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 184f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.7f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
             PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 184f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.66f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
-            PlaceLevelPad("Infield Bravo 12-30 W", -6f, -24f, 44f, 26f, Shade(AirsideTheme.Eucalyptus, 0.5f), grass, new Vector2(10f, 6f), top: 0f, height: 0.32f);
-            PlaceLevelPad("Infield Bravo 12-30 E", 56f, -30f, 36f, 32f, Shade(AirsideTheme.Eucalyptus, 0.48f), grass, new Vector2(8f, 7f), top: 0f, height: 0.32f);
-            PlaceLevelPad("Infield 12-30 pocket", 32f, -72f, 30f, 38f, Shade(AirsideTheme.DryGrass, 0.7f), grass, new Vector2(7f, 8f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield Bravo 12-30 W", -6f, -24f, 44f, 26f, Shade(AirsideTheme.Eucalyptus, 0.66f), grass, new Vector2(10f, 6f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield Bravo 12-30 E", 56f, -30f, 36f, 32f, Shade(AirsideTheme.Eucalyptus, 0.64f), grass, new Vector2(8f, 7f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield 12-30 pocket", 32f, -72f, 30f, 38f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(7f, 8f), top: 0f, height: 0.32f);
 
             PlaceLevelPad("Runway 23-05", VisualRunwayCenterX, 0f, 184f, 8.2f, tarmac, asphalt, new Vector2(36f, 1.6f));
             PlaceLevelPad("Runway shoulder N", VisualRunwayCenterX, 4.85f, 184f, 1.7f, Shade(tarmac, 0.92f), asphalt, new Vector2(36f, 0.4f));
@@ -5596,11 +5596,12 @@ namespace Airside.Presentation
             CreateBlock("Terminal hall upper", new Vector3(26f, 6.35f, 27.2f), new Vector3(18.5f, 3.2f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.45f, 24.45f), new Vector3(16.2f, 2.1f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal hall upper glow", new Vector3(26f, 6.3f, 24.62f), new Vector3(14f, 1.5f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal airside curtain", new Vector3(26f, 3.55f, 23.68f), new Vector3(24f, 5.2f, 0.1f), new Color(0.16f, 0.4f, 0.52f, 0.48f),
-                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(4.2f, 2.2f));
-            CreateBlock("Terminal airside curtain glow", new Vector3(26f, 3.4f, 23.78f), new Vector3(20f, 3.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal roof plant", new Vector3(22f, 8.15f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
-            CreateBlock("Terminal roof plant B", new Vector3(30.4f, 8.12f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
+            CreateBlock("Terminal airside curtain", new Vector3(26f, 4.2f, 23.68f), new Vector3(26f, 6.6f, 0.1f), new Color(0.16f, 0.4f, 0.52f, 0.48f),
+                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(4.6f, 2.4f));
+            CreateBlock("Terminal airside curtain glow", new Vector3(26f, 4.0f, 23.78f), new Vector3(22f, 4.4f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            BuildAdelaideAirsideWaveRoof();
+            CreateBlock("Terminal roof plant", new Vector3(22f, 9.55f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal roof plant B", new Vector3(30.4f, 9.35f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
             CreateBlock("Terminal east roof plant", new Vector3(57.2f, 6.5f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 6.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
             CreateBlock("Terminal west roof plant", new Vector3(9.2f, 6.55f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
@@ -7762,6 +7763,24 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Wave roof on the airside hall so T1 reads as Adelaide from the gulf,
+        /// not a flat regional box. Sits behind the ADL letters.
+        /// </summary>
+        private static void BuildAdelaideAirsideWaveRoof()
+        {
+            var soffit = new Color(0.52f, 0.55f, 0.58f);
+            var pale = new Color(0.78f, 0.8f, 0.82f);
+            for (var i = -4; i <= 4; i++)
+            {
+                var x = 26f + i * 2.55f;
+                var crest = 8.85f + Mathf.Sin((i + 4) * 0.62f) * 1.15f;
+                CreateBlock($"T1 wave {i}", new Vector3(x, crest, 26.6f), new Vector3(2.7f, 0.38f, 5.2f), i % 2 == 0 ? soffit : pale);
+            }
+
+            CreateBlock("T1 wave fascia", new Vector3(26f, 8.55f, 24.55f), new Vector3(21.6f, 0.28f, 0.22f), soffit);
+        }
+
+        /// <summary>
         /// Curved landside glass so the main hall reads as Adelaide T1 from overview,
         /// not a flat regional box. Presentation only.
         /// </summary>
@@ -9287,7 +9306,7 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null, bool withEngineAudio = true)
         {
             var root = new GameObject(name).transform;
-            // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.32 is on
+            // Motion roots sit at y=0.7. v06 tires are at kit Y ≈ −0.008; scale 1.38 is on
             // the kit holder (does not scale this offset). −0.65 puts rubber on pavement top 0.04.
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 PreferArtKit(
@@ -9315,7 +9334,7 @@ namespace Airside.Presentation
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
                 if (root.childCount > 0)
-                    root.GetChild(0).localScale *= 1.32f;
+                    root.GetChild(0).localScale *= 1.38f;
             }
 
             if (!usedArt)

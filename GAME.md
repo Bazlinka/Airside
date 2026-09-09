@@ -1,13 +1,13 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 22 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 23 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
   (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
   tower + east satellite, aircraft on final over the gulf then rolling out to
-  A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.32,
+  A1. Night beacon should sit on the tower. Larger aircraft kit (scale 1.38,
   offset −0.65) sit height is computed from v06 tire min vs pavement 0.04 m
   but still needs a Play glance. **12/30 should sit inside a south
   fence pocket** (not cut by the old gap at x=0). Takeoff climb continues
@@ -21,7 +21,7 @@
   houses sit outside the fence.   West Beach sand meets the grass deck level.
   Terminal roofs carry plant boxes. Adelaide Hills sit east of the CBD.
   A visual turboprop holds on the 12/30 taxi. Night taxi lamps follow that
-  south strip.   A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.32.
+  south strip.   A fifth idle turboprop sits on Bravo west. Aircraft kit is 1.38.
   URP sun shadows reach 420 m with overview-biased cascades. 05 ALS now
   runs 12 stations out over the gulf on piers so the opening shot has a
   lit final. Day grade is punchier. Bravo east infield holds a sixth idle
@@ -40,6 +40,7 @@
   Live-stand GSE stages on the apron when no flight is parked. CBD west
   glass faces the gulf opening shot. Gulf water has a local reflection
   probe; aircraft skins keep bump/AO under licensed liveries.
+  T1 has an airside wave roof; the 12/30 pocket is coastal green; kit is 1.38.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -92,6 +93,7 @@
   Idle fleet wears licensed liveries. Live-stand GSE stays on the apron
   when the sim is empty. CBD west glass faces the gulf. Gulf water
   reflects the opening shot; aircraft keep skin maps under liveries.
+  T1 has an airside wave roof; 12/30 infield is coastal green; kit is 1.38.
   Save schema
   unchanged.
 - **Watch for / assumptions:**

@@ -65,6 +65,7 @@
   catch the sun; parked nav lamps stay lit so the fleet reads from 318 m.
   Terminal reflection probe sits on the landside curve the opening shot sees.
   An ochre fascia bands the landside glass so T1 reads Adelaide from yaw 132.
+  West hall gets the same ochre band.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -133,7 +134,8 @@
   a wave sits under the ADL letters; a kerbside coach waits
   east of the porte. Idle fleet stripes match each airframe
   accent; spinners catch the sun; parked nav lamps stay lit.
-  Terminal probe sits on the landside curve. Save schema
+  Terminal probe sits on the landside curve. An ochre fascia
+  bands the hall glass and west hall. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

@@ -124,7 +124,8 @@ change it describes.
   ADL letters; a kerbside coach waits east of the porte-cochere.
   Idle fleet tails and stripes use each airframe's accent;
   spinners catch the sun; parked nav lamps stay lit. The
-  terminal reflection probe sits on the landside curve.
+  terminal reflection probe sits on the landside curve. An
+  ochre fascia bands the landside glass and west hall.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

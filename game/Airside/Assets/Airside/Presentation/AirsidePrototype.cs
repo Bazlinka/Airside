@@ -4530,6 +4530,7 @@ namespace Airside.Presentation
                          "Terminal east ident accent",
                          "Terminal west glow",
                          "Terminal west ident accent",
+                         "Terminal west ochre",
                          "Terminal west hall upper glow",
                          "West drop canopy glow",
                          "T1 curve glow",
@@ -4590,6 +4591,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal east ident accent", StringComparison.Ordinal)
                                    || name.StartsWith("Adelaide monument bar", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal west ident accent", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal west ochre", StringComparison.Ordinal)
                                    || name.StartsWith("Terminal west hall upper", StringComparison.Ordinal)
                                    || name.StartsWith("West drop canopy glow", StringComparison.Ordinal)
                                    || name.StartsWith("T1 curve glow", StringComparison.Ordinal)
@@ -5649,6 +5651,7 @@ namespace Airside.Presentation
             CreateBlock("Terminal west glow", new Vector3(12f, 3.35f, 32.5f), new Vector3(8.8f, 3.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             CreateBlock("Terminal west ident", new Vector3(12f, 7.15f, 32.72f), new Vector3(7.2f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
             CreateBlock("Terminal west ident accent", new Vector3(12f, 7.15f, 32.82f), new Vector3(7.2f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
+            CreateBlock("Terminal west ochre", new Vector3(12f, 6.18f, 32.78f), new Vector3(10.2f, 0.32f, 0.14f), new Color(0.86f, 0.5f, 0.16f));
             CreateBlock("Terminal west link", new Vector3(18.4f, 2.0f, 28.2f), new Vector3(4.8f, 3.5f, 5.0f), new Color(0.64f, 0.68f, 0.71f));
             CreateBlock("Terminal west hall upper", new Vector3(12f, 5.45f, 29.3f), new Vector3(10.8f, 1.9f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal west hall upper glass", new Vector3(12f, 5.5f, 32.05f), new Vector3(9.2f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));

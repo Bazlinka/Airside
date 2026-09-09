@@ -91,7 +91,8 @@ namespace Airside.Presentation
             Quaternion worldRotation,
             string instanceName,
             out Transform instance,
-            Vector3? localScale = null)
+            Vector3? localScale = null,
+            Vector3[] localOffsets = null)
         {
             instance = null;
             if (parts == null || parts.Length == 0)
@@ -99,10 +100,10 @@ namespace Airside.Presentation
             if (!TryLoadKit(artRelativePath, out var kit))
                 return false;
 
-            var key = CombinedKey(artRelativePath, parts);
+            var key = CombinedKey(artRelativePath, parts, localOffsets);
             if (!CombinedCache.TryGetValue(key, out var template) || template == null)
             {
-                template = BuildCombined(kit, parts);
+                template = BuildCombined(kit, parts, localOffsets);
                 CombinedCache[key] = template;
             }
 
@@ -129,6 +130,13 @@ namespace Airside.Presentation
 
         public static bool HasKit(string artRelativePath) =>
             ArtRuntimePaths.ResolveExisting(artRelativePath) != null;
+
+        public static bool HasMesh(string artRelativePath, string meshName)
+        {
+            if (string.IsNullOrEmpty(meshName) || !TryLoadKit(artRelativePath, out var kit) || kit == null)
+                return false;
+            return kit.ByName.ContainsKey(meshName);
+        }
 
         private static Transform CreateMeshObject(
             string name,
@@ -270,7 +278,10 @@ namespace Airside.Presentation
             return kit.Meshes.Count > 0 ? kit : null;
         }
 
-        private static string CombinedKey(string artRelativePath, (string Name, Color Color)[] parts)
+        private static string CombinedKey(
+            string artRelativePath,
+            (string Name, Color Color)[] parts,
+            Vector3[] localOffsets)
         {
             var sb = new StringBuilder(artRelativePath.Length + parts.Length * 24);
             sb.Append(artRelativePath);
@@ -280,12 +291,21 @@ namespace Airside.Presentation
                 sb.Append('|').Append(part.Name).Append('#');
                 sb.Append(part.Color.r).Append(',').Append(part.Color.g).Append(',')
                     .Append(part.Color.b).Append(',').Append(part.Color.a);
+                if (localOffsets != null && i < localOffsets.Length)
+                {
+                    var o = localOffsets[i];
+                    if (o.sqrMagnitude > 0f)
+                        sb.Append('@').Append(o.x).Append(',').Append(o.y).Append(',').Append(o.z);
+                }
             }
 
             return sb.ToString();
         }
 
-        private static CombinedTemplate BuildCombined(GltfKit kit, (string Name, Color Color)[] parts)
+        private static CombinedTemplate BuildCombined(
+            GltfKit kit,
+            (string Name, Color Color)[] parts,
+            Vector3[] localOffsets)
         {
             var groups = new List<CombineGroup>(4);
             for (var i = 0; i < parts.Length; i++)
@@ -310,7 +330,11 @@ namespace Airside.Presentation
                     groups.Add(group);
                 }
 
+                var offset = localOffsets != null && i < localOffsets.Length
+                    ? localOffsets[i]
+                    : Vector3.zero;
                 group.Entries.Add(entry);
+                group.Offsets.Add(offset);
             }
 
             if (groups.Count == 0)
@@ -341,6 +365,12 @@ namespace Airside.Presentation
                     var entry = group.Entries[e];
                     var count = entry.Vertices.Length;
                     Array.Copy(entry.Vertices, 0, vertices, vertOffset, count);
+                    var offset = e < group.Offsets.Count ? group.Offsets[e] : Vector3.zero;
+                    if (offset.sqrMagnitude > 0f)
+                    {
+                        for (var v = 0; v < count; v++)
+                            vertices[vertOffset + v] += offset;
+                    }
                     if (entry.Uvs != null && entry.Uvs.Length == count)
                         Array.Copy(entry.Uvs, 0, uvs, vertOffset, count);
                     var indices = entry.Indices;
@@ -473,6 +503,7 @@ namespace Airside.Presentation
             public Color Color { get; }
             public AirsideMaterialLibrary.SurfaceKind Kind { get; }
             public List<MeshEntry> Entries { get; } = new();
+            public List<Vector3> Offsets { get; } = new();
         }
 
         private sealed class MeshEntry

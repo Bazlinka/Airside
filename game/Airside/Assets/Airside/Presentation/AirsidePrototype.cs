@@ -35,6 +35,7 @@ namespace Airside.Presentation
         private ReflectionProbe _terminalProbe;
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
+        private Renderer[] _touchdownSmokeRenderers;
         private Light _fuelFarmLight;
         private Light _arffBayLight;
         private Renderer _arffLightbarRenderer;
@@ -42,8 +43,16 @@ namespace Airside.Presentation
         private Transform _taxiSprayRoot;
         private Light[] _windowLights;
         private Transform _horizonDome;
+        private Renderer _horizonDomeRenderer;
         private Transform _sunDisc;
+        private Renderer _sunDiscRenderer;
         private Transform _moonDisc;
+        private Renderer _moonDiscRenderer;
+        private Renderer _starFieldRenderer;
+        private Renderer _coastFoamRenderer;
+        private Renderer[] _taxiSprayRenderers;
+        private Renderer[] _puddleRenderers;
+        private readonly Dictionary<int, AudioSource> _engineAudio = new Dictionary<int, AudioSource>();
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
         private int _cloudTintKey = int.MinValue;
@@ -108,6 +117,7 @@ namespace Airside.Presentation
         private Transform _terminalFlag;
         private Transform _coastFoam;
         private readonly List<Transform> _coastFoamLayers = new List<Transform>();
+        private readonly List<Renderer> _coastFoamRenderers = new List<Renderer>();
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
         private readonly List<Renderer> _coastWaterRenderers = new List<Renderer>();
@@ -1205,9 +1215,14 @@ namespace Airside.Presentation
             if (aircraft == null)
                 return;
 
-            var source = aircraft.GetComponent<AudioSource>();
-            if (source == null)
-                return;
+            var id = aircraft.GetInstanceID();
+            if (!_engineAudio.TryGetValue(id, out var source) || source == null)
+            {
+                source = aircraft.GetComponent<AudioSource>();
+                if (source == null)
+                    return;
+                _engineAudio[id] = source;
+            }
 
             if (_audioMuted)
             {
@@ -2478,14 +2493,22 @@ namespace Airside.Presentation
 
             _taxiSprayRoot.position = lead.position + Vector3.up * 0.2f;
             _taxiSprayRoot.rotation = lead.rotation;
-            for (var i = 0; i < _taxiSprayRoot.childCount; i++)
+            var n = _taxiSprayRoot.childCount;
+            if (_taxiSprayRenderers == null || _taxiSprayRenderers.Length != n)
+            {
+                _taxiSprayRenderers = new Renderer[n];
+                for (var i = 0; i < n; i++)
+                    _taxiSprayRenderers[i] = _taxiSprayRoot.GetChild(i).GetComponent<Renderer>();
+            }
+
+            for (var i = 0; i < n; i++)
             {
                 var puff = _taxiSprayRoot.GetChild(i);
                 var pulse = 0.7f + 0.3f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * (6f + i) + i));
                 var side = i % 2 == 0 ? -0.65f : 0.65f;
                 puff.localPosition = new Vector3(side, 0.08f + pulse * 0.12f, -0.4f - i * 0.15f);
                 puff.localScale = new Vector3(0.55f, 0.25f, 0.55f) * pulse * (raining ? 1.25f : 1f);
-                var renderer = puff.GetComponent<Renderer>();
+                var renderer = _taxiSprayRenderers[i];
                 if (renderer != null)
                 {
                     var color = GetRendererColor(renderer);
@@ -2504,19 +2527,31 @@ namespace Airside.Presentation
             if (!show)
                 return;
             var alpha = Mathf.Lerp(0.12f, storm ? 0.42f : 0.32f, wetness);
-            for (var i = 0; i < _wetPuddleRoot.childCount; i++)
+            if (_puddleRenderers == null)
             {
-                var cluster = _wetPuddleRoot.GetChild(i);
-                for (var b = 0; b < cluster.childCount; b++)
+                var list = new List<Renderer>(16);
+                for (var i = 0; i < _wetPuddleRoot.childCount; i++)
                 {
-                    var puddle = cluster.GetChild(b);
-                    var renderer = puddle.GetComponent<Renderer>();
-                    if (renderer == null)
-                        continue;
-                    var color = GetRendererColor(renderer);
-                    color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i + b * 0.4f));
-                    SetRendererColor(renderer, color);
+                    var cluster = _wetPuddleRoot.GetChild(i);
+                    for (var b = 0; b < cluster.childCount; b++)
+                    {
+                        var renderer = cluster.GetChild(b).GetComponent<Renderer>();
+                        if (renderer != null)
+                            list.Add(renderer);
+                    }
                 }
+
+                _puddleRenderers = list.ToArray();
+            }
+
+            for (var i = 0; i < _puddleRenderers.Length; i++)
+            {
+                var renderer = _puddleRenderers[i];
+                if (renderer == null)
+                    continue;
+                var color = GetRendererColor(renderer);
+                color.a = alpha * (0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 0.7f + i * 0.4f));
+                SetRendererColor(renderer, color);
             }
         }
 
@@ -2578,12 +2613,20 @@ namespace Airside.Presentation
             {
                 _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(_touchdownSmokeRemaining / 1.35f);
-                for (var i = 0; i < _touchdownSmoke.childCount; i++)
+                var n = _touchdownSmoke.childCount;
+                if (_touchdownSmokeRenderers == null || _touchdownSmokeRenderers.Length != n)
+                {
+                    _touchdownSmokeRenderers = new Renderer[n];
+                    for (var i = 0; i < n; i++)
+                        _touchdownSmokeRenderers[i] = _touchdownSmoke.GetChild(i).GetComponent<Renderer>();
+                }
+
+                for (var i = 0; i < n; i++)
                 {
                     var puff = _touchdownSmoke.GetChild(i);
                     puff.localScale = Vector3.Lerp(new Vector3(2.8f, 0.25f, 2.8f), new Vector3(1.0f, 0.35f, 1.0f), t);
                     puff.localPosition += Vector3.up * (Time.unscaledDeltaTime * 0.35f);
-                    var renderer = puff.GetComponent<Renderer>();
+                    var renderer = _touchdownSmokeRenderers[i];
                     if (renderer != null)
                     {
                         var color = GetRendererColor(renderer);
@@ -4108,9 +4151,10 @@ namespace Airside.Presentation
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
             {
-                var domeRenderer = _horizonDome.GetComponent<Renderer>();
-                if (domeRenderer != null)
-                    SetRendererColor(domeRenderer, sky, sky * Mathf.Lerp(0.35f, 1f, daylight));
+                if (_horizonDomeRenderer == null)
+                    _horizonDomeRenderer = _horizonDome.GetComponent<Renderer>();
+                if (_horizonDomeRenderer != null)
+                    SetRendererColor(_horizonDomeRenderer, sky, sky * Mathf.Lerp(0.35f, 1f, daylight));
             }
 
             UpdateSunAndMoonDiscs(daylight, warm, elevation);
@@ -6027,8 +6071,24 @@ namespace Airside.Presentation
                 "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
             {
-                root = new GameObject(name).transform;
                 var steel = new Color(0.7f, 0.72f, 0.75f);
+                var rot = Quaternion.Euler(0f, yawDegrees, 0f);
+                if (ArtGltfLoader.TryPlaceCombined(
+                        kit,
+                        new[]
+                        {
+                            ("trolley_rail", steel),
+                            ("trolley_post_l", steel),
+                            ("trolley_post_r", steel)
+                        },
+                        position, rot, name, out var combined))
+                {
+                    combined.position = position;
+                    combined.rotation = rot;
+                    return;
+                }
+
+                root = new GameObject(name).transform;
                 var placed = 0;
                 void Place(string mesh, Color color)
                 {
@@ -6078,9 +6138,26 @@ namespace Airside.Presentation
                 "Models/Props/mdl_terminal_forecourt_kit_v01.gltf");
             if (!string.IsNullOrEmpty(kit) && ArtGltfLoader.HasKit(kit))
             {
-                root = new GameObject(name).transform;
                 var wood = new Color(0.4f, 0.32f, 0.22f);
                 var steel = new Color(0.45f, 0.46f, 0.48f);
+                var rot = Quaternion.Euler(0f, yawDegrees, 0f);
+                if (ArtGltfLoader.TryPlaceCombined(
+                        kit,
+                        new[]
+                        {
+                            ("bench_seat", wood),
+                            ("bench_back", Shade(wood, 0.9f)),
+                            ("bench_leg_l", steel),
+                            ("bench_leg_r", steel)
+                        },
+                        position, rot, name, out var combined))
+                {
+                    combined.position = position;
+                    combined.rotation = rot;
+                    return;
+                }
+
+                root = new GameObject(name).transform;
                 var placed = 0;
                 void Place(string mesh, Color color)
                 {
@@ -6208,35 +6285,88 @@ namespace Airside.Presentation
                 PlaceBay(new Vector3(x + 2f, 0f, -20f), 0f, $"S {x}");
             }
 
-            PlacePart("fence_corner", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner NW");
-            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NW");
-            PlacePart("fence_corner", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner NE");
-            PlacePart("fence_corner_brace", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NE");
-            PlacePart("fence_corner", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner SW");
-            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SW");
-            PlacePart("fence_corner", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner SE");
-            PlacePart("fence_corner_brace", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SE");
+            void PlaceCombo(string name, Vector3 pos, Quaternion rot, params (string Name, Color Color)[] parts)
+            {
+                if (ArtGltfLoader.TryPlaceCombined(kit, parts, pos, rot, name, out _))
+                {
+                    placed++;
+                    return;
+                }
 
-            // Vehicle gate at access road.
-            PlacePart("gate_post", new Vector3(23f, 0f, 34f), Quaternion.identity, post, "Gate post L");
-            PlacePart("gate_post", new Vector3(29f, 0f, 34f), Quaternion.identity, post, "Gate post R");
+                for (var i = 0; i < parts.Length; i++)
+                    PlacePart(parts[i].Name, pos, rot, parts[i].Color, $"{name} {parts[i].Name}");
+            }
+
+            PlaceCombo("Fence corner NW", new Vector3(-44f, 0f, 34f), Quaternion.identity,
+                ("fence_corner", post), ("fence_corner_brace", post));
+            PlaceCombo("Fence corner NE", new Vector3(44f, 0f, 34f), Quaternion.identity,
+                ("fence_corner", post), ("fence_corner_brace", post));
+            PlaceCombo("Fence corner SW", new Vector3(-44f, 0f, -20f), Quaternion.identity,
+                ("fence_corner", post), ("fence_corner_brace", post));
+            PlaceCombo("Fence corner SE", new Vector3(44f, 0f, -20f), Quaternion.identity,
+                ("fence_corner", post), ("fence_corner_brace", post));
+
+            // Vehicle gate at access road. Leaves keep unique yaw; the rest share identity rotation.
             PlacePart("gate_vehicle_leaf_l", new Vector3(24.2f, 0f, 35.6f), Quaternion.Euler(0f, 12f, 0f), yellow, "Gate leaf L");
             PlacePart("gate_vehicle_leaf_r", new Vector3(27.8f, 0f, 35.6f), Quaternion.Euler(0f, -12f, 0f), yellow, "Gate leaf R");
-            PlacePart("gate_vehicle_rail", new Vector3(26f, 0f, 35.55f), Quaternion.identity, post, "Gate vehicle rail");
-            PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron L");
-            PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron R");
-            PlacePart("gate_sign", new Vector3(26f, 0f, 34.2f), Quaternion.identity, AirsideTheme.SafetyYellow, "Gate sign");
-            PlacePart("gate_sign_frame", new Vector3(26f, 0f, 34.15f), Quaternion.identity, post, "Gate sign frame");
-            PlacePart("gate_post_light", new Vector3(23f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light L");
-            PlacePart("gate_post_light", new Vector3(29f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light R");
-            PlacePart("gate_latch", new Vector3(26f, 0f, 35.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
-            PlacePart("gate_stop", new Vector3(23.1f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
-            PlacePart("gate_stop", new Vector3(28.9f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
-            // Pedestrian gate fills the landside access gap beside the vehicle gate when kit meshes exist.
-            PlacePart("gate_pedestrian", new Vector3(20.6f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate");
-            PlacePart("gate_pedestrian_frame", new Vector3(20.6f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame");
-            PlacePart("gate_pedestrian", new Vector3(31.4f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate E");
-            PlacePart("gate_pedestrian_frame", new Vector3(31.4f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame E");
+            var gateOrigin = new Vector3(26f, 0f, 34f);
+            var chevron = new Color(0.15f, 0.15f, 0.16f);
+            var light = new Color(0.95f, 0.35f, 0.12f);
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("gate_post", post),
+                        ("gate_post", post),
+                        ("gate_vehicle_rail", post),
+                        ("gate_vehicle_chevron", chevron),
+                        ("gate_vehicle_chevron", chevron),
+                        ("gate_sign", AirsideTheme.SafetyYellow),
+                        ("gate_sign_frame", post),
+                        ("gate_post_light", light),
+                        ("gate_post_light", light),
+                        ("gate_latch", new Color(0.25f, 0.26f, 0.28f)),
+                        ("gate_stop", AirsideTheme.Concrete),
+                        ("gate_stop", AirsideTheme.Concrete)
+                    },
+                    gateOrigin, Quaternion.identity, "Vehicle gate", out _,
+                    localOffsets: new[]
+                    {
+                        new Vector3(-3f, 0f, 0f),
+                        new Vector3(3f, 0f, 0f),
+                        new Vector3(0f, 0f, 1.55f),
+                        new Vector3(-1.8f, 0f, 1.5f),
+                        new Vector3(1.8f, 0f, 1.5f),
+                        new Vector3(0f, 0f, 0.2f),
+                        new Vector3(0f, 0f, 0.15f),
+                        new Vector3(-3f, 0f, 0.15f),
+                        new Vector3(3f, 0f, 0.15f),
+                        new Vector3(0f, 0f, 1.5f),
+                        new Vector3(-2.9f, 0f, 0.4f),
+                        new Vector3(2.9f, 0f, 0.4f)
+                    }))
+            {
+                placed++;
+            }
+            else
+            {
+                PlacePart("gate_post", new Vector3(23f, 0f, 34f), Quaternion.identity, post, "Gate post L");
+                PlacePart("gate_post", new Vector3(29f, 0f, 34f), Quaternion.identity, post, "Gate post R");
+                PlacePart("gate_vehicle_rail", new Vector3(26f, 0f, 35.55f), Quaternion.identity, post, "Gate vehicle rail");
+                PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, 35.5f), Quaternion.identity, chevron, "Gate chevron L");
+                PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, 35.5f), Quaternion.identity, chevron, "Gate chevron R");
+                PlaceCombo("Gate sign", new Vector3(26f, 0f, 34.2f), Quaternion.identity,
+                    ("gate_sign", AirsideTheme.SafetyYellow), ("gate_sign_frame", post));
+                PlacePart("gate_post_light", new Vector3(23f, 0f, 34.15f), Quaternion.identity, light, "Gate light L");
+                PlacePart("gate_post_light", new Vector3(29f, 0f, 34.15f), Quaternion.identity, light, "Gate light R");
+                PlacePart("gate_latch", new Vector3(26f, 0f, 35.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
+                PlacePart("gate_stop", new Vector3(23.1f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
+                PlacePart("gate_stop", new Vector3(28.9f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
+            }
+            PlaceCombo("Pedestrian gate", new Vector3(20.6f, 0f, 34f), Quaternion.identity,
+                ("gate_pedestrian", panel), ("gate_pedestrian_frame", post));
+            PlaceCombo("Pedestrian gate E", new Vector3(31.4f, 0f, 34f), Quaternion.identity,
+                ("gate_pedestrian", panel), ("gate_pedestrian_frame", post));
 
             return placed >= 20;
         }
@@ -6586,6 +6716,7 @@ namespace Airside.Presentation
 
             var wood = new Color(0.4f, 0.32f, 0.22f);
             var steel = new Color(0.45f, 0.46f, 0.48f);
+            var soil = new Color(0.28f, 0.22f, 0.14f);
             var placed = 0;
             void Place(string mesh, Vector3 pos, Color color, string name, float yawDeg = 0f)
             {
@@ -6595,62 +6726,49 @@ namespace Airside.Presentation
                 placed++;
             }
 
-            Place("bench_seat", new Vector3(21f, 0f, 31.6f), wood, "Terminal bench");
-            Place("bench_back", new Vector3(21f, 0f, 31.6f), Shade(wood, 0.9f), "Terminal bench back");
-            Place("bench_leg_l", new Vector3(21f, 0f, 31.6f), steel, "Terminal bench leg L");
-            Place("bench_leg_r", new Vector3(21f, 0f, 31.6f), steel, "Terminal bench leg R");
-            Place("planter", new Vector3(31.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter");
-            Place("planter_soil", new Vector3(31.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil");
-            Place("planter_scrub", new Vector3(31.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub");
-            // Prefer authored dropoff bollard; fall back to generic bollard mesh.
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(23.5f, 0f, 33.2f), Quaternion.identity, steel, out var dropL))
-                Place("bollard", new Vector3(23.5f, 0f, 33.2f), steel, "Drop-off bollard L");
-            else
+            void PlaceCluster(string name, Vector3 pos, float yaw, params (string Name, Color Color)[] parts)
             {
-                dropL.name = "Drop-off bollard L";
-                placed++;
+                if (ArtGltfLoader.TryPlaceCombined(kit, parts, pos, Quaternion.Euler(0f, yaw, 0f), name, out _))
+                {
+                    placed++;
+                    return;
+                }
+
+                for (var i = 0; i < parts.Length; i++)
+                    Place(parts[i].Name, pos, parts[i].Color, name, yaw);
             }
 
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(28.5f, 0f, 33.2f), Quaternion.identity, steel, out var dropR))
-                Place("bollard", new Vector3(28.5f, 0f, 33.2f), steel, "Drop-off bollard R");
-            else
+            PlaceCluster("Terminal bench", new Vector3(21f, 0f, 31.6f), 0f,
+                ("bench_seat", wood), ("bench_back", Shade(wood, 0.9f)), ("bench_leg_l", steel), ("bench_leg_r", steel));
+            PlaceCluster("Terminal planter", new Vector3(31.5f, 0f, 31.8f), 0f,
+                ("planter", AirsideTheme.Concrete), ("planter_soil", soil),
+                ("planter_scrub", Shade(AirsideTheme.Eucalyptus, 0.85f)));
+            PlaceCluster("Terminal planter W", new Vector3(18.5f, 0f, 31.8f), 0f,
+                ("planter", AirsideTheme.Concrete), ("planter_soil", soil),
+                ("planter_scrub", Shade(AirsideTheme.Eucalyptus, 0.85f)));
+
+            var bollardBody = ArtGltfLoader.HasMesh(kit, "dropoff_bollard") ? "dropoff_bollard" : "bollard";
+            void PlaceBollard(string name, Vector3 pos)
             {
-                dropR.name = "Drop-off bollard R";
-                placed++;
+                PlaceCluster(name, pos, 0f, (bollardBody, steel), ("bollard_cap", AirsideTheme.SafetyYellow));
             }
 
-            // Extra mid-span bollards densify the drop-off line (same extract names).
-            if (!ArtGltfLoader.TryPlaceNamedMesh(kit, "dropoff_bollard", new Vector3(26f, 0f, 33.2f), Quaternion.identity, steel, out var dropM))
-                Place("bollard", new Vector3(26f, 0f, 33.2f), steel, "Drop-off bollard M");
-            else
-            {
-                dropM.name = "Drop-off bollard M";
-                placed++;
-            }
-
-            Place("bollard_cap", new Vector3(23.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap L");
-            Place("bollard_cap", new Vector3(26f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap M");
-            Place("bollard_cap", new Vector3(28.5f, 0f, 33.2f), AirsideTheme.SafetyYellow, "Drop-off bollard cap R");
+            PlaceBollard("Drop-off bollard L", new Vector3(23.5f, 0f, 33.2f));
+            PlaceBollard("Drop-off bollard M", new Vector3(26f, 0f, 33.2f));
+            PlaceBollard("Drop-off bollard R", new Vector3(28.5f, 0f, 33.2f));
             Place("kerb_straight", new Vector3(26f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb");
             Place("kerb_corner", new Vector3(23.2f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner L", 0f);
             Place("kerb_corner", new Vector3(28.8f, 0f, 33.6f), AirsideTheme.Concrete, "Drop-off kerb corner R", 90f);
-            Place("trolley_rail", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley rail");
-            Place("trolley_post_l", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post L");
-            Place("trolley_post_r", new Vector3(33.5f, 0f, 30.8f), steel, "Trolley post R");
-            Place("sign_post", new Vector3(39.5f, 0f, 40.5f), steel, "Parking sign post");
-            Place("sign_face", new Vector3(39.5f, 0f, 40.5f), AirsideTheme.SafetyYellow, "Parking sign face");
-            Place("sign_frame", new Vector3(39.5f, 0f, 40.5f), Shade(steel, 0.85f), "Parking sign frame");
-            // Second parking sign near access road.
-            Place("sign_post", new Vector3(44f, 0f, 36f), steel, "Access sign post");
-            Place("sign_face", new Vector3(44f, 0f, 36f), AirsideTheme.SafetyYellow, "Access sign face");
-            Place("sign_frame", new Vector3(44f, 0f, 36f), Shade(steel, 0.85f), "Access sign frame");
+            PlaceCluster("Trolley bay", new Vector3(33.5f, 0f, 30.8f), 0f,
+                ("trolley_rail", steel), ("trolley_post_l", steel), ("trolley_post_r", steel));
+            PlaceCluster("Parking sign", new Vector3(39.5f, 0f, 40.5f), 0f,
+                ("sign_post", steel), ("sign_face", AirsideTheme.SafetyYellow), ("sign_frame", Shade(steel, 0.85f)));
+            PlaceCluster("Access sign", new Vector3(44f, 0f, 36f), 0f,
+                ("sign_post", steel), ("sign_face", AirsideTheme.SafetyYellow), ("sign_frame", Shade(steel, 0.85f)));
             Place("kerb_straight", new Vector3(48f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb N");
             Place("kerb_straight", new Vector3(48f, 0f, 39.8f), AirsideTheme.Concrete, "Car park kerb S");
             Place("kerb_corner", new Vector3(42f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NW", 180f);
             Place("kerb_corner", new Vector3(54f, 0f, 52.2f), AirsideTheme.Concrete, "Car park kerb corner NE", -90f);
-            Place("planter", new Vector3(18.5f, 0f, 31.8f), AirsideTheme.Concrete, "Terminal planter W");
-            Place("planter_soil", new Vector3(18.5f, 0f, 31.8f), new Color(0.28f, 0.22f, 0.14f), "Terminal planter soil W");
-            Place("planter_scrub", new Vector3(18.5f, 0f, 31.8f), Shade(AirsideTheme.Eucalyptus, 0.85f), "Terminal planter scrub W");
             return placed >= 6;
         }
 
@@ -6676,9 +6794,25 @@ namespace Airside.Presentation
             // Three planter clusters along the airside glass edge.
             foreach (var x in new[] { 20f, 26f, 32f })
             {
-                Place("planter", new Vector3(x, 0f, 24.4f), AirsideTheme.Concrete, $"Airside planter {x:0}");
-                Place("planter_soil", new Vector3(x, 0f, 24.4f), soil, $"Airside planter soil {x:0}");
-                Place("planter_scrub", new Vector3(x, 0f, 24.4f), Shade(AirsideTheme.Eucalyptus, 0.85f), $"Airside planter scrub {x:0}");
+                var pos = new Vector3(x, 0f, 24.4f);
+                var name = $"Airside planter {x:0}";
+                if (ArtGltfLoader.TryPlaceCombined(
+                        kit,
+                        new[]
+                        {
+                            ("planter", AirsideTheme.Concrete),
+                            ("planter_soil", soil),
+                            ("planter_scrub", Shade(AirsideTheme.Eucalyptus, 0.85f))
+                        },
+                        pos, Quaternion.identity, name, out _))
+                {
+                    placed++;
+                    continue;
+                }
+
+                Place("planter", pos, AirsideTheme.Concrete, name);
+                Place("planter_soil", pos, soil, $"{name} soil");
+                Place("planter_scrub", pos, Shade(AirsideTheme.Eucalyptus, 0.85f), $"{name} scrub");
             }
 
             return placed >= 3;
@@ -7226,15 +7360,18 @@ namespace Airside.Presentation
             if (!show)
                 return;
 
-            // Soft twinkle — one mesh, one property block.
             var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.StarTwinkleHz);
-            var renderer = _starFieldRoot.childCount > 0
-                ? _starFieldRoot.GetChild(0).GetComponent<Renderer>()
-                : _starFieldRoot.GetComponent<Renderer>();
-            if (renderer == null)
+            if (_starFieldRenderer == null)
+            {
+                _starFieldRenderer = _starFieldRoot.childCount > 0
+                    ? _starFieldRoot.GetChild(0).GetComponent<Renderer>()
+                    : _starFieldRoot.GetComponent<Renderer>();
+            }
+
+            if (_starFieldRenderer == null)
                 return;
             var c = new Color(twinkle, twinkle, 1f) * (1.1f - daylight);
-            SetRendererColor(renderer, c, c);
+            SetRendererColor(_starFieldRenderer, c, c);
         }
 
         private static void BuildSunAndMoonDiscs()
@@ -7298,9 +7435,10 @@ namespace Airside.Presentation
                         new Color(1f, 0.95f, 0.78f),
                         Mathf.Clamp01(daylight));
                     sunColor = Color.Lerp(sunColor, new Color(1f, 0.7f, 0.4f), warm * 0.55f);
-                    var renderer = _sunDisc.GetComponent<Renderer>();
-                    if (renderer != null)
-                        SetRendererColor(renderer, sunColor, sunColor * (1.1f + warm * 0.6f));
+                    if (_sunDiscRenderer == null)
+                        _sunDiscRenderer = _sunDisc.GetComponent<Renderer>();
+                    if (_sunDiscRenderer != null)
+                        SetRendererColor(_sunDiscRenderer, sunColor, sunColor * (1.1f + warm * 0.6f));
 
                     var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
                     _sunDisc.localScale = Vector3.one * scale;
@@ -7319,11 +7457,12 @@ namespace Airside.Presentation
                         moonDir.y = 0.15f;
                     _moonDisc.position = moonDir.normalized * 90f + Vector3.up * 6f;
                     var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
-                    var renderer = _moonDisc.GetComponent<Renderer>();
-                    if (renderer != null)
+                    if (_moonDiscRenderer == null)
+                        _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();
+                    if (_moonDiscRenderer != null)
                     {
                         var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
-                        SetRendererColor(renderer, c, c * 0.7f);
+                        SetRendererColor(_moonDiscRenderer, c, c * 0.7f);
                     }
                 }
             }
@@ -7458,8 +7597,10 @@ namespace Airside.Presentation
         {
             _coastBoats.Clear();
             _coastFoamLayers.Clear();
+            _coastFoamRenderers.Clear();
             _coastWaterRenderers.Clear();
             _coastFoam = null;
+            _coastFoamRenderer = null;
             // Prefix scan — foam/water pads are subdivided often; exact name lists go stale.
             foreach (var renderer in AirsideSceneIndex.Renderers)
             {
@@ -7469,8 +7610,12 @@ namespace Airside.Presentation
                 if (n.StartsWith("Coast foam", StringComparison.Ordinal))
                 {
                     _coastFoamLayers.Add(renderer.transform);
+                    _coastFoamRenderers.Add(renderer);
                     if (_coastFoam == null)
+                    {
                         _coastFoam = renderer.transform;
+                        _coastFoamRenderer = renderer;
+                    }
                 }
                 else if (n.StartsWith("Coast water", StringComparison.Ordinal)
                     || n.StartsWith("Coast shallows", StringComparison.Ordinal))
@@ -7575,12 +7720,11 @@ namespace Airside.Presentation
                 var scale = _coastFoam.localScale;
                 scale.z = 2.2f * pulse;
                 _coastFoam.localScale = scale;
-                var renderer = _coastFoam.GetComponent<Renderer>();
-                if (renderer != null)
+                if (_coastFoamRenderer != null)
                 {
-                    var c = GetRendererColor(renderer);
+                    var c = GetRendererColor(_coastFoamRenderer);
                     c.a = 0.55f + 0.3f * (0.5f + 0.5f * Mathf.Sin(t * AirsideReusableMotion.FoamAlphaHz));
-                    SetRendererColor(renderer, c);
+                    SetRendererColor(_coastFoamRenderer, c);
                 }
             }
 
@@ -7590,7 +7734,7 @@ namespace Airside.Presentation
                 var foam = _coastFoamLayers[i];
                 if (foam == null)
                     continue;
-                var renderer = foam.GetComponent<Renderer>();
+                var renderer = i < _coastFoamRenderers.Count ? _coastFoamRenderers[i] : null;
                 if (renderer == null)
                     continue;
                 var wave = 0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f);
@@ -9062,19 +9206,36 @@ namespace Airside.Presentation
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
-            var placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_a", new Vector3(-0.55f, 0f, 0f), Quaternion.identity,
-                new Color(0.85f, 0.2f, 0.15f), out var a);
-            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_b", new Vector3(0.55f, 0f, 0f), Quaternion.identity,
-                new Color(0.85f, 0.2f, 0.15f), out var b) || placed;
-            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_rope", Vector3.zero, Quaternion.identity,
-                new Color(0.2f, 0.2f, 0.22f), out var rope) || placed;
-            placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chock_handle", Vector3.zero, Quaternion.identity,
-                new Color(0.25f, 0.26f, 0.28f), out var handle) || placed;
+            var rubber = new Color(0.85f, 0.2f, 0.15f);
+            var placed = ArtGltfLoader.TryPlaceCombined(
+                kit,
+                new[]
+                {
+                    ("chock_a", rubber),
+                    ("chock_b", rubber),
+                    ("chock_rope", new Color(0.2f, 0.2f, 0.22f)),
+                    ("chock_handle", new Color(0.25f, 0.26f, 0.28f))
+                },
+                Vector3.zero, Quaternion.identity, "Wheel chocks kit", out var kitRoot,
+                localOffsets: new[]
+                {
+                    new Vector3(-0.55f, 0f, 0f),
+                    new Vector3(0.55f, 0f, 0f),
+                    Vector3.zero,
+                    Vector3.zero
+                });
+            if (kitRoot != null)
+            {
+                kitRoot.SetParent(root, false);
+                kitRoot.localPosition = Vector3.zero;
+                kitRoot.localRotation = Quaternion.identity;
+            }
+
             // v02 kit may ship a single combined "chocks" mesh.
             if (!placed)
             {
                 placed = ArtGltfLoader.TryPlaceNamedMesh(kit, "chocks", Vector3.zero, Quaternion.identity,
-                    new Color(0.85f, 0.2f, 0.15f), out var combined);
+                    rubber, out var combined);
                 if (combined != null)
                 {
                     combined.SetParent(root, false);
@@ -9084,10 +9245,6 @@ namespace Airside.Presentation
 
             if (placed)
             {
-                if (a != null) { a.SetParent(root, false); a.localPosition = new Vector3(-0.55f, 0f, 0f); }
-                if (b != null) { b.SetParent(root, false); b.localPosition = new Vector3(0.55f, 0f, 0f); }
-                if (rope != null) { rope.SetParent(root, false); rope.localPosition = Vector3.zero; }
-                if (handle != null) { handle.SetParent(root, false); handle.localPosition = Vector3.zero; }
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -9253,21 +9410,24 @@ namespace Airside.Presentation
                 "Models/Props/mdl_service_equipment_kit_authored_v01.gltf",
                 "Models/Props/mdl_service_equipment_kit_v02.gltf",
                 "Models/Props/mdl_service_equipment_kit_v01.gltf");
-            var placed = false;
-            void PlaceTow(string mesh, Color color)
+            var placed = ArtGltfLoader.TryPlaceCombined(
+                kit,
+                new[]
+                {
+                    ("towbar", new Color(0.82f, 0.62f, 0.18f)),
+                    ("towbar_head", new Color(0.3f, 0.32f, 0.34f)),
+                    ("towbar_wheel", new Color(0.15f, 0.15f, 0.16f)),
+                    ("towbar_handle", new Color(0.28f, 0.3f, 0.32f)),
+                    ("towbar_eye", new Color(0.35f, 0.36f, 0.38f))
+                },
+                Vector3.zero, Quaternion.identity, "Tug towbar kit", out var kitRoot);
+            if (kitRoot != null)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(kit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
-                    return;
-                part.SetParent(root, false);
-                part.localPosition = new Vector3(0f, -0.55f, 0f);
-                placed = true;
+                kitRoot.SetParent(root, false);
+                kitRoot.localPosition = new Vector3(0f, -0.55f, 0f);
+                kitRoot.localRotation = Quaternion.identity;
             }
 
-            PlaceTow("towbar", new Color(0.82f, 0.62f, 0.18f));
-            PlaceTow("towbar_head", new Color(0.3f, 0.32f, 0.34f));
-            PlaceTow("towbar_wheel", new Color(0.15f, 0.15f, 0.16f));
-            PlaceTow("towbar_handle", new Color(0.28f, 0.3f, 0.32f));
-            PlaceTow("towbar_eye", new Color(0.35f, 0.36f, 0.38f));
             if (!placed)
             {
                 ParentBlock(root, "Tug body", Vector3.zero, new Vector3(2.2f, 0.85f, 1.15f), new Color(0.82f, 0.62f, 0.18f));
@@ -9323,20 +9483,21 @@ namespace Airside.Presentation
             var sock = new GameObject("Windsock sock").transform;
             sock.position = new Vector3(-11.2f, 3.05f, 12f);
             sock.rotation = Quaternion.Euler(0f, 12f, 0f);
-            var fabricPlaced = false;
-            void PlaceFabric(string mesh, Color color)
+            var fabricPlaced = ArtGltfLoader.TryPlaceCombined(
+                propsKit,
+                new[]
+                {
+                    ("sock_fabric", new Color(0.92f, 0.55f, 0.12f)),
+                    ("sock_fabric_mid", new Color(0.95f, 0.65f, 0.2f)),
+                    ("sock_fabric_tip", new Color(0.95f, 0.95f, 0.92f))
+                },
+                sock.position, sock.rotation, "Windsock fabric", out var fabric);
+            if (fabric != null)
             {
-                if (!ArtGltfLoader.TryPlaceNamedMesh(propsKit, mesh, Vector3.zero, Quaternion.identity, color, out var part))
-                    return;
-                part.SetParent(sock, false);
-                part.localPosition = Vector3.zero;
-                part.localRotation = Quaternion.identity;
+                fabric.SetParent(sock, true);
                 fabricPlaced = true;
             }
 
-            PlaceFabric("sock_fabric", new Color(0.92f, 0.55f, 0.12f));
-            PlaceFabric("sock_fabric_mid", new Color(0.95f, 0.65f, 0.2f));
-            PlaceFabric("sock_fabric_tip", new Color(0.95f, 0.95f, 0.92f));
             if (!fabricPlaced)
             {
                 var cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -10198,6 +10359,39 @@ namespace Airside.Presentation
             var rot = Quaternion.Euler(0f, yaw, 0f);
             var yellow = new Color(0.85f, 0.7f, 0.2f);
             var dark = new Color(0.2f, 0.22f, 0.24f);
+            var extras = new Color(0.35f, 0.36f, 0.38f);
+            // Combined mesh keeps High extras (glass/rails/rollers) without extra GameObjects.
+            if (ArtGltfLoader.TryPlaceCombined(
+                    kit,
+                    new[]
+                    {
+                        ("belt_loader_chassis", yellow),
+                        ("belt_loader_cab", Shade(yellow, 0.85f)),
+                        ("belt_loader_boom", new Color(0.55f, 0.56f, 0.58f)),
+                        ("belt_loader_belt", new Color(0.25f, 0.25f, 0.26f)),
+                        ("belt_loader_wheel_fl", dark),
+                        ("belt_loader_wheel_fr", dark),
+                        ("belt_loader_wheel_rl", dark),
+                        ("belt_loader_wheel_rr", dark),
+                        ("belt_loader_cab_glass", new Color(0.35f, 0.55f, 0.65f)),
+                        ("belt_loader_stripe", new Color(0.15f, 0.16f, 0.18f)),
+                        ("belt_loader_rail_l", dark),
+                        ("belt_loader_rail_r", dark),
+                        ("belt_loader_hinge", dark),
+                        ("belt_loader_support", dark),
+                        ("belt_loader_roller_1", extras),
+                        ("belt_loader_roller_2", extras),
+                        ("belt_loader_roller_3", extras),
+                        ("belt_loader_roller_4", extras),
+                        ("belt_loader_bumper", Shade(yellow, 0.7f)),
+                        ("belt_loader_hub_fl", new Color(0.28f, 0.3f, 0.32f)),
+                        ("belt_loader_hub_fr", new Color(0.28f, 0.3f, 0.32f)),
+                        ("belt_loader_hitch", dark),
+                        ("belt_loader_light", new Color(0.95f, 0.9f, 0.6f))
+                    },
+                    position, rot, "Belt loader", out _))
+                return;
+
             var placed = false;
             void Place(string mesh, Color color)
             {
@@ -10222,10 +10416,10 @@ namespace Airside.Presentation
                 Place("belt_loader_rail_r", dark);
                 Place("belt_loader_hinge", dark);
                 Place("belt_loader_support", dark);
-                Place("belt_loader_roller_1", new Color(0.35f, 0.36f, 0.38f));
-                Place("belt_loader_roller_2", new Color(0.35f, 0.36f, 0.38f));
-                Place("belt_loader_roller_3", new Color(0.35f, 0.36f, 0.38f));
-                Place("belt_loader_roller_4", new Color(0.35f, 0.36f, 0.38f));
+                Place("belt_loader_roller_1", extras);
+                Place("belt_loader_roller_2", extras);
+                Place("belt_loader_roller_3", extras);
+                Place("belt_loader_roller_4", extras);
                 Place("belt_loader_bumper", Shade(yellow, 0.7f));
                 Place("belt_loader_hub_fl", new Color(0.28f, 0.3f, 0.32f));
                 Place("belt_loader_hub_fr", new Color(0.28f, 0.3f, 0.32f));

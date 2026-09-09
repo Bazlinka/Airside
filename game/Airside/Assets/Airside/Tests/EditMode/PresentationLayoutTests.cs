@@ -174,6 +174,7 @@ namespace Airside.Tests
                     out var instance),
                 Is.False);
             Assert.That(instance, Is.Null);
+            Assert.That(ArtGltfLoader.HasMesh("Models/missing_kit.gltf", "fence_bay"), Is.False);
         }
 
         [Test]
@@ -188,7 +189,8 @@ namespace Airside.Tests
                 "Cloud 0",
                 "Coast boat A",
                 "Windsock sock",
-                "Jetty deck"
+                "Jetty deck",
+                "antenna_dish"
             };
             var created = new List<GameObject>();
             try

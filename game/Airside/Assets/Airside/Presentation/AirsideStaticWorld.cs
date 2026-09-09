@@ -100,7 +100,8 @@ namespace Airside.Presentation
                 || n == "Moon disc"
                 || n == "Apron life"
                 || n == "Star field"
-                || n == "Jetty deck";
+                || n == "Jetty deck"
+                || n == "antenna_dish";
         }
 
         private static void AttachDistantLod(Transform airfieldRoot)

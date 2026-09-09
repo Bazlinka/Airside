@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/
+  bollards, airside planter strip, luggage trolleys, landside benches, fence
+  corners, pedestrian gates, vehicle-gate furniture, chocks, belt loader, tug
+  towbar fallback and windsock fabric stamp one cached combined mesh (with
+  per-part local offsets where poses differ). Dome/sun/moon/stars/foam/spray/
+  puddles/smoke/engine audio cache renderers instead of `GetComponent` every
+  frame. Ops `antenna_dish` stays off the static batch so it still rotates.
+  High stays 4× MSAA + SMAA, four cascades, 12 additional lights, two probes.
+  Decision 0029. Evidence: brace depth 0; `scripts/test-domain.sh` pending.
+
 - **Runtime kit combine + static-batch skip.** ALS stations, REIL, cones,
   barriers, signs, FOD bins, dollies, windsock poles, stairs and GPU carts
   stamp one cached combined mesh per instance. Greybox shrubs/trees/clouds

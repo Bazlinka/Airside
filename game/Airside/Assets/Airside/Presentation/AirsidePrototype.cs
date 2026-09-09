@@ -5026,7 +5026,9 @@ namespace Airside.Presentation
                 new Vector3(110f, 0f, 46f),
                 new Vector3(130f, 0f, 46f),
                 new Vector3(150f, 0f, 46f),
-                new Vector3(168f, 0f, 46f)
+                new Vector3(168f, 0f, 46f),
+                new Vector3(6f, 0f, 36.2f),
+                new Vector3(18f, 0f, 36.2f)
             };
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -5694,6 +5696,9 @@ namespace Airside.Presentation
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
+            PlaceLevelPad("Access road west drop", 12f, 36.2f, 16f, 5.2f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(4f, 1.4f));
+            for (var x = 6; x <= 18; x += 2)
+                CreateBlock($"Drop-off zebra {x}", new Vector3(x, 0.06f, 36.2f), new Vector3(0.7f, 0.02f, 3.4f), Color.white);
             CreateTaxiChordPad("Access road elbow", new Vector3(26f, 0.02f, 46f), new Vector3(34f, 0.02f, 46f), 6.2f, asphalt, new Vector2(1.8f, 1.2f));
             PlaceLevelPad("Car park", 46f, 46f, 22f, 16f, Shade(AirsideTheme.Concrete, 0.85f), concrete, new Vector2(5f, 4f));
             PlaceLevelPad("Arterial link", 90f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -8919,8 +8924,8 @@ namespace Airside.Presentation
                 ParentBlock(root, "TaxiLight", new Vector3(0f, -0.18f, 2.45f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
             if (!HasNamedChild(root, "Strobe L"))
             {
-                ParentBlock(root, "Strobe L", new Vector3(-4.35f, 0.18f, 0.05f), new Vector3(0.1f, 0.1f, 0.1f), new Color(0.95f, 0.97f, 1f));
-                ParentBlock(root, "Strobe R", new Vector3(4.35f, 0.18f, 0.05f), new Vector3(0.1f, 0.1f, 0.1f), new Color(0.95f, 0.97f, 1f));
+                ParentBlock(root, "Strobe L", new Vector3(-4.35f, 0.18f, 0.05f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.95f, 0.97f, 1f));
+                ParentBlock(root, "Strobe R", new Vector3(4.35f, 0.18f, 0.05f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.95f, 0.97f, 1f));
             }
             if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
             {

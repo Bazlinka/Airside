@@ -35,7 +35,7 @@
   Extra coast foam toward Glenelg; 12/30 has aiming bars; windsock is on the
   05 Alpha.   Rapid 23 and the GA apron have centreline paint and night lamps.
   A west arrivals hall balances the east pier. Parked GA fills the west ties.
-  Save schema unchanged.
+  Landside has a zebra drop-off at the west hall. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

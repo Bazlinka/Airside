@@ -3986,6 +3986,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = 0.78f;
             _sun.shadowBias = 0.035f;
             _sun.shadowNormalBias = 0.4f;
+            QualitySettings.shadowDistance = 260f;
 
             // Cool fill opposite the key — softens night and dawn without a full probe bake.
             var fillGo = GameObject.Find("Fill light");

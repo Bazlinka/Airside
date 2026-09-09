@@ -26,6 +26,8 @@ sync, and fallback verification.
 | Wind whoosh loop | SketchMan3, [OpenGameArt](https://opengameart.org/content/wind-whoosh-loop), CC0 | 5.959-second stereo 48 kHz OGG described by its author as a loop. It is a suitable low-level exterior air-bed and materially more natural than the procedural noise fallback. | **Integrate.** Ships as `Resources/Airside/Audio/wind_whoosh_loop.ogg`; procedural `CreateWindClip()` remains the missing-file fallback. |
 | Rain (loopable) | Ylmir, [OpenGameArt](https://opengameart.org/content/rain-loopable), CC0 | Four authored loopable rain recordings were sampled. `3.ogg` is the longest (45 seconds), stereo 44.1 kHz candidate and prevents the audible one-second repetition of the generated crackle fallback. | **Integrate.** Ships as `Resources/Airside/Audio/rain_loop_03.ogg`; procedural `CreateRainClip()` remains the missing-file fallback. |
 | Beach Ocean Waves | jasinski via qubodup, [OpenGameArt](https://opengameart.org/content/beach-ocean-waves), CC0 | 4-second stereo 44.1 kHz field recording. The source FLAC is losslessly decoded to Unity-compatible PCM WAV with `afconvert`; both source and shipped SHA-256 values are in the asset register. | **Integrate.** Ships as `Resources/Airside/Audio/coast_wave_01.wav`; procedural `CreateCoastClip()` remains the missing-file fallback. |
+| Asphalt 01 | Charlotte Baglioni (photography) and Dario Barresi (processing), [Poly Haven](https://polyhaven.com/a/asphalt_01), CC0 | The 2K source diffuse, OpenGL normal and roughness maps were resized to Airside's 1024px platform budget. Roughness is inverted into the smoothness alpha of the RGB-zero metallic-gloss map. Its muted fine aggregate matches the approved asphalt swatch without branded or location-specific detail. | **Integrate.** Versioned `tx_asphalt_runway_*_v03` maps replace v02 only when present; v02 and v01 remain runtime fallbacks. |
+| City Kit Industrial | [Kenney](https://kenney.nl/assets/city-kit-industrial), CC0 | The individual tanks, solar panels and containers are cleanly modelled but share a purple-lit, orange-banded stylised sci-fi palette that conflicts with the approved real-airport reference boards. | **Reject as runtime props.** Neutral-looking geometry still needs a material/scale pass, so do not introduce an unreviewed style clash. |
 
 ## Free sources still worth sampling, one at a time
 
@@ -33,7 +35,7 @@ sync, and fallback verification.
 |---|---|---|
 | Trees, scrub, grass and rocks | [Kay Lousberg Forest Nature Pack](https://kaylousberg.com/game-assets/forest-nature-pack) (CC0) | FBX, glTF and OBJ; the free tier has more than 100 stylised vegetation models. It may improve distant belts, but must be palette-tuned and compared to the approved Kingscote scrub board. |
 | Landside parked cars | [Kenney Car Kit](https://kenney.nl/assets/car-kit) (CC0) | 45 transport models suitable for background/parking variation; assess one model before importing the pack. |
-| Surface source maps | [Poly Haven](https://polyhaven.com/) (CC0) | Useful PBR source material, but each map needs Airside's stylised colour/roughness treatment and must not introduce photo-real mismatch. |
+| Surface source maps | [Poly Haven](https://polyhaven.com/) (CC0) | Asphalt 01 now proves the controlled path at 1024px; evaluate concrete, grass, sand and water one material at a time against their respective boards. |
 
 ## Rule for the next intake
 

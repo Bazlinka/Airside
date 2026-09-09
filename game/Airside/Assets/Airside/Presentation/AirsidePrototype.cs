@@ -2813,6 +2813,7 @@ namespace Airside.Presentation
                 || name.StartsWith("Taxiway C", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway D", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway Rapid", StringComparison.Ordinal)
+                || name.StartsWith("Taxiway GA", StringComparison.Ordinal)
                 || name.StartsWith("GA apron", StringComparison.Ordinal)
                 || name.StartsWith("Hangar apron", StringComparison.Ordinal)
                 || name.StartsWith("Freight", StringComparison.Ordinal)
@@ -2911,6 +2912,7 @@ namespace Airside.Presentation
                     && !n.StartsWith("Taxiway C", StringComparison.Ordinal)
                     && !n.StartsWith("Taxiway D", StringComparison.Ordinal)
                     && !n.StartsWith("Taxiway Rapid", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxiway GA", StringComparison.Ordinal)
                     && !n.StartsWith("GA apron", StringComparison.Ordinal)
                     && !n.StartsWith("Hangar apron", StringComparison.Ordinal)
                     && !n.StartsWith("Runway marking", StringComparison.Ordinal)
@@ -4723,7 +4725,8 @@ namespace Airside.Presentation
                 (new Vector3(58f, 8.2f, 20f), new Vector3(60f, 0.2f, 22f)),
                 (new Vector3(70f, 9.4f, 40f), new Vector3(70f, 0.2f, 46f)),
                 (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f)),
-                (new Vector3(-64f, 7.2f, 18f), new Vector3(-64f, 0.2f, 22f))
+                (new Vector3(-64f, 7.2f, 18f), new Vector3(-64f, 0.2f, 22f)),
+                (new Vector3(-48f, 6.8f, 12f), new Vector3(-48f, 0.2f, 15.4f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -4843,6 +4846,12 @@ namespace Airside.Presentation
             lights.Add(CreateEdgePointLight("Taxi Delta point 12", new Vector3(74.4f, 0.45f, 12f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
             lights.Add(CreateEdgePointLight("Taxi Delta point 18", new Vector3(74.4f, 0.45f, 18f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Rapid 23 A", new Vector3(66.2f, 0.45f, 2.5f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Rapid 23 B", new Vector3(69.6f, 0.45f, 6.4f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi GA point", new Vector3(-48f, 0.45f, 12.2f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
 
             // REIL-style white flashers just beyond each blast pad (blinked later).
@@ -5273,6 +5282,7 @@ namespace Airside.Presentation
             CreateTaxiChordPad("Taxiway Alpha W stub", new Vector3(-70f, 0.02f, 9f), new Vector3(-70f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Alpha E stub", new Vector3(80f, 0.02f, 9f), new Vector3(80f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Rapid 23", new Vector3(64f, 0.02f, 0f), new Vector3(72f, 0.02f, 9f), 5.6f, asphalt, new Vector2(1.8f, 1.4f));
+            CreateTaxiChordPad("Taxiway GA", new Vector3(-48f, 0.02f, 9f), new Vector3(-48f, 0.02f, 15.2f), 4.8f, asphalt, new Vector2(1.1f, 1.4f));
 
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
@@ -10762,6 +10772,19 @@ namespace Airside.Presentation
             }
             for (var z = 11; z <= 21; z += 5)
                 CreateBlock($"Taxi centre Delta {z}", new Vector3(72f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.4f), taxiPaint);
+            var rapidYaw = Quaternion.LookRotation(new Vector3(8f, 0f, 9f)).eulerAngles.y;
+            for (var i = 1; i <= 5; i++)
+            {
+                var t = i / 6f;
+                var dash = CreateBlock($"Taxiway Rapid centre {i}",
+                    Vector3.Lerp(new Vector3(64f, 0.05f, 0f), new Vector3(72f, 0.05f, 9f), t),
+                    new Vector3(0.14f, 0.02f, 2.2f), taxiPaint);
+                dash.transform.rotation = Quaternion.Euler(0f, rapidYaw, 0f);
+            }
+
+            for (var z = 10; z <= 14; z += 2)
+                CreateBlock($"Taxiway GA centre {z}", new Vector3(-48f, 0.05f, z), new Vector3(0.14f, 0.02f, 1.6f), taxiPaint);
+            CreateBlock("Hold short GA", new Vector3(-48f, 0.05f, 10.6f), new Vector3(3.4f, 0.03f, 0.2f), new Color(0.95f, 0.85f, 0.2f));
 
             // Extend paint onto the A1 exit fillet toward the runway.
             for (var x = -24; x <= -12; x += 1)
@@ -11143,6 +11166,10 @@ namespace Airside.Presentation
                     continue;
                 PlaceTaxiLamp(kit, new Vector3(51.2f, 0f, z), taxiColor);
             }
+
+            PlaceTaxiLamp(kit, new Vector3(66.2f, 0f, 2.5f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(69.6f, 0f, 6.4f), taxiColor);
+            PlaceTaxiLamp(kit, new Vector3(-48f, 0f, 12.2f), taxiColor);
 
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
@@ -11654,6 +11681,8 @@ namespace Airside.Presentation
                 PolishAircraftGlass(root);
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
+                CreateBlock($"GA apron T {i}", new Vector3(spot.x, 0.055f, spot.z + 1.6f), new Vector3(2.2f, 0.02f, 0.12f), new Color(0.95f, 0.85f, 0.2f));
+                CreateBlock($"GA apron stem {i}", new Vector3(spot.x, 0.055f, spot.z + 0.7f), new Vector3(0.12f, 0.02f, 1.6f), new Color(0.95f, 0.85f, 0.2f));
                 PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);
             }
         }

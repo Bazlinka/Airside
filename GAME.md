@@ -33,7 +33,8 @@
   live aircraft. A 05 glideslope sits south of the gulf threshold; the 05
   localizer sits east of the 23 ALS. Fuel farm is west of the freight shed.
   Extra coast foam toward Glenelg; 12/30 has aiming bars; windsock is on the
-  05 Alpha. Save schema unchanged.
+  05 Alpha. Rapid 23 and the GA apron have centreline paint and night lamps.
+  Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

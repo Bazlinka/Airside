@@ -45,6 +45,7 @@ change it describes.
   23 has a rapid-exit taxi. Wingtip strobes pulse in flight; 05 has a
   glideslope on the gulf side and a localizer east of 23; the fuel farm sits
   west of freight; Glenelg foam and 12/30 aiming bars read from overview.
+  Rapid 23 and the GA apron have painted centreline and night taxi lamps.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

@@ -12,8 +12,11 @@ change it describes.
   Runway paint is 05/23 along the full strip. Aircraft kit sits on the pavement
   with a slightly larger silhouette. Awake no longer builds ~10k offset cubes
   and refuses a second prototype instance. PC shadow distance is 260 m so the
-  bigger overview still gets sun shadows. Outer fence ribbons enclose the long
-  23/05 strip (inner fence no longer sits on the asphalt). Unity EditMode 193/193.
+  bigger overview still gets sun shadows. One Adelaide-scale perimeter fence
+  (kit or outer ribbons) encloses the long 23/05 strip — the compact inner
+  Kingscote ring is gone so it no longer cuts the north apron. Approach over
+  the gulf, flare on the 05 numbers, long rollout to A1; takeoff uses more of
+  23/05. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

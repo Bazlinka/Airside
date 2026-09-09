@@ -10,8 +10,8 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        // Slightly terminal-biased so overview reads apron + buildings as one miniature.
-        private readonly Vector3 _overviewCenter = new(6f, 0f, 8f);
+        // West-biased so first frame shows Gulf St Vincent plus the long 23/05 strip.
+        private readonly Vector3 _overviewCenter = new(-8f, 0f, 6f);
         private const float OverviewDistance = 214f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
@@ -19,7 +19,7 @@ namespace Airside.Presentation
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(6f, 0f, 8f);
+        private Vector3 _center = new(-8f, 0f, 6f);
         private float _yaw = 128f;
         private float _pitch = 34f;
         private float _distance = OverviewDistance;
@@ -160,10 +160,10 @@ namespace Airside.Presentation
             {
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 3.2f,
                 AircraftPhase.AtStand => 1.5f,
-                AircraftPhase.Takeoff => Mathf.Lerp(5f, 12f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(8f, 14f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(10f, 4f, progress),
-                AircraftPhase.Departed => 12f,
+                AircraftPhase.Takeoff => Mathf.Lerp(8f, 18f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(14f, 22f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(16f, 6f, progress),
+                AircraftPhase.Departed => 18f,
                 _ => air
             };
         }
@@ -188,10 +188,10 @@ namespace Airside.Presentation
             {
                 AircraftPhase.AtStand => 14f,
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 16f,
-                AircraftPhase.Takeoff => Mathf.Lerp(18f, 34f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(28f, 36f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(26f, 16f, progress),
-                AircraftPhase.Departed => 36f,
+                AircraftPhase.Takeoff => Mathf.Lerp(22f, 42f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(36f, 48f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(34f, 18f, progress),
+                AircraftPhase.Departed => 46f,
                 _ => air
             };
         }

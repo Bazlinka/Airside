@@ -125,6 +125,10 @@ namespace Airside.Presentation
         private const float VisualThresholdWestX = -84f;
         private const float VisualThresholdEastX = 92f;
         private const float VisualRunwayEdgeZ = 4.05f;
+        private const float FenceWestX = -78f;
+        private const float FenceEastX = 108f;
+        private const float FenceNorthZ = 54f;
+        private const float FenceSouthZ = -52f;
         private float _apronProbeRefreshAt;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
@@ -1102,9 +1106,9 @@ namespace Airside.Presentation
                     ? 0f
                     : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.48f) / 0.52f)),
                 AircraftPhase.Approach => Mathf.Lerp(-2.5f, -3.5f, t),
-                AircraftPhase.Landing => t < 0.28f
-                    ? Mathf.Lerp(-2.5f, -3.2f, t / 0.28f)
-                    : Mathf.Lerp(-3.2f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.28f) / 0.72f)),
+                AircraftPhase.Landing => t < 0.22f
+                    ? Mathf.Lerp(-2.5f, -3.2f, t / 0.22f)
+                    : Mathf.Lerp(-3.2f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.22f) / 0.78f)),
                 AircraftPhase.Departed => -8f,
                 _ => 0f
             };
@@ -2530,7 +2534,7 @@ namespace Airside.Presentation
                 if (phase == AircraftPhase.Landing
                     && index < _commercialAircraft.Length
                     && !_touchdownFired.Contains(id)
-                    && VisualPhaseProgress(flight, 0f) >= 0.28f)
+                    && VisualPhaseProgress(flight, 0f) >= 0.22f)
                 {
                     _touchdownFired.Add(id);
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
@@ -6257,70 +6261,68 @@ namespace Airside.Presentation
                 // fence_corner_brace only at PlacePart corner sites — not every bay.
             }
 
-            // North landside (gap for vehicle gate at x≈22–30).
-            for (var x = -40; x <= 56; x += 4)
+            // Adelaide-scale perimeter — one fence, not a toy inner ring plus outer ribbons.
+            for (var x = -76; x <= 104; x += 4)
             {
                 if (x >= 22 && x <= 30)
                     continue;
-                PlaceBay(new Vector3(x + 2f, 0f, 34f), 0f, $"N {x}");
+                PlaceBay(new Vector3(x + 2f, 0f, FenceNorthZ), 0f, $"N {x}");
             }
 
-            // West / east airside — leave a gap on the 23/05 strip so posts are not on asphalt.
-            for (var z = -18; z <= 32; z += 4)
+            for (var z = -50; z <= 52; z += 4)
             {
                 if (z > -10 && z < 8)
                     continue;
-                PlaceBay(new Vector3(-44f, 0f, z + 2f), 90f, $"W {z}");
-                PlaceBay(new Vector3(44f, 0f, z + 2f), -90f, $"E {z}");
+                PlaceBay(new Vector3(FenceWestX, 0f, z + 2f), 90f, $"W {z}");
+                PlaceBay(new Vector3(FenceEastX, 0f, z + 2f), -90f, $"E {z}");
             }
 
-            // South above dunes (gap at runway strip).
-            for (var x = -40; x <= 40; x += 4)
+            // South gap at 12/30 so the visual cross runway is not fenced through.
+            for (var x = -76; x <= 104; x += 4)
             {
                 if (x >= -12 && x <= 12)
                     continue;
-                PlaceBay(new Vector3(x + 2f, 0f, -20f), 0f, $"S {x}");
+                PlaceBay(new Vector3(x + 2f, 0f, FenceSouthZ), 0f, $"S {x}");
             }
 
-            PlacePart("fence_corner", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner NW");
-            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NW");
-            PlacePart("fence_corner", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner NE");
-            PlacePart("fence_corner_brace", new Vector3(44f, 0f, 34f), Quaternion.identity, post, "Fence corner brace NE");
-            PlacePart("fence_corner", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner SW");
-            PlacePart("fence_corner_brace", new Vector3(-44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SW");
-            PlacePart("fence_corner", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner SE");
-            PlacePart("fence_corner_brace", new Vector3(44f, 0f, -20f), Quaternion.identity, post, "Fence corner brace SE");
+            PlacePart("fence_corner", new Vector3(FenceWestX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner NW");
+            PlacePart("fence_corner_brace", new Vector3(FenceWestX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner brace NW");
+            PlacePart("fence_corner", new Vector3(FenceEastX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner NE");
+            PlacePart("fence_corner_brace", new Vector3(FenceEastX, 0f, FenceNorthZ), Quaternion.identity, post, "Fence corner brace NE");
+            PlacePart("fence_corner", new Vector3(FenceWestX, 0f, FenceSouthZ), Quaternion.identity, post, "Fence corner SW");
+            PlacePart("fence_corner_brace", new Vector3(FenceWestX, 0f, FenceSouthZ), Quaternion.identity, post, "Fence corner brace SW");
+            PlacePart("fence_corner", new Vector3(FenceEastX, 0f, FenceSouthZ), Quaternion.identity, post, "Fence corner SE");
+            PlacePart("fence_corner_brace", new Vector3(FenceEastX, 0f, FenceSouthZ), Quaternion.identity, post, "Fence corner brace SE");
 
-            // Vehicle gate at access road.
-            PlacePart("gate_post", new Vector3(23f, 0f, 34f), Quaternion.identity, post, "Gate post L");
-            PlacePart("gate_post", new Vector3(29f, 0f, 34f), Quaternion.identity, post, "Gate post R");
-            PlacePart("gate_vehicle_leaf_l", new Vector3(24.2f, 0f, 35.6f), Quaternion.Euler(0f, 12f, 0f), yellow, "Gate leaf L");
-            PlacePart("gate_vehicle_leaf_r", new Vector3(27.8f, 0f, 35.6f), Quaternion.Euler(0f, -12f, 0f), yellow, "Gate leaf R");
-            PlacePart("gate_vehicle_rail", new Vector3(26f, 0f, 35.55f), Quaternion.identity, post, "Gate vehicle rail");
-            PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron L");
-            PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, 35.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron R");
-            PlacePart("gate_sign", new Vector3(26f, 0f, 34.2f), Quaternion.identity, AirsideTheme.SafetyYellow, "Gate sign");
-            PlacePart("gate_sign_frame", new Vector3(26f, 0f, 34.15f), Quaternion.identity, post, "Gate sign frame");
-            PlacePart("gate_post_light", new Vector3(23f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light L");
-            PlacePart("gate_post_light", new Vector3(29f, 0f, 34.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light R");
-            PlacePart("gate_latch", new Vector3(26f, 0f, 35.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
-            PlacePart("gate_stop", new Vector3(23.1f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
-            PlacePart("gate_stop", new Vector3(28.9f, 0f, 34.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
-            // Pedestrian gate fills the landside access gap beside the vehicle gate when kit meshes exist.
-            PlacePart("gate_pedestrian", new Vector3(20.6f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate");
-            PlacePart("gate_pedestrian_frame", new Vector3(20.6f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame");
-            PlacePart("gate_pedestrian", new Vector3(31.4f, 0f, 34f), Quaternion.identity, panel, "Pedestrian gate E");
-            PlacePart("gate_pedestrian_frame", new Vector3(31.4f, 0f, 34f), Quaternion.identity, post, "Pedestrian gate frame E");
+            // Vehicle gate on the access road at the outer north fence.
+            PlacePart("gate_post", new Vector3(23f, 0f, FenceNorthZ), Quaternion.identity, post, "Gate post L");
+            PlacePart("gate_post", new Vector3(29f, 0f, FenceNorthZ), Quaternion.identity, post, "Gate post R");
+            PlacePart("gate_vehicle_leaf_l", new Vector3(24.2f, 0f, FenceNorthZ + 1.6f), Quaternion.Euler(0f, 12f, 0f), yellow, "Gate leaf L");
+            PlacePart("gate_vehicle_leaf_r", new Vector3(27.8f, 0f, FenceNorthZ + 1.6f), Quaternion.Euler(0f, -12f, 0f), yellow, "Gate leaf R");
+            PlacePart("gate_vehicle_rail", new Vector3(26f, 0f, FenceNorthZ + 1.55f), Quaternion.identity, post, "Gate vehicle rail");
+            PlacePart("gate_vehicle_chevron", new Vector3(24.2f, 0f, FenceNorthZ + 1.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron L");
+            PlacePart("gate_vehicle_chevron", new Vector3(27.8f, 0f, FenceNorthZ + 1.5f), Quaternion.identity, new Color(0.15f, 0.15f, 0.16f), "Gate chevron R");
+            PlacePart("gate_sign", new Vector3(26f, 0f, FenceNorthZ + 0.2f), Quaternion.identity, AirsideTheme.SafetyYellow, "Gate sign");
+            PlacePart("gate_sign_frame", new Vector3(26f, 0f, FenceNorthZ + 0.15f), Quaternion.identity, post, "Gate sign frame");
+            PlacePart("gate_post_light", new Vector3(23f, 0f, FenceNorthZ + 0.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light L");
+            PlacePart("gate_post_light", new Vector3(29f, 0f, FenceNorthZ + 0.15f), Quaternion.identity, new Color(0.95f, 0.35f, 0.12f), "Gate light R");
+            PlacePart("gate_latch", new Vector3(26f, 0f, FenceNorthZ + 1.5f), Quaternion.identity, new Color(0.25f, 0.26f, 0.28f), "Gate latch");
+            PlacePart("gate_stop", new Vector3(23.1f, 0f, FenceNorthZ + 0.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop L");
+            PlacePart("gate_stop", new Vector3(28.9f, 0f, FenceNorthZ + 0.4f), Quaternion.identity, AirsideTheme.Concrete, "Gate stop R");
+            PlacePart("gate_pedestrian", new Vector3(20.6f, 0f, FenceNorthZ), Quaternion.identity, panel, "Pedestrian gate");
+            PlacePart("gate_pedestrian_frame", new Vector3(20.6f, 0f, FenceNorthZ), Quaternion.identity, post, "Pedestrian gate frame");
+            PlacePart("gate_pedestrian", new Vector3(31.4f, 0f, FenceNorthZ), Quaternion.identity, panel, "Pedestrian gate E");
+            PlacePart("gate_pedestrian_frame", new Vector3(31.4f, 0f, FenceNorthZ), Quaternion.identity, post, "Pedestrian gate frame E");
 
             return placed >= 20;
         }
 
         private static void BuildPerimeterFence()
         {
-            // Batch F3 PRP-002 — modular fence/gate kit; dense CreateBlock ribbon remains fallback.
+            // One Adelaide-scale perimeter. The compact Kingscote inner ring cut the
+            // north apron and sat inside the outer ribbons, so it is no longer placed.
             if (!TryBuildPerimeterFenceFromKit())
-                BuildPerimeterFenceFallback();
-            PlaceAdelaideOuterFence();
+                PlaceAdelaideOuterFence();
         }
 
         /// <summary>
@@ -6343,24 +6345,39 @@ namespace Airside.Presentation
             }
 
             // West grass/sand seam, gap across 23/05.
-            Wall("Outer fence W N", -78f, 30f, 0.1f, 44f);
-            Wall("Outer fence W S", -78f, -30f, 0.1f, 44f);
-            Posts("Outer cap W N", -78f, 10f, 50f);
-            Posts("Outer cap W S", -78f, -50f, -10f);
+            Wall("Outer fence W N", FenceWestX, 30f, 0.1f, 44f);
+            Wall("Outer fence W S", FenceWestX, -30f, 0.1f, 44f);
+            Posts("Outer cap W N", FenceWestX, 10f, 50f);
+            Posts("Outer cap W S", FenceWestX, -50f, -10f);
             // East of blast pad, same runway gap.
-            Wall("Outer fence E N", 108f, 30f, 0.1f, 44f);
-            Wall("Outer fence E S", 108f, -30f, 0.1f, 44f);
-            Posts("Outer cap E N", 108f, 10f, 50f);
-            Posts("Outer cap E S", 108f, -50f, -10f);
+            Wall("Outer fence E N", FenceEastX, 30f, 0.1f, 44f);
+            Wall("Outer fence E S", FenceEastX, -30f, 0.1f, 44f);
+            Posts("Outer cap E N", FenceEastX, 10f, 50f);
+            Posts("Outer cap E S", FenceEastX, -50f, -10f);
             // North landside beyond the apron expansion (gate gap at the access road).
-            Wall("Outer fence N W", -28f, 54f, 96f, 0.1f);
-            Wall("Outer fence N E", 70f, 54f, 72f, 0.1f);
+            Wall("Outer fence N W", -28f, FenceNorthZ, 96f, 0.1f);
+            Wall("Outer fence N E", 70f, FenceNorthZ, 72f, 0.1f);
             for (var x = -74f; x <= 104f; x += 12f)
             {
                 if (x > 18f && x < 34f)
                     continue;
-                CreateBlock($"Outer cap N {x}", new Vector3(x, 1.38f, 54f), new Vector3(0.18f, 0.12f, 0.18f), post);
+                CreateBlock($"Outer cap N {x}", new Vector3(x, 1.38f, FenceNorthZ), new Vector3(0.18f, 0.12f, 0.18f), post);
             }
+
+            // South ribbons with a gap for visual 12/30.
+            Wall("Outer fence S W", -46f, FenceSouthZ, 56f, 0.1f);
+            Wall("Outer fence S E", 62f, FenceSouthZ, 88f, 0.1f);
+            for (var x = -74f; x <= 104f; x += 12f)
+            {
+                if (x > -14f && x < 14f)
+                    continue;
+                CreateBlock($"Outer cap S {x}", new Vector3(x, 1.38f, FenceSouthZ), new Vector3(0.18f, 0.12f, 0.18f), post);
+            }
+
+            CreateBlock("Gate post L", new Vector3(23f, 0.9f, FenceNorthZ), new Vector3(0.22f, 1.8f, 0.22f), post);
+            CreateBlock("Gate post R", new Vector3(29f, 0.9f, FenceNorthZ), new Vector3(0.22f, 1.8f, 0.22f), post);
+            CreateBlock("Gate leaf L", new Vector3(24.2f, 0.85f, FenceNorthZ + 1.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
+            CreateBlock("Gate leaf R", new Vector3(27.8f, 0.85f, FenceNorthZ + 1.6f), new Vector3(2.2f, 1.5f, 0.08f), Shade(AirsideTheme.SafetyYellow, 0.75f));
         }
 
         private static void BuildPerimeterFenceFallback()
@@ -7420,7 +7437,7 @@ namespace Airside.Presentation
                 grass, new Vector2(5f, 4f), top: 4.6f, height: 9f);
             PlaceLevelPad("Hill far SE", 96f, -70f, 28f, 18f, Shade(AirsideTheme.DryGrass, 0.55f),
                 grass, new Vector2(5f, 3.5f), top: 3.8f, height: 7.5f);
-            PlaceLevelPad("Hill far SW", -108f, -64f, 30f, 18f, Shade(AirsideTheme.Eucalyptus, 0.38f),
+            PlaceLevelPad("Hill far SW", 18f, -92f, 30f, 18f, Shade(AirsideTheme.Eucalyptus, 0.38f),
                 grass, new Vector2(5f, 3.5f), top: 4.2f, height: 8.2f);
             BuildAdelaideSkyline();
         }
@@ -7441,6 +7458,11 @@ namespace Airside.Presentation
             CreateBlock("CBD tower E", new Vector3(172f, 8.4f, 114f), new Vector3(3.2f, 16.8f, 3.0f), glass);
             CreateBlock("CBD tower F", new Vector3(151f, 5.4f, 92f), new Vector3(6.2f, 10.8f, 4.8f), stone);
             CreateBlock("CBD tower G", new Vector3(178f, 6.8f, 104f), new Vector3(2.8f, 13.6f, 2.6f), pale);
+            CreateBlock("CBD tower H", new Vector3(168f, 12.4f, 118f), new Vector3(2.6f, 24.8f, 2.4f), glass);
+            CreateBlock("CBD tower I", new Vector3(138f, 4.8f, 96f), new Vector3(7.4f, 9.6f, 5.2f), stone);
+            CreateBlock("CBD tower J", new Vector3(184f, 5.6f, 96f), new Vector3(3.6f, 11.2f, 3.2f), pale);
+            CreateBlock("CBD midrise K", new Vector3(146f, 3.6f, 86f), new Vector3(8.8f, 7.2f, 6.4f), stone);
+            CreateBlock("CBD midrise L", new Vector3(160f, 4.2f, 88f), new Vector3(5.4f, 8.4f, 4.6f), pale);
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
@@ -8098,15 +8120,15 @@ namespace Airside.Presentation
             if (_birdFlockRoot == null)
                 return;
 
-            // Wide lazy orbit south of the runway — presentation flock, not wildlife sim.
+            // Wide lazy orbit over Gulf St Vincent — presentation flock, not wildlife sim.
             var t = Time.unscaledTime * AirsideReusableMotion.BirdOrbitHz * Mathf.PI * 2f;
             for (var i = 0; i < _birdFlockRoot.childCount; i++)
             {
                 var bird = _birdFlockRoot.GetChild(i);
                 var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.35f;
-                var radius = 26f + (i % 5) * 3.2f;
-                var x = Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
-                var z = -42f + Mathf.Sin(phase) * radius * 0.45f;
+                var radius = 22f + (i % 5) * 3.2f;
+                var x = VisualRunwayWestX - 38f + Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
+                var z = 8f + Mathf.Sin(phase) * radius * 0.55f;
                 var y = 8.5f + Mathf.Sin(phase * 2.1f + i) * 1.8f + (i % 3) * 0.8f;
                 var next = new Vector3(x, y, z);
                 var prev = bird.position;
@@ -8175,7 +8197,7 @@ namespace Airside.Presentation
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
                 if (root.childCount > 0)
-                    root.GetChild(0).localScale *= 1.12f;
+                    root.GetChild(0).localScale *= 1.18f;
             }
 
             if (!usedArt)
@@ -10926,9 +10948,8 @@ namespace Airside.Presentation
 
         private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute, float laneOffset = 0f)
         {
-            // Air phases share the runway axis and meet the taxi network at (-24, 0)
-            // so takeoff no longer teleports 52 m after taxi-out, and landing rolls out
-            // to the same A1 entry TaxiIn uses.
+            // Air phases share the long 23/05 visual axis and still meet the taxi
+            // network at (-24, 0) so takeoff/landing stay continuous with A1.
             var t = Mathf.Clamp01(progress);
             // Number-two stays further out on final while waiting so it does not stack
             // on the leader at the flare start.
@@ -10937,7 +10958,9 @@ namespace Airside.Presentation
             return phase switch
             {
                 AircraftPhase.Approach => Smooth(
-                    new Vector3(-72f, 7.5f, laneOffset), new Vector3(-50f, 1.55f, laneOffset * 0.35f), t),
+                    new Vector3(VisualRunwayWestX - 52f, 16f, laneOffset),
+                    new Vector3(VisualThresholdWestX, 1.55f, laneOffset * 0.35f),
+                    t),
                 AircraftPhase.Landing => LandingPosition(t, laneOffset),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
@@ -10946,7 +10969,7 @@ namespace Airside.Presentation
                     new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ), t),
                 AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
                 AircraftPhase.Takeoff => TakeoffPosition(t),
-                _ => new Vector3(72f, 18f, 0f)
+                _ => new Vector3(VisualRunwayEastX + 52f, 24f, 0f)
             };
         }
 
@@ -10977,25 +11000,30 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Flare then a real ground rollout (~22 m) to the west taxi exit (-24).
+        /// Flare over the 05 numbers, then a long ground rollout to the A1 entry (-24).
         /// </summary>
         private static Vector3 LandingPosition(float t, float laneOffset = 0f)
         {
-            const float touchdownT = 0.28f;
+            const float touchdownT = 0.22f;
             var z = laneOffset * 0.2f;
             if (t < touchdownT)
             {
-                // Softer flare pitch companion: stay slightly higher longer.
-                return Smooth(new Vector3(-50f, 1.7f, z), new Vector3(-46f, 0.75f, z * 0.5f), t / touchdownT);
+                return Smooth(
+                    new Vector3(VisualThresholdWestX, 1.7f, z),
+                    new Vector3(VisualThresholdWestX + 8f, 0.75f, z * 0.5f),
+                    t / touchdownT);
             }
 
             var u = (t - touchdownT) / (1f - touchdownT);
             var eased = 1f - (1f - u) * (1f - u);
-            return Vector3.Lerp(new Vector3(-46f, 0.7f, z * 0.5f), new Vector3(-24f, 0.7f, 0f), eased);
+            return Vector3.Lerp(
+                new Vector3(VisualThresholdWestX + 8f, 0.7f, z * 0.5f),
+                new Vector3(-24f, 0.7f, 0f),
+                eased);
         }
 
         /// <summary>
-        /// Line up from the A1 entry heading, ground-roll, then climb — continuous with taxi-out.
+        /// Line up from the A1 entry heading, ground-roll down 23/05, then climb.
         /// </summary>
         private static Vector3 TakeoffPosition(float t)
         {
@@ -11015,11 +11043,11 @@ namespace Airside.Presentation
             {
                 var u = (t - 0.14f) / 0.34f;
                 var eased = u * u;
-                return Vector3.Lerp(new Vector3(-20.5f, 0.7f, 0f), new Vector3(10f, 0.7f, 0f), eased);
+                return Vector3.Lerp(new Vector3(-20.5f, 0.7f, 0f), new Vector3(62f, 0.7f, 0f), eased);
             }
 
             var climb = (t - 0.48f) / 0.52f;
-            return Smooth(new Vector3(10f, 0.7f, 0f), new Vector3(52f, 12f, 0f), climb);
+            return Smooth(new Vector3(62f, 0.7f, 0f), new Vector3(VisualRunwayEastX + 40f, 18f, 0f), climb);
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)

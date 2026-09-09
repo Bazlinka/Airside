@@ -18,7 +18,8 @@
   cover Stand 3 and the east satellite.
   Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Night
   beacon is on the ATC tower. Multi-storey car park sits east of the surface
-  bays. Save schema unchanged.
+  bays. West freight shed fills the hangar side. Terminal has an upper hall.
+  Dual landing lights reach further down the 05 final. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

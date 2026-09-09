@@ -1404,16 +1404,18 @@ namespace Airside.Presentation
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
-                light.range = 78f;
-                light.spotAngle = 42f;
-                light.innerSpotAngle = 18f;
-                light.shadows = LightShadows.Soft;
+                light.range = 96f;
+                light.spotAngle = 38f;
+                light.innerSpotAngle = 16f;
+                light.shadows = lamp.name.EndsWith(" R", StringComparison.Ordinal)
+                    ? LightShadows.None
+                    : LightShadows.Soft;
             }
 
             light.enabled = on;
             if (!on)
                 return;
-            light.intensity = night ? 7.4f : 4.4f;
+            light.intensity = night ? 8.6f : 5.0f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -2750,6 +2752,8 @@ namespace Airside.Presentation
                 || name.StartsWith("Taxi lead", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway A", StringComparison.Ordinal)
                 || name.StartsWith("Hangar apron", StringComparison.Ordinal)
+                || name.StartsWith("Freight", StringComparison.Ordinal)
+                || name.StartsWith("MSCP apron", StringComparison.Ordinal)
                 || name.StartsWith("Stand stop", StringComparison.Ordinal)
                 || name.StartsWith("Stand number", StringComparison.Ordinal)
                 || name.StartsWith("Access turn", StringComparison.Ordinal)
@@ -2865,6 +2869,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Jetty ", StringComparison.Ordinal)
                     && !n.StartsWith("ARFF apron", StringComparison.Ordinal)
                     && !n.StartsWith("Fuel ", StringComparison.Ordinal)
+                    && !n.StartsWith("Freight", StringComparison.Ordinal)
+                    && !n.StartsWith("MSCP", StringComparison.Ordinal)
                     && !n.StartsWith("Terminal canopy", StringComparison.Ordinal)
                     && !n.StartsWith("Stand box", StringComparison.Ordinal)
                     && !n.StartsWith("Access road shoulder", StringComparison.Ordinal)
@@ -4583,7 +4589,9 @@ namespace Airside.Presentation
                 (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f)),
                 (new Vector3(20f, 9.0f, 34f), new Vector3(17f, 0.2f, 34f)),
                 (new Vector3(40f, 9.0f, 18f), new Vector3(40f, 0.2f, 24f)),
-                (new Vector3(58f, 8.2f, 20f), new Vector3(60f, 0.2f, 22f))
+                (new Vector3(58f, 8.2f, 20f), new Vector3(60f, 0.2f, 22f)),
+                (new Vector3(70f, 9.4f, 40f), new Vector3(70f, 0.2f, 46f)),
+                (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -4861,7 +4869,10 @@ namespace Airside.Presentation
                 new Vector3(48f, 0f, 40f),
                 new Vector3(56f, 0f, 34f),
                 new Vector3(40f, 0f, 40f),
-                new Vector3(60f, 0f, 46f)
+                new Vector3(60f, 0f, 46f),
+                new Vector3(68f, 0f, 40f),
+                new Vector3(76f, 0f, 46f),
+                new Vector3(70f, 0f, 52f)
             };
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -5230,6 +5241,12 @@ namespace Airside.Presentation
             CreateBlock("Terminal east concourse roof", new Vector3(60f, 4.0f, 22.4f), new Vector3(12.6f, 0.22f, 7.6f), new Color(0.5f, 0.53f, 0.56f));
             CreateBlock("Terminal east concourse glow", new Vector3(60f, 2.05f, 19.0f), new Vector3(8.5f, 1.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
             CreateBlock("Terminal east ident", new Vector3(60f, 4.15f, 18.95f), new Vector3(6.4f, 0.4f, 0.14f), new Color(0.1f, 0.18f, 0.32f));
+            // Extra storey so the main hall is not a one-box regional shed from overview.
+            CreateBlock("Terminal hall upper", new Vector3(26f, 5.9f, 27.2f), new Vector3(16.5f, 2.4f, 5.2f), new Color(0.66f, 0.7f, 0.73f));
+            CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
+            CreateBlock("Terminal hall upper glow", new Vector3(26f, 5.85f, 24.7f), new Vector3(12f, 1.1f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal roof plant", new Vector3(22f, 7.25f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
+            BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
@@ -5396,8 +5413,8 @@ namespace Airside.Presentation
                 "Textures/Decals/dc_runway_wear_v01.png");
             CreateDecalQuad("Runway wear E", new Vector3(VisualThresholdEastX - 18f, 0.02f, 0f), new Vector3(16f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            PlaceLevelPad("Hangar apron", -20f, 16.8f, 18f, 10f, new Color(0.34f, 0.36f, 0.37f),
-                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(4f, 2.2f));
+            PlaceLevelPad("Hangar apron", -22f, 16.8f, 24f, 12f, new Color(0.34f, 0.36f, 0.37f),
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(5.2f, 2.6f));
             CreateTaxiChordPad("Hangar taxi link", new Vector3(-12f, 0.02f, 9f), new Vector3(-18f, 0.02f, 14f), 4.2f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.4f, 1.1f));
             CreateBlock("Hangar apron centre", new Vector3(-20f, 0.05f, 17.2f), new Vector3(0.12f, 0.02f, 4.2f), new Color(0.95f, 0.85f, 0.2f));
@@ -6964,6 +6981,27 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// West freight shed so the hangar side is not empty grass. Presentation only;
+        /// not on the sim network and kept north of the GA tie-downs.
+        /// </summary>
+        private static void BuildAdelaideFreightShed()
+        {
+            var shell = new Color(0.52f, 0.54f, 0.56f);
+            var dock = new Color(0.38f, 0.4f, 0.42f);
+            var glass = new Color(0.18f, 0.36f, 0.48f, 0.42f);
+            PlaceLevelPad("Freight apron", -44f, 24f, 18f, 14f, new Color(0.34f, 0.36f, 0.37f),
+                PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(4f, 3f));
+            CreateBlock("Freight shed", new Vector3(-44f, 2.5f, 26.2f), new Vector3(14f, 5.0f, 8.4f), shell,
+                "Textures/Surfaces/tx_corrugated_metal_basecolor_v01.png", new Vector2(2.2f, 1.4f));
+            CreateBlock("Freight dock", new Vector3(-44f, 0.7f, 21.6f), new Vector3(10f, 1.4f, 3.2f), dock);
+            CreateBlock("Freight door A", new Vector3(-47.5f, 1.6f, 22.05f), new Vector3(3.2f, 2.6f, 0.16f), new Color(0.22f, 0.24f, 0.26f));
+            CreateBlock("Freight door B", new Vector3(-40.5f, 1.6f, 22.05f), new Vector3(3.2f, 2.6f, 0.16f), new Color(0.22f, 0.24f, 0.26f));
+            CreateBlock("Freight office glass", new Vector3(-38.2f, 2.4f, 30.35f), new Vector3(3.6f, 1.6f, 0.1f), glass);
+            CreateBlock("Freight office glow", new Vector3(-38.2f, 2.35f, 30.2f), new Vector3(3.2f, 1.2f, 0.08f), new Color(1f, 0.78f, 0.4f));
+            PlaceContactShadow("Freight contact", new Vector3(-44f, 0.035f, 26f), new Vector3(15f, 0.02f, 10f), 0.14f);
+        }
+
+        /// <summary>
         /// Tall landside ATC cabin so Adelaide reads as a city airport, not a
         /// regional strip. Presentation only — not collidable and not on the sim.
         /// </summary>
@@ -8434,6 +8472,13 @@ namespace Airside.Presentation
                 ParentBlock(root, "Window R3", new Vector3(0.36f, 0.2f, -0.2f), new Vector3(0.05f, 0.16f, 0.32f), new Color(0.1f, 0.16f, 0.28f));
                 ParentBlock(root, "Window L4", new Vector3(-0.36f, 0.2f, -0.75f), new Vector3(0.05f, 0.16f, 0.28f), new Color(0.1f, 0.16f, 0.28f));
                 ParentBlock(root, "Window R4", new Vector3(0.36f, 0.2f, -0.75f), new Vector3(0.05f, 0.16f, 0.28f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Window L5", new Vector3(-0.36f, 0.2f, -1.2f), new Vector3(0.05f, 0.14f, 0.24f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Window R5", new Vector3(0.36f, 0.2f, -1.2f), new Vector3(0.05f, 0.14f, 0.24f), new Color(0.1f, 0.16f, 0.28f));
+                ParentBlock(root, "Tire L", new Vector3(-0.75f, -0.82f, -0.2f), new Vector3(0.3f, 0.12f, 0.3f), new Color(0.08f, 0.08f, 0.09f));
+                ParentBlock(root, "Tire R", new Vector3(0.75f, -0.82f, -0.2f), new Vector3(0.3f, 0.12f, 0.3f), new Color(0.08f, 0.08f, 0.09f));
+                ParentBlock(root, "Tire nose", new Vector3(0f, -0.82f, 1.6f), new Vector3(0.26f, 0.1f, 0.26f), new Color(0.08f, 0.08f, 0.09f));
+                ParentBlock(root, "Exhaust L", new Vector3(-1.5f, 0.12f, 0.25f), new Vector3(0.18f, 0.14f, 0.35f), new Color(0.28f, 0.3f, 0.32f));
+                ParentBlock(root, "Exhaust R", new Vector3(1.5f, 0.12f, 0.25f), new Vector3(0.18f, 0.14f, 0.35f), new Color(0.28f, 0.3f, 0.32f));
                 ParentBlock(root, "Winglet L", new Vector3(-4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
                 ParentBlock(root, "Winglet R", new Vector3(4.55f, 0.32f, 0.15f), new Vector3(0.08f, 0.58f, 0.42f), accent);
                 ParentBlock(root, "Belly fairing", new Vector3(0f, -0.28f, 0.15f), new Vector3(0.42f, 0.12f, 1.6f), new Color(0.88f, 0.9f, 0.92f));
@@ -8453,7 +8498,10 @@ namespace Airside.Presentation
             if (!HasNamedChild(root, "Beacon"))
                 ParentBlock(root, "Beacon", new Vector3(0f, 1.05f, 0.15f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
             if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
-                ParentBlock(root, "LandingLight", new Vector3(0f, -0.12f, 2.85f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            {
+                ParentBlock(root, "LandingLight L", new Vector3(-1.45f, -0.12f, 2.55f), new Vector3(0.16f, 0.1f, 0.18f), new Color(0.95f, 0.95f, 0.85f));
+                ParentBlock(root, "LandingLight R", new Vector3(1.45f, -0.12f, 2.55f), new Vector3(0.16f, 0.1f, 0.18f), new Color(0.95f, 0.95f, 0.85f));
+            }
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, -0.18f, 2.45f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
             if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))

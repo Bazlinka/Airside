@@ -474,7 +474,7 @@ namespace Airside.Presentation
                     ? "Recovered the previous safe copy."
                     : summary.ClockMovedBackwards
                         ? "Device clock moved backwards; no time was added."
-                        : $"{_simulation.Location.Name} · {_simulation.Location.Region}";
+                        : PlayerFacingLocationLine(_simulation.Location);
                 awayBody =
                     $"Airport operated for {FormatDuration(summary.AwaySeconds)}\n" +
                     $"Flights completed: {summary.FlightsCompleted}\n" +
@@ -491,7 +491,7 @@ namespace Airside.Presentation
                 insolvencyBody =
                     $"Cash stayed negative across {AirportEconomy.InsolvencyConsecutiveDays} consecutive day closes. Operations have stopped; commands are refused.\n\n" +
                     $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}\n" +
-                    $"{_simulation.Location.Name} · {_simulation.Location.Region}";
+                    $"{PlayerFacingAirportName(_simulation.Location)} · {_simulation.Location.Region}";
             }
 
             var showBriefing = _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
@@ -506,7 +506,7 @@ namespace Airside.Presentation
                     showPause: showPause,
                     showAway: showAway,
                     showInsolvency: showInsolvency,
-                    locationName: _simulation.Location.Name,
+                    locationName: PlayerFacingAirportName(_simulation.Location),
                     firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
                     awayBody: awayBody,
                     insolvencyBody: insolvencyBody);
@@ -521,7 +521,7 @@ namespace Airside.Presentation
                     showPause: showPause,
                     showAway: showAway,
                     showInsolvency: showInsolvency,
-                    locationName: _simulation.Location.Name,
+                    locationName: PlayerFacingAirportName(_simulation.Location),
                     firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
                     awayBody: awayBody,
                     insolvencyBody: insolvencyBody);
@@ -894,7 +894,7 @@ namespace Airside.Presentation
             }
 
             SyncLeft(
-                locationLine: $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}",
+                locationLine: PlayerFacingLocationLine(_simulation.Location),
                 flightLine: CommercialFlightHudLine(),
                 phaseLine: CommercialPhaseHudLine(),
                 clock: clockLine,
@@ -3174,14 +3174,14 @@ namespace Airside.Presentation
             {
                 GUI.DrawTexture(new Rect(42, 28, 240, 40), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
                 y = 70f;
-                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                GUI.Label(new Rect(42, y, 380, 18), PlayerFacingLocationLine(_simulation.Location), small);
                 y += 20f;
             }
             else
             {
                 GUI.Label(new Rect(42, y, 320, 34), "AIRSIDE", title);
                 y += 28f;
-                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
+                GUI.Label(new Rect(42, y, 380, 18), PlayerFacingLocationLine(_simulation.Location), small);
                 y += 20f;
             }
 
@@ -3585,7 +3585,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(left + 24, top + 150, width - 48, 22),
                 $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}", detail);
             GUI.Label(new Rect(left + 24, top + 180, width - 48, 22),
-                $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
+                PlayerFacingLocationLine(_simulation.Location), small);
             if (GUI.Button(new Rect(left + 100, top + 220, 260, 36), "Start a new airport", button))
                 ResetToNewAirport();
         }
@@ -3776,9 +3776,9 @@ namespace Airside.Presentation
                 GUI.DrawTexture(new Rect(left + 24, top + 14, 280, 70), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
             else
                 GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(left + 24, top + 88, width - 48, 24), $"You run {_simulation.Location.Name}", detail);
+            GUI.Label(new Rect(left + 24, top + 88, width - 48, 24), $"You run {PlayerFacingAirportName(_simulation.Location)}", detail);
             GUI.Label(new Rect(left + 24, top + 118, width - 48, 44),
-                $"Aircraft move on their own. Your job is cash, reputation and capacity at {_simulation.Location.Name}.", detail);
+                $"Aircraft move on their own. Your job is cash, reputation and capacity at {PlayerFacingAirportName(_simulation.Location)}.", detail);
             GUI.Label(new Rect(left + 24, top + 170, width - 48, 22), "First useful decision", detail);
             GUI.Label(new Rect(left + 24, top + 196, width - 48, 44),
                 $"In about {AirportRoutes.FirstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
@@ -3917,10 +3917,20 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(left + 24, top + 252, width - 48, 20), "Device clock moved backwards; no time was added.", small);
             else
                 GUI.Label(new Rect(left + 24, top + 252, width - 48, 20),
-                    $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
+                    PlayerFacingLocationLine(_simulation.Location), small);
             if (GUI.Button(new Rect(left + 130, top + 292, 200, 32), "Continue operations", button))
                 _showAwaySummary = false;
         }
+
+        private static string PlayerFacingAirportName(AirportLocation location) =>
+            string.Equals(location.Id, "ADL", StringComparison.OrdinalIgnoreCase)
+                ? "Adelaide Airport"
+                : location.Name;
+
+        private static string PlayerFacingLocationLine(AirportLocation location) =>
+            string.Equals(location.Id, "ADL", StringComparison.OrdinalIgnoreCase)
+                ? "Adelaide Airport  ·  West Beach"
+                : $"{location.Name}  ·  {location.Region}";
 
         private static string FormatDuration(long seconds)
         {
@@ -4617,7 +4627,7 @@ namespace Airside.Presentation
             {
                 var taxiStem = new Color(0.35f, 0.36f, 0.38f);
                 var taxiLens = new Color(0.3f, 0.55f, 1f);
-                for (var x = -12; x <= 28; x += 8)
+                for (var x = -48; x <= 56; x += 8)
                 {
                     lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                         new Color(0.3f, 0.55f, 1f), range: 7.5f));
@@ -4635,7 +4645,7 @@ namespace Airside.Presentation
             else
             {
                 // Sparse taxi spill along Taxiway A so night taxi still reads without fixture glitter.
-                for (var x = -8; x <= 24; x += 16)
+                for (var x = -48; x <= 56; x += 16)
                 {
                     lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                         new Color(0.3f, 0.55f, 1f), range: 9f));
@@ -5182,6 +5192,14 @@ namespace Airside.Presentation
             CreateBlock("Terminal east roof", new Vector3(40f, 4.45f, 24.5f), new Vector3(10.6f, 0.22f, 7.8f), new Color(0.52f, 0.55f, 0.58f));
             CreateBlock("Terminal link", new Vector3(34.4f, 2.0f, 26.2f), new Vector3(5.2f, 3.6f, 5.2f), new Color(0.64f, 0.68f, 0.71f));
             CreateBlock("Terminal east glow", new Vector3(40f, 2.2f, 21.0f), new Vector3(6.5f, 1.4f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            // Satellite hall east of Charlie; skybridge clears the taxi so the pier does not sit on paint.
+            CreateBlock("Terminal skybridge", new Vector3(50.5f, 3.5f, 24.2f), new Vector3(9.2f, 1.5f, 2.6f), new Color(0.6f, 0.64f, 0.67f));
+            CreateBlock("Terminal skybridge glass", new Vector3(50.5f, 3.55f, 25.45f), new Vector3(8.4f, 1.0f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
+            CreateBlock("Terminal east concourse", new Vector3(60f, 1.95f, 22.4f), new Vector3(12f, 3.9f, 7.2f), new Color(0.64f, 0.68f, 0.71f));
+            CreateBlock("Terminal east concourse glass", new Vector3(60f, 2.15f, 18.85f), new Vector3(10f, 2.3f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
+            CreateBlock("Terminal east concourse roof", new Vector3(60f, 4.0f, 22.4f), new Vector3(12.6f, 0.22f, 7.6f), new Color(0.5f, 0.53f, 0.56f));
+            CreateBlock("Terminal east concourse glow", new Vector3(60f, 2.05f, 19.0f), new Vector3(8.5f, 1.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            BuildAdelaideControlTower();
             BuildTerminalLandsideCanopy();
             PlaceBuildingOrFallback(
                 PreferArtKit(
@@ -6869,6 +6887,25 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Tall landside ATC cabin so Adelaide reads as a city airport, not a
+        /// regional strip. Presentation only — not collidable and not on the sim.
+        /// </summary>
+        private static void BuildAdelaideControlTower()
+        {
+            var shaft = new Color(0.72f, 0.74f, 0.76f);
+            var cab = new Color(0.18f, 0.36f, 0.48f, 0.55f);
+            var roof = new Color(0.32f, 0.34f, 0.36f);
+            CreateBlock("ATC tower shaft", new Vector3(56f, 8.2f, 34f), new Vector3(2.6f, 16.4f, 2.6f), shaft);
+            CreateBlock("ATC tower flare", new Vector3(56f, 15.6f, 34f), new Vector3(3.4f, 1.2f, 3.4f), Shade(shaft, 0.92f));
+            CreateBlock("ATC tower cab", new Vector3(56f, 17.4f, 34f), new Vector3(5.2f, 2.6f, 5.2f), cab);
+            CreateBlock("ATC tower glass N", new Vector3(56f, 17.5f, 36.55f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass S", new Vector3(56f, 17.5f, 31.45f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower roof", new Vector3(56f, 18.9f, 34f), new Vector3(5.6f, 0.35f, 5.6f), roof);
+            CreateBlock("ATC tower mast", new Vector3(56f, 20.4f, 34f), new Vector3(0.18f, 2.6f, 0.18f), new Color(0.45f, 0.46f, 0.48f));
+            PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.2f, 0.02f, 4.2f), 0.18f);
+        }
+
+        /// <summary>
         /// Decision 0025 item 3 — landside canopy, posts and glass so the terminal
         /// entrance reads as a building, not a flat box, from overview and landside.
         /// </summary>
@@ -7070,7 +7107,7 @@ namespace Airside.Presentation
                 (new Vector3(40f, 0f, -26f), 1.1f),
                 (new Vector3(-60f, 0f, 20f), 1.2f),
                 (new Vector3(68f, 0f, 16f), 1.05f),
-                // Extra belt density so overview reads as continuous KI bush (0025 item 3).
+                // Extra belt density so overview reads as continuous coastal bush.
                 (new Vector3(-34f, 0f, 48f), 1.0f),
                 (new Vector3(-20f, 0f, 52f), 1.15f),
                 (new Vector3(4f, 0f, 54f), 0.9f),
@@ -7082,7 +7119,7 @@ namespace Airside.Presentation
                 (new Vector3(66f, 0f, -14f), 0.88f),
                 (new Vector3(-50f, 0f, -30f), 1.0f),
                 (new Vector3(48f, 0f, -32f), 1.12f),
-                // Far paddock belt — denser KI fringe from overview (0025 item 3).
+                // Far paddock belt — denser Adelaide plains fringe from overview.
                 (new Vector3(-70f, 0f, 40f), 1.25f),
                 (new Vector3(-66f, 0f, 50f), 1.05f),
                 (new Vector3(74f, 0f, 38f), 1.15f),
@@ -7448,11 +7485,11 @@ namespace Airside.Presentation
             var euc = Shade(AirsideTheme.Eucalyptus, 0.45f);
             var dry = Shade(AirsideTheme.DryGrass, 0.55f);
             var sand = Shade(AirsideTheme.Sand, 0.75f);
-            Place("hill_a", new Vector3(-85f, 0f, 68f), Quaternion.identity, euc, "Context hill NW", 2.8f);
+            Place("hill_a", new Vector3(-42f, 0f, 82f), Quaternion.identity, euc, "Context hill N inland", 2.8f);
             Place("hill_b", new Vector3(90f, 0f, 62f), Quaternion.Euler(0f, 25f, 0f), dry, "Context hill NE", 2.6f);
-            Place("hill_c", new Vector3(-110f, 0f, 28f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill W", 2.4f);
+            Place("hill_c", new Vector3(-58f, 0f, 64f), Quaternion.Euler(0f, 40f, 0f), euc, "Context hill NW inland", 2.4f);
             Place("hill_a", new Vector3(120f, 0f, 18f), Quaternion.Euler(0f, -30f, 0f), dry, "Context hill E", 2.3f);
-            Place("hill_b", new Vector3(-78f, 0f, 48f), Quaternion.Euler(0f, 12f, 0f), dry, "Context hill NW mid", 1.9f);
+            Place("hill_b", new Vector3(-36f, 0f, 76f), Quaternion.Euler(0f, 12f, 0f), dry, "Context hill N mid", 1.9f);
             Place("hill_c", new Vector3(82f, 0f, 46f), Quaternion.Euler(0f, -18f, 0f), euc, "Context hill NE mid", 1.85f);
             // West Beach dunes — Adelaide's water is the gulf to the west, not south.
             Place("dune_a", new Vector3(-86f, 0f, -16f), Quaternion.identity, sand, "Context dune W S", 2.0f);
@@ -7473,7 +7510,7 @@ namespace Airside.Presentation
         {
             TryPlaceContextTerrainAccents();
             var grass = PreferSurfaceBasecolor("tx_grass_kingscote");
-            PlaceLevelPad("Hill far NW", -120f, 72f, 36f, 22f, Shade(AirsideTheme.Eucalyptus, 0.4f),
+            PlaceLevelPad("Hill far NW", -22f, 88f, 36f, 22f, Shade(AirsideTheme.Eucalyptus, 0.4f),
                 grass, new Vector2(6f, 4f), top: 5.2f, height: 10f);
             PlaceLevelPad("Hill far NE", 110f, 78f, 32f, 20f, Shade(AirsideTheme.Eucalyptus, 0.42f),
                 grass, new Vector2(5f, 4f), top: 4.6f, height: 9f);
@@ -7503,6 +7540,9 @@ namespace Airside.Presentation
             CreateBlock("CBD tower H", new Vector3(168f, 12.4f, 118f), new Vector3(2.6f, 24.8f, 2.4f), glass);
             CreateBlock("CBD tower I", new Vector3(138f, 4.8f, 96f), new Vector3(7.4f, 9.6f, 5.2f), stone);
             CreateBlock("CBD tower J", new Vector3(184f, 5.6f, 96f), new Vector3(3.6f, 11.2f, 3.2f), pale);
+            CreateBlock("CBD tower M", new Vector3(190f, 8.8f, 110f), new Vector3(3.0f, 17.6f, 2.8f), glass);
+            CreateBlock("CBD tower N", new Vector3(176f, 7.2f, 88f), new Vector3(4.4f, 14.4f, 3.6f), pale);
+            CreateBlock("CBD midrise O", new Vector3(154f, 4.6f, 78f), new Vector3(9.2f, 9.2f, 6.8f), stone);
             CreateBlock("CBD midrise K", new Vector3(146f, 3.6f, 86f), new Vector3(8.8f, 7.2f, 6.4f), stone);
             CreateBlock("CBD midrise L", new Vector3(160f, 4.2f, 88f), new Vector3(5.4f, 8.4f, 4.6f), pale);
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
@@ -7523,7 +7563,9 @@ namespace Airside.Presentation
                 new Vector3(114f, 1.05f, 70f), new Vector3(122f, 1.15f, 68f), new Vector3(130f, 0.95f, 72f),
                 new Vector3(118f, 1.2f, 62f), new Vector3(126f, 1.0f, 78f), new Vector3(134f, 1.1f, 80f),
                 new Vector3(140f, 1.25f, 74f), new Vector3(112f, 0.9f, 78f), new Vector3(136f, 1.05f, 64f),
-                new Vector3(128f, 0.95f, 88f)
+                new Vector3(128f, 0.95f, 88f), new Vector3(146f, 1.1f, 82f), new Vector3(152f, 1.0f, 70f),
+                new Vector3(116f, 0.95f, -36f), new Vector3(124f, 1.1f, -42f), new Vector3(132f, 1.05f, -30f),
+                new Vector3(110f, 0.9f, 52f), new Vector3(142f, 1.15f, 56f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -7811,6 +7853,7 @@ namespace Airside.Presentation
             // Soft, tight discs — oversized near-black cylinders read as ground patches at night.
             PlaceContactShadow("Terminal contact", new Vector3(26f, 0.035f, 27f), new Vector3(18f, 0.02f, 6.2f), 0.16f);
             PlaceContactShadow("Terminal east contact", new Vector3(40f, 0.035f, 24.5f), new Vector3(12f, 0.02f, 7f), 0.14f);
+            PlaceContactShadow("Terminal concourse contact", new Vector3(60f, 0.035f, 22.4f), new Vector3(12f, 0.02f, 7.4f), 0.14f);
             PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.035f, 20f), new Vector3(10f, 0.02f, 7f), 0.14f);
             PlaceContactShadow("Ops contact", new Vector3(-8f, 0.035f, 26f), new Vector3(5f, 0.02f, 3.5f), 0.12f);
             PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
@@ -9171,6 +9214,8 @@ namespace Airside.Presentation
                     && n.IndexOf("wing", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("tail", StringComparison.OrdinalIgnoreCase) < 0
                     && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) < 0
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))
@@ -9405,6 +9450,7 @@ namespace Airside.Presentation
 
             if (placed)
             {
+                root.localScale = Vector3.one * 1.12f;
                 root.gameObject.SetActive(false);
                 return root;
             }
@@ -9414,6 +9460,7 @@ namespace Airside.Presentation
                 || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
                 prefabRoot.name = "Passenger stairs";
+                prefabRoot.localScale = Vector3.one * 1.12f;
                 prefabRoot.gameObject.SetActive(false);
                 return prefabRoot;
             }
@@ -10426,7 +10473,7 @@ namespace Airside.Presentation
             }
 
             var taxiStep = hasLightingKit ? 12 : 8;
-            for (var x = -8; x <= 28; x += taxiStep)
+            for (var x = -48; x <= 56; x += taxiStep)
             {
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 6.9f), taxiColor);
@@ -10453,6 +10500,8 @@ namespace Airside.Presentation
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
             PlaceObstructionLamp(kit, new Vector3(40f, 4.8f, 24.5f), obstruction, "Terminal east obstruction");
+            PlaceObstructionLamp(kit, new Vector3(60f, 4.3f, 22.4f), obstruction, "Terminal concourse obstruction");
+            PlaceObstructionLamp(kit, new Vector3(56f, 21.6f, 34f), obstruction, "ATC tower obstruction");
             PlaceObstructionLamp(kit, new Vector3(-8f, 3.2f, 26f), obstruction, "Ops obstruction");
 
             // Apron flood poles — four corners so night turnarounds read lit.
@@ -10980,6 +11029,8 @@ namespace Airside.Presentation
 
                 root.position = new Vector3(spot.x, 0.48f, spot.z);
                 root.rotation = Quaternion.Euler(0f, spot.yaw, 0f);
+                if (hasGaPrefab)
+                    root.localScale = Vector3.one * 1.1f;
                 CreateBlock($"Tie rope {i}a", new Vector3(spot.x - 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 CreateBlock($"Tie rope {i}b", new Vector3(spot.x + 1.4f, 0.08f, spot.z), new Vector3(0.2f, 0.06f, 0.2f), new Color(0.55f, 0.55f, 0.5f));
                 PlaceContactShadow($"GA contact {i}", new Vector3(spot.x, 0.04f, spot.z), new Vector3(3.4f, 0.02f, 2.6f), 0.14f);

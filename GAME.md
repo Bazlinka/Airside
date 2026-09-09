@@ -3,13 +3,14 @@
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
 - **Branch:** `feature/adelaide-overnight-visual`
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
-  Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint, one
-  outer fence (no inner Kingscote ring on the apron), aircraft on final over
-  the gulf then rolling out to A1. EditMode 193/193 earlier this session.
+  Adelaide Airport HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint,
+  one outer fence, ATC tower + east satellite, aircraft on final over the gulf
+  then rolling out to A1. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
-  slabs, bigger field, long 23/05 flight path, east terminal pier, CBD + suburb
-  skyline. Aircraft skin polish, 12/30 dusk lights, stand bays on 14/24/34, shadow
-  distance 320 m. Save schema unchanged.
+  slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
+  hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
+  Hills pulled off the gulf. HUD says Adelaide Airport. Alpha edge lights
+  run the full taxi. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

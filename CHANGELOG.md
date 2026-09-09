@@ -23,7 +23,10 @@ change it describes.
   Beach houses sit outside the east fence. Aircraft skin is glossier; 12/30 and
   Bravo pick up dusk edge lights. Sun shadows reach 320 m so the gulf and CBD
   still catch the key light. Stand stop bars sit on the real 14/24/34 bays.
-  Unity EditMode 193/193.
+  HUD and briefing say Adelaide Airport. Context hills no longer sit in the gulf.
+  Landside has a control tower and an east satellite hall linked by a skybridge
+  over Charlie. Stairs and parked GA are scaled to the larger aircraft kit.
+  Taxi edge lights run the full Alpha length. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

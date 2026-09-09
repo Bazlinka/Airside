@@ -46,8 +46,10 @@ namespace Airside.Simulation
             while (_events.Count > _capacity)
             {
                 var removeAt = IndexOfFirstRemovable();
+                // If the log is only Insolvent rows, still drop the oldest so capacity
+                // cannot grow without bound.
                 if (removeAt < 0)
-                    break;
+                    removeAt = 0;
                 _events.RemoveAt(removeAt);
             }
         }

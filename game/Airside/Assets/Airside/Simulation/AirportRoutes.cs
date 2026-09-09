@@ -100,6 +100,7 @@ namespace Airside.Simulation
         public long IncomePerFlight { get; private set; }
         public int OffersMade => _generated;
         public int OffersDeclined { get; private set; }
+        public int MissedOffers { get; private set; }
 
         /// <summary>Total scheduled flights per day across accepted routes.</summary>
         public int ScheduledFlightsPerDay
@@ -118,7 +119,7 @@ namespace Airside.Simulation
             if (Pending != null && now.CompareTo(Pending.ExpiresAt) >= 0)
             {
                 Pending = null;
-                OffersDeclined++;
+                MissedOffers++;
             }
 
             // Replay every offer window due by `now`, so a large time step lands in
@@ -132,7 +133,7 @@ namespace Airside.Simulation
                 if (now.CompareTo(Pending.ExpiresAt) >= 0)
                 {
                     Pending = null;
-                    OffersDeclined++;
+                    MissedOffers++;
                 }
             }
         }

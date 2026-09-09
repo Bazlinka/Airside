@@ -81,6 +81,7 @@ namespace Airside.Simulation
 
         public int CompletedCycles { get; private set; }
         public int ReservationConflicts { get; private set; }
+        public int CommercialReservationStalls { get; private set; }
         public TurnaroundWorkflow ActiveTurnaround => FocusFlight.Turnaround;
         public AirportEconomy Economy { get; }
         public AirportRoutes Routes { get; }
@@ -355,7 +356,9 @@ namespace Airside.Simulation
             var wasHolding = TrafficWaits.TryGetWaitStart(flight.OwnerId, out _);
             if (!_reservations.TryReplace(flight.OwnerId, flight.RequiredResources(now), out var blocked))
             {
-                if (!IsCommercialOwner(blocked))
+                if (IsCommercialOwner(blocked))
+                    CommercialReservationStalls++;
+                else
                     ReservationConflicts++;
                 TrafficWaits.SetWaiting(flight.OwnerId, blocked, now);
                 var before = Atc.LastInstruction;
@@ -627,7 +630,8 @@ namespace Airside.Simulation
 
                 flight.FlightSettled = true;
                 CompletedCycles++;
-                Atc.NotifyRunwayVacated(now);
+                // Wake/separation for departure uses takeoff clearance timing; do not
+                // re-issue a landing-style runway-vacated cue once airborne.
                 Record(now, flight.AircraftId, "ATC", Atc.IssueRadarContact(flight.AircraftId));
                 Record(now, flight.AircraftId, "ATC", Atc.IssueFrequencyChangeApproved(flight.AircraftId));
                 Record(now, flight.AircraftId, "Departed",
@@ -638,6 +642,7 @@ namespace Airside.Simulation
             else if (previousPhase == AircraftPhase.Landing && flight.Operation.Phase == AircraftPhase.TaxiIn)
             {
                 Atc.NotifyRunwayVacated(now, flight.AircraftId);
+                Record(now, flight.AircraftId, "ATC", Atc.IssueReportRunwayVacated(flight.AircraftId));
                 Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
             }
         }
@@ -658,7 +663,7 @@ namespace Airside.Simulation
             {
                 if (!_approachWaitLogged)
                 {
-                    Record(now, primary.AircraftId, "Approach hold", "Second commercial waiting for a free stand");
+                    Record(now, "ATC", "Approach hold", "Second commercial waiting for a free stand");
                     _approachWaitLogged = true;
                 }
 
@@ -701,6 +706,7 @@ namespace Airside.Simulation
             _flights[index] = new CommercialFlight(id, now, stand, TaxiNetwork.RouteTo(stand));
             _flights.Sort(CompareFlights);
             Record(now, id, "Flight inbound", $"Assigned {stand.Value}");
+            Record(now, id, "ATC", Atc.IssueJoinLeftDownwind(id));
         }
 
         private static int CompareFlights(CommercialFlight a, CommercialFlight b)
@@ -835,7 +841,8 @@ namespace Airside.Simulation
             while (_daysSettled < day)
             {
                 _daysSettled++;
-                var closeTime = new SimulationTime((long)(DayCycle.DaySeconds * (_daysSettled - 8.0 / 24.0)));
+                var closeTime = DayCycle.MidnightOfDay(_daysSettled);
+                // Charge the weather that sits on the day-close boundary (stable vs catch-up).
                 var weather = Weather.At(closeTime);
                 var baseCost = Math.Max(0, BaseDailyOperatingCost - Research.DailyOperatingDiscount);
                 var cost = baseCost + Weather.DailyOperatingCost(weather) + Staffing.DailyWage;
@@ -882,14 +889,47 @@ namespace Airside.Simulation
                     mayEnterCorridor: aircraft.OnCorridor || ReferenceEquals(aircraft, grantee));
 
             // Surface ground-traffic holds in ATC phraseology when no commercial is mid-clearance.
+            // Rotate through every holding fleet aircraft so a second waiter is not silent.
+            var commercialNeedsTower = false;
+            foreach (var flight in _flights)
+            {
+                if (flight.Operation.IsComplete)
+                    continue;
+                if (flight.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing
+                    or AircraftPhase.Takeoff)
+                {
+                    commercialNeedsTower = true;
+                    break;
+                }
+
+                if (flight.Operation.Phase == AircraftPhase.TaxiOut
+                    && flight.Operation.SecondsRemaining(now) <= 0)
+                {
+                    commercialNeedsTower = true;
+                    break;
+                }
+            }
+
+            if (commercialNeedsTower)
+                return;
+
+            var holdMessages = new List<string>();
             foreach (var aircraft in _groundTraffic)
             {
                 if (!aircraft.IsHolding)
                     continue;
                 string reason;
-                if (aircraft.DesiredSegment.Equals(default))
+                if (aircraft.IsHoldingOffField)
+                {
+                    reason = "holding off-field — all stands occupied";
+                }
+                else if (aircraft.WantsCorridorNow)
                 {
                     reason = "awaiting corridor — give way to commercial";
+                }
+                else if (aircraft.DesiredSegment.Equals(default))
+                {
+                    reason = "awaiting taxi clearance";
                 }
                 else if (IsCommercialOwner(aircraft.DesiredSegment))
                 {
@@ -900,8 +940,30 @@ namespace Airside.Simulation
                     reason = $"{aircraft.DesiredSegment.Value} busy";
                 }
 
-                Atc.IssueGroundHold(aircraft.Id.Value, reason);
-                break;
+                holdMessages.Add($"{aircraft.Id.Value}: {reason}");
+            }
+
+            if (holdMessages.Count > 0)
+            {
+                var tick = (int)(now.ElapsedSeconds % holdMessages.Count);
+                var chosen = _groundTraffic[0];
+                var seen = 0;
+                foreach (var aircraft in _groundTraffic)
+                {
+                    if (!aircraft.IsHolding)
+                        continue;
+                    if (seen == tick)
+                    {
+                        chosen = aircraft;
+                        break;
+                    }
+                    seen++;
+                }
+
+                var reason = holdMessages[tick];
+                var colon = reason.IndexOf(':');
+                var phrase = colon >= 0 ? reason[(colon + 1)..].Trim() : reason;
+                Atc.IssueGroundHold(chosen.Id.Value, phrase);
             }
         }
 
@@ -920,7 +982,9 @@ namespace Airside.Simulation
                 var now = _lastUpdatedAt;
                 if (!_reservations.TryReplace(owner, flight.RequiredResources(now), out var blocked))
                 {
-                    if (!IsCommercialOwner(blocked))
+                    if (IsCommercialOwner(blocked))
+                        CommercialReservationStalls++;
+                    else
                         ReservationConflicts++;
                     TrafficWaits.SetWaiting(owner, blocked, now);
                 }
@@ -1368,7 +1432,6 @@ namespace Airside.Simulation
                 case AircraftPhase.Landing:
                     Record(now, flight.AircraftId, "ATC",
                         Atc.IssueClearedToLand(flight.AircraftId, CurrentWeather, now));
-                    Record(now, flight.AircraftId, "ATC", Atc.IssueReportRunwayVacated(flight.AircraftId));
                     Record(now, flight.AircraftId, "Landing", Runway.Value);
                     break;
                 case AircraftPhase.TaxiIn:

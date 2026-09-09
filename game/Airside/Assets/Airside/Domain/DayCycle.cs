@@ -75,5 +75,24 @@ namespace Airside.Domain
         public double SunElevationDegrees => -6.0 + 66.0 * Math.Sin(Math.PI * Math.Max(0.0, Math.Min(1.0, (LocalHour - 5.0) / 15.0)));
 
         public string Clock => $"{Hour:00}:{Minute:00}";
+
+        /// <summary>Simulation time of local midnight ending day <paramref name="dayNumber"/> (1-based).</summary>
+        public static SimulationTime MidnightOfDay(int dayNumber, long daySeconds = DaySeconds)
+        {
+            if (dayNumber < 1)
+                throw new ArgumentOutOfRangeException(nameof(dayNumber));
+            // Day 1 starts at StartHour; midnight that ends day N is N days after that midnight.
+            var seconds = (long)(daySeconds * (dayNumber - StartHour / 24.0));
+            return new SimulationTime(Math.Max(0, seconds));
+        }
+
+        /// <summary>Simulation time of local midday on day <paramref name="dayNumber"/> (1-based).</summary>
+        public static SimulationTime MiddayOfDay(int dayNumber, long daySeconds = DaySeconds)
+        {
+            if (dayNumber < 1)
+                throw new ArgumentOutOfRangeException(nameof(dayNumber));
+            var seconds = (long)(daySeconds * (dayNumber - 0.5 - StartHour / 24.0));
+            return new SimulationTime(Math.Max(0, seconds));
+        }
     }
 }

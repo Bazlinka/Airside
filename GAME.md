@@ -1,17 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — 100-item layering/collision/route bug audit)
-- **Branch:** `cursor/bug-audit-100-0740` (audit doc only; `main` unchanged)
-- **Do next:** Pick the suggested first fix batch in
-  `docs/testing/BUG_AUDIT_2026-09-09_LAYERING_COLLISION_ROUTES.md` (stand spacing /
-  lead-in crossings / GT bay+off-field hold / taxi-out corner cut), or resume Mac
-  packaged app review on `main` if preferred.
-- **In progress / half-done:** Audit listed; no behaviour fixes on this branch yet.
+- **Last updated:** 2026-09-09 (Cursor — layering/collision/route 100-fix)
+- **Branch:** `cursor/layering-collision-bugfix-100-d7f0` (PR → squash-merge to main)
+- **Do next:** Mac Play audit after merge — quit Unity, `scripts/rebuild-and-open-mac.sh`.
+  Confirm dual commercials no longer wingtip-clip, GT off-field hold is away from A1 entry,
+  taxi-out follows dogleg lead-ins, run-up bay north of Alpha.
+- **In progress / half-done:** Deferred presentation polish from BUGFIX_PASS_100 (puddles,
+  flaps, per-stand GSE props, windsock pause) — optional follow-up.
 - **Watch for / assumptions:**
-  - Audit is code-trace only (no Unity playtest in cloud)
+  - Stand Z is now 14/24/34 — third-stand apron pads shifted +8 Z
   - Save schema unchanged
-- **Open question for Bailey:** Which priority band to fix first — (A) collisions,
-  (B) routes, or keep visual polish / Mac sign-off on `main`?
+  - `scripts/test-domain.sh` 177 passed on the fix branch
+- **Open question for Bailey:** none
 
 ---
 
@@ -86,6 +86,8 @@ Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
 supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
+
+- Layering / collision / route **100-fix** on `cursor/layering-collision-bugfix-100-d7f0`: dogleg lead-ins, apron throat, stand spacing 14/24/34, GT off-field + run-up bay, selective yield, `scripts/test-domain.sh` **177 passed** (`CollisionPass100Tests`).
 
 - Fidelity-board integration **merged via #167**: scrub/terrain v02, surface
   `tx_*_v02` + wet concrete, ARFF prefab v02 densify, CHR dual wands,

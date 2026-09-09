@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime kit combine + static-batch skip.** ALS stations, REIL, cones,
+  barriers, signs, FOD bins, dollies, windsock poles, stairs and GPU carts
+  stamp one cached combined mesh per instance. Greybox shrubs/trees/clouds
+  share combined primitive meshes. Cloud umbras keep drifting when tint is
+  unchanged; bird wings are cached. Static combine skips GSE, clouds,
+  birds, boats and foam so those transforms still move. High stays 4× MSAA
+  + SMAA, four cascades, 12 additional lights, two probes. Decision 0029.
+  Evidence: brace depth 0; `AirsidePrototype.cs` 255 `CreateBlock` sites;
+  `scripts/test-domain.sh` **178 passed**.
+
 - **Runtime kit combine + deferred audio.** Fence bays, edge/taxi/flood lamps,
   taxi arrows, VEG-002 scrub and VEG-001 eucalyptus stamp one cached combined
   mesh per instance instead of 3–9 kit GameObjects. Ambient wind/rain/coast and

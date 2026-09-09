@@ -67,5 +67,8 @@ Kingscote at overview and follow, day/dusk/night.
   registers names
 - Author a single fuel-farm / ALS mesh instead of greybox fallbacks
 - Runtime `ArtGltfLoader.TryPlaceCombined` now stamps fence bays, lamps,
-  scrub and eucalyptus as cached combined meshes; authored single-mesh
-  kits would still cut remaining submeshes
+  ALS stations, REIL, cones, barriers, signs, bins, dollies, windsock poles,
+  stairs, GPU carts, scrub and eucalyptus as cached combined meshes; authored
+  single-mesh kits would still cut remaining submeshes
+- Static combine skips whole dynamic subtrees (GSE, clouds, birds, boats)
+  so those transforms still move after `StaticBatchingUtility.Combine`

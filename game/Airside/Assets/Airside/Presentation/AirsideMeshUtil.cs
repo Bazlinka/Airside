@@ -19,5 +19,26 @@ namespace Airside.Presentation
                 return;
             mesh.UploadMeshData(true);
         }
+
+        /// <summary>
+        /// One mesh of scaled/offset copies of a readable source (greybox shrub clumps).
+        /// </summary>
+        public static Mesh CombineTransformed(Mesh source, Matrix4x4[] locals)
+        {
+            if (source == null || locals == null || locals.Length == 0)
+                return null;
+            var combine = new CombineInstance[locals.Length];
+            for (var i = 0; i < locals.Length; i++)
+            {
+                combine[i].mesh = source;
+                combine[i].transform = locals[i];
+            }
+
+            var mesh = new Mesh { name = source.name + " combined" };
+            mesh.CombineMeshes(combine, true, true);
+            mesh.RecalculateBounds();
+            UploadStatic(mesh);
+            return mesh;
+        }
     }
 }

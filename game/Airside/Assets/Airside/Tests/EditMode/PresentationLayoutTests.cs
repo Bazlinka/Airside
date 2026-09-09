@@ -177,6 +177,41 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void StaticWorld_MovingRootsStayOffTheStaticBatch()
+        {
+            var moving = new[]
+            {
+                "Ground traffic GT-201",
+                "Fuel truck",
+                "Passenger stairs",
+                "GPU cart",
+                "Cloud 0",
+                "Coast boat A",
+                "Windsock sock",
+                "Jetty deck"
+            };
+            var created = new List<GameObject>();
+            try
+            {
+                foreach (var name in moving)
+                {
+                    var go = new GameObject(name);
+                    created.Add(go);
+                    Assert.That(AirsideStaticWorld.IsDynamic(go), Is.True, name);
+                }
+
+                var slab = new GameObject("Runway W");
+                created.Add(slab);
+                Assert.That(AirsideStaticWorld.IsDynamic(slab), Is.False);
+            }
+            finally
+            {
+                foreach (var go in created)
+                    UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
         public void NamedChildren_HasNameAndFindContainsUseCachedScan()
         {
             var root = new GameObject("NamedChildren root");

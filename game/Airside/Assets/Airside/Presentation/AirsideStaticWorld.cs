@@ -46,12 +46,14 @@ namespace Airside.Presentation
 
         private static void Collect(Transform root, List<GameObject> batch)
         {
-            for (var i = 0; i < root.childCount; i++)
-                Collect(root.GetChild(i), batch);
-
             var go = root.gameObject;
+            // Moving roots keep their whole subtree off the static batch so drift,
+            // GSE, birds and clouds still translate after Combine.
             if (IsDynamic(go))
                 return;
+
+            for (var i = 0; i < root.childCount; i++)
+                Collect(root.GetChild(i), batch);
 
             go.isStatic = true;
             if (go.GetComponent<MeshRenderer>() != null)
@@ -67,14 +69,29 @@ namespace Airside.Presentation
             var n = go.name;
             return n.StartsWith("Hold short", System.StringComparison.Ordinal)
                 || n.StartsWith("Commercial ", System.StringComparison.Ordinal)
+                || n.StartsWith("Ground traffic", System.StringComparison.Ordinal)
+                || n.StartsWith("Fuel truck", System.StringComparison.Ordinal)
+                || n.StartsWith("Baggage cart", System.StringComparison.Ordinal)
+                || n.StartsWith("Passenger ", System.StringComparison.Ordinal)
+                || n.StartsWith("GPU ", System.StringComparison.Ordinal)
+                || n.StartsWith("Wheel chock", System.StringComparison.Ordinal)
+                || n.StartsWith("Pushback", System.StringComparison.Ordinal)
                 || n.StartsWith("Rain", System.StringComparison.Ordinal)
+                || n.StartsWith("Touchdown", System.StringComparison.Ordinal)
+                || n.StartsWith("Taxi spray", System.StringComparison.Ordinal)
+                || n.StartsWith("Skid", System.StringComparison.Ordinal)
+                || n.StartsWith("Wet ", System.StringComparison.Ordinal)
                 || n.StartsWith("interior_glow", System.StringComparison.Ordinal)
                 || n.StartsWith("flag_", System.StringComparison.Ordinal)
                 || n.StartsWith("door_panel", System.StringComparison.Ordinal)
                 || n.StartsWith("Propeller", System.StringComparison.Ordinal)
                 || n.StartsWith("Star ", System.StringComparison.Ordinal)
                 || n.StartsWith("Bird ", System.StringComparison.Ordinal)
+                || n.StartsWith("Cloud", System.StringComparison.Ordinal)
+                || n.StartsWith("Windsock sock", System.StringComparison.Ordinal)
                 || n.StartsWith("Terminal window glow", System.StringComparison.Ordinal)
+                || n.StartsWith("Coast boat", System.StringComparison.Ordinal)
+                || n.StartsWith("Coast foam", System.StringComparison.Ordinal)
                 || n == "GroundShadow"
                 || n == "Hangar door"
                 || n == "Windsock"
@@ -82,8 +99,8 @@ namespace Airside.Presentation
                 || n == "Sun disc"
                 || n == "Moon disc"
                 || n == "Apron life"
-                || n == "Cloud bands"
-                || n == "Cloud umbras";
+                || n == "Star field"
+                || n == "Jetty deck";
         }
 
         private static void AttachDistantLod(Transform airfieldRoot)

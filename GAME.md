@@ -1,15 +1,14 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — continuous ground + ATC goal, cycle 136)
-- **Branch:** `feature/ground-atc-authenticity`
-- **Do next:** Press Play — overview 155; hold K/L + east Alpha edges; soft taxi-lead / apron–Alpha
-  fillets; vacated → Ground handoff; departure hold traffic naming. Continue until stop.
-- **In progress / half-done:** Continuous goal active. Cycle 136 in progress (docs/tests caught up).
+- **Last updated:** 2026-09-09 (Cursor — ground + ATC authenticity merged to main)
+- **Branch:** `main`
+- **Do next:** Packaged app review — quit Unity, run `scripts/rebuild-and-open-mac.sh`
+  (or `scripts/build-mac.sh` then open `work/builds/Airside.app`). Press Play audit: overview
+  155, hold K/L, soft fillets, ATC ops-log sequencing.
+- **In progress / half-done:** Continuous authenticity goal may continue after Bailey’s app review.
 - **Watch for / assumptions:**
-  - Do **not** run `scripts/rebuild-and-open-mac.sh` on this feature branch
-  - Batchmode tests blocked while Editor has the project open
-  - Screen/window capture blocked on macOS 15 — visual audit needs Bailey Play
-  - Save schema unchanged; CreateBlock ~22370 — prefer prefix matching over exact names
+  - Batchmode build needs Unity Editor closed
+  - Save schema unchanged
 - **Open question for Bailey:** none
 
 ---

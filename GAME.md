@@ -23,7 +23,10 @@
   leaves through an east gate toward the CBD. Glenelg/Holdfast towers sit
   south along the gulf. Jetty lamps light both jetties at night. CBD and
   Holdfast windows glow at dusk. Climb vapor on 23. Apron is wider west and
-  under the satellite. Save schema unchanged.
+  under the satellite. Taxiway Delta feeds the east satellite. 23 has its own
+  ALS. The terminal is larger with ochre idents. A West Beach surf club sits
+  by the jetty. Aircraft skin is glossier and cabin windows glow at night.
+  Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

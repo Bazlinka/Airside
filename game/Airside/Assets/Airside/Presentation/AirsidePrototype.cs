@@ -1495,6 +1495,8 @@ namespace Airside.Presentation
                       || n == "Cockpit glare"
                       || ((n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
                            || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
+                           || n.StartsWith("Window L", StringComparison.Ordinal)
+                           || n.StartsWith("Window R", StringComparison.Ordinal)
                            || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0)
                           && n.IndexOf("frame", StringComparison.OrdinalIgnoreCase) < 0)))
                     continue;
@@ -2782,6 +2784,9 @@ namespace Airside.Presentation
                 || name.StartsWith("Taxi edge", StringComparison.Ordinal)
                 || name.StartsWith("Taxi lead", StringComparison.Ordinal)
                 || name.StartsWith("Taxiway A", StringComparison.Ordinal)
+                || name.StartsWith("Taxiway B", StringComparison.Ordinal)
+                || name.StartsWith("Taxiway C", StringComparison.Ordinal)
+                || name.StartsWith("Taxiway D", StringComparison.Ordinal)
                 || name.StartsWith("Hangar apron", StringComparison.Ordinal)
                 || name.StartsWith("Freight", StringComparison.Ordinal)
                 || name.StartsWith("MSCP apron", StringComparison.Ordinal)
@@ -2800,6 +2805,8 @@ namespace Airside.Presentation
                 || name.StartsWith("Stand lead", StringComparison.Ordinal)
                 || name.StartsWith("Apron chevron", StringComparison.Ordinal)
                 || name.StartsWith("Hold short", StringComparison.Ordinal)
+                || name.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
+                || name.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                 || name.StartsWith("Taxi centre", StringComparison.Ordinal)
                 || name.StartsWith("Aiming point", StringComparison.Ordinal)
                 || name.StartsWith("TDZ ", StringComparison.Ordinal)
@@ -2873,6 +2880,9 @@ namespace Airside.Presentation
                     && !n.StartsWith("Apron slab", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi lead", StringComparison.Ordinal)
                     && !n.StartsWith("Taxiway A", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxiway B", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxiway C", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxiway D", StringComparison.Ordinal)
                     && !n.StartsWith("Hangar apron", StringComparison.Ordinal)
                     && !n.StartsWith("Runway marking", StringComparison.Ordinal)
                     && !n.StartsWith("Runway edge", StringComparison.Ordinal)
@@ -2896,6 +2906,8 @@ namespace Airside.Presentation
                     && !n.StartsWith("Stand lead", StringComparison.Ordinal)
                     && !n.StartsWith("Apron chevron", StringComparison.Ordinal)
                     && !n.StartsWith("Hold short", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi Bravo centre", StringComparison.Ordinal)
+                    && !n.StartsWith("Taxi Charlie centre", StringComparison.Ordinal)
                     && !n.StartsWith("Taxi centre", StringComparison.Ordinal)
                     && !n.StartsWith("Aiming point", StringComparison.Ordinal)
                     && !n.StartsWith("TDZ ", StringComparison.Ordinal)
@@ -4287,8 +4299,13 @@ namespace Airside.Presentation
                         continue;
                     }
 
-                    // Chase from far approach (high index) toward the threshold (index 0).
-                    var step = (Mathf.Min(_alsLights.Length, 8) - 1 - i) * 0.42f;
+                    // Chase from far approach (high index) toward each threshold (05 west / 23 east).
+                    var lampName = light.gameObject.name;
+                    var space = lampName.LastIndexOf(' ');
+                    var idx = 0;
+                    if (space >= 0)
+                        int.TryParse(lampName[(space + 1)..], out idx);
+                    var step = (7 - idx) * 0.42f;
                     var wave = Mathf.Repeat(chase - step, 2.4f);
                     var pulse = wave < 0.4f
                         ? Mathf.SmoothStep(0f, 1f, 1f - Mathf.Abs(wave / 0.2f - 1f))
@@ -4406,10 +4423,13 @@ namespace Airside.Presentation
                          "Terminal hall upper glow",
                          "Terminal east glow",
                          "Terminal east concourse glow",
+                         "Terminal east concourse upper glow",
                          "Freight office glow",
+                         "West Beach surf club glass",
                          "Holdfast glass A",
                          "Holdfast glass B",
                          "Holdfast glass C",
+                         "Holdfast glass D",
                          "ATC tower glass N",
                          "ATC tower glass S",
                          "ATC tower glass E",
@@ -4432,7 +4452,9 @@ namespace Airside.Presentation
                                    || name == "office_window"
                                    || name.StartsWith("Holdfast glass", StringComparison.Ordinal)
                                    || name.StartsWith("ATC tower glass", StringComparison.Ordinal)
-                                   || name.StartsWith("CBD glow", StringComparison.Ordinal));
+                                   || name.StartsWith("CBD glow", StringComparison.Ordinal)
+                                   || name.StartsWith("West Beach surf club glass", StringComparison.Ordinal)
+                                   || name.StartsWith("Terminal east concourse upper", StringComparison.Ordinal));
                 if (!wantsPoint)
                     continue;
 
@@ -4616,6 +4638,16 @@ namespace Airside.Presentation
                     lights.Add(light);
             }
 
+            for (var i = 0; i < 8; i++)
+            {
+                var go = GameObject.Find($"ALS east lamp {i}");
+                if (go == null)
+                    continue;
+                var light = go.GetComponent<Light>();
+                if (light != null)
+                    lights.Add(light);
+            }
+
             foreach (var name in new[] { "REIL lamp L", "REIL lamp R" })
             {
                 var go = GameObject.Find(name);
@@ -4764,6 +4796,11 @@ namespace Airside.Presentation
                 lights.Add(CreateEdgePointLight($"Taxi Charlie point {z}", new Vector3(51.2f, 0.45f, z),
                     new Color(0.3f, 0.55f, 1f), range: 8f));
             }
+
+            lights.Add(CreateEdgePointLight("Taxi Delta point 12", new Vector3(74.4f, 0.45f, 12f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
+            lights.Add(CreateEdgePointLight("Taxi Delta point 18", new Vector3(74.4f, 0.45f, 18f),
+                new Color(0.3f, 0.55f, 1f), range: 8f));
 
             // REIL-style white flashers just beyond each blast pad (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(VisualRunwayWestX - 10f, 1.6f, -2.8f),
@@ -5183,6 +5220,9 @@ namespace Airside.Presentation
             PlaceLevelPad("Taxiway Alpha", 5f, 9f, 162f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(32f, 1.2f));
             PlaceLevelPad("Taxiway Bravo", 6f, -9.2f, 170f, 4.8f, Shade(tarmac, 1.02f), asphalt, new Vector2(32f, 1f));
             PlaceLevelPad("Taxiway Charlie", 48f, 18f, 5.2f, 52f, Shade(tarmac, 1.04f), asphalt, new Vector2(1.1f, 10f));
+            PlaceLevelPad("Taxiway Delta", 72f, 16f, 5.2f, 12f, Shade(tarmac, 1.03f), asphalt, new Vector2(1.1f, 2.4f));
+            CreateTaxiChordPad("Taxiway Delta Alpha", new Vector3(72f, 0.02f, 9f), new Vector3(72f, 0.02f, 12f), 5.2f, asphalt, new Vector2(1.1f, 1f));
+            CreateTaxiChordPad("Taxiway Delta satellite", new Vector3(72f, 0.02f, 16f), new Vector3(64f, 0.02f, 16f), 5.0f, asphalt, new Vector2(1.2f, 1f));
             CreateTaxiChordPad("Taxiway Bravo Charlie", new Vector3(48f, 0.02f, -6f), new Vector3(48f, 0.02f, -9.2f), 5.4f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo 12-30", new Vector3(26f, 0.02f, -9.2f), new Vector3(21f, 0.02f, -17f), 5.6f, asphalt, new Vector2(1.6f, 1.4f));
             CreateTaxiChordPad("Taxiway Bravo W exit", new Vector3(-60f, 0.02f, -9.2f), new Vector3(-60f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
@@ -5295,7 +5335,8 @@ namespace Airside.Presentation
                     "terminal_body", "end_cap", "service_wing", "roof", "canopy", "buttress", "plinth",
                     "column", "signage", "fascia", "soffit", "wall_rib", "service_rib", "corner_trim", "girth",
                     "roof_panel", "roof_ridge", "roof_eave", "hvac"
-                });
+                },
+                uniformScale: 1.14f);
         }
 
         private static void BuildAirfieldTerrain12()
@@ -5313,7 +5354,10 @@ namespace Airside.Presentation
             if (GameObject.Find("landside_glass") == null && GameObject.Find("interior_glow_desk") == null)
                 CreateBlock("Terminal landside glow", new Vector3(26f, 2.2f, 29.4f), new Vector3(10f, 1.4f, 0.08f), new Color(1f, 0.8f, 0.42f));
             if (GameObject.Find("Terminal ident") == null)
-                CreateBlock("Terminal ident", new Vector3(26f, 5.15f, 24.05f), new Vector3(10.5f, 0.55f, 0.16f), new Color(0.1f, 0.18f, 0.32f));
+            {
+                CreateBlock("Terminal ident", new Vector3(26f, 5.15f, 24.05f), new Vector3(10.5f, 0.55f, 0.16f), new Color(0.12f, 0.2f, 0.34f));
+                CreateBlock("Terminal ident accent", new Vector3(26f, 5.15f, 23.94f), new Vector3(10.5f, 0.18f, 0.06f), new Color(0.86f, 0.5f, 0.16f));
+            }
             // East pier on the expanded apron so the landside matches the bigger field.
             CreateBlock("Terminal east wing", new Vector3(40f, 2.15f, 24.5f), new Vector3(10f, 4.3f, 7.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal east glass", new Vector3(40f, 2.35f, 20.85f), new Vector3(8f, 2.4f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
@@ -5327,7 +5371,11 @@ namespace Airside.Presentation
             CreateBlock("Terminal east concourse glass", new Vector3(60f, 2.15f, 18.85f), new Vector3(10f, 2.3f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Terminal east concourse roof", new Vector3(60f, 4.0f, 22.4f), new Vector3(12.6f, 0.22f, 7.6f), new Color(0.5f, 0.53f, 0.56f));
             CreateBlock("Terminal east concourse glow", new Vector3(60f, 2.05f, 19.0f), new Vector3(8.5f, 1.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal east ident", new Vector3(60f, 4.15f, 18.95f), new Vector3(6.4f, 0.4f, 0.14f), new Color(0.1f, 0.18f, 0.32f));
+            CreateBlock("Terminal east ident", new Vector3(60f, 4.15f, 18.95f), new Vector3(6.4f, 0.4f, 0.14f), new Color(0.12f, 0.2f, 0.34f));
+            CreateBlock("Terminal east ident accent", new Vector3(60f, 4.15f, 18.86f), new Vector3(6.4f, 0.12f, 0.05f), new Color(0.86f, 0.5f, 0.16f));
+            CreateBlock("Terminal east concourse upper", new Vector3(60f, 5.35f, 22.5f), new Vector3(10.4f, 1.9f, 5.6f), new Color(0.66f, 0.7f, 0.73f));
+            CreateBlock("Terminal east concourse upper glass", new Vector3(60f, 5.4f, 19.65f), new Vector3(8.8f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
+            CreateBlock("Terminal east concourse upper glow", new Vector3(60f, 5.3f, 19.78f), new Vector3(7.4f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
             // Extra storey so the main hall is not a one-box regional shed from overview.
             CreateBlock("Terminal hall upper", new Vector3(26f, 5.9f, 27.2f), new Vector3(16.5f, 2.4f, 5.2f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
@@ -5999,6 +6047,12 @@ namespace Airside.Presentation
             PlaceCoastRock("Coast rock B", new Vector3(-80f, -0.1f, -12f), "rock_b", new Color(0.62f, 0.42f, 0.32f), 3.6f, -12f);
             PlaceCoastRock("Coast rock C", new Vector3(-76f, -0.14f, 48f), "rock_c", Shade(rock, 1.05f), 4.4f, 40f);
             PlaceCoastRock("Coast rock D", new Vector3(-82f, -0.12f, -32f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
+            var cream = new Color(0.86f, 0.82f, 0.74f);
+            var surfGlass = new Color(0.22f, 0.42f, 0.55f, 0.5f);
+            CreateBlock("West Beach surf club", new Vector3(-70f, 2.2f, 18f), new Vector3(6.8f, 4.4f, 5.0f), cream);
+            CreateBlock("West Beach surf club glass", new Vector3(-73.35f, 2.4f, 18f), new Vector3(0.12f, 2.6f, 3.6f), surfGlass);
+            CreateBlock("West Beach surf club roof", new Vector3(-70f, 4.55f, 18f), new Vector3(7.4f, 0.28f, 5.5f), new Color(0.42f, 0.28f, 0.2f));
+            PlaceContactShadow("West Beach surf club contact", new Vector3(-70f, 0.04f, 18f), new Vector3(7.6f, 0.02f, 5.6f), 0.14f);
             BuildGlenelgCoast();
         }
 
@@ -6018,12 +6072,15 @@ namespace Airside.Presentation
             CreateBlock("Holdfast tower A", new Vector3(-74f, 8.2f, -92f), new Vector3(4.4f, 16.4f, 3.8f), cream);
             CreateBlock("Holdfast tower B", new Vector3(-66f, 6.6f, -100f), new Vector3(3.8f, 13.2f, 3.4f), pale);
             CreateBlock("Holdfast tower C", new Vector3(-80f, 5.4f, -84f), new Vector3(5.2f, 10.8f, 4.2f), cream);
+            CreateBlock("Holdfast tower D", new Vector3(-72f, 4.8f, -58f), new Vector3(4.0f, 9.6f, 3.6f), pale);
             CreateBlock("Holdfast glass A", new Vector3(-74f, 8.4f, -93.95f), new Vector3(3.6f, 10f, 0.12f), glass);
             CreateBlock("Holdfast glass B", new Vector3(-66f, 6.8f, -101.75f), new Vector3(3.0f, 8f, 0.12f), glass);
             CreateBlock("Holdfast glass C", new Vector3(-80f, 5.6f, -86.15f), new Vector3(4.2f, 7.2f, 0.12f), glass);
+            CreateBlock("Holdfast glass D", new Vector3(-72f, 5.0f, -59.85f), new Vector3(3.2f, 6.4f, 0.12f), glass);
             PlaceContactShadow("Holdfast contact A", new Vector3(-74f, 0.04f, -92f), new Vector3(5.2f, 0.02f, 4.6f), 0.16f);
             PlaceContactShadow("Holdfast contact B", new Vector3(-66f, 0.04f, -100f), new Vector3(4.6f, 0.02f, 4.2f), 0.14f);
             PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
+            PlaceContactShadow("Holdfast contact D", new Vector3(-72f, 0.04f, -58f), new Vector3(4.8f, 0.02f, 4.4f), 0.14f);
         }
 
         /// <summary>VEG-002 rock accents on the West Beach shoreline; cube blocks remain fallback.</summary>
@@ -7018,6 +7075,53 @@ namespace Airside.Presentation
                 reil.intensity = 0f;
                 reil.shadows = LightShadows.None;
             }
+
+            BuildEastApproachLightBars();
+        }
+
+        /// <summary>
+        /// Visual-only ALS east of 23 so night takeoff and overview are not one-sided.
+        /// Greybox stations keep Awake cheap; chase is collected as ALS east lamp N.
+        /// </summary>
+        private static void BuildEastApproachLightBars()
+        {
+            var bar = new Color(0.85f, 0.88f, 0.9f);
+            var stem = new Color(0.35f, 0.36f, 0.38f);
+            const int stationCount = 6;
+            const float stationStep = 6.5f;
+            for (var i = 0; i < stationCount; i++)
+            {
+                var x = VisualThresholdEastX + 8f + i * stationStep;
+                CreateBlock($"ALS east stem {i}", new Vector3(x, 0.35f, 0f), new Vector3(0.12f, 0.7f, 0.12f), stem);
+                CreateBlock($"ALS east centre {i}", new Vector3(x, 0.75f, 0f), new Vector3(0.35f, 0.18f, 0.35f), bar);
+                if (i % 2 == 0)
+                {
+                    CreateBlock($"ALS east bar L {i}", new Vector3(x, 0.7f, -1.5f - i * 0.1f), new Vector3(0.25f, 0.14f, 2.4f + i * 0.16f), bar);
+                    CreateBlock($"ALS east bar R {i}", new Vector3(x, 0.7f, 1.5f + i * 0.1f), new Vector3(0.25f, 0.14f, 2.4f + i * 0.16f), bar);
+                }
+
+                var lampGo = new GameObject($"ALS east lamp {i}");
+                lampGo.transform.position = new Vector3(x, 0.95f, 0f);
+                lampGo.transform.rotation = Quaternion.LookRotation(
+                    new Vector3(VisualThresholdEastX - x, -0.7f, 0f).normalized);
+                var light = lampGo.AddComponent<Light>();
+                light.type = LightType.Spot;
+                light.color = new Color(1f, 0.95f, 0.85f);
+                light.range = 14f + i * 0.55f;
+                light.spotAngle = 42f;
+                light.innerSpotAngle = 18f;
+                light.intensity = 0f;
+                light.shadows = LightShadows.None;
+
+                var lens = CreateBlock($"ALS east lens {i}", new Vector3(x, 0.78f, 0f), new Vector3(0.28f, 0.12f, 0.28f),
+                    new Color(1f, 0.97f, 0.88f));
+                var lensRenderer = lens.GetComponent<Renderer>();
+                if (lensRenderer != null && lensRenderer.material.HasProperty("_EmissionColor"))
+                {
+                    lensRenderer.material.EnableKeyword("_EMISSION");
+                    lensRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.95f, 0.8f) * 1.4f);
+                }
+            }
         }
 
         /// <summary>
@@ -7794,11 +7898,16 @@ namespace Airside.Presentation
             CreateBlock("CBD midrise O", new Vector3(154f, 4.6f, 78f), new Vector3(9.2f, 9.2f, 6.8f), stone);
             CreateBlock("CBD midrise K", new Vector3(146f, 3.6f, 86f), new Vector3(8.8f, 7.2f, 6.4f), stone);
             CreateBlock("CBD midrise L", new Vector3(160f, 4.2f, 88f), new Vector3(5.4f, 8.4f, 4.6f), pale);
+            CreateBlock("CBD tower P", new Vector3(126f, 8.6f, 90f), new Vector3(3.6f, 17.2f, 3.2f), glass);
+            CreateBlock("CBD tower Q", new Vector3(134f, 6.4f, 82f), new Vector3(4.8f, 12.8f, 4.0f), pale);
+            CreateBlock("CBD midrise R", new Vector3(118f, 4.2f, 96f), new Vector3(8.6f, 8.4f, 6.2f), stone);
             PlaceCbdWindowGlow("CBD glow B", new Vector3(156f, 11f, 106.35f), new Vector3(2.6f, 16f, 0.12f));
             PlaceCbdWindowGlow("CBD glow E", new Vector3(172f, 8.4f, 112.45f), new Vector3(2.4f, 12f, 0.12f));
             PlaceCbdWindowGlow("CBD glow H", new Vector3(168f, 12.4f, 116.75f), new Vector3(2.0f, 18f, 0.12f));
             PlaceCbdWindowGlow("CBD glow M", new Vector3(190f, 8.8f, 108.55f), new Vector3(2.2f, 13f, 0.12f));
             PlaceCbdWindowGlow("CBD glow A", new Vector3(148f, 9f, 100.15f), new Vector3(3.2f, 12f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow P", new Vector3(126f, 8.6f, 88.35f), new Vector3(2.6f, 12f, 0.12f));
+            PlaceCbdWindowGlow("CBD glow Q", new Vector3(134f, 6.4f, 79.95f), new Vector3(3.4f, 9f, 0.12f));
             PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
             PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
@@ -9376,7 +9485,7 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(4.0f, 0.012f, 2.15f);
+            shadow.transform.localScale = new Vector3(4.4f, 0.012f, 2.35f);
             var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.22f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -9517,13 +9626,13 @@ namespace Airside.Presentation
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))
-                    renderer.material.SetFloat("_Smoothness", 0.78f);
+                    renderer.material.SetFloat("_Smoothness", 0.82f);
                 if (renderer.material.HasProperty("_Metallic"))
                     renderer.material.SetFloat("_Metallic",
                         n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) >= 0
                         || n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) >= 0
-                            ? 0.28f
-                            : 0.16f);
+                            ? 0.32f
+                            : 0.18f);
             }
         }
 
@@ -10500,7 +10609,13 @@ namespace Airside.Presentation
             for (var x = -70; x <= 80; x += 6)
                 CreateBlock($"Taxi Bravo centre {x}", new Vector3(x, 0.05f, -9.2f), new Vector3(2.6f, 0.02f, 0.14f), taxiPaint);
             for (var z = -6; z <= 40; z += 6)
+            {
+                if (z >= 20 && z <= 28)
+                    continue;
                 CreateBlock($"Taxi Charlie centre {z}", new Vector3(48f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.6f), taxiPaint);
+            }
+            for (var z = 11; z <= 21; z += 5)
+                CreateBlock($"Taxi centre Delta {z}", new Vector3(72f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.4f), taxiPaint);
 
             // Extend paint onto the A1 exit fillet toward the runway.
             for (var x = -24; x <= -12; x += 1)

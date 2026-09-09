@@ -60,7 +60,7 @@ namespace Airside.Presentation
             [SurfaceKind.Sand] = new Profile(0.0f, 0.16f, 0.62f, 0.84f),
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
-            [SurfaceKind.AircraftSkin] = new Profile(0.22f, 0.78f, 0.1f, 0.98f),
+            [SurfaceKind.AircraftSkin] = new Profile(0.22f, 0.82f, 0.1f, 0.98f),
             // Flat painted markings — matte, not aircraft-skin gloss.
             [SurfaceKind.PaintedLine] = new Profile(0.02f, 0.22f, 0.08f, 0.96f),
             // Slightly softer glass so curtain walls read as panes, not chrome mirrors.

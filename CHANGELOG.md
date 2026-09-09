@@ -13,7 +13,7 @@ change it describes.
   puddles/smoke/engine audio cache renderers instead of `GetComponent` every
   frame. Ops `antenna_dish` stays off the static batch so it still rotates.
   High stays 4× MSAA + SMAA, four cascades, 12 additional lights, two probes.
-  Decision 0029. Evidence: brace depth 0; `scripts/test-domain.sh` pending.
+  Decision 0029. Evidence: brace depth 0; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime kit combine + static-batch skip.** ALS stations, REIL, cones,
   barriers, signs, FOD bins, dollies, windsock poles, stairs and GPU carts

@@ -191,7 +191,7 @@ animation clips → P3 audio.
 | AUD-001 | Engine / prop loop | Procedural sine | Missing | Project-owned or cleared licence loop | `Audio/` (new folder — add to AGENTS map when created) |
 | AUD-002 | Ambient wind / coast bed | Yes (`Resources/Airside/Audio/wind_whoosh_loop.ogg`) | Partial — wind loop integrated; coastal bed still procedural | OpenGameArt / SketchMan3 CC0; register row | `../../Resources/Airside/Audio/` (runtime-loadable AudioClip path) |
 | AUD-003 | Touchdown / rollout one-shot | No | Missing | Same | `Audio/` |
-| AUD-004 | Soft rain bed | No | Missing | Same | `Audio/` |
+| AUD-004 | Soft rain bed | Yes (`Resources/Airside/Audio/rain_loop_03.ogg`) | Integrated — CC0 45-second bed; procedural fallback retained | OpenGameArt / Ylmir CC0; register row | `../../Resources/Airside/Audio/` (runtime-loadable AudioClip path) |
 | AUD-005 | UI click / alert (minimal) | Yes (`Resources/Airside/Audio/ui_select_005.ogg`) | Partial — click integrated; alert still missing | Kenney Interface Sounds (CC0); register row | `../../Resources/Airside/Audio/` (runtime-loadable AudioClip path) |
 
 ## Reference boards (keep in git — modelling targets, not runtime meshes)

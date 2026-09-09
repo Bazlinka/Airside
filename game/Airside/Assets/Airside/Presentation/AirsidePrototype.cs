@@ -188,7 +188,8 @@ namespace Airside.Presentation
             _ambientWindAudio.volume = 0f;
             _ambientWindAudio.Play();
             _ambientRainAudio = gameObject.AddComponent<AudioSource>();
-            _ambientRainAudio.clip = CreateRainClip();
+            var externalRainClip = Resources.Load<AudioClip>("Airside/Audio/rain_loop_03");
+            _ambientRainAudio.clip = externalRainClip != null ? externalRainClip : CreateRainClip();
             _ambientRainAudio.loop = true;
             _ambientRainAudio.playOnAwake = false;
             _ambientRainAudio.spatialBlend = 0f;

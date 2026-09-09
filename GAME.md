@@ -26,7 +26,8 @@
   runs 12 stations out over the gulf on piers so the opening shot has a
   lit final. Day grade is punchier. Bravo east infield holds a sixth idle
   turboprop; Charlie has apron GSE. Hills ridge is a bit more broken up.
-  EditMode 193/193 earlier this session.
+  T1 landside glass is taller and longer; an airside curtain wall faces the
+  gulf so the hall reads from the opening shot. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -71,7 +72,8 @@
   Hills / Mt Lofty sit east of the CBD. A visual turboprop holds on the
   12/30 taxi with night lamps along that strip. Bravo west holds another
   idle turboprop. 05 ALS extends over the gulf on piers. Bravo east infield
-  holds a sixth idle turboprop. Save schema
+  holds a sixth idle turboprop. T1 glass is taller with an airside curtain.
+  Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

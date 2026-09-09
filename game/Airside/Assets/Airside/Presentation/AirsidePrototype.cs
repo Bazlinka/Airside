@@ -4491,6 +4491,7 @@ namespace Airside.Presentation
                          "glass_front",
                          "landside_glass",
                          "Terminal hall upper glow",
+                         "Terminal airside curtain glow",
                          "Terminal east glow",
                          "Terminal east concourse glow",
                          "Terminal east concourse upper glow",
@@ -5525,11 +5526,14 @@ namespace Airside.Presentation
             CreateBlock("Terminal east concourse upper glow", new Vector3(60f, 5.3f, 19.78f), new Vector3(7.4f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
             BuildSatelliteAerobridges();
             // Extra storey so the main hall is not a one-box regional shed from overview.
-            CreateBlock("Terminal hall upper", new Vector3(26f, 5.9f, 27.2f), new Vector3(16.5f, 2.4f, 5.2f), new Color(0.66f, 0.7f, 0.73f));
-            CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.0f, 24.55f), new Vector3(14f, 1.5f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
-            CreateBlock("Terminal hall upper glow", new Vector3(26f, 5.85f, 24.7f), new Vector3(12f, 1.1f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            CreateBlock("Terminal roof plant", new Vector3(22f, 7.25f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
-            CreateBlock("Terminal roof plant B", new Vector3(30.4f, 7.22f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
+            CreateBlock("Terminal hall upper", new Vector3(26f, 6.35f, 27.2f), new Vector3(18.5f, 3.2f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
+            CreateBlock("Terminal hall upper glass", new Vector3(26f, 6.45f, 24.45f), new Vector3(16.2f, 2.1f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
+            CreateBlock("Terminal hall upper glow", new Vector3(26f, 6.3f, 24.62f), new Vector3(14f, 1.5f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal airside curtain", new Vector3(26f, 3.55f, 23.68f), new Vector3(24f, 5.2f, 0.1f), new Color(0.16f, 0.4f, 0.52f, 0.48f),
+                "Textures/Environment/tx_terminal_glass_mask_v01.png", new Vector2(4.2f, 2.2f));
+            CreateBlock("Terminal airside curtain glow", new Vector3(26f, 3.4f, 23.78f), new Vector3(20f, 3.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("Terminal roof plant", new Vector3(22f, 8.15f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal roof plant B", new Vector3(30.4f, 8.12f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
             CreateBlock("Terminal east roof plant", new Vector3(57.2f, 6.5f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 6.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
             CreateBlock("Terminal west roof plant", new Vector3(9.2f, 6.55f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
@@ -7628,8 +7632,8 @@ namespace Airside.Presentation
 
             var ochre = new Color(0.86f, 0.5f, 0.16f);
             // Rooftop scale so ADL still reads from the 318 m opening shot.
-            const float y = 7.45f;
-            const float z = 24.32f;
+            const float y = 8.15f;
+            const float z = 24.28f;
             CreateBlock("Ident A L", new Vector3(21.35f, y, z), new Vector3(0.38f, 2.7f, 0.24f), ochre);
             CreateBlock("Ident A R", new Vector3(23.25f, y, z), new Vector3(0.38f, 2.7f, 0.24f), ochre);
             CreateBlock("Ident A bar", new Vector3(22.3f, y - 0.12f, z), new Vector3(1.7f, 0.38f, 0.24f), ochre);
@@ -7650,20 +7654,20 @@ namespace Airside.Presentation
             var glass = new Color(0.16f, 0.4f, 0.52f, 0.5f);
             var mullion = new Color(0.72f, 0.75f, 0.78f);
             var soffit = new Color(0.52f, 0.55f, 0.58f);
-            for (var i = -3; i <= 3; i++)
+            for (var i = -3; i <= 5; i++)
             {
-                var yaw = i * 8f;
-                var x = 26f + i * 2.35f;
-                var z = 32.9f - Mathf.Abs(i) * 0.38f;
-                CreateBlock($"T1 curve glass {i}", new Vector3(x, 3.15f, z), new Vector3(2.45f, 4.5f, 0.12f), glass)
+                var yaw = i * 7.5f;
+                var x = 26f + i * 2.4f;
+                var z = 32.95f - Mathf.Abs(i) * 0.32f;
+                CreateBlock($"T1 curve glass {i}", new Vector3(x, 3.65f, z), new Vector3(2.55f, 5.6f, 0.12f), glass)
                     .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                CreateBlock($"T1 curve mullion {i}", new Vector3(x, 3.15f, z - 0.08f), new Vector3(0.12f, 4.6f, 0.16f), mullion)
+                CreateBlock($"T1 curve mullion {i}", new Vector3(x, 3.65f, z - 0.08f), new Vector3(0.12f, 5.75f, 0.16f), mullion)
                     .transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
 
-            CreateBlock("T1 curve roof", new Vector3(26f, 5.55f, 32.1f), new Vector3(16.8f, 0.2f, 3.4f), soffit);
-            CreateBlock("T1 curve glow", new Vector3(26f, 3.05f, 33.05f), new Vector3(14.2f, 2.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
-            PlaceContactShadow("T1 curve contact", new Vector3(26f, 0.035f, 32.4f), new Vector3(17.2f, 0.02f, 4.2f), 0.12f);
+            CreateBlock("T1 curve roof", new Vector3(28.4f, 6.55f, 32.15f), new Vector3(20.4f, 0.22f, 3.6f), soffit);
+            CreateBlock("T1 curve glow", new Vector3(28.4f, 3.45f, 33.18f), new Vector3(17.6f, 3.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            PlaceContactShadow("T1 curve contact", new Vector3(28.4f, 0.035f, 32.4f), new Vector3(20.8f, 0.02f, 4.4f), 0.12f);
         }
 
         /// <summary>

@@ -83,7 +83,8 @@ change it describes.
   boats sit in the opening-shot water. Shadow cascades favour the 318 m
   overview. 05 ALS runs 12 stations out over Gulf St Vincent on piers;
   the day grade is punchier; Bravo east and Charlie pick up idle life;
-  the Hills ridge is less of a single slab. Unity EditMode 193/193.
+  the Hills ridge is less of a single slab. T1 landside glass is taller and
+  longer, with an airside curtain wall facing the gulf. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

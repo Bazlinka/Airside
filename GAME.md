@@ -54,7 +54,7 @@
   sits in the 05 shore gap. Mile End houses and cars fill the arterial
   foreground. 05 ALS beads and piers read from 318 m; aircraft polish
   covers flaps/pylons/belly; MSCP is three storeys with north voids;
-  landside A is larger.
+  landside A is larger. 23 ALS beads match the 05 ladder.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite

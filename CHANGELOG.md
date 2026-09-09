@@ -106,7 +106,9 @@ change it describes.
   instead of one slab; aiming bars and aircraft ground shadows match the
   1.38 kit. Follow camera pulled back so the bigger airframe reads in
   full; east hangar trees moved off the roof; kit gets winglets if the
-  glTF has none. Unity EditMode 193/193.
+  glTF has none. East satellite has a wave roof; Rapid 23 infield holds
+  an eighth idle turboprop; eucalyptus sits on the Hills ridge.
+  Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

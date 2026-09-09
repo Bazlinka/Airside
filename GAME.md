@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 26 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 27 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -46,6 +46,8 @@
   Aiming bars and aircraft ground shadows match the 1.38 kit.
   Follow camera pulled back for the bigger airframe; east hangar no longer
   has trees through the roof. Kit winglets inject if the glTF has none.
+  East satellite has a wave roof; an eighth idle turboprop holds south of
+  Bravo by Rapid 23; eucalyptus sits on the Hills ridge tops.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
@@ -100,7 +102,9 @@
   reflects the opening shot; aircraft keep skin maps under liveries.
   T1 has an airside wave roof; 12/30 infield is coastal green; kit is 1.38.
   12/30 is wider with a 23 blast fence and east hangar. Hills ridge is
-  folded. Follow camera frames the 1.38 kit. Save schema
+  folded. Follow camera frames the 1.38 kit. East satellite has a wave
+  roof; Rapid 23 infield holds an eighth idle turboprop; Hills ridge
+  carries eucalyptus. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

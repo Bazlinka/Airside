@@ -5616,8 +5616,9 @@ namespace Airside.Presentation
             BuildAdelaideAirsideWaveRoof();
             CreateBlock("Terminal roof plant", new Vector3(22f, 9.55f, 27.4f), new Vector3(3.2f, 0.7f, 2.2f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal roof plant B", new Vector3(30.4f, 9.35f, 27.6f), new Vector3(2.6f, 0.55f, 1.8f), new Color(0.46f, 0.48f, 0.5f));
-            CreateBlock("Terminal east roof plant", new Vector3(57.2f, 6.5f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
-            CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 6.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
+            BuildAdelaideSatelliteWaveRoof();
+            CreateBlock("Terminal east roof plant", new Vector3(57.2f, 7.55f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
+            CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 7.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
             CreateBlock("Terminal west roof plant", new Vector3(9.2f, 6.55f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
             CreateBlock("Terminal west glass", new Vector3(12f, 2.25f, 32.65f), new Vector3(10.4f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
@@ -7832,6 +7833,25 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Wave roof on the east satellite so Charlie/Rapid 23 is not a flat box
+        /// from the gulf opening shot. Sits above the concourse upper hall.
+        /// </summary>
+        private static void BuildAdelaideSatelliteWaveRoof()
+        {
+            var soffit = new Color(0.5f, 0.53f, 0.56f);
+            var pale = new Color(0.76f, 0.78f, 0.8f);
+            for (var i = -2; i <= 2; i++)
+            {
+                var x = 60f + i * 2.4f;
+                var crest = 6.55f + Mathf.Sin((i + 2) * 0.7f) * 0.85f;
+                CreateBlock($"Satellite wave {i}", new Vector3(x, crest, 22.6f), new Vector3(2.55f, 0.32f, 4.6f),
+                    i % 2 == 0 ? soffit : pale);
+            }
+
+            CreateBlock("Satellite wave fascia", new Vector3(60f, 6.35f, 20.25f), new Vector3(11.6f, 0.24f, 0.18f), soffit);
+        }
+
+        /// <summary>
         /// Curved landside glass so the main hall reads as Adelaide T1 from overview,
         /// not a flat regional box. Presentation only.
         /// </summary>
@@ -8529,7 +8549,32 @@ namespace Airside.Presentation
                 grass, new Vector2(6f, 10f), top: 24f, height: 34f).transform.rotation = Quaternion.Euler(0f, -16f, 0f);
             PlaceLevelPad("Adelaide Hills fold C", 292f, -38f, 52f, 70f, Shade(AirsideTheme.DryGrass, 0.4f),
                 grass, new Vector2(9f, 12f), top: 15f, height: 22f).transform.rotation = Quaternion.Euler(0f, 12f, 0f);
+            PlaceLevelPad("Adelaide Hills fold D", 340f, -8f, 28f, 48f, Shade(AirsideTheme.Eucalyptus, 0.26f),
+                grass, new Vector2(5f, 8f), top: 19f, height: 26f).transform.rotation = Quaternion.Euler(0f, -28f, 0f);
+            PlaceHillsRidgeTrees();
             BuildAdelaideSkyline();
+        }
+
+        /// <summary>
+        /// Eucalyptus on the ridge tops so the Hills read as a treed range from
+        /// 318 m, not bare grass slabs. Y matches pad tops; not wet pavement.
+        /// </summary>
+        private static void PlaceHillsRidgeTrees()
+        {
+            PlaceTree(new Vector3(272f, 8.0f, 18f), 3.2f);
+            PlaceTree(new Vector3(268f, 8.0f, 42f), 2.8f);
+            PlaceTree(new Vector3(254f, 8.0f, -8f), 2.6f);
+            PlaceTree(new Vector3(304f, 18.0f, 12f), 3.6f);
+            PlaceTree(new Vector3(318f, 16.0f, 48f), 3.4f);
+            PlaceTree(new Vector3(312f, 16.0f, 8f), 3.1f);
+            PlaceTree(new Vector3(334f, 24.0f, 52f), 3.8f);
+            PlaceTree(new Vector3(292f, 15.0f, -38f), 3.0f);
+            PlaceTree(new Vector3(332f, 22.0f, 88f), 3.5f);
+            PlaceTree(new Vector3(348f, 28.0f, 58f), 4.2f);
+            PlaceTree(new Vector3(288f, 12.0f, -72f), 2.6f);
+            PlaceTree(new Vector3(306f, 14.0f, -22f), 3.1f);
+            PlaceTree(new Vector3(340f, 19.0f, -8f), 3.3f);
+            PlaceTree(new Vector3(326f, 16.0f, 72f), 2.9f);
         }
 
         /// <summary>
@@ -11365,6 +11410,9 @@ namespace Airside.Presentation
                 dash.transform.rotation = Quaternion.Euler(0f, rapidYaw, 0f);
             }
             CreateBlock("Hold short Rapid", new Vector3(70.4f, 0.05f, 7.6f), new Vector3(3.2f, 0.03f, 0.2f), new Color(0.95f, 0.85f, 0.2f));
+            var rapidHold = CreateBlock("Hold short Rapid Rwy", new Vector3(65.2f, 0.05f, 1.2f),
+                new Vector3(3.6f, 0.03f, 0.22f), new Color(0.95f, 0.85f, 0.2f));
+            rapidHold.transform.rotation = Quaternion.Euler(0f, rapidYaw, 0f);
             for (var z = 16; z <= 28; z += 4)
                 CreateBlock($"Taxiway Echo centre {z}", new Vector3(74f, 0.05f, z), new Vector3(0.14f, 0.02f, 2.2f), taxiPaint);
             for (var z = -8; z <= -5; z += 1)
@@ -11950,7 +11998,10 @@ namespace Airside.Presentation
             PlaceBeltLoader(serviceKit, new Vector3(8.2f, 0f, 22.4f), 195f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(26.8f, 0f, 19.0f), 185f, silhouetteOnly: true);
             PlaceBeltLoader(serviceKit, new Vector3(26.8f, 0f, 29.0f), 175f, silhouetteOnly: true);
+            PlaceBeltLoader(serviceKit, new Vector3(78.2f, 0f, -16.4f), 95f, silhouetteOnly: true);
             PlaceBaggageDolly(kit, new Vector3(6.4f, 0f, 19.6f));
+            PlaceBaggageDolly(kit, new Vector3(81.4f, 0f, -17.2f));
+            PlaceBaggageDolly(kit, new Vector3(51.2f, 0f, 14.2f));
             PlaceBaggageDolly(kit, new Vector3(44f, 0f, 16.8f));
             PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
             PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
@@ -12343,6 +12394,10 @@ namespace Airside.Presentation
                 "Textures/Decals/dc_livery_airside_traffic_v01.png");
             PlaceIdleApronAircraft("Idle west apron", new Vector3(2f, 0.7f, 20.4f), 90f, new Color(0.14f, 0.22f, 0.48f),
                 "Textures/Decals/dc_livery_coastline_regional_v01.png");
+            // South of Bravo, east of the Bravo-east hold — fills the Rapid 23 /
+            // Charlie pocket from overview. Off Alpha (z=9) and off Rapid 23.
+            PlaceIdleApronAircraft("Idle Rapid infield", new Vector3(80f, 0.7f, -18f), 270f, new Color(0.2f, 0.28f, 0.46f),
+                "Textures/Decals/dc_livery_emu_air_v01.png");
         }
 
         /// <summary>

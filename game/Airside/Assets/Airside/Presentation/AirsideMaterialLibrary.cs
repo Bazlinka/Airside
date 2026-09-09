@@ -692,9 +692,15 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Prefer denser v02 surface maps from the approved fidelity board; keep v01 fallback.</summary>
+        /// <summary>
+        /// Prefer the reviewed v03 surface maps, then the denser v02 maps, while keeping
+        /// the original v01 procedural maps as a safe fallback for incomplete intakes.
+        /// </summary>
         private static Texture2D PreferAuthoredMap(string stem, string mapKind, bool linear)
         {
+            var v03 = TryLoadArtTexture($"Textures/Surfaces/{stem}_{mapKind}_v03.png", linear: linear);
+            if (v03 != null)
+                return v03;
             var v02 = TryLoadArtTexture($"Textures/Surfaces/{stem}_{mapKind}_v02.png", linear: linear);
             if (v02 != null)
                 return v02;

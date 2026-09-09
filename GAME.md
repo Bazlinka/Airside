@@ -1,17 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Codex — free CC0 coastal-audio intake)
-- **Branch:** `art/free-coast-audio` (PR pending)
-- **Do next:** Merge the coastal-audio PR, then continue the checklist in priority
+- **Last updated:** 2026-09-09 (Codex — free CC0 runway-surface intake)
+- **Branch:** `art/free-industrial-props` (PR pending)
+- **Do next:** Merge the runway-surface PR, then continue the checklist in priority
   order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters. AUD-002
-  wind/coast, AUD-004 rain and AUD-005 click are integrated; source distinct
-  cleared alert, touchdown and engine assets after higher-priority visual kits.
+  wind/coast, AUD-004 rain, AUD-005 click and TEX-SRF-001 runway asphalt are
+  integrated; source distinct cleared alert, touchdown and engine assets after
+  higher-priority visual kits.
 - **In progress / half-done:** First-playable **refine / art sourcing** — no new
   economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
 - **Watch for / assumptions:**
   - Checklist rows marked Placeholder still need authored replacements; AUD-005 remains partial (click only)
   - Register + StreamingAssets sync required with every new runtime art commit
-  - The generated `double` to `float` source errors in `AirsidePrototype.cs` were repaired in this intake; local Unity EditMode is still blocked while the package resolver initialises UGUI/Input System/URP dependencies, so do not treat the import as a green test run yet
+  - The generated `double` to `float` source errors in `AirsidePrototype.cs` and the `BugfixPassTests` StableId assertion mismatch were repaired in this intake. Unity EditMode passes 192/192; `scripts/test-domain.sh` remains unavailable on this Mac because no .NET SDK is installed
   - Save schema unchanged
 - **Open question for Bailey:** none
 

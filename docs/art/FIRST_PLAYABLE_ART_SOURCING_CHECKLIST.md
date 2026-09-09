@@ -135,7 +135,7 @@ animation clips → P3 audio.
 
 | ID | Item | In git? | Quality | Source from | Target path |
 |---|---|---|---|---|---|
-| TEX-SRF-001 | Asphalt runway base + PBR | Yes (`v01`/`v02`) | Placeholder | Hand-authored tileables vs surface board | `Textures/Surfaces/tx_asphalt_runway_*` |
+| TEX-SRF-001 | Asphalt runway base + PBR | Yes (`v01`/`v02`/CC0 `v03`) | Integrated — CC0 asphalt maps, camera QA pending | Poly Haven Asphalt 01, resized to 1024px and roughness-derived smoothness | `Textures/Surfaces/tx_asphalt_runway_*` |
 | TEX-SRF-002 | Concrete apron base + PBR | Yes | Placeholder | Same | `Textures/Surfaces/tx_concrete_apron_*` |
 | TEX-SRF-003 | Grass Kingscote base + PBR | Yes | Placeholder | Same | `Textures/Surfaces/tx_grass_kingscote_*` |
 | TEX-SRF-004 | Corrugated metal base + PBR | Yes | Placeholder | Same | `Textures/Surfaces/tx_corrugated_metal_*` |

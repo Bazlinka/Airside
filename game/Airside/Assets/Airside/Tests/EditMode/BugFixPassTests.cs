@@ -198,7 +198,7 @@ namespace Airside.Tests
                 new AirportTaxiNetwork().RouteTo(AirportSimulation.StandTwo));
             var resources = flight.ResourcesForPhase(AircraftPhase.Approach, new SimulationTime(0)).ToArray();
             Assert.That(resources, Does.Contain(AirportSimulation.StandTwo));
-            Assert.That(resources, Does.Not.Contain(AirportSimulation.Runway));
+            Assert.That(resources.Any(resource => resource.Equals(AirportSimulation.Runway)), Is.False);
 
             var landing = flight.ResourcesForPhase(AircraftPhase.Landing, new SimulationTime(0)).ToArray();
             Assert.That(landing, Does.Contain(AirportSimulation.StandTwo));

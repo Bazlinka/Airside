@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Free CC0 runway asphalt.** Poly Haven's Asphalt 01 diffuse, OpenGL normal and
+  roughness maps are resized to the existing 1024px budget and wired as the
+  preferred `tx_asphalt_runway_*_v03` source. The roughness map becomes the
+  smoothness alpha; generated v02 and v01 maps remain fallbacks.
+
+- **EditMode compile repair.** Replaced an incompatible StableId containment
+  constraint in `BugfixPassTests` with an explicit typed predicate.
+
 - **Free CC0 coastal ambience.** Jasinski's field-recorded beach wave is losslessly packaged as a Unity WAV and replaces the synthetic coast bed when available; the procedural clip remains as fallback. Source and shipped checksums are recorded in the asset register.
 
 - **Free CC0 ambient rain.** Ylmir's 45-second loopable OpenGameArt rain bed is packaged through Resources and replaces generated rain crackle when available; the procedural clip remains as a fallback. Source checksum and licence are recorded in the asset register.

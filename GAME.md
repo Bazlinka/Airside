@@ -10,8 +10,8 @@
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
   Hills pulled off the gulf. HUD says Adelaide Airport. Alpha and Charlie
-  edge lights run the full taxi. Car park fills the bigger pad. Save schema
-  unchanged.
+  edge lights run the full taxi; Alpha paint matches the long strip. Car park
+  fills the bigger pad. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

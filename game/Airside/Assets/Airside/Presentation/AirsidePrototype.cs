@@ -10135,23 +10135,33 @@ namespace Airside.Presentation
             // and always densify dashed paint so Alpha reads as a continuous taxi route.
             var taxiPaint = new Color(0.95f, 0.85f, 0.2f);
             var usedTaxiFarWest = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_centreline", new Vector3(-8f, 0.035f, 9f), Quaternion.identity,
+                kit, "taxi_centreline", new Vector3(-28f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
             var usedTaxiWest = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_centreline", new Vector3(8f, 0.035f, 9f), Quaternion.identity,
+                kit, "taxi_centreline", new Vector3(-8f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
+            var usedTaxiMid = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(12f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
             var usedTaxiEast = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_centreline", new Vector3(28f, 0.035f, 9f), Quaternion.identity,
+                kit, "taxi_centreline", new Vector3(32f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
+            var usedTaxiFarEast = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(52f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
             // Dashed centreline along the full Alpha span (and A1 exit fillet).
-            for (var x = -22; x <= 38; x += 1)
+            for (var x = -50; x <= 56; x += 1)
             {
                 // Skip under a successfully placed kit segment (±10 m around each kit centre).
-                if (usedTaxiFarWest && Mathf.Abs(x + 8f) < 10f)
+                if (usedTaxiFarWest && Mathf.Abs(x + 28f) < 10f)
                     continue;
-                if (usedTaxiWest && Mathf.Abs(x - 8f) < 10f)
+                if (usedTaxiWest && Mathf.Abs(x + 8f) < 10f)
                     continue;
-                if (usedTaxiEast && Mathf.Abs(x - 28f) < 10f)
+                if (usedTaxiMid && Mathf.Abs(x - 12f) < 10f)
+                    continue;
+                if (usedTaxiEast && Mathf.Abs(x - 32f) < 10f)
+                    continue;
+                if (usedTaxiFarEast && Mathf.Abs(x - 52f) < 10f)
                     continue;
                 CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(0.85f, 0.02f, 0.11f),
                     taxiPaint);
@@ -10178,18 +10188,26 @@ namespace Airside.Presentation
             var usedTaxiEdgeS = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_s", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_edge_n", new Vector3(28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+                kit, "taxi_edge_n", new Vector3(-28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_edge_s", new Vector3(28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+                kit, "taxi_edge_s", new Vector3(-28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(32f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(32f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(52f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(52f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             if (!usedTaxiEdgeN)
             {
-                for (var x = -20; x <= 36; x += 2)
+                for (var x = -48; x <= 56; x += 2)
                     CreateBlock($"Taxi edge N {x}", new Vector3(x, 0.035f, 10.85f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
             }
 
             if (!usedTaxiEdgeS)
             {
-                for (var x = -20; x <= 36; x += 2)
+                for (var x = -48; x <= 56; x += 2)
                     CreateBlock($"Taxi edge S {x}", new Vector3(x, 0.035f, 7.15f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
             }
             // Apron lead-in chevrons from taxi to stand lead — kit chevrons when present.

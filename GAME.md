@@ -1,15 +1,17 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — ground + ATC authenticity merged to main)
-- **Branch:** `main`
-- **Do next:** Packaged app review — quit Unity, run `scripts/rebuild-and-open-mac.sh`
-  (or `scripts/build-mac.sh` then open `work/builds/Airside.app`). Press Play audit: overview
-  155, hold K/L, soft fillets, ATC ops-log sequencing.
-- **In progress / half-done:** Continuous authenticity goal may continue after Bailey’s app review.
+- **Last updated:** 2026-09-09 (Cursor — 100-item layering/collision/route bug audit)
+- **Branch:** `cursor/bug-audit-100-0740` (audit doc only; `main` unchanged)
+- **Do next:** Pick the suggested first fix batch in
+  `docs/testing/BUG_AUDIT_2026-09-09_LAYERING_COLLISION_ROUTES.md` (stand spacing /
+  lead-in crossings / GT bay+off-field hold / taxi-out corner cut), or resume Mac
+  packaged app review on `main` if preferred.
+- **In progress / half-done:** Audit listed; no behaviour fixes on this branch yet.
 - **Watch for / assumptions:**
-  - Batchmode build needs Unity Editor closed
+  - Audit is code-trace only (no Unity playtest in cloud)
   - Save schema unchanged
-- **Open question for Bailey:** none
+- **Open question for Bailey:** Which priority band to fix first — (A) collisions,
+  (B) routes, or keep visual polish / Mac sign-off on `main`?
 
 ---
 

@@ -5,6 +5,7 @@ change it describes.
 
 ## Unreleased
 
+- Document 100-item layering / collision / taxi-route bug audit (`docs/testing/BUG_AUDIT_2026-09-09_LAYERING_COLLISION_ROUTES.md`).
 - **Ground authenticity + aerodrome ATC (cycle 136).** Apron→Alpha mid fillets; vacated cue now
   hands off to Kingscote Ground / taxi-to-stand; taxi-to-stand phrases add surface wind + remain
   this frequency. Evidence: Unity Editor open — Press Play.

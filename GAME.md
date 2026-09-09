@@ -4,7 +4,7 @@
 - **Branch:** `feature/adelaide-overnight-visual`
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint.
-  Then merge if Play is clean.
+  EditMode already 193/193 on this branch. Merge if Play is clean.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, aircraft polish, CBD skyline. Save schema unchanged.
 - **Watch for / assumptions:**
@@ -45,8 +45,8 @@ production order live in
 moves from procedural primitives to approved art in batches, with primitives kept
 as fallbacks during integration.
 
-The immediate visual target is a premium stylised-realism miniature of a regional
-Australian airport. Generated images establish composition, palette, fictional
+The immediate visual target is a premium stylised-realism miniature of
+Adelaide Airport at West Beach. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
 

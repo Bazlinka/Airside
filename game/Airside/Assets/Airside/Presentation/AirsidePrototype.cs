@@ -7366,8 +7366,12 @@ namespace Airside.Presentation
             CreateBlock("CBD tower C", new Vector3(164f, 7.5f, 98f), new Vector3(5.5f, 15f, 4.2f), stone);
             CreateBlock("CBD tower D", new Vector3(142f, 6.2f, 112f), new Vector3(3.8f, 12.4f, 3.4f), pale);
             CreateBlock("CBD tower E", new Vector3(172f, 8.4f, 114f), new Vector3(3.2f, 16.8f, 3.0f), glass);
-            PlaceLevelPad("Adelaide plains NE", 158f, 108f, 64f, 40f, Shade(AirsideTheme.DryGrass, 0.7f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(12f, 8f), top: 0.2f, height: 0.4f);
+            CreateBlock("CBD tower F", new Vector3(151f, 5.4f, 92f), new Vector3(6.2f, 10.8f, 4.8f), stone);
+            CreateBlock("CBD tower G", new Vector3(178f, 6.8f, 104f), new Vector3(2.8f, 13.6f, 2.6f), pale);
+            PlaceLevelPad("Adelaide plains NE", 158f, 108f, 72f, 48f, Shade(AirsideTheme.DryGrass, 0.7f),
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(14f, 9f), top: 0.2f, height: 0.4f);
+            PlaceLevelPad("Suburban band E", 88f, 64f, 42f, 16f, Shade(AirsideTheme.DryGrass, 0.78f),
+                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(8f, 3f), top: 0.12f, height: 0.24f);
         }
 
         private static void BuildHorizonDome()
@@ -7645,7 +7649,7 @@ namespace Airside.Presentation
         private static void BuildBuildingContactShadows()
         {
             // Soft, tight discs — oversized near-black cylinders read as ground patches at night.
-            PlaceContactShadow("Terminal contact", new Vector3(26f, 0.035f, 27f), new Vector3(14f, 0.02f, 4.5f), 0.14f);
+            PlaceContactShadow("Terminal contact", new Vector3(26f, 0.035f, 27f), new Vector3(18f, 0.02f, 6.2f), 0.16f);
             PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.035f, 20f), new Vector3(10f, 0.02f, 7f), 0.14f);
             PlaceContactShadow("Ops contact", new Vector3(-8f, 0.035f, 26f), new Vector3(5f, 0.02f, 3.5f), 0.12f);
             PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
@@ -8869,12 +8873,12 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(2.8f, 0.012f, 1.5f);
-            var material = AirsideMaterialLibrary.Create(new Color(0.05f, 0.06f, 0.08f, 0.16f),
+            shadow.transform.localScale = new Vector3(3.4f, 0.012f, 1.8f);
+            var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.22f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
             renderer.material = material;
-            SetRendererColor(renderer, new Color(0.05f, 0.06f, 0.08f, 0.16f));
+            SetRendererColor(renderer, new Color(0.04f, 0.05f, 0.06f, 0.22f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
         }
@@ -9851,6 +9855,7 @@ namespace Airside.Presentation
             PlaceRunwayDigit('1', new Vector3(14.2f, 0.04f, 14f), yaw: 0f);
             PlaceRunwayDigit('2', new Vector3(14.2f, 0.04f, 24f), yaw: 0f);
             PlaceRunwayDigit('3', new Vector3(14.2f, 0.04f, 34f), yaw: 0f);
+            PlaceCrossRunwayIdents();
 
             var usedStandA = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "stand_stop_a", new Vector3(14f, 0.04f, 16.2f), Quaternion.identity,
@@ -10145,6 +10150,20 @@ namespace Airside.Presentation
                     Seg("lr", 0.55f, -0.5f, 0.28f, 0.9f);
                     break;
             }
+        }
+
+        /// <summary>Visual-only 12/30 idents on the rotated cross runway.</summary>
+        private static void PlaceCrossRunwayIdents()
+        {
+            var center = new Vector3(8f, 0.04f, -38f);
+            var yaw = 58f;
+            var along = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+            var end12 = center - along * 48f;
+            var end30 = center + along * 48f;
+            PlaceRunwayDigit('1', end12 - along * 1.15f, yaw + 90f);
+            PlaceRunwayDigit('2', end12 + along * 1.15f, yaw + 90f);
+            PlaceRunwayDigit('3', end30 - along * 1.15f, yaw - 90f);
+            PlaceRunwayDigit('0', end30 + along * 1.15f, yaw - 90f);
         }
 
         /// <summary>

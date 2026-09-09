@@ -8,7 +8,7 @@
   the gulf then rolling out to A1. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier, CBD + suburb
-  skyline. Save schema unchanged.
+  skyline. Aircraft skin polish and 12/30 dusk lights in this pass. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.

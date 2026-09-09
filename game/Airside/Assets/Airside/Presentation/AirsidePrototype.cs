@@ -4657,6 +4657,25 @@ namespace Airside.Presentation
             lights.Add(CreateEdgePointLight("Taxi A2 point W", new Vector3(18f, 0.45f, 7f),
                 new Color(0.3f, 0.55f, 1f), range: 8f));
 
+            // Visual 12/30 edge spill — sparse so dusk still reads the cross strip.
+            var crossCenter = new Vector3(8f, 0.55f, -38f);
+            var crossAlong = Quaternion.Euler(0f, 58f, 0f) * Vector3.right;
+            var crossAcross = Quaternion.Euler(0f, 58f, 0f) * Vector3.forward;
+            for (var i = -6; i <= 6; i += 2)
+            {
+                var p = crossCenter + crossAlong * (i * 8f);
+                lights.Add(CreateEdgePointLight($"12-30 edge L {i}", p - crossAcross * 3.6f,
+                    new Color(1f, 1f, 0.85f), range: 8f));
+                lights.Add(CreateEdgePointLight($"12-30 edge R {i}", p + crossAcross * 3.6f,
+                    new Color(1f, 1f, 0.85f), range: 8f));
+            }
+
+            for (var x = -56; x <= 72; x += 24)
+            {
+                lights.Add(CreateEdgePointLight($"Taxi Bravo point {x}", new Vector3(x, 0.45f, -9.2f),
+                    new Color(0.3f, 0.55f, 1f), range: 8f));
+            }
+
             // REIL-style white flashers just beyond each blast pad (blinked later).
             lights.Add(CreateEdgePointLight("REIL W L", new Vector3(VisualRunwayWestX - 10f, 1.6f, -2.8f),
                 new Color(1f, 1f, 0.95f), range: 16f));
@@ -7736,9 +7755,9 @@ namespace Airside.Presentation
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
-                var x = (float)(rng.NextDouble() * 220f - 110f);
-                var z = (float)(rng.NextDouble() * 200f - 100f);
-                var y = 24f + (float)rng.NextDouble() * 26f;
+                var x = (float)(rng.NextDouble() * 360f - 180f);
+                var z = (float)(rng.NextDouble() * 280f - 120f);
+                var y = 28f + (float)rng.NextDouble() * 32f;
                 cluster.position = new Vector3(x, y, z);
 
                 var sx = 16f + (float)rng.NextDouble() * 30f;
@@ -7791,6 +7810,7 @@ namespace Airside.Presentation
         {
             // Soft, tight discs — oversized near-black cylinders read as ground patches at night.
             PlaceContactShadow("Terminal contact", new Vector3(26f, 0.035f, 27f), new Vector3(18f, 0.02f, 6.2f), 0.16f);
+            PlaceContactShadow("Terminal east contact", new Vector3(40f, 0.035f, 24.5f), new Vector3(12f, 0.02f, 7f), 0.14f);
             PlaceContactShadow("Hangar contact", new Vector3(-20f, 0.035f, 20f), new Vector3(10f, 0.02f, 7f), 0.14f);
             PlaceContactShadow("Ops contact", new Vector3(-8f, 0.035f, 26f), new Vector3(5f, 0.02f, 3.5f), 0.12f);
             PlaceContactShadow("Fuel farm contact", new Vector3(-34f, 0.035f, 22f), new Vector3(5.5f, 0.015f, 4.5f), 0.1f);
@@ -8285,6 +8305,7 @@ namespace Airside.Presentation
             }
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
+            PolishAircraftSurfaces(root);
             EnsurePropDiscs(root);
             EnsureGroundShadow(root);
             // Only inject lamp / heat proxies when the authored kit did not already ship them.
@@ -9122,6 +9143,40 @@ namespace Airside.Presentation
                     continue;
                 renderer.material.mainTexture = texture;
                 renderer.material.mainTextureScale = new Vector2(1f, 1f);
+                if (renderer.material.HasProperty("_Smoothness"))
+                    renderer.material.SetFloat("_Smoothness", 0.74f);
+                if (renderer.material.HasProperty("_Metallic"))
+                    renderer.material.SetFloat("_Metallic", 0.16f);
+            }
+        }
+
+        private static void PolishAircraftSurfaces(Transform aircraft)
+        {
+            foreach (var renderer in aircraft.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+                var n = renderer.gameObject.name;
+                if (n.IndexOf("window", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("glass", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("light", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("prop", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("tire", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("heat", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("shadow", StringComparison.OrdinalIgnoreCase) >= 0)
+                    continue;
+                if (n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("wing", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("tail", StringComparison.OrdinalIgnoreCase) < 0
+                    && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
+                    && n != "Fuselage" && n != "Livery stripe")
+                    continue;
+                if (renderer.material.HasProperty("_Smoothness"))
+                    renderer.material.SetFloat("_Smoothness", 0.72f);
+                if (renderer.material.HasProperty("_Metallic"))
+                    renderer.material.SetFloat("_Metallic", 0.14f);
             }
         }
 
@@ -10382,8 +10437,22 @@ namespace Airside.Presentation
             PlaceTaxiLamp(kit, new Vector3(-18f, 0f, 4.5f), taxiColor);
             PlaceTaxiLamp(kit, new Vector3(-14f, 0f, 7f), taxiColor);
 
+            var crossCenter = new Vector3(8f, 0f, -38f);
+            var crossAlong = Quaternion.Euler(0f, 58f, 0f) * Vector3.right;
+            var crossAcross = Quaternion.Euler(0f, 58f, 0f) * Vector3.forward;
+            for (var i = -6; i <= 6; i += 2)
+            {
+                var p = crossCenter + crossAlong * (i * 8f);
+                PlaceEdgeLamp(kit, p - crossAcross * 3.6f, edgeColor);
+                PlaceEdgeLamp(kit, p + crossAcross * 3.6f, edgeColor);
+            }
+
+            for (var x = -56; x <= 72; x += 24)
+                PlaceTaxiLamp(kit, new Vector3(x, 0f, -11.4f), taxiColor);
+
             PlaceObstructionLamp(kit, new Vector3(-20f, 5.0f, 20f), obstruction, "Hangar obstruction");
             PlaceObstructionLamp(kit, new Vector3(26f, 4.5f, 27f), obstruction, "Terminal roof light");
+            PlaceObstructionLamp(kit, new Vector3(40f, 4.8f, 24.5f), obstruction, "Terminal east obstruction");
             PlaceObstructionLamp(kit, new Vector3(-8f, 3.2f, 26f), obstruction, "Ops obstruction");
 
             // Apron flood poles — four corners so night turnarounds read lit.
@@ -10392,6 +10461,8 @@ namespace Airside.Presentation
             PlaceFloodMast(kit, new Vector3(32f, 0f, 12f), flood);
             PlaceFloodMast(kit, new Vector3(8f, 0f, 22f), flood);
             PlaceFloodMast(kit, new Vector3(32f, 0f, 22f), flood);
+            PlaceFloodMast(kit, new Vector3(40f, 0f, 22f), flood);
+            PlaceFloodMast(kit, new Vector3(40f, 0f, 14f), flood);
         }
 
         private static void PlaceEdgeLamp(string kit, Vector3 position, Color color)

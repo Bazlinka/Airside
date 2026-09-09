@@ -20,7 +20,8 @@ change it describes.
   a little further out so gulf, both runways and the CBD read in one frame.
   Runway wear is spread along the full 23/05 strip. Terminal has an east pier;
   Bravo/Charlie/12-30 have centreline paint; gulf water goes further west; West
-  Beach houses sit outside the east fence. Unity EditMode 193/193.
+  Beach houses sit outside the east fence. Aircraft skin is glossier; 12/30 and
+  Bravo pick up dusk edge lights. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

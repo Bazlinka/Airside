@@ -64,6 +64,7 @@
   Idle fleet tails and stripes use each airframe's accent; spinners
   catch the sun; parked nav lamps stay lit so the fleet reads from 318 m.
   Terminal reflection probe sits on the landside curve the opening shot sees.
+  An ochre fascia bands the landside glass so T1 reads Adelaide from yaw 132.
   EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite

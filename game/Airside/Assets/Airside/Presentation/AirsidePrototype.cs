@@ -4533,6 +4533,7 @@ namespace Airside.Presentation
                          "Terminal west hall upper glow",
                          "West drop canopy glow",
                          "T1 curve glow",
+                         "T1 curve ochre",
                          "T1 porte glow",
                          "Adelaide monument bar",
                          "Freight office glow",
@@ -4592,6 +4593,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal west hall upper", StringComparison.Ordinal)
                                    || name.StartsWith("West drop canopy glow", StringComparison.Ordinal)
                                    || name.StartsWith("T1 curve glow", StringComparison.Ordinal)
+                                   || name.StartsWith("T1 curve ochre", StringComparison.Ordinal)
                                    || name.StartsWith("T1 porte glow", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
@@ -8018,6 +8020,8 @@ namespace Airside.Presentation
 
             CreateBlock("T1 curve roof", new Vector3(27.2f, 6.95f, 32.15f), new Vector3(26.8f, 0.22f, 3.6f), soffit);
             CreateBlock("T1 curve glow", new Vector3(27.2f, 3.65f, 33.18f), new Vector3(24.2f, 3.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            CreateBlock("T1 curve ochre", new Vector3(27.2f, 6.62f, 33.08f), new Vector3(24.8f, 0.38f, 0.16f),
+                new Color(0.86f, 0.5f, 0.16f));
             PlaceContactShadow("T1 curve contact", new Vector3(27.2f, 0.035f, 32.4f), new Vector3(27.2f, 0.02f, 4.4f), 0.12f);
         }
 

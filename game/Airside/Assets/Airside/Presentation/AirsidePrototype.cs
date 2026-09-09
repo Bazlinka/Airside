@@ -129,6 +129,9 @@ namespace Airside.Presentation
         private const float FenceEastX = 108f;
         private const float FenceNorthZ = 54f;
         private const float FenceSouthZ = -52f;
+        // Parallel Alpha stays inside the fence and matches the long 23/05 strip.
+        private const float VisualAlphaWestX = -76f;
+        private const float VisualAlphaEastX = 86f;
         private float _apronProbeRefreshAt;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
@@ -4630,7 +4633,7 @@ namespace Airside.Presentation
             {
                 var taxiStem = new Color(0.35f, 0.36f, 0.38f);
                 var taxiLens = new Color(0.3f, 0.55f, 1f);
-                for (var x = -48; x <= 56; x += 8)
+                for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += 8)
                 {
                     lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                         new Color(0.3f, 0.55f, 1f), range: 7.5f));
@@ -4648,7 +4651,7 @@ namespace Airside.Presentation
             else
             {
                 // Sparse taxi spill along Taxiway A so night taxi still reads without fixture glitter.
-                for (var x = -48; x <= 56; x += 16)
+                for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += 16)
                 {
                     lights.Add(CreateEdgePointLight($"Taxi point {x}", new Vector3(x, 0.45f, 9f),
                         new Color(0.3f, 0.55f, 1f), range: 9f));
@@ -4803,20 +4806,20 @@ namespace Airside.Presentation
         private static ReflectionProbe BuildApronReflectionProbe()
         {
             var go = new GameObject("Apron reflection probe");
-            go.transform.position = new Vector3(20f, 3.5f, 17f);
+            go.transform.position = new Vector3(28f, 3.8f, 20f);
             var probe = go.AddComponent<ReflectionProbe>();
             probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
             probe.resolution = 128;
-            // Cover stand apron + hangar face so authored metal/glass get local floods.
-            probe.size = new Vector3(56f, 22f, 42f);
+            // Cover stand apron, hangar, east pier and satellite so metal/glass pick up local floods.
+            probe.size = new Vector3(96f, 28f, 56f);
             probe.center = Vector3.zero;
             probe.intensity = 1f;
             probe.boxProjection = true;
-            probe.shadowDistance = 28f;
+            probe.shadowDistance = 42f;
             probe.nearClipPlane = 0.3f;
-            probe.farClipPlane = 90f;
+            probe.farClipPlane = 140f;
             probe.RenderProbe();
             return probe;
         }
@@ -4828,19 +4831,19 @@ namespace Airside.Presentation
         private static ReflectionProbe BuildTerminalReflectionProbe()
         {
             var go = new GameObject("Terminal reflection probe");
-            go.transform.position = new Vector3(26f, 3.2f, 27f);
+            go.transform.position = new Vector3(44f, 4.4f, 26f);
             var probe = go.AddComponent<ReflectionProbe>();
             probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
             probe.resolution = 64;
-            probe.size = new Vector3(32f, 16f, 22f);
+            probe.size = new Vector3(72f, 26f, 36f);
             probe.center = Vector3.zero;
             probe.intensity = 0.95f;
             probe.boxProjection = true;
-            probe.shadowDistance = 18f;
+            probe.shadowDistance = 28f;
             probe.nearClipPlane = 0.3f;
-            probe.farClipPlane = 60f;
+            probe.farClipPlane = 100f;
             probe.RenderProbe();
             return probe;
         }
@@ -5045,10 +5048,15 @@ namespace Airside.Presentation
         // runway, taxi, apron, buildings, props and context provide the visual detail.
         private static void BuildAirfieldTerrainBase()
         {
-            // One oversized level grass deck so the airfield never reads as floating
-            // tiles. Pavement sits 4 cm above this top so seams cannot appear.
-            PlaceLevelPad("Airfield terrain base", 8f, 6f, 560f, 420f, Shade(AirsideTheme.DryGrass, 0.62f),
-                PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(80f, 60f), top: 0f, height: 0.8f);
+            // Inland grass only — west edge meets West Beach sand so Gulf St Vincent
+            // stays visible. Extra plains pads keep the east/north/south floor seamless
+            // without paving over the water.
+            var grass = PreferSurfaceBasecolor("tx_grass_kingscote");
+            var dry = Shade(AirsideTheme.DryGrass, 0.62f);
+            PlaceLevelPad("Airfield terrain base", 70f, 8f, 296f, 220f, dry, grass, new Vector2(42f, 32f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains N", 80f, 148f, 316f, 88f, Shade(dry, 0.97f), grass, new Vector2(44f, 12f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains S", 80f, -138f, 316f, 76f, Shade(dry, 0.95f), grass, new Vector2(44f, 11f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains E", 230f, 10f, 120f, 280f, Shade(dry, 1.02f), grass, new Vector2(18f, 40f), top: 0f, height: 0.8f);
         }
 
 
@@ -5062,8 +5070,8 @@ namespace Airside.Presentation
             var tarmac = new Color(0.16f, 0.18f, 0.2f);
             var pad = new Color(0.34f, 0.36f, 0.37f);
 
-            PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 200f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
-            PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 200f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.58f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 184f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 184f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.58f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
 
             PlaceLevelPad("Runway 23-05", VisualRunwayCenterX, 0f, 184f, 8.2f, tarmac, asphalt, new Vector2(36f, 1.6f));
             PlaceLevelPad("Runway shoulder N", VisualRunwayCenterX, 4.85f, 184f, 1.7f, Shade(tarmac, 0.92f), asphalt, new Vector2(36f, 0.4f));
@@ -5076,13 +5084,15 @@ namespace Airside.Presentation
             cross.transform.rotation = Quaternion.Euler(0f, 58f, 0f);
             PlaceLevelPad("Runway 12-30 shoulder", 8f, -38f, 118f, 9.6f, Shade(tarmac, 0.9f), asphalt, new Vector2(22f, 1.8f), top: 0.015f).transform.rotation = Quaternion.Euler(0f, 58f, 0f);
 
-            PlaceLevelPad("Taxiway Alpha", 4f, 9f, 110f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(22f, 1.2f));
+            PlaceLevelPad("Taxiway Alpha", 5f, 9f, 162f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(32f, 1.2f));
             PlaceLevelPad("Taxiway Bravo", 6f, -9.2f, 170f, 4.8f, Shade(tarmac, 1.02f), asphalt, new Vector2(32f, 1f));
             PlaceLevelPad("Taxiway Charlie", 48f, 18f, 5.2f, 52f, Shade(tarmac, 1.04f), asphalt, new Vector2(1.1f, 10f));
             CreateTaxiChordPad("Taxiway Bravo Charlie", new Vector3(48f, 0.02f, -6f), new Vector3(48f, 0.02f, -9.2f), 5.4f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo 12-30", new Vector3(26f, 0.02f, -9.2f), new Vector3(21f, 0.02f, -17f), 5.6f, asphalt, new Vector2(1.6f, 1.4f));
             CreateTaxiChordPad("Taxiway Bravo W exit", new Vector3(-60f, 0.02f, -9.2f), new Vector3(-60f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
             CreateTaxiChordPad("Taxiway Bravo E exit", new Vector3(70f, 0.02f, -9.2f), new Vector3(70f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
+            CreateTaxiChordPad("Taxiway Alpha W stub", new Vector3(-70f, 0.02f, 9f), new Vector3(-70f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
+            CreateTaxiChordPad("Taxiway Alpha E stub", new Vector3(80f, 0.02f, 9f), new Vector3(80f, 0.02f, 4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
 
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
@@ -5444,6 +5454,8 @@ namespace Airside.Presentation
                 water, new Vector2(18f, 40f), top: -0.42f, height: 0.5f);
             PlaceLevelPad("West Beach sand", -96f, 6f, 36f, 280f, Shade(AirsideTheme.Sand, 0.95f),
                 sand, new Vector2(10f, 48f), top: -0.02f, height: 0.28f);
+            PlaceLevelPad("Dune belt", -80f, 6f, 8f, 260f, Shade(AirsideTheme.Sand, 0.9f),
+                sand, new Vector2(2.2f, 44f), top: 0.02f, height: 0.28f);
             PlaceLevelPad("Coast shallows", -116f, 6f, 22f, 280f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
                 water, new Vector2(8f, 36f), top: -0.18f, height: 0.28f);
             PlaceLevelPad("Coast foam A", -102f, 10f, 6f, 90f, new Color(0.92f, 0.96f, 0.97f, 0.42f),
@@ -5451,6 +5463,10 @@ namespace Airside.Presentation
             PlaceLevelPad("Coast foam B", -104f, -24f, 5f, 70f, new Color(0.9f, 0.94f, 0.96f, 0.32f),
                 null, null, top: -0.07f, height: 0.08f);
             PlaceLevelPad("Coast foam C", -100f, 48f, 5f, 50f, new Color(0.93f, 0.96f, 0.98f, 0.28f),
+                null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam D", -106f, -48f, 5f, 64f, new Color(0.9f, 0.95f, 0.97f, 0.26f),
+                null, null, top: -0.07f, height: 0.08f);
+            PlaceLevelPad("Coast foam E", -108f, 78f, 6f, 44f, new Color(0.94f, 0.97f, 0.98f, 0.24f),
                 null, null, top: -0.06f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
@@ -6925,11 +6941,15 @@ namespace Airside.Presentation
             var roof = new Color(0.32f, 0.34f, 0.36f);
             CreateBlock("ATC tower shaft", new Vector3(56f, 8.2f, 34f), new Vector3(2.6f, 16.4f, 2.6f), shaft);
             CreateBlock("ATC tower flare", new Vector3(56f, 15.6f, 34f), new Vector3(3.4f, 1.2f, 3.4f), Shade(shaft, 0.92f));
+            CreateBlock("ATC tower walkway", new Vector3(56f, 16.15f, 34f), new Vector3(6.4f, 0.18f, 6.4f), Shade(shaft, 0.88f));
             CreateBlock("ATC tower cab", new Vector3(56f, 17.4f, 34f), new Vector3(5.2f, 2.6f, 5.2f), cab);
             CreateBlock("ATC tower glass N", new Vector3(56f, 17.5f, 36.55f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
             CreateBlock("ATC tower glass S", new Vector3(56f, 17.5f, 31.45f), new Vector3(4.4f, 1.8f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass E", new Vector3(58.55f, 17.5f, 34f), new Vector3(0.1f, 1.8f, 4.4f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
+            CreateBlock("ATC tower glass W", new Vector3(53.45f, 17.5f, 34f), new Vector3(0.1f, 1.8f, 4.4f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
             CreateBlock("ATC tower roof", new Vector3(56f, 18.9f, 34f), new Vector3(5.6f, 0.35f, 5.6f), roof);
             CreateBlock("ATC tower mast", new Vector3(56f, 20.4f, 34f), new Vector3(0.18f, 2.6f, 0.18f), new Color(0.45f, 0.46f, 0.48f));
+            CreateBlock("ATC dish", new Vector3(56.85f, 19.55f, 34.5f), new Vector3(1.15f, 0.12f, 1.15f), new Color(0.72f, 0.74f, 0.76f));
             PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.2f, 0.02f, 4.2f), 0.18f);
         }
 
@@ -7593,7 +7613,9 @@ namespace Airside.Presentation
                 new Vector3(140f, 1.25f, 74f), new Vector3(112f, 0.9f, 78f), new Vector3(136f, 1.05f, 64f),
                 new Vector3(128f, 0.95f, 88f), new Vector3(146f, 1.1f, 82f), new Vector3(152f, 1.0f, 70f),
                 new Vector3(116f, 0.95f, -36f), new Vector3(124f, 1.1f, -42f), new Vector3(132f, 1.05f, -30f),
-                new Vector3(110f, 0.9f, 52f), new Vector3(142f, 1.15f, 56f)
+                new Vector3(110f, 0.9f, 52f), new Vector3(142f, 1.15f, 56f),
+                new Vector3(120f, 1.0f, -48f), new Vector3(138f, 1.1f, -38f), new Vector3(148f, 1.05f, 48f),
+                new Vector3(156f, 1.2f, 62f), new Vector3(108f, 0.95f, -28f), new Vector3(160f, 1.08f, 76f)
             };
             for (var i = 0; i < spots.Length; i++)
             {
@@ -7959,9 +7981,9 @@ namespace Airside.Presentation
                 {
                     _coastWaterRenderers.Add(renderer);
                     if (renderer.material.HasProperty("_Smoothness"))
-                        renderer.material.SetFloat("_Smoothness", 0.82f);
+                        renderer.material.SetFloat("_Smoothness", 0.88f);
                     if (renderer.material.HasProperty("_Metallic"))
-                        renderer.material.SetFloat("_Metallic", 0.12f);
+                        renderer.material.SetFloat("_Metallic", 0.16f);
                 }
             }
 
@@ -9258,9 +9280,13 @@ namespace Airside.Presentation
                     && n != "Fuselage" && n != "Livery stripe")
                     continue;
                 if (renderer.material.HasProperty("_Smoothness"))
-                    renderer.material.SetFloat("_Smoothness", 0.72f);
+                    renderer.material.SetFloat("_Smoothness", 0.78f);
                 if (renderer.material.HasProperty("_Metallic"))
-                    renderer.material.SetFloat("_Metallic", 0.14f);
+                    renderer.material.SetFloat("_Metallic",
+                        n.IndexOf("engine", StringComparison.OrdinalIgnoreCase) >= 0
+                        || n.IndexOf("nacelle", StringComparison.OrdinalIgnoreCase) >= 0
+                            ? 0.28f
+                            : 0.16f);
             }
         }
 
@@ -10108,6 +10134,10 @@ namespace Airside.Presentation
             CreateBlock("Hold short N", new Vector3(42f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             CreateBlock("Hold short O", new Vector3(-36f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             CreateBlock("Hold short P", new Vector3(-36f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short Q", new Vector3(-64f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short R", new Vector3(-64f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short S", new Vector3(72f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
+            CreateBlock("Hold short T", new Vector3(72f, 0.05f, 7.1f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             // Readable block digits for 05 / 23 (facing inbound traffic).
             PlaceRunwayDigit('0', new Vector3(VisualThresholdWestX + 8.4f, 0.04f, 0f), yaw: 90f);
             PlaceRunwayDigit('5', new Vector3(VisualThresholdWestX + 10.4f, 0.04f, 0f), yaw: 90f);
@@ -10188,9 +10218,12 @@ namespace Airside.Presentation
             // and always densify dashed paint so Alpha reads as a continuous taxi route.
             var taxiPaint = new Color(0.95f, 0.85f, 0.2f);
             var usedTaxiFarWest = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "taxi_centreline", new Vector3(-28f, 0.035f, 9f), Quaternion.identity,
+                kit, "taxi_centreline", new Vector3(-48f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
             var usedTaxiWest = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(-28f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
+            var usedTaxiMidWest = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_centreline", new Vector3(-8f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
             var usedTaxiMid = ArtGltfLoader.TryPlaceNamedMesh(
@@ -10202,19 +10235,26 @@ namespace Airside.Presentation
             var usedTaxiFarEast = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_centreline", new Vector3(52f, 0.035f, 9f), Quaternion.identity,
                 taxiPaint, out _);
+            var usedTaxiThresholdEast = ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_centreline", new Vector3(72f, 0.035f, 9f), Quaternion.identity,
+                taxiPaint, out _);
             // Dashed centreline along the full Alpha span (and A1 exit fillet).
-            for (var x = -50; x <= 56; x += 1)
+            for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += 1)
             {
                 // Skip under a successfully placed kit segment (±10 m around each kit centre).
-                if (usedTaxiFarWest && Mathf.Abs(x + 28f) < 10f)
+                if (usedTaxiFarWest && Mathf.Abs(x + 48f) < 10f)
                     continue;
-                if (usedTaxiWest && Mathf.Abs(x + 8f) < 10f)
+                if (usedTaxiWest && Mathf.Abs(x + 28f) < 10f)
+                    continue;
+                if (usedTaxiMidWest && Mathf.Abs(x + 8f) < 10f)
                     continue;
                 if (usedTaxiMid && Mathf.Abs(x - 12f) < 10f)
                     continue;
                 if (usedTaxiEast && Mathf.Abs(x - 32f) < 10f)
                     continue;
                 if (usedTaxiFarEast && Mathf.Abs(x - 52f) < 10f)
+                    continue;
+                if (usedTaxiThresholdEast && Mathf.Abs(x - 72f) < 10f)
                     continue;
                 CreateBlock($"Taxi centre {x}", new Vector3(x, 0.035f, 9f), new Vector3(0.85f, 0.02f, 0.11f),
                     taxiPaint);
@@ -10241,6 +10281,10 @@ namespace Airside.Presentation
             var usedTaxiEdgeS = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_s", new Vector3(8f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(-48f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(-48f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_n", new Vector3(-28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_s", new Vector3(-28f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
@@ -10252,15 +10296,19 @@ namespace Airside.Presentation
                 kit, "taxi_edge_n", new Vector3(52f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "taxi_edge_s", new Vector3(52f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_n", new Vector3(72f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
+            ArtGltfLoader.TryPlaceNamedMesh(
+                kit, "taxi_edge_s", new Vector3(72f, 0.035f, 9f), Quaternion.identity, Color.white, out _);
             if (!usedTaxiEdgeN)
             {
-                for (var x = -48; x <= 56; x += 2)
+                for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += 2)
                     CreateBlock($"Taxi edge N {x}", new Vector3(x, 0.035f, 10.85f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
             }
 
             if (!usedTaxiEdgeS)
             {
-                for (var x = -48; x <= 56; x += 2)
+                for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += 2)
                     CreateBlock($"Taxi edge S {x}", new Vector3(x, 0.035f, 7.15f), new Vector3(2.2f, 0.02f, 0.12f), Color.white);
             }
             // Apron lead-in chevrons from taxi to stand lead — kit chevrons when present.
@@ -10556,7 +10604,7 @@ namespace Airside.Presentation
             }
 
             var taxiStep = hasLightingKit ? 12 : 8;
-            for (var x = -48; x <= 56; x += taxiStep)
+            for (var x = VisualAlphaWestX; x <= VisualAlphaEastX; x += taxiStep)
             {
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 11.1f), taxiColor);
                 PlaceTaxiLamp(kit, new Vector3(x, 0f, 6.9f), taxiColor);

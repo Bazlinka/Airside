@@ -11,15 +11,15 @@ namespace Airside.Presentation
     public sealed class AirsideCameraController : MonoBehaviour
     {
         // West-biased so first frame shows Gulf St Vincent plus the long 23/05 strip.
-        private readonly Vector3 _overviewCenter = new(-8f, 0f, 6f);
-        private const float OverviewDistance = 252f;
+        private readonly Vector3 _overviewCenter = new(-18f, 0f, 4f);
+        private const float OverviewDistance = 268f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
         private const float OverviewYaw = 128f;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(-8f, 0f, 6f);
+        private Vector3 _center = new(-18f, 0f, 4f);
         private float _yaw = 128f;
         private float _pitch = 34f;
         private float _distance = OverviewDistance;
@@ -267,7 +267,7 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 18f, 320f);
+                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 18f, 360f);
         }
 
         /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>

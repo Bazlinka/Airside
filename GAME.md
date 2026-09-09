@@ -3,18 +3,19 @@
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
 - **Branch:** `feature/adelaide-overnight-visual`
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
-  Adelaide Airport HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint,
-  one outer fence, ATC tower + east satellite, aircraft on final over the gulf
-  then rolling out to A1. Night beacon should sit on the tower. EditMode 193/193
-  earlier this session.
+  Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
+  (grass deck no longer covers the water), 05/23 paint, one outer fence, ATC
+  tower + east satellite, aircraft on final over the gulf then rolling out to
+  A1. Night beacon should sit on the tower. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
-  Hills pulled off the gulf. HUD says Adelaide Airport. Alpha and Charlie
-  edge lights run the full taxi; Alpha paint matches the long strip. Car park
-  fills the bigger pad. Night floods cover Stand 3 and the east satellite.
+  Hills pulled off the gulf. HUD says Adelaide Airport. Alpha now runs the full
+  23/05 length inside the fence; paint/lights/holds follow. Grass stops at the
+  West Beach dune belt so Gulf St Vincent reads on first overview (~268 m).
+  Car park fills the bigger pad. Night floods cover Stand 3 and the east satellite.
   Approach lights aim at 05 over the gulf. Aircraft glass/GSE polish. Night
-  beacon is on the ATC tower. First overview is 252 m. Save schema unchanged.
+  beacon is on the ATC tower. Save schema unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;
     the 3D airfield is the Adelaide-shaped presentation for all locations.
@@ -116,7 +117,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 1. **Mac Play** the Adelaide overnight rebuild on
    `feature/adelaide-overnight-visual` — first frame, level ground, dual runway,
-   Gulf west, Adelaide HUD/ATC. Merge if clean.
+   Gulf west actually visible (not under grass), Adelaide HUD/ATC. Merge if clean.
 2. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
    in priority order (props/gear/wheels/engines → buildings → GSE → trees → CHR).
 3. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign

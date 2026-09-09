@@ -1,10 +1,10 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (origin through `c8a10cd`; local foam commit may be one ahead)
+- **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
+- **Branch:** `feature/adelaide-overnight-visual`
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
-  Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint.
-  EditMode already 193/193 on this branch. Merge if Play is clean.
+  Adelaide HUD/ATC, dual-runway overview, Gulf to the west, 05/23 paint,
+  fence no longer across the runway. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, aircraft polish, CBD skyline. Save schema unchanged.
 - **Watch for / assumptions:**

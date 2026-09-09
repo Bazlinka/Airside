@@ -5010,6 +5010,7 @@ namespace Airside.Presentation
             var pad = new Color(0.34f, 0.36f, 0.37f);
 
             PlaceLevelPad("Infield grass", VisualRunwayCenterX, 4.6f, 200f, 5.2f, Shade(AirsideTheme.Eucalyptus, 0.62f), grass, new Vector2(36f, 2f), top: 0f, height: 0.32f);
+            PlaceLevelPad("Infield grass S", VisualRunwayCenterX, -6.8f, 200f, 4.4f, Shade(AirsideTheme.Eucalyptus, 0.58f), grass, new Vector2(36f, 1.6f), top: 0f, height: 0.32f);
 
             PlaceLevelPad("Runway 23-05", VisualRunwayCenterX, 0f, 184f, 8.2f, tarmac, asphalt, new Vector2(36f, 1.6f));
             PlaceLevelPad("Runway shoulder N", VisualRunwayCenterX, 4.85f, 184f, 1.7f, Shade(tarmac, 0.92f), asphalt, new Vector2(36f, 0.4f));
@@ -6264,9 +6265,11 @@ namespace Airside.Presentation
                 PlaceBay(new Vector3(x + 2f, 0f, 34f), 0f, $"N {x}");
             }
 
-            // West / east airside — east faces inward with -90 yaw.
+            // West / east airside — leave a gap on the 23/05 strip so posts are not on asphalt.
             for (var z = -18; z <= 32; z += 4)
             {
+                if (z > -10 && z < 8)
+                    continue;
                 PlaceBay(new Vector3(-44f, 0f, z + 2f), 90f, $"W {z}");
                 PlaceBay(new Vector3(44f, 0f, z + 2f), -90f, $"E {z}");
             }
@@ -6315,9 +6318,53 @@ namespace Airside.Presentation
         private static void BuildPerimeterFence()
         {
             // Batch F3 PRP-002 — modular fence/gate kit; dense CreateBlock ribbon remains fallback.
-            if (TryBuildPerimeterFenceFromKit())
-                return;
+            if (!TryBuildPerimeterFenceFromKit())
+                BuildPerimeterFenceFallback();
+            PlaceAdelaideOuterFence();
+        }
 
+        /// <summary>
+        /// Long outer ribbons so the Adelaide-scale runway is inside the airfield,
+        /// not sliced by the compact Kingscote fence. Few primitives, runway gaps.
+        /// </summary>
+        private static void PlaceAdelaideOuterFence()
+        {
+            var mesh = new Color(0.56f, 0.58f, 0.6f);
+            var post = new Color(0.48f, 0.49f, 0.51f);
+            void Wall(string name, float x, float z, float sx, float sz)
+            {
+                CreateBlock(name, new Vector3(x, 0.72f, z), new Vector3(sx, 1.28f, sz), mesh);
+            }
+
+            void Posts(string prefix, float x, float z0, float z1)
+            {
+                for (var z = z0; z <= z1; z += 10f)
+                    CreateBlock($"{prefix} {z}", new Vector3(x, 1.38f, z), new Vector3(0.18f, 0.12f, 0.18f), post);
+            }
+
+            // West grass/sand seam, gap across 23/05.
+            Wall("Outer fence W N", -78f, 30f, 0.1f, 44f);
+            Wall("Outer fence W S", -78f, -30f, 0.1f, 44f);
+            Posts("Outer cap W N", -78f, 10f, 50f);
+            Posts("Outer cap W S", -78f, -50f, -10f);
+            // East of blast pad, same runway gap.
+            Wall("Outer fence E N", 108f, 30f, 0.1f, 44f);
+            Wall("Outer fence E S", 108f, -30f, 0.1f, 44f);
+            Posts("Outer cap E N", 108f, 10f, 50f);
+            Posts("Outer cap E S", 108f, -50f, -10f);
+            // North landside beyond the apron expansion (gate gap at the access road).
+            Wall("Outer fence N W", -28f, 54f, 96f, 0.1f);
+            Wall("Outer fence N E", 70f, 54f, 72f, 0.1f);
+            for (var x = -74f; x <= 104f; x += 12f)
+            {
+                if (x > 18f && x < 34f)
+                    continue;
+                CreateBlock($"Outer cap N {x}", new Vector3(x, 1.38f, 54f), new Vector3(0.18f, 0.12f, 0.18f), post);
+            }
+        }
+
+        private static void BuildPerimeterFenceFallback()
+        {
             var post = new Color(0.55f, 0.56f, 0.58f);
             var rail = new Color(0.72f, 0.74f, 0.76f);
             var mesh = new Color(0.62f, 0.64f, 0.66f);
@@ -6338,9 +6385,11 @@ namespace Airside.Presentation
                 }
             }
 
-            // West and east airside boundaries (keep runway ends open).
+            // West and east airside boundaries (keep the 23/05 strip open).
             for (var z = -18; z <= 32; z += 3)
             {
+                if (z > -8 && z < 8)
+                    continue;
                 CreateBlock($"Fence post W {z}", new Vector3(-44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
                 CreateBlock($"Fence post E {z}", new Vector3(44f, 0.7f, z), new Vector3(0.12f, 1.4f, 0.12f), post);
                 if (z < 32)
@@ -6417,6 +6466,8 @@ namespace Airside.Presentation
             // East/west mid posts + corner braces so airside boundary reads continuous.
             for (var z = -16; z <= 30; z += 4)
             {
+                if (z > -8 && z < 8)
+                    continue;
                 CreateBlock($"Fence post W mid {z}", new Vector3(-44f, 0.7f, z + 2f), new Vector3(0.1f, 1.35f, 0.1f), post);
                 CreateBlock($"Fence post E mid {z}", new Vector3(44f, 0.7f, z + 2f), new Vector3(0.1f, 1.35f, 0.1f), post);
             }
@@ -6442,6 +6493,8 @@ namespace Airside.Presentation
 
             for (var z = -14; z <= 28; z += 12)
             {
+                if (z > -8 && z < 8)
+                    continue;
                 CreateBlock($"Fence brace W diag {z}", new Vector3(-44f, 0.75f, z + 1f), new Vector3(0.06f, 0.06f, 2.2f), mesh);
                 CreateBlock($"Fence brace E diag {z}", new Vector3(44f, 0.75f, z + 1f), new Vector3(0.06f, 0.06f, 2.2f), mesh);
             }
@@ -6470,6 +6523,8 @@ namespace Airside.Presentation
 
             for (var z = -18; z <= 28; z += 8)
             {
+                if (z > -8 && z < 8)
+                    continue;
                 CreateBlock($"Fence wire W {z}", new Vector3(-44f, 1.38f, z + 2f), new Vector3(0.03f, 0.03f, 8f), mesh);
                 CreateBlock($"Fence wire E {z}", new Vector3(44f, 1.38f, z + 2f), new Vector3(0.03f, 0.03f, 8f), mesh);
                 CreateBlock($"Fence cap W {z}", new Vector3(-44f, 1.42f, z), new Vector3(0.2f, 0.1f, 0.2f), post);
@@ -7002,7 +7057,19 @@ namespace Airside.Presentation
                 (new Vector3(-75f, 0f, 28f), 1.08f),
                 (new Vector3(78f, 0f, 24f), 0.95f),
                 (new Vector3(-8f, 0f, -38f), 0.88f),
-                (new Vector3(36f, 0f, -36f), 1.02f)
+                (new Vector3(36f, 0f, -36f), 1.02f),
+                // Adelaide-scale outer belt — west dunes, east plains, north of the new fence.
+                (new Vector3(-70f, 0f, 22f), 1.2f),
+                (new Vector3(-72f, 0f, 38f), 1.05f),
+                (new Vector3(-68f, 0f, 48f), 0.95f),
+                (new Vector3(96f, 0f, 22f), 1.15f),
+                (new Vector3(100f, 0f, 40f), 1.05f),
+                (new Vector3(92f, 0f, 54f), 1.22f),
+                (new Vector3(-40f, 0f, 72f), 1.3f),
+                (new Vector3(8f, 0f, 74f), 1.1f),
+                (new Vector3(48f, 0f, 72f), 1.18f),
+                (new Vector3(88f, 0f, -18f), 1.0f),
+                (new Vector3(104f, 0f, -8f), 0.92f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers
@@ -7030,7 +7097,8 @@ namespace Airside.Presentation
                 new Vector3(-30f, 0f, 58f), new Vector3(-5f, 0f, 56f), new Vector3(18f, 0f, 58f),
                 new Vector3(40f, 0f, 58f), new Vector3(62f, 0f, 52f), new Vector3(68f, 0f, 42f),
                 new Vector3(72f, 0f, 22f), new Vector3(70f, 0f, -8f), new Vector3(-70f, 0f, -6f),
-                new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f)
+                new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f),
+                new Vector3(-74f, 0f, 16f), new Vector3(98f, 0f, 32f), new Vector3(90f, 0f, 60f)
             };
             var inlandCount = inlandScrub.Length;
             for (var i = 0; i < inlandCount; i++)
@@ -8095,7 +8163,7 @@ namespace Airside.Presentation
                 out _,
                 RenameAircraftPart,
                 kitName => AircraftPartColor(kitName, accent),
-                localPosition: new Vector3(0f, -0.66f, 0f));
+                localPosition: new Vector3(0f, -0.64f, 0f));
 
             if (usedArt)
             {

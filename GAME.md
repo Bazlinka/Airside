@@ -1,16 +1,16 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — handoff after art checklist merge)
-- **Branch:** `main`
-- **Do next:** Bailey sources assets from
-  `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md` (P0 aircraft parts →
-  buildings → vehicles/GSE → veg/characters). Mac Play audit of #170 collision
-  pass remains when convenient.
+- **Last updated:** 2026-09-09 (Codex — free CC0 UI-audio intake)
+- **Branch:** `main` (after PR merge)
+- **Do next:** Continue the checklist in priority order: P0 aircraft parts →
+  buildings → vehicles/GSE → veg/characters. AUD-005 click is integrated;
+  source a distinct cleared alert only after the existing Unity compile baseline is repaired.
 - **In progress / half-done:** First-playable **refine / art sourcing** — no new
   economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
 - **Watch for / assumptions:**
-  - Checklist rows marked Placeholder still need authored replacements
+  - Checklist rows marked Placeholder still need authored replacements; AUD-005 remains partial (click only)
   - Register + StreamingAssets sync required with every new runtime art commit
+  - The generated `double` to `float` source errors in `AirsidePrototype.cs` were repaired in this intake; local Unity EditMode is still blocked while the package resolver initialises UGUI/Input System/URP dependencies, so do not treat the import as a green test run yet
   - Save schema unchanged
 - **Open question for Bailey:** none
 

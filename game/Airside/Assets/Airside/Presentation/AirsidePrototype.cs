@@ -3971,7 +3971,7 @@ namespace Airside.Presentation
             // Match overview framing (architectural miniature, decision 0022 / post-F polish).
             camera.fieldOfView = 46f;
             camera.nearClipPlane = 0.35f;
-            camera.farClipPlane = 900f;
+            camera.farClipPlane = 1100f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -5030,6 +5030,10 @@ namespace Airside.Presentation
             PlaceLevelPad("Taxiway Alpha", 4f, 9f, 110f, 5.6f, Shade(tarmac, 1.05f), asphalt, new Vector2(22f, 1.2f));
             PlaceLevelPad("Taxiway Bravo", 6f, -9.2f, 170f, 4.8f, Shade(tarmac, 1.02f), asphalt, new Vector2(32f, 1f));
             PlaceLevelPad("Taxiway Charlie", 48f, 18f, 5.2f, 52f, Shade(tarmac, 1.04f), asphalt, new Vector2(1.1f, 10f));
+            CreateTaxiChordPad("Taxiway Bravo Charlie", new Vector3(48f, 0.02f, -6f), new Vector3(48f, 0.02f, -9.2f), 5.4f, asphalt, new Vector2(1.2f, 1.1f));
+            CreateTaxiChordPad("Taxiway Bravo 12-30", new Vector3(26f, 0.02f, -9.2f), new Vector3(21f, 0.02f, -17f), 5.6f, asphalt, new Vector2(1.6f, 1.4f));
+            CreateTaxiChordPad("Taxiway Bravo W exit", new Vector3(-60f, 0.02f, -9.2f), new Vector3(-60f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
+            CreateTaxiChordPad("Taxiway Bravo E exit", new Vector3(70f, 0.02f, -9.2f), new Vector3(70f, 0.02f, -4.2f), 5.2f, asphalt, new Vector2(1.2f, 1.1f));
 
             PlaceLevelPad("Apron", 20f, 22f, 36f, 28f, pad, concrete, new Vector2(8f, 6f));
             PlaceLevelPad("Apron east expansion", 42f, 20f, 18f, 22f, Shade(pad, 0.97f), concrete, new Vector2(4f, 5f));
@@ -6993,8 +6997,8 @@ namespace Airside.Presentation
 
         private static void BuildVegetation()
         {
-            // Stylised eucalyptus clumps — denser belts so overview reads as KI bush, not
-            // a handful of props (0025 item 3). PlaceTree prefers VEG-001 v02→v01.
+            // Stylised eucalyptus clumps — denser belts so overview reads as West Beach
+            // tree line, not a handful of props (0025 item 3). PlaceTree prefers VEG-001 v02→v01.
             var scrubKit = PreferArtKit(
                 "Models/Environment/mdl_kingscote_scrub_kit_v02.gltf",
                 "Models/Environment/mdl_kingscote_scrub_kit_v01.gltf");
@@ -7086,7 +7090,12 @@ namespace Airside.Presentation
                 (new Vector3(8f, 0f, 74f), 1.1f),
                 (new Vector3(48f, 0f, 72f), 1.18f),
                 (new Vector3(88f, 0f, -18f), 1.0f),
-                (new Vector3(104f, 0f, -8f), 0.92f)
+                (new Vector3(104f, 0f, -8f), 0.92f),
+                (new Vector3(-62f, 0f, -48f), 1.1f),
+                (new Vector3(80f, 0f, -46f), 1.0f),
+                (new Vector3(104f, 0f, 8f), 1.12f),
+                (new Vector3(-74f, 0f, -36f), 0.95f),
+                (new Vector3(58f, 0f, -50f), 1.08f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers

@@ -16,7 +16,8 @@ change it describes.
   (kit or outer ribbons) encloses the long 23/05 strip — the compact inner
   Kingscote ring is gone so it no longer cuts the north apron. Approach over
   the gulf, flare on the 05 numbers, long rollout to A1; takeoff uses more of
-  23/05. Unity EditMode 193/193.
+  23/05. Bravo joins Charlie and 12/30 with visual runway exits. Unity EditMode
+  193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

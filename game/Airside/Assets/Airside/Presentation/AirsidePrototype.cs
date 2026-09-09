@@ -5764,6 +5764,10 @@ namespace Airside.Presentation
                 null, null, top: -0.06f, height: 0.08f);
             PlaceLevelPad("Coast foam G", -104f, -64f, 5f, 40f, new Color(0.91f, 0.95f, 0.97f, 0.22f),
                 null, null, top: -0.07f, height: 0.08f);
+            PlaceLevelPad("Coast foam H", -102f, 118f, 6f, 48f, new Color(0.93f, 0.96f, 0.98f, 0.22f),
+                null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam I", -108f, -128f, 6f, 44f, new Color(0.92f, 0.95f, 0.97f, 0.2f),
+                null, null, top: -0.07f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -6194,6 +6198,7 @@ namespace Airside.Presentation
             PlaceCoastBoat("Coast boat F", new Vector3(-126f, -0.42f, -78f), 102f, new Color(0.88f, 0.86f, 0.78f));
             PlaceCoastBoat("Coast boat G", new Vector3(-132f, -0.44f, -96f), 108f, new Color(0.22f, 0.38f, 0.48f));
             PlaceCoastBoat("Coast boat H", new Vector3(-118f, -0.4f, -52f), 88f, new Color(0.9f, 0.55f, 0.2f));
+            PlaceCoastBoat("Coast boat I", new Vector3(-128f, -0.43f, 88f), 76f, new Color(0.18f, 0.42f, 0.38f));
             if (!hasBoatPrefab)
             {
                 PlaceCoastBoat("Coast boat D", new Vector3(-130f, -0.4f, -28f), 100f, new Color(0.2f, 0.35f, 0.45f));
@@ -6392,6 +6397,9 @@ namespace Airside.Presentation
             PlaceParkedCar("Eastern arterial car B", new Vector3(148f, 0f, 48.2f), -90f, carColors[0]);
             PlaceParkedCar("Eastern arterial car C", new Vector3(132f, 0f, 43.8f), 88f, carColors[4]);
             PlaceParkedCar("Eastern arterial car D", new Vector3(164f, 0f, 48.4f), -92f, carColors[2]);
+            PlaceParkedCar("Eastern arterial car E", new Vector3(108f, 0f, 48.0f), -88f, carColors[1]);
+            PlaceParkedCar("Eastern arterial car F", new Vector3(176f, 0f, 43.4f), 92f, carColors[4]);
+            PlaceParkedCar("Eastern arterial car G", new Vector3(154f, 0f, 43.9f), 86f, new Color(0.15f, 0.16f, 0.18f));
             BuildAdelaideLandsideMonument();
             PlaceArterialDirectionSign();
 
@@ -11607,6 +11615,9 @@ namespace Airside.Presentation
             PlaceBeltLoader(serviceKit, new Vector3(12.5f, 0f, 21.5f), 200f, silhouetteOnly: hasServiceKit);
             if (!hasServiceKit)
                 PlaceBeltLoader(serviceKit, new Vector3(29.5f, 0f, 15.5f), 110f, silhouetteOnly: false);
+            PlaceBeltLoader(serviceKit, new Vector3(68f, 0f, 18.4f), 250f, silhouetteOnly: true);
+            PlaceBaggageDolly(kit, new Vector3(64f, 0f, 14.6f));
+            PlaceBaggageDolly(kit, new Vector3(76f, 0f, 28.4f));
 
             BuildApronSafetyProps();
             BuildFuelFarm();
@@ -11980,6 +11991,7 @@ namespace Airside.Presentation
 
             PlaceIdleApronAircraft("Idle satellite", new Vector3(82f, 0.7f, 32f), 255f, new Color(0.18f, 0.32f, 0.52f));
             PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f));
+            PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f));
         }
 
         /// <summary>

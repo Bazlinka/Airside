@@ -67,7 +67,9 @@ change it describes.
   the field. 12/30 has a PAPI ladder. GSE and stairs match the larger kit.
   Clouds sit at ~90–150 m instead of on the tower; eucalyptus and south
   suburbs fringe the 12/30 pocket; gulf birds orbit higher; CBD and Holdfast
-  massing is taller from the 318 m overview. Unity EditMode 193/193.
+  massing is taller from the 318 m overview. An idle turboprop sits beside
+  the hangar; satellite GSE, extra gulf foam and arterial cars fill empty
+  overview gaps. Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

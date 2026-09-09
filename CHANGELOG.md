@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Runtime airfield performance (P0–P2).** Retired the tile-built operational
+  airfield and terrain-kit cube dump in favour of combined runway/taxi/apron
+  pads plus the WLD-004 kit. Streamed textures and Lit materials are cached and
+  shared; tints use `MaterialPropertyBlock`. Scenery is marked static and combined.
+  Prefabs load on demand through Addressables keys (no `Resources.LoadAll`).
+  High keeps 4× MSAA / four cascades / two probes; Medium is 2× MSAA, two
+  cascades, one 64px apron probe. Probes refresh only on weather/time bands.
+  Decision 0029. Evidence: `AirsidePrototype.cs` ~11k lines / 266 `CreateBlock`
+  call sites (was ~18k / 3,500+); brace depth 0; `scripts/test-domain.sh` **178 passed**.
+
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its
   unreachable tens-of-thousands of outer grass primitives with a textured terrain

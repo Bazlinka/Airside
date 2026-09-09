@@ -78,7 +78,7 @@ namespace Airside.Presentation
         }
 
         public static bool HasKit(string artRelativePath) =>
-            TryLoadKit(artRelativePath, out var kit) && kit.Meshes.Count > 0;
+            ArtRuntimePaths.ResolveExisting(artRelativePath) != null;
 
         private static Transform CreateMeshObject(
             string name,
@@ -90,14 +90,20 @@ namespace Airside.Presentation
         {
             var go = new GameObject(name);
             var transform = go.transform;
+            var worldPose = parent == null;
+            if (parent == null)
+                parent = AirsideStaticWorld.WorldRoot;
             if (parent != null)
                 transform.SetParent(parent, false);
-            transform.localPosition = parent != null ? Vector3.zero : position;
-            transform.localRotation = parent != null ? Quaternion.identity : rotation;
-            if (parent == null)
+            if (worldPose)
             {
                 transform.position = position;
                 transform.rotation = rotation;
+            }
+            else
+            {
+                transform.localPosition = Vector3.zero;
+                transform.localRotation = Quaternion.identity;
             }
 
             var filter = go.AddComponent<MeshFilter>();
@@ -106,7 +112,7 @@ namespace Airside.Presentation
             var kind = AirsideMaterialLibrary.InferFromMeshName(name);
             // Shared: kits build one renderer per mesh, and identical (colour, kind)
             // pairs are overwhelmingly common. Runtime tinting clones via .material.
-            var hasUsableUvs = mesh != null && mesh.uv != null && mesh.uv.Length == mesh.vertexCount;
+            var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);
             renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
                 color, kind, useTextures: hasUsableUvs);
             return transform;
@@ -202,6 +208,7 @@ namespace Airside.Presentation
                 mesh.RecalculateNormals();
                 mesh.SetUVs(0, BuildPlanarUvs(vertices));
                 mesh.RecalculateBounds();
+                AirsideMeshUtil.UploadStatic(mesh);
 
                 var entry = new MeshEntry(name, mesh);
                 kit.Meshes.Add(entry);

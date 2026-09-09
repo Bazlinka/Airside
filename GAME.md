@@ -1,19 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Codex — free CC0 asset intake / startup safeguard)
-- **Branch:** `art/free-concrete-surface` (startup-safeguard PR pending)
-- **Do next:** Have Cursor diagnose the packaged-player visual-first-frame issue
-  before more art sourcing. The previous `InvalidProgramException` is removed and
-  the dense outer grass field is replaced by one textured base, but a visible frame
-  was not captured from the local Mac player. Then continue the checklist in
-  priority order: P0 aircraft parts → buildings → vehicles/GSE → veg/characters.
-- **In progress / half-done:** First-playable **refine / art sourcing** — no new
-  economy or Companion. Deferred polish in `BUGFIX_PASS_100` stays optional.
+- **Last updated:** 2026-09-09 (Cursor — runtime airfield performance pass)
+- **Branch:** `cursor/game-performance-pass-c1bb`
+- **Do next:** Mac Play / packaged player — confirm visual first frame with combined
+  runway/taxi/apron pads + WLD-004 terrain kit (no tile airfield). Sign off High
+  (4× MSAA + SMAA) vs Medium on a 2 GB GPU. Then continue art sourcing: P0 aircraft
+  parts → buildings → vehicles/GSE → veg/characters.
+- **In progress / half-done:** Presentation performance P0–P2 landed on this branch
+  (decision 0029). StreamingAssets glTF copies remain until a Mac Addressables bake
+  is proven. Keep hunting leftover fallback cubes (ALS, fuel farm, landside).
 - **Watch for / assumptions:**
-  - Checklist rows marked Placeholder still need authored replacements; AUD-005 remains partial (click only)
-  - Register + StreamingAssets sync required with every new runtime art commit
-  - The generated `double` to `float` source errors, `BugfixPassTests` StableId assertion mismatch, packaged-player `BuildAirfield` IL fault, and unreachable dense outer-ground field were repaired in this intake. Unity EditMode passes 192/192; `scripts/test-domain.sh` remains unavailable on this Mac because no .NET SDK is installed
-  - Packaged-player visual-first-frame QA is still outstanding. The latest player log has repeated non-fatal `mesh isReadable is false` UV warnings while it initialises; treat the player as unresolved until a visible interactive frame is captured.
+  - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`)
+  - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
+  - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
   - Save schema unchanged
 - **Open question for Bailey:** none
 
@@ -53,7 +52,8 @@ Australian airport. Generated images establish composition, palette, fictional
 liveries and UI direction. Runtime aircraft, buildings and service vehicles remain
 true 3D assets; animation and VFX mirror simulation state and never drive it.
 
-- Anti-aliasing is on: 4x MSAA on the PC pipeline asset plus SMAA (high) on the runtime camera.
+- Anti-aliasing is on: High keeps 4× MSAA on the PC pipeline plus SMAA (high) on
+  the runtime camera; Medium uses 2× MSAA + SMAA. Vsync is on (`vSyncCount` 1).
 - The post stack runs a deliberate grade only — the template default profile's depth of field, motion blur, lens distortion, chromatic aberration, lens flare and panini are pinned off.
 - The simulation keeps running when the window loses focus (`runInBackground`).
 - Ground traffic only uses stands the airport has actually built; with every built stand occupied by a commercial it holds off-field (leaving the corridor free) rather than taxiing to an unbuilt Stand 3.
@@ -90,6 +90,12 @@ Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
 supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
+
+- Runtime airfield performance **P0–P2 on `cursor/game-performance-pass-c1bb`**:
+  combined operational pads (6) replace 745 Terrain11 tiles; terrain-kit cube
+  dump removed; textures/materials cached; Addressables on demand; High/Medium
+  ladder; probe bands. `AirsidePrototype.cs` ~11k lines, brace depth 0.
+  Decision 0029. Mac Play visual-first-frame still required.
 
 - Layering / collision / route **100-fix** on `cursor/layering-collision-bugfix-100-d7f0`: dogleg lead-ins, apron throat, stand spacing 14/24/34, GT off-field + run-up bay, selective yield, `scripts/test-domain.sh` **177 passed** (`CollisionPass100Tests`).
 

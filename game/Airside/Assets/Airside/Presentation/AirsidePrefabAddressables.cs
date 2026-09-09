@@ -9,11 +9,12 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Decision 0025 item 1 / ADR 0026 — runtime Addressables locator that exposes
-    /// every <c>Resources/Airside/Prefabs</c> asset under key
-    /// <c>airside-prefab/&lt;key&gt;</c> until Bailey builds Editor Addressables groups.
-    /// Loads via <see cref="AirsideResourcesProvider"/> (Resources.Load), keeping
-    /// StreamingAssets glTF and direct Resources fallbacks intact.
+    /// Decision 0026 / performance P1 — Addressables locator for
+    /// <c>airside-prefab/&lt;key&gt;</c>. Keys resolve on demand via
+    /// <see cref="AirsideResourcesProvider"/>; startup no longer
+    /// <c>Resources.LoadAll</c>s every prefab. When a packaged Addressables
+    /// catalog is present it is initialised first and this locator only fills
+    /// missing keys.
     /// </summary>
     public static class AirsidePrefabAddressables
     {
@@ -21,6 +22,21 @@ namespace Airside.Presentation
 
         private static bool _registered;
         private static bool _providerRegistered;
+
+        public static bool HasPackagedCatalog
+        {
+            get
+            {
+                try
+                {
+                    return File.Exists(Path.Combine(Application.streamingAssetsPath, "aa", "settings.json"));
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap() => EnsureRegistered();
@@ -33,32 +49,11 @@ namespace Airside.Presentation
             try
             {
                 EnsureProvider();
-
-                var locations = new Dictionary<object, IList<IResourceLocation>>();
-                var prefabs = Resources.LoadAll<GameObject>(ArtPresentationLoader.ResourcesPrefabRoot);
-                for (var i = 0; i < prefabs.Length; i++)
-                {
-                    var prefab = prefabs[i];
-                    if (prefab == null || string.IsNullOrEmpty(prefab.name))
-                        continue;
-
-                    var key = ArtPresentationLoader.AddressablesKeyPrefix + prefab.name;
-                    var internalId = $"{ArtPresentationLoader.ResourcesPrefabRoot}/{prefab.name}";
-                    IResourceLocation location = new ResourceLocationBase(
-                        key,
-                        internalId,
-                        AirsideResourcesProvider.Id,
-                        typeof(GameObject));
-                    locations[key] = new List<IResourceLocation> { location };
-                }
-
-                Addressables.AddResourceLocator(new Locator(locations));
+                Addressables.AddResourceLocator(new OnDemandLocator());
                 _registered = true;
             }
             catch (Exception)
             {
-                // Addressables / ResourceManager unavailable in some batch contexts.
-                // ArtPresentationLoader still falls through to Resources → glTF.
                 _registered = true;
             }
         }
@@ -70,13 +65,9 @@ namespace Airside.Presentation
 
             try
             {
-                // Packaged builds often lack StreamingAssets/aa/settings.json. Prefer
-                // attaching our Resources provider without a full catalog initialize
-                // when the player catalog is absent (avoids the known missing-settings spam).
                 var catalogSettings = Path.Combine(
                     Application.streamingAssetsPath, "aa", "settings.json");
-                var hasCatalog = File.Exists(catalogSettings);
-                if (hasCatalog)
+                if (File.Exists(catalogSettings))
                     Addressables.InitializeAsync().WaitForCompletion();
 
                 var providers = Addressables.ResourceManager.ResourceProviders;
@@ -94,7 +85,6 @@ namespace Airside.Presentation
             }
             catch (Exception)
             {
-                // Leave unregistered; locator registration may still no-op safely.
             }
         }
 
@@ -123,48 +113,49 @@ namespace Airside.Presentation
             }
         }
 
-        private sealed class Locator : IResourceLocator
+        /// <summary>
+        /// On-demand locator: a key exists when the Resources prefab file can be
+        /// named. The provider loads that single asset; nothing else is touched.
+        /// </summary>
+        private sealed class OnDemandLocator : IResourceLocator
         {
-            private readonly Dictionary<object, IList<IResourceLocation>> _locations;
-
-            public Locator(Dictionary<object, IList<IResourceLocation>> locations) =>
-                _locations = locations ?? new Dictionary<object, IList<IResourceLocation>>();
-
             public string LocatorId => AirsidePrefabAddressables.LocatorId;
 
-            public IEnumerable<object> Keys => _locations.Keys;
+            public IEnumerable<object> Keys
+            {
+                get { yield break; }
+            }
 
 #if !ENABLE_JSON_CATALOG
-            /// <summary>
-            /// Required by IResourceLocator when Addressables is built against the binary
-            /// catalog (the default in this Unity version). Guarded the same way the
-            /// interface declares it, so a JSON-catalog build still compiles.
-            /// </summary>
             public IEnumerable<IResourceLocation> AllLocations
             {
-                get
-                {
-                    foreach (var entry in _locations.Values)
-                    {
-                        if (entry == null)
-                            continue;
-                        foreach (var location in entry)
-                            yield return location;
-                    }
-                }
+                get { yield break; }
             }
 #endif
 
             public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
             {
-                if (key != null && _locations.TryGetValue(key, out locations))
-                {
-                    if (type == null || type == typeof(GameObject) || type == typeof(UnityEngine.Object))
-                        return true;
-                }
-
                 locations = null;
-                return false;
+                if (key is not string s
+                    || !s.StartsWith(ArtPresentationLoader.AddressablesKeyPrefix, StringComparison.Ordinal))
+                    return false;
+                if (type != null && type != typeof(GameObject) && type != typeof(UnityEngine.Object))
+                    return false;
+
+                var prefabKey = s.Substring(ArtPresentationLoader.AddressablesKeyPrefix.Length);
+                if (string.IsNullOrEmpty(prefabKey))
+                    return false;
+
+                var internalId = $"{ArtPresentationLoader.ResourcesPrefabRoot}/{prefabKey}";
+                locations = new List<IResourceLocation>
+                {
+                    new ResourceLocationBase(
+                        s,
+                        internalId,
+                        AirsideResourcesProvider.Id,
+                        typeof(GameObject))
+                };
+                return true;
             }
         }
     }

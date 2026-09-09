@@ -89,5 +89,65 @@ namespace Airside.Tests
 
             Assert.That(visible, Is.EqualTo(resetBySimulation));
         }
+
+        [Test]
+        public void CombinedSurfaces_TileAirfieldIsRetired()
+        {
+            Assert.That(AirsideCombinedSurfaces.UseTileOperational, Is.False);
+            Assert.That(AirsideCombinedSurfaces.UseTilePaddock, Is.False);
+            Assert.That(AirsideCombinedSurfaces.CombinedPadCount, Is.EqualTo(6));
+        }
+
+        [Test]
+        public void RuntimeQuality_HighKeepsDocumentedMsaaAndAddsMediumLadder()
+        {
+            Assert.That(AirsideRuntimeQuality.HighMsaa, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.MediumMsaa, Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.VSyncCount, Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.HighShadowCascades, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.MediumShadowCascades, Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.HighAdditionalLights, Is.EqualTo(12));
+            Assert.That(AirsideRuntimeQuality.MediumAdditionalLights, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void RuntimeQuality_ProbeBandChangesOnlyOnWeatherAndTimeThresholds()
+        {
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.8f, 0f), Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.4f, 0f), Is.EqualTo(1));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.1f, 0f), Is.EqualTo(0));
+            Assert.That(AirsideRuntimeQuality.ProbeBand(0.8f, 0.3f), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void MeshUtil_NullMeshHasNoUvsWithoutReadingUvArray()
+        {
+            Assert.That(AirsideMeshUtil.HasUsableUvs(null), Is.False);
+        }
+
+        [Test]
+        public void StaticWorld_HoldShortAndAircraftStayDynamic()
+        {
+            Assert.That(AirsideStaticWorld.IsDynamic(null), Is.True);
+            var hold = new GameObject("Hold short 09");
+            var apron = new GameObject("Apron ");
+            try
+            {
+                Assert.That(AirsideStaticWorld.IsDynamic(hold), Is.True);
+                Assert.That(AirsideStaticWorld.IsDynamic(apron), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(hold);
+                UnityEngine.Object.DestroyImmediate(apron);
+            }
+        }
+
+        [Test]
+        public void PrefabAddressables_OnDemandLocatorDoesNotPreloadCatalog()
+        {
+            Assert.That(AirsidePrefabAddressables.LocatorId, Is.EqualTo("Airside.Prefabs"));
+            Assert.That(ArtPresentationLoader.AddressablesKeyPrefix, Is.EqualTo("airside-prefab/"));
+        }
     }
 }

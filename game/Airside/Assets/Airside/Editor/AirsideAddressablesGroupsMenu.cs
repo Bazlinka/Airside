@@ -18,17 +18,19 @@ namespace Airside.Editor
         private static void VerifyPrefabKeys()
         {
             Airside.Presentation.AirsidePrefabAddressables.EnsureRegistered();
-            var count = Airside.Presentation.AirsidePrefabAddressables.RegisteredKeyCount;
             var resources = Resources.LoadAll<GameObject>(
                 Airside.Presentation.ArtPresentationLoader.ResourcesPrefabRoot);
+            var catalog = Airside.Presentation.AirsidePrefabAddressables.HasPackagedCatalog
+                ? "packaged catalog present"
+                : "no packaged catalog — keys resolve on demand via Resources";
             Debug.Log(
-                $"[Airside] Addressables prefab keys registered: {count} " +
-                $"(Resources prefabs found: {resources.Length}). " +
-                "Editor Addressables groups can mirror the same airside-prefab/<key> contract.");
+                $"[Airside] Prefab Addressables locator ready ({catalog}). " +
+                $"Resources prefabs found: {resources.Length}. " +
+                "Runtime loads one key at a time; Editor Addressables groups can mirror airside-prefab/<key>.");
             EditorUtility.DisplayDialog(
                 "Airside Addressables",
-                $"Registered {count} airside-prefab keys from {resources.Length} Resources prefabs.\n\n" +
-                "Runtime uses AirsideResourcesProvider → Resources.Load.\n" +
+                $"On-demand locator registered.\n{catalog}.\n{resources.Length} Resources prefabs on disk.\n\n" +
+                "Runtime no longer LoadAlls this folder at startup.\n" +
                 "StreamingAssets glTF remains the fallback when no prefab exists.",
                 "OK");
         }

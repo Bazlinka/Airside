@@ -303,18 +303,7 @@ namespace Airside.Presentation
 
         private static Texture2D LoadArtTexture(string artRelativePath)
         {
-            var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
-            if (fullPath == null)
-                return null;
-
-            var bytes = File.ReadAllBytes(fullPath);
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true);
-            if (!texture.LoadImage(bytes))
-                return null;
-
-            texture.wrapMode = TextureWrapMode.Clamp;
-            texture.filterMode = FilterMode.Bilinear;
-            return texture;
+            return AirsideArtTextures.Load(artRelativePath, linear: false, wrap: TextureWrapMode.Clamp);
         }
     }
 }

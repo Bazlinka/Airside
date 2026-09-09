@@ -8977,7 +8977,7 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(3.4f, 0.012f, 1.8f);
+            shadow.transform.localScale = new Vector3(4.0f, 0.012f, 2.15f);
             var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.22f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();

@@ -12,7 +12,7 @@ namespace Airside.Presentation
     {
         // West-biased so first frame shows Gulf St Vincent plus the long 23/05 strip.
         private readonly Vector3 _overviewCenter = new(-8f, 0f, 6f);
-        private const float OverviewDistance = 214f;
+        private const float OverviewDistance = 236f;
         private const float OverviewFov = 46f;
         private const float OverviewPitch = 34f;
         private const float OverviewYaw = 128f;

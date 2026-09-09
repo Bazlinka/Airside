@@ -95,7 +95,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 - Fidelity-board integration on `cursor/integrate-fidelity-boards-3272`: scrub /
   terrain v02 kits, surface `tx_*_v02`, ARFF prefab v02, docs promoted to
-  Approved · Integrated.
+  Approved · Integrated (densify tighten pass included).
 - `scripts/test-domain.sh`: **136/136** on `cursor/integrate-fidelity-boards-3272`.
 - Day/night readability merged via #158 (Mac noon/midnight overview pending).
 - 50-item bugfix pass merged via #157.

@@ -448,7 +448,8 @@ namespace Airside.Presentation
             Color dryColor,
             float drySmoothness,
             float dryMetallic = 0.02f,
-            float dryBumpScale = 0.5f)
+            float dryBumpScale = 0.5f,
+            bool preferWetConcreteAlbedo = false)
         {
             if (material == null)
                 return;
@@ -461,6 +462,20 @@ namespace Airside.Presentation
             // URP Lit reads _BaseColor; keep it in sync with .color so wet darken shows.
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", wetColor);
+
+            // Approved surface board wet-concrete swatch — swap apron albedo when wet enough.
+            if (preferWetConcreteAlbedo && wetness01 > 0.12f)
+            {
+                var wetMap = PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false);
+                if (wetMap != null)
+                {
+                    if (material.HasProperty("_BaseMap"))
+                        material.SetTexture("_BaseMap", wetMap);
+                    if (material.HasProperty("_MainTex"))
+                        material.SetTexture("_MainTex", wetMap);
+                    material.mainTexture = wetMap;
+                }
+            }
             if (material.HasProperty("_SpecColor"))
             {
                 var spec = Color.Lerp(

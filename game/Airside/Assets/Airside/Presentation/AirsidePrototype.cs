@@ -1753,9 +1753,11 @@ namespace Airside.Presentation
             var fuelActive = TaskActive(servicing, "Refuel");
             var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
             var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
-            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(13.3f, 0.55f, standZ + 1.8f), fuelPark);
-            UpdateVehicle(_baggageCart, bagActive, new Vector3(20.2f, 0.42f, standZ - 1.8f), bagPark);
-            UpdateVehicle(_passengerBus, paxActive, new Vector3(13f, 0.68f, standZ - 2.2f), busPark);
+            // Approved turnaround day/dusk board: fuel at port wing, baggage port-forward,
+            // bus starboard clear of props.
+            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(14.6f, 0.55f, standZ + 3.1f), fuelPark);
+            UpdateVehicle(_baggageCart, bagActive, new Vector3(19.4f, 0.42f, standZ + 2.4f), bagPark);
+            UpdateVehicle(_passengerBus, paxActive, new Vector3(14.2f, 0.68f, standZ - 3.4f), busPark);
             var daylight = (float)_simulation.TimeOfDay.Daylight;
             SyncVehicleHeadlights(_fuelTruck, fuelActive || daylight < 0.38f, daylight);
             SyncVehicleHeadlights(_baggageCart, bagActive || daylight < 0.38f, daylight);
@@ -1796,13 +1798,19 @@ namespace Airside.Presentation
                 // Yaw ~90 so kit long axis (+Z) aims toward cabin (−X), then pitch about local X.
                 PlaceProp(_stairs, true, new Vector3(stairsX, 0.55f, z + 0.15f),
                     Quaternion.Euler(0f, 90f, 0f) * Quaternion.Euler(stairsPitch, 0f, 0f));
-                // Chocks drop and settle with a slight roll into the tire.
+                // Paired chocks at main-gear tracks (board inventory).
                 var chockArrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f));
                 var chockY = Mathf.Lerp(0.42f, 0.12f, chockArrive);
                 var chockRoll = Mathf.Lerp(35f, 0f, chockArrive);
-                PlaceProp(_chocks, true, new Vector3(17f, chockY, z + 1.55f), Quaternion.Euler(0f, 0f, chockRoll));
-                PlaceProp(_gpuCart, true, new Vector3(15.2f, 0.35f, z + 2.4f), Quaternion.Euler(0f, 90f, 0f));
+                PlaceProp(_chocks, true, new Vector3(16.6f, chockY, z + 1.55f), Quaternion.Euler(0f, 0f, chockRoll));
+                // GPU at nose in Coastal Blue (board); cable toward aircraft.
+                PlaceProp(_gpuCart, true, new Vector3(14.2f, 0.35f, z + 0.15f), Quaternion.Euler(0f, 90f, 0f));
                 PulseGpuCart(_gpuCart, true);
+                // Pushback tug waits at nose during AtStand so the service set matches the board.
+                PlaceProp(_pushbackTug, true, new Vector3(13.4f, 0.4f, z - 0.2f),
+                    Quaternion.LookRotation(new Vector3(-1f, 0f, -0.15f)));
+                SyncVehicleHeadlights(_pushbackTug, (float)_simulation.TimeOfDay.Daylight < 0.38f,
+                    (float)_simulation.TimeOfDay.Daylight);
             }
             else
             {
@@ -1810,6 +1818,8 @@ namespace Airside.Presentation
                 PlaceProp(_chocks, false, Vector3.zero, Quaternion.identity);
                 PlaceProp(_gpuCart, false, Vector3.zero, Quaternion.identity);
                 PulseGpuCart(_gpuCart, false);
+                if (pushing == null)
+                    PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
             }
 
             if (pushing != null)
@@ -1829,7 +1839,7 @@ namespace Airside.Presentation
                 PulseServiceBeacon(_pushbackTug, true);
                 SyncVehicleHeadlights(_pushbackTug, true, (float)_simulation.TimeOfDay.Daylight);
             }
-            else
+            else if (atStand == null)
             {
                 PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
             }
@@ -2279,9 +2289,11 @@ namespace Airside.Presentation
                     var (renderer, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
                     if (renderer == null)
                         continue;
-                    var apply = raining ? rainWetness : (paved ? 0.06f : 0f);
+                    // Clear residual damp reads on overview like the turnaround dusk board.
+                    var apply = raining ? rainWetness : (paved ? 0.14f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
-                        renderer.material, apply, dry, drySmooth, dryMetallic, dryBump);
+                        renderer.material, apply, dry, drySmooth, dryMetallic, dryBump,
+                        preferWetConcreteAlbedo: paved);
                 }
             }
 
@@ -5399,6 +5411,10 @@ namespace Airside.Presentation
                         new Vector3(0.05f, 0.55f, 0.05f), new Color(0.95f, 0.2f, 0.15f));
                     ParentBlock(root, $"{name} wand tip", new Vector3(0.42f, bodyY + 0.65f, 0.05f),
                         new Vector3(0.08f, 0.08f, 0.08f), new Color(1f, 0.85f, 0.2f));
+                    ParentBlock(root, $"{name} wand L", new Vector3(-0.42f, bodyY + 0.35f, 0.05f),
+                        new Vector3(0.05f, 0.55f, 0.05f), new Color(0.95f, 0.2f, 0.15f));
+                    ParentBlock(root, $"{name} wand tip L", new Vector3(-0.42f, bodyY + 0.65f, 0.05f),
+                        new Vector3(0.08f, 0.08f, 0.08f), new Color(1f, 0.85f, 0.2f));
                 }
             }
             else
@@ -5495,6 +5511,25 @@ namespace Airside.Presentation
             {
                 Place($"{prefix}_wand", $"{name} wand", new Color(0.95f, 0.2f, 0.15f));
                 Place($"{prefix}_wand_tip", $"{name} wand tip", new Color(1f, 0.85f, 0.2f));
+                // Silhouette board shows two wands — mirror a second into the other hand.
+                if (ArtGltfLoader.TryPlaceNamedMesh(kitPath, $"{prefix}_wand", Vector3.zero, Quaternion.identity,
+                        new Color(0.95f, 0.2f, 0.15f), out var wandL))
+                {
+                    wandL.SetParent(root, false);
+                    wandL.localPosition = new Vector3(-0.42f, 0f, 0.05f);
+                    wandL.localRotation = Quaternion.Euler(0f, 0f, 12f);
+                    wandL.name = $"{name} wand L";
+                    placed++;
+                }
+
+                if (ArtGltfLoader.TryPlaceNamedMesh(kitPath, $"{prefix}_wand_tip", Vector3.zero, Quaternion.identity,
+                        new Color(1f, 0.85f, 0.2f), out var tipL))
+                {
+                    tipL.SetParent(root, false);
+                    tipL.localPosition = new Vector3(-0.42f, 0.3f, 0.05f);
+                    tipL.name = $"{name} wand tip L";
+                    placed++;
+                }
             }
 
             return placed >= 3;
@@ -5661,9 +5696,9 @@ namespace Airside.Presentation
             }
 
             // Rock outcrops along the sand — prefer VEG-002 scrub kit rocks (v02 adds rock_c).
-            var rock = new Color(0.52f, 0.48f, 0.42f);
+            var rock = new Color(0.82f, 0.78f, 0.72f);
             PlaceCoastRock("Coast rock A", new Vector3(-28f, -0.25f, -50f), "rock_a", rock, 4.2f, 18f);
-            PlaceCoastRock("Coast rock B", new Vector3(18f, -0.2f, -49f), "rock_b", Shade(rock, 0.9f), 3.6f, -12f);
+            PlaceCoastRock("Coast rock B", new Vector3(18f, -0.2f, -49f), "rock_b", new Color(0.62f, 0.42f, 0.32f), 3.6f, -12f);
             PlaceCoastRock("Coast rock C", new Vector3(42f, -0.3f, -51.5f), "rock_c", Shade(rock, 1.05f), 4.4f, 40f);
             PlaceCoastRock("Coast rock D", new Vector3(-8f, -0.22f, -50.5f), "rock_a", Shade(rock, 0.95f), 3.2f, -25f);
         }
@@ -6889,12 +6924,12 @@ namespace Airside.Presentation
                 new Vector3(72f, 0f, 22f), new Vector3(70f, 0f, -8f), new Vector3(-70f, 0f, -6f),
                 new Vector3(-66f, 0f, 18f), new Vector3(8f, 0f, 40f), new Vector3(-4f, 0f, 36f)
             };
-            var inlandCount = hasScrubKit ? 7 : inlandScrub.Length;
+            var inlandCount = inlandScrub.Length;
             for (var i = 0; i < inlandCount; i++)
                 PlaceShrub(inlandScrub[i], 0.75f + (i % 5) * 0.1f);
 
-            // Fence-line scrub carpet — wider step when kit scrub owns the silhouette.
-            var fenceStep = hasScrubKit ? 9 : 4;
+            // Fence-line scrub carpet — denser when VEG-002 kit stamps authored clumps.
+            var fenceStep = hasScrubKit ? 5 : 4;
             for (var x = -70; x <= 70; x += fenceStep)
             {
                 PlaceShrubClump(new Vector3(x, 0f, 36f + (x % 5) * 0.2f), 0.55f + (Mathf.Abs(x) % 4) * 0.08f);
@@ -6902,7 +6937,7 @@ namespace Airside.Presentation
                     PlaceShrubClump(new Vector3(x + 1.5f, 0f, 40f), 0.7f);
             }
 
-            var sideStep = hasScrubKit ? 10 : 5;
+            var sideStep = hasScrubKit ? 6 : 5;
             for (var z = -20; z <= 50; z += sideStep)
             {
                 PlaceShrubClump(new Vector3(-48f - (z % 3) * 0.4f, 0f, z), 0.6f + (Mathf.Abs(z) % 3) * 0.1f);
@@ -6910,18 +6945,21 @@ namespace Airside.Presentation
             }
 
             // Between apron fringe and N fence.
-            var fringeStep = hasScrubKit ? 6 : 3;
+            var fringeStep = hasScrubKit ? 3 : 3;
             for (var x = 6; x <= 34; x += fringeStep)
                 PlaceShrubClump(new Vector3(x, 0f, 28.5f + (x % 2) * 0.4f), 0.5f);
 
             // Dense coastal scrub belt — prefer VEG-002 clumps over greybox cubes.
-            var coastStep = hasScrubKit ? 8 : 5;
+            var coastStep = hasScrubKit ? 4 : 5;
             for (var x = -55; x <= 55; x += coastStep)
             {
                 var zJitter = ((x * 13) % 7) * 0.15f;
                 PlaceShrub(new Vector3(x, 0f, -39.5f + zJitter), 0.7f + (Mathf.Abs(x) % 4) * 0.06f);
                 if (x % (coastStep * 2) == 0)
                     PlaceShrub(new Vector3(x + 1.5f, 0f, -37.5f), 0.65f);
+                // Extra dune-edge stamp so overview matches the scrub style sheet belt.
+                if (hasScrubKit && x % 8 == 0)
+                    PlaceShrub(new Vector3(x + 0.8f, 0f, -41.2f + zJitter * 0.5f), 0.85f);
             }
         }
 
@@ -6996,11 +7034,15 @@ namespace Airside.Presentation
 
             if (hash % 5 == 0)
             {
+                // Pale limestone / laterite — scrub style sheet, not warm brown.
                 var rock = hash % 15 == 0 ? "rock_c" : (hash % 10 == 0 ? "rock_b" : "rock_a");
-                Place(rock, new Color(0.55f, 0.5f, 0.42f));
+                var limestone = rock == "rock_b"
+                    ? new Color(0.62f, 0.42f, 0.32f)
+                    : new Color(0.82f, 0.78f, 0.72f);
+                Place(rock, limestone);
             }
 
-            if (basePosition.z < -34f && hash % 3 == 0)
+            if (basePosition.z < -34f && hash % 2 == 0)
             {
                 Place(hash % 2 == 0 ? "dune_mix_a" : "dune_mix_b", Shade(AirsideTheme.Sand, 0.85f));
             }
@@ -7186,9 +7228,10 @@ namespace Airside.Presentation
             // Near-field coast / paddock accents from the same WLD-004 kit (textured slabs remain).
             Place("coast_sand", new Vector3(-55f, -0.2f, -48f), Quaternion.identity, sand, "Context coast sand W", 1.8f);
             Place("coast_sand", new Vector3(55f, -0.2f, -48f), Quaternion.Euler(0f, 180f, 0f), sand, "Context coast sand E", 1.8f);
-            Place("coast_shallows", new Vector3(-30f, -0.5f, -58f), Quaternion.identity, new Color(0.45f, 0.68f, 0.78f), "Context shallows W", 1.4f);
-            Place("coast_shallows", new Vector3(30f, -0.5f, -58f), Quaternion.Euler(0f, 180f, 0f), new Color(0.45f, 0.68f, 0.78f), "Context shallows E", 1.4f);
-            Place("coast_water", new Vector3(0f, -0.8f, -70f), Quaternion.identity, new Color(0.22f, 0.42f, 0.58f), "Context coast water", 2.2f);
+            Place("coast_shallows", new Vector3(-30f, -0.5f, -58f), Quaternion.identity, new Color(0.32f, 0.62f, 0.72f), "Context shallows W", 1.4f);
+            Place("coast_shallows", new Vector3(30f, -0.5f, -58f), Quaternion.Euler(0f, 180f, 0f), new Color(0.32f, 0.62f, 0.72f), "Context shallows E", 1.4f);
+            Place("coast_shallows", new Vector3(0f, -0.45f, -56f), Quaternion.identity, new Color(0.35f, 0.66f, 0.74f), "Context shallows mid", 1.2f);
+            Place("coast_water", new Vector3(0f, -0.8f, -70f), Quaternion.identity, new Color(0.18f, 0.38f, 0.52f), "Context coast water", 2.2f);
             Place("paddock_n", new Vector3(-50f, -0.3f, 42f), Quaternion.identity, dry, "Context paddock NW", 2.1f);
             Place("paddock_s", new Vector3(50f, -0.3f, 42f), Quaternion.Euler(0f, 180f, 0f), dry, "Context paddock NE", 2.0f);
             Place("paddock_e", new Vector3(62f, -0.3f, -20f), Quaternion.identity, euc, "Context paddock E", 1.75f);
@@ -9150,8 +9193,8 @@ namespace Airside.Presentation
             }
 
             // REF-003 GSE palette — Safety Yellow chassis, dark metal vents/wheels.
-            PlaceGpu("gpu_body", AirsideTheme.SafetyYellow);
-            PlaceGpu("gpu_cab", Shade(AirsideTheme.SafetyYellow, 0.85f));
+            PlaceGpu("gpu_body", AirsideTheme.CoastalBlue);
+            PlaceGpu("gpu_cab", Shade(AirsideTheme.CoastalBlue, 0.85f));
             PlaceGpu("gpu_vent", new Color(0.35f, 0.38f, 0.36f));
             PlaceGpu("gpu_panel", new Color(0.2f, 0.22f, 0.24f));
             PlaceGpu("gpu_panel_b", new Color(0.2f, 0.22f, 0.24f));
@@ -9176,7 +9219,7 @@ namespace Airside.Presentation
             PlaceGpu("gpu_hub_rl", new Color(0.25f, 0.26f, 0.28f));
             PlaceGpu("gpu_hub_rr", new Color(0.25f, 0.26f, 0.28f));
             if (!placed && ArtGltfLoader.TryPlaceNamedMesh(kit, "gpu", Vector3.zero, Quaternion.identity,
-                    AirsideTheme.SafetyYellow, out var gpu))
+                    AirsideTheme.CoastalBlue, out var gpu))
             {
                 gpu.SetParent(root, false);
                 gpu.localPosition = Vector3.zero;
@@ -9198,7 +9241,7 @@ namespace Airside.Presentation
             }
 
             root = new GameObject("GPU cart").transform;
-            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), AirsideTheme.SafetyYellow);
+            ParentBlock(root, "GPU body", Vector3.zero, new Vector3(1.4f, 0.7f, 0.9f), AirsideTheme.CoastalBlue);
             ParentBlock(root, "GPU cable", new Vector3(0.85f, 0.1f, 0f), new Vector3(0.7f, 0.08f, 0.08f), new Color(0.2f, 0.2f, 0.22f));
             ParentBlock(root, "GPU wheel L", new Vector3(0.4f, -0.28f, 0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));
             ParentBlock(root, "GPU wheel R", new Vector3(0.4f, -0.28f, -0.35f), new Vector3(0.22f, 0.22f, 0.14f), new Color(0.15f, 0.15f, 0.16f));

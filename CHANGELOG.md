@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Tighten fidelity densify vs Approved boards.** Pale-grey open-bay ARFF shed,
+  red/white truck accents, joint-free concrete + wet-concrete maps, denser scrub
+  belts with pale limestone rocks, turquoise shallows, turnaround GSE zones
+  (fuel port / bus starboard / GPU nose / tug at stand), dual marshaller wands,
+  and clearer residual apron damp.
+
 - **Fidelity densify against approved boards.** ARFF shed v02 is a pale-grey
   hollow open bay (bollards, fluorescents, dark void; no sign glyphs). ARFF
   truck v02 keeps deep red body with white roof/panel accents and Safety Yellow

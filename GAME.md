@@ -91,8 +91,8 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 - Fidelity-board integration on `cursor/integrate-fidelity-boards-3272`: scrub /
   terrain v02 kits, surface `tx_*_v02`, ARFF prefab v02, docs promoted to
-  Approved · Integrated. Domain tests pending on this branch.
-- `scripts/test-domain.sh`: **136/136** on merged smoothness pass (#159).
+  Approved · Integrated.
+- `scripts/test-domain.sh`: **136/136** on `cursor/integrate-fidelity-boards-3272`.
 - Day/night readability merged via #158 (Mac noon/midnight overview pending).
 - 50-item bugfix pass merged via #157.
 - Eucalyptus VEG-001 v02 merged via #156 (Mac overview vs REF still pending).

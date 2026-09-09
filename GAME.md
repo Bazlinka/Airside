@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — overnight Adelaide visual rebuild)
-- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 7 commits ahead of
+- **Branch:** `feature/adelaide-overnight-visual` (local HEAD is 8 commits ahead of
   `origin` — push was blocked overnight; publish before another tool starts)
 - **Do next:** Mac Play in Unity 6.3 LTS — confirm first frame, level ground,
   Adelaide Airport HUD/ATC, dual-runway overview, **Gulf visible to the west**
@@ -19,7 +19,8 @@
   should read from the opening shot. Hangar apron holds a third idle turboprop.
   Airside ident shows ADL. Noon sun is a bit punchier. North West Beach
   houses sit outside the fence.   West Beach sand meets the grass deck level.
-  Terminal roofs carry plant boxes. EditMode 193/193 earlier this session.
+  Terminal roofs carry plant boxes. Adelaide Hills sit east of the CBD.
+  A visual turboprop holds on the 12/30 taxi. EditMode 193/193 earlier this session.
 - **In progress / half-done:** Overnight visual pass — Adelaide default, level
   slabs, bigger field, long 23/05 flight path, east terminal pier + satellite
   hall over Charlie, control-tower silhouette, CBD + denser suburb skyline.
@@ -60,7 +61,9 @@
   Sky disc and stars sit on the far dome. Clouds sit at ~90–150 m off the
   dual-runway core. Eucalyptus fringes the 12/30 pocket. CBD signature towers
   and extra Holdfast massing read from the opening shot. Hangar, satellite and
-  freight aprons hold idle turboprops. Airside ident carries ADL. Save schema
+  freight aprons hold idle turboprops. Airside ident carries ADL. Adelaide
+  Hills / Mt Lofty sit east of the CBD. A visual turboprop holds on the
+  12/30 taxi. Save schema
   unchanged.
 - **Watch for / assumptions:**
   - New games are Adelaide (`ADL`). Existing `KGC` saves keep Kingscote ATC/name;

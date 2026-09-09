@@ -4274,9 +4274,9 @@ namespace Airside.Presentation
                 if (cloudy)
                     clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f);
                 RenderSettings.fogColor = clearFog;
-                var density = Mathf.Lerp(0.0028f, 0.0012f, daylight);
+                var density = Mathf.Lerp(0.0022f, 0.00085f, daylight);
                 if (cloudy)
-                    density = Mathf.Max(density, Mathf.Lerp(0.0042f, 0.0022f, daylight));
+                    density = Mathf.Max(density, Mathf.Lerp(0.0036f, 0.0016f, daylight));
                 // Tiny dusk haze only — do not orange-wash the whole scene.
                 density += warm * 0.00035f;
                 RenderSettings.fogDensity = density;
@@ -4787,7 +4787,8 @@ namespace Airside.Presentation
                 (new Vector3(-42f, 7.2f, 18f), new Vector3(-42f, 0.2f, 24f)),
                 (new Vector3(-64f, 7.2f, 18f), new Vector3(-64f, 0.2f, 22f)),
                 (new Vector3(-48f, 6.8f, 12f), new Vector3(-48f, 0.2f, 15.4f)),
-                (new Vector3(76f, 8.2f, 26f), new Vector3(76f, 0.2f, 30f))
+                (new Vector3(76f, 8.2f, 26f), new Vector3(76f, 0.2f, 30f)),
+                (new Vector3(-28f, 6.6f, 14f), new Vector3(-28f, 0.2f, 17.2f))
             };
             var lights = new Light[specs.Length];
             for (var i = 0; i < specs.Length; i++)
@@ -5314,7 +5315,7 @@ namespace Airside.Presentation
             PlaceLevelPad("Airfield terrain base", 70f, 8f, 296f, 220f, dry, grass, new Vector2(42f, 32f), top: 0f, height: 0.8f);
             PlaceLevelPad("Adelaide plains N", 80f, 148f, 316f, 88f, Shade(dry, 0.97f), grass, new Vector2(44f, 12f), top: 0f, height: 0.8f);
             PlaceLevelPad("Adelaide plains S", 80f, -138f, 316f, 76f, Shade(dry, 0.95f), grass, new Vector2(44f, 11f), top: 0f, height: 0.8f);
-            PlaceLevelPad("Adelaide plains E", 230f, 10f, 120f, 280f, Shade(dry, 1.02f), grass, new Vector2(18f, 40f), top: 0f, height: 0.8f);
+            PlaceLevelPad("Adelaide plains E", 280f, 10f, 220f, 280f, Shade(dry, 1.02f), grass, new Vector2(28f, 40f), top: 0f, height: 0.8f);
         }
 
 
@@ -7927,7 +7928,13 @@ namespace Airside.Presentation
                 (new Vector3(60f, 0f, -88f), 0.98f),
                 (new Vector3(32f, 0f, -102f), 1.22f),
                 (new Vector3(44f, 0f, -108f), 1.08f),
-                (new Vector3(20f, 0f, -98f), 1.0f)
+                (new Vector3(20f, 0f, -98f), 1.0f),
+                // Foothill eucalyptus so the Adelaide Hills ridge is not a bare slab.
+                (new Vector3(248f, 0f, 28f), 1.35f),
+                (new Vector3(262f, 0f, 62f), 1.22f),
+                (new Vector3(254f, 0f, -18f), 1.18f),
+                (new Vector3(270f, 0f, 96f), 1.4f),
+                (new Vector3(242f, 0f, -48f), 1.1f)
             };
             // Place the full belt with authored VEG-001 silhouettes when the kit is
             // present (v02 densifies far paddock too). Primitive greybox still covers
@@ -8281,6 +8288,16 @@ namespace Airside.Presentation
                 grass, new Vector2(5f, 3.5f), top: 3.8f, height: 7.5f);
             PlaceLevelPad("Hill far SW", 62f, -112f, 30f, 18f, Shade(AirsideTheme.Eucalyptus, 0.38f),
                 grass, new Vector2(5f, 3.5f), top: 4.2f, height: 8.2f);
+            // Adelaide Hills / Mt Lofty ridge east of the CBD so the opening shot
+            // has a city-and-hills backdrop, not a flat eastern drop-off.
+            PlaceLevelPad("Adelaide Hills E", 318f, 36f, 86f, 210f, Shade(AirsideTheme.Eucalyptus, 0.34f),
+                grass, new Vector2(14f, 28f), top: 16f, height: 32f);
+            PlaceLevelPad("Adelaide Hills NE", 302f, 132f, 72f, 84f, Shade(AirsideTheme.Eucalyptus, 0.3f),
+                grass, new Vector2(12f, 12f), top: 20f, height: 38f);
+            PlaceLevelPad("Adelaide Hills SE", 288f, -72f, 78f, 96f, Shade(AirsideTheme.DryGrass, 0.48f),
+                grass, new Vector2(12f, 14f), top: 12f, height: 24f);
+            PlaceLevelPad("Mt Lofty", 348f, 58f, 34f, 28f, Shade(AirsideTheme.Eucalyptus, 0.28f),
+                grass, new Vector2(6f, 5f), top: 28f, height: 44f);
             BuildAdelaideSkyline();
         }
 
@@ -9923,7 +9940,7 @@ namespace Airside.Presentation
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
-                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.52f));
+                disc.GetComponent<Renderer>().material = CreateMaterial(new Color(0.62f, 0.64f, 0.68f, 0.62f));
                 disc.SetActive(false);
             }
         }
@@ -9963,7 +9980,7 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(3.6f, 7.2f, t);
+            var width = Mathf.Lerp(4.4f, 8.2f, t);
             var depth = width * 0.52f;
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
@@ -12047,6 +12064,7 @@ namespace Airside.Presentation
             PlaceIdleApronAircraft("Idle satellite", new Vector3(82f, 0.7f, 32f), 255f, new Color(0.18f, 0.32f, 0.52f));
             PlaceIdleApronAircraft("Idle freight", new Vector3(-38f, 0.7f, 22.4f), 95f, new Color(0.72f, 0.22f, 0.16f));
             PlaceIdleApronAircraft("Idle hangar", new Vector3(-28f, 0.7f, 17.2f), 90f, new Color(0.78f, 0.76f, 0.7f));
+            PlaceIdleApronAircraft("Idle 12-30", new Vector3(25.6f, 0.7f, -48f), 165f, new Color(0.22f, 0.38f, 0.42f));
         }
 
         /// <summary>

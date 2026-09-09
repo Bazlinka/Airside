@@ -74,7 +74,9 @@ change it describes.
   Noon sun is punchier. North West Beach houses sit outside the fence.
   West Beach sand meets the grass deck level so the dune seam is not a crack.
   Terminal roofs carry extra plant so the halls are not flat slabs from overview.
-  Unity EditMode 193/193.
+  Adelaide Hills / Mt Lofty sit east of the CBD; a visual turboprop holds on
+  the 12/30 taxi; day fog is thinner so gulf and hills stay crisp. Unity
+  EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`
   body (which threw `InvalidProgramException` in the packaged player) and its

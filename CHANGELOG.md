@@ -109,7 +109,9 @@ change it describes.
   glTF has none. East satellite has a wave roof; Rapid 23 infield holds
   an eighth idle turboprop; eucalyptus sits on the Hills ridge.
   ATC cab cantilevers toward the gulf; east hangar has west glass and
-  bay props; west hall has a small wave roof.
+  bay props; west hall has a small wave roof. Holdfast towers show
+  north/east glass from the gulf opening shot; extra foam sits in the
+  05 shore gap.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

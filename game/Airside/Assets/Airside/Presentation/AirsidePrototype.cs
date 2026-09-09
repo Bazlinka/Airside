@@ -4622,6 +4622,17 @@ namespace Airside.Presentation
                 _nightGlowRenderers.Add(renderer);
             }
 
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                    continue;
+                var n = renderer.gameObject.name;
+                if (!n.StartsWith("Holdfast glass", StringComparison.Ordinal)
+                    && !n.StartsWith("Holdfast hotel glass", StringComparison.Ordinal))
+                    continue;
+                _nightGlowRenderers.Add(renderer);
+            }
+
             // Authored hangar/terminal glass often uses numbered pane names — emission glow only.
             // Do not stamp a PointLight on every glass_pane* (dusk wash / overlapping soup).
             var paneLights = 0;
@@ -5896,6 +5907,10 @@ namespace Airside.Presentation
                 null, null, top: -0.06f, height: 0.08f);
             PlaceLevelPad("Coast foam I", -108f, -128f, 6f, 44f, new Color(0.92f, 0.95f, 0.97f, 0.2f),
                 null, null, top: -0.07f, height: 0.08f);
+            PlaceLevelPad("Coast foam J", -104f, 0f, 6f, 36f, new Color(0.94f, 0.97f, 0.98f, 0.34f),
+                null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam K", -108f, -12f, 5f, 28f, new Color(0.92f, 0.96f, 0.97f, 0.28f),
+                null, null, top: -0.07f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -6402,6 +6417,21 @@ namespace Airside.Presentation
             PlaceContactShadow("Holdfast contact C", new Vector3(-80f, 0.04f, -84f), new Vector3(6.0f, 0.02f, 5.0f), 0.14f);
             PlaceContactShadow("Holdfast contact D", new Vector3(-72f, 0.04f, -58f), new Vector3(4.8f, 0.02f, 4.4f), 0.14f);
             PlaceContactShadow("Holdfast contact I", new Vector3(-76f, 0.04f, -122f), new Vector3(4.2f, 0.02f, 4.0f), 0.14f);
+            // North/east glass so the yaw-132 opening shot sees Holdfast, not blank stone.
+            CreateBlock("Holdfast glass A north", new Vector3(-74f, 8.4f, -90.05f), new Vector3(3.6f, 10f, 0.12f), glass);
+            CreateBlock("Holdfast glass A east", new Vector3(-71.75f, 8.4f, -92f), new Vector3(0.12f, 10f, 3.0f), glass);
+            CreateBlock("Holdfast glass E north", new Vector3(-62f, 7.4f, -69.95f), new Vector3(3.6f, 9.2f, 0.12f), glass);
+            CreateBlock("Holdfast glass E east", new Vector3(-59.65f, 7.4f, -72f), new Vector3(0.12f, 9.2f, 3.2f), glass);
+            CreateBlock("Holdfast glass F north", new Vector3(-84f, 12.4f, -106.15f), new Vector3(3.0f, 16f, 0.12f), glass);
+            CreateBlock("Holdfast glass F east", new Vector3(-82.05f, 12.4f, -108f), new Vector3(0.12f, 16f, 2.8f), glass);
+            CreateBlock("Holdfast glass G north", new Vector3(-58f, 11.4f, -112.05f), new Vector3(3.4f, 14.8f, 0.12f), glass);
+            CreateBlock("Holdfast glass G east", new Vector3(-55.85f, 11.4f, -114f), new Vector3(0.12f, 14.8f, 3.0f), glass);
+            CreateBlock("Holdfast glass I north", new Vector3(-76f, 10.6f, -120.35f), new Vector3(2.6f, 13.6f, 0.12f), glass);
+            CreateBlock("Holdfast glass I east", new Vector3(-74.25f, 10.6f, -122f), new Vector3(0.12f, 13.6f, 2.4f), glass);
+            CreateBlock("Holdfast tower J", new Vector3(-82f, 16.4f, -128f), new Vector3(3.6f, 32.8f, 3.4f), cream);
+            CreateBlock("Holdfast glass J north", new Vector3(-82f, 16.6f, -126.25f), new Vector3(2.8f, 22f, 0.12f), glass);
+            CreateBlock("Holdfast glass J east", new Vector3(-80.15f, 16.6f, -128f), new Vector3(0.12f, 22f, 2.6f), glass);
+            PlaceContactShadow("Holdfast contact J", new Vector3(-82f, 0.04f, -128f), new Vector3(4.4f, 0.02f, 4.2f), 0.16f);
         }
 
         /// <summary>VEG-002 rock accents on the West Beach shoreline; cube blocks remain fallback.</summary>

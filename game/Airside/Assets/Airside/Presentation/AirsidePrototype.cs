@@ -4555,6 +4555,8 @@ namespace Airside.Presentation
                          "ATC tower glass S",
                          "ATC tower glass E",
                          "ATC tower glass W",
+                         "ATC tower cab glow",
+                         "East hangar west glass",
                          "ILS GS glass",
                          "ILS loc hut glow"
                      })
@@ -5619,7 +5621,6 @@ namespace Airside.Presentation
             BuildAdelaideSatelliteWaveRoof();
             CreateBlock("Terminal east roof plant", new Vector3(57.2f, 7.55f, 22.8f), new Vector3(2.8f, 0.55f, 1.9f), new Color(0.48f, 0.5f, 0.52f));
             CreateBlock("Terminal east roof plant B", new Vector3(63.4f, 7.48f, 23.2f), new Vector3(2.2f, 0.48f, 1.6f), new Color(0.45f, 0.47f, 0.49f));
-            CreateBlock("Terminal west roof plant", new Vector3(9.2f, 6.55f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             CreateBlock("Terminal west hall", new Vector3(12f, 2.05f, 29.2f), new Vector3(12.5f, 4.1f, 7.0f), new Color(0.65f, 0.69f, 0.72f));
             CreateBlock("Terminal west glass", new Vector3(12f, 2.25f, 32.65f), new Vector3(10.4f, 2.2f, 0.12f), new Color(0.16f, 0.38f, 0.5f));
             CreateBlock("Terminal west roof", new Vector3(12f, 4.25f, 29.2f), new Vector3(13.1f, 0.22f, 7.4f), new Color(0.5f, 0.53f, 0.56f));
@@ -5630,6 +5631,8 @@ namespace Airside.Presentation
             CreateBlock("Terminal west hall upper", new Vector3(12f, 5.45f, 29.3f), new Vector3(10.8f, 1.9f, 5.4f), new Color(0.66f, 0.7f, 0.73f));
             CreateBlock("Terminal west hall upper glass", new Vector3(12f, 5.5f, 32.05f), new Vector3(9.2f, 1.2f, 0.1f), new Color(0.16f, 0.38f, 0.5f, 0.45f));
             CreateBlock("Terminal west hall upper glow", new Vector3(12f, 5.4f, 31.92f), new Vector3(7.8f, 0.9f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            BuildAdelaideWestHallWaveRoof();
+            CreateBlock("Terminal west roof plant", new Vector3(9.2f, 7.45f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
             BuildAdelaideLandsideCurve();
             BuildAdelaideFreightShed();
@@ -7708,18 +7711,24 @@ namespace Airside.Presentation
             var shaft = new Color(0.72f, 0.74f, 0.76f);
             var cab = new Color(0.18f, 0.36f, 0.48f, 0.55f);
             var roof = new Color(0.32f, 0.34f, 0.36f);
+            var glass = new Color(0.22f, 0.42f, 0.55f, 0.5f);
             CreateBlock("ATC tower shaft", new Vector3(56f, 10.8f, 34f), new Vector3(2.8f, 21.6f, 2.8f), shaft);
             CreateBlock("ATC tower flare", new Vector3(56f, 20.8f, 34f), new Vector3(3.6f, 1.3f, 3.6f), Shade(shaft, 0.92f));
-            CreateBlock("ATC tower walkway", new Vector3(56f, 21.4f, 34f), new Vector3(6.8f, 0.2f, 6.8f), Shade(shaft, 0.88f));
-            CreateBlock("ATC tower cab", new Vector3(56f, 22.7f, 34f), new Vector3(5.6f, 2.8f, 5.6f), cab);
-            CreateBlock("ATC tower glass N", new Vector3(56f, 22.8f, 36.75f), new Vector3(4.8f, 2.0f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass S", new Vector3(56f, 22.8f, 31.25f), new Vector3(4.8f, 2.0f, 0.1f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass E", new Vector3(58.75f, 22.8f, 34f), new Vector3(0.1f, 2.0f, 4.8f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower glass W", new Vector3(53.25f, 22.8f, 34f), new Vector3(0.1f, 2.0f, 4.8f), new Color(0.22f, 0.42f, 0.55f, 0.5f));
-            CreateBlock("ATC tower roof", new Vector3(56f, 24.15f, 34f), new Vector3(6.0f, 0.38f, 6.0f), roof);
+            CreateBlock("ATC tower walkway", new Vector3(56f, 21.4f, 34f), new Vector3(10.4f, 0.22f, 7.6f), Shade(shaft, 0.88f));
+            CreateBlock("ATC tower cab", new Vector3(56f, 22.7f, 34f), new Vector3(8.8f, 2.8f, 5.4f), cab);
+            CreateBlock("ATC tower cab wing W", new Vector3(50.6f, 22.55f, 34f), new Vector3(3.2f, 2.2f, 4.4f), cab);
+            CreateBlock("ATC tower cab wing E", new Vector3(61.4f, 22.55f, 34f), new Vector3(3.2f, 2.2f, 4.4f), cab);
+            CreateBlock("ATC tower visor", new Vector3(56f, 23.85f, 30.6f), new Vector3(7.2f, 0.16f, 1.8f), roof);
+            CreateBlock("ATC tower glass N", new Vector3(56f, 22.8f, 36.75f), new Vector3(7.6f, 2.0f, 0.1f), glass);
+            CreateBlock("ATC tower glass S", new Vector3(56f, 22.8f, 31.25f), new Vector3(7.6f, 2.0f, 0.1f), glass);
+            CreateBlock("ATC tower glass E", new Vector3(63.05f, 22.65f, 34f), new Vector3(0.1f, 1.8f, 3.8f), glass);
+            CreateBlock("ATC tower glass W", new Vector3(48.95f, 22.65f, 34f), new Vector3(0.1f, 1.8f, 3.8f), glass);
+            CreateBlock("ATC tower cab glow", new Vector3(56f, 22.7f, 31.4f), new Vector3(6.4f, 1.6f, 0.08f), new Color(1f, 0.82f, 0.45f));
+            // Roof Y stays 24.15 so the night beacon still sits on the cab.
+            CreateBlock("ATC tower roof", new Vector3(56f, 24.15f, 34f), new Vector3(12.2f, 0.38f, 6.4f), roof);
             CreateBlock("ATC tower mast", new Vector3(56f, 25.7f, 34f), new Vector3(0.2f, 2.8f, 0.2f), new Color(0.45f, 0.46f, 0.48f));
             CreateBlock("ATC dish", new Vector3(56.9f, 24.85f, 34.55f), new Vector3(1.25f, 0.12f, 1.25f), new Color(0.72f, 0.74f, 0.76f));
-            PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(4.6f, 0.02f, 4.6f), 0.18f);
+            PlaceContactShadow("ATC tower contact", new Vector3(56f, 0.035f, 34f), new Vector3(8.4f, 0.02f, 6.2f), 0.18f);
         }
 
         /// <summary>
@@ -7737,6 +7746,14 @@ namespace Airside.Presentation
             CreateBlock("East hangar ridge", new Vector3(96f, 7.45f, 38f), new Vector3(17.6f, 0.22f, 1.1f), Shade(roof, 0.85f));
             CreateBlock("East hangar door", new Vector3(96f, 2.9f, 32.5f), new Vector3(11.2f, 5.6f, 0.18f), door);
             CreateBlock("East hangar window glow", new Vector3(96f, 4.6f, 32.42f), new Vector3(6.4f, 1.6f, 0.08f), new Color(1f, 0.75f, 0.35f));
+            CreateBlock("East hangar west glass", new Vector3(87.72f, 4.2f, 38f), new Vector3(0.1f, 3.6f, 8.4f),
+                new Color(0.18f, 0.36f, 0.48f, 0.42f));
+            CreateBlock("East hangar workbench", new Vector3(90.2f, 0.85f, 36.4f), new Vector3(2.6f, 0.12f, 0.9f),
+                new Color(0.45f, 0.42f, 0.38f));
+            CreateBlock("East hangar drum A", new Vector3(92.4f, 0.55f, 40.2f), new Vector3(0.55f, 1.1f, 0.55f),
+                new Color(0.85f, 0.55f, 0.18f));
+            CreateBlock("East hangar drum B", new Vector3(93.2f, 0.55f, 40.2f), new Vector3(0.55f, 1.1f, 0.55f),
+                new Color(0.72f, 0.22f, 0.16f));
             PlaceContactShadow("East hangar contact", new Vector3(96f, 0.035f, 38f), new Vector3(17.2f, 0.02f, 12.0f), 0.16f);
         }
 
@@ -7849,6 +7866,24 @@ namespace Airside.Presentation
             }
 
             CreateBlock("Satellite wave fascia", new Vector3(60f, 6.35f, 20.25f), new Vector3(11.6f, 0.24f, 0.18f), soffit);
+        }
+
+        /// <summary>
+        /// Small wave on the west arrivals hall so T1 is not a box on the gulf side.
+        /// </summary>
+        private static void BuildAdelaideWestHallWaveRoof()
+        {
+            var soffit = new Color(0.5f, 0.53f, 0.56f);
+            var pale = new Color(0.76f, 0.78f, 0.8f);
+            for (var i = -2; i <= 2; i++)
+            {
+                var x = 12f + i * 2.2f;
+                var crest = 6.7f + Mathf.Sin((i + 2) * 0.7f) * 0.55f;
+                CreateBlock($"T1 west wave {i}", new Vector3(x, crest, 29.4f), new Vector3(2.35f, 0.28f, 4.2f),
+                    i % 2 == 0 ? soffit : pale);
+            }
+
+            CreateBlock("T1 west wave fascia", new Vector3(12f, 6.55f, 27.25f), new Vector3(10.8f, 0.2f, 0.16f), soffit);
         }
 
         /// <summary>

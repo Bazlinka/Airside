@@ -108,6 +108,8 @@ change it describes.
   full; east hangar trees moved off the roof; kit gets winglets if the
   glTF has none. East satellite has a wave roof; Rapid 23 infield holds
   an eighth idle turboprop; eucalyptus sits on the Hills ridge.
+  ATC cab cantilevers toward the gulf; east hangar has west glass and
+  bay props; west hall has a small wave roof.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

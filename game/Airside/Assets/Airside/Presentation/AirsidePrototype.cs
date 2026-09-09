@@ -5364,6 +5364,10 @@ namespace Airside.Presentation
                 sand, new Vector2(10f, 48f), top: -0.02f, height: 0.28f);
             PlaceLevelPad("Coast shallows", -116f, 6f, 22f, 280f, new Color(0.32f, 0.55f, 0.58f, 0.85f),
                 water, new Vector2(8f, 36f), top: -0.18f, height: 0.28f);
+            PlaceLevelPad("Coast foam A", -102f, 10f, 6f, 90f, new Color(0.92f, 0.96f, 0.97f, 0.42f),
+                null, null, top: -0.06f, height: 0.08f);
+            PlaceLevelPad("Coast foam B", -104f, -24f, 5f, 70f, new Color(0.9f, 0.94f, 0.96f, 0.32f),
+                null, null, top: -0.07f, height: 0.08f);
 
             PlaceLevelPad("Access road", 26f, 40f, 8.5f, 36f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(2f, 8f));
             PlaceLevelPad("Access road east", 40f, 46f, 28f, 8.5f, new Color(0.22f, 0.24f, 0.26f), asphalt, new Vector2(6f, 2f));
@@ -5753,7 +5757,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Jetty + fishing boat silhouettes on the KI coast so the southern edge
+        /// Jetty + fishing boat silhouettes on Gulf St Vincent so the west edge
         /// reads as a shoreline with life (presentation only).
         /// </summary>
         private static void BuildCoastalLife()
@@ -7800,7 +7804,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Soft boat bob + foam pulse on the KI coast (0025 items 3+7). Presentation only.
+        /// Soft boat bob + foam pulse on Gulf St Vincent (0025 items 3+7). Presentation only.
         /// </summary>
         private void UpdateCoastalMotion()
         {
@@ -7860,7 +7864,7 @@ namespace Airside.Presentation
                 _jettyDeck.position = pos;
             }
 
-            // Slow UV scroll + shallow bob so the KI coast reads as living water (0025 items 3+7).
+            // Slow UV scroll + shallow bob so Gulf St Vincent reads as living water (0025 items 3+7).
             for (var i = 0; i < _coastWaterRenderers.Count; i++)
             {
                 var renderer = _coastWaterRenderers[i];
@@ -10813,7 +10817,7 @@ namespace Airside.Presentation
             return clip;
         }
 
-        /// <summary>Soft coastal wave bed for Kangaroo Island ambience (presentation only).</summary>
+        /// <summary>Soft coastal wave bed for West Beach / Gulf St Vincent (presentation only).</summary>
         private static AudioClip CreateCoastClip()
         {
             const int sampleRate = 22050;

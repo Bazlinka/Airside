@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Emit mdl_arff_truck_v02 Resources prefab — denser red/white rescue appliance."""
+"""Emit mdl_arff_truck_v02 Resources prefab — deep-red / white-roof rescue appliance.
+
+Color contract (AirsideRuntimeMaterialBinder):
+  base   = deep practical red body
+  accent = off-white — binds to names with cab roof / white / panel / band / face
+  step   = Safety Yellow — binds to step / tread; chevron / grab / bollard are
+           also forced yellow in the binder for conspicuity-only accents.
+
+Oversized body stripe renamed so it stays red. No number plate.
+"""
 
 from __future__ import annotations
 
@@ -15,11 +24,13 @@ def main() -> None:
         "c3d4e5f60718293a4b5c6d7e8f901a2b",
         [
             ("ARFF chassis", (0.0, 0.55, 0.0), (1.8, 0.55, 4.2), "cube"),
-            ("ARFF chassis rail L", (-0.85, 0.7, 0.0), (0.08, 0.18, 3.8), "cube"),
-            ("ARFF chassis rail R", (0.85, 0.7, 0.0), (0.08, 0.18, 3.8), "cube"),
+            ("ARFF chassis beam L", (-0.85, 0.7, 0.0), (0.08, 0.18, 3.8), "cube"),
+            ("ARFF chassis beam R", (0.85, 0.7, 0.0), (0.08, 0.18, 3.8), "cube"),
             ("ARFF chassis cross", (0.0, 0.68, -0.4), (1.7, 0.08, 0.1), "cube"),
             ("ARFF cab", (0.0, 1.35, 1.2), (1.7, 1.0, 1.6), "cube"),
-            ("ARFF cab roof panel", (0.0, 1.92, 1.2), (1.55, 0.08, 1.4), "cube"),
+            # Named so accent white binds (cab roof / white / panel).
+            ("ARFF cab roof white panel", (0.0, 1.92, 1.2), (1.55, 0.08, 1.4), "cube"),
+            ("ARFF tank roof white panel", (0.0, 2.0, -0.9), (1.45, 0.06, 2.2), "cube"),
             ("ARFF cab glass", (0.0, 1.45, 1.85), (1.5, 0.55, 0.12), "cube"),
             ("ARFF cab side glass L", (-0.88, 1.45, 1.2), (0.06, 0.45, 0.9), "cube"),
             ("ARFF cab side glass R", (0.88, 1.45, 1.2), (0.06, 0.45, 0.9), "cube"),
@@ -27,15 +38,15 @@ def main() -> None:
             ("ARFF mirror R", (0.95, 1.55, 1.9), (0.12, 0.18, 0.08), "cube"),
             ("ARFF door L", (-0.9, 1.25, 1.55), (0.08, 0.85, 0.7), "cube"),
             ("ARFF door R", (0.9, 1.25, 1.55), (0.08, 0.85, 0.7), "cube"),
-            ("ARFF door panel L", (-0.93, 1.3, 1.55), (0.04, 0.7, 0.55), "cube"),
-            ("ARFF door panel R", (0.93, 1.3, 1.55), (0.04, 0.7, 0.55), "cube"),
+            ("ARFF door white panel L", (-0.93, 1.35, 1.55), (0.04, 0.35, 0.55), "cube"),
+            ("ARFF door white panel R", (0.93, 1.35, 1.55), (0.04, 0.35, 0.55), "cube"),
             ("ARFF door handle L", (-0.95, 1.2, 1.7), (0.06, 0.18, 0.08), "cube"),
             ("ARFF door handle R", (0.95, 1.2, 1.7), (0.06, 0.18, 0.08), "cube"),
             ("ARFF tank", (0.0, 1.4, -0.9), (1.55, 1.1, 2.4), "cube"),
-            ("ARFF tank band", (0.0, 1.55, -0.9), (1.62, 0.12, 2.2), "cube"),
-            ("ARFF tank hatch", (0.0, 2.0, -0.5), (0.45, 0.12, 0.45), "cube"),
+            # Narrow body seam — stays red (no stripe/band/rail keyword).
+            ("ARFF body seam", (0.0, 0.95, 0.0), (1.82, 0.06, 3.4), "cube"),
+            ("ARFF tank hatch", (0.0, 2.05, -0.5), (0.4, 0.1, 0.4), "cube"),
             ("ARFF foam tank", (0.0, 1.55, -1.6), (1.1, 0.45, 0.7), "cube"),
-            ("ARFF foam tank band", (0.0, 1.7, -1.6), (1.15, 0.08, 0.55), "cube"),
             ("ARFF turret", (0.0, 2.15, -0.4), (0.55, 0.45, 0.7), "cube"),
             ("ARFF monitor", (0.0, 2.35, 0.15), (0.18, 0.18, 1.1), "cube"),
             ("ARFF monitor nozzle", (0.0, 2.35, 0.75), (0.14, 0.14, 0.25), "cube"),
@@ -45,7 +56,8 @@ def main() -> None:
             ("ARFF lightbar rear", (0.0, 2.05, -0.2), (1.1, 0.1, 0.22), "cube"),
             ("ARFF beacon", (0.0, 2.4, -0.9), (0.22, 0.22, 0.22), "cylinder"),
             ("ARFF bumper", (0.0, 0.45, 2.2), (1.9, 0.35, 0.25), "cube"),
-            ("ARFF bumper plate", (0.0, 0.55, 2.32), (1.6, 0.22, 0.08), "cube"),
+            ("ARFF bumper fascia", (0.0, 0.55, 2.32), (1.6, 0.22, 0.08), "cube"),
+            # Yellow ONLY on bumper chevrons / steps / grab rails.
             ("ARFF bumper chevron L", (-0.45, 0.55, 2.36), (0.55, 0.16, 0.05), "cube"),
             ("ARFF bumper chevron R", (0.45, 0.55, 2.36), (0.55, 0.16, 0.05), "cube"),
             ("ARFF grille", (0.0, 1.05, 2.0), (1.2, 0.45, 0.1), "cube"),
@@ -61,6 +73,11 @@ def main() -> None:
             ("ARFF taillight R", (0.7, 0.9, -2.05), (0.2, 0.14, 0.08), "cube"),
             ("ARFF step L", (-0.95, 0.55, 1.4), (0.25, 0.12, 0.45), "cube"),
             ("ARFF step R", (0.95, 0.55, 1.4), (0.25, 0.12, 0.45), "cube"),
+            ("ARFF rear step", (0.0, 0.45, -2.15), (1.0, 0.15, 0.35), "cube"),
+            ("ARFF grab bar L", (-0.98, 1.05, 1.75), (0.05, 0.55, 0.05), "cube"),
+            ("ARFF grab bar R", (0.98, 1.05, 1.75), (0.05, 0.55, 0.05), "cube"),
+            ("ARFF grab bar rear L", (-0.9, 1.1, -2.05), (0.05, 0.45, 0.05), "cube"),
+            ("ARFF grab bar rear R", (0.9, 1.1, -2.05), (0.05, 0.45, 0.05), "cube"),
             ("ARFF hose reel", (0.0, 1.15, -2.0), (0.7, 0.55, 0.45), "cylinder"),
             ("ARFF wheel FL", (-0.95, 0.35, 1.3), (0.35, 0.7, 0.7), "cylinder"),
             ("ARFF wheel FR", (0.95, 0.35, 1.3), (0.35, 0.7, 0.7), "cylinder"),
@@ -70,25 +87,23 @@ def main() -> None:
             ("ARFF rim FR", (0.95, 0.35, 1.3), (0.18, 0.45, 0.45), "cylinder"),
             ("ARFF rim RL", (-0.95, 0.35, -1.3), (0.18, 0.45, 0.45), "cylinder"),
             ("ARFF rim RR", (0.95, 0.35, -1.3), (0.18, 0.45, 0.45), "cylinder"),
-            ("ARFF stripe", (0.0, 0.85, 0.0), (1.85, 0.18, 3.6), "cube"),
-            ("ARFF stripe upper", (0.0, 1.75, -0.4), (1.6, 0.1, 2.0), "cube"),
             ("ARFF wiper", (0.0, 1.7, 1.9), (0.7, 0.04, 0.04), "cube"),
-            ("ARFF roof rack", (0.0, 2.05, -0.9), (1.2, 0.08, 1.6), "cube"),
+            ("ARFF roof rack", (0.0, 2.1, -0.9), (1.15, 0.06, 1.5), "cube"),
             ("ARFF side locker L", (-0.95, 1.25, -0.6), (0.2, 0.7, 1.2), "cube"),
             ("ARFF side locker R", (0.95, 1.25, -0.6), (0.2, 0.7, 1.2), "cube"),
             ("ARFF side locker door L", (-1.02, 1.25, -0.6), (0.04, 0.55, 1.0), "cube"),
             ("ARFF side locker door R", (1.02, 1.25, -0.6), (0.04, 0.55, 1.0), "cube"),
             ("ARFF locker latch L", (-1.05, 1.25, -0.2), (0.04, 0.1, 0.08), "cube"),
             ("ARFF locker latch R", (1.05, 1.25, -0.2), (0.04, 0.1, 0.08), "cube"),
-            ("ARFF pump panel", (0.55, 1.15, -2.15), (0.45, 0.55, 0.12), "cube"),
-            ("ARFF rear step", (0.0, 0.45, -2.15), (1.0, 0.15, 0.35), "cube"),
+            ("ARFF pump housing", (0.55, 1.15, -2.15), (0.45, 0.55, 0.12), "cube"),
             ("ARFF mudflap L", (-0.85, 0.35, -1.75), (0.08, 0.35, 0.25), "cube"),
             ("ARFF mudflap R", (0.85, 0.35, -1.75), (0.08, 0.35, 0.25), "cube"),
-            ("ARFF number plate", (0.0, 0.55, 2.38), (0.55, 0.14, 0.04), "cube"),
+            # No number plate — board forbids registration markings.
         ],
-        base=(0.78, 0.18, 0.14),
-        accent=(0.95, 0.92, 0.9),
-        step=(0.15, 0.15, 0.16),
+        base=(0.72, 0.14, 0.12),
+        accent=(0.95, 0.94, 0.92),
+        # Safety Yellow #F2C14B — steps bind here; chevron/grab also forced yellow.
+        step=(0.949, 0.757, 0.294),
     )
     print("Wrote mdl_arff_truck_v02 Resources prefab")
 

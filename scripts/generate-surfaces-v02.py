@@ -3,10 +3,14 @@
 
 Distinct ids — does not overwrite v01. Does NOT crop the reference board;
 procedural tileable maps using Airside palette targets:
-  Runway Ink #17242A, Tarmac #343B40, Concrete #9CA3A2,
+  Runway Ink #17242A, Tarmac #343B40, Concrete warmer worn ~#A3A8A4,
   Eucalyptus #4F6F60, Dry Grass #8A8A58, Sand #C8B286, Coastal Blue #39708A.
 
-Slightly richer variation than v01; still seamless.
+Board notes (Bailey-approved surface fidelity):
+  - Worn concrete: richer fine aggregate, NO slab joint grid
+  - Grass: denser high-frequency blade-like streaks
+  - Asphalt: darker with rubber streaks
+  - Wet concrete: cooler/darker than dry, broad damp sheen, NO puddle shapes
 """
 
 from __future__ import annotations
@@ -99,42 +103,70 @@ def emit_set(
 
 
 def make_asphalt_v02() -> tuple[np.ndarray, np.ndarray]:
-    # Blend Runway Ink into Tarmac for a richer runway read.
+    # Darker runway read: lean harder into Runway Ink with rubber streaks.
     ink = hex_to_rgb("#17242A")
     tarmac = hex_to_rgb("#343B40")
     n = wrap_noise((SIZE, SIZE), scale=8, octaves=5)
-    fine = wrap_noise((SIZE, SIZE), scale=72, octaves=4)
+    fine = wrap_noise((SIZE, SIZE), scale=88, octaves=4)
     mid = wrap_noise((SIZE, SIZE), scale=24, octaves=3)
-    blend = np.clip(0.45 * n + 0.35 * mid + 0.2 * fine, 0, 1)
-    rgb = ink * (1 - blend[..., None]) + tarmac * blend[..., None]
+    blend = np.clip(0.55 * n + 0.28 * mid + 0.17 * fine, 0, 1)
+    # Bias toward ink (darker overall).
+    rgb = ink * (1.0 - 0.55 * blend[..., None]) + tarmac * (0.55 * blend[..., None])
     mix = (blend - blend.mean()) / (blend.std() + 1e-6)
-    rgb = rgb + mix[..., None] * np.array([12.0, 12.0, 13.0])
-    fleck = wrap_noise((SIZE, SIZE), scale=140, octaves=1)
-    rgb += (fleck > 0.8)[..., None] * np.array([10.0, 10.0, 9.0])
-    rubber = wrap_noise((SIZE, SIZE), scale=18, octaves=3)
+    rgb = rgb + mix[..., None] * np.array([8.0, 8.0, 9.0])
+    fleck = wrap_noise((SIZE, SIZE), scale=160, octaves=1)
+    rgb += (fleck > 0.82)[..., None] * np.array([7.0, 7.0, 6.0])
+    # Rubber streaks — soft dark bands, non-lettering.
+    rubber = wrap_noise((SIZE, SIZE), scale=14, octaves=3)
+    streak = wrap_noise((SIZE, SIZE), scale=6, octaves=2)
     yy = np.linspace(0, 1, SIZE)[:, None]
-    band = np.exp(-0.5 * ((yy - 0.5) / 0.12) ** 2)
-    rgb -= (band * (rubber > 0.55) * 8.0)[..., None] * np.array([1.0, 1.0, 1.05])
-    height = 0.5 * n + 0.35 * fine + 0.15 * mid
+    band_a = np.exp(-0.5 * ((yy - 0.42) / 0.09) ** 2)
+    band_b = np.exp(-0.5 * ((yy - 0.58) / 0.1) ** 2)
+    band = np.clip(band_a + 0.85 * band_b, 0, 1)
+    rubber_mask = band * np.clip((rubber - 0.42) / 0.35, 0, 1) * (0.55 + 0.45 * streak)
+    rgb -= rubber_mask[..., None] * np.array([14.0, 14.0, 15.0])
+    height = 0.45 * n + 0.4 * fine + 0.15 * mid
     height = (height - height.min()) / (height.max() - height.min() + 1e-8)
     return rgb, height
 
 
 def make_concrete_v02() -> tuple[np.ndarray, np.ndarray]:
-    base = hex_to_rgb("#9CA3A2")
-    n = wrap_noise((SIZE, SIZE), scale=4, octaves=5)
-    fine = wrap_noise((SIZE, SIZE), scale=56, octaves=3)
+    # Warmer worn grey ~#A3A8A4 — richer fine aggregate, NO joint grid.
+    base = hex_to_rgb("#A3A8A4")
+    n = wrap_noise((SIZE, SIZE), scale=5, octaves=5)
+    fine = wrap_noise((SIZE, SIZE), scale=72, octaves=4)
+    grit = wrap_noise((SIZE, SIZE), scale=140, octaves=2)
+    pebble = wrap_noise((SIZE, SIZE), scale=200, octaves=1)
     mix = (n - n.mean()) / (n.std() + 1e-6)
-    rgb = base + mix[..., None] * np.array([16.0, 15.0, 14.0])
-    # faint panel joints
-    x = np.arange(SIZE)[None, :]
-    y = np.arange(SIZE)[:, None]
-    joint = (
-        (np.abs((x % 256) - 128) < 2).astype(np.float64)
-        + (np.abs((y % 256) - 128) < 2).astype(np.float64)
-    )
-    rgb -= joint[..., None] * np.array([10.0, 10.0, 9.0])
-    height = 0.65 * n + 0.35 * fine
+    fine_m = (fine - fine.mean()) / (fine.std() + 1e-6)
+    rgb = base + mix[..., None] * np.array([14.0, 13.0, 11.0])
+    rgb = rgb + fine_m[..., None] * np.array([9.0, 8.5, 7.5])
+    # Fine aggregate flecks (warmer / cooler chips).
+    rgb += (grit > 0.78)[..., None] * np.array([10.0, 9.0, 7.0])
+    rgb -= (grit < 0.22)[..., None] * np.array([8.0, 8.0, 7.0])
+    rgb += (pebble > 0.9)[..., None] * np.array([6.0, 5.5, 4.5])
+    # Soft service wear — broad, no cracks / joints / tire trails.
+    wear = wrap_noise((SIZE, SIZE), scale=3, octaves=3)
+    rgb -= np.clip((wear - 0.55) / 0.4, 0, 1)[..., None] * np.array([6.0, 6.0, 5.5])
+    height = 0.5 * n + 0.35 * fine + 0.15 * grit
+    height = (height - height.min()) / (height.max() - height.min() + 1e-8)
+    return rgb, height
+
+
+def make_wet_concrete_v02() -> tuple[np.ndarray, np.ndarray]:
+    """Cooler/darker than dry concrete, broad damp sheen — no puddle shapes."""
+    dry, height = make_concrete_v02()
+    # Cooler + darker shift from dry family.
+    cool = np.array([0.88, 0.92, 0.98])
+    rgb = dry * 0.78 * cool
+    # Soft reflected sky tone (Coastal Blue family, very restrained).
+    sky = hex_to_rgb("#39708A")
+    sheen_n = wrap_noise((SIZE, SIZE), scale=4, octaves=3)
+    sheen = np.clip((sheen_n - sheen_n.mean()) / (sheen_n.std() + 1e-6) * 0.12 + 0.55, 0.35, 0.85)
+    # Broad damp sheen only — no discrete puddle blobs.
+    rgb = rgb * (0.92 + 0.08 * sheen[..., None]) + sky * (0.04 * sheen[..., None])
+    # Slightly flatter height so normals read smoother/wet.
+    height = 0.75 * height + 0.25 * sheen_n
     height = (height - height.min()) / (height.max() - height.min() + 1e-8)
     return rgb, height
 
@@ -144,12 +176,26 @@ def make_grass_v02() -> tuple[np.ndarray, np.ndarray]:
     euc = hex_to_rgb("#4F6F60")
     n = wrap_noise((SIZE, SIZE), scale=16, octaves=5)
     patch = wrap_noise((SIZE, SIZE), scale=6, octaves=3)
-    blend = np.clip((0.55 * n + 0.45 * patch - 0.3) / 0.45, 0, 1)[..., None]
+    blend = np.clip((0.55 * n + 0.45 * patch - 0.28) / 0.48, 0, 1)[..., None]
     rgb = dry * (1 - blend) + euc * blend
-    detail = wrap_noise((SIZE, SIZE), scale=110, octaves=3)
+    # Denser high-frequency grass detail with blade-like streaks.
+    detail = wrap_noise((SIZE, SIZE), scale=130, octaves=4)
     d = (detail - detail.mean()) / (detail.std() + 1e-6)
-    rgb = rgb + d[..., None] * 10.0
-    height = 0.6 * n + 0.4 * detail
+    rgb = rgb + d[..., None] * 12.0
+    # Blade-like anisotropic streaks (short, non-directional overall).
+    blade_a = wrap_noise((SIZE, SIZE), scale=180, octaves=2)
+    blade_b = wrap_noise((SIZE, SIZE), scale=160, octaves=2)
+    xx = np.linspace(0, 1, SIZE)[None, :]
+    yy = np.linspace(0, 1, SIZE)[:, None]
+    streak_dir = 0.5 + 0.5 * np.sin(2 * np.pi * (xx * 37 + yy * 11 + blade_a * 0.4))
+    streak_cross = 0.5 + 0.5 * np.sin(2 * np.pi * (xx * -9 + yy * 41 + blade_b * 0.35))
+    blades = np.clip((streak_dir * streak_cross - 0.42) / 0.35, 0, 1)
+    rgb += blades[..., None] * np.array([6.0, 8.0, 5.0])
+    rgb -= (blades > 0.7)[..., None] * np.array([4.0, 3.0, 4.0]) * (1.0 - blend[..., 0:1])
+    # Micro flecks for denser turf read at overview.
+    fleck = wrap_noise((SIZE, SIZE), scale=220, octaves=1)
+    rgb += (fleck > 0.88)[..., None] * np.array([5.0, 7.0, 4.0])
+    height = 0.45 * n + 0.35 * detail + 0.2 * blades
     height = (height - height.min()) / (height.max() - height.min() + 1e-8)
     return rgb, height
 
@@ -194,11 +240,11 @@ def main() -> None:
         "tx_asphalt_runway",
         asphalt,
         ah,
-        normal_strength=2.6,
+        normal_strength=2.8,
         metallic=0.02,
-        smooth_base=0.24,
-        smooth_var=0.14,
-        ao_contrast=0.3,
+        smooth_base=0.22,
+        smooth_var=0.12,
+        ao_contrast=0.32,
     )
 
     concrete, ch = make_concrete_v02()
@@ -206,11 +252,24 @@ def main() -> None:
         "tx_concrete_apron",
         concrete,
         ch,
-        normal_strength=3.2,
+        normal_strength=3.0,
         metallic=0.03,
-        smooth_base=0.3,
+        smooth_base=0.28,
         smooth_var=0.1,
-        ao_contrast=0.24,
+        ao_contrast=0.22,
+    )
+
+    wet, wh = make_wet_concrete_v02()
+    emit_set(
+        "tx_wet_concrete",
+        wet,
+        wh,
+        normal_strength=2.2,
+        metallic=0.04,
+        # Higher smoothness = broad damp sheen (no puddle shapes in albedo).
+        smooth_base=0.55,
+        smooth_var=0.08,
+        ao_contrast=0.18,
     )
 
     grass, gh = make_grass_v02()
@@ -218,11 +277,11 @@ def main() -> None:
         "tx_grass_kingscote",
         grass,
         gh,
-        normal_strength=3.5,
+        normal_strength=3.8,
         metallic=0.0,
-        smooth_base=0.15,
-        smooth_var=0.09,
-        ao_contrast=0.42,
+        smooth_base=0.14,
+        smooth_var=0.1,
+        ao_contrast=0.45,
     )
 
     sand, sh = make_sand_v02()
@@ -237,11 +296,11 @@ def main() -> None:
         ao_contrast=0.34,
     )
 
-    water, wh = make_water_v02()
+    water, wh2 = make_water_v02()
     emit_set(
         "tx_water_coast",
         water,
-        wh,
+        wh2,
         normal_strength=1.8,
         metallic=0.02,
         smooth_base=0.72,

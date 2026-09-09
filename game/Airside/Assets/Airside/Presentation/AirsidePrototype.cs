@@ -4533,6 +4533,7 @@ namespace Airside.Presentation
                          "Terminal west hall upper glow",
                          "West drop canopy glow",
                          "T1 curve glow",
+                         "T1 porte glow",
                          "Adelaide monument bar",
                          "Freight office glow",
                          "West Beach surf club glass",
@@ -4591,6 +4592,7 @@ namespace Airside.Presentation
                                    || name.StartsWith("Terminal west hall upper", StringComparison.Ordinal)
                                    || name.StartsWith("West drop canopy glow", StringComparison.Ordinal)
                                    || name.StartsWith("T1 curve glow", StringComparison.Ordinal)
+                                   || name.StartsWith("T1 porte glow", StringComparison.Ordinal)
                                    || name.StartsWith("ILS GS glass", StringComparison.Ordinal)
                                    || name.StartsWith("ILS loc hut glow", StringComparison.Ordinal));
                 if (!wantsPoint)
@@ -4633,7 +4635,14 @@ namespace Airside.Presentation
                 _nightGlowRenderers.Add(renderer);
             }
 
-            // Authored hangar/terminal glass often uses numbered pane names — emission glow only.
+            foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                    continue;
+                if (!renderer.gameObject.name.StartsWith("Ident landside", StringComparison.Ordinal))
+                    continue;
+                _nightGlowRenderers.Add(renderer);
+            }
             // Do not stamp a PointLight on every glass_pane* (dusk wash / overlapping soup).
             var paneLights = 0;
             const int maxPaneLights = 6;
@@ -5646,6 +5655,8 @@ namespace Airside.Presentation
             CreateBlock("Terminal west roof plant", new Vector3(9.2f, 7.45f, 29.1f), new Vector3(2.6f, 0.5f, 1.7f), new Color(0.47f, 0.49f, 0.51f));
             PlaceContactShadow("Terminal west contact", new Vector3(12f, 0.035f, 29.2f), new Vector3(13f, 0.02f, 7.6f), 0.14f);
             BuildAdelaideLandsideCurve();
+            BuildAdelaideLandsidePorteCochere();
+            PlaceAdelaideLandsideIdentLetters();
             BuildAdelaideFreightShed();
             BuildAdelaideControlTower();
             BuildAdelaideEastHangar();
@@ -7950,6 +7961,49 @@ namespace Airside.Presentation
             CreateBlock("T1 curve roof", new Vector3(28.4f, 6.55f, 32.15f), new Vector3(20.4f, 0.22f, 3.6f), soffit);
             CreateBlock("T1 curve glow", new Vector3(28.4f, 3.45f, 33.18f), new Vector3(17.6f, 3.2f, 0.08f), new Color(1f, 0.82f, 0.45f));
             PlaceContactShadow("T1 curve contact", new Vector3(28.4f, 0.035f, 32.4f), new Vector3(20.8f, 0.02f, 4.4f), 0.12f);
+        }
+
+        /// <summary>
+        /// Drop-off porte-cochere on the landside curve so yaw 132 sees a city
+        /// entrance, not a bare glass wall. Stops short of the A monument.
+        /// </summary>
+        private static void BuildAdelaideLandsidePorteCochere()
+        {
+            var steel = new Color(0.48f, 0.5f, 0.52f);
+            var soffit = new Color(0.62f, 0.64f, 0.66f);
+            CreateBlock("T1 porte slab", new Vector3(25.2f, 4.65f, 35.05f), new Vector3(11.2f, 0.22f, 3.1f), soffit);
+            CreateBlock("T1 porte fascia", new Vector3(25.2f, 4.48f, 36.55f), new Vector3(11.5f, 0.28f, 0.2f), steel);
+            CreateBlock("T1 porte glow", new Vector3(25.2f, 4.5f, 35.05f), new Vector3(9.8f, 0.06f, 2.6f), new Color(1f, 0.85f, 0.55f));
+            for (var i = 0; i < 4; i++)
+            {
+                var x = 20.4f + i * 3.2f;
+                CreateBlock($"T1 porte post {i}", new Vector3(x, 2.32f, 34.55f), new Vector3(0.24f, 4.56f, 0.24f), steel);
+            }
+
+            PlaceContactShadow("T1 porte contact", new Vector3(25.2f, 0.035f, 35.2f), new Vector3(11.6f, 0.02f, 3.4f), 0.12f);
+        }
+
+        /// <summary>
+        /// ADL on the landside curve so the opening shot (yaw 132) reads Adelaide
+        /// Airport. Geometry, not a baked HUD texture. Airside letters stay on the gulf face.
+        /// </summary>
+        private static void PlaceAdelaideLandsideIdentLetters()
+        {
+            if (GameObject.Find("Ident landside A L") != null)
+                return;
+
+            var ochre = new Color(0.86f, 0.5f, 0.16f);
+            const float y = 8.05f;
+            const float z = 33.52f;
+            CreateBlock("Ident landside A L", new Vector3(21.35f, y, z), new Vector3(0.42f, 2.9f, 0.26f), ochre);
+            CreateBlock("Ident landside A R", new Vector3(23.35f, y, z), new Vector3(0.42f, 2.9f, 0.26f), ochre);
+            CreateBlock("Ident landside A bar", new Vector3(22.35f, y - 0.1f, z), new Vector3(1.85f, 0.4f, 0.26f), ochre);
+            CreateBlock("Ident landside D stem", new Vector3(25.25f, y, z), new Vector3(0.44f, 2.9f, 0.26f), ochre);
+            CreateBlock("Ident landside D top", new Vector3(26.7f, y + 1.26f, z), new Vector3(2.25f, 0.36f, 0.26f), ochre);
+            CreateBlock("Ident landside D bot", new Vector3(26.7f, y - 1.26f, z), new Vector3(2.25f, 0.36f, 0.26f), ochre);
+            CreateBlock("Ident landside D bow", new Vector3(27.7f, y, z), new Vector3(0.44f, 2.2f, 0.26f), ochre);
+            CreateBlock("Ident landside L stem", new Vector3(29.7f, y, z), new Vector3(0.44f, 2.9f, 0.26f), ochre);
+            CreateBlock("Ident landside L base", new Vector3(31.05f, y - 1.26f, z), new Vector3(2.35f, 0.4f, 0.26f), ochre);
         }
 
         /// <summary>
@@ -10335,7 +10389,7 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(6.6f, 0.012f, 3.4f);
+            shadow.transform.localScale = new Vector3(8.2f, 0.012f, 4.2f);
             var material = AirsideMaterialLibrary.Create(new Color(0.04f, 0.05f, 0.06f, 0.32f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -10356,7 +10410,7 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(6.6f, 10.4f, t);
+            var width = Mathf.Lerp(8.2f, 12.2f, t);
             var depth = width * 0.52f;
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;

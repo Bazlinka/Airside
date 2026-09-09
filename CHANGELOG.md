@@ -116,6 +116,8 @@ change it describes.
   emissive beads; aircraft polish covers flaps, pylons and belly;
   the landside car park is three storeys with north openings; the
   Adelaide A monument is larger. 23 ALS beads match the gulf ladder.
+  Landside ADL letters and a porte-cochere face the opening shot;
+  aircraft ground shadows match the 1.38 kit.
   Unity EditMode 193/193.
 
 - **Airfield startup safeguard.** Replaced the oversized generated `BuildAirfield`

@@ -5308,12 +5308,16 @@ namespace Airside.Presentation
                 && GameObject.Find("window_r") == null)
                 CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
 
-            // Soft wear accent only — large stain sheets were opaque black patches (PNG alpha ignored).
-            CreateDecalQuad("Runway wear W", new Vector3(-18f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+            // Soft wear accent along the long 23/05 — large stain sheets were opaque black patches.
+            CreateDecalQuad("Runway wear W", new Vector3(VisualThresholdWestX + 18f, 0.02f, 0f), new Vector3(16f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Runway wear mid", new Vector3(0f, 0.02f, 0f), new Vector3(14f, 1f, 1.15f),
+            CreateDecalQuad("Runway wear A1", new Vector3(-24f, 0.02f, 0f), new Vector3(14f, 1f, 1.15f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Runway wear E", new Vector3(18f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+            CreateDecalQuad("Runway wear mid", new Vector3(VisualRunwayCenterX, 0.02f, 0f), new Vector3(14f, 1f, 1.15f),
+                "Textures/Decals/dc_runway_wear_v01.png");
+            CreateDecalQuad("Runway wear A2", new Vector3(28f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+                "Textures/Decals/dc_runway_wear_v01.png");
+            CreateDecalQuad("Runway wear E", new Vector3(VisualThresholdEastX - 18f, 0.02f, 0f), new Vector3(16f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
             PlaceLevelPad("Hangar apron", -20f, 16.8f, 18f, 10f, new Color(0.34f, 0.36f, 0.37f),
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(4f, 2.2f));

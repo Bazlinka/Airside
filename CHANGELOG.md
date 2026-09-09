@@ -5,6 +5,8 @@ change it describes.
 
 ## Unreleased
 
+- **Free CC0 coastal ambience.** Jasinski's field-recorded beach wave is losslessly packaged as a Unity WAV and replaces the synthetic coast bed when available; the procedural clip remains as fallback. Source and shipped checksums are recorded in the asset register.
+
 - **Free CC0 ambient rain.** Ylmir's 45-second loopable OpenGameArt rain bed is packaged through Resources and replaces generated rain crackle when available; the procedural clip remains as a fallback. Source checksum and licence are recorded in the asset register.
 
 - **Free CC0 ambient wind.** SketchMan3's loopable OpenGameArt wind bed is packaged through Resources and replaces generated wind noise when available; the procedural clip remains as a fallback. Source checksum and licence are recorded in the asset register.

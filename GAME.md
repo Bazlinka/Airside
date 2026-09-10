@@ -1,17 +1,27 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — real-metre circuit loop)
+- **Last updated:** 2026-09-10 (Cursor — real-metre runway markings)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Unity Play. Press F and watch one arrival land on the 3 100 m
-  runway, roll, take off, climb out of the field, then a new arrival come in
-  from the west. No taxi. Run `scripts/test-unity.sh` when a Mac editor is
-  available.
-- **In progress / half-done:** Bare field plus circuit loop (`AirportCircuit`).
-  Taxi/stand/pushback still exist on the phase enum (1 s each) for save
-  compatibility but are not drawn. Night lighting stays pinned off. Dormant
-  building spawners remain in `AirsidePrototype` but are not called.
+- **Do next:** Flight-state cues on the existing v06 turboprop (gear, props,
+  attitude, landing lights). Unity Play: overview should show threshold bars,
+  aiming points, a dashed centreline and edge lines on the 3 100 m strip; press
+  F and confirm touchdown sits on the 300 m TDZ pair. Run `scripts/test-unity.sh`
+  when a Mac editor is available.
+- **In progress / half-done:** Bare field plus circuit loop (`AirportCircuit`)
+  plus ICAO-ish paint (`AirsideRunwayMarkings`). Taxi/stand/pushback still exist
+  on the phase enum (1 s each) for save compatibility but are not drawn. Night
+  lighting stays pinned off. Dormant building spawners remain in
+  `AirsidePrototype` but are not called.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
+  - Paint families keep collector prefixes (`runway_centre`, `runway_edge_left`,
+    `runway_edge_right`, `runway_threshold`, `Aiming point`, `TDZ marks`)
+  - Do not stretch or call `PlaceWorldMarkings()` / WLD-001 on the bare field;
+    that kit is the 155 m miniature
+  - `AirsideRunwayMarkings` holds no UnityEngine types. Spawn from it; do not
+    duplicate metre literals in `BuildBareAdelaideField`
+  - The 300 m TDZ pair is centred on `AirsideFlightPath.TouchdownX`. Marks fit
+    the path; do not move the path to fit the marks
   - `Infield grass` is now buried under the terrain rather than removed. Its top
     is at -0.41, below the terrain at -0.045, so it is hidden but still
     collectable. Do not "tidy it up"
@@ -36,7 +46,8 @@
     not mirror is unverified. One had already gone stale that way: it compared the
     landing rollout at a progress that `TouchdownProgress` had moved past. Derive
     sample points from the constants instead of writing literals, and mirror the
-    check in the harness
+    check in the harness. New: `FlightPath_TouchdownSitsOnTheThreeHundredMetreTdz`
+    — mirror it the next time that harness runs
   - Phase progress is read at the fractional presentation clock
     (`AirsideAircraftMotion.PhaseProgress`), not sampled at the simulated second.
     It is clamped to 1, which is what keeps a held departure parked at the
@@ -136,6 +147,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
+- **Real-metre runway markings** on `cursor/bare-adelaide-field-bc75`: the 3 100 ×
+  45 m slab now has ICAO-ish threshold bars (12 per end), aiming points at 400 m,
+  dashed centreline (30/20), 0.90 m edge lines, and TDZ pairs at 150/300/600/750/900 m.
+  Numbers live in `AirsideRunwayMarkings` (no UnityEngine). The 300 m pair is
+  centred on `AirsideFlightPath.TouchdownX` (-1250). Paint is combined per family,
+  not hundreds of cubes. WLD-001 is not used.
+
 - **Bare Adelaide field** on `cursor/bare-adelaide-field-bc75`: visible world is
   one 3 100 × 45 m runway (YPAD 05/23), 3 400 × 2 309 m / 785 ha empty ground,
   one turboprop and pinned daylight. No buildings, cars, signs, taxiways or
@@ -184,11 +202,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
-   in priority order (props/gear/wheels/engines → buildings → GSE → trees → CHR).
-2. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
-   off or list concrete gaps.
-3. Mac overview: day/night readability (#158) noon + midnight sign-off.
-4. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
-   characters (#153) vs refs if not yet signed off.
-5. No new economy systems; no Companion/CloudKit.
+1. **Flight-state cues** on the existing v06 turboprop — gear, props, attitude,
+   landing lights — so one circuit explains land / roll / takeoff without a new
+   mesh. Then watch the loop. One taxiway + one stand only when Bailey says so.
+2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.

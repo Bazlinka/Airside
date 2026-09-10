@@ -81,5 +81,70 @@ namespace Airside.Tests
             Assert.That(AirsideBareField.OverviewDistance,
                 Is.GreaterThan(1000f));
         }
+
+        [Test]
+        public void RunwayMarkings_ThresholdsSitOnTheRealMetreEnds()
+        {
+            Assert.That(AirsideRunwayMarkings.WestThresholdX,
+                Is.EqualTo(-AirsideBareField.RunwayHalfLength));
+            Assert.That(AirsideRunwayMarkings.EastThresholdX,
+                Is.EqualTo(AirsideBareField.RunwayHalfLength));
+            Assert.That(AirsideRunwayMarkings.WestThresholdX, Is.EqualTo(-1550f));
+            Assert.That(AirsideRunwayMarkings.ThresholdStripeCount, Is.EqualTo(12));
+            Assert.That(AirsideRunwayMarkings.ThresholdStripes().Length,
+                Is.EqualTo(AirsideRunwayMarkings.ThresholdStripeCount * 2));
+        }
+
+        [Test]
+        public void RunwayMarkings_AimingPointBeginsFourHundredMetresPastTheThreshold()
+        {
+            Assert.That(AirsideRunwayMarkings.AimingPointFromThreshold, Is.EqualTo(400f));
+            Assert.That(AirsideRunwayMarkings.WestAimingStartX,
+                Is.EqualTo(-AirsideBareField.RunwayHalfLength + 400f));
+            Assert.That(AirsideRunwayMarkings.WestAimingStartX, Is.EqualTo(-1150f));
+            Assert.That(AirsideRunwayMarkings.EastAimingStartX,
+                Is.EqualTo(AirsideBareField.RunwayHalfLength - 400f));
+            Assert.That(AirsideRunwayMarkings.HasTouchdownZoneAt(400f), Is.False,
+                "400 m is the aiming point; do not double it as a TDZ pair");
+        }
+
+        [Test]
+        public void RunwayMarkings_ThreeHundredMetreTdzSitsUnderTheCircuitTouchdown()
+        {
+            Assert.That(AirsideRunwayMarkings.HasTouchdownZoneAt(300f), Is.True);
+            Assert.That(AirsideRunwayMarkings.WestTouchdownZoneX(300f),
+                Is.EqualTo(-AirsideBareField.RunwayHalfLength + 300f));
+            Assert.That(AirsideRunwayMarkings.WestTouchdownZoneX(300f), Is.EqualTo(-1250f));
+            Assert.That(AirsideRunwayMarkings.EastTouchdownZoneX(300f),
+                Is.EqualTo(AirsideBareField.RunwayHalfLength - 300f));
+        }
+
+        [Test]
+        public void RunwayMarkings_CentrelineIsDashedAndEdgesAreWideEnoughToRead()
+        {
+            var dashes = AirsideRunwayMarkings.CentrelineDashes();
+            Assert.That(dashes.Length, Is.GreaterThan(20), "one 3 km bar is not a centreline");
+            Assert.That(dashes[0].LengthX, Is.EqualTo(AirsideRunwayMarkings.CentrelineDashLength));
+            Assert.That(dashes[0].LengthX, Is.EqualTo(30f));
+            Assert.That(dashes[0].WidthZ, Is.EqualTo(0.90f));
+            Assert.That(AirsideRunwayMarkings.EdgeWidth, Is.EqualTo(0.90f));
+            Assert.That(AirsideRunwayMarkings.EdgeWidth, Is.Not.EqualTo(0.35f));
+            Assert.That(AirsideRunwayMarkings.EdgeOuterZ,
+                Is.LessThan(AirsideBareField.RunwayHalfWidth));
+            Assert.That(AirsideRunwayMarkings.EdgeOuterZ,
+                Is.GreaterThan(AirsideBareField.RunwayHalfWidth - 1.01f));
+        }
+
+        [Test]
+        public void RunwayMarkings_EveryMarkStaysOnThePavement()
+        {
+            var marks = AirsideRunwayMarkings.All();
+            Assert.That(marks.Length, Is.GreaterThan(50));
+            for (var i = 0; i < marks.Length; i++)
+            {
+                Assert.That(marks[i].OnPavement, Is.True,
+                    $"mark {i} at x={marks[i].CenterX} z={marks[i].CenterZ} leaves the 45 m pavement");
+            }
+        }
     }
 }

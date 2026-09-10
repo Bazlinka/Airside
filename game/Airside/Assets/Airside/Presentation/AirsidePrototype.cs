@@ -104,6 +104,7 @@ namespace Airside.Presentation
         private static Material FallbackTreeCanopyMaterial;
         private static Mesh BuiltinSphereMesh;
         private static Mesh BuiltinCylinderMesh;
+        private static Mesh BuiltinCubeMesh;
 
         // Last wetness pushed into the wet-surface materials; NaN forces the next pass to
         // re-apply (set on collect, so newly built surfaces such as Stand 3 pick up rain).
@@ -5184,8 +5185,9 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// One grass slab the size of Adelaide Airport and one 3100 × 45 m runway.
-        /// No taxiways, apron, buildings, signs or props.
+        /// One grass slab the size of Adelaide Airport, one 3100 × 45 m runway, and
+        /// real-metre paint from <see cref="AirsideRunwayMarkings"/>. No taxiways,
+        /// apron, buildings, signs or props.
         /// </summary>
         private static void BuildBareAdelaideField()
         {
@@ -5216,15 +5218,71 @@ namespace Airside.Presentation
                     AirsideBareField.RunwayLengthMetres / 18f,
                     AirsideBareField.RunwayWidthMetres / 8f));
 
-            var paintY = AirsideBareField.RunwayCenterY
-                         + AirsideBareField.RunwayHeightMetres * 0.5f + 0.03f;
-            var edgeZ = AirsideBareField.RunwayHalfWidth - 0.7f;
-            CreateBlock("runway_centre", new Vector3(0f, paintY, 0f),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 80f, 0.02f, 0.45f), Color.white);
-            CreateBlock("runway_edge_left", new Vector3(0f, paintY, -edgeZ),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
-            CreateBlock("runway_edge_right", new Vector3(0f, paintY, edgeZ),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
+            var paint = Color.white;
+            var markings = new GameObject("Runway markings").transform;
+            if (_airfieldRoot != null)
+                markings.SetParent(_airfieldRoot, false);
+
+            CreateCombinedRunwayPaint(markings, "runway_edge_left",
+                new[] { AirsideRunwayMarkings.EdgeLeft }, paint);
+            CreateCombinedRunwayPaint(markings, "runway_edge_right",
+                new[] { AirsideRunwayMarkings.EdgeRight }, paint);
+            CreateCombinedRunwayPaint(markings, "runway_centre",
+                AirsideRunwayMarkings.CentrelineDashes(), paint);
+            CreateCombinedRunwayPaint(markings, "runway_threshold",
+                AirsideRunwayMarkings.ThresholdStripes(), paint);
+            CreateCombinedRunwayPaint(markings, "Aiming point",
+                AirsideRunwayMarkings.AimingPoints(), paint);
+            CreateCombinedRunwayPaint(markings, "TDZ marks",
+                AirsideRunwayMarkings.TouchdownZones(), paint);
+        }
+
+        /// <summary>
+        /// One combined paint mesh per marking family so a 3 100 m strip is not
+        /// hundreds of unbatched cubes. Names keep the wet-surface collectors working.
+        /// </summary>
+        private static void CreateCombinedRunwayPaint(
+            Transform parent, string name, AirsideRunwayMarkings.RunwayMark[] marks, Color color)
+        {
+            if (marks == null || marks.Length == 0)
+                return;
+
+            var y = AirsideRunwayMarkings.PaintCenterY;
+            var h = AirsideRunwayMarkings.PaintHeight;
+            var locals = new Matrix4x4[marks.Length];
+            for (var i = 0; i < marks.Length; i++)
+            {
+                var mark = marks[i];
+                locals[i] = Matrix4x4.TRS(
+                    new Vector3(mark.CenterX, y, mark.CenterZ),
+                    Quaternion.identity,
+                    new Vector3(mark.LengthX, h, mark.WidthZ));
+            }
+
+            var mesh = AirsideMeshUtil.CombineTransformed(BuiltinCube(), locals);
+            if (mesh == null)
+            {
+                foreach (var mark in marks)
+                {
+                    ParentBlock(
+                        parent,
+                        name,
+                        new Vector3(mark.CenterX, y, mark.CenterZ),
+                        new Vector3(mark.LengthX, h, mark.WidthZ),
+                        color);
+                }
+
+                return;
+            }
+
+            var go = new GameObject(name);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = CreateSharedSurfaceMaterial(color);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            go.transform.SetParent(parent, false);
+            AirsideSceneIndex.Remember(go);
         }
 
         /// <summary>
@@ -7365,6 +7423,16 @@ namespace Airside.Presentation
             BuiltinSphereMesh = temp.GetComponent<MeshFilter>().sharedMesh;
             Object.DestroyImmediate(temp);
             return BuiltinSphereMesh;
+        }
+
+        private static Mesh BuiltinCube()
+        {
+            if (BuiltinCubeMesh != null)
+                return BuiltinCubeMesh;
+            var temp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            BuiltinCubeMesh = temp.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(temp);
+            return BuiltinCubeMesh;
         }
 
         private static Mesh BuiltinCylinder()

@@ -475,6 +475,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightPath_TouchdownSitsOnTheThreeHundredMetreTdz()
+        {
+            // Headless BareFieldTests cannot compile AirsideFlightPath. Keep this
+            // equality in both Unity EditMode and work/flightcheck.
+            Assert.That(AirsideFlightPath.TouchdownX,
+                Is.EqualTo(AirsideRunwayMarkings.WestTouchdownZoneX(300f)).Within(0.01f));
+            Assert.That(AirsideFlightPath.WestThresholdX,
+                Is.EqualTo(AirsideRunwayMarkings.WestThresholdX).Within(0.01f));
+            var half = AirsideRunwayMarkings.TouchdownZoneLength * 0.5f;
+            Assert.That(AirsideFlightPath.TouchdownX,
+                Is.InRange(
+                    AirsideRunwayMarkings.WestTouchdownZoneX(300f) - half,
+                    AirsideRunwayMarkings.WestTouchdownZoneX(300f) + half));
+        }
+
+        [Test]
         public void FlightPath_DampingConvergesTheSameAtAnyFrameRate()
         {
             float Converge(int fps)

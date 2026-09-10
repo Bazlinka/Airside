@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **The 3 100 × 45 m runway now has real-metre markings.** Threshold bars (12
+  per end), aiming points at 400 m, a dashed 30/20 centreline, 0.90 m edge
+  lines, and touchdown-zone pairs at 150/300/600/750/900 m. The 300 m pair sits
+  under the circuit touchdown. Paint comes from `AirsideRunwayMarkings` (no
+  UnityEngine); the miniature WLD-001 kit is not used. See ADR 0032.
+
 - **The aircraft now flies a real-metre land / takeoff circuit on the 3 100 m
   runway.** Approach starts 4.2 km west; landing rolls ~1 050 m and almost
   stops; takeoff rotates after ~900 m and climbs out until the model is off

@@ -34,6 +34,12 @@
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
+    <!--
+      AirsideAircraftParts is Presentation by folder but holds no UnityEngine types,
+      so the landing-gear spin name contract can be checked headlessly here as well
+      as under Unity (AircraftPartsTests).
+    -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAircraftParts.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs" />
   </ItemGroup>

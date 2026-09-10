@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Main and nose wheels now spin in place on the ground roll (Pass A).** The
+  v06 kit ships every part flat with its mesh baked at world position, so the
+  old tyre spin swept the wheels in a wide arc around the fuselage centreline —
+  they read as not spinning and drifting off the legs. Each tyre / wheel / rim
+  is now pivot-rebaked to its axle centre (the landing-gear mirror of the
+  propeller hub rebake), so `RollLandingGearTires` spins them on the spot during
+  landing and takeoff and stops them in the air. The rebake and the roll pass
+  share one name contract (`AirsideAircraftParts.RollsInPlace`), locked headless
+  by `AircraftPartsTests`. Same mesh, no new kit. Presentation only.
+
 - **One circuit now explains itself from follow.** Same v06 turboprop: gear,
   props, attitude and landing lights follow the land / roll / takeoff loop.
   Lights stay on in pinned daylight; props keep spinning in the climb; cabin

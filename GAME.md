@@ -1,12 +1,26 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — circuit flight-state cues)
+- **Last updated:** 2026-09-10 (Cursor — aircraft refine Pass A: wheels spin)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Unity Play. Press F and watch one circuit without the HUD:
-  approach (gear down, lights on, nose down), flare, land on the 300 m TDZ
-  (smoke once), roll almost to a stop, spool, rotate, gear up, climb out, next
-  speck on final. Then one taxiway + one stand only when Bailey says so. Run
-  `scripts/test-unity.sh` when a Mac editor is available.
+- **Do next:** Pass B — wheels/oleos stay attached through gear retract and the
+  flare. Tyres/wheels/rims are already nested under `Gear nose/L/R` and (after
+  Pass A) spin in place; the remaining lie is that the strut folds about the kit
+  origin, so on retract the leg swings from the belly. Rebake each strut pivot to
+  its top hinge (mirror `RebakeWheelPivots`; own-mesh only via
+  `RebakeOwnMeshToPivot`, done before nesting so the nested wheels are not
+  re-homed) so the leg folds forward carrying the wheels. Then Pass C — cabin /
+  cockpit glass inset in the fuselage. Verify on Mac: Play, F, one circuit —
+  wheels spin on the roll, stop in the climb, stay on the legs when the gear
+  retracts. Run `scripts/test-unity.sh` when a Mac editor is available.
+- **Just landed (Pass A):** main + nose wheels spin in place on landing/takeoff
+  and stop airborne. Root cause was flat kit nodes with world-baked meshes (same
+  trap the props have): `RollLandingGearTires` swept each wheel around the
+  fuselage origin instead of spinning it. Fix: `RebakeWheelPivots` in
+  `BuildAircraft` rebakes each tyre/wheel/rim to its axle centre; the roll pass
+  and the rebake share `AirsideAircraftParts.RollsInPlace`, so the spun set and
+  the rebaked set cannot drift. Headless `AircraftPartsTests` (name contract) is
+  green in `scripts/test-domain.sh`; the in-place geometry still needs a Mac Play
+  check.
 - **In progress / half-done:** Bare field, circuit loop, real-metre markings,
   and presentation cues on the v06 turboprop. Taxi/stand/pushback still exist
   on the phase enum (1 s each) for save compatibility but are not drawn. Night

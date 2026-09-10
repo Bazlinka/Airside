@@ -1764,10 +1764,7 @@ namespace Airside.Presentation
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Tire", StringComparison.Ordinal) ||
-                    (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
-                     && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
-                     && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0))
+                if (AirsideAircraftParts.RollsInPlace(child.name))
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
         }
@@ -8323,6 +8320,11 @@ namespace Airside.Presentation
                 // Propeller transform sits at the kit origin — rebake so spin stays on-hub.
                 RebakePropellerPivots(root);
                 NestLandingGearParts(root);
+                // Tyre / wheel / rim meshes are baked at world position with the node
+                // at the kit origin, so a naive spin sweeps them around the fuselage
+                // centreline. Rebake each to its axle centre so the ground roll spins
+                // them in place — the landing-gear mirror of RebakePropellerPivots.
+                RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
             }
@@ -8893,6 +8895,73 @@ namespace Airside.Presentation
             NestUnderProp(gearL, rimL, "Rim");
             NestUnderProp(gearR, rimR, "Rim");
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
+        }
+
+        /// <summary>
+        /// Rebake every rolling wheel part (tyre / wheel / rim) so its transform sits
+        /// at the axle centre and <see cref="RollLandingGearTires"/> spins it in place
+        /// instead of sweeping it around the kit origin. The set is <see
+        /// cref="AirsideAircraftParts.RollsInPlace"/> — the same predicate the roll
+        /// pass uses, so the rebaked set and the spun set cannot drift.
+        /// </summary>
+        private static void RebakeWheelPivots(Transform aircraft)
+        {
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(child.name))
+                    continue;
+                RebakeWheelPivot(child);
+            }
+        }
+
+        private static void RebakeWheelPivot(Transform wheel)
+        {
+            var renderer = wheel.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+
+            // The wheel spins about its lateral (X) axis, so the axle centre is the
+            // mesh bounds centre. Skip when the node already sits on that axle
+            // (Resources/prefab path with local wheel verts).
+            var axleWorld = renderer.bounds.center;
+            if ((wheel.position - axleWorld).sqrMagnitude < 0.0025f)
+                return;
+
+            RebakeOwnMeshToPivot(wheel, axleWorld);
+        }
+
+        /// <summary>
+        /// Move a single node's transform to <paramref name="pivotWorld"/> and rebake
+        /// only that node's own mesh so its world geometry is unchanged. Unlike the
+        /// propeller rebake this deliberately ignores child meshes, so nesting a spin
+        /// pivot inside a retract pivot never re-homes the inner one.
+        /// </summary>
+        private static void RebakeOwnMeshToPivot(Transform node, Vector3 pivotWorld)
+        {
+            var filter = node.GetComponent<MeshFilter>();
+            Vector3[] world = null;
+            if (filter != null && filter.sharedMesh != null)
+            {
+                var source = filter.sharedMesh.vertices;
+                world = new Vector3[source.Length];
+                for (var v = 0; v < source.Length; v++)
+                    world[v] = node.TransformPoint(source[v]);
+            }
+
+            node.position = pivotWorld;
+
+            if (filter == null || filter.sharedMesh == null || world == null)
+                return;
+
+            var mesh = Object.Instantiate(filter.sharedMesh);
+            mesh.name = filter.sharedMesh.name + " pivot";
+            var local = new Vector3[world.Length];
+            for (var v = 0; v < world.Length; v++)
+                local[v] = node.InverseTransformPoint(world[v]);
+            mesh.vertices = local;
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            filter.sharedMesh = mesh;
         }
 
         /// <summary>

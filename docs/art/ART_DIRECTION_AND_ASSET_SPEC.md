@@ -233,7 +233,7 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_regional_turboprop_01_v06.gltf` (+ `.fbx`; fallbacks v05→authored→lofted→v04→…→v01) | High-wing regional twin turboprop: continuous body, lofted wing/nacelles/tail, six twisted blades per engine, attached gear and readable glazing (141 named meshes) | Integrated candidate (v06 preferred; Mac FBX bake and packaged visual pass; Bailey review pending) |
+| AIR-001 | `Models/Aircraft/mdl_atr42_starter_v01.gltf` (+ `.fbx`; v06 compatibility fallback) | Final fictional ATR 42-600-class starter at 22.67 m length × 24.57 m span × 7.59 m height; 3.93 m six-blade props, six-wheel gear, readable glazing and restrained articulated flight/door/gear parts (158 named meshes) | Approved · Integrated · Verified (Unity Resources bake, targeted EditMode and packaged Mac follow pass) |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |

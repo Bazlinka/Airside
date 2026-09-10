@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **AIR-001 is now the final ATR 42-class starter aircraft, not another v06
+  placeholder.** The new 158-part asset matches the official 22.67 m length,
+  24.57 m span, 7.59 m height and 3.93 m six-blade prop diameter. It has twin
+  nose wheels, tandem main wheels, working gear/doors, props, flaps, ailerons,
+  elevators, rudder, spoilers and cabin/cargo doors with corrected pivots.
+  Follow framing, prop blur and touchdown wheel spacing now fit the real-size
+  aircraft. Fictional Airside livery only. See ADR 0034.
+
 - **One circuit now explains itself from follow.** Same v06 turboprop: gear,
   props, attitude and landing lights follow the land / roll / takeoff loop.
   Lights stay on in pinned daylight; props keep spinning in the climb; cabin

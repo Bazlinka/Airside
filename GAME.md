@@ -156,6 +156,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
+- **Final AIR-001 ATR 42-class starter** on `feature/atr42-final-aircraft`:
+  production identity `mdl_atr42_starter_v01`, exact 22.67 × 24.57 × 7.59 m
+  three-view envelope and 3.93 m six-blade props. Six-wheel gear, doors and
+  restrained flight controls are separate and runtime-pivoted. The Resources
+  prefab and StreamingAssets fallback are integrated; targeted aircraft Unity
+  tests pass and the packaged Mac follow view has been inspected. Decision 0034.
+
 - **Circuit flight-state cues** on `cursor/bare-adelaide-field-bc75`: same v06
   turboprop. Gear down on the runway, up after `RotateProgress + 0.05`. Landing
   lights on through approach / land / skipped wait / takeoff roll, off after

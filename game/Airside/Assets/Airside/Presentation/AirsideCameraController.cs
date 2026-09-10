@@ -230,14 +230,14 @@ namespace Airside.Presentation
 
         private static float FollowDistance(AircraftPhase phase, float altitude, float progress)
         {
-            var air = Mathf.Lerp(20f, 32f, Mathf.Clamp01(altitude / 10f));
+            var air = Mathf.Lerp(30f, 42f, Mathf.Clamp01(altitude / 10f));
             return phase switch
             {
-                AircraftPhase.AtStand => 22f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 22f,
-                AircraftPhase.Takeoff => Mathf.Lerp(28f, 70f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(48f, 36f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(36f, 18f, progress),
+                AircraftPhase.AtStand => 32f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 32f,
+                AircraftPhase.Takeoff => Mathf.Lerp(38f, 80f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(58f, 46f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(46f, 30f, progress),
                 AircraftPhase.Departed => Mathf.Lerp(70f, 220f, progress),
                 _ => air
             };

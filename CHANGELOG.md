@@ -37,9 +37,13 @@ change it describes.
   aircraft loop can be judged on its own. The horizon dome was opaque and
   depth-writing, hiding everything past its 165 m radius, so an arrival popped
   into existence through the sky wall; it is now a background-queue backdrop and
-  the star sphere sits beyond the flight envelope. Evidence: 77 assertions in
-  `work/flightcheck`, 12 new EditMode tests, `scripts/test-domain.sh` **181
-  passed**.
+  the star sphere sits beyond the flight envelope. Recorded as
+  `docs/decisions/0030-aircraft-motion-and-focus.md`, which also scopes the one
+  thing this pass did **not** do: the parallel taxiway, extra runway exits and
+  larger map that Bailey asked for are a simulation topology change, not a
+  presentation tweak. Evidence: 73 assertions in `work/flightcheck`, 13 new
+  EditMode tests, `scripts/test-domain.sh` **181 passed**. Nothing here has been
+  through a Unity editor — there is none on the machine it was written on.
 
 - **An arrival keeps the runway until it is past the holding position.** The
   runway was released the instant the landing rollout ended, while the aircraft

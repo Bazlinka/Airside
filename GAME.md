@@ -26,6 +26,12 @@
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
   - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
+  - Because of that gap, `work/flightcheck` is the only thing that compiles the
+    real flight geometry here, and any `PresentationLayoutTests` assertion it does
+    not mirror is unverified. One had already gone stale that way: it compared the
+    landing rollout at a progress that `TouchdownProgress` had moved past. Derive
+    sample points from the constants instead of writing literals, and mirror the
+    check in the harness
   - Phase progress is read at the fractional presentation clock
     (`AirsideAircraftMotion.PhaseProgress`), not sampled at the simulated second.
     It is clamped to 1, which is what keeps a held departure parked at the
@@ -44,6 +50,11 @@
   - The horizon dome is a background-queue backdrop with no depth write. If it
     goes back to opaque geometry, every aircraft past 165 m disappears again
   - Save schema unchanged
+- **Decisions:** this pass is recorded in
+  `docs/decisions/0030-aircraft-motion-and-focus.md` — the fractional-clock read
+  and the interpolation design that was tried and rejected, the two deliberate
+  fall-throughs to the simulated second, the shared holding position, the
+  line-up arc, aircraft-only focus, and the deferred taxiway rebuild.
 - **Open question for Bailey:** the taxiway/runway rebuild above is a scoped
   follow-up — worth doing next, or is the aircraft loop the priority first?
 

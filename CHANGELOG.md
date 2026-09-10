@@ -19,8 +19,8 @@ change it describes.
   lowest pad **3.5 cm** proud; normalized heights run **0.1053–0.5538** so
   nothing clamps; relief is **3.57 m over 220 m**; the overview core is **67.1%
   dry grass, 15.0% green, 17.8% worn dirt**; the dirt shoulder measures
-  **2.20–3.20 m**; and lag correlation decays monotonically from **0.767 at 11 m
-  to 0.409 at 32 m** with no resurgence at any layer's tile size, so there is no
+  **2.20–3.20 m**; and lag correlation decays monotonically from **0.799 at 11 m
+  to 0.430 at 32 m** with no resurgence at any layer's tile size, so there is no
   repeat period. Every layer's albedo has its low-frequency luminance divided out
   — tile-scale spread is **0.5–2.0 luminance points** with per-pixel detail std
   preserved at **8.9–23.8** — so all large-scale variation comes from the

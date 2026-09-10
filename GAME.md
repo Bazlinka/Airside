@@ -169,7 +169,7 @@ supplementary check, not a replacement for a real Unity run before merging.
   Z [-12, 60], lowest pad **3.5 cm** proud; normalized heights **0.1053–0.5538**
   (no clamping); relief **3.57 m over 220 m**; overview core **67.1% dry grass,
   15.0% green, 17.8% worn dirt**; dirt shoulder **2.20–3.20 m**; lag correlation
-  decays monotonically **0.767 at 11 m → 0.409 at 32 m** with no resurgence at
+  decays monotonically **0.799 at 11 m → 0.430 at 32 m** with no resurgence at
   any tile size. Albedo tile-scale luminance spread **0.5–2.0 points** with
   detail std **8.9–23.8**. `scripts/test-domain.sh` **200 passed** (19 new
   terrain tests, mutation-checked). Decision 0031. **The bake has not been run:

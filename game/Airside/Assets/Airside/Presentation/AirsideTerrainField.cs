@@ -65,6 +65,13 @@ namespace Airside.Presentation
         public const float PavementWorldY = -0.045f;
 
         /// <summary>
+        /// Top surface Y of the lowest operational pad in the scene — Runway blast W/E,
+        /// centre -0.08 plus half-height 0.07. Recorded here so the clearance test and
+        /// <see cref="PavementWorldY"/> cannot drift apart.
+        /// </summary>
+        public const float LowestPavementTopY = -0.01f;
+
+        /// <summary>
         /// Where the plateau sits in the 0..1 heightmap.
         ///
         /// 0.36 leaves 2.88 m of range below the airfield, which is what the deepest

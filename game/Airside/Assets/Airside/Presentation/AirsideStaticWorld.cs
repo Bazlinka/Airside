@@ -101,7 +101,11 @@ namespace Airside.Presentation
                 || n == "Apron life"
                 || n == "Star field"
                 || n == "Jetty deck"
-                || n == "antenna_dish";
+                || n == "antenna_dish"
+                // Terrain manages its own patch LOD and culling. Feeding it to
+                // StaticBatchingUtility.Combine previously spiked memory on packaged Mac,
+                // and returning true here stops Collect from walking into the subtree at all.
+                || n == AirsideTerrainGround.TerrainObjectName;
         }
 
         private static void AttachDistantLod(Transform airfieldRoot)

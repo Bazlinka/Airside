@@ -5108,7 +5108,8 @@ namespace Airside.Presentation
             var root = new GameObject("Airfield");
             _airfieldRoot = root.transform;
             AirsideStaticWorld.WorldRoot = _airfieldRoot;
-            BuildAirfieldTerrainBase();
+            if (!AirsideTerrainGround.TryBuild(_airfieldRoot))
+                BuildAirfieldTerrainBase();
             if (AirsideCombinedSurfaces.UseTileOperational)
                 BuildAirfieldTerrain11Operational();
             else
@@ -5140,6 +5141,8 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(6f, 4f));
         }
 
+        // Fallback ground, used only when the baked Kingscote TerrainData is absent.
+        //
         // The former fine-grained outer-ground tile field created tens of thousands of
         // primitives during Awake, preventing the player from reaching its first frame.
         // One textured base keeps the operational airfield visible; the retained inner

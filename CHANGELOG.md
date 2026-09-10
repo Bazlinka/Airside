@@ -20,7 +20,8 @@ change it describes.
   with the aircraft and stop once the wheels leave the ground. Propeller RPM
   spools between phases instead of jumping, up faster than down. The chase
   camera tracks harder on the fast phases so a departure cannot outrun it out of
-  frame. Six new EditMode tests pin no-stall, seam continuity, no slowdown at
+  frame. Engine pitch and volume follow the spooled RPM, so a takeoff no longer
+  sounds identical to a pushback. Six new EditMode tests pin no-stall, seam continuity, no slowdown at
   rotation, a departure that keeps flying, wheels that stop when airborne and
   frame-rate independent damping. Evidence: all 21 assertions mirrored and
   passing in `work/flightcheck`; `scripts/test-domain.sh` **178 passed**.

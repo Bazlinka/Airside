@@ -1264,7 +1264,15 @@ namespace Airside.Presentation
                 return;
             }
 
-            var target = enginesOn ? EngineVolumeRunning : EngineVolumeIdle;
+            // Engine note follows the spooled RPM. It used to drone at one pitch and one
+            // running volume, so a takeoff sounded exactly like a pushback.
+            var power = _propRpm.TryGetValue(id, out var rpm)
+                ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
+                    AirsideReusableMotion.PropRpmTakeoff, rpm)
+                : 0f;
+            source.pitch = Mathf.Lerp(0.85f, 1.2f, power);
+
+            var target = enginesOn ? Mathf.Lerp(EngineVolumeRunning, EngineVolumeRunning * 1.5f, power) : EngineVolumeIdle;
             if (_paused)
                 target *= EngineVolumePausedScale;
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);

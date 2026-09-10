@@ -1,26 +1,29 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — aircraft refine Pass A: wheels spin)
+- **Last updated:** 2026-09-10 (Cursor — aircraft refine Pass B: gear retract)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Pass B — wheels/oleos stay attached through gear retract and the
-  flare. Tyres/wheels/rims are already nested under `Gear nose/L/R` and (after
-  Pass A) spin in place; the remaining lie is that the strut folds about the kit
-  origin, so on retract the leg swings from the belly. Rebake each strut pivot to
-  its top hinge (mirror `RebakeWheelPivots`; own-mesh only via
-  `RebakeOwnMeshToPivot`, done before nesting so the nested wheels are not
-  re-homed) so the leg folds forward carrying the wheels. Then Pass C — cabin /
-  cockpit glass inset in the fuselage. Verify on Mac: Play, F, one circuit —
-  wheels spin on the roll, stop in the climb, stay on the legs when the gear
-  retracts. Run `scripts/test-unity.sh` when a Mac editor is available.
-- **Just landed (Pass A):** main + nose wheels spin in place on landing/takeoff
-  and stop airborne. Root cause was flat kit nodes with world-baked meshes (same
-  trap the props have): `RollLandingGearTires` swept each wheel around the
-  fuselage origin instead of spinning it. Fix: `RebakeWheelPivots` in
-  `BuildAircraft` rebakes each tyre/wheel/rim to its axle centre; the roll pass
-  and the rebake share `AirsideAircraftParts.RollsInPlace`, so the spun set and
-  the rebaked set cannot drift. Headless `AircraftPartsTests` (name contract) is
-  green in `scripts/test-domain.sh`; the in-place geometry still needs a Mac Play
-  check.
+- **Do next:** Pass C — cabin/cockpit glass sits inset in the fuselage. From F
+  the panes should read as openings in the skin, not floating rectangles or a
+  glass cage. In the v06 kit the window meshes are already close to the skin
+  (`cabin_window_*` x≈±0.8 against a fuselage of half-width ≈0.82), so prefer the
+  kit's own glass with a glass material and only nudge offsets inward if a pane
+  proud of the skin is confirmed on Mac — do not add extra glass cubes or bake
+  window text. Check `UpdateCabinWindowGlow` and the glass material path, not new
+  geometry. Verify on Mac: Play, F, one circuit.
+- **Just landed (Pass B):** gear retract folds each leg from its top hinge and
+  carries the nested wheels/oleo/scissors, instead of swinging the whole leg off
+  the belly. `RebakeGearStrutPivots` rebakes `Gear nose/L/R` to their top hinge
+  before the wheels are nested (own-mesh rebake, so nested parts are not
+  re-homed); the retract pass and the rebake share
+  `AirsideAircraftParts.IsGearStrut`, proven disjoint from the spin set. Fold
+  geometry still needs a Mac Play check.
+- **Landed earlier (Pass A):** main + nose wheels spin in place on
+  landing/takeoff and stop airborne. Root cause was flat kit nodes with
+  world-baked meshes (same trap the props have): `RollLandingGearTires` swept
+  each wheel around the fuselage origin. Fix: `RebakeWheelPivots` rebakes each
+  tyre/wheel/rim to its axle centre; the roll pass and the rebake share
+  `AirsideAircraftParts.RollsInPlace`. Both passes locked headless by
+  `AircraftPartsTests`; run `scripts/test-unity.sh` on a Mac before merging.
 - **In progress / half-done:** Bare field, circuit loop, real-metre markings,
   and presentation cues on the v06 turboprop. Taxi/stand/pushback still exist
   on the phase enum (1 s each) for save compatibility but are not drawn. Night

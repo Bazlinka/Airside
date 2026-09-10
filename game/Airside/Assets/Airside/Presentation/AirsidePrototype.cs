@@ -1393,10 +1393,13 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name is "Gear nose" or "Gear L" or "Gear R")
+                else if (AirsideAircraftParts.IsGearStrut(child.name))
                 {
                     // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
                     // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
+                    // The strut pivot is rebaked to its top hinge (RebakeGearStrutPivots),
+                    // so this fold swings the leg from the wing/fuselage, carrying the
+                    // nested wheels, oleo and scissors instead of swinging off the belly.
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
@@ -8319,6 +8322,11 @@ namespace Airside.Presentation
                 // glTF kits author prop verts at nacelle world positions while the
                 // Propeller transform sits at the kit origin — rebake so spin stays on-hub.
                 RebakePropellerPivots(root);
+                // Rebake each retracting leg to its top hinge before the wheels are
+                // nested, so the strut folds from the wing/fuselage (carrying the
+                // nested parts) instead of swinging about the kit origin and lifting
+                // the leg off the airframe. Own-mesh rebake, so it runs before nesting.
+                RebakeGearStrutPivots(root);
                 NestLandingGearParts(root);
                 // Tyre / wheel / rim meshes are baked at world position with the node
                 // at the kit origin, so a naive spin sweeps them around the fuselage
@@ -8912,6 +8920,40 @@ namespace Airside.Presentation
                     continue;
                 RebakeWheelPivot(child);
             }
+        }
+
+        /// <summary>
+        /// Rebake each retracting leg (<see cref="AirsideAircraftParts.IsGearStrut"/>)
+        /// so its transform sits at the top hinge where it meets the wing/fuselage.
+        /// The gear retract then folds the leg from that hinge, carrying the nested
+        /// wheels/oleo/scissors, rather than swinging the whole leg about the kit
+        /// origin and pulling its top off the airframe. Runs before the wheels are
+        /// nested so the own-mesh rebake never re-homes them.
+        /// </summary>
+        private static void RebakeGearStrutPivots(Transform aircraft)
+        {
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft || !AirsideAircraftParts.IsGearStrut(child.name))
+                    continue;
+                RebakeGearStrutPivot(child);
+            }
+        }
+
+        private static void RebakeGearStrutPivot(Transform strut)
+        {
+            var renderer = strut.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+
+            // The leg hinges forward about its lateral (X) axis, so the hinge is the
+            // top-centre of the strut mesh — where it attaches to the airframe.
+            var bounds = renderer.bounds;
+            var hingeWorld = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+            if ((strut.position - hingeWorld).sqrMagnitude < 0.0025f)
+                return;
+
+            RebakeOwnMeshToPivot(strut, hingeWorld);
         }
 
         private static void RebakeWheelPivot(Transform wheel)

@@ -32,5 +32,15 @@ namespace Airside.Presentation
                    && partName.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
                    && partName.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0;
         }
+
+        /// <summary>
+        /// True for the three retracting legs. These are the struts the gear retract
+        /// pitches and the struts whose pivot is rebaked to the top hinge, so the two
+        /// passes stay in step: the legs that fold are exactly the legs that fold from
+        /// the correct point. Densified "Gear scissors/oleo/door *" parts are carried
+        /// by the leg, not pitched themselves, so they must return false.
+        /// </summary>
+        public static bool IsGearStrut(string partName) =>
+            partName is "Gear nose" or "Gear L" or "Gear R";
     }
 }

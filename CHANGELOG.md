@@ -5,6 +5,18 @@ change it describes.
 
 ## Unreleased
 
+- **Landing gear now folds from the wing and keeps its wheels on retract (Pass
+  B).** The legs were pivoted at the kit origin, so raising the gear swung each
+  whole leg about the fuselage centreline — the top lifted off the airframe and
+  the wheels appeared to trail behind. Each retracting leg (`Gear nose/L/R`) is
+  now pivot-rebaked to its top hinge before the wheels are nested, so the fold
+  swings from the wing/fuselage and carries the nested tyre/wheel/rim, oleo and
+  scissors with it. The retract pass and the hinge rebake share one contract
+  (`AirsideAircraftParts.IsGearStrut`), and it is proven disjoint from the spin
+  set so a leg is never folded and rolled at once. Locked headless by
+  `AircraftPartsTests`. The fold geometry still needs a Mac Play check. Same
+  mesh, presentation only.
+
 - **Main and nose wheels now spin in place on the ground roll (Pass A).** The
   v06 kit ships every part flat with its mesh baked at world position, so the
   old tyre spin swept the wheels in a wide arc around the fuselage centreline —

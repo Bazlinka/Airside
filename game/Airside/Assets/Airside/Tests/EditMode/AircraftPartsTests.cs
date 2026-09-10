@@ -42,5 +42,40 @@ namespace Airside.Tests
         {
             Assert.That(AirsideAircraftParts.RollsInPlace(partName), Is.False, partName ?? "<null>");
         }
+
+        [TestCase("Gear nose")]
+        [TestCase("Gear L")]
+        [TestCase("Gear R")]
+        public void IsGearStrut_TrueForTheThreeRetractingLegs(string partName)
+        {
+            Assert.That(AirsideAircraftParts.IsGearStrut(partName), Is.True, partName);
+        }
+
+        [TestCase("Gear scissors L")]
+        [TestCase("Gear oleo nose")]
+        [TestCase("Gear door R")]
+        [TestCase("Scissors")]
+        [TestCase("Oleo")]
+        [TestCase("Tire")]
+        [TestCase("Wheel")]
+        [TestCase("Rim")]
+        [TestCase("Gear")]
+        [TestCase("")]
+        [TestCase(null)]
+        public void IsGearStrut_FalseForCarriedPartsAndDensifiedGear(string partName)
+        {
+            Assert.That(AirsideAircraftParts.IsGearStrut(partName), Is.False, partName ?? "<null>");
+        }
+
+        [Test]
+        public void GearStrut_AndRollingWheel_AreDisjoint()
+        {
+            // A leg that retracts must never also be spun in place, or the fold and
+            // the roll would fight over the same transform.
+            foreach (var strut in new[] { "Gear nose", "Gear L", "Gear R" })
+                Assert.That(AirsideAircraftParts.RollsInPlace(strut), Is.False, strut);
+            foreach (var wheel in new[] { "Tire", "Wheel", "Rim" })
+                Assert.That(AirsideAircraftParts.IsGearStrut(wheel), Is.False, wheel);
+        }
     }
 }

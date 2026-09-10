@@ -197,18 +197,29 @@ namespace Airside.Presentation
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
-            _apronLights = BuildApronLights();
-            _landsideLights = BuildLandsideStreetlights();
-            _thresholdLights = BuildThresholdApproachLights();
-            _alsLights = CollectAlsLights();
-            _runwayEdgeLights = BuildRunwayEdgePointLights();
-            _apronProbe = BuildApronReflectionProbe();
-            _terminalProbe = BuildTerminalReflectionProbe();
-            _aerodromeBeacon = BuildAerodromeBeacon();
-            _rainRoot = BuildRainRoot();
+            if (AirsideFocusMode.ShowDecorativeLights)
+            {
+                _apronLights = BuildApronLights();
+                _landsideLights = BuildLandsideStreetlights();
+                _thresholdLights = BuildThresholdApproachLights();
+                _alsLights = CollectAlsLights();
+                _runwayEdgeLights = BuildRunwayEdgePointLights();
+                _apronProbe = BuildApronReflectionProbe();
+                _terminalProbe = BuildTerminalReflectionProbe();
+                _aerodromeBeacon = BuildAerodromeBeacon();
+            }
+            else
+            {
+                _apronLights = Array.Empty<Light>();
+                _landsideLights = Array.Empty<Light>();
+                _thresholdLights = Array.Empty<Light>();
+                _alsLights = Array.Empty<Light>();
+                _runwayEdgeLights = Array.Empty<Light>();
+            }
+            _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
             _touchdownSmoke = BuildTouchdownSmoke();
-            _skidMarkRoot = BuildSkidMarkRoot();
-            _taxiSprayRoot = BuildTaxiSprayRoot();
+            _skidMarkRoot = AirsideFocusMode.ShowWorldProps ? BuildSkidMarkRoot() : null;
+            _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
             _touchdownAudio = gameObject.AddComponent<AudioSource>();
             _touchdownAudio.playOnAwake = false;
@@ -234,42 +245,53 @@ namespace Airside.Presentation
             _uiAudio.spatialBlend = 0f;
             _uiAudio.volume = 0.3f;
             AirsideSceneIndex.Capture();
-            CollectNightGlowWindows();
-            _fuelFarmLight = AirsideSceneIndex.FindLight("Fuel farm light");
-            _arffBayLight = AirsideSceneIndex.FindLight("ARFF bay light");
+            if (AirsideFocusMode.ShowBuildings)
+                CollectNightGlowWindows();
+            _fuelFarmLight = AirsideFocusMode.ShowDecorativeLights
+                ? AirsideSceneIndex.FindLight("Fuel farm light") : null;
+            _arffBayLight = AirsideFocusMode.ShowDecorativeLights
+                ? AirsideSceneIndex.FindLight("ARFF bay light") : null;
             var worldRenderers = AirsideSceneIndex.Renderers;
             CollectWetSurfaces(worldRenderers);
-            BuildWetPuddles();
+            if (AirsideFocusMode.ShowEnvironment)
+                BuildWetPuddles();
             CollectHoldShortMarkings(worldRenderers);
             CollectAirfieldLights(worldRenderers);
-            var hangarDoor = AirsideSceneIndex.Find("Hangar door");
-            if (hangarDoor != null)
+            if (AirsideFocusMode.ShowBuildings)
             {
-                _hangarDoor = hangarDoor;
-                _hangarDoorClosedX = _hangarDoor.position.x;
+                var hangarDoor = AirsideSceneIndex.Find("Hangar door");
+                if (hangarDoor != null)
+                {
+                    _hangarDoor = hangarDoor;
+                    _hangarDoorClosedX = _hangarDoor.position.x;
+                }
+
+                CollectHangarDoorPanels();
+                _opsAntennaDish = AirsideSceneIndex.Find("antenna_dish");
+                _terminalFlag = AirsideSceneIndex.Find("flag_cloth");
+
+                var hangarBayLightGo = AirsideSceneIndex.FindGameObject("Hangar bay light");
+                if (hangarBayLightGo == null)
+                {
+                    hangarBayLightGo = new GameObject("Hangar bay light");
+                    hangarBayLightGo.transform.position = new Vector3(-20f, 3.2f, 20.5f);
+                    var bay = hangarBayLightGo.AddComponent<Light>();
+                    bay.type = LightType.Point;
+                    bay.color = new Color(1f, 0.88f, 0.62f);
+                    bay.range = 14f;
+                    bay.intensity = 0.2f;
+                    AirsideSceneIndex.Remember(hangarBayLightGo);
+                }
+                _hangarBayLight = hangarBayLightGo.GetComponent<Light>();
             }
 
-            CollectHangarDoorPanels();
-            CollectCoastalMotionTargets();
-            _opsAntennaDish = AirsideSceneIndex.Find("antenna_dish");
-            _terminalFlag = AirsideSceneIndex.Find("flag_cloth");
-
-            var hangarBayLightGo = AirsideSceneIndex.FindGameObject("Hangar bay light");
-            if (hangarBayLightGo == null)
+            if (AirsideFocusMode.ShowEnvironment)
             {
-                hangarBayLightGo = new GameObject("Hangar bay light");
-                hangarBayLightGo.transform.position = new Vector3(-20f, 3.2f, 20.5f);
-                var bay = hangarBayLightGo.AddComponent<Light>();
-                bay.type = LightType.Point;
-                bay.color = new Color(1f, 0.88f, 0.62f);
-                bay.range = 14f;
-                bay.intensity = 0.2f;
-                AirsideSceneIndex.Remember(hangarBayLightGo);
+                CollectCoastalMotionTargets();
+                _horizonDome = AirsideSceneIndex.Find("Horizon dome");
+                _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
+                _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             }
-            _hangarBayLight = hangarBayLightGo.GetComponent<Light>();
-            _horizonDome = AirsideSceneIndex.Find("Horizon dome");
-            _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
-            _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
             if (AirsideFocusMode.ShowGroundTrafficAircraft)
@@ -326,8 +348,10 @@ namespace Airside.Presentation
                 OrientPlusXKitToForward(_pushbackTug);
             }
 
-            _windsockSock = BuildWindsock();
-            EnsureStandThreeVisual();
+            if (AirsideFocusMode.ShowWorldProps)
+                _windsockSock = BuildWindsock();
+            if (AirsideFocusMode.ShowBuildings)
+                EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
                 _cameraController.SetFollowTargets(_commercialAircraft);
             AirsideRuntimeQuality.AfterWorldBuilt();
@@ -460,7 +484,8 @@ namespace Airside.Presentation
             UpdateStandEquipment();
             UpdateWindsock();
             UpdateTerminalFlag();
-            EnsureStandThreeVisual();
+            if (AirsideFocusMode.ShowBuildings)
+                EnsureStandThreeVisual();
             UpdateEngineAudio();
             UpdateAmbientAudio();
             UpdateWeatherPresentation();
@@ -2517,15 +2542,25 @@ namespace Airside.Presentation
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
-                var baseDensity = Mathf.Lerp(0.0065f, 0.0032f, daylight);
-                // Adverse fog kept readable on the apron — thick enough to read FG/TSRA, not opaque.
-                RenderSettings.fogDensity = weather == WeatherKind.Storm
-                    ? Mathf.Max(baseDensity, 0.014f)
-                    : weather == WeatherKind.Fog
-                        ? Mathf.Max(baseDensity, 0.011f)
-                        : raining
-                            ? Mathf.Max(baseDensity, 0.0075f)
-                            : baseDensity;
+                var baseDensity = AirsideBareField.Enabled
+                    ? Mathf.Lerp(0.00032f, 0.0002f, daylight)
+                    : Mathf.Lerp(0.0065f, 0.0032f, daylight);
+                // Adverse fog kept readable — thick enough to read FG/TSRA, not opaque.
+                RenderSettings.fogDensity = AirsideBareField.Enabled
+                    ? (weather == WeatherKind.Storm
+                        ? Mathf.Max(baseDensity, 0.00045f)
+                        : weather == WeatherKind.Fog
+                            ? Mathf.Max(baseDensity, 0.00038f)
+                            : raining
+                                ? Mathf.Max(baseDensity, 0.00028f)
+                                : baseDensity)
+                    : (weather == WeatherKind.Storm
+                        ? Mathf.Max(baseDensity, 0.014f)
+                        : weather == WeatherKind.Fog
+                            ? Mathf.Max(baseDensity, 0.011f)
+                            : raining
+                                ? Mathf.Max(baseDensity, 0.0075f)
+                                : baseDensity);
             }
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
@@ -4129,10 +4164,10 @@ namespace Airside.Presentation
                 camera = new GameObject("Main Camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
             // Match overview framing (architectural miniature, decision 0022 / post-F polish).
-            camera.fieldOfView = 48f;
-            // Arrivals join final ~430 m out and the star sphere sits beyond that, so the
-            // far plane has to cover the whole flight envelope from a chase camera.
-            camera.farClipPlane = Mathf.Max(camera.farClipPlane, 1200f);
+            camera.fieldOfView = AirsideBareField.OverviewFov;
+            // The Adelaide ground is 3.4 km on the long axis; the far plane has to
+            // cover the whole site from the high overview.
+            camera.farClipPlane = Mathf.Max(camera.farClipPlane, AirsideBareField.CameraFarClip);
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -4285,11 +4320,13 @@ namespace Airside.Presentation
                 if (cloudy)
                     clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f);
                 RenderSettings.fogColor = clearFog;
-                var density = Mathf.Lerp(0.0036f, 0.0016f, daylight);
-                if (cloudy)
+                var density = AirsideBareField.Enabled
+                    ? Mathf.Lerp(AirsideBareField.NightFogDensity, AirsideBareField.DayFogDensity, daylight)
+                    : Mathf.Lerp(0.0036f, 0.0016f, daylight);
+                if (cloudy && !AirsideBareField.Enabled)
                     density = Mathf.Max(density, Mathf.Lerp(0.005f, 0.0028f, daylight));
                 // Tiny dusk haze only — do not orange-wash the whole scene.
-                density += warm * 0.00035f;
+                density += AirsideBareField.Enabled ? warm * 0.00002f : warm * 0.00035f;
                 RenderSettings.fogDensity = density;
             }
 
@@ -5128,14 +5165,67 @@ namespace Airside.Presentation
             var root = new GameObject("Airfield");
             _airfieldRoot = root.transform;
             AirsideStaticWorld.WorldRoot = _airfieldRoot;
+            if (AirsideBareField.Enabled)
+            {
+                BuildBareAdelaideField();
+                return;
+            }
+
             if (!AirsideTerrainGround.TryBuild(_airfieldRoot))
                 BuildAirfieldTerrainBase();
             if (AirsideCombinedSurfaces.UseTileOperational)
                 BuildAirfieldTerrain11Operational();
             else
                 BuildCombinedOperationalSurfaces();
-            BuildAirfieldTerrain12();
-            BuildAirfieldApronAndBuildings();
+            if (AirsideFocusMode.ShowBuildings)
+                BuildAirfieldTerrain12();
+            if (AirsideFocusMode.ShowBuildings || AirsideFocusMode.ShowEnvironment
+                || AirsideFocusMode.ShowWorldProps)
+                BuildAirfieldApronAndBuildings();
+        }
+
+        /// <summary>
+        /// One grass slab the size of Adelaide Airport and one 3100 × 45 m runway.
+        /// No taxiways, apron, buildings, signs or props.
+        /// </summary>
+        private static void BuildBareAdelaideField()
+        {
+            var grass = Shade(AirsideTheme.DryGrass, 0.62f);
+            var asphalt = new Color(0.16f, 0.18f, 0.2f);
+            CreateBlock(
+                AirsideBareField.GroundObjectName,
+                new Vector3(0f, AirsideBareField.GroundCenterY, 0f),
+                new Vector3(
+                    AirsideBareField.GroundLengthMetres,
+                    AirsideBareField.GroundHeightMetres,
+                    AirsideBareField.GroundWidthMetres),
+                grass,
+                PreferSurfaceBasecolor("tx_grass_kingscote"),
+                new Vector2(
+                    AirsideBareField.GroundLengthMetres / 16f,
+                    AirsideBareField.GroundWidthMetres / 16f));
+            CreateBlock(
+                AirsideBareField.RunwayObjectName,
+                new Vector3(0f, AirsideBareField.RunwayCenterY, 0f),
+                new Vector3(
+                    AirsideBareField.RunwayLengthMetres,
+                    AirsideBareField.RunwayHeightMetres,
+                    AirsideBareField.RunwayWidthMetres),
+                asphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(
+                    AirsideBareField.RunwayLengthMetres / 18f,
+                    AirsideBareField.RunwayWidthMetres / 8f));
+
+            var paintY = AirsideBareField.RunwayCenterY
+                         + AirsideBareField.RunwayHeightMetres * 0.5f + 0.03f;
+            var edgeZ = AirsideBareField.RunwayHalfWidth - 0.7f;
+            CreateBlock("runway_centre", new Vector3(0f, paintY, 0f),
+                new Vector3(AirsideBareField.RunwayLengthMetres - 80f, 0.02f, 0.45f), Color.white);
+            CreateBlock("runway_edge_left", new Vector3(0f, paintY, -edgeZ),
+                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
+            CreateBlock("runway_edge_right", new Vector3(0f, paintY, edgeZ),
+                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
         }
 
         /// <summary>

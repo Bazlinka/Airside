@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **The visible world is one plane, one 3 100 × 45 m runway, and empty Adelaide
+  ground.** Buildings, cars, signs, taxiways, apron, coast, trees, fences,
+  decorative lights and a second aircraft are no longer spawned. The ground is
+  3 400 × 2 309 m (785 ha, the published Adelaide Airport site). The runway is
+  YPAD 05/23 at real metres, not the 1:20 miniature. Overview camera, far clip
+  and fog are sized for that field; daylight sun lighting is unchanged.
+  Simulation layout, reservations and saves are untouched. See ADR 0032.
+
 - **Adelaide-scale airfield layout with single-aircraft focus and pinned daylight.**
   Runway 05/23 at 1:20 scale (155 m) with parallel taxiways A/B and separate
   arrival/departure routes per stand (`AirportLayout`, `StandTaxiRoutes`).

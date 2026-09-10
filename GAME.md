@@ -1,13 +1,23 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — aircraft logic pass)
-- **Branch:** `main`. Everything through the aircraft-logic pass is merged —
-  performance (PR #183) and flight realism + aircraft logic (PR #184). There is
-  no outstanding branch; start new work from `main`.
-- **Do next:** **Mac Play, and this needs a Unity compile first — nothing in this
-  pass has been through the Unity editor.** Watch a full arrival and a full
-  departure at 1× and then at 4×, on both the overview and the follow camera.
-  What to judge: the aircraft should move continuously at both speeds (the 1 Hz
+- **Last updated:** 2026-09-10 (Cursor — CC0 terrain ground pass)
+- **Branch:** `feature/cc0-terrain-ground`, off `main`. Everything through the
+  aircraft-logic pass is merged (performance PR #183, flight realism + aircraft
+  logic PR #184). Check this branch out rather than starting on `main`.
+- **Do next — the terrain has to be baked before it exists.** Run
+  `bash scripts/bake-terrain.sh` once on the Mac and commit its outputs with
+  their `.meta` files: `Art/Terrain/terrain_kingscote_first_playable_v01.asset`,
+  four `trn_ground_*_v01.terrainlayer`, `mat_kingscote_terrain_v01.mat` and
+  `Resources/Airside/Prefabs/mdl_kingscote_terrain_v01.prefab`. Until then the
+  runtime falls back to the old procedural slab, so **the scene looks unchanged
+  and that is not a bug**. Then `scripts/test-unity.sh`, `scripts/build-mac.sh`,
+  and matched overview screenshots at day, dusk, night and rain. While watching a
+  full arrival and departure, check wheels never clip below the terrain and that
+  runway, taxiway, stands and ground traffic stay aligned. Check `Player.log` for
+  missing TerrainData, TerrainLayer, texture, shader or Addressables paths, and
+  confirm settled RSS stays under 1 GB.
+- **Also still owed from the aircraft pass:** Mac Play at 1× and 4× on both
+  cameras. The aircraft should move continuously at both speeds (the 1 Hz
   staircase is what made 4× look so much worse); taxi should hold one steady
   speed out as well as in; a departure should stop at the hold-short bar clear of
   the runway and then swing onto the centreline along a curve rather than
@@ -26,6 +36,23 @@
   Presentation performance P0–P2 and art sourcing carry over unchanged.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
+  - `Infield grass` is now buried under the terrain rather than removed. Its top
+    is at -0.41, below the terrain at -0.045, so it is hidden but still
+    collectable. Do not "tidy it up"
+  - Everything about the terrain's shape and blending lives in
+    `AirsideTerrainField`, which holds no UnityEngine types on purpose: the
+    Editor baker and the headless tests sample the same functions, so the shipped
+    ground and the thing under test cannot drift. Re-run `scripts/bake-terrain.sh`
+    after changing it or after regenerating the maps
+  - The operational plateau is pinned dead level across X [-64, 66] × Z [-12, 60].
+    If a pad, stand or taxi node is ever moved outside that box it will end up
+    over sculpted ground; widen the plateau in the same commit
+  - `Kingscote terrain` is in `AirsideStaticWorld.IsDynamic` so `Collect` skips
+    its subtree entirely and it can never reach `StaticBatchingUtility.Combine`
+  - The TerrainLayer maps under `Art/Textures/Terrain/` are Editor-imported and
+    are deliberately excluded from the StreamingAssets sync. The apron concrete
+    v03 under `Art/Textures/Surfaces/` *is* runtime-loaded and does sync;
+    `AirsideMaterialLibrary` already prefers v03 over v02 and v01
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
   - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
   - Because of that gap, `work/flightcheck` is the only thing that compiles the
@@ -134,6 +161,20 @@ Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
 supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
+
+- CC0 Unity Terrain ground on `feature/cc0-terrain-ground`: 256 × 220 × 8 m
+  TerrainData (heightmap 257, alphamap 256), four CC0 TerrainLayers on the
+  built-in URP Terrain Lit shader, plus a Poly Haven worn-concrete apron.
+  Operational plateau dead level at **-0.0450 min and max** across X [-64, 66] ×
+  Z [-12, 60], lowest pad **3.5 cm** proud; normalized heights **0.1053–0.5538**
+  (no clamping); relief **3.57 m over 220 m**; overview core **67.1% dry grass,
+  15.0% green, 17.8% worn dirt**; dirt shoulder **2.20–3.20 m**; lag correlation
+  decays monotonically **0.767 at 11 m → 0.409 at 32 m** with no resurgence at
+  any tile size. Albedo tile-scale luminance spread **0.5–2.0 points** with
+  detail std **8.9–23.8**. `scripts/test-domain.sh` **200 passed** (19 new
+  terrain tests, mutation-checked). Decision 0031. **The bake has not been run:
+  needs `scripts/bake-terrain.sh` on the Mac, then Unity compile, Mac build and
+  packaged day/dusk/night/rain QA.**
 
 - Runtime airfield performance **P0–P2 plus GPU-state + paint/probe/kit-combine
   pass, merged to `main` as PR #183**: combined operational pads (6)

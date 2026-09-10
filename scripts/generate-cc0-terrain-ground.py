@@ -305,8 +305,12 @@ def build_apron_concrete_v03(records: list) -> None:
     """
     ph = PolyHaven("worn_concrete_floor")
     color = np.asarray(ph.need("diff").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
-    # Pale worn apron per the reference board, without crushing the stains flat.
-    color = grade(color, "#B3B0A8")
+    # The apron tiles at roughly 4.7 x 4 m, so the source photograph's large stain
+    # blotches would repeat several times across one stand. FREE_GROUND_SOLUTION is
+    # explicit that stains must not be baked into every repeated concrete tile, so
+    # the low-frequency luminance goes the same way as the terrain layers' and only
+    # the fine crazing and grit detail is kept. Graded pale per the reference board.
+    color = grade(equalise_tile(color, strength=0.85), "#B3B0A8")
     normal = np.asarray(ph.need("nor_gl").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
     rough = to_gray(ph.need("rough"))
     ao = to_gray(ph.need("ao"))

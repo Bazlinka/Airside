@@ -14,7 +14,10 @@ change it describes.
   back. Approach/landing speed spread drops from 200×/575× to 1.2×/8.2× (the
   8.2× is the intended braked rollout). Aircraft and ground-traffic turns use
   frame-rate independent exponential damping, and bank angle is damped per
-  airframe with a slower roll-in than roll-out. Evidence:
+  airframe with a slower roll-in than roll-out. Control surfaces, flaps and
+  spoilers moved onto the presentation clock (they animated while paused) and
+  onto schedules keyed to rotation and touchdown. Tires spin up and wind down
+  with the aircraft and stop once the wheels leave the ground. Evidence:
   `work/flightcheck` before/after run; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/

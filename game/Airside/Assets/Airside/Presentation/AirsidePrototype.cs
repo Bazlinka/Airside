@@ -1080,7 +1080,7 @@ namespace Airside.Presentation
                     AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
                 SpinPropellers(view, phase);
-                RollLandingGearTires(view, phase);
+                RollLandingGearTires(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight, progress);
@@ -1680,21 +1680,13 @@ namespace Airside.Presentation
             }
         }
 
-        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase)
+        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress)
         {
             // Presentation-only: tires roll on the ground (Batch D motion life).
-            var rolling = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut
-                or AircraftPhase.Pushback or AircraftPhase.Landing or AircraftPhase.Takeoff;
-            if (!rolling)
+            var speed = AirsideFlightPath.WheelSpeedFactor(phase, progress);
+            if (speed <= 0f)
                 return;
 
-            var speed = phase switch
-            {
-                AircraftPhase.Takeoff => 2.4f,
-                AircraftPhase.Landing => 1.9f,
-                AircraftPhase.Pushback => 0.55f,
-                _ => 1f
-            };
             var degrees = PresentationDeltaTime * AirsideReusableMotion.AircraftTireRpmTaxi * speed;
             if (degrees <= 0f)
                 return;
@@ -1859,7 +1851,8 @@ namespace Airside.Presentation
                 SpinGroundTrafficPropellers(view, enginesOn);
                 RollLandingGearTires(
                     view,
-                    traffic.IsHolding || traffic.IsAtStand ? AircraftPhase.AtStand : AircraftPhase.TaxiIn);
+                    traffic.IsHolding || traffic.IsAtStand ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
+                    1f);
                 UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(
                     view,

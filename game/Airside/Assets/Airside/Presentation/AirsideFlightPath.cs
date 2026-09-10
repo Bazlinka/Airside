@@ -134,6 +134,33 @@ namespace Airside.Presentation
                 0f);
         }
 
+        /// <summary>
+        /// Wheel speed relative to taxi speed. Zero once the wheels leave the ground, so
+        /// tires stop instead of freewheeling in the air, and the takeoff roll and the
+        /// landing rollout spin up and wind down with the aircraft rather than sitting
+        /// at one fixed rate for the whole phase.
+        /// </summary>
+        public static float WheelSpeedFactor(AircraftPhase phase, float progress)
+        {
+            var t = Mathf.Clamp01(progress);
+            switch (phase)
+            {
+                case AircraftPhase.Takeoff:
+                    return t >= RotateProgress ? 0f : Mathf.Lerp(0.25f, 3.2f, t / RotateProgress);
+                case AircraftPhase.Landing:
+                    return t < TouchdownProgress
+                        ? 0f
+                        : Mathf.Lerp(3.2f, 0.3f, (t - TouchdownProgress) / (1f - TouchdownProgress));
+                case AircraftPhase.Pushback:
+                    return 0.55f;
+                case AircraftPhase.TaxiIn:
+                case AircraftPhase.TaxiOut:
+                    return 1f;
+                default:
+                    return 0f;
+            }
+        }
+
         /// <summary>Nose attitude for a phase. Negative X euler is nose-up.</summary>
         public static float PitchDegrees(AircraftPhase phase, float progress)
         {

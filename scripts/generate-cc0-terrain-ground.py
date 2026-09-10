@@ -233,9 +233,29 @@ def ao_from_height(height: np.ndarray) -> np.ndarray:
     return np.clip(0.5 + (height - box) * 2.5, 0.35, 1.0)
 
 
-def build_terrain_layer(name: str, src, grade_target: str | None, records: list) -> None:
+def calm_speckles(rgb: np.ndarray, excess: float = 0.055, strength: float = 0.85) -> np.ndarray:
+    """Pull strongly green specks back toward the surrounding ground colour.
+
+    Ground 030 is sold as worn dirt but carries scattered bright grass tufts. They
+    are only about 2% of the pixels, yet they are the most distinctive thing in the
+    image, so tiling it turns them into landmarks that plainly repeat — visible in
+    the 3x3 tiling board even though the low-frequency luminance is already flat.
+    Nothing here touches overall colour: only pixels whose green clearly exceeds
+    red and blue are moved, and they are moved toward their own luminance.
+    """
+    green = rgb[..., 1] - 0.5 * (rgb[..., 0] + rgb[..., 2])
+    t = np.clip((green - excess) / max(excess, 1e-4), 0.0, 1.0) * strength
+    lum = (rgb @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32))[..., None]
+    return np.clip(rgb * (1.0 - t[..., None]) + lum * t[..., None], 0.0, 1.0)
+
+
+def build_terrain_layer(name: str, src, grade_target: str | None, records: list,
+                        calm: bool = False) -> None:
     color = np.asarray(src.need("Color").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
-    color = grade(equalise_tile(color), grade_target)
+    color = equalise_tile(color)
+    if calm:
+        color = calm_speckles(color)
+    color = grade(color, grade_target)
 
     normal = np.asarray(src.need("NormalGL").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
 
@@ -305,12 +325,28 @@ def build_apron_concrete_v03(records: list) -> None:
     """
     ph = PolyHaven("worn_concrete_floor")
     color = np.asarray(ph.need("diff").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
+
     # The apron tiles at roughly 4.7 x 4 m, so the source photograph's large stain
-    # blotches would repeat several times across one stand. FREE_GROUND_SOLUTION is
-    # explicit that stains must not be baked into every repeated concrete tile, so
-    # the low-frequency luminance goes the same way as the terrain layers' and only
-    # the fine crazing and grit detail is kept. Graded pale per the reference board.
-    color = grade(equalise_tile(color, strength=0.85), "#B3B0A8")
+    # blotches would repeat several times across one stand, and FREE_GROUND_SOLUTION
+    # is explicit that stains must not be baked into every repeated concrete tile.
+    color = equalise_tile(color, strength=0.7)
+
+    # Desaturate before grading. The source is a warm brown floor (mean 101, 87, 61,
+    # saturation 0.39), and reaching a pale grey by per-channel gain alone needs a
+    # 2.3x blue boost, which turned the dark stains teal and the mid tones salmon.
+    # Pulling most of the chroma out first means the grade only has to move
+    # brightness, which is all "pale worn concrete" actually asks for.
+    lum = (color @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32))[..., None]
+    color = np.clip(color * 0.22 + lum * 0.78, 0.0, 1.0)
+
+    # Compress contrast toward the mean. A photographed floor has deep dark stains
+    # that at 4.7 m per repeat still read as a repeating blotch pattern, and the
+    # reference board wants a pale, evenly worn apron rather than a mouldy one. Half
+    # contrast keeps the crazing and joint lines legible without the blotches.
+    color = np.clip(color.mean() + (color - color.mean()) * 0.5, 0.0, 1.0)
+
+    # Graded pale per the reference board.
+    color = grade(color, "#BEBBB4")
     normal = np.asarray(ph.need("nor_gl").convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)).astype(np.float32) / 255.0
     rough = to_gray(ph.need("rough"))
     ao = to_gray(ph.need("ao"))
@@ -348,7 +384,7 @@ def main() -> None:
     # below dry grass and in the same hue, so the two layers blended into one uniform
     # field and the splatmap's patches became invisible.
     build_terrain_layer("greengrass", AmbientCg("Ground003"), "#5C7040", records)
-    build_terrain_layer("worndirt", AmbientCg("Ground030"), "#9A7B5A", records)
+    build_terrain_layer("worndirt", AmbientCg("Ground030"), "#9A7B5A", records, calm=True)
     build_terrain_layer_polyhaven("coastsand", "coast_sand_01", "#C8B286", records)
 
     print("Surfaces:")

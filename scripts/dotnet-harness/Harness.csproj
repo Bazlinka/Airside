@@ -26,6 +26,12 @@
     <Compile Include="../../game/Airside/Assets/Airside/Domain/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Simulation/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Persistence/**/*.cs" Exclude="../../game/Airside/Assets/Airside/Persistence/AirsideSaveRepository.cs" />
+    <!--
+      AirsideTerrainField is Presentation by folder but holds no UnityEngine types,
+      so the authored landform can be checked here rather than only under Unity.
+      Compiling it means TerrainFieldTests runs on machines without an editor.
+    -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs" />
   </ItemGroup>
 

@@ -5,6 +5,49 @@ change it describes.
 
 ## Unreleased
 
+- **The airfield ground is one authored Unity Terrain with four CC0 layers
+  instead of a flat, repeating grass slab.** The old ground was a single grass
+  PNG repeating every 5 m across a dead-flat 210 × 180 m slab. It is replaced by
+  a 256 × 220 × 8 m TerrainData (heightmap 257, alphamap 256) blending four CC0
+  PBR TerrainLayers — ambientCG Ground 013 dry grass, Ground 003 green grass,
+  Ground 030 worn dirt and Poly Haven Coast Sand 01 — on the built-in URP Terrain
+  Lit shader, plus a Poly Haven worn-concrete apron. No MicroSplat, no paid
+  asset, no runtime terrain plugin.
+
+  Measured on the authored field: the operational plateau is dead level at world
+  Y **-0.0450 min and max** across X [-64, 66] and Z [-12, 60], leaving the
+  lowest pad **3.5 cm** proud; normalized heights run **0.1053–0.5538** so
+  nothing clamps; relief is **3.57 m over 220 m**; the overview core is **67.1%
+  dry grass, 15.0% green, 17.8% worn dirt**; the dirt shoulder measures
+  **2.20–3.20 m**; and lag correlation decays monotonically from **0.799 at 11 m
+  to 0.430 at 32 m** with no resurgence at any layer's tile size, so there is no
+  repeat period. Every layer's albedo has its low-frequency luminance divided out
+  — tile-scale spread is **0.5–2.0 luminance points** with per-pixel detail std
+  preserved at **8.9–23.8** — so all large-scale variation comes from the
+  splatmap.
+
+  The terrain is baked once in the Editor (`scripts/bake-terrain.sh`) and the
+  player only does one `Resources.Load` and one `Instantiate`; nothing is
+  generated at startup, and the terrain is excluded from
+  `StaticBatchingUtility.Combine`. The procedural slab remains the fallback until
+  packaged visual QA passes.
+
+  **Verified:** `scripts/test-domain.sh` **200 passed, 0 failed** (up from 181;
+  19 new terrain tests, mutation-checked so they bite), `sync-art-streaming-assets.sh`
+  clean with zero deletions, and both Unity-facing files compile against a
+  stubbed engine surface. **Not verified:** `scripts/test-unity.sh`,
+  `scripts/build-mac.sh`, packaged screenshots at day/dusk/night/rain,
+  `Player.log` and the settled-RSS measurement all need a Mac Unity editor, which
+  this pass did not have. See ADR 0031.
+
+- **Running the art sync no longer deletes 282 committed StreamingAssets metas.**
+  `sync-art-streaming-assets.sh` rm -rf'd its destination, where Unity's
+  generated and committed `.meta` files live, so simply running it deleted
+  tracked files and would have had Unity reissue fresh GUIDs for every synced
+  asset. It now deletes only the glTF/bin/PNG files it owns, and skips
+  `Textures/Terrain` because those maps are Editor-imported and never resolve
+  through `ArtRuntimePaths`.
+
 - **The chase camera cuts on a slot recycle instead of flying across the field.**
   When a departed flight's slot is reused, the new arrival appears hundreds of
   metres away on final in a single frame. The follow camera eased toward it at a

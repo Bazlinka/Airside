@@ -1081,7 +1081,7 @@ namespace Airside.Presentation
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
-                UpdateControlSurfaces(view, phase, progress, bank);
+                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
                 UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight, progress);
                 UpdateCabinDoor(view, phase);
@@ -1132,9 +1132,14 @@ namespace Airside.Presentation
             return current;
         }
 
-        private static void UpdateControlSurfaces(Transform aircraft, AircraftPhase phase, float progress, float bankDegrees)
+        private static void UpdateControlSurfaces(
+            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
+            // deltaTime is the presentation clock, so surfaces hold still while paused
+            // and sweep 4x faster at 4x speed instead of running on their own timeline.
+            if (deltaTime <= 0f)
+                return;
             var pitch = PhasePitchDegrees(phase, progress);
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
@@ -1146,7 +1151,7 @@ namespace Airside.Presentation
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, rudder, Time.unscaledDeltaTime * 90f);
+                    euler.y = Mathf.MoveTowards(current, rudder, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -1156,7 +1161,7 @@ namespace Airside.Presentation
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     var target = child.name.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 80f);
+                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 80f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.StartsWith("Aileron", StringComparison.Ordinal))
@@ -1165,27 +1170,45 @@ namespace Airside.Presentation
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     var side = child.name.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
                     var target = Mathf.Clamp(bankDegrees * 0.8f * side, -18f, 18f);
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 90f);
+                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name is "Flap L" or "Flap R")
                 {
-                    var deploy = phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.Takeoff
-                        ? Mathf.Lerp(0f, 22f, Mathf.Clamp01(progress + 0.25f))
-                        : 0f;
+                    // Takeoff flap is set for the roll and milked off after rotation —
+                    // it used to keep extending all the way through the climb.
+                    var deploy = phase switch
+                    {
+                        AircraftPhase.Takeoff => progress < AirsideFlightPath.RotateProgress
+                            ? 12f
+                            : Mathf.Lerp(12f, 0f, Mathf.InverseLerp(
+                                AirsideFlightPath.RotateProgress, 1f, progress)),
+                        AircraftPhase.Approach => Mathf.Lerp(8f, 22f, Mathf.Clamp01(progress)),
+                        // Full flap is already out on short final; keep it there until
+                        // the rollout has washed off speed.
+                        AircraftPhase.Landing => progress < 0.6f
+                            ? 22f
+                            : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, progress)),
+                        _ => 0f
+                    };
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    euler.x = Mathf.MoveTowards(current, deploy, Time.unscaledDeltaTime * 40f);
+                    euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.StartsWith("Spoiler", StringComparison.Ordinal))
                 {
-                    var raise = phase is AircraftPhase.Landing
-                        ? Mathf.Lerp(0f, 35f, Mathf.Clamp01(progress))
+                    // Spoilers pop on touchdown and stow as the rollout ends, rather
+                    // than creeping up from zero through the whole flare.
+                    var raise = phase == AircraftPhase.Landing
+                        ? 35f * Mathf.Clamp01(Mathf.InverseLerp(
+                              AirsideFlightPath.TouchdownProgress,
+                              AirsideFlightPath.TouchdownProgress + 0.06f, progress)
+                            - Mathf.InverseLerp(0.86f, 1f, progress))
                         : 0f;
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    euler.x = Mathf.MoveTowards(current, -raise, Time.unscaledDeltaTime * 55f);
+                    euler.x = Mathf.MoveTowards(current, -raise, deltaTime * 55f);
                     child.localEulerAngles = euler;
                 }
             }
@@ -10874,8 +10897,11 @@ namespace Airside.Presentation
             var t = Mathf.Clamp01(progress);
             // Number-two stays further out on final while waiting so it does not stack
             // on the leader at the flare start.
+            // Number-two holds off the flare gate, but compressing progress rather than
+            // clamping it means it keeps creeping down the approach instead of stopping
+            // dead in mid-air the instant it reaches the hold point.
             if (phase == AircraftPhase.Approach && laneOffset != 0f && t > 0.82f)
-                t = 0.82f;
+                t = 0.82f + (t - 0.82f) * 0.08f;
             return phase switch
             {
                 AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),

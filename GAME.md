@@ -1,16 +1,9 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — aircraft logic pass)
-- **Branch:** `cursor/aircraft-motion-pass-c1bb` → PR #184, open against `main`.
-  Not `cursor/game-performance-pass-c1bb`. PR #183 was squash-merged as `3bec923`
-  while it still held only the runtime-airfield performance pass, so the 12
-  commits of flight-realism and aircraft-logic work pushed to that branch
-  afterwards never reached `main` and had no open PR. Because `main` now holds one
-  squash commit where the old branch holds the original eight, the old branch
-  conflicts with `main` in `CHANGELOG.md`, `GAME.md`, `AirsidePrototype.cs` and
-  `PresentationLayoutTests.cs`. Those 12 commits were replayed onto current `main`
-  here with no conflicts and an identical tree hash (`7f24ff2`). **Work from this
-  branch, not the old one, and do not try to merge the old one.**
+- **Branch:** `main`. Everything through the aircraft-logic pass is merged —
+  performance (PR #183) and flight realism + aircraft logic (PR #184). There is
+  no outstanding branch; start new work from `main`.
 - **Do next:** **Mac Play, and this needs a Unity compile first — nothing in this
   pass has been through the Unity editor.** Watch a full arrival and a full
   departure at 1× and then at 4×, on both the overview and the follow camera.
@@ -143,7 +136,7 @@ supplementary check, not a replacement for a real Unity run before merging.
 ## Current evidence
 
 - Runtime airfield performance **P0–P2 plus GPU-state + paint/probe/kit-combine
-  pass on `cursor/game-performance-pass-c1bb`**: combined operational pads (6)
+  pass, merged to `main` as PR #183**: combined operational pads (6)
   replace 745 Terrain11 tiles; textures/materials cached; Addressables on demand;
   High/Medium ladder; probe bands. Per-frame `Renderer.material` clones removed;
   scene index; one star mesh; probes `RenderProbe` after world combine. Taxi

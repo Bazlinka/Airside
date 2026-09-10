@@ -20,8 +20,10 @@ change it describes.
   with the aircraft and stop once the wheels leave the ground. Propeller RPM
   spools between phases instead of jumping, up faster than down. The chase
   camera tracks harder on the fast phases so a departure cannot outrun it out of
-  frame. Evidence:
-  `work/flightcheck` before/after run; `scripts/test-domain.sh` **178 passed**.
+  frame. Six new EditMode tests pin no-stall, seam continuity, no slowdown at
+  rotation, a departure that keeps flying, wheels that stop when airborne and
+  frame-rate independent damping. Evidence: all 21 assertions mirrored and
+  passing in `work/flightcheck`; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/
   bollards, airside planter strip, luggage trolleys, landside benches, fence

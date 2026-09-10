@@ -232,5 +232,102 @@ namespace Airside.Tests
                 UnityEngine.Object.DestroyImmediate(root);
             }
         }
+
+        private static Vector3 FlightPathAt(AircraftPhase phase, float t) => phase switch
+        {
+            AircraftPhase.Approach => AirsideFlightPath.Approach(t, 0f),
+            AircraftPhase.Landing => AirsideFlightPath.Landing(t, 0f),
+            AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
+            _ => AirsideFlightPath.Departed(t)
+        };
+
+        [TestCase(AircraftPhase.Approach)]
+        [TestCase(AircraftPhase.Landing)]
+        [TestCase(AircraftPhase.Takeoff)]
+        [TestCase(AircraftPhase.Departed)]
+        public void FlightPath_NeverStallsInsideAPhase(AircraftPhase phase)
+        {
+            // A smoothstep on position has zero velocity at both ends, which reads as
+            // the aircraft stopping dead at rotation, at the flare and at the threshold.
+            const int steps = 400;
+            var previous = FlightPathAt(phase, 0f);
+            for (var i = 1; i <= steps; i++)
+            {
+                var current = FlightPathAt(phase, i / (float)steps);
+                var speed = Vector3.Distance(previous, current) * steps;
+                Assert.That(speed, Is.GreaterThan(1f), $"{phase} stalls at t={i / (float)steps:F3}");
+                previous = current;
+            }
+        }
+
+        [Test]
+        public void FlightPath_PhaseSeamsAreContinuousInPositionAndSpeed()
+        {
+            const float h = 1f / 400f;
+            void Seam(string label, AircraftPhase from, AircraftPhase to)
+            {
+                var leaving = Vector3.Distance(FlightPathAt(from, 1f - h), FlightPathAt(from, 1f)) / h;
+                var entering = Vector3.Distance(FlightPathAt(to, 0f), FlightPathAt(to, h)) / h;
+                Assert.That(Vector3.Distance(FlightPathAt(from, 1f), FlightPathAt(to, 0f)),
+                    Is.LessThan(0.01f), $"{label} teleports");
+                Assert.That(entering, Is.EqualTo(leaving).Within(leaving * 0.35f), $"{label} lurches");
+            }
+
+            Seam("approach -> landing", AircraftPhase.Approach, AircraftPhase.Landing);
+            Seam("takeoff -> departed", AircraftPhase.Takeoff, AircraftPhase.Departed);
+        }
+
+        [Test]
+        public void FlightPath_TakeoffDoesNotSlowDownAtRotation()
+        {
+            const float h = 1f / 400f;
+            var r = AirsideFlightPath.RotateProgress;
+            Assert.That(r, Is.InRange(0.3f, 0.9f));
+            Assert.That(AirsideFlightPath.Takeoff(r).x, Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
+
+            var before = Vector3.Distance(AirsideFlightPath.Takeoff(r - 0.02f), AirsideFlightPath.Takeoff(r - 0.02f + h)) / h;
+            var after = Vector3.Distance(AirsideFlightPath.Takeoff(r + 0.02f), AirsideFlightPath.Takeoff(r + 0.02f + h)) / h;
+            Assert.That(after, Is.GreaterThanOrEqualTo(before));
+        }
+
+        [Test]
+        public void FlightPath_DepartureKeepsFlyingInsteadOfFreezing()
+        {
+            var start = AirsideFlightPath.Departed(0f);
+            Assert.That(start, Is.EqualTo(AirsideFlightPath.Takeoff(1f)));
+            Assert.That(AirsideFlightPath.Departed(1f).x, Is.GreaterThan(start.x + 100f));
+            Assert.That(AirsideFlightPath.Departed(1f).y, Is.GreaterThan(start.y));
+        }
+
+        [Test]
+        public void FlightPath_WheelsStopOnceTheAircraftIsAirborne()
+        {
+            var r = AirsideFlightPath.RotateProgress;
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Takeoff, r + 0.01f), Is.Zero);
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0f), Is.Zero);
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Departed, 0.5f), Is.Zero);
+
+            // Roll accelerates, rollout decelerates.
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Takeoff, r * 0.9f),
+                Is.GreaterThan(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Takeoff, r * 0.1f)));
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0.95f),
+                Is.LessThan(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0.35f)));
+        }
+
+        [Test]
+        public void FlightPath_DampingConvergesTheSameAtAnyFrameRate()
+        {
+            float Converge(int fps)
+            {
+                var v = 0f;
+                for (var i = 0; i < fps; i++)
+                    v = Mathf.Lerp(v, 1f, AirsideFlightPath.DampFactor(5f, 1f / fps));
+                return v;
+            }
+
+            Assert.That(Converge(144), Is.EqualTo(Converge(30)).Within(0.002f));
+            // Paused presentation time must not move anything.
+            Assert.That(AirsideFlightPath.DampFactor(5f, 0f), Is.Zero);
+        }
     }
 }

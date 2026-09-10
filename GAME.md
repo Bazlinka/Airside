@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — plane/ground polish follow-up)
-- **Branch:** `cursor/plane-ground-dynamics-polish-0c44` (PR #191)
+- **Branch:** `cursor/plane-ground-pause-followup-0c44` (follow-up after #191 merge)
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
   overview and follow at 1× and 4×. Confirm authored Adelaide ground (no 16 m grid),

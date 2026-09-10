@@ -459,6 +459,8 @@ namespace Airside.Presentation
         private void Update()
         {
             ReadSimulationControls();
+            if (_cameraController != null)
+                _cameraController.FreezePresentation = _paused;
             if (!_paused)
                 _preciseTime += Time.unscaledDeltaTime * _speed;
 
@@ -1430,9 +1432,12 @@ namespace Airside.Presentation
                 }
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    // ANM-AIR-004 — pulse rate from AirsideReusableMotion (not a hard-coded 2 Hz).
-                    var beaconOn = enginesOn &&
-                        (Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0);
+                    // ANM-AIR-004 — pulse from the presentation clock so pause freezes the blink.
+                    var beaconOn = enginesOn;
+                    if (beaconOn && deltaTime > 0f)
+                        beaconOn = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
+                    else if (beaconOn)
+                        beaconOn = child.gameObject.activeSelf;
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
@@ -2760,7 +2765,9 @@ namespace Airside.Presentation
                     for (var p = 0; p < _touchdownSmoke.childCount; p++)
                     {
                         var puff = _touchdownSmoke.GetChild(p);
-                        var side = p % 2 == 0 ? -2.05f : 2.05f;
+                        var side = p % 2 == 0
+                            ? -AirsideReusableMotion.MainGearHalfTrackMetres
+                            : AirsideReusableMotion.MainGearHalfTrackMetres;
                         var aft = -0.15f * (p / 2);
                         puff.localPosition = new Vector3(side, 0.12f, aft);
                     }

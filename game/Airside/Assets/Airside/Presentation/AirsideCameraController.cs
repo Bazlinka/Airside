@@ -35,6 +35,12 @@ namespace Airside.Presentation
         private bool _hasLastTargetPosition;
 
         /// <summary>
+        /// When true (sim pause), follow easing and touchdown shake freeze. Player orbit
+        /// and overview pan still work so the field can be inspected while paused.
+        /// </summary>
+        public bool FreezePresentation { get; set; }
+
+        /// <summary>
         /// No aircraft covers this much ground in one frame — the fastest phase at 4x
         /// time and 30 fps moves about 4 m. A jump this large means the slot was
         /// recycled: the departure that just flew out has been replaced by a new
@@ -126,28 +132,31 @@ namespace Airside.Presentation
                 // Track harder on the fast phases. At one fixed rate the camera trails a
                 // departure by speed/rate metres, which at 4x let the aircraft run off
                 // the edge of frame during climb-out.
+                var dt = FreezePresentation ? 0f : Time.unscaledDeltaTime;
                 var centreRate = _followPhase switch
                 {
                     AircraftPhase.Takeoff or AircraftPhase.Departed => 8f,
                     AircraftPhase.Approach or AircraftPhase.Landing => 6f,
                     _ => 4.2f
                 };
-                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * centreRate));
-
-                _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.4f));
-
-                // Ease yaw toward the aircraft heading without fighting player orbit.
-                if (Time.unscaledTime >= _orbitSuppressUntil)
+                if (dt > 0f)
                 {
-                    var yawBias = YawBiasDegrees(_followPhase);
-                    var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
-                    _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.7f));
-                }
-                var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
-                _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 0.85f));
+                    _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-dt * centreRate));
+                    _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-dt * 2.4f));
 
-                var targetFov = FollowFov(_followPhase, _followProgress);
-                _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 1.6f));
+                    // Ease yaw toward the aircraft heading without fighting player orbit.
+                    if (Time.unscaledTime >= _orbitSuppressUntil)
+                    {
+                        var yawBias = YawBiasDegrees(_followPhase);
+                        var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
+                        _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-dt * 0.7f));
+                    }
+                    var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
+                    _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
+
+                    var targetFov = FollowFov(_followPhase, _followProgress);
+                    _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-dt * 1.6f));
+                }
             }
             else
             {
@@ -189,12 +198,14 @@ namespace Airside.Presentation
             var shakeOffset = Vector3.zero;
             if (_touchdownShake > 0f)
             {
-                var strength = _touchdownShake * 0.55f;
+                // Restrained ATR-scale nudge — readable in follow, not a crash cutscene.
+                var strength = _touchdownShake * 0.28f;
                 shakeOffset = new Vector3(
-                    Mathf.Sin(Time.unscaledTime * 48f) * strength,
-                    Mathf.Sin(Time.unscaledTime * 61f) * strength * 0.6f,
-                    Mathf.Cos(Time.unscaledTime * 53f) * strength * 0.4f);
-                _touchdownShake = Mathf.MoveTowards(_touchdownShake, 0f, Time.unscaledDeltaTime * 2.8f);
+                    Mathf.Sin(Time.unscaledTime * 36f) * strength,
+                    Mathf.Sin(Time.unscaledTime * 44f) * strength * 0.55f,
+                    Mathf.Cos(Time.unscaledTime * 40f) * strength * 0.35f);
+                if (!FreezePresentation)
+                    _touchdownShake = Mathf.MoveTowards(_touchdownShake, 0f, Time.unscaledDeltaTime * 2.2f);
             }
 
             transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance + shakeOffset, rotation);
@@ -230,15 +241,16 @@ namespace Airside.Presentation
 
         private static float FollowDistance(AircraftPhase phase, float altitude, float progress)
         {
-            var air = Mathf.Lerp(30f, 42f, Mathf.Clamp01(altitude / 10f));
+            // ATR 42-class is ~22.7 m long / 24.6 m span — keep a little more room than the v06 kit.
+            var air = Mathf.Lerp(34f, 48f, Mathf.Clamp01(altitude / 10f));
             return phase switch
             {
-                AircraftPhase.AtStand => 32f,
-                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 32f,
-                AircraftPhase.Takeoff => Mathf.Lerp(38f, 80f, progress),
-                AircraftPhase.Approach => Mathf.Lerp(58f, 46f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(46f, 30f, progress),
-                AircraftPhase.Departed => Mathf.Lerp(70f, 220f, progress),
+                AircraftPhase.AtStand => 36f,
+                AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 36f,
+                AircraftPhase.Takeoff => Mathf.Lerp(46f, 95f, progress),
+                AircraftPhase.Approach => Mathf.Lerp(68f, 52f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(54f, 36f, progress),
+                AircraftPhase.Departed => Mathf.Lerp(80f, 240f, progress),
                 _ => air
             };
         }
@@ -369,7 +381,7 @@ namespace Airside.Presentation
         /// <summary>Brief camera shake when a commercial touches down (presentation only).</summary>
         public void PulseTouchdown()
         {
-            _touchdownShake = 1f;
+            _touchdownShake = 0.7f;
         }
 
         public bool IsFollowing => _following;

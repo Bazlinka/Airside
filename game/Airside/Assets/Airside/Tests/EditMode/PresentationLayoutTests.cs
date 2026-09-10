@@ -652,6 +652,53 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightPath_PitchIsContinuousAcrossApproachLandingAndRotate()
+        {
+            var approachEnd = AirsideFlightPath.PitchDegrees(AircraftPhase.Approach, 1f);
+            var landStart = AirsideFlightPath.PitchDegrees(AircraftPhase.Landing, 0f);
+            Assert.That(landStart, Is.EqualTo(approachEnd).Within(0.05f));
+
+            // No sudden pitch jump across the flare → touchdown → settle window.
+            float previous = AirsideFlightPath.PitchDegrees(AircraftPhase.Landing, 0f);
+            for (var i = 1; i <= 40; i++)
+            {
+                var t = i / 40f;
+                var pitch = AirsideFlightPath.PitchDegrees(AircraftPhase.Landing, t);
+                Assert.That(Mathf.Abs(pitch - previous), Is.LessThan(3.5f),
+                    $"landing pitch jumped by {Mathf.Abs(pitch - previous):0.00}° at t={t:0.00}");
+                previous = pitch;
+            }
+
+            var beforeRotate = AirsideFlightPath.PitchDegrees(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress - 0.001f);
+            Assert.That(beforeRotate, Is.EqualTo(0f).Within(0.05f));
+            var afterRotate = AirsideFlightPath.PitchDegrees(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress + 0.08f);
+            Assert.That(afterRotate, Is.LessThan(0f));
+            Assert.That(Mathf.Abs(afterRotate), Is.LessThan(8f),
+                "rotation should ease in, not snap to full nose-up");
+        }
+
+        [Test]
+        public void FlightPath_GroundSpeedIsContinuousAcrossTouchdownAndRotate()
+        {
+            var before = AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress + 0.01f);
+            var after = AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress + 0.05f);
+            Assert.That(before, Is.GreaterThan(5f));
+            Assert.That(after, Is.GreaterThan(1f));
+            Assert.That(after, Is.LessThan(before * 1.15f));
+
+            var roll = AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress * 0.9f);
+            var airborne = AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress + 0.02f);
+            Assert.That(roll, Is.GreaterThan(10f));
+            Assert.That(airborne, Is.Zero);
+        }
+
+        [Test]
         public void CircuitCues_GearBiasEasesRatherThanSnapping()
         {
             var start = AirsideReusableMotion.GearRetractProgress;

@@ -558,6 +558,11 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract - 0.001f),
                 Is.EqualTo(AirsideReusableMotion.GearDeployed));
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract),
+                Is.EqualTo(AirsideReusableMotion.GearDeployed),
+                "retract eases after the rotate cue rather than popping at the threshold");
+            Assert.That(AirsideReusableMotion.GearBias(
+                    AircraftPhase.Takeoff,
+                    retract + AirsideReusableMotion.GearTransitionProgress),
                 Is.EqualTo(AirsideReusableMotion.GearRetracted));
             Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, retract), Is.False);
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Departed, 0.5f),
@@ -589,6 +594,97 @@ namespace Airside.Tests
             {
                 TaxiLoopFixture.RestoreCircuit();
             }
+        }
+
+        [Test]
+        public void FlightPath_TireSpinUsesTravelledDistanceAndRadius()
+        {
+            var midRoll = AirsideFlightPath.RotateProgress * 0.5f;
+            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(AircraftPhase.Takeoff, midRoll);
+            Assert.That(speed, Is.GreaterThan(10f));
+            var main = AirsideFlightPath.TireAngularDegreesPerSecond(
+                speed, AirsideReusableMotion.MainTireRadiusMetres);
+            var nose = AirsideFlightPath.TireAngularDegreesPerSecond(
+                speed, AirsideReusableMotion.NoseTireRadiusMetres);
+            Assert.That(main, Is.GreaterThan(0f));
+            Assert.That(nose, Is.GreaterThan(main), "smaller nose tires spin faster at the same speed");
+            Assert.That(AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress + 0.02f), Is.Zero);
+            Assert.That(AirsideFlightPath.GroundSpeedMetresPerSecond(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress * 0.5f), Is.Zero);
+            Assert.That(AirsideFlightPath.TireAngularDegreesPerSecond(0f, 0.37f), Is.Zero);
+        }
+
+        [Test]
+        public void FlightPath_OleoSettlesOncePerTouchdownWithoutBounce()
+        {
+            Assert.That(AirsideReusableMotion.OleoCompressionMetres(
+                AircraftPhase.Approach, 0.9f), Is.Zero);
+            Assert.That(AirsideReusableMotion.OleoCompressionMetres(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress * 0.5f), Is.Zero);
+            var peak = AirsideReusableMotion.OleoCompressionMetres(
+                AircraftPhase.Landing,
+                AirsideFlightPath.TouchdownProgress + AirsideReusableMotion.OleoSettleProgress * 0.5f);
+            Assert.That(peak, Is.GreaterThan(AirsideReusableMotion.OleoStaticMetres));
+            Assert.That(peak, Is.LessThanOrEqualTo(AirsideReusableMotion.OleoTouchdownMetres + 0.001f));
+            var settled = AirsideReusableMotion.OleoCompressionMetres(AircraftPhase.Landing, 0.95f);
+            Assert.That(settled, Is.EqualTo(AirsideReusableMotion.OleoStaticMetres).Within(0.001f));
+            Assert.That(AirsideReusableMotion.OleoCompressionMetres(AircraftPhase.Departed, 0.2f), Is.Zero);
+        }
+
+        [Test]
+        public void FlightPath_PhaseSeamsStayContinuousAtOneAndFourX()
+        {
+            // Sample positions are pure functions of progress — 1× and 4× only change
+            // how fast progress advances, not the path itself.
+            var landEnd = AirsideFlightPath.Landing(1f, 0f);
+            var hold = AirsideFlightPath.OnRunwayHold();
+            Assert.That(Vector3.Distance(landEnd, hold), Is.LessThan(0.05f));
+            var takeoffStart = AirsideFlightPath.Takeoff(0f);
+            Assert.That(Vector3.Distance(hold, takeoffStart), Is.LessThan(0.05f));
+            var takeoffEnd = AirsideFlightPath.Takeoff(1f);
+            var departedStart = AirsideFlightPath.Departed(0f);
+            Assert.That(Vector3.Distance(takeoffEnd, departedStart), Is.LessThan(0.05f));
+
+            var approachEnd = AirsideFlightPath.Approach(1f, 0f);
+            var landStart = AirsideFlightPath.Landing(0f, 0f);
+            Assert.That(Vector3.Distance(approachEnd, landStart), Is.LessThan(0.5f));
+        }
+
+        [Test]
+        public void CircuitCues_GearBiasEasesRatherThanSnapping()
+        {
+            var start = AirsideReusableMotion.GearRetractProgress;
+            var mid = start + AirsideReusableMotion.GearTransitionProgress * 0.5f;
+            var a = AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, start + 0.001f);
+            var b = AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, mid);
+            var c = AirsideReusableMotion.GearBias(
+                AircraftPhase.Takeoff, start + AirsideReusableMotion.GearTransitionProgress);
+            Assert.That(a, Is.LessThan(1f));
+            Assert.That(b, Is.LessThan(a));
+            Assert.That(b, Is.GreaterThan(c));
+            Assert.That(c, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void CircuitCues_TouchdownIsOneShotAtPathContact()
+        {
+            Assert.That(AirsideFlightPath.HasTouchedDown(
+                AirsideFlightPath.TouchdownProgress - 0.001f), Is.False);
+            Assert.That(AirsideFlightPath.HasTouchedDown(
+                AirsideFlightPath.TouchdownProgress), Is.True);
+            Assert.That(AirsideFlightPath.Landing(AirsideFlightPath.TouchdownProgress, 0f).y,
+                Is.EqualTo(AirsideFlightPath.GroundY).Within(0.01f));
+        }
+
+        [Test]
+        public void FinalAtr_PreferredKitPathIsStarterV01()
+        {
+            // PreferArtKit is private; the production contract is the Resources key and
+            // the glTF stem used by BuildAircraft.
+            Assert.That(AirsideReusableMotion.MainTireRadiusMetres, Is.EqualTo(0.37f));
+            Assert.That(AirsideReusableMotion.NoseTireRadiusMetres, Is.EqualTo(0.31f));
+            Assert.That(AirsideReusableMotion.MainTireRadiusMetres * 2f, Is.EqualTo(0.74f).Within(0.001f));
         }
     }
 }

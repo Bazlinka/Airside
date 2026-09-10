@@ -218,8 +218,9 @@ namespace Airside.Presentation
                 _runwayEdgeLights = Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
-            _touchdownSmoke = null;
-            _skidMarkRoot = AirsideFocusMode.ShowWorldProps ? BuildSkidMarkRoot() : null;
+            // Touchdown smoke is circuit presentation, independent of disabled world props.
+            _touchdownSmoke = BuildTouchdownSmoke();
+            _skidMarkRoot = null;
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
             _touchdownAudio = gameObject.AddComponent<AudioSource>();
@@ -1121,9 +1122,10 @@ namespace Airside.Presentation
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase, progress);
+                ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
-                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress);
+                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime);
                 UpdateCabinDoor(view, phase);
                 UpdateCabinWindowGlow(view, phase, PresentationDaylight);
                 UpdateEngineHeat(view, phase);
@@ -1376,8 +1378,14 @@ namespace Airside.Presentation
             }
         }
 
-        private static void UpdateAircraftLightsAndGear(Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f)
+        private static void UpdateAircraftLightsAndGear(
+            Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f)
         {
+            if (deltaTime < 0f)
+                deltaTime = Time.unscaledDeltaTime;
+            // Pause freezes strut/door motion with the presentation clock.
+            if (deltaTime <= 0f)
+                deltaTime = 0f;
             var gearBias = AirsideReusableMotion.GearBias(phase, progress01);
             var airborne = phase == AircraftPhase.Departed
                 || phase == AircraftPhase.Approach
@@ -1399,8 +1407,8 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = gearBias < 0.5f ? 0f : 78f;
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 160f);
+                    var target = Mathf.Lerp(0f, 78f, gearBias);
+                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name is "Gear nose" or "Gear L" or "Gear R")
@@ -1411,7 +1419,7 @@ namespace Airside.Presentation
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
-                    euler.x = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 140f);
+                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
@@ -1762,24 +1770,41 @@ namespace Airside.Presentation
 
         private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress)
         {
-            // Presentation-only: tires roll on the ground (Batch D motion life).
-            var speed = AirsideFlightPath.WheelSpeedFactor(phase, progress);
-            if (speed <= 0f)
+            // Distance travelled / radius — stops naturally when ground speed is zero.
+            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress);
+            if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
-            var degrees = PresentationDeltaTime * AirsideReusableMotion.AircraftTireRpmTaxi * speed;
-            if (degrees <= 0f)
-                return;
             foreach (var child in AirsideNamedChildren.Get(aircraft))
             {
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Tire", StringComparison.Ordinal) ||
-                    (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
-                     && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
-                     && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0))
+                if (!(child.name.StartsWith("Tire", StringComparison.Ordinal) ||
+                      (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
+                       && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
+                       && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)))
+                    continue;
+                var radius = AirsideReusableMotion.TireRadiusMetres(child.name);
+                var degrees = PresentationDeltaTime
+                    * AirsideFlightPath.TireAngularDegreesPerSecond(groundSpeed, radius);
+                if (degrees > 0f)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
+        }
+
+        /// <summary>
+        /// Brief body settle after touchdown. Applied on top of the path pose.
+        /// Presentation only — never feeds simulation.
+        /// </summary>
+        private static void ApplyOleoSettling(Transform aircraft, AircraftPhase phase, float progress)
+        {
+            if (aircraft == null)
+                return;
+            var compression = AirsideReusableMotion.OleoCompressionMetres(phase, progress);
+            if (compression <= 0f)
+                return;
+            var world = aircraft.position;
+            aircraft.position = new Vector3(world.x, world.y - compression, world.z);
         }
 
         private void SyncCommercialAircraftViews()
@@ -2764,8 +2789,10 @@ namespace Airside.Presentation
             {
                 _touchdownSmoke.gameObject.SetActive(false);
             }
-            else
+            else if (!_paused)
             {
+                // Freeze the puff while paused; at 4× it still ages in real time so the
+                // one-shot stays short rather than stretching across the whole rollout.
                 _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(_touchdownSmokeRemaining / 1.35f);
                 var n = _touchdownSmoke.childCount;
@@ -5200,27 +5227,41 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// One grass slab the size of Adelaide Airport, one 3100 × 45 m runway, and
+        /// Authored Adelaide ground mesh, one 3100 × 45 m runway with shoulders, and
         /// real-metre paint from <see cref="AirsideRunwayMarkings"/>. No taxiways,
-        /// apron, buildings, signs or props.
+        /// apron, buildings, signs or props. Falls back to a grass slab if the mesh
+        /// builder cannot resolve the CC0 maps.
         /// </summary>
         private static void BuildBareAdelaideField()
         {
-            var grass = Shade(AirsideTheme.DryGrass, 0.62f);
+            if (!AirsideAdelaideGroundMesh.TryBuild(_airfieldRoot))
+            {
+                var grass = Shade(AirsideTheme.DryGrass, 0.62f);
+                CreateBlock(
+                    AirsideBareField.GroundObjectName,
+                    new Vector3(0f, AirsideBareField.GroundCenterY, 0f),
+                    new Vector3(
+                        AirsideBareField.GroundLengthMetres,
+                        AirsideBareField.GroundHeightMetres,
+                        AirsideBareField.GroundWidthMetres),
+                    grass,
+                    PreferSurfaceBasecolor("tx_grass_kingscote"),
+                    new Vector2(
+                        AirsideBareField.GroundLengthMetres / 47f,
+                        AirsideBareField.GroundWidthMetres / 37f));
+            }
+
+            BuildBareAdelaideRunway();
+        }
+
+        /// <summary>
+        /// Exact 3 100 × 45 m pavement plus restrained dirt shoulders outside that
+        /// width. Multi-scale asphalt tiling avoids the old stretched-pixel look.
+        /// </summary>
+        private static void BuildBareAdelaideRunway()
+        {
             var asphalt = new Color(0.16f, 0.18f, 0.2f);
-            CreateBlock(
-                AirsideBareField.GroundObjectName,
-                new Vector3(0f, AirsideBareField.GroundCenterY, 0f),
-                new Vector3(
-                    AirsideBareField.GroundLengthMetres,
-                    AirsideBareField.GroundHeightMetres,
-                    AirsideBareField.GroundWidthMetres),
-                grass,
-                PreferSurfaceBasecolor("tx_grass_kingscote"),
-                new Vector2(
-                    AirsideBareField.GroundLengthMetres / 16f,
-                    AirsideBareField.GroundWidthMetres / 16f));
-            CreateBlock(
+            var runway = CreateBlock(
                 AirsideBareField.RunwayObjectName,
                 new Vector3(0f, AirsideBareField.RunwayCenterY, 0f),
                 new Vector3(
@@ -5230,8 +5271,31 @@ namespace Airside.Presentation
                 asphalt,
                 PreferSurfaceBasecolor("tx_asphalt_runway"),
                 new Vector2(
-                    AirsideBareField.RunwayLengthMetres / 18f,
-                    AirsideBareField.RunwayWidthMetres / 8f));
+                    AirsideBareField.RunwayLengthMetres / 42f,
+                    AirsideBareField.RunwayWidthMetres / 11f));
+            ApplyRunwayMultiScale(runway.transform);
+
+            // Shoulders sit outside the declared 45 m — they do not narrow the strip.
+            var shoulderWidth = 7.5f;
+            var shoulderColor = new Color(0.42f, 0.36f, 0.28f);
+            var shoulderZ = AirsideBareField.RunwayHalfWidth + shoulderWidth * 0.5f;
+            var dirtAlbedo = AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerWornDirt);
+            if (ArtRuntimePaths.ResolveExisting(dirtAlbedo) == null)
+                dirtAlbedo = PreferSurfaceBasecolor("tx_grass_kingscote");
+            CreateBlock(
+                "Runway shoulder N",
+                new Vector3(0f, AirsideBareField.RunwayCenterY - 0.01f, shoulderZ),
+                new Vector3(AirsideBareField.RunwayLengthMetres + 40f, 0.1f, shoulderWidth),
+                shoulderColor,
+                dirtAlbedo,
+                new Vector2((AirsideBareField.RunwayLengthMetres + 40f) / 29f, shoulderWidth / 9f));
+            CreateBlock(
+                "Runway shoulder S",
+                new Vector3(0f, AirsideBareField.RunwayCenterY - 0.01f, -shoulderZ),
+                new Vector3(AirsideBareField.RunwayLengthMetres + 40f, 0.1f, shoulderWidth),
+                shoulderColor,
+                dirtAlbedo,
+                new Vector2((AirsideBareField.RunwayLengthMetres + 40f) / 29f, shoulderWidth / 9f));
 
             var paint = Color.white;
             var markings = new GameObject("Runway markings").transform;
@@ -5250,6 +5314,38 @@ namespace Airside.Presentation
                 AirsideRunwayMarkings.AimingPoints(), paint);
             CreateCombinedRunwayPaint(markings, "TDZ marks",
                 AirsideRunwayMarkings.TouchdownZones(), paint);
+        }
+
+        /// <summary>
+        /// Second-scale asphalt detail on URP Lit so long-runway tiling does not read
+        /// as stretched pixels from follow, without changing the 45 m footprint.
+        /// </summary>
+        private static void ApplyRunwayMultiScale(Transform runway)
+        {
+            if (runway == null)
+                return;
+            var renderer = runway.GetComponent<Renderer>();
+            if (renderer == null || renderer.sharedMaterial == null)
+                return;
+            var material = renderer.material;
+            if (material.mainTexture == null || !material.HasProperty("_DetailAlbedoMap"))
+                return;
+            // Second UV scale breaks the long-runway landmark repeat without new assets.
+            material.SetTexture("_DetailAlbedoMap", material.mainTexture);
+            material.SetTextureScale("_DetailAlbedoMap", new Vector2(3.7f, 1.9f));
+            material.EnableKeyword("_DETAIL_MULX2");
+            if (material.HasProperty("_DetailAlbedoMapScale"))
+                material.SetFloat("_DetailAlbedoMapScale", 0.35f);
+            var normalPath = PreferSurfaceMap("tx_asphalt_runway", "normal");
+            if (normalPath != null && material.HasProperty("_DetailNormalMap"))
+            {
+                var normal = AirsideArtTextures.Load(normalPath, linear: true);
+                if (normal != null)
+                {
+                    material.SetTexture("_DetailNormalMap", normal);
+                    material.SetTextureScale("_DetailNormalMap", new Vector2(3.7f, 1.9f));
+                }
+            }
         }
 
         /// <summary>
@@ -8341,6 +8437,11 @@ namespace Airside.Presentation
                 NestLandingGearParts(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                if (finalAtr42)
+                {
+                    PolishFinalAtrMaterials(root);
+                    EnsureAircraftLod(root);
+                }
             }
 
             if (!usedArt)
@@ -9239,6 +9340,86 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Restrained PBR response for the final ATR: skin, glass, rubber, metal and
+        /// lights without changing the fictional Airside livery.
+        /// </summary>
+        private static void PolishFinalAtrMaterials(Transform aircraft)
+        {
+            foreach (var renderer in aircraft.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null || renderer.name is "GroundShadow" or "PropDisc")
+                    continue;
+                var kind = AirsideMaterialLibrary.InferFromMeshName(renderer.name);
+                var color = GetRendererColor(renderer);
+                // Skip near-black UV-failure patches — lift them to a usable panel grey.
+                if (color.r < 0.04f && color.g < 0.04f && color.b < 0.04f && color.a > 0.9f)
+                    color = new Color(0.55f, 0.58f, 0.62f, 1f);
+                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
+            }
+        }
+
+        /// <summary>
+        /// Overview LOD: keep the full ATR close-up, drop small static detail far out.
+        /// Moving parts stay in every LOD so gear/props never pop off.
+        /// </summary>
+        private static void EnsureAircraftLod(Transform aircraft)
+        {
+            if (aircraft.GetComponent<LODGroup>() != null)
+                return;
+
+            var all = new List<Renderer>(64);
+            var nearOnly = new List<Renderer>(32);
+            foreach (var renderer in aircraft.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null || renderer.name is "GroundShadow" or "PropDisc")
+                    continue;
+                all.Add(renderer);
+                var n = renderer.name;
+                var moving = n.StartsWith("Propeller", StringComparison.Ordinal)
+                    || n.StartsWith("Tire", StringComparison.Ordinal)
+                    || n.StartsWith("Gear", StringComparison.Ordinal)
+                    || n.StartsWith("Flap", StringComparison.Ordinal)
+                    || n.StartsWith("Aileron", StringComparison.Ordinal)
+                    || n.StartsWith("Elevator", StringComparison.Ordinal)
+                    || n.StartsWith("Rudder", StringComparison.Ordinal)
+                    || n.StartsWith("Spoiler", StringComparison.Ordinal)
+                    || n.StartsWith("CabinDoor", StringComparison.Ordinal)
+                    || n.StartsWith("LandingLight", StringComparison.Ordinal)
+                    || n.StartsWith("NavLight", StringComparison.Ordinal)
+                    || n.StartsWith("Beacon", StringComparison.Ordinal);
+                var fine = n.IndexOf("rim", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("scissors", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("rivet", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("antenna", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("fairing", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (!moving && fine)
+                    nearOnly.Add(renderer);
+            }
+
+            if (all.Count == 0)
+                return;
+
+            var far = new List<Renderer>(all.Count);
+            foreach (var renderer in all)
+            {
+                if (!nearOnly.Contains(renderer))
+                    far.Add(renderer);
+            }
+
+            // Medium drops fine detail immediately; High keeps it to ~12% screen height.
+            var detailHeight = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High
+                ? 0.12f
+                : 0.35f;
+            var group = aircraft.gameObject.AddComponent<LODGroup>();
+            group.SetLODs(new[]
+            {
+                new LOD(detailHeight, all.ToArray()),
+                new LOD(0.02f, far.ToArray())
+            });
+            group.RecalculateBounds();
+        }
+
+        /// <summary>
         /// Translucent prop disc under each propeller hub — shown only at high RPM.
         /// </summary>
         private static void EnsurePropDiscs(Transform aircraft)
@@ -9267,7 +9448,7 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, planar);
                 }
 
-                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 4.2f);
+                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 4.05f);
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "PropDisc";
                 Object.Destroy(disc.GetComponent<Collider>());
@@ -9275,8 +9456,14 @@ namespace Airside.Presentation
                 disc.transform.localPosition = Vector3.zero;
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                disc.transform.localScale = new Vector3(diameter, 0.012f, diameter);
-                disc.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.55f, 0.56f, 0.6f, 0.32f));
+                disc.transform.localScale = new Vector3(diameter, 0.008f, diameter);
+            // Soft translucent disc — not an opaque pancake. Keep blades hidden only
+            // while the disc is showing so high RPM never freezes as a solid plate.
+                var discMat = AirsideMaterialLibrary.CreateShared(
+                    new Color(0.62f, 0.64f, 0.68f, 0.16f),
+                    AirsideMaterialLibrary.SurfaceKind.Default);
+                disc.GetComponent<Renderer>().sharedMaterial = discMat;
+                SetRendererColor(disc.GetComponent<Renderer>(), new Color(0.62f, 0.64f, 0.68f, 0.16f));
                 disc.SetActive(false);
             }
         }
@@ -9295,7 +9482,8 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(19.5f, 0.012f, 13.5f);
+            // ATR 42-class footprint (~24.6 m span × ~22.7 m length).
+            shadow.transform.localScale = new Vector3(22.5f, 0.012f, 16.5f);
             var material = AirsideMaterialLibrary.CreateShared(new Color(0.05f, 0.06f, 0.08f, 0.16f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -9311,13 +9499,14 @@ namespace Airside.Presentation
             if (shadow == null)
                 return;
 
-            var ground = new Vector3(aircraft.position.x, 0.09f, aircraft.position.z);
+            var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.02f;
+            var ground = new Vector3(aircraft.position.x, groundY, aircraft.position.z);
             shadow.position = ground;
             shadow.rotation = Quaternion.identity;
-            var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
-            var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(19.5f, 27.5f, t);
-            var depth = Mathf.Lerp(13.5f, 19f, t);
+            var altitude = Mathf.Max(0f, aircraft.position.y - AirsideFlightPath.GroundY);
+            var t = Mathf.Clamp01(altitude / 18f);
+            var width = Mathf.Lerp(22.5f, 30f, t);
+            var depth = Mathf.Lerp(16.5f, 22f, t);
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
@@ -9350,27 +9539,30 @@ namespace Airside.Presentation
         /// <summary>
         /// Prefer denser surface basecolours (v02 fidelity board) when present; keep v01 fallback.
         /// </summary>
-        private static string PreferSurfaceBasecolor(string stem)
+        private static string PreferSurfaceBasecolor(string stem) => PreferSurfaceMap(stem, "basecolor");
+
+        private static string PreferSurfaceMap(string stem, string map)
         {
-            if (string.IsNullOrEmpty(stem))
+            if (string.IsNullOrEmpty(stem) || string.IsNullOrEmpty(map))
                 return null;
-            if (SurfaceBasecolorCache.TryGetValue(stem, out var cached))
+            var cacheKey = stem + "|" + map;
+            if (SurfaceBasecolorCache.TryGetValue(cacheKey, out var cached))
                 return cached;
 
             string chosen = null;
-            var v03 = $"Textures/Surfaces/{stem}_basecolor_v03.png";
+            var v03 = $"Textures/Surfaces/{stem}_{map}_v03.png";
             if (ArtRuntimePaths.ResolveExisting(v03) != null)
                 chosen = v03;
             else
             {
-                var v02 = $"Textures/Surfaces/{stem}_basecolor_v02.png";
+                var v02 = $"Textures/Surfaces/{stem}_{map}_v02.png";
                 if (ArtRuntimePaths.ResolveExisting(v02) != null)
                     chosen = v02;
                 else
-                    chosen = $"Textures/Surfaces/{stem}_basecolor_v01.png";
+                    chosen = $"Textures/Surfaces/{stem}_{map}_v01.png";
             }
 
-            SurfaceBasecolorCache[stem] = chosen;
+            SurfaceBasecolorCache[cacheKey] = chosen;
             return chosen;
         }
 

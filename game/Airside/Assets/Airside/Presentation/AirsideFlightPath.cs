@@ -143,19 +143,24 @@ namespace Airside.Presentation
                 0f);
         }
 
-        public static float WheelSpeedFactor(AircraftPhase phase, float progress)
+        /// <summary>
+        /// Horizontal ground speed along the circuit, metres per simulated second.
+        /// Zero when the gear is off the pavement. Used for distance-based tire spin.
+        /// </summary>
+        public static float GroundSpeedMetresPerSecond(AircraftPhase phase, float progress)
         {
             var t = Mathf.Clamp01(progress);
+            var duration = Mathf.Max(0.001f, PhaseSeconds(phase));
             switch (phase)
             {
                 case AircraftPhase.Takeoff:
                     if (t >= RotateProgress)
                         return 0f;
-                    return Mathf.Lerp(1f, 6f, t / Mathf.Max(0.05f, RotateProgress));
+                    break;
                 case AircraftPhase.Landing:
-                    return t < TouchdownProgress
-                        ? 0f
-                        : Mathf.Lerp(6f, 0.4f, (t - TouchdownProgress) / (1f - TouchdownProgress));
+                    if (t < TouchdownProgress)
+                        return 0f;
+                    break;
                 case AircraftPhase.TaxiIn:
                 case AircraftPhase.TaxiOut:
                 case AircraftPhase.Pushback:
@@ -164,11 +169,61 @@ namespace Airside.Presentation
                 default:
                     return 0f;
             }
+
+            const float eps = 0.0025f;
+            var a = Mathf.Clamp01(t - eps);
+            var b = Mathf.Clamp01(t + eps);
+            if (b <= a)
+                return 0f;
+            Vector3 pa;
+            Vector3 pb;
+            if (phase == AircraftPhase.Takeoff)
+            {
+                pa = Takeoff(a);
+                pb = Takeoff(b);
+            }
+            else
+            {
+                pa = Landing(a);
+                pb = Landing(b);
+            }
+
+            var dx = pb.x - pa.x;
+            var dz = pb.z - pa.z;
+            var metres = Mathf.Sqrt(dx * dx + dz * dz);
+            return metres / ((b - a) * duration);
+        }
+
+        /// <summary>
+        /// Tire angular speed in degrees per simulated second from travelled distance
+        /// and wheel radius. Stops naturally once <see cref="GroundSpeedMetresPerSecond"/>
+        /// is zero (lift-off / flare).
+        /// </summary>
+        public static float TireAngularDegreesPerSecond(float groundSpeedMps, float radiusMetres)
+        {
+            if (groundSpeedMps <= 0.001f || radiusMetres <= 0.001f)
+                return 0f;
+            return (groundSpeedMps / (2f * Mathf.PI * radiusMetres)) * 360f;
+        }
+
+        /// <summary>
+        /// Legacy relative factor kept for existing tests. Prefer
+        /// <see cref="GroundSpeedMetresPerSecond"/> for presentation.
+        /// </summary>
+        public static float WheelSpeedFactor(AircraftPhase phase, float progress)
+        {
+            var speed = GroundSpeedMetresPerSecond(phase, progress);
+            if (speed <= 0.001f)
+                return 0f;
+            // Normalize against a brisk rollout (~55 m/s) so older callers stay in range.
+            return Mathf.Clamp(speed / 55f * 6f, 0f, 8f);
         }
 
         public const float ApproachPitchStartDegrees = -2.8f;
         public const float ApproachPitchEndDegrees = -3.4f;
         public const float FlarePitchDegrees = -5.5f;
+        /// <summary>Main-gear-first hold just after touchdown (nose still slightly up).</summary>
+        public const float TouchdownHoldPitchDegrees = -3.2f;
         public const float RotatePitchDegrees = -12f;
         public const float ClimbPitchDegrees = -10f;
         public const float DepartedPitchEndDegrees = -4.5f;
@@ -184,15 +239,29 @@ namespace Airside.Presentation
                     if (x <= RotateX)
                         return 0f;
                     var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
-                    return Mathf.Lerp(0f, RotatePitchDegrees, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.2f)));
+                    // Ease into rotation rather than a sharp pitch snap at RotateX.
+                    var ease = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 1.6f));
+                    return Mathf.Lerp(0f, RotatePitchDegrees, ease);
                 }
                 case AircraftPhase.Approach:
                     return Mathf.Lerp(ApproachPitchStartDegrees, ApproachPitchEndDegrees, t);
                 case AircraftPhase.Landing:
-                    return t < TouchdownProgress
-                        ? Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees, t / TouchdownProgress)
-                        : Mathf.Lerp(FlarePitchDegrees, 0f, Mathf.SmoothStep(0f, 1f,
-                            Mathf.Min(1f, (t - TouchdownProgress) / 0.14f)));
+                {
+                    if (t < TouchdownProgress)
+                    {
+                        var flare = t / TouchdownProgress;
+                        // Soft flare: hold approach attitude longer, then deepen.
+                        var shaped = flare * flare;
+                        return Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees, shaped);
+                    }
+
+                    var since = (t - TouchdownProgress) / (1f - TouchdownProgress);
+                    // Main-gear-first: hold a little nose-up, then settle level.
+                    if (since < 0.08f)
+                        return Mathf.Lerp(FlarePitchDegrees, TouchdownHoldPitchDegrees, since / 0.08f);
+                    return Mathf.Lerp(TouchdownHoldPitchDegrees, 0f, Mathf.SmoothStep(0f, 1f,
+                        Mathf.Min(1f, (since - 0.08f) / 0.2f)));
+                }
                 case AircraftPhase.Departed:
                     return Mathf.Lerp(ClimbPitchDegrees, DepartedPitchEndDegrees, t);
                 default:

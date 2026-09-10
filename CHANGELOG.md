@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Adelaide bare field looks authored, and the ATR circuit reads weightier.**
+  The 16 m tiled grass cube is replaced by a multi-scale CC0 ground mesh
+  (`AirsideAdelaideGround` + `Airside/AdelaideGround` shader) with flat runway
+  clearance, dirt shoulders outside the 45 m strip, and multi-scale asphalt.
+  Presentation dynamics: eased gear, distance/radius tire spin, brief oleo
+  settle, softer prop disc, ATR material/LOD polish, and touchdown smoke that
+  fires once even with world props disabled. See ADR 0035.
+  **Verified:** `scripts/test-domain.sh` **213 passed** (6 new Adelaide ground
+  tests; 4 pre-existing failures also red on main). Unity Play / Mac build /
+  packaged loops still required.
+
 - **AIR-001 is now the final ATR 42-class starter aircraft, not another v06
   placeholder.** The new 158-part asset matches the official 22.67 m length,
   24.57 m span, 7.59 m height and 3.93 m six-blade prop diameter. It has twin

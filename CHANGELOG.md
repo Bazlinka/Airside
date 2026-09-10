@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **The chase camera cuts on a slot recycle instead of flying across the field.**
+  When a departed flight's slot is reused, the new arrival appears hundreds of
+  metres away on final in a single frame. The follow camera eased toward it at a
+  fixed rate, so it dragged the length of the airfield for several seconds. A
+  target jump larger than any aircraft can cover in one frame (20 m; the fastest
+  phase at 4× and 30 fps moves about 4 m) now snaps centre, distance, yaw, pitch
+  and FOV straight to the new framing. A deliberate aircraft switch still eases.
+
 - **Aircraft move like aircraft, and 1× and 4× are both smooth.** The renderer
   sampled the simulation's whole-second phase clock, so an aircraft moved in 1 Hz
   steps: **1475 of 1499 frames** of a taxi were frozen and the 1476th jumped

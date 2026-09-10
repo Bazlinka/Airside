@@ -31,12 +31,23 @@ namespace Airside.Presentation
         private float _followProgress;
         private float _fov = OverviewFov;
         private Camera _camera;
+        private Vector3 _lastTargetPosition;
+        private bool _hasLastTargetPosition;
+
+        /// <summary>
+        /// No aircraft covers this much ground in one frame — the fastest phase at 4x
+        /// time and 30 fps moves about 4 m. A jump this large means the slot was
+        /// recycled: the departure that just flew out has been replaced by a new
+        /// arrival joining final at the other end of the field.
+        /// </summary>
+        private const float RespawnJumpMetres = 20f;
 
         public void SetFollowTarget(Transform target)
         {
             _followTargets = target != null ? new[] { target } : System.Array.Empty<Transform>();
             _followIndex = 0;
             _followTarget = target;
+            _hasLastTargetPosition = false;
         }
 
         public void SetFollowTargets(Transform[] targets)
@@ -51,6 +62,7 @@ namespace Airside.Presentation
 
             _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
             _followTarget = _followTargets[_followIndex];
+            _hasLastTargetPosition = false;
         }
 
         /// <summary>
@@ -89,6 +101,28 @@ namespace Airside.Presentation
                 var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude);
                 var lookHeight = LookHeightMetres(_followPhase, altitude);
                 var lookPoint = _followTarget.position + ahead * lookAhead + Vector3.up * lookHeight;
+
+                // A recycled slot puts the new arrival hundreds of metres away in one
+                // frame. Easing to it dragged the camera the length of the field, so cut
+                // straight there instead.
+                var recycled = _hasLastTargetPosition
+                    && Vector3.Distance(_lastTargetPosition, _followTarget.position) > RespawnJumpMetres;
+                _lastTargetPosition = _followTarget.position;
+                _hasLastTargetPosition = true;
+
+                var followDistance = FollowDistance(_followPhase, altitude, _followProgress);
+                if (recycled)
+                {
+                    _center = lookPoint;
+                    _distance = followDistance;
+                    _fov = FollowFov(_followPhase, _followProgress);
+                    if (Time.unscaledTime >= _orbitSuppressUntil)
+                        _yaw = Quaternion.LookRotation(ahead).eulerAngles.y + YawBiasDegrees(_followPhase);
+                    _pitch = FollowPitch(_followPhase, altitude, _followProgress);
+                    ApplyTransform();
+                    return;
+                }
+
                 // Track harder on the fast phases. At one fixed rate the camera trails a
                 // departure by speed/rate metres, which at 4x let the aircraft run off
                 // the edge of frame during climb-out.
@@ -100,7 +134,6 @@ namespace Airside.Presentation
                 };
                 _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * centreRate));
 
-                var followDistance = FollowDistance(_followPhase, altitude, _followProgress);
                 _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.4f));
 
                 // Ease yaw toward the aircraft heading without fighting player orbit.
@@ -144,6 +177,11 @@ namespace Airside.Presentation
                 }
             }
 
+            ApplyTransform();
+        }
+
+        private void ApplyTransform()
+        {
             if (_camera != null)
                 _camera.fieldOfView = _fov;
 
@@ -296,12 +334,14 @@ namespace Airside.Presentation
                 _following = true;
                 _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
                 _followTarget = _followTargets[_followIndex];
+                _hasLastTargetPosition = false;
                 return;
             }
 
             // Already following: cycle through commercials (and wrap).
             _followIndex = (_followIndex + 1) % _followTargets.Length;
             _followTarget = _followTargets[_followIndex];
+            _hasLastTargetPosition = false;
         }
 
         /// <summary>HUD / hotkey: return to the default overview framing.</summary>

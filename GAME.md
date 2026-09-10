@@ -1,21 +1,18 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — Adelaide layout, aircraft focus, daylight pin)
-- **Branch:** `main`
-- **Do next:** Playtest the packaged build (`work/builds/Airside.app`) or Unity
-  Play. Watch a full arrival (lands west, rolls to B exit, taxis to stand) and
-  departure (pushback, taxi A to west hold-short, full-length takeoff roll east).
-  Confirm one smooth v06 turboprop is visible, lighting stays daytime, no sun
-  disc under the map, and runway rollout reads realistic. Run
-  `scripts/test-unity.sh` for a fresh EditMode pass. If baked terrain looks
-  misaligned, re-run `scripts/bake-terrain.sh` after the new 384×300 m plateau.
-- **In progress / half-done:** Layout uses Adelaide runway 05/23 dimensions at
-  1:20 scale (155 m) via `AirportLayout.cs` with parallel taxiways A (departures)
-  and B (arrivals). `AirsideFocusMode.AircraftOnly` hides ground traffic aircraft,
-  second commercial visuals, GSE, and people — sim still runs all slots. Night
-  visuals are pinned off (`PinDaylightPresentation = true`); HUD clock still
-  advances. Perimeter fence removed. Persistence save uses headless
-  `AirsideSaveJsonCodec` (no JsonUtility). Art/terrain naming still Kingscote-branded.
+- **Last updated:** 2026-09-10 (Cursor — bare Adelaide field)
+- **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
+- **Do next:** Unity Play / Mac build. Confirm the scene is only grass, one
+  3 100 × 45 m runway, one turboprop and daytime sun. No buildings, cars, signs,
+  taxiways or lamps. Press F to follow the aircraft; scroll out to see the
+  3 400 × 2 309 m (785 ha) ground. Run `scripts/test-unity.sh` when a Mac editor
+  is available.
+- **In progress / half-done:** The visible world is the bare field
+  (`AirsideBareField.Enabled`). Simulation still uses the 1:20 `AirportLayout`
+  taxi graph and may run extra slots; they are not drawn. Night lighting stays
+  pinned off. Dormant spawners (buildings, coast, GSE) remain in
+  `AirsidePrototype` but are not called. Art/terrain naming is still
+  Kingscote-branded.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - `Infield grass` is now buried under the terrain rather than removed. Its top
@@ -61,13 +58,11 @@
   - The horizon dome is a background-queue backdrop with no depth write. If it
     goes back to opaque geometry, every aircraft past 165 m disappears again
   - Save schema unchanged
-- **Decisions:** this pass is recorded in
-  `docs/decisions/0030-aircraft-motion-and-focus.md` — the fractional-clock read
-  and the interpolation design that was tried and rejected, the two deliberate
-  fall-throughs to the simulated second, the shared holding position, the
-  line-up arc, aircraft-only focus, and the deferred taxiway rebuild.
-- **Open question for Bailey:** the taxiway/runway rebuild above is a scoped
-  follow-up — worth doing next, or is the aircraft loop the priority first?
+- **Decisions:** visible world is ADR 0032 (bare Adelaide field). Aircraft
+  motion remains ADR 0030.
+- **Open question for Bailey:** keep the dormant building/GSE spawners in
+  `AirsidePrototype` for a later restore, or delete that code now that the
+  field is bare?
 
 ---
 
@@ -143,6 +138,12 @@ Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
 supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
+
+- **Bare Adelaide field** on `cursor/bare-adelaide-field-bc75`: visible world is
+  one 3 100 × 45 m runway (YPAD 05/23), 3 400 × 2 309 m / 785 ha empty ground,
+  one turboprop and pinned daylight. No buildings, cars, signs, taxiways or
+  decorative lights. Decision 0032. `scripts/test-domain.sh` is the headless
+  check for the new metre constants.
 
 - CC0 Unity Terrain ground on `feature/cc0-terrain-ground`: 256 × 220 × 8 m
   TerrainData (heightmap 257, alphamap 256), four CC0 TerrainLayers on the

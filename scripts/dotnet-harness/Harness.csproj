@@ -32,6 +32,7 @@
       Compiling it means TerrainFieldTests runs on machines without an editor.
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs" />
   </ItemGroup>
 

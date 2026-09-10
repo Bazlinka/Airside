@@ -95,7 +95,7 @@ namespace Airside.Tests
         {
             Assert.That(AirsideCombinedSurfaces.UseTileOperational, Is.False);
             Assert.That(AirsideCombinedSurfaces.UseTilePaddock, Is.False);
-            Assert.That(AirsideCombinedSurfaces.CombinedPadCount, Is.EqualTo(6));
+            Assert.That(AirsideCombinedSurfaces.CombinedPadCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -479,14 +479,20 @@ namespace Airside.Tests
         [Test]
         public void FocusMode_GroundClutterFollowsTheSingleAircraftOnlySwitch()
         {
-            // Ground vehicles, stand equipment and people are parked behind one switch
-            // so the aircraft pass can be judged on its own. Each reader must derive
-            // from that switch rather than carry its own copy of the decision.
-            Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
-            Assert.That(AirsideFocusMode.ShowStandEquipment, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
-            Assert.That(AirsideFocusMode.ShowPeople, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
-            Assert.That(AirsideFocusMode.ShowGroundTrafficAircraft, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
+            // The bare field parks every non-aircraft object behind the same switch
+            // so the player sees only plane, runway, ground and sun lighting.
+            Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.False);
+            Assert.That(AirsideFocusMode.ShowStandEquipment, Is.False);
+            Assert.That(AirsideFocusMode.ShowPeople, Is.False);
+            Assert.That(AirsideFocusMode.ShowGroundTrafficAircraft, Is.False);
+            Assert.That(AirsideFocusMode.ShowBuildings, Is.False);
+            Assert.That(AirsideFocusMode.ShowEnvironment, Is.False);
+            Assert.That(AirsideFocusMode.ShowWorldProps, Is.False);
+            Assert.That(AirsideFocusMode.ShowDecorativeLights, Is.False);
             Assert.That(AirsideFocusMode.VisibleCommercialFlights, Is.EqualTo(1));
+            Assert.That(AirsideBareField.Enabled, Is.True);
+            Assert.That(AirsideBareField.RunwayLengthMetres, Is.EqualTo(3100f));
+            Assert.That(AirsideBareField.RunwayWidthMetres, Is.EqualTo(45f));
         }
 
         [Test]

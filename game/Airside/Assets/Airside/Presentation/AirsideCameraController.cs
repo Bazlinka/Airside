@@ -10,19 +10,19 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class AirsideCameraController : MonoBehaviour
     {
-        // Slightly terminal-biased so overview reads apron + buildings as one miniature.
-        private readonly Vector3 _overviewCenter = new(12f, 0f, 16f);
-        private const float OverviewDistance = 155f;
-        private const float OverviewFov = 50f;
-        private const float OverviewPitch = 38f;
-        private const float OverviewYaw = 138f;
+        // Bare field: look at the runway centre from high enough to read 3100 m of asphalt.
+        private readonly Vector3 _overviewCenter = new(0f, 0f, 0f);
+        private static float OverviewDistance => AirsideBareField.OverviewDistance;
+        private static float OverviewFov => AirsideBareField.OverviewFov;
+        private static float OverviewPitch => AirsideBareField.OverviewPitch;
+        private static float OverviewYaw => AirsideBareField.OverviewYaw;
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
-        private Vector3 _center = new(12f, 0f, 16f);
-        private float _yaw = 138f;
-        private float _pitch = 38f;
-        private float _distance = OverviewDistance;
+        private Vector3 _center = new(0f, 0f, 0f);
+        private float _yaw = AirsideBareField.OverviewYaw;
+        private float _pitch = AirsideBareField.OverviewPitch;
+        private float _distance = AirsideBareField.OverviewDistance;
         private bool _following;
         private bool _easingOverview;
         private float _orbitSuppressUntil;
@@ -297,7 +297,8 @@ namespace Airside.Presentation
                     if (keyboard.aKey.isPressed) move.x -= 1f;
                     var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                     var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                    _center += (planarForward * move.y + planarRight * move.x) * (18f * Time.unscaledDeltaTime);
+                    _center += (planarForward * move.y + planarRight * move.x)
+                        * (AirsideBareField.OverviewPanMetresPerSecond * Time.unscaledDeltaTime);
                 }
             }
 
@@ -316,7 +317,13 @@ namespace Airside.Presentation
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
-                _distance = Mathf.Clamp(_distance - scroll * 0.04f, 12f, 130f);
+            {
+                var step = scroll * 0.0025f * Mathf.Max(80f, _distance);
+                _distance = Mathf.Clamp(
+                    _distance - step,
+                    AirsideBareField.MinOrbitDistance,
+                    AirsideBareField.MaxOrbitDistance);
+            }
         }
 
         /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>

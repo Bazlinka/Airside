@@ -40,6 +40,8 @@ namespace Airside.Presentation
         // ANM-AIR tire radii from mdl_atr42_starter_v01 (metres).
         public const float MainTireRadiusMetres = 0.37f;
         public const float NoseTireRadiusMetres = 0.31f;
+        /// <summary>Half-track of the main gear used for touchdown puff spacing.</summary>
+        public const float MainGearHalfTrackMetres = 2.05f;
 
         // Shared presentation pulse rates (Hz) — beacon family + ALS/REIL
         public const float ServicePulseHz = 2.5f;

@@ -217,7 +217,7 @@ namespace Airside.Presentation
                 _runwayEdgeLights = Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
-            _touchdownSmoke = BuildTouchdownSmoke();
+            _touchdownSmoke = null;
             _skidMarkRoot = AirsideFocusMode.ShowWorldProps ? BuildSkidMarkRoot() : null;
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
@@ -2697,8 +2697,7 @@ namespace Airside.Presentation
 
         private void UpdateTouchdownSmoke()
         {
-            if (_touchdownSmoke == null)
-                return;
+            return;
 
             for (var index = 0; index < _simulation.Flights.Count; index++)
             {
@@ -11145,11 +11144,10 @@ namespace Airside.Presentation
             {
                 AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
                 AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
-                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
-                AircraftPhase.AtStand => TaxiVisualPath.StandPosition(taxiRoute),
-                // Push back along the stand centreline onto the apron throat.
-                AircraftPhase.Pushback => TaxiVisualPath.PushbackPosition(taxiRoute, t),
-                AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t),
+                AircraftPhase.TaxiIn => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.AtStand => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
                 _ => AirsideFlightPath.Departed(t)
             };

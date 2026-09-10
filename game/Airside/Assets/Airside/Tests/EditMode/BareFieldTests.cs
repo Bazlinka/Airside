@@ -1,10 +1,14 @@
 using Airside.Presentation;
+using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
 {
     public sealed class BareFieldTests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void BareField_IsEnabled()
         {
@@ -45,6 +49,26 @@ namespace Airside.Tests
             Assert.That(AirsideBareField.ContainsRunway(0f, 22.6f), Is.False);
             Assert.That(AirsideBareField.ContainsGround(1700f, 1154f), Is.True);
             Assert.That(AirsideBareField.ContainsGround(1701f, 0f), Is.False);
+        }
+
+        [Test]
+        public void Circuit_SkipsTaxiAndUsesRealRunwayDurations()
+        {
+            Assert.That(AirportCircuit.SkipGroundTaxi, Is.True);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.TaxiIn), Is.True);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.AtStand), Is.True);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.Pushback), Is.True);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.TaxiOut), Is.True);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.Landing), Is.False);
+            Assert.That(AirportCircuit.IsSkippedGroundPhase(AircraftPhase.Takeoff), Is.False);
+            Assert.That(AirportCircuit.DurationSeconds(AircraftPhase.Approach),
+                Is.EqualTo(AirportCircuit.ApproachSeconds));
+            Assert.That(AirportCircuit.DurationSeconds(AircraftPhase.Landing),
+                Is.EqualTo(AirportCircuit.LandingSeconds));
+            Assert.That(AirportCircuit.DurationSeconds(AircraftPhase.Takeoff),
+                Is.EqualTo(AirportCircuit.TakeoffSeconds));
+            Assert.That(AirportCircuit.DurationSeconds(AircraftPhase.TaxiIn),
+                Is.EqualTo(AirportCircuit.TaxiSkipSeconds));
         }
 
         [Test]

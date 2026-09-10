@@ -10,6 +10,12 @@ namespace Airside.Tests
     /// </summary>
     public sealed class DelayCauseTests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.EnableFullTaxiLoop();
+
+        [TearDown]
+        public void TearDown() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void UnderstaffedTurnaround_OverrunsAndNamesUnderstaffingAsTheCause()
         {

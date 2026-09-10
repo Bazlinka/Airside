@@ -1,18 +1,15 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — bare Adelaide field)
+- **Last updated:** 2026-09-10 (Cursor — real-metre circuit loop)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Unity Play / Mac build. Confirm the scene is only grass, one
-  3 100 × 45 m runway, one turboprop and daytime sun. No buildings, cars, signs,
-  taxiways or lamps. Press F to follow the aircraft; scroll out to see the
-  3 400 × 2 309 m (785 ha) ground. Run `scripts/test-unity.sh` when a Mac editor
-  is available.
-- **In progress / half-done:** The visible world is the bare field
-  (`AirsideBareField.Enabled`). Simulation still uses the 1:20 `AirportLayout`
-  taxi graph and may run extra slots; they are not drawn. Night lighting stays
-  pinned off. Dormant spawners (buildings, coast, GSE) remain in
-  `AirsidePrototype` but are not called. Art/terrain naming is still
-  Kingscote-branded.
+- **Do next:** Unity Play. Press F and watch one arrival land on the 3 100 m
+  runway, roll, take off, climb out of the field, then a new arrival come in
+  from the west. No taxi. Run `scripts/test-unity.sh` when a Mac editor is
+  available.
+- **In progress / half-done:** Bare field plus circuit loop (`AirportCircuit`).
+  Taxi/stand/pushback still exist on the phase enum (1 s each) for save
+  compatibility but are not drawn. Night lighting stays pinned off. Dormant
+  building spawners remain in `AirsidePrototype` but are not called.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - `Infield grass` is now buried under the terrain rather than removed. Its top
@@ -58,8 +55,8 @@
   - The horizon dome is a background-queue backdrop with no depth write. If it
     goes back to opaque geometry, every aircraft past 165 m disappears again
   - Save schema unchanged
-- **Decisions:** visible world is ADR 0032 (bare Adelaide field). Aircraft
-  motion remains ADR 0030.
+- **Decisions:** visible world is ADR 0032. Circuit loop is ADR 0033.
+  Aircraft motion read remains ADR 0030.
 - **Open question for Bailey:** keep the dormant building/GSE spawners in
   `AirsidePrototype` for a later restore, or delete that code now that the
   field is bare?

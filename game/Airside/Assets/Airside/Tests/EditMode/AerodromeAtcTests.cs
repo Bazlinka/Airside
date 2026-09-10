@@ -6,6 +6,12 @@ namespace Airside.Tests
 {
     public sealed class AerodromeAtcTests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.EnableFullTaxiLoop();
+
+        [TearDown]
+        public void TearDown() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void LandingClearance_IsLoggedWithTowerPhraseology()
         {

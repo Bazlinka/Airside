@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **The aircraft now flies a real-metre land / takeoff circuit on the 3 100 m
+  runway.** Approach starts 4.2 km west; landing rolls ~1 050 m and almost
+  stops; takeoff rotates after ~900 m and climbs out until the model is off
+  the field; the next arrival then appears on long final. Taxi, stand and
+  pushback are skipped. Tyre-smoke VFX is off. See ADR 0033.
+
 - **The visible world is one plane, one 3 100 × 45 m runway, and empty Adelaide
   ground.** Buildings, cars, signs, taxiways, apron, coast, trees, fences,
   decorative lights and a second aircraft are no longer spawned. The ground is

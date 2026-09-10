@@ -1,7 +1,16 @@
 ## Where to resume — session handoff
 
 - **Last updated:** 2026-09-10 (Cursor — aircraft logic pass)
-- **Branch:** `cursor/game-performance-pass-c1bb`
+- **Branch:** `cursor/aircraft-motion-pass-c1bb` → PR #184, open against `main`.
+  Not `cursor/game-performance-pass-c1bb`. PR #183 was squash-merged as `3bec923`
+  while it still held only the runtime-airfield performance pass, so the 12
+  commits of flight-realism and aircraft-logic work pushed to that branch
+  afterwards never reached `main` and had no open PR. Because `main` now holds one
+  squash commit where the old branch holds the original eight, the old branch
+  conflicts with `main` in `CHANGELOG.md`, `GAME.md`, `AirsidePrototype.cs` and
+  `PresentationLayoutTests.cs`. Those 12 commits were replayed onto current `main`
+  here with no conflicts and an identical tree hash (`7f24ff2`). **Work from this
+  branch, not the old one, and do not try to merge the old one.**
 - **Do next:** **Mac Play, and this needs a Unity compile first — nothing in this
   pass has been through the Unity editor.** Watch a full arrival and a full
   departure at 1× and then at 4×, on both the overview and the follow camera.

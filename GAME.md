@@ -123,11 +123,14 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
+1. **Ground fidelity** — implement the selected zero-cost Unity Terrain + CC0
+   four-layer solution in `docs/art/FREE_GROUND_SOLUTION.md`; first slice is
+   dry grass, worn dirt and coastal sand beneath the existing operational meshes.
+2. **Art sourcing / refine** — work `docs/art/FIRST_PLAYABLE_ART_SOURCING_CHECKLIST.md`
    in priority order (props/gear/wheels/engines → buildings → GSE → trees → CHR).
-2. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
+3. Mac Play: fidelity densify (#167) + collision #170 vs Approved boards — sign
    off or list concrete gaps.
-3. Mac overview: day/night readability (#158) noon + midnight sign-off.
-4. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
+4. Mac overview: day/night readability (#158) noon + midnight sign-off.
+5. Mac overview backlog: eucalyptus (#156), forecourt (#155), fence (#154),
    characters (#153) vs refs if not yet signed off.
-5. No new economy systems; no Companion/CloudKit.
+6. No new economy systems; no Companion/CloudKit.

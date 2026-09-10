@@ -18,7 +18,9 @@ change it describes.
   spoilers moved onto the presentation clock (they animated while paused) and
   onto schedules keyed to rotation and touchdown. Tires spin up and wind down
   with the aircraft and stop once the wheels leave the ground. Propeller RPM
-  spools between phases instead of jumping, up faster than down. Evidence:
+  spools between phases instead of jumping, up faster than down. The chase
+  camera tracks harder on the fast phases so a departure cannot outrun it out of
+  frame. Evidence:
   `work/flightcheck` before/after run; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/

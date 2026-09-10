@@ -89,7 +89,16 @@ namespace Airside.Presentation
                 var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude);
                 var lookHeight = LookHeightMetres(_followPhase, altitude);
                 var lookPoint = _followTarget.position + ahead * lookAhead + Vector3.up * lookHeight;
-                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 4.2f));
+                // Track harder on the fast phases. At one fixed rate the camera trails a
+                // departure by speed/rate metres, which at 4x let the aircraft run off
+                // the edge of frame during climb-out.
+                var centreRate = _followPhase switch
+                {
+                    AircraftPhase.Takeoff or AircraftPhase.Departed => 8f,
+                    AircraftPhase.Approach or AircraftPhase.Landing => 6f,
+                    _ => 4.2f
+                };
+                _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-Time.unscaledDeltaTime * centreRate));
 
                 var followDistance = FollowDistance(_followPhase, altitude, _followProgress);
                 _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 2.4f));

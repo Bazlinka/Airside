@@ -24,6 +24,7 @@ namespace Airside.Presentation
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
         // Damped roll angle per airframe so banking eases in and out of a turn.
         private readonly Dictionary<string, float> _bankDegrees = new();
+        private readonly Dictionary<int, float> _propRpm = new();
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light _fillLight;
@@ -1598,13 +1599,19 @@ namespace Airside.Presentation
         private void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
             // Presentation-only: RPM follows phase (Batch F4 ANM-AIR-001 via AirsideReusableMotion).
-            if (!AirsideReusableMotion.PropellersSpinning(phase))
+            // RPM used to jump straight to the new phase value, so takeoff power arrived
+            // in one frame and engines stopped dead at shutdown. Spool between them
+            // instead — up faster than down, the way an engine accepts throttle.
+            var targetRpm = AirsideReusableMotion.PropellersSpinning(phase)
+                ? AirsideReusableMotion.PropRpmForPhase(phase)
+                : 0f;
+            var rpm = SpooledPropRpm(aircraft, targetRpm);
+            if (rpm < 1f)
             {
                 ApplyPropBlur(aircraft, highRpm: false);
                 return;
             }
 
-            var rpm = AirsideReusableMotion.PropRpmForPhase(phase);
             // Constants are true RPM — convert to degrees/sec (×6) so blades read as spinning.
             var degrees = PresentationDeltaTime * rpm * 6f;
             if (degrees <= 0f)
@@ -1621,16 +1628,28 @@ namespace Airside.Presentation
             }
         }
 
+        private float SpooledPropRpm(Transform aircraft, float targetRpm)
+        {
+            var key = aircraft.GetInstanceID();
+            if (!_propRpm.TryGetValue(key, out var current))
+                current = targetRpm;
+            var rate = targetRpm > current ? 1.6f : 0.8f;
+            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
+            _propRpm[key] = current;
+            return current;
+        }
+
         private void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
         {
-            if (!enginesOn)
+            // Match ANM-AIR taxi RPM so ground traffic props read with the fleet, and
+            // spool through start-up / shutdown rather than snapping on and off.
+            var rpm = SpooledPropRpm(aircraft, enginesOn ? AirsideReusableMotion.PropRpmTaxi : 0f);
+            if (rpm < 1f)
             {
                 ApplyPropBlur(aircraft, highRpm: false);
                 return;
             }
 
-            // Match ANM-AIR taxi RPM so ground traffic props read with the fleet.
-            var rpm = AirsideReusableMotion.PropRpmTaxi;
             var degrees = PresentationDeltaTime * rpm * 6f;
             if (degrees <= 0f)
                 return;

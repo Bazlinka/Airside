@@ -17,7 +17,8 @@ change it describes.
   airframe with a slower roll-in than roll-out. Control surfaces, flaps and
   spoilers moved onto the presentation clock (they animated while paused) and
   onto schedules keyed to rotation and touchdown. Tires spin up and wind down
-  with the aircraft and stop once the wheels leave the ground. Evidence:
+  with the aircraft and stop once the wheels leave the ground. Propeller RPM
+  spools between phases instead of jumping, up faster than down. Evidence:
   `work/flightcheck` before/after run; `scripts/test-domain.sh` **178 passed**.
 
 - **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/

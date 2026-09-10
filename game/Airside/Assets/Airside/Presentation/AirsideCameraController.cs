@@ -191,7 +191,9 @@ namespace Airside.Presentation
                 AircraftPhase.Takeoff => Mathf.Lerp(18f, 34f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(28f, 36f, progress),
                 AircraftPhase.Landing => Mathf.Lerp(26f, 16f, progress),
-                AircraftPhase.Departed => 36f,
+                // Ease back as the departure climbs away so it recedes instead of
+                // staying pinned at the same apparent size all the way out.
+                AircraftPhase.Departed => Mathf.Lerp(36f, 88f, progress),
                 _ => air
             };
         }

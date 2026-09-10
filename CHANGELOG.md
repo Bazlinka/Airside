@@ -5,6 +5,18 @@ change it describes.
 
 ## Unreleased
 
+- **Flight realism: continuous speed, no mid-air freeze, smoother turns.** New
+  `AirsideFlightPath` builds every air phase from a speed profile instead of a
+  smoothstep on position, so nothing starts or ends at zero velocity. Takeoff is
+  one ramp along the runway axis — the old build lost **88%** of its speed at
+  rotation, it now gains 6%. `Departed` flew to a fixed point and froze on
+  screen; it now climbs out continuously to 240 m with the chase camera easing
+  back. Approach/landing speed spread drops from 200×/575× to 1.2×/8.2× (the
+  8.2× is the intended braked rollout). Aircraft and ground-traffic turns use
+  frame-rate independent exponential damping, and bank angle is damped per
+  airframe with a slower roll-in than roll-out. Evidence:
+  `work/flightcheck` before/after run; `scripts/test-domain.sh` **178 passed**.
+
 - **Runtime kit combine + per-frame cache.** Forecourt benches/planters/signs/
   bollards, airside planter strip, luggage trolleys, landside benches, fence
   corners, pedestrian gates, vehicle-gate furniture, chocks, belt loader, tug

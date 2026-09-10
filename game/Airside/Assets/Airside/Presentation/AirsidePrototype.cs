@@ -22,6 +22,8 @@ namespace Airside.Presentation
         // respawn-driven re-sort of the flight list can no longer repaint a plane
         // or leave two aircraft in the same livery.
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
+        // Damped roll angle per airframe so banking eases in and out of a turn.
+        private readonly Dictionary<string, float> _bankDegrees = new();
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light _fillLight;
@@ -1063,14 +1065,19 @@ namespace Airside.Presentation
                 }
 
                 var direction = next - position;
-                var targetRotation = direction.sqrMagnitude > 0.001f
+                var heading = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
                 var pitch = PhasePitchDegrees(phase, progress);
-                var bank = TurnBankDegrees(view, targetRotation, phase);
-                targetRotation *= Quaternion.Euler(pitch, 0f, bank);
-                var turnRate = phase == AircraftPhase.Takeoff && progress < 0.2f ? 8f : 5f;
-                view.rotation = Quaternion.Slerp(view.rotation, targetRotation, Time.unscaledDeltaTime * turnRate);
+                var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase);
+                var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
+                // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
+                // freezes attitude while paused instead of drifting on unscaled time.
+                var turnRate = phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress * 0.4f ? 8f : 5f;
+                view.rotation = Quaternion.Slerp(
+                    view.rotation,
+                    targetRotation,
+                    AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
                 SpinPropellers(view, phase);
                 RollLandingGearTires(view, phase);
@@ -1088,24 +1095,8 @@ namespace Airside.Presentation
             }
         }
 
-        private static float PhasePitchDegrees(AircraftPhase phase, float progress)
-        {
-            // Presentation-only attitude: nose-up takeoff, shallow approach, landing flare.
-            // Negative X euler = nose up with LookRotation-forward posing.
-            var t = Mathf.Clamp01(progress);
-            return phase switch
-            {
-                AircraftPhase.Takeoff => t < 0.48f
-                    ? 0f
-                    : Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, (t - 0.48f) / 0.52f)),
-                AircraftPhase.Approach => Mathf.Lerp(-2.5f, -3.5f, t),
-                AircraftPhase.Landing => t < 0.28f
-                    ? Mathf.Lerp(-2.5f, -3.2f, t / 0.28f)
-                    : Mathf.Lerp(-3.2f, 0f, Mathf.SmoothStep(0f, 1f, (t - 0.28f) / 0.72f)),
-                AircraftPhase.Departed => -8f,
-                _ => 0f
-            };
-        }
+        private static float PhasePitchDegrees(AircraftPhase phase, float progress) =>
+            AirsideFlightPath.PitchDegrees(phase, progress);
 
         private static float TurnBankDegrees(Transform view, Quaternion targetRotation, AircraftPhase phase)
         {
@@ -1120,6 +1111,25 @@ namespace Airside.Presentation
             var yawDelta = Mathf.DeltaAngle(view.eulerAngles.y, targetRotation.eulerAngles.y);
             var limit = 16f;
             return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
+        }
+
+        /// <summary>
+        /// Roll in and out of a turn instead of snapping to the instantaneous yaw error.
+        /// The raw value jitters frame to frame because it is a difference of two poses
+        /// that are themselves being damped, which made the wings twitch on every turn.
+        /// </summary>
+        private float SmoothedBankDegrees(string aircraftId, Transform view, Quaternion heading, AircraftPhase phase)
+        {
+            var target = TurnBankDegrees(view, heading, phase);
+            if (!_bankDegrees.TryGetValue(aircraftId, out var current))
+                current = target;
+
+            var dt = PresentationDeltaTime;
+            // Roll in a little slower than the aircraft rolls out — matches how a turn reads.
+            var rate = Mathf.Abs(target) > Mathf.Abs(current) ? 2.2f : 3.2f;
+            current = Mathf.Lerp(current, target, AirsideFlightPath.DampFactor(rate, dt));
+            _bankDegrees[aircraftId] = current;
+            return current;
         }
 
         private static void UpdateControlSurfaces(Transform aircraft, AircraftPhase phase, float progress, float bankDegrees)
@@ -1307,7 +1317,7 @@ namespace Airside.Presentation
             var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
             var night = daylight < 0.35f;
             var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing
-                || (phase == AircraftPhase.Takeoff && progress01 < 0.48f);
+                || (phase == AircraftPhase.Takeoff && progress01 < AirsideReusableMotion.GearRetractProgress);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             foreach (var child in AirsideNamedChildren.Get(aircraft))
@@ -1809,8 +1819,10 @@ namespace Airside.Presentation
                     // Keep last travel heading on a yield snap (zero-length move).
                     targetRotation = view.rotation;
                 }
-                if (PresentationDeltaTime > 0f)
-                    view.rotation = Quaternion.Slerp(view.rotation, targetRotation, PresentationDeltaTime * 4f);
+                view.rotation = Quaternion.Slerp(
+                    view.rotation,
+                    targetRotation,
+                    AirsideFlightPath.DampFactor(4f, PresentationDeltaTime));
 
                 if (traffic.CurrentPhase is "Away" or "Away hold")
                 {
@@ -2476,7 +2488,7 @@ namespace Airside.Presentation
                 // Ground spray only — not climbing takeoff or airborne approach.
                 var onGround = phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
                     || phase == AircraftPhase.Landing
-                    || (phase == AircraftPhase.Takeoff && progress < 0.48f);
+                    || (phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress);
                 if (!onGround)
                     continue;
                 if (_commercialAircraft == null || i >= _commercialAircraft.Length)
@@ -2571,7 +2583,7 @@ namespace Airside.Presentation
                 if (phase == AircraftPhase.Landing
                     && index < _commercialAircraft.Length
                     && !_touchdownFired.Contains(id)
-                    && VisualPhaseProgress(flight, 0f) >= 0.28f)
+                    && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.TouchdownProgress)
                 {
                     _touchdownFired.Add(id);
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
@@ -10866,17 +10878,16 @@ namespace Airside.Presentation
                 t = 0.82f;
             return phase switch
             {
-                AircraftPhase.Approach => Smooth(
-                    new Vector3(-72f, 7.5f, laneOffset), new Vector3(-50f, 1.55f, laneOffset * 0.35f), t),
-                AircraftPhase.Landing => LandingPosition(t, laneOffset),
+                AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
+                AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
                 AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
                 // Push back along the stand centreline onto the throat (x=12, standZ).
                 AircraftPhase.Pushback => Smooth(
                     new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ), t),
                 AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
-                AircraftPhase.Takeoff => TakeoffPosition(t),
-                _ => new Vector3(72f, 18f, 0f)
+                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
+                _ => AirsideFlightPath.Departed(t)
             };
         }
 
@@ -10904,52 +10915,6 @@ namespace Airside.Presentation
         {
             // Pushback already ends on the throat; taxi-out is pure reverse route.
             return PositionAlongTaxiRoute(route, t, true);
-        }
-
-        /// <summary>
-        /// Flare then a real ground rollout (~22 m) to the west taxi exit (-24).
-        /// </summary>
-        private static Vector3 LandingPosition(float t, float laneOffset = 0f)
-        {
-            const float touchdownT = 0.28f;
-            var z = laneOffset * 0.2f;
-            if (t < touchdownT)
-            {
-                // Softer flare pitch companion: stay slightly higher longer.
-                return Smooth(new Vector3(-50f, 1.7f, z), new Vector3(-46f, 0.75f, z * 0.5f), t / touchdownT);
-            }
-
-            var u = (t - touchdownT) / (1f - touchdownT);
-            var eased = 1f - (1f - u) * (1f - u);
-            return Vector3.Lerp(new Vector3(-46f, 0.7f, z * 0.5f), new Vector3(-24f, 0.7f, 0f), eased);
-        }
-
-        /// <summary>
-        /// Line up from the A1 entry heading, ground-roll, then climb — continuous with taxi-out.
-        /// </summary>
-        private static Vector3 TakeoffPosition(float t)
-        {
-            // First ~14%: bezier lineup so LookRotation does not snap ~140° onto +X.
-            if (t < 0.14f)
-            {
-                var u = Mathf.SmoothStep(0f, 1f, t / 0.14f);
-                var start = new Vector3(-24f, 0.7f, 0f);
-                // Bend north, away from the GT departing / off-field exit south of Alpha.
-                var bend = new Vector3(-23.2f, 0.7f, 0.85f);
-                var aligned = new Vector3(-20.5f, 0.7f, 0f);
-                var omu = 1f - u;
-                return omu * omu * start + 2f * omu * u * bend + u * u * aligned;
-            }
-
-            if (t < 0.48f)
-            {
-                var u = (t - 0.14f) / 0.34f;
-                var eased = u * u;
-                return Vector3.Lerp(new Vector3(-20.5f, 0.7f, 0f), new Vector3(10f, 0.7f, 0f), eased);
-            }
-
-            var climb = (t - 0.48f) / 0.52f;
-            return Smooth(new Vector3(10f, 0.7f, 0f), new Vector3(52f, 12f, 0f), climb);
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)

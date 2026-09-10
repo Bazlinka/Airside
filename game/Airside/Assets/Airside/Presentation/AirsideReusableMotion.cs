@@ -81,12 +81,15 @@ namespace Airside.Presentation
             phase is not (AircraftPhase.AtStand or AircraftPhase.Departed);
 
         /// <summary>
-        /// Gear bias 0..1. Takeoff keeps gear down through ground roll and retracts
-        /// after rotate (~0.48 phase progress — matches <c>TakeoffPosition</c>).
+        /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and starts
+        /// retracting just after the wheels actually leave <see cref="AirsideFlightPath"/>.
         /// </summary>
+        public static float GearRetractProgress =>
+            Mathf.Min(0.97f, AirsideFlightPath.RotateProgress + 0.05f);
+
         public static float GearBias(AircraftPhase phase, float progress01 = 1f) => phase switch
         {
-            AircraftPhase.Takeoff => progress01 < 0.48f ? GearDeployed : GearRetracted,
+            AircraftPhase.Takeoff => progress01 < GearRetractProgress ? GearDeployed : GearRetracted,
             AircraftPhase.Approach => GearDeployed,
             AircraftPhase.Landing => GearDeployed,
             AircraftPhase.Departed => GearRetracted,

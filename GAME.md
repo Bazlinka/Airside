@@ -1,22 +1,31 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — runtime kit combine + per-frame cache)
+- **Last updated:** 2026-09-09 (Cursor — flight realism pass)
 - **Branch:** `cursor/game-performance-pass-c1bb`
-- **Do next:** Mac Play / packaged player — confirm visual first frame with combined
-  runway/taxi/apron pads + WLD-004 terrain kit (no tile airfield). Confirm clouds,
-  GSE, birds, boats and the ops `antenna_dish` still move after static combine.
-  Sign off High (4× MSAA + SMAA) vs Medium on a 2 GB GPU. Then continue art sourcing:
-  P0 aircraft parts → buildings → vehicles/GSE → veg/characters.
+- **Do next:** Mac Play — watch one full arrival and one full departure on the follow
+  camera. Confirm the aircraft never stalls at rotation, at the flare or at the
+  runway threshold, and that a departure keeps climbing away instead of freezing in
+  frame. Then confirm the combined runway/taxi/apron pads + WLD-004 terrain kit look
+  right, that clouds, GSE, birds, boats and the ops `antenna_dish` still move after
+  static combine, and sign off High (4× MSAA + SMAA) vs Medium on a 2 GB GPU.
+  Then continue art sourcing: P0 aircraft parts → buildings → vehicles/GSE → veg.
 - **In progress / half-done:** Presentation performance P0–P2 plus GPU-state, scene
   index, combined star mesh, deferred probe bake, taxi-paint strips, cached kit
   combine (fence/forecourt/GSE/planters/chocks/belt loader), deferred ambient
   `Resources.Load`, static-batch skip of moving roots including `antenna_dish`.
-  StreamingAssets glTF copies remain until a Mac Addressables bake is proven.
-  Standing “never stop hunting” performance goal is stopped at Bailey/Cursor request.
+  Air-phase geometry now lives in `AirsideFlightPath` (speed profiles, not
+  smoothstep). StreamingAssets glTF copies remain until a Mac Addressables bake is
+  proven. Standing “never stop hunting” performance goal is stopped at Bailey's
+  request.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
   - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
+  - Takeoff rotation is derived (`AirsideFlightPath.RotateProgress` ≈ 0.64), not the
+    old hard-coded `0.48`. Gear retract, landing lights and runway spray all key off
+    it — do not reintroduce a literal
+  - `AirsideFlightPath` is presentation-only. Phase timing stays in Simulation, so
+    frame rate and these curves cannot change simulation outcomes
   - Save schema unchanged
 - **Open question for Bailey:** none
 

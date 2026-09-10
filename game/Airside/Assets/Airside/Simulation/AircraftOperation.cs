@@ -17,18 +17,6 @@ namespace Airside.Simulation
 
     public sealed class AircraftOperation
     {
-        private static readonly long[] PhaseDurationsSeconds =
-        {
-            20,
-            12,
-            25,
-            45,
-            12,
-            25,
-            15,
-            long.MaxValue
-        };
-
         private Func<SimulationTime, double> _atStandProgress;
 
         public AircraftOperation(string aircraftId, SimulationTime startedAt)
@@ -45,7 +33,7 @@ namespace Airside.Simulation
         public AircraftPhase Phase { get; private set; }
         public SimulationTime PhaseStartedAt { get; private set; }
         public bool IsComplete => Phase == AircraftPhase.Departed;
-        public long PhaseDurationSeconds => PhaseDurationsSeconds[(int)Phase];
+        public long PhaseDurationSeconds => AirportCircuit.DurationSeconds(Phase);
 
         /// <summary>
         /// When set, <see cref="PhaseProgress"/> for <see cref="AircraftPhase.AtStand"/>
@@ -115,7 +103,7 @@ namespace Airside.Simulation
             var changed = false;
             while (!IsComplete)
             {
-                var duration = PhaseDurationsSeconds[(int)Phase];
+                var duration = AirportCircuit.DurationSeconds(Phase);
                 var nextTransition = PhaseStartedAt.Advance(duration);
                 var durationElapsed = now.CompareTo(nextTransition) >= 0;
 

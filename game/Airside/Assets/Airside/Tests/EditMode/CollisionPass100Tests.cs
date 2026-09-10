@@ -8,6 +8,12 @@ namespace Airside.Tests
     /// <summary>Regressions for the 2026-09-09 layering / collision / route bugfix pass.</summary>
     public sealed class CollisionPass100Tests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.EnableFullTaxiLoop();
+
+        [TearDown]
+        public void TearDown() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void StandCentres_AreAtLeastTenMetresApart()
         {

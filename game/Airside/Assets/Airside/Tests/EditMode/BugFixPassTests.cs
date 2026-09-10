@@ -10,6 +10,12 @@ namespace Airside.Tests
     /// <summary>Focused regressions for the 2026-09-08 simulation/domain bugfix pass.</summary>
     public sealed class BugfixPassTests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.EnableFullTaxiLoop();
+
+        [TearDown]
+        public void TearDown() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void HoldShort_SetsTrafficWaitForRunwayWhenTakeoffBlocked()
         {

@@ -6,6 +6,12 @@ namespace Airside.Tests
 {
     public sealed class ConcurrentFlightsTests
     {
+        [SetUp]
+        public void SetUp() => TaxiLoopFixture.EnableFullTaxiLoop();
+
+        [TearDown]
+        public void TearDown() => TaxiLoopFixture.RestoreCircuit();
+
         [Test]
         public void BelowThreshold_KeepsASingleCommercialFlight()
         {

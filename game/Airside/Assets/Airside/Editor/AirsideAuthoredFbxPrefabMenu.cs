@@ -16,6 +16,7 @@ namespace Airside.Editor
 
         private static readonly string[] AuthoredFbxPaths =
         {
+            "Assets/Airside/Art/Models/Aircraft/mdl_atr42_starter_v01.fbx",
             "Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v06.fbx",
             "Assets/Airside/Art/Models/Aircraft/mdl_regional_turboprop_01_v05.fbx",
             "Assets/Airside/Art/Models/Buildings/mdl_terminal_regional_small_v05.fbx",
@@ -99,6 +100,26 @@ namespace Airside.Editor
                     "Play will prefer airside-prefab/<key> over StreamingAssets glTF.",
                     "OK");
             }
+        }
+
+        [MenuItem("Airside/Art/Bake ATR 42 Starter Prefab")]
+        public static void BakeAtr42StarterPrefab()
+        {
+            const string source = "Assets/Airside/Art/Models/Aircraft/mdl_atr42_starter_v01.fbx";
+            const string prefabDir = "Assets/Resources/Airside/Prefabs";
+            Directory.CreateDirectory(Path.Combine(Application.dataPath, "Resources/Airside/Prefabs"));
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(source);
+            if (model == null)
+                throw new FileNotFoundException("ATR 42 starter FBX did not import", source);
+
+            var instance = Object.Instantiate(model);
+            instance.name = "mdl_atr42_starter_v01";
+            PrefabUtility.SaveAsPrefabAsset(instance, $"{prefabDir}/mdl_atr42_starter_v01.prefab");
+            Object.DestroyImmediate(instance);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Airside.Presentation.AirsidePrefabAddressables.EnsureRegistered();
+            Debug.Log("[Airside] Baked final ATR 42 starter Resources prefab.");
         }
     }
 }

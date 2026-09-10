@@ -104,6 +104,7 @@ namespace Airside.Presentation
         private static Material FallbackTreeCanopyMaterial;
         private static Mesh BuiltinSphereMesh;
         private static Mesh BuiltinCylinderMesh;
+        private static Mesh BuiltinCubeMesh;
 
         // Last wetness pushed into the wet-surface materials; NaN forces the next pass to
         // re-apply (set on collect, so newly built surfaces such as Stand 3 pick up rain).
@@ -217,7 +218,7 @@ namespace Airside.Presentation
                 _runwayEdgeLights = Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
-            _touchdownSmoke = BuildTouchdownSmoke();
+            _touchdownSmoke = null;
             _skidMarkRoot = AirsideFocusMode.ShowWorldProps ? BuildSkidMarkRoot() : null;
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
@@ -1182,7 +1183,17 @@ namespace Airside.Presentation
             var pitch = PhasePitchDegrees(phase, progress);
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var children = AirsideNamedChildren.Get(aircraft);
+            var hasSeparateElevators = false;
+            foreach (var part in children)
+            {
+                if (part != null && part.name.StartsWith("Elevator", StringComparison.Ordinal))
+                {
+                    hasSeparateElevators = true;
+                    break;
+                }
+            }
+            foreach (var child in children)
             {
                 if (child == aircraft)
                     continue;
@@ -1194,7 +1205,7 @@ namespace Airside.Presentation
                     child.localEulerAngles = euler;
                 }
                 else if (child.name.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                         child.name.StartsWith("Tailplane", StringComparison.Ordinal))
+                         (!hasSeparateElevators && child.name.StartsWith("Tailplane", StringComparison.Ordinal)))
                 {
                     // Soft elevator cue on the whole tailplane when no separate elevator mesh.
                     var euler = child.localEulerAngles;
@@ -1216,20 +1227,7 @@ namespace Airside.Presentation
                 {
                     // Takeoff flap is set for the roll and milked off after rotation —
                     // it used to keep extending all the way through the climb.
-                    var deploy = phase switch
-                    {
-                        AircraftPhase.Takeoff => progress < AirsideFlightPath.RotateProgress
-                            ? 12f
-                            : Mathf.Lerp(12f, 0f, Mathf.InverseLerp(
-                                AirsideFlightPath.RotateProgress, 1f, progress)),
-                        AircraftPhase.Approach => Mathf.Lerp(8f, 22f, Mathf.Clamp01(progress)),
-                        // Full flap is already out on short final; keep it there until
-                        // the rollout has washed off speed.
-                        AircraftPhase.Landing => progress < 0.6f
-                            ? 22f
-                            : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, progress)),
-                        _ => 0f
-                    };
+                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
@@ -1258,8 +1256,8 @@ namespace Airside.Presentation
             for (var index = 0; index < _simulation.Flights.Count && index < _commercialAircraft.Length; index++)
             {
                 var phase = _simulation.Flights[index].Operation.Phase;
-                var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
-                ApplyEngineAudio(_commercialAircraft[index], enginesOn);
+                ApplyEngineAudio(_commercialAircraft[index],
+                    AirsideReusableMotion.PropellersSpinning(phase));
             }
 
             for (var index = 0; index < _groundTraffic.Length; index++)
@@ -1384,10 +1382,9 @@ namespace Airside.Presentation
             var airborne = phase == AircraftPhase.Departed
                 || phase == AircraftPhase.Approach
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
-            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var enginesOn = AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
-            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing
-                || (phase == AircraftPhase.Takeoff && progress01 < AirsideReusableMotion.GearRetractProgress);
+            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             foreach (var child in AirsideNamedChildren.Get(aircraft))
@@ -1435,6 +1432,20 @@ namespace Airside.Presentation
                 {
                     child.gameObject.SetActive(landingLights);
                     EnsureLandingSpotLight(child, landingLights, night);
+                    var lamp = child.GetComponent<Renderer>();
+                    if (lamp != null)
+                    {
+                        lamp.GetPropertyBlock(RendererTintBlock);
+                        var color = landingLights
+                            ? new Color(1f, 0.97f, 0.88f)
+                            : new Color(0.55f, 0.55f, 0.5f);
+                        RendererTintBlock.SetColor("_Color", color);
+                        RendererTintBlock.SetColor("_BaseColor", color);
+                        RendererTintBlock.SetColor("_EmissionColor", landingLights
+                            ? new Color(2.6f, 2.5f, 2.1f)
+                            : Color.black);
+                        lamp.SetPropertyBlock(RendererTintBlock);
+                    }
                 }
                 else if (child.name.StartsWith("TaxiLight", StringComparison.Ordinal))
                 {
@@ -1521,7 +1532,11 @@ namespace Airside.Presentation
             light.enabled = on;
             if (!on)
                 return;
-            light.intensity = night ? 6.5f : 3.2f;
+            // Pinned daylight washes a night-tuned lamp. Keep the beam readable in follow.
+            light.intensity = night ? 7.5f : 9.5f;
+            light.range = 90f;
+            light.spotAngle = 48f;
+            light.innerSpotAngle = 22f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -2716,11 +2731,11 @@ namespace Airside.Presentation
                     _touchdownFired.Add(id);
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
                     _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
-                    _touchdownSmoke.localScale = Vector3.one;
+                    _touchdownSmoke.localScale = Vector3.one * 1.35f;
                     for (var p = 0; p < _touchdownSmoke.childCount; p++)
                     {
                         var puff = _touchdownSmoke.GetChild(p);
-                        var side = p % 2 == 0 ? -0.75f : 0.75f;
+                        var side = p % 2 == 0 ? -2.05f : 2.05f;
                         var aft = -0.15f * (p / 2);
                         puff.localPosition = new Vector3(side, 0.12f, aft);
                     }
@@ -2791,7 +2806,7 @@ namespace Airside.Presentation
                 mark.name = "Skid mark";
                 Object.Destroy(mark.GetComponent<Collider>());
                 mark.transform.SetParent(_skidMarkRoot, false);
-                var side = i == 0 ? -0.75f : 0.75f;
+                var side = i == 0 ? -2.05f : 2.05f;
                 mark.transform.position = aircraft.position
                     + aircraft.right * side
                     + aircraft.forward * -0.4f
@@ -5185,8 +5200,9 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// One grass slab the size of Adelaide Airport and one 3100 × 45 m runway.
-        /// No taxiways, apron, buildings, signs or props.
+        /// One grass slab the size of Adelaide Airport, one 3100 × 45 m runway, and
+        /// real-metre paint from <see cref="AirsideRunwayMarkings"/>. No taxiways,
+        /// apron, buildings, signs or props.
         /// </summary>
         private static void BuildBareAdelaideField()
         {
@@ -5217,15 +5233,71 @@ namespace Airside.Presentation
                     AirsideBareField.RunwayLengthMetres / 18f,
                     AirsideBareField.RunwayWidthMetres / 8f));
 
-            var paintY = AirsideBareField.RunwayCenterY
-                         + AirsideBareField.RunwayHeightMetres * 0.5f + 0.03f;
-            var edgeZ = AirsideBareField.RunwayHalfWidth - 0.7f;
-            CreateBlock("runway_centre", new Vector3(0f, paintY, 0f),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 80f, 0.02f, 0.45f), Color.white);
-            CreateBlock("runway_edge_left", new Vector3(0f, paintY, -edgeZ),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
-            CreateBlock("runway_edge_right", new Vector3(0f, paintY, edgeZ),
-                new Vector3(AirsideBareField.RunwayLengthMetres - 24f, 0.02f, 0.35f), Color.white);
+            var paint = Color.white;
+            var markings = new GameObject("Runway markings").transform;
+            if (_airfieldRoot != null)
+                markings.SetParent(_airfieldRoot, false);
+
+            CreateCombinedRunwayPaint(markings, "runway_edge_left",
+                new[] { AirsideRunwayMarkings.EdgeLeft }, paint);
+            CreateCombinedRunwayPaint(markings, "runway_edge_right",
+                new[] { AirsideRunwayMarkings.EdgeRight }, paint);
+            CreateCombinedRunwayPaint(markings, "runway_centre",
+                AirsideRunwayMarkings.CentrelineDashes(), paint);
+            CreateCombinedRunwayPaint(markings, "runway_threshold",
+                AirsideRunwayMarkings.ThresholdStripes(), paint);
+            CreateCombinedRunwayPaint(markings, "Aiming point",
+                AirsideRunwayMarkings.AimingPoints(), paint);
+            CreateCombinedRunwayPaint(markings, "TDZ marks",
+                AirsideRunwayMarkings.TouchdownZones(), paint);
+        }
+
+        /// <summary>
+        /// One combined paint mesh per marking family so a 3 100 m strip is not
+        /// hundreds of unbatched cubes. Names keep the wet-surface collectors working.
+        /// </summary>
+        private static void CreateCombinedRunwayPaint(
+            Transform parent, string name, AirsideRunwayMarkings.RunwayMark[] marks, Color color)
+        {
+            if (marks == null || marks.Length == 0)
+                return;
+
+            var y = AirsideRunwayMarkings.PaintCenterY;
+            var h = AirsideRunwayMarkings.PaintHeight;
+            var locals = new Matrix4x4[marks.Length];
+            for (var i = 0; i < marks.Length; i++)
+            {
+                var mark = marks[i];
+                locals[i] = Matrix4x4.TRS(
+                    new Vector3(mark.CenterX, y, mark.CenterZ),
+                    Quaternion.identity,
+                    new Vector3(mark.LengthX, h, mark.WidthZ));
+            }
+
+            var mesh = AirsideMeshUtil.CombineTransformed(BuiltinCube(), locals);
+            if (mesh == null)
+            {
+                foreach (var mark in marks)
+                {
+                    ParentBlock(
+                        parent,
+                        name,
+                        new Vector3(mark.CenterX, y, mark.CenterZ),
+                        new Vector3(mark.LengthX, h, mark.WidthZ),
+                        color);
+                }
+
+                return;
+            }
+
+            var go = new GameObject(name);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = CreateSharedSurfaceMaterial(color);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            go.transform.SetParent(parent, false);
+            AirsideSceneIndex.Remember(go);
         }
 
         /// <summary>
@@ -7368,6 +7440,16 @@ namespace Airside.Presentation
             return BuiltinSphereMesh;
         }
 
+        private static Mesh BuiltinCube()
+        {
+            if (BuiltinCubeMesh != null)
+                return BuiltinCubeMesh;
+            var temp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            BuiltinCubeMesh = temp.GetComponent<MeshFilter>().sharedMesh;
+            Object.DestroyImmediate(temp);
+            return BuiltinCubeMesh;
+        }
+
         private static Mesh BuiltinCylinder()
         {
             if (BuiltinCylinderMesh != null)
@@ -8234,10 +8316,15 @@ namespace Airside.Presentation
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
             var root = new GameObject(name).transform;
-            // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7f, so
-            // offset the kit by -0.7f so gear sits on the ground. Primitive fallback below.
+            // Production AIR-001: true-size ATR 42-class starter aircraft. Motion roots
+            // use y=0.7f, so offset the metre-authored kit to put its tires on the ground.
+            // v06 remains a safe fallback for branches/builds that have not imported it yet.
+            var aircraftArt = PreferArtKit(
+                "Models/Aircraft/mdl_atr42_starter_v01.gltf",
+                "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf");
+            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
             var usedArt = ArtPresentationLoader.TryInstantiate(
-                PreferArtKit("Models/Aircraft/mdl_regional_turboprop_01_v06.gltf"),
+                aircraftArt,
                 root,
                 out _,
                 RenameAircraftPart,
@@ -8250,6 +8337,7 @@ namespace Airside.Presentation
                 // glTF kits author prop verts at nacelle world positions while the
                 // Propeller transform sits at the kit origin — rebake so spin stays on-hub.
                 RebakePropellerPivots(root);
+                RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
@@ -8293,7 +8381,9 @@ namespace Airside.Presentation
                 ParentBlock(root, "LandingLight", new Vector3(0f, -0.15f, 2.5f), new Vector3(0.18f, 0.12f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, -0.2f, 2.2f), new Vector3(0.14f, 0.1f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
-            if (!HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
+            // The final starter keeps the silhouette clean; the legacy heat cubes
+            // read as opaque blobs at its larger scale. Older kits retain their cue.
+            if (!finalAtr42 && !HasNamedChild(root, "EngineHeat L") && !HasNamedChild(root, "EngineHeat R"))
             {
                 // Batch F4 VFX-002 — prefer reusable heat kit; fall back to translucent quads.
                 if (ArtPresentationLoader.TryInstantiatePrefab("vfx_engine_heat_v01", out var heatKit))
@@ -8324,8 +8414,33 @@ namespace Airside.Presentation
             return root;
         }
 
-        private static string RenameAircraftPart(string kitName) => kitName switch
+        private static string RenameAircraftPart(string kitName)
         {
+            if (kitName.StartsWith("cabin_window_r", StringComparison.Ordinal))
+                return "Cabin window R" + kitName.Substring("cabin_window_r".Length);
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return "Cabin window " + kitName.Substring("cabin_window_".Length);
+            if (kitName.StartsWith("tire_nose_", StringComparison.Ordinal))
+                return "Tire nose " + FriendlyPartSuffix(kitName.Substring("tire_nose_".Length));
+            if (kitName.StartsWith("wheel_nose_", StringComparison.Ordinal))
+                return "Wheel nose " + FriendlyPartSuffix(kitName.Substring("wheel_nose_".Length));
+            if (kitName.StartsWith("rim_nose_", StringComparison.Ordinal))
+                return "Rim nose " + FriendlyPartSuffix(kitName.Substring("rim_nose_".Length));
+            if (kitName.StartsWith("tire_left_", StringComparison.Ordinal))
+                return "Tire L " + FriendlyPartSuffix(kitName.Substring("tire_left_".Length));
+            if (kitName.StartsWith("wheel_left_", StringComparison.Ordinal))
+                return "Wheel L " + FriendlyPartSuffix(kitName.Substring("wheel_left_".Length));
+            if (kitName.StartsWith("rim_left_", StringComparison.Ordinal))
+                return "Rim L " + FriendlyPartSuffix(kitName.Substring("rim_left_".Length));
+            if (kitName.StartsWith("tire_right_", StringComparison.Ordinal))
+                return "Tire R " + FriendlyPartSuffix(kitName.Substring("tire_right_".Length));
+            if (kitName.StartsWith("wheel_right_", StringComparison.Ordinal))
+                return "Wheel R " + FriendlyPartSuffix(kitName.Substring("wheel_right_".Length));
+            if (kitName.StartsWith("rim_right_", StringComparison.Ordinal))
+                return "Rim R " + FriendlyPartSuffix(kitName.Substring("rim_right_".Length));
+
+            return kitName switch
+            {
             "fuselage" => "Fuselage",
             "fuselage_mid" => "Fuselage mid",
             "fuselage_aft" => "Fuselage aft",
@@ -8484,6 +8599,8 @@ namespace Airside.Presentation
             "gear_door_nose" => "Gear door nose",
             "gear_door_left" => "Gear door L",
             "gear_door_right" => "Gear door R",
+            "gear_fairing_left" => "Gear fairing L",
+            "gear_fairing_right" => "Gear fairing R",
             "tire_nose" => "Tire nose",
             "tire_left" => "Tire L",
             "tire_right" => "Tire R",
@@ -8506,15 +8623,34 @@ namespace Airside.Presentation
             "landing_light_l" => "LandingLight L",
             "landing_light_r" => "LandingLight R",
             "taxi_light" => "TaxiLight",
+            "engine_heat_left" => "EngineHeat L",
+            "engine_heat_right" => "EngineHeat R",
             _ => kitName
-        };
+            };
+        }
 
-        private static Color? AircraftPartColor(string kitName, Color accent) => kitName switch
+        private static string FriendlyPartSuffix(string suffix) =>
+            suffix.Replace('_', ' ');
+
+        private static Color? AircraftPartColor(string kitName, Color accent)
         {
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return new Color(0.18f, 0.35f, 0.48f, 0.42f);
+            if (kitName.StartsWith("tire_", StringComparison.Ordinal))
+                return new Color(0.12f, 0.12f, 0.13f);
+            if (kitName.StartsWith("wheel_", StringComparison.Ordinal)
+                || kitName.StartsWith("rim_", StringComparison.Ordinal))
+                return new Color(0.55f, 0.56f, 0.58f);
+            if (kitName.StartsWith("engine_heat_", StringComparison.Ordinal))
+                return new Color(0.95f, 0.55f, 0.2f, 0.10f);
+
+            return kitName switch
+            {
             "fuselage" or "fuselage_mid" or "fuselage_aft"
                 or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
                 or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
-                or "belly_fairing" or "cargo_door" or "door_frame_fwd" => new Color(0.93f, 0.95f, 0.97f),
+                or "belly_fairing" or "cargo_door" or "door_frame_fwd"
+                or "gear_fairing_left" or "gear_fairing_right" => new Color(0.93f, 0.95f, 0.97f),
             "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
                 or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
                 or "cabin_window_6" or "cabin_window_7"
@@ -8581,7 +8717,8 @@ namespace Airside.Presentation
             "tail_nav_light" => new Color(0.95f, 0.95f, 0.9f),
             "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null
-        };
+            };
+        }
 
         /// <summary>
         /// Parent blades, hubs and spinners under each propeller so SpinPropellers
@@ -8772,54 +8909,121 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// FBX/glTF fallback meshes arrive with aircraft-space vertices and zeroed
+        /// transforms. Move gameplay parts to their actual hinges and rebake the
+        /// vertices so their runtime rotations do not orbit around the fuselage.
+        /// </summary>
+        private static void RebakeAircraftArticulatedPivots(Transform aircraft)
+        {
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft)
+                    continue;
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+
+                var bounds = renderer.bounds;
+                var pivot = bounds.center;
+                var articulated = true;
+                if (child.name is "Gear nose" or "Gear L" or "Gear R")
+                {
+                    pivot.y = bounds.max.y;
+                }
+                else if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
+                {
+                    pivot.y = bounds.max.y;
+                }
+                else if (child.name is "Flap L" or "Flap R"
+                         || child.name.StartsWith("Aileron", StringComparison.Ordinal)
+                         || child.name.StartsWith("Elevator", StringComparison.Ordinal)
+                         || child.name.StartsWith("Spoiler", StringComparison.Ordinal))
+                {
+                    pivot.z = bounds.max.z;
+                }
+                else if (child.name.StartsWith("Rudder", StringComparison.Ordinal)
+                         || child.name.StartsWith("CabinDoor", StringComparison.Ordinal)
+                         || child.name.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase))
+                {
+                    pivot.z = bounds.max.z;
+                }
+                else
+                {
+                    articulated = false;
+                }
+
+                if (articulated)
+                    RebakePartPivot(child, pivot);
+            }
+        }
+
+        private static void RebakePartPivot(Transform part, Vector3 pivotWorld)
+        {
+            if ((part.position - pivotWorld).sqrMagnitude < 0.0025f)
+                return;
+
+            var filters = part.GetComponentsInChildren<MeshFilter>(true);
+            var worldVertices = new Vector3[filters.Length][];
+            for (var i = 0; i < filters.Length; i++)
+            {
+                var filter = filters[i];
+                if (filter == null || filter.sharedMesh == null)
+                    continue;
+                var vertices = filter.sharedMesh.vertices;
+                var world = new Vector3[vertices.Length];
+                for (var v = 0; v < vertices.Length; v++)
+                    world[v] = filter.transform.TransformPoint(vertices[v]);
+                worldVertices[i] = world;
+            }
+
+            part.position = pivotWorld;
+            for (var i = 0; i < filters.Length; i++)
+            {
+                if (worldVertices[i] == null)
+                    continue;
+                var filter = filters[i];
+                var mesh = Object.Instantiate(filter.sharedMesh);
+                mesh.name = filter.sharedMesh.name + " articulated-pivot";
+                var local = new Vector3[worldVertices[i].Length];
+                for (var v = 0; v < local.Length; v++)
+                    local[v] = filter.transform.InverseTransformPoint(worldVertices[i][v]);
+                mesh.vertices = local;
+                mesh.RecalculateBounds();
+                mesh.RecalculateNormals();
+                filter.sharedMesh = mesh;
+            }
+        }
+
+        /// <summary>
         /// Parent scissors / tires under matching gear struts so retract takes the
         /// whole assembly (0025 item 7) — mirrors NestCrossPropellerBlades.
         /// </summary>
         private static void NestLandingGearParts(Transform aircraft)
         {
             Transform gearNose = null, gearL = null, gearR = null;
-            Transform scissorsNose = null, scissorsL = null, scissorsR = null;
-            Transform tireNose = null, tireL = null, tireR = null;
-            Transform oleoNose = null, oleoL = null, oleoR = null;
-            Transform rimNose = null, rimL = null, rimR = null;
-            Transform wheelNose = null, wheelL = null, wheelR = null;
+            var movingParts = new List<Transform>();
             foreach (var child in AirsideNamedChildren.Get(aircraft))
             {
                 if (child.name == "Gear nose") gearNose = child;
                 else if (child.name == "Gear L") gearL = child;
                 else if (child.name == "Gear R") gearR = child;
-                else if (child.name == "Gear scissors nose") scissorsNose = child;
-                else if (child.name == "Gear scissors L") scissorsL = child;
-                else if (child.name == "Gear scissors R") scissorsR = child;
-                else if (child.name == "Tire nose") tireNose = child;
-                else if (child.name == "Tire L") tireL = child;
-                else if (child.name == "Tire R") tireR = child;
-                else if (child.name == "Gear oleo nose") oleoNose = child;
-                else if (child.name == "Gear oleo L") oleoL = child;
-                else if (child.name == "Gear oleo R") oleoR = child;
-                else if (child.name == "Rim nose") rimNose = child;
-                else if (child.name == "Rim L") rimL = child;
-                else if (child.name == "Rim R") rimR = child;
-                else if (child.name == "Wheel nose") wheelNose = child;
-                else if (child.name == "Wheel L") wheelL = child;
-                else if (child.name == "Wheel R") wheelR = child;
+                else if (child.name.StartsWith("Gear scissors", StringComparison.Ordinal)
+                         || child.name.StartsWith("Gear oleo", StringComparison.Ordinal)
+                         || child.name.StartsWith("Tire", StringComparison.Ordinal)
+                         || child.name.StartsWith("Wheel", StringComparison.Ordinal)
+                         || child.name.StartsWith("Rim", StringComparison.Ordinal))
+                    movingParts.Add(child);
             }
 
-            NestUnderProp(gearNose, scissorsNose, "Scissors");
-            NestUnderProp(gearL, scissorsL, "Scissors");
-            NestUnderProp(gearR, scissorsR, "Scissors");
-            NestUnderProp(gearNose, oleoNose, "Oleo");
-            NestUnderProp(gearL, oleoL, "Oleo");
-            NestUnderProp(gearR, oleoR, "Oleo");
-            NestUnderProp(gearNose, tireNose, "Tire");
-            NestUnderProp(gearL, tireL, "Tire");
-            NestUnderProp(gearR, tireR, "Tire");
-            NestUnderProp(gearNose, wheelNose, "Wheel");
-            NestUnderProp(gearL, wheelL, "Wheel");
-            NestUnderProp(gearR, wheelR, "Wheel");
-            NestUnderProp(gearNose, rimNose, "Rim");
-            NestUnderProp(gearL, rimL, "Rim");
-            NestUnderProp(gearR, rimR, "Rim");
+            foreach (var part in movingParts)
+            {
+                var lower = part.name.ToLowerInvariant();
+                var gear = lower.Contains("nose") ? gearNose
+                    : part.name.IndexOf(" L", StringComparison.Ordinal) >= 0 ? gearL
+                    : part.name.IndexOf(" R", StringComparison.Ordinal) >= 0 ? gearR
+                    : null;
+                NestUnderProp(gear, part, part.name);
+            }
             // Gear doors stay siblings so UpdateAircraftLightsAndGear can animate them independently.
         }
 
@@ -9063,7 +9267,7 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, planar);
                 }
 
-                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 2.8f);
+                var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 4.2f);
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "PropDisc";
                 Object.Destroy(disc.GetComponent<Collider>());
@@ -9091,7 +9295,7 @@ namespace Airside.Presentation
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
             shadow.transform.localRotation = Quaternion.identity;
-            shadow.transform.localScale = new Vector3(2.8f, 0.012f, 1.5f);
+            shadow.transform.localScale = new Vector3(19.5f, 0.012f, 13.5f);
             var material = AirsideMaterialLibrary.CreateShared(new Color(0.05f, 0.06f, 0.08f, 0.16f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -9112,8 +9316,8 @@ namespace Airside.Presentation
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - 0.55f);
             var t = Mathf.Clamp01(altitude / 14f);
-            var width = Mathf.Lerp(3.6f, 7.2f, t);
-            var depth = width * 0.52f;
+            var width = Mathf.Lerp(19.5f, 27.5f, t);
+            var depth = Mathf.Lerp(13.5f, 19f, t);
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
@@ -11145,11 +11349,10 @@ namespace Airside.Presentation
             {
                 AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
                 AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
-                AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
-                AircraftPhase.AtStand => TaxiVisualPath.StandPosition(taxiRoute),
-                // Push back along the stand centreline onto the apron throat.
-                AircraftPhase.Pushback => TaxiVisualPath.PushbackPosition(taxiRoute, t),
-                AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t),
+                AircraftPhase.TaxiIn => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.AtStand => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
+                AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
                 _ => AirsideFlightPath.Departed(t)
             };

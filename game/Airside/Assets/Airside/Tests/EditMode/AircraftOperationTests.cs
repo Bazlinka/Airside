@@ -35,8 +35,10 @@ namespace Airside.Tests
         {
             var operation = new AircraftOperation("AS001", new SimulationTime(10));
 
-            Assert.That(operation.SecondsRemaining(new SimulationTime(15)), Is.EqualTo(15));
-            Assert.That(operation.PhaseProgress(new SimulationTime(15)), Is.EqualTo(0.25).Within(0.0001));
+            Assert.That(operation.SecondsRemaining(new SimulationTime(15)),
+                Is.EqualTo(AirportCircuit.ApproachSeconds - 5));
+            Assert.That(operation.PhaseProgress(new SimulationTime(15)),
+                Is.EqualTo(5d / AirportCircuit.ApproachSeconds).Within(0.0001));
         }
 
         [Test]

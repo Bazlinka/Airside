@@ -7,7 +7,9 @@ namespace Airside.Simulation
     public sealed class AirportSimulation
     {
         public const long CycleLengthSeconds = 160;
-        public const long DepartureResetSeconds = 6;
+        public static long DepartureResetSeconds => AirportCircuit.SkipGroundTaxi
+            ? AirportCircuit.DepartureFlyOutSeconds
+            : 6;
         public const long BaseDailyOperatingCost = 400;
         public const int SecondFlightThreshold = 4;
 
@@ -382,7 +384,8 @@ namespace Airside.Simulation
             // Holding short after TaxiOut: ResourcesForPhase is empty, so TryReplace
             // succeeded without claiming the runway. Surface the takeoff wait instead
             // of silently clearing TrafficWaits.
-            if (flight.Operation.Phase == AircraftPhase.TaxiOut
+            if (!AirportCircuit.SkipGroundTaxi
+                && flight.Operation.Phase == AircraftPhase.TaxiOut
                 && flight.Operation.SecondsRemaining(now) <= 0)
             {
                 if (!CanIssueTakeoffClearance(flight, now, out var holdReason, out var runwayBlocked))
@@ -1152,6 +1155,7 @@ namespace Airside.Simulation
         private bool CanLeavePhase(CommercialFlight flight, AircraftPhase phase, SimulationTime now)
         {
             if (phase == AircraftPhase.AtStand
+                && !AirportCircuit.SkipGroundTaxi
                 && (flight.Turnaround == null || !flight.Turnaround.IsComplete(now)))
                 return false;
 
@@ -1164,6 +1168,7 @@ namespace Airside.Simulation
                 return false;
 
             if (phase == AircraftPhase.TaxiOut
+                && !AirportCircuit.SkipGroundTaxi
                 && !CanIssueTakeoffClearance(flight, now, out _, out _))
                 return false;
 

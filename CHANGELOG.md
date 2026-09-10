@@ -5,6 +5,32 @@ change it describes.
 
 ## Unreleased
 
+- **AIR-001 is now the final ATR 42-class starter aircraft, not another v06
+  placeholder.** The new 158-part asset matches the official 22.67 m length,
+  24.57 m span, 7.59 m height and 3.93 m six-blade prop diameter. It has twin
+  nose wheels, tandem main wheels, working gear/doors, props, flaps, ailerons,
+  elevators, rudder, spoilers and cabin/cargo doors with corrected pivots.
+  Follow framing, prop blur and touchdown wheel spacing now fit the real-size
+  aircraft. Fictional Airside livery only. See ADR 0034.
+
+- **One circuit now explains itself from follow.** Same v06 turboprop: gear,
+  props, attitude and landing lights follow the land / roll / takeoff loop.
+  Lights stay on in pinned daylight; props keep spinning in the climb; cabin
+  doors stay shut on the skipped stand. Restrained touchdown smoke fires once
+  when the path meets the runway at the 300 m TDZ, not on short final.
+
+- **The 3 100 × 45 m runway now has real-metre markings.** Threshold bars (12
+  per end), aiming points at 400 m, a dashed 30/20 centreline, 0.90 m edge
+  lines, and touchdown-zone pairs at 150/300/600/750/900 m. The 300 m pair sits
+  under the circuit touchdown. Paint comes from `AirsideRunwayMarkings` (no
+  UnityEngine); the miniature WLD-001 kit is not used. See ADR 0032.
+
+- **The aircraft now flies a real-metre land / takeoff circuit on the 3 100 m
+  runway.** Approach starts 4.2 km west; landing rolls ~1 050 m and almost
+  stops; takeoff rotates after ~900 m and climbs out until the model is off
+  the field; the next arrival then appears on long final. Taxi, stand and
+  pushback are skipped. See ADR 0033.
+
 - **The visible world is one plane, one 3 100 × 45 m runway, and empty Adelaide
   ground.** Buildings, cars, signs, taxiways, apron, coast, trees, fences,
   decorative lights and a second aircraft are no longer spawned. The ground is

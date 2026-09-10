@@ -75,6 +75,12 @@ namespace Airside.Simulation
         /// </summary>
         public IEnumerable<StableId> ResourcesForPhase(AircraftPhase phase, SimulationTime at)
         {
+            if (AirportCircuit.IsSkippedGroundPhase(phase))
+            {
+                yield return AirportSimulation.Runway;
+                yield break;
+            }
+
             switch (phase)
             {
                 case AircraftPhase.Approach:

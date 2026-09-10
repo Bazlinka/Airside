@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Airside.Persistence;
+using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
@@ -13,6 +14,7 @@ namespace Airside.Tests
         [SetUp]
         public void SetUp()
         {
+            TaxiLoopFixture.EnableFullTaxiLoop();
             _directory = Path.Combine(Path.GetTempPath(), "airside-tests-" + Guid.NewGuid().ToString("N"));
             _path = Path.Combine(_directory, "save.json");
         }
@@ -20,6 +22,7 @@ namespace Airside.Tests
         [TearDown]
         public void TearDown()
         {
+            TaxiLoopFixture.RestoreCircuit();
             if (Directory.Exists(_directory))
                 Directory.Delete(_directory, true);
         }

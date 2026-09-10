@@ -416,7 +416,9 @@ namespace Airside.Tests
         public void FlightPath_DepartureKeepsFlyingInsteadOfFreezing()
         {
             var start = AirsideFlightPath.Departed(0f);
-            Assert.That(start, Is.EqualTo(AirsideFlightPath.Takeoff(1f)));
+            // Distance, not Vector3 equality: the two ends of the seam are reached by
+            // different arithmetic, so exact float equality is not owed here.
+            Assert.That(Vector3.Distance(start, AirsideFlightPath.Takeoff(1f)), Is.LessThan(0.01f));
             Assert.That(AirsideFlightPath.Departed(1f).x, Is.GreaterThan(start.x + 100f));
             Assert.That(AirsideFlightPath.Departed(1f).y, Is.GreaterThan(start.y + 20f));
         }
@@ -464,11 +466,25 @@ namespace Airside.Tests
             Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0f), Is.Zero);
             Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Departed, 0.5f), Is.Zero);
 
-            // Roll accelerates, rollout decelerates.
+            // Roll accelerates, rollout decelerates. Both sample points have to sit
+            // after touchdown: before it the wheels are stopped, not merely slower.
             Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Takeoff, r * 0.9f),
                 Is.GreaterThan(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Takeoff, r * 0.1f)));
-            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0.95f),
-                Is.LessThan(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0.35f)));
+            var justDown = AirsideFlightPath.TouchdownProgress
+                           + (1f - AirsideFlightPath.TouchdownProgress) * 0.2f;
+            Assert.That(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, 0.99f),
+                Is.LessThan(AirsideFlightPath.WheelSpeedFactor(AircraftPhase.Landing, justDown)));
+        }
+
+        [Test]
+        public void FocusMode_GroundClutterFollowsTheSingleAircraftOnlySwitch()
+        {
+            // Ground vehicles, stand equipment and people are parked behind one switch
+            // so the aircraft pass can be judged on its own. Each reader must derive
+            // from that switch rather than carry its own copy of the decision.
+            Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
+            Assert.That(AirsideFocusMode.ShowStandEquipment, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
+            Assert.That(AirsideFocusMode.ShowPeople, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
         }
 
         [Test]

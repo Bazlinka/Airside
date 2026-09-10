@@ -25,6 +25,7 @@ namespace Airside.Presentation
         // Damped roll angle per airframe so banking eases in and out of a turn.
         private readonly Dictionary<string, float> _bankDegrees = new();
         private readonly Dictionary<int, float> _propRpm = new();
+
         private Transform[] _groundTraffic;
         private Light _sun;
         private Light _fillLight;
@@ -266,47 +267,54 @@ namespace Airside.Presentation
             _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
             for (var index = 0; index < _groundTraffic.Length; index++)
                 _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
-            _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
-                PreferArtKit(
-                    "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
-                    "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
-            _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
-                PreferArtKit(
-                    "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
-                    "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
-            _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.22f, 0.44f, 0.55f), new Vector3(3.8f, 1.5f, 1.45f),
-                PreferArtKit(
-                    "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
-                    "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
-            // Authored GSE kits face +X; LookRotation travel aims +Z — nest a -90° yaw so they match.
-            OrientPlusXKitToForward(_fuelTruck);
-            OrientPlusXKitToForward(_baggageCart);
-            OrientPlusXKitToForward(_passengerBus);
-            _stairs = BuildStairs();
-            _chocks = BuildChocks();
-            _gpuCart = BuildGpuCart();
-            _pushbackTug = BuildPushbackTug();
-            OrientPlusXKitToForward(_pushbackTug);
+            if (AirsideFocusMode.ShowGroundVehicles)
+            {
+                _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
+                    PreferArtKit(
+                        "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v04.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
+                _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
+                    PreferArtKit(
+                        "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v04.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v03.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v02.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
+                _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.22f, 0.44f, 0.55f), new Vector3(3.8f, 1.5f, 1.45f),
+                    PreferArtKit(
+                        "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v04.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v03.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v02.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
+                // Authored GSE kits face +X; LookRotation travel aims +Z — nest a -90° yaw so they match.
+                OrientPlusXKitToForward(_fuelTruck);
+                OrientPlusXKitToForward(_baggageCart);
+                OrientPlusXKitToForward(_passengerBus);
+            }
+
+            if (AirsideFocusMode.ShowStandEquipment)
+            {
+                _stairs = BuildStairs();
+                _chocks = BuildChocks();
+                _gpuCart = BuildGpuCart();
+                _pushbackTug = BuildPushbackTug();
+                OrientPlusXKitToForward(_pushbackTug);
+            }
+
             _windsockSock = BuildWindsock();
             EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
                 _cameraController.SetFollowTargets(_commercialAircraft);
-
             AirsideRuntimeQuality.AfterWorldBuilt();
             AirsideStaticWorld.Finalize(_airfieldRoot);
             if (_apronProbe != null)
@@ -1040,16 +1048,16 @@ namespace Airside.Presentation
                 var view = _commercialAircraft[index];
                 if (view == null)
                     continue;
-                var standZ = AirportTaxiNetwork.StandZ(flight.AssignedStand);
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var lane = ApproachLaneOffset(flight);
-                var position = PositionFor(phase, progress, standZ, flight.TaxiRoute, lane);
+                var position = PositionFor(phase, progress, flight.TaxiRoute, lane);
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
-                var lookAhead = phase == AircraftPhase.Takeoff && progress < 0.2f ? 0.04f
+                var lookAhead = phase == AircraftPhase.Takeoff
+                        && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
-                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), standZ, flight.TaxiRoute, lane);
+                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), flight.TaxiRoute, lane);
                 // Soft catch-up on ground so stalls do not teleport through another airframe.
                 if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
                     or AircraftPhase.AtStand or AircraftPhase.Landing)
@@ -1927,27 +1935,53 @@ namespace Airside.Presentation
             _presentationClock += PresentationDeltaTime;
         }
 
+        /// <summary>
+        /// How far through its current phase an aircraft should be drawn, read at the
+        /// fractional presentation clock rather than the simulated second. Sampling the
+        /// simulation directly gave a 1 Hz staircase — 59 still frames then a jump, four
+        /// times longer at 4x, which is what made the fast speed look so much worse.
+        ///
+        /// <paramref name="lookAheadSeconds"/> asks for the position a moment later, used
+        /// to point the nose along the path.
+        /// </summary>
         private float VisualPhaseProgress(CommercialFlight flight, float lookAheadSeconds)
         {
-            if (flight.Operation.IsComplete)
-                return 1f;
+            var operation = flight.Operation;
+            var phase = operation.Phase;
+            var duration = AirsideFlightPath.PhaseSeconds(phase);
+            var progress = PhaseProgressNow(flight, duration);
 
-            // Drive all phases from the stalled operation clock so taxi holds do not
-            // creep toward the aircraft ahead between whole-second stalls.
-            var simNow = new SimulationTime((long)Math.Floor(_preciseTime));
-            var baseProgress = (float)flight.Operation.PhaseProgress(simNow);
-            if (lookAheadSeconds <= 0f)
-                return baseProgress;
+            if (lookAheadSeconds <= 0f || duration <= 0f)
+                return progress;
 
-            var duration = flight.Operation.PhaseDurationSeconds;
-            if (duration <= 0 || duration == long.MaxValue)
-                return baseProgress;
+            return Mathf.Clamp01(progress + lookAheadSeconds / duration);
+        }
 
-            return Mathf.Clamp01(baseProgress + lookAheadSeconds / duration);
+        private float PhaseProgressNow(CommercialFlight flight, float duration)
+        {
+            var operation = flight.Operation;
+
+            // At the stand, progress tracks turnaround work rather than the phase clock,
+            // and the airframe is parked either way.
+            if (operation.Phase == AircraftPhase.AtStand)
+                return Mathf.Clamp01((float)operation.PhaseProgress(_clock.Now));
+
+            // A flight waiting on a reservation has its phase clock pushed forward once
+            // per stalled second, so a fractional read would creep forward and snap back
+            // every second. Hold the simulated value: the aircraft is standing still,
+            // which is exactly what it is doing.
+            if (_simulation.TrafficWaits.TryGetWaitStart(flight.OwnerId, out _))
+                return Mathf.Clamp01((float)operation.PhaseProgress(_clock.Now));
+
+            return AirsideAircraftMotion.PhaseProgress(
+                _preciseTime, operation.PhaseStartedAt.ElapsedSeconds, duration);
         }
 
         private void UpdateServiceVehicles()
         {
+            if (!AirsideFocusMode.ShowGroundVehicles)
+                return;
+
             // Prefer the watched/focused commercial at stand so dual-stand activity matches the player view.
             var servicing = PreferWatchedAtStandFlight(requireTurnaround: true);
 
@@ -1990,6 +2024,9 @@ namespace Airside.Presentation
 
         private void UpdateStandEquipment()
         {
+            if (!AirsideFocusMode.ShowStandEquipment)
+                return;
+
             // Presentation-only stand props — prefer the flight the player is watching.
             var atStand = PreferWatchedAtStandFlight(requireTurnaround: false);
             CommercialFlight pushing = PreferWatchedFlightInPhase(AircraftPhase.Pushback);
@@ -4080,6 +4117,9 @@ namespace Airside.Presentation
             camera.tag = "MainCamera";
             // Match overview framing (architectural miniature, decision 0022 / post-F polish).
             camera.fieldOfView = 48f;
+            // Arrivals join final ~430 m out and the star sphere sits beyond that, so the
+            // far plane has to cover the whole flight envelope from a chase camera.
+            camera.farClipPlane = Mathf.Max(camera.farClipPlane, 1200f);
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -5402,8 +5442,10 @@ namespace Airside.Presentation
             BuildBuildingContactShadows();
             BuildDistantHills();
             BuildHorizonDome();
-            BuildLandsideLife();
-            BuildApronLife();
+            if (AirsideFocusMode.ShowGroundVehicles)
+                BuildLandsideLife();
+            if (AirsideFocusMode.ShowPeople)
+                BuildApronLife();
         }
 
         /// <summary>
@@ -5655,6 +5697,9 @@ namespace Airside.Presentation
 
         private void UpdateApronLife()
         {
+            if (!AirsideFocusMode.ShowPeople)
+                return;
+
             if (_apronLifeRoot == null)
                 _apronLifeRoot = AirsideSceneIndex.Find("Apron life");
 
@@ -6682,7 +6727,8 @@ namespace Airside.Presentation
                 light.shadows = LightShadows.None;
             }
 
-            PlaceArffTruck();
+            if (AirsideFocusMode.ShowGroundVehicles)
+                PlaceArffTruck();
         }
 
         /// <summary>
@@ -7310,6 +7356,12 @@ namespace Airside.Presentation
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             // Render inside of the sphere.
             material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Front);
+            // Draw it as a backdrop rather than as geometry. An opaque depth-writing dome
+            // hid everything beyond its 165 m radius, so an aircraft joining final from
+            // the distance stayed invisible until it crossed the sky wall and popped into
+            // existence. Background queue with no depth write can never occlude.
+            material.SetInt("_ZWrite", 0);
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
             var domeRenderer = dome.GetComponent<Renderer>();
             domeRenderer.sharedMaterial = material;
             domeRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -7334,8 +7386,12 @@ namespace Airside.Presentation
                 var yaw = (float)rng.NextDouble() * 360f;
                 var pitch = 10f + (float)rng.NextDouble() * 72f;
                 var dir = (Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward).normalized;
-                var pos = dir * 128f;
-                var s = 0.22f + (float)rng.NextDouble() * 0.42f;
+                // Far enough out to sit beyond the whole flight envelope — an arrival
+                // joining final 430 m out must not be occluded by a star. Radius and
+                // quad size scale together, so the night sky looks unchanged.
+                const float radius = 128f * StarDistanceScale;
+                var pos = dir * radius;
+                var s = (0.22f + (float)rng.NextDouble() * 0.42f) * StarDistanceScale;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
                 var color = new Color(bright, bright, 0.95f * bright, 1f);
                 var right = Vector3.Cross(dir, Vector3.up);
@@ -7376,6 +7432,8 @@ namespace Airside.Presentation
             renderer.receiveShadows = false;
             root.gameObject.SetActive(false);
         }
+
+        private const float StarDistanceScale = 4f;
 
         private static Material StarSharedMaterial()
         {
@@ -10909,14 +10967,12 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private Vector3 PositionFor(AircraftPhase phase, float progress, float standZ, TaxiRoute taxiRoute, float laneOffset = 0f)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f)
         {
-            // Air phases share the runway axis and meet the taxi network at (-24, 0)
-            // so takeoff no longer teleports 52 m after taxi-out, and landing rolls out
-            // to the same A1 entry TaxiIn uses.
+            // Every phase hands over where the previous one ended: landing rolls out to
+            // the A1 entry TaxiIn starts from, taxi-out stops at the runway hold-short
+            // point takeoff lines up from, and takeoff runs straight into the climb-out.
             var t = Mathf.Clamp01(progress);
-            // Number-two stays further out on final while waiting so it does not stack
-            // on the leader at the flare start.
             // Number-two holds off the flare gate, but compressing progress rather than
             // clamping it means it keeps creeping down the approach instead of stopping
             // dead in mid-air the instant it reaches the hold point.
@@ -10927,11 +10983,10 @@ namespace Airside.Presentation
                 AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
                 AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
                 AircraftPhase.TaxiIn => PositionAlongTaxiRoute(taxiRoute, t, false),
-                AircraftPhase.AtStand => new Vector3(17f, 0.7f, standZ),
-                // Push back along the stand centreline onto the throat (x=12, standZ).
-                AircraftPhase.Pushback => Smooth(
-                    new Vector3(17f, 0.7f, standZ), new Vector3(12f, 0.7f, standZ), t),
-                AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t, standZ),
+                AircraftPhase.AtStand => TaxiVisualPath.StandPosition(taxiRoute),
+                // Push back along the stand centreline onto the apron throat.
+                AircraftPhase.Pushback => TaxiVisualPath.PushbackPosition(taxiRoute, t),
+                AircraftPhase.TaxiOut => TaxiOutPosition(taxiRoute, t),
                 AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
                 _ => AirsideFlightPath.Departed(t)
             };
@@ -10955,20 +11010,19 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Follow the reverse taxi polyline from the first sample — no apron chord cut.
+        /// Reverse taxi from the throat pushback left the aircraft on, out to the runway
+        /// hold-short point. It used to replay the stand lead-in — a 5 m jump backwards
+        /// into the bay — and then run all the way onto the runway centreline.
         /// </summary>
-        private Vector3 TaxiOutPosition(TaxiRoute route, float t, float standZ)
+        private static Vector3 TaxiOutPosition(TaxiRoute route, float t)
         {
-            // Pushback already ends on the throat; taxi-out is pure reverse route.
-            return PositionAlongTaxiRoute(route, t, true);
+            return TaxiVisualPath.TaxiOutPosition(route, t);
         }
 
         private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)
         {
             return TaxiVisualPath.PositionAt(route, progress, reverse);
         }
-
-        private static Vector3 Smooth(Vector3 from, Vector3 to, float progress) => Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
 
         
 

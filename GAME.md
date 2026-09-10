@@ -1,33 +1,51 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-09 (Cursor — flight realism pass)
+- **Last updated:** 2026-09-10 (Cursor — aircraft logic pass)
 - **Branch:** `cursor/game-performance-pass-c1bb`
-- **Do next:** Mac Play — watch one full arrival and one full departure on the follow
-  camera. Confirm the aircraft never stalls at rotation, at the flare or at the
-  runway threshold, and that a departure keeps climbing away instead of freezing in
-  frame. Then confirm the combined runway/taxi/apron pads + WLD-004 terrain kit look
-  right, that clouds, GSE, birds, boats and the ops `antenna_dish` still move after
-  static combine, and sign off High (4× MSAA + SMAA) vs Medium on a 2 GB GPU.
-  Then continue art sourcing: P0 aircraft parts → buildings → vehicles/GSE → veg.
-- **In progress / half-done:** Presentation performance P0–P2 plus GPU-state, scene
-  index, combined star mesh, deferred probe bake, taxi-paint strips, cached kit
-  combine (fence/forecourt/GSE/planters/chocks/belt loader), deferred ambient
-  `Resources.Load`, static-batch skip of moving roots including `antenna_dish`.
-  Air-phase geometry now lives in `AirsideFlightPath` (speed profiles, not
-  smoothstep). StreamingAssets glTF copies remain until a Mac Addressables bake is
-  proven. Standing “never stop hunting” performance goal is stopped at Bailey's
-  request.
+- **Do next:** **Mac Play, and this needs a Unity compile first — nothing in this
+  pass has been through the Unity editor.** Watch a full arrival and a full
+  departure at 1× and then at 4×, on both the overview and the follow camera.
+  What to judge: the aircraft should move continuously at both speeds (the 1 Hz
+  staircase is what made 4× look so much worse); taxi should hold one steady
+  speed out as well as in; a departure should stop at the hold-short bar clear of
+  the runway and then swing onto the centreline along a curve rather than
+  snapping round; an arrival should be a distant speck on final rather than
+  popping into existence. Ground vehicles, stand equipment and people are parked
+  by `AirsideFocusMode.AircraftOnly` — flip that to `false` to bring them back.
+- **In progress / half-done:** Aircraft-focus mode is a deliberate temporary
+  simplification at Bailey's request, not a deletion — one flag, one place.
+  **Not done, and it is the real answer to "there aren't enough taxiways / map
+  isn't big enough":** the field still has a single A1/A2 taxiway, so a departure
+  holding short and an arrival vacating the runway share the same chord. The
+  simulation stops them colliding on the runway, but they pass close on A1. That
+  needs a parallel taxiway with separate arrival-exit and departure-entry
+  connections, a longer runway and multiple exits — markings, lights and
+  thresholds all need eyes on them in Unity, so it was not attempted here.
+  Presentation performance P0–P2 and art sourcing carry over unchanged.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
   - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
-  - Takeoff rotation is derived (`AirsideFlightPath.RotateProgress` ≈ 0.64), not the
-    old hard-coded `0.48`. Gear retract, landing lights and runway spray all key off
-    it — do not reintroduce a literal
-  - `AirsideFlightPath` is presentation-only. Phase timing stays in Simulation, so
-    frame rate and these curves cannot change simulation outcomes
+  - Phase progress is read at the fractional presentation clock
+    (`AirsideAircraftMotion.PhaseProgress`), not sampled at the simulated second.
+    It is clamped to 1, which is what keeps a held departure parked at the
+    hold-short bar instead of sliding onto the runway ahead of its clearance
+  - A flight waiting on a reservation has `PhaseStartedAt` pushed forward every
+    stalled second, so a fractional read would creep forward and snap back. That
+    case falls through to the simulated value on purpose — do not "simplify" it
+  - The runway holding position lives in `AirportTaxiNetwork.RunwayHoldingPositionZ`
+    because both layers need it: presentation draws the bar there and the
+    simulation decides an arrival has vacated there. Do not fork the number
+  - Takeoff rotation is derived (`AirsideFlightPath.RotateProgress` ≈ 0.75), not a
+    literal. Gear retract, landing lights and runway spray all key off it
+  - `AirsideFlightPath` and `TaxiVisualPath` are presentation-only. Phase timing
+    stays in Simulation, so frame rate and these curves cannot change simulation
+    outcomes
+  - The horizon dome is a background-queue backdrop with no depth write. If it
+    goes back to opaque geometry, every aircraft past 165 m disappears again
   - Save schema unchanged
-- **Open question for Bailey:** none
+- **Open question for Bailey:** the taxiway/runway rebuild above is a scoped
+  follow-up — worth doing next, or is the aircraft loop the priority first?
 
 ---
 

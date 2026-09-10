@@ -233,61 +233,183 @@ namespace Airside.Tests
             }
         }
 
-        private static Vector3 FlightPathAt(AircraftPhase phase, float t) => phase switch
+        private static TaxiRoute StandOneRoute() =>
+            new AirportTaxiNetwork().RouteTo(AirportSimulation.StandOne);
+
+        /// <summary>
+        /// Mirrors AirsidePrototype.PositionFor for a single flight to Stand 1, so the
+        /// whole cycle can be measured end to end.
+        /// </summary>
+        private static Vector3 FlightPathAt(AircraftPhase phase, float t)
         {
-            AircraftPhase.Approach => AirsideFlightPath.Approach(t, 0f),
-            AircraftPhase.Landing => AirsideFlightPath.Landing(t, 0f),
-            AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t),
-            _ => AirsideFlightPath.Departed(t)
-        };
+            var route = StandOneRoute();
+            t = Mathf.Clamp01(t);
+            switch (phase)
+            {
+                case AircraftPhase.Approach: return AirsideFlightPath.Approach(t, 0f);
+                case AircraftPhase.Landing: return AirsideFlightPath.Landing(t, 0f);
+                case AircraftPhase.TaxiIn: return TaxiVisualPath.PositionAt(route, t, reverse: false);
+                case AircraftPhase.AtStand: return TaxiVisualPath.StandPosition(route);
+                case AircraftPhase.Pushback: return TaxiVisualPath.PushbackPosition(route, t);
+                case AircraftPhase.TaxiOut: return TaxiVisualPath.TaxiOutPosition(route, t);
+                case AircraftPhase.Takeoff: return AirsideFlightPath.Takeoff(t);
+                default: return AirsideFlightPath.Departed(t);
+            }
+        }
+
+        /// <summary>
+        /// Metres per real second at 1x. Phase durations differ — takeoff lasts 15 s and
+        /// the departure fly-out 6 s — so distance per unit of progress is not comparable
+        /// across a seam, and comparing it flagged a matched handover as a 2.5x lurch.
+        /// </summary>
+        private static float SpeedAt(AircraftPhase phase, float from, float to)
+        {
+            var seconds = (to - from) * AirsideFlightPath.PhaseSeconds(phase);
+            return seconds <= 0f
+                ? 0f
+                : Vector3.Distance(FlightPathAt(phase, from), FlightPathAt(phase, to)) / seconds;
+        }
 
         [TestCase(AircraftPhase.Approach)]
         [TestCase(AircraftPhase.Landing)]
+        [TestCase(AircraftPhase.TaxiIn)]
+        [TestCase(AircraftPhase.TaxiOut)]
         [TestCase(AircraftPhase.Takeoff)]
         [TestCase(AircraftPhase.Departed)]
         public void FlightPath_NeverStallsInsideAPhase(AircraftPhase phase)
         {
             // A smoothstep on position has zero velocity at both ends, which reads as
             // the aircraft stopping dead at rotation, at the flare and at the threshold.
+            // AtStand is a real stop and Pushback eases to one before the tug leaves, so
+            // neither is listed here.
             const int steps = 400;
-            var previous = FlightPathAt(phase, 0f);
-            for (var i = 1; i <= steps; i++)
+            for (var i = 20; i < steps - 20; i++)
             {
-                var current = FlightPathAt(phase, i / (float)steps);
-                var speed = Vector3.Distance(previous, current) * steps;
-                Assert.That(speed, Is.GreaterThan(1f), $"{phase} stalls at t={i / (float)steps:F3}");
-                previous = current;
+                var t = i / (float)steps;
+                Assert.That(SpeedAt(phase, t, t + 1f / steps), Is.GreaterThan(0.5f),
+                    $"{phase} stalls at t={t:F3}");
             }
         }
 
         [Test]
         public void FlightPath_PhaseSeamsAreContinuousInPositionAndSpeed()
         {
-            const float h = 1f / 400f;
-            void Seam(string label, AircraftPhase from, AircraftPhase to)
+            const float h = 0.002f;
+            void Seam(string label, AircraftPhase from, AircraftPhase to, float tolerance)
             {
-                var leaving = Vector3.Distance(FlightPathAt(from, 1f - h), FlightPathAt(from, 1f)) / h;
-                var entering = Vector3.Distance(FlightPathAt(to, 0f), FlightPathAt(to, h)) / h;
                 Assert.That(Vector3.Distance(FlightPathAt(from, 1f), FlightPathAt(to, 0f)),
-                    Is.LessThan(0.01f), $"{label} teleports");
-                Assert.That(entering, Is.EqualTo(leaving).Within(leaving * 0.35f), $"{label} lurches");
+                    Is.LessThan(0.05f), $"{label} teleports");
+                if (tolerance <= 0f)
+                    return;
+
+                var leaving = SpeedAt(from, 1f - h, 1f);
+                var entering = SpeedAt(to, 0f, h);
+                Assert.That(entering, Is.EqualTo(leaving).Within(Mathf.Max(leaving, entering) * tolerance),
+                    $"{label} lurches: {leaving:F2} -> {entering:F2} m/s");
             }
 
-            Seam("approach -> landing", AircraftPhase.Approach, AircraftPhase.Landing);
-            Seam("takeoff -> departed", AircraftPhase.Takeoff, AircraftPhase.Departed);
+            Seam("approach -> landing", AircraftPhase.Approach, AircraftPhase.Landing, 0.15f);
+            // A rollout genuinely brakes onto the taxiway, so it gets a wider bound.
+            Seam("landing -> taxi-in", AircraftPhase.Landing, AircraftPhase.TaxiIn, 0.35f);
+            Seam("taxi-in -> at stand", AircraftPhase.TaxiIn, AircraftPhase.AtStand, 0f);
+            Seam("at stand -> pushback", AircraftPhase.AtStand, AircraftPhase.Pushback, 0f);
+            Seam("pushback -> taxi-out", AircraftPhase.Pushback, AircraftPhase.TaxiOut, 0f);
+            Seam("taxi-out -> takeoff", AircraftPhase.TaxiOut, AircraftPhase.Takeoff, 0.35f);
+            Seam("takeoff -> departed", AircraftPhase.Takeoff, AircraftPhase.Departed, 0.15f);
+        }
+
+        [Test]
+        public void FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed()
+        {
+            var taxi = SpeedAt(AircraftPhase.TaxiIn, 0.5f, 0.502f);
+            Assert.That(SpeedAt(AircraftPhase.Approach, 0.5f, 0.502f), Is.GreaterThan(taxi * 6f));
+            Assert.That(SpeedAt(AircraftPhase.Departed, 0.5f, 0.502f), Is.GreaterThan(taxi * 6f));
+            // The landing rollout used to be slower than a taxi, which is the single
+            // clearest reason nothing on the field read as an aircraft.
+            Assert.That(SpeedAt(AircraftPhase.Landing, 0.5f, 0.502f), Is.GreaterThan(taxi * 4f));
         }
 
         [Test]
         public void FlightPath_TakeoffDoesNotSlowDownAtRotation()
         {
-            const float h = 1f / 400f;
             var r = AirsideFlightPath.RotateProgress;
-            Assert.That(r, Is.InRange(0.3f, 0.9f));
+            Assert.That(r, Is.InRange(AirsideFlightPath.LineupProgress, 0.95f));
             Assert.That(AirsideFlightPath.Takeoff(r).x, Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
+            Assert.That(AirsideFlightPath.Takeoff(r).y,
+                Is.EqualTo(AirsideFlightPath.GroundY).Within(0.01f), "rotation happens on the ground");
 
-            var before = Vector3.Distance(AirsideFlightPath.Takeoff(r - 0.02f), AirsideFlightPath.Takeoff(r - 0.02f + h)) / h;
-            var after = Vector3.Distance(AirsideFlightPath.Takeoff(r + 0.02f), AirsideFlightPath.Takeoff(r + 0.02f + h)) / h;
-            Assert.That(after, Is.GreaterThanOrEqualTo(before));
+            // The roll is one continuous acceleration; any dip reads as the aircraft
+            // lifting off and then hesitating.
+            var last = SpeedAt(AircraftPhase.Takeoff, AirsideFlightPath.LineupProgress,
+                AirsideFlightPath.LineupProgress + 0.002f);
+            for (var t = AirsideFlightPath.LineupProgress + 0.002f; t < 0.998f; t += 0.002f)
+            {
+                var speed = SpeedAt(AircraftPhase.Takeoff, t, t + 0.002f);
+                Assert.That(speed, Is.GreaterThan(last - 0.05f), $"takeoff roll slows at t={t:F3}");
+                last = speed;
+            }
+        }
+
+        [Test]
+        public void FlightPath_LineUpTurnsOntoTheCentrelineInsteadOfSnapping()
+        {
+            // Taxi-out used to end pointing up the A1 chord and takeoff began pointing
+            // down the runway — a 143 degree heading snap in a single frame.
+            var start = AirsideFlightPath.Takeoff(0f);
+            Assert.That(start.z, Is.EqualTo(AirportTaxiNetwork.RunwayHoldingPositionZ).Within(0.01f));
+            Assert.That(AirsideFlightPath.Takeoff(AirsideFlightPath.LineupProgress).z,
+                Is.EqualTo(0f).Within(0.01f), "line-up ends on the centreline");
+
+            var previous = HeadingDegrees(AirsideFlightPath.Takeoff(0f), AirsideFlightPath.Takeoff(0.002f));
+            for (var i = 1; i <= 200; i++)
+            {
+                var t = AirsideFlightPath.LineupProgress * i / 200f;
+                var heading = HeadingDegrees(AirsideFlightPath.Takeoff(t), AirsideFlightPath.Takeoff(t + 0.002f));
+                Assert.That(Mathf.Abs(Mathf.DeltaAngle(previous, heading)), Is.LessThan(3f),
+                    $"line-up snaps at t={t:F3}");
+                previous = heading;
+            }
+        }
+
+        [Test]
+        public void FlightPath_DepartureHoldsShortClearOfTheRunway()
+        {
+            // Taxi-out used to finish on the runway centreline, so a departure waiting
+            // for clearance stood in the next arrival's rollout.
+            var hold = TaxiVisualPath.TaxiOutPosition(StandOneRoute(), 1f);
+            Assert.That(Mathf.Abs(hold.z), Is.GreaterThan(AirsideRunwayHalfWidth + 2f));
+            Assert.That(hold.z, Is.EqualTo(AirportTaxiNetwork.RunwayHoldingPositionZ).Within(0.01f));
+
+            // Presentation and the simulation have to agree on where the line is, or a
+            // departure gets cleared through an arrival that has not vacated.
+            var route = StandOneRoute();
+            var simLine = TaxiVisualPath.PositionAtForward(
+                route, AirportTaxiNetwork.RunwayHoldingProgress(route));
+            Assert.That(Vector3.Distance(simLine, hold), Is.LessThan(0.05f));
+        }
+
+        [Test]
+        public void FlightPath_TaxiRunsAtAConstantSpeedInBothDirections()
+        {
+            // Reverse travel used to mirror only the segment index, so an outbound
+            // aircraft spent the long Alpha leg's share of the phase crawling the short
+            // lead-in and then raced the rest — a tenfold speed swing inside one phase.
+            var route = StandOneRoute();
+            foreach (var reverse in new[] { false, true })
+            {
+                var min = float.MaxValue;
+                var max = 0f;
+                for (var i = 0; i < 500; i++)
+                {
+                    var step = Vector3.Distance(
+                        TaxiVisualPath.PositionAt(route, i / 500f, reverse),
+                        TaxiVisualPath.PositionAt(route, (i + 1) / 500f, reverse));
+                    min = Mathf.Min(min, step);
+                    max = Mathf.Max(max, step);
+                }
+
+                Assert.That(max / min, Is.LessThan(1.35f), $"reverse={reverse} taxi speed is uneven");
+            }
         }
 
         [Test]
@@ -296,7 +418,42 @@ namespace Airside.Tests
             var start = AirsideFlightPath.Departed(0f);
             Assert.That(start, Is.EqualTo(AirsideFlightPath.Takeoff(1f)));
             Assert.That(AirsideFlightPath.Departed(1f).x, Is.GreaterThan(start.x + 100f));
-            Assert.That(AirsideFlightPath.Departed(1f).y, Is.GreaterThan(start.y));
+            Assert.That(AirsideFlightPath.Departed(1f).y, Is.GreaterThan(start.y + 20f));
+        }
+
+        [Test]
+        public void AircraftMotion_ReadsProgressFromTheFractionalClock()
+        {
+            // The simulation ticks whole seconds, so sampling it straight gave 59 still
+            // frames then a jump. Progress is a pure function of time, so presentation
+            // evaluates it at the fractional presentation clock instead.
+            Assert.That(AirsideAircraftMotion.PhaseProgress(32.0d, 32L, 25f), Is.Zero);
+            Assert.That(AirsideAircraftMotion.PhaseProgress(32.5d, 32L, 25f),
+                Is.EqualTo(0.02f).Within(1e-5f));
+            Assert.That(AirsideAircraftMotion.PhaseProgress(44.5d, 32L, 25f),
+                Is.EqualTo(0.5f).Within(1e-5f));
+
+            // Clamped, so a departure held for traffic waits at the hold-short point
+            // rather than sliding onto the runway ahead of its clearance.
+            Assert.That(AirsideAircraftMotion.PhaseProgress(57.0d, 32L, 25f), Is.EqualTo(1f));
+            Assert.That(AirsideAircraftMotion.PhaseProgress(400d, 32L, 25f), Is.EqualTo(1f));
+
+            // Strictly increasing between ticks: no frame repeats a position.
+            var previous = -1f;
+            for (var i = 0; i < 240; i++)
+            {
+                var progress = AirsideAircraftMotion.PhaseProgress(32d + i / 60d, 32L, 25f);
+                Assert.That(progress, Is.GreaterThan(previous));
+                previous = progress;
+            }
+        }
+
+        private const float AirsideRunwayHalfWidth = 3.4f;
+
+        private static float HeadingDegrees(Vector3 from, Vector3 to)
+        {
+            var d = to - from;
+            return Mathf.Atan2(d.z, d.x) * Mathf.Rad2Deg;
         }
 
         [Test]

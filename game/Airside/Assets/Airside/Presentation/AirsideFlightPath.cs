@@ -4,28 +4,97 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Presentation-only flight geometry for the air phases. Simulation timing stays
-    /// authoritative — these curves only decide where the model sits inside a phase.
+    /// Presentation-only flight geometry. Simulation timing stays authoritative —
+    /// these curves only decide where the model sits inside a phase.
     ///
-    /// Every phase is built from a speed profile rather than a smoothstep on position.
-    /// Smoothstep starts and ends at zero velocity, which read as the aircraft stopping
-    /// dead at rotation, at the flare and at the runway threshold.
+    /// Two rules drive the shapes here:
+    ///
+    /// 1. Every phase is built from a speed profile, never a smoothstep on position.
+    ///    Smoothstep starts and ends at zero velocity, which reads as the aircraft
+    ///    stopping dead at rotation, at the flare and at the runway threshold.
+    /// 2. Distances are sized against the phase durations in
+    ///    <see cref="AircraftOperation"/> so that an aircraft in the air moves at
+    ///    roughly ten times taxi speed. The previous distances made a landing
+    ///    rollout slower than a taxi, which is why nothing read as an aircraft.
     /// </summary>
     public static class AirsideFlightPath
     {
-        // Runway axis landmarks shared by takeoff, landing and the taxi network.
-        public const float TaxiExitX = -24f;
-        public const float RotateX = 10f;
-        public const float TakeoffEndX = 52f;
-        public const float TakeoffEndY = 12f;
-        public const float GroundY = 0.7f;
-        public const float DepartedEndX = 240f;
-        public const float DepartedEndY = 58f;
-        public const float TouchdownProgress = 0.28f;
+        /// <summary>Simulated seconds each phase lasts, mirroring AircraftOperation.</summary>
+        public static float PhaseSeconds(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Approach => 20f,
+            AircraftPhase.Landing => 12f,
+            AircraftPhase.TaxiIn => 25f,
+            AircraftPhase.AtStand => 45f,
+            AircraftPhase.Pushback => 12f,
+            AircraftPhase.TaxiOut => 25f,
+            AircraftPhase.Takeoff => 15f,
+            _ => DepartureFlyOutSeconds
+        };
 
-        // Takeoff roll accelerates from a slow lineup to rotation speed.
-        private const float TakeoffStartSpeed = 0.18f;
-        private const float TakeoffEndSpeed = 1.85f;
+        /// <summary>
+        /// Departed has no simulated duration, so presentation gives it one. It matches
+        /// AirportSimulation.DepartureResetSeconds, the window before the slot respawns.
+        /// </summary>
+        public const float DepartureFlyOutSeconds = 6f;
+
+        public const float GroundY = 0.7f;
+
+        // Runway axis landmarks. The taxi network meets the runway at x = -24.
+        public const float RunwayEntryX = -24f;
+        public const float RotateX = 28f;
+        public const float TakeoffEndX = 96f;
+        public const float TakeoffEndY = 22f;
+        public const float DepartedEndX = 246f;
+        public const float DepartedEndY = 62f;
+
+        // Arrivals join far enough out that they fly in from the distance instead of
+        // popping into existence just off the runway end.
+        public const float ApproachStartX = -430f;
+        public const float ApproachStartY = 78f;
+        public const float ShortFinalX = -160f;
+        public const float ShortFinalY = 12f;
+        public const float TouchdownX = -42f;
+        public const float TouchdownProgress = 0.8f;
+
+        /// <summary>
+        /// Hold short of the runway, on the A1 chord between the runway entry and the
+        /// Alpha junction. Taxi-out used to stop on the runway centreline itself, so a
+        /// departure waiting for clearance sat in the path of the next landing. The
+        /// simulation owns this distance — it is also where an arrival counts as vacated.
+        /// </summary>
+        public const float HoldShortZ = AirportTaxiNetwork.RunwayHoldingPositionZ;
+
+        public static readonly float HoldShortX = HoldShortXOnChord();
+
+        /// <summary>
+        /// Share of the takeoff phase spent turning onto the runway. Sized so the arc is
+        /// walked at roughly the taxi speed the aircraft arrives with.
+        /// </summary>
+        public const float LineupProgress = 0.4f;
+
+        // Line-up turn: a constant-radius arc from the hold-short point onto the
+        // centreline. An arc keeps the tangent rotating smoothly, so the nose sweeps
+        // through the turn instead of snapping 143 degrees at the phase boundary.
+        private static readonly float LineupRadius = HoldShortZ / 1.8f;
+        private static readonly float LineupCentreX = HoldShortX + 0.6f * LineupRadius;
+        private static readonly float LineupCentreZ = HoldShortZ - 0.8f * LineupRadius;
+        private const float LineupStartAngle = 2.2142975f;  // 126.87 degrees
+        private const float LineupSweep = 2.4980915f;       // 143.13 degrees
+
+        /// <summary>Where the line-up arc puts the aircraft on the centreline.</summary>
+        public static readonly float LineupEndX = LineupCentreX;
+
+        // Roll speeds are chosen so the roll enters at the taxi speed the line-up arc
+        // leaves with, then accelerates all the way to the climb. The roll covers far
+        // more ground than the arc in less time, so its start ratio has to be small.
+        private const float RollStartSpeed = 0.066f;
+        private const float RollEndSpeed = 1f;
+
+        // Braking profile for the landing rollout, ending at taxi speed so the handover
+        // into TaxiIn does not lurch.
+        private const float RolloutStartSpeed = 1f;
+        private const float RolloutEndSpeed = 0.15f;
 
         /// <summary>Phase progress at which the takeoff geometry leaves the ground.</summary>
         public static readonly float RotateProgress = SolveTakeoffProgressForX(RotateX);
@@ -56,60 +125,61 @@ namespace Airside.Presentation
             return 1f - Mathf.Exp(-rate * deltaTime);
         }
 
-        /// <summary>
-        /// Final approach: steady descent at near-constant speed onto the flare gate.
-        /// </summary>
+        /// <summary>Long straight-in final, descending at near-constant speed.</summary>
         public static Vector3 Approach(float t, float laneOffset)
         {
-            var s = DistanceFraction(t, 1.08f, 0.92f);
+            var s = DistanceFraction(t, 1.06f, 0.94f);
             return new Vector3(
-                Mathf.Lerp(-72f, -50f, s),
-                Mathf.Lerp(7.5f, 1.7f, s),
-                Mathf.Lerp(laneOffset, laneOffset * 0.35f, s));
+                Mathf.Lerp(ApproachStartX, ShortFinalX, s),
+                Mathf.Lerp(ApproachStartY, ShortFinalY, s),
+                Mathf.Lerp(laneOffset * 4f, laneOffset, s));
         }
 
         /// <summary>
-        /// Flare then braked rollout to the west taxi exit. Horizontal speed carries
-        /// through touchdown; only the sink rate is arrested, which is what a flare
-        /// actually does. The rollout brakes toward taxi speed instead of stopping dead.
+        /// Descent to the flare, touchdown, then a braked rollout to the runway exit.
+        /// Horizontal speed carries through touchdown; only the sink rate is arrested,
+        /// which is what a flare actually does. The rollout brakes to taxi speed so the
+        /// handover into TaxiIn is continuous.
         /// </summary>
         public static Vector3 Landing(float t, float laneOffset)
         {
             var u = Mathf.Clamp01(t);
-            var z = laneOffset * 0.2f;
             if (u < TouchdownProgress)
             {
                 var f = u / TouchdownProgress;
                 // Vertical speed reaches zero exactly at the wheels-down point.
                 var sink = 1f - (1f - f) * (1f - f);
                 return new Vector3(
-                    Mathf.Lerp(-50f, -46f, DistanceFraction(f, 1.05f, 0.95f)),
-                    Mathf.Lerp(1.7f, GroundY, sink),
-                    Mathf.Lerp(z, z * 0.5f, f));
+                    Mathf.Lerp(ShortFinalX, TouchdownX, DistanceFraction(f, 1.05f, 0.95f)),
+                    Mathf.Lerp(ShortFinalY, GroundY, sink),
+                    Mathf.Lerp(laneOffset, 0f, f));
             }
 
             var r = (u - TouchdownProgress) / (1f - TouchdownProgress);
-            var rollout = DistanceFraction(r, 1f, 0.12f);
-            return new Vector3(
-                Mathf.Lerp(-46f, TaxiExitX, rollout),
-                GroundY,
-                Mathf.Lerp(z * 0.5f, 0f, rollout));
+            var rollout = DistanceFraction(r, RolloutStartSpeed, RolloutEndSpeed);
+            return new Vector3(Mathf.Lerp(TouchdownX, RunwayEntryX, rollout), GroundY, 0f);
         }
 
         /// <summary>
-        /// Lineup, accelerating ground roll, rotate, then climb-out — one continuous
-        /// speed ramp along the runway axis, so the aircraft never slows at rotation.
+        /// Line-up turn off the hold-short point, then an accelerating roll, rotate and
+        /// climb. One continuous speed ramp along the runway axis after the turn, so the
+        /// aircraft never slows at rotation.
         /// </summary>
         public static Vector3 Takeoff(float t)
         {
-            var s = DistanceFraction(t, TakeoffStartSpeed, TakeoffEndSpeed);
-            var x = Mathf.Lerp(TaxiExitX, TakeoffEndX, s);
+            var u = Mathf.Clamp01(t);
+            if (u < LineupProgress)
+            {
+                // Arc length is linear in angle, so a linear sweep is a constant speed.
+                var angle = LineupStartAngle + u / LineupProgress * LineupSweep;
+                return new Vector3(
+                    LineupCentreX + LineupRadius * Mathf.Cos(angle),
+                    GroundY,
+                    LineupCentreZ + LineupRadius * Mathf.Sin(angle));
+            }
 
-            // Lineup bend north, away from the off-field exit south of Alpha. Fades out
-            // well before rotation so the climb tracks the centreline.
-            var bend = Mathf.Clamp01(1f - s / 0.09f);
-            var z = 0.85f * bend * bend;
-
+            var r = (u - LineupProgress) / (1f - LineupProgress);
+            var x = Mathf.Lerp(LineupEndX, TakeoffEndX, DistanceFraction(r, RollStartSpeed, RollEndSpeed));
             var y = GroundY;
             if (x > RotateX)
             {
@@ -118,27 +188,27 @@ namespace Airside.Presentation
                 y = Mathf.Lerp(GroundY, TakeoffEndY, climb * Mathf.Sqrt(climb));
             }
 
-            return new Vector3(x, y, z);
+            return new Vector3(x, y, 0f);
         }
 
         /// <summary>
-        /// Climb-out after the runway. The previous build teleported the model to a
-        /// fixed point and froze it there, which read as the aircraft vanishing in
-        /// mid-air. It now keeps flying the departure track and leaves under power.
+        /// Climb-out after the runway. The aircraft used to teleport to a fixed point and
+        /// freeze there in frame; it now keeps flying the departure track until the slot
+        /// is recycled.
         /// </summary>
         public static Vector3 Departed(float t)
         {
             return new Vector3(
-                Mathf.Lerp(TakeoffEndX, DepartedEndX, DistanceFraction(t, 1f, 1.6f)),
-                Mathf.Lerp(TakeoffEndY, DepartedEndY, DistanceFraction(t, 1.25f, 0.7f)),
+                Mathf.Lerp(TakeoffEndX, DepartedEndX, DistanceFraction(t, 1f, 1.3f)),
+                Mathf.Lerp(TakeoffEndY, DepartedEndY, DistanceFraction(t, 1.2f, 0.9f)),
                 0f);
         }
 
         /// <summary>
         /// Wheel speed relative to taxi speed. Zero once the wheels leave the ground, so
         /// tires stop instead of freewheeling in the air, and the takeoff roll and the
-        /// landing rollout spin up and wind down with the aircraft rather than sitting
-        /// at one fixed rate for the whole phase.
+        /// landing rollout spin up and wind down with the aircraft rather than sitting at
+        /// one fixed rate for the whole phase.
         /// </summary>
         public static float WheelSpeedFactor(AircraftPhase phase, float progress)
         {
@@ -146,13 +216,17 @@ namespace Airside.Presentation
             switch (phase)
             {
                 case AircraftPhase.Takeoff:
-                    return t >= RotateProgress ? 0f : Mathf.Lerp(0.25f, 3.2f, t / RotateProgress);
+                    if (t >= RotateProgress)
+                        return 0f;
+                    return t < LineupProgress
+                        ? 1f
+                        : Mathf.Lerp(1f, 6f, (t - LineupProgress) / (RotateProgress - LineupProgress));
                 case AircraftPhase.Landing:
                     return t < TouchdownProgress
                         ? 0f
-                        : Mathf.Lerp(3.2f, 0.3f, (t - TouchdownProgress) / (1f - TouchdownProgress));
+                        : Mathf.Lerp(6f, 0.6f, (t - TouchdownProgress) / (1f - TouchdownProgress));
                 case AircraftPhase.Pushback:
-                    return 0.55f;
+                    return 0.4f;
                 case AircraftPhase.TaxiIn:
                 case AircraftPhase.TaxiOut:
                     return 1f;
@@ -170,17 +244,18 @@ namespace Airside.Presentation
                 case AircraftPhase.Takeoff:
                 {
                     var x = Takeoff(t).x;
-                    if (x <= RotateX)
+                    if (t < LineupProgress || x <= RotateX)
                         return 0f;
                     var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
-                    return Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.2f)));
+                    return Mathf.Lerp(0f, -10f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.4f)));
                 }
                 case AircraftPhase.Approach:
                     return Mathf.Lerp(-2.5f, -3.5f, t);
                 case AircraftPhase.Landing:
                     return t < TouchdownProgress
                         ? Mathf.Lerp(-2.5f, -4.2f, t / TouchdownProgress)
-                        : Mathf.Lerp(-4.2f, 0f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, (t - TouchdownProgress) / 0.22f)));
+                        : Mathf.Lerp(-4.2f, 0f, Mathf.SmoothStep(0f, 1f,
+                            Mathf.Min(1f, (t - TouchdownProgress) / 0.09f)));
                 case AircraftPhase.Departed:
                     return Mathf.Lerp(-9f, -4f, t);
                 default:
@@ -188,14 +263,27 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Hold short sits on the A1 chord from the runway entry (-24, 0) to the Alpha
+        /// junction (-12, 9), at the point where it clears the runway edge.
+        /// </summary>
+        private static float HoldShortXOnChord()
+        {
+            var entry = AirportTaxiNetwork.RunwayEnd;
+            var junction = AirportTaxiNetwork.Junction;
+            var span = junction.Z - entry.Z;
+            var f = Mathf.Approximately(span, 0f) ? 0f : (HoldShortZ - entry.Z) / span;
+            return Mathf.Lerp(entry.X, junction.X, f);
+        }
+
         private static float SolveTakeoffProgressForX(float targetX)
         {
-            var lo = 0f;
+            var lo = LineupProgress;
             var hi = 1f;
             for (var i = 0; i < 40; i++)
             {
                 var mid = (lo + hi) * 0.5f;
-                if (Mathf.Lerp(TaxiExitX, TakeoffEndX, DistanceFraction(mid, TakeoffStartSpeed, TakeoffEndSpeed)) < targetX)
+                if (Takeoff(mid).x < targetX)
                     lo = mid;
                 else
                     hi = mid;

@@ -5,6 +5,34 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft move like aircraft, and 1× and 4× are both smooth.** The renderer
+  sampled the simulation's whole-second phase clock, so an aircraft moved in 1 Hz
+  steps: **1475 of 1499 frames** of a taxi were frozen and the 1476th jumped
+  1.86 m. At 4× the jumps were four times longer, which is why the fast speed
+  looked so much worse. Phase progress is a pure function of time, so
+  `AirsideAircraftMotion.PhaseProgress` now evaluates it at the fractional
+  presentation clock instead of interpolating stale samples — exact, no lag, no
+  per-aircraft history. **Still frames go to 0** at both speeds, the largest
+  single-frame step drops from 20.32 m to 0.42 m on takeoff, and the worst change
+  between neighbouring frames falls from 1.000 to 0.091. Air-phase distances are
+  now sized against the phase durations, so speeds read as an aircraft:
+  approach 13.1–14.7 m/s, landing 13.1 braking to 2.1, taxi 1.9, takeoff 1.5
+  accelerating to 25.1, climb-out 23.0–28.8. The landing rollout used to be
+  *slower* than a taxi. Takeoff no longer snaps 143° at the phase boundary — it
+  turns onto the centreline along a constant-radius line-up arc, worst heading
+  step 0.72°. Taxi is parameterised by distance in both directions (reverse used
+  to mirror only the segment index, a tenfold speed swing within one phase) and
+  route corners are filleted, worst heading step 1.28°. A departure holds short
+  **3.10 m clear of the runway edge** instead of on the centreline, and a
+  departure fly-out replaces the teleport-and-freeze. Aircraft-focus mode
+  (`AirsideFocusMode`) parks ground vehicles, stand equipment and people so the
+  aircraft loop can be judged on its own. The horizon dome was opaque and
+  depth-writing, hiding everything past its 165 m radius, so an arrival popped
+  into existence through the sky wall; it is now a background-queue backdrop and
+  the star sphere sits beyond the flight envelope. Evidence: 77 assertions in
+  `work/flightcheck`, 12 new EditMode tests, `scripts/test-domain.sh` **181
+  passed**.
+
 - **An arrival keeps the runway until it is past the holding position.** The
   runway was released the instant the landing rollout ended, while the aircraft
   was still on the centreline, so a waiting departure could be cleared and start

@@ -1,32 +1,27 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — plane/ground dynamics polish)
-- **Branch:** `cursor/plane-ground-dynamics-polish-0c44` (off latest `main`)
-- **Do next:** On a Mac with Unity 6.3 LTS: `git checkout cursor/plane-ground-dynamics-polish-0c44`,
-  run `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
+- **Last updated:** 2026-09-10 (Cursor — plane/ground polish follow-up)
+- **Branch:** `cursor/plane-ground-dynamics-polish-0c44` (PR #191)
+- **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
+  `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
   overview and follow at 1× and 4×. Confirm authored Adelaide ground (no 16 m grid),
-  ATR v01 (not v06), eased gear, distance-based tires, one-shot touchdown smoke, and
-  pause freeze. Inspect Player.log for missing shader/maps. Merge only after that
-  Unity evidence.
-- **In progress / half-done:** Visual-quality + dynamics pass is implemented and
-  headless-checked. Unity Play, packaged Mac build and screenshot/video evidence
-  are still required — this Cloud Linux VM has no Unity editor.
+  ATR v01, eased gear, distance tires, one-shot touchdown smoke, pause freeze
+  (aircraft + beacon + camera shake). Inspect Player.log. Merge only after that.
+- **In progress / half-done:** Visual + dynamics pass implemented and headless-
+  checked. Follow-up hardening pushed: pause freezes follow easing / touchdown
+  shake / beacon blink; ATR follow distances opened; softer touchdown shake;
+  pitch/ground-speed continuity EditMode tests added. Unity Play / Mac build
+  still required — no editor on this Cloud Linux VM.
 - **Watch for / assumptions:**
   - Bare field still bypasses Kingscote `AirsideTerrainGround.TryBuild`; Adelaide
-    ground is `AirsideAdelaideGround` + mesh/shader (ADR 0035), not a stretched
-    Terrain prefab
-  - Operational plateau stays dead level across X [-1580, 1580] × Z [-90, 90]
-  - `Textures/Terrain/` PNGs now sync into StreamingAssets for the mesh path
-  - Touchdown smoke builds even when `ShowWorldProps` is false
+    ground is `AirsideAdelaideGround` + mesh/shader (ADR 0035)
+  - `AirsideCameraController.FreezePresentation` is driven from `_paused`
+  - Touchdown puff half-track is `AirsideReusableMotion.MainGearHalfTrackMetres`
   - Gear bias eases over `GearTransitionProgress` after `GearRetractProgress`
-  - Tire spin uses `GroundSpeedMetresPerSecond` / radius (0.37 m main, 0.31 m nose)
-  - Oleo settle is presentation-only on the motion root
-  - Pre-existing headless flakes still red on main and this branch:
-    `Taxiing_ReleasesEachSegmentBeforeReservingTheNext`,
-    `TaxiRoutes_UseDoglegThroatBeforeStandLeadIn`,
-    `AwaySummary_ReportsRouteIncomeAndReputationChange`,
-    `Weights_KeepDryGrassDominantAcrossTheOverviewCore` (0.594 vs ≥0.60)
-  - Combined pads / paint collector names / circuit skip / save schema unchanged
+  - Tire spin uses ground speed / radius (0.37 m main, 0.31 m nose)
+  - Pre-existing headless flakes still red on main and this branch (taxi / Away /
+    dry-grass 0.594)
+  - Combined pads / paint collectors / circuit skip / save schema unchanged
 - **Decisions:** ADR 0035 (Adelaide authored ground mesh). ADR 0032–0034 still apply.
 - **Open question for Bailey:** keep dormant building/GSE spawners in
   `AirsidePrototype` for a later restore, or delete that code now that the

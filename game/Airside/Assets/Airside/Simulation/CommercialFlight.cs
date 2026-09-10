@@ -76,6 +76,11 @@ namespace Airside.Simulation
                     yield return AirportSimulation.Runway;
                     break;
                 case AircraftPhase.TaxiIn:
+                    // An arrival still inside the runway strip has not vacated. Releasing
+                    // the runway the instant the rollout ended let a departure be cleared
+                    // and start its roll while the arrival was still on the centreline.
+                    if (!HasVacatedRunway(at))
+                        yield return AirportSimulation.Runway;
                     // Single-file A1/A2 corridor — dual commercials must not meet head-on.
                     yield return AirportTaxiNetwork.Corridor;
                     yield return SegmentForPhase(AircraftPhase.TaxiIn, at);
@@ -106,6 +111,19 @@ namespace Airside.Simulation
                         yield return AssignedStand;
                     break;
             }
+        }
+
+        /// <summary>
+        /// True once an inbound aircraft is past the A1 holding position. Only meaningful
+        /// while taxiing in; every other phase is either on the runway by right or well
+        /// clear of it.
+        /// </summary>
+        public bool HasVacatedRunway(SimulationTime at)
+        {
+            if (Operation.Phase != AircraftPhase.TaxiIn)
+                return true;
+
+            return Operation.PhaseProgress(at) >= AirportTaxiNetwork.RunwayHoldingProgress(TaxiRoute);
         }
 
         private bool StillOccupyingStandOnTaxiOut(SimulationTime at)

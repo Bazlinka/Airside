@@ -5,6 +5,19 @@ change it describes.
 
 ## Unreleased
 
+- **An arrival keeps the runway until it is past the holding position.** The
+  runway was released the instant the landing rollout ended, while the aircraft
+  was still on the centreline, so a waiting departure could be cleared and start
+  its takeoff roll straight through it — the "multiple aircraft on the runway"
+  Bailey reported. `AirportTaxiNetwork` now owns the holding-position distance
+  (`RunwayHoldingPositionZ`, 6.5 m from the centreline) and derives the route
+  progress that crosses it, and a flight taxiing in holds `RUNWAY-09-27` until
+  it does. No deadlock: a departure holding short still releases the corridor, so
+  the arrival always has somewhere to vacate to. Three new EditMode tests pin the
+  hold, the holding line landing on A1 for all three stands, and a 40-cycle
+  two-flight soak in which the runway never has more than one aircraft on it.
+  Evidence: `scripts/test-domain.sh` **181 passed**.
+
 - **Flight realism: continuous speed, no mid-air freeze, smoother turns.** New
   `AirsideFlightPath` builds every air phase from a speed profile instead of a
   smoothstep on position, so nothing starts or ends at zero velocity. Takeoff is

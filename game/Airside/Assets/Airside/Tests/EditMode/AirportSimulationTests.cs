@@ -185,6 +185,102 @@ namespace Airside.Tests
                 "taxi-in should visit A1, A2, throat and lead-in in order");
         }
 
+        [Test]
+        public void ArrivingFlight_KeepsTheRunwayUntilItIsPastTheHoldingPosition()
+        {
+            // The runway used to be released the instant the rollout ended, while the
+            // aircraft was still on the centreline, so a waiting departure could be
+            // cleared and start its roll straight through it.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
+
+            var sawHeldWhileTaxiing = false;
+            var releasedBeforeTheLine = false;
+            for (var second = 1; second <= 400; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+
+                var flight = simulation.Flights[0];
+                if (flight.Operation.Phase != AircraftPhase.TaxiIn)
+                    continue;
+
+                var ownsRunway = FlightOwns(simulation, AirportSimulation.Runway);
+                if (flight.HasVacatedRunway(clock.Now))
+                {
+                    if (ownsRunway)
+                        Assert.Fail("the runway is still held after the holding position");
+                }
+                else if (ownsRunway)
+                {
+                    sawHeldWhileTaxiing = true;
+                }
+                else
+                {
+                    releasedBeforeTheLine = true;
+                }
+            }
+
+            Assert.That(sawHeldWhileTaxiing, Is.True, "runway not held while inside the strip");
+            Assert.That(releasedBeforeTheLine, Is.False, "runway released before the holding position");
+        }
+
+        [Test]
+        public void RunwayHoldingPosition_IsClearOfTheRunwayStripOnEveryStandRoute()
+        {
+            var network = new AirportTaxiNetwork();
+            foreach (var stand in new[]
+                     {
+                         AirportSimulation.StandOne, AirportSimulation.StandTwo, AirportSimulation.StandThree
+                     })
+            {
+                var route = network.RouteTo(stand);
+                var progress = AirportTaxiNetwork.RunwayHoldingProgress(route);
+
+                Assert.That(progress, Is.GreaterThan(0f), $"{stand.Value} holding line is at the runway");
+                Assert.That(progress, Is.LessThan(1f), $"{stand.Value} holding line is past the stand");
+                // It must land on the first segment, the one that leaves the runway.
+                Assert.That(route.ForwardSegmentIndex(progress), Is.Zero, $"{stand.Value} holding line left A1");
+            }
+        }
+
+        [Test]
+        public void TwoFlights_NeverBothHoldTheRunway()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
+
+            var sawTwoFlights = false;
+            for (var second = 1; second <= 20000 && simulation.CompletedCycles < 40; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                // Accepting routes is what unlocks the second concurrent flight.
+                if (simulation.Routes.Pending != null)
+                    simulation.AcceptPendingRoute();
+                sawTwoFlights |= simulation.Flights.Count >= 2;
+
+                var onRunway = 0;
+                for (var i = 0; i < simulation.Flights.Count; i++)
+                {
+                    var flight = simulation.Flights[i];
+                    var phase = flight.Operation.Phase;
+                    var occupying = phase == AircraftPhase.Landing
+                                    || phase == AircraftPhase.Takeoff
+                                    || (phase == AircraftPhase.TaxiIn && !flight.HasVacatedRunway(clock.Now));
+                    if (occupying)
+                        onRunway++;
+                }
+
+                Assert.That(onRunway, Is.LessThanOrEqualTo(1),
+                    $"{onRunway} aircraft on the runway at second {second}");
+            }
+
+            Assert.That(sawTwoFlights, Is.True, "never reached two concurrent flights");
+            Assert.That(simulation.ReservationConflicts, Is.Zero);
+            Assert.That(simulation.CompletedCycles, Is.EqualTo(40), "the loop deadlocked");
+        }
+
         private static bool FlightOwns(AirportSimulation simulation, StableId segment)
         {
             return simulation.Reservations.TryGetOwner(segment, out var owner) &&

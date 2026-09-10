@@ -50,11 +50,16 @@ namespace Airside.Simulation
         /// <summary>
         /// Maps 0..1 phase progress to a segment index using chord length so short
         /// lead-ins are not as slow as long Alpha legs.
+        ///
+        /// Reverse travel covers the same chords from the other end, so its distance is
+        /// measured from the far end of the route. Mirroring only the index made an
+        /// outbound aircraft spend the long Alpha leg's share of the phase on the short
+        /// lead-in, then cover Alpha in the lead-in's share — a tenfold speed swing, and
+        /// segment reservations that did not line up with where the aircraft was.
         /// </summary>
         public int SegmentIndexAt(double progress, bool reverse)
         {
-            var forward = ForwardSegmentIndex(progress);
-            return reverse ? SegmentIds.Count - 1 - forward : forward;
+            return ForwardSegmentIndex(reverse ? 1d - progress : progress);
         }
 
         public int ForwardSegmentIndex(double progress)
@@ -121,6 +126,14 @@ namespace Airside.Simulation
         public static readonly TaxiPoint AwayHold = new(-60f, -30f);
         public static readonly TaxiPoint RunUpBayPoint = new(5f, 13f);
 
+        /// <summary>
+        /// Distance from the runway centreline to the A1 holding position, in metres.
+        /// An arrival has not vacated the runway until it is past this point, and a
+        /// departure waits here for its clearance. Presentation reads the same number so
+        /// the painted hold-short bar and the reservation boundary cannot drift apart.
+        /// </summary>
+        public const float RunwayHoldingPositionZ = 6.5f;
+
         /// <summary>Seconds GT spends on each Alpha leg — shared pacing with commercials.</summary>
         public const long AlphaLegSeconds = 14;
         public const long LeadInLegSeconds = 10;
@@ -155,6 +168,26 @@ namespace Airside.Simulation
             if (stand.Equals(AirportSimulation.StandTwo)) return StandTwoLeadIn;
             if (stand.Equals(AirportSimulation.StandThree)) return StandThreeLeadIn;
             throw new ArgumentOutOfRangeException(nameof(stand));
+        }
+
+        /// <summary>
+        /// Forward route progress at which the aircraft crosses the runway holding
+        /// position on the first segment. Inbound, this is where the runway is finally
+        /// vacated; outbound, it is where a departure stops and waits.
+        /// </summary>
+        public static float RunwayHoldingProgress(TaxiRoute route)
+        {
+            if (route == null)
+                throw new ArgumentNullException(nameof(route));
+
+            var entry = route.Points[0];
+            var next = route.Points[1];
+            var span = next.Z - entry.Z;
+            var f = Math.Abs(span) < 0.0001f
+                ? 1f
+                : (RunwayHoldingPositionZ - entry.Z) / span;
+            f = Math.Max(0f, Math.Min(1f, f));
+            return Math.Min(1f, f * route.SegmentLengths[0] / route.TotalLength);
         }
 
         public static TaxiPoint StandPoint(StableId stand) => new(17f, StandZ(stand));

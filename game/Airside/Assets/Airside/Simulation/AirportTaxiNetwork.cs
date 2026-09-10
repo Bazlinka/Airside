@@ -102,6 +102,8 @@ namespace Airside.Simulation
     {
         public static readonly StableId AlphaOne = new("TAXI-A1");
         public static readonly StableId AlphaTwo = new("TAXI-A2");
+        public static readonly StableId BravoExit = new("TAXI-B-EXIT");
+        public static readonly StableId BravoOne = new("TAXI-B1");
         public static readonly StableId StandOneLeadIn = new("LEAD-IN-1");
         public static readonly StableId StandTwoLeadIn = new("LEAD-IN-2");
         public static readonly StableId StandThreeLeadIn = new("LEAD-IN-3");
@@ -119,12 +121,14 @@ namespace Airside.Simulation
         public static readonly StableId Corridor = new("TAXI-CORRIDOR");
 
         // Canonical waypoints shared by commercial routes and ground-traffic circuits.
-        public static readonly TaxiPoint RunwayEnd = new(-24f, 0f);
-        public static readonly TaxiPoint Junction = new(-12f, 9f);
-        public static readonly TaxiPoint AlphaEnd = new(8f, 9f);
-        public static readonly TaxiPoint OffFieldExit = new(-36f, -4f);
-        public static readonly TaxiPoint AwayHold = new(-60f, -30f);
-        public static readonly TaxiPoint RunUpBayPoint = new(5f, 13f);
+        public static readonly TaxiPoint RunwayEnd = new(AirportLayout.DepartureEntryX, 0f);
+        public static readonly TaxiPoint ArrivalRunwayExit = new(AirportLayout.ArrivalExitX, 0f);
+        public static readonly TaxiPoint Junction = new(AirportLayout.AlphaJunctionX, AirportLayout.TaxiwayAlphaZ);
+        public static readonly TaxiPoint AlphaEnd = new(AirportLayout.TaxiwayEastX, AirportLayout.TaxiwayAlphaZ);
+        public static readonly TaxiPoint BravoEnd = new(AirportLayout.TaxiwayEastX, AirportLayout.TaxiwayBravoZ);
+        public static readonly TaxiPoint OffFieldExit = new(AirportLayout.EastThresholdX + 18f, -6f);
+        public static readonly TaxiPoint AwayHold = new(-110f, -34f);
+        public static readonly TaxiPoint RunUpBayPoint = new(5f, 16f);
 
         /// <summary>
         /// Distance from the runway centreline to the A1 holding position, in metres.
@@ -135,20 +139,23 @@ namespace Airside.Simulation
         public const float RunwayHoldingPositionZ = 6.5f;
 
         /// <summary>Seconds GT spends on each Alpha leg — shared pacing with commercials.</summary>
-        public const long AlphaLegSeconds = 14;
+        public const long AlphaLegSeconds = 16;
         public const long LeadInLegSeconds = 10;
         public const long RunUpHoldSeconds = 18;
 
-        public TaxiRoute RouteTo(StableId stand)
+        public StandTaxiRoutes RoutesTo(StableId stand)
         {
             if (stand.Equals(AirportSimulation.StandOne))
-                return Create("A1 → A2 → throat → Stand 1", StandOneLeadIn, StandZ(stand));
+                return CreateRoutes("Stand 1", StandOneLeadIn, StandZ(stand));
             if (stand.Equals(AirportSimulation.StandTwo))
-                return Create("A1 → A2 → throat → Stand 2", StandTwoLeadIn, StandZ(stand));
+                return CreateRoutes("Stand 2", StandTwoLeadIn, StandZ(stand));
             if (stand.Equals(AirportSimulation.StandThree))
-                return Create("A1 → A2 → throat → Stand 3", StandThreeLeadIn, StandZ(stand));
+                return CreateRoutes("Stand 3", StandThreeLeadIn, StandZ(stand));
             throw new ArgumentOutOfRangeException(nameof(stand), "Stand is not connected to the taxi network.");
         }
+
+        /// <summary>Arrival route only — kept for tests that sample taxi-in geometry.</summary>
+        public TaxiRoute RouteTo(StableId stand) => RoutesTo(stand).Arrival;
 
         /// <summary>
         /// Stand centres are ≥10 m apart so turboprop half-spans (~3.9 m) do not
@@ -190,25 +197,42 @@ namespace Airside.Simulation
             return Math.Min(1f, f * route.SegmentLengths[0] / route.TotalLength);
         }
 
-        public static TaxiPoint StandPoint(StableId stand) => new(17f, StandZ(stand));
+        public static TaxiPoint StandPoint(StableId stand) => new(AirportLayout.StandX, StandZ(stand));
 
-        public static TaxiPoint ThroatPoint(StableId stand) => new(12f, StandZ(stand));
+        public static TaxiPoint ThroatPoint(StableId stand) => new(AirportLayout.ApronThroatX, StandZ(stand));
 
-        private static TaxiRoute Create(string name, StableId leadIn, float standZ)
+        private static StandTaxiRoutes CreateRoutes(string label, StableId leadIn, float standZ)
         {
-            // Dogleg: remain on Alpha to (8,9), then north/south to the stand Z at
-            // x=12 before entering the stand box at x=17 — clears neighbouring stands.
-            return new TaxiRoute(
-                name,
+            var throat = new TaxiPoint(AirportLayout.ApronThroatX, standZ);
+            var stand = new TaxiPoint(AirportLayout.StandX, standZ);
+            var bravoNorth = new TaxiPoint(AirportLayout.ArrivalExitX, AirportLayout.TaxiwayBravoZ);
+
+            var arrival = new TaxiRoute(
+                $"B exit → B1 → throat → {label}",
+                new[] { BravoExit, BravoOne, ApronThroat, leadIn },
+                new[]
+                {
+                    ArrivalRunwayExit,
+                    bravoNorth,
+                    BravoEnd,
+                    throat,
+                    stand
+                });
+
+            // Departure path is defined west → east so taxi-out reverse walks stand → hold short.
+            var departure = new TaxiRoute(
+                $"A1 → A2 → throat → {label}",
                 new[] { AlphaOne, AlphaTwo, ApronThroat, leadIn },
                 new[]
                 {
                     RunwayEnd,
                     Junction,
                     AlphaEnd,
-                    new TaxiPoint(12f, standZ),
-                    new TaxiPoint(17f, standZ)
+                    throat,
+                    stand
                 });
+
+            return new StandTaxiRoutes(arrival, departure);
         }
     }
 }

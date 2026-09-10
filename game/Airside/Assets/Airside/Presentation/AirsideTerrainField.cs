@@ -27,10 +27,10 @@ namespace Airside.Presentation
         // ---- Terrain extents -------------------------------------------------
 
         /// <summary>Terrain width in metres (world X).</summary>
-        public const float SizeX = 256f;
+        public const float SizeX = 384f;
 
         /// <summary>Terrain length in metres (world Z).</summary>
-        public const float SizeZ = 220f;
+        public const float SizeZ = 300f;
 
         /// <summary>Full height range in metres. Only a fraction is used; see <see cref="PavementNormalized"/>.</summary>
         public const float SizeY = 8f;
@@ -90,10 +90,10 @@ namespace Airside.Presentation
         /// stands (Z up to 34) sit inside that. The plateau adds margin on every side so
         /// no aircraft, vehicle or pad can ever end up below ground.
         /// </summary>
-        public const float PlateauMinX = -64f;
-        public const float PlateauMaxX = 66f;
-        public const float PlateauMinZ = -12f;
-        public const float PlateauMaxZ = 60f;
+        public const float PlateauMinX = -96f;
+        public const float PlateauMaxX = 98f;
+        public const float PlateauMinZ = -16f;
+        public const float PlateauMaxZ = 72f;
 
         /// <summary>Metres over which the plateau eases into the surrounding landform.</summary>
         public const float PlateauFalloff = 26f;
@@ -149,10 +149,11 @@ namespace Airside.Presentation
         // markings.
         private static readonly float[,] Pads =
         {
-            { 0f, 0f, 48f, 3.4f },       // Runway W
-            { -50.5f, 0f, 4f, 3.2f },    // Runway blast W
-            { 50.5f, 0f, 4f, 3.2f },     // Runway blast E
-            { 8f, 9f, 32f, 2.1f },       // Taxiway A
+            { 0f, 0f, 78f, 3.4f },       // Runway W (Adelaide 05/23 at 1:20)
+            { -81.5f, 0f, 4f, 3.2f },    // Runway blast W
+            { 81.5f, 0f, 4f, 3.2f },     // Runway blast E
+            { -23f, 12f, 36f, 2.1f },    // Taxiway A
+            { -23f, 20f, 36f, 2.1f },    // Taxiway B
             { 20f, 18f, 14f, 8f },       // Apron
             { 40f, 18.6f, 9f, 11f },     // Stand 3 apron
             { 18f, 18.6f, 13f, 4f },     // Stand 3 taxi lead

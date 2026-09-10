@@ -687,7 +687,7 @@ namespace Airside.Simulation
             }
 
             var id = $"AS-{_nextAircraftNumber++:000}";
-            var flight = new CommercialFlight(id, at, stand, TaxiNetwork.RouteTo(stand));
+            var flight = new CommercialFlight(id, at, stand, TaxiNetwork.RoutesTo(stand));
             _flights.Add(flight);
             _flights.Sort(CompareFlights);
             Record(at, id, "Flight inbound", $"Assigned {stand.Value}");
@@ -703,7 +703,7 @@ namespace Airside.Simulation
 
             var id = $"AS-{_nextAircraftNumber++:000}";
             var index = _flights.IndexOf(flight);
-            _flights[index] = new CommercialFlight(id, now, stand, TaxiNetwork.RouteTo(stand));
+            _flights[index] = new CommercialFlight(id, now, stand, TaxiNetwork.RoutesTo(stand));
             _flights.Sort(CompareFlights);
             Record(now, id, "Flight inbound", $"Assigned {stand.Value}");
             Record(now, id, "ATC", Atc.IssueJoinLeftDownwind(id));

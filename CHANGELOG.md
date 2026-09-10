@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Adelaide-scale airfield layout with single-aircraft focus and pinned daylight.**
+  Runway 05/23 at 1:20 scale (155 m) with parallel taxiways A/B and separate
+  arrival/departure routes per stand (`AirportLayout`, `StandTaxiRoutes`).
+  Landing rollout uses ~72% of phase for braked centreline roll from west
+  threshold to B exit; takeoff rotate at ~68% of runway length. Aircraft-only
+  focus shows one v06 Coastline Regional turboprop; ground traffic and second
+  commercial visuals hidden. Perimeter fence removed. Daylight pinned for all
+  presentation lighting; sun/moon discs disabled. Terrain field enlarged to
+  384×300 m. Persistence saves via headless `AirsideSaveJsonCodec`.
+  **Verified:** `scripts/build-mac.sh` on Mac (2026-09-10).
+
 - **The airfield ground is one authored Unity Terrain with four CC0 layers
   instead of a flat, repeating grass slab.** The old ground was a single grass
   PNG repeating every 5 m across a dead-flat 210 × 180 m slab. It is replaced by

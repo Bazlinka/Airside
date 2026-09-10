@@ -195,7 +195,7 @@ namespace Airside.Tests
         public void Approach_ReservesAssignedStand()
         {
             var flight = new CommercialFlight("AS-101", new SimulationTime(0), AirportSimulation.StandTwo,
-                new AirportTaxiNetwork().RouteTo(AirportSimulation.StandTwo));
+                new AirportTaxiNetwork().RoutesTo(AirportSimulation.StandTwo));
             var resources = flight.ResourcesForPhase(AircraftPhase.Approach, new SimulationTime(0)).ToArray();
             Assert.That(resources, Does.Contain(AirportSimulation.StandTwo));
             Assert.That(resources.Any(resource => resource.Equals(AirportSimulation.Runway)), Is.False);

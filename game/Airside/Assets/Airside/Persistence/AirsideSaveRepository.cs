@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using UnityEngine;
 
 namespace Airside.Persistence
 {
@@ -44,7 +43,7 @@ namespace Airside.Persistence
                 Directory.CreateDirectory(directory);
 
             var temporaryPath = _path + ".temporary";
-            var json = JsonUtility.ToJson(save, true);
+            var json = AirsideSaveJsonCodec.Serialize(save, pretty: true);
             using (var stream = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
             using (var writer = new StreamWriter(stream))
             {
@@ -84,7 +83,7 @@ namespace Airside.Persistence
 
             try
             {
-                save = JsonUtility.FromJson<AirsideSaveData>(File.ReadAllText(path));
+                save = AirsideSaveJsonCodec.Deserialize(File.ReadAllText(path));
                 save?.Migrate();
                 save?.Validate();
                 return save != null;

@@ -11,7 +11,7 @@ namespace Airside.Simulation
     /// </summary>
     public sealed class CommercialFlight
     {
-        public CommercialFlight(string aircraftId, SimulationTime spawnedAt, StableId assignedStand, TaxiRoute taxiRoute)
+        public CommercialFlight(string aircraftId, SimulationTime spawnedAt, StableId assignedStand, StandTaxiRoutes routes)
         {
             if (string.IsNullOrWhiteSpace(aircraftId))
                 throw new ArgumentException("Aircraft identifier is required.", nameof(aircraftId));
@@ -20,7 +20,13 @@ namespace Airside.Simulation
             SpawnedAt = spawnedAt;
             CycleStartedAt = spawnedAt;
             AssignedStand = assignedStand;
-            TaxiRoute = taxiRoute ?? throw new ArgumentNullException(nameof(taxiRoute));
+            if (routes.Arrival == null)
+                throw new ArgumentNullException(nameof(routes));
+            if (routes.Departure == null)
+                throw new ArgumentNullException(nameof(routes));
+            ArrivalRoute = routes.Arrival;
+            DepartureRoute = routes.Departure;
+            TaxiRoute = ArrivalRoute;
             Operation = new AircraftOperation(aircraftId, spawnedAt);
         }
 
@@ -29,6 +35,9 @@ namespace Airside.Simulation
         public SimulationTime CycleStartedAt { get; set; }
         public AircraftOperation Operation { get; set; }
         public StableId AssignedStand { get; set; }
+        public TaxiRoute ArrivalRoute { get; }
+        public TaxiRoute DepartureRoute { get; }
+        /// <summary>Arrival path — kept for callers that only need taxi-in geometry.</summary>
         public TaxiRoute TaxiRoute { get; set; }
         public TurnaroundWorkflow Turnaround { get; set; }
         public bool FlightSettled { get; set; }
@@ -49,8 +58,12 @@ namespace Airside.Simulation
 
             var progress = Operation.PhaseProgress(at);
             var reverse = phase == AircraftPhase.TaxiOut;
-            return TaxiRoute.SegmentIds[TaxiRoute.SegmentIndexAt(progress, reverse)];
+            var route = RouteFor(Operation.Phase);
+            return route.SegmentIds[route.SegmentIndexAt(progress, reverse)];
         }
+
+        public TaxiRoute RouteFor(AircraftPhase phase) =>
+            phase == AircraftPhase.TaxiOut ? DepartureRoute : ArrivalRoute;
 
         public IEnumerable<StableId> RequiredResources(SimulationTime at) =>
             ResourcesForPhase(Operation.Phase, at);
@@ -123,7 +136,7 @@ namespace Airside.Simulation
             if (Operation.Phase != AircraftPhase.TaxiIn)
                 return true;
 
-            return Operation.PhaseProgress(at) >= AirportTaxiNetwork.RunwayHoldingProgress(TaxiRoute);
+            return Operation.PhaseProgress(at) >= AirportTaxiNetwork.RunwayHoldingProgress(ArrivalRoute);
         }
 
         private bool StillOccupyingStandOnTaxiOut(SimulationTime at)
@@ -139,11 +152,12 @@ namespace Airside.Simulation
 
         private bool OnApronThroat(AircraftPhase phase, SimulationTime at)
         {
+            var route = RouteFor(phase);
             var segment = Operation.Phase == phase
                 ? SegmentFor(at)
                 : (phase == AircraftPhase.TaxiOut
-                    ? TaxiRoute.SegmentIds[TaxiRoute.SegmentIds.Count - 1]
-                    : TaxiRoute.SegmentIds[0]);
+                    ? route.SegmentIds[route.SegmentIds.Count - 1]
+                    : route.SegmentIds[0]);
             return segment.Equals(AirportTaxiNetwork.ApronThroat)
                 || segment.Equals(AirportTaxiNetwork.LeadInFor(AssignedStand));
         }
@@ -157,10 +171,11 @@ namespace Airside.Simulation
             // entry end of the route (first segment inbound / last outbound).
             if (Operation.Phase != phase)
             {
-                var count = TaxiRoute.SegmentIds.Count;
+                var route = RouteFor(phase);
+                var count = route.SegmentIds.Count;
                 return phase == AircraftPhase.TaxiOut
-                    ? TaxiRoute.SegmentIds[count - 1]
-                    : TaxiRoute.SegmentIds[0];
+                    ? route.SegmentIds[count - 1]
+                    : route.SegmentIds[0];
             }
 
             return SegmentFor(at);

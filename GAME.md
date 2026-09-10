@@ -2,15 +2,20 @@
 
 - **Last updated:** 2026-09-10 (Cursor — aircraft refine Pass C: cabin glass)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Pass D — gear doors. `Gear door nose/L/R` are still animated about
-  the kit origin (like the struts were), so open/close swings them in a wide arc
-  instead of about their bay hinge, and they can clip or read as open in the
-  climb. Rebake each door to its hinge edge (own-mesh, mirror
-  `RebakeGearStrutPivots`) so the existing open/close in
-  `UpdateAircraftLightsAndGear` swings them cleanly; keep them body-mounted
-  siblings that close flush when the gear is up. After that: prop discs vs blades
-  at high RPM, landing-light meshes, livery crawl, and scale vs the 45 m runway.
-  Verify on Mac: Play, F, one circuit. Run `scripts/test-unity.sh` on a Mac.
+- **Do next (needs a Mac — read this first):** Pass D — gear doors. `Gear door
+  nose/L/R` are still animated about the kit origin (like the struts were), so
+  open/close orbits them around the fuselage — clearly broken. But a naive hinge
+  rebake (the Pass B pattern) is NOT enough on its own: the doors are flat 0.82 m
+  plates just under the belly (y≈0.56–0.60) and the coded open angle is 78° about
+  X. Hinged at the door's forward (min-z) edge, +78° swings the far edge ~0.8 m
+  straight down — to ~0.9 m below the belly, through the runway. So Pass D must
+  rebake the door pivot to its bay-hinge AND retune the open angle/axis together,
+  checked live on a Mac (Play, F, gear down at stand/approach, gear up in climb).
+  Keep the doors body-mounted siblings that close flush when the gear is up; do
+  not just copy `RebakeGearStrutPivots`. Then: prop discs vs blades at high RPM,
+  landing-light meshes, livery crawl, and scale vs the 45 m runway. Run
+  `scripts/test-unity.sh` on a Mac. (This session had no Mac/Unity, so Pass D was
+  scoped but not attempted — the three airframe bugs A–C landed instead.)
 - **Just landed (Pass C):** cabin side windows recessed into the skin so they no
   longer float outside the curving fuselage. `InsetCabinWindows` nudges each pane
   (`AirsideAircraftParts.IsCabinWindowGlass`) inward; windscreen/cockpit glass

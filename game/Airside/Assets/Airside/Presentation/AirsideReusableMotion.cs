@@ -70,15 +70,15 @@ namespace Airside.Presentation
 
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
-            AircraftPhase.Takeoff => PropRpmTakeoff,
+            AircraftPhase.Takeoff or AircraftPhase.Departed => PropRpmTakeoff,
             AircraftPhase.Approach or AircraftPhase.Landing => PropRpmApproach,
             AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => PropRpmTaxi,
-            AircraftPhase.AtStand or AircraftPhase.Departed => 0f,
+            AircraftPhase.AtStand => AirportCircuit.SkipGroundTaxi ? PropRpmTaxi : 0f,
             _ => PropRpmCruise
         };
 
         public static bool PropellersSpinning(AircraftPhase phase) =>
-            phase is not (AircraftPhase.AtStand or AircraftPhase.Departed);
+            PropRpmForPhase(phase) > 0f;
 
         /// <summary>
         /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and starts
@@ -96,7 +96,44 @@ namespace Airside.Presentation
             _ => GearDeployed
         };
 
+        /// <summary>
+        /// Landing lamps follow the circuit, not night. Daylight is pinned, so these
+        /// stay on through approach, landing, the skipped ground wait, and the takeoff
+        /// roll, then go out once the gear comes up.
+        /// </summary>
+        public static bool LandingLightsOn(AircraftPhase phase, float progress01 = 1f)
+        {
+            if (phase is AircraftPhase.Approach or AircraftPhase.Landing)
+                return true;
+            if (AirportCircuit.IsSkippedGroundPhase(phase))
+                return true;
+            if (phase == AircraftPhase.Takeoff)
+                return progress01 < GearRetractProgress;
+            return false;
+        }
+
+        public static float FlapDegrees(AircraftPhase phase, float progress01 = 1f)
+        {
+            var t = Mathf.Clamp01(progress01);
+            if (AirportCircuit.IsSkippedGroundPhase(phase))
+                return 12f;
+            return phase switch
+            {
+                AircraftPhase.Takeoff => t < AirsideFlightPath.RotateProgress
+                    ? 12f
+                    : Mathf.Lerp(12f, 0f, Mathf.InverseLerp(
+                        AirsideFlightPath.RotateProgress, 1f, t)),
+                AircraftPhase.Approach => Mathf.Lerp(8f, 22f, t),
+                AircraftPhase.Landing => t < 0.6f
+                    ? 22f
+                    : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, t)),
+                _ => 0f
+            };
+        }
+
         public static float CabinDoorBias(AircraftPhase phase) =>
-            phase == AircraftPhase.AtStand ? DoorOpenAtStand : DoorClosed;
+            phase == AircraftPhase.AtStand && !AirportCircuit.SkipGroundTaxi
+                ? DoorOpenAtStand
+                : DoorClosed;
     }
 }

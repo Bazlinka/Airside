@@ -37,6 +37,9 @@ namespace Airside.Presentation
         public const float TouchdownX = -1250f;
         public const float TouchdownProgress = 0.22f;
 
+        public static bool HasTouchedDown(float landingProgress) =>
+            Mathf.Clamp01(landingProgress) >= TouchdownProgress;
+
         /// <summary>Rollout end / takeoff start — still on the 3 100 m strip.</summary>
         public const float RolloutEndX = -200f;
         public const float RunwayEntryX = RolloutEndX;
@@ -163,6 +166,13 @@ namespace Airside.Presentation
             }
         }
 
+        public const float ApproachPitchStartDegrees = -2.8f;
+        public const float ApproachPitchEndDegrees = -3.4f;
+        public const float FlarePitchDegrees = -5.5f;
+        public const float RotatePitchDegrees = -12f;
+        public const float ClimbPitchDegrees = -10f;
+        public const float DepartedPitchEndDegrees = -4.5f;
+
         public static float PitchDegrees(AircraftPhase phase, float progress)
         {
             var t = Mathf.Clamp01(progress);
@@ -174,17 +184,17 @@ namespace Airside.Presentation
                     if (x <= RotateX)
                         return 0f;
                     var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
-                    return Mathf.Lerp(0f, -11f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.2f)));
+                    return Mathf.Lerp(0f, RotatePitchDegrees, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.2f)));
                 }
                 case AircraftPhase.Approach:
-                    return Mathf.Lerp(-2.8f, -3.4f, t);
+                    return Mathf.Lerp(ApproachPitchStartDegrees, ApproachPitchEndDegrees, t);
                 case AircraftPhase.Landing:
                     return t < TouchdownProgress
-                        ? Mathf.Lerp(-3.2f, -5.2f, t / TouchdownProgress)
-                        : Mathf.Lerp(-5.2f, 0f, Mathf.SmoothStep(0f, 1f,
+                        ? Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees, t / TouchdownProgress)
+                        : Mathf.Lerp(FlarePitchDegrees, 0f, Mathf.SmoothStep(0f, 1f,
                             Mathf.Min(1f, (t - TouchdownProgress) / 0.14f)));
                 case AircraftPhase.Departed:
-                    return Mathf.Lerp(-10f, -4.5f, t);
+                    return Mathf.Lerp(ClimbPitchDegrees, DepartedPitchEndDegrees, t);
                 default:
                     return 0f;
             }

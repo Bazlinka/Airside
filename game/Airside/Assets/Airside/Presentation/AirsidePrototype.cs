@@ -1217,20 +1217,7 @@ namespace Airside.Presentation
                 {
                     // Takeoff flap is set for the roll and milked off after rotation —
                     // it used to keep extending all the way through the climb.
-                    var deploy = phase switch
-                    {
-                        AircraftPhase.Takeoff => progress < AirsideFlightPath.RotateProgress
-                            ? 12f
-                            : Mathf.Lerp(12f, 0f, Mathf.InverseLerp(
-                                AirsideFlightPath.RotateProgress, 1f, progress)),
-                        AircraftPhase.Approach => Mathf.Lerp(8f, 22f, Mathf.Clamp01(progress)),
-                        // Full flap is already out on short final; keep it there until
-                        // the rollout has washed off speed.
-                        AircraftPhase.Landing => progress < 0.6f
-                            ? 22f
-                            : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, progress)),
-                        _ => 0f
-                    };
+                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
@@ -1259,8 +1246,8 @@ namespace Airside.Presentation
             for (var index = 0; index < _simulation.Flights.Count && index < _commercialAircraft.Length; index++)
             {
                 var phase = _simulation.Flights[index].Operation.Phase;
-                var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
-                ApplyEngineAudio(_commercialAircraft[index], enginesOn);
+                ApplyEngineAudio(_commercialAircraft[index],
+                    AirsideReusableMotion.PropellersSpinning(phase));
             }
 
             for (var index = 0; index < _groundTraffic.Length; index++)
@@ -1385,10 +1372,9 @@ namespace Airside.Presentation
             var airborne = phase == AircraftPhase.Departed
                 || phase == AircraftPhase.Approach
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
-            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var enginesOn = AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
-            var landingLights = phase is AircraftPhase.Approach or AircraftPhase.Landing
-                || (phase == AircraftPhase.Takeoff && progress01 < AirsideReusableMotion.GearRetractProgress);
+            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             foreach (var child in AirsideNamedChildren.Get(aircraft))
@@ -1436,6 +1422,20 @@ namespace Airside.Presentation
                 {
                     child.gameObject.SetActive(landingLights);
                     EnsureLandingSpotLight(child, landingLights, night);
+                    var lamp = child.GetComponent<Renderer>();
+                    if (lamp != null)
+                    {
+                        lamp.GetPropertyBlock(RendererTintBlock);
+                        var color = landingLights
+                            ? new Color(1f, 0.97f, 0.88f)
+                            : new Color(0.55f, 0.55f, 0.5f);
+                        RendererTintBlock.SetColor("_Color", color);
+                        RendererTintBlock.SetColor("_BaseColor", color);
+                        RendererTintBlock.SetColor("_EmissionColor", landingLights
+                            ? new Color(2.6f, 2.5f, 2.1f)
+                            : Color.black);
+                        lamp.SetPropertyBlock(RendererTintBlock);
+                    }
                 }
                 else if (child.name.StartsWith("TaxiLight", StringComparison.Ordinal))
                 {
@@ -1522,7 +1522,11 @@ namespace Airside.Presentation
             light.enabled = on;
             if (!on)
                 return;
-            light.intensity = night ? 6.5f : 3.2f;
+            // Pinned daylight washes a night-tuned lamp. Keep the beam readable in follow.
+            light.intensity = night ? 7.5f : 9.5f;
+            light.range = 90f;
+            light.spotAngle = 48f;
+            light.innerSpotAngle = 22f;
             // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
             light.transform.localRotation = Quaternion.identity;
         }
@@ -2698,7 +2702,8 @@ namespace Airside.Presentation
 
         private void UpdateTouchdownSmoke()
         {
-            return;
+            if (_touchdownSmoke == null)
+                return;
 
             for (var index = 0; index < _simulation.Flights.Count; index++)
             {
@@ -2716,7 +2721,7 @@ namespace Airside.Presentation
                     _touchdownFired.Add(id);
                     _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
                     _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
-                    _touchdownSmoke.localScale = Vector3.one;
+                    _touchdownSmoke.localScale = Vector3.one * 1.35f;
                     for (var p = 0; p < _touchdownSmoke.childCount; p++)
                     {
                         var puff = _touchdownSmoke.GetChild(p);

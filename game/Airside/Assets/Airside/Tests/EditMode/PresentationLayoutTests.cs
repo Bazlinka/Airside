@@ -505,5 +505,90 @@ namespace Airside.Tests
             // Paused presentation time must not move anything.
             Assert.That(AirsideFlightPath.DampFactor(5f, 0f), Is.Zero);
         }
+
+        [Test]
+        public void CircuitCues_ApproachReadsAsALandingAircraft()
+        {
+            TaxiLoopFixture.RestoreCircuit();
+            Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Approach, 0.5f),
+                Is.EqualTo(AirsideReusableMotion.GearDeployed));
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Approach, 0.5f), Is.True);
+            Assert.That(AirsideReusableMotion.PropRpmForPhase(AircraftPhase.Approach),
+                Is.EqualTo(AirsideReusableMotion.PropRpmApproach));
+            Assert.That(AirsideReusableMotion.PropRpmForPhase(AircraftPhase.Approach),
+                Is.Not.EqualTo(AirsideReusableMotion.PropRpmForPhase(AircraftPhase.Takeoff)));
+            Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Approach, 0f),
+                Is.EqualTo(AirsideFlightPath.ApproachPitchStartDegrees).Within(0.01f));
+            Assert.That(AirsideReusableMotion.FlapDegrees(AircraftPhase.Approach, 1f),
+                Is.GreaterThan(AirsideReusableMotion.FlapDegrees(AircraftPhase.Approach, 0f)));
+        }
+
+        [Test]
+        public void CircuitCues_TouchdownFiresOnTheRunwayNotShortFinal()
+        {
+            TaxiLoopFixture.RestoreCircuit();
+            Assert.That(AirsideFlightPath.HasTouchedDown(0f), Is.False);
+            Assert.That(AirsideFlightPath.Landing(0f, 0f).y,
+                Is.GreaterThan(AirsideFlightPath.GroundY + 1f));
+            Assert.That(AirsideFlightPath.HasTouchedDown(AirsideFlightPath.TouchdownProgress), Is.True);
+            Assert.That(AirsideFlightPath.Landing(AirsideFlightPath.TouchdownProgress, 0f).y,
+                Is.EqualTo(AirsideFlightPath.GroundY).Within(0.05f));
+            Assert.That(AirsideFlightPath.Landing(AirsideFlightPath.TouchdownProgress, 0f).x,
+                Is.EqualTo(AirsideFlightPath.TouchdownX).Within(0.5f));
+            Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Landing,
+                    AirsideFlightPath.TouchdownProgress),
+                Is.EqualTo(AirsideFlightPath.FlarePitchDegrees).Within(0.05f));
+        }
+
+        [Test]
+        public void CircuitCues_GearAndLightsFollowRotateNotBrakeRelease()
+        {
+            TaxiLoopFixture.RestoreCircuit();
+            var rotate = AirsideFlightPath.RotateProgress;
+            var retract = AirsideReusableMotion.GearRetractProgress;
+            Assert.That(retract, Is.GreaterThan(rotate));
+            Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, 0f),
+                Is.EqualTo(AirsideReusableMotion.GearDeployed));
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, 0f), Is.True);
+            Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, rotate * 0.99f), Is.Zero);
+            Assert.That(AirsideFlightPath.Takeoff(rotate).x,
+                Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
+            Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, 1f),
+                Is.EqualTo(AirsideFlightPath.RotatePitchDegrees).Within(0.05f));
+            Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract - 0.001f),
+                Is.EqualTo(AirsideReusableMotion.GearDeployed));
+            Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract),
+                Is.EqualTo(AirsideReusableMotion.GearRetracted));
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, retract), Is.False);
+            Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Departed, 0.5f),
+                Is.EqualTo(AirsideReusableMotion.GearRetracted));
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Departed, 0.5f), Is.False);
+            Assert.That(AirsideReusableMotion.PropellersSpinning(AircraftPhase.Departed), Is.True);
+            Assert.That(AirsideReusableMotion.FlapDegrees(AircraftPhase.Takeoff, 1f),
+                Is.LessThan(AirsideReusableMotion.FlapDegrees(AircraftPhase.Takeoff, 0f)));
+        }
+
+        [Test]
+        public void CircuitCues_SkippedStandDoesNotOpenTheDoorOrKillTheProps()
+        {
+            TaxiLoopFixture.RestoreCircuit();
+            Assert.That(AirportCircuit.SkipGroundTaxi, Is.True);
+            Assert.That(AirsideReusableMotion.CabinDoorBias(AircraftPhase.AtStand), Is.Zero);
+            Assert.That(AirsideReusableMotion.PropellersSpinning(AircraftPhase.AtStand), Is.True);
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.TaxiIn, 0f), Is.True);
+            Assert.That(AirsideReusableMotion.FlapDegrees(AircraftPhase.TaxiOut, 0f), Is.EqualTo(12f));
+
+            TaxiLoopFixture.EnableFullTaxiLoop();
+            try
+            {
+                Assert.That(AirsideReusableMotion.CabinDoorBias(AircraftPhase.AtStand), Is.EqualTo(1f));
+                Assert.That(AirsideReusableMotion.PropRpmForPhase(AircraftPhase.AtStand), Is.Zero);
+                Assert.That(AirsideReusableMotion.PropellersSpinning(AircraftPhase.Departed), Is.True);
+            }
+            finally
+            {
+                TaxiLoopFixture.RestoreCircuit();
+            }
+        }
     }
 }

@@ -1,14 +1,14 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — real-metre runway markings)
+- **Last updated:** 2026-09-10 (Cursor — circuit flight-state cues)
 - **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Flight-state cues on the existing v06 turboprop (gear, props,
-  attitude, landing lights). Unity Play: overview should show threshold bars,
-  aiming points, a dashed centreline and edge lines on the 3 100 m strip; press
-  F and confirm touchdown sits on the 300 m TDZ pair. Run `scripts/test-unity.sh`
-  when a Mac editor is available.
-- **In progress / half-done:** Bare field plus circuit loop (`AirportCircuit`)
-  plus ICAO-ish paint (`AirsideRunwayMarkings`). Taxi/stand/pushback still exist
+- **Do next:** Unity Play. Press F and watch one circuit without the HUD:
+  approach (gear down, lights on, nose down), flare, land on the 300 m TDZ
+  (smoke once), roll almost to a stop, spool, rotate, gear up, climb out, next
+  speck on final. Then one taxiway + one stand only when Bailey says so. Run
+  `scripts/test-unity.sh` when a Mac editor is available.
+- **In progress / half-done:** Bare field, circuit loop, real-metre markings,
+  and presentation cues on the v06 turboprop. Taxi/stand/pushback still exist
   on the phase enum (1 s each) for save compatibility but are not drawn. Night
   lighting stays pinned off. Dormant building spawners remain in
   `AirsidePrototype` but are not called.
@@ -47,7 +47,7 @@
     landing rollout at a progress that `TouchdownProgress` had moved past. Derive
     sample points from the constants instead of writing literals, and mirror the
     check in the harness. New: `FlightPath_TouchdownSitsOnTheThreeHundredMetreTdz`
-    — mirror it the next time that harness runs
+    and `CircuitCues_*` — mirror them the next time that harness runs
   - Phase progress is read at the fractional presentation clock
     (`AirsideAircraftMotion.PhaseProgress`), not sampled at the simulated second.
     It is clamped to 1, which is what keeps a held departure parked at the
@@ -60,6 +60,15 @@
     simulation decides an arrival has vacated there. Do not fork the number
   - Takeoff rotation is derived (`AirsideFlightPath.RotateProgress` ≈ 0.75), not a
     literal. Gear retract, landing lights and runway spray all key off it
+  - Landing lights are not gated on night. Pinned daylight still shows them in
+    follow (emissive + brighter spots). They stay on through skipped ground
+    phases and go out after `GearRetractProgress`
+  - Props keep spinning in `Departed` (takeoff RPM). AtStand only kills them
+    when the full taxi loop is on; the circuit idles them instead
+  - Cabin doors stay shut on the circuit (`CabinDoorBias` is 0 while
+    `SkipGroundTaxi`). Do not restore stand-door theatre
+  - Touchdown smoke/skid is presentation-only again. It keys off
+    `HasTouchedDown` / `TouchdownProgress`, not the Approach→Landing seam
   - `AirsideFlightPath` and `TaxiVisualPath` are presentation-only. Phase timing
     stays in Simulation, so frame rate and these curves cannot change simulation
     outcomes
@@ -147,6 +156,13 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
+- **Circuit flight-state cues** on `cursor/bare-adelaide-field-bc75`: same v06
+  turboprop. Gear down on the runway, up after `RotateProgress + 0.05`. Landing
+  lights on through approach / land / skipped wait / takeoff roll, off after
+  retract, readable in pinned daylight. Props keep takeoff RPM in climb-out.
+  Touchdown smoke fires once at `TouchdownProgress` (the 300 m TDZ), not on
+  short final. Cabin doors stay shut on the circuit.
+
 - **Real-metre runway markings** on `cursor/bare-adelaide-field-bc75`: the 3 100 ×
   45 m slab now has ICAO-ish threshold bars (12 per end), aiming points at 400 m,
   dashed centreline (30/20), 0.90 m edge lines, and TDZ pairs at 150/300/600/750/900 m.
@@ -202,7 +218,6 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Next work
 
-1. **Flight-state cues** on the existing v06 turboprop — gear, props, attitude,
-   landing lights — so one circuit explains land / roll / takeoff without a new
-   mesh. Then watch the loop. One taxiway + one stand only when Bailey says so.
+1. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
+   and one stand** only when Bailey says so.
 2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.

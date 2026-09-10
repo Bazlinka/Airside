@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **One circuit now explains itself from follow.** Same v06 turboprop: gear,
+  props, attitude and landing lights follow the land / roll / takeoff loop.
+  Lights stay on in pinned daylight; props keep spinning in the climb; cabin
+  doors stay shut on the skipped stand. Restrained touchdown smoke fires once
+  when the path meets the runway at the 300 m TDZ, not on short final.
+
 - **The 3 100 × 45 m runway now has real-metre markings.** Threshold bars (12
   per end), aiming points at 400 m, a dashed 30/20 centreline, 0.90 m edge
   lines, and touchdown-zone pairs at 150/300/600/750/900 m. The 300 m pair sits
@@ -15,7 +21,7 @@ change it describes.
   runway.** Approach starts 4.2 km west; landing rolls ~1 050 m and almost
   stops; takeoff rotates after ~900 m and climbs out until the model is off
   the field; the next arrival then appears on long final. Taxi, stand and
-  pushback are skipped. Tyre-smoke VFX is off. See ADR 0033.
+  pushback are skipped. See ADR 0033.
 
 - **The visible world is one plane, one 3 100 × 45 m runway, and empty Adelaide
   ground.** Buildings, cars, signs, taxiways, apron, coast, trees, fences,

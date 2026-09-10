@@ -237,7 +237,7 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 22f,
                 AircraftPhase.Takeoff => Mathf.Lerp(28f, 70f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(48f, 36f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(40f, 24f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(36f, 18f, progress),
                 AircraftPhase.Departed => Mathf.Lerp(70f, 220f, progress),
                 _ => air
             };

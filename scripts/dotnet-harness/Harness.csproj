@@ -27,14 +27,17 @@
     <Compile Include="../../game/Airside/Assets/Airside/Simulation/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Persistence/**/*.cs" Exclude="../../game/Airside/Assets/Airside/Persistence/AirsideSaveRepository.cs" />
     <!--
-      AirsideTerrainField, AirsideBareField and AirsideRunwayMarkings are
-      Presentation by folder but hold no UnityEngine types, so the authored
-      landform / real-metre strip can be checked here rather than only under Unity.
-      Compiling them means TerrainFieldTests and BareFieldTests run without an editor.
+      AirsideTerrainField, AirsideBareField, AirsideRunwayMarkings and
+      AirsideAdelaideGround are Presentation by folder but hold no UnityEngine
+      types, so the authored landform / real-metre strip can be checked here
+      rather than only under Unity.
+      Compiling them means TerrainFieldTests, BareFieldTests and AdelaideGroundTests
+      run without an editor.
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaideGround.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs" />
   </ItemGroup>
 

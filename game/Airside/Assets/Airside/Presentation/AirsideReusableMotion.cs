@@ -22,6 +22,8 @@ namespace Airside.Presentation
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;
         public const float GearRetracted = 0f;
+        /// <summary>Seconds of phase progress over which gear eases after rotate.</summary>
+        public const float GearTransitionProgress = 0.12f;
 
         // ANM-AIR-003 cabin/cargo door
         public const float DoorOpenAtStand = 1f;
@@ -35,8 +37,9 @@ namespace Airside.Presentation
         public const float VehicleWheelRpmTaxi = 180f;
         public const float VehicleWheelRpmService = 90f;
 
-        // ANM-AIR tire roll on ground phases (degrees/sec base before phase scale)
-        public const float AircraftTireRpmTaxi = 380f;
+        // ANM-AIR tire radii from mdl_atr42_starter_v01 (metres).
+        public const float MainTireRadiusMetres = 0.37f;
+        public const float NoseTireRadiusMetres = 0.31f;
 
         // Shared presentation pulse rates (Hz) — beacon family + ALS/REIL
         public const float ServicePulseHz = 2.5f;
@@ -68,6 +71,11 @@ namespace Airside.Presentation
         public const float UiPulseHz = 0.51f;
         public const float WindowFlickerHz = 0.27f;
 
+        // Oleo / settling (presentation metres on the motion root).
+        public const float OleoStaticMetres = 0.02f;
+        public const float OleoTouchdownMetres = 0.11f;
+        public const float OleoSettleProgress = 0.18f;
+
         public static float PropRpmForPhase(AircraftPhase phase) => phase switch
         {
             AircraftPhase.Takeoff or AircraftPhase.Departed => PropRpmTakeoff,
@@ -81,20 +89,81 @@ namespace Airside.Presentation
             PropRpmForPhase(phase) > 0f;
 
         /// <summary>
-        /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and starts
-        /// retracting just after the wheels actually leave <see cref="AirsideFlightPath"/>.
+        /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and eases
+        /// retract after the wheels leave <see cref="AirsideFlightPath"/>.
         /// </summary>
         public static float GearRetractProgress =>
             Mathf.Min(0.97f, AirsideFlightPath.RotateProgress + 0.05f);
 
-        public static float GearBias(AircraftPhase phase, float progress01 = 1f) => phase switch
+        public static float GearBias(AircraftPhase phase, float progress01 = 1f)
         {
-            AircraftPhase.Takeoff => progress01 < GearRetractProgress ? GearDeployed : GearRetracted,
-            AircraftPhase.Approach => GearDeployed,
-            AircraftPhase.Landing => GearDeployed,
-            AircraftPhase.Departed => GearRetracted,
-            _ => GearDeployed
-        };
+            var t = Mathf.Clamp01(progress01);
+            switch (phase)
+            {
+                case AircraftPhase.Takeoff:
+                {
+                    var start = GearRetractProgress;
+                    var end = Mathf.Min(1f, start + GearTransitionProgress);
+                    if (t <= start)
+                        return GearDeployed;
+                    if (t >= end)
+                        return GearRetracted;
+                    return Mathf.Lerp(GearDeployed, GearRetracted,
+                        Mathf.SmoothStep(0f, 1f, (t - start) / (end - start)));
+                }
+                case AircraftPhase.Approach:
+                    // Ease down over the first part of final rather than popping at phase entry.
+                    return Mathf.Lerp(0.15f, GearDeployed, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, t / 0.22f)));
+                case AircraftPhase.Landing:
+                    return GearDeployed;
+                case AircraftPhase.Departed:
+                    return GearRetracted;
+                default:
+                    return GearDeployed;
+            }
+        }
+
+        /// <summary>
+        /// Brief oleo squish after touchdown, then a small static compression on the ground.
+        /// Zero once airborne. Presentation-only; never feeds simulation.
+        /// </summary>
+        public static float OleoCompressionMetres(AircraftPhase phase, float progress01)
+        {
+            var t = Mathf.Clamp01(progress01);
+            switch (phase)
+            {
+                case AircraftPhase.Landing:
+                    if (t < AirsideFlightPath.TouchdownProgress)
+                        return 0f;
+                    var since = (t - AirsideFlightPath.TouchdownProgress) / OleoSettleProgress;
+                    if (since < 1f)
+                    {
+                        // Ease in fast, ease out to static — no bounce past zero.
+                        var peak = Mathf.Sin(Mathf.Clamp01(since) * Mathf.PI);
+                        return Mathf.Lerp(OleoStaticMetres, OleoTouchdownMetres, peak);
+                    }
+
+                    return OleoStaticMetres;
+                case AircraftPhase.Takeoff:
+                    return t < AirsideFlightPath.RotateProgress ? OleoStaticMetres : 0f;
+                case AircraftPhase.TaxiIn:
+                case AircraftPhase.TaxiOut:
+                case AircraftPhase.Pushback:
+                case AircraftPhase.AtStand:
+                    return OleoStaticMetres;
+                default:
+                    return 0f;
+            }
+        }
+
+        public static float TireRadiusMetres(string tireName)
+        {
+            if (string.IsNullOrEmpty(tireName))
+                return MainTireRadiusMetres;
+            return tireName.IndexOf("nose", System.StringComparison.OrdinalIgnoreCase) >= 0
+                ? NoseTireRadiusMetres
+                : MainTireRadiusMetres;
+        }
 
         /// <summary>
         /// Landing lamps follow the circuit, not night. Daylight is pinned, so these

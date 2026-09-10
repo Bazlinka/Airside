@@ -19,18 +19,15 @@ fi
 mkdir -p "$dst"
 find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) -delete
 
-# Runtime loaders only need glTF kits (+ bins) and UI/surface PNGs.
-#
-# Textures/Terrain is excluded on purpose. Those maps are referenced by imported
-# TerrainLayer assets, which Unity packs into the build itself; they never go
-# through ArtRuntimePaths, so copying them here would duplicate megabytes into the
-# player for nothing.
+# Runtime loaders need glTF kits (+ bins), UI/surface PNGs, and the CC0 Terrain
+# layer maps used by the Adelaide bare-field ground mesh (ArtRuntimePaths).
+# TerrainLayer .terrainlayer assets still pack their own copies for the Kingscote
+# Terrain path; the StreamingAssets PNGs are the mesh/shader runtime source.
 while IFS= read -r -d '' file; do
   rel="${file#"$src"/}"
   mkdir -p "$dst/$(dirname "$rel")"
   cp -f "$file" "$dst/$rel"
 done < <(find "$src" -type f \
-  -not -path "$src/Textures/Terrain/*" \
   \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) -print0)
 
 count="$(find "$dst" -type f | wc -l | tr -d ' ')"

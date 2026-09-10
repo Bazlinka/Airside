@@ -1,83 +1,34 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — circuit flight-state cues)
-- **Branch:** `cursor/bare-adelaide-field-bc75` (off latest `main`)
-- **Do next:** Unity Play. Press F and watch one circuit without the HUD:
-  approach (gear down, lights on, nose down), flare, land on the 300 m TDZ
-  (smoke once), roll almost to a stop, spool, rotate, gear up, climb out, next
-  speck on final. Then one taxiway + one stand only when Bailey says so. Run
-  `scripts/test-unity.sh` when a Mac editor is available.
-- **In progress / half-done:** Bare field, circuit loop, real-metre markings,
-  and presentation cues on the v06 turboprop. Taxi/stand/pushback still exist
-  on the phase enum (1 s each) for save compatibility but are not drawn. Night
-  lighting stays pinned off. Dormant building spawners remain in
-  `AirsidePrototype` but are not called.
+- **Last updated:** 2026-09-10 (Cursor — plane/ground dynamics polish)
+- **Branch:** `cursor/plane-ground-dynamics-polish-0c44` (off latest `main`)
+- **Do next:** On a Mac with Unity 6.3 LTS: `git checkout cursor/plane-ground-dynamics-polish-0c44`,
+  run `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
+  overview and follow at 1× and 4×. Confirm authored Adelaide ground (no 16 m grid),
+  ATR v01 (not v06), eased gear, distance-based tires, one-shot touchdown smoke, and
+  pause freeze. Inspect Player.log for missing shader/maps. Merge only after that
+  Unity evidence.
+- **In progress / half-done:** Visual-quality + dynamics pass is implemented and
+  headless-checked. Unity Play, packaged Mac build and screenshot/video evidence
+  are still required — this Cloud Linux VM has no Unity editor.
 - **Watch for / assumptions:**
-  - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
-  - Paint families keep collector prefixes (`runway_centre`, `runway_edge_left`,
-    `runway_edge_right`, `runway_threshold`, `Aiming point`, `TDZ marks`)
-  - Do not stretch or call `PlaceWorldMarkings()` / WLD-001 on the bare field;
-    that kit is the 155 m miniature
-  - `AirsideRunwayMarkings` holds no UnityEngine types. Spawn from it; do not
-    duplicate metre literals in `BuildBareAdelaideField`
-  - The 300 m TDZ pair is centred on `AirsideFlightPath.TouchdownX`. Marks fit
-    the path; do not move the path to fit the marks
-  - `Infield grass` is now buried under the terrain rather than removed. Its top
-    is at -0.41, below the terrain at -0.045, so it is hidden but still
-    collectable. Do not "tidy it up"
-  - Everything about the terrain's shape and blending lives in
-    `AirsideTerrainField`, which holds no UnityEngine types on purpose: the
-    Editor baker and the headless tests sample the same functions, so the shipped
-    ground and the thing under test cannot drift. Re-run `scripts/bake-terrain.sh`
-    after changing it or after regenerating the maps
-  - The operational plateau is pinned dead level across X [-64, 66] × Z [-12, 60].
-    If a pad, stand or taxi node is ever moved outside that box it will end up
-    over sculpted ground; widen the plateau in the same commit
-  - `Kingscote terrain` is in `AirsideStaticWorld.IsDynamic` so `Collect` skips
-    its subtree entirely and it can never reach `StaticBatchingUtility.Combine`
-  - The TerrainLayer maps under `Art/Textures/Terrain/` are Editor-imported and
-    are deliberately excluded from the StreamingAssets sync. The apron concrete
-    v03 under `Art/Textures/Surfaces/` *is* runtime-loaded and does sync;
-    `AirsideMaterialLibrary` already prefers v03 over v02 and v01
-  - High path must not drop bloom/SSAO/shadows; Medium is the cheaper ladder
-  - `scripts/test-domain.sh` does not compile Presentation; Unity EditMode is required for `PresentationLayoutTests`
-  - Because of that gap, `work/flightcheck` is the only thing that compiles the
-    real flight geometry here, and any `PresentationLayoutTests` assertion it does
-    not mirror is unverified. One had already gone stale that way: it compared the
-    landing rollout at a progress that `TouchdownProgress` had moved past. Derive
-    sample points from the constants instead of writing literals, and mirror the
-    check in the harness. New: `FlightPath_TouchdownSitsOnTheThreeHundredMetreTdz`
-    and `CircuitCues_*` — mirror them the next time that harness runs
-  - Phase progress is read at the fractional presentation clock
-    (`AirsideAircraftMotion.PhaseProgress`), not sampled at the simulated second.
-    It is clamped to 1, which is what keeps a held departure parked at the
-    hold-short bar instead of sliding onto the runway ahead of its clearance
-  - A flight waiting on a reservation has `PhaseStartedAt` pushed forward every
-    stalled second, so a fractional read would creep forward and snap back. That
-    case falls through to the simulated value on purpose — do not "simplify" it
-  - The runway holding position lives in `AirportTaxiNetwork.RunwayHoldingPositionZ`
-    because both layers need it: presentation draws the bar there and the
-    simulation decides an arrival has vacated there. Do not fork the number
-  - Takeoff rotation is derived (`AirsideFlightPath.RotateProgress` ≈ 0.75), not a
-    literal. Gear retract, landing lights and runway spray all key off it
-  - Landing lights are not gated on night. Pinned daylight still shows them in
-    follow (emissive + brighter spots). They stay on through skipped ground
-    phases and go out after `GearRetractProgress`
-  - Props keep spinning in `Departed` (takeoff RPM). AtStand only kills them
-    when the full taxi loop is on; the circuit idles them instead
-  - Cabin doors stay shut on the circuit (`CabinDoorBias` is 0 while
-    `SkipGroundTaxi`). Do not restore stand-door theatre
-  - Touchdown smoke/skid is presentation-only again. It keys off
-    `HasTouchedDown` / `TouchdownProgress`, not the Approach→Landing seam
-  - `AirsideFlightPath` and `TaxiVisualPath` are presentation-only. Phase timing
-    stays in Simulation, so frame rate and these curves cannot change simulation
-    outcomes
-  - The horizon dome is a background-queue backdrop with no depth write. If it
-    goes back to opaque geometry, every aircraft past 165 m disappears again
-  - Save schema unchanged
-- **Decisions:** visible world is ADR 0032. Circuit loop is ADR 0033.
-  Aircraft motion read remains ADR 0030.
-- **Open question for Bailey:** keep the dormant building/GSE spawners in
+  - Bare field still bypasses Kingscote `AirsideTerrainGround.TryBuild`; Adelaide
+    ground is `AirsideAdelaideGround` + mesh/shader (ADR 0035), not a stretched
+    Terrain prefab
+  - Operational plateau stays dead level across X [-1580, 1580] × Z [-90, 90]
+  - `Textures/Terrain/` PNGs now sync into StreamingAssets for the mesh path
+  - Touchdown smoke builds even when `ShowWorldProps` is false
+  - Gear bias eases over `GearTransitionProgress` after `GearRetractProgress`
+  - Tire spin uses `GroundSpeedMetresPerSecond` / radius (0.37 m main, 0.31 m nose)
+  - Oleo settle is presentation-only on the motion root
+  - Pre-existing headless flakes still red on main and this branch:
+    `Taxiing_ReleasesEachSegmentBeforeReservingTheNext`,
+    `TaxiRoutes_UseDoglegThroatBeforeStandLeadIn`,
+    `AwaySummary_ReportsRouteIncomeAndReputationChange`,
+    `Weights_KeepDryGrassDominantAcrossTheOverviewCore` (0.594 vs ≥0.60)
+  - Combined pads / paint collector names / circuit skip / save schema unchanged
+- **Decisions:** ADR 0035 (Adelaide authored ground mesh). ADR 0032–0034 still apply.
+- **Open question for Bailey:** keep dormant building/GSE spawners in
   `AirsidePrototype` for a later restore, or delete that code now that the
   field is bare?
 
@@ -156,6 +107,16 @@ supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
 
+- **Plane / ground dynamics polish** on `cursor/plane-ground-dynamics-polish-0c44`:
+  Adelaide authored ground mesh (ADR 0035) replaces the 16 m tiled grass cube;
+  runway keeps 3 100 × 45 m with multi-scale asphalt + outside dirt shoulders;
+  touchdown smoke restored independent of world props; gear eases; tires spin from
+  distance/radius; oleo settle; softer prop disc; ATR material/LOD polish.
+  **Verified headless:** `scripts/test-domain.sh` **213 passed** (6 new Adelaide
+  ground tests); 4 pre-existing failures also red on `main`. **Not yet verified:**
+  Unity EditMode / Play, `scripts/test-unity.sh`, `scripts/build-mac.sh`, packaged
+  overview/follow loops (no Unity editor on this Cloud Linux VM).
+
 - **Final AIR-001 ATR 42-class starter** on `feature/atr42-final-aircraft`:
   production identity `mdl_atr42_starter_v01`, exact 22.67 × 24.57 × 7.59 m
   three-view envelope and 3.93 m six-blade props. Six-wheel gear, doors and
@@ -163,12 +124,9 @@ supplementary check, not a replacement for a real Unity run before merging.
   prefab and StreamingAssets fallback are integrated; targeted aircraft Unity
   tests pass and the packaged Mac follow view has been inspected. Decision 0034.
 
-- **Circuit flight-state cues** on `cursor/bare-adelaide-field-bc75`: same v06
-  turboprop. Gear down on the runway, up after `RotateProgress + 0.05`. Landing
-  lights on through approach / land / skipped wait / takeoff roll, off after
-  retract, readable in pinned daylight. Props keep takeoff RPM in climb-out.
-  Touchdown smoke fires once at `TouchdownProgress` (the 300 m TDZ), not on
-  short final. Cabin doors stay shut on the circuit.
+- **Circuit flight-state cues** on `cursor/bare-adelaide-field-bc75`: ATR circuit
+  gear / lights / props / one-shot touchdown at `TouchdownProgress`. Cabin doors
+  stay shut on the circuit.
 
 - **Real-metre runway markings** on `cursor/bare-adelaide-field-bc75`: the 3 100 ×
   45 m slab now has ICAO-ish threshold bars (12 per end), aiming points at 400 m,

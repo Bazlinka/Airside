@@ -14,7 +14,7 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideRunwayMarkings
     {
-        public const float PaintLiftMetres = 0.03f;
+        public const float PaintLiftMetres = 0.045f;
         public const float PaintHeight = 0.02f;
 
         public const float EdgeWidth = 0.90f;

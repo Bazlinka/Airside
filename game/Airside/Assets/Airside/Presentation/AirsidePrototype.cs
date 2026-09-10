@@ -1606,10 +1606,7 @@ namespace Airside.Presentation
                 // frames must not emit (InferFromMeshName treats those as Metal).
                 if (!(n == "Cockpit"
                       || n == "Cockpit glare"
-                      || ((n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
-                           || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
-                           || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0)
-                          && n.IndexOf("frame", StringComparison.OrdinalIgnoreCase) < 0)))
+                      || AirsideAircraftParts.IsCabinWindowGlass(n)))
                     continue;
 
                 var renderer = child.GetComponent<Renderer>();
@@ -8335,6 +8332,12 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                // Cabin panes are baked flat at the fuselage's widest half-width, but the
+                // skin curves inward toward the roof, so the pane tops sit proud of the
+                // body. Recess them into the skin so they read as windows in the openings
+                // rather than floating rectangles. Windscreen/cockpit glass is already
+                // inset, so it is left alone.
+                InsetCabinWindows(root);
             }
 
             if (!usedArt)
@@ -9004,6 +9007,34 @@ namespace Airside.Presentation
             mesh.RecalculateBounds();
             mesh.RecalculateNormals();
             filter.sharedMesh = mesh;
+        }
+
+        /// <summary>Cabin panes recess this far into the skin — enough to clear the
+        /// ~9 cm the fuselage curves inward from its widest point to the window tops.</summary>
+        private const float CabinWindowInsetMetres = 0.1f;
+
+        /// <summary>
+        /// Recess each cabin side-window pane inward along X so its top edge sits inside
+        /// the inward-curving fuselage skin instead of poking through it. A presentation
+        /// nudge on the kit's own glass — no extra panes, no baked window text. Windscreen
+        /// and cockpit glass already sit inside the body, so they are left untouched.
+        /// </summary>
+        private static void InsetCabinWindows(Transform aircraft)
+        {
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft || !AirsideAircraftParts.IsCabinWindowGlass(child.name))
+                    continue;
+                var renderer = child.GetComponent<Renderer>();
+                if (renderer == null)
+                    continue;
+
+                // Move toward the centreline on whichever side the pane sits.
+                var side = Mathf.Sign(renderer.bounds.center.x);
+                if (side == 0f)
+                    continue;
+                child.localPosition += new Vector3(-side * CabinWindowInsetMetres, 0f, 0f);
+            }
         }
 
         /// <summary>

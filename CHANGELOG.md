@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Cabin windows now sit in the fuselage instead of floating outside it (Pass
+  C).** The kit bakes each cabin pane flat at the fuselage's widest half-width,
+  but the skin curves inward toward the roof, so every pane top poked ~9 cm
+  through the body and read as a floating rectangle. Each cabin side pane is now
+  recessed inward into the skin so it reads as a window in the opening. The
+  windscreen and cockpit glass already sat inside the body and are untouched; the
+  inset and the night glow share one pane contract
+  (`AirsideAircraftParts.IsCabinWindowGlass`). No extra glass, no baked window
+  text. Locked headless by `AircraftPartsTests`; the seated look still needs a
+  Mac Play check. Presentation only, same mesh.
+
 - **Landing gear now folds from the wing and keeps its wheels on retract (Pass
   B).** The legs were pivoted at the kit origin, so raising the gear swung each
   whole leg about the fuselage centreline — the top lifted off the airframe and

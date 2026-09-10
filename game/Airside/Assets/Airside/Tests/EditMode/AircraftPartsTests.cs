@@ -67,6 +67,30 @@ namespace Airside.Tests
             Assert.That(AirsideAircraftParts.IsGearStrut(partName), Is.False, partName ?? "<null>");
         }
 
+        [TestCase("Cabin window 1")]
+        [TestCase("Cabin window 7")]
+        [TestCase("Cabin window R3")]
+        [TestCase("cabin_window_3")]
+        public void IsCabinWindowGlass_TrueForSidePanes(string partName)
+        {
+            Assert.That(AirsideAircraftParts.IsCabinWindowGlass(partName), Is.True, partName);
+        }
+
+        [TestCase("Cabin window frame 3")]
+        [TestCase("cabin_window_frame_r3")]
+        [TestCase("Windscreen C")]
+        [TestCase("Windscreen L")]
+        [TestCase("Cockpit")]
+        [TestCase("Cockpit glare")]
+        [TestCase("Cockpit frame")]
+        [TestCase("Fuselage")]
+        [TestCase("")]
+        [TestCase(null)]
+        public void IsCabinWindowGlass_FalseForFramesWindscreenCockpitAndBody(string partName)
+        {
+            Assert.That(AirsideAircraftParts.IsCabinWindowGlass(partName), Is.False, partName ?? "<null>");
+        }
+
         [Test]
         public void GearStrut_AndRollingWheel_AreDisjoint()
         {

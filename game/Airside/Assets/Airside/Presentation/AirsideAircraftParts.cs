@@ -42,5 +42,24 @@ namespace Airside.Presentation
         /// </summary>
         public static bool IsGearStrut(string partName) =>
             partName is "Gear nose" or "Gear L" or "Gear R";
+
+        /// <summary>
+        /// True for a cabin side-window glass pane (either side), false for its frame,
+        /// the windscreen and the cockpit glass. The kit bakes these panes flat at the
+        /// fuselage's widest half-width, but the skin curves inward toward the roof, so
+        /// the pane tops sit proud of the body. This is the set the inset pass recesses
+        /// into the skin and the set the night glow lights, kept in one place so the two
+        /// cannot disagree about what counts as a cabin window.
+        /// </summary>
+        public static bool IsCabinWindowGlass(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return false;
+            if (partName.IndexOf("frame", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+            return partName.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                   || partName.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
+                   || partName.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
     }
 }

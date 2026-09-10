@@ -22,13 +22,13 @@ namespace Airside.Presentation
         /// <summary>Simulated seconds each phase lasts, mirroring AircraftOperation.</summary>
         public static float PhaseSeconds(AircraftPhase phase) => phase switch
         {
-            AircraftPhase.Approach => 20f,
-            AircraftPhase.Landing => 12f,
-            AircraftPhase.TaxiIn => 25f,
+            AircraftPhase.Approach => 22f,
+            AircraftPhase.Landing => 14f,
+            AircraftPhase.TaxiIn => 28f,
             AircraftPhase.AtStand => 45f,
             AircraftPhase.Pushback => 12f,
-            AircraftPhase.TaxiOut => 25f,
-            AircraftPhase.Takeoff => 15f,
+            AircraftPhase.TaxiOut => 28f,
+            AircraftPhase.Takeoff => 18f,
             _ => DepartureFlyOutSeconds
         };
 
@@ -40,22 +40,27 @@ namespace Airside.Presentation
 
         public const float GroundY = 0.7f;
 
-        // Runway axis landmarks. The taxi network meets the runway at x = -24.
-        public const float RunwayEntryX = -24f;
-        public const float RotateX = 28f;
-        public const float TakeoffEndX = 96f;
-        public const float TakeoffEndY = 22f;
-        public const float DepartedEndX = 246f;
-        public const float DepartedEndY = 62f;
+        // Adelaide runway 05/23 landmarks (1:20 scale via <see cref="AirportLayout"/>).
+        public const float RunwayEntryX = AirportLayout.ArrivalExitX;
+
+        /// <summary>Rotate at ~68% of runway length from the west threshold.</summary>
+        public const float RotateX = AirportLayout.WestThresholdX + AirportLayout.RunwayLength * 0.68f;
+        public const float TakeoffEndX = AirportLayout.EastThresholdX + 8f;
+        public const float TakeoffEndY = 24f;
+        public const float DepartedEndX = 320f;
+        public const float DepartedEndY = 68f;
 
         // Arrivals join far enough out that they fly in from the distance instead of
         // popping into existence just off the runway end.
-        public const float ApproachStartX = -430f;
-        public const float ApproachStartY = 78f;
-        public const float ShortFinalX = -160f;
-        public const float ShortFinalY = 12f;
-        public const float TouchdownX = -42f;
-        public const float TouchdownProgress = 0.8f;
+        public const float ApproachStartX = -620f;
+        public const float ApproachStartY = 82f;
+        public const float ShortFinalX = -220f;
+        public const float ShortFinalY = 14f;
+        /// <summary>Touchdown zone just past the west threshold on runway 05.</summary>
+        public const float TouchdownX = AirportLayout.WestThresholdX + 3f;
+
+        /// <summary>Most of the landing phase is braked rollout along the centreline.</summary>
+        public const float TouchdownProgress = 0.28f;
 
         /// <summary>
         /// Hold short of the runway, on the A1 chord between the runway entry and the

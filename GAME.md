@@ -1,39 +1,21 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — CC0 terrain ground pass)
-- **Branch:** `feature/cc0-terrain-ground`, off `main`. Everything through the
-  aircraft-logic pass is merged (performance PR #183, flight realism + aircraft
-  logic PR #184). Check this branch out rather than starting on `main`.
-- **Do next — the terrain has to be baked before it exists.** Run
-  `bash scripts/bake-terrain.sh` once on the Mac and commit its outputs with
-  their `.meta` files: `Art/Terrain/terrain_kingscote_first_playable_v01.asset`,
-  four `trn_ground_*_v01.terrainlayer`, `mat_kingscote_terrain_v01.mat` and
-  `Resources/Airside/Prefabs/mdl_kingscote_terrain_v01.prefab`. Until then the
-  runtime falls back to the old procedural slab, so **the scene looks unchanged
-  and that is not a bug**. Then `scripts/test-unity.sh`, `scripts/build-mac.sh`,
-  and matched overview screenshots at day, dusk, night and rain. While watching a
-  full arrival and departure, check wheels never clip below the terrain and that
-  runway, taxiway, stands and ground traffic stay aligned. Check `Player.log` for
-  missing TerrainData, TerrainLayer, texture, shader or Addressables paths, and
-  confirm settled RSS stays under 1 GB.
-- **Also still owed from the aircraft pass:** Mac Play at 1× and 4× on both
-  cameras. The aircraft should move continuously at both speeds (the 1 Hz
-  staircase is what made 4× look so much worse); taxi should hold one steady
-  speed out as well as in; a departure should stop at the hold-short bar clear of
-  the runway and then swing onto the centreline along a curve rather than
-  snapping round; an arrival should be a distant speck on final rather than
-  popping into existence. Ground vehicles, stand equipment and people are parked
-  by `AirsideFocusMode.AircraftOnly` — flip that to `false` to bring them back.
-- **In progress / half-done:** Aircraft-focus mode is a deliberate temporary
-  simplification at Bailey's request, not a deletion — one flag, one place.
-  **Not done, and it is the real answer to "there aren't enough taxiways / map
-  isn't big enough":** the field still has a single A1/A2 taxiway, so a departure
-  holding short and an arrival vacating the runway share the same chord. The
-  simulation stops them colliding on the runway, but they pass close on A1. That
-  needs a parallel taxiway with separate arrival-exit and departure-entry
-  connections, a longer runway and multiple exits — markings, lights and
-  thresholds all need eyes on them in Unity, so it was not attempted here.
-  Presentation performance P0–P2 and art sourcing carry over unchanged.
+- **Last updated:** 2026-09-10 (Cursor — Adelaide layout, aircraft focus, daylight pin)
+- **Branch:** `main`
+- **Do next:** Playtest the packaged build (`work/builds/Airside.app`) or Unity
+  Play. Watch a full arrival (lands west, rolls to B exit, taxis to stand) and
+  departure (pushback, taxi A to west hold-short, full-length takeoff roll east).
+  Confirm one smooth v06 turboprop is visible, lighting stays daytime, no sun
+  disc under the map, and runway rollout reads realistic. Run
+  `scripts/test-unity.sh` for a fresh EditMode pass. If baked terrain looks
+  misaligned, re-run `scripts/bake-terrain.sh` after the new 384×300 m plateau.
+- **In progress / half-done:** Layout uses Adelaide runway 05/23 dimensions at
+  1:20 scale (155 m) via `AirportLayout.cs` with parallel taxiways A (departures)
+  and B (arrivals). `AirsideFocusMode.AircraftOnly` hides ground traffic aircraft,
+  second commercial visuals, GSE, and people — sim still runs all slots. Night
+  visuals are pinned off (`PinDaylightPresentation = true`); HUD clock still
+  advances. Perimeter fence removed. Persistence save uses headless
+  `AirsideSaveJsonCodec` (no JsonUtility). Art/terrain naming still Kingscote-branded.
 - **Watch for / assumptions:**
   - Combined pads keep wet-surface collector names (`Runway W`, `Apron `, `Taxiway A`, `Infield grass`, `Taxi centre`, `Taxi exit centre`)
   - `Infield grass` is now buried under the terrain rather than removed. Its top

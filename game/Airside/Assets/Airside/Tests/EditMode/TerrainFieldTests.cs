@@ -19,8 +19,8 @@ namespace Airside.Tests
         [Test]
         public void Extents_MatchTheApprovedTerrainSize()
         {
-            Assert.That(AirsideTerrainField.SizeX, Is.EqualTo(256f));
-            Assert.That(AirsideTerrainField.SizeZ, Is.EqualTo(220f));
+            Assert.That(AirsideTerrainField.SizeX, Is.EqualTo(384f));
+            Assert.That(AirsideTerrainField.SizeZ, Is.EqualTo(300f));
             Assert.That(AirsideTerrainField.SizeY, Is.EqualTo(8f));
             Assert.That(AirsideTerrainField.HeightmapResolution, Is.EqualTo(257));
             Assert.That(AirsideTerrainField.AlphamapResolution, Is.EqualTo(256));
@@ -30,8 +30,8 @@ namespace Airside.Tests
         public void Extents_ContainEveryOperationalPadWithMargin()
         {
             // Parsed extents of the operational pads in AirsidePrototype.
-            const float padMinX = -54.5f;
-            const float padMaxX = 56f;
+            const float padMinX = -85.5f;
+            const float padMaxX = 85.5f;
             const float padMinZ = -3.4f;
             const float padMaxZ = 52f;
 

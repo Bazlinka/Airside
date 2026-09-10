@@ -233,8 +233,8 @@ namespace Airside.Tests
             }
         }
 
-        private static TaxiRoute StandOneRoute() =>
-            new AirportTaxiNetwork().RouteTo(AirportSimulation.StandOne);
+        private static StandTaxiRoutes StandOneRoutes() =>
+            new AirportTaxiNetwork().RoutesTo(AirportSimulation.StandOne);
 
         /// <summary>
         /// Mirrors AirsidePrototype.PositionFor for a single flight to Stand 1, so the
@@ -242,16 +242,16 @@ namespace Airside.Tests
         /// </summary>
         private static Vector3 FlightPathAt(AircraftPhase phase, float t)
         {
-            var route = StandOneRoute();
+            var routes = StandOneRoutes();
             t = Mathf.Clamp01(t);
             switch (phase)
             {
                 case AircraftPhase.Approach: return AirsideFlightPath.Approach(t, 0f);
                 case AircraftPhase.Landing: return AirsideFlightPath.Landing(t, 0f);
-                case AircraftPhase.TaxiIn: return TaxiVisualPath.PositionAt(route, t, reverse: false);
-                case AircraftPhase.AtStand: return TaxiVisualPath.StandPosition(route);
-                case AircraftPhase.Pushback: return TaxiVisualPath.PushbackPosition(route, t);
-                case AircraftPhase.TaxiOut: return TaxiVisualPath.TaxiOutPosition(route, t);
+                case AircraftPhase.TaxiIn: return TaxiVisualPath.PositionAt(routes.Arrival, t, reverse: false);
+                case AircraftPhase.AtStand: return TaxiVisualPath.StandPosition(routes.Departure);
+                case AircraftPhase.Pushback: return TaxiVisualPath.PushbackPosition(routes.Departure, t);
+                case AircraftPhase.TaxiOut: return TaxiVisualPath.TaxiOutPosition(routes.Departure, t);
                 case AircraftPhase.Takeoff: return AirsideFlightPath.Takeoff(t);
                 default: return AirsideFlightPath.Departed(t);
             }
@@ -376,13 +376,13 @@ namespace Airside.Tests
         {
             // Taxi-out used to finish on the runway centreline, so a departure waiting
             // for clearance stood in the next arrival's rollout.
-            var hold = TaxiVisualPath.TaxiOutPosition(StandOneRoute(), 1f);
+            var hold = TaxiVisualPath.TaxiOutPosition(StandOneRoutes().Departure, 1f);
             Assert.That(Mathf.Abs(hold.z), Is.GreaterThan(AirsideRunwayHalfWidth + 2f));
             Assert.That(hold.z, Is.EqualTo(AirportTaxiNetwork.RunwayHoldingPositionZ).Within(0.01f));
 
             // Presentation and the simulation have to agree on where the line is, or a
             // departure gets cleared through an arrival that has not vacated.
-            var route = StandOneRoute();
+            var route = StandOneRoutes().Departure;
             var simLine = TaxiVisualPath.PositionAtForward(
                 route, AirportTaxiNetwork.RunwayHoldingProgress(route));
             Assert.That(Vector3.Distance(simLine, hold), Is.LessThan(0.05f));
@@ -394,7 +394,7 @@ namespace Airside.Tests
             // Reverse travel used to mirror only the segment index, so an outbound
             // aircraft spent the long Alpha leg's share of the phase crawling the short
             // lead-in and then raced the rest — a tenfold speed swing inside one phase.
-            var route = StandOneRoute();
+            var route = StandOneRoutes().Arrival;
             foreach (var reverse in new[] { false, true })
             {
                 var min = float.MaxValue;
@@ -485,6 +485,8 @@ namespace Airside.Tests
             Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
             Assert.That(AirsideFocusMode.ShowStandEquipment, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
             Assert.That(AirsideFocusMode.ShowPeople, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
+            Assert.That(AirsideFocusMode.ShowGroundTrafficAircraft, Is.EqualTo(!AirsideFocusMode.AircraftOnly));
+            Assert.That(AirsideFocusMode.VisibleCommercialFlights, Is.EqualTo(1));
         }
 
         [Test]

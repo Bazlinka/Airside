@@ -103,20 +103,22 @@ namespace Airside.Tests
         public void TaxiRoutes_UseNamedSharedSegmentsAndAStandSpecificLeadIn()
         {
             var network = new AirportTaxiNetwork();
-            var standOne = network.RouteTo(AirportSimulation.StandOne);
-            var standTwo = network.RouteTo(AirportSimulation.StandTwo);
-            var standThree = network.RouteTo(AirportSimulation.StandThree);
+            var standOne = network.RoutesTo(AirportSimulation.StandOne);
+            var standTwo = network.RoutesTo(AirportSimulation.StandTwo);
+            var standThree = network.RoutesTo(AirportSimulation.StandThree);
 
-            Assert.That(standOne.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.AlphaOne));
-            Assert.That(standOne.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
-            Assert.That(standOne.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
-            Assert.That(standOne.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
-            Assert.That(standTwo.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
-            Assert.That(standTwo.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
-            Assert.That(standThree.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
-            Assert.That(standThree.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
-            Assert.That(standOne.Points.Count, Is.EqualTo(standOne.SegmentIds.Count + 1));
-            Assert.That(standThree.Points[standThree.Points.Count - 1].Z, Is.EqualTo(34f));
+            Assert.That(standOne.Arrival.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.BravoExit));
+            Assert.That(standOne.Arrival.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.BravoOne));
+            Assert.That(standOne.Arrival.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standOne.Arrival.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandOneLeadIn));
+            Assert.That(standOne.Departure.SegmentIds[0], Is.EqualTo(AirportTaxiNetwork.AlphaOne));
+            Assert.That(standOne.Departure.SegmentIds[1], Is.EqualTo(AirportTaxiNetwork.AlphaTwo));
+            Assert.That(standTwo.Arrival.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standTwo.Arrival.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandTwoLeadIn));
+            Assert.That(standThree.Arrival.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
+            Assert.That(standThree.Arrival.SegmentIds[3], Is.EqualTo(AirportTaxiNetwork.StandThreeLeadIn));
+            Assert.That(standOne.Arrival.Points.Count, Is.EqualTo(standOne.Arrival.SegmentIds.Count + 1));
+            Assert.That(standThree.Arrival.Points[standThree.Arrival.Points.Count - 1].Z, Is.EqualTo(34f));
         }
 
         [Test]
@@ -234,12 +236,12 @@ namespace Airside.Tests
                          AirportSimulation.StandOne, AirportSimulation.StandTwo, AirportSimulation.StandThree
                      })
             {
-                var route = network.RouteTo(stand);
+                var route = network.RoutesTo(stand).Departure;
                 var progress = AirportTaxiNetwork.RunwayHoldingProgress(route);
 
                 Assert.That(progress, Is.GreaterThan(0f), $"{stand.Value} holding line is at the runway");
                 Assert.That(progress, Is.LessThan(1f), $"{stand.Value} holding line is past the stand");
-                // It must land on the first segment, the one that leaves the runway.
+                // It must land on the first segment, the A1 chord that leaves the runway.
                 Assert.That(route.ForwardSegmentIndex(progress), Is.Zero, $"{stand.Value} holding line left A1");
             }
         }

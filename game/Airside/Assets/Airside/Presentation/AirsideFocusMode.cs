@@ -22,5 +22,11 @@ namespace Airside.Presentation
 
         /// <summary>Marshallers, ground crew, passengers, landside walkers.</summary>
         public static bool ShowPeople => !AircraftOnly;
+
+        /// <summary>GT-201 / GT-202 circuit aircraft — hidden while judging the commercial loop.</summary>
+        public static bool ShowGroundTrafficAircraft => !AircraftOnly;
+
+        /// <summary>How many commercial models to draw; sim may still run more slots.</summary>
+        public static int VisibleCommercialFlights => AircraftOnly ? 1 : int.MaxValue;
     }
 }

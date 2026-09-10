@@ -92,6 +92,8 @@ namespace Airside.Presentation
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
+        private static readonly int MainTexStId = Shader.PropertyToID("_MainTex_ST");
         private static readonly Dictionary<string, string> SurfaceBasecolorCache = new();
         private static Transform _airfieldRoot;
         private static Mesh FallbackShrubMesh;
@@ -150,7 +152,13 @@ namespace Airside.Presentation
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
         private const float AmbientCoastVolume = 0.035f;
-            private float _apronProbeRefreshAt;
+        // Temporary — keep the field in daylight while night lighting is reworked.
+        private const bool PinDaylightPresentation = true;
+
+        private float PresentationDaylight =>
+            PinDaylightPresentation ? 1f : (float)_simulation.TimeOfDay.Daylight;
+
+        private float _apronProbeRefreshAt;
             private int _probeBand = int.MinValue;
         private string _researchToast = string.Empty;
         private float _researchToastUntil;
@@ -264,9 +272,16 @@ namespace Airside.Presentation
             _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
-            _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
-            for (var index = 0; index < _groundTraffic.Length; index++)
-                _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
+            if (AirsideFocusMode.ShowGroundTrafficAircraft)
+            {
+                _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
+                for (var index = 0; index < _groundTraffic.Length; index++)
+                    _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
+            }
+            else
+            {
+                _groundTraffic = Array.Empty<Transform>();
+            }
             if (AirsideFocusMode.ShowGroundVehicles)
             {
                 _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
@@ -1051,27 +1066,17 @@ namespace Airside.Presentation
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var lane = ApproachLaneOffset(flight);
-                var position = PositionFor(phase, progress, flight.TaxiRoute, lane);
+                var route = TaxiRouteFor(flight, phase);
+                var position = PositionFor(phase, progress, route, lane);
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
-                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), flight.TaxiRoute, lane);
-                // Soft catch-up on ground so stalls do not teleport through another airframe.
-                if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
-                    or AircraftPhase.AtStand or AircraftPhase.Landing)
-                {
-                    var catchUp = PresentationDeltaTime * 12f;
-                    var holding = _simulation.TrafficWaits.TryGetWaitStart(flight.OwnerId, out _);
-                    view.position = catchUp <= 0f
-                        ? view.position
-                        : TaxiVisualPath.MoveGroundTraffic(view.position, position, holding, catchUp);
-                }
-                else
-                {
-                    view.position = position;
-                }
+                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane);
+                // Fractional phase progress is exact — catch-up lag made some phases slide
+                // while airborne phases snapped, which read as inconsistent smoothness.
+                view.position = position;
 
                 var direction = next - position;
                 var heading = direction.sqrMagnitude > 0.001f
@@ -1092,9 +1097,9 @@ namespace Airside.Presentation
                 RollLandingGearTires(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
-                UpdateAircraftLightsAndGear(view, phase, (float)_simulation.TimeOfDay.Daylight, progress);
+                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress);
                 UpdateCabinDoor(view, phase);
-                UpdateCabinWindowGlow(view, phase, (float)_simulation.TimeOfDay.Daylight);
+                UpdateCabinWindowGlow(view, phase, PresentationDaylight);
                 UpdateEngineHeat(view, phase);
 
                 if (_cameraController != null
@@ -1308,7 +1313,7 @@ namespace Airside.Presentation
 
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
-                windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - (float)_simulation.TimeOfDay.Daylight);
+                windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);
 
             _ambientWindAudio.volume = Mathf.MoveTowards(_ambientWindAudio.volume, windTarget, Time.unscaledDeltaTime * 0.2f);
             _ambientRainAudio.volume = Mathf.MoveTowards(_ambientRainAudio.volume, rainTarget, Time.unscaledDeltaTime * 0.25f);
@@ -1772,9 +1777,11 @@ namespace Airside.Presentation
 
             var next = new Transform[needed];
             var kept = new HashSet<Transform>();
+            var visibleLimit = AirsideFocusMode.VisibleCommercialFlights;
             for (var index = 0; index < needed; index++)
             {
                 var flight = flights[index];
+                var visible = index < visibleLimit;
 
                 // Assign a stable livery slot: reuse this aircraft's slot, else take
                 // the lowest slot no other current aircraft holds.
@@ -1799,15 +1806,19 @@ namespace Airside.Presentation
                 {
                     next[index] = existing;
                     kept.Add(existing);
+                    existing.gameObject.SetActive(visible);
                     continue;
                 }
 
-                var color = slot == 0
-                    ? new Color(0.12f, 0.43f, 0.76f)
-                    : new Color(0.18f, 0.55f, 0.48f);
-                var livery = slot == 0
-                    ? "Textures/Decals/dc_livery_coastline_regional_v01.png"
-                    : "Textures/Decals/dc_livery_emu_air_v01.png";
+                if (!visible)
+                {
+                    next[index] = null;
+                    continue;
+                }
+
+                // Coastline Regional v06 turboprop — the smooth reference airframe.
+                var color = new Color(0.12f, 0.43f, 0.76f);
+                var livery = "Textures/Decals/dc_livery_coastline_regional_v01.png";
                 next[index] = BuildAircraft($"Commercial {flight.AircraftId}", color, livery);
             }
 
@@ -1835,11 +1846,18 @@ namespace Airside.Presentation
 
             _commercialAircraft = next;
             if (changed && needed > 0 && _cameraController != null)
-                _cameraController.SetFollowTargets(_commercialAircraft);
+            {
+                var follow = next.Where(t => t != null && t.gameObject.activeSelf).ToArray();
+                if (follow.Length > 0)
+                    _cameraController.SetFollowTargets(follow);
+            }
         }
 
         private void UpdateGroundTrafficVisual()
         {
+            if (_groundTraffic == null || _groundTraffic.Length == 0)
+                return;
+
             for (var index = 0; index < _groundTraffic.Length; index++)
             {
                 var view = _groundTraffic[index];
@@ -1892,11 +1910,11 @@ namespace Airside.Presentation
                 UpdateAircraftLightsAndGear(
                     view,
                     visualPhase,
-                    (float)_simulation.TimeOfDay.Daylight);
+                    PresentationDaylight);
                 UpdateCabinWindowGlow(
                     view,
                     visualPhase,
-                    (float)_simulation.TimeOfDay.Daylight);
+                    PresentationDaylight);
                 UpdateEngineHeat(view, visualPhase);
             }
         }
@@ -1961,11 +1979,6 @@ namespace Airside.Presentation
         {
             var operation = flight.Operation;
 
-            // At the stand, progress tracks turnaround work rather than the phase clock,
-            // and the airframe is parked either way.
-            if (operation.Phase == AircraftPhase.AtStand)
-                return Mathf.Clamp01((float)operation.PhaseProgress(_clock.Now));
-
             // A flight waiting on a reservation has its phase clock pushed forward once
             // per stalled second, so a fractional read would creep forward and snap back
             // every second. Hold the simulated value: the aircraft is standing still,
@@ -1995,9 +2008,9 @@ namespace Airside.Presentation
                 UpdateVehicle(_fuelTruck, false, fuelPark, fuelPark);
                 UpdateVehicle(_baggageCart, false, bagPark, bagPark);
                 UpdateVehicle(_passengerBus, false, busPark, busPark);
-                SyncVehicleHeadlights(_fuelTruck, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
-                SyncVehicleHeadlights(_baggageCart, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
-                SyncVehicleHeadlights(_passengerBus, (float)_simulation.TimeOfDay.Daylight < 0.38f, (float)_simulation.TimeOfDay.Daylight);
+                SyncVehicleHeadlights(_fuelTruck, PresentationDaylight < 0.38f, PresentationDaylight);
+                SyncVehicleHeadlights(_baggageCart, PresentationDaylight < 0.38f, PresentationDaylight);
+                SyncVehicleHeadlights(_passengerBus, PresentationDaylight < 0.38f, PresentationDaylight);
                 return;
             }
 
@@ -2010,7 +2023,7 @@ namespace Airside.Presentation
             UpdateVehicle(_fuelTruck, fuelActive, new Vector3(18.8f, 0.55f, standZ + 2.4f), fuelPark);
             UpdateVehicle(_baggageCart, bagActive, new Vector3(19.4f, 0.42f, standZ + 2.4f), bagPark);
             UpdateVehicle(_passengerBus, paxActive, new Vector3(15.6f, 0.68f, standZ + 4.2f), busPark);
-            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var daylight = PresentationDaylight;
             SyncVehicleHeadlights(_fuelTruck, fuelActive || daylight < 0.38f, daylight);
             SyncVehicleHeadlights(_baggageCart, bagActive || daylight < 0.38f, daylight);
             SyncVehicleHeadlights(_passengerBus, paxActive || daylight < 0.38f, daylight);
@@ -2064,8 +2077,8 @@ namespace Airside.Presentation
                 // Pushback tug waits at nose during AtStand so the service set matches the board.
                 PlaceProp(_pushbackTug, true, new Vector3(13.4f, 0.4f, z - 0.2f),
                     Quaternion.LookRotation(new Vector3(-1, 0, 7.85f)));
-                SyncVehicleHeadlights(_pushbackTug, (float)_simulation.TimeOfDay.Daylight < 0.38f,
-                    (float)_simulation.TimeOfDay.Daylight);
+                SyncVehicleHeadlights(_pushbackTug, PresentationDaylight < 0.38f,
+                    PresentationDaylight);
             }
             else
             {
@@ -2092,7 +2105,7 @@ namespace Airside.Presentation
                     : Quaternion.LookRotation(new Vector3(-1, 0, 7.65f));
                 PlaceProp(_pushbackTug, true, tugPos, facing);
                 PulseServiceBeacon(_pushbackTug, true);
-                SyncVehicleHeadlights(_pushbackTug, true, (float)_simulation.TimeOfDay.Daylight);
+                SyncVehicleHeadlights(_pushbackTug, true, PresentationDaylight);
             }
             else if (atStand == null)
             {
@@ -2161,10 +2174,10 @@ namespace Airside.Presentation
                     new Vector3(18f, 0.065f, 18.6f),
                     new Vector3(26f, 0.04f, 8f),
                     new Color(0.50f, 0.50f, 0.52f));
-                PlaceProp("prop_safety_cone_v01", "Stand 3 cone NW", new Vector3(32.2f, 0.18f, 28.4f), Quaternion.identity, 0.85f);
-                PlaceProp("prop_safety_cone_v01", "Stand 3 cone SW", new Vector3(32.2f, 0.18f, 8.8f), Quaternion.identity, 0.85f);
-                PlaceProp("prop_safety_cone_v01", "Stand 3 cone NE", new Vector3(47.8f, 0.18f, 28.4f), Quaternion.identity, 0.85f);
-                PlaceProp("prop_safety_cone_v01", "Stand 3 cone SE", new Vector3(47.8f, 0.18f, 8.8f), Quaternion.identity, 0.85f);
+                CreateCone(new Vector3(32.2f, 0.18f, 28.4f));
+                CreateCone(new Vector3(32.2f, 0.18f, 8.8f));
+                CreateCone(new Vector3(47.8f, 0.18f, 28.4f));
+                CreateCone(new Vector3(47.8f, 0.18f, 8.8f));
             }
         }
 
@@ -2500,7 +2513,7 @@ namespace Airside.Presentation
                 // Cooler, denser atmosphere in adverse weather — stacks on base day fog.
                 var fogDay = new Color(0.55f, 0.6f, 0.66f);
                 var fogNight = new Color(0.18f, 0.22f, 0.3f);
-                var daylight = (float)_simulation.TimeOfDay.Daylight;
+                var daylight = PresentationDaylight;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
@@ -2549,7 +2562,7 @@ namespace Airside.Presentation
             if (_apronProbe != null && Time.unscaledTime >= _apronProbeRefreshAt)
             {
                 _apronProbe.intensity = Mathf.Lerp(0.75f, 1.15f, rainWetness);
-                MaybeRefreshApronProbe((float)_simulation.TimeOfDay.Daylight, rainWetness);
+                MaybeRefreshApronProbe(PresentationDaylight, rainWetness);
                 _apronProbeRefreshAt = Time.unscaledTime + 30f;
             }
         }
@@ -4162,17 +4175,21 @@ namespace Airside.Presentation
         private void ApplyDayCycle()
         {
             var cycle = _simulation.TimeOfDay;
-            var daylight = (float)cycle.Daylight;
+            var daylight = PresentationDaylight;
 
-            var elevation = (float)cycle.SunElevationDegrees;
-            _sun.transform.rotation = Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
+            var elevation = PinDaylightPresentation ? 48f : (float)cycle.SunElevationDegrees;
+            _sun.transform.rotation = PinDaylightPresentation
+                ? Quaternion.Euler(48f, -28f, 0f)
+                : Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
 
             // Warm key, cool fill — day must read bright coastal sun; night must yield to
             // apron floods so the airfield silhouette stays obvious from overview.
             var day = new Color(1f, 0.96f, 0.88f);
             var goldenHour = new Color(1f, 0.68f, 0.42f);
             var night = new Color(0.32f, 0.38f, 0.55f);
-            var warm = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
+            var warm = PinDaylightPresentation
+                ? 0f
+                : Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
             _sun.intensity = Mathf.Lerp(0.12f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
@@ -4537,7 +4554,7 @@ namespace Airside.Presentation
             }
 
             _windowLights = lights.ToArray();
-            UpdateNightGlow((float)_simulation.TimeOfDay.Daylight);
+            UpdateNightGlow(PresentationDaylight);
         }
 
         private void UpdateNightGlow(float daylight)
@@ -4694,7 +4711,8 @@ namespace Airside.Presentation
             var edgeStep = AirsideRuntimeQuality.EdgeLightStep;
             if (hasLightingKit)
                 edgeStep = Mathf.Max(edgeStep, 10);
-            for (var x = -44; x <= 44; x += edgeStep)
+            var runwayEdge = (int)AirportLayout.RunwayHalfLength - 2;
+            for (var x = -runwayEdge; x <= runwayEdge; x += edgeStep)
             {
                 lights.Add(CreateEdgePointLight($"Runway edge point L {x}", new Vector3(x, 0.55f, -3.4f)));
                 lights.Add(CreateEdgePointLight($"Runway edge point R {x}", new Vector3(x, 0.55f, 3.4f)));
@@ -5087,19 +5105,21 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Paved lead-in along the taxi chord from Taxiway A (8,9) to the stand bay.
+        /// Paved lead-in along the taxi chord from the parallel taxiways to the stand bay.
         /// </summary>
         private static void CreateTaxiLeadPad(string name, float standZ)
         {
-            // Dogleg matching AirportTaxiNetwork: Alpha (8,9) → throat (12,standZ) → stand (17,standZ).
-            // Narrower chords so Stand 3 does not pave through Stand 1/2 boxes.
-            CreateTaxiChordPad($"{name} throat leg", new Vector3(8f, 0.01f, 9f), new Vector3(12f, 0.01f, standZ), 3.2f,
+            // Dogleg matching AirportTaxiNetwork: apron throat → stand.
+            var alpha = new Vector3(AirportLayout.TaxiwayEastX, 0.01f, AirportLayout.TaxiwayAlphaZ);
+            var throat = new Vector3(AirportLayout.ApronThroatX, 0.01f, standZ);
+            var stand = new Vector3(AirportLayout.StandX, 0.01f, standZ);
+            CreateTaxiChordPad($"{name} throat leg", alpha, throat, 3.2f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
-            CreateTaxiChordPad($"{name} stand leg", new Vector3(12f, 0.01f, standZ), new Vector3(17f, 0.01f, standZ), 3.4f,
+            CreateTaxiChordPad($"{name} stand leg", throat, stand, 3.4f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
-            CreateTaxiChordPad($"{name} throat", new Vector3(8f, 0.01f, 9f), new Vector3(10f, 0.01f, 9f + (standZ - 9f) * 0.25f), 2.8f,
+            CreateTaxiChordPad($"{name} throat", alpha, new Vector3(10f, 0.01f, AirportLayout.TaxiwayAlphaZ + (standZ - AirportLayout.TaxiwayAlphaZ) * 0.25f), 2.8f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
-            CreateTaxiChordPad($"{name} mouth", new Vector3(15f, 0.01f, standZ), new Vector3(17f, 0.01f, standZ), 3.2f,
+            CreateTaxiChordPad($"{name} mouth", new Vector3(stand.x - 2f, 0.01f, standZ), stand, 3.2f,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
         }
 
@@ -5127,16 +5147,32 @@ namespace Airside.Presentation
             var grass = Shade(AirsideTheme.Eucalyptus, 0.62f);
             var asphalt = new Color(0.16f, 0.18f, 0.2f);
             var concrete = new Color(0.34f, 0.36f, 0.37f);
-            CreateBlock("Infield grass", new Vector3(4f, -0.55f, 4.6f), new Vector3(48f, 0.28f, 3.4f), grass,
+            var taxiAsphalt = new Color(0.22f, 0.24f, 0.26f);
+            var runwayLen = AirportLayout.RunwayLength;
+            var runwayHalf = AirportLayout.RunwayHalfLength;
+            var taxiSpan = AirportLayout.TaxiwayEastX - AirportLayout.AlphaJunctionX + 16f;
+            var taxiCentreX = (AirportLayout.TaxiwayEastX + AirportLayout.AlphaJunctionX) * 0.5f;
+
+            CreateBlock("Infield grass", new Vector3(4f, -0.55f, 4.6f), new Vector3(runwayHalf + 8f, 0.28f, 3.4f), grass,
                 PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(12f, 2.2f));
-            CreateBlock("Runway W", new Vector3(0f, -0.08f, 0f), new Vector3(96f, 0.144f, 6.8f), asphalt,
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(18f, 2.4f));
-            CreateBlock("Runway blast W", new Vector3(-50.5f, -0.08f, 0f), new Vector3(8f, 0.14f, 6.4f), asphalt,
+            CreateBlock("Runway W", new Vector3(0f, -0.08f, 0f), new Vector3(runwayLen, 0.144f, AirportLayout.RunwayWidth), asphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(24f, 2.4f));
+            CreateBlock("Runway blast W", new Vector3(-runwayHalf - 4f, -0.08f, 0f), new Vector3(8f, 0.14f, 6.4f), asphalt,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(2.2f, 2.2f));
-            CreateBlock("Runway blast E", new Vector3(50.5f, -0.08f, 0f), new Vector3(8f, 0.14f, 6.4f), asphalt,
+            CreateBlock("Runway blast E", new Vector3(runwayHalf + 4f, -0.08f, 0f), new Vector3(8f, 0.14f, 6.4f), asphalt,
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(2.2f, 2.2f));
-            CreateBlock("Taxiway A", new Vector3(8f, -0.02f, 9f), new Vector3(64f, 0.12f, 4.2f), new Color(0.22f, 0.24f, 0.26f),
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(14f, 1.6f));
+            CreateBlock("Taxiway A", new Vector3(taxiCentreX, -0.02f, AirportLayout.TaxiwayAlphaZ),
+                new Vector3(taxiSpan, 0.12f, 4.2f), taxiAsphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(16f, 1.6f));
+            CreateBlock("Taxiway B", new Vector3(taxiCentreX, -0.02f, AirportLayout.TaxiwayBravoZ),
+                new Vector3(taxiSpan, 0.12f, 4.2f), taxiAsphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(16f, 1.6f));
+            CreateTaxiChordPad("Taxiway B exit", new Vector3(AirportLayout.ArrivalExitX, -0.02f, 0f),
+                new Vector3(AirportLayout.ArrivalExitX, -0.02f, AirportLayout.TaxiwayBravoZ), 4.2f,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
+            CreateTaxiChordPad("Taxiway A entry", new Vector3(AirportLayout.DepartureEntryX, -0.02f, 0f),
+                new Vector3(AirportLayout.AlphaJunctionX, -0.02f, AirportLayout.TaxiwayAlphaZ), 4.2f,
+                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
             CreateBlock("Apron ", new Vector3(20f, 0f, 18f), new Vector3(28f, 0.12f, 16f), concrete,
                 PreferSurfaceBasecolor("tx_concrete_apron"), new Vector2(6f, 4f));
         }
@@ -5149,8 +5185,11 @@ namespace Airside.Presentation
         // runway, taxi, apron, buildings, props and context provide the visual detail.
         private static void BuildAirfieldTerrainBase()
         {
-            CreateBlock("Airfield terrain base", new Vector3(0f, -0.76f, 10f), new Vector3(210f, 0.8f, 180f),
-                Shade(AirsideTheme.DryGrass, 0.62f), PreferSurfaceBasecolor("tx_grass_kingscote"), new Vector2(42f, 36f));
+            CreateBlock("Airfield terrain base",
+                new Vector3(AirsideTerrainField.CentreX, -0.76f, AirsideTerrainField.CentreZ),
+                new Vector3(AirsideTerrainField.SizeX + 24f, 0.8f, AirsideTerrainField.SizeZ + 24f),
+                Shade(AirsideTheme.DryGrass, 0.62f), PreferSurfaceBasecolor("tx_grass_kingscote"),
+                new Vector2(AirsideTerrainField.SizeX * 0.11f, AirsideTerrainField.SizeZ * 0.12f));
         }
 
         private static void BuildAirfieldTerrain11Operational()
@@ -5325,11 +5364,11 @@ namespace Airside.Presentation
                 CreateBlock("Ops shed window glow", new Vector3(-8f, 1.5f, 24.1f), new Vector3(3.2f, 1.1f, 0.08f), new Color(1f, 0.78f, 0.4f));
 
             // Soft wear accent only — large stain sheets were opaque black patches (PNG alpha ignored).
-            CreateDecalQuad("Runway wear W", new Vector3(-18f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+            CreateDecalQuad("Runway wear W", new Vector3(-52f, 0.02f, 0f), new Vector3(18f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Runway wear mid", new Vector3(0f, 0.02f, 0f), new Vector3(14f, 1f, 1.15f),
+            CreateDecalQuad("Runway wear mid", new Vector3(0f, 0.02f, 0f), new Vector3(18f, 1f, 1.15f),
                 "Textures/Decals/dc_runway_wear_v01.png");
-            CreateDecalQuad("Runway wear E", new Vector3(18f, 0.02f, 0f), new Vector3(14f, 1f, 1.2f),
+            CreateDecalQuad("Runway wear E", new Vector3(52f, 0.02f, 0f), new Vector3(18f, 1f, 1.2f),
                 "Textures/Decals/dc_runway_wear_v01.png");
             // Soft hangar apron so the hangar does not sit on raw grass (regional strip cue).
             CreateBlock("Hangar apron", new Vector3(-20.5f, -0.01f, 16.4f), new Vector3(16f, 0.09f, 8.4f), new Color(0.34f, 0.36f, 0.37f),
@@ -5373,8 +5412,8 @@ namespace Airside.Presentation
             PlaceWorldProps();
             BuildEnvironmentContext();
 
-            BuildStandMarking(17f, 14f, "Stand 1");
-            BuildStandMarking(17f, 24f, "Stand 2");
+            BuildStandMarking(AirportLayout.StandX, 14f, "Stand 1");
+            BuildStandMarking(AirportLayout.StandX, 24f, "Stand 2");
             // Stand bay digits come from PlaceWorldMarkings / PlaceRunwayDigit (kit-prefer).
         }
 
@@ -6476,6 +6515,10 @@ namespace Airside.Presentation
 
         private static void BuildPerimeterFence()
         {
+            // Perimeter fence removed — the kit ribbon blocked sight lines on the runway
+            // and read as a cage around the airfield rather than a distant landside boundary.
+            return;
+
             // Batch F3 PRP-002 — modular fence/gate kit; dense CreateBlock ribbon remains fallback.
             if (TryBuildPerimeterFenceFromKit())
                 return;
@@ -7470,7 +7513,7 @@ namespace Airside.Presentation
             if (_starFieldRoot == null)
                 return;
 
-            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var daylight = PresentationDaylight;
             var show = daylight < 0.35f;
             _starFieldRoot.gameObject.SetActive(show);
             if (!show)
@@ -7502,6 +7545,8 @@ namespace Airside.Presentation
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
             if (sunMat.HasProperty("_EmissionColor"))
                 sunMat.EnableKeyword("_EMISSION");
+            sunMat.SetInt("_ZWrite", 0);
+            sunMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
             var sunRenderer = sun.GetComponent<Renderer>();
             sunRenderer.sharedMaterial = sunMat;
             SetRendererColor(sunRenderer, new Color(1f, 0.92f, 0.65f, 1f), new Color(1.4f, 1.1f, 0.55f));
@@ -7537,15 +7582,27 @@ namespace Airside.Presentation
                 _moonDisc = AirsideSceneIndex.Find("Moon disc");
             }
 
-            // Place discs opposite the light direction on a large sky sphere.
+            // Sun/moon billboards read wrong from overview and clip through terrain — off
+            // while daylight is pinned; directional light carries the sky.
+            if (PinDaylightPresentation)
+            {
+                if (_sunDisc != null)
+                    _sunDisc.gameObject.SetActive(false);
+                if (_moonDisc != null)
+                    _moonDisc.gameObject.SetActive(false);
+                return;
+            }
+
+            // Place discs on a camera-centred sky sphere so they cannot sit under the terrain.
             var sunDir = _sun != null ? -_sun.transform.forward : Vector3.up;
+            var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
             if (_sunDisc != null)
             {
-                var showSun = daylight > 0.02f || elevation > -4f;
+                var showSun = sunDir.y > 0.2f && daylight > 0.15f;
                 _sunDisc.gameObject.SetActive(showSun);
                 if (showSun)
                 {
-                    _sunDisc.position = sunDir.normalized * 95f + Vector3.up * 8f;
+                    _sunDisc.position = skyAnchor + sunDir.normalized * 420f;
                     var sunColor = Color.Lerp(
                         new Color(1f, 0.55f, 0.28f),
                         new Color(1f, 0.95f, 0.78f),
@@ -7761,7 +7818,7 @@ namespace Airside.Presentation
 
             // Presentation-only: hangar door slides open by day, closes at night.
             // Also opens wider when a commercial aircraft is near the hangar apron.
-            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var daylight = PresentationDaylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
             for (var i = 0; i < _simulation.Flights.Count; i++)
             {
@@ -7902,7 +7959,7 @@ namespace Airside.Presentation
                 return;
 
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
-            var daylight = (float)_simulation.TimeOfDay.Daylight;
+            var daylight = PresentationDaylight;
             var drift = Time.unscaledDeltaTime * 0.35f;
             var weather = _simulation.CurrentWeather;
             var overcast = weather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
@@ -8090,15 +8147,7 @@ namespace Airside.Presentation
             // Batch C AIR-001: metre-scale turboprop kit. Motion roots still use y=0.7f, so
             // offset the kit by -0.7f so gear sits on the ground. Primitive fallback below.
             var usedArt = ArtPresentationLoader.TryInstantiate(
-                PreferArtKit(
-                    "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v05.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_authored_v01.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_lofted_v01.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v04.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v03.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v02.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v01.gltf"),
+                PreferArtKit("Models/Aircraft/mdl_regional_turboprop_01_v06.gltf"),
                 root,
                 out _,
                 RenameAircraftPart,
@@ -8859,8 +8908,19 @@ namespace Airside.Presentation
                 return;
 
             renderer.GetPropertyBlock(RendererTintBlock);
-            RendererTintBlock.SetTextureOffset(BaseMapId, offset);
-            RendererTintBlock.SetTextureOffset(MainTexId, offset);
+            var scale = Vector2.one;
+            var shared = renderer.sharedMaterial;
+            if (shared != null)
+            {
+                if (shared.HasProperty(BaseMapId))
+                    scale = shared.GetTextureScale(BaseMapId);
+                else if (shared.HasProperty(MainTexId))
+                    scale = shared.GetTextureScale(MainTexId);
+            }
+
+            var st = new Vector4(scale.x, scale.y, offset.x, offset.y);
+            RendererTintBlock.SetVector(BaseMapStId, st);
+            RendererTintBlock.SetVector(MainTexStId, st);
             renderer.SetPropertyBlock(RendererTintBlock);
         }
 
@@ -8876,8 +8936,9 @@ namespace Airside.Presentation
             renderer.GetPropertyBlock(RendererTintBlock);
             RendererTintBlock.SetTexture("_BaseMap", texture);
             RendererTintBlock.SetTexture("_MainTex", texture);
-            RendererTintBlock.SetTextureScale("_BaseMap", tiling);
-            RendererTintBlock.SetTextureScale("_MainTex", tiling);
+            var st = new Vector4(tiling.x, tiling.y, 0f, 0f);
+            RendererTintBlock.SetVector(BaseMapStId, st);
+            RendererTintBlock.SetVector(MainTexStId, st);
             if (smoothness.HasValue)
                 RendererTintBlock.SetFloat("_Smoothness", smoothness.Value);
             renderer.SetPropertyBlock(RendererTintBlock);
@@ -9831,10 +9892,12 @@ namespace Airside.Presentation
             if (!usedEdgeR)
                 CreateBlock("Runway edge R", new Vector3(0f, 0.025f, 3.35f), new Vector3(86f, 0.02f, 0.16f), Color.white);
 
+            var thresholdW = AirportLayout.WestThresholdX;
+            var thresholdE = AirportLayout.EastThresholdX;
             var usedThresholdW = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "runway_threshold", new Vector3(-44f, 0.03f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
+                kit, "runway_threshold", new Vector3(thresholdW, 0.03f, 0f), Quaternion.Euler(0f, 90f, 0f), Color.white, out _);
             var usedThresholdE = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "runway_threshold", new Vector3(44f, 0.03f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
+                kit, "runway_threshold", new Vector3(thresholdE, 0.03f, 0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
             // Extra bar meshes only when a threshold strip missed.
             if (!usedThresholdW || !usedThresholdE)
             {
@@ -9856,15 +9919,17 @@ namespace Airside.Presentation
             var usedSideER = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "threshold_side_r", new Vector3(44f, 0.032f, 3.0f), Quaternion.Euler(0f, -90f, 0f), Color.white, out _);
             if (!usedThresholdW)
-                CreateBlock("Threshold W", new Vector3(-44f, 0.03f, 0f), new Vector3(2.2f, 0.02f, 5.4f), Color.white);
+                CreateBlock("Threshold W", new Vector3(thresholdW, 0.03f, 0f), new Vector3(2.2f, 0.02f, 5.4f), Color.white);
             if (!usedThresholdE)
-                CreateBlock("Threshold E", new Vector3(44f, 0.03f, 0f), new Vector3(2.2f, 0.02f, 5.4f), Color.white);
+                CreateBlock("Threshold E", new Vector3(thresholdE, 0.03f, 0f), new Vector3(2.2f, 0.02f, 5.4f), Color.white);
 
             var holdYellow = new Color(0.95f, 0.82f, 0.12f);
+            var holdX = AirsideFlightPath.HoldShortX;
+            var holdZ = AirportTaxiNetwork.RunwayHoldingPositionZ;
             var usedHoldA = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_a", new Vector3(-12f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out var holdA);
+                kit, "hold_short_a", new Vector3(holdX, 0.05f, holdZ + 0.1f), Quaternion.identity, holdYellow, out var holdA);
             var usedHoldB = ArtGltfLoader.TryPlaceNamedMesh(
-                kit, "hold_short_b", new Vector3(-12f, 0.05f, 7.1f), Quaternion.identity, holdYellow, out var holdB);
+                kit, "hold_short_b", new Vector3(holdX, 0.05f, holdZ + 0.6f), Quaternion.identity, holdYellow, out var holdB);
             var usedHoldC = ArtGltfLoader.TryPlaceNamedMesh(
                 kit, "hold_short_c", new Vector3(4f, 0.05f, 6.6f), Quaternion.identity, holdYellow, out var holdC);
             var usedHoldD = ArtGltfLoader.TryPlaceNamedMesh(
@@ -9874,9 +9939,9 @@ namespace Airside.Presentation
             if (holdC != null) holdC.name = "Hold short C";
             if (holdD != null) holdD.name = "Hold short D";
             if (!usedHoldA)
-                CreateBlock("Hold short A", new Vector3(-12f, 0.05f, 6.6f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
+                CreateBlock("Hold short A", new Vector3(holdX, 0.05f, holdZ + 0.1f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
             if (!usedHoldB)
-                CreateBlock("Hold short B", new Vector3(-12f, 0.05f, 7.1f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
+                CreateBlock("Hold short B", new Vector3(holdX, 0.05f, holdZ + 0.6f), new Vector3(4.2f, 0.03f, 0.22f), holdYellow);
             if (!usedHoldC)
                 CreateBlock("Hold short C", new Vector3(4f, 0.05f, 6.6f), new Vector3(3.6f, 0.03f, 0.2f), holdYellow);
             if (!usedHoldD)
@@ -10003,9 +10068,14 @@ namespace Airside.Presentation
             }
 
             CreatePaintStrip("Taxi exit centre A1",
-                new Vector3(-24f, 0.035f, 4.5f), new Vector3(-12f, 0.035f, 8.34f), 0.12f, taxiPaint);
+                new Vector3(AirportLayout.DepartureEntryX, 0.035f, 4.5f),
+                new Vector3(AirportLayout.AlphaJunctionX, 0.035f, AirportLayout.TaxiwayAlphaZ - 0.66f), 0.12f, taxiPaint);
+            CreatePaintStrip("Taxi exit centre B1",
+                new Vector3(AirportLayout.ArrivalExitX, 0.035f, 4.5f),
+                new Vector3(AirportLayout.ArrivalExitX, 0.035f, AirportLayout.TaxiwayBravoZ - 0.66f), 0.12f, taxiPaint);
             CreatePaintStrip("Taxi exit centre A2",
-                new Vector3(12f, 0.035f, 8.34f), new Vector3(24f, 0.035f, 4.5f), 0.12f, taxiPaint);
+                new Vector3(AirportLayout.TaxiwayEastX, 0.035f, AirportLayout.TaxiwayAlphaZ - 0.66f),
+                new Vector3(AirportLayout.TaxiwayEastX + 12f, 0.035f, 4.5f), 0.12f, taxiPaint);
 
             // Edges: mesh already carries ±1.85f Z offset — place at taxi centre, identity yaw.
             // Two copies match the dual centreline coverage along Taxiway A.
@@ -11027,7 +11097,10 @@ namespace Airside.Presentation
             return TaxiVisualPath.PositionAt(route, progress, reverse);
         }
 
-        
+        private static TaxiRoute TaxiRouteFor(CommercialFlight flight, AircraftPhase phase) =>
+            phase is AircraftPhase.TaxiOut or AircraftPhase.Pushback or AircraftPhase.AtStand
+                ? flight.DepartureRoute
+                : flight.ArrivalRoute;
 
         private static GameObject CreateBlock(
             string name,

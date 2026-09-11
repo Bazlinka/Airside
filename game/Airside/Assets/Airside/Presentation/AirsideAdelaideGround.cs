@@ -36,13 +36,13 @@ namespace Airside.Presentation
         public static float OriginY => PavementWorldY - PavementNormalized * SizeY;
 
         /// <summary>
-        /// Dead-level footprint covering the 3 100 × 45 m runway plus a margin for
-        /// shoulders and overrun. Outside this box only, subtle relief is allowed.
+        /// Dead-level footprint covering 05/23, 12/30, Taxiway F and a margin for
+        /// shoulders. Outside this box only, subtle relief is allowed.
         /// </summary>
-        public const float PlateauMinX = -1580f;
-        public const float PlateauMaxX = 1580f;
-        public const float PlateauMinZ = -90f;
-        public const float PlateauMaxZ = 90f;
+        public static float PlateauMinX => -AirsideAdelaidePavement.PlateauHalfX;
+        public static float PlateauMaxX => AirsideAdelaidePavement.PlateauHalfX;
+        public static float PlateauMinZ => -AirsideAdelaidePavement.PlateauHalfZ;
+        public static float PlateauMaxZ => AirsideAdelaidePavement.PlateauHalfZ;
         public const float PlateauFalloff = 120f;
 
         public const int LayerDryGrass = 0;
@@ -81,14 +81,8 @@ namespace Airside.Presentation
         public const int MediumResolutionX = 65;
         public const int MediumResolutionZ = 45;
 
-        public static float DistanceToRunway(float worldX, float worldZ)
-        {
-            var dx = Math.Abs(worldX) - AirsideBareField.RunwayHalfLength;
-            var dz = Math.Abs(worldZ) - AirsideBareField.RunwayHalfWidth;
-            if (dx < 0f) dx = 0f;
-            if (dz < 0f) dz = 0f;
-            return (float)Math.Sqrt(dx * dx + dz * dz);
-        }
+        public static float DistanceToRunway(float worldX, float worldZ) =>
+            AirsideAdelaidePavement.DistanceToPavement(worldX, worldZ);
 
         public static float PlateauMask(float worldX, float worldZ)
         {

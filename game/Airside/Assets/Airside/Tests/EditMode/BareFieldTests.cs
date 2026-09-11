@@ -20,7 +20,7 @@ namespace Airside.Tests
         {
             Assert.That(AirsideBareField.RunwayLengthMetres, Is.EqualTo(3100f));
             Assert.That(AirsideBareField.RunwayWidthMetres, Is.EqualTo(45f));
-            Assert.That(AirsideBareField.RunwayObjectName, Is.EqualTo("Runway W"));
+            Assert.That(AirsideBareField.RunwayObjectName, Is.EqualTo("Runway 05/23"));
         }
 
         [Test]

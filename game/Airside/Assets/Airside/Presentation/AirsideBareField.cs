@@ -1,17 +1,19 @@
 namespace Airside.Presentation
 {
-    /// <summary>
-    /// The visible world is an empty Adelaide Airport: one runway, flat ground, and
-    /// nothing else. Published YPAD figures, in real metres — not the 1:20 miniature.
-    ///
-    /// This holds no UnityEngine types so the same numbers can be checked headlessly.
-    /// </summary>
-    public static class AirsideBareField
-    {
+/// <summary>
+        /// The visible world is an empty Adelaide Airport at published YPAD metres —
+        /// not the 1:20 miniature. Main runway 05/23 extents live here; the cross
+        /// strip, taxi skeleton and shared names live on
+        /// <see cref="AirsideAdelaidePavement"/>.
+        ///
+        /// This holds no UnityEngine types so the same numbers can be checked headlessly.
+        /// </summary>
+        public static class AirsideBareField
+        {
         /// <summary>
-        /// When true the player sees only ground, runway, one aircraft and sun lighting.
-        /// Buildings, cars, signs, taxiways, apron, coast, trees and decorative lights
-        /// are not spawned.
+        /// When true the player sees ground, YPAD pavement silhouette, one aircraft
+        /// and sun lighting. Buildings, cars, signs, apron clutter, coast, trees and
+        /// decorative lights are not spawned.
         /// </summary>
         public const bool Enabled = true;
 
@@ -41,7 +43,9 @@ namespace Airside.Presentation
         public const float RunwayCenterY = -0.02f;
 
         public const string GroundObjectName = "Airport ground";
-        public const string RunwayObjectName = "Runway W";
+
+        /// <summary>YPAD main strip. Prefer <see cref="AirsideAdelaidePavement.MainRunwayName"/>.</summary>
+        public const string RunwayObjectName = AirsideAdelaidePavement.MainRunwayName;
 
         public const float OverviewDistance = 2400f;
         public const float OverviewPitch = 50f;

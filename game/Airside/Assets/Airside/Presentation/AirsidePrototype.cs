@@ -2988,7 +2988,7 @@ namespace Airside.Presentation
                 || name.StartsWith("Car park aisle", StringComparison.Ordinal)
                 || name.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                 || name.StartsWith("Car park bay", StringComparison.Ordinal)
-                || name.StartsWith("Runway W", StringComparison.Ordinal)
+                || name.StartsWith("Runway 05", StringComparison.Ordinal) || name.StartsWith("Runway 12", StringComparison.Ordinal) || name.StartsWith("Taxiway ", StringComparison.Ordinal)
                 || name.StartsWith("Runway E", StringComparison.Ordinal)
                 || name.StartsWith("Runway mid", StringComparison.Ordinal)
                 || name.StartsWith("Runway blast", StringComparison.Ordinal)
@@ -3072,7 +3072,7 @@ namespace Airside.Presentation
                     && !n.StartsWith("Car park aisle", StringComparison.Ordinal)
                     && !n.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                     && !n.StartsWith("Car park bay", StringComparison.Ordinal)
-                    && !n.StartsWith("Runway W", StringComparison.Ordinal)
+                    && !n.StartsWith("Runway 05", StringComparison.Ordinal) && !n.StartsWith("Runway 12", StringComparison.Ordinal) && !n.StartsWith("Taxiway ", StringComparison.Ordinal)
                     && !n.StartsWith("Runway E", StringComparison.Ordinal)
                     && !n.StartsWith("Runway mid", StringComparison.Ordinal)
                     && !n.StartsWith("Runway blast", StringComparison.Ordinal)
@@ -5288,14 +5288,29 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Exact 3 100 × 45 m pavement plus restrained dirt shoulders outside that
-        /// width. Multi-scale asphalt tiling avoids the old stretched-pixel look.
+        /// YPAD silhouette: 05/23 + 12/30 + Taxiway F + D/E exits, each to the same
+        /// real-metre / combined-paint standard as the original single strip.
         /// </summary>
-        private static void BuildBareAdelaideRunway()
+        private static void BuildBareAdelaidePavement()
         {
             var asphalt = new Color(0.16f, 0.18f, 0.2f);
+            var taxiAsphalt = new Color(0.18f, 0.19f, 0.21f);
+            var shoulderColor = new Color(0.42f, 0.36f, 0.28f);
+            var paint = Color.white;
+            var dirtAlbedo = AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerWornDirt);
+            if (ArtRuntimePaths.ResolveExisting(dirtAlbedo) == null)
+                dirtAlbedo = PreferSurfaceBasecolor("tx_grass_kingscote");
+
+            BuildBareMainRunway(asphalt, shoulderColor, dirtAlbedo, paint);
+            BuildBareCrossRunway(asphalt, shoulderColor, dirtAlbedo, paint);
+            BuildBareTaxiSkeleton(taxiAsphalt, paint);
+        }
+
+        private static void BuildBareMainRunway(
+            Color asphalt, Color shoulderColor, string dirtAlbedo, Color paint)
+        {
             var runway = CreateBlock(
-                AirsideBareField.RunwayObjectName,
+                AirsideAdelaidePavement.MainRunwayName,
                 new Vector3(0f, AirsideBareField.RunwayCenterY, 0f),
                 new Vector3(
                     AirsideBareField.RunwayLengthMetres,
@@ -5308,45 +5323,296 @@ namespace Airside.Presentation
                     AirsideBareField.RunwayWidthMetres / 11f));
             ApplyRunwayMultiScale(runway.transform);
 
-            // Shoulders sit outside the declared 45 m — they do not narrow the strip.
-            var shoulderWidth = 7.5f;
-            var shoulderColor = new Color(0.42f, 0.36f, 0.28f);
+            var shoulderWidth = AirsideAdelaidePavement.ShoulderWidthMetres;
             var shoulderZ = AirsideBareField.RunwayHalfWidth + shoulderWidth * 0.5f;
-            var dirtAlbedo = AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerWornDirt);
-            if (ArtRuntimePaths.ResolveExisting(dirtAlbedo) == null)
-                dirtAlbedo = PreferSurfaceBasecolor("tx_grass_kingscote");
             CreateBlock(
-                "Runway shoulder N",
+                "Runway 05/23 shoulder N",
                 new Vector3(0f, AirsideBareField.RunwayCenterY - 0.01f, shoulderZ),
                 new Vector3(AirsideBareField.RunwayLengthMetres + 40f, 0.1f, shoulderWidth),
                 shoulderColor,
                 dirtAlbedo,
                 new Vector2((AirsideBareField.RunwayLengthMetres + 40f) / 29f, shoulderWidth / 9f));
             CreateBlock(
-                "Runway shoulder S",
+                "Runway 05/23 shoulder S",
                 new Vector3(0f, AirsideBareField.RunwayCenterY - 0.01f, -shoulderZ),
                 new Vector3(AirsideBareField.RunwayLengthMetres + 40f, 0.1f, shoulderWidth),
                 shoulderColor,
                 dirtAlbedo,
                 new Vector2((AirsideBareField.RunwayLengthMetres + 40f) / 29f, shoulderWidth / 9f));
 
-            var paint = Color.white;
-            var markings = new GameObject("Runway markings").transform;
+            var markings = new GameObject("Runway 05/23 markings").transform;
             if (_airfieldRoot != null)
                 markings.SetParent(_airfieldRoot, false);
 
-            CreateCombinedRunwayPaint(markings, "runway_edge_left",
+            CreateCombinedStripPaint(markings, "runway_05_23_edge_left",
                 new[] { AirsideRunwayMarkings.EdgeLeft }, paint);
-            CreateCombinedRunwayPaint(markings, "runway_edge_right",
+            CreateCombinedStripPaint(markings, "runway_05_23_edge_right",
                 new[] { AirsideRunwayMarkings.EdgeRight }, paint);
-            CreateCombinedRunwayPaint(markings, "runway_centre",
+            CreateCombinedStripPaint(markings, "runway_05_23_centre",
                 AirsideRunwayMarkings.CentrelineDashes(), paint);
-            CreateCombinedRunwayPaint(markings, "runway_threshold",
+            CreateCombinedStripPaint(markings, "runway_05_23_threshold",
                 AirsideRunwayMarkings.ThresholdStripes(), paint);
-            CreateCombinedRunwayPaint(markings, "Aiming point",
+            CreateCombinedStripPaint(markings, "Aiming point 05/23",
                 AirsideRunwayMarkings.AimingPoints(), paint);
-            CreateCombinedRunwayPaint(markings, "TDZ marks",
+            CreateCombinedStripPaint(markings, "TDZ marks 05/23",
                 AirsideRunwayMarkings.TouchdownZones(), paint);
+        }
+
+        private static void BuildBareCrossRunway(
+            Color asphalt, Color shoulderColor, string dirtAlbedo, Color paint)
+        {
+            var root = new GameObject(AirsideAdelaidePavement.CrossRunwayName).transform;
+            if (_airfieldRoot != null)
+                root.SetParent(_airfieldRoot, false);
+            root.position = new Vector3(
+                AirsideAdelaidePavement.CrossCenterX,
+                AirsideBareField.RunwayCenterY,
+                AirsideAdelaidePavement.CrossCenterZ);
+            root.rotation = Quaternion.Euler(0f, AirsideAdelaidePavement.CrossYawDegrees, 0f);
+
+            var slab = CreateLocalBlock(
+                root,
+                "slab",
+                Vector3.zero,
+                new Vector3(
+                    AirsideAdelaidePavement.CrossLengthMetres,
+                    AirsideBareField.RunwayHeightMetres,
+                    AirsideAdelaidePavement.CrossWidthMetres),
+                asphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(
+                    AirsideAdelaidePavement.CrossLengthMetres / 42f,
+                    AirsideAdelaidePavement.CrossWidthMetres / 11f));
+            ApplyRunwayMultiScale(slab.transform);
+
+            var shoulderWidth = AirsideAdelaidePavement.ShoulderWidthMetres;
+            var shoulderZ = AirsideAdelaidePavement.CrossHalfWidth + shoulderWidth * 0.5f;
+            CreateLocalBlock(
+                root,
+                "shoulder L",
+                new Vector3(0f, -0.01f, shoulderZ),
+                new Vector3(AirsideAdelaidePavement.CrossLengthMetres + 30f, 0.1f, shoulderWidth),
+                shoulderColor,
+                dirtAlbedo,
+                new Vector2((AirsideAdelaidePavement.CrossLengthMetres + 30f) / 29f, shoulderWidth / 9f));
+            CreateLocalBlock(
+                root,
+                "shoulder R",
+                new Vector3(0f, -0.01f, -shoulderZ),
+                new Vector3(AirsideAdelaidePavement.CrossLengthMetres + 30f, 0.1f, shoulderWidth),
+                shoulderColor,
+                dirtAlbedo,
+                new Vector2((AirsideAdelaidePavement.CrossLengthMetres + 30f) / 29f, shoulderWidth / 9f));
+
+            var markings = new GameObject("markings").transform;
+            markings.SetParent(root, false);
+            markings.localPosition = Vector3.zero;
+            markings.localRotation = Quaternion.identity;
+
+            // Strip marks are local to the rotated root so paint follows 12/30.
+            var y = AirsideRunwayMarkings.PaintLiftMetres
+                    + AirsideBareField.RunwayHeightMetres * 0.5f;
+            SpawnLocalStripPaint(markings, "edge_left",
+                new[] { AirsideStripMarkings.EdgeLeft(
+                    AirsideAdelaidePavement.CrossLengthMetres,
+                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+            SpawnLocalStripPaint(markings, "edge_right",
+                new[] { AirsideStripMarkings.EdgeRight(
+                    AirsideAdelaidePavement.CrossLengthMetres,
+                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+            SpawnLocalStripPaint(markings, "centre",
+                AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres),
+                paint, y);
+            SpawnLocalStripPaint(markings, "threshold",
+                AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres),
+                paint, y);
+            SpawnLocalStripPaint(markings, "aiming",
+                AirsideStripMarkings.AimingPoints(
+                    AirsideAdelaidePavement.CrossLengthMetres,
+                    AirsideStripMarkings.ShortStripAimingFromThreshold),
+                paint, y);
+            SpawnLocalStripPaint(markings, "tdz",
+                AirsideStripMarkings.TouchdownZones(
+                    AirsideAdelaidePavement.CrossLengthMetres,
+                    AirsideStripMarkings.ShortStripTouchdownDistances),
+                paint, y);
+        }
+
+        private static void BuildBareTaxiSkeleton(Color taxiAsphalt, Color paint)
+        {
+            var f = CreateBlock(
+                AirsideAdelaidePavement.TaxiwayFName,
+                new Vector3(0f, AirsideBareField.RunwayCenterY, AirsideAdelaidePavement.TaxiwayFCenterZ),
+                new Vector3(
+                    AirsideAdelaidePavement.TaxiwayFLengthMetres,
+                    AirsideBareField.RunwayHeightMetres * 0.92f,
+                    AirsideAdelaidePavement.TaxiwayWidthMetres),
+                taxiAsphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(
+                    AirsideAdelaidePavement.TaxiwayFLengthMetres / 36f,
+                    AirsideAdelaidePavement.TaxiwayWidthMetres / 9f));
+            ApplyRunwayMultiScale(f.transform);
+
+            CreateBlock(
+                AirsideAdelaidePavement.TaxiwayDName,
+                new Vector3(
+                    AirsideAdelaidePavement.TaxiwayDCenterX,
+                    AirsideBareField.RunwayCenterY,
+                    AirsideAdelaidePavement.TaxiLinkCenterZ),
+                new Vector3(
+                    AirsideAdelaidePavement.TaxiwayWidthMetres,
+                    AirsideBareField.RunwayHeightMetres * 0.92f,
+                    AirsideAdelaidePavement.TaxiLinkLengthZ),
+                taxiAsphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+
+            CreateBlock(
+                AirsideAdelaidePavement.TaxiwayEName,
+                new Vector3(
+                    AirsideAdelaidePavement.TaxiwayECenterX,
+                    AirsideBareField.RunwayCenterY,
+                    AirsideAdelaidePavement.TaxiLinkCenterZ),
+                new Vector3(
+                    AirsideAdelaidePavement.TaxiwayWidthMetres,
+                    AirsideBareField.RunwayHeightMetres * 0.92f,
+                    AirsideAdelaidePavement.TaxiLinkLengthZ),
+                taxiAsphalt,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+
+            var markings = new GameObject("Taxiway markings").transform;
+            if (_airfieldRoot != null)
+                markings.SetParent(_airfieldRoot, false);
+
+            // Taxiway F paint in world space (axis-aligned).
+            var fMarks = AirsideStripMarkings.TaxiwayGuide(
+                AirsideAdelaidePavement.TaxiwayFLengthMetres,
+                AirsideAdelaidePavement.TaxiwayWidthMetres);
+            var fWorld = OffsetMarks(fMarks, 0f, AirsideAdelaidePavement.TaxiwayFCenterZ);
+            CreateCombinedStripPaint(markings, "taxi_f_guide", fWorld, paint);
+
+            // Hold-short bars near the runway end of D and E (world Z along the link).
+            var holdAlong = 12f;
+            var hold = AirsideStripMarkings.HoldShortBars(
+                AirsideAdelaidePavement.TaxiwayWidthMetres, holdAlong);
+            // HoldShortBars: X across taxi, Z along link from runway edge.
+            // Place at D/E: rotate mapping so length is across taxi (world X) and Z is along link.
+            CreateCombinedStripPaint(
+                markings,
+                "taxi_d_hold",
+                HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayDCenterX),
+                paint);
+            CreateCombinedStripPaint(
+                markings,
+                "taxi_e_hold",
+                HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayECenterX),
+                paint);
+        }
+
+        private static AirsideRunwayMarkings.RunwayMark[] OffsetMarks(
+            AirsideStripMarkings.Mark[] marks, float offsetX, float offsetZ)
+        {
+            var result = new AirsideRunwayMarkings.RunwayMark[marks.Length];
+            for (var i = 0; i < marks.Length; i++)
+            {
+                var m = marks[i];
+                result[i] = new AirsideRunwayMarkings.RunwayMark(
+                    m.CenterX + offsetX, m.CenterZ + offsetZ, m.LengthX, m.WidthZ);
+            }
+
+            return result;
+        }
+
+        private static AirsideRunwayMarkings.RunwayMark[] HoldShortWorld(
+            AirsideStripMarkings.Mark[] local, float centerX)
+        {
+            // Local hold marks: LengthX = across taxi, WidthZ = bar thickness along link.
+            // World: X = across (same), Z = runway-edge + local Z.
+            var runwayEdgeZ = AirsideBareField.RunwayHalfWidth;
+            var result = new AirsideRunwayMarkings.RunwayMark[local.Length];
+            for (var i = 0; i < local.Length; i++)
+            {
+                var m = local[i];
+                result[i] = new AirsideRunwayMarkings.RunwayMark(
+                    centerX + m.CenterX,
+                    runwayEdgeZ + m.CenterZ,
+                    m.LengthX,
+                    m.WidthZ);
+            }
+
+            return result;
+        }
+
+        private static GameObject CreateLocalBlock(
+            Transform parent,
+            string name,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Color color,
+            string artTextureRelativePath = null,
+            Vector2? textureTiling = null)
+        {
+            var block = CreateBlock(name, localPosition, localScale, color, artTextureRelativePath, textureTiling);
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
+            block.transform.localRotation = Quaternion.identity;
+            block.transform.localScale = localScale;
+            return block;
+        }
+
+        private static void SpawnLocalStripPaint(
+            Transform parent, string name, AirsideStripMarkings.Mark[] marks, Color color, float localY)
+        {
+            if (marks == null || marks.Length == 0)
+                return;
+
+            var h = AirsideRunwayMarkings.PaintHeight;
+            var locals = new Matrix4x4[marks.Length];
+            for (var i = 0; i < marks.Length; i++)
+            {
+                var mark = marks[i];
+                locals[i] = Matrix4x4.TRS(
+                    new Vector3(mark.CenterX, localY, mark.CenterZ),
+                    Quaternion.identity,
+                    new Vector3(mark.LengthX, h, mark.WidthZ));
+            }
+
+            var mesh = AirsideMeshUtil.CombineTransformed(BuiltinCube(), locals);
+            if (mesh == null)
+            {
+                foreach (var mark in marks)
+                {
+                    ParentBlock(
+                        parent,
+                        name,
+                        new Vector3(mark.CenterX, localY, mark.CenterZ),
+                        new Vector3(mark.LengthX, h, mark.WidthZ),
+                        color);
+                }
+
+                return;
+            }
+
+            var go = new GameObject(name);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = CreateSharedSurfaceMaterial(color);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            go.transform.SetParent(parent, false);
+            AirsideSceneIndex.Remember(go);
+        }
+
+        /// <summary>
+        /// One combined paint mesh per marking family so a multi-kilometre strip is not
+        /// hundreds of unbatched cubes. Accepts <see cref="AirsideRunwayMarkings.RunwayMark"/>.
+        /// </summary>
+        private static void CreateCombinedStripPaint(
+            Transform parent, string name, AirsideRunwayMarkings.RunwayMark[] marks, Color color)
+        {
+            CreateCombinedRunwayPaint(parent, name, marks, color);
         }
 
         /// <summary>

@@ -202,7 +202,7 @@ namespace Airside.Tests
                     Assert.That(AirsideStaticWorld.IsDynamic(go), Is.True, name);
                 }
 
-                var slab = new GameObject("Runway W");
+                var slab = new GameObject("Runway 05/23");
                 created.Add(slab);
                 Assert.That(AirsideStaticWorld.IsDynamic(slab), Is.False);
             }

@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Adelaide bare field gains a YPAD pavement silhouette.** The single strip is
+  renamed `Runway 05/23`; `Runway 12/30` (1 652 × 45 m at 73°) crosses it; Taxiway
+  F runs parallel with D/E exit stubs; paint and the ops plateau match the existing
+  strip standard. Simulation taxi / circuit skip unchanged (ADR 0036).
+  **Verified:** `scripts/test-domain.sh` **221 passed** (7 new pavement tests; 4 pre-existing failures also red on main). Unity Play / Mac build
+  still required (no editor on this Cloud Linux VM).
+
+
 - **Bare circuit HUD and flight presentation match the visible world.** Economy /
   research / stands chrome hides on the bare field; coast ambience mutes with no
   coast in view; engine audio reaches ATR follow distances (~220 m); gear doors

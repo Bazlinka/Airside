@@ -1,32 +1,27 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — circuit visible polish)
-- **Branch:** `cursor/circuit-visible-polish-0c44`
+- **Last updated:** 2026-09-11 (Cursor — Adelaide YPAD pavement silhouette)
+- **Branch:** `cursor/adelaide-pavement-layout-0c44`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
-  `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
-  overview and follow at 1× and 4×. Confirm: bare HUD (no cash/research/stands),
-  engine audible in follow climb, gear doors closed on rollout, thin prop blur,
-  landing follow stays open through rollout, soft rotate cue, no coast bed.
-  Inspect Player.log. Merge only after that.
-- **In progress / half-done:** Circuit presentation polish implemented and
+  `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play overview + follow.
+  Confirm: `Runway 05/23` renamed, `Runway 12/30` crosses at ~73°, Taxiway F
+  parallel on the north side with D/E stubs, paint readable, ops plateau flat
+  under the new pavement. Circuit still uses 05/23 only. Inspect Player.log.
+  Merge only after that.
+- **In progress / half-done:** Presentation silhouette implemented and
   headless-checked. Unity Play / Mac build still required — no editor on this
   Cloud Linux VM.
 - **Watch for / assumptions:**
-  - `AirsideFocusMode.ShowEconomyHud` is false while `BareWorld` is on
-  - Coast ambient volume forced to 0 on bare world
-  - Engine `maxDistance` 220 m, linear rolloff
-  - `AirsideReusableMotion.GearDoorOpenBias` drives gear-door angles
-  - Landing look-ahead holds 32 m until ~55% progress, then eases to 20 m
+  - Layout constants: `AirsideAdelaidePavement` / `AirsideStripMarkings` (ADR 0036)
+  - Sim taxi graph + `SkipGroundTaxi` unchanged (aircraft does not use F/D/E yet)
+  - Ground plateau half-Z ≈ 860 m; dirt weights use distance-to-any-pavement
   - Pre-existing headless flakes still red on main (taxi / Away / dry-grass)
-  - Combined pads / paint collectors / circuit skip / save schema unchanged
-- **Decisions:** ADR 0035 still applies. No new ADR for this presentation pass.
-- **Open question for Bailey:** keep dormant building/GSE spawners in
-  `AirsidePrototype` for a later restore, or delete that code now that the
-  field is bare?
-- **Diminishing returns call:** After this pass, further bare-field circuit
-  polish (ground shader millimetres, threshold numbers, fog, skids) is past
-  the useful point. Next work should be Bailey's call: taxi/stand restore,
-  systems, second aircraft, or content — not more presentation micro-polish.
+  - Save schema / circuit skip / combined paint collectors unchanged
+- **Decisions:** ADR 0036 (YPAD pavement silhouette). ADR 0035 ground mesh still applies.
+- **Open question for Bailey:** next — (a) use the new taxi for circuit vacate /
+  line-up (sim topology ADR), (b) denser taxi/apron silhouette, or (c) other systems?
+- **Diminishing returns:** bare-circuit *aircraft* polish is done; this pass is
+  airfield pavement, not more ATR framing tweaks.
 
 ---
 

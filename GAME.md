@@ -1,27 +1,26 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-11 (Cursor — Adelaide YPAD pavement silhouette)
-- **Branch:** `cursor/adelaide-pavement-layout-0c44`
+- **Last updated:** 2026-09-11 (Cursor — YPAD fillets + Adelaide perimeter fence)
+- **Branch:** `cursor/adelaide-pavement-fence-0c44`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play overview + follow.
-  Confirm: `Runway 05/23` renamed, `Runway 12/30` crosses at ~73°, Taxiway F
-  parallel on the north side with D/E stubs, paint readable, ops plateau flat
-  under the new pavement. Circuit still uses 05/23 only. Inspect Player.log.
-  Merge only after that.
-- **In progress / half-done:** Presentation silhouette implemented and
-  headless-checked. Unity Play / Mac build still required — no editor on this
-  Cloud Linux VM.
+  Confirm: Taxiway F/D/E joins read as smooth Code C/E fillets (not cube corners),
+  yellow taxi paint, sealed shoulders, rubber TDZ bands, 2.44 m security fence on
+  the 785 ha site edge with N/W/S vehicle gates. Circuit still 05/23 only. Inspect
+  Player.log. Merge only after that.
+- **In progress / half-done:** Fillets + perimeter implemented and headless-checked.
+  Unity Play / Mac build still required — no editor on this Cloud Linux VM.
 - **Watch for / assumptions:**
-  - Layout constants: `AirsideAdelaidePavement` / `AirsideStripMarkings` (ADR 0036)
+  - Layout: `AirsideAdelaidePavement` fillets / shoulders (ADR 0037)
+  - Fence: `AirsideAdelaidePerimeter` on bare-field ground extents (ADR 0037)
   - Sim taxi graph + `SkipGroundTaxi` unchanged (aircraft does not use F/D/E yet)
-  - Ground plateau half-Z ≈ 860 m; dirt weights use distance-to-any-pavement
   - Pre-existing headless flakes still red on main (taxi / Away / dry-grass)
-  - Save schema / circuit skip / combined paint collectors unchanged
-- **Decisions:** ADR 0036 (YPAD pavement silhouette). ADR 0035 ground mesh still applies.
-- **Open question for Bailey:** next — (a) use the new taxi for circuit vacate /
-  line-up (sim topology ADR), (b) denser taxi/apron silhouette, or (c) other systems?
+  - Save schema / circuit skip unchanged; no buildings
+- **Decisions:** ADR 0037 (fillets + perimeter). ADR 0036 silhouette still applies.
+- **Open question for Bailey:** next — (a) wire sim taxi onto F/D/E, (b) denser
+  apron/taxi maze inside the fence, or (c) first landside building?
 - **Diminishing returns:** bare-circuit *aircraft* polish is done; this pass is
-  airfield pavement, not more ATR framing tweaks.
+  airfield pavement realism + site fence.
 
 ---
 

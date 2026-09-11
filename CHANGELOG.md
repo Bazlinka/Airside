@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **YPAD taxi/runway joins get Code C/E fillets, and the 785 ha site gets its
+  security fence.** 42 m quarter-disk fillets smooth F↔D/E and runway↔D/E;
+  Taxiway F gains end caps and 3.5 m sealed shoulders; taxi paint is yellow;
+  TDZ rubber bands darken 05/23; a 2.44 m perimeter fence with N/W/S vehicle
+  gates follows the published site rectangle. No buildings. Sim taxi unchanged
+  (ADR 0037).
+  **Verified:** `scripts/test-domain.sh` **223 passed** (9 Adelaide pavement/
+  perimeter tests; 4 pre-existing failures also red on main). Unity Play / Mac
+  build still required (no editor on this Cloud Linux VM).
+
 - **Adelaide bare field gains a YPAD pavement silhouette.** The single strip is
   renamed `Runway 05/23`; `Runway 12/30` (1 652 × 45 m at 73°) crosses it; Taxiway
   F runs parallel with D/E exit stubs; paint and the ops plateau match the existing

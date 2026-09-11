@@ -5284,7 +5284,8 @@ namespace Airside.Presentation
                         AirsideBareField.GroundWidthMetres / 37f));
             }
 
-            BuildBareAdelaideRunway();
+            BuildBareAdelaidePavement();
+            BuildBareAdelaidePerimeterFence();
         }
 
         /// <summary>
@@ -5322,6 +5323,7 @@ namespace Airside.Presentation
                     AirsideBareField.RunwayLengthMetres / 42f,
                     AirsideBareField.RunwayWidthMetres / 11f));
             ApplyRunwayMultiScale(runway.transform);
+            BuildBareRunwayRubberMarks();
 
             var shoulderWidth = AirsideAdelaidePavement.ShoulderWidthMetres;
             var shoulderZ = AirsideBareField.RunwayHalfWidth + shoulderWidth * 0.5f;
@@ -5440,75 +5442,206 @@ namespace Airside.Presentation
 
         private static void BuildBareTaxiSkeleton(Color taxiAsphalt, Color paint)
         {
+            var taxiYellow = new Color(0.92f, 0.78f, 0.12f);
+            var sealedShoulder = new Color(0.24f, 0.25f, 0.27f);
+            var y = AirsideBareField.RunwayCenterY;
+            var h = AirsideBareField.RunwayHeightMetres * 0.92f;
+            var shoulder = AirsideAdelaidePavement.TaxiSealedShoulderMetres;
+            var tw = AirsideAdelaidePavement.TaxiwayWidthMetres;
+            var half = AirsideAdelaidePavement.TaxiwayHalfWidth;
+
+            // Sealed shoulders under / beside Taxiway F (Code C/E band).
+            CreateBlock(
+                "Taxiway F shoulder N",
+                new Vector3(0f, y - 0.005f, AirsideAdelaidePavement.TaxiwayFCenterZ + half + shoulder * 0.5f),
+                new Vector3(AirsideAdelaidePavement.TaxiwayFLengthMetres + 24f, h * 0.85f, shoulder),
+                sealedShoulder,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(AirsideAdelaidePavement.TaxiwayFLengthMetres / 40f, shoulder / 4f));
+            CreateBlock(
+                "Taxiway F shoulder S",
+                new Vector3(0f, y - 0.005f, AirsideAdelaidePavement.TaxiwayFCenterZ - half - shoulder * 0.5f),
+                new Vector3(AirsideAdelaidePavement.TaxiwayFLengthMetres + 24f, h * 0.85f, shoulder),
+                sealedShoulder,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(AirsideAdelaidePavement.TaxiwayFLengthMetres / 40f, shoulder / 4f));
+
             var f = CreateBlock(
                 AirsideAdelaidePavement.TaxiwayFName,
-                new Vector3(0f, AirsideBareField.RunwayCenterY, AirsideAdelaidePavement.TaxiwayFCenterZ),
+                new Vector3(0f, y, AirsideAdelaidePavement.TaxiwayFCenterZ),
                 new Vector3(
                     AirsideAdelaidePavement.TaxiwayFLengthMetres,
-                    AirsideBareField.RunwayHeightMetres * 0.92f,
-                    AirsideAdelaidePavement.TaxiwayWidthMetres),
+                    h,
+                    tw),
                 taxiAsphalt,
                 PreferSurfaceBasecolor("tx_asphalt_runway"),
                 new Vector2(
                     AirsideAdelaidePavement.TaxiwayFLengthMetres / 36f,
-                    AirsideAdelaidePavement.TaxiwayWidthMetres / 9f));
+                    tw / 9f));
             ApplyRunwayMultiScale(f.transform);
 
-            CreateBlock(
-                AirsideAdelaidePavement.TaxiwayDName,
-                new Vector3(
-                    AirsideAdelaidePavement.TaxiwayDCenterX,
-                    AirsideBareField.RunwayCenterY,
-                    AirsideAdelaidePavement.TaxiLinkCenterZ),
-                new Vector3(
-                    AirsideAdelaidePavement.TaxiwayWidthMetres,
-                    AirsideBareField.RunwayHeightMetres * 0.92f,
-                    AirsideAdelaidePavement.TaxiLinkLengthZ),
-                taxiAsphalt,
-                PreferSurfaceBasecolor("tx_asphalt_runway"),
-                new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+            void BuildLink(string name, float centerX)
+            {
+                // Link sealed shoulders (east / west of the stub).
+                CreateBlock(
+                    $"{name} shoulder E",
+                    new Vector3(centerX + half + shoulder * 0.5f, y - 0.005f, AirsideAdelaidePavement.TaxiLinkCenterZ),
+                    new Vector3(shoulder, h * 0.85f, AirsideAdelaidePavement.TaxiLinkLengthZ + 8f),
+                    sealedShoulder,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(shoulder / 4f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                CreateBlock(
+                    $"{name} shoulder W",
+                    new Vector3(centerX - half - shoulder * 0.5f, y - 0.005f, AirsideAdelaidePavement.TaxiLinkCenterZ),
+                    new Vector3(shoulder, h * 0.85f, AirsideAdelaidePavement.TaxiLinkLengthZ + 8f),
+                    sealedShoulder,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(shoulder / 4f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
 
-            CreateBlock(
-                AirsideAdelaidePavement.TaxiwayEName,
-                new Vector3(
-                    AirsideAdelaidePavement.TaxiwayECenterX,
-                    AirsideBareField.RunwayCenterY,
-                    AirsideAdelaidePavement.TaxiLinkCenterZ),
-                new Vector3(
-                    AirsideAdelaidePavement.TaxiwayWidthMetres,
-                    AirsideBareField.RunwayHeightMetres * 0.92f,
-                    AirsideAdelaidePavement.TaxiLinkLengthZ),
-                taxiAsphalt,
-                PreferSurfaceBasecolor("tx_asphalt_runway"),
-                new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                var link = CreateBlock(
+                    name,
+                    new Vector3(centerX, y, AirsideAdelaidePavement.TaxiLinkCenterZ),
+                    new Vector3(tw, h, AirsideAdelaidePavement.TaxiLinkLengthZ),
+                    taxiAsphalt,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                ApplyRunwayMultiScale(link.transform);
+            }
+
+            BuildLink(AirsideAdelaidePavement.TaxiwayDName, AirsideAdelaidePavement.TaxiwayDCenterX);
+            BuildLink(AirsideAdelaidePavement.TaxiwayEName, AirsideAdelaidePavement.TaxiwayECenterX);
+
+            BuildBareTaxiFillets(taxiAsphalt);
 
             var markings = new GameObject("Taxiway markings").transform;
             if (_airfieldRoot != null)
                 markings.SetParent(_airfieldRoot, false);
 
-            // Taxiway F paint in world space (axis-aligned).
+            // ICAO taxi paint is yellow, not runway white.
             var fMarks = AirsideStripMarkings.TaxiwayGuide(
                 AirsideAdelaidePavement.TaxiwayFLengthMetres,
                 AirsideAdelaidePavement.TaxiwayWidthMetres);
             var fWorld = OffsetMarks(fMarks, 0f, AirsideAdelaidePavement.TaxiwayFCenterZ);
-            CreateCombinedStripPaint(markings, "taxi_f_guide", fWorld, paint);
+            CreateCombinedStripPaint(markings, "taxi_f_guide", fWorld, taxiYellow);
 
-            // Hold-short bars near the runway end of D and E (world Z along the link).
             var holdAlong = 12f;
             var hold = AirsideStripMarkings.HoldShortBars(
                 AirsideAdelaidePavement.TaxiwayWidthMetres, holdAlong);
-            // HoldShortBars: X across taxi, Z along link from runway edge.
-            // Place at D/E: rotate mapping so length is across taxi (world X) and Z is along link.
             CreateCombinedStripPaint(
                 markings,
                 "taxi_d_hold",
                 HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayDCenterX),
-                paint);
+                taxiYellow);
             CreateCombinedStripPaint(
                 markings,
                 "taxi_e_hold",
                 HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayECenterX),
-                paint);
+                taxiYellow);
+        }
+
+        /// <summary>
+        /// Quarter-disk / end-cap / crossing meshes so taxi and runway joins read as
+        /// smooth Code C/E pavement, not hard cube corners.
+        /// </summary>
+        private static void BuildBareTaxiFillets(Color taxiAsphalt)
+        {
+            var y = AirsideBareField.RunwayCenterY;
+            var h = AirsideBareField.RunwayHeightMetres * 0.9f;
+            var fillets = AirsideAdelaidePavement.AllFillets();
+            for (var i = 0; i < fillets.Length; i++)
+            {
+                var f = fillets[i];
+                var mesh = CreateSectorDiskMesh(
+                    f.Radius,
+                    f.StartRadians,
+                    f.SweepRadians,
+                    AirsideAdelaidePavement.FilletArcSegments);
+                if (mesh == null)
+                    continue;
+                var go = new GameObject($"Pavement fillet {i}");
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = CreateSharedSurfaceMaterial(taxiAsphalt);
+                var albedo = PreferSurfaceBasecolor("tx_asphalt_runway");
+                if (!string.IsNullOrEmpty(albedo))
+                {
+                    var tex = AirsideArtTextures.Load(albedo);
+                    if (tex != null && renderer.sharedMaterial != null)
+                    {
+                        renderer.sharedMaterial.mainTexture = tex;
+                        renderer.sharedMaterial.mainTextureScale = new Vector2(
+                            f.Radius / 9f, f.Radius / 9f);
+                    }
+                }
+
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = true;
+                go.transform.SetParent(_airfieldRoot, false);
+                go.transform.position = new Vector3(f.CenterX, y, f.CenterZ);
+                go.transform.localScale = new Vector3(1f, h, 1f);
+                AirsideSceneIndex.Remember(go);
+                ApplyRunwayMultiScale(go.transform);
+            }
+        }
+
+        /// <summary>
+        /// Flat sector / disk in the XZ plane (Y up), unit height — scale Y for slab thickness.
+        /// </summary>
+        private static Mesh CreateSectorDiskMesh(
+            float radius, float startRadians, float sweepRadians, int segments)
+        {
+            if (radius <= 0.01f || segments < 3)
+                return null;
+            var steps = Mathf.Max(3, segments);
+            if (Mathf.Abs(sweepRadians) >= Mathf.PI * 2f - 0.01f)
+            {
+                // Full disk.
+                var vCount = steps + 1;
+                var verts = new Vector3[vCount];
+                var tris = new int[steps * 3];
+                verts[0] = Vector3.zero;
+                for (var i = 0; i < steps; i++)
+                {
+                    var a = startRadians + sweepRadians * (i / (float)steps);
+                    verts[i + 1] = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                    // Winding gives +Y normals (Unity left-handed, viewed from above).
+                    tris[i * 3] = 0;
+                    tris[i * 3 + 1] = i + 2 <= steps ? i + 2 : 1;
+                    tris[i * 3 + 2] = i + 1;
+                }
+
+                var disk = new Mesh { name = "PavementDisk" };
+                disk.SetVertices(verts);
+                disk.SetTriangles(tris, 0);
+                disk.RecalculateNormals();
+                disk.RecalculateBounds();
+                return disk;
+            }
+
+            var count = steps + 2; // centre + arc
+            var vertices = new Vector3[count];
+            var triangles = new int[steps * 3];
+            vertices[0] = Vector3.zero;
+            for (var i = 0; i <= steps; i++)
+            {
+                var t = i / (float)steps;
+                var a = startRadians + sweepRadians * t;
+                vertices[i + 1] = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+            }
+
+            for (var i = 0; i < steps; i++)
+            {
+                triangles[i * 3] = 0;
+                triangles[i * 3 + 1] = i + 2;
+                triangles[i * 3 + 2] = i + 1;
+            }
+
+            var mesh = new Mesh { name = "PavementFillet" };
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         private static AirsideRunwayMarkings.RunwayMark[] OffsetMarks(
@@ -5613,6 +5746,180 @@ namespace Airside.Presentation
             Transform parent, string name, AirsideRunwayMarkings.RunwayMark[] marks, Color color)
         {
             CreateCombinedRunwayPaint(parent, name, marks, color);
+        }
+
+        /// <summary>
+        /// Dark rubber-deposit bands in the touchdown zone — presentation only,
+        /// matching the darkened asphalt pilots see on a busy jet runway.
+        /// </summary>
+        private static void BuildBareRunwayRubberMarks()
+        {
+            var rubber = new Color(0.08f, 0.08f, 0.09f, 1f);
+            var y = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.52f;
+            // Aiming-point / TDZ region each end (≈ 400–900 m from threshold).
+            float[] centers = { -900f, -650f, 650f, 900f };
+            for (var i = 0; i < centers.Length; i++)
+            {
+                CreateBlock(
+                    $"Runway rubber {i}",
+                    new Vector3(centers[i], y, 0f),
+                    new Vector3(180f, 0.02f, AirsideBareField.RunwayWidthMetres - 4f),
+                    rubber);
+            }
+        }
+
+        /// <summary>
+        /// Adelaide-scale airside security fence on the 785 ha site boundary —
+        /// chain-link height + vehicle gates. No buildings.
+        /// </summary>
+        private static void BuildBareAdelaidePerimeterFence()
+        {
+            var meshColor = new Color(0.42f, 0.44f, 0.46f);
+            var postColor = new Color(0.32f, 0.33f, 0.35f);
+            var guardColor = new Color(0.55f, 0.56f, 0.58f);
+            var gateYellow = new Color(0.90f, 0.75f, 0.10f);
+            var hx = AirsideAdelaidePerimeter.FenceHalfX;
+            var hz = AirsideAdelaidePerimeter.FenceHalfZ;
+            var h = AirsideAdelaidePerimeter.FenceHeightMetres;
+            var guard = AirsideAdelaidePerimeter.TopGuardHeightMetres;
+            var thick = AirsideAdelaidePerimeter.PanelThicknessMetres;
+            var post = AirsideAdelaidePerimeter.PostSizeMetres;
+            var spacing = AirsideAdelaidePerimeter.PostSpacingMetres;
+            var root = new GameObject("Adelaide perimeter fence").transform;
+            if (_airfieldRoot != null)
+                root.SetParent(_airfieldRoot, false);
+
+            void Panel(string name, Vector3 pos, Vector3 scale, Color color)
+            {
+                var block = CreateBlock(name, pos, scale, color);
+                block.transform.SetParent(root, true);
+            }
+
+            void BuildSide(string side, bool alongX)
+            {
+                float length = alongX ? hx * 2f : hz * 2f;
+                float start = -length * 0.5f;
+                float cursor = start;
+                while (cursor < length * 0.5f - 0.01f)
+                {
+                    var remaining = length * 0.5f - cursor;
+                    var station = cursor + Mathf.Min(spacing, remaining) * 0.5f;
+                    if (AirsideAdelaidePerimeter.IsInGateGap(side, alongX ? station : station))
+                    {
+                        cursor += AirsideAdelaidePerimeter.VehicleGateWidthMetres;
+                        continue;
+                    }
+
+                    var seg = Mathf.Min(spacing, remaining);
+                    // Skip if this segment overlaps a gate gap.
+                    var segMid = cursor + seg * 0.5f;
+                    if (AirsideAdelaidePerimeter.IsInGateGap(side, alongX ? segMid : segMid))
+                    {
+                        cursor += 0.5f;
+                        continue;
+                    }
+
+                    Vector3 pos;
+                    Vector3 scale;
+                    if (alongX)
+                    {
+                        var z = side == "N" ? hz : -hz;
+                        pos = new Vector3(cursor + seg * 0.5f, h * 0.5f, z);
+                        scale = new Vector3(seg, h, thick);
+                    }
+                    else
+                    {
+                        var x = side == "E" ? hx : -hx;
+                        pos = new Vector3(x, h * 0.5f, cursor + seg * 0.5f);
+                        scale = new Vector3(thick, h, seg);
+                    }
+
+                    Panel($"Fence {side} {cursor:0}", pos, scale, meshColor);
+
+                    // Top guard wire.
+                    var guardPos = pos + Vector3.up * (h * 0.5f + guard * 0.5f);
+                    var guardScale = alongX
+                        ? new Vector3(seg, guard, thick * 0.7f)
+                        : new Vector3(thick * 0.7f, guard, seg);
+                    Panel($"Fence guard {side} {cursor:0}", guardPos, guardScale, guardColor);
+
+                    // Post at segment start.
+                    Vector3 postPos;
+                    if (alongX)
+                    {
+                        var z = side == "N" ? hz : -hz;
+                        postPos = new Vector3(cursor, (h + guard) * 0.5f, z);
+                    }
+                    else
+                    {
+                        var x = side == "E" ? hx : -hx;
+                        postPos = new Vector3(x, (h + guard) * 0.5f, cursor);
+                    }
+
+                    Panel(
+                        $"Fence post {side} {cursor:0}",
+                        postPos,
+                        new Vector3(post, h + guard, post),
+                        postColor);
+
+                    cursor += seg;
+                }
+            }
+
+            BuildSide("N", alongX: true);
+            BuildSide("S", alongX: true);
+            BuildSide("E", alongX: false);
+            BuildSide("W", alongX: false);
+
+            // Corner posts.
+            float[] cxs = { -hx, hx };
+            float[] czs = { -hz, hz };
+            for (var ix = 0; ix < cxs.Length; ix++)
+            for (var iz = 0; iz < czs.Length; iz++)
+            {
+                Panel(
+                    $"Fence corner {ix}{iz}",
+                    new Vector3(cxs[ix], (h + guard) * 0.5f, czs[iz]),
+                    new Vector3(post * 1.4f, h + guard, post * 1.4f),
+                    postColor);
+            }
+
+            // Vehicle gates.
+            for (var g = 0; g < AirsideAdelaidePerimeter.VehicleGates.Length; g++)
+            {
+                var gate = AirsideAdelaidePerimeter.VehicleGates[g];
+                var gw = AirsideAdelaidePerimeter.VehicleGateWidthMetres;
+                var gh = AirsideAdelaidePerimeter.GateLeafHeightMetres;
+                Vector3 center;
+                Vector3 leafScale;
+                Vector3 postOffset;
+                if (gate.Side == "N" || gate.Side == "S")
+                {
+                    var z = gate.Side == "N" ? hz : -hz;
+                    center = new Vector3(gate.StationAlongSide, gh * 0.5f, z);
+                    leafScale = new Vector3(gw * 0.48f, gh, thick * 1.2f);
+                    postOffset = new Vector3(gw * 0.5f, 0f, 0f);
+                }
+                else
+                {
+                    var x = gate.Side == "E" ? hx : -hx;
+                    center = new Vector3(x, gh * 0.5f, gate.StationAlongSide);
+                    leafScale = new Vector3(thick * 1.2f, gh, gw * 0.48f);
+                    postOffset = new Vector3(0f, 0f, gw * 0.5f);
+                }
+
+                Panel($"{gate.Name} post L", center - postOffset + Vector3.up * ((h + guard) * 0.5f - gh * 0.5f),
+                    new Vector3(post * 1.6f, h + guard, post * 1.6f), postColor);
+                Panel($"{gate.Name} post R", center + postOffset + Vector3.up * ((h + guard) * 0.5f - gh * 0.5f),
+                    new Vector3(post * 1.6f, h + guard, post * 1.6f), postColor);
+                // Leaves ajar slightly toward landside.
+                var open = gate.Side == "N" || gate.Side == "E" ? 1.2f : -1.2f;
+                var leafShift = gate.Side == "N" || gate.Side == "S"
+                    ? new Vector3(0f, 0f, open)
+                    : new Vector3(open, 0f, 0f);
+                Panel($"{gate.Name} leaf L", center - postOffset * 0.5f + leafShift, leafScale, gateYellow);
+                Panel($"{gate.Name} leaf R", center + postOffset * 0.5f + leafShift, leafScale, gateYellow);
+            }
         }
 
         /// <summary>

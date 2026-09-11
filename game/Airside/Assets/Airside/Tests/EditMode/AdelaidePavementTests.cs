@@ -38,10 +38,30 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Pavement_FilletsSmoothTJunctionsAtCodeCERadius()
+        {
+            Assert.That(AirsideAdelaidePavement.TaxiFilletRadiusMetres, Is.EqualTo(42f));
+            Assert.That(AirsideAdelaidePavement.TaxiSealedShoulderMetres, Is.EqualTo(3.5f));
+            var fillets = AirsideAdelaidePavement.AllFillets();
+            Assert.That(fillets.Length, Is.EqualTo(11), "8 link fillets + 2 F caps + crossing pad");
+            // Outside a sharp rectangle corner but inside the fillet disk must count as pavement.
+            var r = AirsideAdelaidePavement.TaxiFilletRadiusMetres;
+            var hw = AirsideAdelaidePavement.TaxiwayHalfWidth;
+            var dX = AirsideAdelaidePavement.TaxiwayDCenterX;
+            var fZ = AirsideAdelaidePavement.TaxiwayFCenterZ;
+            // SW fillet centre at (dX - hw, fZ - hw); sample 45° into the exterior quadrant.
+            var sampleX = dX - hw - r * 0.5f;
+            var sampleZ = fZ - hw - r * 0.5f;
+            Assert.That(AirsideAdelaidePavement.ContainsFillet(sampleX, sampleZ), Is.True);
+            Assert.That(AirsideAdelaidePavement.DistanceToPavement(sampleX, sampleZ), Is.EqualTo(0f));
+            // Far from all pavement stays outside.
+            Assert.That(AirsideAdelaidePavement.DistanceToPavement(0f, 500f), Is.GreaterThan(50f));
+        }
+
+        [Test]
         public void Pavement_CrossRunwayFootprintCoversIntersectionAndEnds()
         {
             Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(0f, 0f), Is.True);
-            // Far along the cross centreline in local X (~800 m at 73°).
             var yaw = AirsideAdelaidePavement.CrossYawRadians;
             var along = 800f;
             var x = along * (float)Math.Cos(yaw);
@@ -87,6 +107,20 @@ namespace Airside.Tests
             Assert.That(marks.Length, Is.GreaterThan(4));
             var hold = AirsideStripMarkings.HoldShortBars(23f, 12f);
             Assert.That(hold.Length, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Perimeter_MatchesPublishedSiteRectangleAndGatePattern()
+        {
+            Assert.That(AirsideAdelaidePerimeter.HalfX, Is.EqualTo(1700f));
+            Assert.That(AirsideAdelaidePerimeter.HalfZ, Is.EqualTo(1154.5f));
+            Assert.That(AirsideAdelaidePerimeter.FenceHeightMetres, Is.EqualTo(2.44f));
+            Assert.That(AirsideAdelaidePerimeter.VehicleGates.Length, Is.EqualTo(3));
+            Assert.That(AirsideAdelaidePerimeter.IsInsideFence(0f, 0f), Is.True);
+            Assert.That(AirsideAdelaidePerimeter.IsInsideFence(5000f, 0f), Is.False);
+            Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 420f), Is.True);
+            Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 0f), Is.False);
+            Assert.That(AirsideAdelaidePerimeter.PerimeterLengthMetres, Is.GreaterThan(10000f));
         }
     }
 }

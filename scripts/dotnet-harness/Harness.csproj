@@ -39,6 +39,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaideGround.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaidePavement.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaidePerimeter.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideStripMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideFocusMode.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs" />

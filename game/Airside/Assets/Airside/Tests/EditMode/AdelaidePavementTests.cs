@@ -57,6 +57,35 @@ namespace Airside.Tests
             Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
                 AirsideAdelaidePavement.TerminalApronCenterX,
                 AirsideAdelaidePavement.TerminalApronCenterZ), Is.True);
+            // Apron entries land under the terminal pad, not out in the grass.
+            foreach (var x in AirsideAdelaidePavement.ApronEntryCenterXs)
+            {
+                Assert.That(AirsideAdelaidePavement.ContainsTerminalApron(
+                    x, AirsideAdelaidePavement.TerminalApronCenterZ), Is.True,
+                    $"apron entry X={x} must meet the terminal pad");
+            }
+        }
+
+        [Test]
+        public void Pavement_ApronsStayClearOfBothRunways()
+        {
+            var terminalClear = AirsideAdelaidePavement.TerminalApronClearanceFromRunways(5f);
+            Assert.That(terminalClear, Is.GreaterThanOrEqualTo(
+                AirsideAdelaidePavement.ApronRunwayClearanceMetres),
+                "terminal apron must not intersect 05/23 or 12/30");
+
+            var rfdsClear = AirsideAdelaidePavement.RfdsApronClearanceFromRunways(5f);
+            Assert.That(rfdsClear, Is.GreaterThanOrEqualTo(
+                AirsideAdelaidePavement.ApronRunwayClearanceMetres),
+                "RFDS apron must not intersect 05/23 or 12/30");
+
+            // Spot-check: no sampled apron point may lie on either strip.
+            Assert.That(AirsideAdelaidePavement.ContainsAnyRunway(
+                AirsideAdelaidePavement.TerminalApronCenterX,
+                AirsideAdelaidePavement.TerminalApronCenterZ), Is.False);
+            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(
+                AirsideAdelaidePavement.TerminalApronCenterX + AirsideAdelaidePavement.TerminalApronLengthX * 0.5f,
+                AirsideAdelaidePavement.TerminalApronCenterZ), Is.False);
         }
 
         [Test]

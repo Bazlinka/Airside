@@ -128,16 +128,27 @@ namespace Airside.Presentation
 
         public const string TerminalApronName = "Apron terminal";
 
-        /// <summary>Terminal 1 apron pad north of Taxiway A (concrete, empty).</summary>
-        public const float TerminalApronCenterX = 150f;
+        /// <summary>
+        /// Terminal apron pad north of Taxiway A (concrete, empty). Placed on the
+        /// <b>west</b> / terminal side of 12/30 so the cross-runway strip never cuts
+        /// the pad (YPAD: apron sits clear of both runways, fed by taxiways).
+        /// </summary>
+        public const float TerminalApronCenterX = -600f;
         public const float TerminalApronCenterZ = 340f;
-        public const float TerminalApronLengthX = 1200f;
-        public const float TerminalApronWidthZ = 160f;
+        public const float TerminalApronLengthX = 900f;
+        public const float TerminalApronWidthZ = 150f;
+
+        /// <summary>
+        /// Minimum runway edge clearance the terminal apron must keep (metres).
+        /// Used by headless regression so a future layout slip cannot reintroduce
+        /// the 12/30-through-apron bug.
+        /// </summary>
+        public const float ApronRunwayClearanceMetres = 60f;
 
         /// <summary>Apron entry stubs from A north edge into the terminal apron.</summary>
         public static float[] ApronEntryCenterXs { get; } =
         {
-            -200f, 200f, 600f
+            -800f, -550f, -300f
         };
 
         public static float ApronEntryLengthZ =>
@@ -384,6 +395,60 @@ namespace Airside.Presentation
         public static bool ContainsTerminalApron(float worldX, float worldZ) =>
             Math.Abs(worldX - TerminalApronCenterX) <= TerminalApronLengthX * 0.5f + 1e-3f
             && Math.Abs(worldZ - TerminalApronCenterZ) <= TerminalApronWidthZ * 0.5f + 1e-3f;
+
+        /// <summary>
+        /// Smallest distance from any point on the terminal apron AABB to either
+        /// runway strip. Negative means the pad overlaps a runway (layout bug).
+        /// </summary>
+        public static float TerminalApronClearanceFromRunways(float sampleStepMetres = 10f)
+        {
+            if (sampleStepMetres < 1f)
+                sampleStepMetres = 1f;
+
+            var halfX = TerminalApronLengthX * 0.5f;
+            var halfZ = TerminalApronWidthZ * 0.5f;
+            var min = float.MaxValue;
+            for (var x = TerminalApronCenterX - halfX; x <= TerminalApronCenterX + halfX + 0.01f; x += sampleStepMetres)
+            {
+                for (var z = TerminalApronCenterZ - halfZ; z <= TerminalApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
+                {
+                    var d = DistanceToRunwayPavement(x, z);
+                    if (d < min)
+                        min = d;
+                }
+            }
+
+            // Include the east/north corners explicitly (step may skip exact corners).
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ + halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ - halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ + halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ - halfZ));
+            return min;
+        }
+
+        /// <summary>
+        /// Smallest distance from the RFDS apron AABB to either runway strip.
+        /// </summary>
+        public static float RfdsApronClearanceFromRunways(float sampleStepMetres = 10f)
+        {
+            if (sampleStepMetres < 1f)
+                sampleStepMetres = 1f;
+
+            var halfX = RfdsApronLengthX * 0.5f;
+            var halfZ = RfdsApronWidthZ * 0.5f;
+            var min = float.MaxValue;
+            for (var x = RfdsApronCenterX - halfX; x <= RfdsApronCenterX + halfX + 0.01f; x += sampleStepMetres)
+            {
+                for (var z = RfdsApronCenterZ - halfZ; z <= RfdsApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
+                {
+                    var d = DistanceToRunwayPavement(x, z);
+                    if (d < min)
+                        min = d;
+                }
+            }
+
+            return min;
+        }
 
         public static bool ContainsFillet(float worldX, float worldZ)
         {

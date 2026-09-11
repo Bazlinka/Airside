@@ -5,8 +5,8 @@
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play overview + follow.
   Confirm: Taxiway A parallel north of F, D2/E2 inner exits, A–F links, empty
-  terminal + RFDS apron pads, fillets still smooth, fence intact. Circuit still
-  05/23 only. Inspect Player.log. Merge only after that.
+  terminal apron **west of 12/30** (not cutting the cross-runway), RFDS pad south,
+  fillets still smooth, fence intact. Circuit still 05/23 only. Inspect Player.log.
 - **In progress / half-done:** Denser taxi/apron silhouette implemented and
   headless-checked. Unity Play / Mac build still required — no editor on this
   Cloud Linux VM.

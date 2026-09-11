@@ -11,8 +11,10 @@
    - **Taxiway A** — parallel spine ~105 m north of F (terminal side)
    - **D2 / E2** — inner runway↔F exits at ±550 m
    - **A↔F links** at ±300 / ±900 m
-   - **Terminal apron pad** north of A (concrete, empty — no buildings)
-   - **RFDS apron pad** south of 05/23 near the 05 end
+   - **Terminal apron pad** north of A and **west of 12/30** (concrete, empty —
+     no buildings). Pad must keep ≥ 60 m clearance from both runway strips;
+     regression via `TerminalApronClearanceFromRunways`.
+   - **RFDS apron pad** south of 05/23 near the 05 end (same clearance rule)
    - Apron entry stubs from A into the terminal pad
    - Matching Code C/E fillets and sealed shoulders
 

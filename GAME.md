@@ -1,22 +1,43 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-11 (Cursor — denser YPAD taxi/apron silhouette)
-- **Branch:** `cursor/adelaide-taxi-apron-0c44`
+- **Last updated:** 2026-09-11 (Claude — YPAD silhouette geometry corrections)
+- **Branch:** `claude/adelaide-pavement-review-41kjaa`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play overview + follow.
-  Confirm: Taxiway A parallel north of F, D2/E2 inner exits, A–F links, empty
-  terminal apron **west of 12/30** (not cutting the cross-runway), RFDS pad south,
-  fillets still smooth, fence intact. Circuit still 05/23 only. Inspect Player.log.
-- **In progress / half-done:** Denser taxi/apron silhouette implemented and
-  headless-checked. Unity Play / Mac build still required — no editor on this
-  Cloud Linux VM.
+  **`AirsidePrototype` has not been compiled anywhere** — it needs UnityEngine,
+  and there is no editor on this Cloud Linux VM. Its five rewritten builders
+  were Roslyn-parsed and type-checked against a UnityEngine shim, which catches
+  syntax and signature errors but not everything. Treat the first Unity compile
+  as the real check.
+  Then confirm by eye, in this order:
+  1. **Stubs read as taxiways, not blobs** — D/E/D2/E2, A–F links and apron
+     entries should be ~23 m wide with a flare only at the junctions.
+  2. **The fence sits on the ground** all the way round, not floating.
+  3. Taxiway F now sits much further out (182.5 m from the runway centreline),
+     so the overview framing changes — check the camera still reads well.
+  4. Hold-short bars at 90 m from the runway centreline; solid taxi centrelines.
+  5. Rain: 12/30 and the fillets should darken along with 05/23.
+  6. Circuit still 05/23 only. Inspect Player.log.
+- **In progress / half-done:** Geometry corrections implemented and
+  headless-checked (236 passed). Unity Play / Mac build still required.
 - **Watch for / assumptions:**
-  - Layout: `AirsideAdelaidePavement` A/F/D/E/D2/E2 + aprons (ADR 0038)
-  - Fence: `AirsideAdelaidePerimeter` unchanged (ADR 0037)
+  - Layout: `AirsideAdelaidePavement` — F at 182.5 m, A at 290 m, apron at 450 m,
+    RFDS at −230 m; true concave fillets (ADR 0039 supersedes 0036/0037/0038 here)
+  - Fence: `AirsideAdelaidePerimeter.FenceBaseY` seats it on the landform (ADR 0039)
   - Sim taxi graph + `SkipGroundTaxi` unchanged (aircraft does not use new taxi)
-  - Pre-existing headless flakes still red on main (taxi / Away / dry-grass)
+  - Pre-existing headless failures, also red on `main` — exactly four:
+    `Taxiing_ReleasesEachSegmentBeforeReservingTheNext`,
+    `TaxiRoutes_UseDoglegThroatBeforeStandLeadIn`,
+    `AwaySummary_ReportsRouteIncomeAndReputationChange`,
+    `Weights_KeepDryGrassDominantAcrossTheOverviewCore` (the last is
+    `AirsideTerrainField`, the 1:20 world — not the Adelaide ground)
   - Save schema / circuit skip unchanged; **no buildings** (apron pads empty)
-- **Decisions:** ADR 0038 (taxi/apron silhouette). ADR 0037/0036 still apply.
+- **Known unverified:** `CrossYawDegrees = 73°` and the decision to cross both
+  runways at their midpoints are **not** checked against the published YPAD DAP.
+  73° is plausible (the designators allow 61°–79°) but the comment that justified
+  it was arithmetically wrong. Confirm before hanging sim topology off it.
+- **Decisions:** ADR 0039 (geometry corrections). ADR 0036/0037/0038 still apply
+  except where 0039 supersedes them.
 - **Open question for Bailey:** next — (a) wire sim taxi onto F/A/D/E, (b) more
   DAP taxilane detail on the apron pad, or (c) first landside building?
 - **Diminishing returns:** bare-circuit *aircraft* polish is done; keep pavement

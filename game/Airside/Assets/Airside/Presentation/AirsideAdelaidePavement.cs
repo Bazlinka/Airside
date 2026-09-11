@@ -3,6 +3,24 @@ using System;
 namespace Airside.Presentation
 {
     /// <summary>
+    /// Kind of curved pavement patch in the silhouette.
+    /// </summary>
+    public enum PavementArcKind
+    {
+        /// <summary>
+        /// Concave fillet in a re-entrant (inside) corner: the curved triangle
+        /// bounded by the two pavement edges and an arc tangent to both. This is
+        /// what a real taxiway fillet is — it tucks *into* the corner.
+        /// </summary>
+        CornerFillet,
+
+        /// <summary>
+        /// Convex sector or full disk: taxiway end caps and the runway crossing pad.
+        /// </summary>
+        Sector
+    }
+
+    /// <summary>
     /// Real-metre YPAD pavement silhouette for the bare Adelaide field: main 05/23,
     /// cross 12/30, parallel Taxiways F + A, D/E/D2/E2 runway exits, A–F links,
     /// terminal + RFDS apron pads, Code-C/E fillets, and sealed taxi shoulders.
@@ -23,6 +41,31 @@ namespace Airside.Presentation
         public static float MainHalfLength => AirsideBareField.RunwayHalfLength;
         public static float MainHalfWidth => AirsideBareField.RunwayHalfWidth;
 
+        /// <summary>
+        /// Half-width of the ICAO Annex 14 runway strip for a code 4 precision
+        /// approach runway (300 m wide overall). Nothing but the runway, its
+        /// shoulders and frangible aids may stand inside this band, so the taxi
+        /// spines and apron pads are all checked against it.
+        /// </summary>
+        public const float RunwayStripHalfWidthMetres = 150f;
+
+        /// <summary>
+        /// ICAO Annex 14 minimum runway-centreline to parallel-taxiway-centreline
+        /// separation for code 4E on a precision approach runway.
+        /// </summary>
+        public const float CodeERunwayToTaxiwaySeparationMetres = 182.5f;
+
+        /// <summary>
+        /// ICAO Annex 14 minimum taxiway-to-taxiway centreline separation, code E.
+        /// </summary>
+        public const float CodeETaxiwayToTaxiwaySeparationMetres = 80f;
+
+        /// <summary>
+        /// Runway holding position distance from the runway centreline, code E
+        /// precision approach runway.
+        /// </summary>
+        public const float RunwayHoldingPositionFromCentrelineMetres = 90f;
+
         // --- Cross runway 12/30 ---
 
         public const string CrossRunwayName = "Runway 12/30";
@@ -34,7 +77,15 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Yaw from world +X (05/23) toward the 12 heading.
-        /// Magnetic 115° − 042° ≈ 73°.
+        ///
+        /// NOTE: this is a silhouette approximation, not a surveyed figure. The
+        /// designators alone bound the crossing angle to roughly 61°–79°
+        /// (12 → 115°–124° M, 05 → 045°–054° M), and 73° sits inside that band.
+        /// It has NOT been checked against the published YPAD DAP; an earlier
+        /// comment here derived it from "115° − 042°", but 042° is the bearing of
+        /// a runway designated 04, not 05, so that derivation was wrong even
+        /// though the result is plausible. Confirm against the DAP before any
+        /// simulation topology is hung off these metres.
         /// </summary>
         public const float CrossYawDegrees = 73f;
 
@@ -50,7 +101,14 @@ namespace Airside.Presentation
 
         public const string TaxiwayFName = "Taxiway F";
         public const float TaxiwayWidthMetres = 23f;
-        public const float TaxiwayFCenterZ = 95f;
+
+        /// <summary>
+        /// Centreline Z for Taxiway F. Held at the code 4E runway/taxiway
+        /// separation so the spine clears the 150 m runway strip half-width with
+        /// 21 m to spare (F south edge sits at Z = 171 m).
+        /// </summary>
+        public const float TaxiwayFCenterZ = CodeERunwayToTaxiwaySeparationMetres;
+
         public const float TaxiwayFLengthMetres = 3000f;
 
         public static float TaxiwayHalfWidth => TaxiwayWidthMetres * 0.5f;
@@ -60,10 +118,10 @@ namespace Airside.Presentation
         public const string TaxiwayAName = "Taxiway A";
 
         /// <summary>
-        /// Centreline Z for Taxiway A. ~105 m north of F matches the DAP parallel
-        /// separation between the F and A spines on the terminal side.
+        /// Centreline Z for Taxiway A. 107.5 m north of F — comfortably over the
+        /// code E taxiway-to-taxiway minimum of 80 m.
         /// </summary>
-        public const float TaxiwayACenterZ = 200f;
+        public const float TaxiwayACenterZ = 290f;
 
         public const float TaxiwayALengthMetres = 2400f;
 
@@ -94,6 +152,15 @@ namespace Airside.Presentation
 
         public static float TaxiLinkCenterZ =>
             MainHalfWidth + TaxiLinkLengthZ * 0.5f;
+
+        /// <summary>
+        /// Distance from the runway edge to the hold-short bars on a runway exit
+        /// link, so the painted holding position lands at
+        /// <see cref="RunwayHoldingPositionFromCentrelineMetres"/> from the runway
+        /// centreline.
+        /// </summary>
+        public static float HoldShortFromRunwayEdgeMetres =>
+            RunwayHoldingPositionFromCentrelineMetres - MainHalfWidth;
 
         /// <summary>X stations of all runway↔F exit links.</summary>
         public static float[] RunwayExitCenterXs { get; } =
@@ -134,7 +201,7 @@ namespace Airside.Presentation
         /// the pad (YPAD: apron sits clear of both runways, fed by taxiways).
         /// </summary>
         public const float TerminalApronCenterX = -600f;
-        public const float TerminalApronCenterZ = 340f;
+        public const float TerminalApronCenterZ = 450f;
         public const float TerminalApronLengthX = 900f;
         public const float TerminalApronWidthZ = 150f;
 
@@ -160,9 +227,12 @@ namespace Airside.Presentation
 
         public const string RfdsApronName = "Apron RFDS";
 
-        /// <summary>Small RFDS / south apron silhouette south of 05/23.</summary>
+        /// <summary>
+        /// Small RFDS / south apron silhouette south of 05/23, held clear of the
+        /// 150 m runway strip half-width (north edge sits at Z = −170 m).
+        /// </summary>
         public const float RfdsApronCenterX = -900f;
-        public const float RfdsApronCenterZ = -180f;
+        public const float RfdsApronCenterZ = -230f;
         public const float RfdsApronLengthX = 220f;
         public const float RfdsApronWidthZ = 120f;
 
@@ -199,23 +269,55 @@ namespace Airside.Presentation
         /// <summary>Arc segments per quarter fillet (presentation mesh density).</summary>
         public const int FilletArcSegments = 14;
 
+        /// <summary>
+        /// A fillet may never reach further along a stub than the stub is long, or
+        /// the two fillets at opposite ends meet and the stub stops reading as a
+        /// taxiway. Leaves a little headroom so the tangent point stays on pavement.
+        /// </summary>
+        public static float ClampFilletRadius(float nominalRadius, float legLengthMetres)
+        {
+            var limit = legLengthMetres * 0.9f;
+            if (limit <= 0f)
+                return 0f;
+            return nominalRadius < limit ? nominalRadius : limit;
+        }
+
         // --- Ops plateau (covers strips + F/A + aprons + fillets) ---
 
         public const float PlateauHalfX = 1600f;
 
         /// <summary>
-        /// Covers 12/30 tips (~790 m) plus terminal apron (~420 m) and RFDS pad.
+        /// Covers 12/30 tips (~790 m) plus terminal apron (~525 m) and RFDS pad.
         /// </summary>
         public const float PlateauHalfZ = 860f;
 
         /// <summary>
-        /// One concave-corner fillet: quarter-disk centre at the rectangle join,
-        /// sweeping <see cref="SweepRadians"/> from <see cref="StartRadians"/> (CCW from +X).
+        /// One curved pavement patch.
+        ///
+        /// For <see cref="PavementArcKind.CornerFillet"/>, <see cref="CenterX"/> /
+        /// <see cref="CenterZ"/> are the <b>corner point</b> where the two pavement
+        /// edges meet and <see cref="StartRadians"/> names the empty quadrant the
+        /// fillet fills (0, π/2, π or 3π/2 measured CCW from +X); the sweep is
+        /// always a quarter turn. The filled region is that quadrant's r × r square
+        /// minus the disk of radius r centred at
+        /// (<see cref="ArcCenterX"/>, <see cref="ArcCenterZ"/>) — i.e. a curved
+        /// triangle tangent to both edges, which is what a pavement fillet is.
+        ///
+        /// For <see cref="PavementArcKind.Sector"/>, <see cref="CenterX"/> /
+        /// <see cref="CenterZ"/> are the disk centre and the patch is the plain
+        /// sector swept from <see cref="StartRadians"/> by <see cref="SweepRadians"/>.
         /// </summary>
         public readonly struct FilletSpec
         {
-            public FilletSpec(float centerX, float centerZ, float radius, float startRadians, float sweepRadians)
+            public FilletSpec(
+                PavementArcKind kind,
+                float centerX,
+                float centerZ,
+                float radius,
+                float startRadians,
+                float sweepRadians)
             {
+                Kind = kind;
                 CenterX = centerX;
                 CenterZ = centerZ;
                 Radius = radius;
@@ -223,43 +325,139 @@ namespace Airside.Presentation
                 SweepRadians = sweepRadians;
             }
 
+            public PavementArcKind Kind { get; }
             public float CenterX { get; }
             public float CenterZ { get; }
             public float Radius { get; }
             public float StartRadians { get; }
             public float SweepRadians { get; }
-        }
 
-        /// <summary>
-        /// All fillet disks for the silhouette. Pure layout — the builder turns these into meshes.
-        /// </summary>
-        public static FilletSpec[] AllFillets()
-        {
-            var hw = TaxiwayHalfWidth;
-            var r = TaxiFilletRadiusMetres;
-            var apronR = ApronFilletRadiusMetres;
-            var list = new FilletSpec[64];
-            var n = 0;
+            /// <summary>+1 or −1: which way the fillet opens along X.</summary>
+            public float OutwardX =>
+                Math.Cos(StartRadians + Math.PI * 0.25) >= 0d ? 1f : -1f;
 
-            void AddTJunctionSouthOfHorizontal(float linkX, float horizZ)
+            /// <summary>+1 or −1: which way the fillet opens along Z.</summary>
+            public float OutwardZ =>
+                Math.Sin(StartRadians + Math.PI * 0.25) >= 0d ? 1f : -1f;
+
+            /// <summary>
+            /// Centre of the tangent arc — offset from the corner by r along each
+            /// edge, so the arc touches both edges exactly once.
+            /// </summary>
+            public float ArcCenterX => CenterX + OutwardX * Radius;
+
+            public float ArcCenterZ => CenterZ + OutwardZ * Radius;
+
+            public bool Contains(float worldX, float worldZ)
             {
-                // Horizontal taxi south edge ↔ link west/east.
-                list[n++] = new FilletSpec(linkX - hw, horizZ - hw, r, (float)Math.PI, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(linkX + hw, horizZ - hw, r, (float)Math.PI * 1.5f, (float)Math.PI * 0.5f);
+                if (Kind == PavementArcKind.Sector)
+                {
+                    var sdx = worldX - CenterX;
+                    var sdz = worldZ - CenterZ;
+                    return sdx * sdx + sdz * sdz <= Radius * Radius + 1e-3f;
+                }
+
+                var u = (worldX - CenterX) * OutwardX;
+                var v = (worldZ - CenterZ) * OutwardZ;
+                if (u < -1e-3f || u > Radius + 1e-3f || v < -1e-3f || v > Radius + 1e-3f)
+                    return false;
+                var au = u - Radius;
+                var av = v - Radius;
+                return au * au + av * av >= Radius * Radius - 1e-3f;
             }
 
-            void AddTJunctionNorthOfHorizontal(float linkX, float horizZ)
+            /// <summary>
+            /// Distance from a point to this patch, 0 when inside. Corner fillets
+            /// report <see cref="float.MaxValue"/> for points behind either
+            /// pavement edge — those points sit on the abutting slab, which the
+            /// caller measures separately.
+            /// </summary>
+            public float DistanceTo(float worldX, float worldZ)
             {
-                list[n++] = new FilletSpec(linkX - hw, horizZ + hw, r, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(linkX + hw, horizZ + hw, r, 0f, (float)Math.PI * 0.5f);
+                if (Kind == PavementArcKind.Sector)
+                {
+                    var sdx = worldX - CenterX;
+                    var sdz = worldZ - CenterZ;
+                    var d = (float)Math.Sqrt(sdx * sdx + sdz * sdz) - Radius;
+                    return d < 0f ? 0f : d;
+                }
+
+                var u = (worldX - CenterX) * OutwardX;
+                var v = (worldZ - CenterZ) * OutwardZ;
+                if (u < 0f || v < 0f)
+                    return float.MaxValue;
+
+                var cu = u < 0f ? 0f : (u > Radius ? Radius : u);
+                var cv = v < 0f ? 0f : (v > Radius ? Radius : v);
+                var au = cu - Radius;
+                var av = cv - Radius;
+                if (au * au + av * av >= Radius * Radius)
+                    return (float)Math.Sqrt((u - cu) * (u - cu) + (v - cv) * (v - cv));
+
+                // Clamped point falls inside the removed disk — nearest pavement is
+                // the tangent arc itself.
+                var len = (float)Math.Sqrt(au * au + av * av);
+                float nu, nv;
+                if (len <= 1e-4f)
+                {
+                    nu = 0f;
+                    nv = Radius;
+                }
+                else
+                {
+                    nu = Radius + au / len * Radius;
+                    nv = Radius + av / len * Radius;
+                }
+
+                return (float)Math.Sqrt((u - nu) * (u - nu) + (v - nv) * (v - nv));
+            }
+        }
+
+        private static FilletSpec[] _allFillets;
+
+        /// <summary>
+        /// All curved pavement patches for the silhouette. Pure layout — the
+        /// builder turns these into meshes. Computed once: every input is a
+        /// compile-time constant, and this is called per ground-mesh vertex.
+        /// The returned array is shared — callers must not mutate it.
+        /// </summary>
+        public static FilletSpec[] AllFillets() => _allFillets ??= BuildAllFillets();
+
+        private static FilletSpec[] BuildAllFillets()
+        {
+            var hw = TaxiwayHalfWidth;
+            var exitR = ClampFilletRadius(TaxiFilletRadiusMetres, TaxiLinkLengthZ);
+            var afR = ClampFilletRadius(TaxiFilletRadiusMetres, AfLinkLengthZ);
+            var apronR = ClampFilletRadius(ApronFilletRadiusMetres, ApronEntryLengthZ);
+            var quarter = (float)Math.PI * 0.5f;
+
+            var list = new System.Collections.Generic.List<FilletSpec>(64);
+
+            void AddCorner(float cornerX, float cornerZ, float radius, float quadrantStart) =>
+                list.Add(new FilletSpec(
+                    PavementArcKind.CornerFillet, cornerX, cornerZ, radius, quadrantStart, quarter));
+
+            // Stub meets a horizontal taxiway that lies to the NORTH of it: the two
+            // empty corners open south-west and south-east.
+            void AddTJunctionSouthOfHorizontal(float linkX, float horizZ, float radius)
+            {
+                AddCorner(linkX - hw, horizZ - hw, radius, (float)Math.PI);
+                AddCorner(linkX + hw, horizZ - hw, radius, (float)Math.PI * 1.5f);
+            }
+
+            // Horizontal taxiway lies to the SOUTH: corners open north-west / north-east.
+            void AddTJunctionNorthOfHorizontal(float linkX, float horizZ, float radius)
+            {
+                AddCorner(linkX - hw, horizZ + hw, radius, quarter);
+                AddCorner(linkX + hw, horizZ + hw, radius, 0f);
             }
 
             void AddRunwayExit(float linkX)
             {
-                AddTJunctionSouthOfHorizontal(linkX, TaxiwayFCenterZ);
-                // Runway north edge ↔ link.
-                list[n++] = new FilletSpec(linkX - hw, MainHalfWidth, r, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(linkX + hw, MainHalfWidth, r, 0f, (float)Math.PI * 0.5f);
+                AddTJunctionSouthOfHorizontal(linkX, TaxiwayFCenterZ, exitR);
+                // Runway north edge ↔ link: corners open north-west / north-east.
+                AddCorner(linkX - hw, MainHalfWidth, exitR, quarter);
+                AddCorner(linkX + hw, MainHalfWidth, exitR, 0f);
             }
 
             for (var i = 0; i < RunwayExitCenterXs.Length; i++)
@@ -269,37 +467,35 @@ namespace Airside.Presentation
             for (var i = 0; i < AfLinkCenterXs.Length; i++)
             {
                 var x = AfLinkCenterXs[i];
-                AddTJunctionNorthOfHorizontal(x, TaxiwayFCenterZ);
-                AddTJunctionSouthOfHorizontal(x, TaxiwayACenterZ);
+                AddTJunctionNorthOfHorizontal(x, TaxiwayFCenterZ, afR);
+                AddTJunctionSouthOfHorizontal(x, TaxiwayACenterZ, afR);
             }
 
             // Apron entries: A north edge ↔ apron south edge (tighter radius).
-            var aNorth = TaxiwayACenterZ + hw;
-            var apronSouth = TerminalApronCenterZ - TerminalApronWidthZ * 0.5f;
+            var apronSouthEdge = TerminalApronCenterZ - TerminalApronWidthZ * 0.5f;
             for (var i = 0; i < ApronEntryCenterXs.Length; i++)
             {
                 var x = ApronEntryCenterXs[i];
-                list[n++] = new FilletSpec(x - hw, aNorth, apronR, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(x + hw, aNorth, apronR, 0f, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(x - hw, apronSouth, apronR, (float)Math.PI, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(x + hw, apronSouth, apronR, (float)Math.PI * 1.5f, (float)Math.PI * 0.5f);
+                AddTJunctionNorthOfHorizontal(x, TaxiwayACenterZ, apronR);
+                // Apron pad is north of the stub: corners open south-west / south-east.
+                AddCorner(x - hw, apronSouthEdge, apronR, (float)Math.PI);
+                AddCorner(x + hw, apronSouthEdge, apronR, (float)Math.PI * 1.5f);
             }
 
-            // End caps on F and A.
+            // End caps on F and A (convex semicircles, not corner fillets).
             var capR = TaxiwayEndCapRadiusMetres;
             var fHalf = TaxiwayFLengthMetres * 0.5f;
-            list[n++] = new FilletSpec(fHalf, TaxiwayFCenterZ, capR, (float)-Math.PI * 0.5f, (float)Math.PI);
-            list[n++] = new FilletSpec(-fHalf, TaxiwayFCenterZ, capR, (float)Math.PI * 0.5f, (float)Math.PI);
+            list.Add(new FilletSpec(PavementArcKind.Sector, fHalf, TaxiwayFCenterZ, capR, -quarter, (float)Math.PI));
+            list.Add(new FilletSpec(PavementArcKind.Sector, -fHalf, TaxiwayFCenterZ, capR, quarter, (float)Math.PI));
             var aHalf = TaxiwayALengthMetres * 0.5f;
-            list[n++] = new FilletSpec(aHalf, TaxiwayACenterZ, capR, (float)-Math.PI * 0.5f, (float)Math.PI);
-            list[n++] = new FilletSpec(-aHalf, TaxiwayACenterZ, capR, (float)Math.PI * 0.5f, (float)Math.PI);
+            list.Add(new FilletSpec(PavementArcKind.Sector, aHalf, TaxiwayACenterZ, capR, -quarter, (float)Math.PI));
+            list.Add(new FilletSpec(PavementArcKind.Sector, -aHalf, TaxiwayACenterZ, capR, quarter, (float)Math.PI));
 
             // Crossing soften pad.
-            list[n++] = new FilletSpec(0f, 0f, RunwayCrossingPadRadiusMetres, 0f, (float)Math.PI * 2f);
+            list.Add(new FilletSpec(
+                PavementArcKind.Sector, 0f, 0f, RunwayCrossingPadRadiusMetres, 0f, (float)Math.PI * 2f));
 
-            if (n != list.Length)
-                Array.Resize(ref list, n);
-            return list;
+            return list.ToArray();
         }
 
         /// <summary>Distance from a point to the nearest main or cross runway pavement.</summary>
@@ -315,6 +511,22 @@ namespace Airside.Presentation
             return Math.Min(d, pad);
         }
 
+        /// <summary>
+        /// Distance from a point to the nearest runway <b>strip</b> (the protected
+        /// graded band around each runway), 0 when inside one. Aprons and taxi
+        /// spines are expected to stay out of this.
+        /// </summary>
+        public static float DistanceToRunwayStrip(float worldX, float worldZ)
+        {
+            var main = DistanceToAxisAlignedStrip(
+                worldX, worldZ, 0f, 0f,
+                MainHalfLength, RunwayStripHalfWidthMetres);
+            var cross = DistanceToOrientedStrip(
+                worldX, worldZ, CrossCenterX, CrossCenterZ,
+                CrossHalfLength, RunwayStripHalfWidthMetres, CrossYawRadians);
+            return Math.Min(main, cross);
+        }
+
         /// <summary>Distance to any silhouette pavement (runways + taxi + aprons + fillets).</summary>
         public static float DistanceToPavement(float worldX, float worldZ)
         {
@@ -327,25 +539,29 @@ namespace Airside.Presentation
                 worldX, worldZ, 0f, TaxiwayACenterZ,
                 TaxiwayALengthMetres * 0.5f, TaxiwayHalfWidth));
 
+            // Stubs carry the same sealed shoulder band as the parallels — the
+            // runtime builder spawns them, so the distance field must know.
+            var stubHalf = TaxiwayHalfWidth + TaxiSealedShoulderMetres;
+
             for (var i = 0; i < RunwayExitCenterXs.Length; i++)
             {
                 d = Math.Min(d, DistanceToAxisAlignedStrip(
                     worldX, worldZ, RunwayExitCenterXs[i], TaxiLinkCenterZ,
-                    TaxiwayHalfWidth, TaxiLinkLengthZ * 0.5f));
+                    stubHalf, TaxiLinkLengthZ * 0.5f));
             }
 
             for (var i = 0; i < AfLinkCenterXs.Length; i++)
             {
                 d = Math.Min(d, DistanceToAxisAlignedStrip(
                     worldX, worldZ, AfLinkCenterXs[i], AfLinkCenterZ,
-                    TaxiwayHalfWidth, AfLinkLengthZ * 0.5f));
+                    stubHalf, AfLinkLengthZ * 0.5f));
             }
 
             for (var i = 0; i < ApronEntryCenterXs.Length; i++)
             {
                 d = Math.Min(d, DistanceToAxisAlignedStrip(
                     worldX, worldZ, ApronEntryCenterXs[i], ApronEntryCenterZ,
-                    TaxiwayHalfWidth, ApronEntryLengthZ * 0.5f));
+                    stubHalf, ApronEntryLengthZ * 0.5f));
             }
 
             d = Math.Min(d, DistanceToAxisAlignedStrip(
@@ -367,11 +583,30 @@ namespace Airside.Presentation
             var fillets = AllFillets();
             for (var i = 0; i < fillets.Length; i++)
             {
-                var f = fillets[i];
-                d = Math.Min(d, DistanceToDisk(worldX, worldZ, f.CenterX, f.CenterZ, f.Radius));
+                var fd = fillets[i].DistanceTo(worldX, worldZ);
+                if (fd < d)
+                    d = fd;
             }
 
             return d;
+        }
+
+        /// <summary>
+        /// Total pavement half-width across a stub at a given Z, counting the stub
+        /// slab and every fillet that reaches it. Used by the regression that keeps
+        /// fillets from swallowing the taxiway they are supposed to smooth.
+        /// </summary>
+        public static float PavementHalfWidthAcrossStub(float stubCenterX, float worldZ)
+        {
+            var half = 0f;
+            for (var probe = 0f; probe <= 200f; probe += 0.25f)
+            {
+                if (DistanceToPavement(stubCenterX + probe, worldZ) > 0f)
+                    break;
+                half = probe;
+            }
+
+            return half;
         }
 
         public static bool ContainsMainRunway(float worldX, float worldZ) =>
@@ -398,55 +633,64 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Smallest distance from any point on the terminal apron AABB to either
-        /// runway strip. Negative means the pad overlaps a runway (layout bug).
+        /// runway pavement edge. 0 means the pad touches or overlaps a runway
+        /// (layout bug) — the strip distance helpers clamp at 0 and never go
+        /// negative, so 0 is the failure signal, not a negative number.
         /// </summary>
-        public static float TerminalApronClearanceFromRunways(float sampleStepMetres = 10f)
-        {
-            if (sampleStepMetres < 1f)
-                sampleStepMetres = 1f;
-
-            var halfX = TerminalApronLengthX * 0.5f;
-            var halfZ = TerminalApronWidthZ * 0.5f;
-            var min = float.MaxValue;
-            for (var x = TerminalApronCenterX - halfX; x <= TerminalApronCenterX + halfX + 0.01f; x += sampleStepMetres)
-            {
-                for (var z = TerminalApronCenterZ - halfZ; z <= TerminalApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
-                {
-                    var d = DistanceToRunwayPavement(x, z);
-                    if (d < min)
-                        min = d;
-                }
-            }
-
-            // Include the east/north corners explicitly (step may skip exact corners).
-            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ + halfZ));
-            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ - halfZ));
-            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ + halfZ));
-            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ - halfZ));
-            return min;
-        }
+        public static float TerminalApronClearanceFromRunways(float sampleStepMetres = 10f) =>
+            RectClearance(
+                TerminalApronCenterX, TerminalApronCenterZ,
+                TerminalApronLengthX, TerminalApronWidthZ,
+                sampleStepMetres, DistanceToRunwayPavement);
 
         /// <summary>
-        /// Smallest distance from the RFDS apron AABB to either runway strip.
+        /// Smallest distance from the RFDS apron AABB to either runway pavement edge.
         /// </summary>
-        public static float RfdsApronClearanceFromRunways(float sampleStepMetres = 10f)
+        public static float RfdsApronClearanceFromRunways(float sampleStepMetres = 10f) =>
+            RectClearance(
+                RfdsApronCenterX, RfdsApronCenterZ,
+                RfdsApronLengthX, RfdsApronWidthZ,
+                sampleStepMetres, DistanceToRunwayPavement);
+
+        /// <summary>Smallest distance from the terminal apron AABB to either runway strip.</summary>
+        public static float TerminalApronClearanceFromRunwayStrips(float sampleStepMetres = 10f) =>
+            RectClearance(
+                TerminalApronCenterX, TerminalApronCenterZ,
+                TerminalApronLengthX, TerminalApronWidthZ,
+                sampleStepMetres, DistanceToRunwayStrip);
+
+        /// <summary>Smallest distance from the RFDS apron AABB to either runway strip.</summary>
+        public static float RfdsApronClearanceFromRunwayStrips(float sampleStepMetres = 10f) =>
+            RectClearance(
+                RfdsApronCenterX, RfdsApronCenterZ,
+                RfdsApronLengthX, RfdsApronWidthZ,
+                sampleStepMetres, DistanceToRunwayStrip);
+
+        private static float RectClearance(
+            float centerX, float centerZ, float lengthX, float widthZ,
+            float sampleStepMetres, Func<float, float, float> distance)
         {
             if (sampleStepMetres < 1f)
                 sampleStepMetres = 1f;
 
-            var halfX = RfdsApronLengthX * 0.5f;
-            var halfZ = RfdsApronWidthZ * 0.5f;
+            var halfX = lengthX * 0.5f;
+            var halfZ = widthZ * 0.5f;
             var min = float.MaxValue;
-            for (var x = RfdsApronCenterX - halfX; x <= RfdsApronCenterX + halfX + 0.01f; x += sampleStepMetres)
+            for (var x = centerX - halfX; x <= centerX + halfX + 0.01f; x += sampleStepMetres)
             {
-                for (var z = RfdsApronCenterZ - halfZ; z <= RfdsApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
+                for (var z = centerZ - halfZ; z <= centerZ + halfZ + 0.01f; z += sampleStepMetres)
                 {
-                    var d = DistanceToRunwayPavement(x, z);
+                    var d = distance(x, z);
                     if (d < min)
                         min = d;
                 }
             }
 
+            // Include the corners explicitly (the step may skip them).
+            min = Math.Min(min, distance(centerX + halfX, centerZ + halfZ));
+            min = Math.Min(min, distance(centerX + halfX, centerZ - halfZ));
+            min = Math.Min(min, distance(centerX - halfX, centerZ + halfZ));
+            min = Math.Min(min, distance(centerX - halfX, centerZ - halfZ));
             return min;
         }
 
@@ -455,10 +699,7 @@ namespace Airside.Presentation
             var fillets = AllFillets();
             for (var i = 0; i < fillets.Length; i++)
             {
-                var f = fillets[i];
-                var dx = worldX - f.CenterX;
-                var dz = worldZ - f.CenterZ;
-                if (dx * dx + dz * dz <= f.Radius * f.Radius + 1e-3f)
+                if (fillets[i].Contains(worldX, worldZ))
                     return true;
             }
 

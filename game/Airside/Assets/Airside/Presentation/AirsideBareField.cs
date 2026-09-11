@@ -1,15 +1,15 @@
 namespace Airside.Presentation
 {
-/// <summary>
-        /// The visible world is an empty Adelaide Airport at published YPAD metres —
-        /// not the 1:20 miniature. Main runway 05/23 extents live here; the cross
-        /// strip, taxi skeleton and shared names live on
-        /// <see cref="AirsideAdelaidePavement"/>.
-        ///
-        /// This holds no UnityEngine types so the same numbers can be checked headlessly.
-        /// </summary>
-        public static class AirsideBareField
-        {
+    /// <summary>
+    /// The visible world is an empty Adelaide Airport at published YPAD metres —
+    /// not the 1:20 miniature. Main runway 05/23 extents live here; the cross
+    /// strip, taxi skeleton and shared names live on
+    /// <see cref="AirsideAdelaidePavement"/>.
+    ///
+    /// This holds no UnityEngine types so the same numbers can be checked headlessly.
+    /// </summary>
+    public static class AirsideBareField
+    {
         /// <summary>
         /// When true the player sees ground, YPAD pavement silhouette, one aircraft
         /// and sun lighting. Buildings, cars, signs, apron clutter, coast, trees and

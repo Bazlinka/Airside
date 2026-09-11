@@ -129,6 +129,20 @@ namespace Airside.Presentation
         /// Brief oleo squish after touchdown, then a small static compression on the ground.
         /// Zero once airborne. Presentation-only; never feeds simulation.
         /// </summary>
+        /// <summary>
+        /// Gear-door open amount 0..1. Doors open while the gear is in transit and
+        /// close when the gear is locked up or locked down (presentation only).
+        /// </summary>
+        public static float GearDoorOpenBias(AircraftPhase phase, float progress01 = 1f)
+        {
+            var gear = GearBias(phase, progress01);
+            // Fully retracted or fully deployed → closed over the wells.
+            if (gear <= 0.02f || gear >= 0.98f)
+                return 0f;
+            // Peak open mid-travel.
+            return Mathf.Sin(gear * Mathf.PI);
+        }
+
         public static float OleoCompressionMetres(AircraftPhase phase, float progress01)
         {
             var t = Mathf.Clamp01(progress01);

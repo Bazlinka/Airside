@@ -146,5 +146,12 @@ namespace Airside.Tests
                     $"mark {i} at x={marks[i].CenterX} z={marks[i].CenterZ} leaves the 45 m pavement");
             }
         }
+
+        [Test]
+        public void BareField_HidesEconomyHudChrome()
+        {
+            Assert.That(AirsideFocusMode.BareWorld, Is.True);
+            Assert.That(AirsideFocusMode.ShowEconomyHud, Is.False);
+        }
     }
 }

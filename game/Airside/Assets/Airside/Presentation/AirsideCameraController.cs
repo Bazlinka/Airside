@@ -220,7 +220,7 @@ namespace Airside.Presentation
                 AircraftPhase.AtStand => 4f,
                 AircraftPhase.Takeoff => Mathf.Lerp(18f, 40f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(28f, 40f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(32f, 12f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(32f, 20f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.55f, 1f, progress))),
                 AircraftPhase.Departed => 48f,
                 _ => air
             };
@@ -249,7 +249,7 @@ namespace Airside.Presentation
                 AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => 36f,
                 AircraftPhase.Takeoff => Mathf.Lerp(46f, 95f, progress),
                 AircraftPhase.Approach => Mathf.Lerp(68f, 52f, progress),
-                AircraftPhase.Landing => Mathf.Lerp(54f, 36f, progress),
+                AircraftPhase.Landing => Mathf.Lerp(54f, 42f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1f, progress))),
                 AircraftPhase.Departed => Mathf.Lerp(80f, 240f, progress),
                 _ => air
             };
@@ -384,7 +384,14 @@ namespace Airside.Presentation
             _touchdownShake = 0.7f;
         }
 
-        public bool IsFollowing => _following;
+        // EditMode helpers — same curves as the private follow framing.
+        public static float TestLookAheadMetres(AircraftPhase phase, float progress, float altitude) =>
+            LookAheadMetres(phase, progress, altitude);
+
+        public static float TestFollowDistance(AircraftPhase phase, float altitude, float progress) =>
+            FollowDistance(phase, altitude, progress);
+
+                public bool IsFollowing => _following;
         public Transform FollowTarget => _followTarget;
     }
 }

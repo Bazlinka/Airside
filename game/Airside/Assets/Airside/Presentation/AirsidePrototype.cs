@@ -85,6 +85,8 @@ namespace Airside.Presentation
         private AudioClip _uiClickClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly HashSet<string> _touchdownFired = new HashSet<string>();
+        private readonly HashSet<string> _rotateFired = new HashSet<string>();
+        private AudioClip _rotateClip;
         private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
             new List<(Material, Color, float, float, float, bool)>();
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
@@ -223,6 +225,7 @@ namespace Airside.Presentation
             _skidMarkRoot = null;
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
+            _rotateClip = CreateRotateClip();
             _touchdownAudio = gameObject.AddComponent<AudioSource>();
             _touchdownAudio.playOnAwake = false;
             _touchdownAudio.spatialBlend = 0.55f;
@@ -941,51 +944,56 @@ namespace Airside.Presentation
                 }
             }
 
+            var circuitHud = !AirsideFocusMode.ShowEconomyHud;
             SyncLeft(
                 locationLine: $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}",
                 flightLine: CommercialFlightHudLine(),
                 phaseLine: CommercialPhaseHudLine(),
                 clock: clockLine,
                 clockCol: clockColor,
-                cash: cashLine,
+                cash: circuitHud ? string.Empty : cashLine,
                 cashCol: cashColor,
-                finance: financeLine,
+                finance: circuitHud ? string.Empty : financeLine,
                 financeCol: financeColor,
-                warning: warningLine,
+                warning: circuitHud ? string.Empty : warningLine,
                 warningCol: warningColor,
-                showTurnaround: atStand,
-                turnaround: turnaroundLines,
-                priorityVis: priorityVisible,
+                showTurnaround: !circuitHud && atStand,
+                turnaround: circuitHud ? string.Empty : turnaroundLines,
+                priorityVis: !circuitHud && priorityVisible,
                 priorityInt: priorityInteractable,
                 priorityLbl: priorityLabel,
-                schedule: scheduleLine,
+                schedule: circuitHud ? string.Empty : scheduleLine,
                 scheduleCol: scheduleColor,
-                staffing: staffingLine,
+                staffing: circuitHud ? string.Empty : staffingLine,
                 staffingCol: staffingColor,
-                early: earlySession,
-                earlyHint: "Crew / stand / research unlock after you accept a route",
-                hireInt: staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
+                early: circuitHud || earlySession,
+                earlyHint: circuitHud
+                    ? string.Empty
+                    : "Crew / stand / research unlock after you accept a route",
+                hireInt: !circuitHud && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
                          && _simulation.Economy.Cash >= AirportStaffing.HireCost,
                 hireLbl: $"Hire crew · ${AirportStaffing.HireCost}",
-                releaseInt: staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
-                buildVis: true,
+                releaseInt: !circuitHud && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
+                buildVis: !circuitHud,
                 buildInt: capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost,
                 buildLbl: capacity.HasThirdStand
                     ? "Stand 3 built"
                     : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}",
-                stands: $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
-                research: researchLine,
-                researchProgressVis: researchProgressVisible,
+                stands: circuitHud ? string.Empty : $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
+                research: circuitHud ? string.Empty : researchLine,
+                researchProgressVis: !circuitHud && researchProgressVisible,
                 researchProgress: researchProgress01,
-                researchButtonVis: researchButtonVisible,
+                researchButtonVis: !circuitHud && researchButtonVisible,
                 researchButtonInt: researchButtonInteractable,
                 researchButtonLbl: researchButtonLabel,
-                coach: FirstSessionCoachLine(),
-                coachUrgentFlag: coachUrgent,
-                controls: earlySession
+                coach: circuitHud ? string.Empty : FirstSessionCoachLine(),
+                coachUrgentFlag: !circuitHud && coachUrgent,
+                controls: circuitHud
+                    ? "Space pause · Tab speed · F follow · O overview · M mute"
+                    : earlySession
                     ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
                     : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
-                waitMeter: showWaitMeter,
+                waitMeter: !circuitHud && showWaitMeter,
                 waitLbl: waitLabel,
                 waitProgress: waitProgress);
 
@@ -1330,7 +1338,7 @@ namespace Airside.Presentation
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
             var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
-            var coastTarget = _audioMuted ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
+            var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
             if (_paused)
             {
                 windTarget *= EngineVolumePausedScale;
@@ -1403,13 +1411,13 @@ namespace Airside.Presentation
                     continue;
                 if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
                 {
-                    // Doors open whenever the gear is deployed; close only once it is
-                    // retracted. Keying off `airborne` closed the doors on approach
-                    // while the legs were still down, so the struts clipped through.
+                    // Doors open only while the gear is in transit; closed when locked
+                    // up or locked down so the wells read correctly on the rollout.
                     child.gameObject.SetActive(true);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = Mathf.Lerp(0f, 78f, gearBias);
+                    var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01);
+                    var target = Mathf.Lerp(0f, 78f, doorOpen);
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
@@ -2787,6 +2795,24 @@ namespace Airside.Presentation
                 else if (phase != AircraftPhase.Landing)
                 {
                     _touchdownFired.Remove(id);
+                }
+
+                // Soft rotate cue once the visual path lifts — presentation only.
+                if (phase == AircraftPhase.Takeoff
+                    && index < _commercialAircraft.Length
+                    && !_rotateFired.Contains(id)
+                    && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.RotateProgress)
+                {
+                    _rotateFired.Add(id);
+                    if (_touchdownAudio != null && _rotateClip != null && !_audioMuted)
+                    {
+                        _touchdownAudio.transform.position = _commercialAircraft[index].position;
+                        _touchdownAudio.PlayOneShot(_rotateClip, 0.22f);
+                    }
+                }
+                else if (phase != AircraftPhase.Takeoff)
+                {
+                    _rotateFired.Remove(id);
                 }
 
                 _previousPhases[id] = phase;
@@ -8516,8 +8542,9 @@ namespace Airside.Presentation
             source.loop = true;
             source.volume = 0.11f;
             source.spatialBlend = 0.75f;
-            source.minDistance = 8f;
-            source.maxDistance = 75f;
+            source.minDistance = 12f;
+            source.maxDistance = 220f;
+            source.rolloffMode = AudioRolloffMode.Linear;
             source.Play();
             return root;
         }
@@ -9463,14 +9490,17 @@ namespace Airside.Presentation
                 disc.transform.localPosition = Vector3.zero;
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                disc.transform.localScale = new Vector3(diameter, 0.008f, diameter);
-            // Soft translucent disc — not an opaque pancake. Keep blades hidden only
-            // while the disc is showing so high RPM never freezes as a solid plate.
+                // Thin glass disc — reads as motion blur, not a grey cylinder slab.
+                disc.transform.localScale = new Vector3(diameter * 1.02f, 0.0035f, diameter * 1.02f);
+                var discColor = new Color(0.72f, 0.74f, 0.78f, 0.11f);
                 var discMat = AirsideMaterialLibrary.CreateShared(
-                    new Color(0.62f, 0.64f, 0.68f, 0.16f),
-                    AirsideMaterialLibrary.SurfaceKind.Default);
-                disc.GetComponent<Renderer>().sharedMaterial = discMat;
-                SetRendererColor(disc.GetComponent<Renderer>(), new Color(0.62f, 0.64f, 0.68f, 0.16f));
+                    discColor,
+                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                var discRenderer = disc.GetComponent<Renderer>();
+                discRenderer.sharedMaterial = discMat;
+                discRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                discRenderer.receiveShadows = false;
+                SetRendererColor(discRenderer, discColor);
                 disc.SetActive(false);
             }
         }
@@ -11529,6 +11559,27 @@ namespace Airside.Presentation
             }
 
             var clip = AudioClip.Create("Touchdown chirp", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        /// <summary>Soft low whoosh at rotate — quieter than touchdown (presentation only).</summary>
+        private static AudioClip CreateRotateClip()
+        {
+            const int sampleRate = 22050;
+            var samples = new float[sampleRate / 3];
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var time = i / (float)sampleRate;
+                var envelope = Mathf.Exp(-time * 9f) * (1f - time * 2.2f);
+                if (envelope < 0f)
+                    envelope = 0f;
+                var rumble = Mathf.Sin(time * 2f * Mathf.PI * 70f) * 0.45f;
+                var air = Mathf.Sin(time * 2f * Mathf.PI * (180f + time * 220f)) * 0.12f;
+                samples[i] = (rumble + air) * envelope;
+            }
+
+            var clip = AudioClip.Create("Rotate whoosh", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

@@ -1,31 +1,32 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-10 (Cursor — plane/ground polish follow-up)
-- **Branch:** `cursor/plane-ground-pause-followup-0c44` (follow-up after #191 merge)
+- **Last updated:** 2026-09-10 (Cursor — circuit visible polish)
+- **Branch:** `cursor/circuit-visible-polish-0c44`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play one full circuit in
-  overview and follow at 1× and 4×. Confirm authored Adelaide ground (no 16 m grid),
-  ATR v01, eased gear, distance tires, one-shot touchdown smoke, pause freeze
-  (aircraft + beacon + camera shake). Inspect Player.log. Merge only after that.
-- **In progress / half-done:** Visual + dynamics pass implemented and headless-
-  checked. Follow-up hardening pushed: pause freezes follow easing / touchdown
-  shake / beacon blink; ATR follow distances opened; softer touchdown shake;
-  pitch/ground-speed continuity EditMode tests added. Unity Play / Mac build
-  still required — no editor on this Cloud Linux VM.
+  overview and follow at 1× and 4×. Confirm: bare HUD (no cash/research/stands),
+  engine audible in follow climb, gear doors closed on rollout, thin prop blur,
+  landing follow stays open through rollout, soft rotate cue, no coast bed.
+  Inspect Player.log. Merge only after that.
+- **In progress / half-done:** Circuit presentation polish implemented and
+  headless-checked. Unity Play / Mac build still required — no editor on this
+  Cloud Linux VM.
 - **Watch for / assumptions:**
-  - Bare field still bypasses Kingscote `AirsideTerrainGround.TryBuild`; Adelaide
-    ground is `AirsideAdelaideGround` + mesh/shader (ADR 0035)
-  - `AirsideCameraController.FreezePresentation` is driven from `_paused`
-  - Touchdown puff half-track is `AirsideReusableMotion.MainGearHalfTrackMetres`
-  - Gear bias eases over `GearTransitionProgress` after `GearRetractProgress`
-  - Tire spin uses ground speed / radius (0.37 m main, 0.31 m nose)
-  - Pre-existing headless flakes still red on main and this branch (taxi / Away /
-    dry-grass 0.594)
+  - `AirsideFocusMode.ShowEconomyHud` is false while `BareWorld` is on
+  - Coast ambient volume forced to 0 on bare world
+  - Engine `maxDistance` 220 m, linear rolloff
+  - `AirsideReusableMotion.GearDoorOpenBias` drives gear-door angles
+  - Landing look-ahead holds 32 m until ~55% progress, then eases to 20 m
+  - Pre-existing headless flakes still red on main (taxi / Away / dry-grass)
   - Combined pads / paint collectors / circuit skip / save schema unchanged
-- **Decisions:** ADR 0035 (Adelaide authored ground mesh). ADR 0032–0034 still apply.
+- **Decisions:** ADR 0035 still applies. No new ADR for this presentation pass.
 - **Open question for Bailey:** keep dormant building/GSE spawners in
   `AirsidePrototype` for a later restore, or delete that code now that the
   field is bare?
+- **Diminishing returns call:** After this pass, further bare-field circuit
+  polish (ground shader millimetres, threshold numbers, fog, skids) is past
+  the useful point. Next work should be Bailey's call: taxi/stand restore,
+  systems, second aircraft, or content — not more presentation micro-polish.
 
 ---
 
@@ -101,6 +102,13 @@ Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
 supplementary check, not a replacement for a real Unity run before merging.
 
 ## Current evidence
+
+- **Circuit visible polish** on `cursor/circuit-visible-polish-0c44`: bare HUD
+  hides economy chrome; coast muted; engine range 220 m; gear doors transit-only;
+  glass prop discs; landing follow framing; soft rotate cue.
+  **Verified headless:** `scripts/test-domain.sh` **214 passed** (1 new FocusMode HUD test; 4 pre-existing failures also red on main). **Not yet
+  verified:** Unity EditMode / Play, `scripts/test-unity.sh`, `scripts/build-mac.sh`.
+
 
 - **Plane / ground dynamics polish** on `cursor/plane-ground-dynamics-polish-0c44`:
   Adelaide authored ground mesh (ADR 0035) replaces the 16 m tiled grass cube;

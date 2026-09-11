@@ -6,8 +6,9 @@ namespace Airside.Presentation
     /// <see cref="AirsideBareField.Enabled"/> is true.
     ///
     /// The simulation still runs turnaround tasks, ground traffic and every
-    /// reservation exactly as before, and the HUD still reports them, so nothing
-    /// here changes outcomes or save data.
+    /// reservation exactly as before, so nothing here changes outcomes or save
+    /// data. Bare-world HUD chrome hides economy / research / stands so the
+    /// on-screen UI matches the visible circuit.
     /// </summary>
     public static class AirsideFocusMode
     {
@@ -41,5 +42,11 @@ namespace Airside.Presentation
 
         /// <summary>How many commercial models to draw; sim may still run more slots.</summary>
         public static int VisibleCommercialFlights => AircraftOnly || BareWorld ? 1 : int.MaxValue;
+
+        /// <summary>
+        /// Cash / research / stands chrome. Hidden on the bare circuit so the HUD
+        /// matches the player-visible world (plane, runway, ground, sun).
+        /// </summary>
+        public static bool ShowEconomyHud => !BareWorld;
     }
 }

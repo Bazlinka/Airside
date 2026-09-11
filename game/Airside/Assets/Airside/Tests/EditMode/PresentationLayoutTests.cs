@@ -468,6 +468,7 @@ namespace Airside.Tests
             Assert.That(AirsideFocusMode.ShowEnvironment, Is.False);
             Assert.That(AirsideFocusMode.ShowWorldProps, Is.False);
             Assert.That(AirsideFocusMode.ShowDecorativeLights, Is.False);
+            Assert.That(AirsideFocusMode.ShowEconomyHud, Is.False);
             Assert.That(AirsideFocusMode.VisibleCommercialFlights, Is.EqualTo(1));
             Assert.That(AirsideBareField.Enabled, Is.True);
             Assert.That(AirsideBareField.RunwayLengthMetres, Is.EqualTo(3100f));
@@ -711,6 +712,43 @@ namespace Airside.Tests
             Assert.That(b, Is.LessThan(a));
             Assert.That(b, Is.GreaterThan(c));
             Assert.That(c, Is.EqualTo(0f));
+        }
+
+
+        [Test]
+        public void CircuitCues_GearDoorsCloseWhenLockedUpOrDown()
+        {
+            // Locked down on landing / late approach → doors closed.
+            Assert.That(AirsideReusableMotion.GearDoorOpenBias(AircraftPhase.Landing, 0.5f), Is.EqualTo(0f));
+            Assert.That(AirsideReusableMotion.GearDoorOpenBias(AircraftPhase.Approach, 1f), Is.EqualTo(0f));
+            // Locked up after climb → doors closed.
+            Assert.That(AirsideReusableMotion.GearDoorOpenBias(AircraftPhase.Departed, 0.5f), Is.EqualTo(0f));
+            // Mid-retract after rotate → doors open.
+            var start = AirsideReusableMotion.GearRetractProgress;
+            var mid = start + AirsideReusableMotion.GearTransitionProgress * 0.5f;
+            Assert.That(AirsideReusableMotion.GearDoorOpenBias(AircraftPhase.Takeoff, mid),
+                Is.GreaterThan(0.4f));
+            Assert.That(AirsideReusableMotion.GearDoorOpenBias(AircraftPhase.Takeoff, mid),
+                Is.LessThan(1.01f));
+        }
+
+        [Test]
+        public void CircuitCues_LandingFollowKeepsLookAheadThroughRollout()
+        {
+            // Early landing still looks far ahead; late rollout does not collapse to taxi framing.
+            var early = AirsideCameraController.TestLookAheadMetres(AircraftPhase.Landing, 0.2f, 0f);
+            var mid = AirsideCameraController.TestLookAheadMetres(AircraftPhase.Landing, 0.55f, 0f);
+            var late = AirsideCameraController.TestLookAheadMetres(AircraftPhase.Landing, 1f, 0f);
+            Assert.That(early, Is.EqualTo(32f).Within(0.05f));
+            Assert.That(mid, Is.EqualTo(32f).Within(0.05f));
+            Assert.That(late, Is.EqualTo(20f).Within(0.05f));
+            Assert.That(late, Is.GreaterThan(12f));
+
+            var earlyDist = AirsideCameraController.TestFollowDistance(AircraftPhase.Landing, 0f, 0.2f);
+            var lateDist = AirsideCameraController.TestFollowDistance(AircraftPhase.Landing, 0f, 1f);
+            Assert.That(earlyDist, Is.EqualTo(54f).Within(0.05f));
+            Assert.That(lateDist, Is.EqualTo(42f).Within(0.05f));
+            Assert.That(lateDist, Is.GreaterThan(36f));
         }
 
         [Test]

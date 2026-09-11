@@ -1259,8 +1259,12 @@ namespace Airside.Presentation
             _clockText.style.color = OnLightChrome(clockColor);
             _cashText.text = cashLine ?? string.Empty;
             _cashText.style.color = OnLightChrome(cashColor);
+            _cashText.style.display = string.IsNullOrEmpty(cashLine) ? DisplayStyle.None : DisplayStyle.Flex;
+            if (_cashIcon != null)
+                _cashIcon.style.display = string.IsNullOrEmpty(cashLine) ? DisplayStyle.None : DisplayStyle.Flex;
             _financeText.text = financeLine ?? string.Empty;
             _financeText.style.color = OnLightChrome(financeColor);
+            _financeText.style.display = string.IsNullOrEmpty(financeLine) ? DisplayStyle.None : DisplayStyle.Flex;
             if (_speedText != null)
             {
                 // Prefer a calm speed readout; fall back to the controls hint string.
@@ -1301,13 +1305,16 @@ namespace Airside.Presentation
             }
 
             _scheduleText.text = scheduleLine ?? string.Empty;
+            _scheduleText.style.display = string.IsNullOrEmpty(scheduleLine) ? DisplayStyle.None : DisplayStyle.Flex;
             _scheduleText.style.color = OnLightChrome(scheduleColor);
             _staffingText.text = staffingLine ?? string.Empty;
+            _staffingText.style.display = string.IsNullOrEmpty(staffingLine) ? DisplayStyle.None : DisplayStyle.Flex;
             _staffingText.style.color = OnLightChrome(staffingColor);
 
-            _earlyHintText.style.display = earlySession ? DisplayStyle.Flex : DisplayStyle.None;
-            if (earlySession)
-                _earlyHintText.text = earlyHint ?? string.Empty;
+            var showEarlyHint = earlySession && !string.IsNullOrEmpty(earlyHint);
+            _earlyHintText.style.display = showEarlyHint ? DisplayStyle.Flex : DisplayStyle.None;
+            if (showEarlyHint)
+                _earlyHintText.text = earlyHint;
 
             _crewRow.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
             _standsText.style.display = earlySession ? DisplayStyle.None : DisplayStyle.Flex;
@@ -1626,7 +1633,8 @@ namespace Airside.Presentation
         {
             if (_economyStrip == null)
                 return;
-            _economyStrip.style.display = _gameplayChromeVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            var show = _gameplayChromeVisible && AirsideFocusMode.ShowEconomyHud;
+            _economyStrip.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void ApplySpeedVisibility()

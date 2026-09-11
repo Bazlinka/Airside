@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **Bare circuit HUD and flight presentation match the visible world.** Economy /
+  research / stands chrome hides on the bare field; coast ambience mutes with no
+  coast in view; engine audio reaches ATR follow distances (~220 m); gear doors
+  close when locked up or down and open only in transit; prop discs use a thin
+  glass blur; landing follow keeps look-ahead through rollout; a soft rotate
+  whoosh fires once on lift-off.
+  **Verified:** `scripts/test-domain.sh` **214 passed** (4 pre-existing failures
+  also red on main). Unity Play / Mac build still required (no editor on this
+  Cloud Linux VM).
+
+
 - **Adelaide bare field looks authored, and the ATR circuit reads weightier.**
   The 16 m tiled grass cube is replaced by a multi-scale CC0 ground mesh
   (`AirsideAdelaideGround` + `Airside/AdelaideGround` shader) with flat runway
@@ -12,7 +23,7 @@ change it describes.
   Presentation dynamics: eased gear, distance/radius tire spin, brief oleo
   settle, softer prop disc, ATR material/LOD polish, and touchdown smoke that
   fires once even with world props disabled. See ADR 0035.
-  **Verified:** `scripts/test-domain.sh` **213 passed** (6 new Adelaide ground
+  **Verified:** `scripts/test-domain.sh` **214 passed** (6 new Adelaide ground
   tests; 4 pre-existing failures also red on main). Unity Play / Mac build /
   packaged loops still required.
 

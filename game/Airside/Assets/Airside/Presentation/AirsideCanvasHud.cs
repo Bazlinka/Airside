@@ -695,8 +695,10 @@ namespace Airside.Presentation
             _clockText.color = clockColor;
             _cashText.text = cashLine;
             _cashText.color = cashColor;
+            _cashText.gameObject.SetActive(!string.IsNullOrEmpty(cashLine));
             _financeText.text = financeLine;
             _financeText.color = financeColor;
+            _financeText.gameObject.SetActive(!string.IsNullOrEmpty(financeLine));
 
             var hasWarning = !string.IsNullOrEmpty(warningLine);
             _warningText.gameObject.SetActive(hasWarning);
@@ -721,12 +723,15 @@ namespace Airside.Presentation
             }
 
             _scheduleText.text = scheduleLine;
+            _scheduleText.gameObject.SetActive(!string.IsNullOrEmpty(scheduleLine));
             _scheduleText.color = scheduleColor;
             _staffingText.text = staffingLine;
+            _staffingText.gameObject.SetActive(!string.IsNullOrEmpty(staffingLine));
             _staffingText.color = staffingColor;
 
-            _earlyHintText.gameObject.SetActive(earlySession);
-            if (earlySession)
+            var showEarlyHint = earlySession && !string.IsNullOrEmpty(earlyHint);
+            _earlyHintText.gameObject.SetActive(showEarlyHint);
+            if (showEarlyHint)
                 _earlyHintText.text = earlyHint;
 
             _crewRow.SetActive(!earlySession);

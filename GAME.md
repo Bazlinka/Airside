@@ -1,26 +1,26 @@
 ## Where to resume — session handoff
 
-- **Last updated:** 2026-09-11 (Cursor — YPAD fillets + Adelaide perimeter fence)
-- **Branch:** `cursor/adelaide-pavement-fence-0c44`
+- **Last updated:** 2026-09-11 (Cursor — denser YPAD taxi/apron silhouette)
+- **Branch:** `cursor/adelaide-taxi-apron-0c44`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run
   `scripts/test-unity.sh`, `scripts/build-mac.sh`, then Play overview + follow.
-  Confirm: Taxiway F/D/E joins read as smooth Code C/E fillets (not cube corners),
-  yellow taxi paint, sealed shoulders, rubber TDZ bands, 2.44 m security fence on
-  the 785 ha site edge with N/W/S vehicle gates. Circuit still 05/23 only. Inspect
-  Player.log. Merge only after that.
-- **In progress / half-done:** Fillets + perimeter implemented and headless-checked.
-  Unity Play / Mac build still required — no editor on this Cloud Linux VM.
+  Confirm: Taxiway A parallel north of F, D2/E2 inner exits, A–F links, empty
+  terminal + RFDS apron pads, fillets still smooth, fence intact. Circuit still
+  05/23 only. Inspect Player.log. Merge only after that.
+- **In progress / half-done:** Denser taxi/apron silhouette implemented and
+  headless-checked. Unity Play / Mac build still required — no editor on this
+  Cloud Linux VM.
 - **Watch for / assumptions:**
-  - Layout: `AirsideAdelaidePavement` fillets / shoulders (ADR 0037)
-  - Fence: `AirsideAdelaidePerimeter` on bare-field ground extents (ADR 0037)
-  - Sim taxi graph + `SkipGroundTaxi` unchanged (aircraft does not use F/D/E yet)
+  - Layout: `AirsideAdelaidePavement` A/F/D/E/D2/E2 + aprons (ADR 0038)
+  - Fence: `AirsideAdelaidePerimeter` unchanged (ADR 0037)
+  - Sim taxi graph + `SkipGroundTaxi` unchanged (aircraft does not use new taxi)
   - Pre-existing headless flakes still red on main (taxi / Away / dry-grass)
-  - Save schema / circuit skip unchanged; no buildings
-- **Decisions:** ADR 0037 (fillets + perimeter). ADR 0036 silhouette still applies.
-- **Open question for Bailey:** next — (a) wire sim taxi onto F/D/E, (b) denser
-  apron/taxi maze inside the fence, or (c) first landside building?
-- **Diminishing returns:** bare-circuit *aircraft* polish is done; this pass is
-  airfield pavement realism + site fence.
+  - Save schema / circuit skip unchanged; **no buildings** (apron pads empty)
+- **Decisions:** ADR 0038 (taxi/apron silhouette). ADR 0037/0036 still apply.
+- **Open question for Bailey:** next — (a) wire sim taxi onto F/A/D/E, (b) more
+  DAP taxilane detail on the apron pad, or (c) first landside building?
+- **Diminishing returns:** bare-circuit *aircraft* polish is done; keep pavement
+  densification only while it still changes the overview read.
 
 ---
 

@@ -38,24 +38,44 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Pavement_DenserSilhouetteAddsTaxiAApronsAndInnerExits()
+        {
+            Assert.That(AirsideAdelaidePavement.TaxiwayAName, Is.EqualTo("Taxiway A"));
+            Assert.That(AirsideAdelaidePavement.TaxiwayACenterZ, Is.GreaterThan(AirsideAdelaidePavement.TaxiwayFCenterZ));
+            Assert.That(AirsideAdelaidePavement.RunwayExitCenterXs.Length, Is.EqualTo(4));
+            Assert.That(AirsideAdelaidePavement.AfLinkCenterXs.Length, Is.EqualTo(4));
+            Assert.That(AirsideAdelaidePavement.ApronEntryCenterXs.Length, Is.EqualTo(3));
+            Assert.That(AirsideAdelaidePavement.ContainsTerminalApron(
+                AirsideAdelaidePavement.TerminalApronCenterX,
+                AirsideAdelaidePavement.TerminalApronCenterZ), Is.True);
+            Assert.That(AirsideAdelaidePavement.DistanceToPavement(
+                AirsideAdelaidePavement.RfdsApronCenterX,
+                AirsideAdelaidePavement.RfdsApronCenterZ), Is.EqualTo(0f));
+            // A sits on the ops plateau.
+            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
+                0f, AirsideAdelaidePavement.TaxiwayACenterZ), Is.True);
+            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
+                AirsideAdelaidePavement.TerminalApronCenterX,
+                AirsideAdelaidePavement.TerminalApronCenterZ), Is.True);
+        }
+
+        [Test]
         public void Pavement_FilletsSmoothTJunctionsAtCodeCERadius()
         {
             Assert.That(AirsideAdelaidePavement.TaxiFilletRadiusMetres, Is.EqualTo(42f));
             Assert.That(AirsideAdelaidePavement.TaxiSealedShoulderMetres, Is.EqualTo(3.5f));
             var fillets = AirsideAdelaidePavement.AllFillets();
-            Assert.That(fillets.Length, Is.EqualTo(11), "8 link fillets + 2 F caps + crossing pad");
-            // Outside a sharp rectangle corner but inside the fillet disk must count as pavement.
+            // 4 runway exits × 4 + 4 A–F links × 4 + 3 apron entries × 4 + 4 end caps + crossing.
+            Assert.That(fillets.Length, Is.EqualTo(49));
             var r = AirsideAdelaidePavement.TaxiFilletRadiusMetres;
             var hw = AirsideAdelaidePavement.TaxiwayHalfWidth;
             var dX = AirsideAdelaidePavement.TaxiwayDCenterX;
             var fZ = AirsideAdelaidePavement.TaxiwayFCenterZ;
-            // SW fillet centre at (dX - hw, fZ - hw); sample 45° into the exterior quadrant.
             var sampleX = dX - hw - r * 0.5f;
             var sampleZ = fZ - hw - r * 0.5f;
             Assert.That(AirsideAdelaidePavement.ContainsFillet(sampleX, sampleZ), Is.True);
             Assert.That(AirsideAdelaidePavement.DistanceToPavement(sampleX, sampleZ), Is.EqualTo(0f));
-            // Far from all pavement stays outside.
-            Assert.That(AirsideAdelaidePavement.DistanceToPavement(0f, 500f), Is.GreaterThan(50f));
+            Assert.That(AirsideAdelaidePavement.DistanceToPavement(0f, 900f), Is.GreaterThan(50f));
         }
 
         [Test]

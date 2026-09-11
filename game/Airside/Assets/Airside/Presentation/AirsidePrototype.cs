@@ -5444,99 +5444,180 @@ namespace Airside.Presentation
         {
             var taxiYellow = new Color(0.92f, 0.78f, 0.12f);
             var sealedShoulder = new Color(0.24f, 0.25f, 0.27f);
+            var apronConcrete = new Color(0.42f, 0.43f, 0.44f);
             var y = AirsideBareField.RunwayCenterY;
             var h = AirsideBareField.RunwayHeightMetres * 0.92f;
             var shoulder = AirsideAdelaidePavement.TaxiSealedShoulderMetres;
             var tw = AirsideAdelaidePavement.TaxiwayWidthMetres;
             var half = AirsideAdelaidePavement.TaxiwayHalfWidth;
 
-            // Sealed shoulders under / beside Taxiway F (Code C/E band).
-            CreateBlock(
-                "Taxiway F shoulder N",
-                new Vector3(0f, y - 0.005f, AirsideAdelaidePavement.TaxiwayFCenterZ + half + shoulder * 0.5f),
-                new Vector3(AirsideAdelaidePavement.TaxiwayFLengthMetres + 24f, h * 0.85f, shoulder),
-                sealedShoulder,
-                PreferSurfaceBasecolor("tx_asphalt_runway"),
-                new Vector2(AirsideAdelaidePavement.TaxiwayFLengthMetres / 40f, shoulder / 4f));
-            CreateBlock(
-                "Taxiway F shoulder S",
-                new Vector3(0f, y - 0.005f, AirsideAdelaidePavement.TaxiwayFCenterZ - half - shoulder * 0.5f),
-                new Vector3(AirsideAdelaidePavement.TaxiwayFLengthMetres + 24f, h * 0.85f, shoulder),
-                sealedShoulder,
-                PreferSurfaceBasecolor("tx_asphalt_runway"),
-                new Vector2(AirsideAdelaidePavement.TaxiwayFLengthMetres / 40f, shoulder / 4f));
-
-            var f = CreateBlock(
-                AirsideAdelaidePavement.TaxiwayFName,
-                new Vector3(0f, y, AirsideAdelaidePavement.TaxiwayFCenterZ),
-                new Vector3(
-                    AirsideAdelaidePavement.TaxiwayFLengthMetres,
-                    h,
-                    tw),
-                taxiAsphalt,
-                PreferSurfaceBasecolor("tx_asphalt_runway"),
-                new Vector2(
-                    AirsideAdelaidePavement.TaxiwayFLengthMetres / 36f,
-                    tw / 9f));
-            ApplyRunwayMultiScale(f.transform);
-
-            void BuildLink(string name, float centerX)
+            void ParallelTaxi(
+                string name, float centerZ, float length,
+                bool paintGuide, Transform markingsRoot)
             {
-                // Link sealed shoulders (east / west of the stub).
+                CreateBlock(
+                    $"{name} shoulder N",
+                    new Vector3(0f, y - 0.005f, centerZ + half + shoulder * 0.5f),
+                    new Vector3(length + 24f, h * 0.85f, shoulder),
+                    sealedShoulder,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(length / 40f, shoulder / 4f));
+                CreateBlock(
+                    $"{name} shoulder S",
+                    new Vector3(0f, y - 0.005f, centerZ - half - shoulder * 0.5f),
+                    new Vector3(length + 24f, h * 0.85f, shoulder),
+                    sealedShoulder,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(length / 40f, shoulder / 4f));
+
+                var slab = CreateBlock(
+                    name,
+                    new Vector3(0f, y, centerZ),
+                    new Vector3(length, h, tw),
+                    taxiAsphalt,
+                    PreferSurfaceBasecolor("tx_asphalt_runway"),
+                    new Vector2(length / 36f, tw / 9f));
+                ApplyRunwayMultiScale(slab.transform);
+
+                if (paintGuide && markingsRoot != null)
+                {
+                    var marks = AirsideStripMarkings.TaxiwayGuide(length, tw);
+                    var world = OffsetMarks(marks, 0f, centerZ);
+                    CreateCombinedStripPaint(
+                        markingsRoot, $"{name} guide", world, taxiYellow);
+                }
+            }
+
+            void CrossLink(
+                string name, float centerX, float centerZ, float lengthZ, bool holdShort,
+                Transform markingsRoot)
+            {
                 CreateBlock(
                     $"{name} shoulder E",
-                    new Vector3(centerX + half + shoulder * 0.5f, y - 0.005f, AirsideAdelaidePavement.TaxiLinkCenterZ),
-                    new Vector3(shoulder, h * 0.85f, AirsideAdelaidePavement.TaxiLinkLengthZ + 8f),
+                    new Vector3(centerX + half + shoulder * 0.5f, y - 0.005f, centerZ),
+                    new Vector3(shoulder, h * 0.85f, lengthZ + 8f),
                     sealedShoulder,
                     PreferSurfaceBasecolor("tx_asphalt_runway"),
-                    new Vector2(shoulder / 4f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                    new Vector2(shoulder / 4f, lengthZ / 18f));
                 CreateBlock(
                     $"{name} shoulder W",
-                    new Vector3(centerX - half - shoulder * 0.5f, y - 0.005f, AirsideAdelaidePavement.TaxiLinkCenterZ),
-                    new Vector3(shoulder, h * 0.85f, AirsideAdelaidePavement.TaxiLinkLengthZ + 8f),
+                    new Vector3(centerX - half - shoulder * 0.5f, y - 0.005f, centerZ),
+                    new Vector3(shoulder, h * 0.85f, lengthZ + 8f),
                     sealedShoulder,
                     PreferSurfaceBasecolor("tx_asphalt_runway"),
-                    new Vector2(shoulder / 4f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                    new Vector2(shoulder / 4f, lengthZ / 18f));
 
                 var link = CreateBlock(
                     name,
-                    new Vector3(centerX, y, AirsideAdelaidePavement.TaxiLinkCenterZ),
-                    new Vector3(tw, h, AirsideAdelaidePavement.TaxiLinkLengthZ),
+                    new Vector3(centerX, y, centerZ),
+                    new Vector3(tw, h, lengthZ),
                     taxiAsphalt,
                     PreferSurfaceBasecolor("tx_asphalt_runway"),
-                    new Vector2(9f, AirsideAdelaidePavement.TaxiLinkLengthZ / 18f));
+                    new Vector2(9f, lengthZ / 18f));
                 ApplyRunwayMultiScale(link.transform);
+
+                if (holdShort && markingsRoot != null)
+                {
+                    var hold = AirsideStripMarkings.HoldShortBars(tw, 12f);
+                    CreateCombinedStripPaint(
+                        markingsRoot,
+                        $"{name} hold",
+                        HoldShortWorld(hold, centerX),
+                        taxiYellow);
+                }
             }
-
-            BuildLink(AirsideAdelaidePavement.TaxiwayDName, AirsideAdelaidePavement.TaxiwayDCenterX);
-            BuildLink(AirsideAdelaidePavement.TaxiwayEName, AirsideAdelaidePavement.TaxiwayECenterX);
-
-            BuildBareTaxiFillets(taxiAsphalt);
 
             var markings = new GameObject("Taxiway markings").transform;
             if (_airfieldRoot != null)
                 markings.SetParent(_airfieldRoot, false);
 
-            // ICAO taxi paint is yellow, not runway white.
-            var fMarks = AirsideStripMarkings.TaxiwayGuide(
+            ParallelTaxi(
+                AirsideAdelaidePavement.TaxiwayFName,
+                AirsideAdelaidePavement.TaxiwayFCenterZ,
                 AirsideAdelaidePavement.TaxiwayFLengthMetres,
-                AirsideAdelaidePavement.TaxiwayWidthMetres);
-            var fWorld = OffsetMarks(fMarks, 0f, AirsideAdelaidePavement.TaxiwayFCenterZ);
-            CreateCombinedStripPaint(markings, "taxi_f_guide", fWorld, taxiYellow);
+                paintGuide: true,
+                markings);
+            ParallelTaxi(
+                AirsideAdelaidePavement.TaxiwayAName,
+                AirsideAdelaidePavement.TaxiwayACenterZ,
+                AirsideAdelaidePavement.TaxiwayALengthMetres,
+                paintGuide: true,
+                markings);
 
-            var holdAlong = 12f;
-            var hold = AirsideStripMarkings.HoldShortBars(
-                AirsideAdelaidePavement.TaxiwayWidthMetres, holdAlong);
-            CreateCombinedStripPaint(
-                markings,
-                "taxi_d_hold",
-                HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayDCenterX),
-                taxiYellow);
-            CreateCombinedStripPaint(
-                markings,
-                "taxi_e_hold",
-                HoldShortWorld(hold, AirsideAdelaidePavement.TaxiwayECenterX),
-                taxiYellow);
+            var exits = AirsideAdelaidePavement.RunwayExitCenterXs;
+            var exitNames = AirsideAdelaidePavement.RunwayExitNames;
+            for (var i = 0; i < exits.Length; i++)
+            {
+                CrossLink(
+                    exitNames[i],
+                    exits[i],
+                    AirsideAdelaidePavement.TaxiLinkCenterZ,
+                    AirsideAdelaidePavement.TaxiLinkLengthZ,
+                    holdShort: true,
+                    markings);
+            }
+
+            var af = AirsideAdelaidePavement.AfLinkCenterXs;
+            for (var i = 0; i < af.Length; i++)
+            {
+                CrossLink(
+                    $"Taxiway AF link {i}",
+                    af[i],
+                    AirsideAdelaidePavement.AfLinkCenterZ,
+                    AirsideAdelaidePavement.AfLinkLengthZ,
+                    holdShort: false,
+                    markings);
+            }
+
+            var apronEntries = AirsideAdelaidePavement.ApronEntryCenterXs;
+            for (var i = 0; i < apronEntries.Length; i++)
+            {
+                CrossLink(
+                    $"Taxiway apron entry {i}",
+                    apronEntries[i],
+                    AirsideAdelaidePavement.ApronEntryCenterZ,
+                    AirsideAdelaidePavement.ApronEntryLengthZ,
+                    holdShort: false,
+                    markings);
+            }
+
+            // Terminal apron pad (concrete) — empty, no buildings.
+            var terminal = CreateBlock(
+                AirsideAdelaidePavement.TerminalApronName,
+                new Vector3(
+                    AirsideAdelaidePavement.TerminalApronCenterX,
+                    y - 0.01f,
+                    AirsideAdelaidePavement.TerminalApronCenterZ),
+                new Vector3(
+                    AirsideAdelaidePavement.TerminalApronLengthX,
+                    h * 0.88f,
+                    AirsideAdelaidePavement.TerminalApronWidthZ),
+                apronConcrete,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(
+                    AirsideAdelaidePavement.TerminalApronLengthX / 28f,
+                    AirsideAdelaidePavement.TerminalApronWidthZ / 18f));
+            ApplyRunwayMultiScale(terminal.transform);
+
+            // RFDS / south apron silhouette.
+            var rfds = CreateBlock(
+                AirsideAdelaidePavement.RfdsApronName,
+                new Vector3(
+                    AirsideAdelaidePavement.RfdsApronCenterX,
+                    y - 0.01f,
+                    AirsideAdelaidePavement.RfdsApronCenterZ),
+                new Vector3(
+                    AirsideAdelaidePavement.RfdsApronLengthX,
+                    h * 0.88f,
+                    AirsideAdelaidePavement.RfdsApronWidthZ),
+                apronConcrete,
+                PreferSurfaceBasecolor("tx_asphalt_runway"),
+                new Vector2(
+                    AirsideAdelaidePavement.RfdsApronLengthX / 18f,
+                    AirsideAdelaidePavement.RfdsApronWidthZ / 14f));
+            ApplyRunwayMultiScale(rfds.transform);
+
+            BuildBareTaxiFillets(taxiAsphalt);
         }
 
         /// <summary>

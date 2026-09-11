@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **YPAD bare field gains a denser taxi/apron silhouette.** Taxiway A runs
+  parallel north of F; D2/E2 add inner runway exits; A–F links and apron entries
+  feed an empty terminal apron pad (west of 12/30, clear of both runways) plus a
+  small RFDS pad south of 05/23. Fillets and the site fence remain. No buildings.
+  Sim taxi unchanged (ADR 0038).
+  **Verified:** `scripts/test-domain.sh` **225 passed** (11 Adelaide pavement
+  tests; 4 pre-existing failures also red on main). Unity Play / Mac build still
+  required (no editor on this Cloud Linux VM).
+
 - **YPAD taxi/runway joins get Code C/E fillets, and the 785 ha site gets its
   security fence.** 42 m quarter-disk fillets smooth F↔D/E and runway↔D/E;
   Taxiway F gains end caps and 3.5 m sealed shoulders; taxi paint is yellow;

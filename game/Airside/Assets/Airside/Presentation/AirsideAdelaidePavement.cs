@@ -4,12 +4,13 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Real-metre YPAD pavement silhouette for the bare Adelaide field: main 05/23,
-    /// cross 12/30, parallel Taxiway F, D/E exit links, Code-C/E fillets, and sealed
-    /// taxi shoulders. Pure constants — no UnityEngine types — so headless tests and
-    /// the runtime builder share one layout.
+    /// cross 12/30, parallel Taxiways F + A, D/E/D2/E2 runway exits, A–F links,
+    /// terminal + RFDS apron pads, Code-C/E fillets, and sealed taxi shoulders.
+    /// Pure constants — no UnityEngine types — so headless tests and the runtime
+    /// builder share one layout.
     ///
     /// Simulation taxi topology stays on the 1:20 miniature until a separate ADR
-    /// moves reservations onto these metres. Presentation only.
+    /// moves reservations onto these metres. Presentation only. No buildings.
     /// </summary>
     public static class AirsideAdelaidePavement
     {
@@ -45,7 +46,7 @@ namespace Airside.Presentation
 
         public static float CrossYawRadians => CrossYawDegrees * (float)Math.PI / 180f;
 
-        // --- Taxiway F (parallel, terminal / north side of 05/23) ---
+        // --- Taxiway F (parallel, first north of 05/23) ---
 
         public const string TaxiwayFName = "Taxiway F";
         public const float TaxiwayWidthMetres = 23f;
@@ -54,25 +55,116 @@ namespace Airside.Presentation
 
         public static float TaxiwayHalfWidth => TaxiwayWidthMetres * 0.5f;
 
-        // --- Exit links D (23 / east) and E (05 / west) ---
+        // --- Taxiway A (parallel, terminal side of F — DAP A spine) ---
+
+        public const string TaxiwayAName = "Taxiway A";
+
+        /// <summary>
+        /// Centreline Z for Taxiway A. ~105 m north of F matches the DAP parallel
+        /// separation between the F and A spines on the terminal side.
+        /// </summary>
+        public const float TaxiwayACenterZ = 200f;
+
+        public const float TaxiwayALengthMetres = 2400f;
+
+        // --- Runway exit links (F ↔ 05/23) ---
 
         public const string TaxiwayDName = "Taxiway D";
         public const string TaxiwayEName = "Taxiway E";
+        public const string TaxiwayD2Name = "Taxiway D2";
+        public const string TaxiwayE2Name = "Taxiway E2";
 
-        /// <summary>Along-runway station of Taxiway D (toward 23 / east threshold).</summary>
+        /// <summary>Along-runway station of Taxiway D (toward 23 / east).</summary>
         public const float TaxiwayDCenterX = 1100f;
 
-        /// <summary>Along-runway station of Taxiway E (toward 05 / west threshold).</summary>
+        /// <summary>Along-runway station of Taxiway E (toward 05 / west).</summary>
         public const float TaxiwayECenterX = -1100f;
 
+        /// <summary>Inner exit toward 23 (DAP D2-ish station).</summary>
+        public const float TaxiwayD2CenterX = 550f;
+
+        /// <summary>Inner exit toward 05 (DAP E2-ish station).</summary>
+        public const float TaxiwayE2CenterX = -550f;
+
         /// <summary>
-        /// Length of the D/E stub from the main runway outer edge to Taxiway F inner edge.
+        /// Length of a runway↔F stub from the main runway outer edge to Taxiway F inner edge.
         /// </summary>
         public static float TaxiLinkLengthZ =>
             TaxiwayFCenterZ - MainHalfWidth - TaxiwayHalfWidth;
 
         public static float TaxiLinkCenterZ =>
             MainHalfWidth + TaxiLinkLengthZ * 0.5f;
+
+        /// <summary>X stations of all runway↔F exit links.</summary>
+        public static float[] RunwayExitCenterXs { get; } =
+        {
+            TaxiwayECenterX, TaxiwayE2CenterX, TaxiwayD2CenterX, TaxiwayDCenterX
+        };
+
+        public static string[] RunwayExitNames { get; } =
+        {
+            TaxiwayEName, TaxiwayE2Name, TaxiwayD2Name, TaxiwayDName
+        };
+
+        // --- A↔F cross-links ---
+
+        /// <summary>
+        /// Along-runway stations of the A↔F connectors (DAP feeders between the
+        /// parallel spines — silhouette of B/T/L-class joins without naming the maze).
+        /// </summary>
+        public static float[] AfLinkCenterXs { get; } =
+        {
+            -900f, -300f, 300f, 900f
+        };
+
+        /// <summary>Length of an A↔F stub (F north edge → A south edge).</summary>
+        public static float AfLinkLengthZ =>
+            TaxiwayACenterZ - TaxiwayFCenterZ - TaxiwayWidthMetres;
+
+        public static float AfLinkCenterZ =>
+            (TaxiwayFCenterZ + TaxiwayACenterZ) * 0.5f;
+
+        // --- Aprons (pads only — no buildings) ---
+
+        public const string TerminalApronName = "Apron terminal";
+
+        /// <summary>
+        /// Terminal apron pad north of Taxiway A (concrete, empty). Placed on the
+        /// <b>west</b> / terminal side of 12/30 so the cross-runway strip never cuts
+        /// the pad (YPAD: apron sits clear of both runways, fed by taxiways).
+        /// </summary>
+        public const float TerminalApronCenterX = -600f;
+        public const float TerminalApronCenterZ = 340f;
+        public const float TerminalApronLengthX = 900f;
+        public const float TerminalApronWidthZ = 150f;
+
+        /// <summary>
+        /// Minimum runway edge clearance the terminal apron must keep (metres).
+        /// Used by headless regression so a future layout slip cannot reintroduce
+        /// the 12/30-through-apron bug.
+        /// </summary>
+        public const float ApronRunwayClearanceMetres = 60f;
+
+        /// <summary>Apron entry stubs from A north edge into the terminal apron.</summary>
+        public static float[] ApronEntryCenterXs { get; } =
+        {
+            -800f, -550f, -300f
+        };
+
+        public static float ApronEntryLengthZ =>
+            TerminalApronCenterZ - TerminalApronWidthZ * 0.5f
+            - (TaxiwayACenterZ + TaxiwayHalfWidth);
+
+        public static float ApronEntryCenterZ =>
+            TaxiwayACenterZ + TaxiwayHalfWidth + ApronEntryLengthZ * 0.5f;
+
+        public const string RfdsApronName = "Apron RFDS";
+
+        /// <summary>Small RFDS / south apron silhouette south of 05/23.</summary>
+        public const float RfdsApronCenterX = -900f;
+        public const float RfdsApronCenterZ = -180f;
+        public const float RfdsApronLengthX = 220f;
+        public const float RfdsApronWidthZ = 120f;
 
         // --- Shoulders ---
 
@@ -84,16 +176,18 @@ namespace Airside.Presentation
         /// </summary>
         public const float TaxiSealedShoulderMetres = 3.5f;
 
-        // --- Fillets (smooth 90° pavement joins) ---
+        // --- Fillets ---
 
         /// <summary>
-        /// Outer pavement fillet radius at Taxiway F ↔ D/E and runway ↔ D/E
-        /// T-junctions. Sized for Code C/E 90° turns (≈ 40–45 m pavement radius),
-        /// not a sharp cube corner.
+        /// Outer pavement fillet radius at runway ↔ taxi and F ↔ A T-junctions.
+        /// Sized for Code C/E 90° turns (≈ 40–45 m pavement radius).
         /// </summary>
         public const float TaxiFilletRadiusMetres = 42f;
 
-        /// <summary>Rounded semicircle caps on Taxiway F ends.</summary>
+        /// <summary>Slightly tighter fillet for apron taxilane entries.</summary>
+        public const float ApronFilletRadiusMetres = 28f;
+
+        /// <summary>Rounded semicircle caps on long parallel taxi ends.</summary>
         public const float TaxiwayEndCapRadiusMetres = 11.5f; // = half width
 
         /// <summary>
@@ -105,9 +199,13 @@ namespace Airside.Presentation
         /// <summary>Arc segments per quarter fillet (presentation mesh density).</summary>
         public const int FilletArcSegments = 14;
 
-        // --- Ops plateau (covers both strips + Taxiway F + fillets) ---
+        // --- Ops plateau (covers strips + F/A + aprons + fillets) ---
 
         public const float PlateauHalfX = 1600f;
+
+        /// <summary>
+        /// Covers 12/30 tips (~790 m) plus terminal apron (~420 m) and RFDS pad.
+        /// </summary>
         public const float PlateauHalfZ = 860f;
 
         /// <summary>
@@ -133,38 +231,70 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// All taxi/runway fillet disks for the silhouette (F↔D/E, runway↔D/E, F end caps,
-        /// runway crossing pad). Pure layout — the builder turns these into meshes.
+        /// All fillet disks for the silhouette. Pure layout — the builder turns these into meshes.
         /// </summary>
         public static FilletSpec[] AllFillets()
         {
             var hw = TaxiwayHalfWidth;
-            var fZ = TaxiwayFCenterZ;
             var r = TaxiFilletRadiusMetres;
-            var runwayNorth = MainHalfWidth;
-            var list = new FilletSpec[16];
+            var apronR = ApronFilletRadiusMetres;
+            var list = new FilletSpec[64];
             var n = 0;
 
-            void AddLink(float linkX)
+            void AddTJunctionSouthOfHorizontal(float linkX, float horizZ)
             {
-                // F south edge ↔ link west/east (concave corners of the T).
-                list[n++] = new FilletSpec(linkX - hw, fZ - hw, r, (float)Math.PI, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(linkX + hw, fZ - hw, r, (float)Math.PI * 1.5f, (float)Math.PI * 0.5f);
-                // Runway north edge ↔ link west/east.
-                list[n++] = new FilletSpec(linkX - hw, runwayNorth, r, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
-                list[n++] = new FilletSpec(linkX + hw, runwayNorth, r, 0f, (float)Math.PI * 0.5f);
+                // Horizontal taxi south edge ↔ link west/east.
+                list[n++] = new FilletSpec(linkX - hw, horizZ - hw, r, (float)Math.PI, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(linkX + hw, horizZ - hw, r, (float)Math.PI * 1.5f, (float)Math.PI * 0.5f);
             }
 
-            AddLink(TaxiwayDCenterX);
-            AddLink(TaxiwayECenterX);
+            void AddTJunctionNorthOfHorizontal(float linkX, float horizZ)
+            {
+                list[n++] = new FilletSpec(linkX - hw, horizZ + hw, r, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(linkX + hw, horizZ + hw, r, 0f, (float)Math.PI * 0.5f);
+            }
 
-            // Taxiway F semicircle end caps (full half-disk beyond the rectangle ends).
-            var fHalf = TaxiwayFLengthMetres * 0.5f;
+            void AddRunwayExit(float linkX)
+            {
+                AddTJunctionSouthOfHorizontal(linkX, TaxiwayFCenterZ);
+                // Runway north edge ↔ link.
+                list[n++] = new FilletSpec(linkX - hw, MainHalfWidth, r, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(linkX + hw, MainHalfWidth, r, 0f, (float)Math.PI * 0.5f);
+            }
+
+            for (var i = 0; i < RunwayExitCenterXs.Length; i++)
+                AddRunwayExit(RunwayExitCenterXs[i]);
+
+            // A↔F links: fillets on F north and A south.
+            for (var i = 0; i < AfLinkCenterXs.Length; i++)
+            {
+                var x = AfLinkCenterXs[i];
+                AddTJunctionNorthOfHorizontal(x, TaxiwayFCenterZ);
+                AddTJunctionSouthOfHorizontal(x, TaxiwayACenterZ);
+            }
+
+            // Apron entries: A north edge ↔ apron south edge (tighter radius).
+            var aNorth = TaxiwayACenterZ + hw;
+            var apronSouth = TerminalApronCenterZ - TerminalApronWidthZ * 0.5f;
+            for (var i = 0; i < ApronEntryCenterXs.Length; i++)
+            {
+                var x = ApronEntryCenterXs[i];
+                list[n++] = new FilletSpec(x - hw, aNorth, apronR, (float)Math.PI * 0.5f, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(x + hw, aNorth, apronR, 0f, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(x - hw, apronSouth, apronR, (float)Math.PI, (float)Math.PI * 0.5f);
+                list[n++] = new FilletSpec(x + hw, apronSouth, apronR, (float)Math.PI * 1.5f, (float)Math.PI * 0.5f);
+            }
+
+            // End caps on F and A.
             var capR = TaxiwayEndCapRadiusMetres;
-            list[n++] = new FilletSpec(fHalf, fZ, capR, (float)-Math.PI * 0.5f, (float)Math.PI);
-            list[n++] = new FilletSpec(-fHalf, fZ, capR, (float)Math.PI * 0.5f, (float)Math.PI);
+            var fHalf = TaxiwayFLengthMetres * 0.5f;
+            list[n++] = new FilletSpec(fHalf, TaxiwayFCenterZ, capR, (float)-Math.PI * 0.5f, (float)Math.PI);
+            list[n++] = new FilletSpec(-fHalf, TaxiwayFCenterZ, capR, (float)Math.PI * 0.5f, (float)Math.PI);
+            var aHalf = TaxiwayALengthMetres * 0.5f;
+            list[n++] = new FilletSpec(aHalf, TaxiwayACenterZ, capR, (float)-Math.PI * 0.5f, (float)Math.PI);
+            list[n++] = new FilletSpec(-aHalf, TaxiwayACenterZ, capR, (float)Math.PI * 0.5f, (float)Math.PI);
 
-            // Crossing soften pad (full disk).
+            // Crossing soften pad.
             list[n++] = new FilletSpec(0f, 0f, RunwayCrossingPadRadiusMetres, 0f, (float)Math.PI * 2f);
 
             if (n != list.Length)
@@ -181,36 +311,58 @@ namespace Airside.Presentation
                 worldX, worldZ, CrossCenterX, CrossCenterZ,
                 CrossHalfLength, CrossHalfWidth, CrossYawRadians);
             var d = Math.Min(main, cross);
-            // Crossing pad.
             var pad = DistanceToDisk(worldX, worldZ, 0f, 0f, RunwayCrossingPadRadiusMetres);
             return Math.Min(d, pad);
         }
 
-        /// <summary>Distance to any silhouette pavement (runways + F + D/E + fillets + shoulders).</summary>
+        /// <summary>Distance to any silhouette pavement (runways + taxi + aprons + fillets).</summary>
         public static float DistanceToPavement(float worldX, float worldZ)
         {
             var d = DistanceToRunwayPavement(worldX, worldZ);
+
             d = Math.Min(d, DistanceToAxisAlignedStrip(
                 worldX, worldZ, 0f, TaxiwayFCenterZ,
                 TaxiwayFLengthMetres * 0.5f, TaxiwayHalfWidth));
             d = Math.Min(d, DistanceToAxisAlignedStrip(
-                worldX, worldZ, TaxiwayDCenterX, TaxiLinkCenterZ,
-                TaxiwayHalfWidth, TaxiLinkLengthZ * 0.5f));
-            d = Math.Min(d, DistanceToAxisAlignedStrip(
-                worldX, worldZ, TaxiwayECenterX, TaxiLinkCenterZ,
-                TaxiwayHalfWidth, TaxiLinkLengthZ * 0.5f));
+                worldX, worldZ, 0f, TaxiwayACenterZ,
+                TaxiwayALengthMetres * 0.5f, TaxiwayHalfWidth));
 
-            // Sealed taxi shoulders (axis-aligned envelopes).
+            for (var i = 0; i < RunwayExitCenterXs.Length; i++)
+            {
+                d = Math.Min(d, DistanceToAxisAlignedStrip(
+                    worldX, worldZ, RunwayExitCenterXs[i], TaxiLinkCenterZ,
+                    TaxiwayHalfWidth, TaxiLinkLengthZ * 0.5f));
+            }
+
+            for (var i = 0; i < AfLinkCenterXs.Length; i++)
+            {
+                d = Math.Min(d, DistanceToAxisAlignedStrip(
+                    worldX, worldZ, AfLinkCenterXs[i], AfLinkCenterZ,
+                    TaxiwayHalfWidth, AfLinkLengthZ * 0.5f));
+            }
+
+            for (var i = 0; i < ApronEntryCenterXs.Length; i++)
+            {
+                d = Math.Min(d, DistanceToAxisAlignedStrip(
+                    worldX, worldZ, ApronEntryCenterXs[i], ApronEntryCenterZ,
+                    TaxiwayHalfWidth, ApronEntryLengthZ * 0.5f));
+            }
+
+            d = Math.Min(d, DistanceToAxisAlignedStrip(
+                worldX, worldZ, TerminalApronCenterX, TerminalApronCenterZ,
+                TerminalApronLengthX * 0.5f, TerminalApronWidthZ * 0.5f));
+            d = Math.Min(d, DistanceToAxisAlignedStrip(
+                worldX, worldZ, RfdsApronCenterX, RfdsApronCenterZ,
+                RfdsApronLengthX * 0.5f, RfdsApronWidthZ * 0.5f));
+
+            // Sealed taxi shoulders on the long parallels.
             var shoulderHalf = TaxiwayHalfWidth + TaxiSealedShoulderMetres;
             d = Math.Min(d, DistanceToAxisAlignedStrip(
                 worldX, worldZ, 0f, TaxiwayFCenterZ,
                 TaxiwayFLengthMetres * 0.5f, shoulderHalf));
             d = Math.Min(d, DistanceToAxisAlignedStrip(
-                worldX, worldZ, TaxiwayDCenterX, TaxiLinkCenterZ,
-                shoulderHalf, TaxiLinkLengthZ * 0.5f));
-            d = Math.Min(d, DistanceToAxisAlignedStrip(
-                worldX, worldZ, TaxiwayECenterX, TaxiLinkCenterZ,
-                shoulderHalf, TaxiLinkLengthZ * 0.5f));
+                worldX, worldZ, 0f, TaxiwayACenterZ,
+                TaxiwayALengthMetres * 0.5f, shoulderHalf));
 
             var fillets = AllFillets();
             for (var i = 0; i < fillets.Length; i++)
@@ -239,6 +391,64 @@ namespace Airside.Presentation
 
         public static bool ContainsAnyRunway(float worldX, float worldZ) =>
             ContainsMainRunway(worldX, worldZ) || ContainsCrossRunway(worldX, worldZ);
+
+        public static bool ContainsTerminalApron(float worldX, float worldZ) =>
+            Math.Abs(worldX - TerminalApronCenterX) <= TerminalApronLengthX * 0.5f + 1e-3f
+            && Math.Abs(worldZ - TerminalApronCenterZ) <= TerminalApronWidthZ * 0.5f + 1e-3f;
+
+        /// <summary>
+        /// Smallest distance from any point on the terminal apron AABB to either
+        /// runway strip. Negative means the pad overlaps a runway (layout bug).
+        /// </summary>
+        public static float TerminalApronClearanceFromRunways(float sampleStepMetres = 10f)
+        {
+            if (sampleStepMetres < 1f)
+                sampleStepMetres = 1f;
+
+            var halfX = TerminalApronLengthX * 0.5f;
+            var halfZ = TerminalApronWidthZ * 0.5f;
+            var min = float.MaxValue;
+            for (var x = TerminalApronCenterX - halfX; x <= TerminalApronCenterX + halfX + 0.01f; x += sampleStepMetres)
+            {
+                for (var z = TerminalApronCenterZ - halfZ; z <= TerminalApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
+                {
+                    var d = DistanceToRunwayPavement(x, z);
+                    if (d < min)
+                        min = d;
+                }
+            }
+
+            // Include the east/north corners explicitly (step may skip exact corners).
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ + halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX + halfX, TerminalApronCenterZ - halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ + halfZ));
+            min = Math.Min(min, DistanceToRunwayPavement(TerminalApronCenterX - halfX, TerminalApronCenterZ - halfZ));
+            return min;
+        }
+
+        /// <summary>
+        /// Smallest distance from the RFDS apron AABB to either runway strip.
+        /// </summary>
+        public static float RfdsApronClearanceFromRunways(float sampleStepMetres = 10f)
+        {
+            if (sampleStepMetres < 1f)
+                sampleStepMetres = 1f;
+
+            var halfX = RfdsApronLengthX * 0.5f;
+            var halfZ = RfdsApronWidthZ * 0.5f;
+            var min = float.MaxValue;
+            for (var x = RfdsApronCenterX - halfX; x <= RfdsApronCenterX + halfX + 0.01f; x += sampleStepMetres)
+            {
+                for (var z = RfdsApronCenterZ - halfZ; z <= RfdsApronCenterZ + halfZ + 0.01f; z += sampleStepMetres)
+                {
+                    var d = DistanceToRunwayPavement(x, z);
+                    if (d < min)
+                        min = d;
+                }
+            }
+
+            return min;
+        }
 
         public static bool ContainsFillet(float worldX, float worldZ)
         {

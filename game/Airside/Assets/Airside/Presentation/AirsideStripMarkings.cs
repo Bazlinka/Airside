@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Airside.Presentation
@@ -141,27 +142,124 @@ namespace Airside.Presentation
         }
 
         /// <summary>Taxi edge + dashed centreline in local strip coordinates.</summary>
+        // --- Taxiway paint (yellow) ---
+        //
+        // A taxiway is not a small runway: the centreline is one CONTINUOUS line,
+        // and the edge marking is a pair of narrow lines, not a single wide stripe.
+
+        /// <summary>Continuous yellow taxiway centreline width (metres).</summary>
+        public const float TaxiCentrelineWidth = 0.15f;
+
+        /// <summary>Each line of the double yellow taxiway edge marking (metres).</summary>
+        public const float TaxiEdgeLineWidth = 0.15f;
+
+        /// <summary>Clear gap between the two lines of the edge marking (metres).</summary>
+        public const float TaxiEdgeLineGap = 0.15f;
+
+        /// <summary>Inset of the outer edge line from the pavement edge (metres).</summary>
+        public const float TaxiEdgeInset = 0.15f;
+
+        /// <summary>Continuous centreline running the full length of the taxiway.</summary>
+        public static Mark TaxiwayCentreline(float stripLength) =>
+            new(0f, 0f, stripLength, TaxiCentrelineWidth);
+
+        /// <summary>Double yellow edge marking, both sides (4 lines).</summary>
+        public static Mark[] TaxiwayEdges(float stripLength, float stripWidth)
+        {
+            var outer = stripWidth * 0.5f - TaxiEdgeInset - TaxiEdgeLineWidth * 0.5f;
+            var inner = outer - TaxiEdgeLineWidth - TaxiEdgeLineGap;
+            return new[]
+            {
+                new Mark(0f, -outer, stripLength, TaxiEdgeLineWidth),
+                new Mark(0f, -inner, stripLength, TaxiEdgeLineWidth),
+                new Mark(0f, inner, stripLength, TaxiEdgeLineWidth),
+                new Mark(0f, outer, stripLength, TaxiEdgeLineWidth)
+            };
+        }
+
         public static Mark[] TaxiwayGuide(float stripLength, float stripWidth)
         {
             return Combine(
-                Edges(stripLength, stripWidth),
-                CentrelineDashes(stripLength));
+                TaxiwayEdges(stripLength, stripWidth),
+                new[] { TaxiwayCentreline(stripLength) });
         }
 
         /// <summary>
-        /// Hold-short bar pair across a taxi link (local: X across taxi, Z along link).
-        /// Placed near the runway end of the link.
+        /// ICAO Annex 14 pattern A runway-holding position across a taxi link
+        /// (local: X across taxi, Z along link, +Z away from the runway).
+        ///
+        /// Four bars: the two nearest the runway are solid, the two beyond are
+        /// dashed. <paramref name="alongLinkFromRunwayEdge"/> is measured from the
+        /// runway pavement edge — see
+        /// <c>AirsideAdelaidePavement.HoldShortFromRunwayEdgeMetres</c>, which puts
+        /// the pattern at the code E holding position of 90 m from the centreline.
         /// </summary>
         public static Mark[] HoldShortBars(float taxiWidth, float alongLinkFromRunwayEdge)
         {
-            const float barWidth = 0.9f;
-            const float barGap = 0.9f;
+            const float barWidth = 0.3f;
+            const float barGap = 0.3f;
+            const float dashLength = 0.9f;
+            const float dashGap = 0.9f;
+
+            var pitch = barWidth + barGap;
             var z = alongLinkFromRunwayEdge;
+            var across = taxiWidth - 2f;
+            if (across < 1f)
+                across = taxiWidth;
+
+            // Solid pair sits on the runway side (smaller Z), dashed pair beyond.
+            var solidNear = z - pitch * 1.5f;
+            var solidFar = z - pitch * 0.5f;
+            var dashedNear = z + pitch * 0.5f;
+            var dashedFar = z + pitch * 1.5f;
+
+            var list = new List<Mark>(8);
+            list.Add(new Mark(0f, solidNear, across, barWidth));
+            list.Add(new Mark(0f, solidFar, across, barWidth));
+            AddDashedBar(list, dashedNear, across, barWidth, dashLength, dashGap);
+            AddDashedBar(list, dashedFar, across, barWidth, dashLength, dashGap);
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// The four bars of <see cref="HoldShortBars"/> collapsed to one Mark each,
+        /// for callers that only need the pattern's footprint rather than the
+        /// individual dashes.
+        /// </summary>
+        public static Mark[] HoldShortBarLanes(float taxiWidth, float alongLinkFromRunwayEdge)
+        {
+            const float barWidth = 0.3f;
+            const float barGap = 0.3f;
+            var pitch = barWidth + barGap;
+            var z = alongLinkFromRunwayEdge;
+            var across = taxiWidth - 2f;
+            if (across < 1f)
+                across = taxiWidth;
             return new[]
             {
-                new Mark(0f, z - (barGap + barWidth) * 0.5f, taxiWidth - 2f, barWidth),
-                new Mark(0f, z + (barGap + barWidth) * 0.5f, taxiWidth - 2f, barWidth)
+                new Mark(0f, z - pitch * 1.5f, across, barWidth),
+                new Mark(0f, z - pitch * 0.5f, across, barWidth),
+                new Mark(0f, z + pitch * 0.5f, across, barWidth),
+                new Mark(0f, z + pitch * 1.5f, across, barWidth)
             };
+        }
+
+        private static void AddDashedBar(
+            List<Mark> list, float centerZ, float across, float barWidth,
+            float dashLength, float dashGap)
+        {
+            var step = dashLength + dashGap;
+            var count = (int)Math.Floor((across + dashGap) / step);
+            if (count < 1)
+            {
+                list.Add(new Mark(0f, centerZ, across, barWidth));
+                return;
+            }
+
+            var span = count * step - dashGap;
+            var start = -span * 0.5f + dashLength * 0.5f;
+            for (var i = 0; i < count; i++)
+                list.Add(new Mark(start + i * step, centerZ, dashLength, barWidth));
         }
 
         private static void AddThresholdEnd(List<Mark> list, float centerX, int perSide)

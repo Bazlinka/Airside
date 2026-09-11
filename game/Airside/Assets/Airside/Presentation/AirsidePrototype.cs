@@ -108,6 +108,11 @@ namespace Airside.Presentation
         private static Mesh BuiltinCylinderMesh;
         private static Mesh BuiltinCubeMesh;
 
+        // True when the authored Adelaide ground mesh actually built, so world
+        // heights come from the landform rather than the flat fallback slab. The
+        // perimeter fence seats itself differently in each case.
+        private static bool _bareGroundFollowsLandform;
+
         // Last wetness pushed into the wet-surface materials; NaN forces the next pass to
         // re-apply (set on collect, so newly built surfaces such as Stand 3 pick up rain).
         private float _lastAppliedWetness = float.NaN;
@@ -2989,6 +2994,7 @@ namespace Airside.Presentation
                 || name.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                 || name.StartsWith("Car park bay", StringComparison.Ordinal)
                 || name.StartsWith("Runway 05", StringComparison.Ordinal) || name.StartsWith("Runway 12", StringComparison.Ordinal) || name.StartsWith("Taxiway ", StringComparison.Ordinal)
+                || name.StartsWith("Pavement fillet", StringComparison.Ordinal)
                 || name.StartsWith("Runway E", StringComparison.Ordinal)
                 || name.StartsWith("Runway mid", StringComparison.Ordinal)
                 || name.StartsWith("Runway blast", StringComparison.Ordinal)
@@ -3073,6 +3079,7 @@ namespace Airside.Presentation
                     && !n.StartsWith("Stand 3 apron", StringComparison.Ordinal)
                     && !n.StartsWith("Car park bay", StringComparison.Ordinal)
                     && !n.StartsWith("Runway 05", StringComparison.Ordinal) && !n.StartsWith("Runway 12", StringComparison.Ordinal) && !n.StartsWith("Taxiway ", StringComparison.Ordinal)
+                    && !n.StartsWith("Pavement fillet", StringComparison.Ordinal)
                     && !n.StartsWith("Runway E", StringComparison.Ordinal)
                     && !n.StartsWith("Runway mid", StringComparison.Ordinal)
                     && !n.StartsWith("Runway blast", StringComparison.Ordinal)
@@ -5267,7 +5274,8 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildBareAdelaideField()
         {
-            if (!AirsideAdelaideGroundMesh.TryBuild(_airfieldRoot))
+            _bareGroundFollowsLandform = AirsideAdelaideGroundMesh.TryBuild(_airfieldRoot);
+            if (!_bareGroundFollowsLandform)
             {
                 var grass = Shade(AirsideTheme.DryGrass, 0.62f);
                 CreateBlock(
@@ -5346,13 +5354,13 @@ namespace Airside.Presentation
             if (_airfieldRoot != null)
                 markings.SetParent(_airfieldRoot, false);
 
-            CreateCombinedStripPaint(markings, "runway_05_23_edge_left",
+            CreateCombinedStripPaint(markings, "Runway 05/23 edge left",
                 new[] { AirsideRunwayMarkings.EdgeLeft }, paint);
-            CreateCombinedStripPaint(markings, "runway_05_23_edge_right",
+            CreateCombinedStripPaint(markings, "Runway 05/23 edge right",
                 new[] { AirsideRunwayMarkings.EdgeRight }, paint);
-            CreateCombinedStripPaint(markings, "runway_05_23_centre",
+            CreateCombinedStripPaint(markings, "Runway 05/23 centre",
                 AirsideRunwayMarkings.CentrelineDashes(), paint);
-            CreateCombinedStripPaint(markings, "runway_05_23_threshold",
+            CreateCombinedStripPaint(markings, "Runway 05/23 threshold",
                 AirsideRunwayMarkings.ThresholdStripes(), paint);
             CreateCombinedStripPaint(markings, "Aiming point 05/23",
                 AirsideRunwayMarkings.AimingPoints(), paint);
@@ -5374,7 +5382,7 @@ namespace Airside.Presentation
 
             var slab = CreateLocalBlock(
                 root,
-                "slab",
+                "Runway 12/30 slab",
                 Vector3.zero,
                 new Vector3(
                     AirsideAdelaidePavement.CrossLengthMetres,
@@ -5391,7 +5399,7 @@ namespace Airside.Presentation
             var shoulderZ = AirsideAdelaidePavement.CrossHalfWidth + shoulderWidth * 0.5f;
             CreateLocalBlock(
                 root,
-                "shoulder L",
+                "Runway 12/30 shoulder L",
                 new Vector3(0f, -0.01f, shoulderZ),
                 new Vector3(AirsideAdelaidePavement.CrossLengthMetres + 30f, 0.1f, shoulderWidth),
                 shoulderColor,
@@ -5399,14 +5407,14 @@ namespace Airside.Presentation
                 new Vector2((AirsideAdelaidePavement.CrossLengthMetres + 30f) / 29f, shoulderWidth / 9f));
             CreateLocalBlock(
                 root,
-                "shoulder R",
+                "Runway 12/30 shoulder R",
                 new Vector3(0f, -0.01f, -shoulderZ),
                 new Vector3(AirsideAdelaidePavement.CrossLengthMetres + 30f, 0.1f, shoulderWidth),
                 shoulderColor,
                 dirtAlbedo,
                 new Vector2((AirsideAdelaidePavement.CrossLengthMetres + 30f) / 29f, shoulderWidth / 9f));
 
-            var markings = new GameObject("markings").transform;
+            var markings = new GameObject("Runway 12/30 markings").transform;
             markings.SetParent(root, false);
             markings.localPosition = Vector3.zero;
             markings.localRotation = Quaternion.identity;
@@ -5414,26 +5422,26 @@ namespace Airside.Presentation
             // Strip marks are local to the rotated root so paint follows 12/30.
             var y = AirsideRunwayMarkings.PaintLiftMetres
                     + AirsideBareField.RunwayHeightMetres * 0.5f;
-            SpawnLocalStripPaint(markings, "edge_left",
+            SpawnLocalStripPaint(markings, "Runway 12/30 edge left",
                 new[] { AirsideStripMarkings.EdgeLeft(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
-            SpawnLocalStripPaint(markings, "edge_right",
+            SpawnLocalStripPaint(markings, "Runway 12/30 edge right",
                 new[] { AirsideStripMarkings.EdgeRight(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
-            SpawnLocalStripPaint(markings, "centre",
+            SpawnLocalStripPaint(markings, "Runway 12/30 centre",
                 AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres),
                 paint, y);
-            SpawnLocalStripPaint(markings, "threshold",
+            SpawnLocalStripPaint(markings, "Runway 12/30 threshold",
                 AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres),
                 paint, y);
-            SpawnLocalStripPaint(markings, "aiming",
+            SpawnLocalStripPaint(markings, "Runway 12/30 aiming",
                 AirsideStripMarkings.AimingPoints(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideStripMarkings.ShortStripAimingFromThreshold),
                 paint, y);
-            SpawnLocalStripPaint(markings, "tdz",
+            SpawnLocalStripPaint(markings, "Runway 12/30 tdz",
                 AirsideStripMarkings.TouchdownZones(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideStripMarkings.ShortStripTouchdownDistances),
@@ -5518,7 +5526,8 @@ namespace Airside.Presentation
 
                 if (holdShort && markingsRoot != null)
                 {
-                    var hold = AirsideStripMarkings.HoldShortBars(tw, 12f);
+                    var hold = AirsideStripMarkings.HoldShortBars(
+                        tw, AirsideAdelaidePavement.HoldShortFromRunwayEdgeMetres);
                     CreateCombinedStripPaint(
                         markingsRoot,
                         $"{name} hold",
@@ -5626,104 +5635,179 @@ namespace Airside.Presentation
         /// </summary>
         private static void BuildBareTaxiFillets(Color taxiAsphalt)
         {
-            var y = AirsideBareField.RunwayCenterY;
-            var h = AirsideBareField.RunwayHeightMetres * 0.9f;
+            // Fillets are flat patches, so they sit on the taxiway *surface* — the
+            // top of the slab, not its mid-height. (The old code placed them at the
+            // slab centre and then scaled Y, which does nothing to a mesh whose
+            // vertices are all at y = 0.)
+            var y = AirsideBareField.RunwayCenterY
+                    + AirsideBareField.RunwayHeightMetres * 0.92f * 0.5f;
+
+            // One shared material for all of them, built with the texture and tiling
+            // baked into the cache key. Never mutate what CreateSharedSurfaceMaterial
+            // hands back — it is shared with every other caller of the same key.
+            var albedo = PreferSurfaceBasecolor("tx_asphalt_runway");
+            var material = CreateSharedSurfaceMaterial(
+                taxiAsphalt, albedo, Vector2.one);
+
             var fillets = AirsideAdelaidePavement.AllFillets();
             for (var i = 0; i < fillets.Length; i++)
             {
                 var f = fillets[i];
-                var mesh = CreateSectorDiskMesh(
-                    f.Radius,
-                    f.StartRadians,
-                    f.SweepRadians,
-                    AirsideAdelaidePavement.FilletArcSegments);
+                var mesh = f.Kind == PavementArcKind.CornerFillet
+                    ? CreateCornerFilletMesh(f, AirsideAdelaidePavement.FilletArcSegments)
+                    : CreateSectorDiskMesh(
+                        f.Radius,
+                        f.StartRadians,
+                        f.SweepRadians,
+                        AirsideAdelaidePavement.FilletArcSegments,
+                        f.CenterX,
+                        f.CenterZ);
                 if (mesh == null)
                     continue;
                 var go = new GameObject($"Pavement fillet {i}");
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var renderer = go.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = CreateSharedSurfaceMaterial(taxiAsphalt);
-                var albedo = PreferSurfaceBasecolor("tx_asphalt_runway");
-                if (!string.IsNullOrEmpty(albedo))
-                {
-                    var tex = AirsideArtTextures.Load(albedo);
-                    if (tex != null && renderer.sharedMaterial != null)
-                    {
-                        renderer.sharedMaterial.mainTexture = tex;
-                        renderer.sharedMaterial.mainTextureScale = new Vector2(
-                            f.Radius / 9f, f.Radius / 9f);
-                    }
-                }
-
+                renderer.sharedMaterial = material;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = true;
                 go.transform.SetParent(_airfieldRoot, false);
                 go.transform.position = new Vector3(f.CenterX, y, f.CenterZ);
-                go.transform.localScale = new Vector3(1f, h, 1f);
                 AirsideSceneIndex.Remember(go);
                 ApplyRunwayMultiScale(go.transform);
             }
         }
 
         /// <summary>
-        /// Flat sector / disk in the XZ plane (Y up), unit height — scale Y for slab thickness.
+        /// Flat concave fillet in a re-entrant pavement corner: the curved triangle
+        /// bounded by the two edges and an arc of <paramref name="segments"/> steps
+        /// tangent to both. Local space is centred on the corner, so the caller
+        /// positions the object at the corner point.
+        /// </summary>
+        private static Mesh CreateCornerFilletMesh(
+            AirsideAdelaidePavement.FilletSpec spec, int segments)
+        {
+            var r = spec.Radius;
+            if (r <= 0.01f || segments < 2)
+                return null;
+
+            var steps = Mathf.Max(2, segments);
+            var sx = spec.OutwardX;
+            var sz = spec.OutwardZ;
+            // Arc centre, in corner-local metres.
+            var ox = sx * r;
+            var oz = sz * r;
+
+            // Arc runs from the tangent point on one edge to the tangent point on
+            // the other: (ox, 0) -> (0, oz), swept around (ox, oz).
+            var startAngle = Mathf.Atan2(-oz, 0f);
+            var endAngle = Mathf.Atan2(0f, -ox);
+            var sweep = Mathf.DeltaAngle(
+                startAngle * Mathf.Rad2Deg, endAngle * Mathf.Rad2Deg) * Mathf.Deg2Rad;
+
+            var verts = new Vector3[steps + 2];
+            var uvs = new Vector2[steps + 2];
+            verts[0] = Vector3.zero; // the corner itself
+            for (var i = 0; i <= steps; i++)
+            {
+                var a = startAngle + sweep * (i / (float)steps);
+                verts[i + 1] = new Vector3(ox + Mathf.Cos(a) * r, 0f, oz + Mathf.Sin(a) * r);
+            }
+
+            // World-metre UVs so the asphalt is continuous with the abutting slab.
+            for (var i = 0; i < verts.Length; i++)
+            {
+                uvs[i] = new Vector2(
+                    (spec.CenterX + verts[i].x) / 9f,
+                    (spec.CenterZ + verts[i].z) / 9f);
+            }
+
+            return BuildFanMesh("PavementFillet", verts, uvs, closed: false);
+        }
+
+        /// <summary>
+        /// Flat sector / disk in the XZ plane (Y up). <paramref name="worldCenterX"/>
+        /// / <paramref name="worldCenterZ"/> are only used to keep the texture UVs
+        /// aligned with the surrounding pavement.
         /// </summary>
         private static Mesh CreateSectorDiskMesh(
-            float radius, float startRadians, float sweepRadians, int segments)
+            float radius, float startRadians, float sweepRadians, int segments,
+            float worldCenterX = 0f, float worldCenterZ = 0f)
         {
             if (radius <= 0.01f || segments < 3)
                 return null;
             var steps = Mathf.Max(3, segments);
-            if (Mathf.Abs(sweepRadians) >= Mathf.PI * 2f - 0.01f)
-            {
-                // Full disk.
-                var vCount = steps + 1;
-                var verts = new Vector3[vCount];
-                var tris = new int[steps * 3];
-                verts[0] = Vector3.zero;
-                for (var i = 0; i < steps; i++)
-                {
-                    var a = startRadians + sweepRadians * (i / (float)steps);
-                    verts[i + 1] = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
-                    // Winding gives +Y normals (Unity left-handed, viewed from above).
-                    tris[i * 3] = 0;
-                    tris[i * 3 + 1] = i + 2 <= steps ? i + 2 : 1;
-                    tris[i * 3 + 2] = i + 1;
-                }
+            var full = Mathf.Abs(sweepRadians) >= Mathf.PI * 2f - 0.01f;
 
-                var disk = new Mesh { name = "PavementDisk" };
-                disk.SetVertices(verts);
-                disk.SetTriangles(tris, 0);
-                disk.RecalculateNormals();
-                disk.RecalculateBounds();
-                return disk;
+            var count = full ? steps + 1 : steps + 2;
+            var verts = new Vector3[count];
+            var uvs = new Vector2[count];
+            verts[0] = Vector3.zero;
+            var arcCount = full ? steps : steps + 1;
+            for (var i = 0; i < arcCount; i++)
+            {
+                var a = startRadians + sweepRadians * (i / (float)steps);
+                verts[i + 1] = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
             }
 
-            var count = steps + 2; // centre + arc
-            var vertices = new Vector3[count];
-            var triangles = new int[steps * 3];
-            vertices[0] = Vector3.zero;
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < verts.Length; i++)
             {
-                var t = i / (float)steps;
-                var a = startRadians + sweepRadians * t;
-                vertices[i + 1] = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                uvs[i] = new Vector2(
+                    (worldCenterX + verts[i].x) / 9f,
+                    (worldCenterZ + verts[i].z) / 9f);
             }
 
-            for (var i = 0; i < steps; i++)
+            return BuildFanMesh(full ? "PavementDisk" : "PavementSector", verts, uvs, full);
+        }
+
+        /// <summary>
+        /// Triangle fan from <paramref name="verts"/>[0] around the remaining
+        /// vertices, wound so the face normal points +Y whichever way the arc runs.
+        /// Getting this wrong renders the patch invisible from above.
+        /// </summary>
+        private static Mesh BuildFanMesh(string name, Vector3[] verts, Vector2[] uvs, bool closed)
+        {
+            var arc = verts.Length - 1;
+            if (arc < 2)
+                return null;
+            var triCount = closed ? arc : arc - 1;
+            if (triCount < 1)
+                return null;
+
+            // Signed area of the fan polygon in the XZ plane. Positive means the
+            // boundary runs counter-clockwise in maths convention, which — viewed
+            // from +Y in Unity's left-handed space — needs the reversed winding.
+            //
+            // For an open fan the apex is ON the boundary and must be included: a
+            // concave corner fillet bulges away from its apex, so the arc alone
+            // reports the opposite sign and the patch renders face-down (invisible).
+            var first = closed ? 1 : 0;
+            var area = 0f;
+            for (var i = first; i <= arc; i++)
             {
-                triangles[i * 3] = 0;
-                triangles[i * 3 + 1] = i + 2;
-                triangles[i * 3 + 2] = i + 1;
+                var a = verts[i];
+                var b = verts[i < arc ? i + 1 : first];
+                area += a.x * b.z - b.x * a.z;
             }
 
-            var mesh = new Mesh { name = "PavementFillet" };
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(triangles, 0);
+            var reversed = area > 0f;
+            var tris = new int[triCount * 3];
+            for (var i = 0; i < triCount; i++)
+            {
+                var next = i + 2 <= arc ? i + 2 : 1;
+                tris[i * 3] = 0;
+                tris[i * 3 + 1] = reversed ? next : i + 1;
+                tris[i * 3 + 2] = reversed ? i + 1 : next;
+            }
+
+            var mesh = new Mesh { name = name };
+            mesh.SetVertices(verts);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(tris, 0);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;
         }
+
 
         private static AirsideRunwayMarkings.RunwayMark[] OffsetMarks(
             AirsideStripMarkings.Mark[] marks, float offsetX, float offsetZ)
@@ -5853,6 +5937,19 @@ namespace Airside.Presentation
         /// Adelaide-scale airside security fence on the 785 ha site boundary —
         /// chain-link height + vehicle gates. No buildings.
         /// </summary>
+        /// <summary>
+        /// Airside security fence on the published site rectangle.
+        ///
+        /// Every panel, post, guard rail and gate leaf is seated on
+        /// <see cref="AirsideAdelaidePerimeter.FenceBaseY"/> rather than world Y = 0:
+        /// the authored ground drops roughly 2.4 m into its boundary lip exactly
+        /// where the fence runs, so a fixed height leaves the whole ~11 km ribbon
+        /// hanging in mid-air by about its own height.
+        ///
+        /// Panels are combined into one mesh per side, which turns ~900 renderers
+        /// into a handful — at overview range the individual pickets are well under
+        /// a pixel.
+        /// </summary>
         private static void BuildBareAdelaidePerimeterFence()
         {
             var meshColor = new Color(0.42f, 0.44f, 0.46f);
@@ -5870,81 +5967,116 @@ namespace Airside.Presentation
             if (_airfieldRoot != null)
                 root.SetParent(_airfieldRoot, false);
 
+            // On the authored ground mesh the fence follows the landform. If that
+            // mesh could not be built we are standing on the flat fallback slab, so
+            // the fence seats on the slab top instead.
+            float BaseY(float x, float z) =>
+                _bareGroundFollowsLandform
+                    ? AirsideAdelaidePerimeter.FenceBaseY(x, z)
+                    : AirsideAdelaideGround.PavementWorldY - AirsideAdelaidePerimeter.FenceEmbedMetres;
+
+            float BaseYRun(float x0, float z0, float x1, float z1)
+            {
+                if (!_bareGroundFollowsLandform)
+                    return BaseY(x0, z0);
+                return AirsideAdelaidePerimeter.FenceBaseYAlongSegment(x0, z0, x1, z1);
+            }
+
             void Panel(string name, Vector3 pos, Vector3 scale, Color color)
             {
                 var block = CreateBlock(name, pos, scale, color);
                 block.transform.SetParent(root, true);
             }
 
+            void SpawnBatch(string name, List<Matrix4x4> locals, Color color)
+            {
+                if (locals.Count == 0)
+                    return;
+                var mesh = AirsideMeshUtil.CombineTransformed(BuiltinCube(), locals.ToArray());
+                if (mesh == null)
+                {
+                    // Same fallback the strip paint uses: one block per instance.
+                    for (var i = 0; i < locals.Count; i++)
+                    {
+                        var m = locals[i];
+                        Panel($"{name} {i}", m.GetColumn(3), m.lossyScale, color);
+                    }
+
+                    return;
+                }
+
+                var go = new GameObject(name);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = CreateSharedSurfaceMaterial(color);
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                go.transform.SetParent(root, false);
+                AirsideSceneIndex.Remember(go);
+            }
+
             void BuildSide(string side, bool alongX)
             {
-                float length = alongX ? hx * 2f : hz * 2f;
-                float start = -length * 0.5f;
-                float cursor = start;
+                var panels = new List<Matrix4x4>(128);
+                var guards = new List<Matrix4x4>(128);
+                var posts = new List<Matrix4x4>(128);
+
+                var length = alongX ? hx * 2f : hz * 2f;
+                var cursor = -length * 0.5f;
                 while (cursor < length * 0.5f - 0.01f)
                 {
                     var remaining = length * 0.5f - cursor;
-                    var station = cursor + Mathf.Min(spacing, remaining) * 0.5f;
-                    if (AirsideAdelaidePerimeter.IsInGateGap(side, alongX ? station : station))
+                    var seg = Mathf.Min(spacing, remaining);
+                    var segMid = cursor + seg * 0.5f;
+
+                    // Leave a clear opening where a vehicle gate stands.
+                    if (AirsideAdelaidePerimeter.IsInGateGap(side, segMid))
                     {
                         cursor += AirsideAdelaidePerimeter.VehicleGateWidthMetres;
                         continue;
                     }
 
-                    var seg = Mathf.Min(spacing, remaining);
-                    // Skip if this segment overlaps a gate gap.
-                    var segMid = cursor + seg * 0.5f;
-                    if (AirsideAdelaidePerimeter.IsInGateGap(side, alongX ? segMid : segMid))
-                    {
-                        cursor += 0.5f;
-                        continue;
-                    }
-
-                    Vector3 pos;
-                    Vector3 scale;
+                    float x0, z0, x1, z1, midX, midZ;
                     if (alongX)
                     {
                         var z = side == "N" ? hz : -hz;
-                        pos = new Vector3(cursor + seg * 0.5f, h * 0.5f, z);
-                        scale = new Vector3(seg, h, thick);
+                        x0 = cursor; z0 = z;
+                        x1 = cursor + seg; z1 = z;
+                        midX = segMid; midZ = z;
                     }
                     else
                     {
                         var x = side == "E" ? hx : -hx;
-                        pos = new Vector3(x, h * 0.5f, cursor + seg * 0.5f);
-                        scale = new Vector3(thick, h, seg);
+                        x0 = x; z0 = cursor;
+                        x1 = x; z1 = cursor + seg;
+                        midX = x; midZ = segMid;
                     }
 
-                    Panel($"Fence {side} {cursor:0}", pos, scale, meshColor);
-
-                    // Top guard wire.
-                    var guardPos = pos + Vector3.up * (h * 0.5f + guard * 0.5f);
+                    var baseY = BaseYRun(x0, z0, x1, z1);
+                    var panelScale = alongX
+                        ? new Vector3(seg, h, thick)
+                        : new Vector3(thick, h, seg);
                     var guardScale = alongX
                         ? new Vector3(seg, guard, thick * 0.7f)
                         : new Vector3(thick * 0.7f, guard, seg);
-                    Panel($"Fence guard {side} {cursor:0}", guardPos, guardScale, guardColor);
 
-                    // Post at segment start.
-                    Vector3 postPos;
-                    if (alongX)
-                    {
-                        var z = side == "N" ? hz : -hz;
-                        postPos = new Vector3(cursor, (h + guard) * 0.5f, z);
-                    }
-                    else
-                    {
-                        var x = side == "E" ? hx : -hx;
-                        postPos = new Vector3(x, (h + guard) * 0.5f, cursor);
-                    }
+                    panels.Add(Matrix4x4.TRS(
+                        new Vector3(midX, baseY + h * 0.5f, midZ), Quaternion.identity, panelScale));
+                    guards.Add(Matrix4x4.TRS(
+                        new Vector3(midX, baseY + h + guard * 0.5f, midZ), Quaternion.identity, guardScale));
 
-                    Panel(
-                        $"Fence post {side} {cursor:0}",
-                        postPos,
-                        new Vector3(post, h + guard, post),
-                        postColor);
+                    var postBase = BaseY(x0, z0);
+                    posts.Add(Matrix4x4.TRS(
+                        new Vector3(x0, postBase + (h + guard) * 0.5f, z0),
+                        Quaternion.identity,
+                        new Vector3(post, h + guard, post)));
 
                     cursor += seg;
                 }
+
+                SpawnBatch($"Fence {side}", panels, meshColor);
+                SpawnBatch($"Fence guard {side}", guards, guardColor);
+                SpawnBatch($"Fence post {side}", posts, postColor);
             }
 
             BuildSide("N", alongX: true);
@@ -5958,9 +6090,10 @@ namespace Airside.Presentation
             for (var ix = 0; ix < cxs.Length; ix++)
             for (var iz = 0; iz < czs.Length; iz++)
             {
+                var cornerBase = BaseY(cxs[ix], czs[iz]);
                 Panel(
                     $"Fence corner {ix}{iz}",
-                    new Vector3(cxs[ix], (h + guard) * 0.5f, czs[iz]),
+                    new Vector3(cxs[ix], cornerBase + (h + guard) * 0.5f, czs[iz]),
                     new Vector3(post * 1.4f, h + guard, post * 1.4f),
                     postColor);
             }
@@ -5971,35 +6104,41 @@ namespace Airside.Presentation
                 var gate = AirsideAdelaidePerimeter.VehicleGates[g];
                 var gw = AirsideAdelaidePerimeter.VehicleGateWidthMetres;
                 var gh = AirsideAdelaidePerimeter.GateLeafHeightMetres;
-                Vector3 center;
+                float gx, gz;
                 Vector3 leafScale;
                 Vector3 postOffset;
                 if (gate.Side == "N" || gate.Side == "S")
                 {
-                    var z = gate.Side == "N" ? hz : -hz;
-                    center = new Vector3(gate.StationAlongSide, gh * 0.5f, z);
+                    gx = gate.StationAlongSide;
+                    gz = gate.Side == "N" ? hz : -hz;
                     leafScale = new Vector3(gw * 0.48f, gh, thick * 1.2f);
                     postOffset = new Vector3(gw * 0.5f, 0f, 0f);
                 }
                 else
                 {
-                    var x = gate.Side == "E" ? hx : -hx;
-                    center = new Vector3(x, gh * 0.5f, gate.StationAlongSide);
+                    gx = gate.Side == "E" ? hx : -hx;
+                    gz = gate.StationAlongSide;
                     leafScale = new Vector3(thick * 1.2f, gh, gw * 0.48f);
                     postOffset = new Vector3(0f, 0f, gw * 0.5f);
                 }
 
-                Panel($"{gate.Name} post L", center - postOffset + Vector3.up * ((h + guard) * 0.5f - gh * 0.5f),
-                    new Vector3(post * 1.6f, h + guard, post * 1.6f), postColor);
-                Panel($"{gate.Name} post R", center + postOffset + Vector3.up * ((h + guard) * 0.5f - gh * 0.5f),
-                    new Vector3(post * 1.6f, h + guard, post * 1.6f), postColor);
+                var gateBase = BaseY(gx, gz);
+                var groundPos = new Vector3(gx, gateBase, gz);
+                var postCentre = Vector3.up * ((h + guard) * 0.5f);
+                var postScale = new Vector3(post * 1.6f, h + guard, post * 1.6f);
+                Panel($"{gate.Name} post L", groundPos - postOffset + postCentre, postScale, postColor);
+                Panel($"{gate.Name} post R", groundPos + postOffset + postCentre, postScale, postColor);
+
                 // Leaves ajar slightly toward landside.
                 var open = gate.Side == "N" || gate.Side == "E" ? 1.2f : -1.2f;
                 var leafShift = gate.Side == "N" || gate.Side == "S"
                     ? new Vector3(0f, 0f, open)
                     : new Vector3(open, 0f, 0f);
-                Panel($"{gate.Name} leaf L", center - postOffset * 0.5f + leafShift, leafScale, gateYellow);
-                Panel($"{gate.Name} leaf R", center + postOffset * 0.5f + leafShift, leafScale, gateYellow);
+                var leafCentre = Vector3.up * (gh * 0.5f);
+                Panel($"{gate.Name} leaf L",
+                    groundPos - postOffset * 0.5f + leafShift + leafCentre, leafScale, gateYellow);
+                Panel($"{gate.Name} leaf R",
+                    groundPos + postOffset * 0.5f + leafShift + leafCentre, leafScale, gateYellow);
             }
         }
 

@@ -81,7 +81,13 @@ namespace Airside.Presentation
         public const int MediumResolutionX = 65;
         public const int MediumResolutionZ = 45;
 
-        public static float DistanceToRunway(float worldX, float worldZ) =>
+        /// <summary>
+        /// Distance to the nearest <b>pavement of any kind</b> — runways, taxi
+        /// spines, stubs, apron pads, sealed shoulders and fillets — not just the
+        /// runway. The shoulder/wear layers key off this, so every sealed surface
+        /// gets the same worn edge.
+        /// </summary>
+        public static float DistanceToPavement(float worldX, float worldZ) =>
             AirsideAdelaidePavement.DistanceToPavement(worldX, worldZ);
 
         public static float PlateauMask(float worldX, float worldZ)
@@ -115,7 +121,7 @@ namespace Airside.Presentation
             if (weights.Length < LayerCount)
                 throw new ArgumentException("need " + LayerCount + " weights", nameof(weights));
 
-            var d = DistanceToRunway(worldX, worldZ);
+            var d = DistanceToPavement(worldX, worldZ);
             // 4–12 m shoulder, irregular along the edge so it is not a constant stripe.
             var shoulder = 6.5f + 5.5f * WarpedFbm(worldX, worldZ, 55f, 3307, 3);
             var dirt = 1f - SmoothStep(0.8f, shoulder, d);

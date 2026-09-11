@@ -5,6 +5,31 @@ change it describes.
 
 ## Unreleased
 
+- **YPAD silhouette geometry corrections.** Fillets are now true concave
+  fillets tangent to both pavement edges, so a 23 m stub reads as 23 m instead
+  of the 80–107 m blob the old corner-centred quarter-disks produced. Taxiway F
+  moves to the ICAO code 4E separation (182.5 m) with A at 290 m, which takes F,
+  A, every stub and both apron pads out of the 150 m runway strip and leaves room
+  for hold-short bars at the real 90 m holding position. The perimeter fence is
+  seated on `AirsideAdelaideGround.WorldHeight` instead of world Y = 0, where it
+  had been floating ~2.4 m above the boundary lip for its whole 11 km, and its
+  panels are batched per side. Taxi paint is a continuous centreline plus double
+  edge lines; hold-shorts are ICAO pattern A. Also: fillet builder no longer
+  mutates a shared material, fillets carry real UVs and sit on the pavement
+  surface, 12/30 and the fillets are back in the wet-surface filters,
+  `AllFillets()` is cached, and stub shoulders are in the distance field.
+  Simulation, saves and the circuit skip untouched. No buildings (ADR 0039).
+  **Verified:** `scripts/test-domain.sh` **236 passed** (21 Adelaide pavement
+  tests, up from 11; the same 4 pre-existing failures as `main` —
+  `Taxiing_ReleasesEachSegmentBeforeReservingTheNext`,
+  `TaxiRoutes_UseDoglegThroatBeforeStandLeadIn`,
+  `AwaySummary_ReportsRouteIncomeAndReputationChange`,
+  `Weights_KeepDryGrassDominantAcrossTheOverviewCore`). The three blocker
+  regressions were each confirmed to fail against the old geometry. Unity Play /
+  Mac build still required — `AirsidePrototype` needs UnityEngine and cannot be
+  compiled headlessly; its five rewritten builders were Roslyn-parsed and
+  type-checked against a UnityEngine shim instead.
+
 - **YPAD bare field gains a denser taxi/apron silhouette.** Taxiway A runs
   parallel north of F; D2/E2 add inner runway exits; A–F links and apron entries
   feed an empty terminal apron pad (west of 12/30, clear of both runways) plus a

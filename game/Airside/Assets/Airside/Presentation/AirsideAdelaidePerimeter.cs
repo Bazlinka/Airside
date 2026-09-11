@@ -88,6 +88,48 @@ namespace Airside.Presentation
         public static float FenceHalfX => HalfX - FenceInsetMetres;
         public static float FenceHalfZ => HalfZ - FenceInsetMetres;
 
+        /// <summary>
+        /// How far the bottom rail is sunk below the ground it stands on, so a
+        /// panel never shows daylight under it on sloping ground.
+        /// </summary>
+        public const float FenceEmbedMetres = 0.15f;
+
+        /// <summary>
+        /// World Y for the bottom of a fence panel, post or gate leaf at a point.
+        ///
+        /// The fence follows <see cref="AirsideAdelaideGround"/>, which drops about
+        /// 2.4 m into its boundary lip exactly where the fence runs
+        /// (<see cref="FenceInsetMetres"/> inside the ground rim). Pinning the
+        /// fence to Y = 0 instead leaves the whole ~11 km ribbon hanging in the air
+        /// by roughly its own height.
+        /// </summary>
+        public static float FenceBaseY(float worldX, float worldZ) =>
+            AirsideAdelaideGround.WorldHeight(worldX, worldZ) - FenceEmbedMetres;
+
+        /// <summary>
+        /// Lowest <see cref="FenceBaseY"/> across a panel run, so a single straight
+        /// panel spanning uneven ground is sunk to its lowest point rather than
+        /// floating at its highest.
+        /// </summary>
+        public static float FenceBaseYAlongSegment(
+            float startX, float startZ, float endX, float endZ, int samples = 5)
+        {
+            if (samples < 2)
+                samples = 2;
+            var min = float.MaxValue;
+            for (var i = 0; i < samples; i++)
+            {
+                var t = i / (float)(samples - 1);
+                var x = startX + (endX - startX) * t;
+                var z = startZ + (endZ - startZ) * t;
+                var y = FenceBaseY(x, z);
+                if (y < min)
+                    min = y;
+            }
+
+            return min;
+        }
+
         public static float PerimeterLengthMetres =>
             2f * (2f * FenceHalfX + 2f * FenceHalfZ);
 

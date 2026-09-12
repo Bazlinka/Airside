@@ -22,33 +22,53 @@ namespace Airside.Tests
             Assert.That(HudLayout.ScaleFor(3456, 2168), Is.EqualTo(2.25f).Within(0.001f));
         }
 
-        [TestCase(1280f, 800f)]
-        [TestCase(1536f, 964f)]
-        public void HudLayout_DailyReportAndOfferHaveSeparateSpace(float width, float height)
-        {
-            var layout = HudLayout.Create(width, height, 330f, showDailyReport: true, showRouteOffer: true);
-
-            Assert.That(layout.OperationsPanel.Overlaps(layout.DailyReportPanel), Is.False);
-            Assert.That(layout.OperationsPanel.Overlaps(layout.RouteOfferPanel), Is.False);
-            Assert.That(layout.DailyReportPanel.Overlaps(layout.RouteOfferPanel), Is.False);
-            Assert.That(layout.RouteOfferPanel.yMax, Is.LessThanOrEqualTo(height - 22f));
-            Assert.That(layout.LeftPanel.Overlaps(layout.OperationsPanel), Is.False);
-        }
-
         [TestCase(1280, 720)]
         [TestCase(1440, 900)]
         [TestCase(3456, 2168)]
+        [TestCase(800, 500)]
+        [TestCase(400, 780)]
+        [TestCase(320, 240)]
         public void HudLayout_PhysicalLaptopAndRetinaSizesRemainInsideViewport(int screenWidth, int screenHeight)
         {
             var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
             var width = screenWidth / scale;
             var height = screenHeight / scale;
-            var layout = HudLayout.Create(width, height, 354f, showDailyReport: true, showRouteOffer: true);
+            var layout = HudLayout.Create(width, height);
 
-            Assert.That(layout.LeftPanel.xMin, Is.GreaterThanOrEqualTo(0f));
-            Assert.That(layout.LeftPanel.yMax, Is.LessThanOrEqualTo(height));
-            Assert.That(layout.RouteOfferPanel.xMax, Is.LessThanOrEqualTo(width));
-            Assert.That(layout.RouteOfferPanel.yMax, Is.LessThanOrEqualTo(height));
+            Assert.That(layout.ControlBar.xMin, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(layout.ControlBar.xMax, Is.LessThanOrEqualTo(width));
+            Assert.That(layout.ControlBar.yMax, Is.LessThanOrEqualTo(height));
+            Assert.That(layout.PauseMenu.xMin, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(layout.PauseMenu.xMax, Is.LessThanOrEqualTo(width));
+            Assert.That(layout.PauseMenu.yMax, Is.LessThanOrEqualTo(height));
+
+            // Every control must sit inside the bar, in left-to-right order.
+            var previous = float.NegativeInfinity;
+            for (var index = 0; index < HudLayout.ButtonCount; index++)
+            {
+                var button = layout.ButtonAt(index);
+                Assert.That(button.xMin, Is.GreaterThanOrEqualTo(layout.ControlBar.xMin - 0.01f));
+                Assert.That(button.xMax, Is.LessThanOrEqualTo(layout.ControlBar.xMax + 0.01f));
+                Assert.That(button.width, Is.GreaterThan(0f), $"control {index} collapsed");
+                Assert.That(button.xMin, Is.GreaterThan(previous));
+                previous = button.xMin;
+            }
+        }
+
+        [Test]
+        public void HudLayout_ControlsAreCentredAndDoNotOverlap()
+        {
+            var layout = HudLayout.Create(1440f, 900f);
+
+            var leftGap = layout.ControlBar.xMin;
+            var rightGap = 1440f - layout.ControlBar.xMax;
+            Assert.That(leftGap, Is.EqualTo(rightGap).Within(0.01f), "control bar is not centred");
+
+            for (var index = 1; index < HudLayout.ButtonCount; index++)
+            {
+                Assert.That(layout.ButtonAt(index - 1).Overlaps(layout.ButtonAt(index)), Is.False,
+                    $"control {index - 1} overlaps {index}");
+            }
         }
 
         [Test]
@@ -77,17 +97,6 @@ namespace Airside.Tests
         {
             Assert.That(HudLayout.ScaleFor(800, 500), Is.LessThan(0.8f));
             Assert.That(HudLayout.ScaleFor(800, 500), Is.GreaterThanOrEqualTo(0.55f));
-        }
-
-        [Test]
-        public void GroundTrafficVisual_WhenYieldedDoesNotInterpolateThroughReleasedSpace()
-        {
-            var previous = new Vector3(20f, 0.7f, 9f);
-            var resetBySimulation = new Vector3(8f, 0.7f, 9f);
-
-            var visible = TaxiVisualPath.MoveGroundTraffic(previous, resetBySimulation, isHolding: true, maxDistanceDelta: 0.1f);
-
-            Assert.That(visible, Is.EqualTo(resetBySimulation));
         }
 
         [Test]
@@ -474,12 +483,10 @@ namespace Airside.Tests
             Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.False);
             Assert.That(AirsideFocusMode.ShowStandEquipment, Is.False);
             Assert.That(AirsideFocusMode.ShowPeople, Is.False);
-            Assert.That(AirsideFocusMode.ShowGroundTrafficAircraft, Is.False);
             Assert.That(AirsideFocusMode.ShowBuildings, Is.False);
             Assert.That(AirsideFocusMode.ShowEnvironment, Is.False);
             Assert.That(AirsideFocusMode.ShowWorldProps, Is.False);
             Assert.That(AirsideFocusMode.ShowDecorativeLights, Is.False);
-            Assert.That(AirsideFocusMode.ShowEconomyHud, Is.False);
             Assert.That(AirsideFocusMode.VisibleCommercialFlights, Is.EqualTo(1));
             Assert.That(AirsideBareField.Enabled, Is.True);
             Assert.That(AirsideBareField.RunwayLengthMetres, Is.EqualTo(3100f));

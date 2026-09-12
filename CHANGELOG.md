@@ -5,6 +5,29 @@ change it describes.
 
 ## Unreleased
 
+- **Strip Airside to a bare circuit sandbox.** Remove the objective layer
+  entirely: economy, routes, reputation, staffing, research, stand capacity,
+  daily reports, turnaround workflows, the event log, the ATC phraseology engine
+  and the ground-traffic fleet, plus the whole `Persistence` assembly — no
+  autosave, no save-on-quit, no briefing or away-summary overlays; every launch
+  starts fresh on approach. `AirportSimulation` becomes a circuit driver for one
+  aircraft; the runway reservation and taxi geometry stay because the visible
+  pavement and ground path are drawn from them. Both parallel HUDs
+  (`AirsideCanvasHud`, `AirsideToolkitHud`) are deleted in favour of one IMGUI
+  bar carrying exactly pause, follow and 1×/2×/4×, with a working pause menu
+  (Resume, Restart circuit, Quit); `HudLayout` is rewritten to match. Speed
+  gains a 2× step and selecting a rate clears a pause. Multiple instances are
+  fixed three ways: `forceSingleInstance` 0 → 1, a real `Application.Quit` path
+  behind the menu, and a static guard that disables and destroys a duplicate
+  bootstrap. Every aircraft visual, the Adelaide ground/pavement/perimeter, the
+  terrain field and the camera are untouched (ADR 0041).
+  **Verified:** `scripts/test-domain.sh` **89 passed, 0 failed** (154 removed
+  tests covered the deleted subsystems); `HudLayout` additionally checked
+  against a Rect/Mathf shim from 320×240 to 3456×2168, those cases committed
+  into `PresentationLayoutTests`. **Unity compile, `scripts/test-unity.sh`, a
+  Mac build and a packaged-player check of the bar, menu, 2× and single-instance
+  quit are still outstanding — Presentation cannot be compiled on this Linux VM.**
+
 - **Consolidate Airside on one validated `main`.** Every remaining branch tip is
   retained in `main` history so obsolete branch refs can be removed without losing
   work, while the current Adelaide pavement and AIR-001 v02 tree stays authoritative.

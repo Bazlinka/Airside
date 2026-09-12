@@ -5,10 +5,8 @@ namespace Airside.Presentation
     /// Everything else is presentation-only and stays unspawned while
     /// <see cref="AirsideBareField.Enabled"/> is true.
     ///
-    /// The simulation still runs turnaround tasks, ground traffic and every
-    /// reservation exactly as before, so nothing here changes outcomes or save
-    /// data. Bare-world HUD chrome hides economy / research / stands so the
-    /// on-screen UI matches the visible circuit.
+    /// The simulation drives one aircraft round the circuit and nothing else;
+    /// there are no objectives, economy or scoring to hide (ADR 0041).
     /// </summary>
     public static class AirsideFocusMode
     {
@@ -25,9 +23,6 @@ namespace Airside.Presentation
         /// <summary>Marshallers, ground crew, passengers, landside walkers.</summary>
         public static bool ShowPeople => !AircraftOnly && !BareWorld;
 
-        /// <summary>GT-201 / GT-202 circuit aircraft — hidden on the bare field.</summary>
-        public static bool ShowGroundTrafficAircraft => !AircraftOnly && !BareWorld;
-
         /// <summary>Terminal, hangar, ops shed, ARFF, fuel farm.</summary>
         public static bool ShowBuildings => !BareWorld;
 
@@ -40,13 +35,7 @@ namespace Airside.Presentation
         /// <summary>Apron floods, ALS, streetlights, runway edge lamps, beacon.</summary>
         public static bool ShowDecorativeLights => !BareWorld;
 
-        /// <summary>How many commercial models to draw; sim may still run more slots.</summary>
-        public static int VisibleCommercialFlights => AircraftOnly || BareWorld ? 1 : int.MaxValue;
-
-        /// <summary>
-        /// Cash / research / stands chrome. Hidden on the bare circuit so the HUD
-        /// matches the player-visible world (plane, runway, ground, sun).
-        /// </summary>
-        public static bool ShowEconomyHud => !BareWorld;
+        /// <summary>How many aircraft models to draw. The circuit flies exactly one.</summary>
+        public static int VisibleCommercialFlights => 1;
     }
 }

@@ -147,11 +147,5 @@ namespace Airside.Tests
             }
         }
 
-        [Test]
-        public void BareField_HidesEconomyHudChrome()
-        {
-            Assert.That(AirsideFocusMode.BareWorld, Is.True);
-            Assert.That(AirsideFocusMode.ShowEconomyHud, Is.False);
-        }
     }
 }

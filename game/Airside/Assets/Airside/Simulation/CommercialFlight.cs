@@ -5,9 +5,9 @@ using Airside.Domain;
 namespace Airside.Simulation
 {
     /// <summary>
-    /// One commercial aircraft loop: approach through departure, stand assignment,
-    /// turnaround and settlement. <see cref="AirportSimulation"/> owns the list and
-    /// shared reservation / traffic orchestration.
+    /// One aircraft's circuit: approach through departure, plus the taxi geometry the
+    /// visible ground path is drawn from. <see cref="AirportSimulation"/> owns it.
+    /// Carries no turnaround, settlement or delay state (ADR 0041).
     /// </summary>
     public sealed class CommercialFlight
     {
@@ -39,10 +39,6 @@ namespace Airside.Simulation
         public TaxiRoute DepartureRoute { get; }
         /// <summary>Arrival path — kept for callers that only need taxi-in geometry.</summary>
         public TaxiRoute TaxiRoute { get; set; }
-        public TurnaroundWorkflow Turnaround { get; set; }
-        public bool FlightSettled { get; set; }
-        public long LastDelaySeconds { get; set; }
-        public string LastDelayCause { get; set; } = string.Empty;
 
         public StableId OwnerId => new(AircraftId);
 

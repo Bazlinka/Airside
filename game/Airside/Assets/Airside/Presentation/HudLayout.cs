@@ -3,27 +3,39 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Resolution-independent placement for the prototype HUD. All rectangles are
+    /// Resolution-independent placement for the circuit HUD. All rectangles are
     /// expressed in virtual GUI points after <see cref="ScaleFor"/> is applied.
-    /// Keeping the calculation separate makes the no-overlap contract testable.
+    ///
+    /// The HUD is two things only (ADR 0041): a control bar carrying pause, follow
+    /// and the speed buttons, and a centred pause menu. Keeping the arithmetic here
+    /// makes the fits-on-screen contract testable without an editor.
     /// </summary>
     public readonly struct HudLayout
     {
         private const float Margin = 22f;
-        private const float Gap = 12f;
 
-        private HudLayout(Rect leftPanel, Rect operationsPanel, Rect dailyReportPanel, Rect routeOfferPanel)
+        /// <summary>Control bar height, and the size of the square buttons inside it.</summary>
+        public const float BarHeight = 44f;
+        public const float ButtonWidth = 62f;
+        public const float ButtonGap = 8f;
+
+        /// <summary>pause · follow · 1× · 2× · 4×</summary>
+        public const int ButtonCount = 5;
+
+        public const float MenuWidth = 340f;
+        public const float MenuHeight = 232f;
+
+        private HudLayout(Rect controlBar, Rect pauseMenu)
         {
-            LeftPanel = leftPanel;
-            OperationsPanel = operationsPanel;
-            DailyReportPanel = dailyReportPanel;
-            RouteOfferPanel = routeOfferPanel;
+            ControlBar = controlBar;
+            PauseMenu = pauseMenu;
         }
 
-        public Rect LeftPanel { get; }
-        public Rect OperationsPanel { get; }
-        public Rect DailyReportPanel { get; }
-        public Rect RouteOfferPanel { get; }
+        /// <summary>Bottom-centre strip holding the five controls.</summary>
+        public Rect ControlBar { get; }
+
+        /// <summary>Centred pause-menu panel.</summary>
+        public Rect PauseMenu { get; }
 
         public static float ScaleFor(int screenWidth, int screenHeight)
         {
@@ -33,54 +45,42 @@ namespace Airside.Presentation
             return Mathf.Clamp(Mathf.Min(widthScale, heightScale), 0.55f, 2.25f);
         }
 
-        public static HudLayout Create(float viewportWidth, float viewportHeight, float operationsHeight,
-            bool showDailyReport, bool showRouteOffer)
+        public static HudLayout Create(float viewportWidth, float viewportHeight)
         {
-            var compact = viewportWidth < 1150f;
-            var leftWidth = compact ? 390f : 430f;
-            var rightWidth = compact ? 320f : 360f;
-            var leftHeight = Mathf.Min(760f, viewportHeight - Margin * 2f);
-            var rightX = viewportWidth - Margin - rightWidth;
+            var barWidth = ButtonCount * ButtonWidth + (ButtonCount - 1) * ButtonGap;
+            // Never let the bar run under the margins on a narrow window.
+            barWidth = Mathf.Min(barWidth, Mathf.Max(1f, viewportWidth - Margin * 2f));
 
-            var reportHeight = showDailyReport ? 136f : 0f;
-            var offerHeight = showRouteOffer ? 172f : 0f;
-            var stackedExtras = (showDailyReport ? reportHeight + Gap : 0f)
-                + (showRouteOffer ? offerHeight + Gap : 0f);
-            var maxOperations = Mathf.Max(120f, viewportHeight - Margin * 2f - stackedExtras);
-            if (operationsHeight > maxOperations)
-                operationsHeight = maxOperations;
+            var bar = new Rect(
+                (viewportWidth - barWidth) * 0.5f,
+                Mathf.Max(Margin, viewportHeight - Margin - BarHeight),
+                barWidth,
+                BarHeight);
 
-            var operations = new Rect(rightX, Margin, rightWidth, operationsHeight);
-            var nextY = operations.yMax + Gap;
-            var report = showDailyReport
-                ? new Rect(rightX, nextY, rightWidth, reportHeight)
-                : Rect.zero;
-            if (showDailyReport)
-                nextY = report.yMax + Gap;
+            var menuWidth = Mathf.Min(MenuWidth, Mathf.Max(1f, viewportWidth - Margin * 2f));
+            var menuHeight = Mathf.Min(MenuHeight, Mathf.Max(1f, viewportHeight - Margin * 2f));
+            var menu = new Rect(
+                (viewportWidth - menuWidth) * 0.5f,
+                (viewportHeight - menuHeight) * 0.5f,
+                menuWidth,
+                menuHeight);
 
-            var offer = showRouteOffer
-                ? new Rect(rightX, nextY, rightWidth, offerHeight)
-                : Rect.zero;
+            return new HudLayout(bar, menu);
+        }
 
-            if (showRouteOffer && offer.yMax > viewportHeight - Margin)
-            {
-                var overflow = offer.yMax - (viewportHeight - Margin);
-                operationsHeight = Mathf.Max(120f, operationsHeight - overflow);
-                operations = new Rect(rightX, Margin, rightWidth, operationsHeight);
-                nextY = operations.yMax + Gap;
-                report = showDailyReport
-                    ? new Rect(rightX, nextY, rightWidth, reportHeight)
-                    : Rect.zero;
-                if (showDailyReport)
-                    nextY = report.yMax + Gap;
-                offer = new Rect(rightX, nextY, rightWidth, offerHeight);
-            }
-
-            return new HudLayout(
-                new Rect(Margin, Margin, leftWidth, leftHeight),
-                operations,
-                report,
-                offer);
+        /// <summary>
+        /// Rect for control <paramref name="index"/> (0-based, left to right) inside
+        /// <see cref="ControlBar"/>. Buttons share the bar's width evenly so they stay
+        /// aligned when the bar is clamped on a narrow window.
+        /// </summary>
+        public Rect ButtonAt(int index)
+        {
+            var slot = (ControlBar.width - (ButtonCount - 1) * ButtonGap) / ButtonCount;
+            return new Rect(
+                ControlBar.x + index * (slot + ButtonGap),
+                ControlBar.y,
+                slot,
+                ControlBar.height);
         }
     }
 }

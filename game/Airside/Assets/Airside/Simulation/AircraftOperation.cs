@@ -17,8 +17,6 @@ namespace Airside.Simulation
 
     public sealed class AircraftOperation
     {
-        private Func<SimulationTime, double> _atStandProgress;
-
         public AircraftOperation(string aircraftId, SimulationTime startedAt)
         {
             if (string.IsNullOrWhiteSpace(aircraftId))
@@ -35,13 +33,6 @@ namespace Airside.Simulation
         public bool IsComplete => Phase == AircraftPhase.Departed;
         public long PhaseDurationSeconds => AirportCircuit.DurationSeconds(Phase);
 
-        /// <summary>
-        /// When set, <see cref="PhaseProgress"/> for <see cref="AircraftPhase.AtStand"/>
-        /// is driven by turnaround progress instead of the fixed 45s phase window.
-        /// </summary>
-        public void BindAtStandProgress(Func<SimulationTime, double> progress) =>
-            _atStandProgress = progress;
-
         public long SecondsRemaining(SimulationTime now)
         {
             if (IsComplete)
@@ -55,9 +46,6 @@ namespace Airside.Simulation
         {
             if (IsComplete)
                 return 1;
-
-            if (Phase == AircraftPhase.AtStand && _atStandProgress != null)
-                return Math.Max(0, Math.Min(1, _atStandProgress(now)));
 
             var elapsed = now.ElapsedSeconds - PhaseStartedAt.ElapsedSeconds;
             return Math.Max(0, Math.Min(1, elapsed / (double)PhaseDurationSeconds));
@@ -108,18 +96,7 @@ namespace Airside.Simulation
                 var durationElapsed = now.CompareTo(nextTransition) >= 0;
 
                 if (!durationElapsed)
-                {
-                    // Extra crew can finish turnaround before the scheduled 45s window.
-                    // Only the gated AdvanceTo path (AirportSimulation) may leave early —
-                    // ungated AdvanceTo must still wait out the full AtStand duration.
-                    if (preserveSchedule || Phase != AircraftPhase.AtStand || !canLeavePhase(Phase))
-                        break;
-
-                    Phase = (AircraftPhase)((int)Phase + 1);
-                    PhaseStartedAt = now;
-                    changed = true;
-                    continue;
-                }
+                    break;
 
                 if (!canLeavePhase(Phase))
                     break;

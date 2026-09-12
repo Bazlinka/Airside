@@ -10,9 +10,8 @@ namespace Airside.Simulation
     public sealed class SeededRandomSource : IRandomSource
     {
         /// <summary>
-        /// Remap for a zero seed. Must stay aligned with
-        /// <c>PersistentAirportSession.LoadOrCreate</c> so a caller-supplied 0
-        /// produces the same sequence whether fresh or restored from disk.
+        /// Remap for a zero seed: the xorshift state must never start at 0, or the
+        /// sequence sticks there. A caller-supplied 0 is substituted instead of rejected.
         /// </summary>
         public const uint ZeroSeedSubstitute = 0x6D2B79F5u;
 

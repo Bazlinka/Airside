@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Airside.Domain;
-using Airside.Persistence;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,7 +13,6 @@ namespace Airside.Presentation
     {
         private ManualSimulationClock _clock;
         private AirportSimulation _simulation;
-        private PersistentAirportSession _session;
         private Transform[] _commercialAircraft;
         // Each commercial keeps a stable livery slot (0 = Coastline Regional blue,
         // 1 = Emu Air teal) for its lifetime. Slots are keyed by AircraftId so a
@@ -26,7 +23,6 @@ namespace Airside.Presentation
         private readonly Dictionary<string, float> _bankDegrees = new();
         private readonly Dictionary<int, float> _propRpm = new();
 
-        private Transform[] _groundTraffic;
         private Light _sun;
         private Light _fillLight;
         private Light[] _apronLights;
@@ -73,9 +69,6 @@ namespace Airside.Presentation
         private Light _hangarBayLight;
         private AirsideDayVolume _dayVolume;
         private float _touchdownSmokeRemaining;
-        private AirsideCanvasHud _canvasHud;
-        private AirsideToolkitHud _toolkitHud;
-        private bool _canvasHudActive;
         private AudioSource _touchdownAudio;
         private AudioClip _touchdownClip;
         private AudioSource _ambientWindAudio;
@@ -145,14 +138,20 @@ namespace Airside.Presentation
         private float _presentationClock;
         private bool _paused;
         private bool _audioMuted;
+
+        /// <summary>Selectable time rates. Normal, then the two fast-forwards.</summary>
+        private static readonly int[] SpeedSteps = { 1, 2, 4 };
         private int _speed = 1;
-        private long _nextAutosaveSecond;
-        private bool _showAwaySummary;
-        private bool _showOpeningBriefing;
-        private bool _routeOfferToastShown;
-        private bool _firstRouteIncomeToastShown;
-        private long _routeIncomeSeen;
-        private int _acceptedRouteCountSeen;
+
+        /// <summary>Pause menu visibility. The menu implies paused; pausing does not imply the menu.</summary>
+        private bool _menuOpen;
+
+        /// <summary>
+        /// Single source of truth for "time is not moving": an explicit pause, or the
+        /// pause menu being open. Every presentation rate reads this, so audio, props,
+        /// smoke and apron life all freeze together with the aircraft.
+        /// </summary>
+        private bool SimulationFrozen => _paused || _menuOpen;
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
         private const float EngineVolumePausedScale = 0.28f;
@@ -168,38 +167,39 @@ namespace Airside.Presentation
 
         private float _apronProbeRefreshAt;
             private int _probeBand = int.MinValue;
-        private string _researchToast = string.Empty;
-        private float _researchToastUntil;
-        private float _saveIndicatorUntil;
-        private int _seenEventCount;
-        private string _opsToast = string.Empty;
-        private float _opsToastUntil;
-        private string _SavePath =>
-            Path.Combine(Application.persistentDataPath, "airside-save-v1.json");
+        /// <summary>
+        /// The live prototype. Held statically so a second bootstrap — a scene reload,
+        /// a duplicate component dropped in a scene, or the runtime hook firing twice —
+        /// is destroyed on arrival instead of running a second world and a second HUD
+        /// on top of the first (ADR 0041).
+        /// </summary>
+        private static AirsidePrototype _active;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartPrototype()
         {
-            if (FindFirstObjectByType<AirsidePrototype>() == null)
-                new GameObject("Airside Prototype").AddComponent<AirsidePrototype>();
+            if (_active != null || FindFirstObjectByType<AirsidePrototype>() != null)
+                return;
+            new GameObject("Airside Prototype").AddComponent<AirsidePrototype>();
         }
 
         private void Awake()
         {
-            _session = PersistentAirportSession.LoadOrCreate(_SavePath, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 24031996);
-            _clock = _session.Clock;
-            _simulation = _session.Simulation;
+            if (_active != null && _active != this)
+            {
+                // A second bootstrap must not build a second world on top of the first.
+                // Destroy is deferred to the end of the frame, so disable first —
+                // otherwise this component's Update/OnGUI run once against a world it
+                // never built and dereference a null simulation.
+                enabled = false;
+                Destroy(gameObject);
+                return;
+            }
+
+            _active = this;
+            _clock = new ManualSimulationClock(new SimulationTime(0));
+            _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
-            _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
-            _showAwaySummary = _session.LastAwaySummary.HasReport;
-            // New-game / early session: no away report and no accepted routes yet.
-            _showOpeningBriefing = !_showAwaySummary && _simulation.Routes.Accepted.Count == 0;
-            if (_showOpeningBriefing)
-                _paused = true;
-            _acceptedRouteCountSeen = _simulation.Routes.Accepted.Count;
-            _routeIncomeSeen = _simulation.Economy.TotalRouteIncome;
-            _firstRouteIncomeToastShown = _routeIncomeSeen > 0;
-            _seenEventCount = _simulation.EventLog.Events.Count;
 
             BuildLightingAndCamera();
             AirsideRuntimeQuality.Apply(_mainCamera);
@@ -304,16 +304,6 @@ namespace Airside.Presentation
             }
             _commercialAircraft = Array.Empty<Transform>();
             SyncCommercialAircraftViews();
-            if (AirsideFocusMode.ShowGroundTrafficAircraft)
-            {
-                _groundTraffic = new Transform[_simulation.GroundTraffic.Count];
-                for (var index = 0; index < _groundTraffic.Length; index++)
-                    _groundTraffic[index] = BuildGroundTrafficAircraft(_simulation.GroundTraffic[index].Id.Value);
-            }
-            else
-            {
-                _groundTraffic = Array.Empty<Transform>();
-            }
             if (AirsideFocusMode.ShowGroundVehicles)
             {
                 _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
@@ -370,106 +360,27 @@ namespace Airside.Presentation
                 _apronProbe.RenderProbe();
             if (_terminalProbe != null)
                 _terminalProbe.RenderProbe();
-            _canvasHud = AirsideCanvasHud.Create(transform);
-            _toolkitHud = AirsideToolkitHud.Create(transform);
-            Action onAccept = () => TryAcceptPendingRouteFromHotkey();
-            Action onDecline = () =>
-            {
-                if (_simulation.Routes.Pending != null && !_simulation.IsInsolvent)
-                    _session.DeclineRoute();
-            };
-            _canvasHud.BindActions(
-                onAccept: onAccept,
-                onDecline: onDecline,
-                onPriorityCrew: () =>
-                {
-                    if (!_simulation.IsInsolvent)
-                        _session.EnablePriorityCrew();
-                },
-                onHireCrew: () =>
-                {
-                    if (!_simulation.IsInsolvent)
-                        _session.HireGroundCrew();
-                },
-                onReleaseCrew: () =>
-                {
-                    if (!_simulation.IsInsolvent)
-                        _session.ReleaseGroundCrew();
-                },
-                onBuildStand: () =>
-                {
-                    if (!_simulation.IsInsolvent)
-                        _session.BuildThirdStand();
-                },
-                onStartResearch: () =>
-                {
-                    if (_simulation.IsInsolvent)
-                        return;
-                    var research = _simulation.Research;
-                    if (research.CanStartOperationsEfficiency)
-                        _session.StartOperationsResearch();
-                    else if (research.CanStartPassengerServices)
-                        _session.StartPassengerServicesResearch();
-                },
-                onBeginOperations: () => DismissOpeningBriefing(),
-                onResetAirport: () => ResetToNewAirport(),
-                onContinueAway: () => { _showAwaySummary = false; },
-                onUiClick: PlayUiClick);
-            if (_toolkitHud != null)
-            {
-                _toolkitHud.BindActions(
-                    onAccept: onAccept,
-                    onDecline: onDecline,
-                    onPriorityCrew: () =>
-                    {
-                        if (!_simulation.IsInsolvent)
-                            _session.EnablePriorityCrew();
-                    },
-                    onHireCrew: () =>
-                    {
-                        if (!_simulation.IsInsolvent)
-                            _session.HireGroundCrew();
-                    },
-                    onReleaseCrew: () =>
-                    {
-                        if (!_simulation.IsInsolvent)
-                            _session.ReleaseGroundCrew();
-                    },
-                    onBuildStand: () =>
-                    {
-                        if (!_simulation.IsInsolvent)
-                            _session.BuildThirdStand();
-                    },
-                    onStartResearch: () =>
-                    {
-                        if (_simulation.IsInsolvent)
-                            return;
-                        var research = _simulation.Research;
-                        if (research.CanStartOperationsEfficiency)
-                            _session.StartOperationsResearch();
-                        else if (research.CanStartPassengerServices)
-                            _session.StartPassengerServicesResearch();
-                    },
-                    onBeginOperations: () => DismissOpeningBriefing(),
-                    onResetAirport: () => ResetToNewAirport(),
-                    onContinueAway: () => { _showAwaySummary = false; },
-                    onTogglePause: () => { _paused = !_paused; },
-                    onSpeed1: () => { _speed = 1; },
-                    onSpeed4: () => { _speed = 4; },
-                    onFollow: () => _cameraController?.CycleOrStartFollow(),
-                    onOverview: () => _cameraController?.ReturnToOverview(),
-                    onToggleMute: () => { _audioMuted = !_audioMuted; },
-                    onUiClick: PlayUiClick);
-            }
-            _canvasHudActive = _canvasHud.IsActive;
+        }
+
+        private void OnDestroy()
+        {
+            if (_active == this)
+                _active = null;
         }
 
         private void Update()
         {
+            // A duplicate instance is disabled in Awake before this can run, but a
+            // half-built world must never hard-crash every frame.
+            if (_simulation == null)
+                return;
+
             ReadSimulationControls();
+
+            var running = !SimulationFrozen;
             if (_cameraController != null)
-                _cameraController.FreezePresentation = _paused;
-            if (!_paused)
+                _cameraController.FreezePresentation = !running;
+            if (running)
                 _preciseTime += Time.unscaledDeltaTime * _speed;
 
             var wholeSeconds = (long)Math.Floor(_preciseTime);
@@ -477,32 +388,17 @@ namespace Airside.Presentation
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
                 _simulation.Update();
-                MaybeShowResearchToast();
-                MaybeShowOpsToast();
-                MaybeShowFirstSessionDecisionToasts();
-            }
-
-            if (_clock.Now.ElapsedSeconds >= _nextAutosaveSecond)
-            {
-                SaveSession();
-                _nextAutosaveSecond = _clock.Now.ElapsedSeconds + 15;
             }
 
             ApplyDayCycle();
             AdvancePresentationClock();
             UpdateAircraftVisual();
-            UpdateGroundTrafficVisual();
-            UpdateServiceVehicles();
-            UpdateStandEquipment();
             UpdateWindsock();
             UpdateTerminalFlag();
-            if (AirsideFocusMode.ShowBuildings)
-                EnsureStandThreeVisual();
             UpdateEngineAudio();
             UpdateAmbientAudio();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
-            UpdateTrafficWaitPresentation();
             UpdateCloudDrift();
             UpdateBirdFlock();
             UpdateHangarDoor();
@@ -510,588 +406,156 @@ namespace Airside.Presentation
             UpdateOpsAntenna();
             UpdateStarField();
             UpdateApronLife();
-            SyncCanvasHud();
         }
 
-        private void SyncCanvasHud()
-        {
-            if (!_canvasHudActive || _canvasHud == null)
-                return;
-
-            var toolkitActive = _toolkitHud != null && _toolkitHud.IsActive;
-            // Toolkit owns product chrome — keep Canvas as hotkey/fallback only (0025 item 6).
-            _canvasHud.SetVisible(!toolkitActive);
-
-            string awayBody = null;
-            if (_showAwaySummary)
-            {
-                var summary = _session.LastAwaySummary;
-                var note = summary.RecoveredPreviousSave
-                    ? "Recovered the previous safe copy."
-                    : summary.ClockMovedBackwards
-                        ? "Device clock moved backwards; no time was added."
-                        : $"{_simulation.Location.Name} · {_simulation.Location.Region}";
-                awayBody =
-                    $"Airport operated for {FormatDuration(summary.AwaySeconds)}\n" +
-                    $"Flights completed: {summary.FlightsCompleted}\n" +
-                    $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}\n" +
-                    $"Route income: ${summary.RouteIncome:N0}\n" +
-                    $"Delay + running costs: ${summary.DelayCost + summary.OperatingCost:N0}\n" +
-                    $"Reputation: {summary.ReputationChange:+0;-0;0}  (now {_simulation.Reputation.Score})\n\n" +
-                    note;
-            }
-
-            string insolvencyBody = null;
-            if (_simulation.IsInsolvent)
-            {
-                insolvencyBody =
-                    $"Cash stayed negative across {AirportEconomy.InsolvencyConsecutiveDays} consecutive day closes. Operations have stopped; commands are refused.\n\n" +
-                    $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}\n" +
-                    $"{_simulation.Location.Name} · {_simulation.Location.Region}";
-            }
-
-            var showBriefing = _showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
-            var showPause = _paused && !_showOpeningBriefing && !_showAwaySummary && !_simulation.IsInsolvent;
-            var showAway = _showAwaySummary && !_simulation.IsInsolvent;
-            var showInsolvency = _simulation.IsInsolvent;
-
-            if (toolkitActive)
-            {
-                _toolkitHud.SyncOverlays(
-                    showBriefing: showBriefing,
-                    showPause: showPause,
-                    showAway: showAway,
-                    showInsolvency: showInsolvency,
-                    locationName: _simulation.Location.Name,
-                    firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
-                    awayBody: awayBody,
-                    insolvencyBody: insolvencyBody);
-                _canvasHud.SetOverlaysVisible(false);
-                _canvasHud.SetLeftPanelVisible(false);
-                _canvasHud.SetRightPanelsVisible(false);
-            }
-            else
-            {
-                _canvasHud.SyncOverlays(
-                    showBriefing: showBriefing,
-                    showPause: showPause,
-                    showAway: showAway,
-                    showInsolvency: showInsolvency,
-                    locationName: _simulation.Location.Name,
-                    firstOfferAfterSeconds: (int)AirportRoutes.FirstOfferAfterSeconds,
-                    awayBody: awayBody,
-                    insolvencyBody: insolvencyBody);
-            }
-
-            var overlayOwnsScreen = showBriefing || showAway || showInsolvency;
-            if (overlayOwnsScreen)
-                return;
-
-            SyncCanvasLeftPanel();
-            var earlySession = _simulation.Routes.Accepted.Count == 0;
-            var proposal = _simulation.Routes.Pending;
-            if (proposal == null)
-            {
-                if (toolkitActive)
-                    _toolkitHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
-                else
-                    _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
-            }
-            else
-            {
-                var firstDecision = earlySession;
-                var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
-                var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount);
-                var blocked = !meetsReputation || !fitsCapacity;
-                string status;
-                if (!meetsReputation)
-                    status = $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})";
-                else if (!fitsCapacity)
-                    status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
-                else
-                    status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
-                var payout = proposal.IncomePerFlight + _simulation.Reputation.IncomeBonus;
-                var body = firstDecision
-                    ? $"Accept to earn cash on every completed flight.\n{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight"
-                    : $"{proposal.Airline}\n{proposal.FlightsPerDay}/day to {proposal.Destination}\n+${payout:N0} per completed flight";
-                var title = firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now";
-                var acceptLabel = firstDecision ? "Accept route  (Enter)" : "Accept route";
-                var canAccept = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
-                if (toolkitActive)
-                {
-                    _toolkitHud.SyncOffer(true, firstDecision, title, body, status, blocked, canAccept, acceptLabel);
-                    _canvasHud.SyncOffer(false, false, string.Empty, string.Empty, string.Empty, false, false, string.Empty);
-                }
-                else
-                {
-                    _canvasHud.SyncOffer(true, firstDecision, title, body, status, blocked, canAccept, acceptLabel);
-                }
-            }
-
-            var toastVisible = !string.IsNullOrEmpty(_opsToast) && Time.unscaledTime <= _opsToastUntil;
-            var researchVisible = !string.IsNullOrEmpty(_researchToast) && Time.unscaledTime <= _researchToastUntil;
-            var saveVisible = Time.unscaledTime <= _saveIndicatorUntil;
-
-            // Decision 0025 item 6 — Toolkit owns toasts + right column when active.
-            if (toolkitActive)
-            {
-                _toolkitHud.SyncToast(_opsToast, toastVisible);
-                _toolkitHud.SyncResearchToast(_researchToast, researchVisible);
-                _toolkitHud.SyncSaveIndicator(saveVisible);
-                _canvasHud.SyncToast(string.Empty, false);
-                _canvasHud.SyncResearchToast(string.Empty, false);
-                _canvasHud.SyncSaveIndicator(false);
-            }
-            else
-            {
-                _canvasHud.SyncToast(_opsToast, toastVisible);
-                _canvasHud.SyncResearchToast(_researchToast, researchVisible);
-                _canvasHud.SyncSaveIndicator(saveVisible);
-            }
-
-            SyncCanvasOpsPanel(toolkitActive);
-            if (toolkitActive)
-            {
-                _canvasHud.SetRightPanelsVisible(false);
-                _canvasHud.SetLeftPanelVisible(false);
-            }
-        }
-
-        private void SyncCanvasOpsPanel(bool toolkitOwnsOps = false)
-        {
-            var accepted = _simulation.Routes.Accepted;
-            var pendingOffer = _simulation.Routes.Pending;
-            var summary =
-                $"Routes {accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight";
-
-            var lines = new System.Collections.Generic.List<string>();
-            if (accepted.Count == 0)
-            {
-                if (pendingOffer != null)
-                    lines.Add("Offer waiting above — Accept to start income");
-                else
-                {
-                    var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
-                    lines.Add(secondsToOffer > 0
-                        ? $"No routes yet — first offer in {secondsToOffer}s"
-                        : "No routes yet — offer arriving…");
-                }
-            }
-            else
-            {
-                var start = Math.Max(0, accepted.Count - 4);
-                for (var i = start; i < accepted.Count; i++)
-                {
-                    var route = accepted[i];
-                    lines.Add($"{route.Airline} · {route.FlightsPerDay}/d → {route.Destination} · ${route.IncomePerFlight:N0}");
-                }
-
-                if (start > 0)
-                    lines.Add($"+{start} earlier route(s)");
-            }
-
-            foreach (var aircraft in _simulation.GroundTraffic)
-                lines.Add($"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}");
-
-            if (!string.IsNullOrEmpty(_simulation.Atc.LastInstruction))
-                lines.Add($"ATC · {_simulation.Atc.LastInstruction}");
-
-            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(4))
-                lines.Add($"T+{entry.OccurredAt.ElapsedSeconds}s  {entry.FlightId}  ·  {entry.Title}");
-
-            string report = null;
-            var latest = _simulation.DailyReports.Latest;
-            if (latest != null)
-            {
-                var rep = latest.ReputationChange == 0 ? "reputation flat"
-                    : latest.ReputationChange > 0 ? $"reputation +{latest.ReputationChange}"
-                    : $"reputation {latest.ReputationChange}";
-                report =
-                    $"{latest.SummaryLine}\nIncome ${latest.FlightIncome:N0}  ·  delays -${latest.DelayCost:N0}  ·  running -${latest.OperatingCost:N0}\n{rep}  ·  {latest.GroundCrew} crew";
-            }
-
-            var body = string.Join("\n", lines);
-            var metar = MetarLine(_simulation.CurrentWeather);
-            if (toolkitOwnsOps && _toolkitHud != null)
-            {
-                _toolkitHud.SyncOps(summary, body, report, metar);
-                _toolkitHud.SyncReputationBar(_simulation.Reputation.Score / 100f);
-            }
-            else
-                _canvasHud.SyncOps(summary, body, report);
-        }
-
-        private static string MetarLine(WeatherKind weather)
-        {
-            // Presentation-only METAR-style readout for REF-004 ops chrome.
-            return weather switch
-            {
-                WeatherKind.Clear => "METAR  ·  TEMP 18°  ·  WIND 240/08  ·  VIS 10km",
-                WeatherKind.Cloudy => "METAR  ·  TEMP 17°  ·  WIND 230/10  ·  VIS 9km",
-                WeatherKind.Overcast => "METAR  ·  TEMP 16°  ·  WIND 220/12  ·  VIS 8km",
-                WeatherKind.Rain => "METAR  ·  TEMP 14°  ·  WIND 200/14  ·  VIS 4km  ·  RA",
-                WeatherKind.Storm => "METAR  ·  TEMP 13°  ·  WIND 190/22G32  ·  VIS 2km  ·  TSRA",
-                WeatherKind.Fog => "METAR  ·  TEMP 12°  ·  WIND 250/04  ·  VIS 800m  ·  FG",
-                _ => "METAR  ·  TEMP 17°  ·  WIND 230/10  ·  VIS 9km"
-            };
-        }
-
-        private void SyncCanvasLeftPanel()
-        {
-            var timeOfDay = _simulation.TimeOfDay;
-            var earlySession = _simulation.Routes.Accepted.Count == 0;
-            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
-
-            var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
-            if (Weather.IsAdverse(_simulation.CurrentWeather))
-                weatherLabel += " · wet apron";
-            var clockLine =
-                $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}";
-            var clockColor = _paused || _speed > 1 ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
-
-            var cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.Cloud;
-            var cashLine =
-                $"${_simulation.Economy.Cash:N0}  ·  Rep {_simulation.Reputation.Score}";
-            if (_simulation.Reputation.Band == "Trusted")
-                cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.ClearGreen;
-            else if (_simulation.Reputation.Band == "Provisional" || _simulation.Reputation.Band == "At Risk")
-                cashColor = _simulation.Economy.Cash < 0 ? AirsideTheme.SignalRed : AirsideTheme.SafetyYellow;
-
-            var finance = _simulation.DailyFinance;
-            var financeColor = finance.ExpectedNet < 0 ? AirsideTheme.SignalRed
-                : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? AirsideTheme.SafetyYellow
-                : AirsideTheme.ClearGreen;
-            // Slim economy strip: short day-net only (full breakdown stays in ops).
-            var financeLine = $"Day {finance.ExpectedNet:+$#,0;-$#,0;$0}";
-
-            string warningLine = null;
-            var warningColor = AirsideTheme.SafetyYellow;
-            if (_simulation.Economy.ConsecutiveNegativeDays > 0)
-            {
-                var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
-                warningLine =
-                    $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent";
-            }
-            else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-            {
-                warningLine = $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}";
-            }
-
-            var turnaroundLines = string.Empty;
-            var priorityVisible = false;
-            var priorityInteractable = false;
-            var priorityLabel = "Hire priority crew · $300";
-            string scheduleLine;
-            var scheduleColor = AirsideTheme.Cloud;
-            if (atStand)
-            {
-                var parts = new System.Collections.Generic.List<string>();
-                foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
-                {
-                    var mark = task.State == TurnaroundTaskState.Complete ? "✓"
-                        : task.State == TurnaroundTaskState.Active ? "●" : "○";
-                    var time = task.State == TurnaroundTaskState.Complete ? string.Empty : $"  {task.SecondsRemaining}s";
-                    parts.Add($"{mark} {task.Name}{time}");
-                }
-
-                if (_simulation.CurrentDelaySeconds > 0)
-                {
-                    parts.Add($"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}");
-                    scheduleColor = AirsideTheme.SignalRed;
-                }
-
-                turnaroundLines = string.Join("\n", parts);
-                var alreadyAssigned = _simulation.ActiveTurnaround.PriorityCrewEnabled;
-                priorityVisible = true;
-                priorityInteractable = !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
-                priorityLabel = alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300";
-                scheduleLine = "Turnaround in progress";
-            }
-            else
-            {
-                var onSchedule = _simulation.LastDelaySeconds <= 0;
-                scheduleLine = onSchedule
-                    ? "Operations running to schedule"
-                    : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}";
-                scheduleColor = onSchedule ? AirsideTheme.ClearGreen : AirsideTheme.SignalRed;
-            }
-
-            var staffing = _simulation.Staffing;
-            var staffingLine =
-                $"Crew {staffing.GroundCrew}  ·  ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  SHORT" : string.Empty)}";
-            var staffingColor = staffing.IsUnderstaffed ? AirsideTheme.SafetyYellow : AirsideTheme.Cloud;
-
-            var capacity = _simulation.Capacity;
-            var research = _simulation.Research;
-            var researchLine = string.Empty;
-            var researchProgressVisible = false;
-            var researchProgress01 = 0f;
-            var researchButtonVisible = false;
-            var researchButtonInteractable = false;
-            var researchButtonLabel = "Start research";
-            if (!earlySession)
-            {
-                if (research.IsResearching)
-                {
-                    researchProgress01 = (float)research.Progress01(_clock.Now);
-                    var pct = (int)(researchProgress01 * 100);
-                    researchLine =
-                        $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left";
-                    researchProgressVisible = true;
-                }
-                else if (research.CanStartOperationsEfficiency)
-                {
-                    researchLine =
-                        $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done";
-                    researchButtonVisible = true;
-                    researchButtonInteractable = _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                    researchButtonLabel = $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}";
-                }
-                else if (research.CanStartPassengerServices)
-                {
-                    researchLine =
-                        $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done";
-                    researchButtonVisible = true;
-                    researchButtonInteractable = _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                    researchButtonLabel = $"Start research · ${AirportResearch.PassengerServicesCost:N0}";
-                }
-                else
-                {
-                    var ops = research.OperationsEfficiencyComplete
-                        ? $"{AirportResearch.OperationsEfficiencyName} ✓"
-                        : string.Empty;
-                    var pax = research.PassengerServicesComplete
-                        ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
-                        : string.Empty;
-                    researchLine =
-                        $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}";
-                }
-            }
-
-            var coachUrgent = _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0;
-            var showWaitMeter = earlySession && _simulation.Routes.Pending == null && !_showOpeningBriefing;
-            var waitLabel = string.Empty;
-            var waitProgress = 0f;
-            if (showWaitMeter)
-            {
-                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
-                waitProgress = 1f - Mathf.Clamp01(secondsToOffer / (float)AirportRoutes.FirstOfferAfterSeconds);
-                waitLabel = secondsToOffer > 0
-                    ? $"Waiting for first airline offer… {secondsToOffer}s"
-                    : "Airline offer arriving…";
-            }
-
-            var toolkitOwnsLeft = _toolkitHud != null && _toolkitHud.IsActive;
-            void SyncLeft(
-                string locationLine,
-                string flightLine,
-                string phaseLine,
-                string clock,
-                Color clockCol,
-                string cash,
-                Color cashCol,
-                string finance,
-                Color financeCol,
-                string warning,
-                Color warningCol,
-                bool showTurnaround,
-                string turnaround,
-                bool priorityVis,
-                bool priorityInt,
-                string priorityLbl,
-                string schedule,
-                Color scheduleCol,
-                string staffing,
-                Color staffingCol,
-                bool early,
-                string earlyHint,
-                bool hireInt,
-                string hireLbl,
-                bool releaseInt,
-                bool buildVis,
-                bool buildInt,
-                string buildLbl,
-                string stands,
-                string research,
-                bool researchProgressVis,
-                float researchProgress,
-                bool researchButtonVis,
-                bool researchButtonInt,
-                string researchButtonLbl,
-                string coach,
-                bool coachUrgentFlag,
-                string controls,
-                bool waitMeter,
-                string waitLbl,
-                float waitProgress)
-            {
-                if (toolkitOwnsLeft)
-                {
-                    _toolkitHud.SyncLeftPanel(
-                        locationLine, flightLine, phaseLine, clock, clockCol, cash, cashCol,
-                        finance, financeCol, warning, warningCol, showTurnaround, turnaround,
-                        priorityVis, priorityInt, priorityLbl, schedule, scheduleCol, staffing, staffingCol,
-                        early, earlyHint, hireInt, hireLbl, releaseInt, buildVis, buildInt, buildLbl,
-                        stands, research, researchProgressVis, researchProgress, researchButtonVis,
-                        researchButtonInt, researchButtonLbl, coach, coachUrgentFlag, controls,
-                        waitMeter, waitLbl, waitProgress);
-                }
-                else
-                {
-                    _canvasHud.SyncLeftPanel(
-                        locationLine, flightLine, phaseLine, clock, clockCol, cash, cashCol,
-                        finance, financeCol, warning, warningCol, showTurnaround, turnaround,
-                        priorityVis, priorityInt, priorityLbl, schedule, scheduleCol, staffing, staffingCol,
-                        early, earlyHint, hireInt, hireLbl, releaseInt, buildVis, buildInt, buildLbl,
-                        stands, research, researchProgressVis, researchProgress, researchButtonVis,
-                        researchButtonInt, researchButtonLbl, coach, coachUrgentFlag, controls,
-                        waitMeter, waitLbl, waitProgress);
-                }
-            }
-
-            var circuitHud = !AirsideFocusMode.ShowEconomyHud;
-            SyncLeft(
-                locationLine: $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}",
-                flightLine: CommercialFlightHudLine(),
-                phaseLine: CommercialPhaseHudLine(),
-                clock: clockLine,
-                clockCol: clockColor,
-                cash: circuitHud ? string.Empty : cashLine,
-                cashCol: cashColor,
-                finance: circuitHud ? string.Empty : financeLine,
-                financeCol: financeColor,
-                warning: circuitHud ? string.Empty : warningLine,
-                warningCol: warningColor,
-                showTurnaround: !circuitHud && atStand,
-                turnaround: circuitHud ? string.Empty : turnaroundLines,
-                priorityVis: !circuitHud && priorityVisible,
-                priorityInt: priorityInteractable,
-                priorityLbl: priorityLabel,
-                schedule: circuitHud ? string.Empty : scheduleLine,
-                scheduleCol: scheduleColor,
-                staffing: circuitHud ? string.Empty : staffingLine,
-                staffingCol: staffingColor,
-                early: circuitHud || earlySession,
-                earlyHint: circuitHud
-                    ? string.Empty
-                    : "Crew / stand / research unlock after you accept a route",
-                hireInt: !circuitHud && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew
-                         && _simulation.Economy.Cash >= AirportStaffing.HireCost,
-                hireLbl: $"Hire crew · ${AirportStaffing.HireCost}",
-                releaseInt: !circuitHud && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew,
-                buildVis: !circuitHud,
-                buildInt: capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost,
-                buildLbl: capacity.HasThirdStand
-                    ? "Stand 3 built"
-                    : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}",
-                stands: circuitHud ? string.Empty : $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}",
-                research: circuitHud ? string.Empty : researchLine,
-                researchProgressVis: !circuitHud && researchProgressVisible,
-                researchProgress: researchProgress01,
-                researchButtonVis: !circuitHud && researchButtonVisible,
-                researchButtonInt: researchButtonInteractable,
-                researchButtonLbl: researchButtonLabel,
-                coach: circuitHud ? string.Empty : FirstSessionCoachLine(),
-                coachUrgentFlag: !circuitHud && coachUrgent,
-                controls: circuitHud
-                    ? "Space pause · Tab speed · F follow · O overview · M mute"
-                    : earlySession
-                    ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
-                    : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
-                waitMeter: !circuitHud && showWaitMeter,
-                waitLbl: waitLabel,
-                waitProgress: waitProgress);
-
-            if (toolkitOwnsLeft)
-            {
-                AircraftPhase? phase = _simulation.Flights.Count > 0
-                    ? _simulation.Flights[0].Operation.Phase
-                    : null;
-                _toolkitHud.SyncChromeIcons(
-                    phase,
-                    _simulation.CurrentWeather,
-                    _speed,
-                    _paused,
-                    _audioMuted,
-                    _cameraController != null && _cameraController.IsFollowing);
-                if (atStand && _simulation.ActiveTurnaround != null)
-                {
-                    var tasks = _simulation.ActiveTurnaround.Tasks(_clock.Now);
-                    var names = new string[tasks.Count];
-                    var progress = new float[tasks.Count];
-                    var icons = new Texture2D[tasks.Count];
-                    for (var i = 0; i < tasks.Count; i++)
-                    {
-                        names[i] = tasks[i].State == TurnaroundTaskState.Complete
-                            ? $"✓ {tasks[i].Name}"
-                            : tasks[i].State == TurnaroundTaskState.Active
-                                ? $"● {tasks[i].Name}  {tasks[i].SecondsRemaining}s"
-                                : $"○ {tasks[i].Name}";
-                        progress[i] = tasks[i].Progress01;
-                        icons[i] = AirsideTheme.ServiceIconForTask(tasks[i].Name);
-                    }
-
-                    _toolkitHud.SyncTurnaroundBars(true, names, progress, icons);
-                }
-                else
-                {
-                    _toolkitHud.SyncTurnaroundBars(false, null, null, null);
-                }
-            }
-        }
-
+        /// <summary>
+        /// Keyboard shortcuts for the same five controls the bar carries, plus Escape
+        /// for the menu. Nothing else is bound — there is nothing else to drive.
+        /// </summary>
         private void ReadSimulationControls()
         {
             var keyboard = Keyboard.current;
             if (keyboard == null)
                 return;
 
-            if (_showAwaySummary)
-            {
-                if (keyboard.enterKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame)
-                    _showAwaySummary = false;
-                return;
-            }
+            if (keyboard.escapeKey.wasPressedThisFrame)
+                ToggleMenu();
 
-            if (_showOpeningBriefing)
-            {
-                if (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame
-                    || keyboard.escapeKey.wasPressedThisFrame)
-                    DismissOpeningBriefing();
+            // While the menu is up it owns the keyboard, so a stray hotkey cannot
+            // change speed or camera behind it.
+            if (_menuOpen)
                 return;
-            }
 
-            if (_simulation.IsInsolvent)
-            {
-                // Simulation is frozen; keep presentation paused and ignore ops hotkeys.
-                _paused = true;
-                return;
-            }
-
-            if (keyboard.spaceKey.wasPressedThisFrame)
-                _paused = !_paused;
-            if (keyboard.tabKey.wasPressedThisFrame)
-                _speed = _speed == 1 ? 4 : 1;
-            if (keyboard.pKey.wasPressedThisFrame)
-                _session.EnablePriorityCrew();
+            if (keyboard.spaceKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame)
+                TogglePause();
+            if (keyboard.fKey.wasPressedThisFrame)
+                ToggleFollow();
+            if (keyboard.digit1Key.wasPressedThisFrame) SetSpeed(1);
+            if (keyboard.digit2Key.wasPressedThisFrame) SetSpeed(2);
+            if (keyboard.digit3Key.wasPressedThisFrame) SetSpeed(4);
             if (keyboard.mKey.wasPressedThisFrame)
                 _audioMuted = !_audioMuted;
-
-            // First-session: Enter accepts a ready route offer without hunting the mouse.
-            if (keyboard.enterKey.wasPressedThisFrame)
-                TryAcceptPendingRouteFromHotkey();
         }
 
-        private void TryAcceptPendingRouteFromHotkey()
+        private void TogglePause()
         {
-            var proposal = _simulation.Routes.Pending;
-            if (proposal == null || _simulation.IsInsolvent)
+            _paused = !_paused;
+            PlayUiClick();
+        }
+
+        private void ToggleMenu()
+        {
+            _menuOpen = !_menuOpen;
+            PlayUiClick();
+        }
+
+        private void ToggleFollow()
+        {
+            if (_cameraController == null)
                 return;
-            if (_simulation.Reputation.Score < proposal.ReputationRequired)
+
+            if (_cameraController.IsFollowing)
+                _cameraController.ReturnToOverview();
+            else
+                _cameraController.StartFollowFirst();
+            PlayUiClick();
+        }
+
+        private void SetSpeed(int multiplier)
+        {
+            // Selecting a rate also lifts a pause — asking for 2x while paused means go.
+            _speed = multiplier;
+            _paused = false;
+            PlayUiClick();
+        }
+
+        private void RestartCircuit()
+        {
+            _simulation.RestartCircuit();
+            _preciseTime = _clock.Now.ElapsedSeconds;
+            _previousPhases.Clear();
+            _touchdownFired.Clear();
+            _rotateFired.Clear();
+            _menuOpen = false;
+            _paused = false;
+            PlayUiClick();
+        }
+
+        private void QuitGame()
+        {
+            PlayUiClick();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        private void OnGUI()
+        {
+            if (_simulation == null)
                 return;
-            if (!_simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount))
-                return;
-            _session.AcceptRoute();
+
+            var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
+            var previousMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+
+            var layout = HudLayout.Create(Screen.width / scale, Screen.height / scale);
+            var panel = AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
+            {
+                alignment = TextAnchor.UpperLeft,
+                padding = new RectOffset(18, 18, 14, 14)
+            });
+            var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
+            var button = AirsideTheme.TextStyle(
+                new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
+                AirsideTheme.Cloud);
+
+            DrawControlBar(layout, button);
+            if (_menuOpen)
+                DrawPauseMenu(layout, panel, title, button);
+
+            GUI.matrix = previousMatrix;
+        }
+
+        private void DrawControlBar(HudLayout layout, GUIStyle button)
+        {
+            var following = _cameraController != null && _cameraController.IsFollowing;
+
+            if (GUI.Button(layout.ButtonAt(0), _paused ? "Resume" : "Pause", button))
+                TogglePause();
+            if (GUI.Button(layout.ButtonAt(1), following ? "Follow on" : "Follow", button))
+                ToggleFollow();
+
+            // Brackets rather than a tick or triangle: the built-in GUI font is only
+            // proven for the dashes and arrows already used elsewhere in this HUD.
+            for (var index = 0; index < SpeedSteps.Length; index++)
+            {
+                var step = SpeedSteps[index];
+                var selected = !_paused && _speed == step;
+                var label = selected ? $"[{step}x]" : $"{step}x";
+                if (GUI.Button(layout.ButtonAt(2 + index), label, button))
+                    SetSpeed(step);
+            }
+        }
+
+        private void DrawPauseMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
+        {
+            var rect = layout.PauseMenu;
+            GUI.Box(rect, GUIContent.none, panel);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Paused", title);
+
+            var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
+            if (GUI.Button(row, "Resume", button))
+                ToggleMenu();
+
+            row.y += 52f;
+            if (GUI.Button(row, "Restart circuit", button))
+                RestartCircuit();
+
+            row.y += 52f;
+            if (GUI.Button(row, "Quit", button))
+                QuitGame();
         }
 
         private void UpdateAircraftVisual()
@@ -1276,13 +740,6 @@ namespace Airside.Presentation
                 ApplyEngineAudio(_commercialAircraft[index],
                     AirsideReusableMotion.PropellersSpinning(phase));
             }
-
-            for (var index = 0; index < _groundTraffic.Length; index++)
-            {
-                var traffic = _simulation.GroundTraffic[index];
-                // Ground traffic keeps props turning while on the field; quieter when holding.
-                ApplyEngineAudio(_groundTraffic[index], enginesOn: !traffic.IsHolding);
-            }
         }
 
         private void PlayUiClick()
@@ -1326,7 +783,7 @@ namespace Airside.Presentation
             source.pitch = Mathf.Lerp(0.85f, 1.2f, power);
 
             var target = enginesOn ? Mathf.Lerp(EngineVolumeRunning, EngineVolumeRunning * 1.5f, power) : EngineVolumeIdle;
-            if (_paused)
+            if (SimulationFrozen)
                 target *= EngineVolumePausedScale;
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
         }
@@ -1344,7 +801,7 @@ namespace Airside.Presentation
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
             var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
             var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
-            if (_paused)
+            if (SimulationFrozen)
             {
                 windTarget *= EngineVolumePausedScale;
                 rainTarget *= EngineVolumePausedScale;
@@ -1680,8 +1137,8 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Sim-rate presentation dt — freezes when paused, scales at 4×.</summary>
-        private float PresentationDeltaTime => _paused ? 0f : Time.unscaledDeltaTime * _speed;
+        /// <summary>Sim-rate presentation dt — freezes when paused, scales with the selected rate.</summary>
+        private float PresentationDeltaTime => SimulationFrozen ? 0f : Time.unscaledDeltaTime * _speed;
 
         private void SpinPropellers(Transform aircraft, AircraftPhase phase)
         {
@@ -1724,32 +1181,6 @@ namespace Airside.Presentation
             current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
             _propRpm[key] = current;
             return current;
-        }
-
-        private void SpinGroundTrafficPropellers(Transform aircraft, bool enginesOn)
-        {
-            // Match ANM-AIR taxi RPM so ground traffic props read with the fleet, and
-            // spool through start-up / shutdown rather than snapping on and off.
-            var rpm = SpooledPropRpm(aircraft, enginesOn ? AirsideReusableMotion.PropRpmTaxi : 0f);
-            if (rpm < 1f)
-            {
-                ApplyPropBlur(aircraft, highRpm: false);
-                return;
-            }
-
-            var degrees = PresentationDeltaTime * rpm * 6f;
-            if (degrees <= 0f)
-                return;
-            var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
-            {
-                if (child == aircraft)
-                    continue;
-                if (!child.name.StartsWith("Propeller", StringComparison.Ordinal))
-                    continue;
-                child.Rotate(Vector3.forward, degrees, Space.Self);
-                ApplyPropBlurToHub(child, highRpm);
-            }
         }
 
         /// <summary>
@@ -1936,92 +1367,6 @@ namespace Airside.Presentation
             }
         }
 
-        private void UpdateGroundTrafficVisual()
-        {
-            if (_groundTraffic == null || _groundTraffic.Length == 0)
-                return;
-
-            for (var index = 0; index < _groundTraffic.Length; index++)
-            {
-                var view = _groundTraffic[index];
-                var traffic = _simulation.GroundTraffic[index];
-                var point = traffic.Position;
-                var target = new Vector3(point.X, 0.7f, point.Z);
-                var previous = view.position;
-
-                // A yield can snap the sim point back; do not lerp through released space.
-                // Catch-up rate tracks pause / 1× / 4× so GT does not slide while frozen.
-                var catchUp = PresentationDeltaTime * 10f;
-                view.position = catchUp <= 0f
-                    ? previous
-                    : TaxiVisualPath.MoveGroundTraffic(
-                        previous,
-                        target,
-                        traffic.IsHolding,
-                        catchUp);
-
-                var direction = target - previous;
-                var targetRotation = direction.sqrMagnitude > 0.0004f
-                    ? Quaternion.LookRotation(direction.normalized)
-                    : view.rotation;
-                var visualPhase = GroundTrafficVisualPhase(traffic);
-                if (traffic.IsHolding)
-                {
-                    // Keep last travel heading on a yield snap (zero-length move).
-                    targetRotation = view.rotation;
-                }
-                view.rotation = Quaternion.Slerp(
-                    view.rotation,
-                    targetRotation,
-                    AirsideFlightPath.DampFactor(4f, PresentationDeltaTime));
-
-                if (traffic.CurrentPhase is "Away" or "Away hold")
-                {
-                    view.gameObject.SetActive(false);
-                    continue;
-                }
-                if (!view.gameObject.activeSelf)
-                    view.gameObject.SetActive(true);
-
-                var enginesOn = GroundTrafficEnginesOn(traffic);
-                SpinGroundTrafficPropellers(view, enginesOn);
-                RollLandingGearTires(
-                    view,
-                    traffic.IsHolding || traffic.IsAtStand ? AircraftPhase.AtStand : AircraftPhase.TaxiIn,
-                    1f);
-                UpdateGroundShadow(view);
-                UpdateAircraftLightsAndGear(
-                    view,
-                    visualPhase,
-                    PresentationDaylight);
-                UpdateCabinWindowGlow(
-                    view,
-                    visualPhase,
-                    PresentationDaylight);
-                UpdateEngineHeat(view, visualPhase);
-            }
-        }
-
-        private static AircraftPhase GroundTrafficVisualPhase(GroundTrafficAircraft traffic)
-        {
-            if (traffic.IsAtStand)
-                return AircraftPhase.AtStand;
-            var phase = traffic.CurrentPhase;
-            if (phase is "Away" or "Away hold" or "Waiting for a slot")
-                return AircraftPhase.Departed;
-            if (phase == "Run-up hold")
-                return AircraftPhase.Pushback;
-            return AircraftPhase.TaxiIn;
-        }
-
-        private static bool GroundTrafficEnginesOn(GroundTrafficAircraft traffic)
-        {
-            if (traffic.IsAtStand)
-                return false;
-            var phase = traffic.CurrentPhase;
-            return phase is not ("Away" or "Waiting for a slot");
-        }
-
                 private float PresentationClock
         {
             get
@@ -2062,138 +1407,8 @@ namespace Airside.Presentation
         {
             var operation = flight.Operation;
 
-            // A flight waiting on a reservation has its phase clock pushed forward once
-            // per stalled second, so a fractional read would creep forward and snap back
-            // every second. Hold the simulated value: the aircraft is standing still,
-            // which is exactly what it is doing.
-            if (_simulation.TrafficWaits.TryGetWaitStart(flight.OwnerId, out _))
-                return Mathf.Clamp01((float)operation.PhaseProgress(_clock.Now));
-
             return AirsideAircraftMotion.PhaseProgress(
                 _preciseTime, operation.PhaseStartedAt.ElapsedSeconds, duration);
-        }
-
-        private void UpdateServiceVehicles()
-        {
-            if (!AirsideFocusMode.ShowGroundVehicles)
-                return;
-
-            // Prefer the watched/focused commercial at stand so dual-stand activity matches the player view.
-            var servicing = PreferWatchedAtStandFlight(requireTurnaround: true);
-
-            // Parked GSE stays visible on the apron edge so the field feels staffed.
-            var fuelPark = new Vector3(-2.5f, 0.55f, 24.5f);
-            var bagPark = new Vector3(0.5f, 0.42f, 25.2f);
-            var busPark = new Vector3(2.5f, 0.68f, 26f);
-
-            if (servicing == null)
-            {
-                UpdateVehicle(_fuelTruck, false, fuelPark, fuelPark);
-                UpdateVehicle(_baggageCart, false, bagPark, bagPark);
-                UpdateVehicle(_passengerBus, false, busPark, busPark);
-                SyncVehicleHeadlights(_fuelTruck, PresentationDaylight < 0.38f, PresentationDaylight);
-                SyncVehicleHeadlights(_baggageCart, PresentationDaylight < 0.38f, PresentationDaylight);
-                SyncVehicleHeadlights(_passengerBus, PresentationDaylight < 0.38f, PresentationDaylight);
-                return;
-            }
-
-            var standZ = AirportTaxiNetwork.StandZ(servicing.AssignedStand);
-            var fuelActive = TaskActive(servicing, "Refuel");
-            var bagActive = TaskActive(servicing, "Unload bags") || TaskActive(servicing, "Load bags");
-            var paxActive = TaskActive(servicing, "Passengers off") || TaskActive(servicing, "Board passengers");
-            // Approved turnaround day/dusk board: fuel at port wing, baggage port-forward,
-            // bus starboard clear of props.
-            UpdateVehicle(_fuelTruck, fuelActive, new Vector3(18.8f, 0.55f, standZ + 2.4f), fuelPark);
-            UpdateVehicle(_baggageCart, bagActive, new Vector3(19.4f, 0.42f, standZ + 2.4f), bagPark);
-            UpdateVehicle(_passengerBus, paxActive, new Vector3(15.6f, 0.68f, standZ + 4.2f), busPark);
-            var daylight = PresentationDaylight;
-            SyncVehicleHeadlights(_fuelTruck, fuelActive || daylight < 0.38f, daylight);
-            SyncVehicleHeadlights(_baggageCart, bagActive || daylight < 0.38f, daylight);
-            SyncVehicleHeadlights(_passengerBus, paxActive || daylight < 0.38f, daylight);
-            AnimateServiceLoops(_fuelTruck, fuelActive, "Hose");
-            AnimateServiceLoops(_baggageCart, bagActive, "Cargo");
-            AnimateServiceLoops(_passengerBus, paxActive, "Door");
-            PulseServiceBeacon(_fuelTruck, fuelActive);
-            PulseServiceBeacon(_baggageCart, bagActive);
-            PulseServiceBeacon(_passengerBus, paxActive);
-        }
-
-        private void UpdateStandEquipment()
-        {
-            if (!AirsideFocusMode.ShowStandEquipment)
-                return;
-
-            // Presentation-only stand props — prefer the flight the player is watching.
-            var atStand = PreferWatchedAtStandFlight(requireTurnaround: false);
-            CommercialFlight pushing = PreferWatchedFlightInPhase(AircraftPhase.Pushback);
-            if (pushing == null)
-            {
-                foreach (var flight in _simulation.Flights)
-                {
-                    if (flight.Operation.Phase == AircraftPhase.Pushback)
-                    {
-                        pushing = flight;
-                        break;
-                    }
-                }
-            }
-
-            if (atStand != null)
-            {
-                var z = AirportTaxiNetwork.StandZ(atStand.AssignedStand);
-                var progress = VisualPhaseProgress(atStand, 0f);
-                // Stairs roll in from apron edge, then tip up toward the cabin along kit long axis.
-                var arrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 5f));
-                var stairsX = Mathf.Lerp(20.5f, 17.9f, arrive);
-                var stairsPitch = Mathf.Lerp(-42f, -6f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f)));
-                // Yaw ~90 so kit long axis (+Z) aims toward cabin (−X), then pitch about local X.
-                PlaceProp(_stairs, true, new Vector3(stairsX, 0.55f, z + 0.15f),
-                    Quaternion.Euler(0f, 90f, 0f) * Quaternion.Euler(stairsPitch, 0f, 0f));
-                // Paired chocks at main-gear tracks (board inventory).
-                var chockArrive = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 6f));
-                var chockY = Mathf.Lerp(0.42f, 0.12f, chockArrive);
-                var chockRoll = Mathf.Lerp(35f, 0f, chockArrive);
-                PlaceProp(_chocks, true, new Vector3(16.6f, chockY, z + 1.55f), Quaternion.Euler(0f, 0f, chockRoll));
-                // GPU at nose in Coastal Blue (board); cable toward aircraft.
-                PlaceProp(_gpuCart, true, new Vector3(15.6f, 0.35f, z + 2.1f), Quaternion.Euler(0f, 90f, 0f));
-                PulseGpuCart(_gpuCart, true);
-                // Pushback tug waits at nose during AtStand so the service set matches the board.
-                PlaceProp(_pushbackTug, true, new Vector3(13.4f, 0.4f, z - 0.2f),
-                    Quaternion.LookRotation(new Vector3(-1, 0, 7.85f)));
-                SyncVehicleHeadlights(_pushbackTug, PresentationDaylight < 0.38f,
-                    PresentationDaylight);
-            }
-            else
-            {
-                PlaceProp(_stairs, false, Vector3.zero, Quaternion.identity);
-                PlaceProp(_chocks, false, Vector3.zero, Quaternion.identity);
-                PlaceProp(_gpuCart, false, Vector3.zero, Quaternion.identity);
-                PulseGpuCart(_gpuCart, false);
-                if (pushing == null)
-                    PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
-            }
-
-            if (pushing != null)
-            {
-                var z = AirportTaxiNetwork.StandZ(pushing.AssignedStand);
-                var progress = VisualPhaseProgress(pushing, 0f);
-                // Match commercial Pushback endpoints so the tug does not lag a parallel path.
-                var from = new Vector3(17f, 0.4f, z);
-                var to = new Vector3(12f, 0.4f, z - 2f);
-                var tugPos = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
-                var travel = to - from;
-                travel.y = 0f;
-                var facing = travel.sqrMagnitude > 0.0001f
-                    ? Quaternion.LookRotation(travel.normalized, Vector3.up)
-                    : Quaternion.LookRotation(new Vector3(-1, 0, 7.65f));
-                PlaceProp(_pushbackTug, true, tugPos, facing);
-                PulseServiceBeacon(_pushbackTug, true);
-                SyncVehicleHeadlights(_pushbackTug, true, PresentationDaylight);
-            }
-            else if (atStand == null)
-            {
-                PlaceProp(_pushbackTug, false, Vector3.zero, Quaternion.identity);
-            }
         }
 
         private static void PlaceProp(Transform prop, bool active, Vector3 position, Quaternion rotation)
@@ -2266,52 +1481,6 @@ namespace Airside.Presentation
 
 
 
-        private bool TaskActive(CommercialFlight flight, string name)
-        {
-            return flight.Turnaround != null &&
-                   flight.Turnaround.Tasks(_clock.Now).Any(task => task.Name == name && task.State == TurnaroundTaskState.Active);
-        }
-
-        /// <summary>
-        /// Prefer the commercial the camera is following when it is at stand; otherwise
-        /// the first at-stand flight (matches FocusFlight intent for dual-stand play).
-        /// </summary>
-        private CommercialFlight PreferWatchedAtStandFlight(bool requireTurnaround)
-        {
-            var followed = PreferWatchedFlightInPhase(AircraftPhase.AtStand);
-            if (followed != null && (!requireTurnaround || followed.Turnaround != null))
-                return followed;
-
-            foreach (var flight in _simulation.Flights)
-            {
-                if (flight.Operation.Phase != AircraftPhase.AtStand)
-                    continue;
-                if (requireTurnaround && flight.Turnaround == null)
-                    continue;
-                return flight;
-            }
-
-            return null;
-        }
-
-        private CommercialFlight PreferWatchedFlightInPhase(AircraftPhase phase)
-        {
-            if (_cameraController == null || !_cameraController.IsFollowing || _cameraController.FollowTarget == null)
-                return null;
-            if (_commercialAircraft == null)
-                return null;
-
-            for (var i = 0; i < _commercialAircraft.Length && i < _simulation.Flights.Count; i++)
-            {
-                if (_commercialAircraft[i] != _cameraController.FollowTarget)
-                    continue;
-                var flight = _simulation.Flights[i];
-                return flight.Operation.Phase == phase ? flight : null;
-            }
-
-            return null;
-        }
-
         /// <summary>
         /// Authored vehicle kits face along +X; nest a -90° yaw so LookRotation(+Z) travel
         /// aligns the kit long axis / cab with the travel direction.
@@ -2353,7 +1522,7 @@ namespace Airside.Presentation
                 vehicle.position = parkPosition;
 
             var previous = vehicle.position;
-            var speed = (active ? 7.5f : 5.5f) * (_paused ? 0f : _speed);
+            var speed = (active ? 7.5f : 5.5f) * (SimulationFrozen ? 0f : _speed);
             vehicle.position = Vector3.MoveTowards(previous, target, Time.unscaledDeltaTime * speed);
             var travel = Vector3.Distance(previous, vehicle.position);
             if (travel > 0.001f)
@@ -2827,7 +1996,7 @@ namespace Airside.Presentation
             {
                 _touchdownSmoke.gameObject.SetActive(false);
             }
-            else if (!_paused)
+            else if (!SimulationFrozen)
             {
                 // Freeze the puff while paused; at 4× it still ages in real time so the
                 // one-shot stays short rather than stretching across the whole rollout.
@@ -2936,45 +2105,6 @@ namespace Airside.Presentation
                 }
             }
         }
-
-        private void UpdateTrafficWaitPresentation()
-        {
-            // Presentation-only: pulse hold-short bars when a traffic wait is active
-            // or tower has issued hold / line-up / number-two.
-            var atcHot = _simulation.Atc.ActiveClearance is AtcClearance.HoldShortRunway
-                or AtcClearance.LineUpAndWait
-                or AtcClearance.NumberTwoLanding
-                or AtcClearance.NumberTwoDeparture
-                or AtcClearance.ReadyForDeparture
-                or AtcClearance.GroundHold
-                or AtcClearance.HoldApron
-                or AtcClearance.TrafficAdvisory
-                or AtcClearance.ConditionalLanding
-                or AtcClearance.OrbitLeft
-                or AtcClearance.GoAround
-                or AtcClearance.HoldShortAlpha
-                or AtcClearance.MinimumApproachSpeed
-                or AtcClearance.GiveWayTaxiing;
-            var warning = _simulation.TrafficWaits.HasWarning(_clock.Now) || atcHot;
-            var pulse = warning
-                ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(
-                    Time.unscaledTime * AirsideReusableMotion.ServicePulseHz * Mathf.PI * 2f))
-                : 1f;
-            var baseColor = new Color(0.95f, 0.82f, 0.12f);
-            var hot = new Color(1f, 0.45f, 0.12f);
-            var color = warning ? Color.Lerp(baseColor, hot, pulse) : baseColor;
-            for (var i = 0; i < _holdShortRenderers.Count; i++)
-            {
-                var renderer = _holdShortRenderers[i];
-                if (renderer == null)
-                    continue;
-                var emit = warning
-                    ? new Color(1f, 0.4f, 0.08f) * (0.35f + pulse * 1.4f)
-                    : Color.black;
-                SetRendererColor(renderer, color, emit);
-            }
-        }
-
 
         /// <summary>
         /// True for paved / painted surfaces that keep a residual damp sheen in clear
@@ -3400,843 +2530,6 @@ namespace Airside.Presentation
 
             root.gameObject.SetActive(false);
             return root;
-        }
-
-        private void OnGUI()
-        {
-            // Toolkit owns the full gameplay HUD + overlays when active — skip IMGUI
-            // entirely so first-session density is Toolkit/uGUI only (0025 item 6).
-            if (_toolkitHud != null && _toolkitHud.IsActive)
-                return;
-
-            var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
-            var previousMatrix = GUI.matrix;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-
-            // Approved Airside HUD direction (docs/art/ART_DIRECTION_AND_ASSET_SPEC.md,
-            // REF-004): translucent Runway Ink panels, Cloud text, Coastal Blue for
-            // buttons, Safety Yellow for caution, Clear Green for on-time, Signal Red
-            // reserved for delay.
-            var panel = AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
-            {
-                alignment = TextAnchor.UpperLeft,
-                padding = new RectOffset(18, 18, 14, 14)
-            });
-            var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold });
-            var detail = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 17 });
-            var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14 });
-            var caution = AirsideTheme.CautionStyle(small);
-            var onTime = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.ClearGreen);
-            var delayed = AirsideTheme.TextStyle(new GUIStyle(small), AirsideTheme.SignalRed);
-            var button = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 14, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
-
-            // Canvas HUD owns the left status / hire / research panel when active.
-            if (!_canvasHudActive)
-            {
-            var timeOfDay = _simulation.TimeOfDay;
-            var earlySession = _simulation.Routes.Accepted.Count == 0;
-            var atStand = _simulation.ActiveAircraft.Phase == AircraftPhase.AtStand && _simulation.ActiveTurnaround != null;
-            var turnaroundTaskCount = atStand ? _simulation.ActiveTurnaround.Tasks(_clock.Now).Count() : 0;
-            // Dynamic left panel: shorter in the first session so the world stays visible.
-            var leftPanelHeight = earlySession
-                ? 420f
-                : Mathf.Clamp(360f + turnaroundTaskCount * 19f + (atStand ? 70f : 0f) + 140f, 420f, 580f);
-            var leftPanelRect = new Rect(22, 22, 410, leftPanelHeight);
-            GUI.Box(leftPanelRect, string.Empty, panel);
-            AirsideTheme.DrawPanelFrame(leftPanelRect);
-
-            var y = 36f;
-            var wordmark = AirsideTheme.WordmarkLight;
-            if (wordmark != null)
-            {
-                GUI.DrawTexture(new Rect(42, 28, 240, 40), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
-                y = 70f;
-                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
-                y += 20f;
-            }
-            else
-            {
-                GUI.Label(new Rect(42, y, 320, 34), "AIRSIDE", title);
-                y += 28f;
-                GUI.Label(new Rect(42, y, 380, 18), $"{_simulation.Location.Name}  ·  {_simulation.Location.Region}", small);
-                y += 20f;
-            }
-
-            GUI.Label(new Rect(42, y, 380, 22), CommercialFlightHudLine(), detail);
-            y += 24f;
-
-            var phaseLineX = 42f;
-            var phaseIcon = _simulation.Flights.Count > 0
-                ? AirsideTheme.OperationIcon(_simulation.Flights[0].Operation.Phase)
-                : null;
-            if (phaseIcon != null)
-            {
-                GUI.DrawTexture(new Rect(42, y, 20, 20), phaseIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                phaseLineX = 68f;
-            }
-            GUI.Label(new Rect(phaseLineX, y, 380 - (phaseLineX - 42), 22), CommercialPhaseHudLine(), detail);
-            y += 24f;
-
-            var weatherLabel = Weather.Describe(_simulation.CurrentWeather);
-            if (Weather.IsAdverse(_simulation.CurrentWeather))
-                weatherLabel += " · wet apron";
-            var clockStyle = _paused || _speed > 1 ? caution : small;
-            var weatherLineX = 42f;
-            var weatherIcon = AirsideTheme.WeatherIcon(_simulation.CurrentWeather);
-            if (weatherIcon != null)
-            {
-                GUI.DrawTexture(new Rect(42, y, 20, 20), weatherIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                weatherLineX = 68f;
-            }
-            GUI.Label(new Rect(weatherLineX, y, 380 - (weatherLineX - 42), 22),
-                $"{(_paused ? "PAUSED" : $"{_speed}× time")}{(_audioMuted ? "  ·  MUTED" : string.Empty)}  ·  Day {timeOfDay.DaysElapsed + 1} {timeOfDay.Clock} {timeOfDay.Phase}  ·  {weatherLabel}", clockStyle);
-            y += 24f;
-
-            var cashStyle = _simulation.Economy.Cash < 0 ? delayed : small;
-            var reputationStyle = ReputationBandStyle(small, onTime, caution, delayed);
-            var cashIcon = AirsideTheme.Icon("economy", "cash");
-            var cashX = 42f;
-            if (cashIcon != null)
-            {
-                GUI.DrawTexture(new Rect(42, y, 18, 18), cashIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                cashX = 64f;
-            }
-            GUI.Label(new Rect(cashX, y, 200 - (cashX - 42), 22), $"Cash: ${_simulation.Economy.Cash:N0}  ·  Cycles {_simulation.CompletedCycles}", cashStyle);
-            var repIcon = AirsideTheme.Icon("economy", "reputation");
-            var repX = 242f;
-            if (repIcon != null)
-            {
-                GUI.DrawTexture(new Rect(242, y, 18, 18), repIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                repX = 264f;
-            }
-            GUI.Label(new Rect(repX, y, 190 - (repX - 242), 22),
-                $"Rep {_simulation.Reputation.Score} ({_simulation.Reputation.Band})", reputationStyle);
-            y += 22f;
-
-            var finance = _simulation.DailyFinance;
-            var runway = finance.CashRunwayDays is int days
-                ? $"  ·  ~{days}d runway"
-                : "  ·  cash building";
-            var financeStyle = finance.ExpectedNet < 0 ? delayed
-                : finance.CashRunwayDays is int runwayDays && runwayDays <= 3 ? caution
-                : onTime;
-            var incomeIcon = AirsideTheme.Icon("economy", "income");
-            var financeX = 42f;
-            if (incomeIcon != null)
-            {
-                GUI.DrawTexture(new Rect(42, y, 18, 18), incomeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                financeX = 64f;
-            }
-            GUI.Label(new Rect(financeX, y, 390 - (financeX - 42), 22),
-                $"Day est. {finance.ExpectedNet:+$#,0;-$#,0;$0} (in ${finance.ExpectedFlightIncome:N0} / out ${finance.ExpectedOperatingCost:N0}){runway}", financeStyle);
-            y += 22f;
-
-            if (_simulation.IsInsolvent)
-            {
-                GUI.Label(new Rect(42, y, 360, 22), "INSOLVENT — operations frozen", delayed);
-                y += 22f;
-            }
-            else if (_simulation.Economy.ConsecutiveNegativeDays > 0)
-            {
-                var left = AirportEconomy.InsolvencyConsecutiveDays - _simulation.Economy.ConsecutiveNegativeDays;
-                GUI.Label(new Rect(42, y, 360, 22),
-                    $"Cash warning: {_simulation.Economy.ConsecutiveNegativeDays} negative day close(s) · {left} more → insolvent", caution);
-                y += 22f;
-            }
-            else if (_simulation.TrafficWaits.HasWarning(_clock.Now))
-            {
-                GUI.Label(new Rect(42, y, 360, 22), $"TRAFFIC: {_simulation.TrafficWaits.Describe(_clock.Now)}", caution);
-                y += 22f;
-            }
-
-            if (atStand)
-            {
-                foreach (var task in _simulation.ActiveTurnaround.Tasks(_clock.Now))
-                {
-                    var mark = task.State == TurnaroundTaskState.Complete ? "✓" : task.State == TurnaroundTaskState.Active ? "●" : "○";
-                    var time = task.State == TurnaroundTaskState.Complete ? string.Empty : $"  {task.SecondsRemaining}s";
-                    var taskIcon = AirsideTheme.ServiceIconForTask(task.Name);
-                    var taskX = 42f;
-                    if (taskIcon != null)
-                    {
-                        GUI.DrawTexture(new Rect(42, y, 16, 16), taskIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                        taskX = 62f;
-                    }
-                    GUI.Label(new Rect(taskX, y, 350 - (taskX - 42), 20), $"{mark} {task.Name}{time}", small);
-                    y += 19f;
-                }
-
-                if (_simulation.CurrentDelaySeconds > 0)
-                {
-                    GUI.Label(new Rect(42, y, 360, 22), $"DELAY +{_simulation.CurrentDelaySeconds}s · {_simulation.CurrentDelayCause}", delayed);
-                    y += 22f;
-                }
-
-                var alreadyAssigned = _simulation.ActiveTurnaround != null && _simulation.ActiveTurnaround.PriorityCrewEnabled;
-                GUI.enabled = !_simulation.IsInsolvent && !alreadyAssigned && _simulation.Economy.Cash >= AirportEconomy.PriorityCrewCost;
-                if (GUI.Button(new Rect(42, y, 190, 27), alreadyAssigned ? "Priority crew active" : "Hire priority crew · $300", button))
-                    _session.EnablePriorityCrew();
-                GUI.enabled = true;
-                y += 34f;
-            }
-            else
-            {
-                var onSchedule = _simulation.LastDelaySeconds <= 0;
-                GUI.Label(new Rect(42, y, 350, 22), onSchedule
-                    ? "Operations running to schedule"
-                    : $"Last flight delay: {_simulation.LastDelaySeconds}s · {_simulation.LastDelayCause}", onSchedule ? onTime : delayed);
-                y += 24f;
-            }
-
-            var staffing = _simulation.Staffing;
-            GUI.Label(new Rect(42, y, 380, 20),
-                $"Ground crew: {staffing.GroundCrew}  ·  payroll ${staffing.DailyWage:N0}/day{(staffing.IsUnderstaffed ? "  ·  UNDERSTAFFED" : string.Empty)}",
-                staffing.IsUnderstaffed ? caution : small);
-            y += 22f;
-
-            if (earlySession)
-            {
-                GUI.Label(new Rect(42, y, 360, 22), "Crew / stand / research unlock after you accept a route", small);
-                y += 24f;
-            }
-            else
-            {
-                GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew < AirportStaffing.MaximumGroundCrew && _simulation.Economy.Cash >= AirportStaffing.HireCost;
-                if (GUI.Button(new Rect(42, y, 150, 24), $"Hire crew · ${AirportStaffing.HireCost}", button))
-                    _session.HireGroundCrew();
-                GUI.enabled = !_simulation.IsInsolvent && staffing.GroundCrew > AirportStaffing.MinimumGroundCrew;
-                if (GUI.Button(new Rect(198, y, 110, 24), "Release crew", button))
-                    _session.ReleaseGroundCrew();
-                GUI.enabled = true;
-                y += 28f;
-
-                var capacity = _simulation.Capacity;
-                GUI.Label(new Rect(42, y, 380, 20),
-                    $"Stands: {capacity.StandCount} / {AirportCapacity.MaximumStands}", small);
-                y += 22f;
-                GUI.enabled = !_simulation.IsInsolvent && capacity.CanExpand && _simulation.Economy.Cash >= AirportCapacity.ThirdStandCost;
-                if (GUI.Button(new Rect(42, y, 220, 24),
-                        capacity.HasThirdStand ? "Stand 3 built" : $"Build stand 3 · ${AirportCapacity.ThirdStandCost:N0}", button))
-                    _session.BuildThirdStand();
-                GUI.enabled = true;
-                y += 28f;
-
-                var research = _simulation.Research;
-                var researchIcon = AirsideTheme.Icon("economy", "research");
-                var researchLabelX = 42f;
-                if (researchIcon != null)
-                {
-                    GUI.DrawTexture(new Rect(42, y, 18, 18), researchIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                    researchLabelX = 64f;
-                }
-                if (research.IsResearching)
-                {
-                    var progress = (float)research.Progress01(_clock.Now);
-                    var pct = (int)(progress * 100);
-                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
-                        $"Research: {research.ActiveProjectName} {pct}% · {research.SecondsRemaining(_clock.Now)}s left", small);
-                    y += 22f;
-                    AirsideTheme.DrawProgressBar(
-                        new Rect(42, y, 280, 8),
-                        progress,
-                        AirsideTheme.CoastalBlue,
-                        new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.85f));
-                    y += 16f;
-                }
-                else if (research.CanStartOperationsEfficiency)
-                {
-                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
-                        $"Research: {AirportResearch.OperationsEfficiencyName} · -${AirportResearch.OperationsEfficiencyDailyDiscount}/day when done", small);
-                    y += 22f;
-                    GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.OperationsEfficiencyCost;
-                    if (GUI.Button(new Rect(42, y, 260, 24), $"Start research · ${AirportResearch.OperationsEfficiencyCost:N0}", button))
-                        _session.StartOperationsResearch();
-                    GUI.enabled = true;
-                    y += 28f;
-                }
-                else if (research.CanStartPassengerServices)
-                {
-                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
-                        $"Research: {AirportResearch.PassengerServicesName} · +${AirportResearch.PassengerServicesRouteBonus}/flight when done", small);
-                    y += 22f;
-                    GUI.enabled = !_simulation.IsInsolvent && _simulation.Economy.Cash >= AirportResearch.PassengerServicesCost;
-                    if (GUI.Button(new Rect(42, y, 280, 24), $"Start research · ${AirportResearch.PassengerServicesCost:N0}", button))
-                        _session.StartPassengerServicesResearch();
-                    GUI.enabled = true;
-                    y += 28f;
-                }
-                else
-                {
-                    var ops = research.OperationsEfficiencyComplete
-                        ? $"{AirportResearch.OperationsEfficiencyName} ✓"
-                        : string.Empty;
-                    var pax = research.PassengerServicesComplete
-                        ? $"{AirportResearch.PassengerServicesName} ✓ (+${AirportResearch.PassengerServicesRouteBonus}/flt)"
-                        : string.Empty;
-                    GUI.Label(new Rect(researchLabelX, y, 380 - (researchLabelX - 42), 20),
-                        $"Research: {ops}{(ops.Length > 0 && pax.Length > 0 ? " · " : string.Empty)}{pax}", small);
-                    y += 22f;
-                }
-            }
-
-            // Coach tip — Safety Yellow when the first decision is live.
-            var coachUrgent = _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0;
-            var coachStyle = coachUrgent
-                ? AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow)
-                : detail;
-            if (coachUrgent)
-            {
-                var stripe = AirsideTheme.AlertStripeBackground;
-                if (stripe != null)
-                    GUI.DrawTexture(new Rect(36, y - 2, 382, 28), stripe, ScaleMode.StretchToFill, alphaBlend: true);
-            }
-            GUI.Label(new Rect(42, y, 380, 24), FirstSessionCoachLine(), coachStyle);
-            y += 26f;
-            GUI.Label(new Rect(42, y, 380, 22),
-                earlySession
-                    ? "Space pause · Tab speed · Enter accept offer · F follow · O overview"
-                    : "Space pause · Tab speed · P priority · M mute · F follow/cycle · O overview",
-                small);
-
-            // First-session waiting meter under the coach tip.
-            if (earlySession && _simulation.Routes.Pending == null && !_showOpeningBriefing)
-            {
-                y += 24f;
-                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
-                var progress = 1f - Mathf.Clamp01(secondsToOffer / (float)AirportRoutes.FirstOfferAfterSeconds);
-                GUI.Label(new Rect(42, y, 380, 18),
-                    secondsToOffer > 0
-                        ? $"Waiting for first airline offer… {secondsToOffer}s"
-                        : "Airline offer arriving…",
-                    small);
-                y += 20f;
-                AirsideTheme.DrawProgressBar(
-                    new Rect(42, y, 360, 10),
-                    progress,
-                    AirsideTheme.CoastalBlue,
-                    new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.9f));
-            }
-            } // end !_canvasHudActive left panel
-
-            var historyLeft = Screen.width / scale - 362;
-            var accepted = _simulation.Routes.Accepted;
-            var pendingOffer = _simulation.Routes.Pending;
-            var firstDecisionOffer = pendingOffer != null && accepted.Count == 0;
-            // Canvas HUD owns the offer panel when active; IMGUI ops sits at the top-right.
-            var offerHeight = (_canvasHudActive || pendingOffer == null) ? 0f : (firstDecisionOffer ? 196f : 156f);
-            var opsTop = 22f + (offerHeight > 0f ? offerHeight + 12f : 0f);
-            // Pin the actionable offer above operations so status detail never buries it.
-            if (pendingOffer != null && !_canvasHudActive)
-                DrawRouteOffer(scale, panel, detail, small, caution, button, offerTop: 22f);
-
-            if (!_canvasHudActive)
-            {
-            var listedRoutes = accepted.Count == 0
-                ? 1
-                : Math.Min(4, accepted.Count) + (accepted.Count > 4 ? 1 : 0);
-            // Header through routes summary (~80), schedule lines, fleet (2), event tail (4).
-            var opsHeight = 80f + listedRoutes * 18f + 4f + 2 * 18f + 36f + 6f + 4 * 20f + 16f;
-            var opsRect = new Rect(historyLeft, opsTop, 340, opsHeight);
-            GUI.Box(opsRect, string.Empty, panel);
-            AirsideTheme.DrawPanelFrame(opsRect);
-            GUI.Label(new Rect(historyLeft + 20, opsTop + 14, 300, 26), "OPERATIONS", detail);
-            GUI.Label(new Rect(historyLeft + 20, opsTop + 40, 320, 20),
-                $"Routes {_simulation.Routes.Accepted.Count}  ·  {_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} scheduled flights/day  ·  ${_simulation.Routes.IncomePerFlight + _simulation.Research.RouteIncomeBonus:N0}/flight", small);
-
-            var trafficY = opsTop + 58f;
-            if (accepted.Count == 0)
-            {
-                if (pendingOffer != null)
-                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), "Offer waiting above — Accept to start income", caution);
-                else
-                {
-                    var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
-                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20),
-                        secondsToOffer > 0
-                            ? $"No routes yet — first offer in {secondsToOffer}s"
-                            : "No routes yet — offer arriving…",
-                        small);
-                }
-
-                trafficY += 18f;
-            }
-            else
-            {
-                var start = Math.Max(0, accepted.Count - 4);
-                for (var i = start; i < accepted.Count; i++)
-                {
-                    var route = accepted[i];
-                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20),
-                        $"{route.Airline} · {route.FlightsPerDay}/d → {route.Destination} · ${route.IncomePerFlight:N0}", small);
-                    trafficY += 18f;
-                }
-
-                if (start > 0)
-                {
-                    GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"+{start} earlier route(s)", small);
-                    trafficY += 18f;
-                }
-            }
-
-            trafficY += 4f;
-            foreach (var aircraft in _simulation.GroundTraffic)
-            {
-                GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 20), $"{aircraft.Id.Value}: {GroundTrafficSummary(aircraft)}", small);
-                trafficY += 18f;
-            }
-
-            if (!string.IsNullOrEmpty(_simulation.Atc.LastInstruction))
-            {
-                GUI.Label(new Rect(historyLeft + 20, trafficY, 310, 36), $"ATC · {_simulation.Atc.LastInstruction}", small);
-                trafficY += 36f;
-            }
-
-            var historyY = trafficY + 6f;
-            foreach (var entry in _simulation.EventLog.Events.Reverse().Take(4))
-            {
-                GUI.Label(new Rect(historyLeft + 20, historyY, 300, 19), $"T+{entry.OccurredAt.ElapsedSeconds}s  {entry.FlightId}  ·  {entry.Title}", small);
-                historyY += 20f;
-            }
-
-            var latest = _simulation.DailyReports.Latest;
-            if (latest != null)
-            {
-                var reportTop = historyY + 10f;
-                GUI.Box(new Rect(historyLeft, reportTop, 340, 118), string.Empty, panel);
-                GUI.Label(new Rect(historyLeft + 20, reportTop + 12, 300, 24), "DAILY REPORT", detail);
-                GUI.Label(new Rect(historyLeft + 20, reportTop + 40, 310, 20), latest.SummaryLine, small);
-                GUI.Label(new Rect(historyLeft + 20, reportTop + 60, 310, 20),
-                    $"Income ${latest.FlightIncome:N0}  ·  delays -${latest.DelayCost:N0}  ·  running -${latest.OperatingCost:N0}", small);
-                var rep = latest.ReputationChange == 0 ? "reputation flat"
-                    : latest.ReputationChange > 0 ? $"reputation +{latest.ReputationChange}"
-                    : $"reputation {latest.ReputationChange}";
-                GUI.Label(new Rect(historyLeft + 20, reportTop + 80, 310, 20),
-                    $"{rep}  ·  {latest.GroundCrew} crew", small);
-            }
-            } // end !_canvasHudActive ops panel
-
-            if (!_canvasHudActive)
-            {
-                DrawResearchToast(scale, panel, onTime);
-                DrawSaveIndicator(scale, panel, small, onTime);
-                DrawOpsToast(scale, panel, detail, onTime);
-            }
-            if (!_canvasHudActive)
-            {
-                if (_paused && !_showAwaySummary && !_showOpeningBriefing)
-                    DrawPauseOverlay(scale, panel, title, caution, small, button);
-                if (_showOpeningBriefing)
-                    DrawOpeningBriefing(scale, panel, title, detail, small, button);
-                if (_showAwaySummary)
-                    DrawAwaySummary(scale, panel, title, detail, small, button);
-                if (_simulation.IsInsolvent)
-                    DrawInsolvencyOverlay(scale, panel, title, detail, small, delayed, button);
-            }
-            GUI.matrix = previousMatrix;
-        }
-
-        private void DrawSaveIndicator(float scale, GUIStyle panel, GUIStyle small, GUIStyle onTime)
-        {
-            if (Time.unscaledTime > _saveIndicatorUntil)
-                return;
-
-            var width = 110f;
-            var height = 36f;
-            var left = Screen.width / scale - width - 24f;
-            var top = Screen.height / scale - height - 24f;
-            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 16f, top + 8f, width - 24f, 22f), "Saved", onTime);
-        }
-
-        private void DrawInsolvencyOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle delayed, GUIStyle button)
-        {
-            var width = 460f;
-            var height = 290f;
-            var left = (Screen.width / scale - width) * 0.5f;
-            var top = (Screen.height / scale - height) * 0.5f;
-            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 24, top + 22, width - 48, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(left + 24, top + 58, width - 48, 28), "Airport declared insolvent", delayed);
-            GUI.Label(new Rect(left + 24, top + 96, width - 48, 44),
-                $"Cash stayed negative across {AirportEconomy.InsolvencyConsecutiveDays} consecutive day closes. Operations have stopped; commands are refused.", detail);
-            GUI.Label(new Rect(left + 24, top + 150, width - 48, 22),
-                $"Final cash: ${_simulation.Economy.Cash:N0}  ·  Reputation {_simulation.Reputation.Score}", detail);
-            GUI.Label(new Rect(left + 24, top + 180, width - 48, 22),
-                $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
-            if (GUI.Button(new Rect(left + 100, top + 220, 260, 36), "Start a new airport", button))
-                ResetToNewAirport();
-        }
-
-        private void DrawRouteOffer(float scale, GUIStyle panel, GUIStyle detail, GUIStyle small, GUIStyle caution, GUIStyle button, float offerTop = 244f)
-        {
-            var proposal = _simulation.Routes.Pending;
-            if (proposal == null)
-                return;
-
-            var left = Screen.width / scale - 362;
-            var top = offerTop;
-            var firstDecision = _simulation.Routes.Accepted.Count == 0;
-            var height = firstDecision ? 196f : 156f;
-            var offerRect = new Rect(left, top, 340, height);
-            GUI.Box(offerRect, string.Empty, panel);
-            AirsideTheme.DrawPanelFrame(offerRect, firstDecision
-                ? new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, 0.7f)
-                : null);
-            if (firstDecision)
-            {
-                var stripe = AirsideTheme.AlertStripeBackground;
-                if (stripe != null)
-                    GUI.DrawTexture(new Rect(left, top, 340, 6f), stripe, ScaleMode.StretchToFill, alphaBlend: true);
-                // Soft pulse so the first decision panel reads as live.
-                var pulse = 0.35f + 0.25f * (0.5f + 0.5f * Mathf.Sin(
-                    Time.unscaledTime * AirsideReusableMotion.UiPulseHz * Mathf.PI * 2f));
-                var prev = GUI.color;
-                GUI.color = new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, pulse);
-                GUI.DrawTexture(new Rect(left, top, 4f, height), Texture2D.whiteTexture);
-                GUI.DrawTexture(new Rect(left + 336f, top, 4f, height), Texture2D.whiteTexture);
-                GUI.color = prev;
-            }
-
-            var routeIcon = AirsideTheme.Icon("economy", "route");
-            var titleX = left + 20f;
-            if (routeIcon != null)
-            {
-                GUI.DrawTexture(new Rect(left + 20, top + 14, 20, 20), routeIcon, ScaleMode.ScaleToFit, alphaBlend: true);
-                titleX = left + 46f;
-            }
-
-            var offerTitle = firstDecision ? "FIRST DECISION — route offer" : "ROUTE OFFER — decide now";
-            GUI.Label(new Rect(titleX, top + 14, 300, 24), offerTitle, firstDecision ? caution : detail);
-            if (firstDecision)
-            {
-                GUI.Label(new Rect(left + 20, top + 40, 310, 18),
-                    "Accept to earn cash on every completed flight.", small);
-            }
-
-            var bodyTop = firstDecision ? top + 60f : top + 42f;
-            GUI.Label(new Rect(left + 20, bodyTop, 310, 20), $"{proposal.Airline}", small);
-            GUI.Label(new Rect(left + 20, bodyTop + 20, 310, 20),
-                $"{proposal.FlightsPerDay}/day to {proposal.Destination}", small);
-            var payout = proposal.IncomePerFlight + _simulation.Reputation.IncomeBonus;
-            GUI.Label(new Rect(left + 20, bodyTop + 40, 310, 20),
-                $"+${payout:N0} per completed flight", small);
-            var meetsReputation = _simulation.Reputation.Score >= proposal.ReputationRequired;
-            var fitsCapacity = _simulation.Routes.FitsScheduleCapacity(_simulation.Capacity.StandCount);
-            string status;
-            var blocked = !meetsReputation || !fitsCapacity;
-            if (!meetsReputation)
-                status = $"Needs reputation {proposal.ReputationRequired} (have {_simulation.Reputation.Score})";
-            else if (!fitsCapacity)
-                status = $"Schedule full ({_simulation.Routes.ScheduledFlightsPerDay}/{_simulation.MaxScheduledFlightsPerDay} flights/day)";
-            else
-                status = $"Expires in {proposal.SecondsRemaining(_clock.Now)}s";
-            GUI.Label(new Rect(left + 20, bodyTop + 60, 310, 20), status, blocked ? caution : small);
-
-            var buttonTop = bodyTop + 82f;
-            GUI.enabled = !_simulation.IsInsolvent && meetsReputation && fitsCapacity;
-            var acceptLabel = firstDecision ? "Accept route  (Enter)" : "Accept route";
-            var acceptWidth = firstDecision ? 190f : 150f;
-            if (GUI.Button(new Rect(left + 20, buttonTop, acceptWidth, firstDecision ? 32f : 24f), acceptLabel, button))
-                _session.AcceptRoute();
-            GUI.enabled = true;
-            var declineTop = firstDecision ? buttonTop : buttonTop;
-            var declineLeft = firstDecision ? left + 220f : left + 178f;
-            var declineW = firstDecision ? 100f : 130f;
-            var declineH = firstDecision ? 32f : 24f;
-            if (GUI.Button(new Rect(declineLeft, declineTop, declineW, declineH), "Decline", button))
-                _session.DeclineRoute();
-        }
-
-
-        private void MaybeShowResearchToast()
-        {
-            var completedId = _simulation.Research.LastCompletedProjectId;
-            if (string.IsNullOrEmpty(completedId))
-                return;
-
-            if (completedId == AirportResearch.PassengerServicesId)
-            {
-                _researchToast =
-                    $"Research complete — {AirportResearch.PassengerServicesName} (+${AirportResearch.PassengerServicesRouteBonus}/flight)";
-            }
-            else
-            {
-                _researchToast =
-                    $"Research complete — {AirportResearch.OperationsEfficiencyName} (-${AirportResearch.OperationsEfficiencyDailyDiscount}/day)";
-            }
-
-            _researchToastUntil = Time.unscaledTime + 8f;
-        }
-
-        private void DrawResearchToast(float scale, GUIStyle panel, GUIStyle onTime)
-        {
-            if (string.IsNullOrEmpty(_researchToast) || Time.unscaledTime > _researchToastUntil)
-                return;
-
-            var width = 520f;
-            var height = 64f;
-            var left = (Screen.width / scale - width) * 0.5f;
-            GUI.Box(new Rect(left, 18f, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 20f, 34f, width - 40f, 28f), _researchToast, onTime);
-        }
-
-        private void MaybeShowOpsToast()
-        {
-            var events = _simulation.EventLog.Events;
-            if (events.Count <= _seenEventCount)
-                return;
-
-            var latest = events[events.Count - 1];
-            _seenEventCount = events.Count;
-            var flight = string.IsNullOrEmpty(latest.FlightId) ? string.Empty : $"{latest.FlightId} · ";
-            _opsToast = $"{flight}{latest.Title}";
-            _opsToastUntil = Time.unscaledTime + 4.5f;
-        }
-
-        private void DrawOpsToast(float scale, GUIStyle panel, GUIStyle detail, GUIStyle onTime)
-        {
-            if (string.IsNullOrEmpty(_opsToast) || Time.unscaledTime > _opsToastUntil)
-                return;
-
-            var width = 440f;
-            var height = 52f;
-            var left = (Screen.width / scale - width) * 0.5f;
-            var top = Screen.height / scale - height - 28f;
-            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 18f, top + 14f, width - 36f, 26f), _opsToast, onTime);
-        }
-
-
-        private void DrawPauseOverlay(float scale, GUIStyle panel, GUIStyle title, GUIStyle caution, GUIStyle small, GUIStyle button)
-        {
-            // Presentation-only dimmer while simulation time is paused.
-            var width = Screen.width / scale;
-            var height = Screen.height / scale;
-            var prev = GUI.color;
-            GUI.color = new Color(0.05f, 0.07f, 0.09f, 0.35f);
-            GUI.DrawTexture(new Rect(0f, 0f, width, height), Texture2D.whiteTexture);
-            GUI.color = prev;
-
-            var boxW = 320f;
-            var boxH = 140f;
-            var left = (width - boxW) * 0.5f;
-            var top = (height - boxH) * 0.5f;
-            GUI.Box(new Rect(left, top, boxW, boxH), string.Empty, panel);
-            GUI.Label(new Rect(left + 24f, top + 18f, boxW - 48f, 36f), "PAUSED", title);
-            GUI.Label(new Rect(left + 24f, top + 52f, boxW - 48f, 22f), "Space to resume", caution);
-            if (GUI.Button(new Rect(left + 50f, top + 88f, 220f, 30f), "Start new airport", button))
-                ResetToNewAirport();
-        }
-
-        private void DrawOpeningBriefing(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
-        {
-            var screenW = Screen.width / scale;
-            var screenH = Screen.height / scale;
-            var splash = AirsideTheme.SplashDawn;
-            if (splash != null)
-            {
-                // Full-bleed dawn splash; briefing card sits in the quiet left/centre area.
-                GUI.DrawTexture(new Rect(0f, 0f, screenW, screenH), splash, ScaleMode.ScaleAndCrop, alphaBlend: false);
-                var prev = GUI.color;
-                GUI.color = new Color(0.05f, 0.07f, 0.09f, 0.28f);
-                GUI.DrawTexture(new Rect(0f, 0f, screenW, screenH), Texture2D.whiteTexture);
-                GUI.color = prev;
-            }
-
-            var width = 500f;
-            var height = 360f;
-            var left = (screenW - width) * 0.5f;
-            var top = (screenH - height) * 0.5f;
-            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            var wordmark = AirsideTheme.WordmarkLight;
-            if (wordmark != null)
-                GUI.DrawTexture(new Rect(left + 24, top + 14, 280, 70), wordmark, ScaleMode.ScaleToFit, alphaBlend: true);
-            else
-                GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(left + 24, top + 88, width - 48, 24), "You run this regional airport", detail);
-            GUI.Label(new Rect(left + 24, top + 118, width - 48, 44),
-                $"Aircraft move on their own. Your job is cash, reputation and capacity at {_simulation.Location.Name}.", detail);
-            GUI.Label(new Rect(left + 24, top + 170, width - 48, 22), "First useful decision", detail);
-            GUI.Label(new Rect(left + 24, top + 196, width - 48, 44),
-                $"In about {AirportRoutes.FirstOfferAfterSeconds} seconds an airline will offer a scheduled route. Accept it to earn money on every completed flight.", small);
-            GUI.Label(new Rect(left + 24, top + 248, width - 48, 40),
-                "Watch the right-hand OPERATIONS panel. Watch cash and delays on the left. Press Enter to Accept the first offer.", small);
-            GUI.Label(new Rect(left + 24, top + 292, width - 48, 20),
-                "Space / Enter to begin  ·  Tab = 4× speed", small);
-            if (GUI.Button(new Rect(left + 140, top + 318, 220, 30), "Begin operations", button))
-                DismissOpeningBriefing();
-        }
-
-        private void DismissOpeningBriefing()
-        {
-            _showOpeningBriefing = false;
-            _paused = false;
-            if (_commercialAircraft != null && _commercialAircraft.Length > 0)
-            {
-                _cameraController.SetFollowTargets(_commercialAircraft);
-                _cameraController.StartFollowFirst();
-            }
-        }
-
-        private string FirstSessionCoachLine()
-        {
-            if (_simulation.IsInsolvent)
-                return "Airport insolvent — operations frozen.";
-            if (_showOpeningBriefing)
-                return "Read the briefing, then begin — first route offer arrives soon.";
-            if (_simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
-                return "Tip: First useful decision — Accept the route offer (Enter).";
-            if (_simulation.Routes.Pending != null)
-                return "Tip: Accept a route offer (Enter) for recurring flight income.";
-            if (_simulation.Routes.Accepted.Count == 0)
-            {
-                var secondsToOffer = Math.Max(0, AirportRoutes.FirstOfferAfterSeconds - _clock.Now.ElapsedSeconds);
-                if (secondsToOffer > 0)
-                    return $"Tip: First route offer in {secondsToOffer}s — watch the top-right panel.";
-                return "Tip: Airlines will offer routes soon — watch the right panel.";
-            }
-            if (_simulation.Flights.Count == 0)
-                return "Tip: Accepted routes spawn commercial flights automatically.";
-            if (_simulation.ActiveAircraft.Phase == AircraftPhase.AtStand)
-                return "Tip: Hire crew or priority crew to speed turnarounds.";
-            return "Tip: Watch delays — reputation and cash follow on-time ops.";
-        }
-
-        private void MaybeShowFirstSessionDecisionToasts()
-        {
-            if (_showOpeningBriefing || _showAwaySummary)
-                return;
-
-            if (!_routeOfferToastShown && _simulation.Routes.Pending != null && _simulation.Routes.Accepted.Count == 0)
-            {
-                _opsToast = "Route offer ready — Accept on the right for recurring income";
-                _opsToastUntil = Time.unscaledTime + 6f;
-                _routeOfferToastShown = true;
-            }
-
-            var accepted = _simulation.Routes.Accepted.Count;
-            if (accepted > _acceptedRouteCountSeen)
-            {
-                var latest = _simulation.Routes.Accepted[accepted - 1];
-                var bonus = _simulation.Research.RouteIncomeBonus;
-                _opsToast =
-                    $"Route accepted — +${latest.IncomePerFlight + bonus:N0} per completed flight";
-                _opsToastUntil = Time.unscaledTime + 6f;
-                _acceptedRouteCountSeen = accepted;
-            }
-            else if (accepted < _acceptedRouteCountSeen)
-            {
-                _acceptedRouteCountSeen = accepted;
-            }
-
-            var routeIncome = _simulation.Economy.TotalRouteIncome;
-            if (!_firstRouteIncomeToastShown && routeIncome > _routeIncomeSeen)
-            {
-                var gained = routeIncome - _routeIncomeSeen;
-                _opsToast = $"First route payout +${gained:N0} — completed flights now pay you";
-                _opsToastUntil = Time.unscaledTime + 7f;
-                _firstRouteIncomeToastShown = true;
-            }
-
-            _routeIncomeSeen = routeIncome;
-        }
-
-        private void ResetToNewAirport()
-        {
-            try
-            {
-                var path = _SavePath;
-                if (File.Exists(path))
-                    File.Delete(path);
-                if (File.Exists(path + ".previous"))
-                    File.Delete(path + ".previous");
-                if (File.Exists(path + ".temporary"))
-                    File.Delete(path + ".temporary");
-            }
-            catch (IOException)
-            {
-                // Best-effort wipe; reload still attempts a clean create.
-            }
-
-            UnityEngine.SceneManagement.SceneManager.LoadScene(
-                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
-        }
-
-        private void DrawAwaySummary(float scale, GUIStyle panel, GUIStyle title, GUIStyle detail, GUIStyle small, GUIStyle button)
-        {
-            var summary = _session.LastAwaySummary;
-            var width = 460f;
-            var height = 348f;
-            var left = (Screen.width / scale - width) * 0.5f;
-            var top = (Screen.height / scale - height) * 0.5f;
-            GUI.Box(new Rect(left, top, width, height), string.Empty, panel);
-            GUI.Label(new Rect(left + 24, top + 18, width - 48, 34), "AIRSIDE", title);
-            GUI.Label(new Rect(left + 24, top + 50, width - 48, 22), "Welcome back to operations", detail);
-            GUI.Label(new Rect(left + 24, top + 82, width - 48, 22),
-                $"Airport operated for {FormatDuration(summary.AwaySeconds)}", detail);
-            GUI.Label(new Rect(left + 24, top + 112, width - 48, 22),
-                $"Flights completed: {summary.FlightsCompleted}", detail);
-
-            var cashStyle = summary.CashChange >= 0
-                ? AirsideTheme.TextStyle(new GUIStyle(detail), AirsideTheme.ClearGreen)
-                : AirsideTheme.TextStyle(new GUIStyle(detail), AirsideTheme.SignalRed);
-            GUI.Label(new Rect(left + 24, top + 140, width - 48, 22),
-                $"Cash change: {summary.CashChange:+$#,0;-$#,0;$0}", cashStyle);
-            GUI.Label(new Rect(left + 24, top + 168, width - 48, 22),
-                $"Route income: ${summary.RouteIncome:N0}", detail);
-            GUI.Label(new Rect(left + 24, top + 196, width - 48, 22),
-                $"Delay + running costs: ${summary.DelayCost + summary.OperatingCost:N0}", detail);
-            GUI.Label(new Rect(left + 24, top + 224, width - 48, 22),
-                $"Reputation: {summary.ReputationChange:+0;-0;0}  (now {_simulation.Reputation.Score})", detail);
-            if (summary.RecoveredPreviousSave)
-                GUI.Label(new Rect(left + 24, top + 252, width - 48, 20), "Recovered the previous safe copy.", small);
-            else if (summary.ClockMovedBackwards)
-                GUI.Label(new Rect(left + 24, top + 252, width - 48, 20), "Device clock moved backwards; no time was added.", small);
-            else
-                GUI.Label(new Rect(left + 24, top + 252, width - 48, 20),
-                    $"{_simulation.Location.Name} · {_simulation.Location.Region}", small);
-            if (GUI.Button(new Rect(left + 130, top + 292, 200, 32), "Continue operations", button))
-                _showAwaySummary = false;
-        }
-
-        private static string FormatDuration(long seconds)
-        {
-            var span = TimeSpan.FromSeconds(seconds);
-            if (span.TotalDays >= 1)
-                return $"{(int)span.TotalDays}d {span.Hours}h";
-            if (span.TotalHours >= 1)
-                return $"{(int)span.TotalHours}h {span.Minutes}m";
-            if (span.TotalMinutes >= 1)
-                return $"{(int)span.TotalMinutes}m {span.Seconds}s";
-            return $"{span.Seconds}s";
-        }
-
-        private void OnApplicationPause(bool paused)
-        {
-            if (paused)
-                SaveSession();
-        }
-
-        private void OnApplicationQuit()
-        {
-            SaveSession();
-        }
-
-        private void SaveSession()
-        {
-            _session?.Save(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-            _saveIndicatorUntil = Time.unscaledTime + 1.6f;
-        }
-
-        private static string GroundTrafficSummary(GroundTrafficAircraft traffic)
-        {
-            if (traffic.IsHolding)
-            {
-                var waitingFor = string.IsNullOrEmpty(traffic.DesiredSegment.Value) ? "clearance" : traffic.DesiredSegment.Value;
-                return $"{traffic.CurrentPhase} — holding for {waitingFor}";
-            }
-
-            return traffic.CurrentPhase;
         }
 
         private void BuildLightingAndCamera()
@@ -6866,7 +5159,7 @@ namespace Airside.Presentation
 
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
                 // Freeze when the sim is paused so apron life matches aircraft/GSE.
-                if (_paused)
+                if (SimulationFrozen)
                     continue;
 
                 if (walker)
@@ -10455,17 +8748,6 @@ namespace Airside.Presentation
             block.transform.localPosition = localPosition;
         }
 
-        private static Transform BuildGroundTrafficAircraft(string label)
-        {
-            var root = BuildAircraft(
-                $"Ground traffic {label}",
-                new Color(0.82f, 0.55f, 0.16f),
-                "Textures/Decals/dc_livery_airside_traffic_v01.png");
-            root.localScale = new Vector3(0.82f, 0.82f, 0.82f);
-            root.position = new Vector3(8f, 0.7f, 9f);
-            return root;
-        }
-
         private static Transform BuildServiceVehicle(string name, Color color, Vector3 scale, string artRelativePath = null)
         {
             var root = new GameObject(name).transform;
@@ -12543,146 +10825,6 @@ namespace Airside.Presentation
         }
 
 
-
-        private GUIStyle ReputationBandStyle(GUIStyle small, GUIStyle onTime, GUIStyle caution, GUIStyle delayed)
-        {
-            // Presentation only — band names come from AirportReputation.Band.
-            return _simulation.Reputation.Band switch
-            {
-                "Trusted" => onTime,
-                "Established" => small,
-                "Provisional" => caution,
-                _ => delayed
-            };
-        }
-
-        private string CommercialFlightHudLine()
-        {
-            if (_simulation.Flights.Count == 0)
-                return "No commercial flights";
-
-            var parts = new string[_simulation.Flights.Count];
-            for (var index = 0; index < _simulation.Flights.Count; index++)
-            {
-                var flight = _simulation.Flights[index];
-                parts[index] =
-                    $"{flight.AircraftId} @ {flight.AssignedStand.Value}";
-            }
-
-            return _simulation.Flights.Count == 1
-                ? $"Flight {parts[0]}"
-                : $"Flights {string.Join(" · ", parts)}";
-        }
-
-        private string CommercialPhaseHudLine()
-        {
-            if (_simulation.Flights.Count == 0)
-                return "No active phase";
-
-            if (_simulation.Flights.Count == 1)
-            {
-                var op = _simulation.ActiveAircraft;
-                return $"{FormatPhase(op.Phase)}  ·  {op.SecondsRemaining(_clock.Now)}s";
-            }
-
-            var parts = new string[_simulation.Flights.Count];
-            for (var index = 0; index < _simulation.Flights.Count; index++)
-            {
-                var flight = _simulation.Flights[index];
-                var op = flight.Operation;
-                parts[index] =
-                    $"{flight.AircraftId}: {FormatFlightPhase(flight)} {op.SecondsRemaining(_clock.Now)}s";
-            }
-
-            return string.Join("  ·  ", parts);
-        }
-
-        private string FormatFlightPhase(CommercialFlight flight)
-        {
-            if (string.Equals(_simulation.Atc.LastClearedFlight, flight.AircraftId, StringComparison.Ordinal))
-            {
-                switch (_simulation.Atc.ActiveClearance)
-                {
-                    case AtcClearance.LineUpAndWait:
-                        return "Line up and wait 09";
-                    case AtcClearance.NumberTwoLanding:
-                        return "Number two — approach";
-                    case AtcClearance.MinimumApproachSpeed:
-                        return "Min approach speed";
-                    case AtcClearance.HoldShortAlpha:
-                        return "Hold short Alpha";
-                    case AtcClearance.ContinueTaxi:
-                        return _simulation.Atc.LastInstruction != null
-                            && _simulation.Atc.LastInstruction.IndexOf("to the apron", StringComparison.Ordinal) >= 0
-                            ? "Continue taxi to apron"
-                            : "Continue taxi via Alpha";
-                    case AtcClearance.GiveWayTaxiing:
-                        return "Give way — taxiing traffic";
-                    case AtcClearance.OrbitLeft:
-                        return "Orbit left — sequencing";
-                    case AtcClearance.RadarContact:
-                        return "Radar contact";
-                    case AtcClearance.NumberTwoDeparture:
-                        return "Number two — departure";
-                    case AtcClearance.GoAround:
-                        return "Go around — left circuit 1000 ft";
-                    case AtcClearance.PushbackApproved:
-                        return "Pushback approved";
-                    case AtcClearance.ReadyForDeparture:
-                        return "Hold short — expect departure";
-                    case AtcClearance.RunwayVacated:
-                        return "Runway vacated";
-                    case AtcClearance.ExpectLanding:
-                        return "Expect landing clearance";
-                    case AtcClearance.GroundHold:
-                        return "Hold position";
-                    case AtcClearance.HoldApron:
-                        return "Hold on apron";
-                    case AtcClearance.ReportEstablished:
-                        return "Report established final";
-                    case AtcClearance.ShortFinal:
-                        return "Short final 09";
-                    case AtcClearance.ClearedToLand:
-                        return "Number one — cleared to land";
-                    case AtcClearance.ClearedForTakeoff:
-                        return "Number one — cleared for takeoff";
-                    case AtcClearance.FrequencyChange:
-                        return "Frequency change approved";
-                    case AtcClearance.TrafficAdvisory:
-                        return "Traffic — hold short";
-                    case AtcClearance.ReportVacated:
-                        return "Report runway vacated";
-                    case AtcClearance.TaxiToHoldShort:
-                        return "Taxi to holding point 09";
-                    case AtcClearance.OnStand:
-                        return "On stand — shutdown";
-                    case AtcClearance.TaxiToStand:
-                        return "Taxi to stand via Alpha";
-                    case AtcClearance.ContactGround:
-                        return "Contact Ground";
-                    case AtcClearance.EngineStart:
-                        return "Engine start approved";
-                    case AtcClearance.ReportAirborne:
-                        return "Report airborne";
-                    case AtcClearance.JoinLeftDownwind:
-                        return "Join left downwind 09";
-                    case AtcClearance.ReportMidDownwind:
-                        return "Report mid-downwind 09";
-                    case AtcClearance.ReportBase:
-                        return "Report base 09";
-                    case AtcClearance.ReportFinal:
-                        return "Report final 09";
-                    case AtcClearance.ContinueApproach:
-                        return "Continue approach 09";
-                    case AtcClearance.ConditionalLanding:
-                        return "Cleared when vacated";
-                    case AtcClearance.HoldShortRunway:
-                        return "Hold short runway 09";
-                }
-            }
-
-            return FormatPhase(flight.Operation.Phase);
-        }
 
         private static string FormatPhase(AircraftPhase phase) => phase switch
         {

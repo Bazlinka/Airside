@@ -1,5 +1,23 @@
 ## Where to resume — session handoff
 
+- **2026-09-12 Claude strip to a bare circuit sandbox (ADR 0041):** the whole
+  objective layer is gone — economy, routes, reputation, staffing, research,
+  capacity, daily reports, turnarounds, event log, ATC phraseology, ground
+  traffic — and so is the `Persistence` assembly. The game starts fresh on
+  approach every launch and saves nothing. `AirportSimulation` now only drives
+  one aircraft round the circuit. Both old HUDs are deleted; the HUD is one
+  IMGUI bar with pause, follow, 1×, 2×, 4× plus a pause menu (Resume, Restart
+  circuit, Quit). `forceSingleInstance` is on and Quit really quits.
+- **Evidence:** `scripts/test-domain.sh` **89/89**. `HudLayout` checked from
+  320×240 to 3456×2168 against a Rect/Mathf shim; those cases are committed in
+  `PresentationLayoutTests`.
+- **Next gate — required:** Presentation could not be compiled on the Linux VM
+  (no Unity, no committed UnityEngine shim). A real Unity compile,
+  `scripts/test-unity.sh`, `scripts/build-mac.sh` and a packaged-player check of
+  the control bar, pause menu, 2× rate and single-instance quit must all pass
+  before this is trusted. Aircraft visuals were deliberately untouched, so any
+  change in how the aeroplane looks or animates is a regression.
+
 - **2026-09-12 Codex consolidation and Mac validation:** `main` now records every
   remaining remote branch tip in its history while retaining the latest Adelaide
   pavement and AIR-001 v02 tree. Obsolete branch snapshots can be deleted without
@@ -106,24 +124,18 @@
 
 ## Current milestone
 
-Toward the first playable airport. The airport sits at a named location
-(Kingscote, Kangaroo Island by default; Port Lincoln and Coober Pedy also
-available) and runs a day/night cycle — one simulated day every 20 real minutes,
-driving the sun and ambient light and shown on the HUD. Airlines propose scheduled routes on a timer; the player accepts (or declines) an offer and every
-completed flight then pays a recurring per-flight amount. Schedule demand is capped by stand
-capacity (`StandCount × 6` flights/day) so acceptance cannot outrun the airfield. The airport's reputation
-(0–100) rises with on-time departures and falls with delays; airlines gate their
-proposals on it and pay more when it is high. Deterministic weather changes
-through the day and, with a base fee and crew payroll, is charged as a daily
-running cost — so the airport now has expenses it must cover, not just income.
-The player employs ground crew: the baseline runs turnarounds normally, extra
-crew speed them up, and understaffing stretches them into delays. The player can
-buy a third stand for 8000 — the first buildable capacity upgrade. Research unlocks
-progression: Operations Efficiency (−$100/day running cost), then Passenger Services
-(+$75 route income per departed commercial). If cash stays negative across three
-consecutive day closes, the airport is declared insolvent and the simulation stops.
+A bare circuit sandbox. One ATR-class aircraft flies a continuous circuit at
+Adelaide (YPAD) — approach, landing, rollout to rest, takeoff, fly-out — and
+recycles onto a fresh approach. The airport sits at a named location (Kingscote
+by default; Port Lincoln and Coober Pedy also available) and runs a day/night
+cycle, one simulated day every 20 real minutes, driving the sun and ambient
+light. Deterministic weather changes through the day and drives the wet-surface,
+rain and spray presentation.
 
-When accepted route demand reaches four flights/day, a second commercial aircraft operates alongside the first (stands never double-book). Still current: simultaneous traffic. A ground-traffic fleet shares the airfield with the primary flight: `GT-201` runs a repeating arrival / stand dwell / departure schedule on whichever stand the primary flight is not using, and `GT-202` repositions in and out via a run-up bay without using a stand. Fleet aircraft reserve a single-file corridor lock for the whole time they are on the A1/A2 taxiway, so they queue rather than meet head-on. The primary flight keeps absolute priority on the segments themselves; a hold beyond ten seconds is explained by the traffic wait monitor. The design is deadlock-free by construction.
+There are no objectives, no economy, no scoring and no progression, and nothing
+is saved between runs (ADR 0041). The player has exactly five controls — pause,
+follow, and 1×/2×/4× time — plus a pause menu, and free camera orbit, zoom and
+pan. What is on screen is the aeroplane, the runway and the ground.
 
 ## Visual asset contract
 
@@ -142,38 +154,41 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
   the runtime camera; Medium uses 2× MSAA + SMAA. Vsync is on (`vSyncCount` 1).
 - The post stack runs a deliberate grade only — the template default profile's depth of field, motion blur, lens distortion, chromatic aberration, lens flare and panini are pinned off.
 - The simulation keeps running when the window loses focus (`runInBackground`).
-- Ground traffic only uses stands the airport has actually built; with every built stand occupied by a commercial it holds off-field (leaving the corridor free) rather than taxiing to an unbuilt Stand 3.
-- Every reported delay names a cause the player can act on — understaffing included, not only cabin-cleaning disruptions.
-- The daily finance brief projects income from every commercial aircraft currently operating, not just the first.
-- A player command issued before the first simulated tick (second 0) is replayed on load like any other.
 
 ## Invariants
 
 - Domain and simulation rules remain independent of Unity scenes.
-- Any save-schema change ships with an explicit version bump and a migration path (see `AirsideSaveData.Migrate`).
+- Nothing persists between runs; there is no save file and no schema to migrate.
 - Time comes from an injected clock.
-- Random choices come from a seeded source.
-- Runways, taxiways and stands must be reserved before use.
+- Runways, taxiways and stands must be reserved before use, and a lone aircraft
+  must never block itself (`AirportSimulation.ReservationConflicts` stays zero).
 - Frame rate must not change simulation outcomes.
+- Pausing and opening the pause menu freeze every presentation rate together
+  (`SimulationFrozen`), not just the aircraft.
+- Exactly one `AirsidePrototype` may exist; a duplicate bootstrap destroys itself.
 - No external data or asset enters the project without a recorded licence.
 
 ## Run it
 
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
-- Space: pause or resume simulation
-- Tab: switch between 1× and 4× time
+On-screen controls sit in a bar at the bottom centre: **Pause · Follow · 1× ·
+2× · 4×**. Selecting a rate also clears a pause.
+
+- Escape: open or close the pause menu (Resume, Restart circuit, Quit)
+- Space or P: pause or resume
+- 1 / 2 / 3: normal, 2× and 4× time
+- F: toggle follow camera
+- M: mute audio
 - Right-drag: orbit camera
 - Scroll: zoom
 - WASD: pan overview
-- F: follow aircraft (press again to cycle commercials)
-- O: return to overview
-- P: hire a priority turnaround crew while the aircraft is at stand
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
-Without a Mac Unity editor, `scripts/test-domain.sh` runs the same Domain/Simulation/
-Persistence EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a fast
-supplementary check, not a replacement for a real Unity run before merging.
+Without a Mac Unity editor, `scripts/test-domain.sh` runs the same
+Domain/Simulation EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a
+fast supplementary check, not a replacement for a real Unity run before merging.
+It does not cover Presentation, which needs UnityEngine.
 
 ## Current evidence
 

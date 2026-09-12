@@ -4,7 +4,6 @@
   "references": [
     "Airside.Domain",
     "Airside.Simulation",
-    "Airside.Persistence",
     "Unity.InputSystem",
     "UnityEngine.UI",
     "UnityEngine.UIElementsModule",

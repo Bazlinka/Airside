@@ -88,12 +88,31 @@ def patch(z, theta, half_z, half_theta, offset=.015):
 
 
 def surface_quad(corners, offset=.022):
-    """Thin four-corner pane fitted directly to the changing nose surface."""
-    front=np.asarray([surface(z,np.deg2rad(theta),offset) for z,theta in corners],np.float32)
-    back=np.asarray([surface(z,np.deg2rad(theta),offset-.010) for z,theta in corners],np.float32)
-    verts=np.vstack([front,back]);faces=[0,1,2,0,2,3,4,6,5,4,7,6]
-    for i in range(4):
-        j=(i+1)%4;faces.extend([i,4+j,j,i,4+i,4+j])
+    """Thin planar pane fitted against the local fuselage surface.
+
+    A four-point sample of a curved fuselage is not coplanar. Sending that raw
+    quad to the renderer creates a visible diagonal fold, which made the glass
+    read as chevrons or cracked tiles. Real pressure-cabin glazing is flat, so
+    project the sampled corners onto their best-fit plane and give the pane a
+    small, consistently inward thickness.
+    """
+    sampled=np.asarray([surface(z,np.deg2rad(theta),offset) for z,theta in corners],np.float64)
+    centre=sampled.mean(axis=0)
+    _,_,basis=np.linalg.svd(sampled-centre,full_matrices=False)
+    normal=basis[-1]
+    mean_theta=np.deg2rad(np.mean([theta for _,theta in corners]))
+    outward=np.array([np.cos(mean_theta),np.sin(mean_theta),0.0])
+    if np.dot(normal,outward)<0:
+        normal=-normal
+    front=sampled-((sampled-centre)@normal)[:,None]*normal
+    front=front+normal*.008
+    back=front-normal*.010
+    front=front.astype(np.float32);back=back.astype(np.float32)
+    verts=np.vstack([front,back]);count=len(corners);faces=[]
+    for i in range(1,count-1):
+        faces.extend([0,i,i+1,count,count+i+1,count+i])
+    for i in range(count):
+        j=(i+1)%count;faces.extend([i,count+j,j,i,count+i,count+j])
     return verts,np.asarray(faces,np.uint16)
 
 def profile_prism(name_points, half_width):
@@ -169,10 +188,13 @@ def final_meshes():
         if name.startswith(('cockpit_', 'windscreen_', 'cabin_window_')):
             del meshes[name]
     cockpit_panes={
-        'windscreen_l':[(8.98,104),(8.98,126),(9.72,120),(9.84,102)],
-        'windscreen_r':[(8.98,54),(9.84,78),(9.72,60),(8.98,76)],
-        'cockpit_side_l':[(8.72,132),(8.72,157),(9.40,151),(9.62,126)],
-        'cockpit_side_r':[(8.72,23),(9.62,54),(9.40,29),(8.72,48)],
+        # Broad ATR-style forward panes, ordered around each perimeter. The
+        # near-vertical inner edges create a slim centre post; the outer edges
+        # meet the side panes without the earlier arrowhead-shaped gaps.
+        'windscreen_l':[(8.72,91.5),(8.72,118),(9.78,114),(10.02,92)],
+        'windscreen_r':[(8.72,62),(8.72,88.5),(10.02,88),(9.78,66)],
+        'cockpit_side_l':[(8.48,121),(8.48,149),(9.48,143),(9.78,117)],
+        'cockpit_side_r':[(8.48,31),(8.48,59),(9.78,63),(9.48,37)],
     }
     for name,corners in cockpit_panes.items():
         meshes[name]=surface_quad(corners)
@@ -180,8 +202,16 @@ def final_meshes():
     # Thirteen evenly pitched, fitted cabin panes per side. Insets between each
     # pane stay body-coloured so the window row reads cleanly from overview.
     for i,z in enumerate((5.55,4.68,3.81,2.94,2.07,1.20,.33,-.54,-1.41,-2.28,-3.15,-4.02,-4.89),1):
-        for prefix,theta in [('cabin_window_',np.deg2rad(158)),('cabin_window_r',np.deg2rad(22))]:
-            meshes[prefix+str(i)]=patch(z,theta,.205,.145,.020)
+        # Restrained corner cuts keep the silhouette readable without the old
+        # concentric-ring tessellation that made each pane look shattered.
+        meshes[f'cabin_window_{i}']=surface_quad([
+            (z-.19,148),(z-.15,145.5),(z+.15,145.5),(z+.19,148),
+            (z+.19,156),(z+.15,158.5),(z-.15,158.5),(z-.19,156)
+        ],.021)
+        meshes[f'cabin_window_r{i}']=surface_quad([
+            (z-.19,24),(z-.15,21.5),(z+.15,21.5),(z+.19,24),
+            (z+.19,32),(z+.15,34.5),(z-.15,34.5),(z-.19,32)
+        ],.021)
 
     # Proper front passenger and aft cargo door positions. A slightly larger
     # grey backing patch creates a consistent recessed frame without floating

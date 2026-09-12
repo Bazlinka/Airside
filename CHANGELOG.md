@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **BRD-002 app icon:** 1024² Airside Standalone/macOS icon (runway-A mark on
+  Runway Ink, no baked text) generated via ChatGPT image path, registered as
+  BRD-002, and set as the default Player icon. Candidate + Brand PNG + prompt
+  evidence committed; Dock/Finder appearance still needs a Mac Unity build to
+  verify.
+
 - **Consolidate Airside on one validated `main`.** Every remaining branch tip is
   retained in `main` history so obsolete branch refs can be removed without losing
   work, while the current Adelaide pavement and AIR-001 v02 tree stays authoritative.

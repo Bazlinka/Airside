@@ -1,5 +1,10 @@
 ## Where to resume — session handoff
 
+- **2026-09-12 Cursor app icon (main):** BRD-002 `airside_app_icon_v01.png` is
+  on `main` under Brand + candidates, wired as the default Standalone Player
+  icon (`guid d7022c2c4a14457c8d291f16ba58e04a`). Prompt evidence in
+  `docs/art/prompts/brd-002-app-icon-generation-2026-09-12.md`. Next verify:
+  Mac Unity build → Dock / Finder / .app icon. No simulation change.
 - **2026-09-12 Codex consolidation and Mac validation:** `main` now records every
   remaining remote branch tip in its history while retaining the latest Adelaide
   pavement and AIR-001 v02 tree. Obsolete branch snapshots can be deleted without
@@ -14,7 +19,6 @@
   could not run because the standalone .NET 8 SDK is not installed on this Mac;
   Unity compiled and executed the same project tests. Next gate is packaged-player
   visual inspection of the Adelaide pavement and AIR-001 v02 motion.
-
 - **2026-09-12 Codex aircraft finish:** branch `feature/atr42-visual-finish`,
   layered on the movement-fix branch below. AIR-001 v02 is preferred, with v01
   and v06 fallbacks. GlTF and bin ship in both Art and StreamingAssets; the new

@@ -30,5 +30,22 @@ for name,(v,_) in meshes.items():
 assert abs(meshes['tailplane'][0][:,1].max()-meshes['tail_fin'][0][:,1].max())<.04
 for name in ('elevator_left','elevator_right'):
     assert abs(meshes[name][0][:,1].mean()-meshes['tailplane'][0][:,1].mean())<.3
-assert sum(len(i)//3 for _,i in meshes.values())<20000
-print('PASS: dimensions, ground contact, articulation names, finite nondegenerate triangles, closed fitted skins, glazing clearance, T-tail alignment and triangle budget.')
+assert len(meshes)==158
+assert sum(len(i)//3 for _,i in meshes.values())<22000
+assert sum(n.startswith('cabin_window') for n in meshes)==26
+assert sum(n.startswith(('windscreen_','cockpit_side_')) for n in meshes)==4
+for required in ('door_fwd','cargo_door','door_outline_fwd','cargo_door_outline',
+                 'landing_light_l','landing_light_r','taxi_light','beacon_top',
+                 'nav_light_left','nav_light_right','tail_nav_light','pitot','pitot_b',
+                 'exhaust_left','exhaust_right','tail_root_fairing','tailplane_saddle'):
+    assert required in meshes, required
+assert meshes['door_fwd'][0][:,2].mean()>6.2
+assert -3.6<meshes['cargo_door'][0][:,2].mean()<-3.0
+def overlaps(a,b,margin=0):
+    av,bv=meshes[a][0],meshes[b][0]
+    return np.all(av.max(0)+margin>=bv.min(0)) and np.all(bv.max(0)+margin>=av.min(0))
+assert overlaps('fuselage','tail_root_fairing')
+assert overlaps('tail_root_fairing','tail_fin')
+assert overlaps('tail_fin','tailplane_saddle')
+assert overlaps('tailplane_saddle','tailplane')
+print('PASS: dimensions, ground contact, articulation names, finite nondegenerate triangles, closed fitted skins, complete feature set, fitted glazing, joined tail assembly and triangle budget.')

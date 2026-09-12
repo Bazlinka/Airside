@@ -80,36 +80,75 @@ def patch(z, theta, half_z, half_theta, offset=.015):
     return np.array(verts,np.float32),np.array(faces,np.uint16)
 
 
+
+def profile_prism(name_points, half_width):
+    """Closed, thin fairing extruded across X from a Y/Z side profile."""
+    points=np.asarray(name_points,np.float32)
+    verts=np.array([[x,y,z] for x in (-half_width,half_width) for z,y in points],np.float32)
+    n=len(points);faces=[]
+    for i in range(1,n-1):
+        faces.extend([0,i+1,i,n,n+i,n+i+1])
+    for i in range(n):
+        j=(i+1)%n
+        faces.extend([i,j,n+j,i,n+j,n+i])
+    return verts,np.asarray(faces,np.uint16)
+
 def final_meshes():
     meshes=v01.final_meshes()
     meshes['fuselage']=body()
-    # Remove the old raised cockpit boxes, replacing them with fitted panes and
-    # subtly larger backing panels. The centre pillar is body paint between panes.
+    # Replace the old raised cockpit boxes with four fitted panes. Their spacing
+    # leaves real body-colour pillars instead of coplanar backing panels, removing
+    # the z-fighting that made the nose look broken in the first v02 review.
     for name in list(meshes):
         if name.startswith(('cockpit_', 'windscreen_', 'cabin_window_')):
             del meshes[name]
-    for name,theta in [('l',np.deg2rad(135)),('r',np.deg2rad(45))]:
-        meshes['windscreen_'+name]=patch(9.28,theta,.78,np.deg2rad(21))
-        meshes['windscreen_pillar_'+name]=patch(9.28,theta,.82,np.deg2rad(23),.005)
-    for i,z in enumerate((5.85,4.9,3.95,3,2.05,1.1,.15,-.8,-1.75,-2.7,-3.65,-4.6,-5.55),1):
-        for prefix,theta in [('cabin_window_',np.deg2rad(156)),('cabin_window_r',np.deg2rad(24))]:
-            meshes[prefix+str(i)]=patch(z,theta,.235,.17)
-    # Seat door skins on the new fuselage without changing door names/pivots.
-    for name in ('door_fwd','cargo_door'):
-        old=meshes[name][0];z=float(old[:,2].mean());theta=np.deg2rad(180 if old[:,0].mean()<0 else 0)
-        meshes[name]=patch(z,theta,float(np.ptp(old[:,2]))*.5,.55,.012)
-    # Narrow the stretched fin chord; carry rudder with it. Move the horizontal
-    # stabiliser AND elevators to the fin crown rather than leaving a cruciform.
+    cockpit_panes=(
+        ('windscreen_l',np.deg2rad(109),9.42,.56,np.deg2rad(15)),
+        ('windscreen_r',np.deg2rad(71),9.42,.56,np.deg2rad(15)),
+        ('cockpit_side_l',np.deg2rad(145),9.16,.52,np.deg2rad(13)),
+        ('cockpit_side_r',np.deg2rad(35),9.16,.52,np.deg2rad(13)),
+    )
+    for name,theta,z,half_z,half_theta in cockpit_panes:
+        meshes[name]=patch(z,theta,half_z,half_theta,.020)
+
+    # Thirteen evenly pitched, fitted cabin panes per side. Insets between each
+    # pane stay body-coloured so the window row reads cleanly from overview.
+    for i,z in enumerate((5.55,4.68,3.81,2.94,2.07,1.20,.33,-.54,-1.41,-2.28,-3.15,-4.02,-4.89),1):
+        for prefix,theta in [('cabin_window_',np.deg2rad(158)),('cabin_window_r',np.deg2rad(22))]:
+            meshes[prefix+str(i)]=patch(z,theta,.205,.145,.020)
+
+    # Proper front passenger and aft cargo door positions. A slightly larger
+    # grey backing patch creates a consistent recessed frame without floating
+    # boxes. Door skins remain separately named for the existing animation.
+    for name in ('door_fwd','cargo_door','door_frame_fwd','door_handle_fwd','cargo_sill','cargo_door_latch'):
+        meshes.pop(name,None)
+    meshes['door_outline_fwd']=patch(6.43,np.pi,.46,.54,.010)
+    meshes['door_fwd']=patch(6.43,np.pi,.40,.49,.020)
+    meshes['door_handle_fwd']=patch(6.66,np.pi,.055,.045,.027)
+    meshes['cargo_door_outline']=patch(-3.34,0,.86,.58,.010)
+    meshes['cargo_door']=patch(-3.34,0,.79,.52,.020)
+    meshes['cargo_door_latch']=patch(-2.83,0,.065,.045,.027)
+
+    # Narrow the stretched fin chord and rebuild the tail as one connected read.
+    # A dorsal root fairing joins the pressure body to the fin; a crown saddle
+    # overlaps both fin and stabiliser so no daylight gap can appear from any view.
     for name in ('tail_fin','rudder'):
         verts,idx=meshes[name];verts=verts.copy();verts[:,2]=-9.1+(verts[:,2]+9.1)*.79;meshes[name]=(verts,idx)
+    meshes['tail_root_fairing']=profile_prism([
+        (-9.82,2.20),(-9.45,3.02),(-8.55,3.58),(-6.35,2.66),(-5.55,2.48)
+    ],.22)
     shift=7.57-float(meshes['tailplane'][0][:,1].max())
     for name in ('tailplane','elevator_left','elevator_right'):
         meshes[name]=v01.move_y(meshes[name],shift)
-    # Re-seat the antenna on the trailing fin, not floating forward of the tail.
-    meshes['hf_antenna']=v01.panel(0,7.12,-8.9,.025,.025,.72)
+    meshes['tailplane_saddle']=v01._v05.oval_lathe_fuselage([
+        (-9.55,.10,.04,7.47),(-9.12,.35,.08,7.48),(-8.52,.58,.11,7.46),
+        (-7.42,.54,.10,7.46),(-6.58,.18,.05,7.47)
+    ],segments=28)
+    meshes['hf_antenna']=profile_prism([(-9.18,7.22),(-8.58,7.22),(-8.74,7.47)],.025)
     verts,idx=meshes['tail_nav_light'];verts=verts.copy()
-    verts += np.array([0,7.35,-9.05])-verts.mean(axis=0)
+    verts += np.array([0,7.50,-9.28])-verts.mean(axis=0)
     meshes['tail_nav_light']=(verts,idx)
+
     # Smooth saddle fillets where the high wing meets the cabin roof. These are
     # static skin, separate from the flaps and other articulated surfaces.
     for side,label in ((-1,'left'),(1,'right')):

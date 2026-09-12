@@ -4,11 +4,11 @@ Date: 2026-09-12. Requested by Bailey: “Finish it then” after the mesh revie
 
 ## Decision and reason
 
-Create `mdl_atr42_starter_v02` rather than overwrite the verified v01. Replace
-floating rectangular glazing with rounded panels fitted to a fuller continuous
-fuselage. Shorten the visual nose taper, narrow the fin chord and raise the
-stabiliser plus elevators together to its crown. Seat the tail antenna and door
-skins, and add static wing-root fairings. Preserve articulated part names, prop
+Create `mdl_atr42_starter_v02` rather than overwrite the verified v01. Replace floating rectangular glazing with rounded panels fitted to a fuller
+continuous fuselage. Use four separated cockpit panes and move the passenger and
+cargo doors to credible positions. Join the fuselage, dorsal fairing, fin, crown
+saddle and stabiliser with overlapping geometry so no daylight gap is possible.
+Seat the tail antenna and add static wing-root fairings. Preserve articulated part names, prop
 and gear geometry, and the existing dimension envelope.
 
 ## Integration
@@ -25,7 +25,7 @@ an FBX or prefab bake: ArtGltfLoader is the existing supported runtime path.
 Scope: v02 generator/checks/assets, runtime selection, art manifest/register and
 handoff. Outcome: fitted glazing and coherent nose/T-tail silhouette at overview
 and follow, with original articulation intact. Geometry regression checks pass;
-156 parts, 19,304 triangles. Static side/three-quarter inspection is committed
+158 parts, 20,572 triangles. Static six-view inspection is committed
 as `docs/art/candidates/air_001_atr42_v02_mesh_review.png` (approximate materials).
 
 Unity compilation, EditMode and day/dusk/night overview/follow checks remain

@@ -5,12 +5,13 @@
   and v06 fallbacks. GlTF and bin ship in both Art and StreamingAssets; the new
   version key avoids silently loading the old v01 Resources prefab.
 - **Player outcome / scope:** fuller continuous fuselage/nose, fitted rounded
-  cabin and cockpit glazing, fin-crown T-tail, attached tail antenna, curved
-  door skins and wing-root saddle fairings. Existing moving-part names, props,
+  cabin glazing, four-pane cockpit glass, correctly placed passenger/cargo doors,
+  joined dorsal fin and fin-crown T-tail, seated antenna and wing-root fairings. Existing moving-part names, props,
   gear, 24.57 × 7.59 × 22.67 m envelope and simulation remain intact.
 - **Evidence:** `python scripts/test-air-001-atr42-v02.py` passes bounds, ground
   contact, articulation names, finite/nondegenerate triangles, skin winding,
-  glazing clearance and T-tail alignment checks. 156 parts / 19,304 triangles.
+  glazing clearance, complete feature inventory and positive overlap through the
+  fuselage–dorsal-fairing–fin–tail-saddle–tailplane junction. 158 parts / 20,572 triangles.
   Static mesh review: `docs/art/candidates/air_001_atr42_v02_mesh_review.png`.
   Colours/lighting there are approximate, not a Unity screenshot.
 - **Next / remaining gate:** Unity compile/EditMode and packaged Mac overview +

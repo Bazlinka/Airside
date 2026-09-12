@@ -5,10 +5,11 @@ change it describes.
 
 ## Unreleased
 
-- **AIR-001 v02 visual finish (draft):** fuller rounded nose, conformal cockpit
-  and cabin glazing, fin-crown T-tail, seated tail antenna, fitted doors and
-  wing-root fairings. New glTF identity ships through StreamingAssets with v01
-  fallback; 156 named parts / 19,304 triangles, original dimensions and moving
+- **AIR-001 v02 visual finish (draft):** fuller rounded nose, four clean cockpit panes, conformal cabin glazing,
+  correctly located passenger/cargo doors, and a continuous fuselage–dorsal
+  fairing–fin–tail-saddle–tailplane assembly with no daylight gap. Wing-root
+  fairings, lights, antennae, pitots, exhausts, gear and control surfaces remain. New glTF identity ships through StreamingAssets with v01
+  fallback; 158 named parts / 20,572 triangles, original dimensions and moving
   part names retained. Python geometry checks and static review passed; Unity
   compilation, animation and packaged camera verification pending (ADR 0040).
 

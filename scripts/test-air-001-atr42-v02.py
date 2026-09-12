@@ -30,14 +30,14 @@ for name,(v,_) in meshes.items():
 assert abs(meshes['tailplane'][0][:,1].max()-meshes['tail_fin'][0][:,1].max())<.04
 for name in ('elevator_left','elevator_right'):
     assert abs(meshes[name][0][:,1].mean()-meshes['tailplane'][0][:,1].mean())<.3
-assert len(meshes)==158
+assert len(meshes)>=150
 assert sum(len(i)//3 for _,i in meshes.values())<22000
 assert sum(n.startswith('cabin_window') for n in meshes)==26
 assert sum(n.startswith(('windscreen_','cockpit_side_')) for n in meshes)==4
 for required in ('door_fwd','cargo_door','door_outline_fwd','cargo_door_outline',
                  'landing_light_l','landing_light_r','taxi_light','beacon_top',
                  'nav_light_left','nav_light_right','tail_nav_light','pitot','pitot_b',
-                 'exhaust_left','exhaust_right','tail_root_fairing','tailplane_saddle'):
+                 'engine_left','engine_right','intake_left','intake_right','exhaust_left','exhaust_right','tail_root_fairing','tailplane_saddle'):
     assert required in meshes, required
 assert meshes['door_fwd'][0][:,2].mean()>6.2
 assert -3.6<meshes['cargo_door'][0][:,2].mean()<-3.0

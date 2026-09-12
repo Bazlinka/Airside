@@ -36,7 +36,12 @@ def draw(ax,elev,az,title,limits=None):
  if limits:ax.set(xlim=limits[0],ylim=limits[1],zlim=limits[2]);aspect=tuple(b-a for a,b in limits)
  else:ax.set(xlim=(-11,13),ylim=(-13,13),zlim=(0,8));aspect=(24,26,8)
  ax.set_box_aspect(aspect);ax.view_init(elev,az);ax.set_proj_type('ortho');ax.set_axis_off();ax.set_title(title,fontsize=11,pad=3);ax.set_facecolor('#eef0ec')
-fig=plt.figure(figsize=(16,10),facecolor='#eef0ec')
-views=[(18,-50,'Front three-quarter',None),(4,-90,'Left profile',None),(16,130,'Rear three-quarter',None),(5,90,'Right profile',None),(8,2,'Nose / cockpit',((7.5,12.4),(-2,2),(0,3.5))),(12,178,'Connected tail assembly',((-10.3,-5.2),(-4.5,4.5),(1.7,7.8)))]
-for i,v in enumerate(views):draw(fig.add_subplot(2,3,i+1,projection='3d'),*v)
+fig=plt.figure(figsize=(14,9),facecolor='#eef0ec')
+views=[
+    (16,-48,'Front three-quarter',None),
+    (3,-90,'Left profile',((-11,12.5),(-3,3),(0,7.8))),
+    (8,2,'Nose and flight deck',((7.4,12.35),(-2.2,2.2),(0,3.7))),
+    (14,138,'Rear three-quarter / joined tail',None),
+]
+for i,v in enumerate(views):draw(fig.add_subplot(2,2,i+1,projection='3d'),*v)
 plt.tight_layout(pad=.7);plt.savefig(str(Path(__file__).resolve().parents[1] / 'docs/art/candidates/air_001_atr42_v02_mesh_review.png'),dpi=180)

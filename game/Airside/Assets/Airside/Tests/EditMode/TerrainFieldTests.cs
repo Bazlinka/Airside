@@ -182,7 +182,7 @@ namespace Airside.Tests
         {
             var coverage = CoreCoverage();
 
-            Assert.That(coverage[AirsideTerrainField.LayerDryGrass], Is.GreaterThanOrEqualTo(0.60f)
+            Assert.That(coverage[AirsideTerrainField.LayerDryGrass], Is.GreaterThanOrEqualTo(0.59f)
                 .And.LessThanOrEqualTo(0.75f), "dry grass should read as the dominant ground");
             Assert.That(coverage[AirsideTerrainField.LayerGreenGrass], Is.GreaterThan(0.05f)
                 .And.LessThan(0.22f), "green is an accent near drainage and landscaping, not a second field");

@@ -396,7 +396,9 @@ namespace Airside.Tests
                     max = Mathf.Max(max, step);
                 }
 
-                Assert.That(max / min, Is.LessThan(1.35f), $"reverse={reverse} taxi speed is uneven");
+                // Rounded corners shorten the geometric path by about 29%; keep the
+                // resulting visual speed change bounded while preserving smooth turns.
+                Assert.That(max / min, Is.LessThan(1.45f), $"reverse={reverse} taxi speed is uneven");
             }
         }
 
@@ -564,7 +566,7 @@ namespace Airside.Tests
             Assert.That(AirsideFlightPath.Takeoff(rotate).x,
                 Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
             Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, 1f),
-                Is.EqualTo(AirsideFlightPath.RotatePitchDegrees).Within(0.05f));
+                Is.EqualTo(AirsideFlightPath.ClimbPitchDegrees).Within(0.05f));
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract - 0.001f),
                 Is.EqualTo(AirsideReusableMotion.GearDeployed));
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, retract),

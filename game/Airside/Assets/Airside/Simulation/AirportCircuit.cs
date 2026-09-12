@@ -13,7 +13,9 @@ namespace Airside.Simulation
         public static bool SkipGroundTaxi = true;
 
         public const long ApproachSeconds = 48;
-        public const long LandingSeconds = 20;
+        // The 600 m flare and 1,050 m rollout need a full minute to meet the
+        // approach at roughly 47 m/s and brake to rest without a phase-boundary lurch.
+        public const long LandingSeconds = 60;
         public const long TaxiSkipSeconds = 1;
         public const long TakeoffSeconds = 28;
         public const long DepartureFlyOutSeconds = 22;

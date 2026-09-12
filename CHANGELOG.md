@@ -5,6 +5,15 @@ change it describes.
 
 ## Unreleased
 
+- **Consolidate Airside on one validated `main`.** Every remaining branch tip is
+  retained in `main` history so obsolete branch refs can be removed without losing
+  work, while the current Adelaide pavement and AIR-001 v02 tree stays authoritative.
+  Repair the lane-offset compile break, give the circuit landing enough time to
+  join the approach and brake smoothly, remove the takeoff/departure speed drop,
+  and update stale route/reputation/terrain assertions to their current contracts.
+  **Verified:** Unity 6.3 LTS EditMode **300/300 passed** and universal Mac build
+  completed successfully. Standalone .NET 8 SDK was unavailable on this Mac.
+
 - **AIR-001 v02 visual finish (draft):** stout cabin, blunt drooped nose and rising rear cone, four broad planar cockpit panes with a narrow centre post, fitted rounded planar cabin glazing,
   correctly located passenger/cargo doors, and a continuous fuselage–dorsal
   fairing–fin–tail-saddle–tailplane assembly with no daylight gap. The duplicated 6.6 m engine shells are replaced by compact single nacelles; the oversized 4.6 m-root-chord wings are rebuilt to a roughly 51 m² tapered planform with matching flaps, ailerons, spoilers and track fairings. Lights, antennae, pitots, exhausts, gear and control surfaces remain. New glTF identity ships through StreamingAssets with v01

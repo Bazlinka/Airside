@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-12 Codex consolidation and Mac validation:** `main` now records every
+  remaining remote branch tip in its history while retaining the latest Adelaide
+  pavement and AIR-001 v02 tree. Obsolete branch snapshots can be deleted without
+  losing their commits. Draft PR #190's v06-only wheel/gear/window work is retained
+  in history and superseded by the production-proportioned v02 aircraft.
+- **Repairs made during the gate:** restored Unity compilation after the landing
+  path gained a lane offset; matched the 600 m flare/1,050 m rollout to approach
+  speed with a 60-second landing phase; removed the takeoff/departure speed drop;
+  and refreshed stale route, reputation, taxi-fillet and legacy-terrain assertions.
+- **Evidence:** Unity 6.3 LTS EditMode **300/300 passed** and
+  `scripts/build-mac.sh` produced a universal Mac app. `scripts/test-domain.sh`
+  could not run because the standalone .NET 8 SDK is not installed on this Mac;
+  Unity compiled and executed the same project tests. Next gate is packaged-player
+  visual inspection of the Adelaide pavement and AIR-001 v02 motion.
+
 - **2026-09-12 Codex aircraft finish:** branch `feature/atr42-visual-finish`,
   layered on the movement-fix branch below. AIR-001 v02 is preferred, with v01
   and v06 fallbacks. GlTF and bin ship in both Art and StreamingAssets; the new

@@ -149,8 +149,8 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
 
-            var sawA1 = false;
-            var sawA2 = false;
+            var sawBravoExit = false;
+            var sawBravoOne = false;
             var sawThroat = false;
             var sawLead = false;
             StableId previous = default;
@@ -162,8 +162,8 @@ namespace Airside.Tests
                     continue;
 
                 var segment = simulation.CurrentTaxiSegment;
-                if (segment.Equals(AirportTaxiNetwork.AlphaOne)) sawA1 = true;
-                if (segment.Equals(AirportTaxiNetwork.AlphaTwo)) sawA2 = true;
+                if (segment.Equals(AirportTaxiNetwork.BravoExit)) sawBravoExit = true;
+                if (segment.Equals(AirportTaxiNetwork.BravoOne)) sawBravoOne = true;
                 if (segment.Equals(AirportTaxiNetwork.ApronThroat)) sawThroat = true;
                 if (segment.Equals(AirportTaxiNetwork.StandOneLeadIn)
                     || segment.Equals(AirportTaxiNetwork.StandTwoLeadIn)
@@ -189,8 +189,8 @@ namespace Airside.Tests
                     previous = segment;
             }
 
-            Assert.That(sawA1 && sawA2 && sawThroat && sawLead, Is.True,
-                "taxi-in should visit A1, A2, throat and lead-in in order");
+            Assert.That(sawBravoExit && sawBravoOne && sawThroat && sawLead, Is.True,
+                "taxi-in should visit the B exit, B1, throat and lead-in in order");
         }
 
         [Test]

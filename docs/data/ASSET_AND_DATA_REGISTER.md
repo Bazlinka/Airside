@@ -4,6 +4,7 @@ Every external asset or dataset must be added here before it enters a distributa
 
 | Item | Owner or source | Use | Licence | Attribution | Evidence | Status |
 |---|---|---|---|---|---|---|
+| AIR-001 ATR v02 | Airside project; Codex revision of existing procedural source | Aircraft glTF/bin and static review PNG | Project-owned; no external assets | None | `scripts/generate-air-001-atr42-v02.py`, ADR 0040; incremental asset cost $0; fallback v01 | Integrated draft; geometry checks passed; Unity verification pending |
 | Prototype geometry | Airside project | Runway, buildings and aircraft made from Unity primitives | Project-owned configuration | None | Source in `AirsidePrototype.cs` | Approved |
 | Prototype colours and interface copy | Airside project | Greybox visual target and status panel | Project-owned | None | Source in repository | Approved |
 | Prototype engine tone | Airside project | Procedurally generated sine-wave audio | Project-owned generation | None | Source in `AirsidePrototype.cs` | Approved |

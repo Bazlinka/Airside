@@ -9242,9 +9242,11 @@ namespace Airside.Presentation
             // use y=0.7f, so offset the metre-authored kit to put its tires on the ground.
             // v06 remains a safe fallback for branches/builds that have not imported it yet.
             var aircraftArt = PreferArtKit(
-                "Models/Aircraft/mdl_atr42_starter_v01.gltf",
-                "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf");
-            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
+                "Models/Aircraft/mdl_atr42_starter_v02.gltf",
+                PreferArtKit("Models/Aircraft/mdl_atr42_starter_v01.gltf",
+                    "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf"));
+            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v02.gltf", StringComparison.Ordinal)
+                || aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 aircraftArt,
                 root,
@@ -9414,6 +9416,8 @@ namespace Airside.Presentation
             "cabin_window_frame_r7" => "Cabin window frame R7",
             "cockpit_glare" => "Cockpit glare",
             "windscreen_c" => "Windscreen C",
+            "cockpit_side_l" => "Cockpit side L",
+            "cockpit_side_r" => "Cockpit side R",
             "windscreen_l" => "Windscreen L",
             "windscreen_r" => "Windscreen R",
             "windscreen_pillar_l" => "Windscreen pillar L",
@@ -9507,6 +9511,8 @@ namespace Airside.Presentation
             "spinner_stripe_l" => "Spinner stripe L",
             "spinner_stripe_r" => "Spinner stripe R",
             "tail_fin" => "Tail",
+            "tail_root_fairing" => "Tail root fairing",
+            "tailplane_saddle" => "Tailplane saddle",
             "tail_fin_tip" => "Tail tip",
             "tailplane" => "Tailplane",
             "dorsal_fin" => "Dorsal fin",
@@ -9539,6 +9545,8 @@ namespace Airside.Presentation
             "rim_left" => "Rim L",
             "rim_right" => "Rim R",
             "door_fwd" => "CabinDoor",
+            "door_outline_fwd" => "Cabin door frame",
+            "cargo_door_outline" => "Cargo door frame",
             "cargo_door" => "Cargo door",
             "cargo_door_latch" => "Cargo door latch",
             "antenna" => "Antenna",
@@ -9562,8 +9570,9 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
-                return new Color(0.18f, 0.35f, 0.48f, 0.42f);
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal))
+                return new Color(0.12f, 0.26f, 0.34f, 0.72f);
             if (kitName.StartsWith("tire_", StringComparison.Ordinal))
                 return new Color(0.12f, 0.12f, 0.13f);
             if (kitName.StartsWith("wheel_", StringComparison.Ordinal)
@@ -9592,7 +9601,8 @@ namespace Airside.Presentation
                 or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
             "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
-            "door_handle_fwd" or "cargo_door_latch" or "cargo_sill" => new Color(0.72f, 0.74f, 0.78f),
+            "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
+                or "door_outline_fwd" or "cargo_door_outline" => new Color(0.48f, 0.52f, 0.55f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right"
@@ -9602,6 +9612,7 @@ namespace Airside.Presentation
                 or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
                 or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
+                or "tail_root_fairing" or "tailplane_saddle"
                 or "tailplane_tip_l" or "tailplane_tip_r"
                 or "elevator_left" or "elevator_right" or "rudder" => accent,
             "flap_track_l1" or "flap_track_l2" or "flap_track_r1" or "flap_track_r2"
@@ -9636,7 +9647,7 @@ namespace Airside.Presentation
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "rim_nose" or "rim_left" or "rim_right"
                 or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.55f, 0.56f, 0.58f),
-            "door_fwd" => new Color(0.78f, 0.8f, 0.83f),
+            "door_fwd" or "cargo_door" => new Color(0.91f, 0.93f, 0.95f),
             "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
             "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),

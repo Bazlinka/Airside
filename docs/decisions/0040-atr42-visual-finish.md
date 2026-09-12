@@ -24,7 +24,7 @@ an FBX or prefab bake: ArtGltfLoader is the existing supported runtime path.
 Scope: v02 generator/checks/assets, runtime selection, art manifest/register and
 handoff. Outcome: fitted glazing and coherent nose/T-tail silhouette at overview
 and follow, with original articulation intact. Geometry regression checks pass;
-150 parts, 20,384 triangles. Static four-view inspection is committed
+150 parts, 14,456 triangles. Static four-view inspection is committed
 as `docs/art/candidates/air_001_atr42_v02_mesh_review.png` (approximate materials).
 
 Unity compilation, EditMode and day/dusk/night overview/follow checks remain

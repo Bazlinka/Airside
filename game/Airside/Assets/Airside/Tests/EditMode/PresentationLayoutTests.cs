@@ -313,6 +313,15 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightPath_GroundHoldHasNoSpeedJump_AndDeparturePitchIsContinuous()
+        {
+            Assert.That(SpeedAt(AircraftPhase.Landing, 0.998f, 1f), Is.LessThan(0.5f));
+            Assert.That(SpeedAt(AircraftPhase.Takeoff, 0f, 0.002f), Is.LessThan(0.5f));
+            Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, 1f),
+                Is.EqualTo(AirsideFlightPath.PitchDegrees(AircraftPhase.Departed, 0f)).Within(0.01f));
+        }
+
+        [Test]
         public void FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed()
         {
             Assert.That(SpeedAt(AircraftPhase.Approach, 0.5f, 0.502f), Is.GreaterThan(40f));

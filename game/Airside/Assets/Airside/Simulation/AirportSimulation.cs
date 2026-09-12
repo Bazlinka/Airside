@@ -356,6 +356,8 @@ namespace Airside.Simulation
             // Hold current resources before advancing. If another commercial owns a
             // shared taxi/runway segment, stall schedule progress rather than occupy it.
             var wasHolding = TrafficWaits.TryGetWaitStart(flight.OwnerId, out _);
+            var wasOnRunway = _reservations.TryGetOwner(Runway, out var runwayOwner)
+                && runwayOwner.Equals(flight.OwnerId);
             if (!_reservations.TryReplace(flight.OwnerId, flight.RequiredResources(now), out var blocked))
             {
                 if (IsCommercialOwner(blocked))
@@ -369,6 +371,17 @@ namespace Airside.Simulation
                     Record(now, flight.AircraftId, "ATC", phrase);
                 flight.Operation.StallOneSecond();
                 return;
+            }
+
+            // Report actual runway release, not merely the end of the landing roll.
+            // Circuit mode remains on the runway throughout its skipped ground phases.
+            if (!AirportCircuit.SkipGroundTaxi
+                && wasOnRunway
+                && flight.Operation.Phase == AircraftPhase.TaxiIn
+                && flight.HasVacatedRunway(now))
+            {
+                Atc.NotifyRunwayVacated(now, flight.AircraftId);
+                Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
             }
 
             if (wasHolding
@@ -642,11 +655,10 @@ namespace Airside.Simulation
                 _reservations.Release(flight.OwnerId);
                 TrafficWaits.Clear(flight.OwnerId);
             }
-            else if (previousPhase == AircraftPhase.Landing && flight.Operation.Phase == AircraftPhase.TaxiIn)
+            else if (!AirportCircuit.SkipGroundTaxi
+                && previousPhase == AircraftPhase.Landing && flight.Operation.Phase == AircraftPhase.TaxiIn)
             {
-                Atc.NotifyRunwayVacated(now, flight.AircraftId);
                 Record(now, flight.AircraftId, "ATC", Atc.IssueReportRunwayVacated(flight.AircraftId));
-                Record(now, flight.AircraftId, "ATC", Atc.LastInstruction);
             }
         }
 

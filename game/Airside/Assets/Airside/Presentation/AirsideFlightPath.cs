@@ -57,10 +57,10 @@ namespace Airside.Presentation
         public const float DepartedEndX = 4000f;
         public const float DepartedEndY = 280f;
 
-        private const float RollStartSpeed = 0.08f;
+        private const float RollStartSpeed = 0f;
         private const float RollEndSpeed = 1f;
         private const float RolloutStartSpeed = 1f;
-        private const float RolloutEndSpeed = 0.06f;
+        private const float RolloutEndSpeed = 0f;
 
         public static readonly float RotateProgress = SolveTakeoffProgressForX(RotateX);
 
@@ -241,7 +241,10 @@ namespace Airside.Presentation
                     var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
                     // Ease into rotation rather than a sharp pitch snap at RotateX.
                     var ease = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 1.6f));
-                    return Mathf.Lerp(0f, RotatePitchDegrees, ease);
+                    var rotation = Mathf.Lerp(0f, RotatePitchDegrees, ease);
+                    // Settle into climb attitude before crossing into Departed.
+                    return Mathf.Lerp(rotation, ClimbPitchDegrees,
+                        Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.65f, 1f, climb)));
                 }
                 case AircraftPhase.Approach:
                     return Mathf.Lerp(ApproachPitchStartDegrees, ApproachPitchEndDegrees, t);

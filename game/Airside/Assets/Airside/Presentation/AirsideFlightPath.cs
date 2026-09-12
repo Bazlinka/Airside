@@ -138,7 +138,7 @@ namespace Airside.Presentation
         public static Vector3 Departed(float t)
         {
             return new Vector3(
-                Mathf.Lerp(TakeoffEndX, DepartedEndX, DistanceFraction(t, 1f, 1.15f)),
+                Mathf.Lerp(TakeoffEndX, DepartedEndX, DistanceFraction(t, 1.6f, 0.95f)),
                 Mathf.Lerp(TakeoffEndY, DepartedEndY, DistanceFraction(t, 1.1f, 0.95f)),
                 0f);
         }
@@ -184,8 +184,8 @@ namespace Airside.Presentation
             }
             else
             {
-                pa = Landing(a);
-                pb = Landing(b);
+                pa = Landing(a, 0f);
+                pb = Landing(b, 0f);
             }
 
             var dx = pb.x - pa.x;

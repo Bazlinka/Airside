@@ -194,7 +194,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AwaySummary_ReportsRouteIncomeAndReputationChange()
+        public void AwaySummary_ReportsRouteIncomeAndNetReputationOutcome()
         {
             const long wall = 100000;
             var session = PersistentAirportSession.LoadOrCreate(_path, wall, 24031996);
@@ -209,7 +209,12 @@ namespace Airside.Tests
             Assert.That(summary.HasReport, Is.True);
             Assert.That(summary.FlightsCompleted, Is.GreaterThan(0));
             Assert.That(summary.RouteIncome, Is.GreaterThan(0), "the accepted route paid out while away");
-            Assert.That(summary.ReputationChange, Is.Not.EqualTo(0), "reputation moved with those departures");
+            Assert.That(restored.Simulation.Reputation.OnTimeDepartures
+                + restored.Simulation.Reputation.DelayedDepartures, Is.GreaterThan(0),
+                "completed departures should be reflected in reputation history");
+            Assert.That(summary.ReputationChange,
+                Is.EqualTo(restored.Simulation.Reputation.Score - AirportReputation.Starting),
+                "the summary should report the net result, including a legitimate zero when gains and losses cancel");
         }
 
         [Test]

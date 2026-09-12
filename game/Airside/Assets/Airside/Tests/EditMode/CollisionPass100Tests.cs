@@ -30,9 +30,9 @@ namespace Airside.Tests
             var route = new AirportTaxiNetwork().RouteTo(AirportSimulation.StandTwo);
             Assert.That(route.SegmentIds.Count, Is.EqualTo(4));
             Assert.That(route.SegmentIds[2], Is.EqualTo(AirportTaxiNetwork.ApronThroat));
-            Assert.That(route.Points[3].X, Is.EqualTo(12f).Within(0.01f));
+            Assert.That(route.Points[3].X, Is.EqualTo(AirportLayout.ApronThroatX).Within(0.01f));
             Assert.That(route.Points[3].Z, Is.EqualTo(AirportTaxiNetwork.StandZ(AirportSimulation.StandTwo)).Within(0.01f));
-            Assert.That(route.Points[4].X, Is.EqualTo(17f).Within(0.01f));
+            Assert.That(route.Points[4].X, Is.EqualTo(AirportLayout.StandX).Within(0.01f));
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Airside.Tests
             var throat = route.Points[3];
             var stand = route.Points[4];
             var neighbour = AirportTaxiNetwork.StandPoint(AirportSimulation.StandTwo);
-            // Dogleg keeps the chord at stand Z after x=12, so mid-chord stays clear of Stand 2.
+            // Dogleg keeps the chord at stand Z after the throat, so mid-chord stays clear of Stand 2.
             var mid = new TaxiPoint((throat.X + stand.X) * 0.5f, (throat.Z + stand.Z) * 0.5f);
             var dx = mid.X - neighbour.X;
             var dz = mid.Z - neighbour.Z;

@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-12 Codex aircraft finish:** branch `feature/atr42-visual-finish`,
+  layered on the movement-fix branch below. AIR-001 v02 is preferred, with v01
+  and v06 fallbacks. GlTF and bin ship in both Art and StreamingAssets; the new
+  version key avoids silently loading the old v01 Resources prefab.
+- **Player outcome / scope:** fuller continuous fuselage/nose, fitted rounded
+  cabin and cockpit glazing, fin-crown T-tail, attached tail antenna, curved
+  door skins and wing-root saddle fairings. Existing moving-part names, props,
+  gear, 24.57 × 7.59 × 22.67 m envelope and simulation remain intact.
+- **Evidence:** `python scripts/test-air-001-atr42-v02.py` passes bounds, ground
+  contact, articulation names, finite/nondegenerate triangles, skin winding,
+  glazing clearance and T-tail alignment checks. 156 parts / 19,304 triangles.
+  Static mesh review: `docs/art/candidates/air_001_atr42_v02_mesh_review.png`.
+  Colours/lighting there are approximate, not a Unity screenshot.
+- **Next / remaining gate:** Unity compile/EditMode and packaged Mac overview +
+  follow at day/dusk/night; inspect gear, props, flaps, elevators and doors in
+  motion. No Unity/.NET on this host. No v02 FBX/prefab bake claimed: the supported
+  glTF runtime path supplies v02. Keep draft until the Unity gate passes.
+- **Decision:** ADR 0040; no save migration or simulation change.
+
+### Previous movement handoff
+
 - **2026-09-12 Codex movement follow-up:** `feature/aircraft-movement-fixes`,
   based on the pavement branch below. Draft pending Unity validation.
 - **Player outcome / scope:** commercial taxi entry retains the runway; ATC starts

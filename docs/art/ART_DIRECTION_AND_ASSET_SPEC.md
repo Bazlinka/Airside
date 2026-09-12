@@ -233,7 +233,7 @@ references but **does not substitute a flat image for a 3D object**.
 
 | ID | Runtime file | Required states / notes | Status |
 |---|---|---|---|
-| AIR-001 | `Models/Aircraft/mdl_atr42_starter_v01.gltf` (+ `.fbx`; v06 compatibility fallback) | Final fictional ATR 42-600-class starter at 22.67 m length × 24.57 m span × 7.59 m height; 3.93 m six-blade props, six-wheel gear, readable glazing and restrained articulated flight/door/gear parts (158 named meshes) | Approved · Integrated · Verified (Unity Resources bake, targeted EditMode and packaged Mac follow pass) |
+| AIR-001 | `Models/Aircraft/mdl_atr42_starter_v02.gltf` (+ `.bin`; v01 prefab/glTF then v06 fallback) | Revised fictional ATR-class starter: fitted rounded glazing, fuller nose, T-tail, wing-root fairings; same envelope and moving-part names; 156 parts / 19,304 triangles | Integrated on draft visual-finish branch at Bailey's request; mesh checks and static review passed; Unity overview/follow day/dusk/night pending. Prior v01 remains verified fallback. |
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |

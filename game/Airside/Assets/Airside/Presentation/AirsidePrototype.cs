@@ -9242,9 +9242,11 @@ namespace Airside.Presentation
             // use y=0.7f, so offset the metre-authored kit to put its tires on the ground.
             // v06 remains a safe fallback for branches/builds that have not imported it yet.
             var aircraftArt = PreferArtKit(
-                "Models/Aircraft/mdl_atr42_starter_v01.gltf",
-                "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf");
-            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
+                "Models/Aircraft/mdl_atr42_starter_v02.gltf",
+                PreferArtKit("Models/Aircraft/mdl_atr42_starter_v01.gltf",
+                    "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf"));
+            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v02.gltf", StringComparison.Ordinal)
+                || aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 aircraftArt,
                 root,

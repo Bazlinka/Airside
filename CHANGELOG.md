@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **AIR-001 v02 visual finish (draft):** fuller rounded nose, conformal cockpit
+  and cabin glazing, fin-crown T-tail, seated tail antenna, fitted doors and
+  wing-root fairings. New glTF identity ships through StreamingAssets with v01
+  fallback; 156 named parts / 19,304 triangles, original dimensions and moving
+  part names retained. Python geometry checks and static review passed; Unity
+  compilation, animation and packaged camera verification pending (ADR 0040).
+
 - **Aircraft movement fixes (draft):** reserve the runway when checking entry to
   taxi-in; report actual runway vacation and start separation when the arrival
   clears the holding position, without false vacation calls in circuit mode.

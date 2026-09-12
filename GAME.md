@@ -1,5 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-12 Codex movement follow-up:** `feature/aircraft-movement-fixes`,
+  based on the pavement branch below. Draft pending Unity validation.
+- **Player outcome / scope:** commercial taxi entry retains the runway; ATC starts
+  landing separation only after taxiing clear; bare-circuit holds do not claim
+  runway vacation. Flight curves brake to rest, accelerate from rest and blend
+  takeoff pitch into departure. Scope: CommercialFlight, AirportSimulation,
+  AirsideFlightPath and their existing EditMode tests.
+- **Acceptance / evidence:** four focused regression tests added for future taxi
+  entry reservations, actual-vacate separation timing (including no repeated
+  reset), circuit hold ownership and speed/pitch seams. `git diff --check` passed.
+  Neither test suite ran: .NET SDK and Unity editor are absent from this host.
+  Numerical endpoint checks passed; these are not C# compilation or Unity proof.
+- **Next:** run `scripts/test-domain.sh`, then `scripts/test-unity.sh` and Mac
+  overview/follow playtest: landing → rollout stop → takeoff → climb. Exercise
+  the full taxi loop with traffic to verify separation starts after runway exit.
+  Keep the draft unmerged until Unity checks pass, per AGENTS.md.
+- **Constraints:** deterministic clock, reservations-before-use and save schema
+  preserved. Existing circuit-only scene and geometry remain as below; wiring
+  the new Adelaide taxi pavement into simulation is still a separate task.
+
+### Prior pavement handoff (still applicable)
+
 - **Last updated:** 2026-09-11 (Claude — YPAD silhouette geometry corrections)
 - **Branch:** `claude/adelaide-pavement-review-41kjaa`
 - **Do next:** On a Mac with Unity 6.3 LTS: checkout this branch, run

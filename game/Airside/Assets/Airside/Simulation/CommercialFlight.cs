@@ -98,7 +98,7 @@ namespace Airside.Simulation
                     // An arrival still inside the runway strip has not vacated. Releasing
                     // the runway the instant the rollout ended let a departure be cleared
                     // and start its roll while the arrival was still on the centreline.
-                    if (!HasVacatedRunway(at))
+                    if (Operation.Phase != AircraftPhase.TaxiIn || !HasVacatedRunway(at))
                         yield return AirportSimulation.Runway;
                     // Single-file A1/A2 corridor — dual commercials must not meet head-on.
                     yield return AirportTaxiNetwork.Corridor;

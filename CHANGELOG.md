@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft movement fixes (draft):** reserve the runway when checking entry to
+  taxi-in; report actual runway vacation and start separation when the arrival
+  clears the holding position, without false vacation calls in circuit mode.
+  Brake the circuit rollout to rest, start takeoff from rest and blend departure
+  pitch. Four regression tests added; .NET/Unity execution pending because both
+  runtimes are absent here. Saves and circuit mode unchanged.
+
 - **YPAD silhouette geometry corrections.** Fillets are now true concave
   fillets tangent to both pavement edges, so a 23 m stub reads as 23 m instead
   of the 80–107 m blob the old corner-centred quarter-disks produced. Taxiway F

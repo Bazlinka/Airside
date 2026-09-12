@@ -234,6 +234,67 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void BareCircuit_DoesNotReportRunwayVacatedDuringGroundHold()
+        {
+            TaxiLoopFixture.RestoreCircuit();
+            try
+            {
+                var clock = new ManualSimulationClock(new SimulationTime(0));
+                var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
+                clock.Advance(AirportCircuit.ApproachSeconds + AirportCircuit.LandingSeconds);
+                simulation.Update();
+                Assert.That(simulation.ActiveAircraft.Phase, Is.EqualTo(AircraftPhase.TaxiIn));
+                Assert.That(FlightOwns(simulation, AirportSimulation.Runway), Is.True);
+                Assert.That(simulation.Atc.SeparationRemainingSeconds(clock.Now), Is.Zero);
+            }
+            finally
+            {
+                TaxiLoopFixture.EnableFullTaxiLoop();
+            }
+        }
+
+        [Test]
+        public void FutureTaxiIn_ReservesRunwayBeforeEnteringThePhase()
+        {
+            var now = new SimulationTime(0);
+            var flight = new CommercialFlight("TEST", now, AirportSimulation.StandOne,
+                new AirportTaxiNetwork().RoutesTo(AirportSimulation.StandOne));
+            Assert.That(flight.ResourcesForPhase(AircraftPhase.TaxiIn, now),
+                Does.Contain(AirportSimulation.Runway));
+        }
+
+        [Test]
+        public void LandingSeparation_StartsWhenTaxiingClear_NotAtRolloutEnd()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var simulation = new AirportSimulation(clock, new SeededRandomSource(42), new ReservationTable());
+            var sawTaxiIn = false;
+            for (var second = 1; second <= 100; second++)
+            {
+                clock.Advance(1);
+                simulation.Update();
+                var flight = simulation.Flights[0];
+                if (flight.Operation.Phase != AircraftPhase.TaxiIn)
+                    continue;
+                sawTaxiIn = true;
+                if (!flight.HasVacatedRunway(clock.Now))
+                {
+                    Assert.That(simulation.Atc.SeparationRemainingSeconds(clock.Now), Is.Zero,
+                        "Landing separation must not start while the arrival occupies the runway");
+                    continue;
+                }
+                Assert.That(simulation.Atc.SeparationRemainingSeconds(clock.Now),
+                    Is.EqualTo(AerodromeAtc.RunwaySeparationSeconds));
+                clock.Advance(1);
+                simulation.Update();
+                Assert.That(simulation.Atc.SeparationRemainingSeconds(clock.Now),
+                    Is.EqualTo(AerodromeAtc.RunwaySeparationSeconds - 1), "Do not restart separation every tick");
+                return;
+            }
+            Assert.Fail($"Did not observe runway vacating; taxi-in observed: {sawTaxiIn}");
+        }
+
+        [Test]
         public void RunwayHoldingPosition_IsClearOfTheRunwayStripOnEveryStandRoute()
         {
             var network = new AirportTaxiNetwork();

@@ -291,7 +291,7 @@ namespace Airside.Presentation
             return visual.Leg switch
             {
                 FleetGroundLeg.Parked => new[] { FleetGroundRoutes.Bay(stand) },
-                FleetGroundLeg.TaxiOut => FleetGroundRoutes.TaxiOut(DepartureStand(aircraft)),
+                FleetGroundLeg.TaxiOut => FleetGroundRoutes.TaxiOut(aircraft.DepartureStand.Value),
                 FleetGroundLeg.HoldingShort => new[] { FleetGroundRoutes.HoldingPoint },
                 FleetGroundLeg.Lineup => FleetGroundRoutes.Lineup(),
                 FleetGroundLeg.Vacate => FleetGroundRoutes.Vacate(slot),
@@ -301,28 +301,6 @@ namespace Airside.Presentation
             };
         }
 
-        /// <summary>
-        /// The operations layer releases the stand at pushback, so remember which bay a
-        /// departure left from to draw its taxi-out from there.
-        /// </summary>
-        private readonly Dictionary<string, string> _departureStand = new();
-
-        private string DepartureStand(FleetAircraft aircraft)
-        {
-            var id = aircraft.Registration;
-            if (aircraft.State == FleetState.AtStand)
-                _departureStand[id] = aircraft.Stand.Value;
-            return _departureStand.TryGetValue(id, out var stand) ? stand : "BAY-1";
-        }
-
-        private void RememberDepartureStands()
-        {
-            if (!FleetMode)
-                return;
-            foreach (var aircraft in _operations.Fleet)
-                if (aircraft.State == FleetState.AtStand)
-                    _departureStand[aircraft.Registration] = aircraft.Stand.Value;
-        }
 
         // ---- Aircraft models --------------------------------------------------------
 

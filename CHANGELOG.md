@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Your airline is saved (ADR 0045).** Autosave after every command, on fleet
+  events, every 20 s and on quit; the start screen offers Continue. Saves are
+  JSON, written atomically, versioned and validated on load; a restored game
+  continues exactly as if it had never stopped.
+
 - **Your airline and Emu Air fly in 3D (ADR 0045).** The demo circuit gives way
   to the fleets once an airline starts: apron bays, pushback, taxi on the
   Adelaide taxiways, hold at E2, lineup, takeoff, approach, landing, vacate, a

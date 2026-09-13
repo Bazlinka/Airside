@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude airline save/load (ADR 0045, `feature/save-load`):** the
+  airline game now persists. `AirlineSave` (Simulation) captures and restores
+  `AirlineOperations` — clock, tower, RNG state, airlines and every aircraft's
+  exact state — and rejects anything it cannot trust (version, unknown
+  type/destination/airline, missing player, double-parked stand, clock mismatch).
+  `AirlineSaveFile` writes JSON atomically to
+  `persistentDataPath/airline-save.json`. Autosave after every command, within 2 s
+  of any fleet event, every 20 s, on focus loss and on quit. The start screen
+  offers **Continue** with day, time and trips; a new airline replaces the save.
+  Continue rebuilds the clock and circuit at the saved time rather than stepping
+  from zero. Only the airline layer is saved; the demo circuit is not (ADR 0041
+  still stands for it).
+- **Evidence:** Unity EditMode **216/217** (same pre-existing flight-path failure).
+  `ResumedGame_ContinuesExactlyLikeOneThatNeverStopped` runs original and restored
+  games 27 h further through JSON and they match, AI choices included. Packaged
+  app: started a green airline, skipped to 08:52, quit, relaunched, Continue →
+  same time and states, fleets drawn in 3D.
+- **Watch:** old `airside-save-v1.json*` files from the removed Persistence
+  assembly are still in the player's data folder; nothing reads them.
+- **Next:** money (fares, costs, buying aircraft).
+
 - **2026-09-13 Claude fleets in 3D (ADR 0045, `feature/fleet-3d-aircraft`):** once
   an airline starts, the field draws the fleets instead of the demo circuit. Bays
   on the terminal apron (BAY-1..4 at X −950/−800/−650/−500), pushback and taxi via
@@ -409,4 +430,4 @@ It does not cover Presentation, which needs UnityEngine.
 2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.
 3. **Player airline at Adelaide (ADR 0045).** First slice built on
    `feature/player-airline` (everything except save/load); fleets drawn in 3D on
-   `feature/fleet-3d-aircraft`. Next: save/load, then economy.
+   `feature/fleet-3d-aircraft`; save/load on `feature/save-load`. Next: economy.

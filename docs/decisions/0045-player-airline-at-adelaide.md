@@ -79,3 +79,15 @@ until the first slice lands.
   to E2. Aircraft are built once and hidden while away.
 - Runway occupancy per movement: lineup 60 s + takeoff; approach + landing +
   vacate 90 s.
+
+## Save/load (2026-09-14)
+
+- One airline save, `airline-save.json` in the player's persistent data folder,
+  version 1. Only the airline layer is saved: clock, tower state, RNG state,
+  airlines, and each aircraft's state with its timestamps, stands, destination,
+  schedule and trips. Recent-event history and the demo circuit are not saved.
+- Restores are all-or-nothing: an unrecognised version, type, destination,
+  airline, stand conflict or missing player airline refuses the save instead of
+  resuming a half-right game. The start screen reports why and offers a new airline.
+- Autosave triggers: every command, within 2 s of a fleet event, every 20 s of
+  play, focus loss and quit.

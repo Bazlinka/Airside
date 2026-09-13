@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
@@ -83,9 +84,9 @@ namespace Airside.Presentation
                 return;
 
             _operations.Update();
-            RememberDepartureStands();
             RefreshFleetFlights();
             AnnounceNewEvents();
+            AutosaveIfDue();
         }
 
         /// <summary>True when the airline layer owns the keyboard this frame.</summary>
@@ -147,12 +148,34 @@ namespace Airside.Presentation
 
         private void DrawAirlineSetup(float width, float height, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
         {
-            var rect = new Rect((width - 420f) * 0.5f, Mathf.Max(PanelMargin, (height - 300f) * 0.5f), 420f, 300f);
+            ProbeSavedAirline();
+            var hasSave = _savedAirline != null;
+            var saveBlock = hasSave || !string.IsNullOrEmpty(_saveError) ? 96f : 0f;
+            var panelHeight = 300f + saveBlock;
+            var rect = new Rect((width - 420f) * 0.5f, Mathf.Max(PanelMargin, (height - panelHeight) * 0.5f), 420f, panelHeight);
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 20f;
             var inner = rect.width - 40f;
 
-            GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), "Start your airline at Adelaide", title);
+            if (saveBlock > 0f)
+            {
+                var small = AirsideTheme.TextStyle(new GUIStyle(label) { fontSize = 12 }, AirsideTheme.OpenSky);
+                if (hasSave)
+                {
+                    if (GUI.Button(new Rect(x, rect.y + 16f, inner, 40f), $"Continue {SavedAirlineName()}", button))
+                        ContinueAirline();
+                    GUI.Label(new Rect(x, rect.y + 58f, inner, 20f), SavedAirlineSummary(), small);
+                }
+                else
+                {
+                    GUI.Label(new Rect(x, rect.y + 16f, inner, 60f), _saveError, small);
+                }
+
+                rect.y += saveBlock;
+                rect.height -= saveBlock;
+            }
+
+            GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), hasSave ? "Or start a new airline" : "Start your airline at Adelaide", title);
             GUI.Label(new Rect(x, rect.y + 56f, inner, 20f), "Airline name", label);
             _airlineNameDraft = GUI.TextField(new Rect(x, rect.y + 80f, inner, 30f), _airlineNameDraft ?? string.Empty, 32);
 
@@ -169,7 +192,9 @@ namespace Airside.Presentation
             }
 
             GUI.Label(new Rect(x, rect.y + 190f, inner, 36f),
-                "You start with one ATR 42-600. Emu Air flies two from the same airport.", label);
+                hasSave
+                    ? "A new airline replaces your saved one."
+                    : "You start with one ATR 42-600. Emu Air flies two from the same airport.", label);
 
             var name = (_airlineNameDraft ?? string.Empty).Trim();
             GUI.enabled = name.Length > 0;
@@ -183,10 +208,118 @@ namespace Airside.Presentation
             var player = Airline.Player(name, LiveryChoices[_liveryChoice].hex);
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player);
             _seenEvents = _operations.TotalEvents;
-            RememberDepartureStands();
             RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
+            SaveAirline();
             PlayUiClick();
+        }
+
+        // ---- Saving ---------------------------------------------------------------------
+
+        private const float AutosaveIntervalSeconds = 20f;
+
+        private bool _saveProbed;
+        private AirlineSaveData _savedAirline;
+        private string _saveError;
+        private float _nextAutosaveAt;
+        private bool _saveFailureShown;
+
+        private void ProbeSavedAirline()
+        {
+            if (_saveProbed)
+                return;
+            _saveProbed = true;
+
+            if (AirlineSaveFile.TryRead(AirlineSaveFile.DefaultPath, out var data, out var error))
+                _savedAirline = data;
+            else if (File.Exists(AirlineSaveFile.DefaultPath))
+                _saveError = $"{error} Starting a new airline will replace it.";
+        }
+
+        private string SavedAirlineName()
+        {
+            foreach (var airline in _savedAirline.Airlines)
+                if (airline.IsPlayer)
+                    return airline.Name;
+            return "your airline";
+        }
+
+        private string SavedAirlineSummary()
+        {
+            var at = new SimulationTime(_savedAirline.ClockSeconds);
+            var trips = 0;
+            foreach (var aircraft in _savedAirline.Fleet)
+                foreach (var airline in _savedAirline.Airlines)
+                    if (airline.IsPlayer && airline.Id == aircraft.AirlineId)
+                        trips += aircraft.CompletedTrips;
+            return $"Day {DayNumber(at)}  {ClockText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
+        }
+
+        /// <summary>
+        /// Resume the saved airline. The circuit simulation and clock are rebuilt at the
+        /// saved time rather than stepped there second by second from zero.
+        /// </summary>
+        private void ContinueAirline()
+        {
+            var data = _savedAirline;
+            var clock = new ManualSimulationClock(new SimulationTime(data.ClockSeconds));
+            AirlineOperations restored;
+            try
+            {
+                restored = AirlineSave.Restore(data, clock);
+            }
+            catch (Exception e) when (e is FormatException or ArgumentException or InvalidOperationException)
+            {
+                _savedAirline = null;
+                _saveError = $"Your saved airline could not be loaded ({e.Message}). Starting a new airline will replace it.";
+                return;
+            }
+
+            _clock = clock;
+            _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
+            _preciseTime = _clock.Now.ElapsedSeconds;
+            _operations = restored;
+            _seenEvents = _operations.TotalEvents;
+            RefreshFleetFlights();
+            ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
+            PlayUiClick();
+        }
+
+        private void RequestAutosave() => _nextAutosaveAt = Mathf.Min(_nextAutosaveAt, Time.unscaledTime + 2f);
+
+        private void AutosaveIfDue()
+        {
+            if (Time.unscaledTime < _nextAutosaveAt)
+                return;
+            SaveAirline();
+        }
+
+        private void SaveAirline()
+        {
+            if (_operations == null)
+                return;
+
+            _nextAutosaveAt = Time.unscaledTime + AutosaveIntervalSeconds;
+            try
+            {
+                AirlineSaveFile.Write(AirlineSaveFile.DefaultPath, AirlineSave.Capture(_operations));
+                _saveFailureShown = false;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                if (_saveFailureShown)
+                    return;
+                _saveFailureShown = true;
+                ShowToast($"Could not save: {e.Message}");
+            }
+        }
+
+        private void OnApplicationQuit() => SaveAirline();
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+                SaveAirline();
         }
 
         // ---- Clock and fleet ---------------------------------------------------------
@@ -284,7 +417,8 @@ namespace Airside.Presentation
                         ToggleMap(aircraft, forceOpen: true);
                     if (aircraft.Scheduled.HasValue
                         && GUI.Button(new Rect(x + 150f, y, 120f, 26f), "Cancel", smallButton))
-                        _operations.CancelDeparture(aircraft);
+                        if (_operations.CancelDeparture(aircraft).Accepted)
+                            SaveAirline();
                     y += 32f;
                     break;
 
@@ -299,7 +433,9 @@ namespace Airside.Presentation
                         if (GUI.Button(new Rect(bx, y, 76f, 26f), stand.Value, smallButton))
                         {
                             var result = _operations.AssignStand(aircraft, stand);
-                            if (!result.Accepted)
+                            if (result.Accepted)
+                                SaveAirline();
+                            else
                                 ShowToast(result.Reason);
                         }
                         bx += 82f;
@@ -485,6 +621,7 @@ namespace Airside.Presentation
                         {
                             ShowToast($"{aircraft.Registration} departs {ClockText(departAt)} for {destination.Name}.");
                             _mapOpen = false;
+                            SaveAirline();
                         }
                         else
                         {
@@ -555,6 +692,10 @@ namespace Airside.Presentation
             _seenEvents = _operations.TotalEvents;
             if (fresh <= 0)
                 return;
+
+            // Anything that changed state is worth keeping; the throttle stops 60x from
+            // writing the file every frame.
+            RequestAutosave();
 
             var events = _operations.RecentEvents;
             var start = Math.Max(0, events.Count - (int)Math.Min(fresh, events.Count));

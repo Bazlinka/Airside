@@ -56,11 +56,21 @@ namespace Airside.Simulation
         public const long RunwaySeparationSeconds = 90;
         public const int MaxRecentEvents = 30;
 
-        /// <summary>Runway time for the takeoff roll and initial climb, from the flown circuit.</summary>
-        public static long TakeoffRunwaySeconds => CircuitProfile.TakeoffSeconds;
+        /// <summary>Entering the runway at the holding point and backtracking to the takeoff position.</summary>
+        public const long LineupSeconds = 60;
 
-        /// <summary>Runway time for short final, flare and rollout, from the flown circuit.</summary>
-        public static long LandingRunwaySeconds => CircuitProfile.LandingSeconds;
+        /// <summary>Backtracking from the rollout end and clearing the runway at the exit.</summary>
+        public const long VacateSeconds = 90;
+
+        /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
+        public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
+
+        /// <summary>
+        /// Runway time from the landing clearance on long final through flare, rollout
+        /// and vacating — the whole of it is drawn in 3D, so it is flown in full.
+        /// </summary>
+        public static long LandingRunwaySeconds =>
+            CircuitProfile.ApproachSeconds + CircuitProfile.LandingSeconds + VacateSeconds;
 
         public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = new[]
         {

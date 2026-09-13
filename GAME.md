@@ -1,5 +1,14 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude player-airline design (ADR 0044, docs only):** Bailey's
+  next direction is agreed — Adelaide starter airport that runs itself; the
+  player runs one airline (own name/colours, 1 ATR to start) alongside AI Emu
+  Air; player picks destination + departure time and the arrival stand, tower
+  handles the runway; Australia-wide destinations map with range-locked far
+  destinations; real-length flights with 10×/30×/60× and skip-to-next-event;
+  money deferred. **Nothing built.** Next step: Bailey says go, then start the
+  first slice in ADR 0044's order.
+
 - **2026-09-13 Claude consolidation-graft audit (ADR 0043):** `c23cfa1` grafted
   73 branch tips into `main`'s history while discarding every one of their trees,
   so those commits read like delivered work and contain nothing. Audited all of
@@ -328,3 +337,8 @@ It does not cover Presentation, which needs UnityEngine.
 1. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
    and one stand** only when Bailey says so.
 2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.
+3. **Agreed next direction — player airline at Adelaide (ADR 0044).** Build
+   only on Bailey's go, in the ADR's first-slice order: Adelaide location,
+   airline/livery ownership, destination catalogue with range, off-map
+   tracking, scheduling + stand choice, destinations map, faster time rates,
+   save/load. Economy comes after.

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Player-airline design agreed (ADR 0044, docs only).** Adelaide starter
+  airport run autonomously; the player runs one named airline starting with one
+  ATR alongside AI Emu Air; destination and departure time chosen by the player,
+  runway by the tower, stand on arrival; Australia-wide destinations map with
+  range locks; real-length flights with faster time rates; economy deferred.
+  No code changed.
+
 - **Audit of the branch-consolidation graft (ADR 0043, docs only).** `c23cfa1` is
   a 74-parent octopus merge whose tree is exactly parent 1's — all 73 other tips
   contributed zero content, so their commits are reachable history with nothing

@@ -267,9 +267,9 @@ namespace Airside.Tests
         }
 
         /// <summary>
-        /// Metres per real second at 1x. Phase durations differ — takeoff lasts 15 s and
-        /// the departure fly-out 6 s — so distance per unit of progress is not comparable
-        /// across a seam, and comparing it flagged a matched handover as a 2.5x lurch.
+        /// Metres per real second at 1x. Phase durations differ and are derived from
+        /// CircuitProfile, so distance per unit of progress is not comparable across a
+        /// seam, and comparing it flagged a matched handover as a 2.5x lurch.
         /// </summary>
         private static float SpeedAt(AircraftPhase phase, float from, float to)
         {

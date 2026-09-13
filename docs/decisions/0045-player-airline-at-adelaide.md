@@ -1,4 +1,4 @@
-# 0044 — Player airline at Adelaide (design direction)
+# 0045 — Player airline at Adelaide (design direction)
 
 Date: 2026-09-13. Agreed with Bailey in a Claude Q&A session. Design only —
 nothing is built by this record. Build waits on Bailey's go.

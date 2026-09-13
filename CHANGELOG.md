@@ -5,12 +5,34 @@ change it describes.
 
 ## Unreleased
 
-- **Player-airline design agreed (ADR 0044, docs only).** Adelaide starter
+- **Player-airline design agreed (ADR 0045, docs only).** Adelaide starter
   airport run autonomously; the player runs one named airline starting with one
   ATR alongside AI Emu Air; destination and departure time chosen by the player,
   runway by the tower, stand on arrival; Australia-wide destinations map with
   range locks; real-length flights with faster time rates; economy deferred.
   No code changed.
+
+- **The circuit is now flown to ATR 42 performance (ADR 0044).** Phase durations
+  were hand-picked and the speeds fell out of them, unchecked: the takeoff roll
+  passed rotate at **179 kt** and left the field at **257 kt**, the climb-out ran
+  at 208, the last 600 m of final was a 1.53° drag-in rather than 3°, and there
+  was no flare at all — just a shallower straight line into the tarmac. New
+  `CircuitProfile` (pure C#, in Simulation) holds the stations and the reference
+  speeds and **derives** every duration from distance over mean speed;
+  `AirportCircuit` reads them and `AirsideFlightPath` only turns them into
+  positions, each segment at constant acceleration. Rotate is now 100 kt, climb-out
+  170, the glideslope a true 3°. The flare is a real round-out: it begins at 30 ft
+  as the threshold passes underneath and floats 300 m onto the touchdown-zone
+  markings while the sink is arrested from 584 to 60 ft/min, monotonically.
+  Circuit runs 182 s against 162 — a 900 m roll to Vr genuinely takes 35 seconds.
+  Attitudes retuned (rotate 9°, climb 7.5°, progressive flare to 6.5°). Tyre spin
+  now reads the scheduled airspeed instead of differentiating the position curve.
+  HUD unchanged.
+  **Verified:** `scripts/test-domain.sh` **137 passed, 0 failed** with 17 new
+  `CircuitProfileTests`. The Unity-only path curves were replicated numerically:
+  every speed within **2.3 kt** of schedule, all phase seams continuous to
+  **0.0000 m**, flare sink falling 581 → 0 ft/min. **Unity Play still required —
+  the numbers are right, whether it looks right is a Mac judgement.**
 
 - **Audit of the branch-consolidation graft (ADR 0043, docs only).** `c23cfa1` is
   a 74-parent octopus merge whose tree is exactly parent 1's — all 73 other tips

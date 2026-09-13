@@ -561,6 +561,7 @@ namespace Airside.Presentation
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 
+            DrawSpeedReadout(layout, panel);
             DrawControlBar(layout, button);
             DrawAirlineHud(layout, panel, title, button);
             if (_menuOpen)
@@ -568,6 +569,37 @@ namespace Airside.Presentation
 
             GUI.matrix = previousMatrix;
         }
+
+        /// <summary>
+        /// Live airspeed, read from the same visual progress that places the aircraft,
+        /// so the number always agrees with what is on screen rather than with the
+        /// simulation a fraction of a second behind it.
+        /// </summary>
+        private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
+        {
+            if (_simulation.Flights.Count == 0)
+                return;
+
+            var flight = _simulation.Flights[0];
+            var phase = flight.Operation.Phase;
+            var knots = AirsideFlightPath.AirspeedKnots(phase, VisualPhaseProgress(flight, 0f));
+
+            var rect = layout.SpeedReadout;
+            GUI.Box(rect, GUIContent.none, panel);
+            GUI.Label(rect, $"{Mathf.RoundToInt(knots)} kt", _speedReadoutStyle ??= SpeedReadoutStyle());
+        }
+
+        private GUIStyle _speedReadoutStyle;
+
+        private static GUIStyle SpeedReadoutStyle() =>
+            AirsideTheme.TextStyle(
+                new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 18,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
+                },
+                AirsideTheme.Cloud);
 
         private void DrawControlBar(HudLayout layout, GUIStyle button)
         {

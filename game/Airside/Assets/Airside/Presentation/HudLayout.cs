@@ -6,10 +6,11 @@ namespace Airside.Presentation
     /// Resolution-independent placement for the circuit HUD. All rectangles are
     /// expressed in virtual GUI points after <see cref="ScaleFor"/> is applied.
     ///
-    /// The HUD is two things only (ADR 0041): a control bar carrying pause, follow
-    /// the speed buttons and skip-to-next-event, and a centred pause menu. The
-    /// airline panels (ADR 0045) place themselves around it. Keeping the arithmetic here
-    /// makes the fits-on-screen contract testable without an editor.
+    /// The HUD is a control bar carrying pause, follow, the speed buttons and
+    /// skip-to-next-event (ADR 0041), a centred pause menu, and a live airspeed
+    /// readout above the bar (ADR 0044). The airline panels (ADR 0045) place
+    /// themselves around it. Keeping the arithmetic here makes the fits-on-screen
+    /// contract testable without an editor.
     /// </summary>
     public readonly struct HudLayout
     {
@@ -26,10 +27,16 @@ namespace Airside.Presentation
         public const float MenuWidth = 340f;
         public const float MenuHeight = 232f;
 
-        private HudLayout(Rect controlBar, Rect pauseMenu)
+        /// <summary>Airspeed readout, centred just above the control bar.</summary>
+        public const float ReadoutWidth = 132f;
+        public const float ReadoutHeight = 34f;
+        public const float ReadoutGap = 8f;
+
+        private HudLayout(Rect controlBar, Rect pauseMenu, Rect speedReadout)
         {
             ControlBar = controlBar;
             PauseMenu = pauseMenu;
+            SpeedReadout = speedReadout;
         }
 
         /// <summary>Bottom-centre strip holding the controls.</summary>
@@ -37,6 +44,9 @@ namespace Airside.Presentation
 
         /// <summary>Centred pause-menu panel.</summary>
         public Rect PauseMenu { get; }
+
+        /// <summary>Live airspeed, directly above the control bar.</summary>
+        public Rect SpeedReadout { get; }
 
         public static float ScaleFor(int screenWidth, int screenHeight)
         {
@@ -66,7 +76,15 @@ namespace Airside.Presentation
                 menuWidth,
                 menuHeight);
 
-            return new HudLayout(bar, menu);
+            var readoutWidth = Mathf.Min(ReadoutWidth, Mathf.Max(1f, viewportWidth - Margin * 2f));
+            var readout = new Rect(
+                (viewportWidth - readoutWidth) * 0.5f,
+                // Sits on the bar rather than off the top of a very short window.
+                Mathf.Max(0f, bar.y - ReadoutHeight - ReadoutGap),
+                readoutWidth,
+                Mathf.Min(ReadoutHeight, bar.y));
+
+            return new HudLayout(bar, menu, readout);
         }
 
         /// <summary>

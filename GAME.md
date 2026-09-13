@@ -57,8 +57,10 @@
   300 m onto the touchdown markings with the sink arrested 584 → 60 ft/min.
   Circuit is 182 s (was 162). `CircuitProfile` is the single source of truth and
   is UnityEngine-free, so the speeds are covered headlessly.
-- **Evidence:** `scripts/test-domain.sh` **137/137**; path curves replicated
-  numerically — speeds within 2.3 kt, seams continuous to 0.0000 m.
+- **Evidence:** `scripts/test-domain.sh` **140/140**; path curves replicated
+  numerically — speeds within 2.3 kt, seams continuous to 0.0000 m. A live
+  airspeed readout sits above the control bar; its schedule lives in
+  `CircuitProfile` so the number on screen is test-covered.
 - **Next gate — required:** Unity Play, and this one needs *judgement* rather
   than a checklist: does the round-out read as a landing, does the float look
   right, and is a 35-second takeoff roll (up from 19) too long to watch at 1x?
@@ -274,7 +276,8 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 
 On-screen controls sit in a bar at the bottom centre: **Pause · Follow · 1× ·
 2× · 4× · 10× · 30× · 60× · Skip**. Selecting a rate also clears a pause. Skip
-jumps to the next airline event, but never past a stand choice you owe.
+jumps to the next airline event, but never past a stand choice you owe. Live
+airspeed in knots shows just above the bar.
 
 Airline (ADR 0045): name your airline and pick a livery on the start screen. The
 fleet panel (top right) plans flights and offers stands when your aircraft lands;

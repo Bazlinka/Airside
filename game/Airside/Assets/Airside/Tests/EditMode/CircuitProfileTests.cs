@@ -210,6 +210,86 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void TheAirspeedScheduleMatchesTheReferenceFigures()
+        {
+            // This is the number shown on the HUD, so it is worth asserting directly.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Approach, 0f),
+                Is.EqualTo(CircuitProfile.ApproachEntryKnots).Within(0.1f));
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Approach, 1f),
+                Is.EqualTo(CircuitProfile.ApproachKnots).Within(0.1f));
+
+            // Vapp is held all the way down the slope to the round-out.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 0f),
+                Is.EqualTo(CircuitProfile.ApproachKnots).Within(0.1f));
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, CircuitProfile.FlareProgress * 0.99f),
+                Is.EqualTo(CircuitProfile.ApproachKnots).Within(0.1f));
+
+            // The flare scrubs Vapp off, and the wheels touch at touchdown speed.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, CircuitProfile.TouchdownProgress),
+                Is.EqualTo(CircuitProfile.TouchdownKnots).Within(0.5f));
+            // Then the rollout brakes to a stop.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f), Is.EqualTo(0f).Within(0.1f));
+
+            // The regression that started all this: rotate at Vr, not 179 kt.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 0f), Is.EqualTo(0f).Within(0.1f));
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, CircuitProfile.RotateProgress),
+                Is.EqualTo(CircuitProfile.RotateKnots).Within(0.5f));
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 1f),
+                Is.EqualTo(CircuitProfile.InitialClimbKnots).Within(0.5f));
+
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Departed, 1f),
+                Is.EqualTo(CircuitProfile.ClimbOutKnots).Within(0.5f));
+
+            // Stopped on the rollout end through the skipped ground phases.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.AtStand, 0.5f), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TheAirspeedScheduleIsContinuousAcrossPhaseSeams()
+        {
+            // A jump here would show as the readout flicking by tens of knots in a frame.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Approach, 1f),
+                Is.EqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 0f)).Within(0.1f),
+                "approach into landing");
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 1f),
+                Is.EqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Departed, 0f)).Within(0.1f),
+                "takeoff into departed");
+            // Landing ends stopped and takeoff starts stopped, with the skipped ground
+            // phases between them also reading zero.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f),
+                Is.EqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 0f)).Within(0.1f));
+        }
+
+        [Test]
+        public void TheAirspeedScheduleNeverGoesBackwardsWhereItShouldNot()
+        {
+            // Accelerating phases must only accelerate; the rollout must only slow.
+            AssertMonotonic(AircraftPhase.Takeoff, rising: true);
+            AssertMonotonic(AircraftPhase.Departed, rising: true);
+            for (var i = 1; i <= 50; i++)
+            {
+                var a = CircuitProfile.TouchdownProgress + (1f - CircuitProfile.TouchdownProgress) * (i - 1) / 50f;
+                var b = CircuitProfile.TouchdownProgress + (1f - CircuitProfile.TouchdownProgress) * i / 50f;
+                Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, b),
+                    Is.LessThanOrEqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, a) + 0.01f),
+                    "the rollout must only slow down");
+            }
+        }
+
+        private static void AssertMonotonic(AircraftPhase phase, bool rising)
+        {
+            for (var i = 1; i <= 100; i++)
+            {
+                var previous = CircuitProfile.AirspeedKnots(phase, (i - 1) / 100f);
+                var current = CircuitProfile.AirspeedKnots(phase, i / 100f);
+                if (rising)
+                    Assert.That(current, Is.GreaterThanOrEqualTo(previous - 0.01f), $"{phase} at {i / 100f}");
+                else
+                    Assert.That(current, Is.LessThanOrEqualTo(previous + 0.01f), $"{phase} at {i / 100f}");
+            }
+        }
+
+        [Test]
         public void ProgressFractionsSplitEachPhaseInOrder()
         {
             Assert.That(CircuitProfile.FlareProgress, Is.GreaterThan(0f));

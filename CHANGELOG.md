@@ -44,8 +44,12 @@ change it describes.
   Circuit runs 182 s against 162 — a 900 m roll to Vr genuinely takes 35 seconds.
   Attitudes retuned (rotate 9°, climb 7.5°, progressive flare to 6.5°). Tyre spin
   now reads the scheduled airspeed instead of differentiating the position curve.
-  HUD unchanged.
-  **Verified:** `scripts/test-domain.sh` **137 passed, 0 failed** with 17 new
+  A live airspeed readout sits above the control bar, reading the same visual
+  progress that places the aircraft so the number always agrees with what is on
+  screen. The speed schedule itself lives in `CircuitProfile`, not the flight
+  path, so the figure the player reads is covered by the headless tests rather
+  than being the one part nothing could check.
+  **Verified:** `scripts/test-domain.sh` **140 passed, 0 failed** with 20 new
   `CircuitProfileTests`. The Unity-only path curves were replicated numerically:
   every speed within **2.3 kt** of schedule, all phase seams continuous to
   **0.0000 m**, flare sink falling 581 → 0 ft/min. **Unity Play still required —

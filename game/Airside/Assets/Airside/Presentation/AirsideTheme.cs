@@ -187,7 +187,7 @@ namespace Airside.Presentation
             return style;
         }
 
-        private static Color FromHex(string hex) =>
+        internal static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
 
         // --- Batch E UI (docs/art/prompts/batch-e-ui-generation-2026-09-06.md) ---

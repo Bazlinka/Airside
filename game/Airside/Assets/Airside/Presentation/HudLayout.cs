@@ -7,7 +7,8 @@ namespace Airside.Presentation
     /// expressed in virtual GUI points after <see cref="ScaleFor"/> is applied.
     ///
     /// The HUD is two things only (ADR 0041): a control bar carrying pause, follow
-    /// and the speed buttons, and a centred pause menu. Keeping the arithmetic here
+    /// the speed buttons and skip-to-next-event, and a centred pause menu. The
+    /// airline panels (ADR 0045) place themselves around it. Keeping the arithmetic here
     /// makes the fits-on-screen contract testable without an editor.
     /// </summary>
     public readonly struct HudLayout
@@ -19,8 +20,8 @@ namespace Airside.Presentation
         public const float ButtonWidth = 62f;
         public const float ButtonGap = 8f;
 
-        /// <summary>pause · follow · 1× · 2× · 4×</summary>
-        public const int ButtonCount = 5;
+        /// <summary>pause · follow · 1× · 2× · 4× · 10× · 30× · 60× · skip</summary>
+        public const int ButtonCount = 9;
 
         public const float MenuWidth = 340f;
         public const float MenuHeight = 232f;
@@ -31,7 +32,7 @@ namespace Airside.Presentation
             PauseMenu = pauseMenu;
         }
 
-        /// <summary>Bottom-centre strip holding the five controls.</summary>
+        /// <summary>Bottom-centre strip holding the controls.</summary>
         public Rect ControlBar { get; }
 
         /// <summary>Centred pause-menu panel.</summary>

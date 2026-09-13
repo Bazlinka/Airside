@@ -113,8 +113,11 @@ namespace Airside.Simulation
         public IReadOnlyList<FleetAircraft> Fleet => _fleet;
         public IReadOnlyList<StableId> Stands => _stands;
 
-        /// <summary>Newest last.</summary>
+        /// <summary>Newest last, capped at <see cref="MaxRecentEvents"/>.</summary>
         public IReadOnlyList<FleetEvent> RecentEvents => _recentEvents;
+
+        /// <summary>Events emitted since start, so a reader can tell which recent ones are new.</summary>
+        public long TotalEvents { get; private set; }
 
         public Airline PlayerAirline => _airlines.Find(a => a.IsPlayer);
 
@@ -423,6 +426,7 @@ namespace Airside.Simulation
         {
             aircraft.Enter(state, now, durationSeconds);
             _recentEvents.Add(new FleetEvent(now, aircraft, state));
+            TotalEvents++;
             if (_recentEvents.Count > MaxRecentEvents)
                 _recentEvents.RemoveAt(0);
         }

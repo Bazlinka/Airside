@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 
 namespace Airside.Presentation
 {
-    public sealed class AirsidePrototype : MonoBehaviour
+    public sealed partial class AirsidePrototype : MonoBehaviour
     {
         private ManualSimulationClock _clock;
         private AirportSimulation _simulation;
@@ -159,8 +159,11 @@ namespace Airside.Presentation
         private bool _paused;
         private bool _audioMuted;
 
-        /// <summary>Selectable time rates. Normal, then the two fast-forwards.</summary>
-        private static readonly int[] SpeedSteps = { 1, 2, 4 };
+        /// <summary>
+        /// Selectable time rates. Flights are real length (ADR 0045), so the long
+        /// rates exist to get through a two-hour leg without waiting two hours.
+        /// </summary>
+        private static readonly int[] SpeedSteps = { 1, 2, 4, 10, 30, 60 };
         private int _speed = 1;
 
         /// <summary>Pause menu visibility. The menu implies paused; pausing does not imply the menu.</summary>
@@ -409,6 +412,7 @@ namespace Airside.Presentation
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
                 _simulation.Update();
+                UpdateAirlineOperations();
             }
 
             ApplyDayCycle();
@@ -450,6 +454,10 @@ namespace Airside.Presentation
             if (_menuOpen)
                 return;
 
+            // Typing the airline name must not pause, follow or change speed.
+            if (ReadAirlineControls(keyboard))
+                return;
+
             if (keyboard.spaceKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame)
                 TogglePause();
             if (keyboard.fKey.wasPressedThisFrame)
@@ -459,6 +467,9 @@ namespace Airside.Presentation
             if (keyboard.digit1Key.wasPressedThisFrame) SetSpeed(1);
             if (keyboard.digit2Key.wasPressedThisFrame) SetSpeed(2);
             if (keyboard.digit3Key.wasPressedThisFrame) SetSpeed(4);
+            if (keyboard.digit4Key.wasPressedThisFrame) SetSpeed(10);
+            if (keyboard.digit5Key.wasPressedThisFrame) SetSpeed(30);
+            if (keyboard.digit6Key.wasPressedThisFrame) SetSpeed(60);
             if (keyboard.mKey.wasPressedThisFrame)
                 _audioMuted = !_audioMuted;
         }
@@ -551,6 +562,7 @@ namespace Airside.Presentation
                 AirsideTheme.Cloud);
 
             DrawControlBar(layout, button);
+            DrawAirlineHud(layout, panel, title, button);
             if (_menuOpen)
                 DrawPauseMenu(layout, panel, title, button);
 
@@ -576,6 +588,9 @@ namespace Airside.Presentation
                 if (GUI.Button(layout.ButtonAt(2 + index), label, button))
                     SetSpeed(step);
             }
+
+            if (GUI.Button(layout.ButtonAt(2 + SpeedSteps.Length), "Skip", button))
+                SkipToNextEvent();
         }
 
         private void DrawPauseMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)

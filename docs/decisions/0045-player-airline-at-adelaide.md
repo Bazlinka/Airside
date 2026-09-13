@@ -19,8 +19,8 @@ airport itself runs itself. Keep it realistic to the location.
 | AI airlines | One to start: Emu Air (existing `dc_livery_emu_air_v01`), same ATR for now. Shares/competes for runway slots and stands only; not a route rival yet. |
 | Control mix | Player picks destination and departure time. Tower sequences pushback, taxi, takeoff and landing — no player landing clearance. On arrival the player picks the stand and sends it to taxi. |
 | Destinations | Map of destinations, Australia-wide to start; global later. |
-| Range gating | Destinations beyond the owned aircraft's range (~1,300 km for the ATR) are shown but locked. Perth, Sydney, Brisbane, Darwin are the obvious locked ones. |
-| Flight time | Real length (e.g. Kingscote ~30 min, Port Lincoln ~50 min, Mount Gambier ~1 h, Coober Pedy ~2 h). |
+| Range gating | Destinations beyond the owned aircraft's planning range are shown but locked. The ATR's brochure range is ~1,326 km; with passengers and reserves it is planned at **1,100 km**, which locks Sydney, Hobart, Alice Springs and everything further — as in real service. |
+| Flight time | Real length: great-circle distance at 556 km/h cruise plus 10 min climb/descent (Kingscote ~23 min, Melbourne ~80 min airborne), plus 7 min taxi out, 5 min taxi in and a 40 min turnaround at the destination. |
 | Time controls | 1×, 2×, 4×, 10×, 30×, 60×, plus skip-to-next-event. |
 | Money | Deferred to a second step (fares, fuel, leasing/buying). First slice is ownership and scheduling only. |
 | Branding | Fictional airline names on real routes. |
@@ -55,3 +55,15 @@ until the first slice lands.
 - Adelaide landside is hidden behind the bare-field flags, so the airport reads
   empty until those buildings return.
 - Real-length flights with no saving would lose every session's progress.
+
+## Implementation notes (first slice, 2026-09-13)
+
+- `AirlineOperations` is separate from the circuit `AirportSimulation`, so the
+  flight-model work there is untouched. It shares the same clock.
+- Four regional bays (`BAY-1`–`BAY-4`): player on BAY-1, Emu Air on BAY-2/3.
+  A stand is held on the stand and while taxiing in, released at pushback.
+- Player aircraft wait indefinitely for a stand once landed; Skip refuses to jump
+  past that decision and the rate drops to 1× when it arises.
+- Emu Air picks a random reachable destination and departs 45 min after parking.
+- Still open: 3D aircraft driven by the fleets, save/load, economy, and whether
+  `DayCycle` becomes a real 24-hour day.

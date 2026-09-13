@@ -88,6 +88,9 @@ namespace Airside.Simulation
 
         public ScheduledDeparture? Scheduled { get; internal set; }
 
+        /// <summary>The stand the aircraft last pushed back from, so its taxi-out can be drawn from there.</summary>
+        public StableId DepartureStand { get; internal set; }
+
         public int CompletedTrips { get; internal set; }
 
         public bool IsOffMap => State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound;
@@ -102,6 +105,14 @@ namespace Airside.Simulation
                 return 1;
             var done = now.ElapsedSeconds - StateStartedAt.ElapsedSeconds;
             return Math.Clamp(done / (double)total, 0, 1);
+        }
+
+        /// <summary>Put a restored aircraft back exactly where a save left it.</summary>
+        internal void Restore(FleetState state, SimulationTime startedAt, SimulationTime? endsAt)
+        {
+            State = state;
+            StateStartedAt = startedAt;
+            StateEndsAt = endsAt;
         }
 
         internal void Enter(FleetState state, SimulationTime now, long? durationSeconds)

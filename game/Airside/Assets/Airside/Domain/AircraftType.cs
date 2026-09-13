@@ -41,5 +41,11 @@ namespace Airside.Domain
         public static readonly AircraftType Atr42 = new("ATR42", "ATR 42-600", 556, 1100);
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
+
+        public static bool TryFromId(string id, out AircraftType type)
+        {
+            type = string.Equals(id, Atr42.Id, StringComparison.Ordinal) ? Atr42 : null;
+            return type != null;
+        }
     }
 }

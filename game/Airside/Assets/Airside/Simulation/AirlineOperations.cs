@@ -119,6 +119,15 @@ namespace Airside.Simulation
         }
 
         public Destination Home { get; }
+
+        /// <summary>Simulation time everything has been resolved up to.</summary>
+        public SimulationTime ProcessedTo => _processedTo;
+
+        /// <summary>When the tower may next clear a runway movement.</summary>
+        public SimulationTime RunwayFreeAt => _runwayFreeAt;
+
+        /// <summary>Generator state for saving; 0 when the source is not a <see cref="SeededRandomSource"/>.</summary>
+        public uint RandomState => _random is SeededRandomSource seeded ? seeded.State : 0;
         public IReadOnlyList<Airline> Airlines => _airlines;
         public IReadOnlyList<FleetAircraft> Fleet => _fleet;
         public IReadOnlyList<StableId> Stands => _stands;
@@ -166,6 +175,40 @@ namespace Airside.Simulation
             if (!airline.IsPlayer)
                 ScheduleAiDeparture(aircraft, _processedTo);
             return aircraft;
+        }
+
+        /// <summary>
+        /// Re-add an aircraft exactly as saved. Unlike <see cref="AddAircraft"/> this never
+        /// schedules an AI departure, so the random sequence resumes where it left off.
+        /// </summary>
+        internal void RestoreAircraft(
+            string registration, Airline airline, AircraftType type, FleetState state,
+            SimulationTime stateStartedAt, SimulationTime? stateEndsAt, StableId stand, StableId departureStand,
+            Destination? currentDestination, ScheduledDeparture? scheduled, int completedTrips)
+        {
+            if (!_airlines.Contains(airline))
+                throw new FormatException($"{registration}: airline not restored.");
+            if (string.IsNullOrWhiteSpace(registration)
+                || _fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
+                throw new FormatException($"Duplicate or missing registration '{registration}'.");
+
+            var aircraft = new FleetAircraft(registration, airline, type, default, stateStartedAt);
+            aircraft.Restore(state, stateStartedAt, stateEndsAt);
+            if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
+                throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
+
+            aircraft.Stand = stand;
+            aircraft.DepartureStand = departureStand;
+            aircraft.CurrentDestination = currentDestination;
+            aircraft.Scheduled = scheduled;
+            aircraft.CompletedTrips = Math.Max(0, completedTrips);
+            _fleet.Add(aircraft);
+        }
+
+        internal void RestoreTower(SimulationTime runwayFreeAt, long totalEvents)
+        {
+            _runwayFreeAt = runwayFreeAt;
+            TotalEvents = Math.Max(0, totalEvents);
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -328,6 +371,7 @@ namespace Airside.Simulation
                         return false;
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
+                    aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
                     Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSeconds);
                     return true;

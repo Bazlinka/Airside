@@ -22,6 +22,9 @@ namespace Airside.Simulation
             _state = seed == 0 ? ZeroSeedSubstitute : seed;
         }
 
+        /// <summary>Current generator state. Never zero; feed it back to the constructor to resume the sequence.</summary>
+        public uint State => _state;
+
         public int NextInt(int minimumInclusive, int maximumExclusive)
         {
             if (maximumExclusive <= minimumInclusive)

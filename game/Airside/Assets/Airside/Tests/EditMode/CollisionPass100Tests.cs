@@ -97,8 +97,9 @@ namespace Airside.Tests
         {
             var midnight = DayCycle.MidnightOfDay(1);
             var midday = DayCycle.MiddayOfDay(1);
-            Assert.That(midnight.ElapsedSeconds, Is.EqualTo(800));
-            Assert.That(midday.ElapsedSeconds, Is.EqualTo(200));
+            // Day 1 starts at 08:00: midnight is 16 hours in, midday 4 hours in.
+            Assert.That(midnight.ElapsedSeconds, Is.EqualTo(DayCycle.DaySeconds * 16 / 24));
+            Assert.That(midday.ElapsedSeconds, Is.EqualTo(DayCycle.DaySeconds * 4 / 24));
             Assert.That(new DayCycle(midday).Hour, Is.EqualTo(12));
         }
 

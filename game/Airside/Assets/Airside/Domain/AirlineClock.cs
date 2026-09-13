@@ -3,13 +3,12 @@ using System;
 namespace Airside.Domain
 {
     /// <summary>
-    /// How airline time reads to the player (ADR 0045): a real 24-hour day that starts
-    /// at 08:00 on day 1. Separate from <see cref="DayCycle"/>, which still compresses
-    /// lighting into 20-minute days.
+    /// How airline time reads to the player (ADR 0045): the same real 24-hour day as
+    /// <see cref="DayCycle"/>, starting at 08:00 on day 1.
     /// </summary>
     public static class AirlineClock
     {
-        public const long DayLengthSeconds = 24 * 3600;
+        public const long DayLengthSeconds = DayCycle.DaySeconds;
         public const long StartSeconds = 8 * 3600;
 
         public static string TimeText(SimulationTime time)

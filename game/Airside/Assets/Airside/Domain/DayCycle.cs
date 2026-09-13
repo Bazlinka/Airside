@@ -12,13 +12,13 @@ namespace Airside.Domain
 
     /// <summary>
     /// The local time of day at the airport, derived purely from the simulation
-    /// clock. In the prototype the simulation clock is treated as local time, one
-    /// simulated day every <see cref="DaySeconds"/> seconds, starting at 08:00 on
-    /// day one. Aligning this to real-world wall time comes with the companion app.
+    /// clock: a real 24-hour day (<see cref="DaySeconds"/>), starting at 08:00 on day
+    /// one. It was a 20-minute day until airline flights became real length (ADR 0045),
+    /// when a two-hour leg would have spanned six days of lighting.
     /// </summary>
     public readonly struct DayCycle
     {
-        public const long DaySeconds = 1200; // one simulated day every 20 minutes
+        public const long DaySeconds = 24 * 3600;
         private const double StartHour = 8.0;
 
         public DayCycle(SimulationTime now, long daySeconds = DaySeconds)

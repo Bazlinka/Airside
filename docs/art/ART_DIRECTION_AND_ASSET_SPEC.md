@@ -169,12 +169,14 @@ in the same commit as each asset batch.
 | REF-004 | `docs/art/reference/ref_operations_hud_v01.png` | UI reference | Operations HUD, route offer and welcome-back panel over gameplay; approved reference is 1280×720 (runtime HUD targets desktop ~2560×1440) | Approved |
 | REF-005 | `docs/art/reference/ref_asset_scale_and_palette_v01.png` | Style sheet | Aircraft, vehicles, person, terminal module, materials and palette in one consistent scale reference | Approved |
 | BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Transparent wordmark; simple aviation/wayfinding character; no tiny tagline | Approved · Integrated (opening + HUD; packaged via StreamingAssets) |
+| BRD-002 | `game/Airside/Assets/Airside/Art/Brand/airside_app_icon_v01.png` | Runtime image | 1024² Standalone/macOS app icon; runway-A mark on Runway Ink; no baked text | Approved · Integrated (Player Settings default icon; Dock/Finder verify on Mac build) |
 | UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Approved · Integrated (opening briefing backdrop; packaged via StreamingAssets) |
 
 **Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Bailey
-approved BRD-001 and UI-ILL-001 on 7 September 2026 for runtime use. Batches
-B–D may now use REF masters as production targets. UI-ILL-001 inherits that
-approved design rather than reinventing it.
+approved BRD-001 and UI-ILL-001 on 7 September 2026 for runtime use. Bailey
+requested BRD-002 on 12 September 2026 and had it merged to `main` as the
+Standalone Player icon. Batches B–D may now use REF masters as production
+targets. UI-ILL-001 inherits that approved design rather than reinventing it.
 
 For a machine-friendly map of the approved references, candidates and remaining
 gaps, see `docs/art/AI_IMAGE_REFERENCE_INDEX.md`. For Bailey’s source-everything

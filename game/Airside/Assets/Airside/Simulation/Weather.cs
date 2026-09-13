@@ -21,7 +21,9 @@ namespace Airside.Simulation
     /// </summary>
     public static class Weather
     {
-        public const long BlockSeconds = 300; // a new sky every five simulated minutes
+        // A new sky every simulated hour. Five minutes suited the old 20-minute day; on a
+        // real 24-hour day at 60x it flickered rain on and off every five seconds.
+        public const long BlockSeconds = 3600;
 
         public static WeatherKind At(SimulationTime now)
         {

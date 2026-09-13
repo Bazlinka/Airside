@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude real 24-hour day (Bailey's decision, `feature/real-24h-day`):**
+  `DayCycle.DaySeconds` is now 86,400 (was 1,200), so lighting time, the airline
+  clock and real-length flights agree; `AirlineClock` reads it. Weather now changes
+  hourly (was every 5 simulated minutes, which flickered at 60×). Lighting is still
+  pinned to day by `PinDaylightPresentation` pending the night-lighting rework —
+  unpinning it now gives a real sunrise/sunset.
+- **Evidence:** Unity EditMode **232/232** (one helper test re-expressed in hours).
+- **Watch — iCloud:** `~/Documents` is iCloud Drive, so this repo syncs. iCloud
+  created `FleetVisual 2.cs`-style duplicates inside `Assets/` that broke the Unity
+  compile (duplicate types); moved to `~/.Trash/airside-sync-duplicates-20260914`.
+  More `* 2.*` copies exist under `work/` and `UserSettings/`. Moving the repo out of
+  iCloud (or excluding it) is recommended.
+
 - **2026-09-14 Claude away catch-up and summary (PROJECT_PLAN core rules, `feature/away-catch-up`):**
   the airport keeps running while the game is closed. Saves are now **version 2**
   with `SavedAtUtcTicks` (v1 still loads, without catch-up). On Continue the
@@ -295,7 +308,7 @@ A bare circuit sandbox. One ATR-class aircraft flies a continuous circuit at
 Adelaide (YPAD) — approach, landing, rollout to rest, takeoff, fly-out — and
 recycles onto a fresh approach. The airport sits at a named location (Kingscote
 by default; Port Lincoln and Coober Pedy also available) and runs a day/night
-cycle, one simulated day every 20 real minutes, driving the sun and ambient
+cycle, a real 24-hour day, driving the sun and ambient
 light. Deterministic weather changes through the day and drives the wet-surface,
 rain and spray presentation.
 

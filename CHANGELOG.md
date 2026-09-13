@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **The day is a real 24 hours.** Lighting time now matches the airline clock and
+  real-length flights; weather changes hourly instead of every five minutes.
+
 - **The airport keeps running while you're away.** Continue catches the airline
   game up by the real time since the save (up to a week) and shows what happened
   and what needs you. Save format version 2 adds the save timestamp; version 1

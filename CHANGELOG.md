@@ -5,6 +5,36 @@ change it describes.
 
 ## Unreleased
 
+- **Wheels spin on their axles again, plus tyre smoke.** Every tyre/wheel/rim
+  node in `mdl_atr42_starter_v02` ships with an identity transform and its mesh
+  baked at aircraft-space position, so spinning about the node's own X axis swept
+  each part on a circle about the fuselage centreline — 0.37 m for the forward
+  mains, 0.84 m for the aft, and 8.35 m for the nose wheels, carrying them up over
+  the aeroplane. This was diagnosed and fixed once before (Pass A, `177c075`), but
+  `RebakeWheelPivots`, `RebakeOwnMeshToPivot` and `AirsideAircraftParts` were never
+  in main's *tree* — the branch was grafted into main's history without its
+  content, so the roll pass survived while the rebake that made it correct did
+  not. Restored, with the shared `RollsInPlace` name contract locked by
+  `AircraftPartsTests` so the rebaked set and the spun set cannot drift apart
+  again. `Rim*` parts were also never matched by the old inline filter, so rims
+  stayed still while their tyres moved; they roll now. New pooled tyre smoke fires
+  a burst from the real main-gear contact patches at touchdown and thins out
+  through the rollout as speed bleeds off.
+- **Camera: follow-off releases in place, and zoom works (ADR 0042).** Toggling
+  follow off dragged the player back to a fixed overview; it now hands the camera
+  back where it is, and R is an explicit reset. The F key was handled by *both*
+  `AirsideCameraController.ReadInput` (LateUpdate) and
+  `AirsidePrototype.ReadSimulationControls` (Update), so one press turned follow
+  off and straight back on — F could never disable follow. Follow and reset now
+  have exactly one owner. Scroll while following biases the phase framing instead
+  of being erased by the follow lerp. Added middle-drag pan, Q/E keyboard orbit,
+  Z/X camera height; pitch opens to 4°–85° with a ground-clearance clamp so a low
+  orbit cannot sink the camera through the airfield.
+  **Verified:** `scripts/test-domain.sh` **121 passed, 0 failed**; axle centres
+  checked against the shipped glTF (every tyre's bounds centre sits exactly on its
+  axle, contact patch at 0.0000). **Unity Play still required for the wheel
+  rotation, the smoke and the whole camera scheme.**
+
 - **Strip Airside to a bare circuit sandbox.** Remove the objective layer
   entirely: economy, routes, reputation, staffing, research, stand capacity,
   daily reports, turnaround workflows, the event log, the ATC phraseology engine

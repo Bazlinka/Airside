@@ -48,13 +48,25 @@ namespace Airside.Presentation
         /// </summary>
         private const float RespawnJumpMetres = 20f;
 
-        public void SetFollowTarget(Transform target)
-        {
-            _followTargets = target != null ? new[] { target } : System.Array.Empty<Transform>();
-            _followIndex = 0;
-            _followTarget = target;
-            _hasLastTargetPosition = false;
-        }
+        private const float MinPitchDegrees = 4f;
+        private const float MaxPitchDegrees = 85f;
+        private const float KeyboardOrbitDegreesPerSecond = 70f;
+
+        /// <summary>Never let the camera sink into the airfield at low orbit angles.</summary>
+        private const float MinGroundClearanceMetres = 2.5f;
+
+        /// <summary>
+        /// Player zoom while following, as a multiplier on the phase framing distance.
+        /// Held separately because the follow lerp rewrites <c>_distance</c> every
+        /// frame — a raw scroll would be erased before the next one was drawn.
+        /// Sticky across follow sessions so a preferred framing survives a toggle.
+        /// </summary>
+        private float _followZoom = 1f;
+        private const float MinFollowZoom = 0.35f;
+        private const float MaxFollowZoom = 3.5f;
+
+        /// <summary>Hold off the follow yaw bias briefly so orbit is not fought every frame.</summary>
+        private void SuppressFollowOrbit() => _orbitSuppressUntil = Time.unscaledTime + 0.9f;
 
         public void SetFollowTargets(Transform[] targets)
         {
@@ -116,7 +128,7 @@ namespace Airside.Presentation
                 _lastTargetPosition = _followTarget.position;
                 _hasLastTargetPosition = true;
 
-                var followDistance = FollowDistance(_followPhase, altitude, _followProgress);
+                var followDistance = FollowDistance(_followPhase, altitude, _followProgress) * _followZoom;
                 if (recycled)
                 {
                     _center = lookPoint;
@@ -208,7 +220,13 @@ namespace Airside.Presentation
                     _touchdownShake = Mathf.MoveTowards(_touchdownShake, 0f, Time.unscaledDeltaTime * 2.2f);
             }
 
-            transform.SetPositionAndRotation(_center - rotation * Vector3.forward * _distance + shakeOffset, rotation);
+            var position = _center - rotation * Vector3.forward * _distance + shakeOffset;
+            // The orbit now opens up to a near-level pitch, which at close range can
+            // put the camera under the airfield. Keep it a readable height above the
+            // ground beneath it rather than clamping the angle the player asked for.
+            var groundY = AirsideAdelaideGround.WorldHeight(position.x, position.z);
+            position.y = Mathf.Max(position.y, groundY + MinGroundClearanceMetres);
+            transform.SetPositionAndRotation(position, rotation);
         }
 
         private static float LookAheadMetres(AircraftPhase phase, float progress, float altitude)
@@ -291,12 +309,33 @@ namespace Airside.Presentation
         {
             var keyboard = Keyboard.current;
             var mouse = Mouse.current;
+            // Follow and reset-view are owned by AirsidePrototype, which drives them
+            // from the HUD bar and its hotkeys. Handling them here as well meant one
+            // F press toggled follow off in Update and back on in LateUpdate.
             if (keyboard != null)
             {
-                if (keyboard.fKey.wasPressedThisFrame)
-                    CycleOrStartFollow();
-                if (keyboard.oKey.wasPressedThisFrame)
-                    ReturnToOverview();
+                var dt = Time.unscaledDeltaTime;
+
+                // Keyboard orbit, for trackpads and anyone not holding a mouse button.
+                var keyYaw = 0f;
+                if (keyboard.qKey.isPressed) keyYaw -= 1f;
+                if (keyboard.eKey.isPressed) keyYaw += 1f;
+                if (keyYaw != 0f)
+                {
+                    _yaw += keyYaw * KeyboardOrbitDegreesPerSecond * dt;
+                    SuppressFollowOrbit();
+                }
+
+                // Raise / lower the orbit centre. Z and X rather than R or F, which
+                // are the reset-view and follow keys.
+                var keyLift = 0f;
+                if (keyboard.xKey.isPressed) keyLift += 1f;
+                if (keyboard.zKey.isPressed) keyLift -= 1f;
+                if (keyLift != 0f)
+                {
+                    _center += Vector3.up * (keyLift * AirsideBareField.OverviewPanMetresPerSecond * 0.5f * dt);
+                    _easingOverview = false;
+                }
 
                 if (!_following)
                 {
@@ -305,10 +344,14 @@ namespace Airside.Presentation
                     if (keyboard.sKey.isPressed) move.y -= 1f;
                     if (keyboard.dKey.isPressed) move.x += 1f;
                     if (keyboard.aKey.isPressed) move.x -= 1f;
-                    var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-                    var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                    _center += (planarForward * move.y + planarRight * move.x)
-                        * (AirsideBareField.OverviewPanMetresPerSecond * Time.unscaledDeltaTime);
+                    if (move != Vector2.zero)
+                    {
+                        var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                        var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+                        _center += (planarForward * move.y + planarRight * move.x)
+                            * (AirsideBareField.OverviewPanMetresPerSecond * dt);
+                        _easingOverview = false;
+                    }
                 }
             }
 
@@ -319,49 +362,72 @@ namespace Airside.Presentation
             {
                 var delta = mouse.delta.ReadValue();
                 _yaw += delta.x * 0.18f;
-                _pitch = Mathf.Clamp(_pitch - delta.y * 0.14f, 18f, 72f);
-                // Suppress follow yaw bias briefly so orbit is not fought every frame.
-                _orbitSuppressUntil = Time.unscaledTime + 0.9f;
+                _pitch = Mathf.Clamp(_pitch - delta.y * 0.14f, MinPitchDegrees, MaxPitchDegrees);
+                SuppressFollowOrbit();
                 _easingOverview = false;
+            }
+
+            // Middle-drag slides the view across the field, in the plane you are
+            // looking along. Panning a followed aircraft would only fight the follow,
+            // so it drops follow and hands the camera back to you.
+            if (mouse.middleButton.isPressed)
+            {
+                var delta = mouse.delta.ReadValue();
+                if (delta.sqrMagnitude > 0.0001f)
+                {
+                    if (_following)
+                        ReleaseFollow();
+                    var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                    var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+                    // Scale with distance so the drag tracks the ground under the cursor.
+                    var metresPerPixel = _distance * 0.0016f;
+                    _center -= (planarRight * delta.x + planarForward * delta.y) * metresPerPixel;
+                    _easingOverview = false;
+                }
             }
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
             {
-                var step = scroll * 0.0025f * Mathf.Max(80f, _distance);
-                _distance = Mathf.Clamp(
-                    _distance - step,
-                    AirsideBareField.MinOrbitDistance,
-                    AirsideBareField.MaxOrbitDistance);
+                _easingOverview = false;
+                if (_following)
+                {
+                    // Following: bias the phase framing instead of setting an absolute
+                    // distance, which the follow lerp would erase on the next frame.
+                    _followZoom = Mathf.Clamp(
+                        _followZoom * (1f - scroll * 0.0012f),
+                        MinFollowZoom,
+                        MaxFollowZoom);
+                }
+                else
+                {
+                    var step = scroll * 0.0025f * Mathf.Max(80f, _distance);
+                    _distance = Mathf.Clamp(
+                        _distance - step,
+                        AirsideBareField.MinOrbitDistance,
+                        AirsideBareField.MaxOrbitDistance);
+                }
             }
         }
 
-        /// <summary>HUD / hotkey: start follow or cycle commercials.</summary>
-        public void CycleOrStartFollow()
+        /// <summary>
+        /// HUD / hotkey: stop following and hand the camera back where it is. The
+        /// player keeps the current position, angle and zoom and is free to orbit,
+        /// pan and zoom from there — turning follow off is not a request to be
+        /// dragged back across the field.
+        /// </summary>
+        public void ReleaseFollow()
         {
-            if (_followTargets.Length == 0)
-            {
-                _following = _followTarget != null;
-                return;
-            }
-
-            if (!_following)
-            {
-                // Resume the last followed commercial instead of always restarting at 0.
-                _following = true;
-                _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
-                _followTarget = _followTargets[_followIndex];
-                _hasLastTargetPosition = false;
-                return;
-            }
-
-            // Already following: cycle through commercials (and wrap).
-            _followIndex = (_followIndex + 1) % _followTargets.Length;
-            _followTarget = _followTargets[_followIndex];
+            _following = false;
+            _easingOverview = false;
             _hasLastTargetPosition = false;
         }
 
-        /// <summary>HUD / hotkey: return to the default overview framing.</summary>
+        /// <summary>
+        /// HUD / hotkey: explicitly reset to the default overview framing. Separate
+        /// from <see cref="ReleaseFollow"/> so ending a follow never forces a view
+        /// change the player did not ask for.
+        /// </summary>
         public void ReturnToOverview()
         {
             _following = false;

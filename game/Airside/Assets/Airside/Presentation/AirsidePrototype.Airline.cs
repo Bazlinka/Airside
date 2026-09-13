@@ -10,8 +10,8 @@ namespace Airside.Presentation
     /// <summary>
     /// The player-airline layer (ADR 0045): start-your-airline panel, fleet panel,
     /// Australia-wide destinations map, stand choice and skip-to-next-event.
-    /// IMGUI, drawn over the circuit HUD. The 3D circuit aircraft are not yet driven
-    /// by these fleets — that is the next slice.
+    /// IMGUI, drawn over the circuit HUD. Once the airline starts, the 3D field draws
+    /// the fleets instead of the demo circuit (AirsidePrototype.FleetVisuals.cs).
     /// </summary>
     public sealed partial class AirsidePrototype
     {
@@ -83,6 +83,8 @@ namespace Airside.Presentation
                 return;
 
             _operations.Update();
+            RememberDepartureStands();
+            RefreshFleetFlights();
             AnnounceNewEvents();
         }
 
@@ -181,6 +183,8 @@ namespace Airside.Presentation
             var player = Airline.Player(name, LiveryChoices[_liveryChoice].hex);
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player);
             _seenEvents = _operations.TotalEvents;
+            RememberDepartureStands();
+            RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             PlayUiClick();
         }

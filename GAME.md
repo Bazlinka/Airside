@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude fleets in 3D (ADR 0045, `feature/fleet-3d-aircraft`):** once
+  an airline starts, the field draws the fleets instead of the demo circuit. Bays
+  on the terminal apron (BAY-1..4 at X −950/−800/−650/−500), pushback and taxi via
+  the A↔F link at X −300 to hold at E2, lineup and backtrack, the existing
+  takeoff/climb-out and approach/landing curves, backtrack-vacate to F, a queue
+  for the stand on F, taxi in. Liveries: Emu Air decal (airline colour is now its
+  brown #A66F32); player gets the traffic decal repainted in their colour.
+  `FleetVisual` (Simulation, tested) maps fleet state to circuit phases;
+  `AirsidePrototype.FleetVisuals.cs` holds routes and models; the prototype reads
+  `VisualFlights` everywhere it used `_simulation.Flights`.
+- **Evidence:** Unity EditMode **213/214** (same pre-existing
+  `FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed` failure). Packaged Mac app
+  watched end to end with Follow: pushback → taxi → hold bars → lineup → takeoff →
+  hidden while away → approach → touchdown → rollout → vacate → wait on F →
+  BAY-4 → parked. No exceptions in Player.log.
+- **Runway time grew:** tower runway occupancy now includes a 60 s lineup and the
+  whole approach plus a 90 s vacate, since all of it is drawn.
+- **Watch:** Follow with nothing on the field leaves the camera where it was until
+  an aircraft returns. Black upper fuselage is in the decal art (demo plane too).
+- **Next:** save/load, then money.
+
 - **2026-09-13 Claude player airline, first slice (ADR 0045, `feature/player-airline`):**
   playable at Adelaide. Start screen (name + livery), fleet panel, Australia-wide
   destinations map with range locks and live off-map tracking, schedule a
@@ -384,5 +405,5 @@ It does not cover Presentation, which needs UnityEngine.
    and one stand** only when Bailey says so.
 2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.
 3. **Player airline at Adelaide (ADR 0045).** First slice built on
-   `feature/player-airline` (everything except save/load). Next: 3D runway
-   movements driven by `AirlineOperations`, then save/load, then economy.
+   `feature/player-airline` (everything except save/load); fleets drawn in 3D on
+   `feature/fleet-3d-aircraft`. Next: save/load, then economy.

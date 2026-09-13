@@ -27,6 +27,14 @@ namespace Airside.Simulation
             PhaseStartedAt = startedAt;
         }
 
+        /// <summary>
+        /// An operation already in <paramref name="phase"/> since <paramref name="startedAt"/>.
+        /// Lets another schedule (the airline fleets, ADR 0045) be drawn by the circuit
+        /// presentation without running the circuit's own phase clock.
+        /// </summary>
+        public static AircraftOperation InPhase(string aircraftId, AircraftPhase phase, SimulationTime startedAt) =>
+            new(aircraftId, startedAt) { Phase = phase };
+
         public string AircraftId { get; }
         public AircraftPhase Phase { get; private set; }
         public SimulationTime PhaseStartedAt { get; private set; }

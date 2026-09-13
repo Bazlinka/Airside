@@ -67,3 +67,15 @@ until the first slice lands.
 - Emu Air picks a random reachable destination and departs 45 min after parking.
 - Still open: 3D aircraft driven by the fleets, save/load, economy, and whether
   `DayCycle` becomes a real 24-hour day.
+
+## 3D fleets (2026-09-13)
+
+- The field draws the fleets, not the demo circuit, once an airline starts.
+  `FleetVisual` expresses each fleet state as a circuit `AircraftPhase` so the
+  existing curves, props, gear, lights, smoke and audio are reused unchanged;
+  airborne phases keep the circuit's exact durations.
+- Ground routes are presentation geometry on the real pavement: apron bays →
+  apron lane → X −300 link → Taxiway F → E2 holding point; vacate by backtracking
+  to E2. Aircraft are built once and hidden while away.
+- Runway occupancy per movement: lineup 60 s + takeoff; approach + landing +
+  vacate 90 s.

@@ -615,11 +615,11 @@ namespace Airside.Presentation
         private void UpdateAircraftVisual()
         {
             SyncCommercialAircraftViews();
-            for (var index = 0; index < _simulation.Flights.Count; index++)
+            for (var index = 0; index < VisualFlights.Count; index++)
             {
                 if (index >= _commercialAircraft.Length)
                     break;
-                var flight = _simulation.Flights[index];
+                var flight = VisualFlights[index];
                 var view = _commercialAircraft[index];
                 if (view == null)
                     continue;
@@ -627,18 +627,19 @@ namespace Airside.Presentation
                 var progress = VisualPhaseProgress(flight, 0f);
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = PositionFor(phase, progress, route, lane);
+                var position = FleetGroundPosition(flight, 0f) ?? PositionFor(phase, progress, route, lane);
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
-                var next = PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane);
+                var next = FleetGroundPosition(flight, lookAhead)
+                           ?? PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane);
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
 
-                var direction = next - position;
+                var direction = FleetGroundFacing(flight, next - position);
                 var heading = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
@@ -788,9 +789,9 @@ namespace Airside.Presentation
 
         private void UpdateEngineAudio()
         {
-            for (var index = 0; index < _simulation.Flights.Count && index < _commercialAircraft.Length; index++)
+            for (var index = 0; index < VisualFlights.Count && index < _commercialAircraft.Length; index++)
             {
-                var phase = _simulation.Flights[index].Operation.Phase;
+                var phase = VisualFlights[index].Operation.Phase;
                 ApplyEngineAudio(_commercialAircraft[index],
                     AirsideReusableMotion.PropellersSpinning(phase));
             }
@@ -1307,7 +1308,7 @@ namespace Airside.Presentation
 
         private void SyncCommercialAircraftViews()
         {
-            var flights = _simulation.Flights;
+            var flights = VisualFlights;
             var needed = flights.Count;
 
             // Keep each visual glued to its AircraftId across respawn reordering.
@@ -1344,7 +1345,7 @@ namespace Airside.Presentation
             for (var index = 0; index < needed; index++)
             {
                 var flight = flights[index];
-                var visible = index < visibleLimit;
+                var visible = FleetMode ? IsFleetFlightVisible(flight.AircraftId) : index < visibleLimit;
 
                 // Assign a stable livery slot: reuse this aircraft's slot, else take
                 // the lowest slot no other current aircraft holds.
@@ -1370,6 +1371,15 @@ namespace Airside.Presentation
                     next[index] = existing;
                     kept.Add(existing);
                     existing.gameObject.SetActive(visible);
+                    continue;
+                }
+
+                if (FleetMode)
+                {
+                    // Fleet aircraft are built once and hidden while away, so a return
+                    // from a two-hour leg does not reload the model mid-approach.
+                    next[index] = BuildFleetAircraft(flight.AircraftId);
+                    next[index].gameObject.SetActive(visible);
                     continue;
                 }
 
@@ -1408,6 +1418,12 @@ namespace Airside.Presentation
             }
 
             _commercialAircraft = next;
+            if (FleetMode)
+            {
+                RefreshFleetFollowTargets(next);
+                return;
+            }
+
             if (changed && needed > 0 && _cameraController != null)
             {
                 var follow = next.Where(t => t != null && t.gameObject.activeSelf).ToArray();
@@ -1441,6 +1457,9 @@ namespace Airside.Presentation
         /// </summary>
         private float VisualPhaseProgress(CommercialFlight flight, float lookAheadSeconds)
         {
+            if (TryFleetGroundProgress(flight, lookAheadSeconds, out var groundProgress))
+                return groundProgress;
+
             var operation = flight.Operation;
             var phase = operation.Phase;
             var duration = AirsideFlightPath.PhaseSeconds(phase);
@@ -1884,9 +1903,9 @@ namespace Airside.Presentation
                 return;
 
             Transform lead = null;
-            for (var i = 0; i < _simulation.Flights.Count; i++)
+            for (var i = 0; i < VisualFlights.Count; i++)
             {
-                var flight = _simulation.Flights[i];
+                var flight = VisualFlights[i];
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 // Ground spray only — not climbing takeoff or airborne approach.
@@ -1976,9 +1995,9 @@ namespace Airside.Presentation
             if (_touchdownSmoke == null)
                 return;
 
-            for (var index = 0; index < _simulation.Flights.Count; index++)
+            for (var index = 0; index < VisualFlights.Count; index++)
             {
-                var flight = _simulation.Flights[index];
+                var flight = VisualFlights[index];
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
 
@@ -5452,7 +5471,7 @@ namespace Airside.Presentation
                 var wave = false;
                 if (person.name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    foreach (var flight in _simulation.Flights)
+                    foreach (var flight in VisualFlights)
                     {
                         if (flight.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
                         {
@@ -7512,9 +7531,9 @@ namespace Airside.Presentation
             // Also opens wider when a commercial aircraft is near the hangar apron.
             var daylight = PresentationDaylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
-            for (var i = 0; i < _simulation.Flights.Count; i++)
+            for (var i = 0; i < VisualFlights.Count; i++)
             {
-                var flight = _simulation.Flights[i];
+                var flight = VisualFlights[i];
                 if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.AtStand
                     or AircraftPhase.TaxiOut or AircraftPhase.Pushback)
                 {
@@ -9105,6 +9124,11 @@ namespace Airside.Presentation
             if (texture == null)
                 return;
 
+            ApplyLiveryTexture(aircraft, texture);
+        }
+
+        private static void ApplyLiveryTexture(Transform aircraft, Texture2D texture)
+        {
             foreach (var child in AirsideNamedChildren.Get(aircraft))
             {
                 var n = child.name;
@@ -11078,13 +11102,16 @@ namespace Airside.Presentation
 
         private float ApproachLaneOffset(CommercialFlight flight)
         {
-            if (_simulation.Flights.Count < 2)
+            // The tower clears one fleet arrival at a time, so there is never a number two.
+            if (FleetMode)
+                return 0f;
+            if (VisualFlights.Count < 2)
                 return 0f;
             // Number-two / later flights take a parallel final left of centreline.
             var index = 0;
-            for (var i = 0; i < _simulation.Flights.Count; i++)
+            for (var i = 0; i < VisualFlights.Count; i++)
             {
-                if (ReferenceEquals(_simulation.Flights[i], flight))
+                if (ReferenceEquals(VisualFlights[i], flight))
                 {
                     index = i;
                     break;

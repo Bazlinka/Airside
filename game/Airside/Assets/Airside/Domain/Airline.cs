@@ -33,7 +33,8 @@ namespace Airside.Domain
         public bool IsPlayer { get; }
 
         /// <summary>The fictional AI carrier whose livery decal already ships.</summary>
-        public static Airline EmuAir() => new("EMU", "Emu Air", "#1A9A96", isPlayer: false);
+        // Brown and gold, matching dc_livery_emu_air_v01.
+        public static Airline EmuAir() => new("EMU", "Emu Air", "#A66F32", isPlayer: false);
 
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 

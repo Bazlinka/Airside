@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Your airline and Emu Air fly in 3D (ADR 0045).** The demo circuit gives way
+  to the fleets once an airline starts: apron bays, pushback, taxi on the
+  Adelaide taxiways, hold at E2, lineup, takeoff, approach, landing, vacate, a
+  stand queue on Taxiway F and taxi in, with airline liveries. Fleet runway
+  occupancy now covers lineup, approach and vacate. Emu Air's colour matches its
+  brown-and-gold decal.
+
 - **Player airline, first slice (ADR 0045).** Adelaide is the default location.
   New `Airline`, `AircraftType` (ATR 42-600, 1,100 km planning range) and an
   Australia-wide `DestinationCatalogue` with great-circle, real-length legs.

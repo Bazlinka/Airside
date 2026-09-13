@@ -113,20 +113,6 @@ namespace Airside.Presentation
             return Vector3.Lerp(from, to, length <= 0f ? 0f : local / length);
         }
 
-        public static Vector3 MoveGroundTraffic(Vector3 previous, Vector3 target, bool isHolding, float maxDistanceDelta)
-        {
-            // A yielded aircraft no longer owns the path between these points, so
-            // interpolation would be visually unsafe even though the simulation is safe.
-            // Large retargets (stand change / off-field snap) also snap rather than cut grass.
-            if (isHolding)
-                return target;
-
-            if ((target - previous).sqrMagnitude > maxDistanceDelta * maxDistanceDelta * 64f)
-                return target;
-
-            return Vector3.MoveTowards(previous, target, maxDistanceDelta);
-        }
-
         private static Vector3 Point(TaxiRoute route, int index, float height)
         {
             var p = route.Points[index];

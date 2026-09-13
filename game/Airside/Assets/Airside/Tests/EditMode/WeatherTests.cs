@@ -41,45 +41,5 @@ namespace Airside.Tests
             Assert.That(mild, Is.GreaterThan(samples / 2), "most of the time the weather is fine");
         }
 
-        [Test]
-        public void Simulation_ChargesDailyRunningCostsAtEachMidnight()
-        {
-            var clock = new ManualSimulationClock(new SimulationTime(0));
-            var simulation = new AirportSimulation(clock, new SeededRandomSource(24031996), new ReservationTable());
-
-            // Before the first simulated midnight: no running cost yet.
-            clock.Advance(DayCycle.DaySeconds / 4);
-            simulation.Update();
-            Assert.That(simulation.Economy.TotalOperatingCost, Is.Zero);
-
-            // Cross the first two midnights (at 800s and 2000s for an 08:00 start).
-            clock.Advance(DayCycle.DaySeconds * 2);
-            simulation.Update();
-
-            var expected = 2 * (AirportSimulation.BaseDailyOperatingCost + simulation.Staffing.DailyWage)
-                + Weather.DailyOperatingCost(Weather.At(new SimulationTime(800)))
-                + Weather.DailyOperatingCost(Weather.At(new SimulationTime(2000)));
-            Assert.That(simulation.Economy.TotalOperatingCost, Is.EqualTo(expected));
-        }
-
-        [Test]
-        public void DailySettlement_IsIdenticalUnderLargeAndSmallTimeSteps()
-        {
-            var smallClock = new ManualSimulationClock(new SimulationTime(0));
-            var small = new AirportSimulation(smallClock, new SeededRandomSource(99), new ReservationTable());
-            for (var second = 1; second <= 3500; second++)
-            {
-                smallClock.Advance(1);
-                small.Update();
-            }
-
-            var largeClock = new ManualSimulationClock(new SimulationTime(0));
-            var large = new AirportSimulation(largeClock, new SeededRandomSource(99), new ReservationTable());
-            largeClock.Advance(3500);
-            large.Update();
-
-            Assert.That(large.Economy.TotalOperatingCost, Is.EqualTo(small.Economy.TotalOperatingCost));
-            Assert.That(large.Economy.Cash, Is.EqualTo(small.Economy.Cash));
-        }
     }
 }

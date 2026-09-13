@@ -28,7 +28,6 @@ Airside/
     Assets/Airside/
       Domain/                Pure rules: time, ids — no UnityEngine types
       Simulation/            Airport simulation — deterministic, clock-injected
-      Persistence/           Save schema, load/catch-up
       Presentation/          MonoBehaviours, camera, visuals — Unity-facing only
       Art/                   Approved runtime models, textures, UI, animation and VFX
     Assets/Resources/Airside/Audio/
@@ -47,7 +46,7 @@ Airside/
     testing/                 Acceptance checks and fixtures
   scripts/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
-    test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation/Persistence
+    test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation
                              tests, for machines without Unity — supplementary, not a replacement
     sync-art-streaming-assets.sh
                              Copy runtime glTF/PNG art into StreamingAssets for packaged builds
@@ -71,7 +70,7 @@ note it here in the same commit.
    in Unity 6.3 LTS before committing behaviour changes. No commit rests on an
    agent's claim alone that a build passed. Without a Mac Unity editor, run
    `scripts/test-domain.sh` (needs the .NET 8 SDK) as a fast Domain/Simulation/
-   Persistence pre-check, but still get a Unity run before merging.
+   pre-check, but still get a Unity run before merging.
 5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change.
 6. **Commit message:** short imperative subject, then what changed and the
    evidence. Push to `origin` immediately so other tools see it.

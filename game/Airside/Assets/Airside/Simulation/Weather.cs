@@ -41,18 +41,6 @@ namespace Airside.Simulation
             return WeatherKind.Storm;
         }
 
-        /// <summary>Extra running cost per simulated day attributable to this weather.</summary>
-        public static long DailyOperatingCost(WeatherKind kind) => kind switch
-        {
-            WeatherKind.Clear => 0,
-            WeatherKind.Cloudy => 0,
-            WeatherKind.Overcast => 20,
-            WeatherKind.Rain => 60,
-            WeatherKind.Fog => 100,
-            WeatherKind.Storm => 160,
-            _ => 0
-        };
-
         public static bool IsAdverse(WeatherKind kind) =>
             kind == WeatherKind.Rain || kind == WeatherKind.Fog || kind == WeatherKind.Storm;
 

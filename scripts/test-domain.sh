@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Fast, Unity-free check for Domain/Simulation/Persistence: runs the same
+# Fast, Unity-free check for Domain/Simulation: runs the same
 # EditMode NUnit tests via `dotnet test` against scripts/dotnet-harness/,
 # which compiles those assemblies straight from the Unity project. Presentation
 # is not covered (it needs UnityEngine) and neither is a real Unity compile, so

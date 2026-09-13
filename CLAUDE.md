@@ -8,7 +8,7 @@ Quick pointers:
 
 - The Unity game is `game/Airside/` (Unity 6.3 LTS). Open that folder in Unity.
 - Run checks: `scripts/test-unity.sh` (source of truth; needs a Mac Unity editor).
-  Without one, `scripts/test-domain.sh` runs the same Domain/Simulation/Persistence
+  Without one, `scripts/test-domain.sh` runs the same Domain/Simulation
   EditMode tests headlessly via `dotnet test` — supplementary, not a replacement.
   Local Mac build: `scripts/build-mac.sh`.
 - The git repo is the single source of truth. `git pull --rebase` before work;

@@ -1,10 +1,9 @@
 <!--
   Headless mirror of the Unity EditMode test run, for machines without Unity
-  installed. Compiles Domain/Simulation/Persistence straight from the Unity
-  project (no copies) plus the EditMode tests, against HarnessSaveRepository.cs
-  standing in for the one file that needs UnityEngine.JsonUtility. Run via
-  scripts/test-domain.sh. Supplementary only: scripts/test-unity.sh remains the
-  source of truth (it also covers Presentation and the real Unity compile).
+  installed. Compiles Domain/Simulation straight from the Unity project (no
+  copies) plus the EditMode tests. Run via scripts/test-domain.sh.
+  Supplementary only: scripts/test-unity.sh remains the source of truth (it
+  also covers Presentation and the real Unity compile).
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
@@ -25,7 +24,6 @@
   <ItemGroup>
     <Compile Include="../../game/Airside/Assets/Airside/Domain/**/*.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Simulation/**/*.cs" />
-    <Compile Include="../../game/Airside/Assets/Airside/Persistence/**/*.cs" Exclude="../../game/Airside/Assets/Airside/Persistence/AirsideSaveRepository.cs" />
     <!--
       AirsideTerrainField, AirsideBareField, AirsideRunwayMarkings,
       AirsideAdelaideGround, AirsideAdelaidePavement and AirsideStripMarkings are Presentation by folder but hold no UnityEngine

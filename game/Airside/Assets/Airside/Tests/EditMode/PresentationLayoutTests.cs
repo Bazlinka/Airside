@@ -42,6 +42,13 @@ namespace Airside.Tests
             Assert.That(layout.PauseMenu.xMax, Is.LessThanOrEqualTo(width));
             Assert.That(layout.PauseMenu.yMax, Is.LessThanOrEqualTo(height));
 
+            Assert.That(layout.SpeedReadout.xMin, Is.GreaterThanOrEqualTo(-0.01f));
+            Assert.That(layout.SpeedReadout.xMax, Is.LessThanOrEqualTo(width + 0.01f));
+            Assert.That(layout.SpeedReadout.yMin, Is.GreaterThanOrEqualTo(-0.01f));
+            Assert.That(layout.SpeedReadout.height, Is.GreaterThan(0f), "speed readout collapsed");
+            Assert.That(layout.SpeedReadout.Overlaps(layout.ControlBar), Is.False,
+                "the speed readout must sit above the bar, not on it");
+
             // Every control must sit inside the bar, in left-to-right order.
             var previous = float.NegativeInfinity;
             for (var index = 0; index < HudLayout.ButtonCount; index++)

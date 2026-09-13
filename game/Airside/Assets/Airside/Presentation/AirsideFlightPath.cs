@@ -217,35 +217,12 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Scheduled airspeed at this point in the circuit, in knots. One source of
-        /// truth: tyre spin, engine note and anything else that needs a speed reads
-        /// this rather than differentiating a curve.
+        /// Scheduled airspeed at this point in the circuit, in knots. Delegates to
+        /// <see cref="CircuitProfile"/> so the figure the HUD shows is the one the
+        /// headless tests check.
         /// </summary>
-        public static float AirspeedKnots(AircraftPhase phase, float progress)
-        {
-            var t = Mathf.Clamp01(progress);
-            switch (phase)
-            {
-                case AircraftPhase.Approach:
-                    return Mathf.Lerp(CircuitProfile.ApproachEntryKnots, CircuitProfile.ApproachKnots, t);
-                case AircraftPhase.Landing:
-                    if (t < FlareProgress)
-                        return CircuitProfile.ApproachKnots;
-                    if (t < TouchdownProgress)
-                        return Mathf.Lerp(CircuitProfile.ApproachKnots, CircuitProfile.TouchdownKnots,
-                            Local(t, FlareProgress, TouchdownProgress));
-                    return Mathf.Lerp(CircuitProfile.TouchdownKnots, 0f, Local(t, TouchdownProgress, 1f));
-                case AircraftPhase.Takeoff:
-                    if (t < RotateProgress)
-                        return Mathf.Lerp(0f, CircuitProfile.RotateKnots, Local(t, 0f, RotateProgress));
-                    return Mathf.Lerp(CircuitProfile.RotateKnots, CircuitProfile.InitialClimbKnots,
-                        Local(t, RotateProgress, 1f));
-                case AircraftPhase.Departed:
-                    return Mathf.Lerp(CircuitProfile.InitialClimbKnots, CircuitProfile.ClimbOutKnots, t);
-                default:
-                    return 0f;
-            }
-        }
+        public static float AirspeedKnots(AircraftPhase phase, float progress) =>
+            CircuitProfile.AirspeedKnots(phase, progress);
 
         /// <summary>
         /// Speed over the tarmac, metres per second. Zero whenever the wheels are not

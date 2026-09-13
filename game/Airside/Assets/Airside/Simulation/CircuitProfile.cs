@@ -207,5 +207,46 @@ namespace Airside.Simulation
 
         /// <summary>Fraction of the takeoff phase at which the nose comes up.</summary>
         public static float RotateProgress => TakeoffRollExactSeconds / TakeoffExactSeconds;
+
+        private static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
+
+        private static float Clamp01(float v) => v < 0f ? 0f : v > 1f ? 1f : v;
+
+        private static float Local(float t, float from, float to) =>
+            to <= from ? 0f : Clamp01((t - from) / (to - from));
+
+        /// <summary>
+        /// Scheduled airspeed in knots at this point in the circuit — the single
+        /// source of truth. The HUD readout, the tyre spin and the path curves all
+        /// read this, so the number on screen is the number being flown.
+        ///
+        /// Lives here rather than in the flight path so it is covered by the headless
+        /// harness: the speeds are the whole point of this model, and a figure the
+        /// player can read should not be the one part nothing can test.
+        /// </summary>
+        public static float AirspeedKnots(AircraftPhase phase, float progress)
+        {
+            var t = Clamp01(progress);
+            switch (phase)
+            {
+                case AircraftPhase.Approach:
+                    return Lerp(ApproachEntryKnots, ApproachKnots, t);
+                case AircraftPhase.Landing:
+                    if (t < FlareProgress)
+                        return ApproachKnots;
+                    if (t < TouchdownProgress)
+                        return Lerp(ApproachKnots, TouchdownKnots, Local(t, FlareProgress, TouchdownProgress));
+                    return Lerp(TouchdownKnots, 0f, Local(t, TouchdownProgress, 1f));
+                case AircraftPhase.Takeoff:
+                    if (t < RotateProgress)
+                        return Lerp(0f, RotateKnots, Local(t, 0f, RotateProgress));
+                    return Lerp(RotateKnots, InitialClimbKnots, Local(t, RotateProgress, 1f));
+                case AircraftPhase.Departed:
+                    return Lerp(InitialClimbKnots, ClimbOutKnots, t);
+                default:
+                    // Skipped ground phases: the aircraft is stopped on the rollout end.
+                    return 0f;
+            }
+        }
     }
 }

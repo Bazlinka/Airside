@@ -76,17 +76,30 @@ position curve) and `FlareHeight` for the round-out. Body attitudes retuned:
 rotate to 9° and climb 7.5° rather than 12° and 10°, and the flare now raises
 the nose progressively to 6.5° instead of snapping.
 
-Nothing about the airfield, the aircraft model or the HUD changes. No speed
-readout was added — the HUD stays the five controls of ADR 0041.
+Nothing about the airfield or the aircraft model changes. The HUD gains one
+thing: a live airspeed readout above the control bar, reading the same visual
+progress that places the aircraft so the number always agrees with what is on
+screen rather than with the simulation a fraction of a second behind it.
+
+The speed schedule itself lives in `CircuitProfile.AirspeedKnots`, not in the
+flight path, specifically so it is covered by the headless harness. The speeds
+are the whole point of this model, and the one figure the player can actually
+read should not be the one part nothing can test.
 
 ## Acceptance and evidence
 
-`scripts/test-domain.sh` **137 passed, 0 failed**, including 17 new
+`scripts/test-domain.sh` **140 passed, 0 failed**, including 20 new
 `CircuitProfileTests` asserting the glideslope angle, the 584 ft/min descent
 rate, the flare geometry and monotonic arrest, touchdown on the 300 m markings,
 that each duration equals distance over mean speed, that whole-second rounding
-distorts no phase by more than half a second, and that the takeoff roll reaches
-Vr rather than twice it.
+distorts no phase by more than half a second, that the takeoff roll reaches Vr
+rather than twice it, and that the airspeed schedule hits every reference figure,
+stays continuous across the phase seams, and never runs backwards where it
+should not.
+
+`HudLayout`'s readout placement was checked against the `Rect`/`Mathf` shim from
+320×240 to 3456×2168: it stays inside the viewport, never collapses and never
+overlaps the control bar. Those cases are committed into `PresentationLayoutTests`.
 
 `AirsideFlightPath` needs UnityEngine and cannot run headlessly, so its curves
 were replicated numerically and differentiated: every sampled speed lands within

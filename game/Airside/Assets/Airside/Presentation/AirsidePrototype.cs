@@ -400,6 +400,7 @@ namespace Airside.Presentation
                 return;
 
             ReadSimulationControls();
+            DriveSoak();
 
             var running = !SimulationFrozen;
             if (_cameraController != null)

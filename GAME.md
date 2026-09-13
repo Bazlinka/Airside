@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude soak and playtest packaging (PROJECT_PLAN step 3 acceptance, `test/soak`):**
+  - `AirlineSoakTests`: 30 simulated days, player flown continuously, checked at
+    every event for runway double-occupancy, stand double-booking, stuck waits and
+    the airport stopping; every aircraft flies > 60 trips.
+  - Soak mode for packaged builds (`-airsideSoak -airsideSoakMinutes N`, see Run it).
+  - **Packaged soak, 30 min real time:** COMPLETE, no stalls, 120 fps throughout,
+    managed heap flat at 4 MB, 0 exceptions, 0 "Not allowed". It ran at 1× after
+    the first landing because the soak driver did not re-assert 60× after the
+    game's deliberate drop to 1× for a stand choice — driver fixed.
+  - **Packaged soak, 10 min at 60×:** 10 simulated hours, 7 trips, COMPLETE, no
+    stalls, 120 fps, 0 exceptions. Logs kept in `work/soak/` (not committed).
+  - `scripts/package-playtest.sh` builds from a clean tree and zips
+    `work/playtest/Airside-<commit>.zip` with `docs/testing/PLAYTEST_TESTER_NOTE.md`
+    as "READ ME FIRST" (unsigned-app open steps, no-coaching brief, five questions).
+- **Next — Bailey:** send the zip to one person who has not seen the game (PROJECT_PLAN
+  step 4); observe without coaching; bring back their answers.
+
 - **2026-09-14 Claude first-flight guide (PROJECT_PLAN step 3, `feature/first-flight-guide`):**
   a numbered card under the clock walks a new player through one round trip —
   plan → wait for departure → departing → away → landing → choose a stand →
@@ -411,6 +428,13 @@ Follow and reset are owned by `AirsidePrototype`; camera movement is read by
 toggle follow off in `Update` and straight back on in `LateUpdate`.
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
+
+Soak a packaged build unattended (PROJECT_PLAN acceptance): launch with
+`-airsideSoak -airsideSoakMinutes 30`. A fresh airline flies itself at 60×, a
+`[Airside soak]` heartbeat goes to `~/Library/Logs/DefaultCompany/Airside/Player.log`
+every minute (sim time, trips, fps, memory, fleet states), a STALL error is logged
+if the clock stops, and the app quits with a COMPLETE line. Soak saves go to
+`airline-save-soak.json`, never the player's save.
 Without a Mac Unity editor, `scripts/test-domain.sh` runs the same
 Domain/Simulation EditMode tests headlessly via `dotnet test` (.NET 8 SDK) — a
 fast supplementary check, not a replacement for a real Unity run before merging.

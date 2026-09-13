@@ -91,3 +91,11 @@ until the first slice lands.
   resuming a half-right game. The start screen reports why and offers a new airline.
 - Autosave triggers: every command, within 2 s of a fleet event, every 20 s of
   play, focus loss and quit.
+
+## Away catch-up (2026-09-14)
+
+- Saves record real UTC time (format v2; v1 migrates by resuming without catch-up).
+- Continue advances by real time away, 60 s minimum and 7 days maximum, using the
+  normal event-driven update, so offline results match live play (core rule).
+- Player aircraft that land while away wait for a stand exactly as in live play;
+  the away summary tells the player.

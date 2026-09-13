@@ -1,0 +1,95 @@
+using System;
+using System.Linq;
+using Airside.Domain;
+using Airside.Simulation;
+using NUnit.Framework;
+
+namespace Airside.Tests
+{
+    /// <summary>The airport keeps running while the game is closed (ADR 0045).</summary>
+    public sealed class AwayCatchUpTests
+    {
+        private static readonly DateTime SavedAt = new(2026, 9, 14, 9, 0, 0, DateTimeKind.Utc);
+
+        private static (ManualSimulationClock clock, AirlineOperations ops) Game()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(77), Airline.Player("Bight Air", "#1F3A93"));
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+            ops.ScheduleDeparture(ops.FleetOf(ops.PlayerAirline).Single(), kingscote, new SimulationTime(300));
+            clock.Set(new SimulationTime(120));
+            ops.Update();
+            return (clock, ops);
+        }
+
+        [Test]
+        public void SecondsAway_IsRealTimeSinceTheSaveCappedAtAWeek()
+        {
+            var data = new AirlineSaveData { SavedAtUtcTicks = SavedAt.Ticks };
+            Assert.That(AwayCatchUp.SecondsAway(data, SavedAt.AddSeconds(30)), Is.Zero, "a quick relaunch");
+            Assert.That(AwayCatchUp.SecondsAway(data, SavedAt.AddHours(2)), Is.EqualTo(7200));
+            Assert.That(AwayCatchUp.SecondsAway(data, SavedAt.AddDays(30)), Is.EqualTo(AwayCatchUp.MaxSeconds));
+            Assert.That(AwayCatchUp.SecondsAway(data, SavedAt.AddHours(-3)), Is.Zero, "device clock moved backwards");
+            Assert.That(AwayCatchUp.SecondsAway(new AirlineSaveData(), SavedAt), Is.Zero, "version 1 saves have no timestamp");
+        }
+
+        [Test]
+        public void CatchUp_ReachesTheSameStateAsPlayingLive()
+        {
+            var (liveClock, live) = Game();
+            var saved = AirlineSave.Capture(live, SavedAt);
+            var away = AwayCatchUp.SecondsAway(saved, SavedAt.AddHours(5).AddMinutes(17));
+
+            var resumedClock = new ManualSimulationClock(new SimulationTime(saved.ClockSeconds));
+            var resumed = AirlineSave.Restore(saved, resumedClock);
+            resumedClock.Set(resumedClock.Now.Advance(away));
+            resumed.Update();
+
+            for (var t = liveClock.Now.ElapsedSeconds; t <= saved.ClockSeconds + away; t += 13)
+            {
+                liveClock.Set(new SimulationTime(t));
+                live.Update();
+            }
+
+            liveClock.Set(resumedClock.Now);
+            live.Update();
+
+            Assert.That(Describe(resumed), Is.EqualTo(Describe(live)));
+        }
+
+        [Test]
+        public void Summary_SaysWhatHappenedAndWhatNeedsYou()
+        {
+            var (clock, ops) = Game();
+            var saved = AirlineSave.Capture(ops, SavedAt);
+
+            clock.Set(clock.Now.Advance(3 * 3600));
+            ops.Update();
+            var summary = AwaySummary.Build(saved, ops, 3 * 3600);
+
+            Assert.That(summary.Title, Is.EqualTo("You were away 3 h 00 min"));
+            Assert.That(summary.Lines[0], Does.StartWith("VH-PAX"));
+            Assert.That(summary.Lines[0], Does.Contain("waiting for you to choose a stand"),
+                "a Kingscote round trip is back well inside three hours");
+            Assert.That(summary.Lines.Any(l => l.StartsWith("Emu Air flew") && l.Contains("trip")), Is.True);
+        }
+
+        [Test]
+        public void VersionOneSave_StillLoads()
+        {
+            var (clock, ops) = Game();
+            var saved = AirlineSave.Capture(ops);
+            saved.Version = 1;
+            saved.SavedAtUtcTicks = 0;
+            var restored = AirlineSave.Restore(saved, new ManualSimulationClock(clock.Now));
+            Assert.That(restored.PlayerAirline.Name, Is.EqualTo("Bight Air"));
+            Assert.That(AwayCatchUp.SecondsAway(saved, DateTime.UtcNow), Is.Zero);
+        }
+
+        private static string Describe(AirlineOperations ops) =>
+            string.Join("\n", ops.Fleet.Select(a =>
+                $"{a.Registration} {a.State} {a.StateStartedAt.ElapsedSeconds} {a.Stand.Value} {a.CurrentDestination?.Code} " +
+                $"{a.Scheduled?.Destination.Code}@{a.Scheduled?.DepartAt.ElapsedSeconds} {a.CompletedTrips}"))
+            + $"\nrunway {ops.RunwayFreeAt.ElapsedSeconds} rng {ops.RandomState}";
+    }
+}

@@ -12,9 +12,16 @@ namespace Airside.Simulation
     [Serializable]
     public sealed class AirlineSaveData
     {
-        public const int CurrentVersion = 1;
+        /// <summary>
+        /// 2 added <see cref="SavedAtUtcTicks"/> for away catch-up. Version 1 saves still
+        /// load; with no timestamp they simply resume without catching up.
+        /// </summary>
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
+
+        /// <summary>Real-world UTC time of the save, as <see cref="DateTime.Ticks"/>; 0 when unknown.</summary>
+        public long SavedAtUtcTicks;
         public string HomeCode;
         public long ClockSeconds;
         public long RunwayFreeAtSeconds;
@@ -54,12 +61,13 @@ namespace Airside.Simulation
 
     public static class AirlineSave
     {
-        public static AirlineSaveData Capture(AirlineOperations operations)
+        public static AirlineSaveData Capture(AirlineOperations operations, DateTime? savedAtUtc = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
 
             var data = new AirlineSaveData
             {
+                SavedAtUtcTicks = savedAtUtc?.ToUniversalTime().Ticks ?? 0,
                 HomeCode = operations.Home.Code,
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
@@ -108,8 +116,8 @@ namespace Airside.Simulation
         {
             if (data == null) throw new FormatException("The save is empty.");
             if (clock == null) throw new ArgumentNullException(nameof(clock));
-            if (data.Version != AirlineSaveData.CurrentVersion)
-                throw new FormatException($"Save version {data.Version} is not supported (expected {AirlineSaveData.CurrentVersion}).");
+            if (data.Version < 1 || data.Version > AirlineSaveData.CurrentVersion)
+                throw new FormatException($"Save version {data.Version} is not supported (expected 1 to {AirlineSaveData.CurrentVersion}).");
             if (clock.Now.ElapsedSeconds != data.ClockSeconds)
                 throw new ArgumentException("Set the clock to the saved time before restoring.", nameof(clock));
             if (!DestinationCatalogue.TryFind(data.HomeCode, out var home) || !home.Equals(DestinationCatalogue.Adelaide))

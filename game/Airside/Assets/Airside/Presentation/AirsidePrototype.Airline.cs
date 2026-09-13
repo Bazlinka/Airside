@@ -16,8 +16,6 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private const long DayLengthSeconds = 24 * 3600;
-        private const long ClockStartSeconds = 8 * 3600;
         private const float ToastSeconds = 6f;
 
         private static readonly (string label, string hex)[] LiveryChoices =
@@ -90,7 +88,8 @@ namespace Airside.Presentation
         /// <summary>True when the airline layer owns the keyboard this frame.</summary>
         private bool ReadAirlineControls(Keyboard keyboard)
         {
-            if (AirlineSetupOpen)
+            // The start and away-summary panels own the keyboard until dismissed.
+            if (AirlineSetupOpen || _awaySummary != null)
                 return true;
 
             if (keyboard.tabKey.wasPressedThisFrame)
@@ -131,6 +130,12 @@ namespace Airside.Presentation
             if (AirlineSetupOpen)
             {
                 DrawAirlineSetup(placement, panel, title, label, button);
+                return;
+            }
+
+            if (_awaySummary != null)
+            {
+                DrawAwaySummary(placement, panel, title, label, button);
                 return;
             }
 
@@ -212,10 +217,38 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
+        // ---- Away summary -----------------------------------------------------------------
+
+        private void DrawAwaySummary(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
+        {
+            var summary = _awaySummary;
+            var lineHeight = 40f;
+            var rect = placement.SetupPanel(70f + summary.Lines.Count * lineHeight + 80f);
+            GUI.Box(rect, GUIContent.none, panel);
+            var x = rect.x + 20f;
+            var inner = rect.width - 40f;
+
+            GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), summary.Title, title);
+            var y = rect.y + 58f;
+            foreach (var line in summary.Lines)
+            {
+                GUI.Label(new Rect(x, y, inner, lineHeight), line, label);
+                y += lineHeight;
+            }
+
+            if (GUI.Button(new Rect(x, rect.yMax - 58f, inner, 40f), "Back to the airport", button))
+            {
+                _awaySummary = null;
+                _paused = false;
+                PlayUiClick();
+            }
+        }
+
         // ---- Saving ---------------------------------------------------------------------
 
         private const float AutosaveIntervalSeconds = 20f;
 
+        private AwaySummary _awaySummary;
         private bool _saveProbed;
         private AirlineSaveData _savedAirline;
         private string _saveError;
@@ -273,13 +306,26 @@ namespace Airside.Presentation
                 return;
             }
 
+            // The airport kept running while the game was closed: advance through the
+            // same event-driven update live play uses, then report what happened.
+            var away = AwayCatchUp.SecondsAway(data, DateTime.UtcNow);
+            if (away > 0)
+            {
+                clock.Set(clock.Now.Advance(away));
+                restored.Update();
+                _awaySummary = AwaySummary.Build(data, restored, away);
+                _paused = true;
+            }
+
             _clock = clock;
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
             RefreshFleetFlights();
-            ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
+            if (_awaySummary == null)
+                ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
+            SaveAirline();
             PlayUiClick();
         }
 
@@ -300,7 +346,7 @@ namespace Airside.Presentation
             _nextAutosaveAt = Time.unscaledTime + AutosaveIntervalSeconds;
             try
             {
-                AirlineSaveFile.Write(AirlineSaveFile.DefaultPath, AirlineSave.Capture(_operations));
+                AirlineSaveFile.Write(AirlineSaveFile.DefaultPath, AirlineSave.Capture(_operations, DateTime.UtcNow));
                 _saveFailureShown = false;
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -761,18 +807,10 @@ namespace Airside.Presentation
             return null;
         }
 
-        private static string ClockText(SimulationTime time)
-        {
-            var local = (ClockStartSeconds + time.ElapsedSeconds) % DayLengthSeconds;
-            return $"{local / 3600:00}:{local % 3600 / 60:00}";
-        }
+        private static string ClockText(SimulationTime time) => AirlineClock.TimeText(time);
 
-        private static long DayNumber(SimulationTime time) => (ClockStartSeconds + time.ElapsedSeconds) / DayLengthSeconds + 1;
+        private static long DayNumber(SimulationTime time) => AirlineClock.DayNumber(time);
 
-        private static string DurationText(long seconds)
-        {
-            var minutes = (long)Math.Round(seconds / 60.0);
-            return minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} min" : $"{minutes} min";
-        }
+        private static string DurationText(long seconds) => AirlineClock.DurationText(seconds);
     }
 }

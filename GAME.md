@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude away catch-up and summary (PROJECT_PLAN core rules, `feature/away-catch-up`):**
+  the airport keeps running while the game is closed. Saves are now **version 2**
+  with `SavedAtUtcTicks` (v1 still loads, without catch-up). On Continue the
+  restored `AirlineOperations` is advanced by real time away (≥ 60 s, capped at 7
+  days) through the same event-driven update as live play, then an away summary
+  says what each of your aircraft did and what needs you, plus the AI airline's
+  trips. The game stays paused under the summary until dismissed. Airline time
+  formatting moved to `Domain/AirlineClock`.
+- **Evidence:** Unity EditMode **232/232**; `CatchUp_ReachesTheSameStateAsPlayingLive`
+  compares catch-up against 13-second live stepping over 5 h 17 min. Packaged app:
+  save back-dated 3 h 20 min → "You were away 3 h 21 min / VH-PAX has landed and is
+  waiting for you to choose a stand / Emu Air flew 1 trip", clock 11:35, stand
+  choice offered.
+- **Next per PROJECT_PLAN step 3:** opening guidance for a first-time player, then a
+  30-minute soak and a packaged build for one external playtester.
+
 - **2026-09-14 Claude airline HUD layout (PROJECT_PLAN step 2, `fix/airline-hud-layout`):**
   the airline panels had hard-coded positions and were never in the fits-on-screen
   contract. `AirlineHudLayout` now places clock, fleet, toast, map and start panel

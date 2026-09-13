@@ -341,7 +341,10 @@ namespace Airside.Tests
         public void FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed()
         {
             Assert.That(SpeedAt(AircraftPhase.Approach, 0.5f, 0.502f), Is.GreaterThan(40f));
-            Assert.That(SpeedAt(AircraftPhase.Departed, 0.5f, 0.502f), Is.GreaterThan(80f));
+            // Mid climb-out sits between the initial-climb and climb-out speeds (ADR 0044);
+            // the old 80 m/s floor dated from the curve that left the field at 257 kt.
+            Assert.That(SpeedAt(AircraftPhase.Departed, 0.5f, 0.502f),
+                Is.GreaterThan(CircuitProfile.Knots(CircuitProfile.InitialClimbKnots)));
             Assert.That(SpeedAt(AircraftPhase.Landing, 0.4f, 0.402f), Is.GreaterThan(30f));
         }
 

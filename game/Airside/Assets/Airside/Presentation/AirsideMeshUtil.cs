@@ -20,6 +20,14 @@ namespace Airside.Presentation
             mesh.UploadMeshData(true);
         }
 
+        /// <summary>Upload to the GPU but keep the CPU copy, for meshes something will edit later.</summary>
+        public static void UploadKeepReadable(Mesh mesh)
+        {
+            if (mesh == null)
+                return;
+            mesh.UploadMeshData(false);
+        }
+
         /// <summary>
         /// One mesh of scaled/offset copies of a readable source (greybox shrub clumps).
         /// </summary>

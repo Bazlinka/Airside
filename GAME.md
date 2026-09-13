@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude trustworthy build (PROJECT_PLAN step 1, `fix/trustworthy-build`):**
+  money is deferred (plan: no new economy subsystem before the first session is
+  playable). Three fixes so the exact packaged build can be trusted:
+  1. **Every aircraft pivot rebake was dead in packaged players.** `ArtGltfLoader`
+     uploaded kit part meshes as no-longer-readable; the editor still allows
+     reading them, players refuse (`Player.log`: 1,000 "Not allowed to access
+     vertices" across props, spinners, rudder, spoilers, tyres, wheels, rims). Kit
+     part meshes now stay readable; combined static kits still drop their CPU copy.
+     Locked by `Atr42GltfKit_PartMeshesStayReadableForPivotRebakes`.
+  2. **Airspeed readout followed the hidden demo circuit** in airline mode (118 kt
+     while your aircraft taxied). It now reads the followed aircraft, else the first
+     on the field, and measures taxi speed along the ground route.
+  3. **Stale assertion:** `FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed`
+     demanded 80 m/s mid climb-out from the pre-ADR-0044 curve; it now uses
+     `CircuitProfile.InitialClimbKnots`.
+- **Evidence:** Unity EditMode **221/221, 0 failed, 0 skipped**. Packaged Mac app:
+  Player.log 0 "Not allowed" (was 1,000), 0 exceptions; props on their hubs;
+  readout 0 kt on a parked aircraft.
+
 - **2026-09-14 Claude airline save/load (ADR 0045, `feature/save-load`):** the
   airline game now persists. `AirlineSave` (Simulation) captures and restores
   `AirlineOperations` — clock, tower, RNG state, airlines and every aircraft's
@@ -19,7 +38,7 @@
   same time and states, fleets drawn in 3D.
 - **Watch:** old `airside-save-v1.json*` files from the removed Persistence
   assembly are still in the player's data folder; nothing reads them.
-- **Next:** money (fares, costs, buying aircraft).
+- **Next:** superseded — see the trustworthy-build entry above.
 
 - **2026-09-13 Claude fleets in 3D (ADR 0045, `feature/fleet-3d-aircraft`):** once
   an airline starts, the field draws the fleets instead of the demo circuit. Bays

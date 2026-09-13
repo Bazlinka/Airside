@@ -268,7 +268,12 @@ namespace Airside.Presentation
                 var uvs = BuildPlanarUvs(vertices);
                 mesh.SetUVs(0, uvs);
                 mesh.RecalculateBounds();
-                AirsideMeshUtil.UploadStatic(mesh);
+                // Kit part meshes stay CPU-readable: the aircraft rebakes props, control
+                // surfaces and wheels onto their pivots by reading these vertices, and a
+                // packaged player refuses that on a mesh uploaded as no-longer-readable
+                // (the editor silently allows it, which hid the bug). Combined static
+                // kits below are never edited, so they still drop their CPU copy.
+                AirsideMeshUtil.UploadKeepReadable(mesh);
 
                 var entry = new MeshEntry(name, mesh, vertices, indices, uvs);
                 kit.Meshes.Add(entry);

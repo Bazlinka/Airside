@@ -28,6 +28,30 @@ namespace Airside.Tests
             Assert.That(bounds.min.y, Is.InRange(-0.03f, 0.04f), "all six tires should meet local ground y=0");
         }
 
+        /// <summary>
+        /// The pivot rebakes read vertex data. A packaged player refuses that on a mesh
+        /// uploaded as no-longer-readable, and the editor does not, so without this the
+        /// props and wheels orbit the fuselage only in builds.
+        /// </summary>
+        [Test]
+        public void Atr42GltfKit_PartMeshesStayReadableForPivotRebakes()
+        {
+            var parent = new GameObject("readable-kit-test").transform;
+            try
+            {
+                Assert.That(ArtPresentationLoader.TryInstantiate("Models/Aircraft/mdl_atr42_starter_v02.gltf", parent, out var root),
+                    Is.True, "the v02 glTF kit should load");
+                var filters = root.GetComponentsInChildren<MeshFilter>(true);
+                Assert.That(filters.Length, Is.GreaterThan(100));
+                foreach (var filter in filters)
+                    Assert.That(filter.sharedMesh.isReadable, Is.True, $"{filter.name} must stay readable");
+            }
+            finally
+            {
+                Object.DestroyImmediate(parent.gameObject);
+            }
+        }
+
         [Test]
         public void Atr42StarterPrefab_HasRestrainedCompleteArticulationSet()
         {

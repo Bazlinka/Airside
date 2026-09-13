@@ -577,16 +577,45 @@ namespace Airside.Presentation
         /// </summary>
         private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
         {
-            if (_simulation.Flights.Count == 0)
+            if (!TryReadoutFlight(out var flight))
                 return;
 
-            var flight = _simulation.Flights[0];
-            var phase = flight.Operation.Phase;
-            var knots = AirsideFlightPath.AirspeedKnots(phase, VisualPhaseProgress(flight, 0f));
+            // Taxiing fleet aircraft move along the Adelaide ground routes, which the
+            // circuit speed schedule knows nothing about, so measure them directly.
+            var knots = FleetGroundPosition(flight, 0f) is { } here && FleetGroundPosition(flight, GroundLookAheadSeconds) is { } ahead
+                ? CircuitProfile.ToKnots(Vector3.Distance(here, ahead) / GroundLookAheadSeconds)
+                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f));
 
             var rect = layout.SpeedReadout;
             GUI.Box(rect, GUIContent.none, panel);
             GUI.Label(rect, $"{Mathf.RoundToInt(knots)} kt", _speedReadoutStyle ??= SpeedReadoutStyle());
+        }
+
+        /// <summary>
+        /// The aircraft the readout describes: the one being followed, else the first
+        /// one on the field. Nothing when every fleet aircraft is away.
+        /// </summary>
+        private bool TryReadoutFlight(out CommercialFlight flight)
+        {
+            flight = null;
+            var flights = VisualFlights;
+            if (_commercialAircraft == null)
+                return false;
+
+            var followed = _cameraController != null && _cameraController.IsFollowing ? _cameraController.FollowTarget : null;
+            for (var i = 0; i < flights.Count && i < _commercialAircraft.Length; i++)
+            {
+                var candidate = _commercialAircraft[i];
+                if (candidate == null || !candidate.gameObject.activeSelf)
+                    continue;
+                if (flight == null || candidate == followed)
+                    flight = flights[i];
+
+                if (candidate == followed)
+                    break;
+            }
+
+            return flight != null;
         }
 
         private GUIStyle _speedReadoutStyle;

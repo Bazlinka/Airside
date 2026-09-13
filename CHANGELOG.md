@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Props, control surfaces and wheels pivot correctly in packaged builds.** The
+  glTF loader made kit meshes unreadable, which silently broke every pivot rebake
+  outside the editor. Airspeed readout now follows the aircraft you are watching
+  in airline mode. A stale climb-out speed assertion is anchored to the ATR 42
+  profile. All 221 EditMode tests pass.
+
 - **Your airline is saved (ADR 0045).** Autosave after every command, on fleet
   events, every 20 s and on quit; the start screen offers Continue. Saves are
   JSON, written atomically, versioned and validated on load; a restored game

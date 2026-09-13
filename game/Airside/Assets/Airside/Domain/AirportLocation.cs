@@ -30,8 +30,11 @@ namespace Airside.Domain
         public int UtcOffsetHours { get; }
         public float LatitudeDegrees { get; }
 
-        // Small starter set of real regional airfields. The first playable airport
-        // ships with one; the picker and the full dataset come later.
+        // Small starter set of real airfields. Adelaide is the starter airport
+        // (ADR 0045); the picker and the full dataset come later.
+        public static readonly AirportLocation Adelaide =
+            new("ADL", "Adelaide", "South Australia", 9, -34.945f);
+
         public static readonly AirportLocation Kingscote =
             new("KGC", "Kingscote", "Kangaroo Island, South Australia", 9, -35.71f);
 
@@ -41,9 +44,9 @@ namespace Airside.Domain
         public static readonly AirportLocation CooberPedy =
             new("CPD", "Coober Pedy", "Outback South Australia", 9, -29.04f);
 
-        public static readonly AirportLocation[] Presets = { Kingscote, PortLincoln, CooberPedy };
+        public static readonly AirportLocation[] Presets = { Adelaide, Kingscote, PortLincoln, CooberPedy };
 
-        public static AirportLocation Default => Kingscote;
+        public static AirportLocation Default => Adelaide;
 
         public static bool TryFromId(string id, out AirportLocation location)
         {

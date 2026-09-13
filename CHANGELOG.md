@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Soak-tested and playtest-ready.** A 30-day simulation soak test, an unattended
+  soak mode for packaged builds (30 min at 1× and 10 min at 60× both clean), and a
+  script that zips the exact build with a tester note.
+
 - **First-flight guide.** New players get a step-by-step card for their first
   round trip, with the next button highlighted. The destinations map is now
   opaque enough to read over the airfield.

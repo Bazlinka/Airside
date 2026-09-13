@@ -320,9 +320,9 @@ namespace Airside.Presentation
                 return;
             _saveProbed = true;
 
-            if (AirlineSaveFile.TryRead(AirlineSaveFile.DefaultPath, out var data, out var error))
+            if (AirlineSaveFile.TryRead(SavePath, out var data, out var error))
                 _savedAirline = data;
-            else if (File.Exists(AirlineSaveFile.DefaultPath))
+            else if (File.Exists(SavePath))
                 _saveError = $"{error} Starting a new airline will replace it.";
         }
 
@@ -405,7 +405,7 @@ namespace Airside.Presentation
             _nextAutosaveAt = Time.unscaledTime + AutosaveIntervalSeconds;
             try
             {
-                AirlineSaveFile.Write(AirlineSaveFile.DefaultPath, AirlineSave.Capture(_operations, DateTime.UtcNow));
+                AirlineSaveFile.Write(SavePath, AirlineSave.Capture(_operations, DateTime.UtcNow));
                 _saveFailureShown = false;
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)

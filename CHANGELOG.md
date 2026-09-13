@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **The airport keeps running while you're away.** Continue catches the airline
+  game up by the real time since the save (up to a week) and shows what happened
+  and what needs you. Save format version 2 adds the save timestamp; version 1
+  saves still load.
+
 - **Airline panels fit every target window size.** New `AirlineHudLayout`,
   tested at six sizes for bounds and overlaps. The destinations map no longer
   scatters its lines on scaled HUDs (small or Retina windows).

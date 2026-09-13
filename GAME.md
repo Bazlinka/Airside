@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude wheels, tyre smoke and camera (ADR 0042):** the wheel spin
+  bug was a lost fix, not a new one — `RebakeWheelPivots` / `AirsideAircraftParts`
+  were grafted into main's history by the consolidation without ever entering its
+  tree, so the roll pass ran without the pivot rebake that makes it correct.
+  Restored and locked by `AircraftPartsTests`. Rims now roll too (the old filter
+  never matched them). Tyre smoke added at the real contact patches. Follow-off
+  now releases the camera in place; F previously could not turn follow off at all
+  because the camera and the prototype both handled the key in different phases of
+  the frame.
+- **Evidence:** `scripts/test-domain.sh` **121/121**; axle geometry checked
+  against the shipped glTF.
+- **Next gate — required:** Unity Play. Confirm the wheels turn on their axles
+  (not orbiting), that tyre smoke reads well at touchdown and fades through the
+  rollout, and that F / R / scroll / middle-drag behave as documented under
+  "Run it".
+
 - **2026-09-12 Claude strip to a bare circuit sandbox (ADR 0041):** the whole
   objective layer is gone — economy, routes, reputation, staffing, research,
   capacity, daily reports, turnarounds, event log, ATC phraseology, ground
@@ -179,14 +195,32 @@ Open `game/Airside` in Unity 6.3 LTS and press Play.
 On-screen controls sit in a bar at the bottom centre: **Pause · Follow · 1× ·
 2× · 4×**. Selecting a rate also clears a pause.
 
+Simulation:
+
 - Escape: open or close the pause menu (Resume, Restart circuit, Quit)
 - Space or P: pause or resume
 - 1 / 2 / 3: normal, 2× and 4× time
-- F: toggle follow camera
 - M: mute audio
-- Right-drag: orbit camera
-- Scroll: zoom
-- WASD: pan overview
+
+Camera:
+
+- F: toggle follow. Turning it off hands the camera back **where it is** —
+  position, angle and zoom are kept and you are free to move from there. It
+  does not drag you back to the overview.
+- R: reset to the overview framing (the only thing that moves you back)
+- Right-drag: orbit / look around
+- Middle-drag: pan across the field (drops follow, since panning a followed
+  aircraft would only fight the follow)
+- Scroll: zoom. While following this biases the phase framing rather than
+  setting an absolute distance, so it survives the follow easing instead of
+  being erased on the next frame.
+- WASD: pan (free camera only)
+- Q / E: orbit left / right without a mouse
+- Z / X: lower / raise the camera
+
+Follow and reset are owned by `AirsidePrototype`; camera movement is read by
+`AirsideCameraController`. Exactly one owner each — two owners is why F used to
+toggle follow off in `Update` and straight back on in `LateUpdate`.
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
 Without a Mac Unity editor, `scripts/test-domain.sh` runs the same

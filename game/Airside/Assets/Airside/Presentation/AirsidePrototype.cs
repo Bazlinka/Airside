@@ -36,6 +36,26 @@ namespace Airside.Presentation
         private Transform _rainRoot;
         private Transform _touchdownSmoke;
         private Renderer[] _touchdownSmokeRenderers;
+
+        /// <summary>
+        /// Tyre smoke: a small pool of puffs emitted from the main-gear contact
+        /// patches — a hard burst as the wheels spin up at touchdown, then a
+        /// thinning trail while the rollout scrubs speed off. Presentation only.
+        /// </summary>
+        private WheelPuff[] _wheelPuffs;
+        private float _wheelSmokeEmitCooldown;
+
+        private struct WheelPuff
+        {
+            public Transform Transform;
+            public Renderer Renderer;
+            public float Age;
+            public float Life;
+            public Vector3 Drift;
+            public float StartRadius;
+            public float EndRadius;
+            public float StartAlpha;
+        }
         private Light _fuelFarmLight;
         private Light _arffBayLight;
         private Renderer _arffLightbarRenderer;
@@ -227,6 +247,7 @@ namespace Airside.Presentation
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
             // Touchdown smoke is circuit presentation, independent of disabled world props.
             _touchdownSmoke = BuildTouchdownSmoke();
+            BuildWheelSmoke();
             _skidMarkRoot = null;
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
@@ -399,6 +420,7 @@ namespace Airside.Presentation
             UpdateAmbientAudio();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
+            UpdateWheelSmoke();
             UpdateCloudDrift();
             UpdateBirdFlock();
             UpdateHangarDoor();
@@ -409,8 +431,10 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Keyboard shortcuts for the same five controls the bar carries, plus Escape
-        /// for the menu. Nothing else is bound — there is nothing else to drive.
+        /// Keyboard shortcuts for the five controls the bar carries, plus Escape for
+        /// the menu and R to reset the view. Camera movement itself (orbit, pan,
+        /// zoom, height) is read by AirsideCameraController; follow and reset live
+        /// here so there is exactly one owner of each.
         /// </summary>
         private void ReadSimulationControls()
         {
@@ -430,6 +454,8 @@ namespace Airside.Presentation
                 TogglePause();
             if (keyboard.fKey.wasPressedThisFrame)
                 ToggleFollow();
+            if (keyboard.rKey.wasPressedThisFrame)
+                ResetView();
             if (keyboard.digit1Key.wasPressedThisFrame) SetSpeed(1);
             if (keyboard.digit2Key.wasPressedThisFrame) SetSpeed(2);
             if (keyboard.digit3Key.wasPressedThisFrame) SetSpeed(4);
@@ -454,10 +480,22 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 return;
 
+            // Turning follow off hands the camera back where it is — free to orbit,
+            // pan and zoom from there. It is not a request to be dragged back to the
+            // overview; R does that explicitly.
             if (_cameraController.IsFollowing)
-                _cameraController.ReturnToOverview();
+                _cameraController.ReleaseFollow();
             else
                 _cameraController.StartFollowFirst();
+            PlayUiClick();
+        }
+
+        private void ResetView()
+        {
+            if (_cameraController == null)
+                return;
+
+            _cameraController.ReturnToOverview();
             PlayUiClick();
         }
 
@@ -476,6 +514,7 @@ namespace Airside.Presentation
             _previousPhases.Clear();
             _touchdownFired.Clear();
             _rotateFired.Clear();
+            ClearWheelSmoke();
             _menuOpen = false;
             _paused = false;
             PlayUiClick();
@@ -1226,12 +1265,7 @@ namespace Airside.Presentation
 
             foreach (var child in AirsideNamedChildren.Get(aircraft))
             {
-                if (child == aircraft)
-                    continue;
-                if (!(child.name.StartsWith("Tire", StringComparison.Ordinal) ||
-                      (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
-                       && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
-                       && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)))
+                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(child.name))
                     continue;
                 var radius = AirsideReusableMotion.TireRadiusMetres(child.name);
                 var degrees = PresentationDeltaTime
@@ -1957,6 +1991,7 @@ namespace Airside.Presentation
                     _touchdownSmoke.gameObject.SetActive(true);
                     _touchdownSmokeRemaining = 1.35f;
                     SpawnSkidMarks(_commercialAircraft[index]);
+                    EmitTouchdownWheelSmoke(_commercialAircraft[index], flight, phase);
                     if (_touchdownAudio != null && _touchdownClip != null && !_audioMuted)
                     {
                         _touchdownAudio.transform.position = _touchdownSmoke.position;
@@ -1969,6 +2004,15 @@ namespace Airside.Presentation
                 else if (phase != AircraftPhase.Landing)
                 {
                     _touchdownFired.Remove(id);
+                }
+
+                // Rolling trail: after the wheels are down the tread keeps smoking
+                // until the rollout has scrubbed most of the speed off.
+                if (phase == AircraftPhase.Landing
+                    && index < _commercialAircraft.Length
+                    && _touchdownFired.Contains(id))
+                {
+                    UpdateRollingWheelSmoke(_commercialAircraft[index], flight, phase);
                 }
 
                 // Soft rotate cue once the visual path lifts — presentation only.
@@ -2505,6 +2549,252 @@ namespace Airside.Presentation
 
             root.gameObject.SetActive(false);
             return root;
+        }
+
+        /// <summary>
+        /// Pool of tyre-smoke puffs, all inactive until the wheels touch. Pooled
+        /// rather than spawned so a long rollout never allocates per frame.
+        /// </summary>
+        private void BuildWheelSmoke()
+        {
+            const int poolSize = 24;
+            var root = new GameObject("Tyre smoke").transform;
+            root.SetParent(transform, false);
+            var smokeMaterial = CreateMaterial(WheelSmokeColor);
+            _wheelPuffs = new WheelPuff[poolSize];
+
+            for (var i = 0; i < poolSize; i++)
+            {
+                var puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                puff.name = $"Tyre puff {i + 1}";
+                puff.transform.SetParent(root, false);
+                var collider = puff.GetComponent<Collider>();
+                if (collider != null)
+                    Object.Destroy(collider);
+
+                var renderer = puff.GetComponent<Renderer>();
+                // One shared material for the pool: per-puff alpha rides on a
+                // MaterialPropertyBlock via SetRendererColor, so no instancing.
+                renderer.sharedMaterial = smokeMaterial;
+                puff.SetActive(false);
+
+                _wheelPuffs[i] = new WheelPuff
+                {
+                    Transform = puff.transform,
+                    Renderer = renderer
+                };
+            }
+        }
+
+        private static readonly Color WheelSmokeColor = new Color(0.82f, 0.80f, 0.78f, 0.55f);
+
+        /// <summary>
+        /// The hard puff as stationary tyres are slammed up to ground speed. Both
+        /// mains light at once; the nose is still in the air at this point.
+        /// </summary>
+        private void EmitTouchdownWheelSmoke(Transform aircraft, CommercialFlight flight, AircraftPhase phase)
+        {
+            if (_wheelPuffs == null || aircraft == null)
+                return;
+
+            TryGetMainGearContacts(aircraft, out var left, out var right);
+            var aft = -aircraft.forward;
+            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f));
+            // Touchdown speed is the top of the range, so this is near full strength.
+            var strength = Mathf.Clamp01(speed / TouchdownSmokeReferenceSpeed);
+
+            for (var i = 0; i < 5; i++)
+            {
+                EmitWheelSmoke(left, aft, strength);
+                EmitWheelSmoke(right, aft, strength);
+            }
+
+            _wheelSmokeEmitCooldown = 0f;
+        }
+
+        /// <summary>Ground speed at which tyre smoke reads as full strength.</summary>
+        private const float TouchdownSmokeReferenceSpeed = 45f;
+
+        /// <summary>
+        /// The thinning trail behind the mains during the rollout. Emission rate and
+        /// puff strength both fall with ground speed, so the smoke dies away as the
+        /// aircraft brakes rather than stopping abruptly.
+        /// </summary>
+        private void UpdateRollingWheelSmoke(Transform aircraft, CommercialFlight flight, AircraftPhase phase)
+        {
+            if (_wheelPuffs == null || aircraft == null || SimulationFrozen)
+                return;
+
+            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f));
+            var strength = Mathf.Clamp01(speed / TouchdownSmokeReferenceSpeed);
+            if (strength <= 0.18f)
+                return;
+
+            _wheelSmokeEmitCooldown -= Time.unscaledDeltaTime;
+            if (_wheelSmokeEmitCooldown > 0f)
+                return;
+
+            // Fast tread smokes more often; the gap stretches out as speed bleeds off.
+            _wheelSmokeEmitCooldown = Mathf.Lerp(0.22f, 0.04f, strength);
+
+            TryGetMainGearContacts(aircraft, out var left, out var right);
+            var aft = -aircraft.forward;
+            // Trail puffs are softer than the touchdown burst.
+            var trail = strength * 0.55f;
+            EmitWheelSmoke(left, aft, trail);
+            EmitWheelSmoke(right, aft, trail);
+        }
+
+        /// <summary>
+        /// Ground contact patches of the main gear, taken from the real tyre
+        /// transforms now that they sit on their axles. Falls back to the authored
+        /// half-track when the kit did not load.
+        /// </summary>
+        private static bool TryGetMainGearContacts(Transform aircraft, out Vector3 left, out Vector3 right)
+        {
+            var leftSum = Vector3.zero;
+            var rightSum = Vector3.zero;
+            var leftCount = 0;
+            var rightCount = 0;
+
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft)
+                    continue;
+                if (!child.name.StartsWith("Tire", StringComparison.Ordinal))
+                    continue;
+                if (child.name.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0)
+                    continue;
+
+                // The axle is the transform origin after the rebake; drop to the tread.
+                var contact = child.position - Vector3.up * AirsideReusableMotion.MainTireRadiusMetres;
+                if (child.name.IndexOf(" L", StringComparison.Ordinal) >= 0)
+                {
+                    leftSum += contact;
+                    leftCount++;
+                }
+                else if (child.name.IndexOf(" R", StringComparison.Ordinal) >= 0)
+                {
+                    rightSum += contact;
+                    rightCount++;
+                }
+            }
+
+            if (leftCount > 0 && rightCount > 0)
+            {
+                left = leftSum / leftCount;
+                right = rightSum / rightCount;
+                return true;
+            }
+
+            // Primitive fallback silhouette: no named tyres, so use the authored track.
+            var half = aircraft.right * AirsideReusableMotion.MainGearHalfTrackMetres;
+            var ground = aircraft.position;
+            ground.y = AirsideFlightPath.GroundY;
+            left = ground - half;
+            right = ground + half;
+            return false;
+        }
+
+        /// <summary>
+        /// Light one pooled puff at <paramref name="position"/>. <paramref name="strength"/>
+        /// runs 0..1 and drives size, opacity and how far the puff climbs.
+        /// </summary>
+        private void EmitWheelSmoke(Vector3 position, Vector3 aftDrift, float strength)
+        {
+            if (_wheelPuffs == null)
+                return;
+
+            for (var i = 0; i < _wheelPuffs.Length; i++)
+            {
+                if (_wheelPuffs[i].Transform == null || _wheelPuffs[i].Transform.gameObject.activeSelf)
+                    continue;
+
+                var puff = _wheelPuffs[i];
+                var spread = 0.35f * strength;
+                puff.Transform.position = position + new Vector3(
+                    UnityEngine.Random.Range(-spread, spread),
+                    UnityEngine.Random.Range(0.02f, 0.14f),
+                    UnityEngine.Random.Range(-spread, spread));
+                puff.Age = 0f;
+                puff.Life = Mathf.Lerp(0.45f, 1.5f, strength);
+                // Kicked backwards off the tread, rising as it expands.
+                puff.Drift = aftDrift * Mathf.Lerp(1.5f, 6.0f, strength)
+                             + Vector3.up * Mathf.Lerp(0.25f, 0.9f, strength);
+                puff.StartRadius = Mathf.Lerp(0.18f, 0.42f, strength);
+                puff.EndRadius = Mathf.Lerp(0.9f, 2.6f, strength);
+                puff.StartAlpha = Mathf.Lerp(0.18f, 0.5f, strength);
+                puff.Transform.localScale = Vector3.one * puff.StartRadius;
+                puff.Transform.gameObject.SetActive(true);
+
+                if (puff.Renderer != null)
+                {
+                    var color = WheelSmokeColor;
+                    color.a = puff.StartAlpha;
+                    SetRendererColor(puff.Renderer, color);
+                }
+
+                _wheelPuffs[i] = puff;
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Age every live puff: expand, drift, fade, then return it to the pool.
+        /// Runs on unscaled time so a puff stays a puff at 4x rather than stretching
+        /// across the whole rollout, and freezes with the rest of the presentation.
+        /// </summary>
+        /// <summary>Kill every live puff — used when the circuit is restarted.</summary>
+        private void ClearWheelSmoke()
+        {
+            if (_wheelPuffs == null)
+                return;
+
+            for (var i = 0; i < _wheelPuffs.Length; i++)
+            {
+                if (_wheelPuffs[i].Transform != null)
+                    _wheelPuffs[i].Transform.gameObject.SetActive(false);
+            }
+
+            _wheelSmokeEmitCooldown = 0f;
+        }
+
+        private void UpdateWheelSmoke()
+        {
+            if (_wheelPuffs == null || SimulationFrozen)
+                return;
+
+            var dt = Time.unscaledDeltaTime;
+            for (var i = 0; i < _wheelPuffs.Length; i++)
+            {
+                var puff = _wheelPuffs[i];
+                if (puff.Transform == null || !puff.Transform.gameObject.activeSelf)
+                    continue;
+
+                puff.Age += dt;
+                var t = Mathf.Clamp01(puff.Age / puff.Life);
+                if (t >= 1f)
+                {
+                    puff.Transform.gameObject.SetActive(false);
+                    _wheelPuffs[i] = puff;
+                    continue;
+                }
+
+                puff.Transform.position += puff.Drift * dt;
+                // Slow the drift as the puff loses its kick.
+                puff.Drift = Vector3.Lerp(puff.Drift, Vector3.up * 0.2f, dt * 1.6f);
+                puff.Transform.localScale = Vector3.one * Mathf.Lerp(puff.StartRadius, puff.EndRadius, t);
+
+                if (puff.Renderer != null)
+                {
+                    var color = WheelSmokeColor;
+                    // Hold briefly, then fade out — smoke thins rather than blinking off.
+                    color.a = puff.StartAlpha * (1f - t * t);
+                    SetRendererColor(puff.Renderer, color);
+                }
+
+                _wheelPuffs[i] = puff;
+            }
         }
 
         private static Transform BuildSkidMarkRoot()
@@ -7556,6 +7846,11 @@ namespace Airside.Presentation
                 RebakePropellerPivots(root);
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
+                // Tyre / wheel / rim meshes are baked at aircraft-space position with
+                // the node at the kit origin, so a naive spin sweeps them around the
+                // fuselage centreline. Rebake each to its axle so the ground roll turns
+                // them in place — the landing-gear mirror of RebakePropellerPivots.
+                RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
                 if (finalAtr42)
@@ -8033,6 +8328,78 @@ namespace Airside.Presentation
                     continue;
                 RebakePropellerPivot(child);
             }
+        }
+
+        /// <summary>
+        /// Move every rolling gear part's transform onto its own axle, so the ground
+        /// roll turns it on the spot.
+        ///
+        /// The kit authors each tyre/wheel/rim as a flat node at the aircraft origin
+        /// with the mesh baked at its aircraft-space position, so a spin about the
+        /// node's own X axis sweeps the part on a circle of radius sqrt(y² + z²)
+        /// about the fuselage centreline — roughly 0.4 m for the forward mains, 0.8 m
+        /// for the aft mains and 8.3 m for the nose wheels, which carries them up and
+        /// over the aeroplane. This is the landing-gear mirror of
+        /// <see cref="RebakePropellerPivots"/>. Must run after
+        /// <c>NestLandingGearParts</c>, so the parts are already under their leg.
+        /// </summary>
+        private static void RebakeWheelPivots(Transform aircraft)
+        {
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(child.name))
+                    continue;
+                RebakeWheelPivot(child);
+            }
+        }
+
+        private static void RebakeWheelPivot(Transform wheel)
+        {
+            var renderer = wheel.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+
+            // A wheel turns about its lateral axis, so the axle sits at the centre of
+            // the mesh bounds. Skip when the node is already on that axle — the
+            // Resources/prefab path authors wheel verts locally and must not be moved.
+            var axleWorld = renderer.bounds.center;
+            if ((wheel.position - axleWorld).sqrMagnitude < 0.0025f)
+                return;
+
+            RebakeOwnMeshToPivot(wheel, axleWorld);
+        }
+
+        /// <summary>
+        /// Re-origin one part: move its transform to <paramref name="pivotWorld"/> and
+        /// shift its mesh vertices by the same amount, so the part does not appear to
+        /// move but now rotates about that point.
+        ///
+        /// The mesh is cloned first. Kit meshes are shared through the loader's cache,
+        /// and editing one in place would drag every other instance and every other
+        /// aircraft with it.
+        /// </summary>
+        private static void RebakeOwnMeshToPivot(Transform part, Vector3 pivotWorld)
+        {
+            var filter = part.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null)
+                return;
+
+            var source = filter.sharedMesh;
+            var local = source.vertices;
+            var world = new Vector3[local.Length];
+            for (var v = 0; v < local.Length; v++)
+                world[v] = part.TransformPoint(local[v]);
+
+            part.position = pivotWorld;
+
+            var mesh = Object.Instantiate(source);
+            mesh.name = source.name + " axle-pivot";
+            var rebaked = new Vector3[world.Length];
+            for (var v = 0; v < rebaked.Length; v++)
+                rebaked[v] = part.InverseTransformPoint(world[v]);
+            mesh.vertices = rebaked;
+            mesh.RecalculateBounds();
+            filter.sharedMesh = mesh;
         }
 
         private static void RebakePropellerPivot(Transform prop)

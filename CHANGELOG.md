@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Player-airline design agreed (ADR 0045, docs only).** Adelaide starter
+  airport run autonomously; the player runs one named airline starting with one
+  ATR alongside AI Emu Air; destination and departure time chosen by the player,
+  runway by the tower, stand on arrival; Australia-wide destinations map with
+  range locks; real-length flights with faster time rates; economy deferred.
+  No code changed.
+
 - **The circuit is now flown to ATR 42 performance (ADR 0044).** Phase durations
   were hand-picked and the speeds fell out of them, unchecked: the takeoff roll
   passed rotate at **179 kt** and left the field at **257 kt**, the climb-out ran

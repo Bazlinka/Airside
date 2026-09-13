@@ -70,11 +70,17 @@ namespace Airside.Tests
         [TestCase(320, 240)]
         public void AirlineHudLayout_PanelsFitAndNeverOverlap(int screenWidth, int screenHeight)
         {
+            AssertAirlinePanelsFit(screenWidth, screenHeight, showGuide: false);
+            AssertAirlinePanelsFit(screenWidth, screenHeight, showGuide: true);
+        }
+
+        private static void AssertAirlinePanelsFit(int screenWidth, int screenHeight, bool showGuide)
+        {
             var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
             var width = screenWidth / scale;
             var height = screenHeight / scale;
             var hud = HudLayout.Create(width, height);
-            var airline = AirlineHudLayout.Create(hud);
+            var airline = AirlineHudLayout.Create(hud, showGuide);
 
             void Inside(Rect r, string name)
             {
@@ -102,6 +108,16 @@ namespace Airside.Tests
                 Apart(airline.FleetArea, "fleet", rect, name);
                 Apart(airline.Map, "map", rect, name);
                 Apart(airline.Toast, "toast", rect, name);
+            }
+
+            if (showGuide)
+            {
+                Inside(airline.Guide, "guide");
+                Apart(airline.Guide, "guide", airline.Clock, "clock");
+                Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
+                Apart(airline.Guide, "guide", airline.Map, "map");
+                foreach (var (rect, name) in readoutAndBar)
+                    Apart(airline.Guide, "guide", rect, name);
             }
 
             Apart(airline.Clock, "clock", airline.FleetArea, "fleet");

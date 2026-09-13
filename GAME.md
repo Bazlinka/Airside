@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude first-flight guide (PROJECT_PLAN step 3, `feature/first-flight-guide`):**
+  a numbered card under the clock walks a new player through one round trip —
+  plan → wait for departure → departing → away → landing → choose a stand →
+  taxiing in — with a pulsing highlight on Plan flight and the stand buttons, and
+  a toast when the first trip completes. `FirstFlightGuide` derives the step from
+  fleet state only (no save field), so Continue lands on the right step and the
+  guide never returns once any player aircraft has flown a trip.
+  `AirlineHudLayout` gained a guide slot (map and stacked fleet move below it),
+  tested at all six sizes with and without it. **Readability:** the map panel is
+  now near-opaque (runways read through it) and the ADL label sits left of its dot.
+- **Evidence:** Unity EditMode **233/233**. Packaged app: new airline → step 1 with
+  Plan flight highlighted → map → Melbourne "Now" → step 3 Departing; Continue
+  restores step 3; map readable.
+- **Next:** 30-minute soak, then a packaged build for one external playtester.
+
 - **2026-09-14 Claude real 24-hour day (Bailey's decision, `feature/real-24h-day`):**
   `DayCycle.DaySeconds` is now 86,400 (was 1,200), so lighting time, the airline
   clock and real-length flights agree; `AirlineClock` reads it. Weather now changes

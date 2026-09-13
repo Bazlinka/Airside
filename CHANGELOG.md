@@ -5,6 +5,23 @@ change it describes.
 
 ## Unreleased
 
+- **Audit of the branch-consolidation graft (ADR 0043, docs only).** `c23cfa1` is
+  a 74-parent octopus merge whose tree is exactly parent 1's — all 73 other tips
+  contributed zero content, so their commits are reachable history with nothing
+  in them. That is why the Pass A wheel fix was missing while its commit was an
+  ancestor of `main`. Audited all 73 tips for C# declarations absent from the
+  tree: 87 hits, of which only **Pass A was a real, live loss** (already fixed in
+  #203). Pass B is superseded by `RebakeAircraftArticulatedPivots`, which already
+  rebakes the gear struts to their top hinge; Pass C does not apply to v02, whose
+  panes are generated on the analytic fuselage surface and sit a uniform 1.6–3.2
+  cm proud by construction; Pass D's belly-door trap no longer reaches the runway
+  on v02 (0.18 m drop on the flank doors, 0.56 m on the nose, contact plane at 0).
+  The 66 symbols from the Adelaide landside branch are lost but moot behind the
+  bare-field flags. Nothing further restored. **Correction:** an earlier figure in
+  this session put the cabin panes up to 19 cm proud — that was an artefact of
+  interpolating fuselage vertices by height on an ellipse with a varying centre
+  height, not a real protrusion.
+
 - **Wheels spin on their axles again, plus tyre smoke.** Every tyre/wheel/rim
   node in `mdl_atr42_starter_v02` ships with an identity transform and its mesh
   baked at aircraft-space position, so spinning about the node's own X axis swept

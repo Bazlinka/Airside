@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude consolidation-graft audit (ADR 0043):** `c23cfa1` grafted
+  73 branch tips into `main`'s history while discarding every one of their trees,
+  so those commits read like delivered work and contain nothing. Audited all of
+  them. Only the Pass A wheel fix was a real loss and it is already restored.
+  Pass B is superseded, Pass C and Pass D are moot on the v02 aircraft, and the
+  Adelaide landside branch is moot behind the bare-field flags. Nothing further
+  restored — see the ADR before re-chasing any of those four commits.
+- **Caveat that still matters:** the audit only finds lost *declarations*. A lost
+  edit to an existing function is invisible to it — the `Landing(a)` compile break
+  was that shape. If another defect of that kind appears, suspect the graft and
+  diff the branch tip against its merge-base rather than trusting ancestry.
+
 - **2026-09-13 Claude wheels, tyre smoke and camera (ADR 0042):** the wheel spin
   bug was a lost fix, not a new one — `RebakeWheelPivots` / `AirsideAircraftParts`
   were grafted into main's history by the consolidation without ever entering its

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **First-flight guide.** New players get a step-by-step card for their first
+  round trip, with the next button highlighted. The destinations map is now
+  opaque enough to read over the airfield.
+
 - **The day is a real 24 hours.** Lighting time now matches the airline clock and
   real-length flights; weather changes hourly instead of every five minutes.
 

@@ -121,7 +121,12 @@ namespace Airside.Presentation
 
         private void DrawAirlineHud(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {
-            var placement = AirlineHudLayout.Create(layout);
+            _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
+            if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
+                ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
+            _lastGuideStep = _guideStep;
+            var showGuide = !AirlineSetupOpen && _awaySummary == null && _guideStep != GuideStep.Complete;
+            var placement = AirlineHudLayout.Create(layout, showGuide);
 
             var label = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
             var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
@@ -140,6 +145,8 @@ namespace Airside.Presentation
             }
 
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
+            if (showGuide)
+                DrawGuide(placement.Guide, panel, label, small);
             if (!(_mapOpen && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
             if (_mapOpen)
@@ -215,6 +222,58 @@ namespace Airside.Presentation
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             SaveAirline();
             PlayUiClick();
+        }
+
+        // ---- First-flight guide ------------------------------------------------------------
+
+        private GuideStep _guideStep = GuideStep.Complete;
+        private GuideStep _lastGuideStep = GuideStep.Complete;
+        private FleetAircraft _guideAircraft;
+
+        private bool IsGuided(FleetAircraft aircraft, GuideStep step) =>
+            _guideStep == step && ReferenceEquals(aircraft, _guideAircraft);
+
+        private void DrawGuide(Rect rect, GUIStyle panel, GUIStyle label, GUIStyle small)
+        {
+            var (heading, hint) = GuideText(_guideStep, _guideAircraft);
+            GUI.Box(rect, GUIContent.none, panel);
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
+            var bold = new GUIStyle(label) { fontStyle = FontStyle.Bold };
+            GUI.Label(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 22f), heading, bold);
+            GUI.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, rect.height - 40f), hint, small);
+        }
+
+        /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>
+        private static void DrawGuideHighlight(Rect rect)
+        {
+            var pulse = 0.45f + 0.55f * Mathf.PingPong(Time.unscaledTime * 1.6f, 1f);
+            var colour = AirsideTheme.SafetyYellow;
+            colour.a = pulse;
+            AirsideTheme.DrawPanelFrame(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), colour);
+        }
+
+        private (string heading, string hint) GuideText(GuideStep step, FleetAircraft aircraft)
+        {
+            var reg = aircraft?.Registration ?? "Your aircraft";
+            var dest = aircraft?.CurrentDestination?.Name ?? aircraft?.Scheduled?.Destination.Name ?? "its destination";
+            return step switch
+            {
+                GuideStep.PlanFirstFlight => ("1 · Plan your first flight",
+                    $"Click Plan flight for {reg}, pick a green destination and when it leaves. Kingscote is a short hop."),
+                GuideStep.WaitForDeparture => ("2 · Flight planned",
+                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)}. Speed up with 10x, or Skip (N) to the departure."),
+                GuideStep.Departing => ("3 · Departing",
+                    $"{reg} is heading out. Press Follow (F) to ride along through the taxi and takeoff."),
+                GuideStep.Away => ("4 · Away to " + dest,
+                    "Open the Map (Tab) to track it. Skip (N) jumps ahead to the next event."),
+                GuideStep.Landing => ("5 · Coming home",
+                    $"The tower is bringing {reg} in to land. Follow (F) to watch the touchdown."),
+                GuideStep.ChooseStand => ("6 · Choose a stand",
+                    $"{reg} has landed. Pick a free bay in Your Fleet so it can taxi in."),
+                GuideStep.TaxiingIn => ("7 · Taxiing in",
+                    $"{reg} is taxiing to {aircraft.Stand}. That completes your first trip."),
+                _ => (string.Empty, string.Empty)
+            };
         }
 
         // ---- Away summary -----------------------------------------------------------------
@@ -455,7 +514,10 @@ namespace Airside.Presentation
             switch (aircraft.State)
             {
                 case FleetState.AtStand:
-                    if (GUI.Button(new Rect(x, y, 140f, 26f), "Plan flight", smallButton))
+                    var planRect = new Rect(x, y, 140f, 26f);
+                    if (IsGuided(aircraft, GuideStep.PlanFirstFlight))
+                        DrawGuideHighlight(planRect);
+                    if (GUI.Button(planRect, "Plan flight", smallButton))
                         ToggleMap(aircraft, forceOpen: true);
                     if (aircraft.Scheduled.HasValue
                         && GUI.Button(new Rect(x + 150f, y, 120f, 26f), "Cancel", smallButton))
@@ -472,7 +534,10 @@ namespace Airside.Presentation
                     foreach (var stand in _operations.FreeStands())
                     {
                         any = true;
-                        if (GUI.Button(new Rect(bx, y, 76f, 26f), stand.Value, smallButton))
+                        var standRect = new Rect(bx, y, 76f, 26f);
+                        if (IsGuided(aircraft, GuideStep.ChooseStand))
+                            DrawGuideHighlight(standRect);
+                        if (GUI.Button(standRect, stand.Value, smallButton))
                         {
                             var result = _operations.AssignStand(aircraft, stand);
                             if (result.Accepted)
@@ -529,6 +594,10 @@ namespace Airside.Presentation
 
         private void DrawDestinationsMap(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
+            // Near-opaque: the translucent HUD panel let runways and taxiways read
+            // through the coastline and route lines.
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
             GUI.Box(rect, GUIContent.none, panel);
 
             var detailWidth = Mathf.Min(260f, rect.width * 0.38f);
@@ -582,7 +651,9 @@ namespace Airside.Presentation
             }
 
             DrawSolid(new Rect(homePoint.x - 7f, homePoint.y - 7f, 14f, 14f), AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
-            GUI.Label(new Rect(homePoint.x + 9f, homePoint.y + 2f, 80f, 18f), "ADL", label);
+            // Left of the dot: Kingscote and Port Lincoln sit just to its right and below.
+            var adlStyle = new GUIStyle(label) { alignment = TextAnchor.MiddleRight };
+            GUI.Label(new Rect(homePoint.x - 89f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
 
             DrawMapDetail(detail, aircraft, title, label, small, smallButton);
         }

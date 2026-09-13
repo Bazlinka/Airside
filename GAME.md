@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude airline HUD layout (PROJECT_PLAN step 2, `fix/airline-hud-layout`):**
+  the airline panels had hard-coded positions and were never in the fits-on-screen
+  contract. `AirlineHudLayout` now places clock, fleet, toast, map and start panel
+  from `HudLayout` (which gained `Viewport`): side by side on wide windows; on narrow
+  ones the fleet stacks under the clock, the toast drops above the speed readout,
+  and the open map covers the fleet. Tested at all six target sizes for bounds and
+  overlaps. **Also fixed:** every map line (coastline, routes) scattered across the
+  screen whenever the HUD scale was not 1 — `GUIUtility.RotateAroundPivot` takes a
+  screen-space pivot; lines now rotate in GUI space.
+- **Evidence:** Unity EditMode **228/228**. Packaged app at 800×500 (HUD scale
+  0.55): start panel, clock/fleet/toast/map/readout/bar all clear, coastline
+  correct.
+
 - **2026-09-14 Claude trustworthy build (PROJECT_PLAN step 1, `fix/trustworthy-build`):**
   money is deferred (plan: no new economy subsystem before the first session is
   playable). Three fixes so the exact packaged build can be trusted:

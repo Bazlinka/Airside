@@ -16,8 +16,6 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private const float FleetPanelWidth = 360f;
-        private const float PanelMargin = 22f;
         private const long DayLengthSeconds = 24 * 3600;
         private const long ClockStartSeconds = 8 * 3600;
         private const float ToastSeconds = 6f;
@@ -124,8 +122,7 @@ namespace Airside.Presentation
 
         private void DrawAirlineHud(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {
-            var viewportWidth = layout.ControlBar.center.x * 2f;
-            var viewportHeight = layout.ControlBar.yMax + PanelMargin;
+            var placement = AirlineHudLayout.Create(layout);
 
             var label = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
             var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
@@ -133,26 +130,27 @@ namespace Airside.Presentation
 
             if (AirlineSetupOpen)
             {
-                DrawAirlineSetup(viewportWidth, viewportHeight, panel, title, label, button);
+                DrawAirlineSetup(placement, panel, title, label, button);
                 return;
             }
 
-            DrawClockPanel(panel, label, small, smallButton);
-            DrawFleetPanel(viewportWidth, layout.ControlBar.y - PanelMargin, panel, label, small, smallButton);
-            DrawToast(viewportWidth, label);
+            DrawClockPanel(placement.Clock, panel, label, small, smallButton);
+            if (!(_mapOpen && placement.MapCoversFleet))
+                DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
             if (_mapOpen)
-                DrawDestinationsMap(viewportWidth, layout.ControlBar.y - PanelMargin, panel, title, label, small, smallButton);
+                DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+            DrawToast(placement.Toast, label);
         }
 
         // ---- Start your airline ---------------------------------------------------
 
-        private void DrawAirlineSetup(float width, float height, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
+        private void DrawAirlineSetup(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
         {
             ProbeSavedAirline();
             var hasSave = _savedAirline != null;
             var saveBlock = hasSave || !string.IsNullOrEmpty(_saveError) ? 96f : 0f;
             var panelHeight = 300f + saveBlock;
-            var rect = new Rect((width - 420f) * 0.5f, Mathf.Max(PanelMargin, (height - panelHeight) * 0.5f), 420f, panelHeight);
+            var rect = placement.SetupPanel(panelHeight);
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 20f;
             var inner = rect.width - 40f;
@@ -324,9 +322,8 @@ namespace Airside.Presentation
 
         // ---- Clock and fleet ---------------------------------------------------------
 
-        private void DrawClockPanel(GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        private void DrawClockPanel(Rect rect, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var rect = new Rect(PanelMargin, PanelMargin, 300f, 92f);
             GUI.Box(rect, GUIContent.none, panel);
             var airline = _operations.PlayerAirline;
             DrawSolid(new Rect(rect.x + 14f, rect.y + 16f, 10f, 22f), AirsideTheme.FromHex(airline.LiveryHex));
@@ -337,10 +334,9 @@ namespace Airside.Presentation
                 ToggleMap(_mapAircraft);
         }
 
-        private void DrawFleetPanel(float viewportWidth, float bottom, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var rect = new Rect(viewportWidth - FleetPanelWidth - PanelMargin, PanelMargin, FleetPanelWidth,
-                Mathf.Clamp(FleetPanelContentHeight(), 120f, Mathf.Max(120f, bottom - PanelMargin)));
+            var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(FleetPanelContentHeight(), 120f), area.height));
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
@@ -485,12 +481,8 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
-        private void DrawDestinationsMap(float viewportWidth, float bottom, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        private void DrawDestinationsMap(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var left = PanelMargin + 0f;
-            var top = PanelMargin + 110f;
-            var right = viewportWidth - FleetPanelWidth - PanelMargin * 2f;
-            var rect = new Rect(left, top, Mathf.Max(360f, right - left), Mathf.Max(260f, bottom - top));
             GUI.Box(rect, GUIContent.none, panel);
 
             var detailWidth = Mathf.Min(260f, rect.width * 0.38f);
@@ -670,8 +662,14 @@ namespace Airside.Presentation
             if (length < 0.5f)
                 return;
 
+            // Rotate in GUI space, after the HUD scale. GUIUtility.RotateAroundPivot takes
+            // its pivot in screen space, so under any HUD scale other than 1 every line
+            // swung about the wrong point and scattered across the screen.
             var matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, from);
+            GUI.matrix = matrix
+                         * Matrix4x4.Translate(from)
+                         * Matrix4x4.Rotate(Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg))
+                         * Matrix4x4.Translate(-from);
             DrawSolid(new Rect(from.x, from.y - thickness * 0.5f, length, thickness), colour);
             GUI.matrix = matrix;
         }
@@ -727,12 +725,11 @@ namespace Airside.Presentation
             }
         }
 
-        private void DrawToast(float viewportWidth, GUIStyle label)
+        private void DrawToast(Rect rect, GUIStyle label)
         {
             if (string.IsNullOrEmpty(_toast) || Time.unscaledTime > _toastUntil)
                 return;
 
-            var rect = new Rect((viewportWidth - 460f) * 0.5f, PanelMargin, 460f, 40f);
             DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f));
             AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
             var centred = new GUIStyle(label) { alignment = TextAnchor.MiddleCenter };

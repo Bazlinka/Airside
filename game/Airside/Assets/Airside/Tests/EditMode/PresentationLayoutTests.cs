@@ -62,6 +62,67 @@ namespace Airside.Tests
             }
         }
 
+        [TestCase(1280, 720)]
+        [TestCase(1440, 900)]
+        [TestCase(3456, 2168)]
+        [TestCase(800, 500)]
+        [TestCase(400, 780)]
+        [TestCase(320, 240)]
+        public void AirlineHudLayout_PanelsFitAndNeverOverlap(int screenWidth, int screenHeight)
+        {
+            var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
+            var width = screenWidth / scale;
+            var height = screenHeight / scale;
+            var hud = HudLayout.Create(width, height);
+            var airline = AirlineHudLayout.Create(hud);
+
+            void Inside(Rect r, string name)
+            {
+                Assert.That(r.width, Is.GreaterThan(0f), $"{name} collapsed");
+                Assert.That(r.height, Is.GreaterThan(0f), $"{name} collapsed");
+                Assert.That(r.xMin, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the left");
+                Assert.That(r.yMin, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the top");
+                Assert.That(r.xMax, Is.LessThanOrEqualTo(width + 0.01f), $"{name} off the right");
+                Assert.That(r.yMax, Is.LessThanOrEqualTo(height + 0.01f), $"{name} off the bottom");
+            }
+
+            void Apart(Rect a, string aName, Rect b, string bName) =>
+                Assert.That(a.Overlaps(b), Is.False, $"{aName} overlaps {bName} at {screenWidth}x{screenHeight}");
+
+            Inside(airline.Clock, "clock");
+            Inside(airline.FleetArea, "fleet");
+            Inside(airline.Toast, "toast");
+            Inside(airline.Map, "map");
+            Inside(airline.SetupPanel(396f), "setup");
+
+            var readoutAndBar = new[] { (hud.SpeedReadout, "speed readout"), (hud.ControlBar, "control bar") };
+            foreach (var (rect, name) in readoutAndBar)
+            {
+                Apart(airline.Clock, "clock", rect, name);
+                Apart(airline.FleetArea, "fleet", rect, name);
+                Apart(airline.Map, "map", rect, name);
+                Apart(airline.Toast, "toast", rect, name);
+            }
+
+            Apart(airline.Clock, "clock", airline.FleetArea, "fleet");
+            Apart(airline.Clock, "clock", airline.Map, "map");
+            Apart(airline.Toast, "toast", airline.Clock, "clock");
+            if (!airline.MapCoversFleet)
+            {
+                Apart(airline.Map, "map", airline.FleetArea, "fleet");
+                Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
+            }
+        }
+
+        [Test]
+        public void AirlineHudLayout_DesktopKeepsMapBesideTheFleet()
+        {
+            var airline = AirlineHudLayout.Create(HudLayout.Create(1440f, 900f));
+            Assert.That(airline.MapCoversFleet, Is.False);
+            Assert.That(airline.Map.width, Is.GreaterThanOrEqualTo(AirlineHudLayout.MinimumMapWidth));
+            Assert.That(airline.FleetArea.y, Is.EqualTo(AirlineHudLayout.Margin), "fleet sits top-right");
+        }
+
         [Test]
         public void HudLayout_ControlsAreCentredAndDoNotOverlap()
         {

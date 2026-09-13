@@ -32,12 +32,16 @@ namespace Airside.Presentation
         public const float ReadoutHeight = 34f;
         public const float ReadoutGap = 8f;
 
-        private HudLayout(Rect controlBar, Rect pauseMenu, Rect speedReadout)
+        private HudLayout(Vector2 viewport, Rect controlBar, Rect pauseMenu, Rect speedReadout)
         {
+            Viewport = viewport;
             ControlBar = controlBar;
             PauseMenu = pauseMenu;
             SpeedReadout = speedReadout;
         }
+
+        /// <summary>Virtual viewport size the layout was made for.</summary>
+        public Vector2 Viewport { get; }
 
         /// <summary>Bottom-centre strip holding the controls.</summary>
         public Rect ControlBar { get; }
@@ -84,7 +88,7 @@ namespace Airside.Presentation
                 readoutWidth,
                 Mathf.Min(ReadoutHeight, bar.y));
 
-            return new HudLayout(bar, menu, readout);
+            return new HudLayout(new Vector2(viewportWidth, viewportHeight), bar, menu, readout);
         }
 
         /// <summary>

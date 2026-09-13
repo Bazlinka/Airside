@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Airline panels fit every target window size.** New `AirlineHudLayout`,
+  tested at six sizes for bounds and overlaps. The destinations map no longer
+  scatters its lines on scaled HUDs (small or Retina windows).
+
 - **Props, control surfaces and wheels pivot correctly in packaged builds.** The
   glTF loader made kit meshes unreadable, which silently broke every pivot rebake
   outside the editor. Airspeed readout now follows the aircraft you are watching

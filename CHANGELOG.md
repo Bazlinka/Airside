@@ -5,6 +5,16 @@ change it describes.
 
 ## Unreleased
 
+- **Player airline, first slice (ADR 0045).** Adelaide is the default location.
+  New `Airline`, `AircraftType` (ATR 42-600, 1,100 km planning range) and an
+  Australia-wide `DestinationCatalogue` with great-circle, real-length legs.
+  `AirlineOperations` runs fleets through taxi, a single tower-sequenced runway
+  (arrivals first, 90 s separation), off-map legs, a 40-minute outstation
+  turnaround and stand assignment; it is event-driven, so any frame size, rate or
+  skip reaches the same state. Emu Air flies two ATRs by itself. HUD: start
+  screen, fleet panel, destinations map with range locks and live tracking, stand
+  choice, 10×/30×/60× and Skip. The 3D aircraft do not follow the fleets yet.
+
 - **Player-airline design agreed (ADR 0045, docs only).** Adelaide starter
   airport run autonomously; the player runs one named airline starting with one
   ATR alongside AI Emu Air; destination and departure time chosen by the player,

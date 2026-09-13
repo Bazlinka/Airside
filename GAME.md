@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude player airline, first slice (ADR 0045, `feature/player-airline`):**
+  playable at Adelaide. Start screen (name + livery), fleet panel, Australia-wide
+  destinations map with range locks and live off-map tracking, schedule a
+  departure, tower-sequenced runway, stand choice on landing, 10×/30×/60× and
+  Skip (N). Emu Air flies two ATRs on its own. Logic is `AirlineOperations`
+  (event-driven, UnityEngine-free); HUD is `AirsidePrototype.Airline.cs`.
+- **Evidence:** Unity EditMode **211/212** — the 17 new airline tests pass; the one
+  failure (`FlightPath_AirPhasesMoveAtAircraftSpeedNotTaxiSpeed`) also fails on
+  clean `main` after #206 and is not from this branch. `scripts/build-mac.sh`
+  succeeds; the packaged app was driven end to end (start → plan MEL → off-map
+  tracking → landed → BAY-4 → taxi in).
+- **Not yet:** the 3D aircraft are still the demo circuit and do not follow the
+  fleets; no saving; no money. Next slice: drive the 3D runway movements from
+  `AirlineOperations` (Takeoff/Landing states), then save/load.
+- **Watch:** `DayCycle` is still one day per 20 real minutes while airline time is
+  a real 24 h clock (HUD clock uses 24 h; lighting is pinned to day anyway) —
+  Bailey to decide. Packaged `Player.log` shows ~536 "Not allowed to access
+  vertices … isReadable is false" for the tyre/wheel/rim axle-pivot rebake, so
+  the ADR 0042 wheel fix likely does not apply in builds (editor only).
+
 - **2026-09-13 Claude player-airline design (ADR 0045, docs only):** Bailey's
   next direction is agreed — Adelaide starter airport that runs itself; the
   player runs one airline (own name/colours, 1 ATR to start) alongside AI Emu
@@ -232,13 +252,21 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
 On-screen controls sit in a bar at the bottom centre: **Pause · Follow · 1× ·
-2× · 4×**. Selecting a rate also clears a pause.
+2× · 4× · 10× · 30× · 60× · Skip**. Selecting a rate also clears a pause. Skip
+jumps to the next airline event, but never past a stand choice you owe.
+
+Airline (ADR 0045): name your airline and pick a livery on the start screen. The
+fleet panel (top right) plans flights and offers stands when your aircraft lands;
+the map (top left, or Tab) shows every destination — green in range, grey locked —
+and tracks aircraft that are away.
 
 Simulation:
 
 - Escape: open or close the pause menu (Resume, Restart circuit, Quit)
 - Space or P: pause or resume
-- 1 / 2 / 3: normal, 2× and 4× time
+- 1 / 2 / 3 / 4 / 5 / 6: 1×, 2×, 4×, 10×, 30× and 60× time
+- N: skip to the next airline event
+- Tab: open or close the destinations map
 - M: mute audio
 
 Camera:
@@ -355,8 +383,6 @@ It does not cover Presentation, which needs UnityEngine.
 1. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
    and one stand** only when Bailey says so.
 2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.
-3. **Agreed next direction — player airline at Adelaide (ADR 0045).** Build
-   only on Bailey's go, in the ADR's first-slice order: Adelaide location,
-   airline/livery ownership, destination catalogue with range, off-map
-   tracking, scheduling + stand choice, destinations map, faster time rates,
-   save/load. Economy comes after.
+3. **Player airline at Adelaide (ADR 0045).** First slice built on
+   `feature/player-airline` (everything except save/load). Next: 3D runway
+   movements driven by `AirlineOperations`, then save/load, then economy.

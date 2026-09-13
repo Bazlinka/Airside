@@ -39,11 +39,11 @@
   pinned to day by `PinDaylightPresentation` pending the night-lighting rework —
   unpinning it now gives a real sunrise/sunset.
 - **Evidence:** Unity EditMode **232/232** (one helper test re-expressed in hours).
-- **Watch — iCloud:** `~/Documents` is iCloud Drive, so this repo syncs. iCloud
-  created `FleetVisual 2.cs`-style duplicates inside `Assets/` that broke the Unity
-  compile (duplicate types); moved to `~/.Trash/airside-sync-duplicates-20260914`.
-  More `* 2.*` copies exist under `work/` and `UserSettings/`. Moving the repo out of
-  iCloud (or excluding it) is recommended.
+- **Resolved — iCloud (2026-09-14):** `~/Documents` is iCloud Drive and created
+  `FleetVisual 2.cs`-style duplicates that broke the Unity compile. On Bailey's Mac
+  the repo now lives at **`~/Code/Airside`** (outside iCloud); the old
+  `~/Documents/Codex/Airside` path is a symlink to it. If duplicate-type compile
+  errors reappear, look for `* 2.*` files first.
 
 - **2026-09-14 Claude away catch-up and summary (PROJECT_PLAN core rules, `feature/away-catch-up`):**
   the airport keeps running while the game is closed. Saves are now **version 2**

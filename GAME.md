@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-13 Claude realistic circuit performance (ADR 0044):** the flight
+  model is now derived from ATR 42 reference speeds rather than hand-picked
+  durations. The old curve passed rotate at 179 kt and left the field at 257;
+  it is 100 and 120 now. Real 3° glideslope, real flare from 30 ft floating
+  300 m onto the touchdown markings with the sink arrested 584 → 60 ft/min.
+  Circuit is 182 s (was 162). `CircuitProfile` is the single source of truth and
+  is UnityEngine-free, so the speeds are covered headlessly.
+- **Evidence:** `scripts/test-domain.sh` **137/137**; path curves replicated
+  numerically — speeds within 2.3 kt, seams continuous to 0.0000 m.
+- **Next gate — required:** Unity Play, and this one needs *judgement* rather
+  than a checklist: does the round-out read as a landing, does the float look
+  right, and is a 35-second takeoff roll (up from 19) too long to watch at 1x?
+  The numbers are defensible; the feel is Bailey's call.
+
 - **2026-09-13 Claude consolidation-graft audit (ADR 0043):** `c23cfa1` grafted
   73 branch tips into `main`'s history while discarding every one of their trees,
   so those commits read like delivered work and contain nothing. Audited all of
@@ -163,6 +177,10 @@ by default; Port Lincoln and Coober Pedy also available) and runs a day/night
 cycle, one simulated day every 20 real minutes, driving the sun and ambient
 light. Deterministic weather changes through the day and drives the wet-surface,
 rain and spray presentation.
+
+The aircraft is flown to ATR 42 reference speeds — Vr 100 kt, Vapp 110,
+touchdown 95, climb-out 170 — on a true 3° glideslope with a real flare
+(ADR 0044). Phase durations are derived from those speeds, never picked.
 
 There are no objectives, no economy, no scoring and no progression, and nothing
 is saved between runs (ADR 0041). The player has exactly five controls — pause,

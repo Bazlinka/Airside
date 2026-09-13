@@ -4,14 +4,19 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Real-metre circuit on the Adelaide 05/23 strip. Approach, land, roll to a
-    /// stop, take off, climb out until the model is off the field. Taxi geometry
-    /// is not used — ground-wait phases sit on the rollout end.
+    /// Where the aircraft sits on the Adelaide 05/23 strip at any point in a phase.
     ///
-    /// Simulation timing stays authoritative. These curves only decide where the
-    /// model sits inside a phase. Speeds are sized against
-    /// <see cref="AirportCircuit"/> durations so a regional turboprop reads as
-    /// one on a 3 100 m runway.
+    /// Every station, height and speed comes from <see cref="CircuitProfile"/>, which
+    /// holds the ATR 42 reference figures and derives the phase durations from them.
+    /// This file only turns those into positions: each segment is flown at constant
+    /// acceleration between its entry and exit speed, so the instantaneous speed at
+    /// any progress is the scheduled one rather than whatever a hand-picked duration
+    /// happened to produce.
+    ///
+    /// The approach is a true 3° glideslope. The flare is a real round-out: it
+    /// begins at 30 ft, right as the threshold goes under, and floats 300 m past
+    /// the aim point onto the touchdown-zone markings while the sink is arrested
+    /// from 584 ft/min to about 60.
     /// </summary>
     public static class AirsideFlightPath
     {
@@ -20,50 +25,62 @@ namespace Airside.Presentation
                 ? DepartureFlyOutSeconds
                 : AirportCircuit.DurationSeconds(phase);
 
-        public const float DepartureFlyOutSeconds = 22f;
+        public static float DepartureFlyOutSeconds => CircuitProfile.DepartedSeconds;
 
+        /// <summary>Height of the wheels-on-tarmac plane in world space.</summary>
         public const float GroundY = 0.72f;
 
         public static float WestThresholdX => -AirsideBareField.RunwayHalfLength;
         public static float EastThresholdX => AirsideBareField.RunwayHalfLength;
 
-        // Long straight-in from west of the field so the arrival is a distant speck.
-        public const float ApproachStartX = -4200f;
-        public const float ApproachStartY = 155f;
-        public const float ShortFinalX = -1850f;
-        public const float ShortFinalY = 16f;
+        public static float ApproachStartX => CircuitProfile.ApproachStartX;
+        public static float ApproachStartY => GroundY + CircuitProfile.ApproachStartHeight;
+        public static float ShortFinalX => CircuitProfile.ShortFinalX;
+        public static float ShortFinalY => GroundY + CircuitProfile.ShortFinalHeight;
 
-        /// <summary>Touchdown 300 m past the west threshold, typical TDZ.</summary>
-        public const float TouchdownX = -1250f;
-        public const float TouchdownProgress = 0.22f;
+        /// <summary>Where the glideslope meets the ground — aimed at, not landed on.</summary>
+        public static float AimPointX => CircuitProfile.AimPointX;
+
+        /// <summary>Where the wheels arrive, having floated past the aim point.</summary>
+        public static float TouchdownX => CircuitProfile.TouchdownX;
+
+        public static float FlareStartX => CircuitProfile.FlareStartX;
+
+        /// <summary>Fraction of the landing phase at which the wheels touch.</summary>
+        public static float TouchdownProgress => CircuitProfile.TouchdownProgress;
+
+        /// <summary>Fraction of the landing phase at which the round-out begins.</summary>
+        public static float FlareProgress => CircuitProfile.FlareProgress;
 
         public static bool HasTouchedDown(float landingProgress) =>
             Mathf.Clamp01(landingProgress) >= TouchdownProgress;
 
-        /// <summary>Rollout end / takeoff start — still on the 3 100 m strip.</summary>
-        public const float RolloutEndX = -200f;
-        public const float RunwayEntryX = RolloutEndX;
+        public static float RolloutEndX => CircuitProfile.RolloutEndX;
+        public static float RunwayEntryX => RolloutEndX;
 
         /// <summary>No taxi line-up. Takeoff begins on the centreline.</summary>
         public const float LineupProgress = 0f;
-        public const float LineupEndX = RolloutEndX;
-        public const float HoldShortX = RolloutEndX;
+        public static float LineupEndX => RolloutEndX;
+        public static float HoldShortX => RolloutEndX;
         public const float HoldShortZ = 0f;
 
-        /// <summary>Rotate after ~900 m of roll, still well short of the east end.</summary>
-        public const float RotateX = 700f;
-        public const float TakeoffEndX = 1650f;
-        public const float TakeoffEndY = 95f;
-        public const float DepartedEndX = 4000f;
-        public const float DepartedEndY = 280f;
+        public static float RotateX => CircuitProfile.RotateX;
+        public static float TakeoffEndX => CircuitProfile.TakeoffEndX;
+        public static float TakeoffEndY => GroundY + CircuitProfile.TakeoffEndHeight;
+        public static float DepartedEndX => CircuitProfile.DepartedEndX;
+        public static float DepartedEndY => GroundY + CircuitProfile.DepartedEndHeight;
 
-        private const float RollStartSpeed = 0f;
-        private const float RollEndSpeed = 1f;
-        private const float RolloutStartSpeed = 1f;
-        private const float RolloutEndSpeed = 0f;
+        /// <summary>Fraction of the takeoff phase at which the nose comes up.</summary>
+        public static float RotateProgress => CircuitProfile.RotateProgress;
 
-        public static readonly float RotateProgress = SolveTakeoffProgressForX(RotateX);
+        private static float Mps(float knots) => CircuitProfile.Knots(knots);
 
+        /// <summary>
+        /// Fraction of a segment's distance covered by progress <paramref name="t"/>
+        /// when accelerating uniformly from <paramref name="startSpeed"/> to
+        /// <paramref name="endSpeed"/>. Speeds may be in any consistent unit — only
+        /// their ratio matters.
+        /// </summary>
         public static float DistanceFraction(float t, float startSpeed, float endSpeed)
         {
             var u = Mathf.Clamp01(t);
@@ -80,36 +97,81 @@ namespace Airside.Presentation
             return 1f - Mathf.Exp(-rate * deltaTime);
         }
 
-        /// <summary>Long straight-in, descending at near-constant speed on a 3° slope.</summary>
+        /// <summary>Progress within a sub-segment of a phase, 0..1.</summary>
+        private static float Local(float t, float from, float to) =>
+            to <= from ? 0f : Mathf.Clamp01((t - from) / (to - from));
+
+        /// <summary>Long straight-in on the 3° glideslope, slowing from 120 kt to Vapp.</summary>
         public static Vector3 Approach(float t, float laneOffset)
         {
-            var s = DistanceFraction(t, 1.04f, 0.96f);
+            var s = DistanceFraction(t, Mps(CircuitProfile.ApproachEntryKnots), Mps(CircuitProfile.ApproachKnots));
+            var x = Mathf.Lerp(ApproachStartX, ShortFinalX, s);
             return new Vector3(
-                Mathf.Lerp(ApproachStartX, ShortFinalX, s),
-                Mathf.Lerp(ApproachStartY, ShortFinalY, s),
+                x,
+                GroundY + CircuitProfile.GlideslopeHeight(x),
                 Mathf.Lerp(laneOffset * 8f, laneOffset, s));
         }
 
         /// <summary>
-        /// Flare to a soft touchdown, then a long braked rollout that almost stops
-        /// on the centreline so takeoff can spool from rest.
+        /// Final glide on the slope, a real flare, then the braked rollout.
+        ///
+        /// The flare is a cubic Hermite on height: it leaves the glideslope at exactly
+        /// the descent rate it was flying, and arrives at the tarmac at
+        /// <see cref="CircuitProfile.TouchdownSinkMetresPerSecond"/>. Both height and
+        /// sink fall monotonically through it, so the aircraft never sinks faster
+        /// mid-flare than it did on the slope.
         /// </summary>
         public static Vector3 Landing(float t, float laneOffset)
         {
             var u = Mathf.Clamp01(t);
-            if (u < TouchdownProgress)
+            var vApp = Mps(CircuitProfile.ApproachKnots);
+            var vTouchdown = Mps(CircuitProfile.TouchdownKnots);
+
+            if (u < FlareProgress)
             {
-                var f = u / TouchdownProgress;
-                var sink = 1f - (1f - f) * (1f - f);
+                var f = Local(u, 0f, FlareProgress);
+                var x = Mathf.Lerp(ShortFinalX, FlareStartX, f);
                 return new Vector3(
-                    Mathf.Lerp(ShortFinalX, TouchdownX, DistanceFraction(f, 1.04f, 0.96f)),
-                    Mathf.Lerp(ShortFinalY, GroundY, sink),
-                    Mathf.Lerp(laneOffset, 0f, f));
+                    x,
+                    GroundY + CircuitProfile.GlideslopeHeight(x),
+                    Mathf.Lerp(laneOffset, laneOffset * 0.35f, f));
             }
 
-            var r = (u - TouchdownProgress) / (1f - TouchdownProgress);
-            var rollout = DistanceFraction(r, RolloutStartSpeed, RolloutEndSpeed);
+            if (u < TouchdownProgress)
+            {
+                var f = Local(u, FlareProgress, TouchdownProgress);
+                var x = Mathf.Lerp(FlareStartX, TouchdownX, DistanceFraction(f, vApp, vTouchdown));
+                return new Vector3(
+                    x,
+                    GroundY + FlareHeight(f),
+                    Mathf.Lerp(laneOffset * 0.35f, 0f, f));
+            }
+
+            var r = Local(u, TouchdownProgress, 1f);
+            var rollout = DistanceFraction(r, vTouchdown, 0f);
             return new Vector3(Mathf.Lerp(TouchdownX, RolloutEndX, rollout), GroundY, 0f);
+        }
+
+        /// <summary>
+        /// Height above the tarmac through the flare, as a function of flare progress.
+        /// Cubic Hermite matching the glideslope descent rate on entry and the
+        /// touchdown sink rate on arrival.
+        /// </summary>
+        public static float FlareHeight(float flareProgress)
+        {
+            var f = Mathf.Clamp01(flareProgress);
+            var seconds = CircuitProfile.FlareExactSeconds;
+            var h0 = CircuitProfile.FlareHeightMetres;
+            // Tangents are dh/df, so the per-second rates are scaled by the segment length.
+            var m0 = -CircuitProfile.ApproachDescentRate * seconds;
+            var m1 = -CircuitProfile.TouchdownSinkMetresPerSecond * seconds;
+
+            var f2 = f * f;
+            var f3 = f2 * f;
+            var h00 = 2f * f3 - 3f * f2 + 1f;
+            var h10 = f3 - 2f * f2 + f;
+            var h11 = f3 - f2;
+            return Mathf.Max(0f, h0 * h00 + m0 * h10 + m1 * h11);
         }
 
         /// <summary>Hold on the rollout end — taxi is not drawn.</summary>
@@ -117,40 +179,81 @@ namespace Airside.Presentation
             new(RolloutEndX, GroundY, 0f);
 
         /// <summary>
-        /// Accelerating roll from the rollout end, rotate, then a climbing departure
-        /// that leaves the east threshold still accelerating.
+        /// Ground roll to Vr, then rotate and climb away. The roll is a genuine
+        /// 900 m acceleration to 100 kt rather than the 179 kt it used to reach.
         /// </summary>
         public static Vector3 Takeoff(float t)
         {
             var u = Mathf.Clamp01(t);
-            var x = Mathf.Lerp(RolloutEndX, TakeoffEndX, DistanceFraction(u, RollStartSpeed, RollEndSpeed));
-            var y = GroundY;
-            if (x > RotateX)
+            var vRotate = Mps(CircuitProfile.RotateKnots);
+            var vClimb = Mps(CircuitProfile.InitialClimbKnots);
+
+            if (u < RotateProgress)
             {
-                var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
-                y = Mathf.Lerp(GroundY, TakeoffEndY, climb * Mathf.Sqrt(climb));
+                var f = Local(u, 0f, RotateProgress);
+                var x = Mathf.Lerp(RolloutEndX, RotateX, DistanceFraction(f, 0f, vRotate));
+                return new Vector3(x, GroundY, 0f);
             }
 
-            return new Vector3(x, y, 0f);
+            var c = Local(u, RotateProgress, 1f);
+            var cx = Mathf.Lerp(RotateX, TakeoffEndX, DistanceFraction(c, vRotate, vClimb));
+            // Rotation takes a moment, so the climb eases in rather than snapping to
+            // the full gradient the instant the nose comes up. The exponent sets how
+            // hot the climb is by the end of the phase: 1.5 would finish at 1 790
+            // ft/min, far too much for an ATR, while 1.15 arrives at about 1 370 —
+            // just above the nominal 1 300 and still starting from a flat rotation.
+            var climbShape = Mathf.Pow(c, 1.15f);
+            return new Vector3(cx, GroundY + CircuitProfile.TakeoffEndHeight * climbShape, 0f);
         }
 
-        /// <summary>Keep climbing east until the slot recycles off-field.</summary>
+        /// <summary>Accelerating climb-out to 170 kt until the slot recycles off-field.</summary>
         public static Vector3 Departed(float t)
         {
+            var s = DistanceFraction(t, Mps(CircuitProfile.InitialClimbKnots), Mps(CircuitProfile.ClimbOutKnots));
             return new Vector3(
-                Mathf.Lerp(TakeoffEndX, DepartedEndX, DistanceFraction(t, 1.6f, 0.95f)),
-                Mathf.Lerp(TakeoffEndY, DepartedEndY, DistanceFraction(t, 1.1f, 0.95f)),
+                Mathf.Lerp(TakeoffEndX, DepartedEndX, s),
+                Mathf.Lerp(TakeoffEndY, DepartedEndY, s),
                 0f);
         }
 
         /// <summary>
-        /// Horizontal ground speed along the circuit, metres per simulated second.
-        /// Zero when the gear is off the pavement. Used for distance-based tire spin.
+        /// Scheduled airspeed at this point in the circuit, in knots. One source of
+        /// truth: tyre spin, engine note and anything else that needs a speed reads
+        /// this rather than differentiating a curve.
+        /// </summary>
+        public static float AirspeedKnots(AircraftPhase phase, float progress)
+        {
+            var t = Mathf.Clamp01(progress);
+            switch (phase)
+            {
+                case AircraftPhase.Approach:
+                    return Mathf.Lerp(CircuitProfile.ApproachEntryKnots, CircuitProfile.ApproachKnots, t);
+                case AircraftPhase.Landing:
+                    if (t < FlareProgress)
+                        return CircuitProfile.ApproachKnots;
+                    if (t < TouchdownProgress)
+                        return Mathf.Lerp(CircuitProfile.ApproachKnots, CircuitProfile.TouchdownKnots,
+                            Local(t, FlareProgress, TouchdownProgress));
+                    return Mathf.Lerp(CircuitProfile.TouchdownKnots, 0f, Local(t, TouchdownProgress, 1f));
+                case AircraftPhase.Takeoff:
+                    if (t < RotateProgress)
+                        return Mathf.Lerp(0f, CircuitProfile.RotateKnots, Local(t, 0f, RotateProgress));
+                    return Mathf.Lerp(CircuitProfile.RotateKnots, CircuitProfile.InitialClimbKnots,
+                        Local(t, RotateProgress, 1f));
+                case AircraftPhase.Departed:
+                    return Mathf.Lerp(CircuitProfile.InitialClimbKnots, CircuitProfile.ClimbOutKnots, t);
+                default:
+                    return 0f;
+            }
+        }
+
+        /// <summary>
+        /// Speed over the tarmac, metres per second. Zero whenever the wheels are not
+        /// on it, so tyre spin stops at lift-off and does not start before touchdown.
         /// </summary>
         public static float GroundSpeedMetresPerSecond(AircraftPhase phase, float progress)
         {
             var t = Mathf.Clamp01(progress);
-            var duration = Mathf.Max(0.001f, PhaseSeconds(phase));
             switch (phase)
             {
                 case AircraftPhase.Takeoff:
@@ -161,37 +264,11 @@ namespace Airside.Presentation
                     if (t < TouchdownProgress)
                         return 0f;
                     break;
-                case AircraftPhase.TaxiIn:
-                case AircraftPhase.TaxiOut:
-                case AircraftPhase.Pushback:
-                case AircraftPhase.AtStand:
-                    return 0f;
                 default:
                     return 0f;
             }
 
-            const float eps = 0.0025f;
-            var a = Mathf.Clamp01(t - eps);
-            var b = Mathf.Clamp01(t + eps);
-            if (b <= a)
-                return 0f;
-            Vector3 pa;
-            Vector3 pb;
-            if (phase == AircraftPhase.Takeoff)
-            {
-                pa = Takeoff(a);
-                pb = Takeoff(b);
-            }
-            else
-            {
-                pa = Landing(a, 0f);
-                pb = Landing(b, 0f);
-            }
-
-            var dx = pb.x - pa.x;
-            var dz = pb.z - pa.z;
-            var metres = Mathf.Sqrt(dx * dx + dz * dz);
-            return metres / ((b - a) * duration);
+            return Mps(AirspeedKnots(phase, t));
         }
 
         /// <summary>
@@ -219,14 +296,24 @@ namespace Airside.Presentation
             return Mathf.Clamp(speed / 55f * 6f, 0f, 8f);
         }
 
-        public const float ApproachPitchStartDegrees = -2.8f;
-        public const float ApproachPitchEndDegrees = -3.4f;
-        public const float FlarePitchDegrees = -5.5f;
+        // Body attitudes, degrees. Negative is nose-up in this codebase.
+        public const float ApproachPitchStartDegrees = -2.4f;
+        public const float ApproachPitchEndDegrees = -3.0f;
+
+        /// <summary>Nose-up through the round-out; an ATR touches down around 6° body angle.</summary>
+        public const float FlarePitchDegrees = -6.5f;
+
         /// <summary>Main-gear-first hold just after touchdown (nose still slightly up).</summary>
-        public const float TouchdownHoldPitchDegrees = -3.2f;
-        public const float RotatePitchDegrees = -12f;
-        public const float ClimbPitchDegrees = -10f;
-        public const float DepartedPitchEndDegrees = -4.5f;
+        public const float TouchdownHoldPitchDegrees = -4.0f;
+
+        /// <summary>Body angle once rotated — an ATR lifts off around 8-9°.</summary>
+        public const float RotatePitchDegrees = -9f;
+
+        /// <summary>Established initial climb attitude.</summary>
+        public const float ClimbPitchDegrees = -7.5f;
+
+        /// <summary>Lowered as the climb-out accelerates toward 170 kt.</summary>
+        public const float DepartedPitchEndDegrees = -4f;
 
         public static float PitchDegrees(AircraftPhase phase, float progress)
         {
@@ -235,12 +322,11 @@ namespace Airside.Presentation
             {
                 case AircraftPhase.Takeoff:
                 {
-                    var x = Takeoff(t).x;
-                    if (x <= RotateX)
+                    if (t <= RotateProgress)
                         return 0f;
-                    var climb = Mathf.Clamp01((x - RotateX) / (TakeoffEndX - RotateX));
-                    // Ease into rotation rather than a sharp pitch snap at RotateX.
-                    var ease = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 1.6f));
+                    var climb = Local(t, RotateProgress, 1f);
+                    // Ease into rotation rather than a sharp pitch snap at Vr.
+                    var ease = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.4f));
                     var rotation = Mathf.Lerp(0f, RotatePitchDegrees, ease);
                     // Settle into climb attitude before crossing into Departed.
                     return Mathf.Lerp(rotation, ClimbPitchDegrees,
@@ -250,16 +336,18 @@ namespace Airside.Presentation
                     return Mathf.Lerp(ApproachPitchStartDegrees, ApproachPitchEndDegrees, t);
                 case AircraftPhase.Landing:
                 {
+                    if (t < FlareProgress)
+                        return ApproachPitchEndDegrees;
                     if (t < TouchdownProgress)
                     {
-                        var flare = t / TouchdownProgress;
-                        // Soft flare: hold approach attitude longer, then deepen.
-                        var shaped = flare * flare;
-                        return Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees, shaped);
+                        // Progressive round-out: the nose comes up as the sink is arrested.
+                        var flare = Local(t, FlareProgress, TouchdownProgress);
+                        return Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees,
+                            Mathf.SmoothStep(0f, 1f, flare));
                     }
 
-                    var since = (t - TouchdownProgress) / (1f - TouchdownProgress);
-                    // Main-gear-first: hold a little nose-up, then settle level.
+                    var since = Local(t, TouchdownProgress, 1f);
+                    // Main-gear-first: hold a little nose-up, then let the nose down.
                     if (since < 0.08f)
                         return Mathf.Lerp(FlarePitchDegrees, TouchdownHoldPitchDegrees, since / 0.08f);
                     return Mathf.Lerp(TouchdownHoldPitchDegrees, 0f, Mathf.SmoothStep(0f, 1f,
@@ -270,22 +358,6 @@ namespace Airside.Presentation
                 default:
                     return 0f;
             }
-        }
-
-        private static float SolveTakeoffProgressForX(float targetX)
-        {
-            var lo = 0f;
-            var hi = 1f;
-            for (var i = 0; i < 40; i++)
-            {
-                var mid = (lo + hi) * 0.5f;
-                if (Takeoff(mid).x < targetX)
-                    lo = mid;
-                else
-                    hi = mid;
-            }
-
-            return (lo + hi) * 0.5f;
         }
     }
 }

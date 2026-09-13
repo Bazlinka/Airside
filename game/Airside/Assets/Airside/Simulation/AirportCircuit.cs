@@ -12,13 +12,14 @@ namespace Airside.Simulation
         /// </summary>
         public static bool SkipGroundTaxi = true;
 
-        public const long ApproachSeconds = 48;
-        // The 600 m flare and 1,050 m rollout need a full minute to meet the
-        // approach at roughly 47 m/s and brake to rest without a phase-boundary lurch.
-        public const long LandingSeconds = 60;
+        // Durations are derived from the stations and reference speeds in
+        // CircuitProfile, never picked by hand. Picking them by hand is how the
+        // takeoff roll came to pass rotate at 179 kt and leave the field at 257 kt.
+        public static long ApproachSeconds => CircuitProfile.ApproachSeconds;
+        public static long LandingSeconds => CircuitProfile.LandingSeconds;
         public const long TaxiSkipSeconds = 1;
-        public const long TakeoffSeconds = 28;
-        public const long DepartureFlyOutSeconds = 22;
+        public static long TakeoffSeconds => CircuitProfile.TakeoffSeconds;
+        public static long DepartureFlyOutSeconds => CircuitProfile.DepartedSeconds;
 
         public static bool IsSkippedGroundPhase(AircraftPhase phase) =>
             SkipGroundTaxi

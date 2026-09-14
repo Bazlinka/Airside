@@ -31,39 +31,13 @@ namespace Airside.Presentation
             ("+1 h", 3600), ("+2 h", 7200)
         };
 
-        /// <summary>
-        /// Coarse mainland and Tasmania outlines (lon, lat) — a reading aid for the map,
-        /// not survey data.
-        /// </summary>
-        private static readonly Vector2[] MainlandOutline =
-        {
-            new(113.6f, -22.0f), new(113.5f, -26.5f), new(114.6f, -28.8f), new(115.7f, -31.8f),
-            new(115.0f, -33.6f), new(115.1f, -34.4f), new(117.9f, -35.1f), new(121.9f, -33.9f),
-            new(126.0f, -32.3f), new(129.0f, -31.7f), new(131.2f, -31.5f), new(133.7f, -32.1f),
-            new(135.9f, -34.7f), new(137.8f, -32.5f), new(137.0f, -35.2f), new(138.4f, -34.4f),
-            new(138.5f, -34.8f), new(138.1f, -35.6f), new(139.4f, -36.0f), new(140.5f, -37.9f),
-            new(141.6f, -38.4f), new(143.5f, -38.8f), new(144.9f, -38.3f), new(146.4f, -39.1f),
-            new(148.0f, -37.9f), new(150.0f, -37.5f), new(150.2f, -35.7f), new(151.3f, -33.9f),
-            new(151.8f, -32.9f), new(153.1f, -30.3f), new(153.6f, -28.6f), new(153.4f, -27.2f),
-            new(153.2f, -25.0f), new(150.8f, -23.3f), new(149.2f, -21.1f), new(146.8f, -19.3f),
-            new(145.8f, -16.9f), new(145.3f, -15.5f), new(143.5f, -12.8f), new(142.5f, -10.7f),
-            new(141.9f, -12.6f), new(141.6f, -15.0f), new(140.8f, -17.5f), new(139.5f, -17.4f),
-            new(136.8f, -15.9f), new(136.8f, -12.2f), new(135.5f, -12.0f), new(132.5f, -11.4f),
-            new(130.8f, -12.4f), new(129.5f, -14.9f), new(128.1f, -15.5f), new(125.3f, -14.4f),
-            new(123.6f, -16.3f), new(122.2f, -18.0f), new(118.6f, -20.3f), new(116.8f, -20.6f),
-            new(113.6f, -22.0f)
-        };
-
-        private static readonly Vector2[] TasmaniaOutline =
-        {
-            new(144.6f, -40.7f), new(148.3f, -40.9f), new(148.0f, -43.2f), new(146.9f, -43.6f),
-            new(145.2f, -42.2f), new(144.6f, -40.7f)
-        };
-
         private AirlineOperations _operations;
         private string _airlineNameDraft = "Southern Cross Regional";
         private int _liveryChoice;
         private bool _mapOpen;
+        private bool _hangarOpen;
+        private readonly AustraliaMapLens _mapLens = new();
+        private Vector2 _hangarScroll;
         private FleetAircraft _mapAircraft;
         private string _selectedAircraftId;
         private Destination? _mapSelection;
@@ -97,6 +71,8 @@ namespace Airside.Presentation
 
             if (keyboard.tabKey.wasPressedThisFrame)
                 ToggleMap(_mapAircraft);
+            if (keyboard.hKey.wasPressedThisFrame)
+                ToggleHangar();
             return false;
         }
 
@@ -133,9 +109,11 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
-            if (!(_mapOpen && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
-            if (_mapOpen)
+            if (_hangarOpen)
+                DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
+            else if (_mapOpen)
                 DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
             DrawSelectionHudCard(layout, panel, label, small);
             DrawToast(placement.Toast, label);
@@ -237,9 +215,9 @@ namespace Airside.Presentation
             _hudPanels.Add(placement.Clock);
             if (showGuide)
                 _hudPanels.Add(placement.Guide);
-            if (!(_mapOpen && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
-            if (_mapOpen)
+            if (_mapOpen || _hangarOpen)
                 _hudPanels.Add(placement.Map);
             if (TrySelectionHudCardRect(layout, out var selectionCard))
                 _hudPanels.Add(selectionCard);
@@ -465,8 +443,10 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
                 $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
-            if (GUI.Button(new Rect(rect.x + 14f, rect.y + 60f, 130f, 24f), _mapOpen ? "Close map" : "Map (Tab)", smallButton))
+            if (GUI.Button(new Rect(rect.x + 14f, rect.y + 60f, 88f, 24f), _mapOpen ? "Close map" : "Map (Tab)", smallButton))
                 ToggleMap(_mapAircraft);
+            if (GUI.Button(new Rect(rect.x + 108f, rect.y + 60f, 100f, 24f), _hangarOpen ? "Close hangar" : "Hangar (H)", smallButton))
+                ToggleHangar();
         }
 
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
@@ -689,10 +669,13 @@ namespace Airside.Presentation
             if (TryFollowFleetAircraft(aircraft.Registration))
             {
                 _mapOpen = false;
+                _hangarOpen = false;
             }
             else
             {
+                _hangarOpen = false;
                 _mapOpen = true;
+                _mapLens.Reset();
                 _mapSelection = aircraft.CurrentDestination;
             }
             PlayUiClick();
@@ -705,6 +688,7 @@ namespace Airside.Presentation
             _selectedAircraftId = null;
             _mapAircraft = null;
             _mapOpen = false;
+            _hangarOpen = false;
             return true;
         }
 
@@ -736,10 +720,24 @@ namespace Airside.Presentation
 
         private void ToggleMap(FleetAircraft aircraft, bool forceOpen = false)
         {
-            _mapOpen = forceOpen || !_mapOpen;
+            var open = forceOpen || !_mapOpen;
+            _mapOpen = open;
+            if (open)
+            {
+                _hangarOpen = false;
+                _mapLens.Reset();
+            }
             _mapAircraft = aircraft ?? FirstPlayerAircraft();
             _mapSelection = null;
             _mapMessage = null;
+            PlayUiClick();
+        }
+
+        private void ToggleHangar()
+        {
+            _hangarOpen = !_hangarOpen;
+            if (_hangarOpen)
+                _mapOpen = false;
             PlayUiClick();
         }
 
@@ -755,8 +753,8 @@ namespace Airside.Presentation
             var mapRect = new Rect(rect.x + 12f, rect.y + 12f, rect.width - detailWidth - 36f, rect.height - 24f);
             var detail = new Rect(mapRect.xMax + 12f, rect.y + 12f, detailWidth, rect.height - 24f);
 
-            DrawOutline(mapRect, MainlandOutline);
-            DrawOutline(mapRect, TasmaniaOutline);
+            HandleMapLensGui(mapRect);
+            DrawAustraliaBase(mapRect);
 
             var aircraft = _mapAircraft;
             var home = _operations.Home;
@@ -900,28 +898,187 @@ namespace Airside.Presentation
                 ToggleMap(null);
         }
 
-        private static Vector2 Project(Rect area, double longitude, double latitude)
+        private Vector2 Project(Rect area, double longitude, double latitude)
         {
-            // Equirectangular with the width shrunk by cos(mid-latitude) so Australia
-            // keeps its shape, then fitted and centred in the panel.
-            const float minLon = 112f, maxLon = 155f, minLat = -44.5f, maxLat = -9.5f;
-            var aspect = Mathf.Cos(27f * Mathf.Deg2Rad);
-            var mapWidth = (maxLon - minLon) * aspect;
-            var mapHeight = maxLat - minLat;
-            var scale = Mathf.Min(area.width / mapWidth, area.height / mapHeight);
-            var offsetX = area.x + (area.width - mapWidth * scale) * 0.5f;
-            var offsetY = area.y + (area.height - mapHeight * scale) * 0.5f;
-            return new Vector2(
-                offsetX + ((float)longitude - minLon) * aspect * scale,
-                offsetY + (maxLat - (float)latitude) * scale);
+            _mapLens.Project(area.x, area.y, area.width, area.height, longitude, latitude, out var x, out var y);
+            return new Vector2(x, y);
         }
 
-        private static void DrawOutline(Rect area, Vector2[] lonLat)
+        private void HandleMapLensGui(Rect mapRect)
         {
-            var colour = new Color(AirsideTheme.Sand.r, AirsideTheme.Sand.g, AirsideTheme.Sand.b, 0.7f);
-            for (var i = 1; i < lonLat.Length; i++)
-                DrawLine(Project(area, lonLat[i - 1].x, lonLat[i - 1].y), Project(area, lonLat[i].x, lonLat[i].y), colour, 1.5f);
+            var ev = Event.current;
+            if (ev == null)
+                return;
+            var over = mapRect.Contains(ev.mousePosition);
+            if (over && ev.type == EventType.ScrollWheel)
+            {
+                var factor = ev.delta.y > 0f ? 0.9f : 1.12f;
+                _mapLens.ZoomAtGui(mapRect.width, mapRect.height,
+                    ev.mousePosition.x - mapRect.x, ev.mousePosition.y - mapRect.y, factor);
+                ev.Use();
+            }
+
+            if (over && ev.type == EventType.MouseDown && ev.button == 0)
+            {
+                _mapPanning = true;
+                _mapPanGui = ev.mousePosition;
+                ev.Use();
+            }
+
+            if (_mapPanning && ev.type == EventType.MouseDrag && ev.button == 0)
+            {
+                _mapLens.PanByGuiDelta(mapRect.width, mapRect.height,
+                    _mapPanGui.x - mapRect.x, _mapPanGui.y - mapRect.y,
+                    ev.mousePosition.x - mapRect.x, ev.mousePosition.y - mapRect.y);
+                _mapPanGui = ev.mousePosition;
+                ev.Use();
+            }
+
+            if (ev.type == EventType.MouseUp && ev.button == 0)
+                _mapPanning = false;
         }
+
+        private void DrawAustraliaBase(Rect mapRect)
+        {
+            var coast = new Color(AirsideTheme.Sand.r, AirsideTheme.Sand.g, AirsideTheme.Sand.b, 0.85f);
+            var border = new Color(AirsideTheme.Concrete.r, AirsideTheme.Concrete.g, AirsideTheme.Concrete.b, 0.55f);
+            DrawLonLatPolyline(mapRect, AustraliaMapGeometry.MainlandCoastLonLat, coast, 2f);
+            DrawLonLatPolyline(mapRect, AustraliaMapGeometry.TasmaniaCoastLonLat, coast, 2f);
+            foreach (var borderLine in AustraliaMapGeometry.StateBorderLonLats)
+                DrawLonLatPolyline(mapRect, borderLine, border, 1.2f);
+
+            if (_mapLens.ShowStateLabels)
+            {
+                var stateStyle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 11,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
+                }, AirsideTheme.OpenSky);
+                foreach (var (code, lon, lat) in AustraliaMapGeometry.StateLabels)
+                {
+                    var p = Project(mapRect, lon, lat);
+                    GUI.Label(new Rect(p.x - 18f, p.y - 9f, 36f, 18f), code, stateStyle);
+                }
+            }
+
+            if (_mapLens.ShowCountyDetail)
+            {
+                var regionStyle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 10,
+                    alignment = TextAnchor.MiddleCenter
+                }, AirsideTheme.Cloud);
+                foreach (var (name, lon, lat) in AustraliaMapGeometry.RegionLabels)
+                {
+                    var p = Project(mapRect, lon, lat);
+                    GUI.Label(new Rect(p.x - 54f, p.y - 8f, 108f, 16f), name, regionStyle);
+                }
+            }
+
+            var hint = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 11 }, AirsideTheme.Concrete);
+            GUI.Label(new Rect(mapRect.x + 6f, mapRect.yMax - 20f, mapRect.width - 12f, 18f),
+                "Scroll to zoom · drag to pan · click a destination", hint);
+        }
+
+        private void DrawLonLatPolyline(Rect area, float[] lonLat, Color colour, float thickness)
+        {
+            var count = AustraliaMapGeometry.PointCount(lonLat);
+            for (var i = 1; i < count; i++)
+            {
+                var i0 = (i - 1) * 2;
+                var i1 = i * 2;
+                DrawLine(
+                    Project(area, lonLat[i0], lonLat[i0 + 1]),
+                    Project(area, lonLat[i1], lonLat[i1 + 1]),
+                    colour, thickness);
+            }
+        }
+
+
+        private void DrawHangarPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
+            GUI.Box(rect, GUIContent.none, panel);
+
+            var x = rect.x + 16f;
+            var inner = rect.width - 32f;
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Hangar", title);
+            if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
+                ToggleHangar();
+
+            GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
+                "Your aircraft and every other flight in the sky right now.", small);
+
+            var view = new Rect(x, rect.y + 64f, inner, rect.height - 78f);
+            var contentHeight = 8f;
+            foreach (var airline in _operations.Airlines)
+            {
+                contentHeight += 28f;
+                foreach (var _ in _operations.FleetOf(airline))
+                    contentHeight += 72f;
+            }
+
+            _hangarScroll = GUI.BeginScrollView(view, _hangarScroll, new Rect(0f, 0f, inner - 18f, contentHeight));
+            var y = 4f;
+            var rowWidth = inner - 22f;
+            foreach (var airline in _operations.Airlines)
+            {
+                DrawSolid(new Rect(0f, y + 4f, 8f, 14f), AirsideTheme.FromHex(airline.LiveryHex));
+                GUI.Label(new Rect(14f, y, rowWidth - 14f, 22f),
+                    airline.IsPlayer ? $"{airline.Name.ToUpperInvariant()}  ·  YOUR AIRLINE" : airline.Name.ToUpperInvariant(),
+                    label);
+                y += 26f;
+
+                foreach (var aircraft in _operations.FleetOf(airline))
+                {
+                    var row = new Rect(0f, y, rowWidth, 66f);
+                    var selected = _selectedAircraftId == aircraft.Registration;
+                    if (selected)
+                    {
+                        DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
+                        AirsideTheme.DrawPanelFrame(row, AirsideTheme.SafetyYellow);
+                    }
+                    else if (row.Contains(Event.current.mousePosition))
+                    {
+                        DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.14f));
+                    }
+
+                    GUI.Label(new Rect(10f, y + 6f, rowWidth - 20f, 20f),
+                        $"{aircraft.Registration}  ·  {aircraft.Type.Name}", label);
+                    GUI.Label(new Rect(10f, y + 28f, rowWidth - 20f, 18f), StatusText(aircraft), small);
+
+                    if (aircraft.StateEndsAt.HasValue)
+                    {
+                        AirsideTheme.DrawProgressBar(new Rect(10f, y + 50f, rowWidth - 20f, 6f),
+                            (float)aircraft.StateProgress(_clock.Now),
+                            AirsideTheme.CoastalBlue, AirsideTheme.Tarmac);
+                    }
+                    else
+                    {
+                        var where = aircraft.IsOffMap ? "Away from Adelaide" : "At Adelaide";
+                        GUI.Label(new Rect(10f, y + 48f, rowWidth - 20f, 16f), where, small);
+                    }
+
+                    if (GUI.Button(row, GUIContent.none, GUIStyle.none))
+                    {
+                        SelectAircraft(aircraft);
+                        if (aircraft.IsOffMap)
+                        {
+                            _hangarOpen = false;
+                            _mapOpen = true;
+                            _mapLens.Reset();
+                        }
+                    }
+
+                    y += 72f;
+                }
+            }
+
+            GUI.EndScrollView();
+        }
+
 
         private static void DrawLine(Vector2 from, Vector2 to, Color colour, float thickness)
         {

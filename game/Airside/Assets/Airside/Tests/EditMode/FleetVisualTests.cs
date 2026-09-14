@@ -86,7 +86,9 @@ namespace Airside.Tests
             ops.ScheduleDeparture(first, kingscote, new SimulationTime(0));
             ops.ScheduleDeparture(second, kingscote, new SimulationTime(0));
 
-            clock.Set(new SimulationTime(AirlineOperations.TaxiOutSeconds + 5));
+            // Both push back at 0 from neighbouring bays; run until both have reached the hold.
+            var both = System.Math.Max(AirlineOperations.TaxiOutSecondsFrom(first.Stand), AirlineOperations.TaxiOutSecondsFrom(second.Stand));
+            clock.Set(new SimulationTime(both + 5));
             ops.Update();
 
             Assert.That(FleetVisual.For(first, clock.Now).Leg, Is.EqualTo(FleetGroundLeg.Lineup));

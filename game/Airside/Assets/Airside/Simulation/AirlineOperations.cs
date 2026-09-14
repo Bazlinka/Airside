@@ -49,18 +49,25 @@ namespace Airside.Simulation
     /// </summary>
     public sealed class AirlineOperations
     {
-        public const long TaxiOutSeconds = 7 * 60;
-        public const long TaxiInSeconds = 5 * 60;
         public const long DestinationTurnaroundSeconds = 40 * 60;
         public const long AiStandTurnaroundSeconds = 45 * 60;
         public const long RunwaySeparationSeconds = 90;
         public const int MaxRecentEvents = 30;
 
-        /// <summary>Entering the runway at the holding point and backtracking to the takeoff position.</summary>
-        public const long LineupSeconds = 60;
+        // Ground times are measured off the real Adelaide routes with ATR speed limits
+        // (AdelaideGround), never picked: a taxi takes as long as driving it takes.
 
-        /// <summary>Backtracking from the rollout end and clearing the runway at the exit.</summary>
-        public const long VacateSeconds = 90;
+        /// <summary>Pushback, tug disconnect and taxi from <paramref name="stand"/> to the runway 05 holding point.</summary>
+        public static long TaxiOutSecondsFrom(StableId stand) => AdelaideGround.TaxiOut(stand).WholeSeconds;
+
+        /// <summary>Taxi from the E2 holding point into <paramref name="stand"/>.</summary>
+        public static long TaxiInSecondsTo(StableId stand) => AdelaideGround.TaxiIn(stand).WholeSeconds;
+
+        /// <summary>Holding point onto the centreline at the 05 threshold.</summary>
+        public static long LineupSeconds => AdelaideGround.Lineup.WholeSeconds;
+
+        /// <summary>Rollout end, along the runway to exit E2 and clear to its holding point.</summary>
+        public static long VacateSeconds => AdelaideGround.Vacate.WholeSeconds;
 
         /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
         public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
@@ -339,7 +346,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{stand} is occupied.");
 
             aircraft.Stand = stand;
-            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSeconds);
+            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand));
             return CommandResult.Ok;
         }
 
@@ -391,7 +398,7 @@ namespace Airside.Simulation
                     aircraft.Scheduled = null;
                     aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
-                    Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSeconds);
+                    Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSecondsFrom(aircraft.DepartureStand));
                     return true;
 
                 case FleetState.TaxiOut:
@@ -426,7 +433,7 @@ namespace Airside.Simulation
                         if (!IsStandFree(stand))
                             continue;
                         aircraft.Stand = stand;
-                        Transition(aircraft, FleetState.TaxiIn, now, TaxiInSeconds);
+                        Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(stand));
                         return true;
                     }
                     return false;

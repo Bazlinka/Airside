@@ -98,7 +98,7 @@ namespace Airside.Tests
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(ops.IsStandFree(AirlineOperations.AdelaideRegionalBays[0]), Is.True, "stand released at pushback");
 
-            var takeoffAt = 600 + AirlineOperations.TaxiOutSeconds;
+            var takeoffAt = 600 + AirlineOperations.TaxiOutSecondsFrom(AirlineOperations.AdelaideRegionalBays[0]);
             RunTo(clock, ops, takeoffAt);
             Assert.That(plane.State, Is.EqualTo(FleetState.TakingOff), "empty runway: no hold");
 
@@ -119,7 +119,7 @@ namespace Airside.Tests
 
             var bay = AirlineOperations.AdelaideRegionalBays[3];
             Assert.That(ops.AssignStand(plane, bay).Accepted, Is.True);
-            RunTo(clock, ops, clock.Now.ElapsedSeconds + AirlineOperations.TaxiInSeconds);
+            RunTo(clock, ops, clock.Now.ElapsedSeconds + AirlineOperations.TaxiInSecondsTo(bay));
             Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(plane.Stand, Is.EqualTo(bay));
             Assert.That(plane.CompletedTrips, Is.EqualTo(1));
@@ -160,10 +160,11 @@ namespace Airside.Tests
         {
             var (clock, ops, first) = PlayerOnly(aircraft: 2);
             var second = ops.Fleet[1];
-            ops.ScheduleDeparture(first, Code("KGC"), new SimulationTime(0));
-            ops.ScheduleDeparture(second, Code("PLO"), new SimulationTime(0));
+            // Stagger the pushbacks so both reach the holding point in the same second.
+            var holdingAt = 1000 + AirlineOperations.TaxiOutSecondsFrom(first.Stand);
+            ops.ScheduleDeparture(first, Code("KGC"), new SimulationTime(1000));
+            ops.ScheduleDeparture(second, Code("PLO"), new SimulationTime(holdingAt - AirlineOperations.TaxiOutSecondsFrom(second.Stand)));
 
-            var holdingAt = AirlineOperations.TaxiOutSeconds;
             RunTo(clock, ops, holdingAt);
             Assert.That(first.State, Is.EqualTo(FleetState.TakingOff));
             Assert.That(second.State, Is.EqualTo(FleetState.HoldingShort));
@@ -182,12 +183,12 @@ namespace Airside.Tests
             var departing = ops.Fleet[1];
             ops.ScheduleDeparture(arriving, Code("KGC"), new SimulationTime(0));
             var airborne = ops.AirborneSeconds(arriving, Code("KGC"));
-            var backInCircuit = AirlineOperations.TaxiOutSeconds + AirlineOperations.TakeoffRunwaySeconds
+            var backInCircuit = AirlineOperations.TaxiOutSecondsFrom(arriving.Stand) + AirlineOperations.TakeoffRunwaySeconds
                                 + airborne + AirlineOperations.DestinationTurnaroundSeconds + airborne;
 
             // The departure reaches the holding point at the same second the arrival does.
             ops.ScheduleDeparture(departing, Code("PLO"),
-                new SimulationTime(backInCircuit - AirlineOperations.TaxiOutSeconds));
+                new SimulationTime(backInCircuit - AirlineOperations.TaxiOutSecondsFrom(departing.Stand)));
             RunTo(clock, ops, backInCircuit);
 
             Assert.That(arriving.State, Is.EqualTo(FleetState.Landing));

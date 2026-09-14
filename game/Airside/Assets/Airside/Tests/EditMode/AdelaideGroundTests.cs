@@ -10,8 +10,8 @@ namespace Airside.Tests
         {
             Assert.That(AirsideAdelaideGround.SizeX, Is.EqualTo(AirsideBareField.GroundLengthMetres));
             Assert.That(AirsideAdelaideGround.SizeZ, Is.EqualTo(AirsideBareField.GroundWidthMetres));
-            Assert.That(AirsideAdelaideGround.OriginX, Is.EqualTo(-1700f));
-            Assert.That(AirsideAdelaideGround.OriginZ, Is.EqualTo(-1154.5f));
+            Assert.That(AirsideAdelaideGround.OriginX, Is.EqualTo(-AirsideBareField.GroundLengthMetres * 0.5f));
+            Assert.That(AirsideAdelaideGround.OriginZ, Is.EqualTo(-AirsideBareField.GroundWidthMetres * 0.5f));
         }
 
         [Test]

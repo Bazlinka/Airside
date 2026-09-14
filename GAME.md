@@ -1,35 +1,41 @@
 ## Where to resume — session handoff
 
-- **2026-09-14 Claude real YPAD layout data (Bailey's photo / "line everything up", `feature/ypad-real-layout`):**
-  data and generator only — **nothing in the game reads it yet**.
-  - `docs/data/osm/ypad-aeroways-2026-09-14.json`: OSM Overpass snapshot (ODbL,
-    registered as DAT-YPAD-OSM).
-  - `scripts/generate-ypad-layout.py` → `Simulation/AdelaideLayout.cs` (generated,
-    UnityEngine-free): all 83 taxiway centrelines, 5 aprons, 2 terminal footprints,
-    14 holding positions, 12/30 placement, and baked routes on the real network —
-    vacate 05 via E2 (511 m), lineup F6→05 threshold (113 m), and for regional bays
-    50E/50D/50C/50B as BAY-1..4: taxi-in via E2-E1-A5-A6-K-T4 (1.33–1.45 km), Bezier
-    pushback onto T4 (~55 m), taxi-out via T4-K-A6-A5-A4-F2-F3-F6 (3.23–3.40 km).
-  - **Findings vs the current game** (runway frame, x along 05→23 from the midpoint,
-    z to the north-west): real 12/30 crosses 05/23 at x≈+377 (game: 0); terminal and
-    main apron are on the **NE half** (x 975–1,733, z 291–551; game: x≈−600);
-    RFDS is north-west of the SW half (game: south-east); A at z≈195 on the NE half,
-    F curving 190→400 on the SW half (game: straight F 182.5 / A 290 full length).
-- **Evidence:** `scripts/test-unity.sh` exit 0, EditMode **242/242**, 0 failed,
-  0 skipped; the project compiles with the generated file.
-- **Overlap — `codex/adelaide-airside-realism` (3 commits, base #217):** Codex's
-  `AdelaideAirsideLayout.cs` centralises the *simplified* constants (terminal bays at
-  x −950…−500, F/A straight) that this data shows are not where YPAD is. No file or
-  type-name clash (`AdelaideLayout` vs `AdelaideAirsideLayout`), but the two are
-  competing sources of truth for the same geometry — pick one before wiring either.
-  Textual conflicts expected only in GAME.md / CHANGELOG.md (top of file) and
-  `ASSET_AND_DATA_REGISTER.md` (both add rows under the header).
-- **Exact next step:** agree with Codex/Bailey which layout source wins; then build
-  pavement meshes from `AdelaideLayout` (ribbons for taxiways, polygon aprons,
-  12/30 at its real centre/yaw), move `FleetGroundRoutes` onto its baked routes, set
-  takeoff start to `AdelaideLayout.TakeoffStartX`, and derive ground-leg durations
-  from route length with realistic ATR speeds (pushback ~2 kt, taxi ~15 kt, slower
-  in turns).
+- **2026-09-14 Claude real YPAD layout wired in (Bailey: "use the real OSM layout and wire it in", `feature/ypad-real-layout`):**
+  the OpenStreetMap layout is now the single source of truth for Adelaide airside.
+  - **Rendering:** `AirsidePrototype.YpadPavement.cs` builds every OSM taxiway as a
+    ribbon with rounded joints and sealed shoulders, the real apron polygons
+    (ear-clipped), yellow centrelines, hold bars at the 14 real holding positions, and
+    extruded terminal / RFDS footprints. The rectangle-and-fillet skeleton is deleted.
+    12/30 sits at its real crossing (centre 253, 410; yaw 73.2°, ~377 m NE of the
+    05/23 midpoint). Ground and plateau grew to cover it (3 900 × 2 800 m).
+  - **Ground motion:** `Simulation/GroundMotion.cs` gives every route a speed profile —
+    15 kt taxi, 2 kt pushback, 8 kt lineup, cornering speed from turn radius at
+    0.35 m/s² lateral, accel/brake limits — and durations come from it
+    (`AdelaideGround`). Taxi-out 50D–50A ≈ 8–9 min (pushback, 25 s tug disconnect,
+    3.3–3.4 km via T4-K-A-F2-F3-F6), taxi-in ≈ 4 min via E2-E1-A-K-T4, vacate E2 and
+    lineup at the 05 threshold. Replaces the fixed 7/5 min, 60/90 s constants.
+  - **Bays** BAY-1..4 = real 50D, 50C, 50B, 50A; pushback is a tail-first curve onto T4.
+  - **Takeoff** now rolls from the 05 threshold (`CircuitProfile.TakeoffStartX` −1 500);
+    roll/climb distances unchanged. The demo circuit keeps rolling from where it
+    stops via `AirsideFlightPath.CircuitTakeoffOffsetX`.
+  - **Fixed in passing:** the oriented-strip distance used the wrong rotation sign for
+    Unity yaw (invisible while 12/30 was centred on the origin).
+  - Default overview centres on (150, 350) so the terminal is in frame.
+- **Evidence:** `scripts/test-unity.sh` exit 0, EditMode **238/238** (new
+  `GroundMotionTests`; `AdelaidePavementTests` rewritten for the real layout: 12/30
+  crossing, terminal side, apron strip clearance, routes on pavement/plateau and
+  joined end to end, bay spacing). Packaged app: overview from the south-west matches
+  Bailey's aerial photo (12/30 crossing the upper third, terminal beyond it left of
+  05/23, RFDS left, GA apron top-left, F looping round the 05 end); VH-PAX pushback
+  at 2 kt tail-first onto T4 past a parked Emu Air ATR, 0 kt tug pause, then taxi on
+  the yellow centreline at 11 kt through the curve.
+- **Codex branch `codex/adelaide-airside-realism`:** superseded — its
+  `AdelaideAirsideLayout` constants describe the old invented geometry. Merging it
+  now would conflict with this in `AirsidePrototype.FleetVisuals.cs` (its constants
+  block no longer exists here) and `AirsideAdelaidePavement.cs`.
+- **Next:** watch a full real-time arrival (E2 vacate, stand, taxi-in) and a departure
+  through lineup and takeoff at the 05 threshold; then AI timetable + all flights on
+  the map, dev test tools, hangar screen (Bailey's list).
 
 - **2026-09-14 Claude live real time, typing, engine start, intro (Bailey's requests, `feature/live-real-time`):**
   - **Live Adelaide time (Bailey chose "always real time").** `AirlineClock` is now an

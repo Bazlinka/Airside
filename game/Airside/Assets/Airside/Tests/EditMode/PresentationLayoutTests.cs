@@ -430,7 +430,7 @@ namespace Airside.Tests
         {
             var r = AirsideFlightPath.RotateProgress;
             Assert.That(r, Is.InRange(AirsideFlightPath.LineupProgress, 0.95f));
-            Assert.That(AirsideFlightPath.Takeoff(r).x, Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
+            Assert.That(AirsideFlightPath.Takeoff(r, 0f).x, Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
             Assert.That(AirsideFlightPath.Takeoff(r).y,
                 Is.EqualTo(AirsideFlightPath.GroundY).Within(0.01f), "rotation happens on the ground");
 
@@ -450,7 +450,8 @@ namespace Airside.Tests
         {
             var start = AirsideFlightPath.Takeoff(0f);
             Assert.That(start.z, Is.EqualTo(0f).Within(0.01f), "circuit takeoff stays on the centreline");
-            Assert.That(start.x, Is.EqualTo(AirsideFlightPath.RolloutEndX).Within(0.01f));
+            Assert.That(start.x, Is.EqualTo(AirsideFlightPath.RolloutEndX).Within(0.01f), "the demo circuit rolls from where it stopped");
+            Assert.That(AirsideFlightPath.Takeoff(0f, 0f).x, Is.EqualTo(AirsideFlightPath.TakeoffStartX).Within(0.01f), "fleet departures roll from the 05 threshold");
 
             var previous = HeadingDegrees(AirsideFlightPath.Takeoff(0f), AirsideFlightPath.Takeoff(0.002f));
             for (var i = 1; i <= 200; i++)
@@ -657,7 +658,7 @@ namespace Airside.Tests
                 Is.EqualTo(AirsideReusableMotion.GearDeployed));
             Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, 0f), Is.True);
             Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, rotate * 0.99f), Is.Zero);
-            Assert.That(AirsideFlightPath.Takeoff(rotate).x,
+            Assert.That(AirsideFlightPath.Takeoff(rotate, 0f).x,
                 Is.EqualTo(AirsideFlightPath.RotateX).Within(0.2f));
             Assert.That(AirsideFlightPath.PitchDegrees(AircraftPhase.Takeoff, 1f),
                 Is.EqualTo(AirsideFlightPath.ClimbPitchDegrees).Within(0.05f));

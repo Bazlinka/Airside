@@ -13,7 +13,7 @@ Beyond raw geometry it bakes the ground routes aircraft actually follow, found o
 the real taxiway network and smoothed through junctions:
   vacate   runway 05 rollout end -> exit E2 -> holding point clear of the runway
   lineup   runway 05 holding point (F6) -> takeoff start at the 05 threshold
-  taxi-in  E2 holding point -> taxilane T4 -> nose into a regional bay (50B-50E)
+  taxi-in  E2 holding point -> taxilane T4 -> nose into a regional bay (50A-50D)
   pushback bay -> tail-first arc back onto T4, nose pointing along the taxilane
   taxi-out end of pushback -> T4 / K / A / F -> runway 05 holding point
 
@@ -40,9 +40,9 @@ TAKEOFF_START_X = -1500.0
 HOLD_05 = (-1530.0, 90.0)
 E2_HOLD = (237.0, 199.0)
 # Regional bays used as BAY-1..BAY-4, west to east along taxilane T4.
-BAYS = [("BAY-1", "50E"), ("BAY-2", "50D"), ("BAY-3", "50C"), ("BAY-4", "50B")]
+BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A")]
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
-PUSHBACK_TAIL = 24.0     # metres the tail travels along the lane after the pushback
+PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 
 
 def xy(p):

@@ -118,7 +118,7 @@ namespace Airside.Tests
                            / (0.5f * CircuitProfile.TouchdownKnots * Kt)).Within(0.01f));
 
             Assert.That(CircuitProfile.TakeoffRollExactSeconds,
-                Is.EqualTo((CircuitProfile.RotateX - CircuitProfile.RolloutEndX)
+                Is.EqualTo((CircuitProfile.RotateX - CircuitProfile.TakeoffStartX)
                            / (0.5f * CircuitProfile.RotateKnots * Kt)).Within(0.01f));
 
             Assert.That(CircuitProfile.LandingExactSeconds,
@@ -161,7 +161,7 @@ namespace Airside.Tests
         {
             // The regression this whole model exists to prevent: the old curve passed
             // rotate at 179 kt and left the field at 257 kt.
-            var rollMetres = CircuitProfile.RotateX - CircuitProfile.RolloutEndX;
+            var rollMetres = CircuitProfile.RotateX - CircuitProfile.TakeoffStartX;
             var accel = CircuitProfile.Knots(CircuitProfile.RotateKnots) / CircuitProfile.TakeoffRollExactSeconds;
             var covered = 0.5f * accel * CircuitProfile.TakeoffRollExactSeconds * CircuitProfile.TakeoffRollExactSeconds;
 

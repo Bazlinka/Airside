@@ -24,13 +24,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void BareField_GroundMatchesPublishedAdelaideHectares()
+        public void BareField_GroundCoversTheRealAirsideLayout()
         {
-            Assert.That(AirsideBareField.GroundLengthMetres, Is.EqualTo(3400f));
-            Assert.That(AirsideBareField.GroundWidthMetres, Is.EqualTo(2309f));
-            Assert.That(AirsideBareField.GroundAreaSquareMetres, Is.EqualTo(3400f * 2309f));
-            Assert.That(AirsideBareField.GroundHectares,
-                Is.EqualTo(AirsideBareField.AdelaideAirportHectares).Within(0.1f));
+            // The real layout (OSM) runs x −1 550 … +1 760 and z −370 … +1 190.
+            Assert.That(AirsideBareField.GroundLengthMetres * 0.5f, Is.GreaterThan(1760f + 100f));
+            Assert.That(AirsideBareField.GroundWidthMetres * 0.5f, Is.GreaterThan(1190f + 100f));
+            Assert.That(AirsideBareField.GroundAreaSquareMetres,
+                Is.EqualTo(AirsideBareField.GroundLengthMetres * AirsideBareField.GroundWidthMetres));
             Assert.That(AirsideBareField.GroundObjectName, Is.EqualTo("Airport ground"));
         }
 
@@ -47,8 +47,8 @@ namespace Airside.Tests
             Assert.That(AirsideBareField.ContainsRunway(1551f, 0f), Is.False);
             Assert.That(AirsideBareField.ContainsRunway(0f, 22.5f), Is.True);
             Assert.That(AirsideBareField.ContainsRunway(0f, 22.6f), Is.False);
-            Assert.That(AirsideBareField.ContainsGround(1700f, 1154f), Is.True);
-            Assert.That(AirsideBareField.ContainsGround(1701f, 0f), Is.False);
+            Assert.That(AirsideBareField.ContainsGround(1949f, 1399f), Is.True);
+            Assert.That(AirsideBareField.ContainsGround(1951f, 0f), Is.False);
         }
 
         [Test]

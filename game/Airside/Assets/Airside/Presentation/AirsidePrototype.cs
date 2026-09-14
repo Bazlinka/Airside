@@ -442,7 +442,14 @@ namespace Airside.Presentation
                 return;
 
             if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                if (ClearAircraftSelection())
+                {
+                    ResetView();
+                    return;
+                }
                 ToggleMenu();
+            }
 
             // While the menu is up it owns the keyboard, so a stray hotkey cannot
             // change speed or camera behind it.
@@ -487,6 +494,7 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 return;
 
+            ClearAircraftSelection();
             _cameraController.ReturnToOverview();
             PlayUiClick();
         }

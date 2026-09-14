@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Codex selectable aircraft (`codex/selectable-aircraft`):** fleet
+  registrations are now presentation-only selection controls. Selecting an aircraft
+  that is at Adelaide follows that exact 3D aircraft and highlights a compact identity
+  card; selecting an off-map aircraft opens its route tracker instead. Overview, `R`
+  and `Esc` clear the selection. Simulation, schedules, reservations, saves, aircraft
+  models and airport geometry are unchanged.
+- **Task packet / acceptance:** player-visible outcome is exact player-or-AI aircraft
+  selection from the fleet panel; scope is airline HUD, fleet-view lookup and existing
+  follow camera only; deterministic simulation and save invariants remain untouched.
+  Acceptance is exact-transform follow, off-field rejection, selected-state identity,
+  and a clean overview exit.
+- **Evidence:** Unity EditMode **243/243**, including exact registered-target and
+  off-field rejection checks. Per Bailey's preference, no manual playtest was run.
+- **Next:** merge this branch, then build the AI timetable/all-flights map slice so
+  selection exposes a busier, more legible Adelaide operation.
+
 - **2026-09-14 Codex YPAD regional-stand wayfinding (`codex/ypad-wayfinding`):**
   the real 50A–50D regional bays now have procedural yellow lead-in lines, stop
   bars and Unity-rendered identifiers. `AdelaideStandMarkings` derives every

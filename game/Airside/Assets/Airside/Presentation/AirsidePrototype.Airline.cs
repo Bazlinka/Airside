@@ -65,6 +65,7 @@ namespace Airside.Presentation
         private int _liveryChoice;
         private bool _mapOpen;
         private FleetAircraft _mapAircraft;
+        private string _selectedAircraftId;
         private Destination? _mapSelection;
         private int _departureOffsetChoice;
         private string _mapMessage;
@@ -493,8 +494,7 @@ namespace Airside.Presentation
                 {
                     if (y + 20f > rect.yMax)
                         break;
-                    GUI.Label(new Rect(x, y, inner, 34f), $"{aircraft.Registration}  {StatusText(aircraft)}", small);
-                    y += 34f;
+                    y = DrawTrafficAircraftRow(aircraft, x, y, inner, label, small);
                 }
             }
         }
@@ -506,6 +506,7 @@ namespace Airside.Presentation
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
                 height += 22f + 34f + 10f;
+                if (_selectedAircraftId == aircraft.Registration) height += 42f;
                 if (aircraft.StateEndsAt.HasValue) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
                 if (aircraft.State == FleetState.AwaitingStand) height += 54f;
@@ -516,8 +517,8 @@ namespace Airside.Presentation
                 if (airline.IsPlayer)
                     continue;
                 height += 30f;
-                foreach (var _ in _operations.FleetOf(airline))
-                    height += 34f;
+                foreach (var aircraft in _operations.FleetOf(airline))
+                    height += 54f + (_selectedAircraftId == aircraft.Registration ? 42f : 0f);
             }
 
             return height + 4f;
@@ -525,10 +526,13 @@ namespace Airside.Presentation
 
         private float DrawPlayerAircraftRow(FleetAircraft aircraft, float x, float y, float width, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            GUI.Label(new Rect(x, y, width, 20f), $"{aircraft.Registration}  ·  {aircraft.Type.Name}", label);
+            var heading = new Rect(x, y, width, 20f);
+            DrawAircraftSelection(aircraft, heading, $"{aircraft.Registration}  ·  {aircraft.Type.Name}", label);
             y += 22f;
             GUI.Label(new Rect(x, y, width, 34f), StatusText(aircraft), small);
             y += 34f;
+
+            y = DrawSelectedAircraftDetail(aircraft, x, y, width, small);
 
             if (aircraft.StateEndsAt.HasValue)
             {
@@ -581,6 +585,73 @@ namespace Airside.Presentation
             }
 
             return y;
+        }
+
+        private float DrawTrafficAircraftRow(FleetAircraft aircraft, float x, float y, float width, GUIStyle label, GUIStyle small)
+        {
+            var heading = new Rect(x, y, width, 20f);
+            DrawAircraftSelection(aircraft, heading, aircraft.Registration, label);
+            GUI.Label(new Rect(x, y + 20f, width, 32f), StatusText(aircraft), small);
+            return DrawSelectedAircraftDetail(aircraft, x, y + 54f, width, small);
+        }
+
+        private void DrawAircraftSelection(FleetAircraft aircraft, Rect rect, string text, GUIStyle style)
+        {
+            var selected = _selectedAircraftId == aircraft.Registration;
+            if (selected)
+            {
+                DrawSolid(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f),
+                    new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.42f));
+                AirsideTheme.DrawPanelFrame(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f),
+                    AirsideTheme.SafetyYellow);
+            }
+
+            GUI.Label(rect, text, style);
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+                SelectAircraft(aircraft);
+        }
+
+        private float DrawSelectedAircraftDetail(FleetAircraft aircraft, float x, float y, float width, GUIStyle small)
+        {
+            if (_selectedAircraftId != aircraft.Registration)
+                return y;
+
+            var onField = _fleetViewById.ContainsKey(aircraft.Registration);
+            var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
+            var card = new Rect(x, y + 2f, width, 36f);
+            DrawSolid(card, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f));
+            DrawSolid(new Rect(card.x, card.y, 4f, card.height), accent);
+            var mode = onField ? "FOLLOWING AT ADELAIDE" : "TRACKING ON ROUTE MAP";
+            GUI.Label(new Rect(card.x + 10f, card.y + 3f, card.width - 20f, 15f), mode, small);
+            GUI.Label(new Rect(card.x + 10f, card.y + 18f, card.width - 20f, 15f),
+                $"{aircraft.Airline.Name}  ·  {aircraft.Type.Name}", small);
+            return y + 42f;
+        }
+
+        private void SelectAircraft(FleetAircraft aircraft)
+        {
+            _selectedAircraftId = aircraft.Registration;
+            _mapAircraft = aircraft;
+            if (TryFollowFleetAircraft(aircraft.Registration))
+            {
+                _mapOpen = false;
+            }
+            else
+            {
+                _mapOpen = true;
+                _mapSelection = aircraft.CurrentDestination;
+            }
+            PlayUiClick();
+        }
+
+        private bool ClearAircraftSelection()
+        {
+            if (string.IsNullOrEmpty(_selectedAircraftId))
+                return false;
+            _selectedAircraftId = null;
+            _mapAircraft = null;
+            _mapOpen = false;
+            return true;
         }
 
         private string StatusText(FleetAircraft aircraft)

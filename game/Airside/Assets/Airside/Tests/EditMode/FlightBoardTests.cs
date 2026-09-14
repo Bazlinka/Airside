@@ -95,7 +95,7 @@ namespace Airside.Tests
         {
             var (_, _, aircraft) = PlayerOnly();
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("On stand"));
-            Assert.That(FlightBoard.RouteText(aircraft), Does.Contain("Stand"));
+            Assert.That(FlightBoard.RouteText(aircraft), Does.StartWith("Bay "));
             Assert.That(FlightBoard.SortKeySeconds(aircraft), Is.EqualTo(long.MaxValue));
         }
     }

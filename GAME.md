@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Codex YPAD regional-stand wayfinding (`codex/ypad-wayfinding`):**
+  the real 50A–50D regional bays now have procedural yellow lead-in lines, stop
+  bars and Unity-rendered identifiers. `AdelaideStandMarkings` derives every
+  position and label from Claude's generated `AdelaideLayout`; no stand coordinate
+  is copied and no external asset is added. Simulation, routes, timing,
+  reservations, saves and HUD are unchanged.
+- **Evidence:** clean inherited baseline **238/238**; after implementation Unity
+  EditMode **241/241**, including exact bay/reference, stop-point and finite-geometry
+  checks. Per Bailey's request, no manual/external playtest was run; packaged
+  camera-matrix verification remains outstanding.
+- **Next:** merge/review `feature/ypad-real-layout` and this dependent branch in
+  order. Then inspect the stand paint in the packaged overview/follow camera pass
+  before adding more taxiway signs or apron detail.
+
 - **2026-09-14 Claude real YPAD layout wired in (Bailey: "use the real OSM layout and wire it in", `feature/ypad-real-layout`):**
   the OpenStreetMap layout is now the single source of truth for Adelaide airside.
   - **Rendering:** `AirsidePrototype.YpadPavement.cs` builds every OSM taxiway as a

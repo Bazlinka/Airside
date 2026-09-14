@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Real regional stand markings.** Adelaide bays 50A–50D now have yellow apron
+  lead-ins, stop bars and world-rendered identifiers derived from the generated
+  YPAD bay geometry, without changing aircraft routes or timing.
+
 - **The real Adelaide Airport layout is in the game.** Taxiways, aprons, holding
   points and terminal footprints now come from OpenStreetMap, 12/30 crosses where it
   really does, and aircraft use real regional bays 50A–50D. Pushback is a tail-first

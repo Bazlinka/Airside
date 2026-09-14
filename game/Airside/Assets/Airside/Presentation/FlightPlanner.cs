@@ -145,6 +145,41 @@ namespace Airside.Presentation
             return new PlannedTrip(departAt, airborne, arrive, leave, back);
         }
 
+        /// <summary>A parked player aircraft with nothing booked, other than <paramref name="excludeId"/>.</summary>
+        public static FleetAircraft NextFreeAircraft(IReadOnlyList<FleetAircraft> playerFleet, string excludeId)
+        {
+            if (playerFleet == null)
+                return null;
+            foreach (var aircraft in playerFleet)
+                if (aircraft.Registration != excludeId && aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
+                    return aircraft;
+            return null;
+        }
+
+        /// <summary>
+        /// When a busy aircraft should be back in the Adelaide circuit, before any landing
+        /// queue — null when it is already parked. <paramref name="airborneSeconds"/> is one
+        /// leg of its current trip.
+        /// </summary>
+        public static SimulationTime? ExpectedBackAt(FleetAircraft aircraft, long airborneSeconds, SimulationTime now)
+        {
+            var endsAt = aircraft.StateEndsAt ?? now;
+            if (endsAt.CompareTo(now) < 0)
+                endsAt = now;
+            var turnaround = AirlineOperations.DestinationTurnaroundSeconds;
+            return aircraft.State switch
+            {
+                FleetState.AtStand => null,
+                FleetState.TaxiOut => endsAt.Advance(AirlineOperations.TakeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
+                FleetState.HoldingShort or FleetState.TakingOff =>
+                    now.Advance(AirlineOperations.TakeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
+                FleetState.Outbound => endsAt.Advance(turnaround + airborneSeconds),
+                FleetState.AtDestination => endsAt.Advance(airborneSeconds),
+                FleetState.Inbound => endsAt,
+                _ => now
+            };
+        }
+
         /// <summary>
         /// Index of the point nearest <paramref name="clickX"/>,<paramref name="clickY"/>
         /// within <paramref name="radius"/>, or -1. Nearest wins, so crowded dots near

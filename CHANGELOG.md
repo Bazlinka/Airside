@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Live flights on the map + field tags.** Flights are plane icons gliding along their
+  great-circle route with distance to go and landing time; zoom to 60× and click a plane
+  to track it live. Registration tags float over aircraft on the field (L toggles). The
+  planner points to a free aircraft or says when a busy one is back. 280/280 EditMode.
+
 - **Flight planner.** Tab opens a planner with an aircraft switcher (`[` `]`), a
   destination list with distance and flight time, departure chips plus ±5 min, and a
   full trip timeline before Schedule. Map clicks no longer get eaten by panning (pan

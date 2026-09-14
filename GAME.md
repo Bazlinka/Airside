@@ -1,5 +1,32 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — live flights on the map, field tags, planner availability
+  (Bailey: "do both and keep going … a mini plane logo on the map … zoom in and see it
+  moving live"):**
+  - **Route map:** every off-map flight is a livery-coloured plane silhouette (generated
+    texture, `PlaneIcon()`) pointing along its **great-circle** track, positioned from
+    sub-second `_preciseTime` so it glides rather than ticks. Flown part of the route solid,
+    remaining faint; label "VH-EMA → MEL · 613 km to go · lands 15:52". Zoom now goes to
+    60× (was 7×) with bigger scroll steps; clicking a plane selects it and **tracks** it
+    (map stays centred, zoom ≥14×); dragging or *Stop tracking* / *Zoom out* releases.
+    Selecting an away aircraft anywhere (fleet, hangar, flights board) opens the map
+    tracking it. All map lines are now clipped to the map (zoomed coastlines used to spill
+    over the HUD); off-map labels/dots are skipped.
+  - **Field tags:** a registration pill (+ phase for your aircraft: free / planned /
+    taxiing / needs stand …) floats over every aircraft on the field, fades out under
+    140 m camera distance, hides under HUD panels, click selects. **L** toggles.
+  - **Planner availability:** planning a busy aircraft shows "VH-X is free on BAY-2 —
+    Plan VH-X instead", or when none is free, "Back over Adelaide about HH:MM".
+  - Pure rules: `RouteMap.cs` (progress, great-circle point, segment clip) +
+    `FlightPlanner.NextFreeAircraft` / `ExpectedBackAt`; `RouteMapTests` (3) and 2 more
+    `FlightPlannerTests`.
+- **Evidence:** Unity 6.3 EditMode **280/280**; Mac build succeeded; the packaged app
+  (being played by Bailey at the time) showed VH-EMA's plane icon on the MEL great circle
+  with distance/lands label, the planner availability hint and Zoom out. Field tags and
+  tracking not yet eyeballed by Claude.
+- **Next:** Bailey feedback on tags/tracking. Coastline is coarse at deep zoom — a
+  denser outline (or city/airport detail) would make 30–60× look better.
+
 - **2026-09-14 Claude — flight planner rework (Bailey: "flight planning, which plane gets
   selected, switching between them, choosing where to fly to isnt too good"):**
   - **Root cause of bad destination picking:** the map consumed every left press to start

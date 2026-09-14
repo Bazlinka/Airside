@@ -13,7 +13,7 @@ namespace Airside.Presentation
         public const float MinLatitude = -44.5f;
         public const float MaxLatitude = -9.5f;
         public const float MinZoom = 1f;
-        public const float MaxZoom = 7f;
+        public const float MaxZoom = 60f;
         public const float MidLatitudeDegrees = 27f;
 
         public float Zoom { get; private set; } = MinZoom;
@@ -29,6 +29,14 @@ namespace Airside.Presentation
 
         public void SetZoom(float zoom) =>
             Zoom = Clamp(zoom, MinZoom, MaxZoom);
+
+        /// <summary>Centre the view on a point (e.g. a tracked flight), kept inside the map bounds.</summary>
+        public void CenterOn(float areaWidth, float areaHeight, double longitude, double latitude)
+        {
+            CenterLongitude = Clamp((float)longitude, MinLongitude, MaxLongitude);
+            CenterLatitude = Clamp((float)latitude, MinLatitude, MaxLatitude);
+            ClampCenterToView(areaWidth, areaHeight);
+        }
 
         public bool ShowStateLabels => Zoom >= 1.55f;
         public bool ShowCountyDetail => Zoom >= 3.2f;

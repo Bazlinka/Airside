@@ -36,6 +36,13 @@ namespace Airside.Simulation
         /// <summary>Main wheels on, after the flare has scrubbed off Vapp.</summary>
         public const float TouchdownKnots = 95f;
 
+        /// <summary>
+        /// Speed turning off the runway at the end of the rollout. Aircraft do not stop on
+        /// the runway and then taxi off — they brake to a normal exit speed and roll
+        /// straight into the turn, which also frees the runway sooner.
+        /// </summary>
+        public const float RunwayExitKnots = 12f;
+
         /// <summary>Vr — nose comes up here, not before.</summary>
         public const float RotateKnots = 100f;
 
@@ -78,7 +85,7 @@ namespace Airside.Simulation
         /// <summary>Sink rate at touchdown, about 60 ft/min — firm but not a thump.</summary>
         public const float TouchdownSinkMetresPerSecond = 0.30f;
 
-        /// <summary>Rollout end, still on the 3 100 m strip.</summary>
+        /// <summary>Rollout end, still on the 3 100 m strip, at <see cref="RunwayExitKnots"/>.</summary>
         public const float RolloutEndX = -200f;
 
         /// <summary>
@@ -179,7 +186,7 @@ namespace Airside.Simulation
             SegmentSeconds(FlareFloatMetres, Knots(ApproachKnots), Knots(TouchdownKnots));
 
         public static float RolloutExactSeconds =>
-            SegmentSeconds(RolloutEndX - TouchdownX, Knots(TouchdownKnots), 0f);
+            SegmentSeconds(RolloutEndX - TouchdownX, Knots(TouchdownKnots), Knots(RunwayExitKnots));
 
         public static float LandingExactSeconds =>
             FinalGlideExactSeconds + FlareExactSeconds + RolloutExactSeconds;
@@ -244,7 +251,7 @@ namespace Airside.Simulation
                         return ApproachKnots;
                     if (t < TouchdownProgress)
                         return Lerp(ApproachKnots, TouchdownKnots, Local(t, FlareProgress, TouchdownProgress));
-                    return Lerp(TouchdownKnots, 0f, Local(t, TouchdownProgress, 1f));
+                    return Lerp(TouchdownKnots, RunwayExitKnots, Local(t, TouchdownProgress, 1f));
                 case AircraftPhase.Takeoff:
                     if (t < RotateProgress)
                         return Lerp(0f, RotateKnots, Local(t, 0f, RotateProgress));

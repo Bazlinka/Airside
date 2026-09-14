@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Landings roll off the runway.** The rollout brakes to a 12 kt exit speed and turns
+  straight onto the exit instead of stopping on the runway first; the vacate taxi starts
+  at that speed. Ground paths now report their entry speed at t = 0. 294/294 EditMode.
+
 - **Review-shot launch flags.** `-airsideReviewPanel plan|hangar|flights|devtools|help` and
   `-airsideReviewShot <png> [-airsideReviewDelay s]` (with `-airsideSoak`) open a panel,
   capture the finished frame including the HUD, and quit — for repeatable HUD-fit checks.

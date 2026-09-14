@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — runway exit roll:** `CircuitProfile.RunwayExitKnots = 12`; rollout
+  decelerates touchdown → 12 kt (rollout time and airspeed schedule derived from it),
+  `AirsideFlightPath.Landing` distance uses the same exit speed, and
+  `AdelaideGround.Vacate` path is entered at that speed. `GroundPath.SampleAt(0)` returns the
+  entry speed (was always 0). Demo circuit (pre-airline background) now ends its landing at
+  12 kt. Tests updated: rollout timing/decel, landing end speed, landing→vacate seam.
+  EditMode **294/294**. Not rebuilt (Bailey: no rebuilds unless asked).
+
 - **2026-09-14 Claude — review-shot flags:** soak mode accepts `-airsideReviewPanel` and
   `-airsideReviewShot <png>` (+ `-airsideReviewDelay`), reading the frame back via
   `ReadPixels` at end of frame (the ScreenCapture module is not in the project). Intended for

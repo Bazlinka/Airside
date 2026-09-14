@@ -115,7 +115,7 @@ namespace Airside.Tests
 
             Assert.That(CircuitProfile.RolloutExactSeconds,
                 Is.EqualTo((CircuitProfile.RolloutEndX - CircuitProfile.TouchdownX)
-                           / (0.5f * CircuitProfile.TouchdownKnots * Kt)).Within(0.01f));
+                           / (0.5f * (CircuitProfile.TouchdownKnots + CircuitProfile.RunwayExitKnots) * Kt)).Within(0.01f));
 
             Assert.That(CircuitProfile.TakeoffRollExactSeconds,
                 Is.EqualTo((CircuitProfile.RotateX - CircuitProfile.TakeoffStartX)
@@ -176,7 +176,7 @@ namespace Airside.Tests
         [Test]
         public void RolloutDecelerationIsPlausibleBraking()
         {
-            var decel = CircuitProfile.Knots(CircuitProfile.TouchdownKnots) / CircuitProfile.RolloutExactSeconds;
+            var decel = CircuitProfile.Knots(CircuitProfile.TouchdownKnots - CircuitProfile.RunwayExitKnots) / CircuitProfile.RolloutExactSeconds;
             // Gentle: a long strip and no reason to stand on the brakes, but real.
             Assert.That(decel, Is.InRange(0.8f, 2.5f));
             Assert.That(CircuitProfile.RolloutEndX - CircuitProfile.TouchdownX, Is.InRange(800f, 1300f));
@@ -227,8 +227,9 @@ namespace Airside.Tests
             // The flare scrubs Vapp off, and the wheels touch at touchdown speed.
             Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, CircuitProfile.TouchdownProgress),
                 Is.EqualTo(CircuitProfile.TouchdownKnots).Within(0.5f));
-            // Then the rollout brakes to a stop.
-            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f), Is.EqualTo(0f).Within(0.1f));
+            // Then the rollout brakes to runway exit speed and turns off without stopping.
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f),
+                Is.EqualTo(CircuitProfile.RunwayExitKnots).Within(0.1f));
 
             // The regression that started all this: rotate at Vr, not 179 kt.
             Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 0f), Is.EqualTo(0f).Within(0.1f));
@@ -254,10 +255,10 @@ namespace Airside.Tests
             Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 1f),
                 Is.EqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Departed, 0f)).Within(0.1f),
                 "takeoff into departed");
-            // Landing ends stopped and takeoff starts stopped, with the skipped ground
-            // phases between them also reading zero.
-            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f),
-                Is.EqualTo(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 0f)).Within(0.1f));
+            // Landing hands over to the runway-exit taxi at the speed the vacate path starts at.
+            Assert.That(CircuitProfile.Knots(CircuitProfile.AirspeedKnots(AircraftPhase.Landing, 1f)),
+                Is.EqualTo(AdelaideGround.Vacate.PoseAt(0.0).Speed).Within(0.05f), "landing into vacate");
+            Assert.That(CircuitProfile.AirspeedKnots(AircraftPhase.Takeoff, 0f), Is.EqualTo(0f).Within(0.1f));
         }
 
         [Test]

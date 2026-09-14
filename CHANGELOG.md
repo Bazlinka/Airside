@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Handoff note.** GAME.md now opens with the current state, owner preferences and open
+  follow-ups for the next contributor.
+
 - **More regional traffic: Rex and QantasLink.** Two real carriers now share Adelaide's
   regional apron — Rex with two Saab 340Bs on its SA network plus Broken Hill and Mildura,
   QantasLink with a Dash 8-400 to Port Lincoln and Alice Springs — on real bays 50E and 50F

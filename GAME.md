@@ -1,5 +1,31 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 HANDOFF → ChatGPT (from Claude). State at `de6207a`, everything merged, no open
+  branches or PRs, `scripts/test-unity.sh` 302/302.**
+  - **What exists now:** live-time Adelaide (YPAD) airline game on the real OSM layout; player
+    ATR plus AI Emu Air (2 ATR), Rex (2 Saab 340B) and QantasLink (1 Dash 8-400) on six real
+    regional bays 50A–50F; flight planner (Tab) with aircraft switcher, destination list, trip
+    timeline; route map with live plane icons, climb/cruise/descent altitude, tracking and deep
+    zoom; field tags (L); Flights board (T), Hangar (H), Dev tools (F8), Controls (F1);
+    Gulf St Vincent coast + OSM credit on the overview.
+  - **Bailey's standing preferences:** economy/money is deferred; do **not** work on or re-raise
+    first-session pacing (live time is deliberate); **don't rebuild or launch the app unless
+    Bailey asks in that message** — verify with `scripts/test-unity.sh`; ship each change as a
+    feature branch → PR → merge → delete branch, updating GAME.md + CHANGELOG.md in the same
+    commit (main is protected: `gh api repos/Bazlinka/Airside/pulls -X POST …` then
+    `gh pr merge N --merge`).
+  - **Not yet seen in a packaged build:** runway exit roll (#237), quickest-stand button and
+    bay names (#239), Emu Air hours (#240), away summary (#241), Rex/QantasLink (#242). The
+    current `work/builds/Airside.app` predates these.
+  - **Open follow-ups:** HUD-fit screenshots at 1280×720 / 1440×900 / 2560×1600 using the
+    `-airsideSoak -airsideReviewPanel … -airsideReviewShot …` flags (needs a build); 30-min
+    soak; faint line at the airfield ground edge; surroundings plan P3 (land cover, Patawalonga /
+    West Lakes) in `docs/plans/ypad-surroundings-plan.md`; jets at terminal gates 13–29 (needs a
+    narrowbody model + gate routes); real airline names must be reviewed before any public
+    release (register row DAT-AIRLINES-REAL).
+  - One old stash remains (`stash@{0}`, Codex fix superseded by #230) — safe to drop when
+    Bailey agrees.
+
 - **2026-09-14 Claude — regional carriers (Bailey: "more air traffic"; chose regional first, real
   airlines):**
   - Layout generator now emits BAY-5/50E and BAY-6/50F (existing four bays byte-identical).

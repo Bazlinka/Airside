@@ -5,10 +5,18 @@ change it describes.
 
 ## Unreleased
 
+- **Click an aircraft on the field to follow it.** Direct 3D selection (invisible
+  pick proxies + click-vs-drag) follows that exact player or AI aircraft, with a
+  selection ring and details card. Fleet-panel rows stay selectable with a visible
+  Select affordance; dragging to pan does not select; off-field aircraft stay on
+  the map only.
+
 - **Aircraft are selectable from the fleet panel.** Click a player or AI
   registration to follow that exact aircraft at Adelaide, with a highlighted
   identity card; aircraft away from Adelaide open on the route map. Overview,
   `R`, or `Esc` clears the selection without changing the simulation.
+  Packaged-app reachability of that registration-only control was incomplete —
+  superseded for primary use by direct 3D selection above.
 
 - **Real regional stand markings.** Adelaide bays 50A–50D now have yellow apron
   lead-ins, stop bars and world-rendered identifiers derived from the generated

@@ -214,7 +214,10 @@ namespace Airside.Presentation
             BuildLightingAndCamera();
             StartIntro();
             if (_cameraController != null)
+            {
                 _cameraController.PointerOverHud = IsPointerOverHud;
+                _cameraController.FieldClick = TrySelectAircraftAtScreen;
+            }
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
@@ -694,6 +697,7 @@ namespace Airside.Presentation
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
+                UpdateSelectionMarker(view, flight.AircraftId);
                 UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
                 UpdateCabinDoor(view, phase, engines?.DoorsOpen);
                 UpdateCabinWindowGlow(view, phase, PresentationDaylight);

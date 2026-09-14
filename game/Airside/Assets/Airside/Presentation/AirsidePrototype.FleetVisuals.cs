@@ -240,6 +240,86 @@ namespace Airside.Presentation
             return tinted;
         }
 
+        /// <summary>
+        /// Invisible pick volume + selection ring for fleet aircraft. Away (hidden)
+        /// aircraft never receive a proxy, so they cannot be selected in 3D.
+        /// </summary>
+        private void EnsureFleetPickables(Transform[] views)
+        {
+            if (views == null)
+                return;
+
+            for (var i = 0; i < views.Length; i++)
+            {
+                var view = views[i];
+                if (view == null || !view.gameObject.activeSelf)
+                    continue;
+                if (!AircraftPickRouting.TryRegistrationFromViewName(view.name, out var registration))
+                    continue;
+                if (!_fleetViewById.ContainsKey(registration))
+                    continue;
+
+                AircraftPickProxy.Ensure(view, registration);
+                EnsureSelectionMarker(view);
+            }
+        }
+
+        private static void EnsureSelectionMarker(Transform aircraft)
+        {
+            if (aircraft == null || aircraft.Find(AircraftPickRouting.MarkerChildName) != null)
+                return;
+
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            marker.name = AircraftPickRouting.MarkerChildName;
+            Object.Destroy(marker.GetComponent<Collider>());
+            marker.transform.SetParent(aircraft, false);
+            marker.transform.localPosition = new Vector3(0f, -0.4f, 0f);
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = new Vector3(18f, 0.02f, 18f);
+
+            var colour = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.55f);
+            var material = AirsideMaterialLibrary.CreateShared(colour, AirsideMaterialLibrary.SurfaceKind.Default);
+            var renderer = marker.GetComponent<Renderer>();
+            renderer.sharedMaterial = material;
+            SetRendererColor(renderer, colour);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            marker.SetActive(false);
+        }
+
+        private void UpdateSelectionMarker(Transform aircraft, string aircraftId)
+        {
+            if (aircraft == null)
+                return;
+            var marker = aircraft.Find(AircraftPickRouting.MarkerChildName);
+            if (marker == null)
+                return;
+
+            var selected = !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
+            if (marker.gameObject.activeSelf != selected)
+                marker.gameObject.SetActive(selected);
+            if (!selected)
+                return;
+
+            var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.04f;
+            marker.position = new Vector3(aircraft.position.x, groundY, aircraft.position.z);
+            marker.rotation = Quaternion.identity;
+            // Soft pulse so the selected aircraft reads at overview distance.
+            var pulse = 0.72f + 0.28f * Mathf.PingPong(Time.unscaledTime * 1.4f, 1f);
+            var scale = 16f + 2f * pulse;
+            var sx = aircraft.lossyScale.x > 0.001f ? scale / aircraft.lossyScale.x : scale;
+            var sy = aircraft.lossyScale.y > 0.001f ? 0.04f / aircraft.lossyScale.y : 0.04f;
+            var sz = aircraft.lossyScale.z > 0.001f ? scale / aircraft.lossyScale.z : scale;
+            marker.localScale = new Vector3(sx, sy, sz);
+
+            var renderer = marker.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+            var colour = Color.Lerp(AirsideTheme.CoastalBlue, AirsideTheme.SafetyYellow, 0.35f);
+            colour.a = 0.4f + 0.25f * pulse;
+            SetRendererColor(renderer, colour);
+        }
+
         /// <summary>Follow cycles through what is on the field, refreshed as aircraft come and go.</summary>
         private void RefreshFleetFollowTargets(Transform[] views)
         {
@@ -260,6 +340,8 @@ namespace Airside.Presentation
                     _fleetViewById[VisualFlights[i].AircraftId] = view;
             }
 
+            EnsureFleetPickables(views);
+
             if (signature == _fleetFollowSignature)
                 return;
             _fleetFollowSignature = signature;
@@ -271,6 +353,47 @@ namespace Airside.Presentation
             return _cameraController != null
                 && _fleetViewById.TryGetValue(aircraftId, out var view)
                 && _cameraController.StartFollow(view);
+        }
+
+        /// <summary>
+        /// Direct 3D pick: a field click that was not a pan. Off-field aircraft have no
+        /// proxy and are never returned by the raycast.
+        /// </summary>
+        private void TrySelectAircraftAtScreen(Vector2 inputSystemPosition)
+        {
+            if (!FleetMode || AirlineSetupOpen || _awaySummary != null || IntroActive || _menuOpen)
+                return;
+            if (_cameraController == null)
+                return;
+
+            var camera = _cameraController.GetComponent<Camera>();
+            if (camera == null)
+                return;
+
+            var ray = camera.ScreenPointToRay(inputSystemPosition);
+            var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
+            var mask = layer >= 0 ? 1 << layer : ~0;
+            var hits = Physics.RaycastAll(ray, AirsideBareField.MaxOrbitDistance * 2f, mask, QueryTriggerInteraction.Collide);
+            if (hits == null || hits.Length == 0)
+                return;
+
+            var candidates = new List<AircraftPickHit>(hits.Length);
+            for (var i = 0; i < hits.Length; i++)
+            {
+                var proxy = hits[i].collider != null
+                    ? hits[i].collider.GetComponentInParent<AircraftPickProxy>()
+                    : null;
+                if (proxy == null || string.IsNullOrEmpty(proxy.AircraftId))
+                    continue;
+                var selectable = _fleetViewById.ContainsKey(proxy.AircraftId);
+                candidates.Add(new AircraftPickHit(proxy.AircraftId, hits[i].distance, selectable));
+            }
+
+            var id = AircraftPickRouting.ResolveNearest(candidates);
+            if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
+                return;
+
+            SelectAircraft(aircraft);
         }
     }
 }

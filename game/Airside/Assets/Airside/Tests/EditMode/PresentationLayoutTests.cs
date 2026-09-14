@@ -914,6 +914,42 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftPickProxy_AttachesInvisibleVolumeOnThePickLayer()
+        {
+            var aircraft = new GameObject("Commercial VH-PAX");
+            try
+            {
+                var proxy = AircraftPickProxy.Ensure(aircraft.transform, "VH-PAX");
+                Assert.That(proxy, Is.Not.Null);
+                Assert.That(proxy.AircraftId, Is.EqualTo("VH-PAX"));
+
+                var child = aircraft.transform.Find(AircraftPickRouting.ProxyChildName);
+                Assert.That(child, Is.Not.Null);
+                Assert.That(child.GetComponent<Renderer>(), Is.Null);
+
+                var box = child.GetComponent<BoxCollider>();
+                Assert.That(box, Is.Not.Null);
+                Assert.That(box.isTrigger, Is.True);
+                Assert.That(box.size.x, Is.EqualTo(AircraftPickRouting.ProxyWidthMetres).Within(0.01f));
+                Assert.That(box.size.y, Is.EqualTo(AircraftPickRouting.ProxyHeightMetres).Within(0.01f));
+                Assert.That(box.size.z, Is.EqualTo(AircraftPickRouting.ProxyLengthMetres).Within(0.01f));
+
+                var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
+                if (layer >= 0)
+                    Assert.That(child.gameObject.layer, Is.EqualTo(layer));
+
+                // Idempotent: second ensure refreshes the same proxy.
+                var again = AircraftPickProxy.Ensure(aircraft.transform, "VH-PAX");
+                Assert.That(again, Is.SameAs(proxy));
+                Assert.That(aircraft.transform.childCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(aircraft);
+            }
+        }
+
+        [Test]
         public void FinalAtr_PreferredKitPathIsStarterV01()
         {
             // PreferArtKit is private; the production contract is the Resources key and

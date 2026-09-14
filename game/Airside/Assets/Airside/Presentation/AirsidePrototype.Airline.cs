@@ -65,6 +65,23 @@ namespace Airside.Presentation
 
         private bool AirlineSetupOpen => _operations == null;
 
+        // IMGUI runs several times a frame (layout, repaint, input). Styles built inline were
+        // allocated on every pass — dozens a frame, one per fleet row — and fed the garbage
+        // collector for nothing, so they are made once and reused.
+        private GUIStyle _hudLabel;
+        private GUIStyle _hudSmall;
+        private GUIStyle _hudSmallButton;
+        private readonly Dictionary<(GUIStyle basis, string variant), GUIStyle> _styleCache = new();
+
+        /// <summary>A style derived from <paramref name="basis"/>, built on first use and cached.</summary>
+        private GUIStyle Styled(GUIStyle basis, string variant, Func<GUIStyle, GUIStyle> make)
+        {
+            var key = (basis, variant);
+            if (!_styleCache.TryGetValue(key, out var style))
+                _styleCache[key] = style = make(basis);
+            return style;
+        }
+
         // ---- Frame hooks called from AirsidePrototype ----------------------------
 
         private void UpdateAirlineOperations()
@@ -119,9 +136,9 @@ namespace Airside.Presentation
             var placement = AirlineHudLayout.Create(layout, showGuide);
             RememberHudPanels(layout, placement, showGuide);
 
-            var label = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
-            var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
-            var smallButton = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
+            var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
+            var small = _hudSmall ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
+            var smallButton = _hudSmallButton ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
 
             if (AirlineSetupOpen)
             {
@@ -171,7 +188,7 @@ namespace Airside.Presentation
 
             if (saveBlock > 0f)
             {
-                var small = AirsideTheme.TextStyle(new GUIStyle(label) { fontSize = 12 }, AirsideTheme.OpenSky);
+                var small = Styled(label, "setup-small", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 12 }, AirsideTheme.OpenSky));
                 if (hasSave)
                 {
                     if (GUI.Button(new Rect(x, rect.y + 16f, inner, 40f), $"Continue {SavedAirlineName()}", button))
@@ -286,7 +303,7 @@ namespace Airside.Presentation
             var (heading, hint) = GuideText(_guideStep, _guideAircraft);
             GUI.Box(rect, GUIContent.none, panel);
             AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
-            var bold = new GUIStyle(label) { fontStyle = FontStyle.Bold };
+            var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 22f), heading, bold);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, rect.height - 40f), hint, small);
         }
@@ -636,8 +653,11 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x, rect.y, rect.width - 70f, 20f), heading, headingStyle);
             GUI.Label(new Rect(rect.x, rect.y + 20f, rect.width, rect.height - 20f), status, statusStyle);
             var action = selected ? "Selected" : "Select";
-            var actionStyle = AirsideTheme.TextStyle(new GUIStyle(statusStyle) { alignment = TextAnchor.UpperRight, fontStyle = FontStyle.Bold },
-                selected ? AirsideTheme.SafetyYellow : AirsideTheme.CoastalBlue);
+            var actionStyle = selected
+                ? Styled(statusStyle, "action-selected", s => AirsideTheme.TextStyle(
+                    new GUIStyle(s) { alignment = TextAnchor.UpperRight, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow))
+                : Styled(statusStyle, "action", s => AirsideTheme.TextStyle(
+                    new GUIStyle(s) { alignment = TextAnchor.UpperRight, fontStyle = FontStyle.Bold }, AirsideTheme.CoastalBlue));
             GUI.Label(new Rect(rect.xMax - 70f, rect.y, 70f, 18f), action, actionStyle);
 
             // Whole row is the hit target — the previous 20 px registration-only target was
@@ -679,7 +699,7 @@ namespace Airside.Presentation
             var onField = _fleetViewById.ContainsKey(aircraft.Registration);
             var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
             DrawSolid(new Rect(rect.x, rect.y, 5f, rect.height), accent);
-            var bold = new GUIStyle(label) { fontStyle = FontStyle.Bold };
+            var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 20f),
                 $"{aircraft.Registration}  ·  {aircraft.Airline.Name}", bold);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 30f, rect.width - 28f, 34f),
@@ -1001,8 +1021,7 @@ namespace Airside.Presentation
                 _mapLens.CenterOn(mapRect.width, mapRect.height, _mapFlights[tracked].Longitude, _mapFlights[tracked].Latitude);
 
             // Project everything clickable first, so the pointer handler can hit-test it.
-            _mapDestinationRows.Clear();
-            _mapDestinationRows.AddRange(FlightPlanner.DestinationsFor(_operations, aircraft));
+            FlightPlanner.DestinationsFor(_operations, aircraft, _mapDestinationRows);
             _mapDestinationPoints.Clear();
             foreach (var row in _mapDestinationRows)
             {
@@ -1094,7 +1113,7 @@ namespace Airside.Presentation
             {
                 DrawSolid(new Rect(homePoint.x - 7f, homePoint.y - 7f, 14f, 14f), AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
                 // Left of the dot: Kingscote and Port Lincoln sit just to its right and below.
-                var adlStyle = new GUIStyle(label) { alignment = TextAnchor.MiddleRight };
+                var adlStyle = Styled(label, "middle-right", s => new GUIStyle(s) { alignment = TextAnchor.MiddleRight });
                 GUI.Label(new Rect(homePoint.x - 89f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
             }
 
@@ -1317,7 +1336,7 @@ namespace Airside.Presentation
             _plannerScroll = GUI.BeginScrollView(view, _plannerScroll, new Rect(0f, 0f, width, Mathf.Max(_plannerContentHeight, view.height)));
             var x = 0f;
             var y = 0f;
-            var bold = new GUIStyle(label) { fontStyle = FontStyle.Bold };
+            var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
 
             GUI.Label(new Rect(x, y, width, 28f), "Flight planner", title);
             y += 32f;
@@ -1337,7 +1356,7 @@ namespace Airside.Presentation
                 if (arrows && GUI.Button(new Rect(x, y, 28f, 26f), "<", smallButton))
                     SelectAircraft(FlightPlanner.Cycle(fleet, aircraft.Registration, -1));
                 DrawSolid(new Rect(nameX, y, 4f, 26f), AirsideTheme.FromHex(aircraft.Airline.LiveryHex));
-                var centred = new GUIStyle(bold) { alignment = TextAnchor.MiddleCenter };
+                var centred = Styled(bold, "middle-center", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter });
                 GUI.Label(new Rect(nameX, y, nameW, 26f), $"{aircraft.Registration}  ·  {aircraft.Type.Name}", centred);
                 if (arrows && GUI.Button(new Rect(x + width - 28f, y, 28f, 26f), ">", smallButton))
                     SelectAircraft(FlightPlanner.Cycle(fleet, aircraft.Registration, 1));
@@ -1422,7 +1441,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(x, y, width, 18f), "Pick from the list or click a dot on the map.", small);
             y += 22f;
 
-            var right = new GUIStyle(small) { alignment = TextAnchor.UpperRight };
+            var right = Styled(small, "upper-right", s => new GUIStyle(s) { alignment = TextAnchor.UpperRight });
             var mouse = Event.current.mousePosition;
             var shownLocked = false;
             foreach (var row in _mapDestinationRows)
@@ -1518,7 +1537,7 @@ namespace Airside.Presentation
 
             // ---- The trip it makes
             var trip = FlightPlanner.Estimate(aircraft, airborne, departAt);
-            var timeStyle = new GUIStyle(small) { alignment = TextAnchor.UpperRight };
+            var timeStyle = Styled(small, "upper-right", s => new GUIStyle(s) { alignment = TextAnchor.UpperRight });
             var legs = new (string what, SimulationTime at)[]
             {
                 ($"Pushback from {aircraft.Stand}", trip.DepartStand),
@@ -1677,12 +1696,12 @@ namespace Airside.Presentation
 
             if (_mapLens.ShowStateLabels)
             {
-                var stateStyle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                var stateStyle = Styled(GUI.skin.label, "map-state", s => AirsideTheme.TextStyle(new GUIStyle(s)
                 {
                     fontSize = 11,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter
-                }, AirsideTheme.OpenSky);
+                }, AirsideTheme.OpenSky));
                 foreach (var (code, lon, lat) in AustraliaMapGeometry.StateLabels)
                 {
                     var p = Project(mapRect, lon, lat);
@@ -1693,11 +1712,11 @@ namespace Airside.Presentation
 
             if (_mapLens.ShowCountyDetail)
             {
-                var regionStyle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                var regionStyle = Styled(GUI.skin.label, "map-region", s => AirsideTheme.TextStyle(new GUIStyle(s)
                 {
                     fontSize = 10,
                     alignment = TextAnchor.MiddleCenter
-                }, AirsideTheme.Cloud);
+                }, AirsideTheme.Cloud));
                 foreach (var (name, lon, lat) in AustraliaMapGeometry.RegionLabels)
                 {
                     var p = Project(mapRect, lon, lat);
@@ -1706,7 +1725,7 @@ namespace Airside.Presentation
                 }
             }
 
-            var hint = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 11 }, AirsideTheme.Concrete);
+            var hint = Styled(GUI.skin.label, "map-hint", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11 }, AirsideTheme.Concrete));
             GUI.Label(new Rect(mapRect.x + 6f, mapRect.yMax - 20f, mapRect.width - 12f, 18f),
                 "Scroll to zoom · drag to pan · click a destination, or a plane to track it", hint);
         }
@@ -2062,7 +2081,7 @@ namespace Airside.Presentation
 
             DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f));
             AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
-            var centred = new GUIStyle(label) { alignment = TextAnchor.MiddleCenter };
+            var centred = Styled(label, "middle-center", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter });
             GUI.Label(rect, _toast, centred);
         }
 

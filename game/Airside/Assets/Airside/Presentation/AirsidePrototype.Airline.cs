@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using Airside.Domain;
 using Airside.Simulation;
@@ -37,10 +38,13 @@ namespace Airside.Presentation
         private bool _mapOpen;
         private bool _hangarOpen;
         private bool _flightsOpen;
+        private bool _devToolsOpen;
         private readonly AustraliaMapLens _mapLens = new();
         private Vector2 _hangarScroll;
         private Vector2 _flightsScroll;
+        private Vector2 _devToolsScroll;
         private readonly List<FleetAircraft> _flightsBoardRows = new();
+        private readonly SeededRandomSource _devToolsRandom = new(4242);
         private FleetAircraft _mapAircraft;
         private string _selectedAircraftId;
         private Destination? _mapSelection;
@@ -78,6 +82,8 @@ namespace Airside.Presentation
                 ToggleHangar();
             if (keyboard.tKey.wasPressedThisFrame)
                 ToggleFlights();
+            if (keyboard.f8Key.wasPressedThisFrame)
+                ToggleDevTools();
             return false;
         }
 
@@ -114,9 +120,11 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen) && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
-            if (_flightsOpen)
+            if (_devToolsOpen)
+                DrawDevToolsPanel(placement.Map, panel, title, label, small, smallButton);
+            else if (_flightsOpen)
                 DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
             else if (_hangarOpen)
                 DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
@@ -222,9 +230,9 @@ namespace Airside.Presentation
             _hudPanels.Add(placement.Clock);
             if (showGuide)
                 _hudPanels.Add(placement.Guide);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen) && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
-            if (_mapOpen || _hangarOpen || _flightsOpen)
+            if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
                 _hudPanels.Add(placement.Map);
             if (TrySelectionHudCardRect(layout, out var selectionCard))
                 _hudPanels.Add(selectionCard);
@@ -680,11 +688,13 @@ namespace Airside.Presentation
                 _mapOpen = false;
                 _hangarOpen = false;
                 _flightsOpen = false;
+                _devToolsOpen = false;
             }
             else
             {
                 _hangarOpen = false;
                 _flightsOpen = false;
+                _devToolsOpen = false;
                 _mapOpen = true;
                 _mapLens.Reset();
                 _mapSelection = aircraft.CurrentDestination;
@@ -701,6 +711,7 @@ namespace Airside.Presentation
             _mapOpen = false;
             _hangarOpen = false;
             _flightsOpen = false;
+            _devToolsOpen = false;
             return true;
         }
 
@@ -738,6 +749,7 @@ namespace Airside.Presentation
             {
                 _hangarOpen = false;
                 _flightsOpen = false;
+                _devToolsOpen = false;
                 _mapLens.Reset();
             }
             _mapAircraft = aircraft ?? FirstPlayerAircraft();
@@ -753,6 +765,7 @@ namespace Airside.Presentation
             {
                 _mapOpen = false;
                 _flightsOpen = false;
+                _devToolsOpen = false;
             }
             PlayUiClick();
         }
@@ -764,6 +777,19 @@ namespace Airside.Presentation
             {
                 _mapOpen = false;
                 _hangarOpen = false;
+                _devToolsOpen = false;
+            }
+            PlayUiClick();
+        }
+
+        private void ToggleDevTools()
+        {
+            _devToolsOpen = !_devToolsOpen;
+            if (_devToolsOpen)
+            {
+                _mapOpen = false;
+                _hangarOpen = false;
+                _flightsOpen = false;
             }
             PlayUiClick();
         }
@@ -1100,6 +1126,115 @@ namespace Airside.Presentation
             }
 
             GUI.EndScrollView();
+        }
+
+
+        private void DrawDevToolsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
+            GUI.Box(rect, GUIContent.none, panel);
+
+            var x = rect.x + 16f;
+            var inner = rect.width - 32f;
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Dev tools", title);
+            if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
+                ToggleDevTools();
+
+            GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
+                "Playtest helpers — inspect the fleet, auto-schedule idle aircraft, park arrivals. Live time stays on.", small);
+
+            var next = _operations.NextEventAt();
+            GUI.Label(new Rect(x, rect.y + 62f, inner, 18f), DevTools.NextEventLabel(next, ClockText), label);
+
+            var idle = DevTools.CountIdleAtStand(_operations.Fleet);
+            var waiting = DevTools.CountAwaitingStand(_operations.Fleet);
+            var free = 0;
+            foreach (var _ in _operations.FreeStands())
+                free++;
+            GUI.Label(new Rect(x, rect.y + 84f, inner, 18f),
+                $"Idle at stand: {idle}  ·  Awaiting stand: {waiting}  ·  Free stands: {free}", small);
+
+            var buttonY = rect.y + 108f;
+            if (GUI.Button(new Rect(x, buttonY, 210f, 28f), "Auto-schedule idle player", smallButton))
+                DevToolsAutoSchedulePlayer();
+            if (GUI.Button(new Rect(x + 220f, buttonY, 180f, 28f), "Assign free stands", smallButton))
+                DevToolsAssignStands();
+
+            var view = new Rect(x, buttonY + 40f, inner, rect.height - (buttonY + 40f - rect.y) - 14f);
+            var contentHeight = 8f + _operations.Fleet.Count * 28f;
+            _devToolsScroll = GUI.BeginScrollView(view, _devToolsScroll, new Rect(0f, 0f, inner - 18f, contentHeight));
+            var y = 4f;
+            foreach (var aircraft in _operations.Fleet)
+            {
+                var row = new Rect(0f, y, inner - 22f, 24f);
+                var selected = _selectedAircraftId == aircraft.Registration;
+                if (selected)
+                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
+                else if (row.Contains(Event.current.mousePosition))
+                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.14f));
+
+                GUI.Label(new Rect(8f, y + 2f, inner - 36f, 20f), DevTools.FleetLine(aircraft), small);
+                if (GUI.Button(row, GUIContent.none, GUIStyle.none))
+                    SelectAircraft(aircraft);
+                y += 28f;
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private void DevToolsAutoSchedulePlayer()
+        {
+            var player = _operations.PlayerAirline;
+            if (player == null)
+                return;
+            var scheduled = 0;
+            foreach (var aircraft in _operations.FleetOf(player))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue)
+                    continue;
+                var reachable = new List<Destination>();
+                foreach (var destination in _operations.MapDestinations())
+                    if (_operations.CanReach(aircraft, destination))
+                        reachable.Add(destination);
+                if (reachable.Count == 0)
+                    continue;
+                var pick = reachable[_devToolsRandom.NextInt(0, reachable.Count)];
+                var delay = DevTools.AutoScheduleDelaySeconds(aircraft.CompletedTrips,
+                    _devToolsRandom.NextInt(0, DevTools.LaterAutoDepartureLeadMaxSeconds));
+                var result = _operations.ScheduleDeparture(aircraft, pick, _clock.Now.Advance(delay));
+                if (result.Accepted)
+                    scheduled++;
+            }
+
+            ShowToast(scheduled > 0
+                ? $"Auto-scheduled {scheduled} player aircraft."
+                : "No idle player aircraft to schedule.");
+            PlayUiClick();
+        }
+
+        private void DevToolsAssignStands()
+        {
+            var assigned = 0;
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (aircraft.State != FleetState.AwaitingStand)
+                    continue;
+                foreach (var stand in _operations.FreeStands())
+                {
+                    var result = _operations.AssignStand(aircraft, stand);
+                    if (result.Accepted)
+                    {
+                        assigned++;
+                        break;
+                    }
+                }
+            }
+
+            ShowToast(assigned > 0
+                ? $"Assigned {assigned} aircraft to free stands."
+                : "No aircraft waiting for a stand.");
+            PlayUiClick();
         }
 
 

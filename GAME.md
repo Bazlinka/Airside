@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor Dev Tools (`cursor/dev-test-tools-601f`):**
+  **Dev tools (F8)** opens a playtest panel: fleet status lines, next-event time,
+  **Auto-schedule idle player** (soak-style departures) and **Assign free stands**.
+  Mutually exclusive with Map / Hangar / Flights. Presentation only — live Adelaide
+  time stays on (no pause/skip). Stacks on the flights-board branch.
+- **Task packet / acceptance:** player-visible outcome is a gated playtest tools
+  panel; scope is airline HUD presentation; simulation invariants untouched.
+  Acceptance: F8 toggles the panel, fleet list is readable, auto-schedule books
+  idle player aircraft with soak delays, assign stands parks awaiting aircraft,
+  mutual exclusion with map/hangar/flights.
+- **Evidence:** `scripts/test-domain.sh` **192/192** on this Linux host (includes
+  DevTools helper tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
+  No manual playtest claimed.
+- **Next:** Mac Unity + packaged verification of Dev Tools (and flights/map/hangar),
+  then Bailey's external playtest when free. Night lighting remains pinned until
+  a dedicated rework.
+
 - **2026-09-14 Cursor flights board (`cursor/flights-board-601f`):**
   **Flights (T)** opens a time-ordered board of every player and AI movement
   (route, phase, next time). Click a row to select/follow, or open the map when

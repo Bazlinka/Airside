@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Dev tools (F8).** Playtest panel with fleet status, next-event time,
+  auto-schedule for idle player aircraft and assign-free-stands. Shares the
+  overlay slot with Map / Hangar / Flights. Live time stays on.
+
 - **Flights board (T).** Time-ordered board of every player and AI movement with
   route, phase and next clock time. Click a row to follow on the field or track
   on the map when away. Shares the map panel slot with Map (Tab) and Hangar (H).

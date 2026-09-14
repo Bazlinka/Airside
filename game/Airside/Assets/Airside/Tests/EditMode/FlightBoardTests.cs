@@ -1,0 +1,102 @@
+using System.Collections.Generic;
+using Airside.Domain;
+using Airside.Presentation;
+using Airside.Simulation;
+using NUnit.Framework;
+
+namespace Airside.Tests
+{
+    /// <summary>Flights board labels and sort order (presentation helpers only).</summary>
+    public sealed class FlightBoardTests
+    {
+        private static Destination Code(string code)
+        {
+            Assert.That(DestinationCatalogue.TryFind(code, out var destination), Is.True, code);
+            return destination;
+        }
+
+        private static (ManualSimulationClock clock, AirlineOperations ops, FleetAircraft plane) PlayerOnly(int aircraft = 1)
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(11), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#39708A");
+            ops.AddAirline(player);
+            FleetAircraft first = null;
+            for (var i = 0; i < aircraft; i++)
+            {
+                var added = ops.AddAircraft(player, $"VH-PA{(char)('A' + i)}", AircraftType.Atr42,
+                    AirlineOperations.AdelaideRegionalBays[i]);
+                first ??= added;
+            }
+
+            return (clock, ops, first);
+        }
+
+        private static void RunTo(ManualSimulationClock clock, AirlineOperations ops, long seconds)
+        {
+            clock.Set(new SimulationTime(seconds));
+            ops.Update();
+        }
+
+        [Test]
+        public void RouteText_UsesOutboundAndInboundArrows()
+        {
+            var (_, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("MEL"), new SimulationTime(600));
+
+            Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → MEL"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Scheduled"));
+            Assert.That(FlightBoard.TimeLabel(aircraft, t => $"T{t.ElapsedSeconds}"), Is.EqualTo("T600"));
+        }
+
+        [Test]
+        public void Sort_OrdersByNextInterestingTime_IdleLast()
+        {
+            var (_, ops, later) = PlayerOnly(aircraft: 3);
+            var sooner = ops.Fleet[1];
+            var parked = ops.Fleet[2];
+            ops.ScheduleDeparture(later, Code("MEL"), new SimulationTime(1_800));
+            ops.ScheduleDeparture(sooner, Code("KGC"), new SimulationTime(600));
+
+            var list = new List<FleetAircraft> { later, parked, sooner };
+            FlightBoard.Sort(list);
+
+            Assert.That(list[0].Registration, Is.EqualTo(sooner.Registration));
+            Assert.That(list[1].Registration, Is.EqualTo(later.Registration));
+            Assert.That(list[2].Registration, Is.EqualTo(parked.Registration));
+            Assert.That(FlightBoard.SortKeySeconds(sooner), Is.LessThan(FlightBoard.SortKeySeconds(later)));
+            Assert.That(FlightBoard.SortKeySeconds(later), Is.LessThan(FlightBoard.SortKeySeconds(parked)));
+        }
+
+        [Test]
+        public void PhaseLabel_CoversAwayAndArrivalStates()
+        {
+            var (clock, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("BHQ"), new SimulationTime(0));
+
+            var airborne = ops.AirborneSeconds(aircraft, Code("BHQ"));
+            var outboundAt = AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand)
+                             + AirlineOperations.TakeoffRunwaySeconds + 1;
+            RunTo(clock, ops, outboundAt);
+            Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
+            Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → BHQ"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("En route"));
+
+            var inboundAt = outboundAt - 1 + airborne + AirlineOperations.DestinationTurnaroundSeconds + 1;
+            RunTo(clock, ops, inboundAt);
+            Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
+            Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
+        }
+
+        [Test]
+        public void PhaseLabel_OnStandWhenNothingIsPlanned()
+        {
+            var (_, _, aircraft) = PlayerOnly();
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("On stand"));
+            Assert.That(FlightBoard.RouteText(aircraft), Does.Contain("Stand"));
+            Assert.That(FlightBoard.SortKeySeconds(aircraft), Is.EqualTo(long.MaxValue));
+        }
+    }
+}

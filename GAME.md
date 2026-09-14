@@ -1,22 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor flights board (`cursor/flights-board-601f`):**
+  **Flights (T)** opens a time-ordered board of every player and AI movement
+  (route, phase, next time). Click a row to select/follow, or open the map when
+  away. Mutually exclusive with Map (Tab) and Hangar (H). Presentation/UI only —
+  schedules, reservations, saves and airport geometry unchanged. Stacks on the
+  immersive map + hangar branch.
+- **Task packet / acceptance:** player-visible outcome is an all-flights timetable
+  board; scope is airline HUD presentation; simulation invariants untouched.
+  Acceptance: T / clock button toggles the board, rows sort by next interesting
+  time with idle aircraft last, player+AI included, click selects, mutual exclusion
+  with map/hangar, fleet and hangar still work.
+- **Evidence:** `scripts/test-domain.sh` **188/188** on this Linux host (includes
+  FlightBoard helper tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
+  No manual playtest claimed.
+- **Next:** Mac Unity + packaged verification of Flights board (and map/hangar),
+  then Bailey's external playtest when free.
+
 - **2026-09-14 Cursor immersive map + hangar (`cursor/immersive-map-hangar-601f`):**
   the Australia destinations map now zooms and pans (scroll + drag), with a denser
   coastline, state borders, and state/region labels that appear as you zoom in.
   **Hangar (H)** lists every player and AI aircraft with live status and progress;
   click a row to follow it on the field or track it on the map when away.
   Presentation/UI only — schedules, reservations, saves and airport geometry unchanged.
-- **Task packet / acceptance:** player-visible outcome is an immersive zoomable
-  Australia map and a hangar roster for owned + AI flights; scope is airline HUD /
-  map presentation; simulation invariants untouched. Acceptance: zoom/pan without
-  breaking destination planning, state labels when zoomed, hangar shows progress for
-  player and AI, map still tracks off-field aircraft, fleet panel and field selection
-  still work.
-- **Evidence:** `scripts/test-domain.sh` **184/184** on this Linux host (includes 6 new
-  `AustraliaMapLens` tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
-  No manual playtest claimed.
-- **Next:** Mac Unity + packaged verification of map zoom and hangar, then Bailey's
-  external playtest when free.
+- **Evidence:** `scripts/test-domain.sh` **184/184** (map/hangar slice). Unity EditMode
+  / Mac build require Mac Unity 6.3 LTS. No manual playtest claimed.
 
 - **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
   clicking a visible aircraft on the Adelaide field selects and follows that exact

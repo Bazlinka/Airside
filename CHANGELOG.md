@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Flights board (T).** Time-ordered board of every player and AI movement with
+  route, phase and next clock time. Click a row to follow on the field or track
+  on the map when away. Shares the map panel slot with Map (Tab) and Hangar (H).
+
 - **Zoomable Australia map and Hangar.** Scroll and drag the destinations map to
   zoom and pan; denser coastline, state borders and region labels appear as you
   zoom in. Hangar (H) lists your aircraft and AI flights with live progress —

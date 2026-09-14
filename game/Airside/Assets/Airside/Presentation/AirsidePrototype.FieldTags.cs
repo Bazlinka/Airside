@@ -29,7 +29,7 @@ namespace Airside.Presentation
 
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
             _placedTags.Clear();
-            var tagStyle = new GUIStyle(small) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = false };
+            var tagStyle = Styled(small, "field-tag", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = false });
             var cameraPosition = _mainCamera.transform.position;
 
             foreach (var pair in _fleetViewById)

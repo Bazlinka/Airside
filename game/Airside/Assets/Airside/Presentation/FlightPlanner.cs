@@ -118,6 +118,14 @@ namespace Airside.Presentation
         public static List<PlannerDestination> DestinationsFor(AirlineOperations operations, FleetAircraft aircraft)
         {
             var list = new List<PlannerDestination>();
+            DestinationsFor(operations, aircraft, list);
+            return list;
+        }
+
+        /// <summary>Same as above, refilling <paramref name="list"/> so the HUD does not allocate each frame.</summary>
+        public static void DestinationsFor(AirlineOperations operations, FleetAircraft aircraft, List<PlannerDestination> list)
+        {
+            list.Clear();
             foreach (var destination in operations.MapDestinations())
             {
                 var reachable = aircraft != null && operations.CanReach(aircraft, destination);
@@ -125,15 +133,16 @@ namespace Airside.Presentation
                 list.Add(new PlannerDestination(destination, operations.DistanceKm(destination), airborne, reachable));
             }
 
-            list.Sort((a, b) =>
+            list.Sort(ByReachThenDistance);
+        }
+
+        private static readonly Comparison<PlannerDestination> ByReachThenDistance = (a, b) =>
             {
                 if (a.Reachable != b.Reachable)
                     return a.Reachable ? -1 : 1;
                 var byDistance = a.DistanceKm.CompareTo(b.DistanceKm);
                 return byDistance != 0 ? byDistance : string.CompareOrdinal(a.Destination.Code, b.Destination.Code);
-            });
-            return list;
-        }
+            };
 
         /// <summary>Expected trip timeline if pushed back at <paramref name="departAt"/>, before any runway queue.</summary>
         public static PlannedTrip Estimate(FleetAircraft aircraft, long airborneSeconds, SimulationTime departAt)

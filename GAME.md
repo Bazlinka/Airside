@@ -1,5 +1,11 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — HUD allocation pass:** base HUD styles (`panel/title/button`,
+  `label/small/smallButton`) are cached fields; derived styles go through
+  `AirsidePrototype.Styled(basis, variant, make)` (cache keyed by basis reference + variant,
+  non-capturing lambdas). `FlightPlanner.DestinationsFor` has an in-place overload and a
+  static comparer. EditMode **294/294**; not profiled in a build (no rebuilds unless asked).
+
 - **2026-09-14 Claude — runway exit roll:** `CircuitProfile.RunwayExitKnots = 12`; rollout
   decelerates touchdown → 12 kt (rollout time and airspeed schedule derived from it),
   `AirsideFlightPath.Landing` distance uses the same exit speed, and

@@ -546,13 +546,14 @@ namespace Airside.Presentation
                 return;
             }
 
-            var panel = AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
+            // Built once: OnGUI runs several times a frame and these were new every pass.
+            var panel = _hudPanelStyle ??= AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
             {
                 alignment = TextAnchor.UpperLeft,
                 padding = new RectOffset(18, 18, 14, 14)
             });
-            var title = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
-            var button = AirsideTheme.TextStyle(
+            var title = _hudTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
+            var button = _hudButtonStyle ??= AirsideTheme.TextStyle(
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 
@@ -571,7 +572,11 @@ namespace Airside.Presentation
         /// so the number always agrees with what is on screen rather than with the
         /// simulation a fraction of a second behind it.
         /// </summary>
+        private GUIStyle _hudPanelStyle;
+        private GUIStyle _hudTitleStyle;
+        private GUIStyle _hudButtonStyle;
         private GUIStyle _creditStyle;
+        private GUIStyle _creditShadowStyle;
 
         /// <summary>
         /// ODbL attribution for the OSM-derived airfield layout and coastline, small and
@@ -589,7 +594,7 @@ namespace Airside.Presentation
                 normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.72f) }
             };
             var rect = new Rect(layout.Viewport.x - 330f, layout.Viewport.y - 22f, 320f, 18f);
-            var shadow = new GUIStyle(_creditStyle) { normal = { textColor = new Color(0f, 0f, 0f, 0.55f) } };
+            var shadow = _creditShadowStyle ??= new GUIStyle(_creditStyle) { normal = { textColor = new Color(0f, 0f, 0f, 0.55f) } };
             GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, shadow);
             GUI.Label(rect, text, _creditStyle);
         }

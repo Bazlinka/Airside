@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Away summary reads properly.** It names real bays ("parked on Bay 50D") and sizes each
+  line to its text so long statuses no longer clip. 298/298 EditMode.
+
 - **Emu Air keeps regional hours.** AI departures fall between 06:00 and 21:00 Adelaide
   time (a plane ready later waits on its stand for the morning) and follow a weighted
   regional network — Kangaroo Island, Port Lincoln, Whyalla, Mount Gambier, Melbourne,

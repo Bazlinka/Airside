@@ -116,15 +116,15 @@ namespace Airside.Simulation
             return aircraft.State switch
             {
                 FleetState.AtStand when aircraft.Scheduled.HasValue =>
-                    $"is on {aircraft.Stand}, departing {clock.TimeText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}",
-                FleetState.AtStand => $"is parked on {aircraft.Stand} with no flight planned",
+                    $"is on {AdelaideGround.StandLabel(aircraft.Stand)}, departing {clock.TimeText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}",
+                FleetState.AtStand => $"is parked on {AdelaideGround.StandLabel(aircraft.Stand)} with no flight planned",
                 FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff => $"is departing for {dest}",
                 FleetState.Outbound => $"is flying to {dest}",
                 FleetState.AtDestination => $"is on the ground at {dest}",
                 FleetState.Inbound => $"is flying home from {dest}",
                 FleetState.HoldingForLanding or FleetState.Landing => "is landing at Adelaide",
                 FleetState.AwaitingStand => "has landed and is waiting for you to choose a stand",
-                FleetState.TaxiIn => $"is taxiing to {aircraft.Stand}",
+                FleetState.TaxiIn => $"is taxiing to {AdelaideGround.StandLabel(aircraft.Stand)}",
                 _ => $"is {aircraft.State}"
             };
         }

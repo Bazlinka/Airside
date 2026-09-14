@@ -1,5 +1,10 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — away summary:** bay label lookup moved into Simulation
+  (`AdelaideGround.StandLabel`, used by `AwaySummary` and delegated to by `StandNames.Display`);
+  `DrawAwaySummary` measures lines with `CalcHeight` instead of a fixed 40 px row.
+  EditMode **298/298**.
+
 - **2026-09-14 Claude — Emu Air timetable:** `AirlineOperations.ScheduleAiDeparture` draws once
   (as before) over `AiNetwork` weights (KGC 3, PLO 3, WYA 2, MGB 2, MEL 2, CED/CPD/MQL/BHQ 1)
   and passes the ready time through `AiDepartureWithinHours` (06:00–21:00 Adelaide via new

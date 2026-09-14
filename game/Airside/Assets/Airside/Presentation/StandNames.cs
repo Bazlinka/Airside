@@ -21,9 +21,8 @@ namespace Airside.Presentation
             return stand.Value;
         }
 
-        /// <summary>"Bay 50C".</summary>
-        public static string Display(StableId stand) =>
-            string.IsNullOrEmpty(stand.Value) ? "—" : $"Bay {Short(stand)}";
+        /// <summary>"Bay 50C" — the simulation's own label, so summaries and HUD agree.</summary>
+        public static string Display(StableId stand) => AdelaideGround.StandLabel(stand);
 
         /// <summary>The free stand with the shortest taxi in, or null when none is free.</summary>
         public static StableId? QuickestToTaxiIn(IEnumerable<StableId> freeStands)

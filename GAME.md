@@ -1,5 +1,39 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — zoom feel, altitude, taxi speeds + surroundings plan
+  (Bailey: "zoom is really quick … altitude needs to be integrated accurately … check
+  realistic taxi speeds … plan map data so the ground looks like Adelaide"):**
+  - **Zoom:** field camera scroll was applied instantly at ~30 % per wheel notch; now queued
+    in log space (≈11 % per notch at any distance, per-frame cap for trackpads) and eased
+    in over ~0.3 s. Scrolling over a HUD panel no longer also zooms the camera. Route map
+    zoom (which multiplied on every trackpad event) uses the same eased model
+    (`MapZoom`, ≈12 % per notch).
+  - **Altitude:** new `Simulation/EnrouteProfile` shapes each away leg inside its existing
+    `LegTiming` duration — climb 1 200 ft/min at 65 % speed, cruise level from leg length
+    (≈6 000 ft + 25 ft/km, 8 000–FL250), descent 1 500 ft/min at 80 %, cruise speed solved
+    so distance flown equals the leg (MEL ≈ FL220 / ~297 kt). It starts at the field
+    departure's exit height and ends at the approach start height, so field ↔ map is
+    continuous. Map icons now move by distance flown (slower in climb/descent) and label
+    "FL220 ▲ · 297 kt · 613 km · lands 15:52"; fleet status lines show the level. The HUD
+    readout (widened to 230) shows height above the field with ▲/▼ once airborne.
+  - **Taxi speeds:** 15 kt straight kept (realistic), cornering lateral limit 0.35→0.5 m/s²
+    (~10 kt round a 45 m fillet instead of ~6 kt), new speed zones: 10 kt for the first
+    160 m of taxi-out and the last 160 m of taxi-in (apron lane), 5 kt for the last 45 m
+    onto the stand. Zone edges get an inserted path point so the limit holds from that
+    metre. Existing taxi-time range tests still pass.
+  - **Plan:** `docs/plans/ypad-surroundings-plan.md` (research agent) — recommends
+    stylised-but-grounded OSM surroundings (coast/sea first, land cover, roads, extruded
+    buildings, GA DEM Hills silhouette), no Google/Cesium/Street View (licence + online-only
+    + uncanny), Sentinel-2 tint only as optional last step. P0 is showing the OSM credit,
+    which is currently not displayed anywhere (an ODbL gap).
+- **Evidence:** Unity 6.3 EditMode **287/287** (new `EnrouteProfileTests` 7); Mac build to
+  `work/builds-next/Airside.app` succeeded (Bailey's copy in `work/builds` was running).
+  **Not yet eyeballed in the packaged app** — zoom feel is a by-hand check.
+- **Next:** Bailey tries zoom/altitude in `work/builds-next`; answer the plan's open
+  questions (surroundings scope, Mapland licence email, priority vs PROJECT_PLAN); P0
+  attribution is small and should go in regardless. Not done: runway vacate still starts
+  from a stop at the rollout end (real aircraft turn off at ~15 kt).
+
 - **2026-09-14 Claude — live flights on the map, field tags, planner availability
   (Bailey: "do both and keep going … a mini plane logo on the map … zoom in and see it
   moving live"):**

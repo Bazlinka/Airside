@@ -105,4 +105,38 @@ namespace Airside.Presentation
             return true;
         }
     }
+
+    /// <summary>
+    /// Scroll-to-zoom feel shared by the route map and the field camera: steps in log space
+    /// sized by how far the wheel moved, capped per event, eased in over ~0.25 s.
+    /// </summary>
+    public static class MapZoom
+    {
+        /// <summary>Log-zoom per unit of scroll delta — one mouse-wheel notch (~3) is about 12 %.</summary>
+        public const float LogPerScrollUnit = 0.04f;
+
+        /// <summary>Largest single scroll event honoured (a flung trackpad is not a teleport).</summary>
+        public const float MaxScrollPerEvent = 6f;
+
+        /// <summary>Most log-zoom that can be queued at once, ~2x.</summary>
+        public const float MaxPending = 0.7f;
+
+        /// <summary>Easing rate: ~95 % of a queued zoom lands in 0.25 s.</summary>
+        public const float EaseRate = 12f;
+
+        /// <summary>Scroll down (positive) zooms out; returns log-zoom to queue.</summary>
+        public static float StepFor(float scrollDelta)
+        {
+            var clamped = scrollDelta < -MaxScrollPerEvent ? -MaxScrollPerEvent : scrollDelta > MaxScrollPerEvent ? MaxScrollPerEvent : scrollDelta;
+            return -clamped * LogPerScrollUnit;
+        }
+
+        /// <summary>Portion of the pending log-zoom to apply this frame.</summary>
+        public static float EaseStep(float pending, float deltaSeconds)
+        {
+            if (deltaSeconds <= 0f)
+                return 0f;
+            return pending * (1f - (float)System.Math.Exp(-deltaSeconds * EaseRate));
+        }
+    }
 }

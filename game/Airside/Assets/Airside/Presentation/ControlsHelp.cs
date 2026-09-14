@@ -46,7 +46,8 @@ namespace Airside.Presentation
             }),
             new Section("Airline", new[]
             {
-                new Binding("Tab", "Destinations map"),
+                new Binding("Tab", "Flight planner and route map"),
+                new Binding("[ / ]", "Previous / next aircraft"),
                 new Binding("H", "Hangar roster"),
                 new Binding("T", "Flights board"),
                 new Binding("F8", "Dev tools (playtest)"),
@@ -54,7 +55,7 @@ namespace Airside.Presentation
             }),
             new Section("General", new[]
             {
-                new Binding("Esc", "Clear selection, then menu"),
+                new Binding("Esc", "Close panel, clear selection, then menu"),
                 new Binding("M", "Mute"),
             }),
         };

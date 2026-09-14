@@ -1,5 +1,33 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — flight planner rework (Bailey: "flight planning, which plane gets
+  selected, switching between them, choosing where to fly to isnt too good"):**
+  - **Root cause of bad destination picking:** the map consumed every left press to start
+    panning, so the 24 px invisible dot buttons rarely got the click. Now a press only pans
+    after the 4 px drag threshold; a release before that is a click that picks the nearest
+    aircraft or destination within 16 px (nearest wins, so Kingscote/Port Lincoln beside ADL
+    are separable). Hovered dots grow, show a route preview and a name · km · time tip.
+  - **Tab opens a Flight planner**, not a bare map: aircraft switcher (`<` `>` or `[` `]`),
+    a destination list (reachable first, nearest first, km + flight time, locked group),
+    then per destination: pushback in 3 min/15/30/1 h/2 h/4 h plus −/+5 min, and a trip
+    timeline (pushback, airborne, lands, departs, back at Adelaide) before *Schedule*.
+    An aircraft with a booked flight reopens on it ("Change plan" / "Update plan" /
+    "Cancel booked flight"). Detail pane scrolls on short windows.
+  - **Selection is one model:** the planner opens on the selected player aircraft, else the
+    first parked with nothing planned; switching aircraft in the planner selects it and the
+    camera follows, planner stays open. Outside the planner `[` `]` cycle all aircraft.
+    Clicking an aircraft dot on the route map selects it. Esc closes an open panel before
+    clearing the selection. The selection card hides while a panel is open (it covered
+    the planner's buttons).
+  - Pure rules in `Presentation/FlightPlanner.cs` (UnityEngine-free) with
+    `FlightPlannerTests` (6).
+- **Evidence:** Unity 6.3 EditMode **275/275, 0 failed**; `scripts/build-mac.sh` succeeded;
+  packaged app driven by hand: Plan flight → list → map dot click on MEL → timeline →
+  drag-pan → All destinations, camera followed VH-PAX. No flight was scheduled in that pass
+  (Bailey's save was left untouched apart from autosave).
+- **Next:** Bailey plays the planner in the built app. Candidates: aircraft on the overview
+  are hard to see without following; a planner "next free aircraft" hint when all are busy.
+
 - **2026-09-14 Claude main compile repair + branch collation (Bailey: "collate, merge, main, delete branches, build"):**
   `main` at `9084042` (Cursor stack #223–#229) **did not compile in Unity** — the stack
   was only checked with `scripts/test-domain.sh`, which does not build Presentation.

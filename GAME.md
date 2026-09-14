@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — regional carriers (Bailey: "more air traffic"; chose regional first, real
+  airlines):**
+  - Layout generator now emits BAY-5/50E and BAY-6/50F (existing four bays byte-identical).
+    50G skipped: on the T4 bend, its generated lead-in starts on grass (checked with a route
+    plot, `work/review/regional-bays-routes.png`). Bay spacing test replaced by a parked-ATR
+    wingtip clearance check (min 16.7 m, 50D/50E; threshold 4.5 m code C).
+  - `AircraftType.Saab340` (SF34, 500 km/h, 1 000 km) and `Dash8Q400` (DH8D, 667 km/h,
+    1 800 km), both rendered with the ATR model; `TryFromId` knows all three.
+  - `Airline.Rex()` (REX) / `Airline.QantasLink()` (QLK); `AirlineOperations.RegionalCarriers`
+    (Rex VH-ZRC/ZRD, QantasLink VH-QOK), `AiNetworkFor` per carrier, opening departures at
+    10/20/32/45/58 min. `AddMissingRegionalCarriers()` runs in `StartAtAdelaide` and after
+    away catch-up in `ContinueAirline` (idempotent; only free stands; toast when joined) —
+    `AirlineSave.Restore` itself is unchanged.
+  - Only Emu Air gets the Emu decal now; the real carriers are colour-only (no logos).
+    Register row DAT-AIRLINES-REAL flags the names for review before any public release.
+  - Tests: new `RegionalCarriersTests` (4); stand markings expect 6 bays; Emu-specific tests
+    select Emu by name. EditMode **302/302**. Not rebuilt.
+- **Next:** jets at the terminal gates (13–29) need a narrowbody model and gate routes.
+
 - **2026-09-14 Claude — away summary:** bay label lookup moved into Simulation
   (`AdelaideGround.StandLabel`, used by `AwaySummary` and delegated to by `StandNames.Display`);
   `DrawAwaySummary` measures lines with `CalcHeight` instead of a fixed 40 px row.

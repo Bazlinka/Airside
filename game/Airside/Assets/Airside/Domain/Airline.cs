@@ -36,6 +36,12 @@ namespace Airside.Domain
         // Brown and gold, matching dc_livery_emu_air_v01.
         public static Airline EmuAir() => new("EMU", "Emu Air", "#A66F32", isPlayer: false);
 
+        /// <summary>Regional Express — Adelaide's main regional operator (Saab 340s).</summary>
+        public static Airline Rex() => new("REX", "Rex", "#D2491E", isPlayer: false);
+
+        /// <summary>QantasLink regional services from Adelaide (Dash 8-400s).</summary>
+        public static Airline QantasLink() => new("QLK", "QantasLink", "#D8141E", isPlayer: false);
+
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 
         public (byte r, byte g, byte b) LiveryRgb()

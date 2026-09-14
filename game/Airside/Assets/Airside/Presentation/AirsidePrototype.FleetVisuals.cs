@@ -175,7 +175,7 @@ namespace Airside.Presentation
             var airline = aircraft.Airline;
             var accent = AirsideTheme.FromHex(airline.LiveryHex);
             var view = BuildAircraft($"Commercial {aircraftId}", accent,
-                airline.IsPlayer ? null : EmuAirDecal);
+                airline.Id.Value == "EMU" ? EmuAirDecal : null);
 
             if (airline.IsPlayer)
             {

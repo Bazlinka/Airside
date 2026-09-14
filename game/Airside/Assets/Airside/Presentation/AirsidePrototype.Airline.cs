@@ -223,7 +223,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(x, rect.y + 190f, inner, 36f),
                 hasSave
                     ? "A new airline replaces your saved one."
-                    : "You start with one ATR 42-600. Emu Air flies two from the same airport.", label);
+                    : "You start with one ATR 42-600, sharing the regional apron with Emu Air, Rex and QantasLink.", label);
 
             var name = (_airlineNameDraft ?? string.Empty).Trim();
             GUI.enabled = name.Length > 0;
@@ -445,11 +445,16 @@ namespace Airside.Presentation
             if (away >= AwayCatchUp.MinimumSeconds)
                 _awaySummary = AwaySummary.Build(data, restored, away);
 
+            // Saves from before the extra regional carriers gain them now, parked and booked.
+            var joined = restored.AddMissingRegionalCarriers();
+
             _clock = clock;
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
+            if (joined > 0)
+                ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");

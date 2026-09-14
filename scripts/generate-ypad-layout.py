@@ -39,8 +39,11 @@ ROLLOUT_END_X = -200.0
 TAKEOFF_START_X = -1500.0
 HOLD_05 = (-1530.0, 90.0)
 E2_HOLD = (237.0, 199.0)
-# Regional bays used as BAY-1..BAY-4, west to east along taxilane T4.
-BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A")]
+# Regional bays along taxilane T4. BAY-1..BAY-4 are 50D..50A (the original four); BAY-5/6
+# are 50E/50F, added for more regional traffic. 50G is left out: it sits on the bend of T4,
+# so the straight lead-in this generator builds would start on the grass.
+BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A"),
+        ("BAY-5", "50E"), ("BAY-6", "50F")]
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
 PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 

@@ -238,7 +238,7 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11), Player());
-            var emu = ops.Airlines.Single(a => !a.IsPlayer);
+            var emu = ops.Airlines.Single(a => a.Name == "Emu Air");
 
             Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(2));
             Assert.That(ops.FleetOf(emu).All(a => a.Scheduled.HasValue), Is.True, "AI schedules itself");

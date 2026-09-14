@@ -41,6 +41,12 @@ namespace Airside.Presentation
         private bool _devToolsOpen;
         private bool _controlsHelpOpen;
         private readonly AustraliaMapLens _mapLens = new();
+
+        // Left-drag panning on the destinations map: whether a drag started on the map,
+        // and the last GUI point it was at. Used by the map input handler (#224) but never
+        // declared, so Presentation did not compile in Unity.
+        private bool _mapPanning;
+        private Vector2 _mapPanGui;
         private Vector2 _hangarScroll;
         private Vector2 _flightsScroll;
         private Vector2 _devToolsScroll;

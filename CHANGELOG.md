@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **`main` compiles in Unity again.** Fixed an ambiguous `Object.Destroy` in fleet
+  visuals and two undeclared map-panning fields from the UI stack, and replaced four
+  hand-written `.meta` GUIDs that collided with existing prefabs. 269/269 EditMode.
+
 - **Merged UI stack (#224–#228).** Map/Hangar, Flights board, Dev Tools, Controls
   help and live day/night lighting are on `main`.
 

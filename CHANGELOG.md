@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Gulf St Vincent coast and OSM credit.** The overview now has the real coastline from
+  OpenStreetMap: coastal plain, beach and sea past the airfield, fading into the haze.
+  "Map data © OpenStreetMap contributors" is on screen. Fixed the Adelaide ground shader
+  never being included in builds (packaged games showed a flat fallback) and its
+  over-bright lighting. Overlapping aircraft tags stack. 293/293 EditMode.
+
 - **Smoother zoom, real altitude, realistic taxi.** Camera and route-map zoom ease in
   proportional steps (no more leaps; scrolling a panel no longer zooms the camera).
   Away flights follow a climb / cruise / descent profile (FL shown on map and fleet

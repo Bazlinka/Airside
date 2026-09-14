@@ -13,6 +13,7 @@ namespace Airside.Presentation
     {
         private const float FieldTagLiftMetres = 9f;
         private bool _fieldTagsVisible = true;
+        private readonly System.Collections.Generic.List<Rect> _placedTags = new();
 
         private void ToggleFieldTags()
         {
@@ -27,6 +28,7 @@ namespace Airside.Presentation
                 return;
 
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
+            _placedTags.Clear();
             var tagStyle = new GUIStyle(small) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = false };
             var cameraPosition = _mainCamera.transform.position;
 
@@ -57,9 +59,25 @@ namespace Airside.Presentation
                 var text = mine ? $"{aircraft.Registration} · {FieldTagPhase(aircraft)}" : aircraft.Registration;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
+                // Parked side by side, tags would print over each other: lift each one above
+                // any tag already placed where it would land.
+                for (var guard = 0; guard < 8; guard++)
+                {
+                    var bumped = false;
+                    foreach (var placed in _placedTags)
+                    {
+                        if (!placed.Overlaps(pill))
+                            continue;
+                        pill.y = placed.y - pill.height - 2f;
+                        bumped = true;
+                    }
+                    if (!bumped)
+                        break;
+                }
+                _placedTags.Add(pill);
 
                 // Stem from the pill down to the aircraft.
-                DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, 10f), new Color(livery.r, livery.g, livery.b, fade));
+                DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(livery.r, livery.g, livery.b, fade));
                 DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.82f * fade));
                 DrawSolid(new Rect(pill.x, pill.y, 5f, pill.height), new Color(livery.r, livery.g, livery.b, fade));
                 if (selected)

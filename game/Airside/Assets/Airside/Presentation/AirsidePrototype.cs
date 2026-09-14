@@ -559,6 +559,7 @@ namespace Airside.Presentation
             DrawSpeedReadout(layout, panel);
             DrawControlBar(layout, button);
             DrawAirlineHud(layout, panel, title, button);
+            DrawMapCredit(layout);
             if (_menuOpen)
                 DrawPauseMenu(layout, panel, title, button);
 
@@ -570,6 +571,29 @@ namespace Airside.Presentation
         /// so the number always agrees with what is on screen rather than with the
         /// simulation a fraction of a second behind it.
         /// </summary>
+        private GUIStyle _creditStyle;
+
+        /// <summary>
+        /// ODbL attribution for the OSM-derived airfield layout and coastline, small and
+        /// always on screen in the bottom-right corner.
+        /// </summary>
+        private void DrawMapCredit(HudLayout layout)
+        {
+            var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true);
+            if (string.IsNullOrEmpty(text))
+                return;
+            _creditStyle ??= new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.LowerRight,
+                normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.72f) }
+            };
+            var rect = new Rect(layout.Viewport.x - 330f, layout.Viewport.y - 22f, 320f, 18f);
+            var shadow = new GUIStyle(_creditStyle) { normal = { textColor = new Color(0f, 0f, 0f, 0.55f) } };
+            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, shadow);
+            GUI.Label(rect, text, _creditStyle);
+        }
+
         private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
         {
             if (!TryReadoutFlight(out var flight, out var view))
@@ -4026,6 +4050,9 @@ namespace Airside.Presentation
                         AirsideBareField.GroundLengthMetres / 47f,
                         AirsideBareField.GroundWidthMetres / 37f));
             }
+
+            // The coastal plain and Gulf St Vincent past the airfield edge, from the real OSM coast.
+            AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
 
             BuildBareAdelaidePavement();
             BuildBareAdelaidePerimeterFence();

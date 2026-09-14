@@ -1,5 +1,39 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — OSM credit + Gulf St Vincent coast (Bailey: "overview only for now -
+  do the attribution and coast first"):**
+  - **Attribution (plan P0):** "Map data © OpenStreetMap contributors" drawn bottom-right on
+    every frame (`DrawMapCredit`, `MapAttribution`). The ODbL gap is closed on screen; a
+    credits screen is still needed before any public build.
+  - **Coast (plan P2):** `scripts/generate-ypad-coast.py` (imports the layout generator's
+    runway frame) → `Simulation/AdelaideCoast.cs`: real OSM coastline, 293 points → 126 at
+    6 m, nearest 2.39 km from the runway midpoint, plus a closed sea polygon.
+    `CoastGrid` (UnityEngine-free) builds a 24 × 24 km rectilinear grid (60 m within 5.2 km,
+    320 m beyond) with lines exactly on the airfield ground rectangle, classifies sea by
+    scanline parity and coast distance via a segment bucket. `AirsideAdelaideSurroundings`
+    turns it into one vertex-coloured mesh: meets the airfield edge height exactly and tucks
+    40 m under it, eases to the plain, 150 m beach, flat sea 5.2 m below the pavement;
+    new `Airside/Surroundings` shader (sun + SH ambient, fog, fade to fog colour before the
+    10 km far clip).
+  - **Found and fixed:** `Airside/AdelaideGround` was never in the player build (not
+    referenced, not in Always Included Shaders — the old build log never compiles it), so
+    every packaged build showed the flat grass fallback slab. Both shaders are now in
+    `GraphicsSettings` Always Included. Its lighting (`+0.28` multiplied by the ~2.0 sun)
+    bleached the ground once it did render — now sun + `SampleSH` ambient + fog, tint 0.59.
+    Surroundings colours were tuned against measured packaged-build pixels so the field
+    edge blends.
+  - Field tags that would overlap (aircraft parked side by side) now stack upward.
+  - Review shots: `-airsideOverviewYaw/-Pitch/-Distance` re-aim the overview from the
+    command line (sea view: `-airsideOverviewYaw 310 -airsideOverviewPitch 32
+    -airsideOverviewDistance 3200`, with `-airsideSoak` for a separate save and
+    `-screen-fullscreen 0` so `screencapture -l` can grab the window).
+- **Evidence:** Unity 6.3 EditMode **293/293** (`CoastGridTests` 6); Mac build OK
+  (`work/builds-next`); packaged screenshots `work/review/ypad-coast-overview-sw.png` (sea,
+  beach, blended edge) and `work/review/ypad-before-shader-fix.png`.
+- **Next:** a faint line remains along the airfield ground edge (the ground mesh's own
+  boundary lip). Plan P3 (OSM land cover: golf courses, car parks, Patawalonga / West Lakes
+  water) is the next overview step; Hills backdrop P6 after that.
+
 - **2026-09-14 Claude — zoom feel, altitude, taxi speeds + surroundings plan
   (Bailey: "zoom is really quick … altitude needs to be integrated accurately … check
   realistic taxi speeds … plan map data so the ground looks like Adelaide"):**

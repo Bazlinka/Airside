@@ -534,6 +534,24 @@ namespace Airside.Presentation
             _following = true;
             _followIndex = 0;
             _followTarget = _followTargets[0];
+            _hasLastTargetPosition = false;
+        }
+
+        /// <summary>HUD selection: follow one exact aircraft already registered as a target.</summary>
+        public bool StartFollow(Transform target)
+        {
+            if (target == null || !target.gameObject.activeInHierarchy)
+                return false;
+
+            var index = System.Array.IndexOf(_followTargets, target);
+            if (index < 0)
+                return false;
+
+            _following = true;
+            _followIndex = index;
+            _followTarget = target;
+            _hasLastTargetPosition = false;
+            return true;
         }
 
         /// <summary>Brief camera shake when a commercial touches down (presentation only).</summary>

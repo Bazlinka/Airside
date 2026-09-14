@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft are selectable from the fleet panel.** Click a player or AI
+  registration to follow that exact aircraft at Adelaide, with a highlighted
+  identity card; aircraft away from Adelaide open on the route map. Overview,
+  `R`, or `Esc` clears the selection without changing the simulation.
+
 - **Real regional stand markings.** Adelaide bays 50A–50D now have yellow apron
   lead-ins, stop bars and world-rendered identifiers derived from the generated
   YPAD bay geometry, without changing aircraft routes or timing.

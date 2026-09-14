@@ -869,6 +869,51 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FollowSelection_TracksTheExactRegisteredAircraft()
+        {
+            var cameraObject = new GameObject("Selection camera");
+            var first = new GameObject("VH-PAX");
+            var selected = new GameObject("VH-EMU");
+            try
+            {
+                var controller = cameraObject.AddComponent<AirsideCameraController>();
+                controller.SetFollowTargets(new[] { first.transform, selected.transform });
+
+                Assert.That(controller.StartFollow(selected.transform), Is.True);
+                Assert.That(controller.IsFollowing, Is.True);
+                Assert.That(controller.FollowTarget, Is.SameAs(selected.transform));
+            }
+            finally
+            {
+                Object.DestroyImmediate(selected);
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void FollowSelection_RejectsAnAircraftThatIsNotOnTheField()
+        {
+            var cameraObject = new GameObject("Selection camera");
+            var visible = new GameObject("VH-PAX");
+            var away = new GameObject("VH-AWAY");
+            try
+            {
+                var controller = cameraObject.AddComponent<AirsideCameraController>();
+                controller.SetFollowTargets(new[] { visible.transform });
+
+                Assert.That(controller.StartFollow(away.transform), Is.False);
+                Assert.That(controller.IsFollowing, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(away);
+                Object.DestroyImmediate(visible);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
         public void FinalAtr_PreferredKitPathIsStarterV01()
         {
             // PreferArtKit is private; the production contract is the Resources key and

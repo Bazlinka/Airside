@@ -14,6 +14,7 @@ namespace Airside.Presentation
         private readonly List<CommercialFlight> _fleetFlights = new();
         private readonly Dictionary<string, CommercialFlight> _fleetFlightById = new();
         private readonly Dictionary<string, FleetAircraft> _fleetAircraftById = new();
+        private readonly Dictionary<string, Transform> _fleetViewById = new();
         private readonly Dictionary<string, Texture2D> _tintedDecals = new();
         private string _fleetFollowSignature;
 
@@ -247,18 +248,29 @@ namespace Airside.Presentation
 
             var active = new List<Transform>();
             var signature = string.Empty;
-            foreach (var view in views)
+            _fleetViewById.Clear();
+            for (var i = 0; i < views.Length; i++)
             {
+                var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
                 active.Add(view);
                 signature += view.name + "|";
+                if (i < VisualFlights.Count)
+                    _fleetViewById[VisualFlights[i].AircraftId] = view;
             }
 
             if (signature == _fleetFollowSignature)
                 return;
             _fleetFollowSignature = signature;
             _cameraController.SetFollowTargets(active.ToArray());
+        }
+
+        private bool TryFollowFleetAircraft(string aircraftId)
+        {
+            return _cameraController != null
+                && _fleetViewById.TryGetValue(aircraftId, out var view)
+                && _cameraController.StartFollow(view);
         }
     }
 }

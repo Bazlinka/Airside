@@ -346,18 +346,23 @@ namespace Airside.Presentation
         private void DrawAwaySummary(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
         {
             var summary = _awaySummary;
-            var lineHeight = 40f;
-            var rect = placement.SetupPanel(70f + summary.Lines.Count * lineHeight + 80f);
+            // Measure each sentence at the panel's text width: a fixed 40 px row clipped the
+            // third line of a long status ("…departing 14:05 for Mount Gambier").
+            var inner = placement.SetupPanel(100f).width - 40f;
+            var linesHeight = 0f;
+            foreach (var line in summary.Lines)
+                linesHeight += label.CalcHeight(new GUIContent(line), inner) + 8f;
+            var rect = placement.SetupPanel(70f + linesHeight + 80f);
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 20f;
-            var inner = rect.width - 40f;
 
             GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), summary.Title, title);
             var y = rect.y + 58f;
             foreach (var line in summary.Lines)
             {
-                GUI.Label(new Rect(x, y, inner, lineHeight), line, label);
-                y += lineHeight;
+                var height = label.CalcHeight(new GUIContent(line), inner);
+                GUI.Label(new Rect(x, y, inner, height), line, label);
+                y += height + 8f;
             }
 
             if (GUI.Button(new Rect(x, rect.yMax - 58f, inner, 40f), "Back to the airport", button))

@@ -35,6 +35,20 @@ namespace Airside.Simulation
             return stand.Value != null && BaysById.TryGetValue(stand.Value, out var found) ? found : AdelaideLayout.Bays[0];
         }
 
+        /// <summary>
+        /// The player-facing name of a stand: "Bay 50C" for a real Adelaide regional bay,
+        /// the raw id for anything else, "—" for none.
+        /// </summary>
+        public static string StandLabel(StableId stand)
+        {
+            if (string.IsNullOrEmpty(stand.Value))
+                return "—";
+            foreach (var bay in AdelaideLayout.Bays)
+                if (bay.Id == stand.Value)
+                    return $"Bay {bay.Reference}";
+            return stand.Value;
+        }
+
         /// <summary>Runway 05 rollout end → exit E2 → holding point clear of the runway.</summary>
         public static GroundLeg Vacate => _vacateLeg ??= new GroundLeg(new GroundLegPart(VacatePath, tailFirst: false));
 

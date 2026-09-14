@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude main compile repair + branch collation (Bailey: "collate, merge, main, delete branches, build"):**
+  `main` at `9084042` (Cursor stack #223–#229) **did not compile in Unity** — the stack
+  was only checked with `scripts/test-domain.sh`, which does not build Presentation.
+  Two breaks, both fixed:
+  1. `AirsidePrototype.FleetVisuals.cs` `Object.Destroy` was ambiguous (`System` +
+     `UnityEngine`); now `UnityEngine.Object.Destroy`. Same fix Codex had uncommitted on
+     `fix/direct-aircraft-selection-build`.
+  2. `AirsidePrototype.Airline.cs` map drag-panning used `_mapPanning` / `_mapPanGui`,
+     which were never declared (not even on `cursor/immersive-map-hangar-601f`); declared.
+  Also committed Unity's regenerated GUIDs for `ControlsHelp`, `DevTools` and their tests:
+  the hand-written `.meta` GUIDs collided with the pushback tug, wheel chocks, safety cone
+  and GPU cart prefabs.
+  **Collation:** every other branch's content was already on `main` —
+  `cursor/direct-aircraft-selection-601f`'s extra commit is the pre-squash copy of #223,
+  `codex/adelaide-airside-realism` is superseded by the real YPAD layout, the rest are
+  merged. All branches and extra worktrees removed.
+- **Evidence:** Unity 6.3 EditMode **269/269, 0 failed, 0 skipped**; `scripts/build-mac.sh`
+  succeeded. Packaged launch reached "airline started", but no frames were rendered
+  afterwards because the Mac display was not visible (main thread idle waiting on frame
+  present, 0.1 % CPU) — **visual/packaged pass of #223–#228 still not done**.
+- **Next (Bailey):** open the built app with the screen awake: click-select aircraft,
+  Map zoom/pan (Tab), Hangar (H), Flights (T), Dev Tools (F8), Controls (F1), dusk/night.
+
 - **2026-09-14 Cursor — UI stack merged to `main` (#224–#228):**
   All of the following are on `main` now:
   - Zoomable Australia map + Hangar (H) — #224

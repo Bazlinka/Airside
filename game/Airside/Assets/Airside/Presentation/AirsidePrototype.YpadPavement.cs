@@ -59,6 +59,7 @@ namespace Airside.Presentation
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName, taxi, taxiAsphalt, asphaltAlbedo, castShadows: false);
             SpawnSurface(root, "Taxiway centrelines", centrelines, taxiYellow, null, castShadows: false);
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
+            BuildYpadStandMarkings(root, paintY, taxiYellow);
 
             var buildings = new SurfaceMesh();
             foreach (var terminal in AdelaideLayout.Terminals)
@@ -68,6 +69,34 @@ namespace Airside.Presentation
             }
 
             SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.80f, 0.80f, 0.78f), null, castShadows: true);
+        }
+
+        private static void BuildYpadStandMarkings(Transform root, float paintY, Color paint)
+        {
+            var geometry = new SurfaceMesh();
+            foreach (var marking in AdelaideStandMarkings.All())
+            {
+                AddRibbon(geometry, marking.LeadIn, 0.18f, paintY, roundJoints: false);
+                AddRibbon(geometry, marking.StopBar, 0.28f, paintY + 0.001f, roundJoints: false);
+
+                var label = new GameObject($"Stand {marking.Reference} identifier");
+                label.transform.SetParent(root, false);
+                label.transform.position = new Vector3(marking.LabelX, paintY + 0.015f, marking.LabelZ);
+                label.transform.rotation = Quaternion.Euler(90f, marking.LabelYawDegrees, 0f);
+                var text = label.AddComponent<TextMesh>();
+                text.text = marking.Reference;
+                text.anchor = TextAnchor.MiddleCenter;
+                text.alignment = TextAlignment.Center;
+                text.fontSize = 64;
+                text.characterSize = 0.22f;
+                text.color = paint;
+                var renderer = label.GetComponent<MeshRenderer>();
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                AirsideSceneIndex.Remember(label);
+            }
+
+            SpawnSurface(root, "Regional stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
         }
 
         // ---- Mesh construction ----------------------------------------------------------

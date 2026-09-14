@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Merged UI stack (#224–#228).** Map/Hangar, Flights board, Dev Tools, Controls
+  help and live day/night lighting are on `main`.
+
 - **Live day/night lighting.** Sun, ambient, apron floods and aircraft lamps follow
   Adelaide local time again (daylight pin removed). Debug pin override remains available.
 

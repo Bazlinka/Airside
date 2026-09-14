@@ -1,73 +1,21 @@
 ## Where to resume — session handoff
 
-- **2026-09-14 Cursor night lighting (`cursor/night-lighting-601f`):**
-  Daylight pin is **off** — sun, ambient, floods and aircraft lamps follow live
-  Adelaide time again (dawn / day / dusk / night). Pure `DaylightPresentation`
-  helper keeps the pin override testable. Presentation only. Stacks on Controls help.
-- **Task packet / acceptance:** player-visible outcome is a real day/night cycle on
-  the field; scope is presentation lighting; sim clock already 24 h. Acceptance:
-  unpinned daylight tracks `DayCycle.Daylight`, night is dark, pin override still
-  forces noon when enabled, domain tests green.
-- **Evidence:** `scripts/test-domain.sh` **197/197** on this Linux host (includes
-  DaylightPresentation tests). Unity / Mac packaged visual check still required —
-  night look was not Mac-verified here. No manual playtest claimed.
-- **Next:** Mac overview + follow at local night/dusk; then Bailey's external playtest.
-
-- **2026-09-14 Cursor Controls help (`cursor/controls-help-601f`):**
-  **F1** opens a Controls sheet (camera, airline panels, playtest tools). Esc closes
-  help before clearing selection / opening the menu. Presentation only — no sim
-  changes. Stacks on the Dev Tools branch.
-- **Task packet / acceptance:** player-visible outcome is an on-screen controls
-  reference for playtesters; scope is airline HUD presentation. Acceptance: F1
-  toggles the sheet, bindings cover Tab/H/T/F8/F1/Esc/camera, Esc closes help first.
-- **Evidence:** `scripts/test-domain.sh` **194/194** on this Linux host (includes
-  ControlsHelp tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
+- **2026-09-14 Cursor — UI stack merged to `main` (#224–#228):**
+  All of the following are on `main` now:
+  - Zoomable Australia map + Hangar (H) — #224
+  - Flights board (T) — #225
+  - Dev Tools (F8) — #226
+  - Controls help (F1) — #227
+  - Live day/night lighting (daylight pin off) — #228
+  Presentation/UI only across the stack; schedules, reservations, saves and
+  airport geometry unchanged (except lighting follows the existing 24 h clock).
+- **Evidence:** `scripts/test-domain.sh` peaked at **197/197** on Linux before
+  merge. Unity EditMode / Mac packaged visual check (esp. night) still outstanding.
   No manual playtest claimed.
-- **Next:** Mac Unity + packaged verification of the stacked UI (map/hangar/flights/
-  dev tools/controls), then Bailey's external playtest. Night lighting still pinned.
+- **Next — Bailey:** Mac Unity + packaged pass (map/hangar/flights/dev tools/
+  controls + dusk/night), then external playtest zip when free. Economy still
+  deferred (ADR 0045).
 
-- **2026-09-14 Cursor Dev Tools (`cursor/dev-test-tools-601f`):**
-  **Dev tools (F8)** opens a playtest panel: fleet status lines, next-event time,
-  **Auto-schedule idle player** (soak-style departures) and **Assign free stands**.
-  Mutually exclusive with Map / Hangar / Flights. Presentation only — live Adelaide
-  time stays on (no pause/skip). Stacks on the flights-board branch.
-- **Task packet / acceptance:** player-visible outcome is a gated playtest tools
-  panel; scope is airline HUD presentation; simulation invariants untouched.
-  Acceptance: F8 toggles the panel, fleet list is readable, auto-schedule books
-  idle player aircraft with soak delays, assign stands parks awaiting aircraft,
-  mutual exclusion with map/hangar/flights.
-- **Evidence:** `scripts/test-domain.sh` **192/192** on this Linux host (includes
-  DevTools helper tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
-  No manual playtest claimed.
-- **Next:** Mac Unity + packaged verification of Dev Tools (and flights/map/hangar),
-  then Bailey's external playtest when free. Night lighting remains pinned until
-  a dedicated rework.
-
-- **2026-09-14 Cursor flights board (`cursor/flights-board-601f`):**
-  **Flights (T)** opens a time-ordered board of every player and AI movement
-  (route, phase, next time). Click a row to select/follow, or open the map when
-  away. Mutually exclusive with Map (Tab) and Hangar (H). Presentation/UI only —
-  schedules, reservations, saves and airport geometry unchanged. Stacks on the
-  immersive map + hangar branch.
-- **Task packet / acceptance:** player-visible outcome is an all-flights timetable
-  board; scope is airline HUD presentation; simulation invariants untouched.
-  Acceptance: T / clock button toggles the board, rows sort by next interesting
-  time with idle aircraft last, player+AI included, click selects, mutual exclusion
-  with map/hangar, fleet and hangar still work.
-- **Evidence:** `scripts/test-domain.sh` **188/188** on this Linux host (includes
-  FlightBoard helper tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
-  No manual playtest claimed.
-- **Next:** Mac Unity + packaged verification of Flights board (and map/hangar),
-  then Bailey's external playtest when free.
-
-- **2026-09-14 Cursor immersive map + hangar (`cursor/immersive-map-hangar-601f`):**
-  the Australia destinations map now zooms and pans (scroll + drag), with a denser
-  coastline, state borders, and state/region labels that appear as you zoom in.
-  **Hangar (H)** lists every player and AI aircraft with live status and progress;
-  click a row to follow it on the field or track it on the map when away.
-  Presentation/UI only — schedules, reservations, saves and airport geometry unchanged.
-- **Evidence:** `scripts/test-domain.sh` **184/184** (map/hangar slice). Unity EditMode
-  / Mac build require Mac Unity 6.3 LTS. No manual playtest claimed.
 
 - **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
   clicking a visible aircraft on the Adelaide field selects and follows that exact

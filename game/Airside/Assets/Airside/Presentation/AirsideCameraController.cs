@@ -12,7 +12,8 @@ namespace Airside.Presentation
     public sealed class AirsideCameraController : MonoBehaviour
     {
         // Bare field: look at the runway centre from high enough to read 3100 m of asphalt.
-        private readonly Vector3 _overviewCenter = new(0f, 0f, 0f);
+        // Centred over the real field: the terminal and 12/30 lie north-east and north-west of the 05/23 midpoint.
+        private readonly Vector3 _overviewCenter = new(150f, 0f, 350f);
         private static float OverviewDistance => AirsideBareField.OverviewDistance;
         private static float OverviewFov => AirsideBareField.OverviewFov;
         private static float OverviewPitch => AirsideBareField.OverviewPitch;

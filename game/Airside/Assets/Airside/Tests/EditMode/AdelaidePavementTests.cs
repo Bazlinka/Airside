@@ -1,11 +1,19 @@
 using System;
 using Airside.Presentation;
+using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
 {
+    /// <summary>The Adelaide pavement follows the real OpenStreetMap layout (ADR 0045).</summary>
     public sealed class AdelaidePavementTests
     {
+        private static void EachPoint(float[] xz, Action<float, float> check)
+        {
+            for (var i = 0; i + 1 < xz.Length; i += 2)
+                check(xz[i], xz[i + 1]);
+        }
+
         [Test]
         public void Pavement_MainStripMatchesBareFieldMetres()
         {
@@ -13,343 +21,94 @@ namespace Airside.Tests
             Assert.That(AirsideBareField.RunwayObjectName, Is.EqualTo("Runway 05/23"));
             Assert.That(AirsideAdelaidePavement.MainLengthMetres, Is.EqualTo(3100f));
             Assert.That(AirsideAdelaidePavement.MainWidthMetres, Is.EqualTo(45f));
+            Assert.That(AdelaideLayout.MainRunwayLengthMetres, Is.EqualTo(3100f).Within(40f), "OSM agrees with the published length");
         }
 
         [Test]
-        public void Pavement_CrossStripIsPublishedTwelveThirty()
+        public void Pavement_CrossRunwayCrossesWhereItReallyDoes()
         {
             Assert.That(AirsideAdelaidePavement.CrossRunwayName, Is.EqualTo("Runway 12/30"));
             Assert.That(AirsideAdelaidePavement.CrossLengthMetres, Is.EqualTo(1652f));
-            Assert.That(AirsideAdelaidePavement.CrossWidthMetres, Is.EqualTo(45f));
-            // Not a surveyed figure — but it must stay inside the band the runway
-            // designators allow (12 → 115°–124° M against 05 → 045°–054° M).
-            Assert.That(AirsideAdelaidePavement.CrossYawDegrees, Is.InRange(61f, 79f));
+            // OSM: 12/30 (123°) against 05/23 (050°) is 73°, crossing ~377 m north-east of the midpoint.
+            Assert.That(AirsideAdelaidePavement.CrossYawDegrees, Is.EqualTo(73.2f).Within(1f));
+            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(377f, 0f), Is.True);
+            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(0f, 0f), Is.False, "12/30 does not cross at the midpoint");
+            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(20f, 1180f), Is.True, "runway 12 end is far out on the terminal side");
+            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(485f, -360f), Is.True, "runway 30 end is just across 05/23");
         }
 
         [Test]
-        public void Pavement_TaxiSkeletonHasParallelFAndDEExits()
+        public void Layout_TerminalAndAprons_AreOnTheNorthEastHalfNorthWestSide()
         {
-            Assert.That(AirsideAdelaidePavement.TaxiwayFName, Is.EqualTo("Taxiway F"));
-            Assert.That(AirsideAdelaidePavement.TaxiwayDName, Is.EqualTo("Taxiway D"));
-            Assert.That(AirsideAdelaidePavement.TaxiwayEName, Is.EqualTo("Taxiway E"));
-            Assert.That(AirsideAdelaidePavement.TaxiwayWidthMetres, Is.EqualTo(23f));
-            Assert.That(AirsideAdelaidePavement.TaxiwayFCenterZ, Is.GreaterThan(AirsideAdelaidePavement.MainHalfWidth));
-            Assert.That(AirsideAdelaidePavement.TaxiLinkLengthZ, Is.GreaterThan(20f));
-            Assert.That(AirsideAdelaidePavement.TaxiwayDCenterX, Is.GreaterThan(0f));
-            Assert.That(AirsideAdelaidePavement.TaxiwayECenterX, Is.LessThan(0f));
-        }
-
-        [Test]
-        public void Pavement_ParallelTaxiwaysMeetCodeESeparations()
-        {
-            // Runway centreline → parallel taxiway centreline, code 4E precision.
-            Assert.That(AirsideAdelaidePavement.TaxiwayFCenterZ,
-                Is.GreaterThanOrEqualTo(AirsideAdelaidePavement.CodeERunwayToTaxiwaySeparationMetres),
-                "Taxiway F must clear the code 4E runway/taxiway separation");
-
-            // And the whole sealed width must sit outside the runway strip.
-            var fInnerEdge = AirsideAdelaidePavement.TaxiwayFCenterZ
-                             - AirsideAdelaidePavement.TaxiwayHalfWidth
-                             - AirsideAdelaidePavement.TaxiSealedShoulderMetres;
-            Assert.That(fInnerEdge,
-                Is.GreaterThan(AirsideAdelaidePavement.RunwayStripHalfWidthMetres),
-                "Taxiway F pavement must not stand inside the 150 m runway strip");
-
-            // Taxiway-to-taxiway, code E.
-            var fToA = AirsideAdelaidePavement.TaxiwayACenterZ - AirsideAdelaidePavement.TaxiwayFCenterZ;
-            Assert.That(fToA,
-                Is.GreaterThanOrEqualTo(AirsideAdelaidePavement.CodeETaxiwayToTaxiwaySeparationMetres),
-                "F→A separation must clear the code E taxiway/taxiway minimum");
-        }
-
-        [Test]
-        public void Pavement_HoldShortSitsAtTheCodeEHoldingPosition()
-        {
-            var fromEdge = AirsideAdelaidePavement.HoldShortFromRunwayEdgeMetres;
-            Assert.That(fromEdge + AirsideAdelaidePavement.MainHalfWidth,
-                Is.EqualTo(AirsideAdelaidePavement.RunwayHoldingPositionFromCentrelineMetres),
-                "holding position must land 90 m from the runway centreline");
-            Assert.That(fromEdge, Is.GreaterThan(0f));
-            Assert.That(fromEdge, Is.LessThan(AirsideAdelaidePavement.TaxiLinkLengthZ),
-                "the exit link must be long enough to carry the holding position");
-        }
-
-        [Test]
-        public void Pavement_DenserSilhouetteAddsTaxiAApronsAndInnerExits()
-        {
-            Assert.That(AirsideAdelaidePavement.TaxiwayAName, Is.EqualTo("Taxiway A"));
-            Assert.That(AirsideAdelaidePavement.TaxiwayACenterZ, Is.GreaterThan(AirsideAdelaidePavement.TaxiwayFCenterZ));
-            Assert.That(AirsideAdelaidePavement.RunwayExitCenterXs.Length, Is.EqualTo(4));
-            Assert.That(AirsideAdelaidePavement.AfLinkCenterXs.Length, Is.EqualTo(4));
-            Assert.That(AirsideAdelaidePavement.ApronEntryCenterXs.Length, Is.EqualTo(3));
-            Assert.That(AirsideAdelaidePavement.ContainsTerminalApron(
-                AirsideAdelaidePavement.TerminalApronCenterX,
-                AirsideAdelaidePavement.TerminalApronCenterZ), Is.True);
-            Assert.That(AirsideAdelaidePavement.DistanceToPavement(
-                AirsideAdelaidePavement.RfdsApronCenterX,
-                AirsideAdelaidePavement.RfdsApronCenterZ), Is.EqualTo(0f));
-            // A sits on the ops plateau.
-            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
-                0f, AirsideAdelaidePavement.TaxiwayACenterZ), Is.True);
-            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
-                AirsideAdelaidePavement.TerminalApronCenterX,
-                AirsideAdelaidePavement.TerminalApronCenterZ), Is.True);
-            // Apron entries land under the terminal pad, not out in the grass.
-            foreach (var x in AirsideAdelaidePavement.ApronEntryCenterXs)
+            var main = Array.Find(AdelaideLayout.Terminals, t => t.Name.Contains("Domestic"));
+            Assert.That(main.Xz, Is.Not.Null);
+            EachPoint(main.Xz, (x, z) =>
             {
-                Assert.That(AirsideAdelaidePavement.ContainsTerminalApron(
-                    x, AirsideAdelaidePavement.TerminalApronCenterZ), Is.True,
-                    $"apron entry X={x} must meet the terminal pad");
-            }
+                Assert.That(x, Is.GreaterThan(900f), "the terminal is on the 23 half");
+                Assert.That(z, Is.GreaterThan(400f), "and north-west of the runway");
+            });
         }
 
         [Test]
-        public void Pavement_EveryStubJoinsTheSlabsItConnects()
+        public void Layout_ApronsStayClearOfTheMainRunwayStrip()
         {
-            // Each stub must span edge-to-edge with no gap and no overlap, or the
-            // silhouette shows a floating rectangle.
-            var linkSouth = AirsideAdelaidePavement.TaxiLinkCenterZ
-                            - AirsideAdelaidePavement.TaxiLinkLengthZ * 0.5f;
-            var linkNorth = AirsideAdelaidePavement.TaxiLinkCenterZ
-                            + AirsideAdelaidePavement.TaxiLinkLengthZ * 0.5f;
-            Assert.That(linkSouth, Is.EqualTo(AirsideAdelaidePavement.MainHalfWidth).Within(0.01f));
-            Assert.That(linkNorth, Is.EqualTo(
-                AirsideAdelaidePavement.TaxiwayFCenterZ - AirsideAdelaidePavement.TaxiwayHalfWidth).Within(0.01f));
-
-            var afSouth = AirsideAdelaidePavement.AfLinkCenterZ
-                          - AirsideAdelaidePavement.AfLinkLengthZ * 0.5f;
-            var afNorth = AirsideAdelaidePavement.AfLinkCenterZ
-                          + AirsideAdelaidePavement.AfLinkLengthZ * 0.5f;
-            Assert.That(afSouth, Is.EqualTo(
-                AirsideAdelaidePavement.TaxiwayFCenterZ + AirsideAdelaidePavement.TaxiwayHalfWidth).Within(0.01f));
-            Assert.That(afNorth, Is.EqualTo(
-                AirsideAdelaidePavement.TaxiwayACenterZ - AirsideAdelaidePavement.TaxiwayHalfWidth).Within(0.01f));
-
-            var entrySouth = AirsideAdelaidePavement.ApronEntryCenterZ
-                             - AirsideAdelaidePavement.ApronEntryLengthZ * 0.5f;
-            var entryNorth = AirsideAdelaidePavement.ApronEntryCenterZ
-                             + AirsideAdelaidePavement.ApronEntryLengthZ * 0.5f;
-            Assert.That(AirsideAdelaidePavement.ApronEntryLengthZ, Is.GreaterThan(0f),
-                "apron must sit north of Taxiway A or the entry stubs invert");
-            Assert.That(entrySouth, Is.EqualTo(
-                AirsideAdelaidePavement.TaxiwayACenterZ + AirsideAdelaidePavement.TaxiwayHalfWidth).Within(0.01f));
-            Assert.That(entryNorth, Is.EqualTo(
-                AirsideAdelaidePavement.TerminalApronCenterZ
-                - AirsideAdelaidePavement.TerminalApronWidthZ * 0.5f).Within(0.01f));
+            foreach (var apron in AdelaideLayout.Aprons)
+                EachPoint(apron.Xz, (x, z) =>
+                    Assert.That(Math.Abs(z), Is.GreaterThan(AirsideAdelaidePavement.RunwayStripHalfWidthMetres), apron.Name));
         }
 
         [Test]
-        public void Pavement_ApronsStayClearOfBothRunways()
+        public void Layout_RoutesStayOnPavementAndOnThePlateau()
         {
-            var terminalClear = AirsideAdelaidePavement.TerminalApronClearanceFromRunways(5f);
-            Assert.That(terminalClear, Is.GreaterThanOrEqualTo(
-                AirsideAdelaidePavement.ApronRunwayClearanceMetres),
-                "terminal apron must not intersect 05/23 or 12/30");
-
-            var rfdsClear = AirsideAdelaidePavement.RfdsApronClearanceFromRunways(5f);
-            Assert.That(rfdsClear, Is.GreaterThanOrEqualTo(
-                AirsideAdelaidePavement.ApronRunwayClearanceMetres),
-                "RFDS apron must not intersect 05/23 or 12/30");
-
-            // Spot-check: no sampled apron point may lie on either strip.
-            Assert.That(AirsideAdelaidePavement.ContainsAnyRunway(
-                AirsideAdelaidePavement.TerminalApronCenterX,
-                AirsideAdelaidePavement.TerminalApronCenterZ), Is.False);
-            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(
-                AirsideAdelaidePavement.TerminalApronCenterX + AirsideAdelaidePavement.TerminalApronLengthX * 0.5f,
-                AirsideAdelaidePavement.TerminalApronCenterZ), Is.False);
-        }
-
-        [Test]
-        public void Pavement_ApronsStayOutOfTheProtectedRunwayStrips()
-        {
-            Assert.That(AirsideAdelaidePavement.TerminalApronClearanceFromRunwayStrips(5f),
-                Is.GreaterThan(0f),
-                "terminal apron must stand outside the 150 m runway strip");
-            Assert.That(AirsideAdelaidePavement.RfdsApronClearanceFromRunwayStrips(5f),
-                Is.GreaterThan(0f),
-                "RFDS apron must stand outside the 150 m runway strip");
-        }
-
-        [Test]
-        public void Pavement_FilletsSmoothTJunctionsAtCodeCERadius()
-        {
-            Assert.That(AirsideAdelaidePavement.TaxiFilletRadiusMetres, Is.EqualTo(42f));
-            Assert.That(AirsideAdelaidePavement.TaxiSealedShoulderMetres, Is.EqualTo(3.5f));
-            var fillets = AirsideAdelaidePavement.AllFillets();
-            // 4 runway exits × 4 + 4 A–F links × 4 + 3 apron entries × 4 + 4 end caps + crossing.
-            Assert.That(fillets.Length, Is.EqualTo(49));
-
-            var hw = AirsideAdelaidePavement.TaxiwayHalfWidth;
-            var dX = AirsideAdelaidePavement.TaxiwayDCenterX;
-            var fZ = AirsideAdelaidePavement.TaxiwayFCenterZ;
-
-            // Just inside the corner: a real fillet fills this.
-            var nearX = dX - hw - 5f;
-            var nearZ = fZ - hw - 5f;
-            Assert.That(AirsideAdelaidePavement.ContainsFillet(nearX, nearZ), Is.True,
-                "fillet must fill the tight part of the re-entrant corner");
-            Assert.That(AirsideAdelaidePavement.DistanceToPavement(nearX, nearZ), Is.EqualTo(0f));
-
-            // The far diagonal of the corner square is *rounded away* by a real
-            // fillet. A quarter-disk centred on the corner would wrongly cover it.
-            var r = AirsideAdelaidePavement.TaxiFilletRadiusMetres;
-            var farX = dX - hw - r * 0.5f;
-            var farZ = fZ - hw - r * 0.5f;
-            Assert.That(AirsideAdelaidePavement.ContainsFillet(farX, farZ), Is.False,
-                "fillet must be concave — the corner diagonal is rounded away, not filled");
-
-            Assert.That(AirsideAdelaidePavement.DistanceToPavement(0f, 1400f), Is.GreaterThan(50f));
-        }
-
-        [Test]
-        public void Pavement_FilletsDoNotSwallowTheStubsTheySmooth()
-        {
-            // The bug this guards: quarter-disk "fillets" centred on each corner
-            // widened every 23 m stub into an 80–107 m blob over its whole length.
-            var nominal = AirsideAdelaidePavement.TaxiwayWidthMetres;
-            var shoulders = nominal + 2f * AirsideAdelaidePavement.TaxiSealedShoulderMetres;
-
-            void AssertStubStaysNarrow(string what, float stubX, float fromZ, float toZ)
-            {
-                var span = toZ - fromZ;
-
-                // At mid-span a stub must be exactly its sealed width. The old
-                // quarter-disk fillets made this 80.7 m on a 23 m taxiway.
-                var mid = 2f * AirsideAdelaidePavement.PavementHalfWidthAcrossStub(
-                    stubX, fromZ + span * 0.5f);
-                Assert.That(mid, Is.LessThanOrEqualTo(shoulders + 1f),
-                    $"{what} is {mid:0.0} m wide at mid-span; sealed width is {shoulders} m");
-
-                // Across the middle 60% the flare must stay modest — the ends are
-                // where a fillet is allowed to open out.
-                var a = fromZ + span * 0.2f;
-                var b = toZ - span * 0.2f;
-                for (var z = a; z <= b; z += Math.Max(1f, span * 0.05f))
+            void OnPavement(float[] route, string name) =>
+                EachPoint(route, (x, z) =>
                 {
-                    var width = 2f * AirsideAdelaidePavement.PavementHalfWidthAcrossStub(stubX, z);
-                    Assert.That(width, Is.LessThanOrEqualTo(shoulders + 16f),
-                        $"{what} at Z={z:0.0} is {width:0.0} m wide; nominal is {nominal} m");
-                }
-            }
+                    Assert.That(AirsideAdelaidePavement.DistanceToPavement(x, z), Is.LessThan(6f),
+                        $"{name} leaves the pavement at ({x:0},{z:0})");
+                    Assert.That(AirsideAdelaideGround.IsOperationallyFlat(x, z), Is.True, $"{name} at ({x:0},{z:0}) is off the plateau");
+                });
 
-            var linkS = AirsideAdelaidePavement.TaxiLinkCenterZ
-                        - AirsideAdelaidePavement.TaxiLinkLengthZ * 0.5f;
-            var linkN = AirsideAdelaidePavement.TaxiLinkCenterZ
-                        + AirsideAdelaidePavement.TaxiLinkLengthZ * 0.5f;
-            AssertStubStaysNarrow("runway exit link", AirsideAdelaidePavement.TaxiwayDCenterX, linkS, linkN);
-
-            var afS = AirsideAdelaidePavement.AfLinkCenterZ
-                      - AirsideAdelaidePavement.AfLinkLengthZ * 0.5f;
-            var afN = AirsideAdelaidePavement.AfLinkCenterZ
-                      + AirsideAdelaidePavement.AfLinkLengthZ * 0.5f;
-            AssertStubStaysNarrow("A–F link", AirsideAdelaidePavement.AfLinkCenterXs[0], afS, afN);
-
-            var apS = AirsideAdelaidePavement.ApronEntryCenterZ
-                      - AirsideAdelaidePavement.ApronEntryLengthZ * 0.5f;
-            var apN = AirsideAdelaidePavement.ApronEntryCenterZ
-                      + AirsideAdelaidePavement.ApronEntryLengthZ * 0.5f;
-            AssertStubStaysNarrow("apron entry", AirsideAdelaidePavement.ApronEntryCenterXs[0], apS, apN);
-        }
-
-        [Test]
-        public void Pavement_FilletRadiusNeverOutrunsTheStub()
-        {
-            Assert.That(
-                AirsideAdelaidePavement.ClampFilletRadius(42f, 20f),
-                Is.EqualTo(18f).Within(0.001f),
-                "a fillet may not reach further than the stub is long");
-            Assert.That(
-                AirsideAdelaidePavement.ClampFilletRadius(42f, 1000f),
-                Is.EqualTo(42f),
-                "a stub with room keeps the nominal Code C/E radius");
-        }
-
-        [Test]
-        public void Pavement_CornerFilletIsTangentToBothEdges()
-        {
-            var r = 40f;
-            // Corner at the origin opening into the north-east quadrant.
-            var f = new AirsideAdelaidePavement.FilletSpec(
-                PavementArcKind.CornerFillet, 0f, 0f, r, 0f, (float)Math.PI * 0.5f);
-
-            Assert.That(f.OutwardX, Is.EqualTo(1f));
-            Assert.That(f.OutwardZ, Is.EqualTo(1f));
-            Assert.That(f.ArcCenterX, Is.EqualTo(r));
-            Assert.That(f.ArcCenterZ, Is.EqualTo(r));
-
-            // The arc runs from (r, 0) to (0, r), touching each edge exactly once.
-            // Along the edges themselves the fillet reaches the full radius...
-            Assert.That(f.Contains(r - 0.05f, 0f), Is.True, "fillet reaches r along the X edge");
-            Assert.That(f.Contains(0f, r - 0.05f), Is.True, "fillet reaches r along the Z edge");
-            // ...but it pinches to nothing there, because the arc is tangent. A
-            // quarter-disk centred on the corner would still be 40 m thick here.
-            Assert.That(f.Contains(r - 0.05f, 0.05f), Is.False,
-                "the fillet must be tangent to the X edge, not cross it");
-            Assert.That(f.Contains(0.05f, r - 0.05f), Is.False,
-                "the fillet must be tangent to the Z edge, not cross it");
-            // Corner itself is filled.
-            Assert.That(f.Contains(0.5f, 0.5f), Is.True);
-            // The rounded-away diagonal is not.
-            Assert.That(f.Contains(r * 0.5f, r * 0.5f), Is.False);
-            // Nothing outside the quadrant square.
-            Assert.That(f.Contains(r + 5f, 1f), Is.False);
-            Assert.That(f.Contains(-5f, 1f), Is.False);
-
-            // Distance is 0 inside and grows outside.
-            Assert.That(f.DistanceTo(0.5f, 0.5f), Is.EqualTo(0f));
-            Assert.That(f.DistanceTo(r * 0.5f, r * 0.5f), Is.GreaterThan(0f));
-        }
-
-        [Test]
-        public void Pavement_AllFilletsIsCachedNotReallocated()
-        {
-            // Called once per ground-mesh vertex — must not allocate each time.
-            Assert.That(AirsideAdelaidePavement.AllFillets(),
-                Is.SameAs(AirsideAdelaidePavement.AllFillets()));
-        }
-
-        [Test]
-        public void Pavement_CrossRunwayFootprintCoversIntersectionAndEnds()
-        {
-            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(0f, 0f), Is.True);
-            var yaw = AirsideAdelaidePavement.CrossYawRadians;
-            var along = 800f;
-            var x = along * (float)Math.Cos(yaw);
-            var z = along * (float)Math.Sin(yaw);
-            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(x, z), Is.True);
-            Assert.That(AirsideAdelaidePavement.ContainsCrossRunway(x * 1.2f, z * 1.2f), Is.False);
-        }
-
-        [Test]
-        public void Pavement_PlateauCoversCrossStripTaxiAndAprons()
-        {
-            Assert.That(AirsideAdelaideGround.PlateauMaxZ,
-                Is.EqualTo(AirsideAdelaidePavement.PlateauHalfZ));
-            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(0f, AirsideAdelaidePavement.TaxiwayFCenterZ),
-                Is.True);
-            var yaw = AirsideAdelaidePavement.CrossYawRadians;
-            var tipX = AirsideAdelaidePavement.CrossHalfLength * (float)Math.Cos(yaw);
-            var tipZ = AirsideAdelaidePavement.CrossHalfLength * (float)Math.Sin(yaw);
-            Assert.That(AirsideAdelaideGround.IsOperationallyFlat(tipX, tipZ), Is.True,
-                "12/30 tip must sit on the dead-level ops plateau");
-
-            // Both apron pads, all four corners, must be dead level too.
-            foreach (var sx in new[] { -1f, 1f })
-            foreach (var sz in new[] { -1f, 1f })
+            OnPavement(AdelaideLayout.Vacate, "vacate");
+            OnPavement(AdelaideLayout.Lineup, "lineup");
+            foreach (var bay in AdelaideLayout.Bays)
             {
-                Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
-                        AirsideAdelaidePavement.TerminalApronCenterX
-                        + sx * AirsideAdelaidePavement.TerminalApronLengthX * 0.5f,
-                        AirsideAdelaidePavement.TerminalApronCenterZ
-                        + sz * AirsideAdelaidePavement.TerminalApronWidthZ * 0.5f),
-                    Is.True, "terminal apron corner must sit on the ops plateau");
-                Assert.That(AirsideAdelaideGround.IsOperationallyFlat(
-                        AirsideAdelaidePavement.RfdsApronCenterX
-                        + sx * AirsideAdelaidePavement.RfdsApronLengthX * 0.5f,
-                        AirsideAdelaidePavement.RfdsApronCenterZ
-                        + sz * AirsideAdelaidePavement.RfdsApronWidthZ * 0.5f),
-                    Is.True, "RFDS apron corner must sit on the ops plateau");
+                OnPavement(bay.TaxiIn, $"taxi-in {bay.Id}");
+                OnPavement(bay.Pushback, $"pushback {bay.Id}");
+                OnPavement(bay.TaxiOut, $"taxi-out {bay.Id}");
+            }
+        }
+
+        [Test]
+        public void Layout_RoutesJoinUpEndToEnd()
+        {
+            float[] First(float[] r) => new[] { r[0], r[1] };
+            float[] Last(float[] r) => new[] { r[r.Length - 2], r[r.Length - 1] };
+            void Near(float[] a, float[] b, string what) =>
+                Assert.That(Math.Sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])), Is.LessThan(1.5), what);
+
+            Near(First(AdelaideLayout.Vacate), new[] { AdelaideLayout.RolloutEndX, 0f }, "vacate starts where the landing rolls out");
+            Near(Last(AdelaideLayout.Vacate), AdelaideLayout.E2Hold, "vacate ends at the E2 holding point");
+            Near(First(AdelaideLayout.Lineup), AdelaideLayout.Runway05Hold, "lineup starts at the 05 holding point");
+            Near(Last(AdelaideLayout.Lineup), new[] { AdelaideLayout.TakeoffStartX, 0f }, "lineup ends at the takeoff start");
+            foreach (var bay in AdelaideLayout.Bays)
+            {
+                Near(First(bay.TaxiIn), AdelaideLayout.E2Hold, $"{bay.Id} taxi-in starts at E2");
+                Near(Last(bay.TaxiIn), new[] { bay.StopX, bay.StopZ }, $"{bay.Id} taxi-in ends on the stand");
+                Near(First(bay.Pushback), new[] { bay.StopX, bay.StopZ }, $"{bay.Id} pushback starts on the stand");
+                Near(Last(bay.Pushback), First(bay.TaxiOut), $"{bay.Id} taxi-out starts where the pushback ends");
+                Near(Last(bay.TaxiOut), AdelaideLayout.Runway05Hold, $"{bay.Id} taxi-out ends at the 05 holding point");
+            }
+        }
+
+        [Test]
+        public void Layout_BaysAreFarEnoughApartForAnAtr()
+        {
+            var bays = AdelaideLayout.Bays;
+            for (var i = 0; i < bays.Length; i++)
+            for (var j = i + 1; j < bays.Length; j++)
+            {
+                var d = Math.Sqrt(Math.Pow(bays[i].StopX - bays[j].StopX, 2) + Math.Pow(bays[i].StopZ - bays[j].StopZ, 2));
+                Assert.That(d, Is.GreaterThan(30.0), $"{bays[i].Reference} and {bays[j].Reference} (ATR span 24.6 m)");
             }
         }
 
@@ -424,8 +183,8 @@ namespace Airside.Tests
         [Test]
         public void Perimeter_MatchesPublishedSiteRectangleAndGatePattern()
         {
-            Assert.That(AirsideAdelaidePerimeter.HalfX, Is.EqualTo(1700f));
-            Assert.That(AirsideAdelaidePerimeter.HalfZ, Is.EqualTo(1154.5f));
+            Assert.That(AirsideAdelaidePerimeter.HalfX, Is.EqualTo(AirsideBareField.GroundLengthMetres * 0.5f));
+            Assert.That(AirsideAdelaidePerimeter.HalfZ, Is.EqualTo(AirsideBareField.GroundWidthMetres * 0.5f));
             Assert.That(AirsideAdelaidePerimeter.FenceHeightMetres, Is.EqualTo(2.44f));
             Assert.That(AirsideAdelaidePerimeter.VehicleGates.Length, Is.EqualTo(3));
             Assert.That(AirsideAdelaidePerimeter.IsInsideFence(0f, 0f), Is.True);

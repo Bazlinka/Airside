@@ -107,3 +107,11 @@ Bailey: "I want time to be accurate of real time… accurate live time", choosin
 epoch, shown in Adelaide local time. Pause, rates and skip are removed; catch-up on
 Continue is simply aligning to now (capped at a week). Supersedes the 10×–60× and
 skip decisions above.
+
+## Real YPAD layout (2026-09-14)
+
+Bailey: "use the real OSM layout and wire it in". OpenStreetMap geometry (ODbL,
+`scripts/generate-ypad-layout.py` → `AdelaideLayout`) is the single source for the
+airside: pavement, holding points, bays 50A–50D and baked routes. Ground timing is a
+speed profile over those routes (15 kt taxi, 2 kt pushback, radius-limited turns),
+replacing picked constants. Departures start at the 05 threshold.

@@ -743,7 +743,7 @@ namespace Airside.Presentation
 
                     y += 64f;
                     var departAt = _clock.Now.Advance(DepartureOffsets[_departureOffsetChoice].seconds);
-                    var back = departAt.ElapsedSeconds + AirlineOperations.TaxiOutSeconds + AirlineOperations.TakeoffRunwaySeconds
+                    var back = departAt.ElapsedSeconds + AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand) + AirlineOperations.TakeoffRunwaySeconds
                                + airborne * 2 + AirlineOperations.DestinationTurnaroundSeconds;
                     GUI.Label(new Rect(rect.x, y, rect.width, 40f),
                         $"Departs {ClockText(departAt)} · back about {ClockText(new SimulationTime(back))}", small);

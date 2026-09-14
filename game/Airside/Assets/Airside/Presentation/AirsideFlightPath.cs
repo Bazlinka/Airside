@@ -60,7 +60,9 @@ namespace Airside.Presentation
 
         /// <summary>No taxi line-up. Takeoff begins on the centreline.</summary>
         public const float LineupProgress = 0f;
-        public static float LineupEndX => RolloutEndX;
+        /// <summary>Runway 05 takeoff start at the threshold (real YPAD layout).</summary>
+        public static float TakeoffStartX => CircuitProfile.TakeoffStartX;
+        public static float LineupEndX => TakeoffStartX;
         public static float HoldShortX => RolloutEndX;
         public const float HoldShortZ = 0f;
 
@@ -182,7 +184,17 @@ namespace Airside.Presentation
         /// Ground roll to Vr, then rotate and climb away. The roll is a genuine
         /// 900 m acceleration to 100 kt rather than the 179 kt it used to reach.
         /// </summary>
-        public static Vector3 Takeoff(float t)
+        /// <summary>
+        /// The demo circuit takes off from where it stopped; fleet departures from the
+        /// real 05 threshold. Same distances either way — only the whole curve moves.
+        /// </summary>
+        public static float CircuitTakeoffOffsetX => RolloutEndX - TakeoffStartX;
+
+        public static Vector3 Takeoff(float t) => Takeoff(t, CircuitTakeoffOffsetX);
+
+        public static Vector3 Takeoff(float t, float offsetX) => TakeoffAtThreshold(t) + new Vector3(offsetX, 0f, 0f);
+
+        private static Vector3 TakeoffAtThreshold(float t)
         {
             var u = Mathf.Clamp01(t);
             var vRotate = Mps(CircuitProfile.RotateKnots);
@@ -191,7 +203,7 @@ namespace Airside.Presentation
             if (u < RotateProgress)
             {
                 var f = Local(u, 0f, RotateProgress);
-                var x = Mathf.Lerp(RolloutEndX, RotateX, DistanceFraction(f, 0f, vRotate));
+                var x = Mathf.Lerp(TakeoffStartX, RotateX, DistanceFraction(f, 0f, vRotate));
                 return new Vector3(x, GroundY, 0f);
             }
 
@@ -207,7 +219,11 @@ namespace Airside.Presentation
         }
 
         /// <summary>Accelerating climb-out to 170 kt until the slot recycles off-field.</summary>
-        public static Vector3 Departed(float t)
+        public static Vector3 Departed(float t) => Departed(t, CircuitTakeoffOffsetX);
+
+        public static Vector3 Departed(float t, float offsetX) => DepartedAtThreshold(t) + new Vector3(offsetX, 0f, 0f);
+
+        private static Vector3 DepartedAtThreshold(float t)
         {
             var s = DistanceFraction(t, Mps(CircuitProfile.InitialClimbKnots), Mps(CircuitProfile.ClimbOutKnots));
             return new Vector3(

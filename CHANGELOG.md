@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **The real Adelaide Airport layout is in the game.** Taxiways, aprons, holding
+  points and terminal footprints now come from OpenStreetMap, 12/30 crosses where it
+  really does, and aircraft use real regional bays 50A–50D. Pushback is a tail-first
+  curve, taxi turns slow down with the radius, and every ground time comes from real
+  route lengths at ATR speeds (15 kt taxi, 2 kt pushback). Departures roll from the
+  runway 05 threshold.
 - **Click and drag to move around.** Left-drag pans the camera across the field;
   clicks on HUD panels and plain clicks are unaffected.
 

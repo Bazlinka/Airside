@@ -53,6 +53,8 @@ namespace Airside.Simulation
         {
             var start = aircraft.StateStartedAt;
             var elapsed = now.ElapsedSeconds - start.ElapsedSeconds;
+            // Taxi legs last as long as the state the simulation gave them.
+            var stateSeconds = aircraft.StateEndsAt.HasValue ? aircraft.StateEndsAt.Value.ElapsedSeconds - start.ElapsedSeconds : 0;
 
             switch (aircraft.State)
             {
@@ -60,7 +62,7 @@ namespace Airside.Simulation
                     return Ground(AircraftPhase.AtStand, start, FleetGroundLeg.Parked, start, 0);
 
                 case FleetState.TaxiOut:
-                    return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.TaxiOut, start, AirlineOperations.TaxiOutSeconds);
+                    return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.TaxiOut, start, stateSeconds);
 
                 case FleetState.HoldingShort:
                     return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.HoldingShort, start, 0);
@@ -91,7 +93,7 @@ namespace Airside.Simulation
                     return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.AwaitingStand, start, 0);
 
                 case FleetState.TaxiIn:
-                    return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.TaxiIn, start, AirlineOperations.TaxiInSeconds);
+                    return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.TaxiIn, start, stateSeconds);
 
                 default:
                     // Away, turning around at the destination, or holding in the circuit

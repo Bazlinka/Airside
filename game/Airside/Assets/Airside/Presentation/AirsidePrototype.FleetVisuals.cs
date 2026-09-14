@@ -6,141 +6,19 @@ using UnityEngine;
 
 namespace Airside.Presentation
 {
-    /// <summary>
-    /// Adelaide ground movement for the airline fleets (ADR 0045): terminal apron
-    /// bays, and the taxi, lineup and vacate routes between them and runway 05/23 on
-    /// the real pavement layout. Pure geometry — no scene objects.
-    /// </summary>
-    public static class FleetGroundRoutes
-    {
-        private static float Y => AirsideFlightPath.GroundY;
-
-        /// <summary>Runway exit E2, used both to enter for departure and to vacate.</summary>
-        public const float ExitX = AirsideAdelaidePavement.TaxiwayE2CenterX;
-
-        /// <summary>The A↔F connector and terminal apron entry share this station.</summary>
-        public const float LinkX = -300f;
-
-        public const float HoldZ = AirsideAdelaidePavement.RunwayHoldingPositionFromCentrelineMetres;
-        public const float TaxiwayFZ = AirsideAdelaidePavement.TaxiwayFCenterZ;
-        public const float TaxiwayAZ = AirsideAdelaidePavement.TaxiwayACenterZ;
-
-        /// <summary>Apron taxilane along the south of the bays, and the bay centreline row.</summary>
-        public const float ApronLaneZ = 405f;
-        public const float BayZ = 470f;
-
-        /// <summary>Awaiting-stand spots queue west along Taxiway F from here.</summary>
-        public const float AwaitingFirstX = -700f;
-        public const float AwaitingSpacing = 60f;
-
-        private static readonly float[] BayXs = { -950f, -800f, -650f, -500f };
-
-        public static Vector3 Bay(string standId)
-        {
-            var index = 0;
-            if (standId != null && standId.StartsWith("BAY-", StringComparison.Ordinal)
-                && int.TryParse(standId.Substring(4), out var number))
-                index = Mathf.Clamp(number - 1, 0, BayXs.Length - 1);
-            return new Vector3(BayXs[index], Y, BayZ);
-        }
-
-        public static Vector3 HoldingPoint => new(ExitX, Y, HoldZ);
-
-        public static Vector3 AwaitingSpot(int slot) =>
-            new(AwaitingFirstX - AwaitingSpacing * Mathf.Max(0, slot), Y, TaxiwayFZ);
-
-        /// <summary>Stand → holding point. The first leg is the pushback, drawn tail-first.</summary>
-        public static Vector3[] TaxiOut(string standId)
-        {
-            var bay = Bay(standId);
-            return new[]
-            {
-                bay,
-                new Vector3(bay.x, Y, ApronLaneZ),
-                new Vector3(LinkX, Y, ApronLaneZ),
-                new Vector3(LinkX, Y, TaxiwayAZ),
-                new Vector3(LinkX, Y, TaxiwayFZ),
-                new Vector3(ExitX, Y, TaxiwayFZ),
-                HoldingPoint
-            };
-        }
-
-        /// <summary>Holding point → runway, then backtrack to where the takeoff roll starts.</summary>
-        public static Vector3[] Lineup() => new[]
-        {
-            HoldingPoint,
-            new Vector3(ExitX, Y, 0f),
-            AirsideFlightPath.OnRunwayHold()
-        };
-
-        /// <summary>Rollout end → backtrack to E2 → clear onto F → queue for a stand.</summary>
-        public static Vector3[] Vacate(int awaitingSlot) => new[]
-        {
-            AirsideFlightPath.OnRunwayHold(),
-            new Vector3(ExitX, Y, 0f),
-            HoldingPoint,
-            new Vector3(ExitX, Y, TaxiwayFZ),
-            AwaitingSpot(awaitingSlot)
-        };
-
-        public static Vector3[] TaxiIn(int awaitingSlot, string standId)
-        {
-            var bay = Bay(standId);
-            return new[]
-            {
-                AwaitingSpot(awaitingSlot),
-                new Vector3(LinkX, Y, TaxiwayFZ),
-                new Vector3(LinkX, Y, TaxiwayAZ),
-                new Vector3(LinkX, Y, ApronLaneZ),
-                new Vector3(bay.x, Y, ApronLaneZ),
-                bay
-            };
-        }
-
-        /// <summary>Point at <paramref name="t"/> (0..1) of the route's length, and the segment it is on.</summary>
-        public static Vector3 Sample(Vector3[] route, float t, out int segment)
-        {
-            segment = 0;
-            if (route == null || route.Length == 0)
-                return Vector3.zero;
-            if (route.Length == 1)
-                return route[0];
-
-            var total = 0f;
-            for (var i = 1; i < route.Length; i++)
-                total += Vector3.Distance(route[i - 1], route[i]);
-            var target = Mathf.Clamp01(t) * total;
-
-            for (var i = 1; i < route.Length; i++)
-            {
-                var length = Vector3.Distance(route[i - 1], route[i]);
-                if (target <= length || i == route.Length - 1)
-                {
-                    segment = i - 1;
-                    return length <= 0f ? route[i] : Vector3.Lerp(route[i - 1], route[i], Mathf.Clamp01(target / length));
-                }
-
-                target -= length;
-            }
-
-            return route[route.Length - 1];
-        }
-    }
-
     public sealed partial class AirsidePrototype
     {
         private const string EmuAirDecal = "Textures/Decals/dc_livery_emu_air_v01.png";
         private const string PlayerDecalTemplate = "Textures/Decals/dc_livery_airside_traffic_v01.png";
 
-        /// <summary>Minimum look-ahead along a taxi route, so the nose points down it at walking pace.</summary>
-        private const float GroundLookAheadSeconds = 1.5f;
-
         private readonly List<CommercialFlight> _fleetFlights = new();
         private readonly Dictionary<string, CommercialFlight> _fleetFlightById = new();
         private readonly Dictionary<string, FleetAircraft> _fleetAircraftById = new();
-        private readonly Dictionary<string, int> _awaitingSlot = new();
         private readonly Dictionary<string, Texture2D> _tintedDecals = new();
         private string _fleetFollowSignature;
+
+        /// <summary>Fleet departures roll from the real 05 threshold; the demo circuit from where it stopped.</summary>
+        private float TakeoffOffsetX => FleetMode ? 0f : AirsideFlightPath.CircuitTakeoffOffsetX;
 
         /// <summary>Once an airline is running, the fleets replace the demo circuit on the field.</summary>
         private bool FleetMode => _operations != null;
@@ -173,7 +51,6 @@ namespace Airside.Presentation
                 var id = aircraft.Registration;
                 _fleetAircraftById[id] = aircraft;
                 var visual = FleetVisual.For(aircraft, now);
-                UpdateAwaitingSlot(aircraft, visual);
 
                 if (!_fleetFlightById.TryGetValue(id, out var flight))
                 {
@@ -187,29 +64,6 @@ namespace Airside.Presentation
 
                 _fleetFlights.Add(flight);
             }
-        }
-
-        /// <summary>
-        /// Awaiting-stand spots are held from the moment an arrival starts to vacate
-        /// until it parks, so a queue moving up never makes an aircraft jump.
-        /// </summary>
-        private void UpdateAwaitingSlot(FleetAircraft aircraft, FleetVisual visual)
-        {
-            var id = aircraft.Registration;
-            var needsSlot = visual.Leg is FleetGroundLeg.Vacate or FleetGroundLeg.AwaitingStand or FleetGroundLeg.TaxiIn;
-            if (!needsSlot)
-            {
-                _awaitingSlot.Remove(id);
-                return;
-            }
-
-            if (_awaitingSlot.ContainsKey(id))
-                return;
-
-            var slot = 0;
-            while (_awaitingSlot.ContainsValue(slot))
-                slot++;
-            _awaitingSlot[id] = slot;
         }
 
         /// <summary>Engine start/shutdown state for a fleet aircraft; null for the demo circuit.</summary>
@@ -232,24 +86,55 @@ namespace Airside.Presentation
             return visual.Visible && visual.Leg != FleetGroundLeg.None;
         }
 
-        /// <summary>Eased 0..1 through the current ground leg, read at the fractional presentation clock.</summary>
-        private float FleetLegProgress(FleetVisual visual, float lookAheadSeconds)
+        /// <summary>
+        /// The real Adelaide ground leg a fleet aircraft is on (ADR 0045), and the time into
+        /// it at the fractional presentation clock. A leg the simulation timed differently
+        /// (an older save) is stretched to fit, so the aircraft still arrives on time.
+        /// </summary>
+        private GroundPose FleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
         {
-            if (visual.LegSeconds <= 0)
-                return visual.Leg == FleetGroundLeg.HoldingShort ? 1f : 0f;
-
-            var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
-            var linear = Mathf.Clamp01((float)(elapsed / visual.LegSeconds));
-            return Mathf.SmoothStep(0f, 1f, linear);
+            switch (visual.Leg)
+            {
+                case FleetGroundLeg.Parked:
+                {
+                    var bay = AdelaideGround.Bay(aircraft.Stand);
+                    var heading = bay.HeadingDegrees * Mathf.Deg2Rad;
+                    return new GroundPose(bay.StopX, bay.StopZ, Mathf.Sin(heading), Mathf.Cos(heading), 0f, false);
+                }
+                case FleetGroundLeg.HoldingShort:
+                {
+                    var leg = AdelaideGround.TaxiOut(aircraft.DepartureStand);
+                    var end = leg.PoseAt(leg.Seconds);
+                    return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
+                }
+                case FleetGroundLeg.AwaitingStand:
+                    return AdelaideGround.AwaitingPose(0);
+                default:
+                {
+                    var leg = visual.Leg switch
+                    {
+                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand),
+                        FleetGroundLeg.Lineup => AdelaideGround.Lineup,
+                        FleetGroundLeg.Vacate => AdelaideGround.Vacate,
+                        _ => AdelaideGround.TaxiIn(aircraft.Stand)
+                    };
+                    var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
+                    var scale = visual.LegSeconds > 0 ? leg.Seconds / visual.LegSeconds : 1.0;
+                    return leg.PoseAt(elapsed * scale);
+                }
+            }
         }
 
-        /// <summary>Ground-leg progress in place of circuit phase progress; false for airborne phases.</summary>
+        /// <summary>0..1 through the current ground leg, in place of circuit phase progress; false when airborne.</summary>
         private bool TryFleetGroundProgress(CommercialFlight flight, float lookAheadSeconds, out float progress)
         {
             progress = 0f;
             if (!TryFleetGround(flight, out _, out var visual))
                 return false;
-            progress = FleetLegProgress(visual, lookAheadSeconds);
+            if (visual.LegSeconds > 0)
+                progress = Mathf.Clamp01((float)((_preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds) / visual.LegSeconds));
+            else
+                progress = visual.Leg == FleetGroundLeg.HoldingShort ? 1f : 0f;
             return true;
         }
 
@@ -258,55 +143,26 @@ namespace Airside.Presentation
         {
             if (!TryFleetGround(flight, out var aircraft, out var visual))
                 return null;
-
-            if (lookAheadSeconds > 0f)
-                lookAheadSeconds = Mathf.Max(lookAheadSeconds, GroundLookAheadSeconds);
-            var t = FleetLegProgress(visual, lookAheadSeconds);
-            return FleetGroundRoutes.Sample(RouteFor(aircraft, visual), t, out _);
+            var pose = FleetGroundPose(aircraft, visual, lookAheadSeconds);
+            return new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
         }
 
-        /// <summary>
-        /// Heading for a ground leg: tail-first on the pushback, and a fixed facing
-        /// while parked or waiting so the aircraft never spins on the spot.
-        /// </summary>
+        /// <summary>Ground speed on the Adelaide routes in m/s, or null when the circuit path applies.</summary>
+        private float? FleetGroundSpeed(CommercialFlight flight)
+        {
+            if (!TryFleetGround(flight, out var aircraft, out var visual))
+                return null;
+            return FleetGroundPose(aircraft, visual, 0f).Speed;
+        }
+
+        /// <summary>Where the nose points on a ground leg — tail-first on the pushback, parked heading at the bay.</summary>
         private Vector3 FleetGroundFacing(CommercialFlight flight, Vector3 travel)
         {
             if (!TryFleetGround(flight, out var aircraft, out var visual))
                 return travel;
-
-            switch (visual.Leg)
-            {
-                case FleetGroundLeg.Parked:
-                    return Vector3.forward;
-                case FleetGroundLeg.HoldingShort:
-                    return Vector3.back;
-                case FleetGroundLeg.AwaitingStand:
-                    return Vector3.left;
-                case FleetGroundLeg.TaxiOut:
-                    FleetGroundRoutes.Sample(RouteFor(aircraft, visual), FleetLegProgress(visual, 0f), out var segment);
-                    return segment == 0 ? -travel : travel;
-                default:
-                    return travel;
-            }
+            var pose = FleetGroundPose(aircraft, visual, 0f);
+            return new Vector3(pose.NoseX, 0f, pose.NoseZ);
         }
-
-        private Vector3[] RouteFor(FleetAircraft aircraft, FleetVisual visual)
-        {
-            _awaitingSlot.TryGetValue(aircraft.Registration, out var slot);
-            var stand = aircraft.Stand.Value;
-            return visual.Leg switch
-            {
-                FleetGroundLeg.Parked => new[] { FleetGroundRoutes.Bay(stand) },
-                FleetGroundLeg.TaxiOut => FleetGroundRoutes.TaxiOut(aircraft.DepartureStand.Value),
-                FleetGroundLeg.HoldingShort => new[] { FleetGroundRoutes.HoldingPoint },
-                FleetGroundLeg.Lineup => FleetGroundRoutes.Lineup(),
-                FleetGroundLeg.Vacate => FleetGroundRoutes.Vacate(slot),
-                FleetGroundLeg.AwaitingStand => new[] { FleetGroundRoutes.AwaitingSpot(slot) },
-                FleetGroundLeg.TaxiIn => FleetGroundRoutes.TaxiIn(slot, stand),
-                _ => new[] { AirsideFlightPath.OnRunwayHold() }
-            };
-        }
-
 
         // ---- Aircraft models --------------------------------------------------------
 

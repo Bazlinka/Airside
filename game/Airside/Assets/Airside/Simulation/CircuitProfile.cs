@@ -81,9 +81,17 @@ namespace Airside.Simulation
         /// <summary>Rollout end, still on the 3 100 m strip.</summary>
         public const float RolloutEndX = -200f;
 
-        public const float RotateX = 700f;
-        public const float TakeoffEndX = 1650f;
-        public const float DepartedEndX = 4000f;
+        /// <summary>
+        /// Where a runway 05 departure is lined up and starts its roll: just past the
+        /// threshold, entered from the F6 holding point (real YPAD layout). The roll,
+        /// initial climb and climb-out distances are unchanged from the mid-field start
+        /// they replaced; only the start moved.
+        /// </summary>
+        public const float TakeoffStartX = AdelaideLayout.TakeoffStartX;
+
+        public const float RotateX = TakeoffStartX + 900f;
+        public const float TakeoffEndX = RotateX + 950f;
+        public const float DepartedEndX = TakeoffEndX + 2350f;
 
         // --- vertical profile ---------------------------------------------------------
 
@@ -177,7 +185,7 @@ namespace Airside.Simulation
             FinalGlideExactSeconds + FlareExactSeconds + RolloutExactSeconds;
 
         public static float TakeoffRollExactSeconds =>
-            SegmentSeconds(RotateX - RolloutEndX, 0f, Knots(RotateKnots));
+            SegmentSeconds(RotateX - TakeoffStartX, 0f, Knots(RotateKnots));
 
         public static float InitialClimbExactSeconds =>
             SegmentSeconds(TakeoffEndX - RotateX, Knots(RotateKnots), Knots(InitialClimbKnots));

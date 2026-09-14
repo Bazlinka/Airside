@@ -26,16 +26,16 @@ namespace Airside.Presentation
         public const float RunwayWidthMetres = 45f;
 
         /// <summary>
-        /// Ground along the runway axis. 150 m overrun each end so the 3100 m strip
-        /// sits inside the published 785 ha site.
+        /// Ground along the runway axis: the real layout (OpenStreetMap) runs from the 05
+        /// threshold at −1 550 to taxiway T1 by the terminal at +1 760, plus a margin.
         /// </summary>
-        public const float GroundLengthMetres = 3400f;
+        public const float GroundLengthMetres = 3900f;
 
         /// <summary>
-        /// Cross-runway width chosen so length × width = 785.06 ha
-        /// (3 400 m × 2 309 m = 7 850 600 m²).
+        /// Ground across the runway axis: 12/30 runs from −370 to its runway 12 end at
+        /// +1 190 on the terminal side, plus a margin.
         /// </summary>
-        public const float GroundWidthMetres = 2309f;
+        public const float GroundWidthMetres = 2800f;
 
         public const float GroundHeightMetres = 0.8f;
         public const float GroundCenterY = -0.45f;

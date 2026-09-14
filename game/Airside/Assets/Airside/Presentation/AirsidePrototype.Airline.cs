@@ -809,9 +809,9 @@ namespace Airside.Presentation
                 FleetState.TaxiOut => $"Taxiing to the runway · {dest}",
                 FleetState.HoldingShort => $"Holding short, waiting for the runway · {dest}",
                 FleetState.TakingOff => $"Taking off for {dest}",
-                FleetState.Outbound => $"En route to {dest} · lands {ends}",
+                FleetState.Outbound => $"En route to {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"On the ground at {dest} · departs {ends}",
-                FleetState.Inbound => $"Returning from {dest} · back {ends}",
+                FleetState.Inbound => $"Returning from {dest}{EnrouteAltitudeText(aircraft)} · back {ends}",
                 FleetState.HoldingForLanding => "In the Adelaide circuit, waiting to land",
                 FleetState.Landing => "Landing at Adelaide",
                 FleetState.AwaitingStand => "Landed · waiting for a stand",
@@ -935,6 +935,8 @@ namespace Airside.Presentation
             public Destination To;
             public Vector2 Point;
             public float HeadingDegrees;
+            public EnrouteProfile Profile;
+            public double ElapsedSeconds;
         }
 
         private readonly List<MapFlight> _mapFlights = new();
@@ -959,9 +961,11 @@ namespace Airside.Presentation
                     From = inbound ? destination : home,
                     To = inbound ? home : destination
                 };
-                flight.Progress = flying.State == FleetState.AtDestination || !flying.StateEndsAt.HasValue
-                    ? 1.0
-                    : RouteMap.Progress(flying.StateStartedAt.ElapsedSeconds, flying.StateEndsAt.Value.ElapsedSeconds, _preciseTime);
+                if (flying.State == FleetState.AtDestination || !TryEnroute(flying, out flight.Profile, out flight.ElapsedSeconds))
+                    flight.Progress = 1.0;
+                else
+                    // Distance flown, not time elapsed: slower in the climb and descent.
+                    flight.Progress = flight.Profile.DistanceFractionAt(flight.ElapsedSeconds);
                 RouteMap.GreatCirclePoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
                     flight.Progress, out flight.Latitude, out flight.Longitude);
                 _mapFlights.Add(flight);
@@ -1045,6 +1049,7 @@ namespace Airside.Presentation
                 _mapControlRects.Add(zoomOutRect);
 
             HandleMapPointer(mapRect);
+            ApplyMapZoomEasing(mapRect);
             DrawAustraliaBase(mapRect);
 
             var mouse = Event.current.mousePosition;
@@ -1108,7 +1113,7 @@ namespace Airside.Presentation
                 DrawPlaneIcon(flight.Point, iconSize, flight.HeadingDegrees, AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex));
 
                 var detailed = isSelected || i == tracked || _mapLens.Zoom >= 4f;
-                var labelRect = new Rect(flight.Point.x + iconSize * 0.6f, flight.Point.y - 10f, 220f, detailed ? 36f : 18f);
+                var labelRect = new Rect(flight.Point.x + iconSize * 0.6f, flight.Point.y - 10f, 300f, detailed ? 36f : 18f);
                 if (detailed)
                     DrawSolid(labelRect, new Color(ink.r, ink.g, ink.b, 0.75f));
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),
@@ -1153,6 +1158,30 @@ namespace Airside.Presentation
             DrawPlanner(detail, aircraft, title, label, small, smallButton);
         }
 
+        private float _mapZoomPending;
+        private Vector2 _mapZoomAnchor;
+        private float _mapZoomLastTime;
+
+        private void ApplyMapZoomEasing(Rect mapRect)
+        {
+            if (Event.current.type != EventType.Repaint)
+                return;
+            var now = Time.unscaledTime;
+            var dt = Mathf.Clamp(now - _mapZoomLastTime, 0f, 0.1f);
+            _mapZoomLastTime = now;
+            if (Mathf.Abs(_mapZoomPending) < 0.0005f)
+            {
+                _mapZoomPending = 0f;
+                return;
+            }
+
+            var applied = MapZoom.EaseStep(_mapZoomPending, dt);
+            _mapZoomPending -= applied;
+            // Tracking keeps the flight centred, so zoom about the centre rather than the cursor.
+            var anchor = string.IsNullOrEmpty(_mapTrackId) ? _mapZoomAnchor : mapRect.size * 0.5f;
+            _mapLens.ZoomAtGui(mapRect.width, mapRect.height, anchor.x, anchor.y, Mathf.Exp(applied));
+        }
+
         private string MapFlightDetail(MapFlight flight)
         {
             var aircraft = flight.Aircraft;
@@ -1161,8 +1190,36 @@ namespace Airside.Presentation
                 return $"On the ground at {flight.To.Code} · leaves {ends}";
             var legKm = flight.From.DistanceKmTo(flight.To);
             var toGo = legKm * (1.0 - flight.Progress);
-            return $"{toGo:0} km to go · lands {ends}";
+            var profile = flight.Profile;
+            var t = flight.ElapsedSeconds;
+            var trend = profile.PhaseAt(t) switch
+            {
+                EnroutePhase.Climb => " ▲",
+                EnroutePhase.Descent => " ▼",
+                _ => string.Empty
+            };
+            return $"{EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(t))}{trend} · {profile.GroundSpeedKnotsAt(t):0} kt · {toGo:0} km · lands {ends}";
         }
+
+        /// <summary>The away leg an aircraft is flying and how far into it, at sub-second time.</summary>
+        private bool TryEnroute(FleetAircraft aircraft, out EnrouteProfile profile, out double elapsedSeconds)
+        {
+            profile = default;
+            elapsedSeconds = 0;
+            if (aircraft.State is not (FleetState.Outbound or FleetState.Inbound)
+                || !aircraft.StateEndsAt.HasValue || !aircraft.CurrentDestination.HasValue)
+                return false;
+            var started = aircraft.StateStartedAt.ElapsedSeconds;
+            profile = new EnrouteProfile(_operations.DistanceKm(aircraft.CurrentDestination.Value),
+                aircraft.StateEndsAt.Value.ElapsedSeconds - started);
+            elapsedSeconds = Math.Max(0.0, _preciseTime - started);
+            return true;
+        }
+
+        private string EnrouteAltitudeText(FleetAircraft aircraft) =>
+            TryEnroute(aircraft, out var profile, out var elapsed)
+                ? " · " + EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(elapsed))
+                : string.Empty;
 
         private void StartMapTracking(string aircraftId)
         {
@@ -1545,10 +1602,11 @@ namespace Airside.Presentation
                     over = false;
             if (over && ev.type == EventType.ScrollWheel)
             {
-                // Deep zoom (to 60x) is how a flight is seen moving, so each notch counts.
-                var factor = ev.delta.y > 0f ? 0.8f : 1.25f;
-                _mapLens.ZoomAtGui(mapRect.width, mapRect.height,
-                    ev.mousePosition.x - mapRect.x, ev.mousePosition.y - mapRect.y, factor);
+                // Queue the zoom in log space and ease it in over a few frames: a trackpad sends
+                // dozens of scroll events a second, and applying each one outright made the map
+                // leap. The step scales with how far the wheel actually moved.
+                _mapZoomPending = Mathf.Clamp(_mapZoomPending + MapZoom.StepFor(ev.delta.y), -MapZoom.MaxPending, MapZoom.MaxPending);
+                _mapZoomAnchor = ev.mousePosition - mapRect.position;
                 ev.Use();
                 return;
             }

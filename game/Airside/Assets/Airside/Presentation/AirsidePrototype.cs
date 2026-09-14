@@ -572,7 +572,7 @@ namespace Airside.Presentation
         /// </summary>
         private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
         {
-            if (!TryReadoutFlight(out var flight))
+            if (!TryReadoutFlight(out var flight, out var view))
                 return;
 
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
@@ -583,16 +583,55 @@ namespace Airside.Presentation
 
             var rect = layout.SpeedReadout;
             GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(rect, $"{Mathf.RoundToInt(knots)} kt", _speedReadoutStyle ??= SpeedReadoutStyle());
+            GUI.Label(rect, ReadoutText(knots, view), _speedReadoutStyle ??= SpeedReadoutStyle());
+        }
+
+        private Transform _readoutView;
+        private float _readoutLastHeight;
+        private float _readoutLastTime;
+        private float _readoutVerticalFpm;
+
+        /// <summary>
+        /// Speed, plus height above the field and vertical speed once airborne — read off the
+        /// aircraft as drawn, so the numbers are the motion on screen. Below 10 ft it is on
+        /// the wheels and only speed shows.
+        /// </summary>
+        private string ReadoutText(float knots, Transform view)
+        {
+            var speed = $"{Mathf.RoundToInt(knots)} kt";
+            if (view == null)
+                return speed;
+
+            var heightMetres = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY);
+            var now = Time.unscaledTime;
+            if (view != _readoutView)
+            {
+                _readoutView = view;
+                _readoutVerticalFpm = 0f;
+            }
+            else if (now - _readoutLastTime > 0.0001f)
+            {
+                var fpm = (heightMetres - _readoutLastHeight) / (now - _readoutLastTime) * 196.85f;
+                _readoutVerticalFpm = Mathf.Lerp(_readoutVerticalFpm, fpm, 1f - Mathf.Exp(-(now - _readoutLastTime) * 3f));
+            }
+            _readoutLastHeight = heightMetres;
+            _readoutLastTime = now;
+
+            var feet = heightMetres * 3.28084f;
+            if (feet < 10f)
+                return speed;
+            var arrow = _readoutVerticalFpm > 150f ? " ▲" : _readoutVerticalFpm < -150f ? " ▼" : string.Empty;
+            return $"{speed}  ·  {Mathf.RoundToInt(feet / 10f) * 10:#,0} ft{arrow}";
         }
 
         /// <summary>
         /// The aircraft the readout describes: the one being followed, else the first
         /// one on the field. Nothing when every fleet aircraft is away.
         /// </summary>
-        private bool TryReadoutFlight(out CommercialFlight flight)
+        private bool TryReadoutFlight(out CommercialFlight flight, out Transform view)
         {
             flight = null;
+            view = null;
             var flights = VisualFlights;
             if (_commercialAircraft == null)
                 return false;
@@ -604,7 +643,10 @@ namespace Airside.Presentation
                 if (candidate == null || !candidate.gameObject.activeSelf)
                     continue;
                 if (flight == null || candidate == followed)
+                {
                     flight = flights[i];
+                    view = candidate;
+                }
 
                 if (candidate == followed)
                     break;

@@ -26,8 +26,24 @@ namespace Airside.Simulation
         /// <summary>m/s² allowed sideways in a turn; sets the cornering speed from the radius.</summary>
         public float LateralAcceleration { get; }
 
-        /// <summary>ATR taxi: 15 kt on the straight, gentle 0.35 m/s² in turns.</summary>
-        public static GroundSpeedLimits Taxi => new(CircuitProfile.Knots(15f), 0.5f, 0.7f, 0.35f);
+        /// <summary>
+        /// ATR taxi: 15 kt on the straight, 0.5 m/s² sideways in turns — about 10 kt round a
+        /// normal 45 m taxiway fillet, which is how they are flown. (0.35 m/s² crawled
+        /// round every corner at ~6 kt.)
+        /// </summary>
+        public static GroundSpeedLimits Taxi => new(CircuitProfile.Knots(15f), 0.5f, 0.7f, 0.5f);
+
+        /// <summary>Apron taxi lanes next to parked aircraft and people: 10 kt.</summary>
+        public const float ApronKnots = 10f;
+
+        /// <summary>Lead-in to a stand under guidance: walking pace, 5 kt.</summary>
+        public const float StandLeadInKnots = 5f;
+
+        /// <summary>How far out from the stop the lead-in pace starts.</summary>
+        public const float StandLeadInMetres = 45f;
+
+        /// <summary>Apron stretch leaving or entering the bays at <see cref="ApronKnots"/>.</summary>
+        public const float ApronMetres = 160f;
 
         /// <summary>Tug pushback: 2 kt, very gentle starts and stops.</summary>
         public static GroundSpeedLimits Pushback => new(CircuitProfile.Knots(2f), 0.15f, 0.25f, 0.2f);
@@ -43,6 +59,20 @@ namespace Airside.Simulation
     /// follows from that. Durations and positions both come from here, so the time an
     /// aircraft is given for a taxi is exactly the time the drawn motion takes.
     /// </summary>
+    /// <summary>A stretch at one end of a path with a lower speed limit (apron, stand lead-in).</summary>
+    public readonly struct GroundSpeedZone
+    {
+        public GroundSpeedZone(float metres, float maxSpeed)
+        {
+            Metres = metres;
+            MaxSpeed = maxSpeed;
+        }
+
+        public float Metres { get; }
+        public float MaxSpeed { get; }
+        public bool IsSet => Metres > 0f;
+    }
+
     public sealed class GroundPath
     {
         private const float MinimumSegmentSpeed = 0.25f;
@@ -54,9 +84,18 @@ namespace Airside.Simulation
         private readonly double[] _time;
 
         public GroundPath(float[] xz, GroundSpeedLimits limits, float entrySpeed = 0f, float exitSpeed = 0f)
+            : this(xz, limits, entrySpeed, exitSpeed, default, default)
+        {
+        }
+
+        /// <param name="startZones">Slower stretches measured from the start of the path.</param>
+        /// <param name="endZones">Slower stretches measured back from the end of the path.</param>
+        public GroundPath(float[] xz, GroundSpeedLimits limits, float entrySpeed, float exitSpeed,
+            GroundSpeedZone[] startZones, GroundSpeedZone[] endZones)
         {
             if (xz == null || xz.Length < 4 || xz.Length % 2 != 0)
                 throw new ArgumentException("A path needs at least two x,z points.", nameof(xz));
+            xz = SplitAtZoneEdges(xz, startZones, endZones);
 
             var count = xz.Length / 2;
             _x = new float[count];
@@ -81,6 +120,15 @@ namespace Airside.Simulation
                     if (radius < float.MaxValue)
                         v = Math.Min(v, (float)Math.Sqrt(limits.LateralAcceleration * radius));
                 }
+
+                if (startZones != null)
+                    foreach (var zone in startZones)
+                        if (zone.IsSet && _distance[i] <= zone.Metres + 0.01f)
+                            v = Math.Min(v, zone.MaxSpeed);
+                if (endZones != null)
+                    foreach (var zone in endZones)
+                        if (zone.IsSet && _distance[count - 1] - _distance[i] <= zone.Metres + 0.01f)
+                            v = Math.Min(v, zone.MaxSpeed);
 
                 _speed[i] = v;
             }
@@ -173,6 +221,52 @@ namespace Airside.Simulation
                 len > 1e-6f ? dx / len : 1f,
                 len > 1e-6f ? dz / len : 0f,
                 speed);
+        }
+
+        /// <summary>Insert a point exactly where each zone begins or ends, so its limit holds from that metre.</summary>
+        private static float[] SplitAtZoneEdges(float[] xz, GroundSpeedZone[] startZones, GroundSpeedZone[] endZones)
+        {
+            var total = 0f;
+            for (var i = 2; i < xz.Length; i += 2)
+                total += Hypot(xz[i] - xz[i - 2], xz[i + 1] - xz[i - 1]);
+
+            var cuts = new List<float>();
+            if (startZones != null)
+                foreach (var zone in startZones)
+                    if (zone.IsSet && zone.Metres < total)
+                        cuts.Add(zone.Metres);
+            if (endZones != null)
+                foreach (var zone in endZones)
+                    if (zone.IsSet && zone.Metres < total)
+                        cuts.Add(total - zone.Metres);
+            if (cuts.Count == 0)
+                return xz;
+            cuts.Sort();
+
+            var result = new List<float> { xz[0], xz[1] };
+            var travelled = 0f;
+            var next = 0;
+            for (var i = 2; i < xz.Length; i += 2)
+            {
+                float ax = xz[i - 2], az = xz[i - 1], bx = xz[i], bz = xz[i + 1];
+                var length = Hypot(bx - ax, bz - az);
+                while (next < cuts.Count && cuts[next] < travelled + length)
+                {
+                    var t = length > 1e-6f ? (cuts[next] - travelled) / length : 0f;
+                    if (t > 0.01f && t < 0.99f)
+                    {
+                        result.Add(ax + (bx - ax) * t);
+                        result.Add(az + (bz - az) * t);
+                    }
+                    next++;
+                }
+
+                result.Add(bx);
+                result.Add(bz);
+                travelled += length;
+            }
+
+            return result.ToArray();
         }
 
         private float TurnRadius(int i)

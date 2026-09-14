@@ -484,26 +484,50 @@ namespace Airside.Presentation
                 PanByPixels(mouse.delta.ReadValue());
 
             var scroll = mouse.scroll.ReadValue().y;
-            if (Mathf.Abs(scroll) > 0.01f)
+            // Scrolling a HUD panel (the route map, a list) belongs to that panel, not the camera.
+            if (Mathf.Abs(scroll) > 0.01f && (PointerOverHud == null || !PointerOverHud(mouse.position.ReadValue())))
             {
                 _easingOverview = false;
-                if (_following)
-                {
-                    // Following: bias the phase framing instead of setting an absolute
-                    // distance, which the follow lerp would erase on the next frame.
-                    _followZoom = Mathf.Clamp(
-                        _followZoom * (1f - scroll * 0.0012f),
-                        MinFollowZoom,
-                        MaxFollowZoom);
-                }
-                else
-                {
-                    var step = scroll * 0.0025f * Mathf.Max(80f, _distance);
-                    _distance = Mathf.Clamp(
-                        _distance - step,
-                        AirsideBareField.MinOrbitDistance,
-                        AirsideBareField.MaxOrbitDistance);
-                }
+                // Queue zoom in log space so every notch is the same proportion whether you
+                // are 30 m or 3 km out, cap how much one frame can ask for (trackpads report
+                // big pixel deltas), then ease it in below instead of jumping.
+                var clamped = Mathf.Clamp(scroll, -MaxScrollPerFrame, MaxScrollPerFrame);
+                _zoomPendingLog = Mathf.Clamp(_zoomPendingLog - clamped * ZoomLogPerScrollUnit, -MaxZoomPendingLog, MaxZoomPendingLog);
+            }
+
+            ApplyZoomEasing();
+        }
+
+        // One mouse-wheel notch (~120 units on macOS) is ~11 % closer or further.
+        private const float ZoomLogPerScrollUnit = 0.001f;
+        private const float MaxScrollPerFrame = 240f;
+        private const float MaxZoomPendingLog = 0.9f;
+        private const float ZoomEaseRate = 10f;
+        private float _zoomPendingLog;
+
+        private void ApplyZoomEasing()
+        {
+            if (Mathf.Abs(_zoomPendingLog) < 0.0002f)
+            {
+                _zoomPendingLog = 0f;
+                return;
+            }
+
+            var dt = Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+            var step = _zoomPendingLog * (1f - Mathf.Exp(-dt * ZoomEaseRate));
+            _zoomPendingLog -= step;
+            var factor = Mathf.Exp(step);
+            if (_following)
+            {
+                // Following: bias the phase framing instead of setting an absolute
+                // distance, which the follow lerp would erase on the next frame.
+                _followZoom = Mathf.Clamp(_followZoom * factor, MinFollowZoom, MaxFollowZoom);
+            }
+            else
+            {
+                _distance = Mathf.Clamp(_distance * factor,
+                    AirsideBareField.MinOrbitDistance,
+                    AirsideBareField.MaxOrbitDistance);
             }
         }
 

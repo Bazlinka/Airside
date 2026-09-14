@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Smoother zoom, real altitude, realistic taxi.** Camera and route-map zoom ease in
+  proportional steps (no more leaps; scrolling a panel no longer zooms the camera).
+  Away flights follow a climb / cruise / descent profile (FL shown on map and fleet
+  status; HUD shows height and climb/descent). Taxi corners ~10 kt, 10 kt on the apron,
+  5 kt onto the stand. Added the YPAD surroundings plan. 287/287 EditMode.
+
 - **Live flights on the map + field tags.** Flights are plane icons gliding along their
   great-circle route with distance to go and landing time; zoom to 60× and click a plane
   to track it live. Registration tags float over aircraft on the field (L toggles). The

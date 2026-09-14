@@ -50,7 +50,8 @@ namespace Airside.Simulation
             {
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
-                    new GroundLegPart(new GroundPath(bay.TaxiOut, GroundSpeedLimits.Taxi), tailFirst: false, TugDisconnectSeconds));
+                    new GroundLegPart(new GroundPath(bay.TaxiOut, GroundSpeedLimits.Taxi, 0f, 0f,
+                        new[] { ApronZone }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[bay.Id] = leg;
             }
 
@@ -63,7 +64,8 @@ namespace Airside.Simulation
             var bay = Bay(stand);
             if (!TaxiInLegs.TryGetValue(bay.Id, out var leg))
             {
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, GroundSpeedLimits.Taxi), tailFirst: false));
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, GroundSpeedLimits.Taxi, 0f, 0f,
+                    null, new[] { ApronZone, StandLeadInZone }), tailFirst: false));
                 TaxiInLegs[bay.Id] = leg;
             }
 
@@ -83,6 +85,14 @@ namespace Airside.Simulation
             var back = VacatePath.SampleAtDistance(Math.Max(0f, VacatePath.Length - AwaitingSpacingMetres * slot));
             return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
         }
+
+        /// <summary>10 kt on the apron lane beside the bays.</summary>
+        private static GroundSpeedZone ApronZone =>
+            new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnots));
+
+        /// <summary>5 kt for the last stretch onto the stand line.</summary>
+        private static GroundSpeedZone StandLeadInZone =>
+            new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
         private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Taxi);
     }

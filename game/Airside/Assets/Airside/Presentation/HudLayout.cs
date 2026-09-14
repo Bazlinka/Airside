@@ -28,7 +28,7 @@ namespace Airside.Presentation
         public const float MenuHeight = 232f;
 
         /// <summary>Airspeed readout, centred just above the control bar.</summary>
-        public const float ReadoutWidth = 132f;
+        public const float ReadoutWidth = 230f;
         public const float ReadoutHeight = 34f;
         public const float ReadoutGap = 8f;
 

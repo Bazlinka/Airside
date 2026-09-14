@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Controls help (F1).** On-screen hotkey sheet for camera, airline panels and
+  playtest tools. Esc closes the sheet before clearing selection or opening the menu.
+
 - **Dev tools (F8).** Playtest panel with fleet status, next-event time,
   auto-schedule for idle player aircraft and assign-free-stands. Shares the
   overlay slot with Map / Hangar / Flights. Live time stays on.

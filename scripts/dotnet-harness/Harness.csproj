@@ -45,6 +45,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightBoard.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DevTools.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideStandMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs" />
   </ItemGroup>

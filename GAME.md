@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor Controls help (`cursor/controls-help-601f`):**
+  **F1** opens a Controls sheet (camera, airline panels, playtest tools). Esc closes
+  help before clearing selection / opening the menu. Presentation only — no sim
+  changes. Stacks on the Dev Tools branch.
+- **Task packet / acceptance:** player-visible outcome is an on-screen controls
+  reference for playtesters; scope is airline HUD presentation. Acceptance: F1
+  toggles the sheet, bindings cover Tab/H/T/F8/F1/Esc/camera, Esc closes help first.
+- **Evidence:** `scripts/test-domain.sh` **194/194** on this Linux host (includes
+  ControlsHelp tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
+  No manual playtest claimed.
+- **Next:** Mac Unity + packaged verification of the stacked UI (map/hangar/flights/
+  dev tools/controls), then Bailey's external playtest. Night lighting still pinned.
+
 - **2026-09-14 Cursor Dev Tools (`cursor/dev-test-tools-601f`):**
   **Dev tools (F8)** opens a playtest panel: fleet status lines, next-event time,
   **Auto-schedule idle player** (soak-style departures) and **Assign free stands**.

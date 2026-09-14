@@ -5,6 +5,11 @@ change it describes.
 
 ## Unreleased
 
+- **Zoomable Australia map and Hangar.** Scroll and drag the destinations map to
+  zoom and pan; denser coastline, state borders and region labels appear as you
+  zoom in. Hangar (H) lists your aircraft and AI flights with live progress —
+  click a row to follow on the field or track on the map when away.
+
 - **Click an aircraft on the field to follow it.** Direct 3D selection (invisible
   pick proxies + click-vs-drag) follows that exact player or AI aircraft, with a
   selection ring and details card. Fleet-panel rows stay selectable with a visible

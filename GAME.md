@@ -1,24 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor immersive map + hangar (`cursor/immersive-map-hangar-601f`):**
+  the Australia destinations map now zooms and pans (scroll + drag), with a denser
+  coastline, state borders, and state/region labels that appear as you zoom in.
+  **Hangar (H)** lists every player and AI aircraft with live status and progress;
+  click a row to follow it on the field or track it on the map when away.
+  Presentation/UI only — schedules, reservations, saves and airport geometry unchanged.
+- **Task packet / acceptance:** player-visible outcome is an immersive zoomable
+  Australia map and a hangar roster for owned + AI flights; scope is airline HUD /
+  map presentation; simulation invariants untouched. Acceptance: zoom/pan without
+  breaking destination planning, state labels when zoomed, hangar shows progress for
+  player and AI, map still tracks off-field aircraft, fleet panel and field selection
+  still work.
+- **Evidence:** `scripts/test-domain.sh` **184/184** on this Linux host (includes 6 new
+  `AustraliaMapLens` tests). Unity EditMode / Mac build require Mac Unity 6.3 LTS.
+  No manual playtest claimed.
+- **Next:** Mac Unity + packaged verification of map zoom and hangar, then Bailey's
+  external playtest when free.
+
 - **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
   clicking a visible aircraft on the Adelaide field selects and follows that exact
-  transform. Invisible `AircraftPick` proxies (not mesh colliders) handle the pick;
-  a coastal-blue selection ring and a bottom details card make the choice obvious.
-  Left-drag pan still does not select. Off-field aircraft stay map-tracked only.
-  Fleet-panel selection remains, but its hit target is now the whole row with a
-  visible Select affordance — the previous registration-only invisible button was
-  not discoverable in the packaged app (EditMode alone did not catch that).
-- **Task packet / acceptance:** player-visible outcome is direct 3D pick of player
-  and AI aircraft; scope is Presentation/UI only; simulation, schedules, reservations,
-  saves, models and airport geometry unchanged. Acceptance: exact-transform follow
-  for player and AI, drag ≠ select, off-field not 3D-selectable, Overview/R/Esc clear,
-  fleet panel still works.
-- **Evidence:** `scripts/test-domain.sh` **178/178** on this Linux host (includes 6 new
-  `AircraftPickRouting` tests). Unity EditMode / `scripts/test-unity.sh` /
-  `scripts/build-mac.sh` require Mac Unity 6.3 LTS (not available on this Cloud
-  agent). No manual playtest claimed.
-- **Next:** Mac Unity EditMode + packaged build verification of click-to-follow on
-  the field, then Bailey's external playtest zip path from the soak handoff.
+  transform. Invisible `AircraftPick` proxies handle the pick; fleet-panel selection
+  remains with a whole-row Select affordance. Merged via #223.
 
 - **2026-09-14 Codex selectable aircraft (`codex/selectable-aircraft`):** fleet
   registrations are now presentation-only selection controls. Selecting an aircraft
@@ -518,7 +521,8 @@ Simulation:
 
 - Escape: clears aircraft selection and returns to overview when one is selected;
   otherwise opens or closes the menu (Resume, Restart circuit, Quit) — time keeps running
-- Tab: open or close the destinations map
+- Tab: open or close the destinations map (scroll to zoom, drag to pan; state labels appear when zoomed)
+- H: open or close the Hangar (all aircraft + flight progress)
 - M: mute audio
 
 Camera:

@@ -111,6 +111,7 @@ namespace Airside.Presentation
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineSetupOpen && _awaySummary == null && _guideStep != GuideStep.Complete;
             var placement = AirlineHudLayout.Create(layout, showGuide);
+            RememberHudPanels(layout, placement, showGuide);
 
             var label = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
             var small = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
@@ -208,6 +209,46 @@ namespace Airside.Presentation
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             SaveAirline();
             PlayUiClick();
+        }
+
+        // ---- Pointer over HUD ------------------------------------------------------------------
+
+        private readonly List<Rect> _hudPanels = new();
+        private float _hudScale = 1f;
+
+        /// <summary>Record where HUD panels are this frame, in virtual GUI points.</summary>
+        private void RememberHudPanels(HudLayout layout, AirlineHudLayout placement, bool showGuide)
+        {
+            _hudScale = HudLayout.ScaleFor(Screen.width, Screen.height);
+            _hudPanels.Clear();
+            _hudPanels.Add(layout.ControlBar);
+            _hudPanels.Add(layout.SpeedReadout);
+            if (_menuOpen)
+                _hudPanels.Add(layout.PauseMenu);
+            if (AirlineSetupOpen || _awaySummary != null)
+            {
+                // Modal panels: the whole screen belongs to the HUD until dismissed.
+                _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
+                return;
+            }
+
+            _hudPanels.Add(placement.Clock);
+            if (showGuide)
+                _hudPanels.Add(placement.Guide);
+            if (!(_mapOpen && placement.MapCoversFleet))
+                _hudPanels.Add(placement.FleetArea);
+            if (_mapOpen)
+                _hudPanels.Add(placement.Map);
+        }
+
+        private bool IsPointerOverHud(Vector2 inputSystemPosition)
+        {
+            // Input System: origin bottom-left in pixels. IMGUI: origin top-left, scaled.
+            var gui = new Vector2(inputSystemPosition.x, Screen.height - inputSystemPosition.y) / _hudScale;
+            foreach (var rect in _hudPanels)
+                if (rect.Contains(gui))
+                    return true;
+            return false;
         }
 
         // ---- First-flight guide ------------------------------------------------------------

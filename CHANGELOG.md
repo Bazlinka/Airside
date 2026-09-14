@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Click and drag to move around.** Left-drag pans the camera across the field;
+  clicks on HUD panels and plain clicks are unaffected.
+
 - **Live real time.** The game clock is the real time in Adelaide and runs at 1×;
   pause, time rates and skip are removed. Saves move to v3 with older saves
   migrated. Typing in the airline name no longer moves the camera. Aircraft now

@@ -41,6 +41,70 @@ namespace Airside.Presentation
             ? Path.Combine(Application.persistentDataPath, "airline-save-soak.json")
             : AirlineSaveFile.DefaultPath;
 
+        // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
+        //   -airsideReviewPanel plan|hangar|flights|devtools|help   open one panel at start
+        //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
+        private const string ReviewPanelFlag = "-airsideReviewPanel";
+        private const string ReviewShotFlag = "-airsideReviewShot";
+        private const string ReviewDelayFlag = "-airsideReviewDelay";
+        private float _reviewShotAt = -1f;
+        private bool _reviewShotTaken;
+
+        private void OpenReviewPanel(string[] args)
+        {
+            var index = Array.IndexOf(args, ReviewPanelFlag);
+            if (index < 0 || index + 1 >= args.Length)
+                return;
+            switch (args[index + 1])
+            {
+                case "plan": OpenPlanner(null); break;
+                case "hangar": ToggleHangar(); break;
+                case "flights": ToggleFlights(); break;
+                case "devtools": ToggleDevTools(); break;
+                case "help": ToggleControlsHelp(); break;
+            }
+        }
+
+        /// <summary>Read the finished frame (3D and HUD) back and write it as PNG. The ScreenCapture module is not in this project.</summary>
+        private System.Collections.IEnumerator CaptureReviewShot(string path)
+        {
+            yield return new WaitForEndOfFrame();
+            var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            Destroy(texture);
+            Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+        }
+
+        private void DriveReviewShot()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(args, ReviewShotFlag);
+            if (index < 0 || index + 1 >= args.Length)
+                return;
+            if (_reviewShotAt < 0f)
+            {
+                var delayIndex = Array.IndexOf(args, ReviewDelayFlag);
+                var delay = delayIndex >= 0 && delayIndex + 1 < args.Length
+                            && float.TryParse(args[delayIndex + 1], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out var d)
+                    ? d
+                    : 20f;
+                _reviewShotAt = Time.unscaledTime + delay;
+            }
+
+            if (!_reviewShotTaken && Time.unscaledTime >= _reviewShotAt)
+            {
+                _reviewShotTaken = true;
+                StartCoroutine(CaptureReviewShot(args[index + 1]));
+            }
+            else if (_reviewShotTaken && Time.unscaledTime >= _reviewShotAt + 3f)
+            {
+                Application.Quit();
+            }
+        }
+
         private void DriveSoak()
         {
             if (!SoakMode)
@@ -59,7 +123,10 @@ namespace Airside.Presentation
                 _saveProbed = true; // never offer or read the player's save
                 StartAirline("Soak Air");
                 Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min in live time");
+                OpenReviewPanel(args);
             }
+
+            DriveReviewShot();
 
             if (_awaySummary != null)
                 _awaySummary = null;

@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — route map double image fix (Bailey: "zooming out and in i see like two
+  copies of australia"):** `AustraliaMapLens.ClampCenterToView` clamped to
+  `min+half..max-half` even when the view was wider than the map (min above max), so each
+  call flipped the centre between the two ends. Harmless while zoom only ran on scroll
+  events; the eased zoom (#233) calls it every frame, so two alternating copies were drawn.
+  Now centred on that axis (`ClampAxis`), test `ZoomedOut_CentreIsStableFrameToFrame`.
+  Evidence: EditMode **294/294**. Packaged rebuild pending.
+
 - **2026-09-14 Claude — OSM credit + Gulf St Vincent coast (Bailey: "overview only for now -
   do the attribution and coast first"):**
   - **Attribution (plan P0):** "Map data © OpenStreetMap contributors" drawn bottom-right on

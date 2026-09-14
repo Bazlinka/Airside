@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Route map no longer shows two Australias when zoomed out.** The view centre flipped
+  between two positions every frame once zoom eased; it now centres when the view is
+  wider than the map. 294/294 EditMode.
+
 - **Gulf St Vincent coast and OSM credit.** The overview now has the real coastline from
   OpenStreetMap: coastal plain, beach and sea past the airfield, fading into the haze.
   "Map data © OpenStreetMap contributors" is on screen. Fixed the Adelaide ground shader

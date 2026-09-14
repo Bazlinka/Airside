@@ -93,6 +93,8 @@ namespace Airside.Presentation
                 || n.StartsWith("Coast boat", System.StringComparison.Ordinal)
                 || n.StartsWith("Coast foam", System.StringComparison.Ordinal)
                 || n == "GroundShadow"
+                || n == "SelectionMarker"
+                || n == "AircraftPickProxy"
                 || n == "Hangar door"
                 || n == "Windsock"
                 || n == "Horizon dome"

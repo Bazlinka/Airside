@@ -137,6 +137,7 @@ namespace Airside.Presentation
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
             if (_mapOpen)
                 DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+            DrawSelectionHudCard(layout, panel, label, small);
             DrawToast(placement.Toast, label);
         }
 
@@ -240,6 +241,8 @@ namespace Airside.Presentation
                 _hudPanels.Add(placement.FleetArea);
             if (_mapOpen)
                 _hudPanels.Add(placement.Map);
+            if (TrySelectionHudCardRect(layout, out var selectionCard))
+                _hudPanels.Add(selectionCard);
         }
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
@@ -289,13 +292,13 @@ namespace Airside.Presentation
                 GuideStep.PlanFirstFlight => ("1 · Plan your first flight",
                     $"Click Plan flight for {reg}, pick a green destination and when it leaves. Kingscote is a short hop."),
                 GuideStep.WaitForDeparture => ("2 · Flight planned",
-                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — look around, or press Follow (F)."),
+                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — click the aircraft on the field, or press Follow (F)."),
                 GuideStep.Departing => ("3 · Departing",
-                    $"{reg} is heading out. Press Follow (F) to ride along through the taxi and takeoff."),
+                    $"{reg} is heading out. Click it on the field (or press Follow) to ride along through the taxi and takeoff."),
                 GuideStep.Away => ("4 · Away to " + dest,
                     "Flights take real time. Track it on the Map (Tab), or close the game — the airport keeps running and tells you what happened."),
                 GuideStep.Landing => ("5 · Coming home",
-                    $"The tower is bringing {reg} in to land. Follow (F) to watch the touchdown."),
+                    $"The tower is bringing {reg} in to land. Click the aircraft on final (or Follow) to watch the touchdown."),
                 GuideStep.ChooseStand => ("6 · Choose a stand",
                     $"{reg} has landed. Pick a free bay in Your Fleet so it can taxi in."),
                 GuideStep.TaxiingIn => ("7 · Taxiing in",
@@ -475,7 +478,9 @@ namespace Airside.Presentation
             var y = rect.y + 12f;
 
             GUI.Label(new Rect(x, y, inner, 22f), "YOUR FLEET", label);
-            y += 26f;
+            y += 22f;
+            GUI.Label(new Rect(x, y, inner, 18f), "Click an aircraft on the field — or a registration here.", small);
+            y += 22f;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
                 y = DrawPlayerAircraftRow(aircraft, x, y, inner, label, small, smallButton);
@@ -502,10 +507,10 @@ namespace Airside.Presentation
         /// <summary>Mirrors the row heights drawn below so the panel hugs its content.</summary>
         private float FleetPanelContentHeight()
         {
-            var height = 12f + 26f;
+            var height = 12f + 22f + 22f;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                height += 22f + 34f + 10f;
+                height += 56f + 10f;
                 if (_selectedAircraftId == aircraft.Registration) height += 42f;
                 if (aircraft.StateEndsAt.HasValue) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
@@ -526,11 +531,9 @@ namespace Airside.Presentation
 
         private float DrawPlayerAircraftRow(FleetAircraft aircraft, float x, float y, float width, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var heading = new Rect(x, y, width, 20f);
-            DrawAircraftSelection(aircraft, heading, $"{aircraft.Registration}  ·  {aircraft.Type.Name}", label);
-            y += 22f;
-            GUI.Label(new Rect(x, y, width, 34f), StatusText(aircraft), small);
-            y += 34f;
+            var row = new Rect(x, y, width, 54f);
+            DrawAircraftSelection(aircraft, row, $"{aircraft.Registration}  ·  {aircraft.Type.Name}", StatusText(aircraft), label, small);
+            y += 56f;
 
             y = DrawSelectedAircraftDetail(aircraft, x, y, width, small);
 
@@ -589,24 +592,36 @@ namespace Airside.Presentation
 
         private float DrawTrafficAircraftRow(FleetAircraft aircraft, float x, float y, float width, GUIStyle label, GUIStyle small)
         {
-            var heading = new Rect(x, y, width, 20f);
-            DrawAircraftSelection(aircraft, heading, aircraft.Registration, label);
-            GUI.Label(new Rect(x, y + 20f, width, 32f), StatusText(aircraft), small);
+            var row = new Rect(x, y, width, 52f);
+            DrawAircraftSelection(aircraft, row, aircraft.Registration, StatusText(aircraft), label, small);
             return DrawSelectedAircraftDetail(aircraft, x, y + 54f, width, small);
         }
 
-        private void DrawAircraftSelection(FleetAircraft aircraft, Rect rect, string text, GUIStyle style)
+        private void DrawAircraftSelection(FleetAircraft aircraft, Rect rect, string heading, string status, GUIStyle headingStyle, GUIStyle statusStyle)
         {
             var selected = _selectedAircraftId == aircraft.Registration;
-            if (selected)
+            var mouse = Event.current != null ? Event.current.mousePosition : Vector2.negativeInfinity;
+            var hovered = rect.Contains(mouse);
+            if (selected || hovered)
             {
-                DrawSolid(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f),
-                    new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.42f));
-                AirsideTheme.DrawPanelFrame(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f),
-                    AirsideTheme.SafetyYellow);
+                var fill = selected
+                    ? new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.42f)
+                    : new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.22f);
+                DrawSolid(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f), fill);
+                if (selected)
+                    AirsideTheme.DrawPanelFrame(new Rect(rect.x - 5f, rect.y - 2f, rect.width + 10f, rect.height + 4f),
+                        AirsideTheme.SafetyYellow);
             }
 
-            GUI.Label(rect, text, style);
+            GUI.Label(new Rect(rect.x, rect.y, rect.width - 70f, 20f), heading, headingStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 20f, rect.width, rect.height - 20f), status, statusStyle);
+            var action = selected ? "Selected" : "Select";
+            var actionStyle = AirsideTheme.TextStyle(new GUIStyle(statusStyle) { alignment = TextAnchor.UpperRight, fontStyle = FontStyle.Bold },
+                selected ? AirsideTheme.SafetyYellow : AirsideTheme.CoastalBlue);
+            GUI.Label(new Rect(rect.xMax - 70f, rect.y, 70f, 18f), action, actionStyle);
+
+            // Whole row is the hit target — the previous 20 px registration-only target was
+            // effectively invisible in packaged play, which is why Bailey could not use it.
             if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
                 SelectAircraft(aircraft);
         }
@@ -626,6 +641,45 @@ namespace Airside.Presentation
             GUI.Label(new Rect(card.x + 10f, card.y + 18f, card.width - 20f, 15f),
                 $"{aircraft.Airline.Name}  ·  {aircraft.Type.Name}", small);
             return y + 42f;
+        }
+
+        /// <summary>
+        /// Always-visible selection card above the control bar so selection stays readable
+        /// even when the fleet panel is covered by the destinations map.
+        /// </summary>
+        private void DrawSelectionHudCard(HudLayout layout, GUIStyle panel, GUIStyle label, GUIStyle small)
+        {
+            if (!TrySelectionHudCardRect(layout, out var rect))
+                return;
+            if (!_fleetAircraftById.TryGetValue(_selectedAircraftId, out var aircraft))
+                return;
+
+            GUI.Box(rect, GUIContent.none, panel);
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
+            var onField = _fleetViewById.ContainsKey(aircraft.Registration);
+            var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
+            DrawSolid(new Rect(rect.x, rect.y, 5f, rect.height), accent);
+            var bold = new GUIStyle(label) { fontStyle = FontStyle.Bold };
+            GUI.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 20f),
+                $"{aircraft.Registration}  ·  {aircraft.Airline.Name}", bold);
+            GUI.Label(new Rect(rect.x + 14f, rect.y + 30f, rect.width - 28f, 34f),
+                onField
+                    ? $"{StatusText(aircraft)}\nCamera following — Overview / R / Esc clears."
+                    : $"{StatusText(aircraft)}\nAway from Adelaide — tracked on the map.",
+                small);
+        }
+
+        private bool TrySelectionHudCardRect(HudLayout layout, out Rect rect)
+        {
+            rect = default;
+            if (string.IsNullOrEmpty(_selectedAircraftId) || _operations == null)
+                return false;
+            var width = Mathf.Min(420f, layout.Viewport.x - AirlineHudLayout.Margin * 2f);
+            var height = 72f;
+            var x = (layout.Viewport.x - width) * 0.5f;
+            var y = Mathf.Max(AirlineHudLayout.Margin, layout.SpeedReadout.y - height - 12f);
+            rect = new Rect(x, y, width, height);
+            return true;
         }
 
         private void SelectAircraft(FleetAircraft aircraft)

@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
+  clicking a visible aircraft on the Adelaide field selects and follows that exact
+  transform. Invisible `AircraftPick` proxies (not mesh colliders) handle the pick;
+  a coastal-blue selection ring and a bottom details card make the choice obvious.
+  Left-drag pan still does not select. Off-field aircraft stay map-tracked only.
+  Fleet-panel selection remains, but its hit target is now the whole row with a
+  visible Select affordance — the previous registration-only invisible button was
+  not discoverable in the packaged app (EditMode alone did not catch that).
+- **Task packet / acceptance:** player-visible outcome is direct 3D pick of player
+  and AI aircraft; scope is Presentation/UI only; simulation, schedules, reservations,
+  saves, models and airport geometry unchanged. Acceptance: exact-transform follow
+  for player and AI, drag ≠ select, off-field not 3D-selectable, Overview/R/Esc clear,
+  fleet panel still works.
+- **Evidence:** `scripts/test-domain.sh` **178/178** on this Linux host (includes 6 new
+  `AircraftPickRouting` tests). Unity EditMode / `scripts/test-unity.sh` /
+  `scripts/build-mac.sh` require Mac Unity 6.3 LTS (not available on this Cloud
+  agent). No manual playtest claimed.
+- **Next:** Mac Unity EditMode + packaged build verification of click-to-follow on
+  the field, then Bailey's external playtest zip path from the soak handoff.
+
 - **2026-09-14 Codex selectable aircraft (`codex/selectable-aircraft`):** fleet
   registrations are now presentation-only selection controls. Selecting an aircraft
   that is at Adelaide follows that exact 3D aircraft and highlights a compact identity
@@ -13,8 +33,9 @@
   and a clean overview exit.
 - **Evidence:** Unity EditMode **243/243**, including exact registered-target and
   off-field rejection checks. Per Bailey's preference, no manual playtest was run.
-- **Next:** merge this branch, then build the AI timetable/all-flights map slice so
-  selection exposes a busier, more legible Adelaide operation.
+- **Watch — unverified in packaged play:** Bailey could not see or use the fleet-panel
+  registration click target/highlight/details card in the packaged app. Treat that
+  slice as incomplete; direct 3D selection above is the primary fix.
 
 - **2026-09-14 Codex YPAD regional-stand wayfinding (`codex/ypad-wayfinding`):**
   the real 50A–50D regional bays now have procedural yellow lead-in lines, stop
@@ -489,25 +510,32 @@ Overview**, with live airspeed in knots just above.
 
 Airline (ADR 0045): name your airline and pick a livery on the start screen. The
 fleet panel (top right) plans flights and offers stands when your aircraft lands;
-the map (top left, or Tab) shows every destination — green in range, grey locked —
-and tracks aircraft that are away.
+click a registration (or click the aircraft on the field) to follow it. The map
+(top left, or Tab) shows every destination — green in range, grey locked — and
+tracks aircraft that are away.
 
 Simulation:
 
-- Escape: open or close the menu (Resume, Restart circuit, Quit) — time keeps running
+- Escape: clears aircraft selection and returns to overview when one is selected;
+  otherwise opens or closes the menu (Resume, Restart circuit, Quit) — time keeps running
 - Tab: open or close the destinations map
 - M: mute audio
 
 Camera:
 
+- Click an on-field aircraft to select and follow it. A coastal-blue ring marks
+  the selected aircraft; a details card sits above the control bar. Fleet-panel
+  rows also select. Dragging to pan does not select.
 - F: toggle follow. Turning it off hands the camera back **where it is** —
   position, angle and zoom are kept and you are free to move from there. It
   does not drag you back to the overview.
-- R: reset to the overview framing (the only thing that moves you back)
+- R / Overview: reset to the overview framing and clear the current aircraft
+  selection
 - Right-drag: orbit / look around
 - Left-drag or middle-drag: pan across the field (drops follow, since panning a
   followed aircraft would only fight the follow). A left press on a HUD panel stays
-  a click, and a left press only becomes a drag after a few pixels of movement.
+  a click, and a left press only becomes a drag after a few pixels of movement so
+  a plain click can still select an aircraft.
 - Scroll: zoom. While following this biases the phase framing rather than
   setting an absolute distance, so it survives the follow easing instead of
   being erased on the next frame.
@@ -515,9 +543,10 @@ Camera:
 - Q / E: orbit left / right without a mouse
 - Z / X: lower / raise the camera
 
-Follow and reset are owned by `AirsidePrototype`; camera movement is read by
-`AirsideCameraController`. Exactly one owner each — two owners is why F used to
-toggle follow off in `Update` and straight back on in `LateUpdate`.
+Follow, reset and direct aircraft selection are owned by `AirsidePrototype`;
+camera movement is read by `AirsideCameraController`. Exactly one owner each —
+two owners is why F used to toggle follow off in `Update` and straight back on
+in `LateUpdate`.
 
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
 

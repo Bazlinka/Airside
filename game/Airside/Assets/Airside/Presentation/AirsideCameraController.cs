@@ -54,11 +54,19 @@ namespace Airside.Presentation
         /// </summary>
         public Func<Vector2, bool> PointerOverHud { get; set; }
 
+        /// <summary>
+        /// Fired on a left-button release that never became a drag and did not start over
+        /// the HUD. Argument is Input System screen position (origin bottom-left). Used
+        /// for direct on-field aircraft selection.
+        /// </summary>
+        public Action<Vector2> FieldClick { get; set; }
+
         /// <summary>Pixels a left press must travel before it counts as a drag rather than a click.</summary>
-        private const float DragThresholdPixels = 4f;
+        private static float DragThresholdPixels => AircraftPickRouting.DragThresholdPixels;
 
         private bool _leftDragArmed;
         private bool _leftDragging;
+        private bool _leftPressOnField;
         private Vector2 _leftPressAt;
 
         /// <summary>
@@ -443,18 +451,34 @@ namespace Airside.Presentation
             // Left-drag (Bailey 2026-09-14) and middle-drag slide the view across the
             // field. A left press on a HUD panel stays a click, and a left press only
             // becomes a drag once it has moved a few pixels, so plain clicks still work.
+            // A field press that never crosses the drag threshold becomes a FieldClick
+            // on release — that is how aircraft are selected in 3D.
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 _leftPressAt = mouse.position.ReadValue();
-                _leftDragArmed = PointerOverHud == null || !PointerOverHud(_leftPressAt);
+                _leftPressOnField = PointerOverHud == null || !PointerOverHud(_leftPressAt);
+                _leftDragArmed = _leftPressOnField;
                 _leftDragging = false;
             }
 
-            if (!mouse.leftButton.isPressed)
-                _leftDragArmed = _leftDragging = false;
+            if (mouse.leftButton.wasReleasedThisFrame)
+            {
+                if (_leftPressOnField && !_leftDragging
+                    && AircraftPickRouting.CountsAsClick(
+                        _leftPressAt.x, _leftPressAt.y,
+                        mouse.position.ReadValue().x, mouse.position.ReadValue().y))
+                    FieldClick?.Invoke(_leftPressAt);
+                _leftDragArmed = _leftDragging = _leftPressOnField = false;
+            }
+            else if (!mouse.leftButton.isPressed)
+            {
+                _leftDragArmed = _leftDragging = _leftPressOnField = false;
+            }
             else if (_leftDragArmed && !_leftDragging
                      && (mouse.position.ReadValue() - _leftPressAt).sqrMagnitude > DragThresholdPixels * DragThresholdPixels)
+            {
                 _leftDragging = true;
+            }
 
             if (mouse.middleButton.isPressed || _leftDragging)
                 PanByPixels(mouse.delta.ReadValue());

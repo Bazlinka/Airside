@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Airside.Simulation;
@@ -45,6 +46,19 @@ namespace Airside.Presentation
         /// name does not pan, orbit or lift the camera on A/D/W/S/Q/E/Z/X.
         /// </summary>
         public bool KeyboardCaptured { get; set; }
+
+        /// <summary>
+        /// True when a screen point (Input System coordinates, origin bottom-left) is over
+        /// a HUD panel, so a click there is left to the HUD instead of starting a drag.
+        /// </summary>
+        public Func<Vector2, bool> PointerOverHud { get; set; }
+
+        /// <summary>Pixels a left press must travel before it counts as a drag rather than a click.</summary>
+        private const float DragThresholdPixels = 4f;
+
+        private bool _leftDragArmed;
+        private bool _leftDragging;
+        private Vector2 _leftPressAt;
 
         /// <summary>
         /// No aircraft covers this much ground in one frame — the fastest phase at 4x
@@ -425,24 +439,24 @@ namespace Airside.Presentation
                 _easingOverview = false;
             }
 
-            // Middle-drag slides the view across the field, in the plane you are
-            // looking along. Panning a followed aircraft would only fight the follow,
-            // so it drops follow and hands the camera back to you.
-            if (mouse.middleButton.isPressed)
+            // Left-drag (Bailey 2026-09-14) and middle-drag slide the view across the
+            // field. A left press on a HUD panel stays a click, and a left press only
+            // becomes a drag once it has moved a few pixels, so plain clicks still work.
+            if (mouse.leftButton.wasPressedThisFrame)
             {
-                var delta = mouse.delta.ReadValue();
-                if (delta.sqrMagnitude > 0.0001f)
-                {
-                    if (_following)
-                        ReleaseFollow();
-                    var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-                    var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                    // Scale with distance so the drag tracks the ground under the cursor.
-                    var metresPerPixel = _distance * 0.0016f;
-                    _center -= (planarRight * delta.x + planarForward * delta.y) * metresPerPixel;
-                    _easingOverview = false;
-                }
+                _leftPressAt = mouse.position.ReadValue();
+                _leftDragArmed = PointerOverHud == null || !PointerOverHud(_leftPressAt);
+                _leftDragging = false;
             }
+
+            if (!mouse.leftButton.isPressed)
+                _leftDragArmed = _leftDragging = false;
+            else if (_leftDragArmed && !_leftDragging
+                     && (mouse.position.ReadValue() - _leftPressAt).sqrMagnitude > DragThresholdPixels * DragThresholdPixels)
+                _leftDragging = true;
+
+            if (mouse.middleButton.isPressed || _leftDragging)
+                PanByPixels(mouse.delta.ReadValue());
 
             var scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
@@ -466,6 +480,25 @@ namespace Airside.Presentation
                         AirsideBareField.MaxOrbitDistance);
                 }
             }
+        }
+
+        /// <summary>
+        /// Slide the view across the field in the plane you are looking along. Panning a
+        /// followed aircraft would only fight the follow, so it drops follow and hands the
+        /// camera back to you.
+        /// </summary>
+        private void PanByPixels(Vector2 delta)
+        {
+            if (delta.sqrMagnitude <= 0.0001f)
+                return;
+            if (_following)
+                ReleaseFollow();
+            var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+            // Scale with distance so the drag tracks the ground under the cursor.
+            var metresPerPixel = _distance * 0.0016f;
+            _center -= (planarRight * delta.x + planarForward * delta.y) * metresPerPixel;
+            _easingOverview = false;
         }
 
         /// <summary>

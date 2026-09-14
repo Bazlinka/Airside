@@ -438,8 +438,9 @@ Camera:
   does not drag you back to the overview.
 - R: reset to the overview framing (the only thing that moves you back)
 - Right-drag: orbit / look around
-- Middle-drag: pan across the field (drops follow, since panning a followed
-  aircraft would only fight the follow)
+- Left-drag or middle-drag: pan across the field (drops follow, since panning a
+  followed aircraft would only fight the follow). A left press on a HUD panel stays
+  a click, and a left press only becomes a drag after a few pixels of movement.
 - Scroll: zoom. While following this biases the phase framing rather than
   setting an absolute distance, so it survives the follow easing instead of
   being erased on the next frame.

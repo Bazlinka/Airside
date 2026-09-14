@@ -213,6 +213,8 @@ namespace Airside.Presentation
 
             BuildLightingAndCamera();
             StartIntro();
+            if (_cameraController != null)
+                _cameraController.PointerOverHud = IsPointerOverHud;
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();

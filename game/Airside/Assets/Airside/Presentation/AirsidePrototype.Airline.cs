@@ -36,8 +36,11 @@ namespace Airside.Presentation
         private int _liveryChoice;
         private bool _mapOpen;
         private bool _hangarOpen;
+        private bool _flightsOpen;
         private readonly AustraliaMapLens _mapLens = new();
         private Vector2 _hangarScroll;
+        private Vector2 _flightsScroll;
+        private readonly List<FleetAircraft> _flightsBoardRows = new();
         private FleetAircraft _mapAircraft;
         private string _selectedAircraftId;
         private Destination? _mapSelection;
@@ -73,6 +76,8 @@ namespace Airside.Presentation
                 ToggleMap(_mapAircraft);
             if (keyboard.hKey.wasPressedThisFrame)
                 ToggleHangar();
+            if (keyboard.tKey.wasPressedThisFrame)
+                ToggleFlights();
             return false;
         }
 
@@ -109,9 +114,11 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
-            if (!((_mapOpen || _hangarOpen) && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen || _flightsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
-            if (_hangarOpen)
+            if (_flightsOpen)
+                DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
+            else if (_hangarOpen)
                 DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
             else if (_mapOpen)
                 DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
@@ -215,9 +222,9 @@ namespace Airside.Presentation
             _hudPanels.Add(placement.Clock);
             if (showGuide)
                 _hudPanels.Add(placement.Guide);
-            if (!((_mapOpen || _hangarOpen) && placement.MapCoversFleet))
+            if (!((_mapOpen || _hangarOpen || _flightsOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
-            if (_mapOpen || _hangarOpen)
+            if (_mapOpen || _hangarOpen || _flightsOpen)
                 _hudPanels.Add(placement.Map);
             if (TrySelectionHudCardRect(layout, out var selectionCard))
                 _hudPanels.Add(selectionCard);
@@ -443,10 +450,12 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
                 $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
-            if (GUI.Button(new Rect(rect.x + 14f, rect.y + 60f, 88f, 24f), _mapOpen ? "Close map" : "Map (Tab)", smallButton))
+            if (GUI.Button(new Rect(rect.x + 10f, rect.y + 60f, 86f, 24f), _mapOpen ? "Close map" : "Map (Tab)", smallButton))
                 ToggleMap(_mapAircraft);
-            if (GUI.Button(new Rect(rect.x + 108f, rect.y + 60f, 100f, 24f), _hangarOpen ? "Close hangar" : "Hangar (H)", smallButton))
+            if (GUI.Button(new Rect(rect.x + 102f, rect.y + 60f, 90f, 24f), _hangarOpen ? "Close hangar" : "Hangar (H)", smallButton))
                 ToggleHangar();
+            if (GUI.Button(new Rect(rect.x + 198f, rect.y + 60f, 90f, 24f), _flightsOpen ? "Close board" : "Flights (T)", smallButton))
+                ToggleFlights();
         }
 
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
@@ -670,10 +679,12 @@ namespace Airside.Presentation
             {
                 _mapOpen = false;
                 _hangarOpen = false;
+                _flightsOpen = false;
             }
             else
             {
                 _hangarOpen = false;
+                _flightsOpen = false;
                 _mapOpen = true;
                 _mapLens.Reset();
                 _mapSelection = aircraft.CurrentDestination;
@@ -689,6 +700,7 @@ namespace Airside.Presentation
             _mapAircraft = null;
             _mapOpen = false;
             _hangarOpen = false;
+            _flightsOpen = false;
             return true;
         }
 
@@ -725,6 +737,7 @@ namespace Airside.Presentation
             if (open)
             {
                 _hangarOpen = false;
+                _flightsOpen = false;
                 _mapLens.Reset();
             }
             _mapAircraft = aircraft ?? FirstPlayerAircraft();
@@ -737,7 +750,21 @@ namespace Airside.Presentation
         {
             _hangarOpen = !_hangarOpen;
             if (_hangarOpen)
+            {
                 _mapOpen = false;
+                _flightsOpen = false;
+            }
+            PlayUiClick();
+        }
+
+        private void ToggleFlights()
+        {
+            _flightsOpen = !_flightsOpen;
+            if (_flightsOpen)
+            {
+                _mapOpen = false;
+                _hangarOpen = false;
+            }
             PlayUiClick();
         }
 
@@ -993,6 +1020,86 @@ namespace Airside.Presentation
                     Project(area, lonLat[i1], lonLat[i1 + 1]),
                     colour, thickness);
             }
+        }
+
+
+        private void DrawFlightsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
+            GUI.Box(rect, GUIContent.none, panel);
+
+            var x = rect.x + 16f;
+            var inner = rect.width - 32f;
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Flights", title);
+            if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
+                ToggleFlights();
+
+            GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
+                "Every movement at Adelaide — yours and the other airlines — ordered by the next time that matters.", small);
+
+            _flightsBoardRows.Clear();
+            foreach (var aircraft in _operations.Fleet)
+                _flightsBoardRows.Add(aircraft);
+            FlightBoard.Sort(_flightsBoardRows);
+
+            var headerY = rect.y + 64f;
+            var timeW = 72f;
+            var phaseW = 112f;
+            var routeW = Mathf.Min(160f, inner * 0.28f);
+            GUI.Label(new Rect(x, headerY, timeW, 18f), "TIME", small);
+            GUI.Label(new Rect(x + timeW, headerY, phaseW, 18f), "PHASE", small);
+            GUI.Label(new Rect(x + timeW + phaseW, headerY, routeW, 18f), "ROUTE", small);
+            GUI.Label(new Rect(x + timeW + phaseW + routeW, headerY, inner - timeW - phaseW - routeW, 18f), "AIRCRAFT", small);
+
+            var view = new Rect(x, headerY + 22f, inner, rect.height - (headerY - rect.y) - 36f);
+            var rowHeight = 44f;
+            var contentHeight = 8f + _flightsBoardRows.Count * rowHeight;
+            _flightsScroll = GUI.BeginScrollView(view, _flightsScroll, new Rect(0f, 0f, inner - 18f, contentHeight));
+            var y = 4f;
+            var rowWidth = inner - 22f;
+            foreach (var aircraft in _flightsBoardRows)
+            {
+                var row = new Rect(0f, y, rowWidth, rowHeight - 4f);
+                var selected = _selectedAircraftId == aircraft.Registration;
+                if (selected)
+                {
+                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
+                    AirsideTheme.DrawPanelFrame(row, AirsideTheme.SafetyYellow);
+                }
+                else if (row.Contains(Event.current.mousePosition))
+                {
+                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.14f));
+                }
+
+                GUI.Label(new Rect(8f, y + 6f, timeW - 4f, 18f), FlightBoard.TimeLabel(aircraft, ClockText), small);
+                GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 18f), FlightBoard.PhaseLabel(aircraft), label);
+                GUI.Label(new Rect(timeW + phaseW, y + 6f, routeW - 4f, 18f), FlightBoard.RouteText(aircraft), small);
+                GUI.Label(new Rect(timeW + phaseW + routeW, y + 6f, rowWidth - timeW - phaseW - routeW - 8f, 18f),
+                    $"{aircraft.Registration}  ·  {aircraft.Airline.Name}", small);
+
+                if (aircraft.StateEndsAt.HasValue)
+                {
+                    AirsideTheme.DrawProgressBar(new Rect(timeW, y + 28f, rowWidth - timeW - 12f, 5f),
+                        (float)aircraft.StateProgress(_clock.Now),
+                        AirsideTheme.CoastalBlue, AirsideTheme.Tarmac);
+                }
+
+                if (GUI.Button(row, GUIContent.none, GUIStyle.none))
+                {
+                    SelectAircraft(aircraft);
+                    if (aircraft.IsOffMap)
+                    {
+                        _flightsOpen = false;
+                        _mapOpen = true;
+                        _mapLens.Reset();
+                    }
+                }
+
+                y += rowHeight;
+            }
+
+            GUI.EndScrollView();
         }
 
 

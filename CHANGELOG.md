@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Live day/night lighting.** Sun, ambient, apron floods and aircraft lamps follow
+  Adelaide local time again (daylight pin removed). Debug pin override remains available.
+
 - **Controls help (F1).** On-screen hotkey sheet for camera, airline panels and
   playtest tools. Esc closes the sheet before clearing selection or opening the menu.
 

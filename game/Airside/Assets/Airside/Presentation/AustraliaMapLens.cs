@@ -113,9 +113,18 @@ namespace Airside.Presentation
                 return;
             var halfLon = (areaWidth * 0.5f) / (aspect * fit);
             var halfLat = (areaHeight * 0.5f) / fit;
-            CenterLongitude = Clamp(CenterLongitude, MinLongitude + halfLon, MaxLongitude - halfLon);
-            CenterLatitude = Clamp(CenterLatitude, MinLatitude + halfLat, MaxLatitude - halfLat);
+            CenterLongitude = ClampAxis(CenterLongitude, MinLongitude, MaxLongitude, halfLon);
+            CenterLatitude = ClampAxis(CenterLatitude, MinLatitude, MaxLatitude, halfLat);
         }
+
+        /// <summary>
+        /// Keep the view inside the map on one axis. When the view is wider than the map
+        /// (zoomed out), centre it: clamping to min+half..max-half with min above max
+        /// flipped the centre between the two ends on every call, and once zoom eased
+        /// every frame that drew two alternating copies of Australia.
+        /// </summary>
+        private static float ClampAxis(float value, float min, float max, float half) =>
+            min + half >= max - half ? (min + max) * 0.5f : Clamp(value, min + half, max - half);
 
         private static float Clamp(float value, float min, float max) =>
             value < min ? min : value > max ? max : value;

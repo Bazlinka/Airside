@@ -85,5 +85,20 @@ namespace Airside.Tests
             Assert.That(afterLon, Is.EqualTo(beforeLon).Within(0.05f));
             Assert.That(afterLat, Is.EqualTo(beforeLat).Within(0.05f));
         }
+
+        [Test]
+        public void ZoomedOut_CentreIsStableFrameToFrame()
+        {
+            // A wide, short panel: the view is wider than Australia at overview zoom.
+            var lens = new AustraliaMapLens();
+            lens.ZoomAtGui(900f, 300f, 450f, 150f, 1.0001f);
+            var first = (lens.CenterLongitude, lens.CenterLatitude);
+            for (var i = 0; i < 5; i++)
+            {
+                lens.ZoomAtGui(900f, 300f, 200f, 100f, 1f);
+                Assert.That(lens.CenterLongitude, Is.EqualTo(first.CenterLongitude).Within(1e-3f));
+                Assert.That(lens.CenterLatitude, Is.EqualTo(first.CenterLatitude).Within(1e-3f));
+            }
+        }
     }
 }

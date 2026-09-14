@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Real Adelaide Airport layout data (not yet used in game).** OpenStreetMap
+  snapshot (ODbL, registered) and `scripts/generate-ypad-layout.py`, which generates
+  `Simulation/AdelaideLayout.cs`: every taxiway centreline, aprons, terminals,
+  holding points, 12/30 placement and baked routes over the real network (E2
+  vacate, F6 lineup, taxi-in/pushback/taxi-out for bays 50B–50E).
+
 - **Click and drag to move around.** Left-drag pans the camera across the field;
   clicks on HUD panels and plain clicks are unaffected.
 

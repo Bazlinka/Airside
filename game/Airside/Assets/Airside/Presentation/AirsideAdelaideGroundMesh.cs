@@ -150,7 +150,8 @@ namespace Airside.Presentation
             material.SetFloat("_DirtTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerWornDirt));
             material.SetFloat("_BumpScale", 0.55f);
             material.SetFloat("_Smoothness", 0.1f);
-            material.SetColor("_Tint", new Color(0.92f, 0.94f, 0.88f, 1f));
+            // Albedo multiplier under a ~2.0 daytime sun; matches the URP Lit fallback's brightness.
+            material.SetColor("_Tint", new Color(0.59f, 0.61f, 0.55f, 1f));
             return material;
         }
 

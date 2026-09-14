@@ -1,6 +1,8 @@
 # YPAD surroundings plan — making the ground look like Adelaide Airport
 
-Status: proposal for Bailey · 2026-09-14 · Claude (research only, no code changed)
+Status: in progress · 2026-09-14 · Bailey chose **overview only for now; attribution and coast first**.
+P0 (on-screen OSM credit) and P2 (coast + sea) are done; P1's shared frame is done by
+importing `generate-ypad-layout.py` from `generate-ypad-coast.py` rather than a new module.
 
 ## Where we are
 

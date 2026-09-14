@@ -36,6 +36,7 @@ Shader "Airside/AdelaideGround"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_instancing
+            #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -72,6 +73,7 @@ Shader "Airside/AdelaideGround"
                 float3 normalWS : TEXCOORD1;
                 float4 color : TEXCOORD2;
                 float4 shadowCoord : TEXCOORD3;
+                float fogFactor : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -87,6 +89,7 @@ Shader "Airside/AdelaideGround"
                 output.normalWS = nrm.normalWS;
                 output.color = input.color;
                 output.shadowCoord = GetShadowCoord(pos);
+                output.fogFactor = ComputeFogFactor(pos.positionCS.z);
                 return output;
             }
 
@@ -129,12 +132,15 @@ Shader "Airside/AdelaideGround"
 
                 Light mainLight = GetMainLight(input.shadowCoord);
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
-                float3 lighting = mainLight.color * (mainLight.shadowAttenuation * NdotL + 0.28);
+                // Sun plus sky ambient, as URP Lit does. The old "+0.28" was multiplied by the
+                // ~2.0 daytime sun and bleached the ground once this shader reached builds.
+                float3 lighting = mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS);
                 float3 color = albedo * lighting;
                 // Tiny specular so asphalt-adjacent dirt does not look plastic.
                 float3 halfDir = normalize(mainLight.direction + GetWorldSpaceNormalizeViewDir(input.positionWS));
                 float spec = pow(saturate(dot(normalWS, halfDir)), lerp(8.0, 48.0, _Smoothness)) * _Smoothness * 0.2;
                 color += mainLight.color * spec * mainLight.shadowAttenuation;
+                color = MixFog(color, input.fogFactor);
                 return half4(color, 1);
             }
             ENDHLSL

@@ -14,17 +14,32 @@ namespace Airside.Presentation
         // Bare field: look at the runway centre from high enough to read 3100 m of asphalt.
         // Centred over the real field: the terminal and 12/30 lie north-east and north-west of the 05/23 midpoint.
         private readonly Vector3 _overviewCenter = new(150f, 0f, 350f);
-        private static float OverviewDistance => AirsideBareField.OverviewDistance;
+        // Review shots: -airsideOverviewYaw / -airsideOverviewPitch / -airsideOverviewDistance
+        // re-aim the overview from the command line, so packaged-build screenshots of the
+        // surroundings can be repeated from the same place.
+        private static float OverviewDistance => CommandLineFloat("-airsideOverviewDistance", AirsideBareField.OverviewDistance);
         private static float OverviewFov => AirsideBareField.OverviewFov;
-        private static float OverviewPitch => AirsideBareField.OverviewPitch;
-        private static float OverviewYaw => AirsideBareField.OverviewYaw;
+        private static float OverviewPitch => CommandLineFloat("-airsideOverviewPitch", AirsideBareField.OverviewPitch);
+        private static float OverviewYaw => CommandLineFloat("-airsideOverviewYaw", AirsideBareField.OverviewYaw);
+        private static string[] _commandLine;
+
+        private static float CommandLineFloat(string flag, float fallback)
+        {
+            _commandLine ??= System.Environment.GetCommandLineArgs();
+            var i = System.Array.IndexOf(_commandLine, flag);
+            return i >= 0 && i + 1 < _commandLine.Length
+                   && float.TryParse(_commandLine[i + 1], System.Globalization.NumberStyles.Float,
+                       System.Globalization.CultureInfo.InvariantCulture, out var value)
+                ? value
+                : fallback;
+        }
         private Transform[] _followTargets = System.Array.Empty<Transform>();
         private int _followIndex;
         private Transform _followTarget;
         private Vector3 _center = new(0f, 0f, 0f);
-        private float _yaw = AirsideBareField.OverviewYaw;
-        private float _pitch = AirsideBareField.OverviewPitch;
-        private float _distance = AirsideBareField.OverviewDistance;
+        private float _yaw = OverviewYaw;
+        private float _pitch = OverviewPitch;
+        private float _distance = OverviewDistance;
         private bool _following;
         private bool _easingOverview;
         private float _orbitSuppressUntil;

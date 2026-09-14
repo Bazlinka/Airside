@@ -185,7 +185,7 @@ namespace Airside.Simulation
         {
             var last = _x.Length - 1;
             if (seconds <= 0)
-                return Sample(0, 0f, 0f);
+                return Sample(0, 0f, _speed[0]);
             if (seconds >= Seconds)
                 return Sample(last - 1, 1f, _speed[last]);
 

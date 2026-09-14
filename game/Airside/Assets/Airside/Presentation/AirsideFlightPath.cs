@@ -150,7 +150,7 @@ namespace Airside.Presentation
             }
 
             var r = Local(u, TouchdownProgress, 1f);
-            var rollout = DistanceFraction(r, vTouchdown, 0f);
+            var rollout = DistanceFraction(r, vTouchdown, Mps(CircuitProfile.RunwayExitKnots));
             return new Vector3(Mathf.Lerp(TouchdownX, RolloutEndX, rollout), GroundY, 0f);
         }
 

@@ -94,6 +94,8 @@ namespace Airside.Simulation
         private static GroundSpeedZone StandLeadInZone =>
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
-        private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Taxi);
+        /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
+        private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Taxi,
+            entrySpeed: CircuitProfile.Knots(CircuitProfile.RunwayExitKnots));
     }
 }

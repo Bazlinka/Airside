@@ -32,6 +32,28 @@ namespace Airside.Simulation
                 return 0;
             return Math.Min(away, MaxSeconds);
         }
+
+        /// <summary>
+        /// Where a restored game should be right now on its live clock. Past the one-week
+        /// cap, or if the device clock reads earlier than the save, the clock is re-aligned
+        /// so the game still reads real time from here on without simulating the gap.
+        /// </summary>
+        public static SimulationTime LiveTarget(AirlineOperations restored, DateTime utcNow)
+        {
+            if (restored == null) throw new ArgumentNullException(nameof(restored));
+
+            var saved = restored.ProcessedTo;
+            var live = restored.Clock.At(utcNow);
+            var target = live;
+            if (live.CompareTo(saved) < 0)
+                target = saved;
+            else if (live.ElapsedSeconds - saved.ElapsedSeconds > MaxSeconds)
+                target = saved.Advance(MaxSeconds);
+
+            if (!target.Equals(live))
+                restored.Clock = AirlineClock.Aligned(target, utcNow);
+            return target;
+        }
     }
 
     /// <summary>What changed while the player was away, in plain sentences.</summary>
@@ -62,7 +84,7 @@ namespace Airside.Simulation
             {
                 tripsBefore.TryGetValue(aircraft.Registration, out var was);
                 var flown = aircraft.CompletedTrips - was;
-                var status = Status(aircraft);
+                var status = Status(aircraft, after.Clock);
                 lines.Add(flown > 0
                     ? $"{aircraft.Registration} completed {Plural(flown, "trip")} and {status}."
                     : $"{aircraft.Registration} {status}.");
@@ -88,13 +110,13 @@ namespace Airside.Simulation
             return new AwaySummary(awaySeconds, lines);
         }
 
-        private static string Status(FleetAircraft aircraft)
+        private static string Status(FleetAircraft aircraft, AirlineClock clock)
         {
             var dest = aircraft.CurrentDestination?.Name;
             return aircraft.State switch
             {
                 FleetState.AtStand when aircraft.Scheduled.HasValue =>
-                    $"is on {aircraft.Stand}, departing {AirlineClock.TimeText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}",
+                    $"is on {aircraft.Stand}, departing {clock.TimeText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}",
                 FleetState.AtStand => $"is parked on {aircraft.Stand} with no flight planned",
                 FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff => $"is departing for {dest}",
                 FleetState.Outbound => $"is flying to {dest}",

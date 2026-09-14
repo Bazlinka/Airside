@@ -9,7 +9,7 @@ namespace Airside.Presentation
     /// <summary>
     /// Unattended soak mode for packaged builds (PROJECT_PLAN: a 30-minute soak with
     /// no crash, deadlock or unexplained stop). Launch with
-    /// <c>-airsideSoak [-airsideSoakMinutes N]</c>: a fresh airline flies itself at 60x,
+    /// <c>-airsideSoak [-airsideSoakMinutes N]</c>: a fresh airline flies itself in live time,
     /// a heartbeat is logged to Player.log every real minute, and the app quits with
     /// a verdict when time is up. Soak saves go to their own file, never the player's.
     /// </summary>
@@ -58,17 +58,12 @@ namespace Airside.Presentation
                 _soakNextHeartbeat = _soakStartedAt + 60f;
                 _saveProbed = true; // never offer or read the player's save
                 StartAirline("Soak Air");
-                _speed = 60;
-                Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min at 60x");
+                Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min in live time");
             }
 
             if (_awaySummary != null)
                 _awaySummary = null;
-            _paused = false;
             _menuOpen = false;
-            // The game drops to 1x when an aircraft needs a stand; the soak answers at once,
-            // so hold the rate rather than soaking at normal speed after the first landing.
-            _speed = 60;
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
@@ -76,7 +71,12 @@ namespace Airside.Presentation
                 {
                     var reachable = _operations.MapDestinations().Where(d => _operations.CanReach(aircraft, d)).ToList();
                     var destination = reachable[_soakChoices.NextInt(0, reachable.Count)];
-                    _operations.ScheduleDeparture(aircraft, destination, _clock.Now.Advance(_soakChoices.NextInt(60, 1800)));
+                    // The first flight leaves four minutes in, so every soak covers a full
+                    // engine start early; later ones are spread over half an hour.
+                    var delay = aircraft.CompletedTrips == 0
+                        ? 4 * 60
+                        : _soakChoices.NextInt((int)EngineStartSequence.MinimumDepartureLeadSeconds, 1800);
+                    _operations.ScheduleDeparture(aircraft, destination, _clock.Now.Advance(delay));
                 }
                 else if (aircraft.State == FleetState.AwaitingStand)
                 {
@@ -96,7 +96,11 @@ namespace Airside.Presentation
                 _soakStalledBeats = clock == _soakLastClock ? _soakStalledBeats + 1 : 0;
                 _soakLastClock = clock;
                 var trips = _operations.Fleet.Sum(a => a.CompletedTrips);
-                var states = string.Join(", ", _operations.Fleet.Select(a => $"{a.Registration} {a.State}"));
+                var states = string.Join(", ", _operations.Fleet.Select(a =>
+                {
+                    var e = EngineStartSequence.For(a, _preciseTime);
+                    return $"{a.Registration} {a.State} eng L{e.Left:0.00}/R{e.Right:0.00}{(e.Beacon ? " beacon" : "")}{(e.DoorsOpen ? " doors" : "")}";
+                }));
                 Debug.Log($"{SoakLogTag} {(now - _soakStartedAt) / 60f:0} min · sim {AirlineClockText()} · trips {trips} · " +
                           $"fps {_soakFrames / 60f:0} · mem {GC.GetTotalMemory(false) / (1024 * 1024)} MB · {states}");
                 _soakFrames = 0;
@@ -114,6 +118,6 @@ namespace Airside.Presentation
         }
 
         private string AirlineClockText() =>
-            $"day {Airside.Domain.AirlineClock.DayNumber(_clock.Now)} {Airside.Domain.AirlineClock.TimeText(_clock.Now)}";
+            $"{_operations.Clock.DateText(_clock.Now)} {_operations.Clock.TimeText(_clock.Now)}";
     }
 }

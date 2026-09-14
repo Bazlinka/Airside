@@ -26,7 +26,9 @@ namespace Airside.Presentation
 
         private static readonly (string label, long seconds)[] DepartureOffsets =
         {
-            ("Now", 0), ("+15 min", 15 * 60), ("+30 min", 30 * 60), ("+1 h", 3600), ("+2 h", 7200)
+            // The soonest option still leaves time to board, close up and start both engines.
+            ("In 3 min", EngineStartSequence.MinimumDepartureLeadSeconds), ("+15 min", 15 * 60), ("+30 min", 30 * 60),
+            ("+1 h", 3600), ("+2 h", 7200)
         };
 
         /// <summary>
@@ -94,33 +96,15 @@ namespace Airside.Presentation
 
             if (keyboard.tabKey.wasPressedThisFrame)
                 ToggleMap(_mapAircraft);
-            if (keyboard.nKey.wasPressedThisFrame)
-                SkipToNextEvent();
             return false;
-        }
-
-        private void SkipToNextEvent()
-        {
-            if (_operations == null)
-                return;
-
-            // Never skip past a decision the player owes: an aircraft waiting for a stand.
-            var waiting = PlayerNeedsStand();
-            var next = _operations.NextEventAt();
-            if (waiting != null || next == null)
-            {
-                ShowToast(waiting ?? "Nothing scheduled — plan a flight first.");
-                return;
-            }
-
-            // Land exactly on the event; the per-second circuit catches up in one frame.
-            _preciseTime = Math.Max(_preciseTime, next.Value.ElapsedSeconds);
-            _paused = false;
-            PlayUiClick();
         }
 
         private void DrawAirlineHud(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {
+            // A focused text field or a modal airline panel owns the keyboard.
+            if (_cameraController != null)
+                _cameraController.KeyboardCaptured =
+                    AirlineSetupOpen || _awaySummary != null || GUIUtility.keyboardControl != 0;
             _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
             if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
@@ -216,7 +200,9 @@ namespace Airside.Presentation
         private void StartAirline(string name)
         {
             var player = Airline.Player(name, LiveryChoices[_liveryChoice].hex);
-            _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player);
+            // Live time: whatever the demo circuit's clock reads now is this real instant.
+            _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player,
+                AirlineClock.Aligned(_clock.Now, DateTime.UtcNow));
             _seenEvents = _operations.TotalEvents;
             RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
@@ -261,11 +247,11 @@ namespace Airside.Presentation
                 GuideStep.PlanFirstFlight => ("1 · Plan your first flight",
                     $"Click Plan flight for {reg}, pick a green destination and when it leaves. Kingscote is a short hop."),
                 GuideStep.WaitForDeparture => ("2 · Flight planned",
-                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)}. Speed up with 10x, or Skip (N) to the departure."),
+                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — look around, or press Follow (F)."),
                 GuideStep.Departing => ("3 · Departing",
                     $"{reg} is heading out. Press Follow (F) to ride along through the taxi and takeoff."),
                 GuideStep.Away => ("4 · Away to " + dest,
-                    "Open the Map (Tab) to track it. Skip (N) jumps ahead to the next event."),
+                    "Flights take real time. Track it on the Map (Tab), or close the game — the airport keeps running and tells you what happened."),
                 GuideStep.Landing => ("5 · Coming home",
                     $"The tower is bringing {reg} in to land. Follow (F) to watch the touchdown."),
                 GuideStep.ChooseStand => ("6 · Choose a stand",
@@ -298,7 +284,6 @@ namespace Airside.Presentation
             if (GUI.Button(new Rect(x, rect.yMax - 58f, inner, 40f), "Back to the airport", button))
             {
                 _awaySummary = null;
-                _paused = false;
                 PlayUiClick();
             }
         }
@@ -337,12 +322,13 @@ namespace Airside.Presentation
         private string SavedAirlineSummary()
         {
             var at = new SimulationTime(_savedAirline.ClockSeconds);
+            var savedClock = AirlineSave.ClockFor(_savedAirline);
             var trips = 0;
             foreach (var aircraft in _savedAirline.Fleet)
                 foreach (var airline in _savedAirline.Airlines)
                     if (airline.IsPlayer && airline.Id == aircraft.AirlineId)
                         trips += aircraft.CompletedTrips;
-            return $"Day {DayNumber(at)}  {ClockText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
+            return $"Saved {savedClock.DateText(at)} {savedClock.TimeText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
         }
 
         /// <summary>
@@ -365,16 +351,15 @@ namespace Airside.Presentation
                 return;
             }
 
-            // The airport kept running while the game was closed: advance through the
-            // same event-driven update live play uses, then report what happened.
-            var away = AwayCatchUp.SecondsAway(data, DateTime.UtcNow);
-            if (away > 0)
-            {
-                clock.Set(clock.Now.Advance(away));
-                restored.Update();
+            // The airport kept running while the game was closed: bring it to the real
+            // time now through the same event-driven update live play uses, then report
+            // what happened if the gap was worth a summary.
+            var target = AwayCatchUp.LiveTarget(restored, DateTime.UtcNow);
+            var away = target.ElapsedSeconds - clock.Now.ElapsedSeconds;
+            clock.Set(target);
+            restored.Update();
+            if (away >= AwayCatchUp.MinimumSeconds)
                 _awaySummary = AwaySummary.Build(data, restored, away);
-                _paused = true;
-            }
 
             _clock = clock;
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
@@ -434,7 +419,7 @@ namespace Airside.Presentation
             DrawSolid(new Rect(rect.x + 14f, rect.y + 16f, 10f, 22f), AirsideTheme.FromHex(airline.LiveryHex));
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
-                $"Adelaide  {ClockText(_clock.Now)}  ·  Day {DayNumber(_clock.Now)}", small);
+                $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
             if (GUI.Button(new Rect(rect.x + 14f, rect.y + 60f, 130f, 24f), _mapOpen ? "Close map" : "Map (Tab)", smallButton))
                 ToggleMap(_mapAircraft);
         }
@@ -831,8 +816,6 @@ namespace Airside.Presentation
                         ShowToast($"{reg} is back in the Adelaide circuit.");
                         break;
                     case FleetState.AwaitingStand:
-                        // Drop to normal speed: the player has a decision to make.
-                        _speed = 1;
                         ShowToast($"{reg} has landed — choose a stand.");
                         break;
                     case FleetState.AtStand:
@@ -878,9 +861,7 @@ namespace Airside.Presentation
             return null;
         }
 
-        private static string ClockText(SimulationTime time) => AirlineClock.TimeText(time);
-
-        private static long DayNumber(SimulationTime time) => AirlineClock.DayNumber(time);
+        private string ClockText(SimulationTime time) => (_operations?.Clock ?? AirlineClock.Default).TimeText(time);
 
         private static string DurationText(long seconds) => AirlineClock.DurationText(seconds);
     }

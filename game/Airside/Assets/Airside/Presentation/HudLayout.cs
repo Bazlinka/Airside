@@ -18,11 +18,11 @@ namespace Airside.Presentation
 
         /// <summary>Control bar height, and the size of the square buttons inside it.</summary>
         public const float BarHeight = 44f;
-        public const float ButtonWidth = 62f;
+        public const float ButtonWidth = 104f;
         public const float ButtonGap = 8f;
 
-        /// <summary>pause · follow · 1× · 2× · 4× · 10× · 30× · 60× · skip</summary>
-        public const int ButtonCount = 9;
+        /// <summary>follow · overview. Live real time has no pause, rates or skip (ADR 0045).</summary>
+        public const int ButtonCount = 2;
 
         public const float MenuWidth = 340f;
         public const float MenuHeight = 232f;

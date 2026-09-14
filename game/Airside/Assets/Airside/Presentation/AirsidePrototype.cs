@@ -449,6 +449,8 @@ namespace Airside.Presentation
             {
                 if (TryCloseControlsHelp())
                     return;
+                if (TryCloseAirlineOverlay())
+                    return;
                 if (ClearAircraftSelection())
                 {
                     ResetView();

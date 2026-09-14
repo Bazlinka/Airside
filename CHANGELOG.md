@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Flight planner.** Tab opens a planner with an aircraft switcher (`[` `]`), a
+  destination list with distance and flight time, departure chips plus ±5 min, and a
+  full trip timeline before Schedule. Map clicks no longer get eaten by panning (pan
+  starts after a 4 px drag; clicks pick the nearest dot or aircraft), hovered dots show
+  a tip. Esc closes panels first. 275/275 EditMode.
+
 - **`main` compiles in Unity again.** Fixed an ambiguous `Object.Destroy` in fleet
   visuals and two undeclared map-panning fields from the UI stack, and replaced four
   hand-written `.meta` GUIDs that collided with existing prefabs. 269/269 EditMode.

@@ -39,6 +39,7 @@ namespace Airside.Presentation
         private bool _hangarOpen;
         private bool _flightsOpen;
         private bool _devToolsOpen;
+        private bool _controlsHelpOpen;
         private readonly AustraliaMapLens _mapLens = new();
         private Vector2 _hangarScroll;
         private Vector2 _flightsScroll;
@@ -84,7 +85,10 @@ namespace Airside.Presentation
                 ToggleFlights();
             if (keyboard.f8Key.wasPressedThisFrame)
                 ToggleDevTools();
-            return false;
+            if (keyboard.f1Key.wasPressedThisFrame)
+                ToggleControlsHelp();
+            // Help owns the keyboard while open (except F1 / Esc handled here / in Prototype).
+            return _controlsHelpOpen;
         }
 
         private void DrawAirlineHud(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
@@ -92,7 +96,7 @@ namespace Airside.Presentation
             // A focused text field or a modal airline panel owns the keyboard.
             if (_cameraController != null)
                 _cameraController.KeyboardCaptured =
-                    AirlineSetupOpen || _awaySummary != null || GUIUtility.keyboardControl != 0;
+                    AirlineSetupOpen || _awaySummary != null || _controlsHelpOpen || GUIUtility.keyboardControl != 0;
             _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
             if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
@@ -131,6 +135,8 @@ namespace Airside.Presentation
             else if (_mapOpen)
                 DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
             DrawSelectionHudCard(layout, panel, label, small);
+            if (_controlsHelpOpen)
+                DrawControlsHelp(layout, panel, title, label, small, smallButton);
             DrawToast(placement.Toast, label);
         }
 
@@ -236,6 +242,8 @@ namespace Airside.Presentation
                 _hudPanels.Add(placement.Map);
             if (TrySelectionHudCardRect(layout, out var selectionCard))
                 _hudPanels.Add(selectionCard);
+            if (_controlsHelpOpen)
+                _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
         }
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
@@ -1406,6 +1414,60 @@ namespace Airside.Presentation
             _toast = message;
             _toastUntil = Time.unscaledTime + ToastSeconds;
         }
+
+        private void ToggleControlsHelp()
+        {
+            _controlsHelpOpen = !_controlsHelpOpen;
+            PlayUiClick();
+        }
+
+        /// <summary>Esc closes help before selection / menu.</summary>
+        private bool TryCloseControlsHelp()
+        {
+            if (!_controlsHelpOpen)
+                return false;
+            _controlsHelpOpen = false;
+            PlayUiClick();
+            return true;
+        }
+
+        private void DrawControlsHelp(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var viewport = layout.Viewport;
+            var width = Mathf.Min(520f, viewport.x - AirlineHudLayout.Margin * 2f);
+            var height = Mathf.Min(520f, viewport.y - AirlineHudLayout.Margin * 2f);
+            var rect = new Rect((viewport.x - width) * 0.5f, (viewport.y - height) * 0.5f, width, height);
+
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
+            GUI.Box(rect, GUIContent.none, panel);
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
+
+            var x = rect.x + 18f;
+            var inner = rect.width - 36f;
+            GUI.Label(new Rect(x, rect.y + 12f, inner - 100f, 26f), "Controls", title);
+            if (GUI.Button(new Rect(rect.xMax - 110f, rect.y + 12f, 92f, 26f), "Close", smallButton))
+                ToggleControlsHelp();
+
+            GUI.Label(new Rect(x, rect.y + 42f, inner, 18f),
+                "Hotkeys for camera, airline panels and playtest tools. Press F1 again to close.", small);
+
+            var y = rect.y + 70f;
+            foreach (var section in ControlsHelp.Sections)
+            {
+                GUI.Label(new Rect(x, y, inner, 20f), section.Title.ToUpperInvariant(), label);
+                y += 24f;
+                foreach (var binding in section.Bindings)
+                {
+                    GUI.Label(new Rect(x, y, 110f, 18f), binding.Key, smallButton);
+                    GUI.Label(new Rect(x + 120f, y, inner - 120f, 18f), binding.Action, small);
+                    y += 22f;
+                }
+
+                y += 10f;
+            }
+        }
+
 
         // ---- Helpers ------------------------------------------------------------------
 

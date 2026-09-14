@@ -446,6 +446,8 @@ namespace Airside.Presentation
 
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
+                if (TryCloseControlsHelp())
+                    return;
                 if (ClearAircraftSelection())
                 {
                     ResetView();

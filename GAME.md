@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — review-shot flags:** soak mode accepts `-airsideReviewPanel` and
+  `-airsideReviewShot <png>` (+ `-airsideReviewDelay`), reading the frame back via
+  `ReadPixels` at end of frame (the ScreenCapture module is not in the project). Intended for
+  the PROJECT_PLAN HUD-fit check at 1280×720 / 1440×900 / 2560×1600; not yet run (Bailey
+  asked for no rebuilds / app launches). EditMode **294/294**. Map double-image fix (#235)
+  is in `work/builds` (rebuilt at Bailey's request).
+
 - **2026-09-14 Claude — route map double image fix (Bailey: "zooming out and in i see like two
   copies of australia"):** `AustraliaMapLens.ClampCenterToView` clamped to
   `min+half..max-half` even when the view was wider than the map (min above max), so each

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Review-shot launch flags.** `-airsideReviewPanel plan|hangar|flights|devtools|help` and
+  `-airsideReviewShot <png> [-airsideReviewDelay s]` (with `-airsideSoak`) open a panel,
+  capture the finished frame including the HUD, and quit — for repeatable HUD-fit checks.
+
 - **Route map no longer shows two Australias when zoomed out.** The view centre flipped
   between two positions every frame once zoom eased; it now centres when the view is
   wider than the map. 294/294 EditMode.

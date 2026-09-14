@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — stand UX + board altitude:** `Presentation/StandNames` maps BAY-n to
+  the real bay reference for every player-facing string (status, planner, toasts, guide,
+  Flights board). AwaitingStand row adds a full-width quickest-free-bay button (shortest
+  `TaxiInSecondsTo`, guide highlight moved to it) above the per-bay buttons. Flights board
+  aircraft column appends `EnrouteAltitudeText`. DevTools keeps raw ids on purpose.
+  EditMode **296/296** (`StandNamesTests` 2).
+
 - **2026-09-14 Claude — HUD allocation pass:** base HUD styles (`panel/title/button`,
   `label/small/smallButton`) are cached fields; derived styles go through
   `AirsidePrototype.Styled(basis, variant, make)` (cache keyed by basis reference + variant,

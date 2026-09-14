@@ -336,7 +336,7 @@ namespace Airside.Presentation
                 GuideStep.ChooseStand => ("6 · Choose a stand",
                     $"{reg} has landed. Pick a free bay in Your Fleet so it can taxi in."),
                 GuideStep.TaxiingIn => ("7 · Taxiing in",
-                    $"{reg} is taxiing to {aircraft.Stand}. That completes your first trip."),
+                    $"{reg} is taxiing to {StandNames.Display(aircraft.Stand)}. That completes your first trip."),
                 _ => (string.Empty, string.Empty)
             };
         }
@@ -552,7 +552,7 @@ namespace Airside.Presentation
                 if (_selectedAircraftId == aircraft.Registration) height += 46f;
                 if (aircraft.StateEndsAt.HasValue) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
-                if (aircraft.State == FleetState.AwaitingStand) height += 54f;
+                if (aircraft.State == FleetState.AwaitingStand) height += 84f;
             }
 
             foreach (var airline in _operations.Airlines)
@@ -599,22 +599,26 @@ namespace Airside.Presentation
                 case FleetState.AwaitingStand:
                     GUI.Label(new Rect(x, y, width, 20f), "Choose a stand:", label);
                     y += 22f;
+                    var quickest = StandNames.QuickestToTaxiIn(_operations.FreeStands());
+                    if (quickest.HasValue)
+                    {
+                        // One click for the usual choice: the free bay with the shortest taxi in.
+                        var quickRect = new Rect(x, y, width, 26f);
+                        if (IsGuided(aircraft, GuideStep.ChooseStand))
+                            DrawGuideHighlight(quickRect);
+                        var minutes = Mathf.Max(1, Mathf.RoundToInt(AirlineOperations.TaxiInSecondsTo(quickest.Value) / 60f));
+                        if (GUI.Button(quickRect, $"Quickest: {StandNames.Display(quickest.Value)} · {minutes} min taxi", smallButton))
+                            AssignStandFromHud(aircraft, quickest.Value);
+                        y += 30f;
+                    }
+
                     var bx = x;
                     var any = false;
                     foreach (var stand in _operations.FreeStands())
                     {
                         any = true;
-                        var standRect = new Rect(bx, y, 76f, 26f);
-                        if (IsGuided(aircraft, GuideStep.ChooseStand))
-                            DrawGuideHighlight(standRect);
-                        if (GUI.Button(standRect, stand.Value, smallButton))
-                        {
-                            var result = _operations.AssignStand(aircraft, stand);
-                            if (result.Accepted)
-                                SaveAirline();
-                            else
-                                ShowToast(result.Reason);
-                        }
+                        if (GUI.Button(new Rect(bx, y, 76f, 26f), StandNames.Short(stand), smallButton))
+                            AssignStandFromHud(aircraft, stand);
                         bx += 82f;
                     }
 
@@ -625,6 +629,15 @@ namespace Airside.Presentation
             }
 
             return y;
+        }
+
+        private void AssignStandFromHud(FleetAircraft aircraft, StableId stand)
+        {
+            var result = _operations.AssignStand(aircraft, stand);
+            if (result.Accepted)
+                SaveAirline();
+            else
+                ShowToast(result.Reason);
         }
 
         private float DrawTrafficAircraftRow(FleetAircraft aircraft, float x, float y, float width, GUIStyle label, GUIStyle small)
@@ -824,8 +837,8 @@ namespace Airside.Presentation
             return aircraft.State switch
             {
                 FleetState.AtStand => aircraft.Scheduled.HasValue
-                    ? $"On {aircraft.Stand} · departs {ClockText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}"
-                    : $"On {aircraft.Stand} · no flight planned",
+                    ? $"On {StandNames.Display(aircraft.Stand)} · departs {ClockText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}"
+                    : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to the runway · {dest}",
                 FleetState.HoldingShort => $"Holding short, waiting for the runway · {dest}",
                 FleetState.TakingOff => $"Taking off for {dest}",
@@ -835,7 +848,7 @@ namespace Airside.Presentation
                 FleetState.HoldingForLanding => "In the Adelaide circuit, waiting to land",
                 FleetState.Landing => "Landing at Adelaide",
                 FleetState.AwaitingStand => "Landed · waiting for a stand",
-                FleetState.TaxiIn => $"Taxiing to {aircraft.Stand}",
+                FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()
             };
         }
@@ -1413,7 +1426,7 @@ namespace Airside.Presentation
             {
                 hint.height = 58f;
                 DrawSolid(hint, new Color(AirsideTheme.ClearGreen.r, AirsideTheme.ClearGreen.g, AirsideTheme.ClearGreen.b, 0.16f));
-                GUI.Label(new Rect(x + 8f, y + 4f, width - 16f, 18f), $"{free.Registration} is free on {free.Stand}.", small);
+                GUI.Label(new Rect(x + 8f, y + 4f, width - 16f, 18f), $"{free.Registration} is free on {StandNames.Display(free.Stand)}.", small);
                 // Copy before the button: SelectAircraft rebuilds the shared fleet list.
                 var target = free;
                 if (GUI.Button(new Rect(x + 8f, y + 26f, width - 16f, 26f), $"Plan {target.Registration} instead", smallButton))
@@ -1540,7 +1553,7 @@ namespace Airside.Presentation
             var timeStyle = Styled(small, "upper-right", s => new GUIStyle(s) { alignment = TextAnchor.UpperRight });
             var legs = new (string what, SimulationTime at)[]
             {
-                ($"Pushback from {aircraft.Stand}", trip.DepartStand),
+                ($"Pushback from {StandNames.Display(aircraft.Stand)}", trip.DepartStand),
                 ("Airborne from Adelaide", trip.Airborne),
                 ($"Lands {destination.Code}", trip.ArriveDestination),
                 ($"Departs {destination.Code}", trip.LeaveDestination),
@@ -1798,7 +1811,7 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 18f), FlightBoard.PhaseLabel(aircraft), label);
                 GUI.Label(new Rect(timeW + phaseW, y + 6f, routeW - 4f, 18f), FlightBoard.RouteText(aircraft), small);
                 GUI.Label(new Rect(timeW + phaseW + routeW, y + 6f, rowWidth - timeW - phaseW - routeW - 8f, 18f),
-                    $"{aircraft.Registration}  ·  {aircraft.Airline.Name}", small);
+                    $"{aircraft.Registration}  ·  {aircraft.Airline.Name}{EnrouteAltitudeText(aircraft)}", small);
 
                 if (aircraft.StateEndsAt.HasValue)
                 {
@@ -2068,7 +2081,7 @@ namespace Airside.Presentation
                         ShowToast($"{reg} has landed — choose a stand.");
                         break;
                     case FleetState.AtStand:
-                        ShowToast($"{reg} is parked on {e.Aircraft.Stand}.");
+                        ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
                         break;
                 }
             }

@@ -52,7 +52,7 @@ namespace Airside.Presentation
                 FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing
                     or FleetState.AwaitingStand or FleetState.TaxiIn
                     => $"{code} → {HomeCode}",
-                _ => aircraft.Stand.Value.Length > 0 ? $"Stand {aircraft.Stand.Value}" : HomeCode
+                _ => aircraft.Stand.Value.Length > 0 ? StandNames.Display(aircraft.Stand) : HomeCode
             };
         }
 

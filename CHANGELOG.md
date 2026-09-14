@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Real bay names and a quickest-stand button.** Stands read as Adelaide's real bays
+  (Bay 50D…50A) everywhere; a landed aircraft offers one-click "Quickest: Bay 50C · 3 min
+  taxi". The Flights board shows each away flight's level. 296/296 EditMode.
+
 - **Less HUD garbage.** IMGUI text styles and the planner destination list are built once
   and reused instead of reallocated on every OnGUI pass (several per frame, one per fleet
   row), cutting per-frame GC pressure. 294/294 EditMode.

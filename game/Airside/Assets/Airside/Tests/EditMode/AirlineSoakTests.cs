@@ -41,7 +41,7 @@ namespace Airside.Tests
                 }
 
                 if (mine.State == FleetState.AwaitingStand)
-                    Assert.That(ops.AssignStand(mine, ops.FreeStands().First()).Accepted, Is.True, "a stand is always free for three aircraft on four bays");
+                    Assert.That(ops.AssignStand(mine, ops.FreeStands().First()).Accepted, Is.True, "a stand is always free: six aircraft on six bays");
 
                 var next = ops.NextEventAt();
                 Assert.That(next, Is.Not.Null, $"the airport stopped at {clock.Now}: nothing left to happen");

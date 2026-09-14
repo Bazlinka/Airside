@@ -101,14 +101,37 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Layout_BaysAreFarEnoughApartForAnAtr()
+        public void Layout_ParkedAtrWingtipsKeepCodeCClearance()
         {
+            // Stops alone were a poor proxy: 50E sits 28.6 m from 50D but faces another way.
+            // Check the parked wing lines instead — ATR 42 span 24.6 m, wing ~9.5 m behind the
+            // nose — against ICAO code C stand clearance of 4.5 m.
+            const double span = 24.57, noseToWing = 9.5;
+
+            (double ax, double az, double bx, double bz) Wing(AdelaideBay bay)
+            {
+                var h = bay.HeadingDegrees * Math.PI / 180.0;
+                double fx = Math.Sin(h), fz = Math.Cos(h);
+                double cx = bay.StopX - fx * noseToWing, cz = bay.StopZ - fz * noseToWing;
+                return (cx - fz * span / 2, cz + fx * span / 2, cx + fz * span / 2, cz - fx * span / 2);
+            }
+
+            double PointToSegment(double px, double pz, double ax, double az, double bx, double bz)
+            {
+                double dx = bx - ax, dz = bz - az;
+                var t = Math.Max(0, Math.Min(1, ((px - ax) * dx + (pz - az) * dz) / (dx * dx + dz * dz)));
+                return Math.Sqrt(Math.Pow(ax + dx * t - px, 2) + Math.Pow(az + dz * t - pz, 2));
+            }
+
             var bays = AdelaideLayout.Bays;
             for (var i = 0; i < bays.Length; i++)
             for (var j = i + 1; j < bays.Length; j++)
             {
-                var d = Math.Sqrt(Math.Pow(bays[i].StopX - bays[j].StopX, 2) + Math.Pow(bays[i].StopZ - bays[j].StopZ, 2));
-                Assert.That(d, Is.GreaterThan(30.0), $"{bays[i].Reference} and {bays[j].Reference} (ATR span 24.6 m)");
+                var a = Wing(bays[i]);
+                var b = Wing(bays[j]);
+                var gap = Math.Min(Math.Min(PointToSegment(a.ax, a.az, b.ax, b.az, b.bx, b.bz), PointToSegment(a.bx, a.bz, b.ax, b.az, b.bx, b.bz)),
+                    Math.Min(PointToSegment(b.ax, b.az, a.ax, a.az, a.bx, a.bz), PointToSegment(b.bx, b.bz, a.ax, a.az, a.bx, a.bz)));
+                Assert.That(gap, Is.GreaterThan(4.5), $"{bays[i].Reference} and {bays[j].Reference} wingtips");
             }
         }
 

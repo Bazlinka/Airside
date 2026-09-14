@@ -40,11 +40,28 @@ namespace Airside.Domain
         /// </summary>
         public static readonly AircraftType Atr42 = new("ATR42", "ATR 42-600", 556, 1100);
 
+        /// <summary>
+        /// Saab 340B, Rex's regional workhorse: ~270 kt (500 km/h) cruise; planned with a
+        /// full cabin and reserves, about 1,000 km. Drawn with the ATR model for now.
+        /// </summary>
+        public static readonly AircraftType Saab340 = new("SF34", "Saab 340B", 500, 1000);
+
+        /// <summary>
+        /// De Havilland Canada Dash 8-400 (QantasLink): ~360 kt (667 km/h) cruise, about
+        /// 1,800 km planned range. Drawn with the ATR model for now.
+        /// </summary>
+        public static readonly AircraftType Dash8Q400 = new("DH8D", "Dash 8-400", 667, 1800);
+
+        private static readonly AircraftType[] Known = { Atr42, Saab340, Dash8Q400 };
+
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
 
         public static bool TryFromId(string id, out AircraftType type)
         {
-            type = string.Equals(id, Atr42.Id, StringComparison.Ordinal) ? Atr42 : null;
+            type = null;
+            foreach (var known in Known)
+                if (string.Equals(id, known.Id, StringComparison.Ordinal))
+                    type = known;
             return type != null;
         }
     }

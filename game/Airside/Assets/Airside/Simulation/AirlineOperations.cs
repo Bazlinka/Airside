@@ -81,7 +81,20 @@ namespace Airside.Simulation
 
         public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = new[]
         {
-            new StableId("BAY-1"), new StableId("BAY-2"), new StableId("BAY-3"), new StableId("BAY-4")
+            new StableId("BAY-1"), new StableId("BAY-2"), new StableId("BAY-3"), new StableId("BAY-4"),
+            new StableId("BAY-5"), new StableId("BAY-6")
+        };
+
+        /// <summary>
+        /// Real regional carriers that share Adelaide's regional apron with the player and
+        /// Emu Air. New games start with them; older saves gain them on load
+        /// (<see cref="AddMissingRegionalCarriers"/>). Six aircraft in all on six bays, so
+        /// everyone always has a stand.
+        /// </summary>
+        public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
+        {
+            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340) }),
+            (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400) })
         };
 
         private readonly ISimulationClock _clock;
@@ -107,7 +120,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>First Emu Air departures after a new game starts, so the field is not empty for 45 real minutes.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 10 * 60, 20 * 60 };
+        public static readonly long[] AiOpeningDepartureSeconds = { 10 * 60, 20 * 60, 32 * 60, 45 * 60, 58 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
@@ -124,20 +137,58 @@ namespace Airside.Simulation
             operations.AddAirline(player);
             operations.AddAirline(emu);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
-            var emuFleet = new[]
+            var aiFleet = new List<FleetAircraft>
             {
                 operations.AddAircraft(emu, "VH-EMA", AircraftType.Atr42, AdelaideRegionalBays[1]),
                 operations.AddAircraft(emu, "VH-EMB", AircraftType.Atr42, AdelaideRegionalBays[2])
             };
-            for (var i = 0; i < emuFleet.Length; i++)
+            operations.AddMissingRegionalCarriers(aiFleet);
+            // Stagger the first departures so a new game sees a movement every ~12 minutes.
+            for (var i = 0; i < aiFleet.Count && i < AiOpeningDepartureSeconds.Length; i++)
             {
-                if (emuFleet[i].Scheduled is { } first)
-                    emuFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
+                if (aiFleet[i].Scheduled is { } first)
+                    aiFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
                         operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[i]));
             }
 
             operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
+        }
+
+        /// <summary>
+        /// Add any <see cref="RegionalCarriers"/> airline that is not flying here yet, parking
+        /// each of its aircraft on a free stand (skipped if none is free) with an AI departure
+        /// booked. Returns how many aircraft joined. Safe to call on every load.
+        /// </summary>
+        public int AddMissingRegionalCarriers(List<FleetAircraft> added = null)
+        {
+            var count = 0;
+            foreach (var (make, fleet) in RegionalCarriers)
+            {
+                var airline = make();
+                if (_airlines.Exists(a => a.Id.Equals(airline.Id)))
+                    continue;
+                AddAirline(airline);
+                foreach (var (registration, type) in fleet)
+                {
+                    if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    StableId? free = null;
+                    foreach (var stand in FreeStands())
+                    {
+                        free = stand;
+                        break;
+                    }
+
+                    if (!free.HasValue)
+                        break;
+                    var aircraft = AddAircraft(airline, registration, type, free.Value);
+                    added?.Add(aircraft);
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         public Destination Home { get; }
@@ -505,11 +556,34 @@ namespace Airside.Simulation
             ("CED", 1), ("CPD", 1), ("MQL", 1), ("BHQ", 1)
         };
 
+        /// <summary>
+        /// Rex from Adelaide: the South Australian regional network plus Broken Hill and
+        /// Mildura — Port Lincoln and Mount Gambier busiest. An approximation of its real
+        /// pattern, not a copy of a published timetable.
+        /// </summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> RexNetwork = new[]
+        {
+            ("PLO", 3), ("MGB", 3), ("KGC", 2), ("WYA", 2), ("CED", 2), ("BHQ", 2), ("CPD", 1), ("MQL", 1)
+        };
+
+        /// <summary>QantasLink from Adelaide: Port Lincoln and Alice Springs (approximate).</summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> QantasLinkNetwork = new[]
+        {
+            ("PLO", 2), ("ASP", 2)
+        };
+
+        public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
+        {
+            "REX" => RexNetwork,
+            "QLK" => QantasLinkNetwork,
+            _ => AiNetwork
+        };
+
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
         {
             var total = 0;
             var candidates = new List<(Destination destination, int weight)>();
-            foreach (var (code, weight) in AiNetwork)
+            foreach (var (code, weight) in AiNetworkFor(aircraft.Airline))
             {
                 if (!DestinationCatalogue.TryFind(code, out var destination) || !CanReach(aircraft, destination))
                     continue;

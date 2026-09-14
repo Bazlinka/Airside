@@ -86,7 +86,9 @@ namespace Airside.Tests
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
             var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer).Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).ToArray();
             Assert.That(departures, Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds));
-            Assert.That(departures.Max(), Is.LessThanOrEqualTo(20 * 60));
+            var emu = ops.Fleet.Where(a => a.Airline.Name == "Emu Air").Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds);
+            Assert.That(emu.Max(), Is.LessThanOrEqualTo(20 * 60), "Emu Air still opens the day within twenty minutes");
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(60 * 60), "every carrier has moved within the first hour");
         }
     }
 }

@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **More regional traffic: Rex and QantasLink.** Two real carriers now share Adelaide's
+  regional apron — Rex with two Saab 340Bs on its SA network plus Broken Hill and Mildura,
+  QantasLink with a Dash 8-400 to Port Lincoln and Alice Springs — on real bays 50E and 50F
+  (six bays for six aircraft). New games open with a departure about every 12 minutes;
+  existing saves gain the carriers on load. 302/302 EditMode.
+
 - **Away summary reads properly.** It names real bays ("parked on Bay 50D") and sizes each
   line to its text so long statuses no longer clip. 298/298 EditMode.
 

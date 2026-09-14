@@ -11,7 +11,9 @@ how it works — the point is to see what is clear and what is not.
 
 ## What to do
 
-Start an airline at Adelaide and play however seems natural. That's it.
+Start an airline at Adelaide and play however seems natural. The airport runs in
+real Adelaide time — flights take as long as real ones, and it keeps going when
+you close the game. That's it.
 
 ## Afterwards, please tell us
 

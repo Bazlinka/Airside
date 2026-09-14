@@ -13,15 +13,20 @@ namespace Airside.Simulation
     public sealed class AirlineSaveData
     {
         /// <summary>
-        /// 2 added <see cref="SavedAtUtcTicks"/> for away catch-up. Version 1 saves still
-        /// load; with no timestamp they simply resume without catching up.
+        /// 2 added <see cref="SavedAtUtcTicks"/> for away catch-up. 3 added
+        /// <see cref="EpochUtcTicks"/> for live real time. Older saves still load: a v2
+        /// clock is aligned so the save moment reads as when it was saved, a v1 clock
+        /// uses <see cref="AirlineClock.DefaultEpochUtc"/>.
         /// </summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
 
         /// <summary>Real-world UTC time of the save, as <see cref="DateTime.Ticks"/>; 0 when unknown.</summary>
         public long SavedAtUtcTicks;
+
+        /// <summary>Real UTC instant of simulation time zero (live airline clock).</summary>
+        public long EpochUtcTicks;
         public string HomeCode;
         public long ClockSeconds;
         public long RunwayFreeAtSeconds;
@@ -68,6 +73,7 @@ namespace Airside.Simulation
             var data = new AirlineSaveData
             {
                 SavedAtUtcTicks = savedAtUtc?.ToUniversalTime().Ticks ?? 0,
+                EpochUtcTicks = operations.Clock.EpochUtcTicks,
                 HomeCode = operations.Home.Code,
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
@@ -175,7 +181,22 @@ namespace Airside.Simulation
             }
 
             operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
+            operations.Clock = ClockFor(data);
             return operations;
+        }
+
+        /// <summary>
+        /// The live clock a save runs on. v3 stores its epoch; a v2 save is aligned so its
+        /// save moment reads as the real time it was saved; v1 falls back to the default.
+        /// </summary>
+        public static AirlineClock ClockFor(AirlineSaveData data)
+        {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (data.EpochUtcTicks > 0)
+                return new AirlineClock(data.EpochUtcTicks);
+            return data.SavedAtUtcTicks > 0
+                ? AirlineClock.Aligned(new SimulationTime(data.ClockSeconds), new DateTime(data.SavedAtUtcTicks, DateTimeKind.Utc))
+                : AirlineClock.Default;
         }
 
         private static StableId Stand(string value) =>

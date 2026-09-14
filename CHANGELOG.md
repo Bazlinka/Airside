@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **Live real time.** The game clock is the real time in Adelaide and runs at 1×;
+  pause, time rates and skip are removed. Saves move to v3 with older saves
+  migrated. Typing in the airline name no longer moves the camera. Aircraft now
+  start their engines before departure (beacon, doors, right then left engine) and
+  shut down after parking. The game opens with a short skippable intro.
+
 - **Soak-tested and playtest-ready.** A 30-day simulation soak test, an unattended
   soak mode for packaged builds (30 min at 1× and 10 min at 60× both clean), and a
   script that zips the exact build with a tester note.

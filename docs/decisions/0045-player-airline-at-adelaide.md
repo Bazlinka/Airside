@@ -99,3 +99,11 @@ until the first slice lands.
   normal event-driven update, so offline results match live play (core rule).
 - Player aircraft that land while away wait for a stand exactly as in live play;
   the away summary tells the player.
+
+## Live real time (2026-09-14)
+
+Bailey: "I want time to be accurate of real time… accurate live time", choosing
+"always real time" over keeping speed-ups. Simulation time is seconds since a UTC
+epoch, shown in Adelaide local time. Pause, rates and skip are removed; catch-up on
+Continue is simply aligning to now (capped at a week). Supersedes the 10×–60× and
+skip decisions above.

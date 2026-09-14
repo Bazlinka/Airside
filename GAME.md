@@ -1,5 +1,31 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude live real time, typing, engine start, intro (Bailey's requests, `feature/live-real-time`):**
+  - **Live Adelaide time (Bailey chose "always real time").** `AirlineClock` is now an
+    instance with a UTC epoch: one simulated second per real second, shown in
+    Adelaide local time with daylight saving. Pause, 2×–60× and Skip are gone; the
+    menu no longer stops anything. Saves are **v3** (`EpochUtcTicks`); v2 aligns so
+    its save moment reads as when it was saved; v1 uses a default epoch. Continue
+    always syncs to now (`AwayCatchUp.LiveTarget`, which re-aligns past the 7-day cap
+    or a backwards device clock). Emu Air's first departures are at +10 and +20 min.
+  - **Typing no longer moves the camera:** `AirsideCameraController.KeyboardCaptured`
+    while the start/away panels are up or a text field has focus.
+  - **Engine start/shutdown:** `EngineStartSequence` — beacon T−3 min, doors close
+    T−160 s, No.2 (right) T−120 s, No.1 (left) T−70 s, 30 s spool; after parking No.1
+    then No.2 wind down, beacon off, doors open. Drives each propeller, beacon, doors,
+    heat shimmer and engine note. Parked fleet props no longer spin (they did before,
+    via the demo circuit's SkipGroundTaxi RPM). Soonest departure is "In 3 min".
+  - **Launch intro:** 7 s eased camera glide in with wordmark and live local time;
+    any key/click skips; capped timestep so it is not spent behind the loading hitch.
+- **Evidence:** Unity EditMode **242/242** (new: `LiveClockTests`, `EngineStartSequenceTests`).
+  Packaged app: intro plays; holding D/W in the name field leaves the camera still;
+  Bailey's v2 save continued at 10:04 Mon 14 Sep matching the Mac clock; soak log
+  showed beacon T−3, R spool 0.74 → 1, L 0.26 → 1, then TaxiOut; sub-second frames
+  show blades turning at the stand. (Integer-second screenshots strobe-alias a
+  6-blade prop at idle — 2,520°/s is a multiple of 60° — and look frozen.)
+- **Next:** align the airfield with real YPAD geometry (OSM), then derive every
+  ground speed from real route lengths (Bailey, same day).
+
 - **2026-09-14 Claude soak and playtest packaging (PROJECT_PLAN step 3 acceptance, `test/soak`):**
   - `AirlineSoakTests`: 30 simulated days, player flown continuously, checked at
     every event for runway double-occupancy, stand double-booking, stuck waits and
@@ -388,10 +414,11 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
-On-screen controls sit in a bar at the bottom centre: **Pause · Follow · 1× ·
-2× · 4× · 10× · 30× · 60× · Skip**. Selecting a rate also clears a pause. Skip
-jumps to the next airline event, but never past a stand choice you owe. Live
-airspeed in knots shows just above the bar.
+The game opens with a short intro (any key skips). Time is **live Adelaide time**:
+once an airline starts, one second in the game is one real second, and the clock
+shows the real local time. There is no pause, no time rates and no skip; the menu
+does not stop the airport. On-screen controls at the bottom centre are **Follow ·
+Overview**, with live airspeed in knots just above.
 
 Airline (ADR 0045): name your airline and pick a livery on the start screen. The
 fleet panel (top right) plans flights and offers stands when your aircraft lands;
@@ -400,10 +427,7 @@ and tracks aircraft that are away.
 
 Simulation:
 
-- Escape: open or close the pause menu (Resume, Restart circuit, Quit)
-- Space or P: pause or resume
-- 1 / 2 / 3 / 4 / 5 / 6: 1×, 2×, 4×, 10×, 30× and 60× time
-- N: skip to the next airline event
+- Escape: open or close the menu (Resume, Restart circuit, Quit) — time keeps running
 - Tab: open or close the destinations map
 - M: mute audio
 
@@ -430,9 +454,11 @@ toggle follow off in `Update` and straight back on in `LateUpdate`.
 Run checks with `scripts/test-unity.sh`. Build the local Mac app with `scripts/build-mac.sh`.
 
 Soak a packaged build unattended (PROJECT_PLAN acceptance): launch with
-`-airsideSoak -airsideSoakMinutes 30`. A fresh airline flies itself at 60×, a
+`-airsideSoak -airsideSoakMinutes 30`. A fresh airline flies itself in live time
+(its first departure at four minutes, so every soak covers an engine start), a
 `[Airside soak]` heartbeat goes to `~/Library/Logs/DefaultCompany/Airside/Player.log`
-every minute (sim time, trips, fps, memory, fleet states), a STALL error is logged
+every minute (live time, trips, fps, memory, fleet states with engine spool, beacon
+and doors), a STALL error is logged
 if the clock stops, and the app quits with a COMPLETE line. Soak saves go to
 `airline-save-soak.json`, never the player's save.
 Without a Mac Unity editor, `scripts/test-domain.sh` runs the same

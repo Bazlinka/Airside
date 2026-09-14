@@ -156,28 +156,15 @@ namespace Airside.Presentation
         private AirsideCameraController _cameraController;
         private double _preciseTime;
         private float _presentationClock;
-        private bool _paused;
         private bool _audioMuted;
 
         /// <summary>
-        /// Selectable time rates. Flights are real length (ADR 0045), so the long
-        /// rates exist to get through a two-hour leg without waiting two hours.
+        /// Menu visibility. Time is live Adelaide time (ADR 0045), so the menu does not
+        /// pause anything: the airport keeps running behind it.
         /// </summary>
-        private static readonly int[] SpeedSteps = { 1, 2, 4, 10, 30, 60 };
-        private int _speed = 1;
-
-        /// <summary>Pause menu visibility. The menu implies paused; pausing does not imply the menu.</summary>
         private bool _menuOpen;
-
-        /// <summary>
-        /// Single source of truth for "time is not moving": an explicit pause, or the
-        /// pause menu being open. Every presentation rate reads this, so audio, props,
-        /// smoke and apron life all freeze together with the aircraft.
-        /// </summary>
-        private bool SimulationFrozen => _paused || _menuOpen;
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
-        private const float EngineVolumePausedScale = 0.28f;
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
@@ -225,6 +212,7 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
 
             BuildLightingAndCamera();
+            StartIntro();
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
@@ -402,11 +390,11 @@ namespace Airside.Presentation
             ReadSimulationControls();
             DriveSoak();
 
-            var running = !SimulationFrozen;
-            if (_cameraController != null)
-                _cameraController.FreezePresentation = !running;
-            if (running)
-                _preciseTime += Time.unscaledDeltaTime * _speed;
+            // Live time: once an airline runs, simulation time is read off the real clock.
+            // Before that the demo circuit simply runs at 1x.
+            _preciseTime = FleetMode
+                ? Math.Max(_preciseTime, _operations.Clock.SecondsAt(DateTime.UtcNow))
+                : _preciseTime + Time.unscaledDeltaTime;
 
             var wholeSeconds = (long)Math.Floor(_preciseTime);
             if (wholeSeconds > _clock.Now.ElapsedSeconds)
@@ -447,6 +435,10 @@ namespace Airside.Presentation
             if (keyboard == null)
                 return;
 
+            // Any key or click during the launch intro skips it and does nothing else.
+            if (ReadIntroSkip(keyboard))
+                return;
+
             if (keyboard.escapeKey.wasPressedThisFrame)
                 ToggleMenu();
 
@@ -455,30 +447,16 @@ namespace Airside.Presentation
             if (_menuOpen)
                 return;
 
-            // Typing the airline name must not pause, follow or change speed.
+            // Typing the airline name must not follow, reset the view or mute.
             if (ReadAirlineControls(keyboard))
                 return;
 
-            if (keyboard.spaceKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame)
-                TogglePause();
             if (keyboard.fKey.wasPressedThisFrame)
                 ToggleFollow();
             if (keyboard.rKey.wasPressedThisFrame)
                 ResetView();
-            if (keyboard.digit1Key.wasPressedThisFrame) SetSpeed(1);
-            if (keyboard.digit2Key.wasPressedThisFrame) SetSpeed(2);
-            if (keyboard.digit3Key.wasPressedThisFrame) SetSpeed(4);
-            if (keyboard.digit4Key.wasPressedThisFrame) SetSpeed(10);
-            if (keyboard.digit5Key.wasPressedThisFrame) SetSpeed(30);
-            if (keyboard.digit6Key.wasPressedThisFrame) SetSpeed(60);
             if (keyboard.mKey.wasPressedThisFrame)
                 _audioMuted = !_audioMuted;
-        }
-
-        private void TogglePause()
-        {
-            _paused = !_paused;
-            PlayUiClick();
         }
 
         private void ToggleMenu()
@@ -511,14 +489,6 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
-        private void SetSpeed(int multiplier)
-        {
-            // Selecting a rate also lifts a pause — asking for 2x while paused means go.
-            _speed = multiplier;
-            _paused = false;
-            PlayUiClick();
-        }
-
         private void RestartCircuit()
         {
             _simulation.RestartCircuit();
@@ -528,7 +498,6 @@ namespace Airside.Presentation
             _rotateFired.Clear();
             ClearWheelSmoke();
             _menuOpen = false;
-            _paused = false;
             PlayUiClick();
         }
 
@@ -552,6 +521,13 @@ namespace Airside.Presentation
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
             var layout = HudLayout.Create(Screen.width / scale, Screen.height / scale);
+            if (IntroActive)
+            {
+                DrawIntro(layout);
+                GUI.matrix = previousMatrix;
+                return;
+            }
+
             var panel = AirsideTheme.PanelStyle(new GUIStyle(GUI.skin.box)
             {
                 alignment = TextAnchor.UpperLeft,
@@ -635,24 +611,10 @@ namespace Airside.Presentation
         {
             var following = _cameraController != null && _cameraController.IsFollowing;
 
-            if (GUI.Button(layout.ButtonAt(0), _paused ? "Resume" : "Pause", button))
-                TogglePause();
-            if (GUI.Button(layout.ButtonAt(1), following ? "Follow on" : "Follow", button))
+            if (GUI.Button(layout.ButtonAt(0), following ? "Follow on" : "Follow", button))
                 ToggleFollow();
-
-            // Brackets rather than a tick or triangle: the built-in GUI font is only
-            // proven for the dashes and arrows already used elsewhere in this HUD.
-            for (var index = 0; index < SpeedSteps.Length; index++)
-            {
-                var step = SpeedSteps[index];
-                var selected = !_paused && _speed == step;
-                var label = selected ? $"[{step}x]" : $"{step}x";
-                if (GUI.Button(layout.ButtonAt(2 + index), label, button))
-                    SetSpeed(step);
-            }
-
-            if (GUI.Button(layout.ButtonAt(2 + SpeedSteps.Length), "Skip", button))
-                SkipToNextEvent();
+            if (GUI.Button(layout.ButtonAt(1), "Overview", button))
+                ResetView();
         }
 
         private void DrawPauseMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
@@ -716,15 +678,16 @@ namespace Airside.Presentation
                     targetRotation,
                     AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
-                SpinPropellers(view, phase);
+                var engines = FleetEngines(flight);
+                SpinPropellers(view, phase, engines);
                 RollLandingGearTires(view, phase, progress);
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
                 UpdateGroundShadow(view);
-                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime);
-                UpdateCabinDoor(view, phase);
+                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
+                UpdateCabinDoor(view, phase, engines?.DoorsOpen);
                 UpdateCabinWindowGlow(view, phase, PresentationDaylight);
-                UpdateEngineHeat(view, phase);
+                UpdateEngineHeat(view, phase, engines?.AnyRunning);
 
                 if (_cameraController != null
                     && _cameraController.IsFollowing
@@ -854,8 +817,10 @@ namespace Airside.Presentation
             for (var index = 0; index < VisualFlights.Count && index < _commercialAircraft.Length; index++)
             {
                 var phase = VisualFlights[index].Operation.Phase;
+                var engines = FleetEngines(VisualFlights[index]);
                 ApplyEngineAudio(_commercialAircraft[index],
-                    AirsideReusableMotion.PropellersSpinning(phase));
+                    engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
+                    engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f);
             }
         }
 
@@ -871,7 +836,8 @@ namespace Airside.Presentation
             _uiAudio.PlayOneShot(_uiClickClip);
         }
 
-        private void ApplyEngineAudio(Transform aircraft, bool enginesOn)
+        /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
+        private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool = 1f)
         {
             if (aircraft == null)
                 return;
@@ -897,11 +863,11 @@ namespace Airside.Presentation
                 ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
                     AirsideReusableMotion.PropRpmTakeoff, rpm)
                 : 0f;
-            source.pitch = Mathf.Lerp(0.85f, 1.2f, power);
+            source.pitch = Mathf.Lerp(0.85f, 1.2f, power) * Mathf.Lerp(0.55f, 1f, spool);
 
-            var target = enginesOn ? Mathf.Lerp(EngineVolumeRunning, EngineVolumeRunning * 1.5f, power) : EngineVolumeIdle;
-            if (SimulationFrozen)
-                target *= EngineVolumePausedScale;
+            var target = enginesOn
+                ? Mathf.Lerp(EngineVolumeRunning, EngineVolumeRunning * 1.5f, power) * Mathf.Lerp(0.35f, 1f, spool)
+                : EngineVolumeIdle;
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
         }
 
@@ -918,13 +884,6 @@ namespace Airside.Presentation
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
             var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
             var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
-            if (SimulationFrozen)
-            {
-                windTarget *= EngineVolumePausedScale;
-                rainTarget *= EngineVolumePausedScale;
-                coastTarget *= EngineVolumePausedScale;
-            }
-
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
                 windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);
@@ -968,7 +927,8 @@ namespace Airside.Presentation
         }
 
         private static void UpdateAircraftLightsAndGear(
-            Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f)
+            Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
+            EngineState? engines = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
@@ -979,7 +939,7 @@ namespace Airside.Presentation
             var airborne = phase == AircraftPhase.Departed
                 || phase == AircraftPhase.Approach
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
-            var enginesOn = AirsideReusableMotion.PropellersSpinning(phase);
+            var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
@@ -1020,7 +980,7 @@ namespace Airside.Presentation
                 else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
                 {
                     // ANM-AIR-004 — pulse from the presentation clock so pause freezes the blink.
-                    var beaconOn = enginesOn;
+                    var beaconOn = engines?.Beacon ?? enginesOn;
                     if (beaconOn && deltaTime > 0f)
                         beaconOn = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
                     else if (beaconOn)
@@ -1159,11 +1119,14 @@ namespace Airside.Presentation
             light.enabled = on;
         }
 
-        private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase)
+        private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase, bool? doorsOpen = null)
         {
             // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
-            // ANM-AIR-003 — open bias from AirsideReusableMotion.
-            var doorBias = AirsideReusableMotion.CabinDoorBias(phase);
+            // ANM-AIR-003 — open bias from AirsideReusableMotion; fleet aircraft follow their
+            // engine start and shutdown sequence instead.
+            var doorBias = doorsOpen.HasValue
+                ? (doorsOpen.Value ? AirsideReusableMotion.DoorOpenAtStand : AirsideReusableMotion.DoorClosed)
+                : AirsideReusableMotion.CabinDoorBias(phase);
             var cabinTargetY = Mathf.Lerp(0f, -85f, doorBias);
             var cargoTargetY = Mathf.Lerp(0f, 70f, doorBias);
             foreach (var child in AirsideNamedChildren.Get(aircraft))
@@ -1226,10 +1189,10 @@ namespace Airside.Presentation
             }
         }
 
-        private static void UpdateEngineHeat(Transform aircraft, AircraftPhase phase)
+        private static void UpdateEngineHeat(Transform aircraft, AircraftPhase phase, bool? running = null)
         {
             // Presentation-only: subtle heat shimmer behind running engines.
-            var enginesOn = phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed;
+            var enginesOn = running ?? (phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed);
             var intensity = phase is AircraftPhase.Takeoff or AircraftPhase.Approach ? 1.25f : 1f;
             foreach (var child in AirsideNamedChildren.Get(aircraft))
             {
@@ -1255,10 +1218,16 @@ namespace Airside.Presentation
         }
 
         /// <summary>Sim-rate presentation dt — freezes when paused, scales with the selected rate.</summary>
-        private float PresentationDeltaTime => SimulationFrozen ? 0f : Time.unscaledDeltaTime * _speed;
+        private float PresentationDeltaTime => Time.unscaledDeltaTime;
 
-        private void SpinPropellers(Transform aircraft, AircraftPhase phase)
+        private void SpinPropellers(Transform aircraft, AircraftPhase phase, EngineState? engines = null)
         {
+            if (engines is { } perEngine)
+            {
+                SpinPropellersPerEngine(aircraft, phase, perEngine);
+                return;
+            }
+
             // Presentation-only: RPM follows phase (Batch F4 ANM-AIR-001 via AirsideReusableMotion).
             // RPM used to jump straight to the new phase value, so takeoff power arrived
             // in one frame and engines stopped dead at shutdown. Spool between them
@@ -1289,9 +1258,37 @@ namespace Airside.Presentation
             }
         }
 
-        private float SpooledPropRpm(Transform aircraft, float targetRpm)
+        /// <summary>
+        /// Fleet aircraft: each propeller follows its own engine through the start and
+        /// shutdown sequence, at ground idle while parked and at phase RPM otherwise.
+        /// </summary>
+        private void SpinPropellersPerEngine(Transform aircraft, AircraftPhase phase, EngineState engines)
         {
-            var key = aircraft.GetInstanceID();
+            var phaseRpm = phase == AircraftPhase.AtStand
+                ? AirsideReusableMotion.PropRpmTaxi
+                : AirsideReusableMotion.PropRpmForPhase(phase);
+            var id = aircraft.GetInstanceID();
+            var left = SpooledPropRpm(id * 2 + 1, phaseRpm * engines.Left);
+            var right = SpooledPropRpm(id * 2 + 2, phaseRpm * engines.Right);
+            // Engine audio reads the aircraft's own key; give it the stronger engine.
+            _propRpm[id] = Mathf.Max(left, right);
+
+            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            {
+                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                    continue;
+                var rpm = child.name.EndsWith(" L", StringComparison.Ordinal) ? left : right;
+                ApplyPropBlurToHub(child, rpm >= AirsideReusableMotion.PropHighRpmThreshold);
+                if (rpm >= 1f)
+                    child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
+            }
+        }
+
+        private float SpooledPropRpm(Transform aircraft, float targetRpm) =>
+            SpooledPropRpm(aircraft.GetInstanceID(), targetRpm);
+
+        private float SpooledPropRpm(int key, float targetRpm)
+        {
             if (!_propRpm.TryGetValue(key, out var current))
                 current = targetRpm;
             var rate = targetRpm > current ? 1.6f : 0.8f;
@@ -1652,7 +1649,7 @@ namespace Airside.Presentation
                 vehicle.position = parkPosition;
 
             var previous = vehicle.position;
-            var speed = (active ? 7.5f : 5.5f) * (SimulationFrozen ? 0f : _speed);
+            var speed = (active ? 7.5f : 5.5f) * 1f;
             vehicle.position = Vector3.MoveTowards(previous, target, Time.unscaledDeltaTime * speed);
             var travel = Vector3.Distance(previous, vehicle.position);
             if (travel > 0.001f)
@@ -1662,7 +1659,7 @@ namespace Airside.Presentation
                 if (flat.sqrMagnitude > 0.0001f)
                 {
                     var look = Quaternion.LookRotation(flat.normalized, Vector3.up);
-                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f * Mathf.Max(1, _speed));
+                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f);
                 }
             }
 
@@ -1673,7 +1670,7 @@ namespace Airside.Presentation
             var spinRpm = active
                 ? AirsideReusableMotion.VehicleWheelRpmTaxi
                 : AirsideReusableMotion.VehicleWheelRpmService;
-            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm * Mathf.Max(1, _speed) : 0f);
+            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
             if (degrees <= 0f)
                 return;
             foreach (var child in AirsideNamedChildren.Get(vehicle))
@@ -2136,10 +2133,8 @@ namespace Airside.Presentation
             {
                 _touchdownSmoke.gameObject.SetActive(false);
             }
-            else if (!SimulationFrozen)
+            else
             {
-                // Freeze the puff while paused; at 4× it still ages in real time so the
-                // one-shot stays short rather than stretching across the whole rollout.
                 _touchdownSmokeRemaining -= Time.unscaledDeltaTime;
                 var t = Mathf.Clamp01(_touchdownSmokeRemaining / 1.35f);
                 var n = _touchdownSmoke.childCount;
@@ -2718,7 +2713,7 @@ namespace Airside.Presentation
         /// </summary>
         private void UpdateRollingWheelSmoke(Transform aircraft, CommercialFlight flight, AircraftPhase phase)
         {
-            if (_wheelPuffs == null || aircraft == null || SimulationFrozen)
+            if (_wheelPuffs == null || aircraft == null)
                 return;
 
             var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f));
@@ -2857,7 +2852,7 @@ namespace Airside.Presentation
 
         private void UpdateWheelSmoke()
         {
-            if (_wheelPuffs == null || SimulationFrozen)
+            if (_wheelPuffs == null)
                 return;
 
             var dt = Time.unscaledDeltaTime;
@@ -5544,10 +5539,6 @@ namespace Airside.Presentation
                 }
 
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
-                // Freeze when the sim is paused so apron life matches aircraft/GSE.
-                if (SimulationFrozen)
-                    continue;
-
                 if (walker)
                 {
                     var ox = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWalkerHz * Mathf.PI * 2f + i) * 1.6f;

@@ -41,6 +41,12 @@ namespace Airside.Presentation
         public bool FreezePresentation { get; set; }
 
         /// <summary>
+        /// Set while a HUD text field or panel owns the keyboard, so typing an airline
+        /// name does not pan, orbit or lift the camera on A/D/W/S/Q/E/Z/X.
+        /// </summary>
+        public bool KeyboardCaptured { get; set; }
+
+        /// <summary>
         /// No aircraft covers this much ground in one frame — the fastest phase at 4x
         /// time and 30 fps moves about 4 m. A jump this large means the slot was
         /// recycled: the departure that just flew out has been replaced by a new
@@ -100,8 +106,60 @@ namespace Airside.Presentation
                 _fov = _camera.fieldOfView;
         }
 
+        // Launch intro: a single eased glide from a low, wide establishing shot into the
+        // overview. Input is ignored while it plays; SkipIntro jumps to the end.
+        private const float IntroStartDistance = 5600f;
+        private const float IntroStartPitch = 16f;
+        private const float IntroStartYawOffset = -120f;
+        private const float IntroStartFov = 38f;
+        private float _introDuration;
+        private float _introElapsed;
+
+        public bool IsPlayingIntro => _introElapsed < _introDuration;
+
+        /// <summary>Seconds into the intro, on the same capped clock the glide uses.</summary>
+        public float IntroElapsed => _introElapsed;
+
+        public void PlayIntro(float seconds)
+        {
+            _following = false;
+            _easingOverview = false;
+            _introDuration = Mathf.Max(0.01f, seconds);
+            _introElapsed = 0f;
+            ApplyIntroPose(0f);
+        }
+
+        public void SkipIntro()
+        {
+            if (!IsPlayingIntro)
+                return;
+            _introElapsed = _introDuration;
+            ApplyIntroPose(1f);
+        }
+
+        private void ApplyIntroPose(float t)
+        {
+            // Smootherstep: no jolt as the glide begins or settles.
+            var e = t * t * t * (t * (t * 6f - 15f) + 10f);
+            _center = _overviewCenter;
+            _distance = Mathf.Lerp(IntroStartDistance, OverviewDistance, e);
+            _pitch = Mathf.Lerp(IntroStartPitch, OverviewPitch, e);
+            _yaw = OverviewYaw + Mathf.Lerp(IntroStartYawOffset, 0f, e);
+            _fov = Mathf.Lerp(IntroStartFov, OverviewFov, e);
+            ApplyTransform();
+        }
+
         private void LateUpdate()
         {
+            if (IsPlayingIntro)
+            {
+                // Capped step: the first frames after launch take seconds while the world
+                // builds, and an uncapped clock spent the whole glide behind the splash.
+                _introElapsed = Mathf.Min(_introDuration, _introElapsed + Mathf.Min(Time.unscaledDeltaTime, 1f / 30f));
+                ApplyIntroPose(_introElapsed / _introDuration);
+                return;
+            }
+
             ReadInput();
             if (_following && _followTarget != null)
             {
@@ -312,7 +370,7 @@ namespace Airside.Presentation
             // Follow and reset-view are owned by AirsidePrototype, which drives them
             // from the HUD bar and its hotkeys. Handling them here as well meant one
             // F press toggled follow off in Update and back on in LateUpdate.
-            if (keyboard != null)
+            if (keyboard != null && !KeyboardCaptured)
             {
                 var dt = Time.unscaledDeltaTime;
 

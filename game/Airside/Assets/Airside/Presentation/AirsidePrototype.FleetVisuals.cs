@@ -212,6 +212,12 @@ namespace Airside.Presentation
             _awaitingSlot[id] = slot;
         }
 
+        /// <summary>Engine start/shutdown state for a fleet aircraft; null for the demo circuit.</summary>
+        private EngineState? FleetEngines(CommercialFlight flight) =>
+            FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                ? EngineStartSequence.For(aircraft, _preciseTime)
+                : null;
+
         private bool IsFleetFlightVisible(string aircraftId) =>
             _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
             && FleetVisual.For(aircraft, _clock.Now).Visible;

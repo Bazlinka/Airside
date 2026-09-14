@@ -99,11 +99,15 @@ namespace Airside.Simulation
             _runwayFreeAt = clock.Now;
         }
 
+        /// <summary>First Emu Air departures after a new game starts, so the field is not empty for 45 real minutes.</summary>
+        public static readonly long[] AiOpeningDepartureSeconds = { 10 * 60, 20 * 60 };
+
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
-        /// ATR, and Emu Air with two.
+        /// ATR, and Emu Air with two whose first flights leave within twenty minutes.
         /// </summary>
-        public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player)
+        public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
+            AirlineClock airlineClock = null)
         {
             if (player == null) throw new ArgumentNullException(nameof(player));
             if (!player.IsPlayer) throw new ArgumentException("The starting airline must be the player's.", nameof(player));
@@ -113,12 +117,26 @@ namespace Airside.Simulation
             operations.AddAirline(player);
             operations.AddAirline(emu);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
-            operations.AddAircraft(emu, "VH-EMA", AircraftType.Atr42, AdelaideRegionalBays[1]);
-            operations.AddAircraft(emu, "VH-EMB", AircraftType.Atr42, AdelaideRegionalBays[2]);
+            var emuFleet = new[]
+            {
+                operations.AddAircraft(emu, "VH-EMA", AircraftType.Atr42, AdelaideRegionalBays[1]),
+                operations.AddAircraft(emu, "VH-EMB", AircraftType.Atr42, AdelaideRegionalBays[2])
+            };
+            for (var i = 0; i < emuFleet.Length; i++)
+            {
+                if (emuFleet[i].Scheduled is { } first)
+                    emuFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
+                        operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[i]));
+            }
+
+            operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
         }
 
         public Destination Home { get; }
+
+        /// <summary>Maps simulation time to real Adelaide time. Live: one simulated second per real second.</summary>
+        public AirlineClock Clock { get; internal set; } = AirlineClock.Default;
 
         /// <summary>Simulation time everything has been resolved up to.</summary>
         public SimulationTime ProcessedTo => _processedTo;

@@ -1,23 +1,73 @@
 using System;
+using System.Globalization;
 
 namespace Airside.Domain
 {
     /// <summary>
-    /// How airline time reads to the player (ADR 0045): the same real 24-hour day as
-    /// <see cref="DayCycle"/>, starting at 08:00 on day 1.
+    /// Live airline time (ADR 0045, Bailey 2026-09-14): simulation time is seconds since
+    /// <see cref="EpochUtcTicks"/>, and one simulated second is one real second, so the
+    /// game clock is the real time in Adelaide — daylight saving included.
     /// </summary>
-    public static class AirlineClock
+    public sealed class AirlineClock
     {
-        public const long DayLengthSeconds = DayCycle.DaySeconds;
-        public const long StartSeconds = 8 * 3600;
+        /// <summary>A fixed epoch for tests and saves that predate live time: 08:00 ACST, 14 Sep 2026.</summary>
+        public static readonly DateTime DefaultEpochUtc = new(2026, 9, 13, 22, 30, 0, DateTimeKind.Utc);
 
-        public static string TimeText(SimulationTime time)
+        private static TimeZoneInfo _adelaide;
+
+        public AirlineClock(long epochUtcTicks)
         {
-            var local = (StartSeconds + time.ElapsedSeconds) % DayLengthSeconds;
-            return $"{local / 3600:00}:{local % 3600 / 60:00}";
+            if (epochUtcTicks <= 0)
+                throw new ArgumentOutOfRangeException(nameof(epochUtcTicks));
+            EpochUtcTicks = epochUtcTicks;
         }
 
-        public static long DayNumber(SimulationTime time) => (StartSeconds + time.ElapsedSeconds) / DayLengthSeconds + 1;
+        /// <summary>Real UTC instant of simulation time zero.</summary>
+        public long EpochUtcTicks { get; }
+
+        public static AirlineClock Default => new(DefaultEpochUtc.Ticks);
+
+        /// <summary>A clock on which <paramref name="time"/> is the real instant <paramref name="utc"/>.</summary>
+        public static AirlineClock Aligned(SimulationTime time, DateTime utc) =>
+            new(utc.ToUniversalTime().Ticks - time.ElapsedSeconds * TimeSpan.TicksPerSecond);
+
+        /// <summary>Adelaide's zone (ACST +9:30 / ACDT +10:30), with a fixed +9:30 fallback.</summary>
+        public static TimeZoneInfo Adelaide
+        {
+            get
+            {
+                if (_adelaide != null)
+                    return _adelaide;
+                foreach (var id in new[] { "Australia/Adelaide", "Cen. Australia Standard Time" })
+                {
+                    try
+                    {
+                        return _adelaide = TimeZoneInfo.FindSystemTimeZoneById(id);
+                    }
+                    catch (Exception)
+                    {
+                        // Try the next id; zone databases differ by platform.
+                    }
+                }
+
+                return _adelaide = TimeZoneInfo.CreateCustomTimeZone("ACST", TimeSpan.FromMinutes(570), "Adelaide", "ACST");
+            }
+        }
+
+        /// <summary>Precise seconds since the epoch at a real UTC instant; never negative.</summary>
+        public double SecondsAt(DateTime utc) =>
+            Math.Max(0.0, (utc.ToUniversalTime().Ticks - EpochUtcTicks) / (double)TimeSpan.TicksPerSecond);
+
+        /// <summary>Whole simulation seconds at a real UTC instant.</summary>
+        public SimulationTime At(DateTime utc) => new((long)Math.Floor(SecondsAt(utc)));
+
+        public DateTime LocalAt(SimulationTime time) =>
+            TimeZoneInfo.ConvertTimeFromUtc(
+                new DateTime(EpochUtcTicks + time.ElapsedSeconds * TimeSpan.TicksPerSecond, DateTimeKind.Utc), Adelaide);
+
+        public string TimeText(SimulationTime time) => LocalAt(time).ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        public string DateText(SimulationTime time) => LocalAt(time).ToString("ddd d MMM", CultureInfo.InvariantCulture);
 
         public static string DurationText(long seconds)
         {

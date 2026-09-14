@@ -98,5 +98,39 @@ namespace Airside.Tests
             Assert.That(FlightPlanner.NearestWithin(points, 101f, 99f), Is.EqualTo(0));
             Assert.That(FlightPlanner.NearestWithin(points, 200f, 200f), Is.EqualTo(-1));
         }
+
+        [Test]
+        public void NextFreeAircraft_SkipsBookedAndExcluded()
+        {
+            var (_, ops, fleet) = PlayerFleet(3);
+            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
+            ops.ScheduleDeparture(fleet[1], melbourne, new SimulationTime(600));
+
+            Assert.That(FlightPlanner.NextFreeAircraft(fleet, "VH-PAA"), Is.SameAs(fleet[2]));
+            Assert.That(FlightPlanner.NextFreeAircraft(fleet, null), Is.SameAs(fleet[0]));
+        }
+
+        [Test]
+        public void ExpectedBackAt_IsNullWhenParkedAndAfterTheTripWhenAway()
+        {
+            var (clock, ops, fleet) = PlayerFleet(1);
+            var plane = fleet[0];
+            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
+            Assert.That(FlightPlanner.ExpectedBackAt(plane, 3600, clock.Now), Is.Null);
+
+            ops.ScheduleDeparture(plane, melbourne, new SimulationTime(300));
+            var airborne = ops.AirborneSeconds(plane, melbourne);
+            while (plane.State != FleetState.Outbound && clock.Now.ElapsedSeconds < 7200)
+            {
+                clock.Advance(5);
+                ops.Update();
+            }
+
+            Assert.That(plane.State, Is.EqualTo(FleetState.Outbound));
+            var back = FlightPlanner.ExpectedBackAt(plane, airborne, clock.Now);
+            Assert.That(back.HasValue, Is.True);
+            Assert.That(back.Value.ElapsedSeconds, Is.EqualTo(
+                plane.StateEndsAt.Value.ElapsedSeconds + AirlineOperations.DestinationTurnaroundSeconds + airborne));
+        }
     }
 }

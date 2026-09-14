@@ -488,17 +488,65 @@ namespace Airside.Simulation
         private static bool HoldsStand(FleetAircraft aircraft) =>
             aircraft.State is FleetState.AtStand or FleetState.TaxiIn;
 
+        /// <summary>Emu Air pushes back no earlier than this Adelaide hour…</summary>
+        public const int AiFirstDepartureHour = 6;
+
+        /// <summary>…and no later than this one, like a regional operator's day.</summary>
+        public const int AiLastDepartureHour = 21;
+
+        /// <summary>
+        /// Emu Air's network, weighted by how often a regional carrier from Adelaide serves
+        /// each port: the Eyre Peninsula, Kangaroo Island and Mount Gambier most, the outback
+        /// and Melbourne less. Airports not listed are not Emu Air routes.
+        /// </summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> AiNetwork = new[]
+        {
+            ("KGC", 3), ("PLO", 3), ("WYA", 2), ("MGB", 2), ("MEL", 2),
+            ("CED", 1), ("CPD", 1), ("MQL", 1), ("BHQ", 1)
+        };
+
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
         {
-            var reachable = new List<Destination>();
-            foreach (var destination in MapDestinations())
-                if (CanReach(aircraft, destination))
-                    reachable.Add(destination);
-            if (reachable.Count == 0)
+            var total = 0;
+            var candidates = new List<(Destination destination, int weight)>();
+            foreach (var (code, weight) in AiNetwork)
+            {
+                if (!DestinationCatalogue.TryFind(code, out var destination) || !CanReach(aircraft, destination))
+                    continue;
+                candidates.Add((destination, weight));
+                total += weight;
+            }
+
+            if (total == 0)
                 return;
 
-            var pick = reachable[_random.NextInt(0, reachable.Count)];
-            aircraft.Scheduled = new ScheduledDeparture(pick, now.Advance(AiStandTurnaroundSeconds));
+            // One draw, as before, so a timeline stays reproducible from its seed.
+            var roll = _random.NextInt(0, total);
+            var pick = candidates[0].destination;
+            foreach (var (destination, weight) in candidates)
+            {
+                if (roll < weight)
+                {
+                    pick = destination;
+                    break;
+                }
+                roll -= weight;
+            }
+
+            aircraft.Scheduled = new ScheduledDeparture(pick, AiDepartureWithinHours(now.Advance(AiStandTurnaroundSeconds)));
+        }
+
+        /// <summary>The ready time if it falls in Emu Air's operating day, otherwise the next 06:00 in Adelaide.</summary>
+        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt)
+        {
+            var local = Clock.LocalAt(readyAt);
+            var first = local.Date.AddHours(AiFirstDepartureHour);
+            var last = local.Date.AddHours(AiLastDepartureHour);
+            if (local >= first && local <= last)
+                return readyAt;
+            var next = local < first ? first : first.AddDays(1);
+            var at = Clock.AtLocal(next);
+            return at.CompareTo(readyAt) > 0 ? at : readyAt;
         }
 
         private void Transition(FleetAircraft aircraft, FleetState state, SimulationTime now, long? durationSeconds)

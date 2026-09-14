@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Claude — Emu Air timetable:** `AirlineOperations.ScheduleAiDeparture` draws once
+  (as before) over `AiNetwork` weights (KGC 3, PLO 3, WYA 2, MGB 2, MEL 2, CED/CPD/MQL/BHQ 1)
+  and passes the ready time through `AiDepartureWithinHours` (06:00–21:00 Adelaide via new
+  DST-aware `AirlineClock.AtLocal`). Opening departures at +10/+20 min are unchanged so a new
+  game still sees traffic. No save change. `AirlineSoakTests` stall rule now exempts a parked
+  aircraft with a departure booked within 12 h; new `AiTimetableTests` (4 simulated days from
+  a near-midnight start). EditMode **298/298**.
+
 - **2026-09-14 Claude — stand UX + board altitude:** `Presentation/StandNames` maps BAY-n to
   the real bay reference for every player-facing string (status, planner, toasts, guide,
   Flights board). AwaitingStand row adds a full-width quickest-free-bay button (shortest

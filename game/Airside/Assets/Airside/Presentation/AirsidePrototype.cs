@@ -169,11 +169,12 @@ namespace Airside.Presentation
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
         private const float AmbientCoastVolume = 0.035f;
-        // Temporary — keep the field in daylight while night lighting is reworked.
-        private const bool PinDaylightPresentation = true;
+        // Live Adelaide time drives sun, floods and aircraft lamps. Set true only to
+        // force noon while debugging lighting (was pinned through the 24 h day cutover).
+        private const bool PinDaylightPresentation = false;
 
         private float PresentationDaylight =>
-            PinDaylightPresentation ? 1f : (float)_simulation.TimeOfDay.Daylight;
+            DaylightPresentation.Resolve(PinDaylightPresentation, _simulation.TimeOfDay.Daylight);
 
         private float _apronProbeRefreshAt;
             private int _probeBand = int.MinValue;

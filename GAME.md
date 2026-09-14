@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-14 Cursor night lighting (`cursor/night-lighting-601f`):**
+  Daylight pin is **off** — sun, ambient, floods and aircraft lamps follow live
+  Adelaide time again (dawn / day / dusk / night). Pure `DaylightPresentation`
+  helper keeps the pin override testable. Presentation only. Stacks on Controls help.
+- **Task packet / acceptance:** player-visible outcome is a real day/night cycle on
+  the field; scope is presentation lighting; sim clock already 24 h. Acceptance:
+  unpinned daylight tracks `DayCycle.Daylight`, night is dark, pin override still
+  forces noon when enabled, domain tests green.
+- **Evidence:** `scripts/test-domain.sh` **197/197** on this Linux host (includes
+  DaylightPresentation tests). Unity / Mac packaged visual check still required —
+  night look was not Mac-verified here. No manual playtest claimed.
+- **Next:** Mac overview + follow at local night/dusk; then Bailey's external playtest.
+
 - **2026-09-14 Cursor Controls help (`cursor/controls-help-601f`):**
   **F1** opens a Controls sheet (camera, airline panels, playtest tools). Esc closes
   help before clearing selection / opening the menu. Presentation only — no sim

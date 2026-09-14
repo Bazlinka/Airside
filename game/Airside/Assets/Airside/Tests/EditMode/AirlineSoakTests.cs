@@ -59,6 +59,14 @@ namespace Airside.Tests
                 {
                     if (aircraft.StateEndsAt.HasValue)
                         continue;
+                    // Parked overnight with the first flight of the day booked is a schedule,
+                    // not a stall — Emu Air only departs 06:00–21:00 — as long as it is booked.
+                    if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
+                    {
+                        Assert.That(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - clock.Now.ElapsedSeconds,
+                            Is.LessThan(12 * 3600), $"{aircraft} booked too far ahead");
+                        continue;
+                    }
                     var waited = clock.Now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds;
                     Assert.That(waited, Is.LessThan(stuckAfter), $"{aircraft} has waited {waited / 60} min");
                 }

@@ -61,6 +61,13 @@ namespace Airside.Domain
         /// <summary>Whole simulation seconds at a real UTC instant.</summary>
         public SimulationTime At(DateTime utc) => new((long)Math.Floor(SecondsAt(utc)));
 
+        /// <summary>Whole simulation seconds at an Adelaide wall-clock time (DST-aware), never before the epoch.</summary>
+        public SimulationTime AtLocal(DateTime adelaideLocal)
+        {
+            var utc = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(adelaideLocal, DateTimeKind.Unspecified), Adelaide);
+            return new SimulationTime((long)Math.Ceiling(SecondsAt(utc)));
+        }
+
         public DateTime LocalAt(SimulationTime time) =>
             TimeZoneInfo.ConvertTimeFromUtc(
                 new DateTime(EpochUtcTicks + time.ElapsedSeconds * TimeSpan.TicksPerSecond, DateTimeKind.Utc), Adelaide);

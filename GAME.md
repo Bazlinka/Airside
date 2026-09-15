@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Cursor — AIR-001 ATR 42-600 visual fidelity pass (v03). Unity EditMode
+  pending Mac (`scripts/test-unity.sh` has no Unity binary here).**
+  - **Player-visible:** Emu Air / player ATR silhouette tightened as a new v03 kit:
+    four fitted cockpit panes with pillars, even Hangar-readable cabin windows, smoother
+    blunt nose, compact nacelles blended into the high wing, clear fuselage-side main-gear
+    sponsons (not Q400 nacelle gear), tighter wing-root / T-tail joins, six readable 3.93 m
+    props. Envelope unchanged (22.67 × 24.57 × 7.59 m). Runtime prefers
+    `mdl_atr42_starter_v03` with v02/v01 fallbacks.
+  - **How:** new `scripts/generate-air-001-atr42-v03.py` (183 named meshes / 19,704 tris).
+    Thumbnail regenerated from v03; StreamingAssets synced. Review board + multi-angle
+    stills under `docs/art/candidates/` and `work/review/`. Q400 / Saab / 737 untouched.
+    No simulation, catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline multi-angle
+    reviews; `scripts/test-air-001-atr42-v03.py` green. This environment cannot re-run
+    `scripts/test-unity.sh` (Unity 6.3 missing).
+  - **NEXT MILESTONE:** Bailey to review this ATR v03 PR, then reprioritise the next
+    visual or systems slice. Decide the 50D/50E Q400 stand rule if a second Q400 is ever
+    added.
+
+
 - **2026-09-15 Cursor — AIR-005 737-8 visual revision (same asset id). Domain tests pending
   Unity EditMode on Mac.**
   - **Player-visible:** Wattlebird Jet's 737-8 silhouette is rebuilt in place: slender fuselage

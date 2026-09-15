@@ -5,6 +5,17 @@ change it describes.
 
 ## Unreleased
 
+- **ATR 42-600 visual fidelity pass (v03).** AIR-001 gains a new `mdl_atr42_starter_v03` kit
+  while v02 stays the approved fallback: four clean fitted cockpit panes with credible pillars,
+  even Hangar-readable cabin windows, a smoother blunt nose into the cabin, compact nacelles
+  blended into the high wing, clear fuselage-side main-gear sponsons (not Q400 nacelle gear),
+  tighter wing-root / fin / T-tail joins, and six readable 3.93 m props with connected hubs.
+  Same 22.67 × 24.57 × 7.59 m envelope, centred root, tyre contact and moving-part names;
+  catalogue/runtime prefer v03 → v02 → v01. Hangar thumbnail regenerated from v03. 183 meshes /
+  19,704 tris. No simulation or save change. Generator validate + multi-angle review renders;
+  Unity EditMode pending Mac (`scripts/test-unity.sh`).
+
+
 - **737-8 looks like a 737.** AIR-005 rebuilt in place: slender fuselage, fitted cabin windows,
   pitched flight-deck panes, low swept wing with dual-feather winglets, large forward-hung
   turbofans with chevron nozzles, deep wing-body fairing, joined conventional tail. Same

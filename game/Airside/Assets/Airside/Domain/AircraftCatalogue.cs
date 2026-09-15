@@ -89,7 +89,7 @@ namespace Airside.Domain
             planningCruiseKmh: 556, practicalRangeKm: 1100,
             manufacturerMaxCruiseKmh: 556, manufacturerRangeKm: 1302, manufacturerRangeBasis: "703 NM with max passengers",
             StandClass.RegionalBay, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_atr42_starter_v02.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600");
+            "Models/Aircraft/mdl_atr42_starter_v03.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600");
 
         // Rex's type (AIR-007). Saab publishes no range on its product page; 1,000 km stays a
         // planning assumption until a manufacturer figure is recorded.

@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Bug sweep 1 (14 fixes): materials, lights, allocations.** Full-airport props no longer read
+  near-black: the painted-metal catch-all (bark, rocks, benches, unnamed kit parts) was borrowing
+  bare corrugated metal at 55% metallic. Textured blocks now keep their own albedo instead of the
+  authored template's (runway shoulders were corrugated metal), cables/cabinets/tail-lights/
+  mudflaps/terminal parts no longer take aircraft paint, and clear-weather damp no longer paints
+  every paved slab with wet concrete. The 737's fan spool no longer fights the prop spool;
+  touchdown/rotate cues no longer dereference hidden aircraft; tyre smoke sits on each type's
+  tyre radius. Daytime decorative lights switch off, per-frame name reads are cached, night-glow
+  collection is linear, and runtime textures drop their CPU copy. Unity EditMode 401/401.
+
 - **Diagnostic full-airport view no longer blown out.** Under `-airsideFullAirport` the legacy
   terrain was clipped white: its mask maps made the grass three to four times too glossy and its
   untinted textures too bright for the noon lighting. The terrain now gets runtime layer copies

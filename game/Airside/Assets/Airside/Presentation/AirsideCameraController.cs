@@ -226,7 +226,8 @@ namespace Airside.Presentation
             // A destroyed view (aircraft removed from the schedule) used to leave _following
             // set with no target: WASD panning stayed disabled and the HUD still read
             // "Follow on" while the camera sat still. Hand the camera back instead.
-            if (_following && _followTarget == null)
+            // Same for a view hidden while away: the camera kept chasing an invisible slot.
+            if (_following && (_followTarget == null || !_followTarget.gameObject.activeInHierarchy))
                 ReleaseFollow();
 
             if (_following && _followTarget != null)

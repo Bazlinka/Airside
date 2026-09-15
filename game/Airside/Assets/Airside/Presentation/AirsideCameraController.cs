@@ -114,17 +114,22 @@ namespace Airside.Presentation
 
         public void SetFollowTargets(Transform[] targets)
         {
+            var previous = _followTarget;
+            var wasFollowing = _following;
             _followTargets = targets ?? System.Array.Empty<Transform>();
-            if (_followTargets.Length == 0)
+            var keep = AircraftPickRouting.IndexOfSame(_followTargets, previous);
+            if (keep >= 0)
             {
-                _followTarget = null;
-                _followIndex = 0;
+                _followIndex = keep;
+                _followTarget = previous;
                 return;
             }
 
-            _followIndex = Mathf.Clamp(_followIndex, 0, _followTargets.Length - 1);
-            _followTarget = _followTargets[_followIndex];
+            _followIndex = 0;
+            _followTarget = null;
             _hasLastTargetPosition = false;
+            if (wasFollowing)
+                ReleaseFollow();
         }
 
         /// <summary>

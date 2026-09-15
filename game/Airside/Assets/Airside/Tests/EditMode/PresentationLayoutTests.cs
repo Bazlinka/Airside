@@ -916,6 +916,54 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FollowSelection_ReleasesWhenTheFollowedAircraftLeavesTheField()
+        {
+            var cameraObject = new GameObject("Selection camera");
+            var first = new GameObject("VH-PAX");
+            var selected = new GameObject("VH-EMU");
+            try
+            {
+                var controller = cameraObject.AddComponent<AirsideCameraController>();
+                controller.SetFollowTargets(new[] { first.transform, selected.transform });
+                Assert.That(controller.StartFollow(selected.transform), Is.True);
+
+                controller.SetFollowTargets(new[] { first.transform });
+                Assert.That(controller.IsFollowing, Is.False, "do not silently follow someone else");
+                Assert.That(controller.FollowTarget, Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(selected);
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void FollowSelection_KeepsTheSameAircraftWhenAnotherLeaves()
+        {
+            var cameraObject = new GameObject("Selection camera");
+            var first = new GameObject("VH-PAX");
+            var selected = new GameObject("VH-EMU");
+            try
+            {
+                var controller = cameraObject.AddComponent<AirsideCameraController>();
+                controller.SetFollowTargets(new[] { first.transform, selected.transform });
+                Assert.That(controller.StartFollow(selected.transform), Is.True);
+
+                controller.SetFollowTargets(new[] { selected.transform });
+                Assert.That(controller.IsFollowing, Is.True);
+                Assert.That(controller.FollowTarget, Is.SameAs(selected.transform));
+            }
+            finally
+            {
+                Object.DestroyImmediate(selected);
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
         public void AircraftPickProxy_AttachesInvisibleVolumeOnThePickLayer()
         {
             var aircraft = new GameObject("Commercial VH-PAX");

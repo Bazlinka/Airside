@@ -68,5 +68,18 @@ namespace Airside.Tests
             Assert.That(AircraftPickRouting.IsOnFieldSelectable("VH-MISSING", onField), Is.False);
             Assert.That(AircraftPickRouting.IsOnFieldSelectable(null, onField), Is.False);
         }
+
+        [Test]
+        public void IndexOfSame_KeepsTheCurrentAircraftOrReportsItLeft()
+        {
+            var first = new object();
+            var selected = new object();
+            var next = new[] { first, selected };
+
+            Assert.That(AircraftPickRouting.IndexOfSame(next, selected), Is.EqualTo(1));
+            Assert.That(AircraftPickRouting.IndexOfSame(new[] { first }, selected), Is.EqualTo(-1));
+            Assert.That(AircraftPickRouting.IndexOfSame(System.Array.Empty<object>(), selected), Is.EqualTo(-1));
+            Assert.That(AircraftPickRouting.IndexOfSame(next, null), Is.EqualTo(-1));
+        }
     }
 }

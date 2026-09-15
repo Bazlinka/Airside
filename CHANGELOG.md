@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Bug hunt: follow camera, regional backfill, save restore.** Following an aircraft that leaves
+  the field no longer snaps onto someone else. Continue can finish adding Rex/QantasLink aircraft
+  on a later load and uses the same 50D/50E stand preference as live choice. A mid-trip save with
+  no destination is rejected. Headless `scripts/test-domain.sh` compiles again (Unity-only tests
+  excluded). 226 domain tests.
+
 - **Dash 8-400 nacelle-bay polish.** AIR-006 keeps its long high-wing Q400 silhouette, but the
   former blocky rear nacelle fairings are rounded gear-bay continuations and the open main doors
   are thinner. Scale, propellers, type profile and QantasLink operation remain unchanged. 182

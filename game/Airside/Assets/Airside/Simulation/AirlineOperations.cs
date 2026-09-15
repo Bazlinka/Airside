@@ -191,33 +191,33 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Add any <see cref="RegionalCarriers"/> airline that is not flying here yet, parking
-        /// each of its aircraft on a free stand (skipped if none is free) with an AI departure
-        /// booked. Returns how many aircraft joined. Safe to call on every load.
+        /// Add any <see cref="RegionalCarriers"/> aircraft that is not flying here yet, parking
+        /// each on a free stand (skipped if none is free) with an AI departure booked. An
+        /// airline is added only when at least one of its aircraft can park, and a later load
+        /// still fills remaining registrations — same idea as
+        /// <see cref="AddMissingTerminalOperators"/>. Returns how many aircraft joined.
         /// </summary>
         public int AddMissingRegionalCarriers(List<FleetAircraft> added = null)
         {
             var count = 0;
             foreach (var (make, fleet) in RegionalCarriers)
             {
-                var airline = make();
-                if (_airlines.Exists(a => a.Id.Equals(airline.Id)))
-                    continue;
-                AddAirline(airline);
+                var template = make();
+                var airline = _airlines.Find(a => a.Id.Equals(template.Id));
                 foreach (var (registration, type) in fleet)
                 {
                     if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
                         continue;
-                    StableId? free = null;
-                    foreach (var stand in FreeStands())
-                    {
-                        free = stand;
+                    var stand = SuggestStandFor(type);
+                    if (!stand.HasValue)
                         break;
+                    if (airline == null)
+                    {
+                        airline = template;
+                        AddAirline(airline);
                     }
 
-                    if (!free.HasValue)
-                        break;
-                    var aircraft = AddAircraft(airline, registration, type, free.Value);
+                    var aircraft = AddAircraft(airline, registration, type, stand.Value);
                     added?.Add(aircraft);
                     count++;
                 }
@@ -339,6 +339,8 @@ namespace Airside.Simulation
 
             var aircraft = new FleetAircraft(registration, airline, type, default, stateStartedAt);
             aircraft.Restore(state, stateStartedAt, stateEndsAt);
+            if (RequiresTripDestination(state) && currentDestination == null)
+                throw new FormatException($"{registration} is {state} with no destination.");
             if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
                 throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
             if (HoldsStand(aircraft) && !StandFits(type, stand))
@@ -681,18 +683,29 @@ namespace Airside.Simulation
         /// one that does not crowd a tight neighbour, then the shortest taxi in, then list
         /// order. Never refuses a free stand only for clearance, so nobody is stranded.
         /// </summary>
-        public StableId? SuggestStand(FleetAircraft aircraft)
+        public StableId? SuggestStand(FleetAircraft aircraft) =>
+            aircraft == null ? null : SuggestStandFor(aircraft.Type, aircraft);
+
+        /// <summary>
+        /// Same ranking as <see cref="SuggestStand"/> for a type that is not yet on the field
+        /// (regional backfill). <paramref name="except"/> is the aircraft already allowed to
+        /// use a busy gate lead-in; null means the lead-in must be empty.
+        /// </summary>
+        public StableId? SuggestStandFor(AircraftType type, FleetAircraft except = null)
         {
+            if (type == null)
+                return null;
+
             StableId? best = null;
             var bestCrowds = true;
             var bestSeconds = long.MaxValue;
             foreach (var stand in _stands)
             {
-                if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand))
+                if (!StandFits(type, stand) || !IsStandFree(stand))
                     continue;
-                if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
+                if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
                     continue;
-                var crowds = CrowdsNeighbour(aircraft.Type, stand);
+                var crowds = CrowdsNeighbour(type, stand);
                 var seconds = TaxiInSecondsTo(stand);
                 if (best != null && (crowds && !bestCrowds || crowds == bestCrowds && seconds >= bestSeconds))
                     continue;
@@ -756,6 +769,15 @@ namespace Airside.Simulation
 
         private static bool HoldsStand(FleetAircraft aircraft) =>
             aircraft.State is FleetState.AtStand or FleetState.TaxiIn;
+
+        /// <summary>
+        /// These states are mid-trip. A save that omits <see cref="FleetAircraft.CurrentDestination"/>
+        /// would collapse every airborne leg to zero seconds on the next tick.
+        /// </summary>
+        internal static bool RequiresTripDestination(FleetState state) => state is
+            FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+            or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
+            or FleetState.HoldingForLanding or FleetState.Landing;
 
         /// <summary>Emu Air pushes back no earlier than this Adelaide hour…</summary>
         public const int AiFirstDepartureHour = 6;

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Bug sweep 7 (6 fixes): menu input, camera drags, per-frame cost.** With the Esc menu open, the
+  camera no longer pans or orbits behind it, from the keyboard or from drags and scrolls beside
+  it, and Esc closes the menu before touching the selection. Right- and middle-drags only move
+  the camera when they start on the field, not over HUD panels. Per-frame work drops: fan and
+  elevator presence are cached per aircraft, and each fleet aircraft's current ground pose is
+  computed once per frame. Unity EditMode 417/417.
+
 - **Bug sweep 6 (5 fixes): fence gates, runway crossing, sleep hitch, tooling.** The Adelaide
   perimeter fence now has openings at its three vehicle gates (panels used to run straight
   through them). Runway 12/30 no longer z-fights 05/23 at the crossing, and its markings stop at

@@ -108,10 +108,18 @@ namespace Airside.Presentation
         {
             _miniMapDots.Clear();
             _miniMapDotIds.Clear();
+            // Three passes so your own aircraft draw over other operators and the
+            // selection draws over everything; dictionary order used to bury them.
+            for (var pass = 0; pass < 3; pass++)
             foreach (var pair in _fleetViewById)
             {
                 var view = pair.Value;
                 if (view == null || !view.gameObject.activeInHierarchy || !_fleetAircraftById.TryGetValue(pair.Key, out var aircraft))
+                    continue;
+
+                var mine = aircraft.Airline.IsPlayer;
+                var selected = pair.Key == _selectedAircraftId;
+                if (MiniMapDotPass(mine, selected) != pass)
                     continue;
 
                 var point = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
@@ -120,8 +128,6 @@ namespace Airside.Presentation
                 _miniMapDots.Add(point);
                 _miniMapDotIds.Add(pair.Key);
 
-                var mine = aircraft.Airline.IsPlayer;
-                var selected = pair.Key == _selectedAircraftId;
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var size = mine || selected ? 8f : 6f;
                 var severity = AircraftStatus.Severity(aircraft, _clock.Now);
@@ -133,6 +139,9 @@ namespace Airside.Presentation
                 DrawSolid(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), fill);
             }
         }
+
+        /// <summary>Draw order: other operators, then yours, then the selection on top.</summary>
+        public static int MiniMapDotPass(bool mine, bool selected) => selected ? 2 : mine ? 1 : 0;
 
         private void HandleMiniMapPointer(Rect map)
         {

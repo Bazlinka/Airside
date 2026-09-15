@@ -133,5 +133,12 @@ namespace Airside.Tests
             Assert.That(AirsideCameraController.ClampCentreHeight(-400f), Is.EqualTo(AirsideCameraController.MinCentreHeightMetres));
             Assert.That(AirsideCameraController.ClampCentreHeight(9000f), Is.EqualTo(AirsideCameraController.MaxCentreHeightMetres));
         }
+    
+        [Test]
+        public void MiniMapDots_DrawSelectionAndOwnAircraftLast()
+        {
+            Assert.That(AirsidePrototype.MiniMapDotPass(mine: false, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: true, selected: false)));
+            Assert.That(AirsidePrototype.MiniMapDotPass(mine: true, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: false, selected: true)));
+        }
     }
 }

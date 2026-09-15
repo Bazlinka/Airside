@@ -82,6 +82,7 @@ namespace Airside.Presentation
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
         private int _cloudTintKey = int.MinValue;
+        private float[] _cloudBaseAlpha;
         private Transform _birdFlockRoot;
         private Transform[] _birdWingL;
         private Transform[] _birdWingR;
@@ -7780,6 +7781,18 @@ namespace Airside.Presentation
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
                 _cloudTintKey = tintKey;
+            if (_cloudBaseAlpha == null || _cloudBaseAlpha.Length != _cloudRoot.childCount)
+            {
+                // Authored alpha per cluster, read once. The tint pass used to scale whatever
+                // alpha the previous pass had written, so every weather or daylight band change
+                // compounded by up to 1.35x and a day of live weather turned clouds opaque.
+                _cloudBaseAlpha = new float[_cloudRoot.childCount];
+                for (var i = 0; i < _cloudBaseAlpha.Length; i++)
+                {
+                    var authored = _cloudRoot.GetChild(i).GetComponent<Renderer>();
+                    _cloudBaseAlpha[i] = authored != null ? GetRendererColor(authored).a : 0f;
+                }
+            }
             for (var i = 0; i < _cloudRoot.childCount; i++)
             {
                 var cloud = _cloudRoot.GetChild(i);
@@ -7811,9 +7824,9 @@ namespace Airside.Presentation
                 var renderer = cloud.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    var color = GetRendererColor(renderer);
-                    if (color.a > 0.01f)
-                        tint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
+                    var authoredAlpha = _cloudBaseAlpha[i];
+                    if (authoredAlpha > 0.01f)
+                        tint.a = Mathf.Max(tint.a, authoredAlpha * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
                     SetRendererColor(renderer, tint);
                 }
 

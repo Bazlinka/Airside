@@ -49,6 +49,60 @@ namespace Airside.Presentation
         public static float CrossHalfWidth => CrossWidthMetres * 0.5f;
         public static float CrossYawRadians => CrossYawDegrees * (float)Math.PI / 180f;
 
+        /// <summary>
+        /// Height the 12/30 slab sits below 05/23. The two were coplanar (both tops at
+        /// +0.05 m), so their shared crossing z-fought from every camera angle.
+        /// </summary>
+        public const float CrossRunwayDropMetres = 0.004f;
+
+        /// <summary>
+        /// 12/30 paint in its local strip coordinates with everything that would land on the
+        /// main 05/23 pavement removed: long edge lines and dashes are cut at the crossing,
+        /// shorter marks inside it are dropped. 05/23 is the primary runway, so its markings
+        /// run through the intersection and 12/30's stop at its edge, instead of being painted
+        /// across it.
+        /// </summary>
+        public static AirsideStripMarkings.Mark[] ClipCrossRunwayPaintToMain(AirsideStripMarkings.Mark[] marks)
+        {
+            if (marks == null)
+                return Array.Empty<AirsideStripMarkings.Mark>();
+
+            var sin = (float)Math.Sin(CrossYawRadians);
+            var cos = (float)Math.Cos(CrossYawRadians);
+            var result = new System.Collections.Generic.List<AirsideStripMarkings.Mark>(marks.Length);
+            foreach (var mark in marks)
+            {
+                // World Z along the mark's centreline is CrossCenterZ - sin * x + cos * z (Unity
+                // yaw turns local +X to (cos, -sin)). Widen the band by the mark's half width.
+                var margin = MainHalfWidth + Math.Abs(cos) * mark.WidthZ * 0.5f;
+                if (Math.Abs(sin) < 1e-4f)
+                {
+                    result.Add(mark);
+                    continue;
+                }
+
+                var a = CrossCenterZ + cos * mark.CenterZ;
+                var x0 = (a - margin) / sin;
+                var x1 = (a + margin) / sin;
+                var cutStart = Math.Min(x0, x1);
+                var cutEnd = Math.Max(x0, x1);
+                if (cutEnd <= mark.MinX || cutStart >= mark.MaxX)
+                {
+                    result.Add(mark);
+                    continue;
+                }
+
+                if (cutStart - mark.MinX > 0.5f)
+                    result.Add(new AirsideStripMarkings.Mark((mark.MinX + cutStart) * 0.5f, mark.CenterZ,
+                        cutStart - mark.MinX, mark.WidthZ));
+                if (mark.MaxX - cutEnd > 0.5f)
+                    result.Add(new AirsideStripMarkings.Mark((cutEnd + mark.MaxX) * 0.5f, mark.CenterZ,
+                        mark.MaxX - cutEnd, mark.WidthZ));
+            }
+
+            return result.ToArray();
+        }
+
         // --- Taxiways, aprons, shoulders ---
 
         public const string TaxiwaysName = "Taxiways";

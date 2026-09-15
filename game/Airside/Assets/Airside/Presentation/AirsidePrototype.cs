@@ -4446,7 +4446,7 @@ namespace Airside.Presentation
                 root.SetParent(_airfieldRoot, false);
             root.position = new Vector3(
                 AirsideAdelaidePavement.CrossCenterX,
-                AirsideBareField.RunwayCenterY,
+                AirsideBareField.RunwayCenterY - AirsideAdelaidePavement.CrossRunwayDropMetres,
                 AirsideAdelaidePavement.CrossCenterZ);
             root.rotation = Quaternion.Euler(0f, AirsideAdelaidePavement.CrossYawDegrees, 0f);
 
@@ -4493,28 +4493,30 @@ namespace Airside.Presentation
             var y = AirsideRunwayMarkings.PaintLiftMetres
                     + AirsideBareField.RunwayHeightMetres * 0.5f;
             SpawnLocalStripPaint(markings, "Runway 12/30 edge left",
-                new[] { AirsideStripMarkings.EdgeLeft(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeLeft(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+                    AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 edge right",
-                new[] { AirsideStripMarkings.EdgeRight(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeRight(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+                    AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 centre",
-                AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres),
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
+                    AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 threshold",
-                AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres),
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
+                    AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 aiming",
-                AirsideStripMarkings.AimingPoints(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(AirsideStripMarkings.AimingPoints(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideStripMarkings.ShortStripAimingFromThreshold),
+                    AirsideStripMarkings.ShortStripAimingFromThreshold)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 tdz",
-                AirsideStripMarkings.TouchdownZones(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(AirsideStripMarkings.TouchdownZones(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideStripMarkings.ShortStripTouchdownDistances),
+                    AirsideStripMarkings.ShortStripTouchdownDistances)),
                 paint, y);
         }
 

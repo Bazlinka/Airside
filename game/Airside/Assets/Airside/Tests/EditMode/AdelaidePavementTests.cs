@@ -348,5 +348,29 @@ namespace Airside.Tests
             Assert.That(Math.Abs(a - b), Is.GreaterThan(0.01f),
                 "fence base must vary with the landform, not sit on one constant");
         }
+
+        [Test]
+        public void CrossRunwayPaint_StopsAtTheMainRunwayEdge()
+        {
+            var length = AirsideAdelaidePavement.CrossLengthMetres;
+            var width = AirsideAdelaidePavement.CrossWidthMetres;
+            var edge = AirsideStripMarkings.EdgeLeft(length, width);
+            var clipped = AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { edge });
+            Assert.That(clipped.Length, Is.EqualTo(2), "one edge line becomes two either side of 05/23");
+
+            var yaw = AirsideAdelaidePavement.CrossYawRadians;
+            foreach (var mark in clipped)
+            {
+                foreach (var x in new[] { mark.MinX, mark.MaxX })
+                {
+                    var worldZ = AirsideAdelaidePavement.CrossCenterZ
+                                 - (float)System.Math.Sin(yaw) * x + (float)System.Math.Cos(yaw) * mark.CenterZ;
+                    Assert.That(System.Math.Abs(worldZ), Is.GreaterThanOrEqualTo(AirsideAdelaidePavement.MainHalfWidth - 0.01f));
+                }
+            }
+
+            var dashes = AirsideStripMarkings.CentrelineDashes(length);
+            Assert.That(AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(dashes).Length, Is.LessThanOrEqualTo(dashes.Length + 1));
+        }
     }
 }

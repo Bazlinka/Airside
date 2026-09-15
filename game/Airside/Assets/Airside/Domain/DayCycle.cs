@@ -76,6 +76,20 @@ namespace Airside.Domain
 
         public string Clock => $"{Hour:00}:{Minute:00}";
 
+        /// <summary>
+        /// The day cycle at a wall-clock time of day. Live airline time (ADR 0045) reads the
+        /// real Adelaide clock, which has nothing to do with how long the game has run, so
+        /// lighting must be driven from this rather than from simulation seconds.
+        /// </summary>
+        public static DayCycle AtLocalTime(TimeSpan localTimeOfDay)
+        {
+            var hours = localTimeOfDay.TotalHours % 24.0;
+            if (hours < 0)
+                hours += 24.0;
+            var seconds = (long)Math.Round((hours - StartHour + 24.0) % 24.0 / 24.0 * DaySeconds);
+            return new DayCycle(new SimulationTime(seconds % DaySeconds));
+        }
+
         /// <summary>Simulation time of local midnight ending day <paramref name="dayNumber"/> (1-based).</summary>
         public static SimulationTime MidnightOfDay(int dayNumber, long daySeconds = DaySeconds)
         {

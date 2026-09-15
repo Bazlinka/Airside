@@ -84,5 +84,18 @@ namespace Airside.Tests
             simulation.Update();
             Assert.That(simulation.TimeOfDay.Hour, Is.EqualTo(20));
         }
+
+        [TestCase(0, 0, 0.0)]
+        [TestCase(6, 30, 0.75)]
+        [TestCase(12, 0, 1.0)]
+        [TestCase(19, 0, 1.0 / 3.0)]
+        [TestCase(21, 15, 0.0)]
+        public void DayCycle_AtLocalTime_MatchesTheWallClock(int hour, int minute, double daylight)
+        {
+            var cycle = DayCycle.AtLocalTime(new System.TimeSpan(hour, minute, 0));
+            Assert.That(cycle.Hour, Is.EqualTo(hour));
+            Assert.That(cycle.Minute, Is.EqualTo(minute).Within(1));
+            Assert.That(cycle.Daylight, Is.EqualTo(daylight).Within(0.01));
+        }
     }
 }

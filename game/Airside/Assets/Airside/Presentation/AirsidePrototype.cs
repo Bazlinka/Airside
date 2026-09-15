@@ -185,7 +185,35 @@ namespace Airside.Presentation
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
 
         private float PresentationDaylight =>
-            DaylightPresentation.Resolve(PinDaylightPresentation, _simulation.TimeOfDay.Daylight);
+            DaylightPresentation.Resolve(PinDaylightPresentation, PresentationDayCycle.Daylight);
+
+        private long _dayCycleSecond = long.MinValue;
+        private DayCycle _dayCycle;
+
+        /// <summary>
+        /// Time of day for sun, sky, floods and lamps: the real Adelaide wall clock the HUD
+        /// shows. It used to be <c>_simulation.TimeOfDay</c>, which starts at 08:00 whenever
+        /// the game launches, so an evening session was lit as morning and night rarely came.
+        /// Recomputed once per real second; the time-zone conversion is not free.
+        /// </summary>
+        private DayCycle PresentationDayCycle
+        {
+            get
+            {
+                var utc = DateTime.UtcNow;
+                var second = utc.Ticks / TimeSpan.TicksPerSecond;
+                if (second != _dayCycleSecond)
+                {
+                    _dayCycleSecond = second;
+                    var local = FleetMode
+                        ? _operations.Clock.LocalAt(_clock.Now)
+                        : TimeZoneInfo.ConvertTimeFromUtc(utc, AirlineClock.Adelaide);
+                    _dayCycle = DayCycle.AtLocalTime(local.TimeOfDay);
+                }
+
+                return _dayCycle;
+            }
+        }
 
         private float _apronProbeRefreshAt;
             private int _probeBand = int.MinValue;
@@ -3288,7 +3316,7 @@ namespace Airside.Presentation
 
         private void ApplyDayCycle()
         {
-            var cycle = _simulation.TimeOfDay;
+            var cycle = PresentationDayCycle;
             var daylight = PresentationDaylight;
 
             var elevation = PinDaylightPresentation ? 48f : (float)cycle.SunElevationDegrees;

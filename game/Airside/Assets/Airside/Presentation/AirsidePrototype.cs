@@ -543,7 +543,13 @@ namespace Airside.Presentation
             if (keyboard.rKey.wasPressedThisFrame)
                 ResetView();
             if (keyboard.mKey.wasPressedThisFrame)
+            {
+                // Muting used to be silent in both senses: nothing on screen said the
+                // sound was off, so a stray M looked like broken audio.
                 _audioMuted = !_audioMuted;
+                ShowToast(_audioMuted ? "Sound off (M)." : "Sound on (M).");
+                PlayUiClick();
+            }
         }
 
         private void ToggleMenu()

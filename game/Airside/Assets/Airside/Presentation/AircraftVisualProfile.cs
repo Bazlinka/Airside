@@ -73,6 +73,20 @@ namespace Airside.Presentation
             selectionMarkerDiameterMetres: 41f,
             followDistanceMultiplier: 1.55f);
 
+        // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
+        // conventional tail; centred airframe root and tyres at local y=0, like the other
+        // regional types, but framed to the compact 19.73 × 21.44 m envelope.
+        public static readonly AircraftVisualProfile Saab340 = new(
+            artRelativePath: "Models/Aircraft/mdl_saab_340b_v01.gltf",
+            modelGroundOffsetMetres: -0.7f,
+            visualCentreOffsetMetres: Vector3.zero,
+            pickSizeMetres: new Vector3(24f, 9f, 23f),
+            pickCentreYMetres: 3.2f,
+            shadowWidthMetres: 20.5f,
+            shadowDepthMetres: 18.5f,
+            selectionMarkerDiameterMetres: 22f,
+            followDistanceMultiplier: 0.92f);
+
         // AIR-006: original Dash 8-400-class model. Like AIR-001, the authored
         // regional-aircraft root is centred on the airframe and its tyres sit at
         // local y=0; the profile expands framing to the Q400's longer fuselage.
@@ -93,6 +107,8 @@ namespace Airside.Presentation
                 return Boeing7378;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
+            if (type != null && type.Id == AircraftType.Saab340.Id)
+                return Saab340;
             return RegionalTurboprop;
         }
 
@@ -101,6 +117,9 @@ namespace Airside.Presentation
 
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;
+
+        public static bool IsSaab340(AircraftType type) =>
+            type != null && type.Id == AircraftType.Saab340.Id;
     }
 
     /// <summary>

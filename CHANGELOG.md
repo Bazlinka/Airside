@@ -9,6 +9,14 @@ change it describes.
   dragging on them no longer selects or pans the field behind; clicking empty ground deselects.
   335/335 EditMode.
 
+- **Genuine Saab 340B.** Rex's existing aircraft now use their own original, unbranded
+  AIR-007 model rather than the ATR stand-in: exact 19.73 × 21.44 × 6.97 m scale (standard
+  wing), compact low wing, four-blade propellers, nacelle-mounted twin main gear and a
+  conventional tail. The Hangar type card has a thumbnail rendered from that runtime model,
+  and selection, shadow and follow-camera framing use the Saab footprint. No flight plan,
+  stand, timing, reservation or save data changed. Domain harness green; Unity EditMode
+  not run here (no Mac editor). Not rebuilt or manually launched.
+
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and
   covers the Dash 8-400; it records the one known shortfall — a Q400 beside a turboprop on

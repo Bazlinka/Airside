@@ -985,6 +985,23 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Saab340_ProfileUsesItsOwnTrueScaleArtAndFraming()
+        {
+            Assert.That(AircraftType.TryFromId("SF34", out var type), Is.True);
+            Assert.That(type, Is.SameAs(AircraftType.Saab340));
+
+            var profile = AircraftVisualProfiles.For(type);
+            Assert.That(profile, Is.EqualTo(AircraftVisualProfiles.Saab340));
+            Assert.That(profile.ArtRelativePath,
+                Is.EqualTo("Models/Aircraft/mdl_saab_340b_v01.gltf"));
+            Assert.That(profile.PickSizeMetres.x, Is.EqualTo(24f));
+            Assert.That(profile.PickSizeMetres.z, Is.EqualTo(23f));
+            Assert.That(profile.VisualCentreOffsetMetres, Is.EqualTo(Vector3.zero));
+            Assert.That(profile.SelectionMarkerDiameterMetres, Is.EqualTo(22f));
+            Assert.That(profile.FollowDistanceMultiplier, Is.EqualTo(0.92f));
+        }
+
+        [Test]
         public void AircraftPickProxy_UsesTheAttachedAircraftProfile()
         {
             var aircraft = new GameObject("Gate 13 · Boeing 737-8");

@@ -3575,6 +3575,10 @@ namespace Airside.Presentation
         private void CollectNightGlowWindows()
         {
             _nightGlowRenderers.Clear();
+            // Membership sets: List.Contains inside the scene-wide renderer walk below was
+            // O(renderers x glow panes) during startup.
+            var glowSet = new HashSet<Renderer>();
+            var lightSet = new HashSet<Light>();
             var lights = new List<Light>();
             foreach (var name in new[]
                      {
@@ -3612,7 +3616,7 @@ namespace Airside.Presentation
                 if (go == null)
                     continue;
                 var renderer = go.GetComponent<Renderer>();
-                if (renderer != null && !_nightGlowRenderers.Contains(renderer))
+                if (renderer != null && glowSet.Add(renderer))
                     _nightGlowRenderers.Add(renderer);
 
                 var wantsPoint = AirsideRuntimeQuality.WindowPointLights
@@ -3635,7 +3639,7 @@ namespace Airside.Presentation
                     light.intensity = 0f;
                 }
 
-                if (!lights.Contains(light))
+                if (lightSet.Add(light))
                     lights.Add(light);
             }
 
@@ -3645,7 +3649,7 @@ namespace Airside.Presentation
             var maxPaneLights = AirsideRuntimeQuality.PanePointLights;
             foreach (var renderer in AirsideSceneIndex.Renderers)
             {
-                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                if (renderer == null || glowSet.Contains(renderer))
                     continue;
                 var n = renderer.gameObject.name;
                 if (!(n.StartsWith("glass_pane", StringComparison.Ordinal)
@@ -3657,6 +3661,7 @@ namespace Airside.Presentation
                 if (n.StartsWith("skylight_frame", StringComparison.Ordinal))
                     continue;
 
+                glowSet.Add(renderer);
                 _nightGlowRenderers.Add(renderer);
                 if (paneLights >= maxPaneLights || (_nightGlowRenderers.Count % 7) != 0)
                     continue;
@@ -3672,7 +3677,7 @@ namespace Airside.Presentation
                     light.intensity = 0f;
                 }
 
-                if (!lights.Contains(light))
+                if (lightSet.Add(light))
                 {
                     lights.Add(light);
                     paneLights++;

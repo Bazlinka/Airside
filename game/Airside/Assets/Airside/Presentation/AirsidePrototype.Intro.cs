@@ -36,6 +36,9 @@ namespace Airside.Presentation
             return true;
         }
 
+        // OnGUI runs several times a frame; build the intro styles once.
+        private GUIStyle _introTitleStyle, _introSubtitleStyle, _introHintStyle;
+
         private void DrawIntro(HudLayout layout)
         {
             var elapsed = _cameraController.IntroElapsed;
@@ -61,18 +64,18 @@ namespace Airside.Presentation
             }
             else
             {
-                var titleStyle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                var titleStyle = _introTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                     { fontSize = 56, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter });
                 GUI.Label(new Rect(0f, centreY - 40f, width, 80f), "AIRSIDE", titleStyle);
                 centreY += 52f;
             }
 
             var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AirlineClock.Adelaide);
-            var subtitle = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+            var subtitle = _introSubtitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                 { fontSize = 18, alignment = TextAnchor.MiddleCenter }, AirsideTheme.Cloud);
             GUI.Label(new Rect(0f, centreY, width, 28f), $"Adelaide  ·  {local:HH:mm}  ·  live", subtitle);
 
-            var hint = AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+            var hint = _introHintStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                 { fontSize = 13, alignment = TextAnchor.MiddleCenter }, AirsideTheme.OpenSky);
             GUI.Label(new Rect(0f, height - 60f, width, 22f), "Press any key to skip", hint);
 

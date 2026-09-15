@@ -18,7 +18,9 @@ namespace Airside.Presentation
             float shadowWidthMetres,
             float shadowDepthMetres,
             float selectionMarkerDiameterMetres,
-            float followDistanceMultiplier)
+            float followDistanceMultiplier,
+            float mainTireRadiusMetres,
+            float noseTireRadiusMetres)
         {
             ArtRelativePath = artRelativePath;
             ModelGroundOffsetMetres = modelGroundOffsetMetres;
@@ -29,6 +31,8 @@ namespace Airside.Presentation
             ShadowDepthMetres = shadowDepthMetres;
             SelectionMarkerDiameterMetres = selectionMarkerDiameterMetres;
             FollowDistanceMultiplier = followDistanceMultiplier;
+            MainTireRadiusMetres = mainTireRadiusMetres;
+            NoseTireRadiusMetres = noseTireRadiusMetres;
         }
 
         public string ArtRelativePath { get; }
@@ -42,6 +46,10 @@ namespace Airside.Presentation
         public float ShadowDepthMetres { get; }
         public float SelectionMarkerDiameterMetres { get; }
         public float FollowDistanceMultiplier { get; }
+        /// <summary>Authoritative kit radius for main-wheel roll animation.</summary>
+        public float MainTireRadiusMetres { get; }
+        /// <summary>Authoritative kit radius for nose-wheel roll animation.</summary>
+        public float NoseTireRadiusMetres { get; }
     }
 
     /// <summary>Aircraft-class profile catalogue for type-aware presentation.</summary>
@@ -58,7 +66,9 @@ namespace Airside.Presentation
             shadowWidthMetres: 22.5f,
             shadowDepthMetres: 16.5f,
             selectionMarkerDiameterMetres: 18f,
-            followDistanceMultiplier: 1f);
+            followDistanceMultiplier: 1f,
+            mainTireRadiusMetres: 0.37f,
+            noseTireRadiusMetres: 0.31f);
 
         // AIR-005: original 737-8-class model. Its authored root is the parking
         // position's nose stop, its tyres sit at local y=0, and its nose faces +Z.
@@ -71,7 +81,9 @@ namespace Airside.Presentation
             shadowWidthMetres: 34f,
             shadowDepthMetres: 39f,
             selectionMarkerDiameterMetres: 41f,
-            followDistanceMultiplier: 1.55f);
+            followDistanceMultiplier: 1.55f,
+            mainTireRadiusMetres: 0.62f,
+            noseTireRadiusMetres: 0.55f);
 
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
@@ -85,7 +97,9 @@ namespace Airside.Presentation
             shadowWidthMetres: 20.5f,
             shadowDepthMetres: 18.5f,
             selectionMarkerDiameterMetres: 22f,
-            followDistanceMultiplier: 0.92f);
+            followDistanceMultiplier: 0.92f,
+            mainTireRadiusMetres: 0.38f,
+            noseTireRadiusMetres: 0.28f);
 
         // AIR-006: original Dash 8-400-class model. Like AIR-001, the authored
         // regional-aircraft root is centred on the airframe and its tyres sit at
@@ -99,7 +113,9 @@ namespace Airside.Presentation
             shadowWidthMetres: 28f,
             shadowDepthMetres: 32f,
             selectionMarkerDiameterMetres: 33f,
-            followDistanceMultiplier: 1.28f);
+            followDistanceMultiplier: 1.28f,
+            mainTireRadiusMetres: 0.50f,
+            noseTireRadiusMetres: 0.34f);
 
         public static AircraftVisualProfile For(AircraftType type)
         {
@@ -136,6 +152,8 @@ namespace Airside.Presentation
         [SerializeField] private float _shadowDepthMetres;
         [SerializeField] private float _selectionMarkerDiameterMetres;
         [SerializeField] private float _followDistanceMultiplier = 1f;
+        [SerializeField] private float _mainTireRadiusMetres = AirsideReusableMotion.MainTireRadiusMetres;
+        [SerializeField] private float _noseTireRadiusMetres = AirsideReusableMotion.NoseTireRadiusMetres;
 
         public Vector3 PickSizeMetres => _pickSizeMetres;
         public Vector3 VisualCentreOffsetMetres => _visualCentreOffsetMetres;
@@ -144,6 +162,8 @@ namespace Airside.Presentation
         public float ShadowDepthMetres => _shadowDepthMetres;
         public float SelectionMarkerDiameterMetres => _selectionMarkerDiameterMetres;
         public float FollowDistanceMultiplier => _followDistanceMultiplier;
+        public float MainTireRadiusMetres => _mainTireRadiusMetres;
+        public float NoseTireRadiusMetres => _noseTireRadiusMetres;
 
         public static AircraftVisualProfileComponent Ensure(Transform aircraft, AircraftVisualProfile profile)
         {
@@ -166,6 +186,8 @@ namespace Airside.Presentation
             _shadowDepthMetres = profile.ShadowDepthMetres;
             _selectionMarkerDiameterMetres = profile.SelectionMarkerDiameterMetres;
             _followDistanceMultiplier = profile.FollowDistanceMultiplier;
+            _mainTireRadiusMetres = profile.MainTireRadiusMetres;
+            _noseTireRadiusMetres = profile.NoseTireRadiusMetres;
         }
     }
 }

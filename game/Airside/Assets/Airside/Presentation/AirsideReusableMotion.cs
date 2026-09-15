@@ -19,6 +19,15 @@ namespace Airside.Presentation
         public const float PropRpmCruise = 720f;
         public const float PropHighRpmThreshold = 1000f;
 
+        // ANM-AIR-001b turbofan presentation. These are fan RPMs (not N1 data):
+        // deliberately modest visual values that make the 737 intake read alive at
+        // overview distance without a noisy, strobing wheel of individual blades.
+        public const float JetFanRpmTakeoff = 3600f;
+        public const float JetFanRpmApproach = 2800f;
+        public const float JetFanRpmTaxi = 1500f;
+        public const float JetFanRpmCruise = 2400f;
+        public const float JetFanHighRpmThreshold = 1900f;
+
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;
         public const float GearRetracted = 0f;
@@ -89,6 +98,15 @@ namespace Airside.Presentation
 
         public static bool PropellersSpinning(AircraftPhase phase) =>
             PropRpmForPhase(phase) > 0f;
+
+        public static float JetFanRpmForPhase(AircraftPhase phase) => phase switch
+        {
+            AircraftPhase.Takeoff or AircraftPhase.Departed => JetFanRpmTakeoff,
+            AircraftPhase.Approach or AircraftPhase.Landing => JetFanRpmApproach,
+            AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback => JetFanRpmTaxi,
+            AircraftPhase.AtStand => AirportCircuit.SkipGroundTaxi ? JetFanRpmTaxi : 0f,
+            _ => JetFanRpmCruise
+        };
 
         /// <summary>
         /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and eases

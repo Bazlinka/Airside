@@ -124,6 +124,31 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Boeing7378_BuildsArticulatedTurbofansAndUsesItsOwnWheelScale()
+        {
+            var root = Build(AircraftType.Boeing7378);
+            try
+            {
+                var profile = root.GetComponent<AircraftVisualProfileComponent>();
+                Assert.That(profile.MainTireRadiusMetres, Is.EqualTo(0.62f).Within(0.001f));
+                Assert.That(profile.NoseTireRadiusMetres, Is.EqualTo(0.55f).Within(0.001f));
+
+                foreach (var side in new[] { "L", "R" })
+                {
+                    var fan = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == $"Fan {side}");
+                    Assert.That(fan.Cast<Transform>().Count(t => t.name.StartsWith($"Fan blade {side}") && t != fan),
+                        Is.EqualTo(12), $"twelve nested blades in the {side} turbofan");
+                    Assert.That(fan.Find("FanDisc"), Is.Not.Null,
+                        "high-RPM intake blur exists rather than leaving a frozen fan face");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
         public void Operators_FlyTheirCatalogueTypes_AndDrawThemWithThoseProfiles()
         {
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(9),

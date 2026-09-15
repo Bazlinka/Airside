@@ -160,6 +160,9 @@ namespace Airside.Presentation
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
         private readonly List<Renderer> _coastWaterRenderers = new List<Renderer>();
+        // Parallel to _coastWaterRenderers: shallows bob, deep water only scrolls. Resolved at
+        // collect time because Object.name allocates a string on every read.
+        private readonly List<bool> _coastWaterIsShallows = new List<bool>();
         private Transform _jettyDeck;
         private Transform _opsAntennaDish;
         private Transform _starFieldRoot;
@@ -7584,6 +7587,7 @@ namespace Airside.Presentation
             _coastFoamLayers.Clear();
             _coastFoamRenderers.Clear();
             _coastWaterRenderers.Clear();
+            _coastWaterIsShallows.Clear();
             _coastFoam = null;
             _coastFoamRenderer = null;
             // Prefix scan — foam/water pads are subdivided often; exact name lists go stale.
@@ -7606,6 +7610,7 @@ namespace Airside.Presentation
                     || n.StartsWith("Coast shallows", StringComparison.Ordinal))
                 {
                     _coastWaterRenderers.Add(renderer);
+                    _coastWaterIsShallows.Add(n.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0);
                 }
             }
 
@@ -7743,7 +7748,7 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 ApplyRendererTextureOffset(renderer, new Vector2(t * (0.012f + i * 0.004f), t * 0.008f));
-                if (renderer.gameObject.name.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (_coastWaterIsShallows[i])
                 {
                     var p = renderer.transform.position;
                     p.y = -0.35f + Mathf.Sin(t * 0.65f + i) * 0.03f;

@@ -50,7 +50,7 @@ airline, stand, route, save field, save version or migration changes.
 ## Acceptance evidence
 
 - Emitted bounds are exactly 32.83 × 28.42 × 8.34 m and tyres touch local Y=0.
-- Visual revision (2026-09-15): 174 named meshes / 18,856 triangles (was 139 /
+- Visual revision (2026-09-15): 174 named meshes / 18,856 triangles (superseded by quality pass; was 139 /
   6,728). Same asset path and animation/pivot part-name contracts; silhouette
   now uses fitted cabin glazing, a pitched flight deck, continuous nacelles,
   tip fences and a joined T-tail.

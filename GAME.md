@@ -1,5 +1,23 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Cursor — AIR-005 737-8 visual revision (same asset id). Domain tests pending
+  Unity EditMode on Mac.**
+  - **Player-visible:** Wattlebird Jet's 737-8 silhouette is rebuilt in place: slender fuselage
+    with fitted cabin glazing, pitched flight-deck panes, low swept wing with dual-feather
+    winglets, large forward-hung turbofans with chevron nozzles, a deep wing-body fairing and a
+    joined conventional tail. Hangar thumbnail regenerated from the runtime glTF. Envelope
+    unchanged (39.47 × 35.92 × 12.42 m). Path stays `mdl_737_8_narrowbody_v01`.
+  - **How:** rewrite of `scripts/generate-air-005-narrowbody-737-8.py` (204 named meshes /
+    17,464 triangles, was 180 / 6,988). Fuselage loft interpolates stations in increasing-z
+    order (`np.interp` requires that). StreamingAssets + Hangar thumb synced. No simulation,
+    catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0, fuselage half-width ~1.88 m);
+    offline before/after mesh reviews under `/opt/cursor/artifacts/737-8-*-review.png`. Unity
+    EditMode / packaged overview-follow QA still open (no Mac build this session).
+  - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. 50D/50E Q400 stand rule still
+    needs Bailey's decision if a second Q400 is added. Dash 8 visual revision may still be open
+    on its own PR.
+
 - **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
   331/331 (0 failed, 0 skipped).**
   - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used

@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **737-8 looks like a 737.** AIR-005 rebuilt in place: slender fuselage, fitted cabin windows,
+  pitched flight-deck panes, low swept wing with dual-feather winglets, large forward-hung
+  turbofans with chevron nozzles, deep wing-body fairing, joined conventional tail. Same
+  39.47 × 35.92 × 12.42 m envelope and asset path; Hangar thumbnail regenerated. 204 meshes /
+  17,464 tris (was 180 / 6,988). No simulation or save change. Generator validate + offline
+  mesh review; Unity EditMode / packaged QA still open.
+
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and
   covers the Dash 8-400; it records the one known shortfall — a Q400 beside a turboprop on

@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Graphics/performance audit fixes.** The focused bare circuit remains the release default,
+  but full-airport QA is now explicitly launchable with `-airsideFullAirport` and gets the
+  correct miniature framing instead of an effectively empty 3.1 km view. Startup no longer
+  requests the apron reflection cubemap twice on its first frame. Retired scene switches and
+  daylight/fence capture paths are runtime flags, so the project compiles without unreachable
+  branch warnings. Unity EditMode 383/383; packaged default and diagnostic full-world captures
+  completed. The legacy full-world terrain/material exposure remains diagnostic-only and is not
+  release-ready.
+
 - **Bug hunt: follow camera, regional backfill, save restore.** Following an aircraft that leaves
   the field no longer snaps onto someone else. Continue can finish adding Rex/QantasLink aircraft
   on a later load and uses the same 50D/50E stand preference as live choice. A mid-trip save with

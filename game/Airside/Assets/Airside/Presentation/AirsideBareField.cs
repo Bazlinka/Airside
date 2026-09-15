@@ -13,9 +13,25 @@ namespace Airside.Presentation
         /// <summary>
         /// When true the player sees ground, YPAD pavement silhouette, one aircraft
         /// and sun lighting. Buildings, cars, signs, apron clutter, coast, trees and
-        /// decorative lights are not spawned.
+        /// decorative lights are not spawned. The normal release default remains this
+        /// focused circuit; <c>-airsideFullAirport</c> is an explicit visual/performance
+        /// QA mode that exercises the dormant complete-airport path in a packaged player.
         /// </summary>
-        public const bool Enabled = true;
+        public static readonly bool Enabled = !HasLaunchFlag("-airsideFullAirport");
+
+        public static bool HasLaunchFlag(string flag)
+        {
+            if (string.IsNullOrEmpty(flag))
+                return false;
+            var args = System.Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], flag, System.StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
 
         /// <summary>Adelaide Airport Limited published site area.</summary>
         public const float AdelaideAirportHectares = 785f;

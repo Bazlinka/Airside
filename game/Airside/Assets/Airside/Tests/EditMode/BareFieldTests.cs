@@ -10,8 +10,10 @@ namespace Airside.Tests
         public void SetUp() => TaxiLoopFixture.RestoreCircuit();
 
         [Test]
-        public void BareField_IsEnabled()
+        public void BareField_DefaultLaunchStaysFocused()
         {
+            // The full airport is exercised explicitly through -airsideFullAirport;
+            // EditMode's normal launch keeps the documented focused circuit default.
             Assert.That(AirsideBareField.Enabled, Is.True);
         }
 

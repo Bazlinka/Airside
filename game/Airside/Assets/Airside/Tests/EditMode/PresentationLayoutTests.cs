@@ -566,7 +566,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void FocusMode_GroundClutterFollowsTheSingleAircraftOnlySwitch()
+        public void FocusMode_DefaultLaunchKeepsTheFocusedCircuit()
         {
             // The bare field parks every non-aircraft object behind the same switch
             // so the player sees only plane, runway, ground and sun lighting.

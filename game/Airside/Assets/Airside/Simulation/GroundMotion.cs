@@ -183,7 +183,7 @@ namespace Airside.Simulation
             var a = span > 1e-6 ? (v1 - v0) / span : 0;
             var travelled = v0 * tau + 0.5 * a * tau * tau;
             if (v0 + v1 < 2 * MinimumSegmentSpeed)
-                travelled = length * (tau / span);
+                travelled = span > 1e-9 ? length * (tau / span) : length;
             return _distance[segment] + (float)Math.Min(length, Math.Max(0.0, travelled));
         }
 
@@ -257,7 +257,7 @@ namespace Airside.Simulation
             var a = span > 1e-6 ? (v1 - v0) / span : 0;
             var travelled = v0 * tau + 0.5 * a * tau * tau;
             if (v0 + v1 < 2 * MinimumSegmentSpeed)
-                travelled = length * (tau / span);
+                travelled = span > 1e-9 ? length * (tau / span) : length;
             var fraction = length > 1e-6 ? (float)Math.Min(1.0, Math.Max(0.0, travelled / length)) : 1f;
             var speed = (float)Math.Max(0.0, v0 + a * tau);
             return Sample(segment, fraction, speed);

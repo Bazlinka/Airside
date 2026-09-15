@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
+  331/331 (0 failed, 0 skipped).**
+  - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used
+    only the ATR span (it reported 16.7 m at 50D/50E). Replaced by
+    `Layout_ParkedRegionalAircraftKeepCodeCClearance`: parked plan-view outlines (wing, fuselage,
+    tailplane boxes from the runtime glTFs via new `AircraftModelBounds.TryMeasurePart`, root on
+    the stop as drawn) for every bay pair and every ATR / Saab stand-in / Dash 8-400 pairing.
+  - **Known limit it now exposes (needs Bailey's stand-assignment decision):** a Dash 8-400 on
+    50D or 50E next to a turboprop on the other is only **3.3–3.5 m** apart (ICAO code C 4.5 m);
+    two Q400s there would be 1.2 m (only one Q400 exists; the test guards that). Every other pair
+    keeps ≥ 4.5 m (ATR–ATR at 50D/50E 5.7 m). A simple "no Q400 on 50D/50E" rule can strand an
+    aircraft overnight with six aircraft on six bays, so no simulation change was made.
+  - New `AircraftDispatchTests`: the real `BuildAircraftForType` builds each catalogue type with its
+    own profile and drawn dimensions (placeholders draw at ATR size), AIR-006 has two six-blade
+    propellers and is not ATR-sized, and QantasLink/Rex/Emu/Wattlebird/player fly their catalogue
+    types with the matching visual profiles.
+  - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. Decide the 50D/50E Q400 rule first
+    if a second Q400 is ever added.
+
 - **2026-09-15 Codex — AIR-006 genuine Dash 8-400 visual (ADR 0049). Unity EditMode
   328/328 (0 failed, 0 skipped).**
   - **Player-visible:** QantasLink's existing Dash 8-400 now renders as its own true-scale,

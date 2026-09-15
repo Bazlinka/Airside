@@ -20,6 +20,14 @@ namespace Airside.Presentation
         {
             public Accessor[] accessors;
             public Mesh[] meshes;
+            public Node[] nodes;
+        }
+
+        [Serializable]
+        private sealed class Node
+        {
+            public string name;
+            public int mesh = -1;
         }
 
         [Serializable]
@@ -78,6 +86,40 @@ namespace Airside.Presentation
             heightMetres = max.y - min.y;
             lengthMetres = max.z - min.z;
             return true;
+        }
+
+        /// <summary>
+        /// Model-space bounds of one named part (x = across, y = up, z = forward), for plan-view
+        /// clearance checks such as parked wingtips.
+        /// </summary>
+        public static bool TryMeasurePart(string gltfJson, string partName, out Vector3 min, out Vector3 max)
+        {
+            min = max = Vector3.zero;
+            var gltf = JsonUtility.FromJson<Gltf>(gltfJson);
+            if (gltf?.nodes == null || gltf.meshes == null || gltf.accessors == null)
+                return false;
+            foreach (var node in gltf.nodes)
+            {
+                if (node.name != partName || node.mesh < 0 || node.mesh >= gltf.meshes.Length)
+                    continue;
+                var any = false;
+                min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+                max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+                foreach (var primitive in gltf.meshes[node.mesh].primitives ?? Array.Empty<Primitive>())
+                {
+                    var index = primitive.attributes?.POSITION ?? -1;
+                    if (index < 0 || index >= gltf.accessors.Length || gltf.accessors[index].min == null)
+                        continue;
+                    var accessor = gltf.accessors[index];
+                    min = Vector3.Min(min, new Vector3(accessor.min[0], accessor.min[1], accessor.min[2]));
+                    max = Vector3.Max(max, new Vector3(accessor.max[0], accessor.max[1], accessor.max[2]));
+                    any = true;
+                }
+
+                return any;
+            }
+
+            return false;
         }
 
         /// <summary>Measure a catalogue type's runtime model from the project art folder.</summary>

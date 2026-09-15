@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
+using UnityEngine;
+using Airside.Domain;
 
 namespace Airside.Tests
 {
@@ -115,39 +120,108 @@ namespace Airside.Tests
             }
         }
 
-        [Test]
-        public void Layout_ParkedAtrWingtipsKeepCodeCClearance()
+        /// <summary>
+        /// Parked plan-view outline of a regional type as the game draws it: its runtime model's
+        /// root sits on the bay stop facing the bay heading (regional kits are centred on the
+        /// airframe, not on the nose), with wing, fuselage and tailplane boxes measured from the
+        /// runtime glTF. The Saab 340B still draws with the ATR stand-in.
+        /// </summary>
+        private static List<Vector2[]> ParkedOutline(string modelPath, AdelaideBay bay)
         {
-            // Stops alone were a poor proxy: 50E sits 28.6 m from 50D but faces another way.
-            // Check the parked wing lines instead — ATR 42 span 24.6 m, wing ~9.5 m behind the
-            // nose — against ICAO code C stand clearance of 4.5 m.
-            const double span = 24.57, noseToWing = 9.5;
-
-            (double ax, double az, double bx, double bz) Wing(AdelaideBay bay)
+            var json = File.ReadAllText(ArtRuntimePaths.ResolveExisting(modelPath));
+            var boxes = new List<(Vector3 min, Vector3 max)>();
+            foreach (var parts in new[] { new[] { "wing_left", "wing_right" }, new[] { "fuselage" }, new[] { "tailplane" } })
             {
-                var h = bay.HeadingDegrees * Math.PI / 180.0;
-                double fx = Math.Sin(h), fz = Math.Cos(h);
-                double cx = bay.StopX - fx * noseToWing, cz = bay.StopZ - fz * noseToWing;
-                return (cx - fz * span / 2, cz + fx * span / 2, cx + fz * span / 2, cz - fx * span / 2);
+                var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+                var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+                foreach (var part in parts)
+                {
+                    Assert.That(AircraftModelBounds.TryMeasurePart(json, part, out var pMin, out var pMax), Is.True, $"{modelPath} {part}");
+                    min = Vector3.Min(min, pMin);
+                    max = Vector3.Max(max, pMax);
+                }
+
+                boxes.Add((min, max));
             }
 
-            double PointToSegment(double px, double pz, double ax, double az, double bx, double bz)
+            var h = bay.HeadingDegrees * Mathf.Deg2Rad;
+            var forward = new Vector2(Mathf.Sin(h), Mathf.Cos(h));
+            var right = new Vector2(forward.y, -forward.x);
+            var stop = new Vector2(bay.StopX, bay.StopZ);
+            return boxes.Select(box => new[]
             {
-                double dx = bx - ax, dz = bz - az;
-                var t = Math.Max(0, Math.Min(1, ((px - ax) * dx + (pz - az) * dz) / (dx * dx + dz * dz)));
-                return Math.Sqrt(Math.Pow(ax + dx * t - px, 2) + Math.Pow(az + dz * t - pz, 2));
+                stop + right * box.min.x + forward * box.min.z,
+                stop + right * box.max.x + forward * box.min.z,
+                stop + right * box.max.x + forward * box.max.z,
+                stop + right * box.min.x + forward * box.max.z
+            }).ToList();
+        }
+
+        private static float OutlineGap(List<Vector2[]> a, List<Vector2[]> b)
+        {
+            float PointToSegment(Vector2 p, Vector2 s0, Vector2 s1)
+            {
+                var d = s1 - s0;
+                var t = Mathf.Clamp01(Vector2.Dot(p - s0, d) / d.sqrMagnitude);
+                return Vector2.Distance(p, s0 + d * t);
             }
 
+            var best = float.MaxValue;
+            foreach (var pa in a)
+            foreach (var pb in b)
+                for (var i = 0; i < 4; i++)
+                for (var k = 0; k < 4; k++)
+                {
+                    best = Mathf.Min(best, PointToSegment(pa[i], pb[k], pb[(k + 1) % 4]));
+                    best = Mathf.Min(best, PointToSegment(pb[i], pa[k], pa[(k + 1) % 4]));
+                }
+
+            return best;
+        }
+
+        [Test]
+        public void Layout_ParkedRegionalAircraftKeepCodeCClearance()
+        {
+            // ICAO code C stand clearance. The previous version of this test assumed the stop was
+            // the ATR's nose and only used the ATR span, reporting 16.7 m where the drawn gap at
+            // 50D/50E is 5.7 m, and could not see the larger Dash 8-400 at all.
+            const float codeC = 4.5f;
+            var atr = AircraftCatalogue.Atr42.RuntimeModelPath;
+            var dash8 = AircraftCatalogue.Dash8Q400.RuntimeModelPath;
+            var types = new (string name, string model)[]
+            {
+                ("ATR 42-600", atr),
+                ("Saab 340B (ATR stand-in)", AircraftCatalogue.Saab340.RuntimeModelPath ?? atr),
+                ("Dash 8-400", dash8)
+            };
+
+            // Only one Dash 8-400 flies here, so two of them are never side by side.
+            var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(1),
+                Airline.Player("Clearance Air", "#1F3A93"));
+            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Dash8Q400), Is.EqualTo(1),
+                "a second Dash 8-400 needs a stand-assignment rule for 50D/50E first (1.2 m apart there)");
+
+            var shortfalls = new List<string>();
             var bays = AdelaideLayout.Bays;
             for (var i = 0; i < bays.Length; i++)
             for (var j = i + 1; j < bays.Length; j++)
-            {
-                var a = Wing(bays[i]);
-                var b = Wing(bays[j]);
-                var gap = Math.Min(Math.Min(PointToSegment(a.ax, a.az, b.ax, b.az, b.bx, b.bz), PointToSegment(a.bx, a.bz, b.ax, b.az, b.bx, b.bz)),
-                    Math.Min(PointToSegment(b.ax, b.az, a.ax, a.az, a.bx, a.bz), PointToSegment(b.bx, b.bz, a.ax, a.az, a.bx, a.bz)));
-                Assert.That(gap, Is.GreaterThan(4.5), $"{bays[i].Reference} and {bays[j].Reference} wingtips");
-            }
+                foreach (var ta in types)
+                foreach (var tb in types)
+                {
+                    if (ta.model == dash8 && tb.model == dash8)
+                        continue;
+                    var gap = OutlineGap(ParkedOutline(ta.model, bays[i]), ParkedOutline(tb.model, bays[j]));
+                    var pair = $"{ta.name} on {bays[i].Reference} / {tb.name} on {bays[j].Reference}: {gap:0.0} m";
+                    Assert.That(gap, Is.GreaterThan(1f), $"parked aircraft overlap or touch — {pair}");
+                    if (gap < codeC)
+                        shortfalls.Add($"{bays[i].Reference}-{bays[j].Reference}");
+                    if (ta.model != dash8 && tb.model != dash8)
+                        Assert.That(gap, Is.GreaterThanOrEqualTo(codeC), pair);
+                }
+
+            // Known, documented limit (GAME.md): a Dash 8-400 on 50D or 50E next to a turboprop on the
+            // other is 3.3–3.5 m apart. Any other pair falling short of code C fails here.
+            Assert.That(shortfalls.Distinct(), Is.EquivalentTo(new[] { "50D-50E" }));
         }
 
         [Test]

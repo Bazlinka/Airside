@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
+  measures parked outlines from the runtime models (it had assumed the stop was the nose) and
+  covers the Dash 8-400; it records the one known shortfall — a Q400 beside a turboprop on
+  50D/50E is 3.3–3.5 m apart, under the 4.5 m code C clearance — pending a stand-rule decision.
+  New tests prove each type is built from its own model and QantasLink flies the Dash 8-400.
+  331/331 EditMode.
+
 - **Genuine Dash 8-400.** QantasLink's existing aircraft now uses its own original,
   unbranded AIR-006 model rather than the ATR stand-in: exact 32.83 × 28.42 × 8.34 m
   scale, long high wing, six-blade propellers, nacelle-mounted main gear and T-tail.

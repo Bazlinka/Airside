@@ -204,21 +204,30 @@ namespace Airside.Presentation
         /// stay on through approach, landing, the skipped ground wait, and the takeoff
         /// roll, then go out once the gear comes up.
         /// </summary>
-        public static bool LandingLightsOn(AircraftPhase phase, float progress01 = 1f)
+        /// <param name="drawnOnGround">
+        /// True for airline fleet aircraft, which really park and taxi at Adelaide. The
+        /// "skipped ground phase" rule belongs to the demo circuit only: applied to the fleet
+        /// it left every parked aircraft with its landing lights (90 m shadowed spot lights)
+        /// burning all day.
+        /// </param>
+        public static bool LandingLightsOn(AircraftPhase phase, float progress01 = 1f, bool drawnOnGround = false)
         {
             if (phase is AircraftPhase.Approach or AircraftPhase.Landing)
                 return true;
-            if (AirportCircuit.IsSkippedGroundPhase(phase))
-                return true;
+            if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback or AircraftPhase.AtStand)
+                return !drawnOnGround && AirportCircuit.IsSkippedGroundPhase(phase);
             if (phase == AircraftPhase.Takeoff)
                 return progress01 < GearRetractProgress;
             return false;
         }
 
-        public static float FlapDegrees(AircraftPhase phase, float progress01 = 1f)
+        /// <param name="drawnOnGround">True for fleet aircraft: flaps are up on the stand and after landing, set for taxi-out.</param>
+        public static float FlapDegrees(AircraftPhase phase, float progress01 = 1f, bool drawnOnGround = false)
         {
             var t = Mathf.Clamp01(progress01);
-            if (AirportCircuit.IsSkippedGroundPhase(phase))
+            if (drawnOnGround && phase is AircraftPhase.AtStand or AircraftPhase.TaxiIn)
+                return 0f;
+            if (AirportCircuit.IsSkippedGroundPhase(phase) || drawnOnGround && phase is AircraftPhase.TaxiOut or AircraftPhase.Pushback)
                 return 12f;
             return phase switch
             {

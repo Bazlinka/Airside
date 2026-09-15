@@ -72,5 +72,15 @@ namespace Airside.Tests
         {
             Assert.That(AirsideMaterialLibrary.InferFromMeshName(mesh), Is.EqualTo(expected));
         }
+
+        [Test]
+        public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
+        {
+            Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.False);
+            Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.TaxiIn, 0.5f, drawnOnGround: true), Is.False);
+            Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.Approach, 0.5f, drawnOnGround: true), Is.True);
+            Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.EqualTo(0f));
+            Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.TaxiOut, 0.5f, drawnOnGround: true), Is.EqualTo(12f));
+        }
     }
 }

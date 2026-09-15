@@ -837,7 +837,7 @@ namespace Airside.Presentation
                 SpinJetFans(view, phase, engines);
                 RollLandingGearTires(view, phase, progress);
                 ApplyOleoSettling(view, phase, progress);
-                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
+                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
@@ -890,7 +890,8 @@ namespace Airside.Presentation
         }
 
         private static void UpdateControlSurfaces(
-            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime)
+            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
+            bool drawnOnGround = false)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
             // deltaTime is the presentation clock, so surfaces hold still while paused
@@ -947,7 +948,7 @@ namespace Airside.Presentation
                 {
                     // Takeoff flap is set for the roll and milked off after rotation —
                     // it used to keep extending all the way through the climb.
-                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress);
+                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress, drawnOnGround);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
@@ -1100,7 +1101,7 @@ namespace Airside.Presentation
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
-            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
+            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             var namedChildren1 = AirsideNamedChildren.Get(aircraft);

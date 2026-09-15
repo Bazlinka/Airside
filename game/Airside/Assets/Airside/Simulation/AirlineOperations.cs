@@ -112,7 +112,7 @@ namespace Airside.Simulation
 
         /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
         public static bool NeedsTerminalGate(AircraftType type) =>
-            type != null && type.Id == AircraftType.Boeing7378.Id;
+            AircraftCatalogue.TryFor(type, out var spec) && spec.StandClass == StandClass.TerminalGate;
 
         public static bool StandFits(AircraftType type, StableId stand) =>
             AdelaideGround.IsTerminalGate(stand) == NeedsTerminalGate(type);

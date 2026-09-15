@@ -51,12 +51,15 @@ namespace Airside.Presentation
                     continue;
 
                 var fade = Mathf.InverseLerp(RouteMap.FieldTagHideDistanceMetres, RouteMap.FieldTagHideDistanceMetres * 2f, distance);
+                // Other operators' tags are quieter than yours (Ownership).
+                if (!aircraft.Airline.IsPlayer && aircraft.Registration != _selectedAircraftId)
+                    fade *= Ownership.OtherAlpha;
                 var selected = aircraft.Registration == _selectedAircraftId;
                 var mine = aircraft.Airline.IsPlayer;
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var ink = AirsideTheme.RunwayInk;
 
-                var text = mine ? $"{aircraft.Registration} · {FieldTagPhase(aircraft)}" : aircraft.Registration;
+                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {FieldTagPhase(aircraft)}" : aircraft.Registration;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above
@@ -82,6 +85,8 @@ namespace Airside.Presentation
                 DrawSolid(new Rect(pill.x, pill.y, 5f, pill.height), new Color(livery.r, livery.g, livery.b, fade));
                 if (selected)
                     AirsideTheme.DrawPanelFrame(pill, new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, fade));
+                else if (mine)
+                    AirsideTheme.DrawPanelFrame(pill, new Color(livery.r, livery.g, livery.b, fade));
                 var previous = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, fade);
                 GUI.Label(new Rect(pill.x + 4f, pill.y, pill.width - 4f, pill.height), text, tagStyle);

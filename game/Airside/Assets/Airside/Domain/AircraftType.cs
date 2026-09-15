@@ -33,43 +33,21 @@ namespace Airside.Domain
         /// </summary>
         public double PracticalRangeKm { get; }
 
-        /// <summary>
-        /// ATR 42-600: ~300 kt (556 km/h) cruise. Brochure range is ~1,326 km; planned
-        /// with passengers and reserves it is nearer 1,100 km, which keeps Sydney,
-        /// Hobart and Alice Springs out of reach from Adelaide — as in real service.
-        /// </summary>
-        public static readonly AircraftType Atr42 = new("ATR42", "ATR 42-600", 556, 1100);
-
-        /// <summary>
-        /// Saab 340B, Rex's regional workhorse: ~270 kt (500 km/h) cruise; planned with a
-        /// full cabin and reserves, about 1,000 km. Drawn with the ATR model for now.
-        /// </summary>
-        public static readonly AircraftType Saab340 = new("SF34", "Saab 340B", 500, 1000);
-
-        /// <summary>
-        /// De Havilland Canada Dash 8-400 (QantasLink): ~360 kt (667 km/h) cruise, about
-        /// 1,800 km planned range. Drawn with the ATR model for now.
-        /// </summary>
-        public static readonly AircraftType Dash8Q400 = new("DH8D", "Dash 8-400", 667, 1800);
-
-        /// <summary>
-        /// Boeing 737-8 (MAX 8) class: roughly 453 kt / 839 km/h cruise. The
-        /// 5,200 km planning range keeps a reserve/payload margin below the brochure
-        /// maximum. AIR-005 is a fictional, unbranded visual asset; it becomes a
-        /// moving fleet type only when terminal-gate operations are implemented.
-        /// </summary>
-        public static readonly AircraftType Boeing7378 = new("B38M", "Boeing 737-8", 839, 5200);
-
-        private static readonly AircraftType[] Known = { Atr42, Saab340, Dash8Q400, Boeing7378 };
+        // The named types live in AircraftCatalogue (ADR 0048), the one place their facts are kept.
+        // Properties, not fields, so the two classes never initialise each other in a cycle.
+        public static AircraftType Atr42 => AircraftCatalogue.Atr42.Type;
+        public static AircraftType Saab340 => AircraftCatalogue.Saab340.Type;
+        public static AircraftType Dash8Q400 => AircraftCatalogue.Dash8Q400.Type;
+        public static AircraftType Boeing7378 => AircraftCatalogue.Boeing7378.Type;
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
 
         public static bool TryFromId(string id, out AircraftType type)
         {
             type = null;
-            foreach (var known in Known)
-                if (string.Equals(id, known.Id, StringComparison.Ordinal))
-                    type = known;
+            foreach (var spec in AircraftCatalogue.All)
+                if (string.Equals(id, spec.Id, StringComparison.Ordinal))
+                    type = spec.Type;
             return type != null;
         }
     }

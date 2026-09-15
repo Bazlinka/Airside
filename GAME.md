@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — aircraft catalogue + Hangar types + player/AI presentation (ADR 0048).
+  Unity EditMode 327/327 (0 failed, 0 skipped). Milestone 1 (Gate 13 737 loop) was already
+  merged and verified (#246); this is milestone 2.**
+  - **NEXT MILESTONE (3): create/integrate a genuine Dash 8-400 visual** — a true-scale,
+    unbranded runtime model (32.83 × 28.42 × 8.34 m, within ±5%), thumbnail regenerated with
+    `scripts/render-aircraft-thumbnails.py`, `AircraftCatalogue.Dash8Q400` set to Genuine with its
+    model/thumbnail paths, and rendered instead of the ATR stand-in. Then milestone 4 (Saab 340B).
+  - **Player-visible:** Hangar has *Fleet* (YOUR AIRLINE / OTHER OPERATORS) and *Aircraft types*
+    tabs; type cards show a thumbnail rendered from the runtime model (ATR 42-600, 737-8) or a
+    labelled PLACEHOLDER (Saab 340B, Dash 8-400), with role, dimensions, cruise, planning range,
+    stand class, count at Adelaide/yours and model status. The player's aircraft carry a livery
+    accent and "YOURS" badge in the Hangar, fleet panel, Flights board (now two sections),
+    selection card and field tags; AI traffic is quieter (62%) there and on the route map.
+  - **Data:** `Domain/AircraftCatalogue` is the single source (AircraftType named types are
+    catalogue properties). Sources in `docs/data/AIRCRAFT_SPECIFICATIONS.md`. Dash 8-400
+    practical range 1,800 → 1,500 km (below 1,596 km manufacturer); QantasLink routes still
+    reachable. `AircraftModelBounds` checks genuine models ±5%.
+  - **Outstanding:** packaged visual QA of the Hangar tabs, badges and thumbnails (no build
+    requested). Saab 340B manufacturer range and 737-8 manufacturer cruise not yet recorded.
+
 - **2026-09-15 Claude — Gate 13 737-8 operations (ADR 0047). Merged to `main` by PR #246
   (`bbe76b0`); feature branch deleted; Unity EditMode 319/319 (0 failed, 0 skipped),
   re-verified on merged `main`.**

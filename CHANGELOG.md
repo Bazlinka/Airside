@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Aircraft catalogue and Hangar types.** One cited catalogue holds every type's dimensions,
+  cruise, planning range and stand class. The Hangar gains an *Aircraft types* tab with
+  thumbnails rendered from the runtime models (ATR 42-600, 737-8) and clearly labelled
+  placeholders for the Saab 340B and Dash 8-400. Your aircraft now carry a livery accent and
+  "YOURS" badge, with other operators quieter, across the Hangar, fleet panel, Flights board,
+  route map, field tags and selection card. Dash 8-400 planning range corrected to 1,500 km.
+  327/327 EditMode; not rebuilt.
+
 - **Handoff corrected.** GAME.md records the Gate 13 737-8 work as merged (#246) rather than
   on its deleted feature branch.
 

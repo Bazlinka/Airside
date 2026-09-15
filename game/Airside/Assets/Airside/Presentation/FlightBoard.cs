@@ -106,5 +106,20 @@ namespace Airside.Presentation
                     : string.CompareOrdinal(a?.Registration, b?.Registration);
             });
         }
+
+        /// <summary>
+        /// Stable split into YOUR AIRLINE then OTHER OPERATORS (<see cref="Ownership"/>), keeping
+        /// each section in the order <see cref="Sort"/> gave it.
+        /// </summary>
+        public static void GroupByOwnership(List<FleetAircraft> aircraft)
+        {
+            var mine = new List<FleetAircraft>();
+            var others = new List<FleetAircraft>();
+            foreach (var a in aircraft)
+                (a.Airline.IsPlayer ? mine : others).Add(a);
+            aircraft.Clear();
+            aircraft.AddRange(mine);
+            aircraft.AddRange(others);
+        }
     }
 }

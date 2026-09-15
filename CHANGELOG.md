@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **737-8 looks like a 737.** AIR-005 rebuilt in place: slender fuselage, fitted cabin windows,
+  pitched flight-deck panes, low swept wing with dual-feather winglets, large forward-hung
+  turbofans with chevron nozzles, deep wing-body fairing, joined conventional tail. Same
+  39.47 × 35.92 × 12.42 m envelope and asset path; Hangar thumbnail regenerated. 204 meshes /
+  17,464 tris (was 180 / 6,988). No simulation or save change. Generator validate + offline
+  mesh review; Unity EditMode / packaged QA still open.
 - **Dash 8-400 visual quality pass.** AIR-006 tightened in place: continuous wing-root
   saddle, single aerodynamic nacelle with gear bay, framed four-pane flight deck, pitched
   six-blade props with readable hubs/spinners, longer nacelle-mounted gear and doors, soft

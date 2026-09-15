@@ -162,6 +162,23 @@ namespace Airside.Simulation
             return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
         }
 
+        /// <summary>
+        /// Where departure <paramref name="slot"/> holds short after taxiing out from
+        /// <paramref name="departureStand"/>: slot 0 at the runway 05 holding point, later ones
+        /// queued back along their own taxi route.
+        /// </summary>
+        public static GroundPose HoldingShortPose(StableId departureStand, int slot)
+        {
+            var leg = TaxiOut(departureStand);
+            var end = leg.PoseAt(leg.Seconds);
+            if (slot <= 0)
+                return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
+
+            var taxi = leg.Parts[leg.Parts.Count - 1].Path;
+            var back = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
+            return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+        }
+
         private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate)
         {
             if (!TaxiOutLegs.TryGetValue(gate.Id, out var leg))

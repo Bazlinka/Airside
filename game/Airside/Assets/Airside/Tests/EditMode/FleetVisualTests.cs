@@ -96,5 +96,48 @@ namespace Airside.Tests
             Assert.That(waiting.Leg, Is.EqualTo(FleetGroundLeg.HoldingShort));
             Assert.That(waiting.Phase, Is.EqualTo(AircraftPhase.TaxiOut), "engines stay running at the hold");
         }
+
+        [Test]
+        public void WaitingAircraft_AreQueuedApartInsteadOfDrawnOnOneSpot()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#123456");
+            ops.AddAirline(player);
+            var bays = AirlineOperations.AdelaideRegionalBays;
+            var a = ops.AddAircraft(player, "VH-TSA", AircraftType.Atr42, bays[0]);
+            var b = ops.AddAircraft(player, "VH-TSB", AircraftType.Atr42, bays[1]);
+            var c = ops.AddAircraft(player, "VH-TSC", AircraftType.Atr42, bays[2]);
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+            foreach (var plane in new[] { a, b, c })
+                ops.ScheduleDeparture(plane, kingscote, new SimulationTime(0));
+
+            long longest = 0;
+            foreach (var plane in new[] { a, b, c })
+                longest = System.Math.Max(longest, AirlineOperations.TaxiOutSecondsFrom(plane.Stand));
+            clock.Set(new SimulationTime(longest + 5));
+            ops.Update();
+
+            var holding = new List<FleetAircraft>();
+            foreach (var plane in ops.Fleet)
+                if (plane.State == FleetState.HoldingShort)
+                    holding.Add(plane);
+            Assert.That(holding.Count, Is.EqualTo(2), "one lines up, two hold");
+
+            var slots = new HashSet<int>();
+            foreach (var plane in holding)
+                slots.Add(FleetVisual.QueueSlot(ops.Fleet, plane));
+            Assert.That(slots, Is.EquivalentTo(new[] { 0, 1 }));
+
+            var p0 = AdelaideGround.HoldingShortPose(holding[0].DepartureStand, FleetVisual.QueueSlot(ops.Fleet, holding[0]));
+            var p1 = AdelaideGround.HoldingShortPose(holding[1].DepartureStand, FleetVisual.QueueSlot(ops.Fleet, holding[1]));
+            var gap = System.Math.Sqrt((p0.X - p1.X) * (p0.X - p1.X) + (p0.Z - p1.Z) * (p0.Z - p1.Z));
+            Assert.That(gap, Is.GreaterThan(30.0));
+
+            var w0 = AdelaideGround.AwaitingPose(0);
+            var w1 = AdelaideGround.AwaitingPose(1);
+            Assert.That(System.Math.Abs(w0.X - w1.X) + System.Math.Abs(w0.Z - w1.Z), Is.GreaterThan(30f));
+        }
     }
 }

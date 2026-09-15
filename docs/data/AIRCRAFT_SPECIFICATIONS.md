@@ -22,6 +22,6 @@ Genuine runtime models are measured from their glTF POSITION bounds by
 | Type | Runtime model | Measured length × span × height |
 |---|---|---|
 | ATR 42-600 | `Models/Aircraft/mdl_atr42_starter_v02.gltf` | 22.67 × 24.57 × 7.59 m |
+| Dash 8-400 | `Models/Aircraft/mdl_dash8_q400_v01.gltf` (AIR-006) | 32.83 × 28.42 × 8.34 m |
 | Boeing 737-8 | `Models/Aircraft/mdl_737_8_narrowbody_v01.gltf` (AIR-005) | 39.47 × 35.92 × 12.42 m |
 | Saab 340B | none — placeholder, drawn with the ATR stand-in | — |
-| Dash 8-400 | none — placeholder, drawn with the ATR stand-in | — |

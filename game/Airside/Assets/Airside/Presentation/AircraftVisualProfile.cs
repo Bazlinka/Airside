@@ -73,13 +73,34 @@ namespace Airside.Presentation
             selectionMarkerDiameterMetres: 41f,
             followDistanceMultiplier: 1.55f);
 
-        public static AircraftVisualProfile For(AircraftType type) =>
-            type != null && type.Id == AircraftType.Boeing7378.Id
-                ? Boeing7378
-                : RegionalTurboprop;
+        // AIR-006: original Dash 8-400-class model. Like AIR-001, the authored
+        // regional-aircraft root is centred on the airframe and its tyres sit at
+        // local y=0; the profile expands framing to the Q400's longer fuselage.
+        public static readonly AircraftVisualProfile Dash8Q400 = new(
+            artRelativePath: "Models/Aircraft/mdl_dash8_q400_v01.gltf",
+            modelGroundOffsetMetres: -0.7f,
+            visualCentreOffsetMetres: Vector3.zero,
+            pickSizeMetres: new Vector3(31f, 10f, 36f),
+            pickCentreYMetres: 4.1f,
+            shadowWidthMetres: 28f,
+            shadowDepthMetres: 32f,
+            selectionMarkerDiameterMetres: 33f,
+            followDistanceMultiplier: 1.28f);
+
+        public static AircraftVisualProfile For(AircraftType type)
+        {
+            if (type != null && type.Id == AircraftType.Boeing7378.Id)
+                return Boeing7378;
+            if (type != null && type.Id == AircraftType.Dash8Q400.Id)
+                return Dash8Q400;
+            return RegionalTurboprop;
+        }
 
         public static bool IsBoeing7378(AircraftType type) =>
             type != null && type.Id == AircraftType.Boeing7378.Id;
+
+        public static bool IsDash8Q400(AircraftType type) =>
+            type != null && type.Id == AircraftType.Dash8Q400.Id;
     }
 
     /// <summary>

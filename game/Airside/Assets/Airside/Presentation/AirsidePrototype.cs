@@ -7615,10 +7615,92 @@ namespace Airside.Presentation
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsDash8Q400(type))
+                return BuildDash8Q400(name, accent, liveryDecalRelativePath);
 
             var regional = BuildAircraft(name, accent, liveryDecalRelativePath);
             AircraftVisualProfileComponent.Ensure(regional, AircraftVisualProfiles.RegionalTurboprop);
             return regional;
+        }
+
+        /// <summary>AIR-006 original, unbranded Dash 8-400-class turboprop.</summary>
+        private static Transform BuildDash8Q400(
+            string name,
+            Color accent,
+            string liveryDecalRelativePath = null)
+        {
+            var profile = AircraftVisualProfiles.Dash8Q400;
+            var root = new GameObject(name).transform;
+            AircraftVisualProfileComponent.Ensure(root, profile);
+
+            var usedArt = ArtPresentationLoader.TryInstantiate(
+                profile.ArtRelativePath,
+                root,
+                out _,
+                RenameAircraftPart,
+                kitName => AircraftPartColor(kitName, accent),
+                localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
+
+            if (usedArt)
+            {
+                NestCrossPropellerBlades(root);
+                RebakePropellerPivots(root);
+                RebakeAircraftArticulatedPivots(root);
+                NestLandingGearParts(root);
+                RebakeWheelPivots(root);
+                NestCabinDoorParts(root);
+                NestFlapParts(root);
+                EnsureAircraftLod(root);
+            }
+            else
+            {
+                // True-scale primitive fallback. It keeps the Q400's long high-wing,
+                // nacelle-gear and T-tail read if the art bundle is unavailable.
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                body.name = "Fuselage";
+                body.transform.SetParent(root, false);
+                body.transform.localPosition = new Vector3(0f, 2.4f, 0f);
+                body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                body.transform.localScale = new Vector3(1.38f, 16.35f, 1.38f);
+                body.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
+                ParentBlock(root, "Livery stripe", new Vector3(0f, 2.2f, 0.8f), new Vector3(2.82f, 0.16f, 22.8f), accent);
+                ParentBlock(root, "Wing L", new Vector3(-7.7f, 4.55f, 0.5f), new Vector3(13f, 0.32f, 3.2f), accent);
+                ParentBlock(root, "Wing R", new Vector3(7.7f, 4.55f, 0.5f), new Vector3(13f, 0.32f, 3.2f), accent);
+                ParentBlock(root, "Engine L", new Vector3(-4.35f, 3.45f, 0.4f), new Vector3(1.45f, 1.35f, 8.7f), accent * 0.72f);
+                ParentBlock(root, "Engine R", new Vector3(4.35f, 3.45f, 0.4f), new Vector3(1.45f, 1.35f, 8.7f), accent * 0.72f);
+                ParentBlock(root, "Propeller L", new Vector3(-4.35f, 3.6f, 5.45f), new Vector3(0.14f, 4.1f, 0.24f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Propeller R", new Vector3(4.35f, 3.6f, 5.45f), new Vector3(0.14f, 4.1f, 0.24f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Tail", new Vector3(0f, 5.9f, -12.1f), new Vector3(0.35f, 4.9f, 4.2f), accent);
+                ParentBlock(root, "Tailplane", new Vector3(0f, 7.85f, -12.9f), new Vector3(13.3f, 0.24f, 2.4f), accent);
+                ParentBlock(root, "Gear nose", new Vector3(0f, 1.05f, 11.25f), new Vector3(0.22f, 1.45f, 0.22f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear L", new Vector3(-4.35f, 1.5f, -1.7f), new Vector3(0.24f, 2.3f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear R", new Vector3(4.35f, 1.5f, -1.7f), new Vector3(0.24f, 2.3f, 0.32f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "CabinDoor", new Vector3(-1.39f, 2.3f, 11f), new Vector3(0.08f, 1.65f, 0.82f), new Color(0.78f, 0.8f, 0.83f));
+            }
+
+            ApplyLiveryDecal(root, liveryDecalRelativePath);
+            EnsureGroundShadow(root);
+            if (!HasNamedChild(root, "NavLight L"))
+                ParentBlock(root, "NavLight L", new Vector3(-14.15f, 4.85f, 1.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.1f, 0.9f, 0.2f));
+            if (!HasNamedChild(root, "NavLight R"))
+                ParentBlock(root, "NavLight R", new Vector3(14.15f, 4.85f, 1.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.9f, 0.12f, 0.12f));
+            if (!HasNamedChild(root, "Beacon"))
+                ParentBlock(root, "Beacon", new Vector3(0f, 3.8f, -0.75f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.95f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
+                ParentBlock(root, "LandingLight", new Vector3(0f, 1.15f, 13.8f), new Vector3(0.2f, 0.14f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            if (!HasNamedChild(root, "TaxiLight"))
+                ParentBlock(root, "TaxiLight", new Vector3(0f, 0.85f, 11.4f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
+
+            var source = root.gameObject.AddComponent<AudioSource>();
+            source.clip = CreateEngineClip();
+            source.loop = true;
+            source.volume = 0.11f;
+            source.spatialBlend = 0.75f;
+            source.minDistance = 14f;
+            source.maxDistance = 250f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+            source.Play();
+            return root;
         }
 
         /// <summary>AIR-005 original, unbranded 737-8-class narrowbody.</summary>

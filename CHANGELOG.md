@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Genuine Dash 8-400.** QantasLink's existing aircraft now uses its own original,
+  unbranded AIR-006 model rather than the ATR stand-in: exact 32.83 × 28.42 × 8.34 m
+  scale, long high wing, six-blade propellers, nacelle-mounted main gear and T-tail.
+  Its Hangar type card has a thumbnail rendered from that runtime model, and selection,
+  shadow and follow-camera framing use the Q400 footprint. No flight plan, stand,
+  timing, reservation or save data changed. 328/328 EditMode; not rebuilt or manually launched.
+
 - **Aircraft catalogue and Hangar types.** One cited catalogue holds every type's dimensions,
   cruise, planning range and stand class. The Hangar gains an *Aircraft types* tab with
   thumbnails rendered from the runtime models (ATR 42-600, 737-8) and clearly labelled

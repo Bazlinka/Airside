@@ -101,14 +101,15 @@ namespace Airside.Domain
             StandClass.RegionalBay, ModelStatus.Placeholder,
             null, null, "SPEC-SAAB-340B");
 
-        // QantasLink's type. Practical range 1,500 km sits below the 1,596 km full-passenger range.
+        // QantasLink's type (AIR-006). Practical range 1,500 km sits below the
+        // 1,596 km full-passenger range.
         public static readonly AircraftSpec Dash8Q400 = new(
             "DH8D", "Dash 8-400", "Regional turboprop · 82 seats",
             32.83, 28.42, 8.34,
             planningCruiseKmh: 667, practicalRangeKm: 1500,
             manufacturerMaxCruiseKmh: 667, manufacturerRangeKm: 1596, manufacturerRangeBasis: "full passenger range, 102 kg per passenger",
-            StandClass.RegionalBay, ModelStatus.Placeholder,
-            null, null, "SPEC-DASH8-400");
+            StandClass.RegionalBay, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400");
 
         // Wattlebird Jet's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
         // (about Mach 0.79) is the planning figure.

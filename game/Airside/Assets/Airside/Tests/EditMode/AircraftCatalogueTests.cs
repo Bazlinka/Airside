@@ -45,7 +45,7 @@ namespace Airside.Tests
         public void GenuineModels_MatchRealDimensionsWithinFivePercent_AndHaveTheirOwnThumbnail()
         {
             var genuine = AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine).ToList();
-            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "DH8D", "B38M" }));
+            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M" }));
             var thumbnails = new HashSet<string>();
             foreach (var spec in genuine)
             {
@@ -68,12 +68,10 @@ namespace Airside.Tests
         [Test]
         public void Placeholders_HaveNoBorrowedModelOrThumbnail()
         {
-            foreach (var spec in new[] { AircraftCatalogue.Saab340 })
-            {
-                Assert.That(spec.ModelStatus, Is.EqualTo(ModelStatus.Placeholder), spec.Name);
-                Assert.That(spec.RuntimeModelPath, Is.Null, "never an ATR model presented as a Q400/Saab");
-                Assert.That(spec.ThumbnailPath, Is.Null, "never an ATR thumbnail for a Q400/Saab");
-            }
+            Assert.That(
+                AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Placeholder).Select(s => s.Id),
+                Is.Empty,
+                "every live Adelaide type now has its own genuine model");
         }
 
         [Test]

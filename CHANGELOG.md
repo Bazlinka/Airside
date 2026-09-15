@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Clicks land where you aim.** Aircraft tags and the toast are part of the HUD, so clicking or
+  dragging on them no longer selects or pans the field behind; clicking empty ground deselects.
+  337/337 EditMode.
+
 - **Genuine Saab 340B.** Rex's existing aircraft now use their own original, unbranded
   AIR-007 model rather than the ATR stand-in: exact 19.73 × 21.44 × 6.97 m scale (standard
   wing), compact low wing, four-blade propellers, nacelle-mounted twin main gear and a

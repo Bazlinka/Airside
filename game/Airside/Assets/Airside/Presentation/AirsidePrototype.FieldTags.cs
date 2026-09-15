@@ -92,8 +92,13 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(pill.x + 4f, pill.y, pill.width - 4f, pill.height), text, tagStyle);
                 GUI.color = previous;
 
-                if (fade > 0.3f && GUI.Button(pill, GUIContent.none, GUIStyle.none))
-                    SelectAircraft(aircraft);
+                if (fade > 0.3f)
+                {
+                    // Owned by the HUD: a press here must not also pan or 3D-pick behind it.
+                    _hudOverlays.Add(pill);
+                    if (GUI.Button(pill, GUIContent.none, GUIStyle.none))
+                        SelectAircraft(aircraft);
+                }
             }
         }
 
@@ -112,10 +117,7 @@ namespace Airside.Presentation
 
         private bool IsInsideHudPanel(Vector2 gui)
         {
-            foreach (var rect in _hudPanels)
-                if (rect.Contains(gui))
-                    return true;
-            return false;
+            return HudHitTest.Contains(gui, _hudPanels);
         }
     }
 }

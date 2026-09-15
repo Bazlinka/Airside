@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — AIR-005 737-8 close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Wattlebird Jet's 737 now has a skin-coloured flight-deck crown with
+    three compact fitted windshield panes rather than a dark projecting visor; its keel fairing
+    is a short, tapered wing-root transition and its split winglets are restrained at overview
+    distance. The same `mdl_737_8_narrowbody_v01` path, 39.47 × 35.92 × 12.42 m envelope,
+    nose-stop datum, tyre contact, gate loop and save behaviour remain intact.
+  - **How:** `scripts/generate-air-005-narrowbody-737-8.py` now emits 199 named meshes / 17,404
+    triangles; source + StreamingAssets kits and the 480 × 320 Hangar thumbnail are synced.
+    New `scripts/test-air-005-737-8.py` locks scale, compact panes, the short fairing,
+    restrained tips and index integrity. No other aircraft or simulation code changed.
+  - **Evidence:** generator validation and `python3 scripts/test-air-005-737-8.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is not
+    available in this environment, so combined EditMode and packaged overview/follow QA remain
+    open.
+  - **NEXT:** Commit/push this narrow AIR-005 slice, then give AIR-007 Saab 340B the same
+    close-view cockpit/nacelle/prop refinement in a separate commit. Do not start a new type.
+
 - **2026-09-15 Claude — polish phase 6: runway fairness + stand suggestion (ADR 0052). Unity
   EditMode 376/376.**
   - Tower: a departure holding short ≥ 6 min that has waited longer than the first arrival

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate AIR-005: an original 737-8-class narrowbody kit.
 
-Visual revision: smooth slender fuselage with fitted cabin glazing, pitched
-flight-deck panes, low swept wing with dual-feather winglets, large forward-
-hung turbofans with chevron nozzles, a deep wing-body fairing and a joined
+Visual revision: smooth slender fuselage with fitted cabin glazing, flush
+flight-deck panes, low swept wing with restrained split winglets, large forward-
+hung turbofans with chevron nozzles, a tapered wing-body fairing and a joined
 conventional tail. Project-owned, unbranded procedural geometry at the
 official 39.47 × 35.92 × 12.42 m envelope.
 
@@ -367,7 +367,9 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
 
     meshes["fuselage"] = fuselage_body()
 
-    # Soft nose / cockpit crown and fitted flight-deck glazing.
+    # Soft nose / cockpit crown and fitted flight-deck glazing.  Keep the skin
+    # separate from the glass: using one dark cockpit loft made the whole nose
+    # read as a protruding visor in the Hangar and follow views.
     meshes["radome"] = oval_lathe_fuselage(
         [
             (18.60, 0.85, 0.78, 4.25),
@@ -377,7 +379,7 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         ],
         segments=36,
     )
-    meshes["cockpit"] = oval_lathe_fuselage(
+    meshes["flightdeck_crown"] = oval_lathe_fuselage(
         [
             (16.60, 1.55, 0.55, 4.85),
             (17.40, 1.45, 0.62, 4.95),
@@ -386,36 +388,34 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         ],
         segments=28,
     )
-    meshes["cockpit_frame"] = box(0.0, 5.55, 17.85, 2.45, 0.07, 1.55)
-    meshes["cockpit_glare"] = box(0.0, 5.42, 18.35, 1.90, 0.10, 0.70)
+    # Three small, angled panes sit flush to the crown.  Their gaps make the
+    # pillars readable without a separate dark brow or oversized visor slab.
     meshes["windscreen_c"] = windscreen_pane(
-        0.0, 5.28, 18.35, 0.90, 0.78, 0.050, pitch_deg=-28.0
+        0.0, 5.22, 18.28, 1.10, 0.50, 0.045, pitch_deg=-27.0
     )
     meshes["windscreen_l"] = windscreen_pane(
-        -0.78, 5.18, 18.15, 0.62, 0.72, 0.050, pitch_deg=-24.0
+        -0.74, 5.08, 18.12, 0.46, 0.52, 0.045, pitch_deg=-23.0
     )
     meshes["windscreen_r"] = windscreen_pane(
-        0.78, 5.18, 18.15, 0.62, 0.72, 0.050, pitch_deg=-24.0
+        0.74, 5.08, 18.12, 0.46, 0.52, 0.045, pitch_deg=-23.0
     )
     meshes["cockpit_side_l"] = surface_quad(
-        [(17.20, 125), (17.20, 155), (18.15, 150), (18.45, 122)], 0.014
+        [(16.82, 121), (16.82, 151), (17.78, 146), (17.94, 115)], 0.018
     )
     meshes["cockpit_side_r"] = surface_quad(
-        [(17.20, 55), (17.20, 25), (18.45, 58), (18.15, 30)], 0.014
+        [(16.82, 59), (16.82, 29), (17.94, 65), (17.78, 34)], 0.018
     )
-    meshes["windscreen_pillar_l"] = box(-0.45, 5.32, 18.25, 0.05, 0.78, 0.35)
-    meshes["windscreen_pillar_r"] = box(0.45, 5.32, 18.25, 0.05, 0.78, 0.35)
-    meshes["windscreen_pillar_c"] = box(0.0, 5.36, 18.40, 0.04, 0.72, 0.28)
 
-    # Deep 737-class wing-body keel fairing.
+    # A short, tapered keel follows the wing root.  The previous 21.5 m oval
+    # showed as a flat, dark rectangular slab under the fuselage.
     meshes["belly_fairing"] = oval_lathe_fuselage(
         [
-            (-8.50, 0.55, 0.22, 2.55),
-            (-4.00, 0.95, 0.42, 2.45),
-            (1.50, 1.05, 0.48, 2.42),
-            (6.50, 0.95, 0.40, 2.48),
-            (10.50, 0.55, 0.22, 2.60),
-            (13.00, 0.22, 0.10, 2.80),
+            (-5.30, 0.18, 0.08, 2.88),
+            (-3.55, 0.46, 0.19, 2.78),
+            (-0.60, 0.64, 0.27, 2.72),
+            (2.30, 0.62, 0.25, 2.74),
+            (4.85, 0.40, 0.17, 2.81),
+            (6.70, 0.15, 0.06, 2.90),
         ],
         segments=32,
     )
@@ -468,43 +468,44 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
             side, 12.50, 16.80, from_te=0.00, to_te=0.40, thickness=0.065
         )
 
-    # Dual-feather / split-scimitar style tip — upper and lower feathers.
+    # Restrained split-scimitar tips.  They retain a clear upper/lower feather
+    # read without becoming tall vertical plates at the overview camera.
     # Outer tip stations own the exact 35.92 m span. With vertical=True the
     # aerofoil thickness spreads in X around offset_c, so tip offset sits
     # slightly inboard of HALF_SPAN.
-    tip_x = HALF_SPAN - 0.034
+    tip_x = HALF_SPAN - 0.0275
     meshes["winglet_left"] = lofted_aerofoil(
         [
-            (5.45, -17.10, 0.55, 1.55, 0.12),
-            (7.40, -17.50, 0.10, 1.05, 0.09),
-            (9.15, -tip_x, -0.25, 0.55, 0.07),
+            (5.45, -17.10, 0.55, 1.38, 0.11),
+            (6.45, -17.48, 0.12, 0.88, 0.075),
+            (7.25, -tip_x, -0.20, 0.42, 0.055),
         ],
         chord_points=14,
         vertical=True,
     )
     meshes["winglet_right"] = lofted_aerofoil(
         [
-            (5.45, 17.10, 0.55, 1.55, 0.12),
-            (7.40, 17.50, 0.10, 1.05, 0.09),
-            (9.15, tip_x, -0.25, 0.55, 0.07),
+            (5.45, 17.10, 0.55, 1.38, 0.11),
+            (6.45, 17.48, 0.12, 0.88, 0.075),
+            (7.25, tip_x, -0.20, 0.42, 0.055),
         ],
         chord_points=14,
         vertical=True,
     )
     meshes["wingtip_left"] = lofted_aerofoil(
         [
-            (5.35, -17.05, 0.35, 1.25, 0.10),
-            (4.55, -17.45, -0.05, 0.70, 0.08),
-            (3.85, -(tip_x - 0.02), -0.25, 0.40, 0.06),
+            (5.35, -17.05, 0.35, 1.12, 0.09),
+            (4.40, -17.43, -0.05, 0.60, 0.065),
+            (3.65, -(tip_x - 0.02), -0.24, 0.34, 0.050),
         ],
         chord_points=12,
         vertical=True,
     )
     meshes["wingtip_right"] = lofted_aerofoil(
         [
-            (5.35, 17.05, 0.35, 1.25, 0.10),
-            (4.55, 17.45, -0.05, 0.70, 0.08),
-            (3.85, tip_x - 0.02, -0.25, 0.40, 0.06),
+            (5.35, 17.05, 0.35, 1.12, 0.09),
+            (4.40, 17.43, -0.05, 0.60, 0.065),
+            (3.65, tip_x - 0.02, -0.24, 0.34, 0.050),
         ],
         chord_points=12,
         vertical=True,

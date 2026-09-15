@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **737-8 close-view polish.** AIR-005 keeps its real-scale footprint and operational loop, but
+  replaces the dark projecting cockpit mask with a skin-coloured flight-deck crown and three
+  compact fitted panes, shortens and tapers the wing-body keel fairing, and reduces the split
+  winglets to a believable overview proportion. The Hangar thumbnail is regenerated from the
+  shipped glTF. 199 named meshes / 17,404 triangles; deterministic geometry regression green.
+  Unity EditMode and packaged camera QA remain open.
+
 - **Fairer runway and smarter stands.** A departure held short for six minutes now gets the
   runway ahead of newer arrivals, and aircraft (and the player's Best stand button) avoid
   parking beside a Dash 8-400 on the tight 50D/50E pair when another bay is free (ADR 0052).

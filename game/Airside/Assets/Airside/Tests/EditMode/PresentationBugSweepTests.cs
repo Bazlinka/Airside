@@ -55,5 +55,19 @@ namespace Airside.Tests
                 Object.DestroyImmediate(other);
             }
         }
+
+        [TestCase("flood_cable_tray", AirsideMaterialLibrary.SurfaceKind.Rubber)]
+        [TestCase("mudflap_l", AirsideMaterialLibrary.SurfaceKind.Rubber)]
+        [TestCase("taillight_r", AirsideMaterialLibrary.SurfaceKind.Plastic)]
+        [TestCase("pump_cabinet", AirsideMaterialLibrary.SurfaceKind.PaintedMetal)]
+        [TestCase("service_wing_roof", AirsideMaterialLibrary.SurfaceKind.Metal)]
+        [TestCase("shed_body", AirsideMaterialLibrary.SurfaceKind.Metal)]
+        [TestCase("terminal_body", AirsideMaterialLibrary.SurfaceKind.Concrete)]
+        [TestCase("tug_cab", AirsideMaterialLibrary.SurfaceKind.AircraftSkin)]
+        [TestCase("Fuselage", AirsideMaterialLibrary.SurfaceKind.AircraftSkin)]
+        public void InferFromMeshName_AvoidsSkinSubstringTraps(string mesh, AirsideMaterialLibrary.SurfaceKind expected)
+        {
+            Assert.That(AirsideMaterialLibrary.InferFromMeshName(mesh), Is.EqualTo(expected));
+        }
     }
 }

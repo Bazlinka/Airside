@@ -183,6 +183,19 @@ namespace Airside.Presentation
                 || n.Contains("tank") || n.Contains("column")
                 || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
+            // Substring traps for the aircraft-skin rule below: "cab" is inside cable and
+            // cabinet, "tail" inside taillight, "flap" inside mudflap, "wing"/"body" inside
+            // building parts. Each used to take the glossy aircraft paint.
+            if (n.Contains("cable") || n.Contains("mudflap"))
+                return SurfaceKind.Rubber;
+            if (n.Contains("taillight") || n.Contains("headlight"))
+                return SurfaceKind.Plastic;
+            if (n.Contains("cabinet"))
+                return SurfaceKind.PaintedMetal;
+            if (n.Contains("service_wing") || n.Contains("shed_body"))
+                return SurfaceKind.Metal;
+            if (n.Contains("terminal_body"))
+                return SurfaceKind.Concrete;
             if (n.Contains("marking") || n.Contains("centreline") || n.Contains("centerline")
                 || n.Contains("threshold") || n.Contains("hold_short") || n.Contains("aiming")
                 || n.Contains("tdz") || n.Contains("chevron") || n.Contains("stand_stop")

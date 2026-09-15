@@ -127,8 +127,11 @@ namespace Airside.Presentation
         {
             // A focused text field or a modal airline panel owns the keyboard.
             if (_cameraController != null)
+                // The Esc menu owns the keyboard too: the camera reads WASD/QE/ZX itself, so without
+                // this the view kept panning and orbiting behind the open menu.
                 _cameraController.KeyboardCaptured =
-                    AirlineSetupOpen || _awaySummary != null || _controlsHelpOpen || GUIUtility.keyboardControl != 0;
+                    _menuOpen || AirlineSetupOpen || _awaySummary != null || _controlsHelpOpen
+                    || GUIUtility.keyboardControl != 0;
             _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
             if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");

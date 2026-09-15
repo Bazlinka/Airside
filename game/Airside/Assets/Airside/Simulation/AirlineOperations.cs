@@ -621,17 +621,12 @@ namespace Airside.Simulation
                 case FleetState.AwaitingStand:
                     if (aircraft.Airline.IsPlayer)
                         return false;
-                    foreach (var stand in _stands)
-                    {
-                        if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand))
-                            continue;
-                        if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
-                            continue;
-                        aircraft.Stand = stand;
-                        Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(stand));
-                        return true;
-                    }
-                    return false;
+                    var chosen = SuggestStand(aircraft);
+                    if (chosen == null)
+                        return false;
+                    aircraft.Stand = chosen.Value;
+                    Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value));
+                    return true;
 
                 case FleetState.TaxiIn:
                     aircraft.CompletedTrips++;
@@ -646,13 +641,92 @@ namespace Airside.Simulation
             }
         }
 
-        /// <summary>One runway movement at a time; arrivals first, then longest-waiting.</summary>
+        /// <summary>
+        /// Bays too close together for a Dash 8-400 beside another aircraft: 50D and 50E are
+        /// 3.3–3.5 m apart with a Q400 on one (ADR 0049), under the 4.5 m code C clearance.
+        /// </summary>
+        public static readonly IReadOnlyList<(StableId A, StableId B)> TightBayPairs = new[]
+        {
+            (new StableId("BAY-1"), new StableId("BAY-5"))
+        };
+
+        /// <summary>
+        /// True when parking <paramref name="type"/> on <paramref name="stand"/> would put a
+        /// Dash 8-400 next to another aircraft on a <see cref="TightBayPairs"/> neighbour.
+        /// </summary>
+        public bool CrowdsNeighbour(AircraftType type, StableId stand)
+        {
+            foreach (var (a, b) in TightBayPairs)
+            {
+                StableId other;
+                if (stand.Equals(a))
+                    other = b;
+                else if (stand.Equals(b))
+                    other = a;
+                else
+                    continue;
+
+                foreach (var aircraft in _fleet)
+                    if (StandHolder(aircraft, other)
+                        && (ReferenceEquals(type, AircraftType.Dash8Q400) || ReferenceEquals(aircraft.Type, AircraftType.Dash8Q400)))
+                        return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// The stand an aircraft waiting for one should take — other operators taxi straight to
+        /// it, and the player's "Quickest" button offers it: a free stand that fits, preferring
+        /// one that does not crowd a tight neighbour, then the shortest taxi in, then list
+        /// order. Never refuses a free stand only for clearance, so nobody is stranded.
+        /// </summary>
+        public StableId? SuggestStand(FleetAircraft aircraft)
+        {
+            StableId? best = null;
+            var bestCrowds = true;
+            var bestSeconds = long.MaxValue;
+            foreach (var stand in _stands)
+            {
+                if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand))
+                    continue;
+                if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
+                    continue;
+                var crowds = CrowdsNeighbour(aircraft.Type, stand);
+                var seconds = TaxiInSecondsTo(stand);
+                if (best != null && (crowds && !bestCrowds || crowds == bestCrowds && seconds >= bestSeconds))
+                    continue;
+                best = stand;
+                bestCrowds = crowds;
+                bestSeconds = seconds;
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// A departure holding short this long gets the runway ahead of arrivals that have
+        /// waited less, so a steady arrival stream can no longer hold it forever.
+        /// </summary>
+        public const long DepartureMaxHoldSeconds = 6 * 60;
+
+        /// <summary>
+        /// One runway movement at a time. Arrivals normally go first; a departure that has held
+        /// short past <see cref="DepartureMaxHoldSeconds"/>, and longer than the first arrival
+        /// has circled, goes instead. Derived from state times only, so saves need nothing new.
+        /// </summary>
         private bool RunTower(SimulationTime now)
         {
             if (_runwayFreeAt.CompareTo(now) > 0)
                 return false;
 
-            var next = LongestWaiting(FleetState.HoldingForLanding) ?? LongestWaiting(FleetState.HoldingShort);
+            var arrival = LongestWaiting(FleetState.HoldingForLanding);
+            var departure = LongestWaiting(FleetState.HoldingShort);
+            var next = arrival ?? departure;
+            if (arrival != null && departure != null
+                && now.ElapsedSeconds - departure.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
+                && departure.StateStartedAt.CompareTo(arrival.StateStartedAt) < 0)
+                next = departure;
             if (next == null)
                 return false;
 

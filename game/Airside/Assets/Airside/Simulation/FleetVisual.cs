@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Airside.Domain;
 
 namespace Airside.Simulation
@@ -100,6 +101,30 @@ namespace Airside.Simulation
                     // for a landing slot: not drawn at the field.
                     return Hidden(start);
             }
+        }
+
+        /// <summary>
+        /// Place in the queue for aircraft sharing <paramref name="aircraft"/>'s waiting state
+        /// (holding short, or waiting for a stand): 0 for whoever got there first. Ties break on
+        /// registration so every frame and every load draws the same order.
+        /// </summary>
+        public static int QueueSlot(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft)
+        {
+            if (fleet == null || aircraft == null)
+                return 0;
+            var slot = 0;
+            for (var i = 0; i < fleet.Count; i++)
+            {
+                var other = fleet[i];
+                if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
+                    continue;
+                var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
+                if (order < 0 || order == 0
+                    && string.CompareOrdinal(other.Registration, aircraft.Registration) < 0)
+                    slot++;
+            }
+
+            return slot;
         }
 
         private static FleetVisual Air(AircraftPhase phase, SimulationTime startedAt) =>

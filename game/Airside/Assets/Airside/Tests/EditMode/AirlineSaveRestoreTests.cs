@@ -36,5 +36,21 @@ namespace Airside.Tests
             Assert.That(restored.Fleet.Count, Is.EqualTo(ops.Fleet.Count));
             Assert.That(restored.PlayerAirline.Name, Is.EqualTo("Test Air"));
         }
+
+        [TestCase("99")]
+        [TestCase("AtStand, TaxiOut")]
+        [TestCase("atstand")]
+        [TestCase("")]
+        public void Restore_RejectsAStateThatIsNotADeclaredName(string state)
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3),
+                Airline.Player("Test Air", "#123456"));
+            var data = AirlineSave.Capture(ops);
+            data.Fleet[0].State = state;
+
+            var error = Assert.Throws<FormatException>(() => AirlineSave.Restore(data, clock));
+            Assert.That(error.Message, Does.Contain("unknown state"));
+        }
     }
 }

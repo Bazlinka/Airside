@@ -462,9 +462,10 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
+            // An old enough save gains both; the else-if used to swallow the jet's news.
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
-            else if (jetJoined > 0)
+            if (jetJoined > 0)
                 ShowToast("Wattlebird Jet's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();
             if (_awaySummary == null)
@@ -530,7 +531,7 @@ namespace Airside.Presentation
 
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(FleetPanelContentHeight(), 120f), area.height));
+            var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(FleetPanelContentHeight(area.width - 32f), 120f), area.height));
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
@@ -571,7 +572,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Mirrors the row heights drawn below so the panel hugs its content.</summary>
-        private float FleetPanelContentHeight()
+        private float FleetPanelContentHeight(float inner)
         {
             var height = 12f + 26f + 22f + 34f;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
@@ -580,7 +581,8 @@ namespace Airside.Presentation
                 if (_selectedAircraftId == aircraft.Registration) height += 46f;
                 if (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft)) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
-                if (aircraft.State == FleetState.AwaitingStand) height += 84f;
+                if (aircraft.State == FleetState.AwaitingStand)
+                    height += 84f + 32f * (StandButtonRows(CountFreeStands(), inner) - 1);
             }
 
             foreach (var airline in _operations.Airlines)
@@ -648,14 +650,22 @@ namespace Airside.Presentation
                         y += 30f;
                     }
 
+                    // Wrap the bay buttons: six free bays at 82 px ran ~160 px past the 360 px
+                    // fleet panel and off its right edge.
                     var bx = x;
                     var any = false;
                     foreach (var stand in _operations.FreeStands())
                     {
+                        if (any && bx + StandButtonWidth > x + width)
+                        {
+                            bx = x;
+                            y += 32f;
+                        }
+
                         any = true;
-                        if (GUI.Button(new Rect(bx, y, 76f, 26f), StandNames.Short(stand), smallButton))
+                        if (GUI.Button(new Rect(bx, y, StandButtonWidth, 26f), StandNames.Short(stand), smallButton))
                             AssignStandFromHud(aircraft, stand);
-                        bx += 82f;
+                        bx += StandButtonWidth + StandButtonGap;
                     }
 
                     if (!any)
@@ -665,6 +675,24 @@ namespace Airside.Presentation
             }
 
             return y;
+        }
+
+        private const float StandButtonWidth = 76f;
+        private const float StandButtonGap = 6f;
+
+        private int CountFreeStands()
+        {
+            var count = 0;
+            foreach (var _ in _operations.FreeStands())
+                count++;
+            return count;
+        }
+
+        /// <summary>Rows the wrapped bay buttons take in <paramref name="width"/> (at least one).</summary>
+        private static int StandButtonRows(int buttons, float width)
+        {
+            var perRow = Mathf.Max(1, Mathf.FloorToInt((width + StandButtonGap) / (StandButtonWidth + StandButtonGap)));
+            return Mathf.Max(1, (buttons + perRow - 1) / perRow);
         }
 
         private void AssignStandFromHud(FleetAircraft aircraft, StableId stand)
@@ -1233,7 +1261,12 @@ namespace Airside.Presentation
                 var tip = row.Reachable
                     ? $"{row.Destination.Name} · {row.DistanceKm:0} km · {DurationText(row.AirborneSeconds)}"
                     : $"{row.Destination.Name} · {row.DistanceKm:0} km · out of range";
-                var tipRect = new Rect(Mathf.Min(h.x + 12f, mapRect.xMax - 250f), h.y + 12f, 250f, 22f);
+                // Keep the tip inside the map: near the bottom edge (Hobart, Launceston) it used
+                // to hang below the panel over the 3D field, and it never clamped on the left.
+                var tipRect = new Rect(
+                    Mathf.Max(mapRect.x, Mathf.Min(h.x + 12f, mapRect.xMax - 250f)),
+                    h.y + 12f + 22f > mapRect.yMax ? h.y - 12f - 22f : h.y + 12f,
+                    250f, 22f);
                 DrawSolid(tipRect, new Color(ink.r, ink.g, ink.b, 0.92f));
                 AirsideTheme.DrawPanelFrame(tipRect, row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete);
                 GUI.Label(new Rect(tipRect.x + 6f, tipRect.y + 2f, tipRect.width - 12f, 18f), tip, small);

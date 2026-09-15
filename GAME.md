@@ -1,7 +1,11 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batch 1: 14 fixes,
-  Unity EditMode 401/401.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–2 merged:
+  26 fixes, Unity EditMode 406/406.**
+  - **Batch 2:** fleet queue slots at the hold and stand wait (`FleetVisual.QueueSlot`,
+    `AdelaideGround.HoldingShortPose`); follow-camera release, hitch and first-visible fixes;
+    F follows the selection; HUD wrap and clamp fixes; tag click-through; Esc menu wording;
+    strict save state names; ground-path NaN guard.
   - **Dark full-airport materials, likely cause found and fixed:** `SurfaceKind.PaintedMetal`
     (InferFromMeshName's catch-all and the colour-inference default) mapped to
     `mat_corrugated_metal_v01` plus the corrugated mask, whose R channel (metallic) averages 0.55.

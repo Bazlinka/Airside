@@ -98,6 +98,14 @@ namespace Airside.Presentation
         /// </summary>
         private const float RespawnJumpMetres = 20f;
 
+        /// <summary>
+        /// Faster than anything drawn on the field moves (a 737 climbing out is ~90 m/s).
+        /// A long frame — a GC pause, a save, the Mac waking — legitimately moves an
+        /// aircraft this far per second of hitch, so it widens the respawn threshold rather
+        /// than cutting the follow camera as if the slot had been recycled.
+        /// </summary>
+        private const float MaxAircraftSpeedMetresPerSecond = 150f;
+
         private const float MinPitchDegrees = 4f;
         private const float MaxPitchDegrees = 85f;
         private const float KeyboardOrbitDegreesPerSecond = 70f;
@@ -213,6 +221,12 @@ namespace Airside.Presentation
             }
 
             ReadInput();
+            // A destroyed view (aircraft removed from the schedule) used to leave _following
+            // set with no target: WASD panning stayed disabled and the HUD still read
+            // "Follow on" while the camera sat still. Hand the camera back instead.
+            if (_following && _followTarget == null)
+                ReleaseFollow();
+
             if (_following && _followTarget != null)
             {
                 // Look a little ahead of the aircraft so taxi/takeoff reads forward motion.
@@ -245,7 +259,8 @@ namespace Airside.Presentation
                 // frame. Easing to it dragged the camera the length of the field, so cut
                 // straight there instead.
                 var recycled = _hasLastTargetPosition
-                    && Vector3.Distance(_lastTargetPosition, visualCentre) > RespawnJumpMetres;
+                    && Vector3.Distance(_lastTargetPosition, visualCentre)
+                    > RespawnJumpMetres + MaxAircraftSpeedMetresPerSecond * Time.unscaledDeltaTime;
                 _lastTargetPosition = visualCentre;
                 _hasLastTargetPosition = true;
 
@@ -639,12 +654,19 @@ namespace Airside.Presentation
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>
         public void StartFollowFirst()
         {
-            if (_followTargets.Length == 0)
+            // Target arrays can hold null slots (flights past the visible limit) or views
+            // hidden while away; following one of those framed nothing.
+            for (var i = 0; i < _followTargets.Length; i++)
+            {
+                var target = _followTargets[i];
+                if (target == null || !target.gameObject.activeInHierarchy)
+                    continue;
+                _following = true;
+                _followIndex = i;
+                _followTarget = target;
+                _hasLastTargetPosition = false;
                 return;
-            _following = true;
-            _followIndex = 0;
-            _followTarget = _followTargets[0];
-            _hasLastTargetPosition = false;
+            }
         }
 
         /// <summary>HUD selection: follow one exact aircraft already registered as a target.</summary>

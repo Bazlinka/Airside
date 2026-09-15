@@ -514,7 +514,9 @@ namespace Airside.Presentation
             // overview; R does that explicitly.
             if (_cameraController.IsFollowing)
                 _cameraController.ReleaseFollow();
-            else
+            // F is documented as "Follow selected aircraft": with a selection on the field,
+            // follow that one instead of whichever aircraft happens to be first in the list.
+            else if (string.IsNullOrEmpty(_selectedAircraftId) || !TryFollowFleetAircraft(_selectedAircraftId))
                 _cameraController.StartFollowFirst();
             PlayUiClick();
         }
@@ -732,17 +734,23 @@ namespace Airside.Presentation
         {
             var rect = layout.PauseMenu;
             GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Paused", title);
+            // Live Adelaide time never pauses (ADR 0045), so the panel must not claim to.
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Menu", title);
 
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
             if (GUI.Button(row, "Resume", button))
                 ToggleMenu();
 
             row.y += 52f;
-            if (GUI.Button(row, "Restart circuit", button))
-                RestartCircuit();
+            // Once an airline runs the field draws the fleets, not the demo circuit, so a
+            // restart there silently reset an aircraft nobody can see.
+            if (!FleetMode)
+            {
+                if (GUI.Button(row, "Restart circuit", button))
+                    RestartCircuit();
+                row.y += 52f;
+            }
 
-            row.y += 52f;
             if (GUI.Button(row, "Quit", button))
                 QuitGame();
         }

@@ -101,14 +101,13 @@ namespace Airside.Presentation
                 case FleetGroundLeg.Parked:
                     // Bay stop or terminal-gate nose stop — never a gate resolved as a bay.
                     return AdelaideGround.StandPose(aircraft.Stand);
+                // Queue slots: two aircraft holding short, or two arrivals waiting for a stand,
+                // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
-                {
-                    var leg = AdelaideGround.TaxiOut(aircraft.DepartureStand);
-                    var end = leg.PoseAt(leg.Seconds);
-                    return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
-                }
+                    return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft));
                 case FleetGroundLeg.AwaitingStand:
-                    return AdelaideGround.AwaitingPose(0);
+                    return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft));
                 default:
                 {
                     var leg = visual.Leg switch

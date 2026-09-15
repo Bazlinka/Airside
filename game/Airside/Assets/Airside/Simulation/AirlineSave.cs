@@ -160,7 +160,12 @@ namespace Airside.Simulation
                     throw new FormatException($"{record.Registration} belongs to unknown airline '{record.AirlineId}'.");
                 if (!AircraftType.TryFromId(record.TypeId, out var type))
                     throw new FormatException($"{record.Registration} has unknown aircraft type '{record.TypeId}'.");
-                if (!Enum.TryParse(record.State, out FleetState state))
+                // Enum.TryParse also accepts numbers ("99") and comma lists, which yield values
+                // no state machine branch handles; only a declared state name is a state.
+                if (string.IsNullOrWhiteSpace(record.State)
+                    || !Enum.TryParse(record.State, out FleetState state)
+                    || !Enum.IsDefined(typeof(FleetState), state)
+                    || !string.Equals(state.ToString(), record.State.Trim(), StringComparison.Ordinal))
                     throw new FormatException($"{record.Registration} has unknown state '{record.State}'.");
 
                 operations.RestoreAircraft(

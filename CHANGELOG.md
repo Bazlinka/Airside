@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Bug sweep 2 (12 fixes): camera, fleet queue, HUD, saves.** Two aircraft holding short or
+  waiting for a stand are now queued 60 m apart instead of drawn inside each other. The follow
+  camera releases a destroyed target, no longer hard-cuts on a frame hitch, and F follows the
+  selected aircraft (as the controls sheet says) or the first visible one. Stand buttons wrap
+  inside the fleet panel; the map tooltip stays on the map; field tags no longer steal clicks
+  from panel buttons; the Esc panel says "Menu" and hides the no-op restart in airline mode;
+  both joiner toasts show on an old save. Saves with a non-name fleet state are rejected, and
+  ground-path sampling can no longer produce NaN. Unity EditMode 406/406.
+
 - **Bug sweep 1 (14 fixes): materials, lights, allocations.** Full-airport props no longer read
   near-black: the painted-metal catch-all (bark, rocks, benches, unnamed kit parts) was borrowing
   bare corrugated metal at 55% metallic. Textured blocks now keep their own albedo instead of the

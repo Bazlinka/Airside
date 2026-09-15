@@ -77,6 +77,11 @@ namespace Airside.Presentation
                     if (!bumped)
                         break;
                 }
+                // IMGUI hands an event to controls in the order they are drawn, and tags are
+                // drawn before the panels. A pill reaching under a panel therefore took clicks
+                // meant for that panel's buttons, selecting an aircraft instead.
+                if (OverlapsHudPanel(pill))
+                    continue;
                 _placedTags.Add(pill);
 
                 // Stem from the pill down to the aircraft.
@@ -111,6 +116,14 @@ namespace Airside.Presentation
         private bool IsInsideHudPanel(Vector2 gui)
         {
             return HudHitTest.Contains(gui, _hudPanels);
+        }
+
+        private bool OverlapsHudPanel(Rect rect)
+        {
+            for (var i = 0; i < _hudPanels.Count; i++)
+                if (_hudPanels[i].Overlaps(rect))
+                    return true;
+            return false;
         }
     }
 }

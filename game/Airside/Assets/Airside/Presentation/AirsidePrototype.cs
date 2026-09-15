@@ -509,6 +509,14 @@ namespace Airside.Presentation
 
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
+                // An open menu closes first. Esc used to clear a selection (and reset the view)
+                // behind the menu while leaving the menu itself open.
+                if (_menuOpen)
+                {
+                    ToggleMenu();
+                    return;
+                }
+
                 if (TryCloseControlsHelp())
                     return;
                 if (TryCloseAirlineOverlay())

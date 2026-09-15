@@ -81,7 +81,11 @@ namespace Airside.Presentation
             [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
-            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal",
+            // PaintedMetal is deliberately absent. It is InferFromMeshName's catch-all (bark,
+            // rocks, benches, planters, unnamed kit parts) and InferSurfaceKindFromColor's
+            // default, so borrowing the bare corrugated-metal maps gave all of them a ribbed
+            // texture and — via the mask's R channel — metallic 0.55. Under the solid-colour
+            // sky that reflects almost nothing, which is what drove legacy props near black.
             // MAT-001 — dedicated glass / rubber / painted-line / plastic companions.
             [SurfaceKind.Glass] = "tx_glass_pane",
             [SurfaceKind.Rubber] = "tx_rubber_tire",
@@ -631,7 +635,6 @@ namespace Airside.Presentation
                 SurfaceKind.Concrete => "mat_concrete_v01",
                 SurfaceKind.Grass => "mat_grass_v01",
                 SurfaceKind.Metal => "mat_corrugated_metal_v01",
-                SurfaceKind.PaintedMetal => "mat_corrugated_metal_v01",
                 SurfaceKind.Glass => "mat_glass_v01",
                 SurfaceKind.PaintedLine => "mat_painted_line_v01",
                 SurfaceKind.AircraftSkin => "mat_aircraft_v01",

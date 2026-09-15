@@ -1013,6 +1013,21 @@ namespace Airside.Tests
             Assert.That(profile.VisualCentreOffsetMetres.z, Is.EqualTo(-19.735f).Within(0.001f));
             Assert.That(profile.SelectionMarkerDiameterMetres, Is.EqualTo(41f));
             Assert.That(profile.FollowDistanceMultiplier, Is.GreaterThan(1f));
+            Assert.That(profile.MainTireRadiusMetres, Is.EqualTo(0.62f).Within(0.001f));
+            Assert.That(profile.NoseTireRadiusMetres, Is.EqualTo(0.55f).Within(0.001f));
+        }
+
+        [Test]
+        public void CircuitCues_JetFanPowerFollowsTheSameOperationalPhasesAsTheJet()
+        {
+            Assert.That(AirsideReusableMotion.JetFanRpmForPhase(AircraftPhase.Takeoff),
+                Is.GreaterThan(AirsideReusableMotion.JetFanRpmForPhase(AircraftPhase.TaxiOut)));
+            Assert.That(AirsideReusableMotion.JetFanRpmForPhase(AircraftPhase.Approach),
+                Is.GreaterThan(AirsideReusableMotion.JetFanRpmForPhase(AircraftPhase.TaxiOut)));
+            Assert.That(AirsideReusableMotion.JetFanRpmForPhase(AircraftPhase.AtStand),
+                Is.EqualTo(AirportCircuit.SkipGroundTaxi
+                    ? AirsideReusableMotion.JetFanRpmTaxi
+                    : 0f));
         }
 
         [Test]

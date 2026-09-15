@@ -44,6 +44,26 @@
   - **NEXT:** Still do not enable full-airport for players. If it becomes a QA view, calibrate the
     dark legacy Lit materials next, then check dusk/night and profile.
 
+- **2026-09-16 Codex — aircraft presentation completion pass; Unity EditMode 385/385.**
+  - **Player-visible:** Wattlebird Jet's 737-8 finally has a live turbofan read: each
+    intake's twelve blades spin with its own engine spool and resolve into a restrained
+    blur at power, instead of appearing frozen beside animated regional turboprops.
+    All four operational types now roll their tyres at the diameter authored into their
+    model, so the larger 737/Q400 wheels no longer over-spin against ATR/SAAB gear.
+  - **How:** AIR-005 fan parts are named, nested and pivot-rebaked at build time; motion
+    adds phase/engine-driven fan RPM and a non-shadowing intake disc. `AircraftVisualProfile`
+    now owns main/nose tyre radii (ATR .37/.31 m, 737 .62/.55 m, Q400 .50/.34 m, Saab
+    .38/.28 m). This is presentation-only: no catalogue, route, phase, reservation,
+    schedule or save data changed.
+  - **Evidence:** Unity EditMode **385/385 passed**; a fresh universal Mac build succeeded.
+    Deterministic AIR-001, AIR-005, AIR-006 and AIR-007 kit tests pass. The packaged
+    Hangar gallery confirms all four true-scale silhouettes (including the 737); the
+    saved airport was not advanced into a new 737 movement just for QA. `scripts/test-domain.sh`
+    remains unavailable because the system .NET SDK is not on PATH.
+  - **NEXT:** If a dedicated throwaway save is available, capture a 737 at idle, taxi and
+    take-off to review the fan-blur transition in motion. This does not block the scoped
+    presentation build or its automated coverage.
+
 - **2026-09-15 Codex — graphics/performance audit; default circuit retained. Unity EditMode 383/383.**
   - **Player-visible:** the shipped bare YPAD circuit remains unchanged. A developer-only
     `-airsideFullAirport` capture now frames the old miniature world at its usable 155 m overview

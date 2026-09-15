@@ -2209,6 +2209,11 @@ namespace Airside.Presentation
 
             if (raining && _rainRoot != null)
             {
+                // The drop box is 80 x 50 m. Built once at the origin, it only ever rained
+                // where the world origin happened to be on screen, never round a followed
+                // aircraft; it now travels with what the camera is looking at.
+                if (_cameraController != null)
+                    _rainRoot.position = RainRootPosition(_cameraController.FocusPoint);
                 var fallBase = storm ? 20f : 12f;
                 var drift = storm ? -3.2f : -1.5f;
                 for (var i = 0; i < _rainRoot.childCount; i++)
@@ -2907,6 +2912,10 @@ namespace Airside.Presentation
                 }
             }
         }
+
+        /// <summary>Drops span local z −10…40, so the box is centred on the camera focus at ground level.</summary>
+        public static Vector3 RainRootPosition(Vector3 focus) =>
+            new(focus.x, AirsideAdelaideGround.WorldHeight(focus.x, focus.z), focus.z - 15f);
 
         private static Transform BuildRainRoot()
         {

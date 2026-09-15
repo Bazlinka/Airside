@@ -326,7 +326,7 @@ namespace Airside.Presentation
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
 
             // Batch F1 MAT-001 — prefer inspectable authored materials when present.
-            if (useTextures && TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
+            if (useTextures && TryInstantiateAuthored(kind, color, albedo, tiling, out var authoredInstance))
                 return authoredInstance;
 
             Shader shader;
@@ -581,6 +581,7 @@ namespace Airside.Presentation
         private static bool TryInstantiateAuthored(
             SurfaceKind kind,
             Color color,
+            Texture2D albedo,
             Vector2? tiling,
             out Material instance)
         {
@@ -604,6 +605,12 @@ namespace Airside.Presentation
             {
                 instance.color = color;
             }
+
+            // An explicit albedo wins over the template's own map. Ignoring it put runway
+            // shoulders' worn-dirt texture (and every other textured fallback block) onto
+            // whatever the template carried — corrugated metal, for painted-metal blocks.
+            if (albedo != null)
+                instance.mainTexture = albedo;
 
             if (tiling.HasValue)
             {

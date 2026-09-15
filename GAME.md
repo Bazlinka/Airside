@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — game polish pass, phase 1: HUD click-through fixes. Unity EditMode
+  335/335.** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
+  field mini-map, ground/graphics, performance, logic).
+  - Field-tag pills and the toast now count as HUD (`_hudOverlays`, new pure `HudHitTest`), so
+    clicking a tag no longer also 3D-picks behind it and dragging from a tag no longer pans.
+  - A plain click on open ground clears the selection (camera and overlays stay put).
+  - Packaged check still open: tag click, drag from tag, click-empty-ground deselect.
+
 - **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
   331/331 (0 failed, 0 skipped).**
   - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used

@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Clicks land where you aim.** Aircraft tags and the toast are part of the HUD, so clicking or
+  dragging on them no longer selects or pans the field behind; clicking empty ground deselects.
+  335/335 EditMode.
+
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and
   covers the Dash 8-400; it records the one known shortfall — a Q400 beside a turboprop on

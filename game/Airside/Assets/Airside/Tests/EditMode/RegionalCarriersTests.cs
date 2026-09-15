@@ -67,6 +67,50 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AddMissingRegionalCarriers_FillsRemainingAircraftOnceAStandFrees()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Old Save Air", "#2E7D32");
+            ops.AddAirline(player);
+            for (var i = 0; i < 5; i++)
+                ops.AddAircraft(player, $"VH-P{i}", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[i]);
+
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1), "one free bay: only the first Rex aircraft fits");
+            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRC"), Is.True);
+            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRD"), Is.False);
+            Assert.That(ops.Airlines.Select(a => a.Name), Does.Not.Contain("QantasLink"),
+                "do not register a carrier that could not park anyone");
+
+            Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
+            var parked = ops.Fleet.First(a => a.Airline.IsPlayer && a.State == FleetState.AtStand);
+            Assert.That(ops.ScheduleDeparture(parked, kgc, clock.Now).Accepted, Is.True);
+            ops.Update();
+            Assert.That(parked.State, Is.EqualTo(FleetState.TaxiOut));
+
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1), "a later load still fills the rest of Rex");
+            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRD"), Is.True);
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void AddMissingRegionalCarriers_AvoidsTheBayBesideAParkedDash8WhenAnotherIsFree()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Old Save Air", "#2E7D32");
+            ops.AddAirline(player);
+            ops.AddAircraft(player, "VH-QQQ", AircraftType.Dash8Q400, new StableId("BAY-1"));
+
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(3));
+            foreach (var aircraft in ops.Fleet.Where(a => a.Registration != "VH-QQQ"))
+                Assert.That(aircraft.Stand, Is.Not.EqualTo(new StableId("BAY-5")),
+                    $"{aircraft.Registration} should not park on 50E beside the Dash 8-400");
+        }
+
+        [Test]
         public void NewTypes_RoundTripThroughTheirSaveIds()
         {
             foreach (var type in new[] { AircraftType.Atr42, AircraftType.Saab340, AircraftType.Dash8Q400 })

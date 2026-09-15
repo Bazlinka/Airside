@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Cursor — bug hunt fixes (follow camera, regional backfill, save restore, domain harness).**
+  - **Player-visible:** Following an aircraft that leaves Adelaide no longer snaps the camera onto a
+    different one; the view stays where it is (F / Overview still work). Continue on a cramped old
+    save can finish adding Rex/QantasLink on a later load instead of permanently dropping the rest
+    of a carrier, and those joiners use the same 50D/50E clearance preference as live stand choice
+    (ADR 0052). A mid-trip save with no destination is rejected instead of collapsing the flight.
+  - **How:** `SetFollowTargets` keeps the same transform or `ReleaseFollow`s; regional backfill
+    matches terminal-operator “fill remaining aircraft” and `SuggestStandFor`; restore requires a
+    destination in taxi-out through landing. Headless harness excludes Unity-only mini-map /
+    named-children / ground-look tests and compiles `RunwayRubberMarks`.
+  - **Evidence:** `scripts/test-domain.sh` **226 passed** (no Unity editor here). New Unity
+    EditMode follow tests in `PresentationLayoutTests` still need `scripts/test-unity.sh` on Mac.
+  - **Unfixed (see PR):** regional stand released at pushback (intentional, ADR 0047) so taxi-out
+    and taxi-in can overlap a bay; Q400 on 50D/50E still allowed when it is the last free stand;
+    jet AwaitingStand HUD still lists regional bays (player is ATR-only today); Unity/packaged
+    follow check open.
+  - **NEXT:** Mac Unity EditMode + packaged follow of a departure going off-map. Do not start new
+    visual work from this branch.
+
 - **2026-09-15 Codex — AIR-006 Dash 8-400 nacelle-bay polish; Unity EditMode pending Mac.**
   - **Player-visible:** QantasLink's Q400 keeps its established long high-wing, six-prop,
     T-tail silhouette, but its rear nacelle gear-bay enclosures now curve with the pod rather

@@ -64,6 +64,21 @@ namespace Airside.Presentation
             return best;
         }
 
+        /// <summary>
+        /// After the on-field set is rebuilt: index of <paramref name="current"/> in
+        /// <paramref name="next"/>, or -1 if that aircraft left. Follow should release at -1
+        /// rather than clamping onto a different aircraft.
+        /// </summary>
+        public static int IndexOfSame<T>(T[] next, T current) where T : class
+        {
+            if (current == null || next == null || next.Length == 0)
+                return -1;
+            for (var i = 0; i < next.Length; i++)
+                if (ReferenceEquals(next[i], current))
+                    return i;
+            return -1;
+        }
+
         /// <summary>True when this registration currently has an active on-field view.</summary>
         public static bool IsOnFieldSelectable(string aircraftId, IReadOnlyDictionary<string, bool> onFieldById)
         {

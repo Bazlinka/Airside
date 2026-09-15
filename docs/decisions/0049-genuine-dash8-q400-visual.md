@@ -56,3 +56,12 @@ airline, stand, route, save field, save version or migration changes.
 - Unity 6.3 EditMode: 328/328 passed, zero failed/skipped.
 - No app build or manual packaged-player test requested; overview/follow and
   day/dusk/night packaged visual QA remains open.
+
+## Known limit found after merge (2026-09-15)
+
+Parked at the regional bays as drawn (model root on the stop), AIR-006 on 50D or 50E next to
+a turboprop on the other has 3.3–3.5 m between outlines, below ICAO code C's 4.5 m; two
+Dash 8-400s there would be 1.2 m apart. All other bay pairings keep at least 4.5 m.
+`Layout_ParkedRegionalAircraftKeepCodeCClearance` pins this so any new shortfall fails. A
+stand-assignment rule is a separate decision: barring the Q400 from 50D/50E outright can
+leave an aircraft without a bay overnight with six aircraft on six bays.

@@ -90,6 +90,40 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Saab340_BuildsAir007_WithFourBladePropellersAndAnimationPartsRatherThanTheAtr()
+        {
+            var root = Build(AircraftType.Saab340);
+            try
+            {
+                Assert.That(root.GetComponent<AircraftVisualProfileComponent>().PickSizeMetres,
+                    Is.EqualTo(AircraftVisualProfiles.Saab340.PickSizeMetres));
+                foreach (var side in new[] { "L", "R" })
+                {
+                    var propeller = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == $"Propeller {side}");
+                    var blades = 1 + propeller.Cast<Transform>().Count(c => c.name == "Blade" || c.name.StartsWith("Blade "));
+                    Assert.That(blades, Is.EqualTo(4), $"four Dowty blades on the {side} propeller");
+                }
+
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "CabinDoor"), Is.True);
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear L"), Is.True);
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear R"), Is.True);
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear nose"), Is.True);
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Flap L"), Is.True);
+                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Flap R"), Is.True);
+
+                var drawn = RenderedBounds(root);
+                Assert.That(drawn.size.z, Is.EqualTo(AircraftCatalogue.Saab340.LengthMetres).Within(0.05f * AircraftCatalogue.Saab340.LengthMetres),
+                    "compact Saab length, not the ATR stand-in");
+                Assert.That(drawn.size.x, Is.EqualTo(AircraftCatalogue.Saab340.WingspanMetres).Within(0.05f * AircraftCatalogue.Saab340.WingspanMetres));
+                Assert.That(drawn.size.z, Is.LessThan(AircraftCatalogue.Atr42.LengthMetres), "shorter than the high-wing ATR");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
         public void Operators_FlyTheirCatalogueTypes_AndDrawThemWithThoseProfiles()
         {
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(9),
@@ -104,8 +138,8 @@ namespace Airside.Tests
 
             Assert.That(AircraftVisualProfiles.For(TypeOf("QantasLink")), Is.EqualTo(AircraftVisualProfiles.Dash8Q400));
             Assert.That(AircraftVisualProfiles.For(TypeOf("Wattlebird Jet")), Is.EqualTo(AircraftVisualProfiles.Boeing7378));
-            Assert.That(AircraftVisualProfiles.For(TypeOf("Rex")), Is.EqualTo(AircraftVisualProfiles.RegionalTurboprop),
-                "the Saab 340B keeps the ATR stand-in until its own model exists");
+            Assert.That(AircraftVisualProfiles.For(TypeOf("Rex")), Is.EqualTo(AircraftVisualProfiles.Saab340),
+                "Rex's Saab 340Bs draw with AIR-007, not the ATR stand-in");
         }
     }
 }

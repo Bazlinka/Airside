@@ -59,7 +59,7 @@ namespace Airside.Presentation
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var ink = AirsideTheme.RunwayInk;
 
-                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {FieldTagPhase(aircraft)}" : aircraft.Registration;
+                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {AircraftStatus.TagPhase(aircraft)}" : aircraft.Registration;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above
@@ -83,8 +83,14 @@ namespace Airside.Presentation
                 DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(livery.r, livery.g, livery.b, fade));
                 DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.82f * fade));
                 DrawSolid(new Rect(pill.x, pill.y, 5f, pill.height), new Color(livery.r, livery.g, livery.b, fade));
+                var severity = mine ? AircraftStatus.Severity(aircraft, _clock.Now) : StatusSeverity.Normal;
                 if (selected)
                     AirsideTheme.DrawPanelFrame(pill, new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, fade));
+                else if (severity != StatusSeverity.Normal)
+                {
+                    var alert = SeverityColour(severity, livery);
+                    AirsideTheme.DrawPanelFrame(pill, new Color(alert.r, alert.g, alert.b, fade));
+                }
                 else if (mine)
                     AirsideTheme.DrawPanelFrame(pill, new Color(livery.r, livery.g, livery.b, fade));
                 var previous = GUI.color;
@@ -92,30 +98,19 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(pill.x + 4f, pill.y, pill.width - 4f, pill.height), text, tagStyle);
                 GUI.color = previous;
 
-                if (fade > 0.3f && GUI.Button(pill, GUIContent.none, GUIStyle.none))
-                    SelectAircraft(aircraft);
+                if (fade > 0.3f)
+                {
+                    // Owned by the HUD: a press here must not also pan or 3D-pick behind it.
+                    _hudOverlays.Add(pill);
+                    if (GUI.Button(pill, GUIContent.none, GUIStyle.none))
+                        SelectAircraft(aircraft);
+                }
             }
         }
 
-        private static string FieldTagPhase(FleetAircraft aircraft) => aircraft.State switch
-        {
-            FleetState.AtStand => aircraft.Scheduled.HasValue ? "planned" : "free",
-            FleetState.TaxiOut => "taxiing",
-            FleetState.HoldingShort => "holding",
-            FleetState.TakingOff => "takeoff",
-            FleetState.HoldingForLanding => "circuit",
-            FleetState.Landing => "landing",
-            FleetState.AwaitingStand => "needs stand",
-            FleetState.TaxiIn => "taxiing in",
-            _ => "away"
-        };
-
         private bool IsInsideHudPanel(Vector2 gui)
         {
-            foreach (var rect in _hudPanels)
-                if (rect.Contains(gui))
-                    return true;
-            return false;
+            return HudHitTest.Contains(gui, _hudPanels);
         }
     }
 }

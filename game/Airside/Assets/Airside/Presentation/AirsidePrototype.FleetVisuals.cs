@@ -383,7 +383,10 @@ namespace Airside.Presentation
             var mask = layer >= 0 ? 1 << layer : ~0;
             var hits = Physics.RaycastAll(ray, AirsideBareField.MaxOrbitDistance * 2f, mask, QueryTriggerInteraction.Collide);
             if (hits == null || hits.Length == 0)
+            {
+                DeselectOnEmptyFieldClick();
                 return;
+            }
 
             var candidates = new List<AircraftPickHit>(hits.Length);
             for (var i = 0; i < hits.Length; i++)
@@ -400,9 +403,24 @@ namespace Airside.Presentation
             var id = AircraftPickRouting.ResolveNearest(candidates);
 
             if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
+            {
+                DeselectOnEmptyFieldClick();
                 return;
+            }
 
             SelectAircraft(aircraft);
+        }
+
+        /// <summary>
+        /// A plain click on open ground lets go of the selection, like Esc, but leaves the
+        /// camera and any open overlay where they are.
+        /// </summary>
+        private void DeselectOnEmptyFieldClick()
+        {
+            if (string.IsNullOrEmpty(_selectedAircraftId))
+                return;
+            _selectedAircraftId = null;
+            PlayUiClick();
         }
     }
 }

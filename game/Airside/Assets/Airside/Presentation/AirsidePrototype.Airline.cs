@@ -17,7 +17,6 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private const float ToastSeconds = 6f;
 
         private static readonly (string label, string hex)[] LiveryChoices =
         {
@@ -60,8 +59,8 @@ namespace Airside.Presentation
         private long _departureDelaySeconds = 15 * 60;
         private string _mapMessage;
         private long _seenEvents;
-        private string _toast;
-        private float _toastUntil;
+        private readonly ToastQueue _toasts = new();
+        private readonly List<ToastEntry> _visibleToasts = new();
 
         private bool AirlineSetupOpen => _operations == null;
 
@@ -248,6 +247,9 @@ namespace Airside.Presentation
         // ---- Pointer over HUD ------------------------------------------------------------------
 
         private readonly List<Rect> _hudPanels = new();
+        // Small click targets drawn over the field (tags, the toast). Kept apart from
+        // _hudPanels because field tags hide themselves behind panels, not behind each other.
+        private readonly List<Rect> _hudOverlays = new();
         private float _hudScale = 1f;
 
         /// <summary>Record where HUD panels are this frame, in virtual GUI points.</summary>
@@ -255,6 +257,7 @@ namespace Airside.Presentation
         {
             _hudScale = HudLayout.ScaleFor(Screen.width, Screen.height);
             _hudPanels.Clear();
+            _hudOverlays.Clear();
             _hudPanels.Add(layout.ControlBar);
             _hudPanels.Add(layout.SpeedReadout);
             if (_menuOpen)
@@ -281,12 +284,7 @@ namespace Airside.Presentation
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
         {
-            // Input System: origin bottom-left in pixels. IMGUI: origin top-left, scaled.
-            var gui = new Vector2(inputSystemPosition.x, Screen.height - inputSystemPosition.y) / _hudScale;
-            foreach (var rect in _hudPanels)
-                if (rect.Contains(gui))
-                    return true;
-            return false;
+            return HudHitTest.IsOverHud(inputSystemPosition, Screen.height, _hudScale, _hudPanels, _hudOverlays);
         }
 
         // ---- First-flight guide ------------------------------------------------------------
@@ -571,7 +569,7 @@ namespace Airside.Presentation
             {
                 height += 56f + 10f;
                 if (_selectedAircraftId == aircraft.Registration) height += 46f;
-                if (aircraft.StateEndsAt.HasValue) height += 12f;
+                if (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft)) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
                 if (aircraft.State == FleetState.AwaitingStand) height += 84f;
             }
@@ -600,6 +598,13 @@ namespace Airside.Presentation
             {
                 AirsideTheme.DrawProgressBar(new Rect(x, y, width, 6f), (float)aircraft.StateProgress(_clock.Now),
                     AirsideTheme.CoastalBlue, AirsideTheme.Tarmac);
+                y += 12f;
+            }
+            else if (AircraftStatus.IsWaiting(aircraft))
+            {
+                // No end time to count down to: fill towards the "this is too long" mark instead.
+                AirsideTheme.DrawProgressBar(new Rect(x, y, width, 6f), AircraftStatus.WaitProgress(aircraft, _clock.Now),
+                    SeverityColour(AircraftStatus.Severity(aircraft, _clock.Now), AirsideTheme.CoastalBlue), AirsideTheme.Tarmac);
                 y += 12f;
             }
 
@@ -691,7 +696,12 @@ namespace Airside.Presentation
             else if (!selected)
                 GUI.color = new Color(1f, 1f, 1f, Ownership.AlphaFor(aircraft.Airline));
             GUI.Label(new Rect(rect.x, rect.y, rect.width - (mine ? 132f : 70f), 20f), heading, headingStyle);
+            var severity = AircraftStatus.Severity(aircraft, _clock.Now);
+            var previousContent = GUI.contentColor;
+            if (severity != StatusSeverity.Normal)
+                GUI.contentColor = SeverityColour(severity, previousContent);
             GUI.Label(new Rect(rect.x, rect.y + 20f, rect.width, rect.height - 20f), status, statusStyle);
+            GUI.contentColor = previousContent;
             GUI.color = previousColour;
             if (mine)
                 DrawOwnershipBadge(new Rect(rect.x, rect.y - 4f, rect.width - 72f, rect.height), aircraft.Airline, statusStyle);
@@ -876,20 +886,21 @@ namespace Airside.Presentation
             var to = aircraft.CurrentDestination;
             var dest = to.HasValue ? to.Value.Name : string.Empty;
             var ends = aircraft.StateEndsAt.HasValue ? ClockText(aircraft.StateEndsAt.Value) : string.Empty;
+            var wait = AircraftStatus.WaitSuffix(aircraft, _clock.Now);
             return aircraft.State switch
             {
                 FleetState.AtStand => aircraft.Scheduled.HasValue
                     ? $"On {StandNames.Display(aircraft.Stand)} · departs {ClockText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}"
                     : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to the runway · {dest}",
-                FleetState.HoldingShort => $"Holding short, waiting for the runway · {dest}",
+                FleetState.HoldingShort => $"Holding short for the runway · {dest}{wait}",
                 FleetState.TakingOff => $"Taking off for {dest}",
                 FleetState.Outbound => $"En route to {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"On the ground at {dest} · departs {ends}",
                 FleetState.Inbound => $"Returning from {dest}{EnrouteAltitudeText(aircraft)} · back {ends}",
-                FleetState.HoldingForLanding => "In the Adelaide circuit, waiting to land",
+                FleetState.HoldingForLanding => $"In the Adelaide circuit, waiting to land{wait}",
                 FleetState.Landing => "Landing at Adelaide",
-                FleetState.AwaitingStand => "Landed · waiting for a stand",
+                FleetState.AwaitingStand => $"Landed · needs a stand{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()
             };
@@ -1842,6 +1853,8 @@ namespace Airside.Presentation
             var view = new Rect(x, headerY + 22f, inner, rect.height - (headerY - rect.y) - 36f);
             var rowHeight = 44f;
             var contentHeight = 8f + _flightsBoardRows.Count * rowHeight + 2 * 30f;
+            if (_toasts.History.Count > 0)
+                contentHeight += 34f + _toasts.History.Count * 20f;
             _flightsScroll = GUI.BeginScrollView(view, _flightsScroll, new Rect(0f, 0f, inner - 18f, contentHeight));
             var y = 4f;
             var rowWidth = inner - 22f;
@@ -1876,7 +1889,12 @@ namespace Airside.Presentation
                 else if (!selected)
                     GUI.color = new Color(1f, 1f, 1f, Ownership.AlphaFor(aircraft.Airline));
                 GUI.Label(new Rect(8f, y + 6f, timeW - 4f, 18f), FlightBoard.TimeLabel(aircraft, ClockText), small);
+                var boardSeverity = AircraftStatus.Severity(aircraft, _clock.Now);
+                var boardContent = GUI.contentColor;
+                if (boardSeverity != StatusSeverity.Normal)
+                    GUI.contentColor = SeverityColour(boardSeverity, boardContent);
                 GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 18f), FlightBoard.PhaseLabel(aircraft), label);
+                GUI.contentColor = boardContent;
                 GUI.Label(new Rect(timeW + phaseW, y + 6f, routeW - 4f, 18f), FlightBoard.RouteText(aircraft), small);
                 GUI.Label(new Rect(timeW + phaseW + routeW, y + 6f, rowWidth - timeW - phaseW - routeW - (mine ? 66f : 8f), 18f),
                     $"{aircraft.Registration}  ·  {aircraft.Airline.Name}{EnrouteAltitudeText(aircraft)}", small);
@@ -1886,6 +1904,12 @@ namespace Airside.Presentation
                     AirsideTheme.DrawProgressBar(new Rect(timeW, y + 28f, rowWidth - timeW - 12f, 5f),
                         (float)aircraft.StateProgress(_clock.Now),
                         mine ? AirsideTheme.FromHex(aircraft.Airline.LiveryHex) : AirsideTheme.Concrete, AirsideTheme.Tarmac);
+                }
+                else if (AircraftStatus.IsWaiting(aircraft))
+                {
+                    AirsideTheme.DrawProgressBar(new Rect(timeW, y + 28f, rowWidth - timeW - 12f, 5f),
+                        AircraftStatus.WaitProgress(aircraft, _clock.Now),
+                        SeverityColour(boardSeverity, AirsideTheme.Concrete), AirsideTheme.Tarmac);
                 }
 
                 GUI.color = previousColour;
@@ -1897,6 +1921,21 @@ namespace Airside.Presentation
                 }
 
                 y += rowHeight;
+            }
+
+            if (_toasts.History.Count > 0)
+            {
+                // Messages scroll past in a few seconds; the latest few stay readable here.
+                y += 8f;
+                GUI.Label(new Rect(0f, y, rowWidth, 22f), "RECENT MESSAGES", boardBold);
+                y += 26f;
+                foreach (var entry in _toasts.History)
+                {
+                    var ago = Mathf.Max(0, Mathf.RoundToInt((Time.unscaledTime - entry.ShownAt) / 60f));
+                    GUI.Label(new Rect(0f, y, 64f, 20f), ago == 0 ? "now" : $"{ago} min", small);
+                    GUI.Label(new Rect(64f, y, rowWidth - 64f, 20f), entry.Message, small);
+                    y += 20f;
+                }
             }
 
             GUI.EndScrollView();
@@ -2298,20 +2337,39 @@ namespace Airside.Presentation
 
         private void DrawToast(Rect rect, GUIStyle label)
         {
-            if (string.IsNullOrEmpty(_toast) || Time.unscaledTime > _toastUntil)
+            var now = Time.unscaledTime;
+            _toasts.Visible(now, _visibleToasts);
+            if (_visibleToasts.Count == 0)
                 return;
 
-            DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f));
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
+            // Newest sits in the toast slot; older ones step away from the screen edge it hugs.
+            var step = (rect.height + 6f) * (rect.center.y < Screen.height / HudLayout.ScaleFor(Screen.width, Screen.height) * 0.5f ? 1f : -1f);
             var centred = Styled(label, "middle-center", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter });
-            GUI.Label(rect, _toast, centred);
+            var previous = GUI.color;
+            for (var i = 0; i < _visibleToasts.Count; i++)
+            {
+                var entry = _visibleToasts[i];
+                var alpha = ToastQueue.Alpha(entry, now) * (i == 0 ? 1f : 0.78f);
+                var slot = new Rect(rect.x, rect.y + step * i, rect.width, rect.height);
+                _hudOverlays.Add(slot);
+                DrawSolid(slot, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f * alpha));
+                var frame = i == 0 ? AirsideTheme.SafetyYellow : AirsideTheme.Concrete;
+                AirsideTheme.DrawPanelFrame(slot, new Color(frame.r, frame.g, frame.b, alpha));
+                GUI.color = new Color(1f, 1f, 1f, alpha);
+                GUI.Label(slot, entry.Repeats > 1 ? $"{entry.Message}  ×{entry.Repeats}" : entry.Message, centred);
+                GUI.color = previous;
+            }
         }
 
-        private void ShowToast(string message)
+        private void ShowToast(string message) => _toasts.Push(message, Time.unscaledTime);
+
+        /// <summary>Text/bar colour for a status severity; <paramref name="normal"/> when nothing is wrong.</summary>
+        private static Color SeverityColour(StatusSeverity severity, Color normal) => severity switch
         {
-            _toast = message;
-            _toastUntil = Time.unscaledTime + ToastSeconds;
-        }
+            StatusSeverity.Warning => AirsideTheme.SignalRed,
+            StatusSeverity.Attention => AirsideTheme.SafetyYellow,
+            _ => normal
+        };
 
         private void ToggleControlsHelp()
         {

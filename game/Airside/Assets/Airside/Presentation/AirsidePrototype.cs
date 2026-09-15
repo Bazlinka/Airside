@@ -7617,13 +7617,95 @@ namespace Airside.Presentation
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsSaab340(type))
+                return BuildSaab340(name, accent, liveryDecalRelativePath);
 
             var regional = BuildAircraft(name, accent, liveryDecalRelativePath);
             AircraftVisualProfileComponent.Ensure(regional, AircraftVisualProfiles.RegionalTurboprop);
             return regional;
         }
 
-        /// <summary>AIR-006 original, unbranded Dash 8-400-class turboprop.</summary>
+        /// <summary>AIR-007 original, unbranded Saab 340B-class turboprop.</summary>
+        private static Transform BuildSaab340(
+            string name,
+            Color accent,
+            string liveryDecalRelativePath = null)
+        {
+            var profile = AircraftVisualProfiles.Saab340;
+            var root = new GameObject(name).transform;
+            AircraftVisualProfileComponent.Ensure(root, profile);
+
+            var usedArt = ArtPresentationLoader.TryInstantiate(
+                profile.ArtRelativePath,
+                root,
+                out _,
+                RenameAircraftPart,
+                kitName => AircraftPartColor(kitName, accent),
+                localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
+
+            if (usedArt)
+            {
+                NestCrossPropellerBlades(root);
+                RebakePropellerPivots(root);
+                RebakeAircraftArticulatedPivots(root);
+                NestLandingGearParts(root);
+                RebakeWheelPivots(root);
+                NestCabinDoorParts(root);
+                NestFlapParts(root);
+                EnsureAircraftLod(root);
+            }
+            else
+            {
+                // True-scale primitive fallback: compact low-wing, conventional tail,
+                // four-blade props and nacelle-mounted mains if the art kit is missing.
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                body.name = "Fuselage";
+                body.transform.SetParent(root, false);
+                body.transform.localPosition = new Vector3(0f, 2.0f, 0f);
+                body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                body.transform.localScale = new Vector3(1.14f, 9.7f, 1.14f);
+                body.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
+                ParentBlock(root, "Livery stripe", new Vector3(0f, 1.78f, 0.4f), new Vector3(2.3f, 0.12f, 13.5f), accent);
+                ParentBlock(root, "Wing L", new Vector3(-5.5f, 1.95f, 0.4f), new Vector3(10.2f, 0.22f, 2.2f), accent);
+                ParentBlock(root, "Wing R", new Vector3(5.5f, 1.95f, 0.4f), new Vector3(10.2f, 0.22f, 2.2f), accent);
+                ParentBlock(root, "Engine L", new Vector3(-3.55f, 1.65f, 0.3f), new Vector3(1.15f, 1.05f, 5.2f), accent * 0.72f);
+                ParentBlock(root, "Engine R", new Vector3(3.55f, 1.65f, 0.3f), new Vector3(1.15f, 1.05f, 5.2f), accent * 0.72f);
+                ParentBlock(root, "Propeller L", new Vector3(-3.55f, 1.74f, 2.95f), new Vector3(0.12f, 3.2f, 0.2f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Propeller R", new Vector3(3.55f, 1.74f, 2.95f), new Vector3(0.12f, 3.2f, 0.2f), new Color(0.2f, 0.2f, 0.22f));
+                ParentBlock(root, "Tail", new Vector3(0f, 4.5f, -7.6f), new Vector3(0.28f, 3.8f, 2.8f), accent);
+                ParentBlock(root, "Tailplane", new Vector3(0f, 4.8f, -8.2f), new Vector3(9.0f, 0.18f, 1.6f), accent);
+                ParentBlock(root, "Gear nose", new Vector3(0f, 0.75f, 7.15f), new Vector3(0.16f, 1.0f, 0.18f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear L", new Vector3(-3.55f, 0.95f, -0.55f), new Vector3(0.18f, 1.5f, 0.26f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear R", new Vector3(3.55f, 0.95f, -0.55f), new Vector3(0.18f, 1.5f, 0.26f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "CabinDoor", new Vector3(-1.16f, 1.95f, 6.55f), new Vector3(0.06f, 1.3f, 0.65f), new Color(0.78f, 0.8f, 0.83f));
+            }
+
+            ApplyLiveryDecal(root, liveryDecalRelativePath);
+            EnsureGroundShadow(root);
+            if (!HasNamedChild(root, "NavLight L"))
+                ParentBlock(root, "NavLight L", new Vector3(-10.68f, 2.2f, 0.55f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
+            if (!HasNamedChild(root, "NavLight R"))
+                ParentBlock(root, "NavLight R", new Vector3(10.68f, 2.2f, 0.55f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.9f, 0.12f, 0.12f));
+            if (!HasNamedChild(root, "Beacon"))
+                ParentBlock(root, "Beacon", new Vector3(0f, 3.15f, -0.4f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.95f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
+                ParentBlock(root, "LandingLight", new Vector3(0f, 0.7f, 8.4f), new Vector3(0.18f, 0.12f, 0.18f), new Color(0.95f, 0.95f, 0.85f));
+            if (!HasNamedChild(root, "TaxiLight"))
+                ParentBlock(root, "TaxiLight", new Vector3(0f, 0.68f, 7.35f), new Vector3(0.14f, 0.1f, 0.14f), new Color(0.95f, 0.92f, 0.7f));
+
+            var source = root.gameObject.AddComponent<AudioSource>();
+            source.clip = CreateEngineClip();
+            source.loop = true;
+            source.volume = 0.11f;
+            source.spatialBlend = 0.75f;
+            source.minDistance = 12f;
+            source.maxDistance = 220f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+            source.Play();
+            return root;
+        }
+
+/// <summary>AIR-006 original, unbranded Dash 8-400-class turboprop.</summary>
         private static Transform BuildDash8Q400(
             string name,
             Color accent,
@@ -8147,14 +8229,14 @@ namespace Airside.Presentation
             "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5" or "cabin_window_frame_7"
                 or "cabin_window_frame_r1" or "cabin_window_frame_r2" or "cabin_window_frame_r3"
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
-                or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
+                or "cockpit_frame" or "cockpit_sill" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
             "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
                 or "door_outline_fwd" or "cargo_door_outline" => new Color(0.48f, 0.52f, 0.55f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
-                or "wing_fairing_left" or "wing_fairing_right"
+                or "wing_fairing_left" or "wing_fairing_right" or "wing_centre_saddle"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
                 or "wing_fence_left" or "wing_fence_right" or "wing_fence_mid_l" or "wing_fence_mid_r"
                 or "flap_left" or "flap_right" or "flap_fairing_l" or "flap_fairing_r"
@@ -8168,6 +8250,7 @@ namespace Airside.Presentation
                 => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
                 or "nacelle_left" or "nacelle_right"
+                or "nacelle_fillet_left" or "nacelle_fillet_right"
                 or "intake_left" or "intake_right"
                 or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r"
                 => new Color(0.15f, 0.38f, 0.55f),

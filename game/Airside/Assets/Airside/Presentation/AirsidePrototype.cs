@@ -1158,16 +1158,15 @@ namespace Airside.Presentation
                     var lamp = child.GetComponent<Renderer>();
                     if (lamp != null)
                     {
-                        lamp.GetPropertyBlock(RendererTintBlock);
+                        // Through SetRendererColor so the lamp material's _EMISSION keyword is
+                        // on: an emission colour in a property block alone is ignored by URP
+                        // Lit, so the lit landing lamps never glowed.
                         var color = landingLights
                             ? new Color(1f, 0.97f, 0.88f)
                             : new Color(0.55f, 0.55f, 0.5f);
-                        RendererTintBlock.SetColor("_Color", color);
-                        RendererTintBlock.SetColor("_BaseColor", color);
-                        RendererTintBlock.SetColor("_EmissionColor", landingLights
+                        SetRendererColor(lamp, color, landingLights
                             ? new Color(2.6f, 2.5f, 2.1f)
                             : Color.black);
-                        lamp.SetPropertyBlock(RendererTintBlock);
                     }
                 }
                 else if (childName.StartsWith("TaxiLight", StringComparison.Ordinal))

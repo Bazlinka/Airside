@@ -266,8 +266,10 @@ namespace Airside.Presentation
             _hudOverlays.Clear();
             _hudPanels.Add(layout.ControlBar);
             _hudPanels.Add(layout.SpeedReadout);
+            // The menu is modal: the whole screen is HUD while it is up, so dragging or scrolling
+            // beside it no longer orbits, pans or zooms the camera behind it.
             if (_menuOpen)
-                _hudPanels.Add(layout.PauseMenu);
+                _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
             if (AirlineSetupOpen || _awaySummary != null)
             {
                 // Modal panels: the whole screen belongs to the HUD until dismissed.

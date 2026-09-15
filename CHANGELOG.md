@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Diagnostic full-airport view no longer blown out.** Under `-airsideFullAirport` the legacy
+  terrain was clipped white: its mask maps made the grass three to four times too glossy and its
+  untinted textures too bright for the noon lighting. The terrain now gets runtime layer copies
+  with matte smoothness and calibrated albedo, and reads as grass. The default bare circuit is
+  unchanged (packaged noon capture within 2 levels). 389/389 EditMode.
+
 - **Aircraft motion and ground-read polish.** The 737-8 now has independently
   spooling, articulated turbofan faces with a restrained high-power intake blur,
   rather than static nacelles while the turboprops animate. Each aircraft type now

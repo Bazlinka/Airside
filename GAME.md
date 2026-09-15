@@ -1,7 +1,10 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–6 merged:
-  56 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 417/417.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–7 merged:
+  62 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 417/417.**
+  - **Batch 7:** Esc menu is modal for keyboard and pointer, and Esc closes it first; camera
+    right/middle drags need a field press; `AircraftViewParts.HasFans/HasSeparateElevators`;
+    per-frame fleet pose memo.
   - **Batch 6:** fence gate openings (`TryGateGapOverlapping`); 12/30 drop and paint clip
     (`CrossRunwayDropMetres`, `ClipCrossRunwayPaintToMain`); airline mode skips
     `AirportSimulation.Update`; test-unity stale results guard; sync count and orphan metas.

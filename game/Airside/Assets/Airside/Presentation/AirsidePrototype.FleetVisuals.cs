@@ -94,7 +94,28 @@ namespace Airside.Presentation
         /// it at the fractional presentation clock. A leg the simulation timed differently
         /// (an older save) is stretched to fit, so the aircraft still arrives on time.
         /// </summary>
+        // The current-instant pose is asked for several times per aircraft per frame (position,
+        // facing, speed readout); remember it for the frame rather than re-walking the leg.
+        private readonly Dictionary<string, (int Frame, double Time, FleetGroundLeg Leg, long LegStart, GroundPose Pose)> _fleetPoseNow = new();
+
         private GroundPose FleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
+        {
+            if (lookAheadSeconds != 0f)
+                return ComputeFleetGroundPose(aircraft, visual, lookAheadSeconds);
+
+            var frame = Time.frameCount;
+            var legStart = visual.LegStartedAt.ElapsedSeconds;
+            if (_fleetPoseNow.TryGetValue(aircraft.Registration, out var cached)
+                && cached.Frame == frame && cached.Time == _preciseTime
+                && cached.Leg == visual.Leg && cached.LegStart == legStart)
+                return cached.Pose;
+
+            var pose = ComputeFleetGroundPose(aircraft, visual, 0f);
+            _fleetPoseNow[aircraft.Registration] = (frame, _preciseTime, visual.Leg, legStart, pose);
+            return pose;
+        }
+
+        private GroundPose ComputeFleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
         {
             switch (visual.Leg)
             {

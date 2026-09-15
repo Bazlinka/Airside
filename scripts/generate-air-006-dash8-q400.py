@@ -343,6 +343,21 @@ def nacelle_wing_fillet(x, side):
     return _loft_rings(rings)
 
 
+def nacelle_gear_fairing(x):
+    """Rounded rear nacelle belly enclosing the Q400 main-gear bay."""
+    local = oval_lathe_fuselage(
+        [
+            (-3.50, 0.16, 0.18, 2.42),
+            (-2.88, 0.46, 0.44, 2.38),
+            (-2.15, 0.64, 0.56, 2.40),
+            (-1.40, 0.60, 0.54, 2.48),
+            (-0.72, 0.34, 0.32, 2.66),
+        ],
+        segments=28,
+    )
+    return translated(local, x, 0.0, 0.0)
+
+
 def wing_fairing(side):
     """Half of a continuous high-wing / fuselage saddle.
 
@@ -779,12 +794,12 @@ def q400_meshes():
         )
         # Open main-gear doors hang below the nacelle so the bay reads clearly.
         meshes[f"gear_door_{name}"] = box(
-            x + side * 0.78, 1.85, -1.90, 0.12, 2.20, 1.70
+            x + side * 0.72, 1.82, -1.90, 0.10, 1.88, 1.50
         )
         meshes[f"gear_door_inner_{name[0]}"] = box(
-            x - side * 0.55, 2.05, -1.90, 0.10, 1.60, 1.40
+            x - side * 0.48, 2.00, -1.90, 0.08, 1.42, 1.22
         )
-        meshes[f"gear_fairing_{name}"] = box(x, 2.45, -2.15, 1.15, 1.05, 2.70)
+        meshes[f"gear_fairing_{name}"] = nacelle_gear_fairing(x)
         wheel_set(meshes, f"{name}_forward", x, -1.40, 0.50, 0.34)
         wheel_set(meshes, f"{name}_aft", x, -2.40, 0.50, 0.34)
 

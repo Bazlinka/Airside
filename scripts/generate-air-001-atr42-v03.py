@@ -132,6 +132,29 @@ def surface_quad(corners, offset=0.022):
     return verts, np.asarray(faces, np.uint16)
 
 
+def fitted_cockpit_panel(corners, offset=0.018):
+    """Thin glazing that follows the local nose curvature without flattening it."""
+    sampled = np.asarray(
+        [surface(z, np.deg2rad(theta), offset) for z, theta in corners], np.float32
+    )
+    normal = np.cross(sampled[1] - sampled[0], sampled[2] - sampled[0])
+    normal /= np.linalg.norm(normal)
+    mean_theta = np.deg2rad(np.mean([theta for _, theta in corners]))
+    outward = np.array([np.cos(mean_theta), np.sin(mean_theta), 0.0])
+    if np.dot(normal, outward) < 0.0:
+        normal = -normal
+    front = sampled + normal * 0.004
+    back = sampled - normal * 0.008
+    verts = np.vstack((front, back)).astype(np.float32)
+    indices = np.asarray(
+        [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6,
+         0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2,
+         2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0],
+        dtype=np.uint16,
+    )
+    return verts, indices
+
+
 def pillar_strip(z0, z1, theta0, theta1, offset=0.018):
     """Opaque body-colour strip between glazing panes (credible mullion)."""
     return surface_quad(
@@ -220,7 +243,7 @@ def final_meshes():
         "cockpit_side_r": [(8.35, 34.0), (8.35, 60.0), (9.72, 62.5), (9.45, 39.0)],
     }
     for name, corners in panes.items():
-        meshes[name] = surface_quad(corners, offset=0.024)
+        meshes[name] = fitted_cockpit_panel(corners, offset=0.018)
 
     meshes["windscreen_pillar_c"] = pillar_strip(8.52, 9.98, 88.2, 91.8, offset=0.016)
     meshes["windscreen_pillar_l"] = pillar_strip(8.40, 9.80, 116.8, 120.5, offset=0.016)
@@ -349,11 +372,11 @@ def final_meshes():
                 meshes[name] = v01.move_y(meshes[name], shift)
     meshes["tailplane_saddle"] = oval_pod(
         [
-            (-9.45, 0.12, 0.05, 7.48),
-            (-8.95, 0.38, 0.10, 7.50),
-            (-8.25, 0.58, 0.13, 7.49),
-            (-7.35, 0.52, 0.12, 7.48),
-            (-6.55, 0.20, 0.06, 7.47),
+            (-9.60, 0.10, 0.04, 7.40),
+            (-9.08, 0.40, 0.10, 7.46),
+            (-8.28, 0.70, 0.12, 7.46),
+            (-7.42, 0.60, 0.10, 7.45),
+            (-6.60, 0.24, 0.05, 7.42),
         ],
         segments=30,
     )

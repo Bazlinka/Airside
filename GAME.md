@@ -1,5 +1,70 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — AIR-006 Dash 8-400 nacelle-bay polish; Unity EditMode pending Mac.**
+  - **Player-visible:** QantasLink's Q400 keeps its established long high-wing, six-prop,
+    T-tail silhouette, but its rear nacelle gear-bay enclosures now curve with the pod rather
+    than reading as blocks; the open main doors are slimmer at normal camera distance. The
+    `mdl_dash8_q400_v01` path, 32.83 × 28.42 × 8.34 m envelope, tyre contact, type profile,
+    schedules and saves remain unchanged.
+  - **How:** `scripts/generate-air-006-dash8-q400.py` now emits rounded nacelle gear bays and
+    thin door sheets at 182 named meshes / 27,288 triangles. Source + StreamingAssets kits and
+    the 480 × 320 Hangar thumbnail are synced. New `scripts/test-air-006-dash8-q400.py` locks
+    scale, rounded bay density, thin doors, centre saddle and index integrity.
+  - **Evidence:** generator validation and `python3 scripts/test-air-006-dash8-q400.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-006 slice. Then run Unity EditMode and one fresh Mac
+    build against the combined four-aircraft branch before any further visual work.
+
+- **2026-09-15 Codex — AIR-001 ATR 42-600 close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Emu Air and the player's ATR retain their v03 identity, but the four
+    flight-deck panes now follow the curved nose without the previous flattened/stepped read.
+    A broader shallow saddle joins the T-tail to the fin at follow-camera distance. The
+    `mdl_atr42_starter_v03` path, 22.67 × 24.57 × 7.59 m envelope, six props, tyre contact,
+    type profile, schedules and saves remain unchanged.
+  - **How:** the v03 generator now emits curvature-fitted cockpit panels and a wider tailplane
+    saddle; its 183 named meshes / 19,704 triangle budget is unchanged. Source +
+    StreamingAssets kits and the 480 × 320 Hangar thumbnail are synced. The existing v03
+    geometry test now locks the thin fitted panes and tail-saddle blend.
+  - **Evidence:** generator validation and `python3 scripts/test-air-001-atr42-v03.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-001 slice, then polish AIR-006's remaining wing-root
+    and gear-door blockiness in a separate commit. Do not start a new type.
+
+- **2026-09-15 Codex — AIR-007 Saab 340B close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Rex's Saab keeps its compact low-wing, conventional-tail identity, but
+    its four flight-deck panes now follow the rounded nose rather than projecting as a dark
+    box. Curved nacelle gear-bay fairings and smaller hubs/spinners remove the blocky underwing
+    read. The `mdl_saab_340b_v01` path, 19.73 × 21.44 × 6.97 m envelope, tyre contact, motion
+    names, type profile, schedule and save behaviour remain unchanged.
+  - **How:** `scripts/generate-air-007-saab-340b.py` now emits 120 named meshes / 6,868
+    triangles; source + StreamingAssets kits and its 480 × 320 Hangar thumbnail are synced.
+    New `scripts/test-air-007-saab-340b.py` locks scale, fitted glazing, curved gear fairings,
+    compact hubs and index integrity. No other aircraft or simulation code changed.
+  - **Evidence:** generator validation and `python3 scripts/test-air-007-saab-340b.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-007 slice, then polish AIR-001's remaining cockpit
+    glazing and tail joins in a separate commit. Do not start a new type.
+
+- **2026-09-15 Codex — AIR-005 737-8 close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Wattlebird Jet's 737 now has a skin-coloured flight-deck crown with
+    three compact fitted windshield panes rather than a dark projecting visor; its keel fairing
+    is a short, tapered wing-root transition and its split winglets are restrained at overview
+    distance. The same `mdl_737_8_narrowbody_v01` path, 39.47 × 35.92 × 12.42 m envelope,
+    nose-stop datum, tyre contact, gate loop and save behaviour remain intact.
+  - **How:** `scripts/generate-air-005-narrowbody-737-8.py` now emits 199 named meshes / 17,404
+    triangles; source + StreamingAssets kits and the 480 × 320 Hangar thumbnail are synced.
+    New `scripts/test-air-005-737-8.py` locks scale, compact panes, the short fairing,
+    restrained tips and index integrity. No other aircraft or simulation code changed.
+  - **Evidence:** generator validation and `python3 scripts/test-air-005-737-8.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is not
+    available in this environment, so combined EditMode and packaged overview/follow QA remain
+    open.
+  - **NEXT:** Commit/push this narrow AIR-005 slice, then give AIR-007 Saab 340B the same
+    close-view cockpit/nacelle/prop refinement in a separate commit. Do not start a new type.
+
 - **2026-09-15 Claude — polish phase 6: runway fairness + stand suggestion (ADR 0052). Unity
   EditMode 376/376.**
   - Tower: a departure holding short ≥ 6 min that has waited longer than the first arrival

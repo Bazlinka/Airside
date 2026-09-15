@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""Geometry regressions for AIR-005's close-view readability pass; no Unity required."""
+import importlib.util
+from pathlib import Path
+
+import numpy as np
+
+
+SCRIPTS = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location(
+    "air_005", SCRIPTS / "generate-air-005-narrowbody-737-8.py"
+)
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+meshes = module.narrowbody_737_8_meshes()
+module.validate_meshes(meshes)
+vertices = np.concatenate([verts for verts, _ in meshes.values()])
+
+np.testing.assert_allclose(
+    np.ptp(vertices, axis=0),
+    [module.TARGET_SPAN_M, module.TARGET_HEIGHT_M, module.TARGET_LENGTH_M],
+    atol=0.003,
+)
+assert abs(float(vertices[:, 1].min())) < 0.001, "tyres must sit at local y=0"
+
+# The crown stays aircraft skin; glass is carried by three compact fitted panes.
+assert "flightdeck_crown" in meshes
+assert "cockpit" not in meshes, "the obsolete all-dark cockpit visor must not return"
+assert {"windscreen_c", "windscreen_l", "windscreen_r"} <= set(meshes)
+for pane in ("windscreen_c", "windscreen_l", "windscreen_r"):
+    pane_vertices, _ = meshes[pane]
+    assert np.ptp(pane_vertices, axis=0)[2] < 0.30, f"{pane} must stay a compact fitted pane"
+
+# The wing-body fairing is tapered and short enough not to form a long flat slab.
+fairing_vertices, _ = meshes["belly_fairing"]
+assert np.ptp(fairing_vertices, axis=0)[2] < 13.0
+assert np.ptp(fairing_vertices, axis=0)[0] < 1.4
+
+# Split tips retain the full span but are deliberately restrained in vertical height.
+for tip in ("winglet_left", "winglet_right"):
+    tip_vertices, _ = meshes[tip]
+    assert tip_vertices[:, 1].max() <= 7.26, f"{tip} grew into a tall plate"
+    assert np.ptp(tip_vertices, axis=0)[1] < 2.0
+
+for name, (part_vertices, indices) in meshes.items():
+    assert np.isfinite(part_vertices).all(), name
+    assert len(indices) % 3 == 0 and int(indices.max()) < len(part_vertices), name
+
+print("PASS: AIR-005 bounds, fitted glass, tapered fairing, restrained tips and mesh integrity.")

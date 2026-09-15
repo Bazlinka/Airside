@@ -1,5 +1,30 @@
 ## Unreleased
 
+- **Dash 8-400 nacelle-bay polish.** AIR-006 keeps its long high-wing Q400 silhouette, but the
+  former blocky rear nacelle fairings are rounded gear-bay continuations and the open main doors
+  are thinner. Scale, propellers, type profile and QantasLink operation remain unchanged. 182
+  named meshes / 27,288 triangles; deterministic geometry regression green. Unity EditMode and
+  packaged camera QA remain open.
+
+- **ATR 42-600 close-view polish.** AIR-001’s flight-deck panes now follow the curved nose rather
+  than flattening it, and its widened tailplane saddle better joins the T-tail to the fin. The
+  existing v03 scale, six props, fuselage-side gear and player/Emu Air presentation remain
+  unchanged. 183 named meshes / 19,704 triangles; geometry regression green. Unity EditMode and
+  packaged camera QA remain open.
+
+- **Saab 340B close-view polish.** AIR-007’s four flight-deck panes now follow its rounded nose
+  instead of projecting as a dark box; the nacelle gear bays are curved continuations rather
+  than blocks, and the hubs/spinners are scaled down. The low-wing Saab silhouette, true-scale
+  footprint and existing Rex operation remain unchanged. 120 named meshes / 6,868 triangles;
+  deterministic geometry regression green. Unity EditMode and packaged camera QA remain open.
+
+- **737-8 close-view polish.** AIR-005 keeps its real-scale footprint and operational loop, but
+  replaces the dark projecting cockpit mask with a skin-coloured flight-deck crown and three
+  compact fitted panes, shortens and tapers the wing-body keel fairing, and reduces the split
+  winglets to a believable overview proportion. The Hangar thumbnail is regenerated from the
+  shipped glTF. 199 named meshes / 17,404 triangles; deterministic geometry regression green.
+  Unity EditMode and packaged camera QA remain open.
+
 - **Fairer runway and smarter stands.** A departure held short for six minutes now gets the
   runway ahead of newer arrivals, and aircraft (and the player's Best stand button) avoid
   parking beside a Dash 8-400 on the tight 50D/50E pair when another bay is free (ADR 0052).

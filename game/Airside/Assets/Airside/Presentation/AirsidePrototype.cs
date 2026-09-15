@@ -732,17 +732,23 @@ namespace Airside.Presentation
         {
             var rect = layout.PauseMenu;
             GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Paused", title);
+            // Live Adelaide time never pauses (ADR 0045), so the panel must not claim to.
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Menu", title);
 
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
             if (GUI.Button(row, "Resume", button))
                 ToggleMenu();
 
             row.y += 52f;
-            if (GUI.Button(row, "Restart circuit", button))
-                RestartCircuit();
+            // Once an airline runs the field draws the fleets, not the demo circuit, so a
+            // restart there silently reset an aircraft nobody can see.
+            if (!FleetMode)
+            {
+                if (GUI.Button(row, "Restart circuit", button))
+                    RestartCircuit();
+                row.y += 52f;
+            }
 
-            row.y += 52f;
             if (GUI.Button(row, "Quit", button))
                 QuitGame();
         }

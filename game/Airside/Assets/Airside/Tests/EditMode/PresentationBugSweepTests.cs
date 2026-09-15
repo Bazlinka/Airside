@@ -122,5 +122,14 @@ namespace Airside.Tests
             Assert.That(AirsideDayVolume.NoonPunchWeight(0.5f, 0f), Is.EqualTo(0f));
             Assert.That(AirsideDayVolume.GoldenBloomWeight(0.349f), Is.EqualTo(AirsideDayVolume.GoldenBloomWeight(0.351f)).Within(0.05f));
         }
+    
+        [Test]
+        public void CameraKeyboardPan_ScalesWithZoomAndLiftIsBounded()
+        {
+            Assert.That(AirsideCameraController.KeyboardPanMetresPerSecond(AirsideBareField.MinOrbitDistance),
+                Is.LessThan(AirsideBareField.OverviewPanMetresPerSecond * 0.25f));
+            Assert.That(AirsideCameraController.KeyboardPanMetresPerSecond(AirsideBareField.MaxOrbitDistance),
+                Is.GreaterThan(AirsideBareField.OverviewPanMetresPerSecond));
+        }
     }
 }

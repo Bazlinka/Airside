@@ -453,6 +453,15 @@ namespace Airside.Presentation
             _ => 52f
         };
 
+        /// <summary>
+        /// Keyboard pan speed for the current zoom. A flat 220 m/s shot a close-up
+        /// across half the apron in one tap and crawled at the 4.5 km zoom-out; the
+        /// speed now scales with distance, matching the old rate at the overview.
+        /// </summary>
+        public static float KeyboardPanMetresPerSecond(float distance) =>
+            AirsideBareField.OverviewPanMetresPerSecond
+            * Mathf.Clamp(distance / Mathf.Max(1f, OverviewDistance), 0.08f, 4f);
+
         private void ReadInput()
         {
             var keyboard = Keyboard.current;
@@ -481,7 +490,7 @@ namespace Airside.Presentation
                 if (keyboard.zKey.isPressed) keyLift -= 1f;
                 if (keyLift != 0f)
                 {
-                    _center += Vector3.up * (keyLift * AirsideBareField.OverviewPanMetresPerSecond * 0.5f * dt);
+                    _center += Vector3.up * (keyLift * KeyboardPanMetresPerSecond(_distance) * 0.5f * dt);
                     _easingOverview = false;
                 }
 
@@ -497,7 +506,7 @@ namespace Airside.Presentation
                         var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                         var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
                         _center += (planarForward * move.y + planarRight * move.x)
-                            * (AirsideBareField.OverviewPanMetresPerSecond * dt);
+                            * (KeyboardPanMetresPerSecond(_distance) * dt);
                         _easingOverview = false;
                     }
                 }

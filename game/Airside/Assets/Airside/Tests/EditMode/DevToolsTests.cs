@@ -44,6 +44,20 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FleetLine_HandlesAnAircraftThatHasLeftItsStand()
+        {
+            var (clock, ops, aircraft) = PlayerOnly();
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+            Assert.That(ops.ScheduleDeparture(aircraft, kingscote, new SimulationTime(0)).Accepted, Is.True);
+            clock.Set(new SimulationTime(1));
+            ops.Update();
+            Assert.That(aircraft.State, Is.Not.EqualTo(FleetState.AtStand));
+
+            var line = DevTools.FleetLine(aircraft);
+            Assert.That(line, Does.Contain("stand —"));
+        }
+
+        [Test]
         public void NextEventLabel_ExplainsWhenNothingIsQueued()
         {
             Assert.That(DevTools.NextEventLabel(null, t => $"T{t.ElapsedSeconds}"),

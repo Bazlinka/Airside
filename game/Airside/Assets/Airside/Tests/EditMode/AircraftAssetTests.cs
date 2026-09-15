@@ -39,8 +39,8 @@ namespace Airside.Tests
             var parent = new GameObject("readable-kit-test").transform;
             try
             {
-                Assert.That(ArtPresentationLoader.TryInstantiate("Models/Aircraft/mdl_atr42_starter_v02.gltf", parent, out var root),
-                    Is.True, "the v02 glTF kit should load");
+                Assert.That(ArtPresentationLoader.TryInstantiate("Models/Aircraft/mdl_atr42_starter_v03.gltf", parent, out var root),
+                    Is.True, "the v03 glTF kit should load");
                 var filters = root.GetComponentsInChildren<MeshFilter>(true);
                 Assert.That(filters.Length, Is.GreaterThan(100));
                 foreach (var filter in filters)

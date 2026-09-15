@@ -10,6 +10,61 @@
   - Packaged check open: map orientation matches the 3D view, drag feel, Retina crispness.
   - Next in the plan: phase 4 ground textures/graphics, 5 performance, 6 game logic.
 
+- **2026-09-15 Cursor — AIR-001 ATR 42-600 visual fidelity pass (v03). Unity EditMode
+  pending Mac (`scripts/test-unity.sh` has no Unity binary here).**
+  - **Player-visible:** Emu Air / player ATR silhouette tightened as a new v03 kit:
+    four fitted cockpit panes with pillars, even Hangar-readable cabin windows, smoother
+    blunt nose, compact nacelles blended into the high wing, clear fuselage-side main-gear
+    sponsons (not Q400 nacelle gear), tighter wing-root / T-tail joins, six readable 3.93 m
+    props. Envelope unchanged (22.67 × 24.57 × 7.59 m). Runtime prefers
+    `mdl_atr42_starter_v03` with v02/v01 fallbacks.
+  - **How:** new `scripts/generate-air-001-atr42-v03.py` (183 named meshes / 19,704 tris).
+    Thumbnail regenerated from v03; StreamingAssets synced. Review board + multi-angle
+    stills under `docs/art/candidates/` and `work/review/`. Q400 / Saab / 737 untouched.
+    No simulation, catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline multi-angle
+    reviews; `scripts/test-air-001-atr42-v03.py` green. This environment cannot re-run
+    `scripts/test-unity.sh` (Unity 6.3 missing).
+  - **NEXT MILESTONE:** Bailey to review this ATR v03 PR, then reprioritise the next
+    visual or systems slice. Decide the 50D/50E Q400 stand rule if a second Q400 is ever
+    added.
+
+- **2026-09-15 Cursor — AIR-005 737-8 visual revision (same asset id). Domain tests pending
+  Unity EditMode on Mac.**
+  - **Player-visible:** Wattlebird Jet's 737-8 silhouette is rebuilt in place: slender fuselage
+    with fitted cabin glazing, pitched flight-deck panes, low swept wing with dual-feather
+    winglets, large forward-hung turbofans with chevron nozzles, a deep wing-body fairing and a
+    joined conventional tail. Hangar thumbnail regenerated from the runtime glTF. Envelope
+    unchanged (39.47 × 35.92 × 12.42 m). Path stays `mdl_737_8_narrowbody_v01`.
+  - **How:** rewrite of `scripts/generate-air-005-narrowbody-737-8.py` (204 named meshes /
+    17,464 triangles, was 180 / 6,988). Fuselage loft interpolates stations in increasing-z
+    order (`np.interp` requires that). StreamingAssets + Hangar thumb synced. No simulation,
+    catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0, fuselage half-width ~1.88 m);
+    offline before/after mesh reviews under `/opt/cursor/artifacts/737-8-*-review.png`. Unity
+    EditMode / packaged overview-follow QA still open (no Mac build this session).
+  - **NEXT MILESTONE:** Bailey to review this 737-8 visual PR, then reprioritise the next
+    genuine aircraft slice (AIR-006 Dash 8 quality pass and AIR-007 Saab already on `main`).
+    Decide the 50D/50E Q400 stand rule if a second Q400 is ever added.
+- **2026-09-15 Cursor — AIR-006 Dash 8-400 visual quality pass (same asset id). Unity EditMode
+  pending Mac re-run (`scripts/test-unity.sh` has no Unity binary here).**
+  - **Player-visible:** QantasLink's Dash 8-400 silhouette tightened in place: continuous
+    high-wing / fuselage saddle, single aerodynamic nacelle (intake → gear bay → exhaust),
+    framed four-pane flight deck, pitched six-blade props with clear hubs/spinners, longer
+    nacelle-mounted mains with open doors, soft fin-root fillet and rounded T-tail saddle,
+    even cabin windows. Hangar thumbnail regenerated. Envelope unchanged
+    (32.83 × 28.42 × 8.34 m). Path stays `mdl_dash8_q400_v01`.
+  - **How:** further rewrite of `scripts/generate-air-006-dash8-q400.py` (182 named meshes /
+    26752 triangles). Thumbnail colouring fixed so windscreen pillars / prop tips read at
+    Hangar distance. StreamingAssets synced. Review renders in `work/review/`. No simulation,
+    catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline front/side/top/
+    game-camera reviews. Prior Mac Unity EditMode on this branch: 331/331. This environment
+    cannot re-run `scripts/test-unity.sh` (Unity 6.3 missing).
+  - **NEXT MILESTONE:** Bailey to review this Dash 8 quality PR, then reprioritise the next
+    genuine aircraft slice (AIR-007 Saab already on `main`). Decide the 50D/50E Q400 stand
+    rule if a second Q400 is ever added.
+
 - **2026-09-15 Claude — polish phase 2: status severity + stacked messages. Unity EditMode
   343/343.**
   - New pure `AircraftStatus`: HoldingShort / HoldingForLanding go Attention after 3 min and
@@ -55,6 +110,24 @@
     start a new family that is not yet in the simulation without that call. Decide the
     50D/50E Q400 stand rule if a second Q400 is ever added.
 
+- **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
+  331/331 (0 failed, 0 skipped).**
+  - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used
+    only the ATR span (it reported 16.7 m at 50D/50E). Replaced by
+    `Layout_ParkedRegionalAircraftKeepCodeCClearance`: parked plan-view outlines (wing, fuselage,
+    tailplane boxes from the runtime glTFs via new `AircraftModelBounds.TryMeasurePart`, root on
+    the stop as drawn) for every bay pair and every ATR / Saab stand-in / Dash 8-400 pairing.
+  - **Known limit it now exposes (needs Bailey's stand-assignment decision):** a Dash 8-400 on
+    50D or 50E next to a turboprop on the other is only **3.3–3.5 m** apart (ICAO code C 4.5 m);
+    two Q400s there would be 1.2 m (only one Q400 exists; the test guards that). Every other pair
+    keeps ≥ 4.5 m (ATR–ATR at 50D/50E 5.7 m). A simple "no Q400 on 50D/50E" rule can strand an
+    aircraft overnight with six aircraft on six bays, so no simulation change was made.
+  - New `AircraftDispatchTests`: the real `BuildAircraftForType` builds each catalogue type with its
+    own profile and drawn dimensions (placeholders draw at ATR size), AIR-006 has two six-blade
+    propellers and is not ATR-sized, and QantasLink/Rex/Emu/Wattlebird/player fly their catalogue
+    types with the matching visual profiles.
+  - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. Decide the 50D/50E Q400 rule first
+    if a second Q400 is ever added.
 
 - **2026-09-15 Codex — AIR-006 genuine Dash 8-400 visual (ADR 0049). Unity EditMode
   328/328 (0 failed, 0 skipped).**
@@ -407,7 +480,6 @@
 - **Next — Bailey:** Mac Unity + packaged pass (map/hangar/flights/dev tools/
   controls + dusk/night), then external playtest zip when free. Economy still
   deferred (ADR 0045).
-
 
 - **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
   clicking a visible aircraft on the Adelaide field selects and follows that exact
@@ -965,7 +1037,6 @@ It does not cover Presentation, which needs UnityEngine.
   glass prop discs; landing follow framing; soft rotate cue.
   **Verified headless:** `scripts/test-domain.sh` **214 passed** (1 new FocusMode HUD test; 4 pre-existing failures also red on main). **Not yet
   verified:** Unity EditMode / Play, `scripts/test-unity.sh`, `scripts/build-mac.sh`.
-
 
 - **Plane / ground dynamics polish** on `cursor/plane-ground-dynamics-polish-0c44`:
   Adelaide authored ground mesh (ADR 0035) replaces the 16 m tiled grass cube;

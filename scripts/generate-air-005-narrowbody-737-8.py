@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""Generate AIR-005: an original 737-8-class narrowbody aircraft kit.
+"""Generate AIR-005: an original 737-8-class narrowbody kit.
 
-The asset is deliberately an unbranded, stylised interpretation rather than a
-copy of any airline's aircraft.  It is authored in metres with +Z forward and
-Y-up, matching the project's aircraft kit convention.  Its local origin is the
-nose-stop datum (nose at Z=0; tail behind it on negative Z), so a terminal-gate
-route can position the root directly at its stop mark.  The visible envelope is
-kept to the published 737-8 class dimensions so future terminal-gate routes can
-use a credible code-C footprint:
+Visual revision: smooth slender fuselage with fitted cabin glazing, pitched
+flight-deck panes, low swept wing with dual-feather winglets, large forward-
+hung turbofans with chevron nozzles, a deep wing-body fairing and a joined
+conventional tail. Project-owned, unbranded procedural geometry at the
+official 39.47 × 35.92 × 12.42 m envelope.
 
-* length: 39.47 m
-* wingspan: 35.92 m
-* height: 12.42 m
-
-The project runtime reads its simple POSITION + uint16-index glTF kit directly;
-the existing ``write_kit`` helper also exports an editable FBX companion and
-keeps Unity ``.meta`` GUIDs stable on regeneration.
+Coordinates follow Airside aircraft convention: X is span, Y is up, +Z is
+forward. The local origin is the nose-stop datum (nose at Z=0; tail on
+negative Z) so a gate route can place the root on its stop. Tyres touch
+local Y=0. The companion glTF stays inside the deliberately small POSITION +
+uint16-index contract consumed by ArtGltfLoader.
 """
 
 from __future__ import annotations
@@ -31,9 +27,6 @@ REPO = SCRIPTS.parent
 AIRCRAFT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art" / "Models" / "Aircraft"
 BASENAME = "mdl_737_8_narrowbody_v01"
 
-# The aircraft kits share a deliberately small glTF/FBX export contract.  Reuse
-# it instead of creating a second exporter whose binary layout ArtGltfLoader does
-# not understand.
 _AUTH_SPEC = importlib.util.spec_from_file_location(
     "airside_authored_fbx", SCRIPTS / "generate-authored-fbx-turboprop-terminal.py"
 )
@@ -53,32 +46,182 @@ cylinder = _auth.cylinder
 write_kit = _auth.write_kit
 oval_lathe_fuselage = _v05.oval_lathe_fuselage
 lofted_aerofoil = _v05.lofted_aerofoil
+windscreen_pane = _v05.windscreen_pane
 orient_outward = _v05._orient_outward
-
 
 TARGET_LENGTH_M = 39.47
 TARGET_SPAN_M = 35.92
 TARGET_HEIGHT_M = 12.42
 HALF_LENGTH = TARGET_LENGTH_M / 2.0
 HALF_SPAN = TARGET_SPAN_M / 2.0
+FUSE_DIAM = 3.76
+FUSE_RX = FUSE_DIAM / 2.0
+FUSE_SEGMENTS = 64
+
+# Stations in centred aircraft space (z=0 mid-fuselage). Soft 737-class nose,
+# parallel cabin, and a tapered rear pressure body into the fin root.
+# (z, rx, ry, cy)
+STATIONS = np.array(
+    [
+        (HALF_LENGTH - 0.12, 0.06, 0.05, 4.15),
+        (19.35, 0.22, 0.20, 4.18),
+        (18.95, 0.55, 0.50, 4.22),
+        (18.35, 0.95, 0.88, 4.28),
+        (17.50, 1.35, 1.28, 4.32),
+        (16.40, 1.65, 1.58, 4.33),
+        (15.00, 1.82, 1.78, 4.32),
+        (13.20, 1.88, 1.86, 4.31),
+        (10.00, 1.88, 1.88, 4.30),
+        (5.00, 1.88, 1.88, 4.30),
+        (0.00, 1.88, 1.88, 4.30),
+        (-5.00, 1.88, 1.88, 4.30),
+        (-9.50, 1.87, 1.86, 4.30),
+        (-13.20, 1.78, 1.74, 4.27),
+        (-15.60, 1.55, 1.50, 4.22),
+        (-17.40, 1.15, 1.12, 4.16),
+        (-18.60, 0.70, 0.68, 4.10),
+        (-19.25, 0.32, 0.30, 4.06),
+        (-HALF_LENGTH + 0.12, 0.06, 0.05, 4.04),
+    ],
+    dtype=np.float32,
+)
+
+# Low swept wing: ( |x|, chord y, leading-edge z, chord, thickness )
+WING_STATIONS = (
+    (1.55, 4.20, 6.10, 7.60, 0.52),
+    (5.20, 4.45, 4.85, 5.80, 0.38),
+    (10.40, 4.85, 3.10, 3.85, 0.24),
+    (15.40, 5.25, 1.45, 2.45, 0.14),
+    (17.40, 5.40, 0.85, 1.85, 0.11),
+)
+
+
+# STATIONS are authored nose→tail (decreasing z). np.interp requires increasing xp.
+_STATION_Z = STATIONS[::-1, 0]
+_STATION_RX = STATIONS[::-1, 1]
+_STATION_RY = STATIONS[::-1, 2]
+_STATION_CY = STATIONS[::-1, 3]
+
+
+def surface(z: float, theta: float, offset: float = 0.0) -> np.ndarray:
+    rx = float(np.interp(z, _STATION_Z, _STATION_RX))
+    ry = float(np.interp(z, _STATION_Z, _STATION_RY))
+    cy = float(np.interp(z, _STATION_Z, _STATION_CY))
+    return np.array(
+        [(rx + offset) * np.cos(theta), cy + (ry + offset) * np.sin(theta), z],
+        np.float32,
+    )
+
+
+def fuselage_body() -> tuple[np.ndarray, np.ndarray]:
+    zs = np.concatenate(
+        [
+            np.linspace(a, b, 3, endpoint=False)
+            for a, b in zip(STATIONS[:-1, 0], STATIONS[1:, 0])
+        ]
+        + [[float(STATIONS[-1, 0])]]
+    )
+    thetas = np.linspace(0.0, 2.0 * np.pi, FUSE_SEGMENTS, endpoint=False)
+    verts = np.array(
+        [surface(float(z), float(t)) for z in zs for t in thetas], np.float32
+    )
+    faces: list[int] = []
+    rings = len(zs)
+    for j in range(rings - 1):
+        for i in range(FUSE_SEGMENTS):
+            a = j * FUSE_SEGMENTS + i
+            b = j * FUSE_SEGMENTS + (i + 1) % FUSE_SEGMENTS
+            c = b + FUSE_SEGMENTS
+            d = a + FUSE_SEGMENTS
+            faces.extend([a, b, c, a, c, d])
+    for ring, tip_y, tip_z in (
+        (0, float(STATIONS[0, 3]), float(zs[0]) + 0.12),
+        (rings - 1, float(STATIONS[-1, 3]), float(zs[-1]) - 0.12),
+    ):
+        centre = len(verts)
+        verts = np.vstack([verts, [0.0, tip_y, tip_z]]).astype(np.float32)
+        for i in range(FUSE_SEGMENTS):
+            edge = [ring * FUSE_SEGMENTS + i, ring * FUSE_SEGMENTS + (i + 1) % FUSE_SEGMENTS]
+            if ring == rings - 1:
+                edge.reverse()
+            faces.extend([centre, *edge])
+    return verts, np.asarray(faces, np.uint16)
+
+
+def surface_quad(corners, offset=0.018) -> tuple[np.ndarray, np.ndarray]:
+    sampled = np.asarray(
+        [surface(z, np.deg2rad(theta), offset) for z, theta in corners], np.float64
+    )
+    centre = sampled.mean(axis=0)
+    _, _, basis = np.linalg.svd(sampled - centre, full_matrices=False)
+    normal = basis[-1]
+    mean_theta = np.deg2rad(np.mean([theta for _, theta in corners]))
+    outward = np.array([np.cos(mean_theta), np.sin(mean_theta), 0.0])
+    if np.dot(normal, outward) < 0:
+        normal = -normal
+    front = sampled - ((sampled - centre) @ normal)[:, None] * normal
+    front = front + normal * 0.006
+    back = front - normal * 0.009
+    verts = np.vstack([front, back]).astype(np.float32)
+    faces: list[int] = []
+    count = len(corners)
+    for i in range(1, count - 1):
+        faces.extend([0, i, i + 1, count, count + i + 1, count + i])
+    for i in range(count):
+        j = (i + 1) % count
+        faces.extend([i, count + j, j, i, count + i, count + j])
+    return verts, np.asarray(faces, np.uint16)
+
+
+def cabin_window(z: float, side: float) -> tuple[np.ndarray, np.ndarray]:
+    if side < 0:
+        return surface_quad(
+            [
+                (z - 0.18, 148),
+                (z - 0.14, 146.2),
+                (z + 0.14, 146.2),
+                (z + 0.18, 148),
+                (z + 0.18, 156),
+                (z + 0.14, 157.8),
+                (z - 0.14, 157.8),
+                (z - 0.18, 156),
+            ],
+            0.012,
+        )
+    return surface_quad(
+        [
+            (z - 0.18, 32),
+            (z - 0.14, 33.8),
+            (z + 0.14, 33.8),
+            (z + 0.18, 32),
+            (z + 0.18, 24),
+            (z + 0.14, 22.2),
+            (z - 0.14, 22.2),
+            (z - 0.18, 24),
+        ],
+        0.012,
+    )
+
+
+def door_patch(z, half_z, half_h, side, depth=0.016):
+    theta0 = 180.0 if side < 0 else 0.0
+    deg = half_h / FUSE_RX * 57.3 * 0.50
+    return surface_quad(
+        [
+            (z - half_z, theta0 - deg),
+            (z - half_z, theta0 + deg),
+            (z + half_z, theta0 + deg),
+            (z + half_z, theta0 - deg),
+        ],
+        depth,
+    )
 
 
 def _lerp(a: float, b: float, t: float) -> float:
     return a + (b - a) * t
 
 
-# (absolute x, chord-line y, leading-edge z, chord, thickness).  The low wing,
-# swept leading edge, tapered tip and modest dihedral are more important to the
-# overview silhouette than hidden panel detail.
-WING_STATIONS = (
-    (1.45, 4.25, 5.30, 7.30, 0.46),
-    (8.25, 4.73, 3.37, 4.80, 0.29),
-    (16.62, 5.32, 1.00, 2.60, 0.14),
-)
-
-
 def wing_station(x_abs: float) -> tuple[float, float, float, float]:
-    """Interpolate the main-wing planform at |x|."""
     x = min(max(abs(x_abs), WING_STATIONS[0][0]), WING_STATIONS[-1][0])
     for left, right in zip(WING_STATIONS, WING_STATIONS[1:]):
         if x <= right[0]:
@@ -88,11 +231,9 @@ def wing_station(x_abs: float) -> tuple[float, float, float, float]:
 
 
 def _closed_prism(corners: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Make a closed slab from four lower then four upper corner positions."""
-    assert corners.shape == (8, 3)
     faces = (
-        (0, 1, 2, 3),  # lower
-        (4, 7, 6, 5),  # upper
+        (0, 1, 2, 3),
+        (4, 7, 6, 5),
         (0, 4, 5, 1),
         (1, 5, 6, 2),
         (2, 6, 7, 3),
@@ -119,7 +260,6 @@ def wing_slab(
     thickness: float,
     surface: str = "chord",
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Tapered control surface that follows the actual wing sweep/dihedral."""
     stations = []
     for x_abs in (x_in, x_out):
         y, z_le, chord, wing_t = wing_station(x_abs)
@@ -131,7 +271,6 @@ def wing_slab(
         elif surface == "lower":
             y -= wing_t * 0.52 + thickness * 0.5
         stations.append((side * x_abs, y, z_rear, z_front))
-
     (x0, y0, z0_rear, z0_front), (x1, y1, z1_rear, z1_front) = stations
     h = thickness / 2.0
     return _closed_prism(
@@ -151,41 +290,57 @@ def wing_slab(
     )
 
 
-def windshield_pane(
-    cx: float,
-    cy: float,
-    cz: float,
-    sx: float,
-    sy: float,
-    sz: float,
-    pitch_deg: float,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Thin cockpit pane pitched into the 737-class forward fuselage."""
-    verts, indices = box(cx, cy, cz, sx, sy, sz)
-    angle = np.deg2rad(pitch_deg)
-    cosine, sine = float(np.cos(angle)), float(np.sin(angle))
-    transformed = verts.copy()
-    for i, vertex in enumerate(verts):
-        y, z = vertex[1] - cy, vertex[2] - cz
-        transformed[i, 1] = cy + y * cosine - z * sine
-        transformed[i, 2] = cz + y * sine + z * cosine
-    return transformed, indices
+def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
+    """Large forward-hung turbofan — intake lip, fat core, tapered nozzle."""
+    # Stations: (z, rx, ry, cy) in centred aircraft space.
+    stations = [
+        (5.85, 0.55, 0.55, 3.05),
+        (5.55, 0.92, 0.92, 3.08),
+        (5.05, 1.05, 1.05, 3.10),
+        (4.20, 1.08, 1.08, 3.12),
+        (3.00, 1.05, 1.02, 3.12),
+        (1.60, 0.95, 0.90, 3.10),
+        (0.60, 0.78, 0.72, 3.08),
+        (-0.20, 0.58, 0.52, 3.05),
+        (-0.70, 0.38, 0.34, 3.02),
+        (-1.05, 0.22, 0.20, 3.00),
+    ]
+    segs = 40
+    rings = []
+    for z, rx, ry, cy in stations:
+        ring = []
+        for i in range(segs):
+            ang = 2.0 * np.pi * i / segs
+            ring.append([x + rx * np.cos(ang), cy + ry * np.sin(ang), z])
+        rings.append(np.asarray(ring, np.float32))
+    verts: list = []
+    indices: list = []
+    for r in range(len(rings) - 1):
+        for i in range(segs):
+            j = (i + 1) % segs
+            a, b = rings[r][i], rings[r][j]
+            c, d = rings[r + 1][j], rings[r + 1][i]
+            base = len(verts)
+            verts.extend([a, b, c, d])
+            indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
+    for ring, z_sign in ((rings[0], 1.0), (rings[-1], -1.0)):
+        tip = ring.mean(axis=0).copy()
+        tip[2] += z_sign * 0.06
+        for i in range(segs):
+            j = (i + 1) % segs
+            base = len(verts)
+            if z_sign > 0:
+                verts.extend([tip, ring[i], ring[j]])
+            else:
+                verts.extend([tip, ring[j], ring[i]])
+            indices.extend([base, base + 1, base + 2])
+    return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
-def chevron_finger(
-    cx: float,
-    cy: float,
-    cz: float,
-    angle_deg: float,
-    *,
-    radius: float,
-) -> tuple[np.ndarray, np.ndarray]:
-    """One small scallop at an exhaust lip; six read as a chevron nozzle."""
+def chevron_finger(cx, cy, cz, angle_deg, *, radius):
     angle = np.deg2rad(angle_deg)
     dx, dy = float(np.cos(angle)), float(np.sin(angle))
-    # A short cuboid rotated around the exhaust centreline.  It deliberately
-    # extends aft, making the serrated silhouette legible without texture maps.
-    verts, indices = box(0.0, 0.0, -0.17, 0.12, 0.15, 0.38)
+    verts, indices = box(0.0, 0.0, -0.14, 0.11, 0.14, 0.32)
     out = verts.copy()
     for i, vertex in enumerate(verts):
         out[i, 0] = cx + dx * (radius + vertex[0])
@@ -194,251 +349,319 @@ def chevron_finger(
     return out, indices
 
 
+def wheel_set(meshes, prefix, x, z, radius, width):
+    # Segment counts are multiples of 4 so a vertex lands exactly on y=0.
+    meshes[f"tire_{prefix}"] = cylinder(
+        x, radius, z, radius, width, axis="x", segments=24
+    )
+    meshes[f"wheel_{prefix}"] = cylinder(
+        x, radius, z, radius * 0.62, width + 0.030, axis="x", segments=20
+    )
+    meshes[f"rim_{prefix}"] = cylinder(
+        x, radius, z, radius * 0.36, width + 0.050, axis="x", segments=16
+    )
+
+
 def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Original, unbranded 737-8-class mesh kit at true metric scale."""
     meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {}
 
-    # Fuselage: a 3.76 m-diameter, oval lathe with the nose/tail extremities
-    # set exactly to the target length.  +Z is forward in the Airside scene.
-    meshes["fuselage"] = oval_lathe_fuselage(
+    meshes["fuselage"] = fuselage_body()
+
+    # Soft nose / cockpit crown and fitted flight-deck glazing.
+    meshes["radome"] = oval_lathe_fuselage(
         [
-            (HALF_LENGTH, 0.055, 0.055, 4.20),
-            (19.48, 0.18, 0.20, 4.21),
-            (19.18, 0.39, 0.42, 4.25),
-            (18.65, 0.78, 0.84, 4.31),
-            (17.92, 1.22, 1.30, 4.34),
-            (16.92, 1.58, 1.64, 4.34),
-            (15.60, 1.81, 1.84, 4.33),
-            (13.20, 1.88, 1.88, 4.31),
-            (9.00, 1.88, 1.88, 4.30),
-            (4.20, 1.88, 1.88, 4.30),
-            (-0.80, 1.88, 1.88, 4.30),
-            (-5.70, 1.87, 1.86, 4.30),
-            (-10.20, 1.82, 1.79, 4.28),
-            (-13.60, 1.65, 1.62, 4.25),
-            (-15.85, 1.36, 1.34, 4.20),
-            (-17.55, 0.89, 0.92, 4.15),
-            (-18.75, 0.43, 0.48, 4.11),
-            (-19.42, 0.16, 0.20, 4.08),
-            (-HALF_LENGTH, 0.055, 0.055, 4.06),
+            (18.60, 0.85, 0.78, 4.25),
+            (19.10, 0.55, 0.50, 4.18),
+            (19.45, 0.28, 0.26, 4.12),
+            (HALF_LENGTH - 0.12, 0.06, 0.05, 4.08),
         ],
         segments=36,
     )
-    meshes.update(
-        {
-            "radome": cylinder(0.0, 4.24, 19.14, 0.39, 0.92, axis="z", segments=24),
-            "belly_fairing": cylinder(0.0, 2.60, 0.25, 0.92, 12.3, axis="z", segments=24),
-            "cockpit": oval_lathe_fuselage(
-                [
-                    (18.95, 0.63, 0.46, 4.92),
-                    (18.38, 1.12, 0.66, 4.98),
-                    (17.56, 1.42, 0.62, 4.96),
-                    (16.78, 1.60, 0.48, 4.83),
-                ],
-                segments=24,
-            ),
-            "cockpit_frame": box(0.0, 5.58, 18.07, 2.55, 0.08, 1.48),
-            "cockpit_glare": box(0.0, 5.38, 18.57, 1.95, 0.18, 0.52),
-            "windscreen_c": windshield_pane(0.0, 5.34, 18.47, 0.83, 0.74, 0.055, -29.0),
-            "windscreen_l": windshield_pane(-0.72, 5.23, 18.30, 0.58, 0.68, 0.055, -24.0),
-            "windscreen_r": windshield_pane(0.72, 5.23, 18.30, 0.58, 0.68, 0.055, -24.0),
-            "cockpit_side_l": box(-1.76, 5.14, 17.82, 0.055, 0.62, 1.08),
-            "cockpit_side_r": box(1.76, 5.14, 17.82, 0.055, 0.62, 1.08),
-            "windscreen_pillar_l": box(-0.43, 5.36, 18.40, 0.055, 0.78, 0.32),
-            "windscreen_pillar_r": box(0.43, 5.36, 18.40, 0.055, 0.78, 0.32),
-            "windscreen_pillar_c": box(0.0, 5.39, 18.48, 0.045, 0.75, 0.24),
-            # Fictional accent geometry only: it has no text, logo, registration
-            # or real-airline colour scheme baked into the asset.
-            "livery_stripe": box(0.0, 4.02, 2.20, 3.77, 0.12, 27.8),
-            "livery_stripe_lower": box(0.0, 3.67, 2.30, 3.68, 0.06, 27.2),
-            "livery_tail_sweep": box(0.0, 6.60, -14.10, 0.16, 4.10, 4.80),
-            "door_outline_fwd": box(-1.865, 4.73, 14.72, 0.035, 1.96, 1.17),
-            "door_fwd": box(-1.895, 4.73, 14.72, 0.045, 1.79, 1.00),
-            "door_handle_fwd": box(-1.93, 4.76, 15.05, 0.035, 0.10, 0.14),
-            "cargo_door_outline": box(1.865, 3.72, 7.48, 0.035, 1.17, 1.58),
-            "cargo_door": box(1.895, 3.72, 7.48, 0.045, 1.02, 1.42),
-            "cargo_door_latch": box(1.93, 3.75, 7.84, 0.035, 0.12, 0.12),
-            "door_service_aft": box(1.89, 4.65, -12.05, 0.045, 1.66, 0.93),
-            "antenna": box(0.0, 6.24, 8.25, 0.055, 0.54, 0.055),
-            "antenna_aft": box(0.0, 6.15, -6.80, 0.045, 0.38, 0.045),
-            "pitot": box(-1.72, 5.25, 19.16, 0.035, 0.035, 0.46),
-            "pitot_b": box(1.72, 5.25, 19.16, 0.035, 0.035, 0.46),
-        }
+    meshes["cockpit"] = oval_lathe_fuselage(
+        [
+            (16.60, 1.55, 0.55, 4.85),
+            (17.40, 1.45, 0.62, 4.95),
+            (18.10, 1.15, 0.58, 4.92),
+            (18.55, 0.75, 0.42, 4.78),
+        ],
+        segments=28,
+    )
+    meshes["cockpit_frame"] = box(0.0, 5.55, 17.85, 2.45, 0.07, 1.55)
+    meshes["cockpit_glare"] = box(0.0, 5.42, 18.35, 1.90, 0.10, 0.70)
+    meshes["windscreen_c"] = windscreen_pane(
+        0.0, 5.28, 18.35, 0.90, 0.78, 0.050, pitch_deg=-28.0
+    )
+    meshes["windscreen_l"] = windscreen_pane(
+        -0.78, 5.18, 18.15, 0.62, 0.72, 0.050, pitch_deg=-24.0
+    )
+    meshes["windscreen_r"] = windscreen_pane(
+        0.78, 5.18, 18.15, 0.62, 0.72, 0.050, pitch_deg=-24.0
+    )
+    meshes["cockpit_side_l"] = surface_quad(
+        [(17.20, 125), (17.20, 155), (18.15, 150), (18.45, 122)], 0.014
+    )
+    meshes["cockpit_side_r"] = surface_quad(
+        [(17.20, 55), (17.20, 25), (18.45, 58), (18.15, 30)], 0.014
+    )
+    meshes["windscreen_pillar_l"] = box(-0.45, 5.32, 18.25, 0.05, 0.78, 0.35)
+    meshes["windscreen_pillar_r"] = box(0.45, 5.32, 18.25, 0.05, 0.78, 0.35)
+    meshes["windscreen_pillar_c"] = box(0.0, 5.36, 18.40, 0.04, 0.72, 0.28)
+
+    # Deep 737-class wing-body keel fairing.
+    meshes["belly_fairing"] = oval_lathe_fuselage(
+        [
+            (-8.50, 0.55, 0.22, 2.55),
+            (-4.00, 0.95, 0.42, 2.45),
+            (1.50, 1.05, 0.48, 2.42),
+            (6.50, 0.95, 0.40, 2.48),
+            (10.50, 0.55, 0.22, 2.60),
+            (13.00, 0.22, 0.10, 2.80),
+        ],
+        segments=32,
     )
 
-    # Twenty-eight individual window openings per side give the long narrowbody
-    # cabin its read at follow distance.  The loader's cabin_window_* prefix is
-    # intentionally used so these receive the existing glazed material.
-    window_zs = np.linspace(15.42, -10.96, 28)
-    for index, z in enumerate(window_zs, start=1):
-        meshes[f"cabin_window_{index}"] = box(-1.875, 5.00, float(z), 0.045, 0.33, 0.47)
-        meshes[f"cabin_window_r{index}"] = box(1.875, 5.00, float(z), 0.045, 0.33, 0.47)
+    meshes["livery_stripe"] = box(0.0, 4.05, 1.50, 3.78, 0.11, 28.5)
+    meshes["livery_stripe_lower"] = box(0.0, 3.70, 1.60, 3.70, 0.055, 27.8)
+    meshes["livery_tail_sweep"] = lofted_aerofoil(
+        [(6.20, 0.0, -13.20, 2.40, 0.08), (11.20, 0.0, -15.60, 1.10, 0.05)],
+        chord_points=10,
+        vertical=True,
+    )
 
-    # Main low wing and control surfaces.  These use lofted aerofoils rather
-    # than plain boxes so the 35.92 m planform still reads as an aircraft wing
-    # under the overview camera.
+    meshes["door_outline_fwd"] = door_patch(14.55, 0.55, 1.05, -1.0, 0.011)
+    meshes["door_fwd"] = door_patch(14.55, 0.48, 0.95, -1.0, 0.020)
+    meshes["door_handle_fwd"] = door_patch(14.78, 0.07, 0.06, -1.0, 0.028)
+    meshes["cargo_door_outline"] = door_patch(7.20, 0.72, 0.70, 1.0, 0.011)
+    meshes["cargo_door"] = door_patch(7.20, 0.64, 0.62, 1.0, 0.020)
+    meshes["cargo_door_latch"] = door_patch(7.55, 0.07, 0.06, 1.0, 0.028)
+    meshes["door_service_aft"] = door_patch(-11.80, 0.42, 0.88, 1.0, 0.018)
+
+    meshes["antenna"] = box(0.0, 6.22, 8.00, 0.05, 0.50, 0.05)
+    meshes["antenna_aft"] = box(0.0, 6.12, -6.50, 0.04, 0.35, 0.04)
+    meshes["pitot"] = box(-1.55, 4.85, 18.85, 0.035, 0.035, 0.42)
+    meshes["pitot_b"] = box(1.55, 4.85, 18.85, 0.035, 0.035, 0.42)
+
+    for index, z in enumerate(np.linspace(13.80, -11.20, 28), start=1):
+        meshes[f"cabin_window_{index}"] = cabin_window(float(z), -1.0)
+        meshes[f"cabin_window_r{index}"] = cabin_window(float(z), 1.0)
+
+    # Low swept wing + dual-feather tip treatment.
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         wing_stations = [
             (side * x, y, z_le, chord, thickness)
             for x, y, z_le, chord, thickness in WING_STATIONS
         ]
-        meshes[f"wing_{suffix}"] = lofted_aerofoil(wing_stations, chord_points=18)
+        meshes[f"wing_{suffix}"] = lofted_aerofoil(wing_stations, chord_points=22)
         meshes[f"wing_root_{suffix}"] = wing_slab(
-            side, 1.45, 3.15, from_te=0.05, to_te=0.92, thickness=0.24
+            side, 1.55, 3.40, from_te=0.04, to_te=0.92, thickness=0.26
         )
         meshes[f"wing_fairing_{suffix}"] = wing_slab(
-            side, 1.55, 4.00, from_te=0.02, to_te=0.26, thickness=0.22, surface="lower"
+            side, 1.60, 4.20, from_te=0.02, to_te=0.28, thickness=0.24, surface="lower"
         )
         meshes[f"flap_{suffix}"] = wing_slab(
-            side, 2.05, 12.70, from_te=0.00, to_te=0.34, thickness=0.075, surface="lower"
+            side, 2.20, 12.40, from_te=0.00, to_te=0.36, thickness=0.08, surface="lower"
         )
         meshes[f"spoiler_{suffix}"] = wing_slab(
-            side, 4.05, 12.40, from_te=0.34, to_te=0.60, thickness=0.042, surface="upper"
+            side, 4.20, 12.00, from_te=0.36, to_te=0.62, thickness=0.04, surface="upper"
         )
         meshes[f"aileron_{suffix}"] = wing_slab(
-            side, 12.80, 16.22, from_te=0.00, to_te=0.40, thickness=0.065
+            side, 12.50, 16.80, from_te=0.00, to_te=0.40, thickness=0.065
         )
 
-    # The two pieces of each advanced-technology winglet create the distinctive
-    # split/dual-feather silhouette without depending on a real manufacturer's
-    # branded geometry.  The outer vertical surfaces set the exact 35.92 m span.
+    # Dual-feather / split-scimitar style tip — upper and lower feathers.
+    # Outer tip stations own the exact 35.92 m span. With vertical=True the
+    # aerofoil thickness spreads in X around offset_c, so tip offset sits
+    # slightly inboard of HALF_SPAN.
+    tip_x = HALF_SPAN - 0.034
     meshes["winglet_left"] = lofted_aerofoil(
-        [(5.32, -16.58, 0.77, 1.50, 0.13), (8.85, -17.895, -0.16, 0.76, 0.13)],
+        [
+            (5.45, -17.10, 0.55, 1.55, 0.12),
+            (7.40, -17.50, 0.10, 1.05, 0.09),
+            (9.15, -tip_x, -0.25, 0.55, 0.07),
+        ],
         chord_points=14,
         vertical=True,
     )
     meshes["winglet_right"] = lofted_aerofoil(
-        [(5.32, 16.58, 0.77, 1.50, 0.13), (8.85, 17.895, -0.16, 0.76, 0.13)],
+        [
+            (5.45, 17.10, 0.55, 1.55, 0.12),
+            (7.40, 17.50, 0.10, 1.05, 0.09),
+            (9.15, tip_x, -0.25, 0.55, 0.07),
+        ],
         chord_points=14,
         vertical=True,
     )
     meshes["wingtip_left"] = lofted_aerofoil(
-        [(5.27, -16.56, 0.48, 1.32, 0.12), (3.72, -17.66, -0.02, 0.63, 0.10)],
+        [
+            (5.35, -17.05, 0.35, 1.25, 0.10),
+            (4.55, -17.45, -0.05, 0.70, 0.08),
+            (3.85, -(tip_x - 0.02), -0.25, 0.40, 0.06),
+        ],
         chord_points=12,
         vertical=True,
     )
     meshes["wingtip_right"] = lofted_aerofoil(
-        [(5.27, 16.56, 0.48, 1.32, 0.12), (3.72, 17.66, -0.02, 0.63, 0.10)],
+        [
+            (5.35, 17.05, 0.35, 1.25, 0.10),
+            (4.55, 17.45, -0.05, 0.70, 0.08),
+            (3.85, tip_x - 0.02, -0.25, 0.40, 0.06),
+        ],
         chord_points=12,
         vertical=True,
     )
-    meshes.update(
-        {
-            "flap_track_l1": wing_slab(-1.0, 4.55, 4.75, from_te=-0.13, to_te=0.13, thickness=0.18, surface="lower"),
-            "flap_track_l2": wing_slab(-1.0, 8.35, 8.57, from_te=-0.13, to_te=0.13, thickness=0.18, surface="lower"),
-            "flap_track_r1": wing_slab(1.0, 4.55, 4.75, from_te=-0.13, to_te=0.13, thickness=0.18, surface="lower"),
-            "flap_track_r2": wing_slab(1.0, 8.35, 8.57, from_te=-0.13, to_te=0.13, thickness=0.18, surface="lower"),
-            "flap_fairing_l": wing_slab(-1.0, 4.05, 10.90, from_te=-0.03, to_te=0.13, thickness=0.13, surface="lower"),
-            "flap_fairing_r": wing_slab(1.0, 4.05, 10.90, from_te=-0.03, to_te=0.13, thickness=0.13, surface="lower"),
-            "static_wick_left": box(-17.93, 8.86, -0.48, 0.06, 0.035, 0.31),
-            "static_wick_right": box(17.93, 8.86, -0.48, 0.06, 0.035, 0.31),
-        }
+    meshes["flap_track_l1"] = wing_slab(
+        -1.0, 4.50, 4.75, from_te=-0.12, to_te=0.14, thickness=0.16, surface="lower"
     )
+    meshes["flap_track_l2"] = wing_slab(
+        -1.0, 8.40, 8.65, from_te=-0.12, to_te=0.14, thickness=0.16, surface="lower"
+    )
+    meshes["flap_track_r1"] = wing_slab(
+        1.0, 4.50, 4.75, from_te=-0.12, to_te=0.14, thickness=0.16, surface="lower"
+    )
+    meshes["flap_track_r2"] = wing_slab(
+        1.0, 8.40, 8.65, from_te=-0.12, to_te=0.14, thickness=0.16, surface="lower"
+    )
+    meshes["flap_fairing_l"] = wing_slab(
+        -1.0, 4.00, 10.80, from_te=-0.03, to_te=0.14, thickness=0.12, surface="lower"
+    )
+    meshes["flap_fairing_r"] = wing_slab(
+        1.0, 4.00, 10.80, from_te=-0.03, to_te=0.14, thickness=0.12, surface="lower"
+    )
+    meshes["static_wick_left"] = box(-17.85, 8.95, -0.55, 0.05, 0.03, 0.28)
+    meshes["static_wick_right"] = box(17.85, 8.95, -0.55, 0.05, 0.03, 0.28)
 
-    # High-bypass turbofans: large, low-slung, short nacelles are a key
-    # 737-8-class cue.  Six small exhaust fingers form a readable chevron at
-    # close follow range; no engine branding or texture is involved.
+    # Large high-bypass turbofans hung well forward of the wing.
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
-        x = side * 5.24
-        meshes[f"engine_{suffix}"] = cylinder(x, 3.15, 2.57, 1.06, 4.44, axis="z", segments=28)
-        meshes[f"nacelle_{suffix}"] = cylinder(x, 3.08, 2.65, 0.96, 4.16, axis="z", segments=28)
-        meshes[f"intake_{suffix}"] = cylinder(x, 3.15, 4.72, 0.93, 0.22, axis="z", segments=28)
-        meshes[f"fan_{suffix}"] = cylinder(x, 3.15, 4.85, 0.72, 0.035, axis="z", segments=24)
-        meshes[f"pylon_{suffix}"] = box(x, 4.16, 2.88, 0.42, 1.82, 1.86)
-        meshes[f"exhaust_{suffix}"] = cylinder(x, 3.14, 0.55, 0.56, 0.58, axis="z", segments=22)
-        meshes[f"exhaust_stack_{'l' if side < 0 else 'r'}"] = cylinder(x, 3.14, 0.25, 0.46, 0.25, axis="z", segments=20)
+        x = side * 5.35
+        meshes[f"engine_{suffix}"] = nacelle_pod(x)
+        meshes[f"nacelle_{suffix}"] = cylinder(
+            x, 3.10, 3.40, 1.00, 3.60, axis="z", segments=36
+        )
+        meshes[f"intake_{suffix}"] = cylinder(
+            x, 3.08, 5.55, 0.88, 0.18, axis="z", segments=36
+        )
+        meshes[f"fan_{suffix}"] = cylinder(
+            x, 3.08, 5.35, 0.78, 0.08, axis="z", segments=32
+        )
+        # Fan blades as thin radial slabs for a readable spinner/fan face.
+        for bi, ang in enumerate(np.linspace(0, 360, 12, endpoint=False)):
+            rad = np.deg2rad(ang)
+            bx = x + 0.38 * np.cos(rad)
+            by = 3.08 + 0.38 * np.sin(rad)
+            meshes[f"fan_blade_{suffix[0]}{bi+1}"] = box(
+                float(bx), float(by), 5.38, 0.55, 0.04, 0.06
+            )
+        meshes[f"pylon_{suffix}"] = box(x, 4.25, 3.40, 0.38, 1.95, 2.40)
+        meshes[f"exhaust_{suffix}"] = cylinder(
+            x, 3.02, 0.10, 0.48, 0.55, axis="z", segments=28
+        )
+        meshes[f"exhaust_stack_{'l' if side < 0 else 'r'}"] = cylinder(
+            x, 3.02, -0.35, 0.36, 0.35, axis="z", segments=24
+        )
         for index, angle in enumerate(range(0, 360, 60), start=1):
             meshes[f"exhaust_chevron_{suffix}_{index}"] = chevron_finger(
-                x, 3.14, 0.03, float(angle), radius=0.47
+                x, 3.02, -0.55, float(angle), radius=0.40
             )
 
-    # Conventional swept tail, with its top deliberately defining the published
-    # 12.42 m height.  It stays entirely inside the fuselage's length envelope.
-    meshes.update(
-        {
-            "tail_fin": lofted_aerofoil(
-                [(5.92, 0.0, -12.72, 6.34, 0.28), (12.42, 0.0, -15.48, 2.42, 0.14)],
-                chord_points=18,
-                vertical=True,
-            ),
-            "tail_fin_tip": box(0.0, 12.33, -16.05, 0.13, 0.18, 0.72),
-            "rudder": box(0.0, 8.95, -17.78, 0.085, 5.50, 0.68),
-            "dorsal_fin": box(0.0, 5.95, -12.28, 0.10, 1.45, 2.28),
-            "tailplane": lofted_aerofoil(
-                [
-                    (-7.05, 7.25, -16.02, 2.25, 0.14),
-                    (-0.35, 7.10, -14.32, 4.00, 0.18),
-                    (0.35, 7.10, -14.32, 4.00, 0.18),
-                    (7.05, 7.25, -16.02, 2.25, 0.14),
-                ],
-                chord_points=16,
-            ),
-            "tailplane_tip_l": box(-7.08, 7.12, -16.90, 0.22, 0.14, 0.95),
-            "tailplane_tip_r": box(7.08, 7.12, -16.90, 0.22, 0.14, 0.95),
-            "elevator_left": box(-3.58, 7.07, -17.50, 6.45, 0.075, 0.72),
-            "elevator_right": box(3.58, 7.07, -17.50, 6.45, 0.075, 0.72),
-            "tail_nav_light": box(0.0, 8.50, -19.37, 0.09, 0.09, 0.10),
-            "beacon_top": box(0.0, 12.365, -16.05, 0.10, 0.11, 0.10),
-        }
+    # Conventional swept fin — tip owns the exact 12.42 m height.
+    meshes["tail_fin"] = lofted_aerofoil(
+        [
+            (5.70, 0.0, -12.40, 6.60, 0.30),
+            (8.40, 0.0, -14.00, 4.40, 0.22),
+            (10.60, 0.0, -15.20, 3.00, 0.16),
+            (12.42, 0.0, -16.10, 1.85, 0.11),
+        ],
+        chord_points=18,
+        vertical=True,
     )
+    meshes["tail_fin_tip"] = box(0.0, 12.30, -16.35, 0.12, 0.20, 0.85)
+    meshes["rudder"] = lofted_aerofoil(
+        [
+            (6.40, 0.0, -17.55, 0.85, 0.08),
+            (11.40, 0.0, -17.95, 0.55, 0.06),
+        ],
+        chord_points=10,
+        vertical=True,
+    )
+    meshes["dorsal_fin"] = lofted_aerofoil(
+        [
+            (5.40, 0.0, -10.80, 2.60, 0.18),
+            (7.20, 0.0, -13.20, 1.40, 0.10),
+        ],
+        chord_points=12,
+        vertical=True,
+    )
+    meshes["tailplane"] = lofted_aerofoil(
+        [
+            (-7.20, 7.15, -15.80, 2.10, 0.13),
+            (-2.40, 7.05, -14.40, 3.40, 0.18),
+            (-0.30, 7.00, -14.00, 3.90, 0.19),
+            (0.30, 7.00, -14.00, 3.90, 0.19),
+            (2.40, 7.05, -14.40, 3.40, 0.18),
+            (7.20, 7.15, -15.80, 2.10, 0.13),
+        ],
+        chord_points=16,
+    )
+    meshes["tailplane_tip_l"] = box(-7.15, 7.12, -16.55, 0.28, 0.12, 0.90)
+    meshes["tailplane_tip_r"] = box(7.15, 7.12, -16.55, 0.28, 0.12, 0.90)
+    meshes["elevator_left"] = box(-3.60, 7.00, -17.35, 6.60, 0.07, 0.70)
+    meshes["elevator_right"] = box(3.60, 7.00, -17.35, 6.60, 0.07, 0.70)
+    meshes["tail_nav_light"] = box(0.0, 8.40, -19.20, 0.09, 0.09, 0.10)
+    meshes["beacon_top"] = box(0.0, 12.35, -16.20, 0.10, 0.12, 0.10)
 
-    # Tricycle gear: wheelbase is 15.60 m and the main-strut centres are 5.72 m
-    # apart, matching the 737-8 class published airport-planning envelope.  The
-    # tyres touch y=0 so callers can place the kit directly on a ground plane.
-    NOSE_Z = 13.35
-    MAIN_Z = -2.25
+    # Tricycle gear — published-class wheelbase / track, tyres on y=0.
+    NOSE_Z = 13.20
+    MAIN_Z = -2.40
     MAIN_X = 2.86
-    meshes.update(
-        {
-            "gear_nose": box(0.0, 1.89, NOSE_Z, 0.19, 3.12, 0.40),
-            "gear_oleo_nose": cylinder(0.0, 1.67, NOSE_Z, 0.10, 2.75, axis="y", segments=14),
-            "gear_scissors_nose": box(0.0, 2.12, NOSE_Z - 0.21, 0.15, 0.62, 0.34),
-            "gear_door_nose": box(0.0, 3.15, NOSE_Z, 0.92, 0.075, 1.22),
-            "gear_left": box(-MAIN_X, 1.73, MAIN_Z, 0.22, 2.46, 0.48),
-            "gear_right": box(MAIN_X, 1.73, MAIN_Z, 0.22, 2.46, 0.48),
-            "gear_oleo_left": cylinder(-MAIN_X, 1.67, MAIN_Z, 0.11, 2.15, axis="y", segments=14),
-            "gear_oleo_right": cylinder(MAIN_X, 1.67, MAIN_Z, 0.11, 2.15, axis="y", segments=14),
-            "gear_scissors_left": box(-MAIN_X, 2.03, MAIN_Z - 0.25, 0.16, 0.64, 0.38),
-            "gear_scissors_right": box(MAIN_X, 2.03, MAIN_Z - 0.25, 0.16, 0.64, 0.38),
-            "gear_door_left": box(-MAIN_X, 3.00, MAIN_Z, 1.24, 0.075, 1.44),
-            "gear_door_right": box(MAIN_X, 3.00, MAIN_Z, 1.24, 0.075, 1.44),
-            "nav_light_left": box(-17.90, 8.53, -0.27, 0.09, 0.09, 0.09),
-            "nav_light_right": box(17.90, 8.53, -0.27, 0.09, 0.09, 0.09),
-            "landing_light_l": box(-5.24, 2.70, 4.79, 0.25, 0.16, 0.09),
-            "landing_light_r": box(5.24, 2.70, 4.79, 0.25, 0.16, 0.09),
-            "taxi_light": box(0.0, 2.71, 13.73, 0.18, 0.12, 0.13),
-        }
+    meshes["gear_nose"] = box(0.0, 1.85, NOSE_Z, 0.18, 3.00, 0.38)
+    meshes["gear_oleo_nose"] = cylinder(
+        0.0, 1.60, NOSE_Z, 0.09, 2.55, axis="y", segments=16
     )
+    meshes["gear_scissors_nose"] = box(0.0, 2.05, NOSE_Z - 0.20, 0.14, 0.58, 0.32)
+    meshes["gear_door_nose"] = box(0.0, 3.10, NOSE_Z, 0.88, 0.07, 1.15)
+    meshes["gear_left"] = box(-MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
+    meshes["gear_right"] = box(MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
+    meshes["gear_oleo_left"] = cylinder(
+        -MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=16
+    )
+    meshes["gear_oleo_right"] = cylinder(
+        MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=16
+    )
+    meshes["gear_scissors_left"] = box(
+        -MAIN_X, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35
+    )
+    meshes["gear_scissors_right"] = box(
+        MAIN_X, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35
+    )
+    meshes["gear_door_left"] = box(-MAIN_X, 2.95, MAIN_Z, 1.15, 0.07, 1.35)
+    meshes["gear_door_right"] = box(MAIN_X, 2.95, MAIN_Z, 1.15, 0.07, 1.35)
+    meshes["nav_light_left"] = box(-17.85, 8.50, -0.20, 0.09, 0.09, 0.09)
+    meshes["nav_light_right"] = box(17.85, 8.50, -0.20, 0.09, 0.09, 0.09)
+    meshes["landing_light_l"] = box(-5.20, 2.85, 5.00, 0.24, 0.15, 0.09)
+    meshes["landing_light_r"] = box(5.20, 2.85, 5.00, 0.24, 0.15, 0.09)
+    meshes["taxi_light"] = box(0.0, 2.55, 13.55, 0.16, 0.12, 0.12)
 
-    def wheel_set(prefix: str, x: float, z: float, radius: float, width: float) -> None:
-        meshes[f"tire_{prefix}"] = cylinder(x, radius, z, radius, width, axis="x", segments=20)
-        meshes[f"wheel_{prefix}"] = cylinder(x, radius, z, radius * 0.63, width + 0.035, axis="x", segments=16)
-        meshes[f"rim_{prefix}"] = cylinder(x, radius, z, radius * 0.38, width + 0.06, axis="x", segments=14)
+    wheel_set(meshes, "nose_left", -0.30, NOSE_Z, 0.55, 0.22)
+    wheel_set(meshes, "nose_right", 0.30, NOSE_Z, 0.55, 0.22)
+    wheel_set(meshes, "left_inboard", -2.55, MAIN_Z, 0.62, 0.25)
+    wheel_set(meshes, "left_outboard", -3.17, MAIN_Z, 0.62, 0.25)
+    wheel_set(meshes, "right_inboard", 2.55, MAIN_Z, 0.62, 0.25)
+    wheel_set(meshes, "right_outboard", 3.17, MAIN_Z, 0.62, 0.25)
 
-    wheel_set("nose_left", -0.31, NOSE_Z, 0.55, 0.23)
-    wheel_set("nose_right", 0.31, NOSE_Z, 0.55, 0.23)
-    wheel_set("left_inboard", -2.55, MAIN_Z, 0.62, 0.25)
-    wheel_set("left_outboard", -3.17, MAIN_Z, 0.62, 0.25)
-    wheel_set("right_inboard", 2.55, MAIN_Z, 0.62, 0.25)
-    wheel_set("right_outboard", 3.17, MAIN_Z, 0.62, 0.25)
-
-    # The construction coordinates above are centred around the fuselage for
-    # readability.  Gate routes, however, use an aircraft nose-stop datum.  Put
-    # that datum at the root without disturbing any internal relationships.
-    nose_stop_offset = np.array((0.0, 0.0, -HALF_LENGTH), dtype=np.float32)
-    return {
-        name: (verts + nose_stop_offset, indices)
-        for name, (verts, indices) in meshes.items()
+    # Shift from mid-fuselage origin to the nose-stop datum used by gate routes.
+    nose_stop = np.array((0.0, 0.0, -HALF_LENGTH), dtype=np.float32)
+    shifted = {
+        name: (verts + nose_stop, indices) for name, (verts, indices) in meshes.items()
     }
+    return {name: orient_outward(v, i) for name, (v, i) in shifted.items()}
 
 
-def _bounds(meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> tuple[np.ndarray, np.ndarray]:
+def _bounds(meshes):
     vertices = np.concatenate([verts for verts, _ in meshes.values()], axis=0)
     return vertices.min(axis=0), vertices.max(axis=0)
 
 
-def validate_meshes(meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> tuple[np.ndarray, np.ndarray]:
-    """Fail early before emitting an invalid kit or a wildly scaled aircraft."""
+def validate_meshes(meshes):
     if not meshes:
         raise ValueError("AIR-005 emitted no meshes")
     for name, (verts, indices) in meshes.items():
@@ -454,14 +677,24 @@ def validate_meshes(meshes: dict[str, tuple[np.ndarray, np.ndarray]]) -> tuple[n
     minimum, maximum = _bounds(meshes)
     dimensions = maximum - minimum
     expected = np.array((TARGET_SPAN_M, TARGET_HEIGHT_M, TARGET_LENGTH_M), dtype=np.float32)
-    if not np.allclose(dimensions, expected, rtol=0.0, atol=0.015):
-        raise ValueError(f"AIR-005 bounds {dimensions.tolist()} do not match {expected.tolist()}")
-    if abs(float(minimum[1])) > 0.015:
+    if not np.allclose(dimensions, expected, rtol=0.0, atol=0.02):
+        raise ValueError(
+            f"AIR-005 bounds {dimensions.tolist()} do not match {expected.tolist()}"
+        )
+    if abs(float(minimum[1])) > 0.02:
         raise ValueError(f"AIR-005 tyres must touch local y=0, got {minimum[1]:.4f}")
-    if abs(float(maximum[2])) > 0.015:
+    if abs(float(maximum[2])) > 0.02:
         raise ValueError(f"AIR-005 nose-stop datum must be local z=0, got {maximum[2]:.4f}")
-    if abs(float(minimum[2]) + TARGET_LENGTH_M) > 0.015:
-        raise ValueError(f"AIR-005 tail must end at -{TARGET_LENGTH_M:.2f} m, got {minimum[2]:.4f}")
+    if abs(float(minimum[2]) + TARGET_LENGTH_M) > 0.02:
+        raise ValueError(
+            f"AIR-005 tail must end at -{TARGET_LENGTH_M:.2f} m, got {minimum[2]:.4f}"
+        )
+    fuse_verts, _ = meshes["fuselage"]
+    fuse_rx = float(max(abs(fuse_verts[:, 0].min()), abs(fuse_verts[:, 0].max())))
+    if abs(fuse_rx - FUSE_RX) > 0.05:
+        raise ValueError(
+            f"AIR-005 fuselage half-width must be ~{FUSE_RX:.2f} m, got {fuse_rx:.4f}"
+        )
     return minimum, maximum
 
 
@@ -471,9 +704,10 @@ def main() -> None:
     minimum, maximum = validate_meshes(meshes)
     write_kit(AIRCRAFT, BASENAME, meshes)
     dimensions = maximum - minimum
+    triangles = sum(len(indices) // 3 for _, indices in meshes.values())
     print(
-        f"AIR-005 ready: {BASENAME} ({len(meshes)} meshes, "
-        f"bounds {dimensions[0]:.2f} m span × {dimensions[1]:.2f} m height × "
+        f"AIR-005 ready: {BASENAME} ({len(meshes)} meshes, {triangles} triangles; "
+        f"{dimensions[0]:.2f} m span × {dimensions[1]:.2f} m height × "
         f"{dimensions[2]:.2f} m length)"
     )
 

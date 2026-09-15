@@ -7870,10 +7870,12 @@ namespace Airside.Presentation
             // use y=0.7f, so offset the metre-authored kit to put its tires on the ground.
             // v06 remains a safe fallback for branches/builds that have not imported it yet.
             var aircraftArt = PreferArtKit(
-                "Models/Aircraft/mdl_atr42_starter_v02.gltf",
-                PreferArtKit("Models/Aircraft/mdl_atr42_starter_v01.gltf",
-                    "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf"));
-            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v02.gltf", StringComparison.Ordinal)
+                "Models/Aircraft/mdl_atr42_starter_v03.gltf",
+                PreferArtKit("Models/Aircraft/mdl_atr42_starter_v02.gltf",
+                    PreferArtKit("Models/Aircraft/mdl_atr42_starter_v01.gltf",
+                        "Models/Aircraft/mdl_regional_turboprop_01_v06.gltf")));
+            var finalAtr42 = aircraftArt.EndsWith("mdl_atr42_starter_v03.gltf", StringComparison.Ordinal)
+                || aircraftArt.EndsWith("mdl_atr42_starter_v02.gltf", StringComparison.Ordinal)
                 || aircraftArt.EndsWith("mdl_atr42_starter_v01.gltf", StringComparison.Ordinal);
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 aircraftArt,
@@ -8231,14 +8233,14 @@ namespace Airside.Presentation
             "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5" or "cabin_window_frame_7"
                 or "cabin_window_frame_r1" or "cabin_window_frame_r2" or "cabin_window_frame_r3"
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
-                or "cockpit_frame" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
+                or "cockpit_frame" or "cockpit_sill" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
             "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
                 or "door_outline_fwd" or "cargo_door_outline" => new Color(0.48f, 0.52f, 0.55f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
-                or "wing_fairing_left" or "wing_fairing_right"
+                or "wing_fairing_left" or "wing_fairing_right" or "wing_centre_saddle"
                 or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
                 or "wing_fence_left" or "wing_fence_right" or "wing_fence_mid_l" or "wing_fence_mid_r"
                 or "flap_left" or "flap_right" or "flap_fairing_l" or "flap_fairing_r"
@@ -8252,6 +8254,7 @@ namespace Airside.Presentation
                 => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
                 or "nacelle_left" or "nacelle_right"
+                or "nacelle_fillet_left" or "nacelle_fillet_right"
                 or "intake_left" or "intake_right"
                 or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r"
                 => new Color(0.15f, 0.38f, 0.55f),

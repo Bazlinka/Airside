@@ -9,6 +9,37 @@ change it describes.
   camera is looking at; click an aircraft to select it, click or drag to fly the camera there,
   N to hide.
 
+- **ATR 42-600 visual fidelity pass (v03).** AIR-001 gains a new `mdl_atr42_starter_v03` kit
+  while v02 stays the approved fallback: four clean fitted cockpit panes with credible pillars,
+  even Hangar-readable cabin windows, a smoother blunt nose into the cabin, compact nacelles
+  blended into the high wing, clear fuselage-side main-gear sponsons (not Q400 nacelle gear),
+  tighter wing-root / fin / T-tail joins, and six readable 3.93 m props with connected hubs.
+  Same 22.67 × 24.57 × 7.59 m envelope, centred root, tyre contact and moving-part names;
+  catalogue/runtime prefer v03 → v02 → v01. Hangar thumbnail regenerated from v03. 183 meshes /
+  19,704 tris. No simulation or save change. Generator validate + multi-angle review renders;
+  Unity EditMode pending Mac (`scripts/test-unity.sh`).
+
+- **737-8 looks like a 737.** AIR-005 rebuilt in place: slender fuselage, fitted cabin windows,
+  pitched flight-deck panes, low swept wing with dual-feather winglets, large forward-hung
+  turbofans with chevron nozzles, deep wing-body fairing, joined conventional tail. Same
+  39.47 × 35.92 × 12.42 m envelope and asset path; Hangar thumbnail regenerated. 204 meshes /
+  17,464 tris (was 180 / 6,988). No simulation or save change. Generator validate + offline
+  mesh review; Unity EditMode / packaged QA still open.
+- **Dash 8-400 visual quality pass.** AIR-006 tightened in place: continuous wing-root
+  saddle, single aerodynamic nacelle with gear bay, framed four-pane flight deck, pitched
+  six-blade props with readable hubs/spinners, longer nacelle-mounted gear and doors, soft
+  fin-root fillet and rounded T-tail saddle, even cabin windows. Same 32.83 × 28.42 × 8.34 m
+  envelope and asset path; Hangar thumbnail regenerated. 182 meshes / 26752 tris. No
+  simulation or save change. Generator validate + `work/review/` orthographic renders;
+  Unity EditMode re-run pending Mac (`scripts/test-unity.sh` unavailable here).
+
+- **Dash 8-400 looks like a Dash 8.** AIR-006 rebuilt in place: slender fuselage, fitted cabin
+  windows, pitched flight-deck panes, continuous nacelles with gear bays, six-blade props, high
+  wing with tip fences and root saddles, joined T-tail. Same 32.83 × 28.42 × 8.34 m envelope and
+  asset path; Hangar thumbnail regenerated. 174 meshes / 18,856 tris (was 139 / 6,728). No
+  simulation or save change. Domain pre-check + offline mesh review; Unity EditMode / packaged
+  QA still open.
+
 - **Statuses that flag trouble.** Long runway or circuit holds turn yellow then red, a stand you
   need to choose is red, waits show how long, and messages stack instead of overwriting each
   other, with the last ten kept on the Flights board. 343/343 EditMode.
@@ -413,7 +444,6 @@ change it describes.
   **Verified:** `scripts/test-domain.sh` **221 passed** (7 new pavement tests; 4 pre-existing failures also red on main). Unity Play / Mac build
   still required (no editor on this Cloud Linux VM).
 
-
 - **Bare circuit HUD and flight presentation match the visible world.** Economy /
   research / stands chrome hides on the bare field; coast ambience mutes with no
   coast in view; engine audio reaches ATR follow distances (~220 m); gear doors
@@ -423,7 +453,6 @@ change it describes.
   **Verified:** `scripts/test-domain.sh` **214 passed** (4 pre-existing failures
   also red on main). Unity Play / Mac build still required (no editor on this
   Cloud Linux VM).
-
 
 - **Adelaide bare field looks authored, and the ATR circuit reads weightier.**
   The 16 m tiled grass cube is replaced by a multi-scale CC0 ground mesh

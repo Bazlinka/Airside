@@ -48,3 +48,15 @@ Before a 737 can move under its own simulated state, add a paved gate lead-in,
 an explicit pushback/turnout, a terminal-stand model separate from regional
 bays, stand/runway reservations and tests for the complete taxi-in/out path.
 Only then may it join an airline timetable.
+
+## Visual revision (2026-09-15)
+
+AIR-005 keeps the same asset path, envelope and animation/pivot part-name
+contracts. The silhouette is rebuilt in place: fitted cabin glazing, a pitched
+flight deck, dual-feather winglets, chevron-nozzle turbofans, a deep wing-body
+fairing and a joined conventional tail. Evidence: 204 named meshes /
+17,464 triangles (was 180 / 6,988); generator validate for exact bounds, tyres
+on Y=0 and fuselage half-width ~1.88 m; Hangar thumbnail regenerated from the
+runtime glTF. First integration: Unity EditMode 305/305 then 319/319 with Gate
+13 operations. Visual revision: generator validate + offline mesh review; Unity
+EditMode / packaged overview-follow QA still open (no Mac build that session).

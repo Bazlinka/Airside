@@ -84,7 +84,9 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
-            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer).Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).ToArray();
+            // Regional openings only; the Gate 13 jet (ADR 0047) keeps its own timetable.
+            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && !AirlineOperations.NeedsTerminalGate(a.Type))
+                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).ToArray();
             Assert.That(departures, Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds));
             var emu = ops.Fleet.Where(a => a.Airline.Name == "Emu Air").Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds);
             Assert.That(emu.Max(), Is.LessThanOrEqualTo(20 * 60), "Emu Air still opens the day within twenty minutes");

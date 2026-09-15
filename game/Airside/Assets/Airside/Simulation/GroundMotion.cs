@@ -164,6 +164,60 @@ namespace Airside.Simulation
         public float EndX => _x[_x.Length - 1];
         public float EndZ => _z[_z.Length - 1];
 
+        /// <summary>Metres travelled along the path after <paramref name="seconds"/>.</summary>
+        public float DistanceAt(double seconds)
+        {
+            if (seconds <= 0)
+                return 0f;
+            if (seconds >= Seconds)
+                return Length;
+            var i = Array.BinarySearch(_time, seconds);
+            if (i < 0)
+                i = ~i;
+            var segment = Math.Max(0, i - 1);
+            var span = _time[segment + 1] - _time[segment];
+            var length = _distance[segment + 1] - _distance[segment];
+            var v0 = _speed[segment];
+            var v1 = _speed[segment + 1];
+            var tau = seconds - _time[segment];
+            var a = span > 1e-6 ? (v1 - v0) / span : 0;
+            var travelled = v0 * tau + 0.5 * a * tau * tau;
+            if (v0 + v1 < 2 * MinimumSegmentSpeed)
+                travelled = length * (tau / span);
+            return _distance[segment] + (float)Math.Min(length, Math.Max(0.0, travelled));
+        }
+
+        /// <summary>
+        /// Point <paramref name="metres"/> along the path; beyond either end it continues in a
+        /// straight line along the end segment (where a trailing wheel would still be).
+        /// </summary>
+        public (float x, float z) PointAtDistance(float metres)
+        {
+            var last = _x.Length - 1;
+            if (metres < 0f)
+            {
+                var d = Direction(0);
+                return (_x[0] + d.x * metres, _z[0] + d.z * metres);
+            }
+
+            if (metres > Length)
+            {
+                var d = Direction(last - 1);
+                return (_x[last] + d.x * (metres - Length), _z[last] + d.z * (metres - Length));
+            }
+
+            var sample = SampleAtDistance(metres);
+            return (sample.X, sample.Z);
+        }
+
+        private (float x, float z) Direction(int segment)
+        {
+            var dx = _x[segment + 1] - _x[segment];
+            var dz = _z[segment + 1] - _z[segment];
+            var length = Hypot(dx, dz);
+            return length > 1e-6f ? (dx / length, dz / length) : (1f, 0f);
+        }
+
         /// <summary>Position and travel direction <paramref name="metres"/> along the path (speed 0).</summary>
         public GroundSample SampleAtDistance(float metres)
         {
@@ -316,16 +370,26 @@ namespace Airside.Simulation
     /// <summary>One piece of a ground leg: a path, driven nose-first or tail-first, after an optional pause.</summary>
     public readonly struct GroundLegPart
     {
-        public GroundLegPart(GroundPath path, bool tailFirst, double pauseBeforeSeconds = 0)
+        public GroundLegPart(GroundPath path, bool tailFirst, double pauseBeforeSeconds = 0, float trackMetres = 0f)
         {
             Path = path;
             TailFirst = tailFirst;
             PauseBeforeSeconds = pauseBeforeSeconds;
+            TrackMetres = trackMetres;
         }
 
         public GroundPath Path { get; }
         public bool TailFirst { get; }
         public double PauseBeforeSeconds { get; }
+
+        /// <summary>
+        /// When positive, the path is followed by the aircraft's nose datum and its main gear
+        /// trails this far behind along the same path, so the body points from the mains to the
+        /// nose instead of along the tangent at the nose. A 39 m jet steered off its nose tangent
+        /// swings its tail across the grass in every turn; tracked like this it stays on the
+        /// taxiway. Zero keeps the original tangent heading (regional turboprops).
+        /// </summary>
+        public float TrackMetres { get; }
         public double Seconds => PauseBeforeSeconds + Path.Seconds;
     }
 
@@ -387,22 +451,43 @@ namespace Airside.Simulation
                 var part = _parts[i];
                 var isLast = i == _parts.Count - 1;
                 if (t < part.PauseBeforeSeconds)
-                    return Pose(part, part.Path.SampleAt(0), stopped: true);
+                    return Pose(part, 0, stopped: true);
                 t -= part.PauseBeforeSeconds;
                 if (t <= part.Path.Seconds || isLast)
-                    return Pose(part, part.Path.SampleAt(t), stopped: false);
+                    return Pose(part, t, stopped: false);
                 t -= part.Path.Seconds;
             }
 
             var final = _parts[_parts.Count - 1];
-            return Pose(final, final.Path.SampleAt(final.Path.Seconds), stopped: true);
+            return Pose(final, final.Path.Seconds, stopped: true);
         }
 
-        private static GroundPose Pose(GroundLegPart part, GroundSample sample, bool stopped)
+        /// <summary>Parts in order, for tests and tools that need the individual paths.</summary>
+        public IReadOnlyList<GroundLegPart> Parts => _parts;
+
+        private static GroundPose Pose(GroundLegPart part, double seconds, bool stopped)
         {
+            var sample = part.Path.SampleAt(seconds);
             var sign = part.TailFirst ? -1f : 1f;
-            return new GroundPose(sample.X, sample.Z, sample.DirectionX * sign, sample.DirectionZ * sign,
-                stopped ? 0f : sample.Speed, part.TailFirst);
+            var noseX = sample.DirectionX * sign;
+            var noseZ = sample.DirectionZ * sign;
+            if (part.TrackMetres > 0f)
+            {
+                // Main gear on the path behind the nose: behind in travel when nose first,
+                // ahead in travel when the tail leads a pushback.
+                var along = part.Path.DistanceAt(seconds);
+                var mains = part.Path.PointAtDistance(part.TailFirst ? along + part.TrackMetres : along - part.TrackMetres);
+                var dx = sample.X - mains.x;
+                var dz = sample.Z - mains.z;
+                var length = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (length > 1e-3f)
+                {
+                    noseX = dx / length;
+                    noseZ = dz / length;
+                }
+            }
+
+            return new GroundPose(sample.X, sample.Z, noseX, noseZ, stopped ? 0f : sample.Speed, part.TailFirst);
         }
     }
 }

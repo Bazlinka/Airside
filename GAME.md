@@ -1,5 +1,34 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — Gate 13 737-8 operations (ADR 0047). Branch
+  `feature/gate13-737-operations`; Unity EditMode 319/319 (0 failed, 0 skipped).**
+  - **Player-visible:** the AIR-005 preview is replaced by one operational AI 737-8, **VH-WTJ**
+    of fictional **Wattlebird Jet** (teal, no logo). It taxis in nose first to Gate 13, parks,
+    pushes back tail first onto T1, disconnects the tug, taxis out forward and departs on a
+    fixed MEL/SYD/MEL/BNE/SYD/PER/MEL/CBR rotation inside the 06:00–21:00 AI day. It is
+    selectable/followable with registration, airline, type and live state (selection card now
+    shows the type), and appears on field tags and the Flights board ("Gate 13").
+  - **How:** generator adds `AdelaideLayout.TerminalGates` routes and a derived "Gate 13 apron
+    link" filling the 50 m unpaved band between T1/T2 and the OSM apron edge (no overlap).
+    `AdelaideGround` dispatches bay vs gate (`Bay()` throws for a gate); gate legs steer the
+    body from a main-gear point 19 m behind the nose (`GroundLegPart.TrackMetres`), regional
+    legs unchanged. `AirlineOperations.StandFits`/`FreeStandsFor`; `FreeStands()` = regional
+    bays. Gate held while parked, taxiing in and through taxi-out; lead-in held during taxi
+    in/out; derived from state (`GroundResourceHolder`), so no save change. The jet uses a
+    deterministic rotation (no random draws), so regional sequences are untouched.
+    `AddMissingTerminalOperators()` runs in `StartAtAdelaide` and after catch-up on load.
+  - **Evidence:** new `TerminalGateOperationsTests` (14): one 737 at Gate 13, gate never a
+    bay, type-separated stands, nose + main gear on rendered pavement for the whole taxi-in and
+    taxi-out, no teleport/nose snap (0.1 s samples), nose-in stop heading, tail-first pushback
+    with a <2° seam, reservations over 3 simulated days, second-jet refusal, save + catch-up ==
+    live, old-save backfill idempotent, AIR-005 profile. Offline route plots
+    `work/review/gate13-routes*.png` (not committed). Regional tests unchanged except two that
+    counted every AI aircraft as regional.
+  - **Outstanding:** packaged visual QA of Gate 13 taxi-in, pushback and taxi-out (no build
+    requested). Known limits in ADR 0047: ATR circuit speeds and FL250 cruise cap for the jet,
+    no cross-traffic taxiway reservations, no Gate 13 paint. Next asset per ADR 0046: AIR-006
+    A321neo (not started).
+
 - **2026-09-15 HANDOFF → next aircraft slice (Codex). AIR-005 Boeing 737-8-class is merged
   on `main` by PR #244 (`555587f`); Unity EditMode 305/305.**
   - **Player-visible outcome:** a new original, unbranded, true-scale 737-8-class jet is

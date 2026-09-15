@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Gate 13 737-8 now operates.** The parked preview is one real AI aircraft: fictional
+  Wattlebird Jet's VH-WTJ taxis in nose first to Gate 13, parks, pushes back tail first onto
+  T1, taxis out and departs on a Melbourne/Sydney/Brisbane/Perth/Canberra rotation. Gate 13 is
+  its own terminal stand system (never a regional bay), with a paved apron link, gate and
+  lead-in reservations and the normal runway sequencing. It is selectable and followable with
+  its registration, airline, type and live state. Existing saves gain it once. No save-schema
+  change; regional traffic unchanged. 319/319 EditMode; not rebuilt.
+
 - **First terminal jet: AIR-005 737-8.** An original unbranded, true-scale 737-8-class
   model is parked at Adelaide Gate 13 and can be clicked/followed with correctly sized
   camera framing, shadow, selection marker, identity card and hit volume. Gate 13 is a presentation

@@ -42,6 +42,12 @@ namespace Airside.Domain
         /// <summary>QantasLink regional services from Adelaide (Dash 8-400s).</summary>
         public static Airline QantasLink() => new("QLK", "QantasLink", "#D8141E", isPlayer: false);
 
+        /// <summary>
+        /// Wattlebird Jet — the project's own fictional mainland jet operator (ADR 0047), flying
+        /// one unbranded 737-8 from Adelaide's terminal. No real airline, logo or livery.
+        /// </summary>
+        public static Airline WattlebirdJet() => new("WTB", "Wattlebird Jet", "#2F7F86", isPlayer: false);
+
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 
         public (byte r, byte g, byte b) LiveryRgb()

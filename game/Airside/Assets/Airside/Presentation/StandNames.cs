@@ -15,6 +15,8 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(stand.Value))
                 return "—";
+            if (AdelaideGround.TryTerminalGate(stand, out var gate))
+                return gate.Reference;
             foreach (var bay in AdelaideLayout.Bays)
                 if (bay.Id == stand.Value)
                     return bay.Reference;

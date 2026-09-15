@@ -2341,11 +2341,15 @@ namespace Airside.Presentation
                 var flight = VisualFlights[index];
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
+                // Flights past the visible limit have no view; a hidden fleet aircraft has
+                // nothing on screen to smoke or sound. Either used to dereference null.
+                var view = index < _commercialAircraft.Length ? _commercialAircraft[index] : null;
+                var hasView = view != null && view.gameObject.activeInHierarchy;
 
                 // Fire once when the visual path actually meets the runway — not at the
                 // Approach→Landing phase change (that is still ~1.5 m AGL after the path fix).
                 if (phase == AircraftPhase.Landing
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && !_touchdownFired.Contains(id)
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.TouchdownProgress)
                 {
@@ -2384,7 +2388,7 @@ namespace Airside.Presentation
                 // Rolling trail: after the wheels are down the tread keeps smoking
                 // until the rollout has scrubbed most of the speed off.
                 if (phase == AircraftPhase.Landing
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && _touchdownFired.Contains(id))
                 {
                     UpdateRollingWheelSmoke(_commercialAircraft[index], flight, phase);
@@ -2392,7 +2396,7 @@ namespace Airside.Presentation
 
                 // Soft rotate cue once the visual path lifts — presentation only.
                 if (phase == AircraftPhase.Takeoff
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && !_rotateFired.Contains(id)
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.RotateProgress)
                 {

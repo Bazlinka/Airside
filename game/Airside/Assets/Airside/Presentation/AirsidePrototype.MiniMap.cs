@@ -60,7 +60,12 @@ namespace Airside.Presentation
         private void DrawMiniMap(Rect panelRect, GUIStyle panel, GUIStyle small)
         {
             if (!MiniMapShows || panelRect.width <= 0f || panelRect.height <= 0f)
+            {
+                // A press held while the map hid (N, a dialog) would otherwise come back
+                // armed and turn the next field drag into a mini-map recentre.
+                _miniMapPressed = _miniMapDragging = false;
                 return;
+            }
 
             GUI.Box(panelRect, GUIContent.none, panel);
             GUI.Label(new Rect(panelRect.x + 10f, panelRect.y + 2f, panelRect.width - 20f, FieldMiniMap.HeaderHeight),
@@ -137,6 +142,12 @@ namespace Airside.Presentation
 
             switch (ev.type)
             {
+                // A release outside the window never reaches OnGUI. Without this, a later
+                // left-drag on the field kept recentring the camera through the map.
+                case EventType.MouseDown when !map.Contains(ev.mousePosition):
+                    _miniMapPressed = _miniMapDragging = false;
+                    break;
+
                 case EventType.MouseDown when ev.button == 0 && map.Contains(ev.mousePosition):
                     _miniMapPressed = true;
                     _miniMapDragging = false;

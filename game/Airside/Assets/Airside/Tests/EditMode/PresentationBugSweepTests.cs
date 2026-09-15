@@ -82,5 +82,22 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.EqualTo(0f));
             Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.TaxiOut, 0.5f, drawnOnGround: true), Is.EqualTo(12f));
         }
+
+        [Test]
+        public void WaterMaterial_IsTranslucentNotWetAsphalt()
+        {
+            var material = AirsideMaterialLibrary.Create(new Color(0.2f, 0.4f, 0.5f), AirsideMaterialLibrary.SurfaceKind.Water);
+            try
+            {
+                Assert.That(material.renderQueue, Is.GreaterThanOrEqualTo(3000), "water is transparent");
+                var map = material.mainTexture;
+                if (map != null)
+                    Assert.That(map.name, Does.Not.Contain("asphalt"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
     }
 }

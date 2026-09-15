@@ -656,7 +656,9 @@ namespace Airside.Presentation
                 SurfaceKind.Glass => "mat_glass_v01",
                 SurfaceKind.PaintedLine => "mat_painted_line_v01",
                 SurfaceKind.AircraftSkin => "mat_aircraft_v01",
-                SurfaceKind.Water => "mat_wet_v01",
+                // No Water template: mat_wet_v01 is wet *asphalt* (MAT-001 builds it from the
+                // asphalt maps, opaque), so coast water and puddles rendered as solid tarmac.
+                // Water uses the procedural path with the tx_water_coast maps and transparency.
                 _ => null
             };
 

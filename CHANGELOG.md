@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Saab 340B close-view polish.** AIR-007’s four flight-deck panes now follow its rounded nose
+  instead of projecting as a dark box; the nacelle gear bays are curved continuations rather
+  than blocks, and the hubs/spinners are scaled down. The low-wing Saab silhouette, true-scale
+  footprint and existing Rex operation remain unchanged. 120 named meshes / 6,868 triangles;
+  deterministic geometry regression green. Unity EditMode and packaged camera QA remain open.
+
 - **737-8 close-view polish.** AIR-005 keeps its real-scale footprint and operational loop, but
   replaces the dark projecting cockpit mask with a skin-coloured flight-deck crown and three
   compact fitted panes, shortens and tapers the wing-body keel fairing, and reduces the split

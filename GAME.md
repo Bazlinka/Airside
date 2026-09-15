@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — AIR-007 Saab 340B close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Rex's Saab keeps its compact low-wing, conventional-tail identity, but
+    its four flight-deck panes now follow the rounded nose rather than projecting as a dark
+    box. Curved nacelle gear-bay fairings and smaller hubs/spinners remove the blocky underwing
+    read. The `mdl_saab_340b_v01` path, 19.73 × 21.44 × 6.97 m envelope, tyre contact, motion
+    names, type profile, schedule and save behaviour remain unchanged.
+  - **How:** `scripts/generate-air-007-saab-340b.py` now emits 120 named meshes / 6,868
+    triangles; source + StreamingAssets kits and its 480 × 320 Hangar thumbnail are synced.
+    New `scripts/test-air-007-saab-340b.py` locks scale, fitted glazing, curved gear fairings,
+    compact hubs and index integrity. No other aircraft or simulation code changed.
+  - **Evidence:** generator validation and `python3 scripts/test-air-007-saab-340b.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-007 slice, then polish AIR-001's remaining cockpit
+    glazing and tail joins in a separate commit. Do not start a new type.
+
 - **2026-09-15 Codex — AIR-005 737-8 close-view polish; Unity EditMode pending Mac.**
   - **Player-visible:** Wattlebird Jet's 737 now has a skin-coloured flight-deck crown with
     three compact fitted windshield panes rather than a dark projecting visor; its keel fairing

@@ -55,6 +55,63 @@ HALF_LENGTH = TARGET_LENGTH_M / 2.0
 HALF_SPAN = TARGET_SPAN_M / 2.0
 PROP_RADIUS = 3.35 / 2.0  # Dowty R.354/4… family, 132 in / 3.35 m
 
+# Tail-to-nose stations for the narrow circular body.  The same profile feeds
+# the skin and the small fitted flight-deck panes so glazing follows the nose
+# rather than sitting on it as a rectangular mask.
+FUSE_STATIONS = np.array(
+    [
+        (-HALF_LENGTH + 0.12, 0.04, 0.04, 1.78),
+        (-9.35, 0.18, 0.16, 1.80),
+        (-8.70, 0.48, 0.44, 1.82),
+        (-7.80, 0.82, 0.78, 1.88),
+        (-6.40, 1.08, 1.05, 1.95),
+        (-4.20, 1.14, 1.12, 2.00),
+        (3.80, 1.14, 1.12, 2.00),
+        (5.60, 1.10, 1.08, 1.96),
+        (6.90, 0.98, 0.94, 1.88),
+        (7.80, 0.78, 0.72, 1.76),
+        (8.55, 0.52, 0.46, 1.64),
+        (9.15, 0.26, 0.22, 1.52),
+        (HALF_LENGTH - 0.12, 0.05, 0.04, 1.46),
+    ],
+    dtype=np.float32,
+)
+
+
+def fuselage_surface(z: float, angle_degrees: float, offset: float = 0.0) -> np.ndarray:
+    rx = float(np.interp(z, FUSE_STATIONS[:, 0], FUSE_STATIONS[:, 1]))
+    ry = float(np.interp(z, FUSE_STATIONS[:, 0], FUSE_STATIONS[:, 2]))
+    cy = float(np.interp(z, FUSE_STATIONS[:, 0], FUSE_STATIONS[:, 3]))
+    angle = np.deg2rad(angle_degrees)
+    return np.array(
+        [(rx + offset) * np.cos(angle), cy + (ry + offset) * np.sin(angle), z],
+        dtype=np.float32,
+    )
+
+
+def fitted_panel(corners, offset: float = 0.014):
+    """A small glazed quad fitted to the curved fuselage, with a real thin edge."""
+    sampled = np.asarray(
+        [fuselage_surface(z, angle, offset) for z, angle in corners], dtype=np.float32
+    )
+    normal = np.cross(sampled[1] - sampled[0], sampled[2] - sampled[0])
+    normal /= np.linalg.norm(normal)
+    outward = sampled.mean(axis=0).copy()
+    outward[2] = 0.0
+    outward[1] -= 1.75
+    if np.dot(normal, outward) < 0.0:
+        normal = -normal
+    front = sampled + normal * 0.004
+    back = sampled - normal * 0.008
+    vertices = np.vstack((front, back)).astype(np.float32)
+    indices = np.asarray(
+        [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6,
+         0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2,
+         2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0],
+        dtype=np.uint16,
+    )
+    return vertices, indices
+
 
 def translated(mesh, x, y, z):
     vertices, indices = mesh
@@ -102,24 +159,7 @@ def saab_meshes():
 
     # Narrow circular fuselage. The lathe helper adds a 0.12 m tip beyond each
     # end station, so stations are inset by 0.12 m to hit exact length.
-    meshes["fuselage"] = oval_lathe_fuselage(
-        [
-            (-HALF_LENGTH + 0.12, 0.04, 0.04, 1.78),
-            (-9.35, 0.18, 0.16, 1.80),
-            (-8.70, 0.48, 0.44, 1.82),
-            (-7.80, 0.82, 0.78, 1.88),
-            (-6.40, 1.08, 1.05, 1.95),
-            (-4.20, 1.14, 1.12, 2.00),
-            (3.80, 1.14, 1.12, 2.00),
-            (5.60, 1.10, 1.08, 1.96),
-            (6.90, 0.98, 0.94, 1.88),
-            (7.80, 0.78, 0.72, 1.76),
-            (8.55, 0.52, 0.46, 1.64),
-            (9.15, 0.26, 0.22, 1.52),
-            (HALF_LENGTH - 0.12, 0.05, 0.04, 1.46),
-        ],
-        segments=40,
-    )
+    meshes["fuselage"] = oval_lathe_fuselage(FUSE_STATIONS.tolist(), segments=40)
 
     # Low wing — the Saab's defining contrast with ATR / Q400 high wings.
     # Outer tip stations own the exact 21.44 m standard span.
@@ -170,7 +210,20 @@ def saab_meshes():
             x, 1.48, -2.35, 0.16, 0.42, axis="z", segments=16
         )
         meshes[f"pylon_{name}"] = box(x, 1.85, 0.35, 0.42, 0.55, 1.85)
-        meshes[f"gear_fairing_{name}"] = box(x, 1.15, -0.85, 0.85, 0.95, 1.95)
+        meshes[f"gear_fairing_{name}"] = translated(
+            oval_lathe_fuselage(
+                [
+                    (-1.70, 0.16, 0.20, 1.20),
+                    (-1.05, 0.34, 0.36, 1.14),
+                    (-0.30, 0.40, 0.42, 1.15),
+                    (0.38, 0.26, 0.28, 1.23),
+                ],
+                segments=20,
+            ),
+            x,
+            0.0,
+            0.0,
+        )
 
         # Four Dowty blades + tips. propeller_{side} is the spin parent; _b/_c/_d
         # nest under it as Blade / Blade 2 / Blade 3 (see NestCrossPropellerBlades).
@@ -189,13 +242,13 @@ def saab_meshes():
                 tip=True,
             )
         meshes[f"prop_hub_{name}"] = cylinder(
-            x, 1.74, 2.88, 0.22, 0.28, axis="z", segments=22
+            x, 1.74, 2.88, 0.17, 0.22, axis="z", segments=22
         )
         meshes[f"spinner_{name}"] = translated(
             oval_lathe_fuselage(
                 [
                     (2.78, 0.20, 0.20, 1.74),
-                    (3.05, 0.26, 0.26, 1.74),
+                    (3.05, 0.21, 0.21, 1.74),
                     (3.32, 0.04, 0.04, 1.74),
                 ],
                 segments=22,
@@ -254,15 +307,20 @@ def saab_meshes():
         meshes[f"cabin_window_{index}"] = box(-1.13, 2.35, float(z), 0.03, 0.34, 0.38)
         meshes[f"cabin_window_r{index}"] = box(1.13, 2.35, float(z), 0.03, 0.34, 0.38)
 
-    # Four-pane flight deck fitted to the nose.
-    meshes["windscreen_l"] = box(-0.48, 2.48, 8.35, 0.62, 0.52, 0.07)
-    meshes["windscreen_r"] = box(0.48, 2.48, 8.35, 0.62, 0.52, 0.07)
-    meshes["cockpit_side_l"] = box(-0.98, 2.40, 7.85, 0.05, 0.48, 0.65)
-    meshes["cockpit_side_r"] = box(0.98, 2.40, 7.85, 0.05, 0.48, 0.65)
-    meshes["windscreen_pillar_l"] = box(-0.78, 2.48, 8.20, 0.06, 0.50, 0.35)
-    meshes["windscreen_pillar_r"] = box(0.78, 2.48, 8.20, 0.06, 0.50, 0.35)
-    meshes["windscreen_pillar_c"] = box(0.0, 2.52, 8.38, 0.05, 0.48, 0.28)
-    meshes["cockpit_glare"] = box(0.0, 2.78, 8.05, 1.15, 0.08, 0.55)
+    # Four compact panes follow the rounded nose; gaps are the pillars.  The
+    # former box panes and glare slab projected past the nose as a dark mask.
+    meshes["windscreen_l"] = fitted_panel(
+        [(7.78, 99), (7.78, 125), (8.46, 119), (8.62, 97)]
+    )
+    meshes["windscreen_r"] = fitted_panel(
+        [(7.78, 81), (7.78, 55), (8.62, 83), (8.46, 61)]
+    )
+    meshes["cockpit_side_l"] = fitted_panel(
+        [(7.18, 126), (7.18, 150), (7.98, 143), (8.28, 117)]
+    )
+    meshes["cockpit_side_r"] = fitted_panel(
+        [(7.18, 54), (7.18, 30), (8.28, 63), (7.98, 37)]
+    )
 
     meshes["livery_stripe"] = box(-1.135, 1.78, 0.40, 0.03, 0.12, 13.5)
     meshes["livery_stripe_lower"] = box(1.135, 1.78, 0.40, 0.03, 0.12, 13.5)

@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **2026-09-16 Claude — diagnostic `-airsideFullAirport` terrain over-exposure fixed; default
-  circuit untouched. Unity EditMode 387/387 (0 failed, 0 skipped).**
+  circuit untouched. Unity EditMode 389/389 after merging #265 (0 failed, 0 skipped).**
   - **Player-visible:** none by default; the release bare YPAD circuit, camera, simulation and
     saves are unchanged. In `-airsideFullAirport` the legacy Kingscote terrain now reads as
     textured olive grass with relief instead of a clipped white sheet.
@@ -25,6 +25,8 @@
     - never writes to the baked assets.
   - **Evidence:**
     - **Tests:** new `AirsideTerrainGroundCalibrationTests` (4).
+    - **Re-verified on merged code:** after merging #265, rebuilt and re-captured; the same
+      samples agree within 1 level.
     - **Build:** fresh universal Mac build, captures via
       `-airsideSoak -airsidePinDaylight [-airsideFullAirport] -airsideReviewShot`.
     - **Full airport at noon:** terrain sample pixels went from 245–254 to 56–188 olive

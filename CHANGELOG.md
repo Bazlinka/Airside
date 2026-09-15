@@ -4,7 +4,7 @@
   terrain was clipped white: its mask maps made the grass three to four times too glossy and its
   untinted textures too bright for the noon lighting. The terrain now gets runtime layer copies
   with matte smoothness and calibrated albedo, and reads as grass. The default bare circuit is
-  unchanged (packaged noon capture within 2 levels). 387/387 EditMode.
+  unchanged (packaged noon capture within 2 levels). 389/389 EditMode.
 
 - **Aircraft motion and ground-read polish.** The 737-8 now has independently
   spooling, articulated turbofan faces with a restrained high-power intake blur,

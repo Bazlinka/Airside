@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 4: ground and runway look. Unity EditMode 369/369.**
+  - `AdelaideGround.shader`: large soft light/dark patches from deterministic value noise
+    (240 m, ±14 % brightness, slightly warmer when lighter) break the grass tiling; on High
+    quality (`_GROUND_FAR_DETAIL`, `multi_compile_local`) each layer also mixes a rotated 4.3×
+    sample from 120 m to 900 m away, and normal strength eases 70 % flatter with distance to
+    stop far-field shimmer. Medium keeps the single sample.
+  - Ground mesh edge rows now get one-sided slope normals instead of straight up — the likely
+    cause of the faint line round the airfield ground edge (test: edge vs inner normal < 6°).
+  - Runway rubber: four solid near-black 180 × 41 m slabs replaced by 310 seeded streaks on the
+    main-gear tracks (`RunwayRubberMarks`), peaking ~430 m past each threshold, heavier on 05,
+    two shades, two meshes, laid 16–22 mm above the runway top under the paint.
+  - **Needs a packaged look** (not built, per standing rule): overview tiling, far-field
+    shimmer, edge line gone, rubber reads as streaks not stripes; day/dusk/night.
+  - Next in the plan: phase 5 performance, phase 6 game logic.
+
 - **2026-09-15 Claude — polish phase 3: airfield mini-map. Unity EditMode 356/356.**
   - Unity regenerated the ATR v03 `.meta` GUIDs (source and StreamingAssets copies were
     committed identical, as with AIR-007 before); included here.

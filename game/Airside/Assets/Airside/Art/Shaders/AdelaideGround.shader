@@ -14,6 +14,10 @@ Shader "Airside/AdelaideGround"
         _DirtTile ("Dirt Tile Metres", Float) = 29
         _BumpScale ("Bump Scale", Range(0, 2)) = 0.55
         _Smoothness ("Smoothness", Range(0, 1)) = 0.1
+        _MacroScale ("Macro Variation Metres", Float) = 240
+        _MacroStrength ("Macro Brightness", Range(0, 0.5)) = 0.14
+        _FarBlendStart ("Far Detail Start Metres", Float) = 120
+        _FarBlendEnd ("Far Detail End Metres", Float) = 900
     }
 
     SubShader
@@ -37,6 +41,9 @@ Shader "Airside/AdelaideGround"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_instancing
             #pragma multi_compile_fog
+            // High quality: a second, larger, rotated sample of each layer mixes in with
+            // distance so the tile grid stops reading from the overview.
+            #pragma multi_compile_local _ _GROUND_FAR_DETAIL
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -55,7 +62,38 @@ Shader "Airside/AdelaideGround"
                 float _DirtTile;
                 float _BumpScale;
                 float _Smoothness;
+                float _MacroScale;
+                float _MacroStrength;
+                float _FarBlendStart;
+                float _FarBlendEnd;
             CBUFFER_END
+
+            // Deterministic value noise: no texture, same result every frame and every build.
+            float Hash21(float2 p)
+            {
+                p = frac(p * float2(123.34, 456.21));
+                p += dot(p, p + 45.32);
+                return frac(p.x * p.y);
+            }
+
+            float ValueNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                float2 u = f * f * (3.0 - 2.0 * f);
+                float a = Hash21(i);
+                float b = Hash21(i + float2(1, 0));
+                float c = Hash21(i + float2(0, 1));
+                float d = Hash21(i + float2(1, 1));
+                return lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y);
+            }
+
+            // Two octaves, 0..1, centred near 0.5.
+            float MacroNoise(float2 xz)
+            {
+                float2 p = xz / max(_MacroScale, 1.0);
+                return ValueNoise(p) * 0.65 + ValueNoise(p * 2.7 + 17.3) * 0.35;
+            }
 
             struct Attributes
             {
@@ -95,12 +133,19 @@ Shader "Airside/AdelaideGround"
 
             float3 SampleLayer(TEXTURE2D_PARAM(albedoTex, albedoSamp),
                                TEXTURE2D_PARAM(normalTex, normalSamp),
-                               float2 worldXZ, float tileMetres, float3 baseNormal, inout float3 albedo)
+                               float2 worldXZ, float tileMetres, float3 baseNormal, float farMix, inout float3 albedo)
             {
                 float2 uv = worldXZ / max(tileMetres, 1.0);
                 float3 color = SAMPLE_TEXTURE2D(albedoTex, albedoSamp, uv).rgb;
+            #if defined(_GROUND_FAR_DETAIL)
+                // Rotated ~37 degrees and 4.3x larger, so the two grids never line up.
+                float2 farUv = mul(float2x2(0.8, -0.6, 0.6, 0.8), worldXZ) / max(tileMetres * 4.3, 1.0);
+                float3 farColor = SAMPLE_TEXTURE2D(albedoTex, albedoSamp, farUv).rgb;
+                color = lerp(color, (color + farColor) * 0.5, farMix);
+            #endif
+                // Normals shimmer as tiny noise from far away; ease them flat with distance.
                 float3 tangentNormal = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(normalTex, normalSamp, uv), _BumpScale);
+                    SAMPLE_TEXTURE2D(normalTex, normalSamp, uv), _BumpScale * (1.0 - 0.7 * farMix));
                 // Cheap world-XZ bump: remap tangent XY onto XZ while keeping up.
                 float3 n = normalize(float3(
                     baseNormal.x + tangentNormal.x,
@@ -119,15 +164,21 @@ Shader "Airside/AdelaideGround"
                 w /= sum;
 
                 float2 xz = input.positionWS.xz;
+                float farMix = smoothstep(_FarBlendStart, _FarBlendEnd, distance(input.positionWS, GetCameraPositionWS()));
                 float3 aDry, aGreen, aDirt;
                 float3 nDry = SampleLayer(TEXTURE2D_ARGS(_DryAlbedo, sampler_DryAlbedo),
-                    TEXTURE2D_ARGS(_DryNormal, sampler_DryNormal), xz, _DryTile, input.normalWS, aDry);
+                    TEXTURE2D_ARGS(_DryNormal, sampler_DryNormal), xz, _DryTile, input.normalWS, farMix, aDry);
                 float3 nGreen = SampleLayer(TEXTURE2D_ARGS(_GreenAlbedo, sampler_GreenAlbedo),
-                    TEXTURE2D_ARGS(_GreenNormal, sampler_GreenNormal), xz, _GreenTile, input.normalWS, aGreen);
+                    TEXTURE2D_ARGS(_GreenNormal, sampler_GreenNormal), xz, _GreenTile, input.normalWS, farMix, aGreen);
                 float3 nDirt = SampleLayer(TEXTURE2D_ARGS(_DirtAlbedo, sampler_DirtAlbedo),
-                    TEXTURE2D_ARGS(_DirtNormal, sampler_DirtNormal), xz, _DirtTile, input.normalWS, aDirt);
+                    TEXTURE2D_ARGS(_DirtNormal, sampler_DirtNormal), xz, _DirtTile, input.normalWS, farMix, aDirt);
 
                 float3 albedo = (aDry * w.r + aGreen * w.g + aDirt * w.b) * _Tint.rgb;
+                // Large soft light/dark patches, slightly warmer where lighter, as sun-dried
+                // and irrigated ground varies across a real airfield.
+                float macro = MacroNoise(xz) - 0.5;
+                albedo *= 1.0 + macro * 2.0 * _MacroStrength;
+                albedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
                 float3 normalWS = normalize(nDry * w.r + nGreen * w.g + nDirt * w.b);
 
                 Light mainLight = GetMainLight(input.shadowCoord);

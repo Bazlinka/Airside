@@ -187,6 +187,9 @@ namespace Airside.Presentation
             ApplyTransform();
         }
 
+        private Transform _profileOwner;
+        private AircraftVisualProfileComponent _followProfile;
+
         private void LateUpdate()
         {
             if (IsPlayingIntro)
@@ -211,7 +214,14 @@ namespace Airside.Presentation
                 else
                     ahead = Vector3.forward;
 
-                var visualProfile = _followTarget.GetComponent<AircraftVisualProfileComponent>();
+                if (_profileOwner != _followTarget)
+                {
+                    // Cached per target: a GetComponent every frame of every follow is waste.
+                    _profileOwner = _followTarget;
+                    _followProfile = _followTarget.GetComponent<AircraftVisualProfileComponent>();
+                }
+
+                var visualProfile = _followProfile;
                 var visualCentre = visualProfile != null
                     ? _followTarget.TransformPoint(visualProfile.VisualCentreOffsetMetres)
                     : _followTarget.position;

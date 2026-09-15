@@ -321,6 +321,7 @@ namespace Airside.Presentation
                 _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
             }
             _commercialAircraft = Array.Empty<Transform>();
+            _commercialAircraftIds = Array.Empty<string>();
             SyncCommercialAircraftViews();
             if (AirsideFocusMode.ShowGroundVehicles)
             {
@@ -371,7 +372,7 @@ namespace Airside.Presentation
             if (AirsideFocusMode.ShowBuildings)
                 EnsureStandThreeVisual();
             if (_commercialAircraft.Length > 0)
-                _cameraController.SetFollowTargets(_commercialAircraft);
+                _cameraController.SetFollowTargets((Transform[])_commercialAircraft.Clone());
             AirsideRuntimeQuality.AfterWorldBuilt();
             AirsideStaticWorld.Finalize(_airfieldRoot);
             if (_apronProbe != null)
@@ -837,46 +838,49 @@ namespace Airside.Presentation
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
             var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
             var hasSeparateElevators = false;
-            foreach (var part in children)
+            for (var i = 0; i < names.Length; i++)
             {
-                if (part != null && part.name.StartsWith("Elevator", StringComparison.Ordinal))
+                if (children[i] != null && names[i].StartsWith("Elevator", StringComparison.Ordinal))
                 {
                     hasSeparateElevators = true;
                     break;
                 }
             }
-            foreach (var child in children)
+            for (var childIndex = 0; childIndex < children.Length; childIndex++)
             {
+                var child = children[childIndex];
+                var childName = names[childIndex];
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Rudder", StringComparison.Ordinal))
+                if (childName.StartsWith("Rudder", StringComparison.Ordinal))
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
                     euler.y = Mathf.MoveTowards(current, rudder, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                         (!hasSeparateElevators && child.name.StartsWith("Tailplane", StringComparison.Ordinal)))
+                else if (childName.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                         (!hasSeparateElevators && childName.StartsWith("Tailplane", StringComparison.Ordinal)))
                 {
                     // Soft elevator cue on the whole tailplane when no separate elevator mesh.
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = child.name.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
+                    var target = childName.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 80f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("Aileron", StringComparison.Ordinal))
+                else if (childName.StartsWith("Aileron", StringComparison.Ordinal))
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var side = child.name.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
+                    var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
                     var target = Mathf.Clamp(bankDegrees * 0.8f * side, -18f, 18f);
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name is "Flap L" or "Flap R")
+                else if (childName is "Flap L" or "Flap R")
                 {
                     // Takeoff flap is set for the roll and milked off after rotation —
                     // it used to keep extending all the way through the climb.
@@ -886,7 +890,7 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("Spoiler", StringComparison.Ordinal))
+                else if (childName.StartsWith("Spoiler", StringComparison.Ordinal))
                 {
                     // Spoilers pop on touchdown and stow as the rollout ends, rather
                     // than creeping up from zero through the whole flare.
@@ -1036,11 +1040,15 @@ namespace Airside.Presentation
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
             var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren1 = AirsideNamedChildren.Get(aircraft);
+            var childNames1 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex1 = 0; childIndex1 < namedChildren1.Length; childIndex1++)
             {
+                var child = namedChildren1[childIndex1];
+                var childName = childNames1[childIndex1];
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
+                if (childName.StartsWith("Gear door", StringComparison.Ordinal))
                 {
                     // Doors open only while the gear is in transit; closed when locked
                     // up or locked down so the wells read correctly on the rollout.
@@ -1052,7 +1060,7 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name is "Gear nose" or "Gear L" or "Gear R")
+                else if (childName is "Gear nose" or "Gear L" or "Gear R")
                 {
                     // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
                     // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
@@ -1063,13 +1071,13 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("NavLight", StringComparison.Ordinal))
+                else if (childName.StartsWith("NavLight", StringComparison.Ordinal))
                 {
                     var navOn = enginesOn || night;
                     child.gameObject.SetActive(navOn);
-                    EnsureNavPointLight(child, navOn, IsNavLightRight(child.name));
+                    EnsureNavPointLight(child, navOn, IsNavLightRight(childName));
                 }
-                else if (child.name.StartsWith("Beacon", StringComparison.Ordinal))
+                else if (childName.StartsWith("Beacon", StringComparison.Ordinal))
                 {
                     // ANM-AIR-004 — pulse from the presentation clock so pause freezes the blink.
                     var beaconOn = engines?.Beacon ?? enginesOn;
@@ -1080,7 +1088,7 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(beaconOn);
                     EnsureBeaconPointLight(child, beaconOn);
                 }
-                else if (child.name.StartsWith("LandingLight", StringComparison.Ordinal))
+                else if (childName.StartsWith("LandingLight", StringComparison.Ordinal))
                 {
                     child.gameObject.SetActive(landingLights);
                     EnsureLandingSpotLight(child, landingLights, night);
@@ -1099,7 +1107,7 @@ namespace Airside.Presentation
                         lamp.SetPropertyBlock(RendererTintBlock);
                     }
                 }
-                else if (child.name.StartsWith("TaxiLight", StringComparison.Ordinal))
+                else if (childName.StartsWith("TaxiLight", StringComparison.Ordinal))
                 {
                     child.gameObject.SetActive(taxiLights);
                     EnsureTaxiSpotLight(child, taxiLights);
@@ -1221,19 +1229,23 @@ namespace Airside.Presentation
                 : AirsideReusableMotion.CabinDoorBias(phase);
             var cabinTargetY = Mathf.Lerp(0f, -85f, doorBias);
             var cargoTargetY = Mathf.Lerp(0f, 70f, doorBias);
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren2 = AirsideNamedChildren.Get(aircraft);
+            var childNames2 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex2 = 0; childIndex2 < namedChildren2.Length; childIndex2++)
             {
+                var child = namedChildren2[childIndex2];
+                var childName = childNames2[childIndex2];
                 if (child == aircraft)
                     continue;
-                if (child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                if (childName.StartsWith("CabinDoor", StringComparison.Ordinal))
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
                     euler.y = Mathf.MoveTowards(current, cabinTargetY, Time.unscaledDeltaTime * 120f);
                     child.localEulerAngles = euler;
                 }
-                else if (child.name.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
-                         || child.name.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
+                else if (childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
+                         || childName.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
@@ -1259,11 +1271,15 @@ namespace Airside.Presentation
                 intensity = 0.22f;
 
             var glow = new Color(1f, 0.82f, 0.55f) * intensity;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren3 = AirsideNamedChildren.Get(aircraft);
+            var childNames3 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex3 = 0; childIndex3 < namedChildren3.Length; childIndex3++)
             {
+                var child = namedChildren3[childIndex3];
+                var childName = childNames3[childIndex3];
                 if (child == aircraft)
                     continue;
-                var n = child.name;
+                var n = childName;
                 // Exact glass only — densified Cockpit frame / pillars / cabin window
                 // frames must not emit (InferFromMeshName treats those as Metal).
                 if (!(n == "Cockpit"
@@ -1286,9 +1302,13 @@ namespace Airside.Presentation
             // Presentation-only: subtle heat shimmer behind running engines.
             var enginesOn = running ?? (phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed);
             var intensity = phase is AircraftPhase.Takeoff or AircraftPhase.Approach ? 1.25f : 1f;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren4 = AirsideNamedChildren.Get(aircraft);
+            var childNames4 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex4 = 0; childIndex4 < namedChildren4.Length; childIndex4++)
             {
-                if (child == aircraft || !child.name.StartsWith("EngineHeat", StringComparison.Ordinal))
+                var child = namedChildren4[childIndex4];
+                var childName = childNames4[childIndex4];
+                if (child == aircraft || !childName.StartsWith("EngineHeat", StringComparison.Ordinal))
                     continue;
 
                 child.gameObject.SetActive(enginesOn);
@@ -1339,11 +1359,15 @@ namespace Airside.Presentation
             if (degrees <= 0f)
                 return;
             var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren5 = AirsideNamedChildren.Get(aircraft);
+            var childNames5 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex5 = 0; childIndex5 < namedChildren5.Length; childIndex5++)
             {
+                var child = namedChildren5[childIndex5];
+                var childName = childNames5[childIndex5];
                 if (child == aircraft)
                     continue;
-                if (!child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                if (!childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 child.Rotate(Vector3.forward, degrees, Space.Self);
                 ApplyPropBlurToHub(child, highRpm);
@@ -1365,11 +1389,15 @@ namespace Airside.Presentation
             // Engine audio reads the aircraft's own key; give it the stronger engine.
             _propRpm[id] = Mathf.Max(left, right);
 
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren6 = AirsideNamedChildren.Get(aircraft);
+            var childNames6 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex6 = 0; childIndex6 < namedChildren6.Length; childIndex6++)
             {
-                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = namedChildren6[childIndex6];
+                var childName = childNames6[childIndex6];
+                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
-                var rpm = child.name.EndsWith(" L", StringComparison.Ordinal) ? left : right;
+                var rpm = childName.EndsWith(" L", StringComparison.Ordinal) ? left : right;
                 ApplyPropBlurToHub(child, rpm >= AirsideReusableMotion.PropHighRpmThreshold);
                 if (rpm >= 1f)
                     child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
@@ -1394,9 +1422,13 @@ namespace Airside.Presentation
         /// </summary>
         private static void ApplyPropBlur(Transform aircraft, bool highRpm)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren7 = AirsideNamedChildren.Get(aircraft);
+            var childNames7 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex7 = 0; childIndex7 < namedChildren7.Length; childIndex7++)
             {
-                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = namedChildren7[childIndex7];
+                var childName = childNames7[childIndex7];
+                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 ApplyPropBlurToHub(child, highRpm);
             }
@@ -1430,11 +1462,15 @@ namespace Airside.Presentation
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren8 = AirsideNamedChildren.Get(aircraft);
+            var childNames8 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex8 = 0; childIndex8 < namedChildren8.Length; childIndex8++)
             {
-                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(child.name))
+                var child = namedChildren8[childIndex8];
+                var childName = childNames8[childIndex8];
+                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(childName))
                     continue;
-                var radius = AirsideReusableMotion.TireRadiusMetres(child.name);
+                var radius = AirsideReusableMotion.TireRadiusMetres(childName);
                 var degrees = PresentationDeltaTime
                     * AirsideFlightPath.TireAngularDegreesPerSecond(groundSpeed, radius);
                 if (degrees > 0f)
@@ -1457,6 +1493,14 @@ namespace Airside.Presentation
             aircraft.position = new Vector3(world.x, world.y - compression, world.z);
         }
 
+        private string[] _commercialAircraftIds = Array.Empty<string>();
+        private readonly Dictionary<string, Transform> _syncViewsById = new();
+        private readonly HashSet<string> _syncLiveIds = new();
+        private readonly List<string> _syncStaleSlots = new();
+        private readonly HashSet<Transform> _syncKept = new();
+        private Transform[] _syncNextViews = Array.Empty<Transform>();
+        private string[] _syncNextIds = Array.Empty<string>();
+
         private void SyncCommercialAircraftViews()
         {
             var flights = VisualFlights;
@@ -1464,24 +1508,27 @@ namespace Airside.Presentation
 
             // Keep each visual glued to its AircraftId across respawn reordering.
             // Count-only rebuild left transforms at stale list indices after Sort.
-            var byId = new Dictionary<string, Transform>(needed);
+            // Runs every frame, so the working collections are fields and the id of each
+            // view is remembered alongside it rather than parsed back out of its name.
+            var byId = _syncViewsById;
+            byId.Clear();
             if (_commercialAircraft != null)
             {
-                foreach (var existing in _commercialAircraft)
+                for (var i = 0; i < _commercialAircraft.Length; i++)
                 {
-                    if (existing == null)
-                        continue;
-                    const string prefix = "Commercial ";
-                    if (existing.name.StartsWith(prefix, StringComparison.Ordinal))
-                        byId[existing.name.Substring(prefix.Length)] = existing;
+                    var existing = _commercialAircraft[i];
+                    if (existing != null && i < _commercialAircraftIds.Length && _commercialAircraftIds[i] != null)
+                        byId[_commercialAircraftIds[i]] = existing;
                 }
             }
 
             // Drop slot reservations for aircraft that have left the schedule.
-            var liveIds = new HashSet<string>(needed);
+            var liveIds = _syncLiveIds;
+            liveIds.Clear();
             foreach (var flight in flights)
                 liveIds.Add(flight.AircraftId);
-            var staleSlots = new List<string>();
+            var staleSlots = _syncStaleSlots;
+            staleSlots.Clear();
             foreach (var pair in _commercialLiverySlot)
             {
                 if (!liveIds.Contains(pair.Key))
@@ -1490,8 +1537,16 @@ namespace Airside.Presentation
             foreach (var id in staleSlots)
                 _commercialLiverySlot.Remove(id);
 
-            var next = new Transform[needed];
-            var kept = new HashSet<Transform>();
+            if (_syncNextViews.Length != needed)
+            {
+                _syncNextViews = new Transform[needed];
+                _syncNextIds = new string[needed];
+            }
+
+            var next = _syncNextViews;
+            var nextIds = _syncNextIds;
+            var kept = _syncKept;
+            kept.Clear();
             var visibleLimit = AirsideFocusMode.VisibleCommercialFlights;
             for (var index = 0; index < needed; index++)
             {
@@ -1517,6 +1572,7 @@ namespace Airside.Presentation
                     _commercialLiverySlot[flight.AircraftId] = slot;
                 }
 
+                nextIds[index] = flight.AircraftId;
                 if (byId.TryGetValue(flight.AircraftId, out var existing))
                 {
                     next[index] = existing;
@@ -1568,7 +1624,22 @@ namespace Airside.Presentation
                 }
             }
 
-            _commercialAircraft = next;
+            if (changed)
+            {
+                // Swap buffers: the old arrays become next frame's scratch when sizes match.
+                var previousViews = _commercialAircraft;
+                var previousIds = _commercialAircraftIds;
+                _commercialAircraft = next;
+                _commercialAircraftIds = nextIds;
+                _syncNextViews = previousViews != null && previousViews.Length == needed ? previousViews : new Transform[needed];
+                _syncNextIds = previousIds.Length == needed ? previousIds : new string[needed];
+            }
+            else
+            {
+                Array.Copy(nextIds, _commercialAircraftIds, needed);
+            }
+
+            next = _commercialAircraft;
             if (FleetMode)
             {
                 RefreshFleetFollowTargets(next);
@@ -1765,13 +1836,17 @@ namespace Airside.Presentation
             var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
             if (degrees <= 0f)
                 return;
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren9 = AirsideNamedChildren.Get(vehicle);
+            var childNames9 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex9 = 0; childIndex9 < namedChildren9.Length; childIndex9++)
             {
+                var child = namedChildren9[childIndex9];
+                var childName = childNames9[childIndex9];
                 if (child == vehicle)
                     continue;
-                if (child.name.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
-                    && child.name.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
-                    && child.name.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)
+                if (childName.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
+                    && childName.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
+                    && childName.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
         }
@@ -1780,11 +1855,15 @@ namespace Airside.Presentation
         {
             if (vehicle == null)
                 return;
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren10 = AirsideNamedChildren.Get(vehicle);
+            var childNames10 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex10 = 0; childIndex10 < namedChildren10.Length; childIndex10++)
             {
+                var child = namedChildren10[childIndex10];
+                var childName = childNames10[childIndex10];
                 if (child == vehicle)
                     continue;
-                if (child.name.IndexOf("beacon", StringComparison.OrdinalIgnoreCase) < 0)
+                if (childName.IndexOf("beacon", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
                 child.gameObject.SetActive(active);
                 if (!active)
@@ -1809,11 +1888,15 @@ namespace Airside.Presentation
 
             EnsureVehicleHeadlightMeshes(vehicle);
             var night = daylight < 0.4f;
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren11 = AirsideNamedChildren.Get(vehicle);
+            var childNames11 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex11 = 0; childIndex11 < namedChildren11.Length; childIndex11++)
             {
+                var child = namedChildren11[childIndex11];
+                var childName = childNames11[childIndex11];
                 if (child == vehicle)
                     continue;
-                if (child.name.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) < 0)
+                if (childName.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) < 0)
                     continue;
 
                 child.gameObject.SetActive(on);
@@ -1842,9 +1925,13 @@ namespace Airside.Presentation
         private static void EnsureVehicleHeadlightMeshes(Transform vehicle)
         {
             var has = false;
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren12 = AirsideNamedChildren.Get(vehicle);
+            var childNames12 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex12 = 0; childIndex12 < namedChildren12.Length; childIndex12++)
             {
-                if (child != vehicle && child.name.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) >= 0)
+                var child = namedChildren12[childIndex12];
+                var childName = childNames12[childIndex12];
+                if (child != vehicle && childName.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     has = true;
                     break;
@@ -1890,23 +1977,27 @@ namespace Airside.Presentation
             if (vehicle == null)
                 return;
 
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren13 = AirsideNamedChildren.Get(vehicle);
+            var childNames13 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex13 = 0; childIndex13 < namedChildren13.Length; childIndex13++)
             {
+                var child = namedChildren13[childIndex13];
+                var childName = childNames13[childIndex13];
                 if (child == vehicle)
                     continue;
                 // Exact names only — densified Hose reel/guard/tray and Cargo tags must not reset.
-                if (child.name == "Hose")
+                if (childName == "Hose")
                 {
                     child.localScale = new Vector3(0.12f, 0.12f, 0.4f);
                     child.localPosition = new Vector3(child.localPosition.x, child.localPosition.y, 0.4f);
                 }
-                else if (child.name == "Cargo")
+                else if (childName == "Cargo")
                 {
                     var pos = child.localPosition;
                     pos.y = 0.35f;
                     child.localPosition = pos;
                 }
-                else if (child.name == "Door")
+                else if (childName == "Door")
                 {
                     child.localEulerAngles = Vector3.zero;
                 }
@@ -1918,11 +2009,15 @@ namespace Airside.Presentation
             if (!active || vehicle == null || !vehicle.gameObject.activeSelf)
                 return;
 
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren14 = AirsideNamedChildren.Get(vehicle);
+            var childNames14 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex14 = 0; childIndex14 < namedChildren14.Length; childIndex14++)
             {
+                var child = namedChildren14[childIndex14];
+                var childName = childNames14[childIndex14];
                 // Exact part names only so densified accessories (Hose reel, Cargo tag) stay put.
                 // Cargo bags nest under Cargo so they bob with the crate (0025 item 7).
-                if (child == vehicle || child.name != partPrefix)
+                if (child == vehicle || childName != partPrefix)
                     continue;
 
                 if (partPrefix == "Hose")
@@ -2840,23 +2935,27 @@ namespace Airside.Presentation
             var leftCount = 0;
             var rightCount = 0;
 
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren15 = AirsideNamedChildren.Get(aircraft);
+            var childNames15 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex15 = 0; childIndex15 < namedChildren15.Length; childIndex15++)
             {
+                var child = namedChildren15[childIndex15];
+                var childName = childNames15[childIndex15];
                 if (child == aircraft)
                     continue;
-                if (!child.name.StartsWith("Tire", StringComparison.Ordinal))
+                if (!childName.StartsWith("Tire", StringComparison.Ordinal))
                     continue;
-                if (child.name.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (childName.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0)
                     continue;
 
                 // The axle is the transform origin after the rebake; drop to the tread.
                 var contact = child.position - Vector3.up * AirsideReusableMotion.MainTireRadiusMetres;
-                if (child.name.IndexOf(" L", StringComparison.Ordinal) >= 0)
+                if (childName.IndexOf(" L", StringComparison.Ordinal) >= 0)
                 {
                     leftSum += contact;
                     leftCount++;
                 }
-                else if (child.name.IndexOf(" R", StringComparison.Ordinal) >= 0)
+                else if (childName.IndexOf(" R", StringComparison.Ordinal) >= 0)
                 {
                     rightSum += contact;
                     rightCount++;
@@ -5272,32 +5371,36 @@ namespace Airside.Presentation
                     person.position = new Vector3(basePos.x + sway, basePos.y, basePos.z);
                 }
 
-                foreach (var child in AirsideNamedChildren.Get(person))
+                var namedChildren16 = AirsideNamedChildren.Get(person);
+                var childNames16 = AirsideNamedChildren.Names(person);
+                for (var childIndex16 = 0; childIndex16 < namedChildren16.Length; childIndex16++)
                 {
+                    var child = namedChildren16[childIndex16];
+                    var childName = childNames16[childIndex16];
                     if (child == person)
                         continue;
-                    if (child.name.IndexOf("torso", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (childName.IndexOf("torso", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         var lean = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronIdleSwayHz * Mathf.PI * 2f * 1.6f + i * 1.3f) * 4f;
                         if (wave)
                             lean += Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f) * 16f;
                         child.localEulerAngles = new Vector3(0f, 0f, lean);
                     }
-                    else if (wave && child.name.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (wave && childName.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         var tip = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.5f) * 28f;
                         child.localEulerAngles = new Vector3(tip, 0f, 12f);
                     }
-                    else if (wave && child.name.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (wave && childName.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var left = IsLeftSideLimb(child.name);
+                        var left = IsLeftSideLimb(childName);
                         var swing = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.25f
                             + (left ? 0f : 1.2f)) * 35f;
                         child.localEulerAngles = new Vector3(swing, 0f, left ? -12f : 12f);
                     }
-                    else if (walker && child.name.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (walker && childName.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        var left = IsLeftSideLimb(child.name);
+                        var left = IsLeftSideLimb(childName);
                         var stride = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronStrideHz
                             + (left ? 0f : 3.14f)) * 18f;
                         child.localEulerAngles = new Vector3(stride, 0f, 0f);
@@ -8326,40 +8429,44 @@ namespace Airside.Presentation
             var bladesR = new Transform[5];
             var tipsL = new Transform[6];
             var tipsR = new Transform[6];
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren17 = AirsideNamedChildren.Get(aircraft);
+            var childNames17 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex17 = 0; childIndex17 < namedChildren17.Length; childIndex17++)
             {
-                if (child.name == "Propeller L") propL = child;
-                else if (child.name == "Propeller R") propR = child;
-                else if (child.name == "PropBlade L") bladesL[0] = child;
-                else if (child.name == "PropBlade R") bladesR[0] = child;
-                else if (child.name == "PropBlade L2") bladesL[1] = child;
-                else if (child.name == "PropBlade R2") bladesR[1] = child;
-                else if (child.name == "PropBlade L3") bladesL[2] = child;
-                else if (child.name == "PropBlade R3") bladesR[2] = child;
-                else if (child.name == "PropBlade L4") bladesL[3] = child;
-                else if (child.name == "PropBlade R4") bladesR[3] = child;
-                else if (child.name == "PropBlade L5") bladesL[4] = child;
-                else if (child.name == "PropBlade R5") bladesR[4] = child;
-                else if (child.name == "PropTip L") tipsL[0] = child;
-                else if (child.name == "PropTip R") tipsR[0] = child;
-                else if (child.name == "PropTip L2") tipsL[1] = child;
-                else if (child.name == "PropTip R2") tipsR[1] = child;
-                else if (child.name == "PropTip L3") tipsL[2] = child;
-                else if (child.name == "PropTip R3") tipsR[2] = child;
-                else if (child.name == "PropTip L4") tipsL[3] = child;
-                else if (child.name == "PropTip R4") tipsR[3] = child;
-                else if (child.name == "PropTip L5") tipsL[4] = child;
-                else if (child.name == "PropTip R5") tipsR[4] = child;
-                else if (child.name == "PropTip L6") tipsL[5] = child;
-                else if (child.name == "PropTip R6") tipsR[5] = child;
-                else if (child.name == "Prop hub L") hubL = child;
-                else if (child.name == "Prop hub R") hubR = child;
-                else if (child.name == "Spinner L") spinnerL = child;
-                else if (child.name == "Spinner R") spinnerR = child;
-                else if (child.name == "Hub cap L") capL = child;
-                else if (child.name == "Hub cap R") capR = child;
-                else if (child.name == "Spinner stripe L") stripeL = child;
-                else if (child.name == "Spinner stripe R") stripeR = child;
+                var child = namedChildren17[childIndex17];
+                var childName = childNames17[childIndex17];
+                if (childName == "Propeller L") propL = child;
+                else if (childName == "Propeller R") propR = child;
+                else if (childName == "PropBlade L") bladesL[0] = child;
+                else if (childName == "PropBlade R") bladesR[0] = child;
+                else if (childName == "PropBlade L2") bladesL[1] = child;
+                else if (childName == "PropBlade R2") bladesR[1] = child;
+                else if (childName == "PropBlade L3") bladesL[2] = child;
+                else if (childName == "PropBlade R3") bladesR[2] = child;
+                else if (childName == "PropBlade L4") bladesL[3] = child;
+                else if (childName == "PropBlade R4") bladesR[3] = child;
+                else if (childName == "PropBlade L5") bladesL[4] = child;
+                else if (childName == "PropBlade R5") bladesR[4] = child;
+                else if (childName == "PropTip L") tipsL[0] = child;
+                else if (childName == "PropTip R") tipsR[0] = child;
+                else if (childName == "PropTip L2") tipsL[1] = child;
+                else if (childName == "PropTip R2") tipsR[1] = child;
+                else if (childName == "PropTip L3") tipsL[2] = child;
+                else if (childName == "PropTip R3") tipsR[2] = child;
+                else if (childName == "PropTip L4") tipsL[3] = child;
+                else if (childName == "PropTip R4") tipsR[3] = child;
+                else if (childName == "PropTip L5") tipsL[4] = child;
+                else if (childName == "PropTip R5") tipsR[4] = child;
+                else if (childName == "PropTip L6") tipsL[5] = child;
+                else if (childName == "PropTip R6") tipsR[5] = child;
+                else if (childName == "Prop hub L") hubL = child;
+                else if (childName == "Prop hub R") hubR = child;
+                else if (childName == "Spinner L") spinnerL = child;
+                else if (childName == "Spinner R") spinnerR = child;
+                else if (childName == "Hub cap L") capL = child;
+                else if (childName == "Hub cap R") capR = child;
+                else if (childName == "Spinner stripe L") stripeL = child;
+                else if (childName == "Spinner stripe R") stripeR = child;
             }
 
             for (var i = 0; i < bladesL.Length; i++)
@@ -8378,6 +8485,8 @@ namespace Airside.Presentation
             NestUnderProp(propR, capR, "Hub cap");
             NestUnderProp(propL, stripeL, "Stripe");
             NestUnderProp(propR, stripeR, "Stripe");
+            // Parts were renamed above; the per-frame passes read cached names.
+            AirsideNamedChildren.Forget(aircraft);
         }
 
         /// <summary>
@@ -8387,9 +8496,13 @@ namespace Airside.Presentation
         /// </summary>
         private static void RebakePropellerPivots(Transform aircraft)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren18 = AirsideNamedChildren.Get(aircraft);
+            var childNames18 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex18 = 0; childIndex18 < namedChildren18.Length; childIndex18++)
             {
-                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = namedChildren18[childIndex18];
+                var childName = childNames18[childIndex18];
+                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 RebakePropellerPivot(child);
             }
@@ -8410,9 +8523,13 @@ namespace Airside.Presentation
         /// </summary>
         private static void RebakeWheelPivots(Transform aircraft)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren19 = AirsideNamedChildren.Get(aircraft);
+            var childNames19 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex19 = 0; childIndex19 < namedChildren19.Length; childIndex19++)
             {
-                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(child.name))
+                var child = namedChildren19[childIndex19];
+                var childName = childNames19[childIndex19];
+                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(childName))
                     continue;
                 RebakeWheelPivot(child);
             }
@@ -8579,8 +8696,12 @@ namespace Airside.Presentation
         /// </summary>
         private static void RebakeAircraftArticulatedPivots(Transform aircraft)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren20 = AirsideNamedChildren.Get(aircraft);
+            var childNames20 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex20 = 0; childIndex20 < namedChildren20.Length; childIndex20++)
             {
+                var child = namedChildren20[childIndex20];
+                var childName = childNames20[childIndex20];
                 if (child == aircraft)
                     continue;
                 var renderer = child.GetComponent<Renderer>();
@@ -8590,24 +8711,24 @@ namespace Airside.Presentation
                 var bounds = renderer.bounds;
                 var pivot = bounds.center;
                 var articulated = true;
-                if (child.name is "Gear nose" or "Gear L" or "Gear R")
+                if (childName is "Gear nose" or "Gear L" or "Gear R")
                 {
                     pivot.y = bounds.max.y;
                 }
-                else if (child.name.StartsWith("Gear door", StringComparison.Ordinal))
+                else if (childName.StartsWith("Gear door", StringComparison.Ordinal))
                 {
                     pivot.y = bounds.max.y;
                 }
-                else if (child.name is "Flap L" or "Flap R"
-                         || child.name.StartsWith("Aileron", StringComparison.Ordinal)
-                         || child.name.StartsWith("Elevator", StringComparison.Ordinal)
-                         || child.name.StartsWith("Spoiler", StringComparison.Ordinal))
+                else if (childName is "Flap L" or "Flap R"
+                         || childName.StartsWith("Aileron", StringComparison.Ordinal)
+                         || childName.StartsWith("Elevator", StringComparison.Ordinal)
+                         || childName.StartsWith("Spoiler", StringComparison.Ordinal))
                 {
                     pivot.z = bounds.max.z;
                 }
-                else if (child.name.StartsWith("Rudder", StringComparison.Ordinal)
-                         || child.name.StartsWith("CabinDoor", StringComparison.Ordinal)
-                         || child.name.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase))
+                else if (childName.StartsWith("Rudder", StringComparison.Ordinal)
+                         || childName.StartsWith("CabinDoor", StringComparison.Ordinal)
+                         || childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase))
                 {
                     pivot.z = bounds.max.z;
                 }
@@ -8666,16 +8787,20 @@ namespace Airside.Presentation
         {
             Transform gearNose = null, gearL = null, gearR = null;
             var movingParts = new List<Transform>();
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren21 = AirsideNamedChildren.Get(aircraft);
+            var childNames21 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex21 = 0; childIndex21 < namedChildren21.Length; childIndex21++)
             {
-                if (child.name == "Gear nose") gearNose = child;
-                else if (child.name == "Gear L") gearL = child;
-                else if (child.name == "Gear R") gearR = child;
-                else if (child.name.StartsWith("Gear scissors", StringComparison.Ordinal)
-                         || child.name.StartsWith("Gear oleo", StringComparison.Ordinal)
-                         || child.name.StartsWith("Tire", StringComparison.Ordinal)
-                         || child.name.StartsWith("Wheel", StringComparison.Ordinal)
-                         || child.name.StartsWith("Rim", StringComparison.Ordinal))
+                var child = namedChildren21[childIndex21];
+                var childName = childNames21[childIndex21];
+                if (childName == "Gear nose") gearNose = child;
+                else if (childName == "Gear L") gearL = child;
+                else if (childName == "Gear R") gearR = child;
+                else if (childName.StartsWith("Gear scissors", StringComparison.Ordinal)
+                         || childName.StartsWith("Gear oleo", StringComparison.Ordinal)
+                         || childName.StartsWith("Tire", StringComparison.Ordinal)
+                         || childName.StartsWith("Wheel", StringComparison.Ordinal)
+                         || childName.StartsWith("Rim", StringComparison.Ordinal))
                     movingParts.Add(child);
             }
 
@@ -8699,15 +8824,19 @@ namespace Airside.Presentation
             Transform flapL = null, flapR = null;
             var leftExtras = new List<Transform>();
             var rightExtras = new List<Transform>();
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren22 = AirsideNamedChildren.Get(aircraft);
+            var childNames22 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex22 = 0; childIndex22 < namedChildren22.Length; childIndex22++)
             {
-                if (child.name == "Flap L")
+                var child = namedChildren22[childIndex22];
+                var childName = childNames22[childIndex22];
+                if (childName == "Flap L")
                     flapL = child;
-                else if (child.name == "Flap R")
+                else if (childName == "Flap R")
                     flapR = child;
-                else if (child.name is "Flap track L1" or "Flap track L2" or "Flap fairing L")
+                else if (childName is "Flap track L1" or "Flap track L2" or "Flap fairing L")
                     leftExtras.Add(child);
-                else if (child.name is "Flap track R1" or "Flap track R2" or "Flap fairing R")
+                else if (childName is "Flap track R1" or "Flap track R2" or "Flap fairing R")
                     rightExtras.Add(child);
             }
 
@@ -8724,13 +8853,17 @@ namespace Airside.Presentation
         {
             Transform cargo = null;
             var bags = new List<Transform>();
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren23 = AirsideNamedChildren.Get(vehicle);
+            var childNames23 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex23 = 0; childIndex23 < namedChildren23.Length; childIndex23++)
             {
+                var child = namedChildren23[childIndex23];
+                var childName = childNames23[childIndex23];
                 if (child == vehicle)
                     continue;
-                if (child.name == "Cargo" && cargo == null)
+                if (childName == "Cargo" && cargo == null)
                     cargo = child;
-                else if (child.name.StartsWith("Cargo bag", StringComparison.Ordinal))
+                else if (childName.StartsWith("Cargo bag", StringComparison.Ordinal))
                     bags.Add(child);
             }
 
@@ -8749,15 +8882,19 @@ namespace Airside.Presentation
             Transform handle = null;
             Transform frame = null;
             Transform latch = null;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren24 = AirsideNamedChildren.Get(aircraft);
+            var childNames24 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex24 = 0; childIndex24 < namedChildren24.Length; childIndex24++)
             {
-                if (child.name.StartsWith("CabinDoor", StringComparison.Ordinal))
+                var child = namedChildren24[childIndex24];
+                var childName = childNames24[childIndex24];
+                if (childName.StartsWith("CabinDoor", StringComparison.Ordinal))
                     door = child;
-                else if (child.name == "Door handle")
+                else if (childName == "Door handle")
                     handle = child;
-                else if (child.name == "Door frame")
+                else if (childName == "Door frame")
                     frame = child;
-                else if (child.name == "Cargo door latch")
+                else if (childName == "Cargo door latch")
                     latch = child;
             }
 
@@ -8765,9 +8902,13 @@ namespace Airside.Presentation
             NestUnderProp(door, frame, "Frame");
             // Cargo latch stays with cargo door if present.
             Transform cargo = null;
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren25 = AirsideNamedChildren.Get(aircraft);
+            var childNames25 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex25 = 0; childIndex25 < namedChildren25.Length; childIndex25++)
             {
-                if (child.name == "Cargo door")
+                var child = namedChildren25[childIndex25];
+                var childName = childNames25[childIndex25];
+                if (childName == "Cargo door")
                 {
                     cargo = child;
                     break;
@@ -8784,13 +8925,17 @@ namespace Airside.Presentation
         {
             Transform door = null;
             var extras = new List<Transform>();
-            foreach (var child in AirsideNamedChildren.Get(vehicle))
+            var namedChildren26 = AirsideNamedChildren.Get(vehicle);
+            var childNames26 = AirsideNamedChildren.Names(vehicle);
+            for (var childIndex26 = 0; childIndex26 < namedChildren26.Length; childIndex26++)
             {
+                var child = namedChildren26[childIndex26];
+                var childName = childNames26[childIndex26];
                 if (child == vehicle)
                     continue;
-                if (child.name == "Door")
+                if (childName == "Door")
                     door = child;
-                else if (child.name is "Door glass" or "Door handle" or "Door frame")
+                else if (childName is "Door glass" or "Door handle" or "Door frame")
                     extras.Add(child);
             }
 
@@ -8987,9 +9132,13 @@ namespace Airside.Presentation
         /// </summary>
         private static void EnsurePropDiscs(Transform aircraft)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren27 = AirsideNamedChildren.Get(aircraft);
+            var childNames27 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex27 = 0; childIndex27 < namedChildren27.Length; childIndex27++)
             {
-                if (child == aircraft || !child.name.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = namedChildren27[childIndex27];
+                var childName = childNames27[childIndex27];
+                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 if (child.Find("PropDisc") != null)
                     continue;
@@ -9169,9 +9318,13 @@ namespace Airside.Presentation
 
         private static void ApplyLiveryTexture(Transform aircraft, Texture2D texture)
         {
-            foreach (var child in AirsideNamedChildren.Get(aircraft))
+            var namedChildren28 = AirsideNamedChildren.Get(aircraft);
+            var childNames28 = AirsideNamedChildren.Names(aircraft);
+            for (var childIndex28 = 0; childIndex28 < namedChildren28.Length; childIndex28++)
             {
-                var n = child.name;
+                var child = namedChildren28[childIndex28];
+                var childName = childNames28[childIndex28];
+                var n = childName;
                 // Cover segmented turboprop fuselage parts (v04 + lofted cabin rings / nose rings).
                 if (n != "Fuselage" && n != "FuselageMid" && n != "Fuselage mid" && n != "FuselageAft" && n != "Fuselage aft"
                     && n != "Nose"

@@ -16,7 +16,9 @@ namespace Airside.Presentation
         private readonly Dictionary<string, FleetAircraft> _fleetAircraftById = new();
         private readonly Dictionary<string, Transform> _fleetViewById = new();
         private readonly Dictionary<string, Texture2D> _tintedDecals = new();
-        private string _fleetFollowSignature;
+        // Reused every frame: the follow set only changes when an aircraft appears or leaves.
+        private readonly List<Transform> _fleetActiveViews = new();
+        private Transform[] _fleetFollowTargets = Array.Empty<Transform>();
 
         /// <summary>Fleet departures roll from the real 05 threshold; the demo circuit from where it stopped.</summary>
         private float TakeoffOffsetX => FleetMode ? 0f : AirsideFlightPath.CircuitTakeoffOffsetX;
@@ -181,9 +183,13 @@ namespace Airside.Presentation
                     ApplyLiveryTexture(view, decal);
             }
 
-            foreach (var child in AirsideNamedChildren.Get(view))
+            var namedChildren1 = AirsideNamedChildren.Get(view);
+            var childNames1 = AirsideNamedChildren.Names(view);
+            for (var childIndex1 = 0; childIndex1 < namedChildren1.Length; childIndex1++)
             {
-                if (!child.name.StartsWith("Livery", StringComparison.Ordinal))
+                var child = namedChildren1[childIndex1];
+                var childName = childNames1[childIndex1];
+                if (!childName.StartsWith("Livery", StringComparison.Ordinal))
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
@@ -334,26 +340,36 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 return;
 
-            var active = new List<Transform>();
-            var signature = string.Empty;
+            _fleetActiveViews.Clear();
             _fleetViewById.Clear();
             for (var i = 0; i < views.Length; i++)
             {
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
-                active.Add(view);
-                signature += view.name + "|";
+                _fleetActiveViews.Add(view);
                 if (i < VisualFlights.Count)
                     _fleetViewById[VisualFlights[i].AircraftId] = view;
             }
 
-            EnsureFleetPickables(views);
-
-            if (signature == _fleetFollowSignature)
+            if (SameTransforms(_fleetActiveViews, _fleetFollowTargets))
                 return;
-            _fleetFollowSignature = signature;
-            _cameraController.SetFollowTargets(active.ToArray());
+
+            // Pick proxies and markers live on the views, so they only need checking when
+            // the set changes — not with a name lookup and child search every frame.
+            EnsureFleetPickables(views);
+            _fleetFollowTargets = _fleetActiveViews.ToArray();
+            _cameraController.SetFollowTargets(_fleetFollowTargets);
+        }
+
+        private static bool SameTransforms(List<Transform> current, Transform[] previous)
+        {
+            if (current.Count != previous.Length)
+                return false;
+            for (var i = 0; i < previous.Length; i++)
+                if (current[i] != previous[i])
+                    return false;
+            return true;
         }
 
         private bool TryFollowFleetAircraft(string aircraftId)

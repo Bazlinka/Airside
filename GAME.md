@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 5: per-frame garbage cut. Unity EditMode 370/370.**
+  - `AirsideNamedChildren.Names` caches child names alongside the cached transforms; the 29
+    per-frame part passes (gear, doors, lights, props, control surfaces, vehicles, apron
+    people) read those instead of `Transform.name`, which allocated a string per read —
+    hundreds per aircraft per frame with the v03 kits. `NestCrossPropellerBlades` Forgets the
+    cache after renaming parts.
+  - `SyncCommercialAircraftViews` (every frame) reuses its dictionary/sets/lists, swaps two
+    view buffers instead of allocating, and remembers each view's id instead of parsing names.
+  - `RefreshFleetFollowTargets` compares transforms instead of concatenating a name signature,
+    and only re-checks pick proxies/markers when the on-field set changes.
+  - Follow camera caches the target's visual profile component; intro styles built once.
+  - Not yet profiled in a build; a Profiler GC Alloc before/after would confirm.
+
 - **2026-09-15 Claude — polish phase 4: ground and runway look. Unity EditMode 369/369.**
   - `AdelaideGround.shader`: large soft light/dark patches from deterministic value noise
     (240 m, ±14 % brightness, slightly warmer when lighter) break the grass tiling; on High

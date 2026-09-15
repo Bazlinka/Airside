@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Less per-frame garbage.** Aircraft part animation reads cached names, and the fleet view sync
+  and follow-target refresh stop allocating every frame, cutting GC pressure that grows with
+  every detailed aircraft on the field. 370/370 EditMode.
+
 - **Better-looking ground and runway.** Grass gets large natural light and dark patches and
   (High quality) a second texture scale so the tile grid no longer shows from the overview;
   the ground edge is lit like its neighbours; runway rubber is streaks on the gear tracks

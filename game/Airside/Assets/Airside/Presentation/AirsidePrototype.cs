@@ -7435,7 +7435,12 @@ namespace Airside.Presentation
                     var moonDir = Quaternion.Euler(0f, 180f, 0f) * sunDir;
                     if (moonDir.y < 0.05f)
                         moonDir.y = 0.15f;
-                    _moonDisc.position = moonDir.normalized * 90f + Vector3.up * 6f;
+                    // On the same camera-centred sky sphere as the sun. It was placed 90 m from
+                    // the world origin, so orbiting or panning the camera moved past it and it
+                    // could sit inside the hills or among the apron buildings.
+                    _moonDisc.position = skyAnchor + moonDir.normalized * 420f;
+                    // 4.2 m at the old 90 m; keep the same apparent size at 420 m.
+                    _moonDisc.localScale = Vector3.one * (4.2f * 420f / 90f);
                     var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
                     if (_moonDiscRenderer == null)
                         _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();

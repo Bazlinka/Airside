@@ -34,7 +34,6 @@
   - Packaged check open: severity colours readable on the dark panels; toast stack position in
     wide and narrow layouts.
 
-
 - **2026-09-15 Claude — game polish pass, phase 1: HUD click-through fixes. Unity EditMode
   337/337 (after merging AIR-007).** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
   field mini-map, ground/graphics, performance, logic).

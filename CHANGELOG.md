@@ -20,10 +20,10 @@ change it describes.
   simulation or save change. Domain pre-check + offline mesh review; Unity EditMode / packaged
   QA still open.
 
+
 - **Statuses that flag trouble.** Long runway or circuit holds turn yellow then red, a stand you
   need to choose is red, waits show how long, and messages stack instead of overwriting each
   other, with the last ten kept on the Flights board. 343/343 EditMode.
-
 
 - **Clicks land where you aim.** Aircraft tags and the toast are part of the HUD, so clicking or
   dragging on them no longer selects or pans the field behind; clicking empty ground deselects.

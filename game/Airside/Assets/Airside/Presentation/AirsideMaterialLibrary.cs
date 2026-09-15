@@ -215,6 +215,12 @@ namespace Airside.Presentation
                 || n.Contains("door_panel") || n.Contains("door_opening") || n.Contains("door_rib")
                 || n.Contains("door_track") || n.Contains("service_wing") || n.Contains("signage"))
                 return SurfaceKind.Metal;
+            // Bark and rock are matte and non-metallic. They must precede the foliage rule, whose
+            // "tree_" match gave kit trunks the grass material; as painted metal (metallic 0.22,
+            // smoothness 0.55) other trunks and boulders caught a sky sheen and read dark.
+            if (n.Contains("trunk") || n.Contains("bark") || n.Contains("rock")
+                || n.StartsWith("tree") && (n.Contains("flare") || n.Contains("fork")))
+                return SurfaceKind.Default;
             // F3 foliage / scrub / hills — before generic "canopy" concrete match.
             if (n.Contains("leaf") || n.Contains("scrub") || n.Contains("tuft")
                 || n.Contains("tree_") || n.StartsWith("tree ") || n.Contains("grass_tuft")
@@ -225,11 +231,6 @@ namespace Airside.Presentation
             if (n.Contains("fence") || n.Contains("gate_") || n.Contains("bollard") || n.Contains("kerb")
                 || n.Contains("sign_post") || n.Contains("sign_frame") || n.Contains("trolley"))
                 return SurfaceKind.Metal;
-            // Bark and rock are matte and non-metallic; as painted metal (metallic 0.22,
-            // smoothness 0.55) every trunk and boulder caught a sky sheen and read dark.
-            if (n.Contains("trunk") || n.Contains("bark") || n.Contains("flare") || n.Contains("fork")
-                || n.Contains("rock"))
-                return SurfaceKind.Default;
             if (n.Contains("bench") || n.Contains("planter"))
                 return SurfaceKind.PaintedMetal;
             if (n.Contains("coast_sand") || n.Equals("berm"))

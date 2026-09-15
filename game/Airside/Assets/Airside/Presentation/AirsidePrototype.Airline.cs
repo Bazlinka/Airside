@@ -2137,11 +2137,18 @@ namespace Airside.Presentation
                 DrawHangarFleet(view, label, small);
         }
 
+        private readonly List<FleetAircraft> _hangarMine = new();
+        private readonly List<Airline> _hangarOthers = new();
+
         private void DrawHangarFleet(Rect view, GUIStyle label, GUIStyle small)
         {
             var player = _operations.PlayerAirline;
-            var mine = new List<FleetAircraft>(_operations.FleetOf(player));
-            var others = new List<Airline>();
+            // Reused: OnGUI runs this several times a frame while the hangar is open.
+            var mine = _hangarMine;
+            var others = _hangarOthers;
+            mine.Clear();
+            others.Clear();
+            mine.AddRange(_operations.FleetOf(player));
             foreach (var airline in _operations.Airlines)
                 if (!airline.IsPlayer)
                     others.Add(airline);

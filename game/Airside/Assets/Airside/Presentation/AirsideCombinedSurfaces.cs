@@ -7,8 +7,11 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideCombinedSurfaces
     {
-        public const bool UseTileOperational = false;
-        public const bool UseTilePaddock = false;
+        // Retired paths stay available only for explicit regression captures. These
+        // must not be compile-time constants: that turned their call sites into
+        // unreachable code and hid warnings in the actual build.
+        public static readonly bool UseTileOperational = AirsideBareField.HasLaunchFlag("-airsideLegacyTiles");
+        public static readonly bool UseTilePaddock = AirsideBareField.HasLaunchFlag("-airsideLegacyTiles");
 
         /// <summary>Bare field: one runway slab. The retired miniature used six pads.</summary>
         public const int CombinedPadCount = 1;

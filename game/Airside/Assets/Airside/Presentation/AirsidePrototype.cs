@@ -171,7 +171,8 @@ namespace Airside.Presentation
         private const float AmbientCoastVolume = 0.035f;
         // Live Adelaide time drives sun, floods and aircraft lamps. Set true only to
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
-        private const bool PinDaylightPresentation = false;
+        private static readonly bool PinDaylightPresentation =
+            AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
 
         private float PresentationDaylight =>
             DaylightPresentation.Resolve(PinDaylightPresentation, _simulation.TimeOfDay.Daylight);
@@ -376,7 +377,15 @@ namespace Airside.Presentation
             AirsideRuntimeQuality.AfterWorldBuilt();
             AirsideStaticWorld.Finalize(_airfieldRoot);
             if (_apronProbe != null)
+            {
                 _apronProbe.RenderProbe();
+                // ApplyDayCycle runs on the first frame and uses this same band. Mark it
+                // now so the initial 128px cubemap capture is not immediately requested
+                // a second time while the player is still reaching its first interactive
+                // frame.
+                _probeBand = AirsideRuntimeQuality.ProbeBand(PresentationDaylight, 0f);
+                _apronProbeRefreshAt = Time.unscaledTime + 30f;
+            }
             if (_terminalProbe != null)
                 _terminalProbe.RenderProbe();
         }
@@ -3111,10 +3120,11 @@ namespace Airside.Presentation
                 camera = new GameObject("Main Camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
             // Match overview framing (architectural miniature, decision 0022 / post-F polish).
-            camera.fieldOfView = AirsideBareField.OverviewFov;
-            // The Adelaide ground is 3.4 km on the long axis; the far plane has to
-            // cover the whole site from the high overview.
-            camera.farClipPlane = Mathf.Max(camera.farClipPlane, AirsideBareField.CameraFarClip);
+            camera.fieldOfView = AirsideBareField.Enabled ? AirsideBareField.OverviewFov : 50f;
+            // The bare field is 3.4 km across; the compact full-airport QA scene is not.
+            // Tightening the latter's far plane keeps depth precision on apron paint and
+            // avoids paying to submit a mostly empty 10 km view volume.
+            camera.farClipPlane = AirsideBareField.Enabled ? AirsideBareField.CameraFarClip : 1200f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             _mainCamera = camera;
 
@@ -6091,7 +6101,10 @@ namespace Airside.Presentation
         {
             // Perimeter fence removed — the kit ribbon blocked sight lines on the runway
             // and read as a cage around the airfield rather than a distant landside boundary.
-            return;
+            // Retain an explicit capture switch for regression comparison instead of a
+            // literal return that hides the whole method from the compiler.
+            if (!AirsideBareField.HasLaunchFlag("-airsidePerimeterFence"))
+                return;
 
             // Batch F3 PRP-002 — modular fence/gate kit; dense CreateBlock ribbon remains fallback.
             if (TryBuildPerimeterFenceFromKit())

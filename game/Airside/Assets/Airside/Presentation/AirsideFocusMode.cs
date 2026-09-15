@@ -10,7 +10,9 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideFocusMode
     {
-        public const bool AircraftOnly = true;
+        // Keep the release circuit minimal, but make full-airport QA exercise the
+        // actual apron operation layer rather than only its static scenery.
+        public static bool AircraftOnly => AirsideBareField.Enabled;
 
         public static bool BareWorld => AirsideBareField.Enabled;
 
@@ -36,6 +38,6 @@ namespace Airside.Presentation
         public static bool ShowDecorativeLights => !BareWorld;
 
         /// <summary>How many aircraft models to draw. The circuit flies exactly one.</summary>
-        public static int VisibleCommercialFlights => 1;
+        public static int VisibleCommercialFlights => AircraftOnly ? 1 : int.MaxValue;
     }
 }

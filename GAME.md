@@ -1,5 +1,23 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — graphics/performance audit; default circuit retained. Unity EditMode 383/383.**
+  - **Player-visible:** the shipped bare YPAD circuit remains unchanged. A developer-only
+    `-airsideFullAirport` capture now frames the old miniature world at its usable 155 m overview
+    rather than inheriting the 3.1 km bare-field camera and appearing empty. It is not a release
+    toggle: its legacy terrain/material stack is visibly over-exposed in the packaged capture.
+  - **How:** `AirsideBareField` / `AirsideFocusMode` and retired surface/daylight/fence paths now
+    use runtime launch flags instead of compile-time constants, removing three unreachable-code
+    warnings and preserving the default focused circuit. The initial apron probe records its
+    current band and refresh deadline after its first capture, preventing the first `ApplyDayCycle`
+    from immediately issuing the same 128 px cubemap capture again. Camera framing and far plane
+    select the appropriate real-metre or miniature scene envelope.
+  - **Evidence:** Unity EditMode **383/383 passed**, with no C# compile errors or CS0162 warnings;
+    a fresh universal Mac build completed. Default circuit and `-airsideFullAirport` packaged
+    captures were inspected. The headless .NET harness was unavailable here (`dotnet` not on PATH).
+  - **NEXT:** Do not enable full-airport mode for players. If that becomes a product decision,
+    migrate/re-author its legacy terrain/material exposure and complete an independent full-world
+    performance profile before changing the default.
+
 - **2026-09-15 Cursor — bug hunt fixes (follow camera, regional backfill, save restore, domain harness).**
   - **Player-visible:** Following an aircraft that leaves Adelaide no longer snaps the camera onto a
     different one; the view stays where it is (F / Overview still work). Continue on a cramped old

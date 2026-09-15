@@ -88,6 +88,8 @@ namespace Airside.Presentation
         private bool _leftDragArmed;
         private bool _leftDragging;
         private bool _leftPressOnField;
+        private bool _rightPressOnField;
+        private bool _middlePressOnField;
         private Vector2 _leftPressAt;
 
         /// <summary>
@@ -501,7 +503,14 @@ namespace Airside.Presentation
             if (mouse == null)
                 return;
 
-            if (mouse.rightButton.isPressed)
+            // Right- and middle-drags belong to the camera only when they start on the field.
+            // They used to orbit and pan from over any HUD panel, and behind the open menu.
+            if (mouse.rightButton.wasPressedThisFrame)
+                _rightPressOnField = PointerOverHud == null || !PointerOverHud(mouse.position.ReadValue());
+            if (mouse.middleButton.wasPressedThisFrame)
+                _middlePressOnField = PointerOverHud == null || !PointerOverHud(mouse.position.ReadValue());
+
+            if (mouse.rightButton.isPressed && _rightPressOnField)
             {
                 var delta = mouse.delta.ReadValue();
                 _yaw += delta.x * 0.18f;
@@ -542,7 +551,7 @@ namespace Airside.Presentation
                 _leftDragging = true;
             }
 
-            if (mouse.middleButton.isPressed || _leftDragging)
+            if ((mouse.middleButton.isPressed && _middlePressOnField) || _leftDragging)
                 PanByPixels(mouse.delta.ReadValue());
 
             var scroll = mouse.scroll.ReadValue().y;

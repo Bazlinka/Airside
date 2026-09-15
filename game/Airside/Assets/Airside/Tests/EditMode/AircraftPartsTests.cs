@@ -12,7 +12,7 @@ namespace Airside.Tests
     /// </summary>
     public sealed class AircraftPartsTests
     {
-        // Authored kit names, straight out of mdl_atr42_starter_v02.gltf.
+        // Authored kit names, straight out of mdl_atr42_starter_v03.gltf (same as v02).
         [TestCase("tire_left_forward")]
         [TestCase("tire_left_aft")]
         [TestCase("tire_right_forward")]

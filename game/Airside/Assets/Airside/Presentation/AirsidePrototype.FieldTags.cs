@@ -59,7 +59,7 @@ namespace Airside.Presentation
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var ink = AirsideTheme.RunwayInk;
 
-                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {FieldTagPhase(aircraft)}" : aircraft.Registration;
+                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {AircraftStatus.TagPhase(aircraft)}" : aircraft.Registration;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above
@@ -83,8 +83,14 @@ namespace Airside.Presentation
                 DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(livery.r, livery.g, livery.b, fade));
                 DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.82f * fade));
                 DrawSolid(new Rect(pill.x, pill.y, 5f, pill.height), new Color(livery.r, livery.g, livery.b, fade));
+                var severity = mine ? AircraftStatus.Severity(aircraft, _clock.Now) : StatusSeverity.Normal;
                 if (selected)
                     AirsideTheme.DrawPanelFrame(pill, new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, fade));
+                else if (severity != StatusSeverity.Normal)
+                {
+                    var alert = SeverityColour(severity, livery);
+                    AirsideTheme.DrawPanelFrame(pill, new Color(alert.r, alert.g, alert.b, fade));
+                }
                 else if (mine)
                     AirsideTheme.DrawPanelFrame(pill, new Color(livery.r, livery.g, livery.b, fade));
                 var previous = GUI.color;
@@ -101,19 +107,6 @@ namespace Airside.Presentation
                 }
             }
         }
-
-        private static string FieldTagPhase(FleetAircraft aircraft) => aircraft.State switch
-        {
-            FleetState.AtStand => aircraft.Scheduled.HasValue ? "planned" : "free",
-            FleetState.TaxiOut => "taxiing",
-            FleetState.HoldingShort => "holding",
-            FleetState.TakingOff => "takeoff",
-            FleetState.HoldingForLanding => "circuit",
-            FleetState.Landing => "landing",
-            FleetState.AwaitingStand => "needs stand",
-            FleetState.TaxiIn => "taxiing in",
-            _ => "away"
-        };
 
         private bool IsInsideHudPanel(Vector2 gui)
         {

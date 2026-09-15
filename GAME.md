@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 2: status severity + stacked messages. Unity EditMode
+  343/343.**
+  - New pure `AircraftStatus`: HoldingShort / HoldingForLanding go Attention after 3 min and
+    Warning after 10 min; a player aircraft needing a stand is Warning (others Attention).
+    Fleet rows, the flight board phase and the player's field tags colour by severity
+    (SafetyYellow / SignalRed); waiting rows show "waiting N min" and a bar filling towards the
+    10-minute mark instead of no bar.
+  - New `ToastQueue`: up to three messages stack (newest in the toast slot), repeats count
+    "×N" instead of stacking, entries fade out, and the last ten appear under RECENT MESSAGES in
+    the Flights panel.
+  - Phase 1 merge note: Unity regenerated the AIR-007 Saab `.meta` GUIDs (source and
+    StreamingAssets copies had been committed with identical GUIDs); those are in #254.
+  - Packaged check open: severity colours readable on the dark panels; toast stack position in
+    wide and narrow layouts.
+
 - **2026-09-15 Claude — game polish pass, phase 1: HUD click-through fixes. Unity EditMode
   337/337 (after merging AIR-007).** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
   field mini-map, ground/graphics, performance, logic).

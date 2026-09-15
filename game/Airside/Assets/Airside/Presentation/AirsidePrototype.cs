@@ -5385,12 +5385,16 @@ namespace Airside.Presentation
                 kitPath = PreferArtKit(
                 "Models/Characters/mdl_passenger_kit_v02.gltf",
                 "Models/Characters/mdl_passenger_kit_v01.gltf");
+                // string.GetHashCode is not stable across runtimes (and Math.Abs throws on
+                // int.MinValue), so the same figure could change outfit between editor and
+                // player. A fixed FNV-1a parity keeps each name on one variant.
+                var even = StableNameHash(name) % 2 == 0;
                 if (seated)
-                    prefix = lower.Contains("sitter b") || lower.GetHashCode() % 2 == 0 ? "sit_f" : "sit_e";
+                    prefix = lower.Contains("sitter b") || even ? "sit_f" : "sit_e";
                 else if (lower.Contains("walker"))
-                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "walk_c" : "walk_d";
+                    prefix = even ? "walk_c" : "walk_d";
                 else
-                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "stand_a" : "stand_b";
+                    prefix = even ? "stand_a" : "stand_b";
             }
 
             if (string.IsNullOrEmpty(kitPath) || !ArtGltfLoader.HasKit(kitPath))
@@ -5460,6 +5464,21 @@ namespace Airside.Presentation
             }
 
             return placed >= 3;
+        }
+
+        /// <summary>Deterministic 32-bit FNV-1a over the UTF-16 code units of <paramref name="text"/>.</summary>
+        private static uint StableNameHash(string text)
+        {
+            var hash = 2166136261u;
+            if (text == null)
+                return hash;
+            for (var i = 0; i < text.Length; i++)
+            {
+                hash ^= text[i];
+                hash *= 16777619u;
+            }
+
+            return hash;
         }
 
         private void UpdateApronLife()

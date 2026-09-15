@@ -211,20 +211,31 @@ namespace Airside.Presentation
                 else
                     ahead = Vector3.forward;
 
+                var visualProfile = _followTarget.GetComponent<AircraftVisualProfileComponent>();
+                var visualCentre = visualProfile != null
+                    ? _followTarget.TransformPoint(visualProfile.VisualCentreOffsetMetres)
+                    : _followTarget.position;
                 var altitude = Mathf.Max(0f, _followTarget.position.y);
                 var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude);
                 var lookHeight = LookHeightMetres(_followPhase, altitude);
-                var lookPoint = _followTarget.position + ahead * lookAhead + Vector3.up * lookHeight;
+                var lookPoint = visualCentre + ahead * lookAhead + Vector3.up * lookHeight;
 
                 // A recycled slot puts the new arrival hundreds of metres away in one
                 // frame. Easing to it dragged the camera the length of the field, so cut
                 // straight there instead.
                 var recycled = _hasLastTargetPosition
-                    && Vector3.Distance(_lastTargetPosition, _followTarget.position) > RespawnJumpMetres;
-                _lastTargetPosition = _followTarget.position;
+                    && Vector3.Distance(_lastTargetPosition, visualCentre) > RespawnJumpMetres;
+                _lastTargetPosition = visualCentre;
                 _hasLastTargetPosition = true;
 
-                var followDistance = FollowDistance(_followPhase, altitude, _followProgress) * _followZoom;
+                // Follow curves are calibrated to AIR-001's ATR footprint. A type-aware
+                // profile keeps a true-size narrowbody in frame without altering the
+                // deterministic motion or the player's independent follow zoom.
+                var aircraftScale = visualProfile != null
+                    ? visualProfile.FollowDistanceMultiplier
+                    : 1f;
+                var followDistance = FollowDistance(_followPhase, altitude, _followProgress)
+                                     * aircraftScale * _followZoom;
                 if (recycled)
                 {
                     _center = lookPoint;

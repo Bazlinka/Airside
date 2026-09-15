@@ -784,6 +784,11 @@ namespace Airside.Presentation
                     && _cameraController.FollowTarget == view)
                     _cameraController.SetFollowPhase(phase, progress);
             }
+
+            // AIR-005 is a parked presentation preview rather than a simulated
+            // flight, but its selection marker still needs the normal soft pulse.
+            if (_gate13NarrowbodyPreview != null)
+                UpdateSelectionMarker(_gate13NarrowbodyPreview, Gate13PreviewAircraftId);
         }
 
         private static float PhasePitchDegrees(AircraftPhase phase, float progress) =>
@@ -4006,7 +4011,7 @@ namespace Airside.Presentation
                 PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
         }
 
-        private static void BuildAirfield()
+        private void BuildAirfield()
         {
             var root = new GameObject("Airfield");
             _airfieldRoot = root.transform;
@@ -4036,7 +4041,7 @@ namespace Airside.Presentation
         /// apron, buildings, signs or props. Falls back to a grass slab if the mesh
         /// builder cannot resolve the CC0 maps.
         /// </summary>
-        private static void BuildBareAdelaideField()
+        private void BuildBareAdelaideField()
         {
             _bareGroundFollowsLandform = AirsideAdelaideGroundMesh.TryBuild(_airfieldRoot);
             if (!_bareGroundFollowsLandform)
@@ -4060,7 +4065,41 @@ namespace Airside.Presentation
             AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
 
             BuildBareAdelaidePavement();
+            BuildGate13NarrowbodyPreview();
             BuildBareAdelaidePerimeterFence();
+        }
+
+        /// <summary>
+        /// First one-at-a-time jet asset slice (ADR 0046). Gate 13 is a real OSM
+        /// nose-stop anchor, but this aircraft intentionally has no simulated stand,
+        /// taxi or pushback reservation until the terminal lead-in is paved and routed.
+        /// </summary>
+        private void BuildGate13NarrowbodyPreview()
+        {
+            if (AdelaideLayout.TerminalGatePreviews == null
+                || AdelaideLayout.TerminalGatePreviews.Length == 0)
+                return;
+
+            var gate = AdelaideLayout.TerminalGatePreviews[0];
+            var aircraft = BuildAircraftForType(
+                "Gate 13 · Boeing 737-8",
+                AircraftType.Boeing7378,
+                AirsideTheme.CoastalBlue);
+            aircraft.SetParent(_airfieldRoot, true);
+            aircraft.position = new Vector3(gate.NoseX, AirsideFlightPath.GroundY, gate.NoseZ);
+            aircraft.rotation = Quaternion.Euler(0f, gate.HeadingDegrees, 0f);
+            UpdateGroundShadow(aircraft);
+            AircraftPickProxy.Ensure(aircraft, Gate13PreviewAircraftId);
+            EnsureSelectionMarker(aircraft);
+
+            // A parked presentation preview should not emit the generic running
+            // engine loop. Operational state will own this once gates are simulated.
+            var source = aircraft.GetComponent<AudioSource>();
+            if (source != null)
+                source.Stop();
+
+            _gate13NarrowbodyPreview = aircraft;
+            _gate13PreviewSelected = false;
         }
 
         /// <summary>
@@ -7603,6 +7642,100 @@ namespace Airside.Presentation
             CreateBlock($"{name} stop", new Vector3(x, 0.08f, z + 1.9f), new Vector3(3.4f, 0.03f, 0.18f), new Color(0.96f, 0.77f, 0.12f));
         }
 
+        /// <summary>
+        /// Type-aware visual dispatch. Domain/simulation remains the owner of what an
+        /// aircraft is; presentation only selects the matching silhouette and metrics.
+        /// </summary>
+        private static Transform BuildAircraftForType(
+            string name,
+            AircraftType type,
+            Color accent,
+            string liveryDecalRelativePath = null)
+        {
+            if (AircraftVisualProfiles.IsBoeing7378(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
+
+            var regional = BuildAircraft(name, accent, liveryDecalRelativePath);
+            AircraftVisualProfileComponent.Ensure(regional, AircraftVisualProfiles.RegionalTurboprop);
+            return regional;
+        }
+
+        /// <summary>AIR-005 original, unbranded 737-8-class narrowbody.</summary>
+        private static Transform BuildNarrowbody7378(
+            string name,
+            Color accent,
+            string liveryDecalRelativePath = null)
+        {
+            var profile = AircraftVisualProfiles.Boeing7378;
+            var root = new GameObject(name).transform;
+            AircraftVisualProfileComponent.Ensure(root, profile);
+
+            var usedArt = ArtPresentationLoader.TryInstantiate(
+                profile.ArtRelativePath,
+                root,
+                out _,
+                RenameAircraftPart,
+                kitName => AircraftPartColor(kitName, accent),
+                localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
+
+            if (usedArt)
+            {
+                RebakeAircraftArticulatedPivots(root);
+                NestLandingGearParts(root);
+                RebakeWheelPivots(root);
+                NestCabinDoorParts(root);
+                NestFlapParts(root);
+                EnsureAircraftLod(root);
+            }
+            else
+            {
+                // True-scale primitive fallback: it preserves the 39.5 m narrowbody
+                // footprint if the runtime art bundle is unavailable.
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                body.name = "Fuselage";
+                body.transform.SetParent(root, false);
+                body.transform.localPosition = new Vector3(0f, 3.15f, -19.7f);
+                body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                body.transform.localScale = new Vector3(2.05f, 19.7f, 2.05f);
+                body.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.93f, 0.95f, 0.97f));
+                ParentBlock(root, "Livery stripe", new Vector3(0f, 3.2f, -18.5f), new Vector3(4.2f, 0.32f, 31f), accent);
+                ParentBlock(root, "Wing L", new Vector3(-9f, 3.15f, -22f), new Vector3(18f, 0.28f, 6.2f), new Color(0.86f, 0.89f, 0.92f));
+                ParentBlock(root, "Wing R", new Vector3(9f, 3.15f, -22f), new Vector3(18f, 0.28f, 6.2f), new Color(0.86f, 0.89f, 0.92f));
+                ParentBlock(root, "Nacelle L", new Vector3(-6.1f, 2.05f, -18.2f), new Vector3(2.8f, 2.8f, 4.5f), accent * 0.72f);
+                ParentBlock(root, "Nacelle R", new Vector3(6.1f, 2.05f, -18.2f), new Vector3(2.8f, 2.8f, 4.5f), accent * 0.72f);
+                ParentBlock(root, "Tail", new Vector3(0f, 7.1f, -36.5f), new Vector3(0.45f, 8.5f, 5.2f), accent);
+                ParentBlock(root, "Tailplane", new Vector3(0f, 6f, -35.2f), new Vector3(13f, 0.3f, 4.4f), new Color(0.86f, 0.89f, 0.92f));
+                ParentBlock(root, "Gear nose", new Vector3(0f, 0.9f, -4.5f), new Vector3(0.35f, 1.8f, 0.35f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear L", new Vector3(-3.2f, 0.9f, -22f), new Vector3(0.38f, 1.8f, 0.38f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "Gear R", new Vector3(3.2f, 0.9f, -22f), new Vector3(0.38f, 1.8f, 0.38f), new Color(0.25f, 0.25f, 0.28f));
+                ParentBlock(root, "CabinDoor", new Vector3(2.02f, 3.4f, -5.2f), new Vector3(0.08f, 2.2f, 1.15f), new Color(0.78f, 0.8f, 0.83f));
+            }
+
+            ApplyLiveryDecal(root, liveryDecalRelativePath);
+            EnsureGroundShadow(root);
+            if (!HasNamedChild(root, "NavLight L"))
+                ParentBlock(root, "NavLight L", new Vector3(-17.9f, 3.3f, -21.8f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.1f, 0.9f, 0.2f));
+            if (!HasNamedChild(root, "NavLight R"))
+                ParentBlock(root, "NavLight R", new Vector3(17.9f, 3.3f, -21.8f), new Vector3(0.16f, 0.16f, 0.16f), new Color(0.9f, 0.12f, 0.12f));
+            if (!HasNamedChild(root, "Beacon"))
+                ParentBlock(root, "Beacon", new Vector3(0f, 5.35f, -18f), new Vector3(0.18f, 0.18f, 0.18f), new Color(0.95f, 0.2f, 0.15f));
+            if (!HasNamedChild(root, "LandingLight") && !HasNamedChild(root, "LandingLight L"))
+                ParentBlock(root, "LandingLight", new Vector3(0f, 1.15f, -3.2f), new Vector3(0.2f, 0.14f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
+            if (!HasNamedChild(root, "TaxiLight"))
+                ParentBlock(root, "TaxiLight", new Vector3(0f, 0.8f, -4.2f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
+
+            var source = root.gameObject.AddComponent<AudioSource>();
+            source.clip = CreateEngineClip();
+            source.loop = true;
+            source.volume = EngineVolumeRunning;
+            source.spatialBlend = 0.75f;
+            source.minDistance = 16f;
+            source.maxDistance = 300f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+            source.Play();
+            return root;
+        }
+
         private static Transform BuildAircraft(string name, Color accent, string liveryDecalRelativePath = null)
         {
             var root = new GameObject(name).transform;
@@ -8762,14 +8895,17 @@ namespace Airside.Presentation
             if (aircraft.Find("GroundShadow") != null)
                 return;
 
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var width = profile != null ? profile.ShadowWidthMetres : 22.5f;
+            var depth = profile != null ? profile.ShadowDepthMetres : 16.5f;
+            var centre = profile != null ? profile.VisualCentreOffsetMetres : Vector3.zero;
             var shadow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             shadow.name = "GroundShadow";
             Object.Destroy(shadow.GetComponent<Collider>());
             shadow.transform.SetParent(aircraft, false);
-            shadow.transform.localPosition = new Vector3(0f, -0.55f, 0f);
+            shadow.transform.localPosition = new Vector3(centre.x, -0.55f, centre.z);
             shadow.transform.localRotation = Quaternion.identity;
-            // ATR 42-class footprint (~24.6 m span × ~22.7 m length).
-            shadow.transform.localScale = new Vector3(22.5f, 0.012f, 16.5f);
+            shadow.transform.localScale = new Vector3(width, 0.012f, depth);
             var material = AirsideMaterialLibrary.CreateShared(new Color(0.05f, 0.06f, 0.08f, 0.16f),
                 AirsideMaterialLibrary.SurfaceKind.Default);
             var renderer = shadow.GetComponent<Renderer>();
@@ -8786,13 +8922,19 @@ namespace Airside.Presentation
                 return;
 
             var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.02f;
-            var ground = new Vector3(aircraft.position.x, groundY, aircraft.position.z);
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var visualCentre = profile != null
+                ? aircraft.TransformPoint(profile.VisualCentreOffsetMetres)
+                : aircraft.position;
+            var ground = new Vector3(visualCentre.x, groundY, visualCentre.z);
             shadow.position = ground;
             shadow.rotation = Quaternion.identity;
             var altitude = Mathf.Max(0f, aircraft.position.y - AirsideFlightPath.GroundY);
             var t = Mathf.Clamp01(altitude / 18f);
-            var width = Mathf.Lerp(22.5f, 30f, t);
-            var depth = Mathf.Lerp(16.5f, 22f, t);
+            var baseWidth = profile != null ? profile.ShadowWidthMetres : 22.5f;
+            var baseDepth = profile != null ? profile.ShadowDepthMetres : 16.5f;
+            var width = Mathf.Lerp(baseWidth, baseWidth * 1.3333f, t);
+            var depth = Mathf.Lerp(baseDepth, baseDepth * 1.3333f, t);
             var sx = aircraft.lossyScale.x > 0.001f ? width / aircraft.lossyScale.x : width;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.03f / aircraft.lossyScale.y : 0.03f;
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;

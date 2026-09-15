@@ -52,7 +52,15 @@ namespace Airside.Domain
         /// </summary>
         public static readonly AircraftType Dash8Q400 = new("DH8D", "Dash 8-400", 667, 1800);
 
-        private static readonly AircraftType[] Known = { Atr42, Saab340, Dash8Q400 };
+        /// <summary>
+        /// Boeing 737-8 (MAX 8) class: roughly 453 kt / 839 km/h cruise. The
+        /// 5,200 km planning range keeps a reserve/payload margin below the brochure
+        /// maximum. AIR-005 is a fictional, unbranded visual asset; it becomes a
+        /// moving fleet type only when terminal-gate operations are implemented.
+        /// </summary>
+        public static readonly AircraftType Boeing7378 = new("B38M", "Boeing 737-8", 839, 5200);
+
+        private static readonly AircraftType[] Known = { Atr42, Saab340, Dash8Q400, Boeing7378 };
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
 

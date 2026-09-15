@@ -239,6 +239,7 @@ references but **does not substitute a flat image for a 3D object**.
 | AIR-002 | `Textures/Decals/dc_livery_coastline_regional_v01.png` | Fictional blue/coastal identity, transparent decal atlas | Approved · Integrated |
 | AIR-003 | `Textures/Decals/dc_livery_emu_air_v01.png` | Fictional ochre/gold identity; no real airline resemblance | Approved · Integrated |
 | AIR-004 | `Textures/Decals/dc_livery_airside_traffic_v01.png` | Neutral traffic livery used by GT-201/GT-202 when no airline is assigned | Approved · Integrated |
+| AIR-005 | `Models/Aircraft/mdl_737_8_narrowbody_v01.gltf` (+ `.bin`; `.fbx` editable source) | Original unbranded 737-8-class narrowbody at real reference scale: low swept wing, paired under-wing turbofans, conventional tail, dual winglets and tricycle gear; 180 named parts / 6,988 triangles; dedicated pick, shadow and follow framing profile | Integrated as a parked Gate 13 selectable/followable preview under ADR 0046; no terminal route, timetable or reservation semantics yet; Unity EditMode 305/305, packaged camera QA pending |
 | BLD-001 | `Models/Buildings/mdl_terminal_regional_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Batch F1 authored small regional terminal: pitched roof, glazed airside frontage, canopy, service side, rooftop plant, soft end caps (~202 meshes) | Integrated (v05 preferred; Mac FBX bake in Resources; Bailey playtest pending) |
 | BLD-002 | `Models/Buildings/mdl_hangar_small_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | REF-001 pitched corrugated hangar: dual-pitch roof, gable ends, sliding door panels/bars/tracks, skylights, office lean (193 meshes) | Integrated (v05 preferred; Mac FBX bake / overview pending) |
 | BLD-003 | `Models/Buildings/mdl_operations_shed_v05.gltf` (+ `.fbx`; fallbacks authored→v04→…→v01) | Compact ops/crew shed: dual-pitch roof, denser porch and corrugation, antenna/AC silhouette (~160 meshes) | Integrated (v05 preferred; Mac FBX bake / overview pending) |
@@ -313,8 +314,10 @@ matrix before the next begins.
 ## Later production backlog
 
 Do not generate or integrate this set until the related gameplay milestone is
-approved. It includes terminal interiors and passenger agents; narrow-body,
-wide-body, cargo and general-aviation fleets; modular terminal construction;
+approved. ADR 0046 is the explicit exception for Bailey's one-at-a-time Adelaide
+aircraft rollout, beginning with AIR-005; each later type still needs its own
+reviewable slice. The broader backlog includes terminal interiors and passenger
+agents; narrow-body, wide-body, cargo and general-aviation fleets; modular terminal construction;
 baggage systems; emergency services; cargo buildings; rail/surface access;
 seasonal biome variants; research/construction illustrations; and iPhone companion
 art. Each later system extends this manifest instead of creating a separate style.

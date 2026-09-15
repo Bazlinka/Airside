@@ -10,6 +10,7 @@ namespace Airside.Presentation
     {
         private const string EmuAirDecal = "Textures/Decals/dc_livery_emu_air_v01.png";
         private const string PlayerDecalTemplate = "Textures/Decals/dc_livery_airside_traffic_v01.png";
+        private const string Gate13PreviewAircraftId = "GATE-13-737-8";
 
         private readonly List<CommercialFlight> _fleetFlights = new();
         private readonly Dictionary<string, CommercialFlight> _fleetFlightById = new();
@@ -17,6 +18,8 @@ namespace Airside.Presentation
         private readonly Dictionary<string, Transform> _fleetViewById = new();
         private readonly Dictionary<string, Texture2D> _tintedDecals = new();
         private string _fleetFollowSignature;
+        private Transform _gate13NarrowbodyPreview;
+        private bool _gate13PreviewSelected;
 
         /// <summary>Fleet departures roll from the real 05 threshold; the demo circuit from where it stopped.</summary>
         private float TakeoffOffsetX => FleetMode ? 0f : AirsideFlightPath.CircuitTakeoffOffsetX;
@@ -174,7 +177,7 @@ namespace Airside.Presentation
 
             var airline = aircraft.Airline;
             var accent = AirsideTheme.FromHex(airline.LiveryHex);
-            var view = BuildAircraft($"Commercial {aircraftId}", accent,
+            var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent,
                 airline.Id.Value == "EMU" ? EmuAirDecal : null);
 
             if (airline.IsPlayer)
@@ -275,7 +278,11 @@ namespace Airside.Presentation
             marker.transform.SetParent(aircraft, false);
             marker.transform.localPosition = new Vector3(0f, -0.4f, 0f);
             marker.transform.localRotation = Quaternion.identity;
-            marker.transform.localScale = new Vector3(18f, 0.02f, 18f);
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var diameter = profile != null
+                ? profile.SelectionMarkerDiameterMetres
+                : 18f;
+            marker.transform.localScale = new Vector3(diameter, 0.02f, diameter);
 
             var colour = new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.55f);
             var material = AirsideMaterialLibrary.CreateShared(colour, AirsideMaterialLibrary.SurfaceKind.Default);
@@ -294,19 +301,28 @@ namespace Airside.Presentation
             var marker = aircraft.Find(AircraftPickRouting.MarkerChildName);
             if (marker == null)
                 return;
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
 
-            var selected = !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
+            var selected = aircraftId == Gate13PreviewAircraftId
+                ? _gate13PreviewSelected
+                : !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
             if (marker.gameObject.activeSelf != selected)
                 marker.gameObject.SetActive(selected);
             if (!selected)
                 return;
 
             var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.04f;
-            marker.position = new Vector3(aircraft.position.x, groundY, aircraft.position.z);
+            var visualCentre = profile != null
+                ? aircraft.TransformPoint(profile.VisualCentreOffsetMetres)
+                : aircraft.position;
+            marker.position = new Vector3(visualCentre.x, groundY, visualCentre.z);
             marker.rotation = Quaternion.identity;
             // Soft pulse so the selected aircraft reads at overview distance.
             var pulse = 0.72f + 0.28f * Mathf.PingPong(Time.unscaledTime * 1.4f, 1f);
-            var scale = 16f + 2f * pulse;
+            var baseDiameter = profile != null
+                ? profile.SelectionMarkerDiameterMetres
+                : 18f;
+            var scale = baseDiameter * (0.88f + 0.12f * pulse);
             var sx = aircraft.lossyScale.x > 0.001f ? scale / aircraft.lossyScale.x : scale;
             var sy = aircraft.lossyScale.y > 0.001f ? 0.04f / aircraft.lossyScale.y : 0.04f;
             var sz = aircraft.lossyScale.z > 0.001f ? scale / aircraft.lossyScale.z : scale;
@@ -341,6 +357,13 @@ namespace Airside.Presentation
             }
 
             EnsureFleetPickables(views);
+            if (_gate13NarrowbodyPreview != null && _gate13NarrowbodyPreview.gameObject.activeSelf)
+            {
+                // Append the parked preview after operational fleet aircraft so the
+                // Follow shortcut still starts with the player's first live aircraft.
+                active.Add(_gate13NarrowbodyPreview);
+                signature += _gate13NarrowbodyPreview.name + "|";
+            }
 
             if (signature == _fleetFollowSignature)
                 return;
@@ -385,11 +408,27 @@ namespace Airside.Presentation
                     : null;
                 if (proxy == null || string.IsNullOrEmpty(proxy.AircraftId))
                     continue;
-                var selectable = _fleetViewById.ContainsKey(proxy.AircraftId);
+                var selectable = _fleetViewById.ContainsKey(proxy.AircraftId)
+                                 || proxy.AircraftId == Gate13PreviewAircraftId;
                 candidates.Add(new AircraftPickHit(proxy.AircraftId, hits[i].distance, selectable));
             }
 
             var id = AircraftPickRouting.ResolveNearest(candidates);
+            if (id == Gate13PreviewAircraftId && _gate13NarrowbodyPreview != null)
+            {
+                _selectedAircraftId = null;
+                _gate13PreviewSelected = true;
+                _mapOpen = false;
+                _hangarOpen = false;
+                _flightsOpen = false;
+                _devToolsOpen = false;
+                if (_cameraController.StartFollow(_gate13NarrowbodyPreview))
+                    _cameraController.SetFollowPhase(AircraftPhase.AtStand, 0f);
+                ShowToast("Gate 13 · Boeing 737-8 — parked visual preview. Terminal taxi and pushback are next.");
+                PlayUiClick();
+                return;
+            }
+
             if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
                 return;
 

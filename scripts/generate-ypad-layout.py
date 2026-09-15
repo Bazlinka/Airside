@@ -47,6 +47,12 @@ BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A"),
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
 PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 
+# Gate 13 is the first terminal-gate *presentation anchor*, introduced with AIR-005.
+# It deliberately does not join BAYS: terminal ground routing and pushback are a later
+# simulation slice, and treating it as a regional bay would make AdelaideGround fall
+# back to BAY-1. Keep the OSM parking-position ref explicit and source-derived.
+TERMINAL_GATE_PREVIEWS = [("GATE-13", "13")]
+
 
 def xy(p):
     return ((p["lon"] - LON0) * 111320.0 * math.cos(math.radians(LAT0)), (p["lat"] - LAT0) * 110574.0)
@@ -250,6 +256,19 @@ def main():
         report.append((f"pushback {bay_id}/{ref}", pushback, ["stand"]))
         report.append((f"taxi-out {bay_id}/{ref}", taxi_out, depart_names))
 
+    # The first AIR-005 preview is placed at an OSM parking-position nose stop.
+    # These anchors intentionally carry no taxi/pushback route: the Gate 13 parking
+    # line crosses a still-unpaved apron gap and must not be animated as if it were
+    # a safe ground path.
+    terminal_gate_previews = []
+    for gate_id, ref in TERMINAL_GATE_PREVIEWS:
+        entry, stop = parking[ref][0], parking[ref][-1]
+        d = (stop[0] - entry[0], stop[1] - entry[1])
+        dl = math.hypot(*d)
+        d = (d[0] / dl, d[1] / dl)
+        heading = math.degrees(math.atan2(d[0], d[1]))
+        terminal_gate_previews.append((gate_id, ref, stop, heading))
+
     cross_a, cross_b = local(RWY12), local(RWY30)
 
     def fmt(v):
@@ -310,6 +329,25 @@ def main():
         "    }",
         "",
         "    /// <summary>",
+        "    /// An OSM-derived terminal-gate nose-stop anchor. It is deliberately not a",
+        "    /// regional bay and has no taxi/pushback route or reservation semantics yet.",
+        "    /// </summary>",
+        "    public readonly struct AdelaideTerminalGate",
+        "    {",
+        "        public AdelaideTerminalGate(string id, string reference, float noseX, float noseZ, float headingDegrees)",
+        "        {",
+        "            Id = id; Reference = reference; NoseX = noseX; NoseZ = noseZ; HeadingDegrees = headingDegrees;",
+        "        }",
+        "        public string Id { get; }",
+        "        public string Reference { get; }",
+        "        /// <summary>Parking-position stop / aircraft nose datum in runway-frame metres.</summary>",
+        "        public float NoseX { get; }",
+        "        public float NoseZ { get; }",
+        "        /// <summary>Nose heading, degrees clockwise from +z.</summary>",
+        "        public float HeadingDegrees { get; }",
+        "    }",
+        "",
+        "    /// <summary>",
         "    /// Real Adelaide Airport airside geometry in the game's runway frame (x along 05/23",
         "    /// from its midpoint, positive towards 23; z positive to the north-west, terminal",
         "    /// side). Generated from OpenStreetMap; see scripts/generate-ypad-layout.py.",
@@ -342,6 +380,10 @@ def main():
         lines.append(
             f'            new AdelaideBay("{bay_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)},\n'
             f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)}),")
+    lines += ["        };", "", "        public static readonly AdelaideTerminalGate[] TerminalGatePreviews =", "        {"]
+    for gate_id, ref, stop, heading in terminal_gate_previews:
+        lines.append(
+            f'            new AdelaideTerminalGate("{gate_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)}),')
     lines += ["        };", "", "        public static readonly AdelaideTaxiway[] Taxiways =", "        {"]
     for ref, width, pts in taxiways:
         lines.append(f'            new AdelaideTaxiway("{ref}", {fmt(width)}, {arr(pts)}),')

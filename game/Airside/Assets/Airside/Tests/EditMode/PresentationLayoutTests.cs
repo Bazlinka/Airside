@@ -952,6 +952,44 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Boeing7378_ProfileUsesItsTrueScaleArtAndPickVolume()
+        {
+            Assert.That(AircraftType.TryFromId("B38M", out var type), Is.True);
+            Assert.That(type, Is.SameAs(AircraftType.Boeing7378));
+
+            var profile = AircraftVisualProfiles.For(type);
+            Assert.That(profile.ArtRelativePath,
+                Is.EqualTo("Models/Aircraft/mdl_737_8_narrowbody_v01.gltf"));
+            Assert.That(profile.PickSizeMetres.x, Is.EqualTo(40f));
+            Assert.That(profile.PickSizeMetres.z, Is.EqualTo(43f));
+            Assert.That(profile.VisualCentreOffsetMetres.z, Is.EqualTo(-19.735f).Within(0.001f));
+            Assert.That(profile.SelectionMarkerDiameterMetres, Is.EqualTo(41f));
+            Assert.That(profile.FollowDistanceMultiplier, Is.GreaterThan(1f));
+        }
+
+        [Test]
+        public void AircraftPickProxy_UsesTheAttachedAircraftProfile()
+        {
+            var aircraft = new GameObject("Gate 13 · Boeing 737-8");
+            try
+            {
+                var profile = AircraftVisualProfiles.Boeing7378;
+                AircraftVisualProfileComponent.Ensure(aircraft.transform, profile);
+                AircraftPickProxy.Ensure(aircraft.transform, "GATE-13-737-8");
+
+                var proxy = aircraft.transform.Find(AircraftPickRouting.ProxyChildName);
+                Assert.That(proxy, Is.Not.Null);
+                Assert.That(proxy.localPosition.y, Is.EqualTo(profile.PickCentreYMetres));
+                Assert.That(proxy.localPosition.z, Is.EqualTo(profile.VisualCentreOffsetMetres.z));
+                Assert.That(proxy.GetComponent<BoxCollider>().size, Is.EqualTo(profile.PickSizeMetres));
+            }
+            finally
+            {
+                Object.DestroyImmediate(aircraft);
+            }
+        }
+
+        [Test]
         public void FinalAtr_PreferredKitPathIsStarterV01()
         {
             // PreferArtKit is private; the production contract is the Resources key and

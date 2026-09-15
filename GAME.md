@@ -1,5 +1,29 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 HANDOFF → next aircraft slice (Codex). AIR-005 Boeing 737-8-class is ready
+  for merge to `main`; Unity EditMode 305/305.**
+  - **Player-visible outcome:** a new original, unbranded, true-scale 737-8-class jet is
+    parked at Adelaide's real Gate 13 nose-stop. It is clickable and followable, with a
+    narrowbody-sized selection marker, identity card, pick volume, ground shadow and camera framing.
+    Overview, `R` and `Esc` clear its selection. It is silent while parked.
+  - **Scope/invariants:** Gate 13 is a presentation anchor only and is deliberately kept
+    out of regional bays 50A–50F. No flight schedule, save schema, stand/runway
+    reservation, taxi timing or regional traffic changed. The jet cannot move until its
+    uncovered apron lead-in and pushback turnout have explicit pavement and routes.
+  - **Asset evidence:** AIR-005 is generated reproducibly by
+    `scripts/generate-air-005-narrowbody-737-8.py`; 39.47 m long × 35.92 m span × 12.42 m
+    high, 180 named meshes / 6,988 triangles. Source and StreamingAssets copies match.
+    The OpenAI-generated image is retained only as a reviewed modelling candidate; the
+    runtime model is project-owned procedural geometry.
+  - **Verification:** Unity 6.3 EditMode **305/305**; Python generators compile; generated
+    layout and runtime art sync complete. Per Bailey's standing preference, the app was
+    **not rebuilt or manually launched**, so packaged overview/follow day/dusk/night QA
+    remains open.
+  - **Next:** add AIR-006 Airbus A321neo as the next one-at-a-time model. Separately, make
+    Gate 13 operational only after adding its paved lead-in, terminal-stand resolver,
+    pushback turnout and reservation tests. Then continue A220-300, 787, A320, Dash 8 Q400
+    and Saab 340B one at a time.
+
 - **2026-09-14 HANDOFF → ChatGPT (from Claude). State at `de6207a`, everything merged, no open
   branches or PRs, `scripts/test-unity.sh` 302/302.**
   - **What exists now:** live-time Adelaide (YPAD) airline game on the real OSM layout; player

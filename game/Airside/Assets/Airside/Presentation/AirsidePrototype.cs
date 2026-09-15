@@ -112,6 +112,7 @@ namespace Airside.Presentation
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
@@ -9262,15 +9263,19 @@ namespace Airside.Presentation
                 return;
 
             renderer.GetPropertyBlock(RendererTintBlock);
-            RendererTintBlock.SetColor("_Color", color);
-            RendererTintBlock.SetColor("_BaseColor", color);
+            RendererTintBlock.SetColor(ColorId, color);
+            RendererTintBlock.SetColor(BaseColorId, color);
             if (emission.HasValue)
             {
                 var shared = renderer.sharedMaterial;
-                if (shared != null && shared.HasProperty("_EmissionColor"))
+                if (shared != null && shared.HasProperty(EmissionColorId))
                 {
-                    shared.EnableKeyword("_EMISSION");
-                    RendererTintBlock.SetColor("_EmissionColor", emission.Value);
+                    // Night-glow, nav-light and cabin-window passes call this for many renderers
+                    // every frame. EnableKeyword on the shared material each time is a native
+                    // keyword write per call; once is enough.
+                    if (!shared.IsKeywordEnabled("_EMISSION"))
+                        shared.EnableKeyword("_EMISSION");
+                    RendererTintBlock.SetColor(EmissionColorId, emission.Value);
                 }
             }
 

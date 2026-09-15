@@ -307,9 +307,11 @@ namespace Airside.Presentation
                         var yawBias = YawBiasDegrees(_followPhase);
                         var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
                         _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-dt * 0.7f));
+                        // Pitch too: a right-drag while following used to be pulled back
+                        // against the player's hand every frame.
+                        var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
+                        _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
                     }
-                    var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
-                    _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
 
                     var targetFov = FollowFov(_followPhase, _followProgress);
                     _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-dt * 1.6f));
@@ -708,7 +710,7 @@ namespace Airside.Presentation
         public static float TestFollowDistance(AircraftPhase phase, float altitude, float progress) =>
             FollowDistance(phase, altitude, progress);
 
-                public bool IsFollowing => _following;
+        public bool IsFollowing => _following;
         public Transform FollowTarget => _followTarget;
     }
 }

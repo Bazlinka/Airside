@@ -1572,7 +1572,7 @@ namespace Airside.Presentation
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
-            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var profile = PartsFor(aircraft).Profile;
             var namedChildren8 = AirsideNamedChildren.Get(aircraft);
             var childNames8 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex8 = 0; childIndex8 < namedChildren8.Length; childIndex8++)
@@ -1720,6 +1720,7 @@ namespace Airside.Presentation
                 if (!kept.Contains(pair.Value) && pair.Value != null)
                 {
                     AirsideNamedChildren.Forget(pair.Value);
+                    ForgetAircraftViewParts(pair.Value);
                     Destroy(pair.Value.gameObject);
                 }
             }
@@ -9495,14 +9496,58 @@ namespace Airside.Presentation
             renderer.receiveShadows = false;
         }
 
-        private static void UpdateGroundShadow(Transform aircraft)
+        /// <summary>
+        /// Components the per-frame aircraft passes need, resolved once per view. Each frame
+        /// used to repeat Transform.Find over the aircraft's children and GetComponent for the
+        /// shadow, selection marker and visual profile of every aircraft.
+        /// </summary>
+        private struct AircraftViewParts
         {
-            var shadow = aircraft.Find("GroundShadow");
+            public Transform Owner;
+            public AircraftVisualProfileComponent Profile;
+            public Transform Shadow;
+            public Renderer ShadowRenderer;
+            public Transform Marker;
+            public Renderer MarkerRenderer;
+        }
+
+        private readonly Dictionary<int, AircraftViewParts> _aircraftViewParts = new();
+
+        private AircraftViewParts PartsFor(Transform aircraft)
+        {
+            var id = aircraft.GetInstanceID();
+            if (_aircraftViewParts.TryGetValue(id, out var parts) && parts.Owner == aircraft)
+                return parts;
+
+            parts = new AircraftViewParts
+            {
+                Owner = aircraft,
+                Profile = aircraft.GetComponent<AircraftVisualProfileComponent>(),
+                Shadow = aircraft.Find("GroundShadow"),
+                Marker = aircraft.Find(AircraftPickRouting.MarkerChildName)
+            };
+            parts.ShadowRenderer = parts.Shadow != null ? parts.Shadow.GetComponent<Renderer>() : null;
+            parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
+            _aircraftViewParts[id] = parts;
+            return parts;
+        }
+
+        /// <summary>Re-resolve a view's parts after children were added to it (selection marker).</summary>
+        private void ForgetAircraftViewParts(Transform aircraft)
+        {
+            if (aircraft != null)
+                _aircraftViewParts.Remove(aircraft.GetInstanceID());
+        }
+
+        private void UpdateGroundShadow(Transform aircraft)
+        {
+            var parts = PartsFor(aircraft);
+            var shadow = parts.Shadow;
             if (shadow == null)
                 return;
 
             var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.02f;
-            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var profile = parts.Profile;
             var visualCentre = profile != null
                 ? aircraft.TransformPoint(profile.VisualCentreOffsetMetres)
                 : aircraft.position;
@@ -9520,7 +9565,7 @@ namespace Airside.Presentation
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
             shadow.localScale = new Vector3(sx, sy, sz);
 
-            var renderer = shadow.GetComponent<Renderer>();
+            var renderer = parts.ShadowRenderer;
             if (renderer == null)
                 return;
             var color = GetRendererColor(renderer);

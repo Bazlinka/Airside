@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — AIR-001 ATR 42-600 close-view polish; Unity EditMode pending Mac.**
+  - **Player-visible:** Emu Air and the player's ATR retain their v03 identity, but the four
+    flight-deck panes now follow the curved nose without the previous flattened/stepped read.
+    A broader shallow saddle joins the T-tail to the fin at follow-camera distance. The
+    `mdl_atr42_starter_v03` path, 22.67 × 24.57 × 7.59 m envelope, six props, tyre contact,
+    type profile, schedules and saves remain unchanged.
+  - **How:** the v03 generator now emits curvature-fitted cockpit panels and a wider tailplane
+    saddle; its 183 named meshes / 19,704 triangle budget is unchanged. Source +
+    StreamingAssets kits and the 480 × 320 Hangar thumbnail are synced. The existing v03
+    geometry test now locks the thin fitted panes and tail-saddle blend.
+  - **Evidence:** generator validation and `python3 scripts/test-air-001-atr42-v03.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-001 slice, then polish AIR-006's remaining wing-root
+    and gear-door blockiness in a separate commit. Do not start a new type.
+
 - **2026-09-15 Codex — AIR-007 Saab 340B close-view polish; Unity EditMode pending Mac.**
   - **Player-visible:** Rex's Saab keeps its compact low-wing, conventional-tail identity, but
     its four flight-deck panes now follow the rounded nose rather than projecting as a dark

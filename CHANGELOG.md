@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **ATR 42-600 close-view polish.** AIR-001’s flight-deck panes now follow the curved nose rather
+  than flattening it, and its widened tailplane saddle better joins the T-tail to the fin. The
+  existing v03 scale, six props, fuselage-side gear and player/Emu Air presentation remain
+  unchanged. 183 named meshes / 19,704 triangles; geometry regression green. Unity EditMode and
+  packaged camera QA remain open.
+
 - **Saab 340B close-view polish.** AIR-007’s four flight-deck panes now follow its rounded nose
   instead of projecting as a dark box; the nacelle gear bays are curved continuations rather
   than blocks, and the hubs/spinners are scaled down. The low-wing Saab silhouette, true-scale

@@ -42,6 +42,10 @@ assert sum(n.startswith("cabin_window_") and "_frame_" not in n for n in meshes)
 assert "windscreen_l" in meshes and "windscreen_r" in meshes
 assert "cockpit_side_l" in meshes and "cockpit_side_r" in meshes
 assert "windscreen_pillar_c" in meshes
+for pane in ("windscreen_l", "windscreen_r", "cockpit_side_l", "cockpit_side_r"):
+    pane_vertices, _ = meshes[pane]
+    assert len(pane_vertices) == 8, f"{pane} must remain a thin fitted panel"
+assert np.ptp(meshes["tailplane_saddle"][0], axis=0)[0] > 1.2, "tailplane saddle must blend into the fin"
 assert "gear_fairing_left" in meshes and "gear_fairing_right" in meshes
 assert sum(n.startswith("propeller_left") and "tip" not in n for n in meshes) == 6
 assert sum(n.startswith("propeller_right") and "tip" not in n for n in meshes) == 6

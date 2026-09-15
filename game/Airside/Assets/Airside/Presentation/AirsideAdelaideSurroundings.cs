@@ -10,8 +10,10 @@ namespace Airside.Presentation
     /// (<see cref="AdelaideCoast"/>). One vertex-coloured heightfield built from
     /// <see cref="CoastGrid"/>: it meets the airfield ground mesh exactly on its edge (and
     /// tucks under it), eases down to the coastal plain, slopes over a beach and lies flat
-    /// as sea. Stylised to the Airside palette rather than photographic — it is there so
-    /// the overview reads as Adelaide. Presentation only; fails soft to no surroundings.
+    /// as sea, then tinted by real OSM land cover (<see cref="AdelaideLandCover"/>) so
+    /// parks, suburbs, car parks and the Patawalonga read in the right place. Stylised
+    /// to the Airside palette rather than photographic — it is there so the overview
+    /// reads as Adelaide. Presentation only; fails soft to no surroundings.
     /// </summary>
     public static class AirsideAdelaideSurroundings
     {
@@ -22,6 +24,7 @@ namespace Airside.Presentation
         private const float PlainBelowPavement = 1.6f;
         private const float BeachBelowPavement = 4.2f;
         private const float SeaBelowPavement = 5.2f;
+        private const float InlandWaterBelowPavement = 4.8f;
         private const float TuckUnderMetres = 4f;
         private const float EdgeBlendMetres = 700f;
         // Wider than the real sand so the 60 m grid draws a continuous strip, not dashes.
@@ -33,9 +36,14 @@ namespace Airside.Presentation
         private static readonly Color Plain = new(0.555f, 0.57f, 0.42f);
         private static readonly Color Suburb = new(0.585f, 0.575f, 0.53f);
         private static readonly Color Park = new(0.46f, 0.53f, 0.39f);
+        private static readonly Color Commercial = new(0.62f, 0.60f, 0.56f);
+        private static readonly Color Parking = new(0.42f, 0.43f, 0.41f);
+        private static readonly Color Scrub = new(0.52f, 0.55f, 0.40f);
         private static readonly Color Beach = new(0.74f, 0.69f, 0.55f);
-        private static readonly Color Shallows = new(0.30f, 0.53f, 0.58f);
-        private static readonly Color DeepWater = new(0.14f, 0.32f, 0.44f);
+        // Slightly greener shallows / deeper gulf blue — closer to WLD-004 / Coastal Blue.
+        private static readonly Color Shallows = new(0.28f, 0.55f, 0.58f);
+        private static readonly Color DeepWater = new(0.12f, 0.30f, 0.42f);
+        private static readonly Color InlandWater = new(0.26f, 0.50f, 0.54f);
 
         public static bool TryBuild(Transform root)
         {
@@ -59,6 +67,7 @@ namespace Airside.Presentation
                 renderer.sharedMaterial = new Material(shader) { name = "mat_adelaide_surroundings_v01", enableInstancing = true };
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                AirsideAdelaideRoads.TryBuild(root, AirsideAdelaideGround.PavementWorldY);
                 return true;
             }
             catch (Exception e)
@@ -94,6 +103,17 @@ namespace Airside.Presentation
                     continue;
                 }
 
+                var cover = AdelaideLandCover.Sample(x, z);
+                if (cover == AdelaideLandCover.Kind.Water)
+                {
+                    // Patawalonga / West Lakes — real inland water, not the gulf.
+                    vertices[i] = new Vector3(x, pavement - InlandWaterBelowPavement, z);
+                    var c = InlandWater.linear;
+                    c.a = 1f;
+                    colors[i] = c;
+                    continue;
+                }
+
                 // Land: meet the airfield edge height, ease to the plain, dip over the beach.
                 var edgeX = Mathf.Clamp(x, -grid.HoleHalfX, grid.HoleHalfX);
                 var edgeZ = Mathf.Clamp(z, -grid.HoleHalfZ, grid.HoleHalfZ);
@@ -107,7 +127,7 @@ namespace Airside.Presentation
                     height = edgeHeight - TuckUnderMetres;
 
                 vertices[i] = new Vector3(x, height, z);
-                colors[i] = LandColour(x, z, beach, outside);
+                colors[i] = LandColour(x, z, beach, outside, cover);
             }
 
             var triangles = new System.Collections.Generic.List<int>((nx - 1) * (nz - 1) * 6);
@@ -137,11 +157,19 @@ namespace Airside.Presentation
         /// Coastal plain in broad, soft patches — suburbs, parks, open ground — so it is not
         /// one flat card from the overview, then sand along the beach.
         /// </summary>
-        private static Color LandColour(float x, float z, float beach, float outsideAirfield)
+        private static Color LandColour(float x, float z, float beach, float outsideAirfield,
+            AdelaideLandCover.Kind cover)
         {
+            // Soft noise plain as the fallback / blend base.
             var patches = Noise(x / 900f, z / 900f) * 0.65f + Noise(x / 260f + 11.3f, z / 260f - 4.1f) * 0.35f;
             var land = Color.Lerp(Plain, Suburb, Mathf.SmoothStep(0.35f, 0.75f, patches));
             land = Color.Lerp(land, Park, Mathf.SmoothStep(0.72f, 0.9f, Noise(x / 500f - 7.7f, z / 500f + 3.2f)) * 0.8f);
+
+            // Real OSM land cover overrides the noise where we have it (WLD-004 palette).
+            var mapped = CoverColour(cover);
+            if (mapped.HasValue)
+                land = Color.Lerp(land, mapped.Value, 0.82f);
+
             // Match the airfield's dry grass for the first few hundred metres out.
             land = Color.Lerp(AirfieldEdge, land, Mathf.SmoothStep(0f, 1f, outsideAirfield / 900f));
             // Palette is authored in sRGB; vertex colours are read as linear in this project.
@@ -149,6 +177,17 @@ namespace Airside.Presentation
             colour.a = 0f;
             return colour;
         }
+
+        private static Color? CoverColour(AdelaideLandCover.Kind cover) => cover switch
+        {
+            AdelaideLandCover.Kind.Residential => Suburb,
+            AdelaideLandCover.Kind.Commercial => Commercial,
+            AdelaideLandCover.Kind.Park => Park,
+            AdelaideLandCover.Kind.Parking => Parking,
+            AdelaideLandCover.Kind.Sand => Beach,
+            AdelaideLandCover.Kind.Scrub => Scrub,
+            _ => null,
+        };
 
         /// <summary>Smooth value noise in [0, 1].</summary>
         private static float Noise(float x, float z)

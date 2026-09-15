@@ -12,6 +12,21 @@
   - Packaged check open: map orientation matches the 3D view, drag feel, Retina crispness.
   - Next in the plan: phase 4 ground textures/graphics, 5 performance, 6 game logic.
 
+- **2026-09-15 Cursor — YPAD surroundings P3: OSM land cover + arterial roads. Domain
+  EditMode green; Unity EditMode pending Mac (`scripts/test-unity.sh` has no Unity here).**
+  - **Player-visible:** Overview land around Adelaide Airport now shows real OSM parks,
+    suburbs, car parks, sand/scrub and inland water (Patawalonga) instead of noise patches;
+    arterial roads draw as dark ribbons. Coast/sea (P2) kept. Palette stays Airside /
+    WLD-004 stylised (not photoreal).
+  - **How:** new snapshot `docs/data/osm/ypad-landcover-2026-09-15.json`, generator
+    `scripts/generate-ypad-landcover.py` → `AdelaideLandCover.cs` (260×260 @ 50 m + roads).
+    `AirsideAdelaideSurroundings` tints from the grid and drops inland water; new
+    `AirsideAdelaideRoads` builds ribbons. No simulation / save change.
+  - **Evidence:** generator landmark probes (Royal Adelaide Golf=Park, Patawalonga=Water,
+    Harbour Town=Parking/Commercial); `AdelaideLandCoverTests` 7/7; `scripts/test-domain.sh` 212/212 (Unity-only EditMode tests remain excluded from the headless harness — same gap as on main before this PR).
+  - **NEXT:** Bailey to review overview look on Mac. Optional P4 polish (more road classes /
+    labels) or P6 Hills backdrop. Packaged S1–S4 shots still open.
+
 - **2026-09-15 Cursor — AIR-001 ATR 42-600 visual fidelity pass (v03). Unity EditMode
   pending Mac (`scripts/test-unity.sh` has no Unity binary here).**
   - **Player-visible:** Emu Air / player ATR silhouette tightened as a new v03 kit:

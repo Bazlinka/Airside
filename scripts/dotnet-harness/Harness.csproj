@@ -48,7 +48,12 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideStandMarkings.cs" />
-    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandNames.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePavementTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDispatchTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/HudHitTestTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/TerminalGateOperationsTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftCatalogueTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/FlightPlannerTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/EnrouteProfileTests.cs" />
   </ItemGroup>
 
 </Project>

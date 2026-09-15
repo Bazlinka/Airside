@@ -1,3 +1,7 @@
+## Unreleased
+
+- **YPAD surroundings P3 — OSM land cover + arterial roads.** Overview land past the airfield is no longer noise-fake: a 50 m class grid (±6.5 km) painted from real OSM landuse / leisure / water / parking polygons tints the surroundings heightfield (suburbs, parks, car parks, sand, scrub), inland water such as the Patawalonga sits at its own level, and motorway–secondary ribbons draw as asphalt strips. Coast (P2) and pavement unchanged. Snapshot `docs/data/osm/ypad-landcover-2026-09-15.json`; generator `scripts/generate-ypad-landcover.py`. Domain EditMode land-cover tests green; Unity EditMode / packaged overview QA pending Mac.
+
 # Changelog
 
 One line per merged change, newest first. Update this in the same commit as the

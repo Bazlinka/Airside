@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batch 1: 14 fixes,
+  Unity EditMode 401/401.**
+  - **Dark full-airport materials, likely cause found and fixed:** `SurfaceKind.PaintedMetal`
+    (InferFromMeshName's catch-all and the colour-inference default) mapped to
+    `mat_corrugated_metal_v01` plus the corrugated mask, whose R channel (metallic) averages 0.55.
+    Under the solid-colour sky, metallic surfaces reflect almost nothing, so they rendered near
+    black. PaintedMetal now uses its own profile. The authored-template path also dropped
+    explicit albedo.
+  - **Also:** the wet-concrete albedo was applied in clear weather and never restored; mesh
+    names hit aircraft-skin substrings; jet fan and prop spool keys collided; touchdown cues hit
+    null or hidden views; daytime lights left enabled; per-frame `.name` allocations; quadratic
+    night-glow collection; runtime textures kept their CPU copy.
+  - **Not verified visually:** no packaged build or capture this session (standing
+    no-rebuild rule). Dusk/night and a full-world profile are still open.
+
 - **2026-09-16 Claude — diagnostic `-airsideFullAirport` terrain over-exposure fixed; default
   circuit untouched. Unity EditMode 389/389 after merging #265 (0 failed, 0 skipped).**
   - **Player-visible:** none by default; the release bare YPAD circuit, camera, simulation and

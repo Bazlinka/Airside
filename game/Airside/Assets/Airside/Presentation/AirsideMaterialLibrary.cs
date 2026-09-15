@@ -81,7 +81,11 @@ namespace Airside.Presentation
             [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
-            [SurfaceKind.PaintedMetal] = "tx_corrugated_metal",
+            // PaintedMetal is deliberately absent. It is InferFromMeshName's catch-all (bark,
+            // rocks, benches, planters, unnamed kit parts) and InferSurfaceKindFromColor's
+            // default, so borrowing the bare corrugated-metal maps gave all of them a ribbed
+            // texture and — via the mask's R channel — metallic 0.55. Under the solid-colour
+            // sky that reflects almost nothing, which is what drove legacy props near black.
             // MAT-001 — dedicated glass / rubber / painted-line / plastic companions.
             [SurfaceKind.Glass] = "tx_glass_pane",
             [SurfaceKind.Rubber] = "tx_rubber_tire",
@@ -179,6 +183,19 @@ namespace Airside.Presentation
                 || n.Contains("tank") || n.Contains("column")
                 || n.Contains("canopy_post") || n.Contains("crane") || n.Contains("antenna"))
                 return SurfaceKind.Metal;
+            // Substring traps for the aircraft-skin rule below: "cab" is inside cable and
+            // cabinet, "tail" inside taillight, "flap" inside mudflap, "wing"/"body" inside
+            // building parts. Each used to take the glossy aircraft paint.
+            if (n.Contains("cable") || n.Contains("mudflap"))
+                return SurfaceKind.Rubber;
+            if (n.Contains("taillight") || n.Contains("headlight"))
+                return SurfaceKind.Plastic;
+            if (n.Contains("cabinet"))
+                return SurfaceKind.PaintedMetal;
+            if (n.Contains("service_wing") || n.Contains("shed_body"))
+                return SurfaceKind.Metal;
+            if (n.Contains("terminal_body"))
+                return SurfaceKind.Concrete;
             if (n.Contains("marking") || n.Contains("centreline") || n.Contains("centerline")
                 || n.Contains("threshold") || n.Contains("hold_short") || n.Contains("aiming")
                 || n.Contains("tdz") || n.Contains("chevron") || n.Contains("stand_stop")
@@ -326,7 +343,7 @@ namespace Airside.Presentation
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
 
             // Batch F1 MAT-001 — prefer inspectable authored materials when present.
-            if (useTextures && TryInstantiateAuthored(kind, color, tiling, out var authoredInstance))
+            if (useTextures && TryInstantiateAuthored(kind, color, albedo, tiling, out var authoredInstance))
                 return authoredInstance;
 
             Shader shader;
@@ -424,11 +441,6 @@ namespace Airside.Presentation
         public static float DryBumpScale(SurfaceKind kind) => GetProfile(kind).BumpScale;
 
         /// <summary>
-        /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
-        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
-        /// sheen so rain reads on URP Lit without authoring separate wet mats.
-        /// </summary>
-        /// <summary>
         /// Toggles a shader keyword only when it actually changes. A keyword write forces
         /// Unity to re-resolve the shader variant and drops the material out of its SRP
         /// Batcher batch, so a redundant set is far from free.
@@ -443,6 +455,25 @@ namespace Airside.Presentation
                 material.DisableKeyword(keyword);
         }
 
+        /// <summary>
+        /// Wetness at which a concrete surface swaps to the wet-concrete albedo. Real rain is
+        /// 0.52+; clear weather's residual damp on paved slabs is 0.14 and must keep the dry map.
+        /// </summary>
+        public const float WetConcreteAlbedoThreshold = 0.3f;
+
+        /// <summary>
+        /// True when a surface whose dry albedo is <paramref name="dryAlbedo"/> may take the
+        /// wet-concrete swatch. Asphalt and grass must never be repainted as concrete.
+        /// </summary>
+        public static bool AcceptsWetConcreteAlbedo(Texture dryAlbedo) =>
+            dryAlbedo != null
+            && dryAlbedo.name.IndexOf("concrete", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>
+        /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
+        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
+        /// sheen so rain reads on URP Lit without authoring separate wet mats.
+        /// </summary>
         public static void ApplyWetness(
             Material material,
             float wetness01,
@@ -450,7 +481,8 @@ namespace Airside.Presentation
             float drySmoothness,
             float dryMetallic = 0.02f,
             float dryBumpScale = 0.5f,
-            bool preferWetConcreteAlbedo = false)
+            bool preferWetConcreteAlbedo = false,
+            Texture dryAlbedo = null)
         {
             if (material == null)
                 return;
@@ -464,18 +496,22 @@ namespace Airside.Presentation
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", wetColor);
 
-            // Approved surface board wet-concrete swatch — swap apron albedo when wet enough.
-            if (preferWetConcreteAlbedo && wetness01 > 0.12f)
+            // Approved surface board wet-concrete swatch — swap apron albedo in real rain, and
+            // put the dry map back afterwards. The swap used to trigger at clear weather's
+            // residual damp and was never undone, so every paved slab (runway asphalt
+            // included) wore the wet-concrete texture permanently.
+            Texture albedo = preferWetConcreteAlbedo && wetness01 >= WetConcreteAlbedoThreshold
+                ? PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false)
+                : null;
+            if (albedo == null)
+                albedo = dryAlbedo;
+            if (albedo != null && material.mainTexture != albedo)
             {
-                var wetMap = PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false);
-                if (wetMap != null)
-                {
-                    if (material.HasProperty("_BaseMap"))
-                        material.SetTexture("_BaseMap", wetMap);
-                    if (material.HasProperty("_MainTex"))
-                        material.SetTexture("_MainTex", wetMap);
-                    material.mainTexture = wetMap;
-                }
+                if (material.HasProperty("_BaseMap"))
+                    material.SetTexture("_BaseMap", albedo);
+                if (material.HasProperty("_MainTex"))
+                    material.SetTexture("_MainTex", albedo);
+                material.mainTexture = albedo;
             }
             if (material.HasProperty("_SpecColor"))
             {
@@ -562,6 +598,7 @@ namespace Airside.Presentation
         private static bool TryInstantiateAuthored(
             SurfaceKind kind,
             Color color,
+            Texture2D albedo,
             Vector2? tiling,
             out Material instance)
         {
@@ -586,6 +623,12 @@ namespace Airside.Presentation
                 instance.color = color;
             }
 
+            // An explicit albedo wins over the template's own map. Ignoring it put runway
+            // shoulders' worn-dirt texture (and every other textured fallback block) onto
+            // whatever the template carried — corrugated metal, for painted-metal blocks.
+            if (albedo != null)
+                instance.mainTexture = albedo;
+
             if (tiling.HasValue)
             {
                 instance.mainTextureScale = tiling.Value;
@@ -605,7 +648,6 @@ namespace Airside.Presentation
                 SurfaceKind.Concrete => "mat_concrete_v01",
                 SurfaceKind.Grass => "mat_grass_v01",
                 SurfaceKind.Metal => "mat_corrugated_metal_v01",
-                SurfaceKind.PaintedMetal => "mat_corrugated_metal_v01",
                 SurfaceKind.Glass => "mat_glass_v01",
                 SurfaceKind.PaintedLine => "mat_painted_line_v01",
                 SurfaceKind.AircraftSkin => "mat_aircraft_v01",

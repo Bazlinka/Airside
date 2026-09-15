@@ -21,7 +21,13 @@ namespace Airside.Presentation
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
         // Damped roll angle per airframe so banking eases in and out of a turn.
         private readonly Dictionary<string, float> _bankDegrees = new();
+        // Whole-aircraft spool, keyed by instance id; engine audio reads it.
         private readonly Dictionary<int, float> _propRpm = new();
+        // Per-engine spools (id*2+1 left, id*2+2 right). Each lives in its own dictionary:
+        // sharing one made the 737's fans damp toward prop RPM and fan RPM alternately
+        // every frame, and a per-engine key could land on another aircraft's audio key.
+        private readonly Dictionary<int, float> _enginePropRpm = new();
+        private readonly Dictionary<int, float> _jetFanRpm = new();
 
         private Light _sun;
         private Light _fillLight;
@@ -80,8 +86,9 @@ namespace Airside.Presentation
         private Transform[] _birdWingL;
         private Transform[] _birdWingR;
         private Transform _apronLifeRoot;
-        private readonly List<(Transform Person, Vector3 BasePos, bool Walker)> _apronPeople =
-            new List<(Transform, Vector3, bool)>();
+        // Role flags are read from the name once; Object.name allocates on every access.
+        private readonly List<(Transform Person, Vector3 BasePos, bool Walker, bool Sitter, bool Marshaller)> _apronPeople =
+            new List<(Transform, Vector3, bool, bool, bool)>();
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
         private readonly List<(Transform Panel, float ClosedX, float OpenDelta)> _hangarDoorPanels =
@@ -100,8 +107,8 @@ namespace Airside.Presentation
         private readonly HashSet<string> _touchdownFired = new HashSet<string>();
         private readonly HashSet<string> _rotateFired = new HashSet<string>();
         private AudioClip _rotateClip;
-        private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
-            new List<(Material, Color, float, float, float, bool)>();
+        private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved, Texture DryAlbedo)> _wetSurfaces =
+            new List<(Material, Color, float, float, float, bool, Texture)>();
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -131,6 +138,9 @@ namespace Airside.Presentation
         private float _lastAppliedWetness = float.NaN;
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
         private readonly List<Renderer> _airfieldLightRenderers = new List<Renderer>();
+        // Parallel to _airfieldLightRenderers. Object.name allocates a new string on every
+        // read, so the taxi/edge split is resolved once at collect time, not every frame.
+        private readonly List<bool> _airfieldLightIsTaxi = new List<bool>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
@@ -1394,8 +1404,8 @@ namespace Airside.Presentation
                 ? AirsideReusableMotion.PropRpmTaxi
                 : AirsideReusableMotion.PropRpmForPhase(phase);
             var id = aircraft.GetInstanceID();
-            var left = SpooledPropRpm(id * 2 + 1, phaseRpm * engines.Left);
-            var right = SpooledPropRpm(id * 2 + 2, phaseRpm * engines.Right);
+            var left = SpooledPropRpm(_enginePropRpm, id * 2 + 1, phaseRpm * engines.Left);
+            var right = SpooledPropRpm(_enginePropRpm, id * 2 + 2, phaseRpm * engines.Right);
             // Engine audio reads the aircraft's own key; give it the stronger engine.
             _propRpm[id] = Mathf.Max(left, right);
 
@@ -1460,26 +1470,26 @@ namespace Airside.Presentation
 
         private float SpooledJetFanRpm(int key, float targetRpm)
         {
-            if (!_propRpm.TryGetValue(key, out var current))
+            if (!_jetFanRpm.TryGetValue(key, out var current))
                 current = targetRpm;
             // Fan spool is intentionally quicker than a prop governor but still smooth
             // enough that engine start and shutdown read as machinery, not a toggle.
             var rate = targetRpm > current ? 2.3f : 1.1f;
             current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
-            _propRpm[key] = current;
+            _jetFanRpm[key] = current;
             return current;
         }
 
         private float SpooledPropRpm(Transform aircraft, float targetRpm) =>
-            SpooledPropRpm(aircraft.GetInstanceID(), targetRpm);
+            SpooledPropRpm(_propRpm, aircraft.GetInstanceID(), targetRpm);
 
-        private float SpooledPropRpm(int key, float targetRpm)
+        private float SpooledPropRpm(Dictionary<int, float> spools, int key, float targetRpm)
         {
-            if (!_propRpm.TryGetValue(key, out var current))
+            if (!spools.TryGetValue(key, out var current))
                 current = targetRpm;
             var rate = targetRpm > current ? 1.6f : 0.8f;
             current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
-            _propRpm[key] = current;
+            spools[key] = current;
             return current;
         }
 
@@ -2209,14 +2219,15 @@ namespace Airside.Presentation
                 _lastAppliedWetness = rainWetness;
                 for (var i = 0; i < _wetSurfaces.Count; i++)
                 {
-                    var (material, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
+                    var (material, dry, drySmooth, dryMetallic, dryBump, paved, dryAlbedo) = _wetSurfaces[i];
                     if (material == null)
                         continue;
                     // Clear residual damp reads on overview like the turnaround dusk board.
                     var apply = raining ? rainWetness : (paved ? 0.14f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
                         material, apply, dry, drySmooth, dryMetallic, dryBump,
-                        preferWetConcreteAlbedo: paved);
+                        preferWetConcreteAlbedo: paved && AirsideMaterialLibrary.AcceptsWetConcreteAlbedo(dryAlbedo),
+                        dryAlbedo: dryAlbedo);
                 }
             }
 
@@ -2252,8 +2263,10 @@ namespace Airside.Presentation
                 if (_commercialAircraft == null || i >= _commercialAircraft.Length)
                     continue;
                 lead = _commercialAircraft[i];
-                if (lead != null)
+                // A hidden fleet aircraft would leave spray hanging over empty tarmac.
+                if (lead != null && lead.gameObject.activeInHierarchy)
                     break;
+                lead = null;
             }
 
             var show = wetness > 0.12f && lead != null;
@@ -2335,11 +2348,15 @@ namespace Airside.Presentation
                 var flight = VisualFlights[index];
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
+                // Flights past the visible limit have no view; a hidden fleet aircraft has
+                // nothing on screen to smoke or sound. Either used to dereference null.
+                var view = index < _commercialAircraft.Length ? _commercialAircraft[index] : null;
+                var hasView = view != null && view.gameObject.activeInHierarchy;
 
                 // Fire once when the visual path actually meets the runway — not at the
                 // Approach→Landing phase change (that is still ~1.5 m AGL after the path fix).
                 if (phase == AircraftPhase.Landing
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && !_touchdownFired.Contains(id)
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.TouchdownProgress)
                 {
@@ -2378,7 +2395,7 @@ namespace Airside.Presentation
                 // Rolling trail: after the wheels are down the tread keeps smoking
                 // until the rollout has scrubbed most of the speed off.
                 if (phase == AircraftPhase.Landing
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && _touchdownFired.Contains(id))
                 {
                     UpdateRollingWheelSmoke(_commercialAircraft[index], flight, phase);
@@ -2386,7 +2403,7 @@ namespace Airside.Presentation
 
                 // Soft rotate cue once the visual path lifts — presentation only.
                 if (phase == AircraftPhase.Takeoff
-                    && index < _commercialAircraft.Length
+                    && hasView
                     && !_rotateFired.Contains(id)
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.RotateProgress)
                 {
@@ -2711,7 +2728,7 @@ namespace Airside.Presentation
                 var dryMetallic = mat.HasProperty("_Metallic") ? mat.GetFloat("_Metallic") : 0.02f;
                 var dryBump = mat.HasProperty("_BumpScale") ? mat.GetFloat("_BumpScale") : 0.5f;
                 _wetSurfaces.Add((mat, mat.color, drySmooth, dryMetallic, dryBump,
-                    IsPavedSurfaceName(n)));
+                    IsPavedSurfaceName(n), mat.mainTexture));
             }
         }
 
@@ -2809,6 +2826,7 @@ namespace Airside.Presentation
         private void CollectAirfieldLights(Renderer[] renderers = null)
         {
             _airfieldLightRenderers.Clear();
+            _airfieldLightIsTaxi.Clear();
             renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
             {
@@ -2828,7 +2846,10 @@ namespace Airside.Presentation
                     n == "taxiway_light" ||
                     n == "apron_floodlight" ||
                     n == "obstruction_light")
+                {
                     _airfieldLightRenderers.Add(renderer);
+                    _airfieldLightIsTaxi.Add(n.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0);
+                }
             }
         }
 
@@ -3024,6 +3045,12 @@ namespace Airside.Presentation
             var leftCount = 0;
             var rightCount = 0;
 
+            // Drop from axle to tread by this type's own main-tyre radius: the 737's 0.62 m
+            // mains sat puffs a quarter-metre inside the tyre on the shared ATR default.
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var tyreRadius = profile != null
+                ? profile.MainTireRadiusMetres
+                : AirsideReusableMotion.MainTireRadiusMetres;
             var namedChildren15 = AirsideNamedChildren.Get(aircraft);
             var childNames15 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex15 = 0; childIndex15 < namedChildren15.Length; childIndex15++)
@@ -3038,7 +3065,7 @@ namespace Airside.Presentation
                     continue;
 
                 // The axle is the transform origin after the rebake; drop to the tread.
-                var contact = child.position - Vector3.up * AirsideReusableMotion.MainTireRadiusMetres;
+                var contact = child.position - Vector3.up * tyreRadius;
                 if (childName.IndexOf(" L", StringComparison.Ordinal) >= 0)
                 {
                     leftSum += contact;
@@ -3403,6 +3430,8 @@ namespace Airside.Presentation
                             Time.unscaledTime * AirsideReusableMotion.FloodFlickerHz * Mathf.PI * 2f + i * 2.1f + 0.8f)
                         : 1f;
                     light.intensity = street * flicker;
+                    // A 0.02 lamp is invisible but still costs a per-object light slot.
+                    light.enabled = street > 0.05f;
                 }
             }
 
@@ -3416,6 +3445,7 @@ namespace Airside.Presentation
                     if (light == null)
                         continue;
                     light.intensity = approach;
+                    light.enabled = approach > 0.05f;
                 }
             }
 
@@ -3425,6 +3455,7 @@ namespace Airside.Presentation
                 var alsBase = Mathf.Lerp(2.1f, 0.03f, daylight);
                 var nightChase = daylight < 0.42f;
                 var chase = Time.unscaledTime * AirsideReusableMotion.AlsChaseHz;
+                _alsReilSide ??= ReilSides(_alsLights);
                 for (var i = 0; i < _alsLights.Length; i++)
                 {
                     var light = _alsLights[i];
@@ -3432,12 +3463,12 @@ namespace Airside.Presentation
                         continue;
 
                     // Far ALS REIL spots — sharp night flash, not centreline chase.
-                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    if (_alsReilSide[i] != 0)
                     {
                         var flash = daylight < 0.42f
                             && Mathf.Repeat(
                                 Time.unscaledTime * AirsideReusableMotion.ReilFlashHz
-                                + (light.name.EndsWith("R") ? 0.5f : 0f), 1f) < 0.18f;
+                                + (_alsReilSide[i] == 2 ? 0.5f : 0f), 1f) < 0.18f;
                         light.intensity = flash ? 4.2f : alsBase * 0.25f;
                         light.enabled = daylight < 0.55f;
                         continue;
@@ -3470,12 +3501,13 @@ namespace Airside.Presentation
                 var reilPulse = daylight < 0.42f
                     ? (Mathf.Repeat(Time.unscaledTime * 1.8f, 1f) < 0.22f ? 2.6f : 0.15f)
                     : 0f;
+                _runwayEdgeReilSide ??= ReilSides(_runwayEdgeLights);
                 for (var i = 0; i < _runwayEdgeLights.Length; i++)
                 {
                     var light = _runwayEdgeLights[i];
                     if (light == null)
                         continue;
-                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    if (_runwayEdgeReilSide[i] != 0)
                     {
                         light.intensity = edge * 0.35f + reilPulse;
                         light.enabled = daylight < 0.55f;
@@ -3483,6 +3515,7 @@ namespace Airside.Presentation
                     }
 
                     light.intensity = edge;
+                    light.enabled = edge > 0.05f;
                 }
             }
 
@@ -3500,6 +3533,26 @@ namespace Airside.Presentation
             UpdateAerodromeBeacon(daylight);
         }
 
+        // Per-light REIL flags for _alsLights / _runwayEdgeLights: 0 not a REIL, 1 left, 2 right.
+        // Resolved once — reading Light.name every frame allocated a string per lamp.
+        private byte[] _alsReilSide;
+        private byte[] _runwayEdgeReilSide;
+
+        private static byte[] ReilSides(Light[] lights)
+        {
+            var sides = new byte[lights.Length];
+            for (var i = 0; i < lights.Length; i++)
+            {
+                if (lights[i] == null)
+                    continue;
+                var name = lights[i].name;
+                if (name.StartsWith("REIL", StringComparison.Ordinal))
+                    sides[i] = name.EndsWith("R", StringComparison.Ordinal) ? (byte)2 : (byte)1;
+            }
+
+            return sides;
+        }
+
         private void UpdateAirfieldNavLights(float daylight)
         {
             // Edge / taxi lights punch up at dusk/night so the airfield stays readable.
@@ -3511,7 +3564,7 @@ namespace Airside.Presentation
                 var renderer = _airfieldLightRenderers[i];
                 if (renderer == null)
                     continue;
-                var baseColor = renderer.gameObject.name.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
+                var baseColor = _airfieldLightIsTaxi[i]
                     ? new Color(0.25f, 0.55f, 1f)
                     : warmWhite;
                 var color = baseColor * intensity;
@@ -3523,6 +3576,10 @@ namespace Airside.Presentation
         private void CollectNightGlowWindows()
         {
             _nightGlowRenderers.Clear();
+            // Membership sets: List.Contains inside the scene-wide renderer walk below was
+            // O(renderers x glow panes) during startup.
+            var glowSet = new HashSet<Renderer>();
+            var lightSet = new HashSet<Light>();
             var lights = new List<Light>();
             foreach (var name in new[]
                      {
@@ -3560,7 +3617,7 @@ namespace Airside.Presentation
                 if (go == null)
                     continue;
                 var renderer = go.GetComponent<Renderer>();
-                if (renderer != null && !_nightGlowRenderers.Contains(renderer))
+                if (renderer != null && glowSet.Add(renderer))
                     _nightGlowRenderers.Add(renderer);
 
                 var wantsPoint = AirsideRuntimeQuality.WindowPointLights
@@ -3583,7 +3640,7 @@ namespace Airside.Presentation
                     light.intensity = 0f;
                 }
 
-                if (!lights.Contains(light))
+                if (lightSet.Add(light))
                     lights.Add(light);
             }
 
@@ -3593,7 +3650,7 @@ namespace Airside.Presentation
             var maxPaneLights = AirsideRuntimeQuality.PanePointLights;
             foreach (var renderer in AirsideSceneIndex.Renderers)
             {
-                if (renderer == null || _nightGlowRenderers.Contains(renderer))
+                if (renderer == null || glowSet.Contains(renderer))
                     continue;
                 var n = renderer.gameObject.name;
                 if (!(n.StartsWith("glass_pane", StringComparison.Ordinal)
@@ -3605,6 +3662,7 @@ namespace Airside.Presentation
                 if (n.StartsWith("skylight_frame", StringComparison.Ordinal))
                     continue;
 
+                glowSet.Add(renderer);
                 _nightGlowRenderers.Add(renderer);
                 if (paneLights >= maxPaneLights || (_nightGlowRenderers.Count % 7) != 0)
                     continue;
@@ -3620,7 +3678,7 @@ namespace Airside.Presentation
                     light.intensity = 0f;
                 }
 
-                if (!lights.Contains(light))
+                if (lightSet.Add(light))
                 {
                     lights.Add(light);
                     paneLights++;
@@ -4140,8 +4198,11 @@ namespace Airside.Presentation
             if (daylight > 0.38f)
             {
                 _aerodromeBeacon.intensity = 0f;
+                _aerodromeBeacon.enabled = false;
                 return;
             }
+
+            _aerodromeBeacon.enabled = true;
 
             var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(PresentationClock * (AirsideReusableMotion.BeaconHz * Mathf.PI)));
             _aerodromeBeacon.intensity = pulse * Mathf.Lerp(2.4f, 0.2f, daylight / 0.38f);
@@ -5324,12 +5385,16 @@ namespace Airside.Presentation
                 kitPath = PreferArtKit(
                 "Models/Characters/mdl_passenger_kit_v02.gltf",
                 "Models/Characters/mdl_passenger_kit_v01.gltf");
+                // string.GetHashCode is not stable across runtimes (and Math.Abs throws on
+                // int.MinValue), so the same figure could change outfit between editor and
+                // player. A fixed FNV-1a parity keeps each name on one variant.
+                var even = StableNameHash(name) % 2 == 0;
                 if (seated)
-                    prefix = lower.Contains("sitter b") || lower.GetHashCode() % 2 == 0 ? "sit_f" : "sit_e";
+                    prefix = lower.Contains("sitter b") || even ? "sit_f" : "sit_e";
                 else if (lower.Contains("walker"))
-                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "walk_c" : "walk_d";
+                    prefix = even ? "walk_c" : "walk_d";
                 else
-                    prefix = Math.Abs(name.GetHashCode()) % 2 == 0 ? "stand_a" : "stand_b";
+                    prefix = even ? "stand_a" : "stand_b";
             }
 
             if (string.IsNullOrEmpty(kitPath) || !ArtGltfLoader.HasKit(kitPath))
@@ -5401,6 +5466,21 @@ namespace Airside.Presentation
             return placed >= 3;
         }
 
+        /// <summary>Deterministic 32-bit FNV-1a over the UTF-16 code units of <paramref name="text"/>.</summary>
+        private static uint StableNameHash(string text)
+        {
+            var hash = 2166136261u;
+            if (text == null)
+                return hash;
+            for (var i = 0; i < text.Length; i++)
+            {
+                hash ^= text[i];
+                hash *= 16777619u;
+            }
+
+            return hash;
+        }
+
         private void UpdateApronLife()
         {
             if (!AirsideFocusMode.ShowPeople)
@@ -5417,32 +5497,34 @@ namespace Airside.Presentation
                 for (var i = 0; i < _apronLifeRoot.childCount; i++)
                 {
                     var person = _apronLifeRoot.GetChild(i);
-                    var walker = person.name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0;
-                    _apronPeople.Add((person, person.position, walker));
+                    var name = person.name;
+                    _apronPeople.Add((person, person.position,
+                        name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0,
+                        name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0,
+                        name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0));
+                }
+            }
+
+            // Marshallers wave while anything is inbound — one scan, not one per marshaller.
+            var inbound = false;
+            var flights = VisualFlights;
+            for (var f = 0; f < flights.Count; f++)
+            {
+                if (flights[f].Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
+                {
+                    inbound = true;
+                    break;
                 }
             }
 
             // Soft idle lean on torsos so figures don't read as frozen props.
             for (var i = 0; i < _apronPeople.Count; i++)
             {
-                var (person, basePos, walker) = _apronPeople[i];
-                if (person == null)
-                    continue;
-                if (person.name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0)
+                var (person, basePos, walker, sitter, marshaller) = _apronPeople[i];
+                if (person == null || sitter)
                     continue;
 
-                var wave = false;
-                if (person.name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    foreach (var flight in VisualFlights)
-                    {
-                        if (flight.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
-                        {
-                            wave = true;
-                            break;
-                        }
-                    }
-                }
+                var wave = marshaller && inbound;
 
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
                 if (walker)

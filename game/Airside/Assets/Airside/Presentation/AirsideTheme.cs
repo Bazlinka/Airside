@@ -303,7 +303,9 @@ namespace Airside.Presentation
 
         private static Texture2D LoadArtTexture(string artRelativePath)
         {
-            return AirsideArtTextures.Load(artRelativePath, linear: false, wrap: TextureWrapMode.Clamp);
+            // MeanAlpha reads these panels' pixels to decide whether the art is usable.
+            return AirsideArtTextures.Load(artRelativePath, linear: false, wrap: TextureWrapMode.Clamp,
+                keepReadable: true);
         }
     }
 }

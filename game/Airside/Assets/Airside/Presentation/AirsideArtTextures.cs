@@ -13,15 +13,20 @@ namespace Airside.Presentation
     {
         private static readonly Dictionary<string, Texture2D> Cache = new(System.StringComparer.Ordinal);
 
+        /// <param name="keepReadable">
+        /// Keep the CPU-side pixel copy. Only callers that read pixels back need it; everyone
+        /// else lets LoadImage release it, halving each surface map's memory footprint.
+        /// </param>
         public static Texture2D Load(
             string artRelativePath,
             bool linear = false,
-            TextureWrapMode wrap = TextureWrapMode.Repeat)
+            TextureWrapMode wrap = TextureWrapMode.Repeat,
+            bool keepReadable = false)
         {
             if (string.IsNullOrEmpty(artRelativePath))
                 return null;
 
-            var key = CacheKey(artRelativePath, linear, wrap);
+            var key = CacheKey(artRelativePath, linear, wrap, keepReadable);
             if (Cache.TryGetValue(key, out var cached) && cached != null)
                 return cached;
 
@@ -36,7 +41,7 @@ namespace Airside.Presentation
             {
                 var bytes = File.ReadAllBytes(fullPath);
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
-                if (!texture.LoadImage(bytes))
+                if (!texture.LoadImage(bytes, markNonReadable: !keepReadable))
                 {
                     Cache[key] = null;
                     return null;
@@ -63,7 +68,7 @@ namespace Airside.Presentation
             texture.anisoLevel = AirsideRuntimeQuality.AnisoLevel;
         }
 
-        private static string CacheKey(string artRelativePath, bool linear, TextureWrapMode wrap) =>
-            (linear ? "L|" : "S|") + (int)wrap + "|" + artRelativePath;
+        private static string CacheKey(string artRelativePath, bool linear, TextureWrapMode wrap, bool keepReadable) =>
+            (linear ? "L|" : "S|") + (keepReadable ? "R|" : "N|") + (int)wrap + "|" + artRelativePath;
     }
 }

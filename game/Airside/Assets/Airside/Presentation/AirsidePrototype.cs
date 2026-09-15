@@ -4719,14 +4719,22 @@ namespace Airside.Presentation
                 {
                     var remaining = length * 0.5f - cursor;
                     var seg = Mathf.Min(spacing, remaining);
-                    var segMid = cursor + seg * 0.5f;
 
-                    // Leave a clear opening where a vehicle gate stands.
-                    if (AirsideAdelaidePerimeter.IsInGateGap(side, segMid))
+                    // Leave a clear opening where a vehicle gate stands: stop the panel at the
+                    // opening, then resume past it.
+                    if (AirsideAdelaidePerimeter.TryGateGapOverlapping(side, cursor, cursor + seg,
+                            out var gapStart, out var gapEnd))
                     {
-                        cursor += AirsideAdelaidePerimeter.VehicleGateWidthMetres;
-                        continue;
+                        if (gapStart <= cursor + 0.01f)
+                        {
+                            cursor = gapEnd;
+                            continue;
+                        }
+
+                        seg = gapStart - cursor;
                     }
+
+                    var segMid = cursor + seg * 0.5f;
 
                     float x0, z0, x1, z1, midX, midZ;
                     if (alongX)

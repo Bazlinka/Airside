@@ -303,6 +303,12 @@ namespace Airside.Tests
             Assert.That(AirsideAdelaidePerimeter.IsInsideFence(5000f, 0f), Is.False);
             Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 420f), Is.True);
             Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 0f), Is.False);
+
+            // A 40 m panel whose midpoint misses the 8 m gate must still be cut at the gate.
+            Assert.That(AirsideAdelaidePerimeter.TryGateGapOverlapping("N", 392f, 432f, out var start, out var end), Is.True);
+            Assert.That(start, Is.LessThan(420f));
+            Assert.That(end, Is.GreaterThan(420f));
+            Assert.That(AirsideAdelaidePerimeter.TryGateGapOverlapping("N", 0f, 40f, out _, out _), Is.False);
             Assert.That(AirsideAdelaidePerimeter.PerimeterLengthMetres, Is.GreaterThan(10000f));
         }
 

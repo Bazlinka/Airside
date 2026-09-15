@@ -137,6 +137,37 @@ namespace Airside.Presentation
             Math.Abs(worldX) <= FenceHalfX && Math.Abs(worldZ) <= FenceHalfZ;
 
         /// <summary>
+        /// The first vehicle-gate opening on <paramref name="side"/> that overlaps the run
+        /// [<paramref name="from"/>, <paramref name="to"/>), as stations along that side.
+        /// Fence panels are 40 m long and the gates 8 m wide, so a panel has to be cut at the
+        /// opening: testing only a panel's midpoint missed every real gate station.
+        /// </summary>
+        public static bool TryGateGapOverlapping(string side, float from, float to, out float gapStart, out float gapEnd)
+        {
+            gapStart = gapEnd = 0f;
+            var half = VehicleGateWidthMetres * 0.5f + PostSizeMetres;
+            var found = false;
+            for (var i = 0; i < VehicleGates.Length; i++)
+            {
+                var g = VehicleGates[i];
+                if (!string.Equals(g.Side, side, StringComparison.Ordinal))
+                    continue;
+                var start = g.StationAlongSide - half;
+                var end = g.StationAlongSide + half;
+                if (end <= from || start >= to)
+                    continue;
+                if (!found || start < gapStart)
+                {
+                    gapStart = start;
+                    gapEnd = end;
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
         /// True when <paramref name="station"/> lies inside a vehicle-gate gap on
         /// the given side (with a small margin for posts).
         /// </summary>

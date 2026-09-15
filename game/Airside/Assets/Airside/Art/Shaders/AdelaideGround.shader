@@ -110,8 +110,7 @@ Shader "Airside/AdelaideGround"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
                 float4 color : TEXCOORD2;
-                float4 shadowCoord : TEXCOORD3;
-                float fogFactor : TEXCOORD4;
+                float fogFactor : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -126,7 +125,6 @@ Shader "Airside/AdelaideGround"
                 output.positionWS = pos.positionWS;
                 output.normalWS = nrm.normalWS;
                 output.color = input.color;
-                output.shadowCoord = GetShadowCoord(pos);
                 output.fogFactor = ComputeFogFactor(pos.positionCS.z);
                 return output;
             }
@@ -181,7 +179,11 @@ Shader "Airside/AdelaideGround"
                 albedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
                 float3 normalWS = normalize(nDry * w.r + nGreen * w.g + nDirt * w.b);
 
-                Light mainLight = GetMainLight(input.shadowCoord);
+                // Per pixel, as URP Lit and Airside/Surroundings do. With cascades a vertex shadow
+                // coordinate picks one cascade per vertex; across a 40 m ground cell spanning a
+                // split that interpolates garbage, so aircraft shadows on the grass slid, clipped
+                // or vanished along the cascade boundaries.
+                Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
                 // Sun plus sky ambient, as URP Lit does. The old "+0.28" was multiplied by the
                 // ~2.0 daytime sun and bleached the ground once this shader reached builds.

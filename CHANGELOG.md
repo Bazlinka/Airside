@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Diagnostic full-airport view no longer blown out.** Under `-airsideFullAirport` the legacy
+  terrain was clipped white: its mask maps made the grass three to four times too glossy and its
+  untinted textures too bright for the noon lighting. The terrain now gets runtime layer copies
+  with matte smoothness and calibrated albedo, and reads as grass. The default bare circuit is
+  unchanged (packaged noon capture within 2 levels). 387/387 EditMode.
+
 - **Graphics/performance audit fixes.** The focused bare circuit remains the release default,
   but full-airport QA is now explicitly launchable with `-airsideFullAirport` and gets the
   correct miniature framing instead of an effectively empty 3.1 km view. Startup no longer

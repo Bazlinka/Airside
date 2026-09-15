@@ -1,5 +1,49 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — diagnostic `-airsideFullAirport` terrain over-exposure fixed; default
+  circuit untouched. Unity EditMode 387/387 (0 failed, 0 skipped).**
+  - **Player-visible:** none by default; the release bare YPAD circuit, camera, simulation and
+    saves are unchanged. In `-airsideFullAirport` the legacy Kingscote terrain now reads as
+    textured olive grass with relief instead of a clipped white sheet.
+  - **Cause, identified in a packaged build before any fix** (temporary `[DIAG]` instrumentation,
+    since removed):
+    - **White source:** hiding the `Terrain` alone removed all the white.
+    - **Ruled out:** probes, reflection intensity, point/spot lights, fog, horizon dome,
+      shadows, basemap distance, height blend, normal maps, lightmaps, stripped shaders and
+      bad splat weights (sums 0.996–1.004).
+    - **Smoothness (main driver):** URP Terrain/Lit reads mask-map alpha as smoothness. The
+      generated masks average 0.45 / 0.32 / 0.27 / 0.04 against authored 0.12 / 0.18 / 0.08 /
+      0.05. On plain URP Lit, grey 0.25 goes from 148 to 249 when smoothness goes 0 → 0.5.
+    - **Albedo:** the untinted CC0 layers are too bright and cool under the release noon rig.
+      Smoothness 0 alone still left 186–235.
+    - **Not a factor:** textures, colour space (Gamma) and imports are fine.
+  - **How:** `AirsideTerrainGround.TryBuild` now:
+    - returns immediately when `AirsideBareField.Enabled` is true;
+    - gives the terrain its own TerrainData copy with `CalibratedLayer` copies: albedo ×
+      `LayerAlbedoScale` (0.72, 0.76, 0.42), mask smoothness capped at each layer's authored
+      smoothness;
+    - never writes to the baked assets.
+  - **Evidence:**
+    - **Tests:** new `AirsideTerrainGroundCalibrationTests` (4).
+    - **Build:** fresh universal Mac build, captures via
+      `-airsideSoak -airsidePinDaylight [-airsideFullAirport] -airsideReviewShot`.
+    - **Full airport at noon:** terrain sample pixels went from 245–254 to 56–188 olive
+      (e.g. 126,138,87).
+    - **Default circuit at noon:** matches the pre-fix capture within 2 levels at every sample.
+    - **Live-time launches:** both modes inspected.
+    - **Screenshots:** `work/review/full-airport-exposure-*.png`,
+      `work/review/default-circuit-*.png` (git-ignored, local only).
+  - **Remaining limitations:**
+    - **Dark legacy materials:** trees, hills, asphalt and other legacy Lit materials are
+      now visibly under-exposed (near-black).
+    - **Unchecked times of day:** dusk and night not inspected.
+    - **Not re-authored:** the calibration is a runtime copy. The mask generator and the
+      baked assets still carry high smoothness.
+    - **Performance:** no full-world profile.
+    - **Capture caveat:** the Mac must stay awake; captures stalled while it slept.
+  - **NEXT:** Still do not enable full-airport for players. If it becomes a QA view, calibrate the
+    dark legacy Lit materials next, then check dusk/night and profile.
+
 - **2026-09-15 Codex — graphics/performance audit; default circuit retained. Unity EditMode 383/383.**
   - **Player-visible:** the shipped bare YPAD circuit remains unchanged. A developer-only
     `-airsideFullAirport` capture now frames the old miniature world at its usable 155 m overview

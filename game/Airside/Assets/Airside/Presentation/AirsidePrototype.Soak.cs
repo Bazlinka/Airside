@@ -115,7 +115,12 @@ namespace Airside.Presentation
             {
                 var args = Environment.GetCommandLineArgs();
                 var index = Array.IndexOf(args, SoakMinutesFlag);
-                if (index >= 0 && index + 1 < args.Length && float.TryParse(args[index + 1], out var minutes) && minutes > 0f)
+                // Invariant culture, like every other numeric launch flag: under a comma-decimal
+                // macOS locale "-airsideSoakMinutes 0.5" failed to parse and ran the full 30.
+                if (index >= 0 && index + 1 < args.Length
+                    && float.TryParse(args[index + 1], System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var minutes)
+                    && minutes > 0f)
                     _soakMinutes = minutes;
 
                 _soakStartedAt = Time.unscaledTime;

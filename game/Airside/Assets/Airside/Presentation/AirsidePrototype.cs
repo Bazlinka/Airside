@@ -784,11 +784,6 @@ namespace Airside.Presentation
                     && _cameraController.FollowTarget == view)
                     _cameraController.SetFollowPhase(phase, progress);
             }
-
-            // AIR-005 is a parked presentation preview rather than a simulated
-            // flight, but its selection marker still needs the normal soft pulse.
-            if (_gate13NarrowbodyPreview != null)
-                UpdateSelectionMarker(_gate13NarrowbodyPreview, Gate13PreviewAircraftId);
         }
 
         private static float PhasePitchDegrees(AircraftPhase phase, float progress) =>
@@ -4065,41 +4060,7 @@ namespace Airside.Presentation
             AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
 
             BuildBareAdelaidePavement();
-            BuildGate13NarrowbodyPreview();
             BuildBareAdelaidePerimeterFence();
-        }
-
-        /// <summary>
-        /// First one-at-a-time jet asset slice (ADR 0046). Gate 13 is a real OSM
-        /// nose-stop anchor, but this aircraft intentionally has no simulated stand,
-        /// taxi or pushback reservation until the terminal lead-in is paved and routed.
-        /// </summary>
-        private void BuildGate13NarrowbodyPreview()
-        {
-            if (AdelaideLayout.TerminalGatePreviews == null
-                || AdelaideLayout.TerminalGatePreviews.Length == 0)
-                return;
-
-            var gate = AdelaideLayout.TerminalGatePreviews[0];
-            var aircraft = BuildAircraftForType(
-                "Gate 13 · Boeing 737-8",
-                AircraftType.Boeing7378,
-                AirsideTheme.CoastalBlue);
-            aircraft.SetParent(_airfieldRoot, true);
-            aircraft.position = new Vector3(gate.NoseX, AirsideFlightPath.GroundY, gate.NoseZ);
-            aircraft.rotation = Quaternion.Euler(0f, gate.HeadingDegrees, 0f);
-            UpdateGroundShadow(aircraft);
-            AircraftPickProxy.Ensure(aircraft, Gate13PreviewAircraftId);
-            EnsureSelectionMarker(aircraft);
-
-            // A parked presentation preview should not emit the generic running
-            // engine loop. Operational state will own this once gates are simulated.
-            var source = aircraft.GetComponent<AudioSource>();
-            if (source != null)
-                source.Stop();
-
-            _gate13NarrowbodyPreview = aircraft;
-            _gate13PreviewSelected = false;
         }
 
         /// <summary>

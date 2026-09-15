@@ -1,5 +1,9 @@
 # 0046 — One-at-a-time Adelaide aircraft asset rollout
 
+> **Update 2026-09-15:** the exit criteria below are met by ADR 0047 — Gate 13 is now an
+> operational terminal stand and the parked preview has become one AI 737-8 (VH-WTJ,
+> fictional Wattlebird Jet). The rest of this record still governs the asset rollout.
+
 Date: 2026-09-14. Bailey approved the first assets in a deliberately incremental
 fleet rollout: Boeing 737-8, Airbus A321neo, Airbus A220-300, Boeing 787,
 Airbus A320, Dash 8 Q400 and Saab 340B. The models are to arrive one at a time

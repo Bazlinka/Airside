@@ -50,15 +50,15 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Layout_Gate13PreviewIsARealPavedTerminalAnchor_NotARegionalBay()
+        public void Layout_Gate13IsARealPavedTerminalGate_NotARegionalBay()
         {
-            var gate = Array.Find(AdelaideLayout.TerminalGatePreviews, g => g.Id == "GATE-13");
+            var gate = Array.Find(AdelaideLayout.TerminalGates, g => g.Id == "GATE-13");
             Assert.That(gate.Reference, Is.EqualTo("13"));
             Assert.That(gate.NoseX, Is.EqualTo(1570.5f).Within(1f));
             Assert.That(gate.NoseZ, Is.EqualTo(409.7f).Within(1f));
             Assert.That(Math.Abs(gate.HeadingDegrees), Is.LessThan(2f), "Gate 13 faces north toward the terminal");
             Assert.That(AirsideAdelaidePavement.DistanceToPavement(gate.NoseX, gate.NoseZ), Is.LessThan(6f),
-                "the preview itself must stand on the rendered apron");
+                "the gate nose stop must stand on the rendered apron");
             Assert.That(AirsideAdelaideGround.IsOperationallyFlat(gate.NoseX, gate.NoseZ), Is.True);
             foreach (var bay in AdelaideLayout.Bays)
                 Assert.That(bay.Id, Is.Not.EqualTo(gate.Id), "a terminal gate must never resolve as a regional bay");

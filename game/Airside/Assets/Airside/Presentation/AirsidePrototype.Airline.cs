@@ -445,8 +445,10 @@ namespace Airside.Presentation
             if (away >= AwayCatchUp.MinimumSeconds)
                 _awaySummary = AwaySummary.Build(data, restored, away);
 
-            // Saves from before the extra regional carriers gain them now, parked and booked.
+            // Saves from before the extra regional carriers or the terminal jet gain them now,
+            // parked and booked — once only, never a duplicate.
             var joined = restored.AddMissingRegionalCarriers();
+            var jetJoined = restored.AddMissingTerminalOperators();
 
             _clock = clock;
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
@@ -455,6 +457,8 @@ namespace Airside.Presentation
             _seenEvents = _operations.TotalEvents;
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
+            else if (jetJoined > 0)
+                ShowToast("Wattlebird Jet's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
@@ -714,19 +718,6 @@ namespace Airside.Presentation
         {
             if (!TrySelectionHudCardRect(layout, out var rect))
                 return;
-            if (_gate13PreviewSelected)
-            {
-                GUI.Box(rect, GUIContent.none, panel);
-                AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
-                DrawSolid(new Rect(rect.x, rect.y, 5f, rect.height), AirsideTheme.CoastalBlue);
-                var previewBold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
-                GUI.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 20f),
-                    "GATE 13  ·  BOEING 737-8", previewBold);
-                GUI.Label(new Rect(rect.x + 14f, rect.y + 30f, rect.width - 28f, 34f),
-                    "Parked aircraft preview — terminal routing is next.\nCamera following — Overview / R / Esc clears.",
-                    small);
-                return;
-            }
             if (!_fleetAircraftById.TryGetValue(_selectedAircraftId, out var aircraft))
                 return;
 
@@ -737,7 +728,7 @@ namespace Airside.Presentation
             DrawSolid(new Rect(rect.x, rect.y, 5f, rect.height), accent);
             var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 20f),
-                $"{aircraft.Registration}  ·  {aircraft.Airline.Name}", bold);
+                $"{aircraft.Registration}  ·  {aircraft.Airline.Name}  ·  {aircraft.Type.Name}", bold);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 30f, rect.width - 28f, 34f),
                 onField
                     ? $"{StatusText(aircraft)}\nCamera following — Overview / R / Esc clears."
@@ -748,8 +739,7 @@ namespace Airside.Presentation
         private bool TrySelectionHudCardRect(HudLayout layout, out Rect rect)
         {
             rect = default;
-            if ((string.IsNullOrEmpty(_selectedAircraftId) && !_gate13PreviewSelected)
-                || _operations == null)
+            if (string.IsNullOrEmpty(_selectedAircraftId) || _operations == null)
                 return false;
             // Every overlay already shows the selection, and the card would sit over its buttons.
             if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
@@ -764,7 +754,6 @@ namespace Airside.Presentation
 
         private void SelectAircraft(FleetAircraft aircraft)
         {
-            _gate13PreviewSelected = false;
             _selectedAircraftId = aircraft.Registration;
             var plannerStaysOpen = _mapOpen && aircraft.Airline.IsPlayer;
             if (aircraft.Airline.IsPlayer)
@@ -829,10 +818,9 @@ namespace Airside.Presentation
 
         private bool ClearAircraftSelection()
         {
-            if (string.IsNullOrEmpty(_selectedAircraftId) && !_gate13PreviewSelected)
+            if (string.IsNullOrEmpty(_selectedAircraftId))
                 return false;
             _selectedAircraftId = null;
-            _gate13PreviewSelected = false;
             _mapOpen = false;
             _hangarOpen = false;
             _flightsOpen = false;

@@ -10,7 +10,6 @@ namespace Airside.Presentation
     {
         private const string EmuAirDecal = "Textures/Decals/dc_livery_emu_air_v01.png";
         private const string PlayerDecalTemplate = "Textures/Decals/dc_livery_airside_traffic_v01.png";
-        private const string Gate13PreviewAircraftId = "GATE-13-737-8";
 
         private readonly List<CommercialFlight> _fleetFlights = new();
         private readonly Dictionary<string, CommercialFlight> _fleetFlightById = new();
@@ -18,8 +17,6 @@ namespace Airside.Presentation
         private readonly Dictionary<string, Transform> _fleetViewById = new();
         private readonly Dictionary<string, Texture2D> _tintedDecals = new();
         private string _fleetFollowSignature;
-        private Transform _gate13NarrowbodyPreview;
-        private bool _gate13PreviewSelected;
 
         /// <summary>Fleet departures roll from the real 05 threshold; the demo circuit from where it stopped.</summary>
         private float TakeoffOffsetX => FleetMode ? 0f : AirsideFlightPath.CircuitTakeoffOffsetX;
@@ -100,11 +97,8 @@ namespace Airside.Presentation
             switch (visual.Leg)
             {
                 case FleetGroundLeg.Parked:
-                {
-                    var bay = AdelaideGround.Bay(aircraft.Stand);
-                    var heading = bay.HeadingDegrees * Mathf.Deg2Rad;
-                    return new GroundPose(bay.StopX, bay.StopZ, Mathf.Sin(heading), Mathf.Cos(heading), 0f, false);
-                }
+                    // Bay stop or terminal-gate nose stop — never a gate resolved as a bay.
+                    return AdelaideGround.StandPose(aircraft.Stand);
                 case FleetGroundLeg.HoldingShort:
                 {
                     var leg = AdelaideGround.TaxiOut(aircraft.DepartureStand);
@@ -303,9 +297,7 @@ namespace Airside.Presentation
                 return;
             var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
 
-            var selected = aircraftId == Gate13PreviewAircraftId
-                ? _gate13PreviewSelected
-                : !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
+            var selected = !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
             if (marker.gameObject.activeSelf != selected)
                 marker.gameObject.SetActive(selected);
             if (!selected)
@@ -357,13 +349,6 @@ namespace Airside.Presentation
             }
 
             EnsureFleetPickables(views);
-            if (_gate13NarrowbodyPreview != null && _gate13NarrowbodyPreview.gameObject.activeSelf)
-            {
-                // Append the parked preview after operational fleet aircraft so the
-                // Follow shortcut still starts with the player's first live aircraft.
-                active.Add(_gate13NarrowbodyPreview);
-                signature += _gate13NarrowbodyPreview.name + "|";
-            }
 
             if (signature == _fleetFollowSignature)
                 return;
@@ -408,26 +393,11 @@ namespace Airside.Presentation
                     : null;
                 if (proxy == null || string.IsNullOrEmpty(proxy.AircraftId))
                     continue;
-                var selectable = _fleetViewById.ContainsKey(proxy.AircraftId)
-                                 || proxy.AircraftId == Gate13PreviewAircraftId;
+                var selectable = _fleetViewById.ContainsKey(proxy.AircraftId);
                 candidates.Add(new AircraftPickHit(proxy.AircraftId, hits[i].distance, selectable));
             }
 
             var id = AircraftPickRouting.ResolveNearest(candidates);
-            if (id == Gate13PreviewAircraftId && _gate13NarrowbodyPreview != null)
-            {
-                _selectedAircraftId = null;
-                _gate13PreviewSelected = true;
-                _mapOpen = false;
-                _hangarOpen = false;
-                _flightsOpen = false;
-                _devToolsOpen = false;
-                if (_cameraController.StartFollow(_gate13NarrowbodyPreview))
-                    _cameraController.SetFollowPhase(AircraftPhase.AtStand, 0f);
-                ShowToast("Gate 13 · Boeing 737-8 — parked visual preview. Terminal taxi and pushback are next.");
-                PlayUiClick();
-                return;
-            }
 
             if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
                 return;

@@ -18,8 +18,10 @@ namespace Airside.Tests
         {
             var ops = NewGame(out _);
             Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Emu Air"));
-            Assert.That(ops.Fleet.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
-                "one aircraft per bay: nobody can be left without a stand");
+            var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
+            Assert.That(regional.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
+                "one regional aircraft per bay: nobody can be left without a stand");
+            Assert.That(regional.All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Select(a => a.Stand).Distinct().Count(), Is.EqualTo(ops.Fleet.Count));
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
             Assert.That(ops.Fleet.Where(a => !a.Airline.IsPlayer).All(a => a.Scheduled.HasValue), Is.True);

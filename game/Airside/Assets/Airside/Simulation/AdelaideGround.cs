@@ -21,14 +21,44 @@ namespace Airside.Simulation
         private static readonly Dictionary<string, AdelaideBay> BaysById = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> TaxiOutLegs = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> TaxiInLegs = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, AdelaideTerminalGate> GatesById = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// A jet's main gear trails its nose datum by about this much on a gate route (737-8
+        /// nose to main gear ≈ 19 m), which is how its body is steered through the turns.
+        /// </summary>
+        public const float JetTrackMetres = 19f;
+
+        /// <summary>The paved link and lead-in between T1/T2 and a terminal gate, reserved per gate.</summary>
+        public static string LeadInResource(StableId gate) => gate.Value + "/lead-in";
         private static GroundPath _vacate;
         private static GroundLeg _vacateLeg;
         private static GroundLeg _lineupLeg;
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
 
+        public static IReadOnlyList<AdelaideTerminalGate> TerminalGates => AdelaideLayout.TerminalGates;
+
+        /// <summary>True for a terminal gate (a separate stand system from the regional bays).</summary>
+        public static bool IsTerminalGate(StableId stand) => TryTerminalGate(stand, out _);
+
+        public static bool TryTerminalGate(StableId stand, out AdelaideTerminalGate gate)
+        {
+            if (GatesById.Count == 0)
+                foreach (var candidate in AdelaideLayout.TerminalGates)
+                    GatesById[candidate.Id] = candidate;
+            gate = default;
+            return stand.Value != null && GatesById.TryGetValue(stand.Value, out gate);
+        }
+
+        /// <summary>
+        /// Regional bay lookup. Unknown ids keep the historical fall back to the first bay, but a
+        /// terminal gate is refused outright: a jet must never be drawn or routed on 50D.
+        /// </summary>
         public static AdelaideBay Bay(StableId stand)
         {
+            if (IsTerminalGate(stand))
+                throw new InvalidOperationException($"{stand} is a terminal gate, not a regional bay.");
             if (BaysById.Count == 0)
                 foreach (var bay in AdelaideLayout.Bays)
                     BaysById[bay.Id] = bay;
@@ -43,6 +73,8 @@ namespace Airside.Simulation
         {
             if (string.IsNullOrEmpty(stand.Value))
                 return "—";
+            if (TryTerminalGate(stand, out var gate))
+                return $"Gate {gate.Reference}";
             foreach (var bay in AdelaideLayout.Bays)
                 if (bay.Id == stand.Value)
                     return $"Bay {bay.Reference}";
@@ -56,9 +88,37 @@ namespace Airside.Simulation
         public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
             new GroundLegPart(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup), tailFirst: false));
 
-        /// <summary>Pushback tail-first onto T4, tug disconnect, then taxi to the runway 05 holding point.</summary>
+        /// <summary>Where an aircraft parked on <paramref name="stand"/> stands: its stop and nose heading.</summary>
+        public static GroundPose StandPose(StableId stand)
+        {
+            double heading;
+            float x, z;
+            if (TryTerminalGate(stand, out var gate))
+            {
+                x = gate.NoseX;
+                z = gate.NoseZ;
+                heading = gate.HeadingDegrees * Math.PI / 180.0;
+            }
+            else
+            {
+                var bay = Bay(stand);
+                x = bay.StopX;
+                z = bay.StopZ;
+                heading = bay.HeadingDegrees * Math.PI / 180.0;
+            }
+
+            return new GroundPose(x, z, (float)Math.Sin(heading), (float)Math.Cos(heading), 0f, false);
+        }
+
+        /// <summary>
+        /// Pushback tail-first onto T4, tug disconnect, then taxi to the runway 05 holding point.
+        /// A terminal gate uses its own nose-datum routes: pushback tail-first onto T1, the tug
+        /// disconnect, then forward along T1/T2 to runway 05.
+        /// </summary>
         public static GroundLeg TaxiOut(StableId stand)
         {
+            if (TryTerminalGate(stand, out var gate))
+                return GateTaxiOut(gate);
             var bay = Bay(stand);
             if (!TaxiOutLegs.TryGetValue(bay.Id, out var leg))
             {
@@ -72,9 +132,11 @@ namespace Airside.Simulation
             return leg;
         }
 
-        /// <summary>E2 holding point → nose into the assigned bay.</summary>
+        /// <summary>E2 holding point → nose into the assigned bay or terminal gate.</summary>
         public static GroundLeg TaxiIn(StableId stand)
         {
+            if (TryTerminalGate(stand, out var gate))
+                return GateTaxiIn(gate);
             var bay = Bay(stand);
             if (!TaxiInLegs.TryGetValue(bay.Id, out var leg))
             {
@@ -98,6 +160,32 @@ namespace Airside.Simulation
 
             var back = VacatePath.SampleAtDistance(Math.Max(0f, VacatePath.Length - AwaitingSpacingMetres * slot));
             return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+        }
+
+        private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate)
+        {
+            if (!TaxiOutLegs.TryGetValue(gate.Id, out var leg))
+            {
+                leg = new GroundLeg(
+                    new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: JetTrackMetres),
+                    new GroundLegPart(new GroundPath(gate.TaxiOut, GroundSpeedLimits.Taxi, 0f, 0f, new[] { ApronZone }, null),
+                        tailFirst: false, TugDisconnectSeconds, JetTrackMetres));
+                TaxiOutLegs[gate.Id] = leg;
+            }
+
+            return leg;
+        }
+
+        private static GroundLeg GateTaxiIn(AdelaideTerminalGate gate)
+        {
+            if (!TaxiInLegs.TryGetValue(gate.Id, out var leg))
+            {
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, GroundSpeedLimits.Taxi, 0f, 0f,
+                    null, new[] { ApronZone, StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
+                TaxiInLegs[gate.Id] = leg;
+            }
+
+            return leg;
         }
 
         /// <summary>10 kt on the apron lane beside the bays.</summary>

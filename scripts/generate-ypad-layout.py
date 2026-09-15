@@ -47,11 +47,21 @@ BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A"),
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
 PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 
-# Gate 13 is the first terminal-gate *presentation anchor*, introduced with AIR-005.
-# It deliberately does not join BAYS: terminal ground routing and pushback are a later
-# simulation slice, and treating it as a regional bay would make AdelaideGround fall
-# back to BAY-1. Keep the OSM parking-position ref explicit and source-derived.
-TERMINAL_GATE_PREVIEWS = [("GATE-13", "13")]
+# Terminal gates (ADR 0047) are a separate stand system from the regional BAYS: they
+# never join BAYS, so AdelaideGround can never resolve one as a regional bay. Gate 13
+# was AIR-005's presentation anchor (ADR 0046) and is now operational for one jet.
+TERMINAL_GATES = [("GATE-13", "13")]
+
+# Gate 13 ground geometry, all anchored on OSM features. Its real parking line starts at
+# the T1/T2/B1 junction, but OSM's terminal apron only begins at z = 358, leaving a 50 m
+# unpaved band. GATE13_LINK fills exactly that band — T2/T1 centreline below, the OSM
+# apron edge above, inside that edge's x-extent — so it never overlaps the OSM apron.
+GATE13_JUNCTION = (1568.0, 295.0)      # T1/T2/B1 node
+GATE13_T2_ENTRY = (1543.0, 294.0)      # T2 node the eastbound arrival leaves to turn in
+GATE13_T1_PUSH_END = (1600.0, 301.7)   # nose point on T1 centreline after the pushback
+GATE13_LEAD_IN = 60.0                  # straight nose-in stretch before the stop
+GATE13_LINK = [(1520.0, 294.0), (1568.0, 295.0), (1577.0, 297.0), (1611.0, 304.0), (1626.0, 307.2),
+               (1626.0, 358.0), (1520.0, 358.0)]
 
 
 def xy(p):
@@ -256,18 +266,43 @@ def main():
         report.append((f"pushback {bay_id}/{ref}", pushback, ["stand"]))
         report.append((f"taxi-out {bay_id}/{ref}", taxi_out, depart_names))
 
-    # The first AIR-005 preview is placed at an OSM parking-position nose stop.
-    # These anchors intentionally carry no taxi/pushback route: the Gate 13 parking
-    # line crosses a still-unpaved apron gap and must not be animated as if it were
-    # a safe ground path.
-    terminal_gate_previews = []
-    for gate_id, ref in TERMINAL_GATE_PREVIEWS:
+    # Terminal gates: routes follow the jet's nose datum (AIR-005's model root), nose in.
+    aprons.append(("Gate 13 apron link", GATE13_LINK))
+    terminal_gates = []
+    for gate_id, ref in TERMINAL_GATES:
         entry, stop = parking[ref][0], parking[ref][-1]
         d = (stop[0] - entry[0], stop[1] - entry[1])
         dl = math.hypot(*d)
         d = (d[0] / dl, d[1] / dl)
         heading = math.degrees(math.atan2(d[0], d[1]))
-        terminal_gate_previews.append((gate_id, ref, stop, heading))
+        lead = (stop[0] - d[0] * GATE13_LEAD_IN, stop[1] - d[1] * GATE13_LEAD_IN)
+
+        # Taxi-in: E2 -> ... -> T2 eastbound, one left turn onto the lead-in, straight to the stop.
+        arrive, arrive_names = route(E2_HOLD, GATE13_T2_ENTRY)
+        arrive = round_corners(arrive, 35.0)
+        turn_in = bezier(GATE13_T2_ENTRY, (GATE13_T2_ENTRY[0] + 17.0, GATE13_T2_ENTRY[1]),
+                         (lead[0] - d[0] * 32.0, lead[1] - d[1] * 32.0), lead, 14)
+        taxi_in = dedupe(arrive + turn_in[1:] + [stop])
+
+        # Pushback, tail first: straight back down the lead-in, then the tail swings east onto
+        # T1 so the nose ends on the T1 centreline pointing west, ready to taxi out forward.
+        back = (stop[0] - d[0] * 58.0, stop[1] - d[1] * 58.0)
+        t1 = (1611.0 - 1577.0, 304.0 - 297.0)
+        t1l = math.hypot(*t1)
+        t1 = (t1[0] / t1l, t1[1] / t1l)
+        # The curve arrives along T1's own direction, so the taxi-out leaves without a heading step.
+        pushback = dedupe([stop] + bezier(back, (back[0] - d[0] * 30.0, back[1] - d[1] * 30.0),
+                                          (GATE13_T1_PUSH_END[0] - t1[0] * 20.0, GATE13_T1_PUSH_END[1] - t1[1] * 20.0),
+                                          GATE13_T1_PUSH_END, 14))
+
+        # Taxi-out: forward west along T1 to the junction, then the normal route to runway 05.
+        depart, depart_names = route(GATE13_JUNCTION, HOLD_05)
+        taxi_out = round_corners([GATE13_T1_PUSH_END, (1577.0, 297.0)] + depart + [HOLD_05], 35.0)
+
+        terminal_gates.append((gate_id, ref, stop, heading, taxi_in, pushback, taxi_out))
+        report.append((f"taxi-in {gate_id}/{ref}", taxi_in, ["E2"] + arrive_names + ["lead-in"]))
+        report.append((f"pushback {gate_id}/{ref}", pushback, ["stand", "T1"]))
+        report.append((f"taxi-out {gate_id}/{ref}", taxi_out, ["T1"] + depart_names))
 
     cross_a, cross_b = local(RWY12), local(RWY30)
 
@@ -329,14 +364,17 @@ def main():
         "    }",
         "",
         "    /// <summary>",
-        "    /// An OSM-derived terminal-gate nose-stop anchor. It is deliberately not a",
-        "    /// regional bay and has no taxi/pushback route or reservation semantics yet.",
+        "    /// An OSM-derived terminal gate (ADR 0047): a stand system separate from the regional",
+        "    /// bays, with routes for a jet's nose datum — nose-in taxi, tail-first pushback onto T1,",
+        "    /// forward taxi-out to runway 05.",
         "    /// </summary>",
         "    public readonly struct AdelaideTerminalGate",
         "    {",
-        "        public AdelaideTerminalGate(string id, string reference, float noseX, float noseZ, float headingDegrees)",
+        "        public AdelaideTerminalGate(string id, string reference, float noseX, float noseZ, float headingDegrees,",
+        "            float[] taxiIn, float[] pushback, float[] taxiOut)",
         "        {",
         "            Id = id; Reference = reference; NoseX = noseX; NoseZ = noseZ; HeadingDegrees = headingDegrees;",
+        "            TaxiIn = taxiIn; Pushback = pushback; TaxiOut = taxiOut;",
         "        }",
         "        public string Id { get; }",
         "        public string Reference { get; }",
@@ -345,6 +383,12 @@ def main():
         "        public float NoseZ { get; }",
         "        /// <summary>Nose heading, degrees clockwise from +z.</summary>",
         "        public float HeadingDegrees { get; }",
+        "        /// <summary>E2 holding point to the nose stop, nose first.</summary>",
+        "        public float[] TaxiIn { get; }",
+        "        /// <summary>Nose stop to the T1 centreline, tail first.</summary>",
+        "        public float[] Pushback { get; }",
+        "        /// <summary>End of pushback to the runway 05 holding point, nose first.</summary>",
+        "        public float[] TaxiOut { get; }",
         "    }",
         "",
         "    /// <summary>",
@@ -380,10 +424,11 @@ def main():
         lines.append(
             f'            new AdelaideBay("{bay_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)},\n'
             f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)}),")
-    lines += ["        };", "", "        public static readonly AdelaideTerminalGate[] TerminalGatePreviews =", "        {"]
-    for gate_id, ref, stop, heading in terminal_gate_previews:
+    lines += ["        };", "", "        public static readonly AdelaideTerminalGate[] TerminalGates =", "        {"]
+    for gate_id, ref, stop, heading, taxi_in, pushback, taxi_out in terminal_gates:
         lines.append(
-            f'            new AdelaideTerminalGate("{gate_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)}),')
+            f'            new AdelaideTerminalGate("{gate_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)},\n'
+            f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)}),")
     lines += ["        };", "", "        public static readonly AdelaideTaxiway[] Taxiways =", "        {"]
     for ref, width, pts in taxiways:
         lines.append(f'            new AdelaideTaxiway("{ref}", {fmt(width)}, {arr(pts)}),')

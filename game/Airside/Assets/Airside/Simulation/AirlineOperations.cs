@@ -85,6 +85,38 @@ namespace Airside.Simulation
             new StableId("BAY-5"), new StableId("BAY-6")
         };
 
+        /// <summary>Terminal gates (ADR 0047): jets only, a separate stand system from the regional bays.</summary>
+        public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = new[] { new StableId("GATE-13") };
+
+        /// <summary>Every stand at Adelaide: the regional bays, then the terminal gates.</summary>
+        public static readonly IReadOnlyList<StableId> AdelaideStands = new List<StableId>(AdelaideRegionalBays)
+        {
+            AdelaideTerminalGates[0]
+        };
+
+        /// <summary>
+        /// The fictional terminal jet operator and its aircraft, each tied to its gate. New games
+        /// start with it; older saves gain it on load (<see cref="AddMissingTerminalOperators"/>).
+        /// </summary>
+        public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type, StableId Gate)[] Fleet)> TerminalOperators = new (Func<Airline>, (string, AircraftType, StableId)[])[]
+        {
+            (Airline.WattlebirdJet, new[] { ("VH-WTJ", AircraftType.Boeing7378, new StableId("GATE-13")) })
+        };
+
+        /// <summary>
+        /// Wattlebird Jet's mainland rotation, flown in order by completed trips — Melbourne and
+        /// Sydney most, then Brisbane, Perth and Canberra. Deterministic and drawn from no random
+        /// numbers, so adding the jet leaves the regional carriers' random sequence untouched.
+        /// </summary>
+        public static readonly IReadOnlyList<string> WattlebirdRotation = new[] { "MEL", "SYD", "MEL", "BNE", "SYD", "PER", "MEL", "CBR" };
+
+        /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
+        public static bool NeedsTerminalGate(AircraftType type) =>
+            type != null && type.Id == AircraftType.Boeing7378.Id;
+
+        public static bool StandFits(AircraftType type, StableId stand) =>
+            AdelaideGround.IsTerminalGate(stand) == NeedsTerminalGate(type);
+
         /// <summary>
         /// Real regional carriers that share Adelaide's regional apron with the player and
         /// Emu Air. New games start with them; older saves gain them on load
@@ -132,7 +164,7 @@ namespace Airside.Simulation
             if (player == null) throw new ArgumentNullException(nameof(player));
             if (!player.IsPlayer) throw new ArgumentException("The starting airline must be the player's.", nameof(player));
 
-            var operations = new AirlineOperations(clock, random, DestinationCatalogue.Adelaide, AdelaideRegionalBays);
+            var operations = new AirlineOperations(clock, random, DestinationCatalogue.Adelaide, AdelaideStands);
             var emu = Airline.EmuAir();
             operations.AddAirline(player);
             operations.AddAirline(emu);
@@ -150,6 +182,9 @@ namespace Airside.Simulation
                     aiFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
                         operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[i]));
             }
+
+            // The terminal jet joins after the regional openings are fixed, so they are unchanged.
+            operations.AddMissingTerminalOperators();
 
             operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
@@ -184,6 +219,38 @@ namespace Airside.Simulation
                         break;
                     var aircraft = AddAircraft(airline, registration, type, free.Value);
                     added?.Add(aircraft);
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Add any <see cref="TerminalOperators"/> airline and aircraft missing here, parked at its
+        /// own gate with its first rotation flight booked. Skipped when this airport has no such
+        /// gate or it is taken. Returns how many aircraft joined; safe to call on every load.
+        /// </summary>
+        public int AddMissingTerminalOperators()
+        {
+            var count = 0;
+            foreach (var (make, fleet) in TerminalOperators)
+            {
+                var template = make();
+                var airline = _airlines.Find(a => a.Id.Equals(template.Id));
+                foreach (var (registration, type, gate) in fleet)
+                {
+                    if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    if (!_stands.Contains(gate) || !IsStandFree(gate))
+                        continue;
+                    if (airline == null)
+                    {
+                        airline = template;
+                        AddAirline(airline);
+                    }
+
+                    AddAircraft(airline, registration, type, gate);
                     count++;
                 }
             }
@@ -245,6 +312,8 @@ namespace Airside.Simulation
                 throw new InvalidOperationException($"{registration} is already registered.");
             if (!IsStandFree(stand))
                 throw new InvalidOperationException($"{stand} is not free.");
+            if (!StandFits(type, stand))
+                throw new InvalidOperationException($"A {type.Name} cannot park on {stand}.");
 
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
             _fleet.Add(aircraft);
@@ -272,6 +341,8 @@ namespace Airside.Simulation
             aircraft.Restore(state, stateStartedAt, stateEndsAt);
             if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
                 throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
+            if (HoldsStand(aircraft) && !StandFits(type, stand))
+                throw new FormatException($"{registration} ({type.Name}) cannot be on stand '{stand}'.");
 
             aircraft.Stand = stand;
             aircraft.DepartureStand = departureStand;
@@ -310,16 +381,79 @@ namespace Airside.Simulation
             if (!_stands.Contains(stand))
                 return false;
             foreach (var aircraft in _fleet)
-                if (HoldsStand(aircraft) && aircraft.Stand.Equals(stand))
+                if (StandHolder(aircraft, stand))
                     return false;
             return true;
         }
 
+        /// <summary>
+        /// Free regional bays — the stands a turboprop (every player aircraft) can use. Terminal
+        /// gates are never offered here; see <see cref="FreeStandsFor"/>.
+        /// </summary>
         public IEnumerable<StableId> FreeStands()
         {
             foreach (var stand in _stands)
-                if (IsStandFree(stand))
+                if (!AdelaideGround.IsTerminalGate(stand) && IsStandFree(stand))
                     yield return stand;
+        }
+
+        /// <summary>Free stands this aircraft type may use: terminal gates for jets, bays otherwise.</summary>
+        public IEnumerable<StableId> FreeStandsFor(AircraftType type)
+        {
+            foreach (var stand in _stands)
+                if (StandFits(type, stand) && IsStandFree(stand))
+                    yield return stand;
+        }
+
+        /// <summary>
+        /// Who holds a ground resource right now: a stand id, or a gate's
+        /// <see cref="AdelaideGround.LeadInResource"/>. Null when free. Derived from aircraft state,
+        /// so it is always consistent with a save and with catch-up.
+        /// </summary>
+        public FleetAircraft GroundResourceHolder(string resource)
+        {
+            foreach (var aircraft in _fleet)
+            {
+                if (aircraft.State is FleetState.AtStand or FleetState.TaxiIn && aircraft.Stand.Value == resource)
+                    return aircraft;
+                if (aircraft.State == FleetState.TaxiOut && AdelaideGround.IsTerminalGate(aircraft.DepartureStand)
+                    && aircraft.DepartureStand.Value == resource)
+                    return aircraft;
+                if (UsesLeadIn(aircraft, out var gate) && AdelaideGround.LeadInResource(gate) == resource)
+                    return aircraft;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Terminal gates stay held through the whole taxi out (the pushback happens on the gate and
+        /// its lead-in) and while taxiing in; regional bays keep their original rule.
+        /// </summary>
+        private static bool StandHolder(FleetAircraft aircraft, StableId stand)
+        {
+            if (HoldsStand(aircraft) && aircraft.Stand.Equals(stand))
+                return true;
+            return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand)
+                   && AdelaideGround.IsTerminalGate(stand);
+        }
+
+        /// <summary>A gate's lead-in is in use while an aircraft taxis in to it or out from it.</summary>
+        private static bool UsesLeadIn(FleetAircraft aircraft, out StableId gate)
+        {
+            gate = aircraft.State switch
+            {
+                FleetState.TaxiIn => aircraft.Stand,
+                FleetState.TaxiOut => aircraft.DepartureStand,
+                _ => default
+            };
+            return gate.Value != null && AdelaideGround.IsTerminalGate(gate);
+        }
+
+        private bool IsLeadInFree(StableId gate, FleetAircraft except)
+        {
+            var holder = GroundResourceHolder(AdelaideGround.LeadInResource(gate));
+            return holder == null || ReferenceEquals(holder, except);
         }
 
         /// <summary>
@@ -393,8 +527,12 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} is not waiting for a stand.");
             if (!_stands.Contains(stand))
                 return CommandResult.Refused($"{stand} is not a stand here.");
+            if (!StandFits(aircraft.Type, stand))
+                return CommandResult.Refused($"A {aircraft.Type.Name} cannot use {AdelaideGround.StandLabel(stand)}.");
             if (!IsStandFree(stand))
                 return CommandResult.Refused($"{stand} is occupied.");
+            if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
+                return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)}'s lead-in is in use.");
 
             aircraft.Stand = stand;
             Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand));
@@ -445,6 +583,10 @@ namespace Airside.Simulation
                 case FleetState.AtStand:
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
                         return false;
+                    // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
+                    // whenever anything else finishes, since that is the only way it frees.
+                    if (AdelaideGround.IsTerminalGate(aircraft.Stand) && !IsLeadInFree(aircraft.Stand, aircraft))
+                        return false;
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
                     aircraft.DepartureStand = aircraft.Stand;
@@ -481,7 +623,9 @@ namespace Airside.Simulation
                         return false;
                     foreach (var stand in _stands)
                     {
-                        if (!IsStandFree(stand))
+                        if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand))
+                            continue;
+                        if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
                             continue;
                         aircraft.Stand = stand;
                         Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(stand));
@@ -572,15 +716,31 @@ namespace Airside.Simulation
             ("PLO", 2), ("ASP", 2)
         };
 
+        /// <summary>Wattlebird Jet's destinations, weighted by how often <see cref="WattlebirdRotation"/> visits them.</summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> WattlebirdNetwork = new[]
+        {
+            ("MEL", 3), ("SYD", 2), ("BNE", 1), ("PER", 1), ("CBR", 1)
+        };
+
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
             "REX" => RexNetwork,
             "QLK" => QantasLinkNetwork,
+            "WTB" => WattlebirdNetwork,
             _ => AiNetwork
         };
 
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.Airline.Id.Value == "WTB")
+            {
+                // Rotation, not a random draw (see WattlebirdRotation).
+                var code = WattlebirdRotation[aircraft.CompletedTrips % WattlebirdRotation.Count];
+                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiStandTurnaroundSeconds)));
+                return;
+            }
+
             var total = 0;
             var candidates = new List<(Destination destination, int weight)>();
             foreach (var (code, weight) in AiNetworkFor(aircraft.Airline))

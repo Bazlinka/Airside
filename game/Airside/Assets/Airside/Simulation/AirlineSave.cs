@@ -132,7 +132,7 @@ namespace Airside.Simulation
                 throw new FormatException("The save has no random state.");
 
             var operations = new AirlineOperations(clock, new SeededRandomSource(data.RandomState), home,
-                AirlineOperations.AdelaideRegionalBays);
+                AirlineOperations.AdelaideStands);
 
             var airlines = new Dictionary<string, Airline>(StringComparer.Ordinal);
             foreach (var record in data.Airlines ?? new List<AirlineRecord>())

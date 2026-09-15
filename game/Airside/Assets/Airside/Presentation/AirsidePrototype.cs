@@ -106,8 +106,8 @@ namespace Airside.Presentation
         private readonly HashSet<string> _touchdownFired = new HashSet<string>();
         private readonly HashSet<string> _rotateFired = new HashSet<string>();
         private AudioClip _rotateClip;
-        private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved)> _wetSurfaces =
-            new List<(Material, Color, float, float, float, bool)>();
+        private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved, Texture DryAlbedo)> _wetSurfaces =
+            new List<(Material, Color, float, float, float, bool, Texture)>();
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -2215,14 +2215,15 @@ namespace Airside.Presentation
                 _lastAppliedWetness = rainWetness;
                 for (var i = 0; i < _wetSurfaces.Count; i++)
                 {
-                    var (material, dry, drySmooth, dryMetallic, dryBump, paved) = _wetSurfaces[i];
+                    var (material, dry, drySmooth, dryMetallic, dryBump, paved, dryAlbedo) = _wetSurfaces[i];
                     if (material == null)
                         continue;
                     // Clear residual damp reads on overview like the turnaround dusk board.
                     var apply = raining ? rainWetness : (paved ? 0.14f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
                         material, apply, dry, drySmooth, dryMetallic, dryBump,
-                        preferWetConcreteAlbedo: paved);
+                        preferWetConcreteAlbedo: paved && AirsideMaterialLibrary.AcceptsWetConcreteAlbedo(dryAlbedo),
+                        dryAlbedo: dryAlbedo);
                 }
             }
 
@@ -2723,7 +2724,7 @@ namespace Airside.Presentation
                 var dryMetallic = mat.HasProperty("_Metallic") ? mat.GetFloat("_Metallic") : 0.02f;
                 var dryBump = mat.HasProperty("_BumpScale") ? mat.GetFloat("_BumpScale") : 0.5f;
                 _wetSurfaces.Add((mat, mat.color, drySmooth, dryMetallic, dryBump,
-                    IsPavedSurfaceName(n)));
+                    IsPavedSurfaceName(n), mat.mainTexture));
             }
         }
 

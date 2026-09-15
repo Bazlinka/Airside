@@ -424,11 +424,6 @@ namespace Airside.Presentation
         public static float DryBumpScale(SurfaceKind kind) => GetProfile(kind).BumpScale;
 
         /// <summary>
-        /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
-        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
-        /// sheen so rain reads on URP Lit without authoring separate wet mats.
-        /// </summary>
-        /// <summary>
         /// Toggles a shader keyword only when it actually changes. A keyword write forces
         /// Unity to re-resolve the shader variant and drops the material out of its SRP
         /// Batcher batch, so a redundant set is far from free.
@@ -443,6 +438,25 @@ namespace Airside.Presentation
                 material.DisableKeyword(keyword);
         }
 
+        /// <summary>
+        /// Wetness at which a concrete surface swaps to the wet-concrete albedo. Real rain is
+        /// 0.52+; clear weather's residual damp on paved slabs is 0.14 and must keep the dry map.
+        /// </summary>
+        public const float WetConcreteAlbedoThreshold = 0.3f;
+
+        /// <summary>
+        /// True when a surface whose dry albedo is <paramref name="dryAlbedo"/> may take the
+        /// wet-concrete swatch. Asphalt and grass must never be repainted as concrete.
+        /// </summary>
+        public static bool AcceptsWetConcreteAlbedo(Texture dryAlbedo) =>
+            dryAlbedo != null
+            && dryAlbedo.name.IndexOf("concrete", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>
+        /// Wet-variant response for paved / ground surfaces (0025 item 4). Darkens
+        /// albedo, raises smoothness, flattens micro-bump, and enables a clear-coat
+        /// sheen so rain reads on URP Lit without authoring separate wet mats.
+        /// </summary>
         public static void ApplyWetness(
             Material material,
             float wetness01,
@@ -450,7 +464,8 @@ namespace Airside.Presentation
             float drySmoothness,
             float dryMetallic = 0.02f,
             float dryBumpScale = 0.5f,
-            bool preferWetConcreteAlbedo = false)
+            bool preferWetConcreteAlbedo = false,
+            Texture dryAlbedo = null)
         {
             if (material == null)
                 return;
@@ -464,18 +479,22 @@ namespace Airside.Presentation
             if (material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", wetColor);
 
-            // Approved surface board wet-concrete swatch — swap apron albedo when wet enough.
-            if (preferWetConcreteAlbedo && wetness01 > 0.12f)
+            // Approved surface board wet-concrete swatch — swap apron albedo in real rain, and
+            // put the dry map back afterwards. The swap used to trigger at clear weather's
+            // residual damp and was never undone, so every paved slab (runway asphalt
+            // included) wore the wet-concrete texture permanently.
+            Texture albedo = preferWetConcreteAlbedo && wetness01 >= WetConcreteAlbedoThreshold
+                ? PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false)
+                : null;
+            if (albedo == null)
+                albedo = dryAlbedo;
+            if (albedo != null && material.mainTexture != albedo)
             {
-                var wetMap = PreferAuthoredMap("tx_wet_concrete", "basecolor", linear: false);
-                if (wetMap != null)
-                {
-                    if (material.HasProperty("_BaseMap"))
-                        material.SetTexture("_BaseMap", wetMap);
-                    if (material.HasProperty("_MainTex"))
-                        material.SetTexture("_MainTex", wetMap);
-                    material.mainTexture = wetMap;
-                }
+                if (material.HasProperty("_BaseMap"))
+                    material.SetTexture("_BaseMap", albedo);
+                if (material.HasProperty("_MainTex"))
+                    material.SetTexture("_MainTex", albedo);
+                material.mainTexture = albedo;
             }
             if (material.HasProperty("_SpecColor"))
             {

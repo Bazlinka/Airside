@@ -225,8 +225,12 @@ namespace Airside.Presentation
             if (n.Contains("fence") || n.Contains("gate_") || n.Contains("bollard") || n.Contains("kerb")
                 || n.Contains("sign_post") || n.Contains("sign_frame") || n.Contains("trolley"))
                 return SurfaceKind.Metal;
+            // Bark and rock are matte and non-metallic; as painted metal (metallic 0.22,
+            // smoothness 0.55) every trunk and boulder caught a sky sheen and read dark.
             if (n.Contains("trunk") || n.Contains("bark") || n.Contains("flare") || n.Contains("fork")
-                || n.Contains("bench") || n.Contains("planter") || n.Contains("rock"))
+                || n.Contains("rock"))
+                return SurfaceKind.Default;
+            if (n.Contains("bench") || n.Contains("planter"))
                 return SurfaceKind.PaintedMetal;
             if (n.Contains("coast_sand") || n.Equals("berm"))
                 return SurfaceKind.Sand;

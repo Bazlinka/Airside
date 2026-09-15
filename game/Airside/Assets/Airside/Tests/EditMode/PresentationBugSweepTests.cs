@@ -65,6 +65,9 @@ namespace Airside.Tests
         [TestCase("terminal_body", AirsideMaterialLibrary.SurfaceKind.Concrete)]
         [TestCase("tug_cab", AirsideMaterialLibrary.SurfaceKind.AircraftSkin)]
         [TestCase("Fuselage", AirsideMaterialLibrary.SurfaceKind.AircraftSkin)]
+        [TestCase("tree_a_trunk", AirsideMaterialLibrary.SurfaceKind.Default)]
+        [TestCase("rock_b", AirsideMaterialLibrary.SurfaceKind.Default)]
+        [TestCase("tree_b_canopy", AirsideMaterialLibrary.SurfaceKind.Grass)]
         public void InferFromMeshName_AvoidsSkinSubstringTraps(string mesh, AirsideMaterialLibrary.SurfaceKind expected)
         {
             Assert.That(AirsideMaterialLibrary.InferFromMeshName(mesh), Is.EqualTo(expected));

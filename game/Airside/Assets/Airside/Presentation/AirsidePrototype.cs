@@ -8021,6 +8021,9 @@ namespace Airside.Presentation
             }
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
+            // Blur discs: ApplyPropBlurToHub hides the blades above 1 000 RPM and shows the
+            // disc instead. Without one the Saab's propellers vanished on takeoff and approach.
+            EnsurePropDiscs(root);
             EnsureGroundShadow(root);
             if (!HasNamedChild(root, "NavLight L"))
                 ParentBlock(root, "NavLight L", new Vector3(-10.68f, 2.2f, 0.55f), new Vector3(0.12f, 0.12f, 0.12f), new Color(0.1f, 0.9f, 0.2f));
@@ -8101,6 +8104,8 @@ namespace Airside.Presentation
             }
 
             ApplyLiveryDecal(root, liveryDecalRelativePath);
+            // Same as the Saab: the Q400 needs blur discs or its props disappear at power.
+            EnsurePropDiscs(root);
             EnsureGroundShadow(root);
             if (!HasNamedChild(root, "NavLight L"))
                 ParentBlock(root, "NavLight L", new Vector3(-14.15f, 4.85f, 1.2f), new Vector3(0.14f, 0.14f, 0.14f), new Color(0.1f, 0.9f, 0.2f));

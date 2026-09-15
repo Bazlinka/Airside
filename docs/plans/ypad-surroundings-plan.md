@@ -1,7 +1,7 @@
 # YPAD surroundings plan — making the ground look like Adelaide Airport
 
 Status: in progress · 2026-09-14 · Bailey chose **overview only for now; attribution and coast first**.
-P0 (on-screen OSM credit) and P2 (coast + sea) are done; P1's shared frame is done by
+P0 (on-screen OSM credit), P2 (coast + sea) and P3 (land cover + arterial roads) are done; P1's shared frame is done by
 importing `generate-ypad-layout.py` from `generate-ypad-coast.py` rather than a new module.
 
 ## Where we are
@@ -151,7 +151,7 @@ beyond mesh upload (lesson from `AirsideTerrainGround`).
   Presentation builds a water plane to 25 km plus sand strip. Raise `CameraFarClip`
   only if needed; prefer fog. EditMode test: coastline lies 2.5–3.5 km west of runway
   midpoint and never intersects the airfield plateau. *Evidence:* S2, S4 vs reference.
-- **P3 — Land cover.** Landuse/leisure/natural/parking polygons, triangulated in the
+- **P3 — Land cover. (Done 2026-09-15)** Landuse/leisure/natural/parking polygons, triangulated in the
   generator (ear clipping in Python, emit triangles, not raw polygons, so C# stays
   dumb), 6 palette classes, one atlas material with world-UV noise. Clip to a
   6 × 6 km box. Test: class coverage percentages stable ±2 % vs snapshot.

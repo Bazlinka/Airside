@@ -23,6 +23,7 @@ ART = os.path.join(ROOT, "game/Airside/Assets/Airside/Art")
 # (catalogue id, runtime model, output thumbnail) — must match Domain/AircraftCatalogue.cs.
 MODELS = [
     ("ATR42", "Models/Aircraft/mdl_atr42_starter_v02.gltf", "UI/Aircraft/thb_air_atr42_v01.png"),
+    ("DH8D", "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png"),
     ("B38M", "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png"),
 ]
 

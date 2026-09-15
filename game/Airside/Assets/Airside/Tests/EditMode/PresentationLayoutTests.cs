@@ -968,6 +968,23 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Dash8Q400_ProfileUsesItsOwnTrueScaleArtAndFraming()
+        {
+            Assert.That(AircraftType.TryFromId("DH8D", out var type), Is.True);
+            Assert.That(type, Is.SameAs(AircraftType.Dash8Q400));
+
+            var profile = AircraftVisualProfiles.For(type);
+            Assert.That(profile, Is.EqualTo(AircraftVisualProfiles.Dash8Q400));
+            Assert.That(profile.ArtRelativePath,
+                Is.EqualTo("Models/Aircraft/mdl_dash8_q400_v01.gltf"));
+            Assert.That(profile.PickSizeMetres.x, Is.EqualTo(31f));
+            Assert.That(profile.PickSizeMetres.z, Is.EqualTo(36f));
+            Assert.That(profile.VisualCentreOffsetMetres, Is.EqualTo(Vector3.zero));
+            Assert.That(profile.SelectionMarkerDiameterMetres, Is.EqualTo(33f));
+            Assert.That(profile.FollowDistanceMultiplier, Is.GreaterThan(1f));
+        }
+
+        [Test]
         public void AircraftPickProxy_UsesTheAttachedAircraftProfile()
         {
             var aircraft = new GameObject("Gate 13 · Boeing 737-8");

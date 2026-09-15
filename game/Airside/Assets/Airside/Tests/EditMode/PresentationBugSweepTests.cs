@@ -130,6 +130,8 @@ namespace Airside.Tests
                 Is.LessThan(AirsideBareField.OverviewPanMetresPerSecond * 0.25f));
             Assert.That(AirsideCameraController.KeyboardPanMetresPerSecond(AirsideBareField.MaxOrbitDistance),
                 Is.GreaterThan(AirsideBareField.OverviewPanMetresPerSecond));
+            Assert.That(AirsideCameraController.ClampCentreHeight(-400f), Is.EqualTo(AirsideCameraController.MinCentreHeightMetres));
+            Assert.That(AirsideCameraController.ClampCentreHeight(9000f), Is.EqualTo(AirsideCameraController.MaxCentreHeightMetres));
         }
     }
 }

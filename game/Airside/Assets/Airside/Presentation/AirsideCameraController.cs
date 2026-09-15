@@ -462,6 +462,13 @@ namespace Airside.Presentation
             AirsideBareField.OverviewPanMetresPerSecond
             * Mathf.Clamp(distance / Mathf.Max(1f, OverviewDistance), 0.08f, 4f);
 
+        /// <summary>Z/X lift had no bounds: the orbit centre could sink under the field or climb out of sight.</summary>
+        public const float MinCentreHeightMetres = -20f;
+        public const float MaxCentreHeightMetres = 1500f;
+
+        public static float ClampCentreHeight(float y) =>
+            Mathf.Clamp(y, MinCentreHeightMetres, MaxCentreHeightMetres);
+
         private void ReadInput()
         {
             var keyboard = Keyboard.current;
@@ -491,6 +498,7 @@ namespace Airside.Presentation
                 if (keyLift != 0f)
                 {
                     _center += Vector3.up * (keyLift * KeyboardPanMetresPerSecond(_distance) * 0.5f * dt);
+                    _center.y = ClampCentreHeight(_center.y);
                     _easingOverview = false;
                 }
 

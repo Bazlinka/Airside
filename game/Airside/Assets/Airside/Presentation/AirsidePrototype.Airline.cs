@@ -117,6 +117,8 @@ namespace Airside.Presentation
                 ToggleControlsHelp();
             if (keyboard.lKey.wasPressedThisFrame)
                 ToggleFieldTags();
+            if (keyboard.nKey.wasPressedThisFrame)
+                ToggleMiniMap();
             // Help owns the keyboard while open (except F1 / Esc handled here / in Prototype).
             return _controlsHelpOpen;
         }
@@ -166,6 +168,7 @@ namespace Airside.Presentation
                 DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
             else if (_mapOpen)
                 DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+            DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             DrawSelectionHudCard(layout, panel, label, small);
             if (_controlsHelpOpen)
                 DrawControlsHelp(layout, panel, title, label, small, smallButton);
@@ -276,6 +279,12 @@ namespace Airside.Presentation
                 _hudPanels.Add(placement.FleetArea);
             if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
                 _hudPanels.Add(placement.Map);
+            if (MiniMapShows)
+            {
+                var miniMap = FieldMiniMap.PanelFor(layout, placement);
+                if (miniMap.width > 0f)
+                    _hudPanels.Add(miniMap);
+            }
             if (TrySelectionHudCardRect(layout, out var selectionCard))
                 _hudPanels.Add(selectionCard);
             if (_controlsHelpOpen)

@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 3: airfield mini-map. Unity EditMode 356/356.**
+  - Unity regenerated the ATR v03 `.meta` GUIDs (source and StreamingAssets copies were
+    committed identical, as with AIR-007 before); included here.
+  - New bottom-left YPAD mini-map (`FieldMiniMap` pure helper + `AirsidePrototype.MiniMap`): the
+    OSM runways, taxiways, aprons and terminals baked once into a texture; every on-field
+    aircraft as a livery dot (yours larger, severity ring, selected yellow); the camera's
+    ground footprint outlined with its focus point. Click a dot selects, click/drag elsewhere
+    moves the camera (`AirsideCameraController.CentreOn`). N toggles; hides while overlays or
+    help are open and whenever the window has no clear corner.
+  - Packaged check open: map orientation matches the 3D view, drag feel, Retina crispness.
+  - Next in the plan: phase 4 ground textures/graphics, 5 performance, 6 game logic.
+
 - **2026-09-15 Cursor — YPAD surroundings P3: OSM land cover + arterial roads. Domain
   EditMode green; Unity EditMode pending Mac (`scripts/test-unity.sh` has no Unity here).**
   - **Player-visible:** Overview land around Adelaide Airport now shows real OSM parks,
@@ -14,7 +26,6 @@
     Harbour Town=Parking/Commercial); `AdelaideLandCoverTests` 7/7; `scripts/test-domain.sh` 212/212 (Unity-only EditMode tests remain excluded from the headless harness — same gap as on main before this PR).
   - **NEXT:** Bailey to review overview look on Mac. Optional P4 polish (more road classes /
     labels) or P6 Hills backdrop. Packaged S1–S4 shots still open.
-
 
 - **2026-09-15 Cursor — AIR-001 ATR 42-600 visual fidelity pass (v03). Unity EditMode
   pending Mac (`scripts/test-unity.sh` has no Unity binary here).**
@@ -34,7 +45,6 @@
   - **NEXT MILESTONE:** Bailey to review this ATR v03 PR, then reprioritise the next
     visual or systems slice. Decide the 50D/50E Q400 stand rule if a second Q400 is ever
     added.
-
 
 - **2026-09-15 Cursor — AIR-005 737-8 visual revision (same asset id). Domain tests pending
   Unity EditMode on Mac.**
@@ -95,7 +105,6 @@
   - A plain click on open ground clears the selection (camera and overlays stay put).
   - Packaged check still open: tag click, drag from tag, click-empty-ground deselect.
 
-
 - **2026-09-15 Cursor — AIR-007 genuine Saab 340B visual (ADR 0050). Domain/EditMode harness run in this environment; Unity editor not available here.**
   - **Player-visible:** Rex's two Saab 340Bs now render as their own true-scale, compact
     low-wing turboprop with four-blade propellers, nacelle-mounted twin main gear and a
@@ -136,7 +145,6 @@
     types with the matching visual profiles.
   - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. Decide the 50D/50E Q400 rule first
     if a second Q400 is ever added.
-
 
 - **2026-09-15 Codex — AIR-006 genuine Dash 8-400 visual (ADR 0049). Unity EditMode
   328/328 (0 failed, 0 skipped).**
@@ -489,7 +497,6 @@
 - **Next — Bailey:** Mac Unity + packaged pass (map/hangar/flights/dev tools/
   controls + dusk/night), then external playtest zip when free. Economy still
   deferred (ADR 0045).
-
 
 - **2026-09-14 Cursor direct aircraft selection (`cursor/direct-aircraft-selection-601f`):**
   clicking a visible aircraft on the Adelaide field selects and follows that exact
@@ -1047,7 +1054,6 @@ It does not cover Presentation, which needs UnityEngine.
   glass prop discs; landing follow framing; soft rotate cue.
   **Verified headless:** `scripts/test-domain.sh` **214 passed** (1 new FocusMode HUD test; 4 pre-existing failures also red on main). **Not yet
   verified:** Unity EditMode / Play, `scripts/test-unity.sh`, `scripts/build-mac.sh`.
-
 
 - **Plane / ground dynamics polish** on `cursor/plane-ground-dynamics-polish-0c44`:
   Adelaide authored ground mesh (ADR 0035) replaces the 16 m tiled grass cube;

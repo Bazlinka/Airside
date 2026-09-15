@@ -9,6 +9,10 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield mini-map.** A corner map of Adelaide shows every aircraft on the field and what the
+  camera is looking at; click an aircraft to select it, click or drag to fly the camera there,
+  N to hide. 356/356 EditMode.
+
 - **ATR 42-600 visual fidelity pass (v03).** AIR-001 gains a new `mdl_atr42_starter_v03` kit
   while v02 stays the approved fallback: four clean fitted cockpit panes with credible pillars,
   even Hangar-readable cabin windows, a smoother blunt nose into the cabin, compact nacelles
@@ -18,7 +22,6 @@ change it describes.
   catalogue/runtime prefer v03 → v02 → v01. Hangar thumbnail regenerated from v03. 183 meshes /
   19,704 tris. No simulation or save change. Generator validate + multi-angle review renders;
   Unity EditMode pending Mac (`scripts/test-unity.sh`).
-
 
 - **737-8 looks like a 737.** AIR-005 rebuilt in place: slender fuselage, fitted cabin windows,
   pitched flight-deck panes, low swept wing with dual-feather winglets, large forward-hung
@@ -41,7 +44,6 @@ change it describes.
   simulation or save change. Domain pre-check + offline mesh review; Unity EditMode / packaged
   QA still open.
 
-
 - **Statuses that flag trouble.** Long runway or circuit holds turn yellow then red, a stand you
   need to choose is red, waits show how long, and messages stack instead of overwriting each
   other, with the last ten kept on the Flights board. 343/343 EditMode.
@@ -50,7 +52,6 @@ change it describes.
   dragging on them no longer selects or pans the field behind; clicking empty ground deselects.
   337/337 EditMode.
 
-
 - **Genuine Saab 340B.** Rex's existing aircraft now use their own original, unbranded
   AIR-007 model rather than the ATR stand-in: exact 19.73 × 21.44 × 6.97 m scale (standard
   wing), compact low wing, four-blade propellers, nacelle-mounted twin main gear and a
@@ -58,7 +59,6 @@ change it describes.
   and selection, shadow and follow-camera framing use the Saab footprint. No flight plan,
   stand, timing, reservation or save data changed. Domain harness green; Unity EditMode
   not run here (no Mac editor). Not rebuilt or manually launched.
-
 
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and
@@ -448,7 +448,6 @@ change it describes.
   **Verified:** `scripts/test-domain.sh` **221 passed** (7 new pavement tests; 4 pre-existing failures also red on main). Unity Play / Mac build
   still required (no editor on this Cloud Linux VM).
 
-
 - **Bare circuit HUD and flight presentation match the visible world.** Economy /
   research / stands chrome hides on the bare field; coast ambience mutes with no
   coast in view; engine audio reaches ATR follow distances (~220 m); gear doors
@@ -458,7 +457,6 @@ change it describes.
   **Verified:** `scripts/test-domain.sh` **214 passed** (4 pre-existing failures
   also red on main). Unity Play / Mac build still required (no editor on this
   Cloud Linux VM).
-
 
 - **Adelaide bare field looks authored, and the ATR circuit reads weightier.**
   The 16 m tiled grass cube is replaced by a multi-scale CC0 ground mesh

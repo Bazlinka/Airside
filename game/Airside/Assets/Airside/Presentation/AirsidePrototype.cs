@@ -11524,8 +11524,17 @@ namespace Airside.Presentation
         }
 
 
+        private static AudioClip _engineClip;
+
+        /// <summary>
+        /// The procedural engine note. Identical for every aircraft, so it is synthesised once
+        /// and shared; each fleet aircraft used to build and upload its own one-second clip.
+        /// </summary>
         private static AudioClip CreateEngineClip()
         {
+            if (_engineClip != null)
+                return _engineClip;
+
             const int sampleRate = 22050;
             var samples = new float[sampleRate];
             for (var i = 0; i < samples.Length; i++)
@@ -11537,6 +11546,7 @@ namespace Airside.Presentation
 
             var clip = AudioClip.Create("Prototype engine", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
+            _engineClip = clip;
             return clip;
         }
 

@@ -3326,6 +3326,27 @@ namespace Airside.Presentation
             return named != null ? named.GetComponent<Light>() : null;
         }
 
+        private float _weatherGloom;
+        private bool _weatherGloomReady;
+
+        public static float WeatherGloomTarget(WeatherKind weather) => weather switch
+        {
+            WeatherKind.Storm => 0.55f,
+            WeatherKind.Fog => 0.42f,
+            WeatherKind.Rain => 0.28f,
+            WeatherKind.Overcast => 0.22f,
+            WeatherKind.Cloudy => 0.16f,
+            _ => 0f
+        };
+
+        /// <summary>
+        /// Weather is a discrete forecast, so a change of kind snapped sun intensity, trilight
+        /// and the whole post grade in one frame. Gloom now drifts at 0.05/s (clear to storm
+        /// in about 11 s). The first frame lands on the target.
+        /// </summary>
+        public static float EaseWeatherGloom(float current, float target, float deltaSeconds) =>
+            Mathf.MoveTowards(current, target, deltaSeconds * 0.05f);
+
         private void ApplyDayCycle()
         {
             var cycle = PresentationDayCycle;
@@ -3350,13 +3371,10 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weather = CurrentWeather;
-            var weatherGloom = weather == WeatherKind.Storm ? 0.55f
-                : weather == WeatherKind.Fog ? 0.42f
-                : weather == WeatherKind.Rain ? 0.28f
-                : weather == WeatherKind.Cloudy ? 0.16f
-                : weather == WeatherKind.Overcast ? 0.22f
-                : 0f;
+            var weatherGloom = EaseWeatherGloom(_weatherGloom, WeatherGloomTarget(CurrentWeather),
+                _weatherGloomReady ? Time.unscaledDeltaTime : float.PositiveInfinity);
+            _weatherGloom = weatherGloom;
+            _weatherGloomReady = true;
             if (weatherGloom > 0f)
                 _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
             _dayVolume?.Apply(daylight, warm, weatherGloom);

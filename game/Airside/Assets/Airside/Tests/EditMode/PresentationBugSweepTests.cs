@@ -140,5 +140,13 @@ namespace Airside.Tests
             Assert.That(AirsidePrototype.MiniMapDotPass(mine: false, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: true, selected: false)));
             Assert.That(AirsidePrototype.MiniMapDotPass(mine: true, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: false, selected: true)));
         }
+    
+        [Test]
+        public void WeatherGloom_EasesBetweenForecastKinds()
+        {
+            var storm = AirsidePrototype.WeatherGloomTarget(Airside.Simulation.WeatherKind.Storm);
+            Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, 1f / 60f), Is.LessThan(0.01f));
+            Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, float.PositiveInfinity), Is.EqualTo(storm));
+        }
     }
 }

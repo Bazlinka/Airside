@@ -124,7 +124,7 @@ namespace Airside.Tests
         /// Parked plan-view outline of a regional type as the game draws it: its runtime model's
         /// root sits on the bay stop facing the bay heading (regional kits are centred on the
         /// airframe, not on the nose), with wing, fuselage and tailplane boxes measured from the
-        /// runtime glTF. The Saab 340B still draws with the ATR stand-in.
+        /// runtime glTF. Every regional type (ATR, Saab 340B, Dash 8-400) uses its own model.
         /// </summary>
         private static List<Vector2[]> ParkedOutline(string modelPath, AdelaideBay bay)
         {
@@ -191,7 +191,7 @@ namespace Airside.Tests
             var types = new (string name, string model)[]
             {
                 ("ATR 42-600", atr),
-                ("Saab 340B (ATR stand-in)", AircraftCatalogue.Saab340.RuntimeModelPath ?? atr),
+                ("Saab 340B", AircraftCatalogue.Saab340.RuntimeModelPath),
                 ("Dash 8-400", dash8)
             };
 

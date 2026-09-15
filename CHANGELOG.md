@@ -5,6 +5,12 @@ change it describes.
 
 ## Unreleased
 
+- **First terminal jet: AIR-005 737-8.** An original unbranded, true-scale 737-8-class
+  model is parked at Adelaide Gate 13 and can be clicked/followed with correctly sized
+  camera framing, shadow, selection marker, identity card and hit volume. Gate 13 is a presentation
+  anchor only: no fake taxi/pushback route or regional-bay reservation was added.
+  305/305 EditMode; no app rebuild or manual playtest.
+
 - **Handoff note.** GAME.md now opens with the current state, owner preferences and open
   follow-ups for the next contributor.
 

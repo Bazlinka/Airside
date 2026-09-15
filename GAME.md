@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Codex — AIR-006 Dash 8-400 nacelle-bay polish; Unity EditMode pending Mac.**
+  - **Player-visible:** QantasLink's Q400 keeps its established long high-wing, six-prop,
+    T-tail silhouette, but its rear nacelle gear-bay enclosures now curve with the pod rather
+    than reading as blocks; the open main doors are slimmer at normal camera distance. The
+    `mdl_dash8_q400_v01` path, 32.83 × 28.42 × 8.34 m envelope, tyre contact, type profile,
+    schedules and saves remain unchanged.
+  - **How:** `scripts/generate-air-006-dash8-q400.py` now emits rounded nacelle gear bays and
+    thin door sheets at 182 named meshes / 27,288 triangles. Source + StreamingAssets kits and
+    the 480 × 320 Hangar thumbnail are synced. New `scripts/test-air-006-dash8-q400.py` locks
+    scale, rounded bay density, thin doors, centre saddle and index integrity.
+  - **Evidence:** generator validation and `python3 scripts/test-air-006-dash8-q400.py` pass;
+    offline front, side, elevated and Hangar thumbnail review completed. Unity 6.3 is unavailable
+    here, so combined EditMode and packaged overview/follow QA remain open.
+  - **NEXT:** Commit/push this narrow AIR-006 slice. Then run Unity EditMode and one fresh Mac
+    build against the combined four-aircraft branch before any further visual work.
+
 - **2026-09-15 Codex — AIR-001 ATR 42-600 close-view polish; Unity EditMode pending Mac.**
   - **Player-visible:** Emu Air and the player's ATR retain their v03 identity, but the four
     flight-deck panes now follow the curved nose without the previous flattened/stepped read.

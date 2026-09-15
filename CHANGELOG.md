@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Dash 8-400 nacelle-bay polish.** AIR-006 keeps its long high-wing Q400 silhouette, but the
+  former blocky rear nacelle fairings are rounded gear-bay continuations and the open main doors
+  are thinner. Scale, propellers, type profile and QantasLink operation remain unchanged. 182
+  named meshes / 27,288 triangles; deterministic geometry regression green. Unity EditMode and
+  packaged camera QA remain open.
+
 - **ATR 42-600 close-view polish.** AIR-001’s flight-deck panes now follow the curved nose rather
   than flattening it, and its widened tailplane saddle better joins the T-tail to the fin. The
   existing v03 scale, six props, fuselage-side gear and player/Emu Air presentation remain

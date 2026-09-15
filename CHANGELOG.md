@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Bug sweep 3 (10 fixes): live lighting, foliage, emission, perf.** The field is now lit by the
+  real Adelaide clock the HUD shows. It used to start at 08:00 on every launch, so evening
+  sessions were lit as morning and night rarely appeared. Tree crowns on the Resources prefabs
+  no longer render as translucent blue glass (the binder treated "canopy" as glass). Kit trunks
+  no longer take the grass material, and bark and rock are matte instead of painted metal.
+  Landing lamps now glow (their emission keyword was never enabled). Hidden fleet aircraft skip
+  part animation; shadow/marker/profile lookups are cached per aircraft; shared emission
+  keywords are no longer rewritten every frame. Map clicks ignore culled dots, and
+  -airsideSoakMinutes parses with the invariant culture. Unity EditMode 414/414.
+
 - **Bug sweep 2 (12 fixes): camera, fleet queue, HUD, saves.** Two aircraft holding short or
   waiting for a stand are now queued 60 m apart instead of drawn inside each other. The follow
   camera releases a destroyed target, no longer hard-cuts on a frame hitch, and F follows the

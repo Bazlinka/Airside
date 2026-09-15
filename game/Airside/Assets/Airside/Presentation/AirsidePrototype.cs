@@ -514,7 +514,9 @@ namespace Airside.Presentation
             // overview; R does that explicitly.
             if (_cameraController.IsFollowing)
                 _cameraController.ReleaseFollow();
-            else
+            // F is documented as "Follow selected aircraft": with a selection on the field,
+            // follow that one instead of whichever aircraft happens to be first in the list.
+            else if (string.IsNullOrEmpty(_selectedAircraftId) || !TryFollowFleetAircraft(_selectedAircraftId))
                 _cameraController.StartFollowFirst();
             PlayUiClick();
         }

@@ -3037,6 +3037,12 @@ namespace Airside.Presentation
             var leftCount = 0;
             var rightCount = 0;
 
+            // Drop from axle to tread by this type's own main-tyre radius: the 737's 0.62 m
+            // mains sat puffs a quarter-metre inside the tyre on the shared ATR default.
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var tyreRadius = profile != null
+                ? profile.MainTireRadiusMetres
+                : AirsideReusableMotion.MainTireRadiusMetres;
             var namedChildren15 = AirsideNamedChildren.Get(aircraft);
             var childNames15 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex15 = 0; childIndex15 < namedChildren15.Length; childIndex15++)
@@ -3051,7 +3057,7 @@ namespace Airside.Presentation
                     continue;
 
                 // The axle is the transform origin after the rebake; drop to the tread.
-                var contact = child.position - Vector3.up * AirsideReusableMotion.MainTireRadiusMetres;
+                var contact = child.position - Vector3.up * tyreRadius;
                 if (childName.IndexOf(" L", StringComparison.Ordinal) >= 0)
                 {
                     leftSum += contact;

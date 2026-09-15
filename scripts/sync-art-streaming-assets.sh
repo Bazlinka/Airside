@@ -30,6 +30,13 @@ while IFS= read -r -d '' file; do
 done < <(find "$src" -type f \
   \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) -print0)
 
-count="$(find "$dst" -type f | wc -l | tr -d ' ')"
+# A source that was deleted or renamed leaves its old .meta behind; Unity warns about every
+# orphan on import. Remove metas for owned types whose file no longer exists.
+while IFS= read -r -d '' meta; do
+  [[ -e "${meta%.meta}" ]] || rm -f "$meta"
+done < <(find "$dst" -type f \( -name '*.gltf.meta' -o -name '*.bin.meta' -o -name '*.png.meta' \) -print0)
+
+# Count the synced art only; the old count included every .meta file as well.
+count="$(find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) | wc -l | tr -d ' ')"
 echo "Synced $count runtime art files → $dst"
 echo "Remember: Unity will generate .meta files for StreamingAssets on next Editor open."

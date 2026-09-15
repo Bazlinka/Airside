@@ -303,6 +303,12 @@ namespace Airside.Tests
             Assert.That(AirsideAdelaidePerimeter.IsInsideFence(5000f, 0f), Is.False);
             Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 420f), Is.True);
             Assert.That(AirsideAdelaidePerimeter.IsInGateGap("N", 0f), Is.False);
+
+            // A 40 m panel whose midpoint misses the 8 m gate must still be cut at the gate.
+            Assert.That(AirsideAdelaidePerimeter.TryGateGapOverlapping("N", 392f, 432f, out var start, out var end), Is.True);
+            Assert.That(start, Is.LessThan(420f));
+            Assert.That(end, Is.GreaterThan(420f));
+            Assert.That(AirsideAdelaidePerimeter.TryGateGapOverlapping("N", 0f, 40f, out _, out _), Is.False);
             Assert.That(AirsideAdelaidePerimeter.PerimeterLengthMetres, Is.GreaterThan(10000f));
         }
 
@@ -341,6 +347,30 @@ namespace Airside.Tests
             var b = AirsideAdelaidePerimeter.FenceBaseY(1000f, hz);
             Assert.That(Math.Abs(a - b), Is.GreaterThan(0.01f),
                 "fence base must vary with the landform, not sit on one constant");
+        }
+
+        [Test]
+        public void CrossRunwayPaint_StopsAtTheMainRunwayEdge()
+        {
+            var length = AirsideAdelaidePavement.CrossLengthMetres;
+            var width = AirsideAdelaidePavement.CrossWidthMetres;
+            var edge = AirsideStripMarkings.EdgeLeft(length, width);
+            var clipped = AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { edge });
+            Assert.That(clipped.Length, Is.EqualTo(2), "one edge line becomes two either side of 05/23");
+
+            var yaw = AirsideAdelaidePavement.CrossYawRadians;
+            foreach (var mark in clipped)
+            {
+                foreach (var x in new[] { mark.MinX, mark.MaxX })
+                {
+                    var worldZ = AirsideAdelaidePavement.CrossCenterZ
+                                 - (float)System.Math.Sin(yaw) * x + (float)System.Math.Cos(yaw) * mark.CenterZ;
+                    Assert.That(System.Math.Abs(worldZ), Is.GreaterThanOrEqualTo(AirsideAdelaidePavement.MainHalfWidth - 0.01f));
+                }
+            }
+
+            var dashes = AirsideStripMarkings.CentrelineDashes(length);
+            Assert.That(AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(dashes).Length, Is.LessThanOrEqualTo(dashes.Length + 1));
         }
     }
 }

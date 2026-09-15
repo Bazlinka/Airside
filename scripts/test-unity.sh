@@ -14,10 +14,19 @@ if [ ! -x "$unity" ]; then
 fi
 
 mkdir -p "$root/work"
+# A compile error or a second editor on the project exits before tests run and writes no
+# results, so a stale file from the previous run used to be mistaken for this run's.
+rm -f "$results"
 "$unity" -batchmode -nographics \
   -projectPath "$root/game/Airside" \
   -runTests -testPlatform editmode \
   -testResults "$results" \
   -logFile "$log"
 
-echo "Unity tests passed. Results: $results"
+if [ ! -s "$results" ]; then
+  echo "Unity produced no test results (compile error or project already open?). See $log" >&2
+  exit 1
+fi
+
+summary="$(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$results" | head -1 || true)"
+echo "Unity tests passed. ${summary:+$summary. }Results: $results"

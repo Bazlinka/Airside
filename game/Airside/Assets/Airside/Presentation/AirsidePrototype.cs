@@ -189,6 +189,9 @@ namespace Airside.Presentation
         private static readonly bool PinDaylightPresentation =
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
 
+        /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
+        private WeatherKind CurrentWeather => FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather;
+
         private float PresentationDaylight =>
             DaylightPresentation.Resolve(PinDaylightPresentation, PresentationDayCycle.Daylight);
 
@@ -461,7 +464,11 @@ namespace Airside.Presentation
             if (wholeSeconds > _clock.Now.ElapsedSeconds)
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
-                _simulation.Update();
+                // The demo circuit is not drawn once an airline runs. Its update steps one
+                // simulated second at a time with allocating reservation queries, so after the
+                // Mac slept for hours it spent a long frame re-flying a hidden circuit.
+                if (!FleetMode)
+                    _simulation.Update();
                 UpdateAirlineOperations();
             }
 
@@ -1042,7 +1049,7 @@ namespace Airside.Presentation
 
             EnsureAmbientClips();
 
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
@@ -2195,7 +2202,7 @@ namespace Airside.Presentation
 
         private void UpdateWeatherPresentation()
         {
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var wet = Weather.IsAdverse(weather);
             var storm = weather == WeatherKind.Storm;
@@ -3346,7 +3353,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var weatherGloom = weather == WeatherKind.Storm ? 0.55f
                 : weather == WeatherKind.Fog ? 0.42f
                 : weather == WeatherKind.Rain ? 0.28f
@@ -3423,9 +3430,9 @@ namespace Airside.Presentation
 
             // Soft depth fog only — thick enough for far hills, thin enough that runway,
             // apron and buildings stay obvious from the default overview.
-            if (!Weather.IsAdverse(_simulation.CurrentWeather))
+            if (!Weather.IsAdverse(CurrentWeather))
             {
-                var cloudy = _simulation.CurrentWeather == WeatherKind.Cloudy;
+                var cloudy = CurrentWeather == WeatherKind.Cloudy;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 var clearFog = Color.Lerp(
@@ -4446,7 +4453,7 @@ namespace Airside.Presentation
                 root.SetParent(_airfieldRoot, false);
             root.position = new Vector3(
                 AirsideAdelaidePavement.CrossCenterX,
-                AirsideBareField.RunwayCenterY,
+                AirsideBareField.RunwayCenterY - AirsideAdelaidePavement.CrossRunwayDropMetres,
                 AirsideAdelaidePavement.CrossCenterZ);
             root.rotation = Quaternion.Euler(0f, AirsideAdelaidePavement.CrossYawDegrees, 0f);
 
@@ -4493,28 +4500,30 @@ namespace Airside.Presentation
             var y = AirsideRunwayMarkings.PaintLiftMetres
                     + AirsideBareField.RunwayHeightMetres * 0.5f;
             SpawnLocalStripPaint(markings, "Runway 12/30 edge left",
-                new[] { AirsideStripMarkings.EdgeLeft(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeLeft(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+                    AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 edge right",
-                new[] { AirsideStripMarkings.EdgeRight(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeRight(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideAdelaidePavement.CrossWidthMetres) }, paint, y);
+                    AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 centre",
-                AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres),
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
+                    AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 threshold",
-                AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres),
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
+                    AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 aiming",
-                AirsideStripMarkings.AimingPoints(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(AirsideStripMarkings.AimingPoints(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideStripMarkings.ShortStripAimingFromThreshold),
+                    AirsideStripMarkings.ShortStripAimingFromThreshold)),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 tdz",
-                AirsideStripMarkings.TouchdownZones(
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(AirsideStripMarkings.TouchdownZones(
                     AirsideAdelaidePavement.CrossLengthMetres,
-                    AirsideStripMarkings.ShortStripTouchdownDistances),
+                    AirsideStripMarkings.ShortStripTouchdownDistances)),
                 paint, y);
         }
 
@@ -4719,14 +4728,22 @@ namespace Airside.Presentation
                 {
                     var remaining = length * 0.5f - cursor;
                     var seg = Mathf.Min(spacing, remaining);
-                    var segMid = cursor + seg * 0.5f;
 
-                    // Leave a clear opening where a vehicle gate stands.
-                    if (AirsideAdelaidePerimeter.IsInGateGap(side, segMid))
+                    // Leave a clear opening where a vehicle gate stands: stop the panel at the
+                    // opening, then resume past it.
+                    if (AirsideAdelaidePerimeter.TryGateGapOverlapping(side, cursor, cursor + seg,
+                            out var gapStart, out var gapEnd))
                     {
-                        cursor += AirsideAdelaidePerimeter.VehicleGateWidthMetres;
-                        continue;
+                        if (gapStart <= cursor + 0.01f)
+                        {
+                            cursor = gapEnd;
+                            continue;
+                        }
+
+                        seg = gapStart - cursor;
                     }
+
+                    var segMid = cursor + seg * 0.5f;
 
                     float x0, z0, x1, z1, midX, midZ;
                     if (alongX)
@@ -7775,7 +7792,7 @@ namespace Airside.Presentation
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
             var daylight = PresentationDaylight;
             var drift = Time.unscaledDeltaTime * 0.35f;
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var overcast = weather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
             var cloudy = weather == WeatherKind.Cloudy;
             var thickSky = overcast || cloudy;

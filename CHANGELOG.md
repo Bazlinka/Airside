@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Bug sweep 6 (5 fixes): fence gates, runway crossing, sleep hitch, tooling.** The Adelaide
+  perimeter fence now has openings at its three vehicle gates (panels used to run straight
+  through them). Runway 12/30 no longer z-fights 05/23 at the crossing, and its markings stop at
+  the main runway edge instead of being painted across it. Airline mode no longer re-flies hours
+  of the hidden demo circuit after the Mac wakes. `test-unity.sh` fails rather than showing a
+  stale results file, and the art sync reports real counts and removes orphan metas. Unity
+  EditMode 417/417.
+
 - **Bug sweep 5 (8 fixes): terrain at source, fleet lamps, sky.** The Kingscote terrain layers are
   now matte at source: the baker writes each layer's authored smoothness into the mask remap,
   and the baked assets carry it. Parked and taxiing fleet aircraft no longer burn landing lights

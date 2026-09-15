@@ -1,7 +1,13 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–2 merged:
-  26 fixes, Unity EditMode 406/406.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–3 merged:
+  36 fixes, Unity EditMode 414/414.**
+  - **Batch 3 — dusk/night was effectively never shown:** lighting read `DayCycle` over
+    simulation seconds, which starts at 08:00 on launch. It now uses the Adelaide wall clock
+    (`DayCycle.AtLocalTime`). Expect real night lighting in evening playtests; still visually
+    unverified.
+  - **Batch 3 — more dark/odd full-airport materials:** `AirsideRuntimeMaterialBinder` made tree
+    canopies glass; kit trunks were Grass; bark and rock were painted metal.
   - **Batch 2:** fleet queue slots at the hold and stand wait (`FleetVisual.QueueSlot`,
     `AdelaideGround.HoldingShortPose`); follow-camera release, hitch and first-visible fixes;
     F follows the selection; HUD wrap and clamp fixes; tag click-through; Esc menu wording;

@@ -112,6 +112,7 @@ namespace Airside.Presentation
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
@@ -185,7 +186,35 @@ namespace Airside.Presentation
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
 
         private float PresentationDaylight =>
-            DaylightPresentation.Resolve(PinDaylightPresentation, _simulation.TimeOfDay.Daylight);
+            DaylightPresentation.Resolve(PinDaylightPresentation, PresentationDayCycle.Daylight);
+
+        private long _dayCycleSecond = long.MinValue;
+        private DayCycle _dayCycle;
+
+        /// <summary>
+        /// Time of day for sun, sky, floods and lamps: the real Adelaide wall clock the HUD
+        /// shows. It used to be <c>_simulation.TimeOfDay</c>, which starts at 08:00 whenever
+        /// the game launches, so an evening session was lit as morning and night rarely came.
+        /// Recomputed once per real second; the time-zone conversion is not free.
+        /// </summary>
+        private DayCycle PresentationDayCycle
+        {
+            get
+            {
+                var utc = DateTime.UtcNow;
+                var second = utc.Ticks / TimeSpan.TicksPerSecond;
+                if (second != _dayCycleSecond)
+                {
+                    _dayCycleSecond = second;
+                    var local = FleetMode
+                        ? _operations.Clock.LocalAt(_clock.Now)
+                        : TimeZoneInfo.ConvertTimeFromUtc(utc, AirlineClock.Adelaide);
+                    _dayCycle = DayCycle.AtLocalTime(local.TimeOfDay);
+                }
+
+                return _dayCycle;
+            }
+        }
 
         private float _apronProbeRefreshAt;
             private int _probeBand = int.MinValue;
@@ -797,6 +826,12 @@ namespace Airside.Presentation
                     targetRotation,
                     AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
+                // A fleet aircraft away on a leg is hidden for hours. Its pose above stays
+                // current so it reappears on the right heading, but the prop, gear, light,
+                // door, glow, shadow and marker passes below touch nothing visible.
+                if (!view.gameObject.activeSelf)
+                    continue;
+
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
                 SpinJetFans(view, phase, engines);
@@ -1123,16 +1158,15 @@ namespace Airside.Presentation
                     var lamp = child.GetComponent<Renderer>();
                     if (lamp != null)
                     {
-                        lamp.GetPropertyBlock(RendererTintBlock);
+                        // Through SetRendererColor so the lamp material's _EMISSION keyword is
+                        // on: an emission colour in a property block alone is ignored by URP
+                        // Lit, so the lit landing lamps never glowed.
                         var color = landingLights
                             ? new Color(1f, 0.97f, 0.88f)
                             : new Color(0.55f, 0.55f, 0.5f);
-                        RendererTintBlock.SetColor("_Color", color);
-                        RendererTintBlock.SetColor("_BaseColor", color);
-                        RendererTintBlock.SetColor("_EmissionColor", landingLights
+                        SetRendererColor(lamp, color, landingLights
                             ? new Color(2.6f, 2.5f, 2.1f)
                             : Color.black);
-                        lamp.SetPropertyBlock(RendererTintBlock);
                     }
                 }
                 else if (childName.StartsWith("TaxiLight", StringComparison.Ordinal))
@@ -1566,7 +1600,7 @@ namespace Airside.Presentation
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
-            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var profile = PartsFor(aircraft).Profile;
             var namedChildren8 = AirsideNamedChildren.Get(aircraft);
             var childNames8 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex8 = 0; childIndex8 < namedChildren8.Length; childIndex8++)
@@ -1714,6 +1748,7 @@ namespace Airside.Presentation
                 if (!kept.Contains(pair.Value) && pair.Value != null)
                 {
                     AirsideNamedChildren.Forget(pair.Value);
+                    ForgetAircraftViewParts(pair.Value);
                     Destroy(pair.Value.gameObject);
                 }
             }
@@ -3281,7 +3316,7 @@ namespace Airside.Presentation
 
         private void ApplyDayCycle()
         {
-            var cycle = _simulation.TimeOfDay;
+            var cycle = PresentationDayCycle;
             var daylight = PresentationDaylight;
 
             var elevation = PinDaylightPresentation ? 48f : (float)cycle.SunElevationDegrees;
@@ -9227,15 +9262,19 @@ namespace Airside.Presentation
                 return;
 
             renderer.GetPropertyBlock(RendererTintBlock);
-            RendererTintBlock.SetColor("_Color", color);
-            RendererTintBlock.SetColor("_BaseColor", color);
+            RendererTintBlock.SetColor(ColorId, color);
+            RendererTintBlock.SetColor(BaseColorId, color);
             if (emission.HasValue)
             {
                 var shared = renderer.sharedMaterial;
-                if (shared != null && shared.HasProperty("_EmissionColor"))
+                if (shared != null && shared.HasProperty(EmissionColorId))
                 {
-                    shared.EnableKeyword("_EMISSION");
-                    RendererTintBlock.SetColor("_EmissionColor", emission.Value);
+                    // Night-glow, nav-light and cabin-window passes call this for many renderers
+                    // every frame. EnableKeyword on the shared material each time is a native
+                    // keyword write per call; once is enough.
+                    if (!shared.IsKeywordEnabled("_EMISSION"))
+                        shared.EnableKeyword("_EMISSION");
+                    RendererTintBlock.SetColor(EmissionColorId, emission.Value);
                 }
             }
 
@@ -9489,14 +9528,58 @@ namespace Airside.Presentation
             renderer.receiveShadows = false;
         }
 
-        private static void UpdateGroundShadow(Transform aircraft)
+        /// <summary>
+        /// Components the per-frame aircraft passes need, resolved once per view. Each frame
+        /// used to repeat Transform.Find over the aircraft's children and GetComponent for the
+        /// shadow, selection marker and visual profile of every aircraft.
+        /// </summary>
+        private struct AircraftViewParts
         {
-            var shadow = aircraft.Find("GroundShadow");
+            public Transform Owner;
+            public AircraftVisualProfileComponent Profile;
+            public Transform Shadow;
+            public Renderer ShadowRenderer;
+            public Transform Marker;
+            public Renderer MarkerRenderer;
+        }
+
+        private readonly Dictionary<int, AircraftViewParts> _aircraftViewParts = new();
+
+        private AircraftViewParts PartsFor(Transform aircraft)
+        {
+            var id = aircraft.GetInstanceID();
+            if (_aircraftViewParts.TryGetValue(id, out var parts) && parts.Owner == aircraft)
+                return parts;
+
+            parts = new AircraftViewParts
+            {
+                Owner = aircraft,
+                Profile = aircraft.GetComponent<AircraftVisualProfileComponent>(),
+                Shadow = aircraft.Find("GroundShadow"),
+                Marker = aircraft.Find(AircraftPickRouting.MarkerChildName)
+            };
+            parts.ShadowRenderer = parts.Shadow != null ? parts.Shadow.GetComponent<Renderer>() : null;
+            parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
+            _aircraftViewParts[id] = parts;
+            return parts;
+        }
+
+        /// <summary>Re-resolve a view's parts after children were added to it (selection marker).</summary>
+        private void ForgetAircraftViewParts(Transform aircraft)
+        {
+            if (aircraft != null)
+                _aircraftViewParts.Remove(aircraft.GetInstanceID());
+        }
+
+        private void UpdateGroundShadow(Transform aircraft)
+        {
+            var parts = PartsFor(aircraft);
+            var shadow = parts.Shadow;
             if (shadow == null)
                 return;
 
             var groundY = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f + 0.02f;
-            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var profile = parts.Profile;
             var visualCentre = profile != null
                 ? aircraft.TransformPoint(profile.VisualCentreOffsetMetres)
                 : aircraft.position;
@@ -9514,7 +9597,7 @@ namespace Airside.Presentation
             var sz = aircraft.lossyScale.z > 0.001f ? depth / aircraft.lossyScale.z : depth;
             shadow.localScale = new Vector3(sx, sy, sz);
 
-            var renderer = shadow.GetComponent<Renderer>();
+            var renderer = parts.ShadowRenderer;
             if (renderer == null)
                 return;
             var color = GetRendererColor(renderer);

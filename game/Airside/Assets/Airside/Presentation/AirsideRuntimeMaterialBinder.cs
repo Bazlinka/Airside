@@ -26,6 +26,24 @@ namespace Airside.Presentation
                 var n = renderer.gameObject.name.ToLowerInvariant();
                 Color color;
                 var kind = AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
+                // Foliage and bark first. The glass rule below matches "canopy", so every
+                // eucalyptus crown (tree_a_canopy …) rendered as translucent blue glass, and
+                // trunks and rocks fell through to painted metal.
+                if (n.Contains("tree") && n.Contains("canopy") || n.Contains("leaf") || n.Contains("foliage"))
+                {
+                    renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                        accentColor, AirsideMaterialLibrary.SurfaceKind.Grass);
+                    continue;
+                }
+
+                if (n.Contains("trunk") || n.Contains("bark") || n.Contains("rock")
+                    || n.StartsWith("tree_") && (n.Contains("flare") || n.Contains("fork")))
+                {
+                    renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                        baseColor, AirsideMaterialLibrary.SurfaceKind.Default);
+                    continue;
+                }
+
                 // Safety Yellow conspicuity only — bollards / chevrons / grab points
                 // (ARFF board: yellow never as a large body colour).
                 if (n.Contains("bollard") || n.Contains("chevron") || n.Contains("grab"))
@@ -62,7 +80,7 @@ namespace Airside.Presentation
                     color = stepColor;
                     kind = AirsideMaterialLibrary.SurfaceKind.Metal;
                 }
-                else if (n.Contains("window") || n.Contains("glass") || n.Contains("canopy")
+                else if (n.Contains("window") || n.Contains("glass")
                          || n.Equals("cockpit") || n.Contains("cabin window"))
                 {
                     color = new Color(0.18f, 0.35f, 0.48f, 0.42f);

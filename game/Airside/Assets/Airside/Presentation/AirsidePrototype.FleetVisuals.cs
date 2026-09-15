@@ -263,6 +263,7 @@ namespace Airside.Presentation
 
                 AircraftPickProxy.Ensure(view, registration);
                 EnsureSelectionMarker(view);
+                ForgetAircraftViewParts(view);
             }
         }
 
@@ -297,10 +298,11 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return;
-            var marker = aircraft.Find(AircraftPickRouting.MarkerChildName);
+            var parts = PartsFor(aircraft);
+            var marker = parts.Marker;
             if (marker == null)
                 return;
-            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
+            var profile = parts.Profile;
 
             var selected = !string.IsNullOrEmpty(_selectedAircraftId) && _selectedAircraftId == aircraftId;
             if (marker.gameObject.activeSelf != selected)
@@ -325,7 +327,7 @@ namespace Airside.Presentation
             var sz = aircraft.lossyScale.z > 0.001f ? scale / aircraft.lossyScale.z : scale;
             marker.localScale = new Vector3(sx, sy, sz);
 
-            var renderer = marker.GetComponent<Renderer>();
+            var renderer = parts.MarkerRenderer;
             if (renderer == null)
                 return;
             var colour = Color.Lerp(AirsideTheme.CoastalBlue, AirsideTheme.SafetyYellow, 0.35f);

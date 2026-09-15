@@ -628,6 +628,13 @@ namespace Airside.Presentation
                 instance.color = color;
             }
 
+            // A translucent colour on an opaque template (a 0.4-alpha concrete overlay, a see-
+            // through painted line) was rendered solid: only Create's procedural path applied
+            // the transparent surface setup.
+            var alpha = instance.HasProperty("_BaseColor") ? instance.GetColor("_BaseColor").a : instance.color.a;
+            if (alpha < 0.99f && (!instance.HasProperty("_Surface") || instance.GetFloat("_Surface") < 0.5f))
+                ApplyTransparent(instance);
+
             // An explicit albedo wins over the template's own map. Ignoring it put runway
             // shoulders' worn-dirt texture (and every other textured fallback block) onto
             // whatever the template carried — corrugated metal, for painted-metal blocks.

@@ -99,5 +99,19 @@ namespace Airside.Tests
                 Object.DestroyImmediate(material);
             }
         }
+
+        [Test]
+        public void AuthoredTemplate_HonoursATranslucentColour()
+        {
+            var material = AirsideMaterialLibrary.Create(new Color(0.46f, 0.47f, 0.48f, 0.4f), AirsideMaterialLibrary.SurfaceKind.Concrete);
+            try
+            {
+                Assert.That(material.renderQueue, Is.GreaterThanOrEqualTo(3000));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
     }
 }

@@ -98,6 +98,14 @@ namespace Airside.Presentation
         /// </summary>
         private const float RespawnJumpMetres = 20f;
 
+        /// <summary>
+        /// Faster than anything drawn on the field moves (a 737 climbing out is ~90 m/s).
+        /// A long frame — a GC pause, a save, the Mac waking — legitimately moves an
+        /// aircraft this far per second of hitch, so it widens the respawn threshold rather
+        /// than cutting the follow camera as if the slot had been recycled.
+        /// </summary>
+        private const float MaxAircraftSpeedMetresPerSecond = 150f;
+
         private const float MinPitchDegrees = 4f;
         private const float MaxPitchDegrees = 85f;
         private const float KeyboardOrbitDegreesPerSecond = 70f;
@@ -251,7 +259,8 @@ namespace Airside.Presentation
                 // frame. Easing to it dragged the camera the length of the field, so cut
                 // straight there instead.
                 var recycled = _hasLastTargetPosition
-                    && Vector3.Distance(_lastTargetPosition, visualCentre) > RespawnJumpMetres;
+                    && Vector3.Distance(_lastTargetPosition, visualCentre)
+                    > RespawnJumpMetres + MaxAircraftSpeedMetresPerSecond * Time.unscaledDeltaTime;
                 _lastTargetPosition = visualCentre;
                 _hasLastTargetPosition = true;
 

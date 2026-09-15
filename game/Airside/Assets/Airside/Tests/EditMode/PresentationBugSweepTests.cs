@@ -113,5 +113,14 @@ namespace Airside.Tests
                 Object.DestroyImmediate(material);
             }
         }
+
+        [Test]
+        public void DayVolumeGrading_FadesInWithoutAStep()
+        {
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.749f, 0f), Is.EqualTo(AirsideDayVolume.NoonPunchWeight(0.751f, 0f)).Within(0.05f));
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.9f, 0f), Is.EqualTo(1f));
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.5f, 0f), Is.EqualTo(0f));
+            Assert.That(AirsideDayVolume.GoldenBloomWeight(0.349f), Is.EqualTo(AirsideDayVolume.GoldenBloomWeight(0.351f)).Within(0.05f));
+        }
     }
 }

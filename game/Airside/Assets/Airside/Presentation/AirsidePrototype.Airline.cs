@@ -248,6 +248,9 @@ namespace Airside.Presentation
         // ---- Pointer over HUD ------------------------------------------------------------------
 
         private readonly List<Rect> _hudPanels = new();
+        // Small click targets drawn over the field (tags, the toast). Kept apart from
+        // _hudPanels because field tags hide themselves behind panels, not behind each other.
+        private readonly List<Rect> _hudOverlays = new();
         private float _hudScale = 1f;
 
         /// <summary>Record where HUD panels are this frame, in virtual GUI points.</summary>
@@ -255,6 +258,7 @@ namespace Airside.Presentation
         {
             _hudScale = HudLayout.ScaleFor(Screen.width, Screen.height);
             _hudPanels.Clear();
+            _hudOverlays.Clear();
             _hudPanels.Add(layout.ControlBar);
             _hudPanels.Add(layout.SpeedReadout);
             if (_menuOpen)
@@ -281,12 +285,7 @@ namespace Airside.Presentation
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
         {
-            // Input System: origin bottom-left in pixels. IMGUI: origin top-left, scaled.
-            var gui = new Vector2(inputSystemPosition.x, Screen.height - inputSystemPosition.y) / _hudScale;
-            foreach (var rect in _hudPanels)
-                if (rect.Contains(gui))
-                    return true;
-            return false;
+            return HudHitTest.IsOverHud(inputSystemPosition, Screen.height, _hudScale, _hudPanels, _hudOverlays);
         }
 
         // ---- First-flight guide ------------------------------------------------------------
@@ -2301,6 +2300,7 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_toast) || Time.unscaledTime > _toastUntil)
                 return;
 
+            _hudOverlays.Add(rect);
             DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f));
             AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
             var centred = Styled(label, "middle-center", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter });

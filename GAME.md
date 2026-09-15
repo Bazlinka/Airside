@@ -19,6 +19,15 @@
     genuine aircraft slice (AIR-007 Saab already on `main`). Decide the 50D/50E Q400 stand
     rule if a second Q400 is ever added.
 
+- **2026-09-15 Claude — game polish pass, phase 1: HUD click-through fixes. Unity EditMode
+  337/337 (after merging AIR-007).** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
+  field mini-map, ground/graphics, performance, logic).
+  - Field-tag pills and the toast now count as HUD (`_hudOverlays`, new pure `HudHitTest`), so
+    clicking a tag no longer also 3D-picks behind it and dragging from a tag no longer pans.
+  - A plain click on open ground clears the selection (camera and overlays stay put).
+  - Packaged check still open: tag click, drag from tag, click-empty-ground deselect.
+
+
 - **2026-09-15 Cursor — AIR-007 genuine Saab 340B visual (ADR 0050). Domain/EditMode harness run in this environment; Unity editor not available here.**
   - **Player-visible:** Rex's two Saab 340Bs now render as their own true-scale, compact
     low-wing turboprop with four-blade propellers, nacelle-mounted twin main gear and a

@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Aircraft motion and ground-read polish.** The 737-8 now has independently
+  spooling, articulated turbofan faces with a restrained high-power intake blur,
+  rather than static nacelles while the turboprops animate. Each aircraft type now
+  uses the wheel radius authored into its own kit, keeping 737, Q400, Saab and ATR
+  ground-roll speed visually proportional. Presentation only: aircraft routes,
+  phases, schedules, saves and the established unbranded art direction are unchanged.
+  Unity EditMode 385/385; all four deterministic aircraft-kit checks pass.
+
 - **Graphics/performance audit fixes.** The focused bare circuit remains the release default,
   but full-airport QA is now explicitly launchable with `-airsideFullAirport` and gets the
   correct miniature framing instead of an effectively empty 3.1 km view. Startup no longer

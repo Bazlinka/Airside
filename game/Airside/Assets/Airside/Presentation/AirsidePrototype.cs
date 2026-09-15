@@ -781,6 +781,7 @@ namespace Airside.Presentation
 
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
+                SpinJetFans(view, phase, engines);
                 RollLandingGearTires(view, phase, progress);
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
@@ -1413,6 +1414,62 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// The narrowbody has separate turbofan hub/blade assemblies rather than props.
+        /// Keep their presentation parallel to the turboprops: each engine spools on its
+        /// own, blades become a restrained intake blur at high power, and the stronger
+        /// spool also drives the existing generic engine audio response.
+        /// </summary>
+        private void SpinJetFans(Transform aircraft, AircraftPhase phase, EngineState? engines = null)
+        {
+            var namedChildren = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            var hasFans = false;
+            for (var i = 0; i < names.Length; i++)
+            {
+                if (names[i] is "Fan L" or "Fan R")
+                {
+                    hasFans = true;
+                    break;
+                }
+            }
+            if (!hasFans)
+                return;
+
+            var target = AirsideReusableMotion.JetFanRpmForPhase(phase);
+            var id = aircraft.GetInstanceID();
+            var left = SpooledJetFanRpm(id * 2 + 1, target * (engines?.Left ?? 1f));
+            var right = SpooledJetFanRpm(id * 2 + 2, target * (engines?.Right ?? 1f));
+            // Audio expects the established prop-scale band. Convert fan spool rather
+            // than treating its larger physical RPM as permanently full takeoff thrust.
+            _propRpm[id] = Mathf.Lerp(AirsideReusableMotion.PropRpmTaxi,
+                AirsideReusableMotion.PropRpmTakeoff,
+                Mathf.Clamp01(Mathf.Max(left, right) / AirsideReusableMotion.JetFanRpmTakeoff));
+
+            for (var i = 0; i < namedChildren.Length; i++)
+            {
+                var fan = namedChildren[i];
+                if (fan == aircraft || !(names[i] is "Fan L" or "Fan R"))
+                    continue;
+                var rpm = names[i] == "Fan L" ? left : right;
+                ApplyJetFanBlurToHub(fan, rpm >= AirsideReusableMotion.JetFanHighRpmThreshold);
+                if (rpm >= 1f && PresentationDeltaTime > 0f)
+                    fan.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
+            }
+        }
+
+        private float SpooledJetFanRpm(int key, float targetRpm)
+        {
+            if (!_propRpm.TryGetValue(key, out var current))
+                current = targetRpm;
+            // Fan spool is intentionally quicker than a prop governor but still smooth
+            // enough that engine start and shutdown read as machinery, not a toggle.
+            var rate = targetRpm > current ? 2.3f : 1.1f;
+            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
+            _propRpm[key] = current;
+            return current;
+        }
+
         private float SpooledPropRpm(Transform aircraft, float targetRpm) =>
             SpooledPropRpm(aircraft.GetInstanceID(), targetRpm);
 
@@ -1464,6 +1521,26 @@ namespace Airside.Presentation
             }
         }
 
+        private static void ApplyJetFanBlurToHub(Transform fan, bool highRpm)
+        {
+            for (var i = 0; i < fan.childCount; i++)
+            {
+                var child = fan.GetChild(i);
+                if (child.name == "FanDisc")
+                {
+                    child.gameObject.SetActive(highRpm);
+                    continue;
+                }
+
+                if (child.name.StartsWith("Fan blade", StringComparison.Ordinal))
+                {
+                    var renderer = child.GetComponent<Renderer>();
+                    if (renderer != null)
+                        renderer.enabled = !highRpm;
+                }
+            }
+        }
+
         private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress)
         {
             // Distance travelled / radius — stops naturally when ground speed is zero.
@@ -1471,6 +1548,7 @@ namespace Airside.Presentation
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
+            var profile = aircraft.GetComponent<AircraftVisualProfileComponent>();
             var namedChildren8 = AirsideNamedChildren.Get(aircraft);
             var childNames8 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex8 = 0; childIndex8 < namedChildren8.Length; childIndex8++)
@@ -1479,7 +1557,9 @@ namespace Airside.Presentation
                 var childName = childNames8[childIndex8];
                 if (child == aircraft || !AirsideAircraftParts.RollsInPlace(childName))
                     continue;
-                var radius = AirsideReusableMotion.TireRadiusMetres(childName);
+                var radius = childName.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? profile?.NoseTireRadiusMetres ?? AirsideReusableMotion.NoseTireRadiusMetres
+                    : profile?.MainTireRadiusMetres ?? AirsideReusableMotion.MainTireRadiusMetres;
                 var degrees = PresentationDeltaTime
                     * AirsideFlightPath.TireAngularDegreesPerSecond(groundSpeed, radius);
                 if (degrees > 0f)
@@ -7940,11 +8020,14 @@ namespace Airside.Presentation
 
             if (usedArt)
             {
+                NestJetFanBlades(root);
+                RebakeJetFanPivots(root);
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                EnsureJetFanDiscs(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -8134,6 +8217,10 @@ namespace Airside.Presentation
                 return "Tire R " + FriendlyPartSuffix(kitName.Substring("tire_right_".Length));
             if (kitName.StartsWith("wheel_right_", StringComparison.Ordinal))
                 return "Wheel R " + FriendlyPartSuffix(kitName.Substring("wheel_right_".Length));
+            if (kitName.StartsWith("fan_blade_l", StringComparison.Ordinal))
+                return "Fan blade L" + FriendlyPartSuffix(kitName.Substring("fan_blade_l".Length));
+            if (kitName.StartsWith("fan_blade_r", StringComparison.Ordinal))
+                return "Fan blade R" + FriendlyPartSuffix(kitName.Substring("fan_blade_r".Length));
             if (kitName.StartsWith("rim_right_", StringComparison.Ordinal))
                 return "Rim R " + FriendlyPartSuffix(kitName.Substring("rim_right_".Length));
 
@@ -8236,6 +8323,8 @@ namespace Airside.Presentation
             "winglet_right" => "Winglet R",
             "engine_left" => "Engine L",
             "engine_right" => "Engine R",
+            "fan_left" => "Fan L",
+            "fan_right" => "Fan R",
             "pylon_left" => "Pylon L",
             "pylon_right" => "Pylon R",
             "nacelle_left" => "Nacelle L",
@@ -8338,6 +8427,8 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
+            if (kitName.StartsWith("fan_", StringComparison.Ordinal))
+                return new Color(0.16f, 0.18f, 0.21f);
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
                 || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal))
                 return new Color(0.12f, 0.26f, 0.34f, 0.72f);
@@ -8503,6 +8594,35 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// The AIR-005 kit keeps each turbofan blade as a separately named mesh for
+        /// authored readability. Parent those blades to the matching fan hub before
+        /// rebaking, exactly as the turboprop blades are parented to their hubs.
+        /// </summary>
+        private static void NestJetFanBlades(Transform aircraft)
+        {
+            Transform leftFan = null, rightFan = null;
+            var leftBlades = new List<Transform>();
+            var rightBlades = new List<Transform>();
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < children.Length; i++)
+            {
+                var child = children[i];
+                var childName = names[i];
+                if (childName == "Fan L") leftFan = child;
+                else if (childName == "Fan R") rightFan = child;
+                else if (childName.StartsWith("Fan blade L", StringComparison.Ordinal)) leftBlades.Add(child);
+                else if (childName.StartsWith("Fan blade R", StringComparison.Ordinal)) rightBlades.Add(child);
+            }
+
+            foreach (var blade in leftBlades)
+                NestUnderProp(leftFan, blade, blade.name);
+            foreach (var blade in rightBlades)
+                NestUnderProp(rightFan, blade, blade.name);
+            AirsideNamedChildren.Forget(aircraft);
+        }
+
+        /// <summary>
         /// Move each Propeller transform to its hub centre and rebake mesh verts so
         /// <see cref="SpinPropellers"/> rotates about the nacelle, not the airframe origin.
         /// No-ops when the prop node is already at the hub (Resources/prefab path).
@@ -8519,6 +8639,20 @@ namespace Airside.Presentation
                     continue;
                 RebakePropellerPivot(child);
             }
+        }
+
+        /// <summary>Move each jet fan root to its hub so it rotates inside its nacelle.</summary>
+        private static void RebakeJetFanPivots(Transform aircraft)
+        {
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (children[i] == aircraft || !(names[i] is "Fan L" or "Fan R"))
+                    continue;
+                RebakePropellerPivot(children[i]);
+            }
+            AirsideNamedChildren.Forget(aircraft);
         }
 
         /// <summary>
@@ -9192,6 +9326,47 @@ namespace Airside.Presentation
                 discRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 discRenderer.receiveShadows = false;
                 SetRendererColor(discRenderer, discColor);
+                disc.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// A low-alpha intake disc preserves the 737's fan read when individual blades
+        /// would strobe at operating RPM. It is only enabled by <see cref="SpinJetFans"/>.
+        /// </summary>
+        private static void EnsureJetFanDiscs(Transform aircraft)
+        {
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < children.Length; i++)
+            {
+                var fan = children[i];
+                if (fan == aircraft || !(names[i] is "Fan L" or "Fan R") || fan.Find("FanDisc") != null)
+                    continue;
+
+                var radius = 0.45f;
+                foreach (var blade in fan.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (blade == null || !blade.name.StartsWith("Fan blade", StringComparison.Ordinal))
+                        continue;
+                    radius = Mathf.Max(radius, Mathf.Max(blade.bounds.extents.x, blade.bounds.extents.y));
+                }
+
+                var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                disc.name = "FanDisc";
+                Object.Destroy(disc.GetComponent<Collider>());
+                disc.transform.SetParent(fan, false);
+                disc.transform.localPosition = new Vector3(0f, 0f, 0.035f);
+                disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                var diameter = Mathf.Clamp(radius * 2.05f, 0.8f, 2.7f);
+                disc.transform.localScale = new Vector3(diameter, 0.003f, diameter);
+                var colour = new Color(0.26f, 0.34f, 0.39f, 0.18f);
+                var renderer = disc.GetComponent<Renderer>();
+                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour,
+                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                SetRendererColor(renderer, colour);
                 disc.SetActive(false);
             }
         }

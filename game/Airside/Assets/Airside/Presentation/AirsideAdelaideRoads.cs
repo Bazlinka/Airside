@@ -21,7 +21,7 @@ namespace Airside.Presentation
 
         private static readonly Color Asphalt = new(0.28f, 0.30f, 0.31f);
 
-        public static bool TryBuild(Transform root, float pavementWorldY)
+        public static bool TryBuild(Transform root, float pavementWorldY, System.Func<float, float, float> groundHeight = null)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace Airside.Presentation
                 if (shader == null || AdelaideLandCover.Roads == null || AdelaideLandCover.Roads.Length < 3)
                     return false;
 
-                var mesh = BuildMesh(pavementWorldY);
+                var mesh = BuildMesh(pavementWorldY, groundHeight);
                 if (mesh == null || mesh.vertexCount < 3)
                     return false;
 
@@ -53,7 +53,11 @@ namespace Airside.Presentation
             }
         }
 
-        public static Mesh BuildMesh(float pavementWorldY)
+        /// <param name="groundHeight">
+        /// Surface height at a world x,z. Without it roads lie on one fixed plane, which put
+        /// them metres above the beach and inland water and under parts of the airfield lip.
+        /// </param>
+        public static Mesh BuildMesh(float pavementWorldY, System.Func<float, float, float> groundHeight = null)
         {
             var roads = AdelaideLandCover.Roads;
             var vertices = new List<Vector3>(4096);
@@ -116,8 +120,14 @@ namespace Airside.Presentation
                         // Perpendicular in XZ.
                         var px = -dz * half;
                         var pz = dx * half;
-                        var left = new Vector3(x + px, y, z + pz);
-                        var right = new Vector3(x - px, y, z - pz);
+                        var ly = groundHeight != null
+                            ? Mathf.Max(groundHeight(x + px, z + pz), groundHeight(x, z)) + YOffsetMetres
+                            : y;
+                        var ry = groundHeight != null
+                            ? Mathf.Max(groundHeight(x - px, z - pz), groundHeight(x, z)) + YOffsetMetres
+                            : y;
+                        var left = new Vector3(x + px, ly, z + pz);
+                        var right = new Vector3(x - px, ry, z - pz);
                         if (prevLeft.HasValue)
                         {
                             var a = vertices.Count;

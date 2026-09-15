@@ -1,7 +1,14 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–3 merged:
-  36 fixes, Unity EditMode 414/414.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–4 merged:
+  44 fixes, Unity EditMode 415/415.**
+  - **Batch 4:** Saab/Q400 prop discs; per-pixel shadow coordinate in `Airside/AdelaideGround`
+    (shader change, not compiled by the -nographics test run; needs an eyeball pass); terminal
+    prism winding; road height sampling; DevTools null stand; kinematic pick proxies; prefab
+    miss cache; shared engine clip.
+  - **Found, not fixed:** YPAD stand identifiers are `TextMesh` with no font, so they probably
+    render nothing. The built-in font shader draws through geometry (ZTest Always), so a proper
+    fix needs a URP text material and a visual check.
   - **Batch 3 — dusk/night was effectively never shown:** lighting read `DayCycle` over
     simulation seconds, which starts at 08:00 on launch. It now uses the Adelaide wall clock
     (`DayCycle.AtLocalTime`). Expect real night lighting in evening playtests; still visually

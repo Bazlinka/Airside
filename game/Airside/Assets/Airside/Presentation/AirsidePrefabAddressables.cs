@@ -23,18 +23,25 @@ namespace Airside.Presentation
         private static bool _registered;
         private static bool _providerRegistered;
 
+        private static bool? _hasPackagedCatalog;
+
+        /// <summary>Whether a built Addressables catalog shipped. Fixed for the session, so checked once.</summary>
         public static bool HasPackagedCatalog
         {
             get
             {
+                if (_hasPackagedCatalog.HasValue)
+                    return _hasPackagedCatalog.Value;
                 try
                 {
-                    return File.Exists(Path.Combine(Application.streamingAssetsPath, "aa", "settings.json"));
+                    _hasPackagedCatalog = File.Exists(Path.Combine(Application.streamingAssetsPath, "aa", "settings.json"));
                 }
                 catch
                 {
-                    return false;
+                    _hasPackagedCatalog = false;
                 }
+
+                return _hasPackagedCatalog.Value;
             }
         }
 

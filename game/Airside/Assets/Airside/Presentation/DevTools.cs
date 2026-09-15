@@ -28,7 +28,9 @@ namespace Airside.Presentation
 
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             var destText = dest.HasValue ? dest.Value.Code : "—";
-            var stand = aircraft.Stand.Value.Length > 0 ? aircraft.Stand.Value : "—";
+            // Stand is default (null Value) whenever the aircraft is off its stand, so reading
+            // Value.Length threw and the Dev Tools list broke as soon as anything departed.
+            var stand = string.IsNullOrEmpty(aircraft.Stand.Value) ? "—" : aircraft.Stand.Value;
             return $"{aircraft.Registration}  ·  {aircraft.State}  ·  {destText}  ·  stand {stand}";
         }
 

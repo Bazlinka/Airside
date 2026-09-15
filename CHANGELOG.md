@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Bug sweep 4 (8 fixes): props, shadows, buildings, roads, tools.** Rex Saab 340 and QantasLink
+  Dash 8-400 propellers no longer vanish at takeoff and approach power (no blur disc was built).
+  Aircraft shadows on the bare-field grass no longer break along shadow cascade splits (the
+  ground shader sampled shadows per vertex). Concave YPAD terminal and RFDS walls face outward
+  instead of leaving 15 holes. Coastal road ribbons follow the ground instead of floating up to
+  3 m above the beach. The F8 Dev Tools list no longer throws once an aircraft departs. Pick
+  volumes move as kinematic bodies and sync before a click. Missing prefab keys are remembered,
+  and the engine audio clip is built once. Unity EditMode 415/415.
+
 - **Bug sweep 3 (10 fixes): live lighting, foliage, emission, perf.** The field is now lit by the
   real Adelaide clock the HUD shows. It used to start at 08:00 on every launch, so evening
   sessions were lit as morning and night rarely appeared. Tree crowns on the Resources prefabs

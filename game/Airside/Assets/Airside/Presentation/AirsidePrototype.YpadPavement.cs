@@ -240,10 +240,17 @@ namespace Airside.Presentation
             foreach (var (a, b, c) in EarClip(xz))
                 mesh.Triangle(roof[a], roof[b], roof[c], Vector3.up);
 
-            var centroid = Vector3.zero;
+            // Outward from the footprint's winding, not from its centroid: the real terminal
+            // and RFDS outlines are concave, and "away from the centroid" pointed 15 of their
+            // walls inward, so those walls were back-face culled and left holes in the buildings.
+            var signedArea = 0f;
             for (var i = 0; i < count; i++)
-                centroid += new Vector3(xz[i * 2], 0f, xz[i * 2 + 1]);
-            centroid /= count;
+            {
+                var j = (i + 1) % count;
+                signedArea += xz[i * 2] * xz[j * 2 + 1] - xz[j * 2] * xz[i * 2 + 1];
+            }
+
+            var winding = signedArea >= 0f ? 1f : -1f;
 
             for (var i = 0; i < count; i++)
             {
@@ -251,8 +258,8 @@ namespace Airside.Presentation
                 var a = new Vector3(xz[i * 2], baseY, xz[i * 2 + 1]);
                 var b = new Vector3(xz[j * 2], baseY, xz[j * 2 + 1]);
                 var up = Vector3.up * height;
-                var mid = (a + b) * 0.5f;
-                var outward = new Vector3(mid.x - centroid.x, 0f, mid.z - centroid.z);
+                var edge = b - a;
+                var outward = new Vector3(edge.z, 0f, -edge.x) * winding;
                 var v0 = mesh.Add(a);
                 var v1 = mesh.Add(b);
                 var v2 = mesh.Add(b + up);

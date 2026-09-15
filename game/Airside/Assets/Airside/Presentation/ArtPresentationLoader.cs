@@ -153,6 +153,11 @@ namespace Airside.Presentation
 
         private static readonly Dictionary<string, GameObject> PrefabCache = new();
 
+        // Keys with no prefab anywhere. PreferArtKit probes up to six versions of every asset
+        // (v06 → v01) and several call sites repeat the same list, so each miss used to redo an
+        // Addressables locate, a catalog File.Exists and a Resources.Load during world build.
+        private static readonly HashSet<string> MissingPrefabs = new(StringComparer.Ordinal);
+
         private static bool TryLoadPrefabAsset(string prefabKey, out GameObject prefab)
         {
             prefab = null;
@@ -161,6 +166,8 @@ namespace Airside.Presentation
 
             if (PrefabCache.TryGetValue(prefabKey, out prefab) && prefab != null)
                 return true;
+            if (MissingPrefabs.Contains(prefabKey))
+                return false;
 
             AirsidePrefabAddressables.EnsureRegistered();
             try
@@ -190,6 +197,8 @@ namespace Airside.Presentation
             prefab = Resources.Load<GameObject>($"{ResourcesPrefabRoot}/{prefabKey}");
             if (prefab != null)
                 PrefabCache[prefabKey] = prefab;
+            else
+                MissingPrefabs.Add(prefabKey);
             return prefab != null;
         }
 

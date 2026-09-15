@@ -63,6 +63,15 @@ namespace Airside.Presentation
                 box = go.AddComponent<BoxCollider>();
             box.size = size;
             box.isTrigger = true;
+            // The proxy moves with its aircraft every frame. A collider with no Rigidbody is a
+            // static collider to PhysX, and moving static colliders forces broadphase updates;
+            // a kinematic body is the supported way to move a collider by transform.
+            var body = go.GetComponent<Rigidbody>();
+            if (body == null)
+                body = go.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+            body.detectCollisions = true;
             var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
             if (layer >= 0)
                 go.layer = layer;

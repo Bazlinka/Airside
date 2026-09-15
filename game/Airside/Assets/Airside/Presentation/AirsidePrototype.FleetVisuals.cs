@@ -395,6 +395,10 @@ namespace Airside.Presentation
             if (camera == null)
                 return;
 
+            // Auto-sync is off in DynamicsManager, so colliders still sit where the last physics
+            // step left them; a departure moves a metre or more between steps. Pick against
+            // where the aircraft are drawn this frame.
+            Physics.SyncTransforms();
             var ray = camera.ScreenPointToRay(inputSystemPosition);
             var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
             var mask = layer >= 0 ? 1 << layer : ~0;

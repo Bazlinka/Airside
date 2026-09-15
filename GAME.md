@@ -1,7 +1,10 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–5 merged:
-  52 fixes, Unity EditMode 416/416.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–6 merged:
+  56 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 417/417.**
+  - **Batch 6:** fence gate openings (`TryGateGapOverlapping`); 12/30 drop and paint clip
+    (`CrossRunwayDropMetres`, `ClipCrossRunwayPaintToMain`); airline mode skips
+    `AirportSimulation.Update`; test-unity stale results guard; sync count and orphan metas.
   - **Batch 5 — assets fixed at source:** `trn_ground_*_v01.terrainlayer` `m_MaskMapRemapMax.w`
     now equals each layer's authored smoothness, and `AirsideTerrainBakerMenu` writes it on
     rebake. `AirsideTerrainGround.CalibratedLayer`'s smoothness cap is now a guard. The mask PNGs
@@ -12,9 +15,10 @@
     (shader change, not compiled by the -nographics test run; needs an eyeball pass); terminal
     prism winding; road height sampling; DevTools null stand; kinematic pick proxies; prefab
     miss cache; shared engine clip.
-  - **Found, not fixed:** YPAD stand identifiers are `TextMesh` with no font, so they probably
-    render nothing. The built-in font shader draws through geometry (ZTest Always), so a proper
-    fix needs a URP text material and a visual check.
+  - **Found, not fixed (corrected):** YPAD stand identifiers do render. A probe showed `TextMesh`
+    defaults to LegacyRuntime with `GUI/Text Shader`, but that shader draws through geometry
+    (ZTest Always), so labels can show through parked aircraft. A fix needs a depth-tested text
+    material and a visual check.
   - **Batch 3 — dusk/night was effectively never shown:** lighting read `DayCycle` over
     simulation seconds, which starts at 08:00 on launch. It now uses the Adelaide wall clock
     (`DayCycle.AtLocalTime`). Expect real night lighting in evening playtests; still visually

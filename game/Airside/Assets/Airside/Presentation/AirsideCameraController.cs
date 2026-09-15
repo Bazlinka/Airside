@@ -576,6 +576,21 @@ namespace Airside.Presentation
             _easingOverview = false;
         }
 
+        /// <summary>The ground point the camera orbits, for the mini-map's view marker.</summary>
+        public Vector3 FocusPoint => _center;
+
+        /// <summary>
+        /// Mini-map: slide the orbit centre to a ground position, keeping angle, zoom and
+        /// height. Drops follow, like panning does.
+        /// </summary>
+        public void CentreOn(float x, float z)
+        {
+            if (_following)
+                ReleaseFollow();
+            _easingOverview = false;
+            _center = new Vector3(x, _center.y, z);
+        }
+
         /// <summary>
         /// HUD / hotkey: stop following and hand the camera back where it is. The
         /// player keeps the current position, angle and zoom and is free to orbit,

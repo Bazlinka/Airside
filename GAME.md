@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 3: airfield mini-map.**
+  - New bottom-left YPAD mini-map (`FieldMiniMap` pure helper + `AirsidePrototype.MiniMap`): the
+    OSM runways, taxiways, aprons and terminals baked once into a texture; every on-field
+    aircraft as a livery dot (yours larger, severity ring, selected yellow); the camera's
+    ground footprint outlined with its focus point. Click a dot selects, click/drag elsewhere
+    moves the camera (`AirsideCameraController.CentreOn`). N toggles; hides while overlays or
+    help are open and whenever the window has no clear corner.
+  - Packaged check open: map orientation matches the 3D view, drag feel, Retina crispness.
+  - Next in the plan: phase 4 ground textures/graphics, 5 performance, 6 game logic.
+
 - **2026-09-15 Claude — polish phase 2: status severity + stacked messages. Unity EditMode
   343/343.**
   - New pure `AircraftStatus`: HoldingShort / HoldingForLanding go Attention after 3 min and

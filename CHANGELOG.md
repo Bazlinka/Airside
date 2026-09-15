@@ -5,6 +5,10 @@ change it describes.
 
 ## Unreleased
 
+- **Airfield mini-map.** A corner map of Adelaide shows every aircraft on the field and what the
+  camera is looking at; click an aircraft to select it, click or drag to fly the camera there,
+  N to hide.
+
 - **Statuses that flag trouble.** Long runway or circuit holds turn yellow then red, a stand you
   need to choose is red, waits show how long, and messages stack instead of overwriting each
   other, with the last ten kept on the Flights board. 343/343 EditMode.

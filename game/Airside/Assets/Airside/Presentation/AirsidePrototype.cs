@@ -384,6 +384,8 @@ namespace Airside.Presentation
         {
             if (_active == this)
                 _active = null;
+            if (_miniMapTexture != null)
+                Destroy(_miniMapTexture);
         }
 
         private void Update()

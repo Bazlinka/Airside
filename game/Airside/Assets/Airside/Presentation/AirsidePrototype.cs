@@ -856,7 +856,8 @@ namespace Airside.Presentation
                 SpinJetFans(view, phase, engines);
                 RollLandingGearTires(view, phase, progress);
                 ApplyOleoSettling(view, phase, progress);
-                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue);
+                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue,
+                    PartsFor(view).HasSeparateElevators);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
@@ -910,7 +911,7 @@ namespace Airside.Presentation
 
         private static void UpdateControlSurfaces(
             Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
-            bool drawnOnGround = false)
+            bool drawnOnGround = false, bool hasSeparateElevators = false)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
             // deltaTime is the presentation clock, so surfaces hold still while paused
@@ -922,15 +923,6 @@ namespace Airside.Presentation
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
-            var hasSeparateElevators = false;
-            for (var i = 0; i < names.Length; i++)
-            {
-                if (children[i] != null && names[i].StartsWith("Elevator", StringComparison.Ordinal))
-                {
-                    hasSeparateElevators = true;
-                    break;
-                }
-            }
             for (var childIndex = 0; childIndex < children.Length; childIndex++)
             {
                 var child = children[childIndex];
@@ -1497,19 +1489,10 @@ namespace Airside.Presentation
         /// </summary>
         private void SpinJetFans(Transform aircraft, AircraftPhase phase, EngineState? engines = null)
         {
+            if (!PartsFor(aircraft).HasFans)
+                return;
             var namedChildren = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
-            var hasFans = false;
-            for (var i = 0; i < names.Length; i++)
-            {
-                if (names[i] is "Fan L" or "Fan R")
-                {
-                    hasFans = true;
-                    break;
-                }
-            }
-            if (!hasFans)
-                return;
 
             var target = AirsideReusableMotion.JetFanRpmForPhase(phase);
             var id = aircraft.GetInstanceID();
@@ -9595,6 +9578,10 @@ namespace Airside.Presentation
             public Renderer ShadowRenderer;
             public Transform Marker;
             public Renderer MarkerRenderer;
+            /// <summary>Carries "Fan L"/"Fan R" turbofan assemblies (the 737).</summary>
+            public bool HasFans;
+            /// <summary>Carries separate "Elevator" meshes, so the tailplane itself stays still.</summary>
+            public bool HasSeparateElevators;
         }
 
         private readonly Dictionary<int, AircraftViewParts> _aircraftViewParts = new();
@@ -9614,6 +9601,18 @@ namespace Airside.Presentation
             };
             parts.ShadowRenderer = parts.Shadow != null ? parts.Shadow.GetComponent<Renderer>() : null;
             parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
+            // Both used to be rediscovered by scanning every child name on every frame.
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < names.Length; i++)
+            {
+                if (children[i] == null)
+                    continue;
+                if (names[i] is "Fan L" or "Fan R")
+                    parts.HasFans = true;
+                else if (names[i].StartsWith("Elevator", StringComparison.Ordinal))
+                    parts.HasSeparateElevators = true;
+            }
             _aircraftViewParts[id] = parts;
             return parts;
         }

@@ -1787,8 +1787,10 @@ namespace Airside.Presentation
                         break;
                     }
 
+                    // Only what is drawn can be clicked: zoomed in, a dot or plane just past the
+                    // map edge is culled from the drawing but was still inside the hit radius.
                     var aircraftHit = FlightPlanner.NearestWithin(_mapAircraftPoints, ev.mousePosition.x, ev.mousePosition.y, 18f);
-                    if (aircraftHit >= 0)
+                    if (aircraftHit >= 0 && mapRect.Contains(new Vector2(_mapAircraftPoints[aircraftHit].x, _mapAircraftPoints[aircraftHit].y)))
                     {
                         SelectAircraft(_mapAircraftRows[aircraftHit]);
                         ev.Use();
@@ -1796,7 +1798,8 @@ namespace Airside.Presentation
                     }
 
                     var destinationHit = FlightPlanner.NearestWithin(_mapDestinationPoints, ev.mousePosition.x, ev.mousePosition.y);
-                    if (destinationHit >= 0)
+                    if (destinationHit >= 0
+                        && mapRect.Contains(new Vector2(_mapDestinationPoints[destinationHit].x, _mapDestinationPoints[destinationHit].y)))
                         PickDestination(_mapDestinationRows[destinationHit].Destination);
                     ev.Use();
                     break;

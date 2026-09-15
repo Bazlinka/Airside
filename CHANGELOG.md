@@ -7,7 +7,7 @@ change it describes.
 
 - **Airfield mini-map.** A corner map of Adelaide shows every aircraft on the field and what the
   camera is looking at; click an aircraft to select it, click or drag to fly the camera there,
-  N to hide.
+  N to hide. 356/356 EditMode.
 
 - **ATR 42-600 visual fidelity pass (v03).** AIR-001 gains a new `mdl_atr42_starter_v03` kit
   while v02 stays the approved fallback: four clean fitted cockpit panes with credible pillars,

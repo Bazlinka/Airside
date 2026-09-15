@@ -1,6 +1,8 @@
 ## Where to resume — session handoff
 
-- **2026-09-15 Claude — polish phase 3: airfield mini-map.**
+- **2026-09-15 Claude — polish phase 3: airfield mini-map. Unity EditMode 356/356.**
+  - Unity regenerated the ATR v03 `.meta` GUIDs (source and StreamingAssets copies were
+    committed identical, as with AIR-007 before); included here.
   - New bottom-left YPAD mini-map (`FieldMiniMap` pure helper + `AirsidePrototype.MiniMap`): the
     OSM runways, taxiways, aprons and terminals baked once into a texture; every on-field
     aircraft as a livery dot (yours larger, severity ring, selected yellow); the camera's

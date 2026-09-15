@@ -21,7 +21,13 @@ namespace Airside.Presentation
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
         // Damped roll angle per airframe so banking eases in and out of a turn.
         private readonly Dictionary<string, float> _bankDegrees = new();
+        // Whole-aircraft spool, keyed by instance id; engine audio reads it.
         private readonly Dictionary<int, float> _propRpm = new();
+        // Per-engine spools (id*2+1 left, id*2+2 right). Each lives in its own dictionary:
+        // sharing one made the 737's fans damp toward prop RPM and fan RPM alternately
+        // every frame, and a per-engine key could land on another aircraft's audio key.
+        private readonly Dictionary<int, float> _enginePropRpm = new();
+        private readonly Dictionary<int, float> _jetFanRpm = new();
 
         private Light _sun;
         private Light _fillLight;
@@ -1394,8 +1400,8 @@ namespace Airside.Presentation
                 ? AirsideReusableMotion.PropRpmTaxi
                 : AirsideReusableMotion.PropRpmForPhase(phase);
             var id = aircraft.GetInstanceID();
-            var left = SpooledPropRpm(id * 2 + 1, phaseRpm * engines.Left);
-            var right = SpooledPropRpm(id * 2 + 2, phaseRpm * engines.Right);
+            var left = SpooledPropRpm(_enginePropRpm, id * 2 + 1, phaseRpm * engines.Left);
+            var right = SpooledPropRpm(_enginePropRpm, id * 2 + 2, phaseRpm * engines.Right);
             // Engine audio reads the aircraft's own key; give it the stronger engine.
             _propRpm[id] = Mathf.Max(left, right);
 
@@ -1460,26 +1466,26 @@ namespace Airside.Presentation
 
         private float SpooledJetFanRpm(int key, float targetRpm)
         {
-            if (!_propRpm.TryGetValue(key, out var current))
+            if (!_jetFanRpm.TryGetValue(key, out var current))
                 current = targetRpm;
             // Fan spool is intentionally quicker than a prop governor but still smooth
             // enough that engine start and shutdown read as machinery, not a toggle.
             var rate = targetRpm > current ? 2.3f : 1.1f;
             current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
-            _propRpm[key] = current;
+            _jetFanRpm[key] = current;
             return current;
         }
 
         private float SpooledPropRpm(Transform aircraft, float targetRpm) =>
-            SpooledPropRpm(aircraft.GetInstanceID(), targetRpm);
+            SpooledPropRpm(_propRpm, aircraft.GetInstanceID(), targetRpm);
 
-        private float SpooledPropRpm(int key, float targetRpm)
+        private float SpooledPropRpm(Dictionary<int, float> spools, int key, float targetRpm)
         {
-            if (!_propRpm.TryGetValue(key, out var current))
+            if (!spools.TryGetValue(key, out var current))
                 current = targetRpm;
             var rate = targetRpm > current ? 1.6f : 0.8f;
             current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
-            _propRpm[key] = current;
+            spools[key] = current;
             return current;
         }
 

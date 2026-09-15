@@ -7668,14 +7668,11 @@ namespace Airside.Presentation
                 var daySpill = openAmount * 1.55f;
                 var nightGlow = (1f - daylight) * 0.72f;
                 _hangarBayLight.intensity = Mathf.Max(0.1f, daySpill + nightGlow);
-                _hangarBayLight.color = Color.Lerp(
-                    new Color(1f, 0.82f, 0.55f),
-                    new Color(1f, 0.92f, 0.7f),
-                    daylight);
-                _hangarBayLight.color = Color.Lerp(
-                    new Color(1f, 0.78f, 0.48f),
-                    new Color(1f, 0.92f, 0.72f),
-                    openAmount);
+                // Warmer at night and when the door is shut. The daylight tint used to be written
+                // and then immediately overwritten by the door tint, so it never applied.
+                var dayTint = Color.Lerp(new Color(1f, 0.82f, 0.55f), new Color(1f, 0.92f, 0.7f), daylight);
+                var doorTint = Color.Lerp(new Color(1f, 0.78f, 0.48f), new Color(1f, 0.92f, 0.72f), openAmount);
+                _hangarBayLight.color = Color.Lerp(dayTint, doorTint, 0.5f);
             }
         }
 

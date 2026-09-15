@@ -1,7 +1,8 @@
 ## Where to resume — session handoff
 
-- **2026-09-15 Claude — Gate 13 737-8 operations (ADR 0047). Branch
-  `feature/gate13-737-operations`; Unity EditMode 319/319 (0 failed, 0 skipped).**
+- **2026-09-15 Claude — Gate 13 737-8 operations (ADR 0047). Merged to `main` by PR #246
+  (`bbe76b0`); feature branch deleted; Unity EditMode 319/319 (0 failed, 0 skipped),
+  re-verified on merged `main`.**
   - **Player-visible:** the AIR-005 preview is replaced by one operational AI 737-8, **VH-WTJ**
     of fictional **Wattlebird Jet** (teal, no logo). It taxis in nose first to Gate 13, parks,
     pushes back tail first onto T1, disconnects the tug, taxis out forward and departs on a

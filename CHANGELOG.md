@@ -5,6 +5,9 @@ change it describes.
 
 ## Unreleased
 
+- **Handoff corrected.** GAME.md records the Gate 13 737-8 work as merged (#246) rather than
+  on its deleted feature branch.
+
 - **Gate 13 737-8 now operates.** The parked preview is one real AI aircraft: fictional
   Wattlebird Jet's VH-WTJ taxis in nose first to Gate 13, parks, pushes back tail first onto
   T1, taxis out and departs on a Melbourne/Sydney/Brisbane/Perth/Canberra rotation. Gate 13 is

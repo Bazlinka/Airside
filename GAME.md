@@ -1,21 +1,24 @@
 ## Where to resume — session handoff
 
-- **2026-09-15 Cursor — AIR-006 Dash 8-400 visual revision (same asset id). Domain tests pending
-  Unity EditMode on Mac.**
-  - **Player-visible:** QantasLink's Dash 8-400 silhouette is rebuilt in place: longer slender
-    fuselage with fitted cabin glazing, pitched four-pane flight deck, continuous nacelles with
-    main-gear bays, six-blade props, high wing with tip fences / root saddles, and a joined
-    T-tail. Hangar thumbnail regenerated from the runtime glTF. Envelope unchanged
+- **2026-09-15 Cursor — AIR-006 Dash 8-400 visual quality pass (same asset id). Unity EditMode
+  pending Mac re-run (`scripts/test-unity.sh` has no Unity binary here).**
+  - **Player-visible:** QantasLink's Dash 8-400 silhouette tightened in place: continuous
+    high-wing / fuselage saddle, single aerodynamic nacelle (intake → gear bay → exhaust),
+    framed four-pane flight deck, pitched six-blade props with clear hubs/spinners, longer
+    nacelle-mounted mains with open doors, soft fin-root fillet and rounded T-tail saddle,
+    even cabin windows. Hangar thumbnail regenerated. Envelope unchanged
     (32.83 × 28.42 × 8.34 m). Path stays `mdl_dash8_q400_v01`.
-  - **How:** rewrite of `scripts/generate-air-006-dash8-q400.py` (174 named meshes /
-    18,856 triangles, was 139 / 6,728). StreamingAssets + Hangar thumb synced. No simulation,
+  - **How:** further rewrite of `scripts/generate-air-006-dash8-q400.py` (182 named meshes /
+    26752 triangles). Thumbnail colouring fixed so windscreen pillars / prop tips read at
+    Hangar distance. StreamingAssets synced. Review renders in `work/review/`. No simulation,
     catalogue id, save, reservation or schedule change.
-  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline before/after mesh
-    reviews under `/opt/cursor/artifacts/dash8-q400-*-review.png`. Unity EditMode / packaged
-    overview-follow QA still open (no Mac build this session).
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline front/side/top/
+    game-camera reviews. Prior Mac Unity EditMode on this branch: 331/331. This environment
+    cannot re-run `scripts/test-unity.sh` (Unity 6.3 missing).
   - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. 50D/50E Q400 stand rule still
-    needs Bailey's decision if a second Q400 is added. Further Dash 8 polish (materials/panel
-    lines) can continue after Saab if Bailey wants another art pass.
+    needs Bailey's decision if a second Q400 is added.
+
+
 
 - **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
   331/331 (0 failed, 0 skipped).**

@@ -5,6 +5,14 @@ change it describes.
 
 ## Unreleased
 
+- **Dash 8-400 visual quality pass.** AIR-006 tightened in place: continuous wing-root
+  saddle, single aerodynamic nacelle with gear bay, framed four-pane flight deck, pitched
+  six-blade props with readable hubs/spinners, longer nacelle-mounted gear and doors, soft
+  fin-root fillet and rounded T-tail saddle, even cabin windows. Same 32.83 × 28.42 × 8.34 m
+  envelope and asset path; Hangar thumbnail regenerated. 182 meshes / 26752 tris. No
+  simulation or save change. Generator validate + `work/review/` orthographic renders;
+  Unity EditMode re-run pending Mac (`scripts/test-unity.sh` unavailable here).
+
 - **Dash 8-400 looks like a Dash 8.** AIR-006 rebuilt in place: slender fuselage, fitted cabin
   windows, pitched flight-deck panes, continuous nacelles with gear bays, six-blade props, high
   wing with tip fences and root saddles, joined T-tail. Same 32.83 × 28.42 × 8.34 m envelope and

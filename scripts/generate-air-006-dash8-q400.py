@@ -70,13 +70,14 @@ STATIONS = np.array(
         (10.00, 1.35, 1.33, 2.21),
         (11.60, 1.32, 1.28, 2.16),
         (12.70, 1.24, 1.18, 2.08),
-        (13.50, 1.12, 1.04, 1.96),
-        (14.15, 0.96, 0.88, 1.82),
-        (14.70, 0.76, 0.68, 1.68),
-        (15.15, 0.54, 0.48, 1.54),
-        (15.50, 0.34, 0.30, 1.44),
-        (15.80, 0.18, 0.16, 1.36),
-        (HALF_LENGTH - 0.12, 0.05, 0.04, 1.30),
+        (13.50, 1.14, 1.06, 1.98),
+        (14.10, 1.00, 0.92, 1.88),
+        (14.55, 0.84, 0.76, 1.74),
+        (14.95, 0.64, 0.58, 1.60),
+        (15.30, 0.42, 0.38, 1.48),
+        (15.55, 0.24, 0.22, 1.38),
+        (15.75, 0.12, 0.11, 1.33),
+        (HALF_LENGTH - 0.12, 0.05, 0.05, 1.30),
     ],
     dtype=np.float32,
 )
@@ -243,31 +244,9 @@ def wheel_set(meshes, prefix, x, z, radius, width):
     )
 
 
-def nacelle_pod(x):
-    """One continuous nacelle: intake, core, and long main-gear bay."""
-    stations = [
-        (5.40, 0.16, 0.14, 3.62),
-        (5.15, 0.38, 0.34, 3.60),
-        (4.70, 0.55, 0.50, 3.58),
-        (4.00, 0.66, 0.60, 3.54),
-        (2.80, 0.72, 0.66, 3.50),
-        (1.20, 0.74, 0.70, 3.48),
-        (-0.20, 0.75, 0.74, 3.44),
-        (-1.40, 0.74, 0.82, 3.30),
-        (-2.50, 0.68, 0.92, 3.05),
-        (-3.40, 0.55, 0.95, 2.78),
-        (-4.20, 0.38, 0.72, 2.55),
-        (-4.85, 0.22, 0.38, 2.42),
-        (-5.25, 0.10, 0.14, 2.36),
-    ]
-    segs = 40
-    rings = []
-    for z, rx, ry, cy in stations:
-        ring = []
-        for i in range(segs):
-            ang = 2.0 * np.pi * i / segs
-            ring.append([x + rx * np.cos(ang), cy + ry * np.sin(ang), z])
-        rings.append(np.asarray(ring, np.float32))
+def _loft_rings(rings):
+    """Connect successive closed rings into a watertight loft."""
+    segs = len(rings[0])
     verts: list = []
     indices: list = []
     for r in range(len(rings) - 1):
@@ -280,7 +259,7 @@ def nacelle_pod(x):
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
     for ring, z_sign in ((rings[0], 1.0), (rings[-1], -1.0)):
         tip = ring.mean(axis=0).copy()
-        tip[2] += z_sign * 0.08
+        tip[2] += z_sign * 0.06
         for i in range(segs):
             j = (i + 1) % segs
             base = len(verts)
@@ -292,38 +271,272 @@ def nacelle_pod(x):
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
-def wing_fairing(side):
-    # Low, elongated wing-root saddle — fills the wing/cabin join without a
-    # chunky "block on the roof" silhouette.
-    fair = [
-        (-2.20, 0.08, 0.05, 4.28),
-        (-1.40, 0.22, 0.12, 4.38),
-        (-0.40, 0.30, 0.16, 4.44),
-        (0.80, 0.28, 0.15, 4.44),
-        (1.70, 0.16, 0.09, 4.38),
-        (2.30, 0.06, 0.04, 4.30),
+def nacelle_pod(x):
+    """Single aerodynamic nacelle: intake lip, core, gear-bay belly, exhaust.
+
+    Stations follow the Dash 8-400 elongated nacelle that also houses the
+    rearward main gear (Airport Planning / Aeroplane General references).
+    """
+    stations = [
+        (5.62, 0.12, 0.10, 3.58),  # intake lip highlight
+        (5.40, 0.38, 0.34, 3.56),
+        (5.10, 0.56, 0.50, 3.54),
+        (4.60, 0.68, 0.60, 3.52),
+        (3.80, 0.76, 0.68, 3.50),
+        (2.70, 0.82, 0.74, 3.48),
+        (1.50, 0.84, 0.78, 3.46),
+        (0.30, 0.84, 0.86, 3.38),
+        (-0.80, 0.82, 0.98, 3.18),  # gear-bay deepen
+        (-1.80, 0.78, 1.10, 2.96),
+        (-2.70, 0.70, 1.14, 2.76),
+        (-3.50, 0.56, 1.00, 2.56),
+        (-4.15, 0.38, 0.68, 2.44),
+        (-4.65, 0.22, 0.36, 2.38),
+        (-5.10, 0.09, 0.12, 2.34),  # exhaust taper
     ]
-    segs = 28
+    segs = 56
     rings = []
-    for z, rx, ry, cy in fair:
+    for z, rx, ry, cy in stations:
         ring = []
         for i in range(segs):
             ang = 2.0 * np.pi * i / segs
+            # Soft flat on the top where the wing / pylon lands.
+            top_flat = 0.88 if np.sin(ang) > 0.50 else 1.0
+            # Slight belly keel through the gear bay so doors read under the pod.
+            belly = 1.08 if (z < -0.5 and np.sin(ang) < -0.35) else 1.0
             ring.append(
-                [side * (1.12 + abs(rx * np.cos(ang))), cy + ry * np.sin(ang), z]
+                [
+                    x + rx * np.cos(ang),
+                    cy + ry * top_flat * belly * np.sin(ang),
+                    z,
+                ]
             )
         rings.append(np.asarray(ring, np.float32))
-    verts: list = []
-    indices: list = []
-    for r in range(len(rings) - 1):
+    return _loft_rings(rings)
+
+
+def nacelle_wing_fillet(x, side):
+    """Blend the nacelle crown into the wing undersurface (one assembly read)."""
+    z_stations = np.linspace(-1.80, 3.40, 14)
+    segs = 20
+    rings = []
+    for z in z_stations:
+        t = float(np.clip((z + 1.80) / 5.20, 0.0, 1.0))
+        envelope = np.sin(np.pi * t) ** 0.70
+        cx = x
+        cy = 3.85 + 0.35 * envelope
+        rx = 0.55 + 0.35 * envelope
+        ry = 0.22 + 0.28 * envelope
+        ring = []
         for i in range(segs):
-            j = (i + 1) % segs
-            a, b = rings[r][i], rings[r][j]
-            c, d = rings[r + 1][j], rings[r + 1][i]
-            base = len(verts)
-            verts.extend([a, b, c, d])
+            ang = 2.0 * np.pi * i / segs
+            # Bias upward into the wing, keep a soft oval footprint.
+            y_scale = 0.45 + 0.55 * max(0.0, np.sin(ang))
+            ring.append(
+                [
+                    cx + rx * np.cos(ang),
+                    cy + ry * y_scale * np.sin(ang),
+                    float(z),
+                ]
+            )
+        rings.append(np.asarray(ring, np.float32))
+    return _loft_rings(rings)
+
+
+def wing_fairing(side):
+    """Half of a continuous high-wing / fuselage saddle.
+
+    Real Dash 8 centre wing sits across the cabin crown as one piece. Each
+    side mesh runs from past the centreline out to the wing root so the pair
+    forms a continuous saddle with no centre valley or stepped root.
+    """
+    z_stations = np.linspace(-2.40, 3.55, 22)
+    segs = 28
+    rings = []
+    for z in z_stations:
+        t = float(np.clip((z + 2.40) / 5.95, 0.0, 1.0))
+        # Peak under the spar, soft taper fore/aft (not a hard step).
+        envelope = float(np.sin(np.pi * t) ** 0.70)
+        if z > 2.10:
+            envelope *= float(np.clip(1.0 - (z - 2.10) / 1.70, 0.05, 1.0))
+        if z < -1.60:
+            envelope *= float(np.clip(1.0 - (-1.60 - z) / 0.90, 0.08, 1.0))
+        crown_y = float(surface(float(z), np.deg2rad(90.0), offset=0.0)[1])
+        # Inner edge past centreline so left/right halves overlap into one roof.
+        x_inner = side * (0.55)
+        x_outer = side * (1.55 + 0.55 * envelope)
+        y_inner = crown_y + 0.06 + 0.42 * envelope
+        y_outer = 4.35 + 0.22 * envelope
+        # Build a rounded half-ring: flat belly on the cabin, arched crown into
+        # the wing root, closed at the centreline.
+        ring = []
+        for i in range(segs):
+            u = i / float(segs)
+            # Parametric half-oval from belly (u≈0/1) through outboard crown.
+            ang = 2.0 * np.pi * u
+            # Map angle into a spanwise blend: cos pushes outboard, sin lifts.
+            span = 0.5 + 0.5 * np.cos(ang)  # 1 at centreline-ish, 0 at outboard
+            # Remap so the mesh covers inner→outer continuously.
+            s = 0.5 - 0.5 * np.cos(ang)  # 0..1..0 around; use abs of lateral
+            # Prefer a simple elliptical section centred between inner and outer.
+            cx = 0.5 * (x_inner + x_outer)
+            rx = 0.5 * abs(x_outer - x_inner) + 0.08
+            cy = 0.5 * (y_inner + y_outer)
+            ry = 0.5 * abs(y_outer - y_inner) + 0.10 + 0.18 * envelope
+            # Flatten the belly so it seats on the fuselage roof without a step.
+            y_scale = 0.35 + 0.65 * max(0.0, np.sin(ang))
+            # Soften the inboard side so the two halves meet as one surface.
+            x = cx + rx * np.cos(ang)
+            if side > 0:
+                x = max(x, -0.05)
+            else:
+                x = min(x, 0.05)
+            ring.append(
+                [
+                    float(x),
+                    float(cy + ry * y_scale * np.sin(ang)),
+                    float(z),
+                ]
+            )
+        rings.append(np.asarray(ring, np.float32))
+    return _loft_rings(rings)
+
+
+def wing_centre_saddle():
+    """Full-span centre wing box that kills the left/right valley at the crown."""
+    z_stations = np.linspace(-2.20, 3.40, 20)
+    segs = 32
+    rings = []
+    for z in z_stations:
+        t = float(np.clip((z + 2.20) / 5.60, 0.0, 1.0))
+        envelope = float(np.sin(np.pi * t) ** 0.65)
+        if z > 2.00:
+            envelope *= float(np.clip(1.0 - (z - 2.00) / 1.60, 0.06, 1.0))
+        crown_y = float(surface(float(z), np.deg2rad(90.0), offset=0.0)[1])
+        # Wide flattened oval sitting on the cabin roof — continuous across X=0.
+        rx = 1.15 + 0.55 * envelope
+        ry = 0.22 + 0.48 * envelope
+        cy = crown_y + 0.16 + 0.30 * envelope
+        ring = []
+        for i in range(segs):
+            ang = 2.0 * np.pi * i / segs
+            # Squash the belly hard onto the crown; keep a soft arched roof.
+            y_scale = 0.22 + 0.78 * max(0.0, np.sin(ang))
+            # Mild leading/trailing taper already in envelope; keep sides round.
+            ring.append(
+                [
+                    rx * np.cos(ang) * (0.92 + 0.08 * abs(np.sin(ang))),
+                    cy + ry * y_scale * np.sin(ang),
+                    float(z),
+                ]
+            )
+        rings.append(np.asarray(ring, np.float32))
+    return _loft_rings(rings)
+
+
+def tail_root_fillet():
+    """Smooth dorsal blend from rear fuselage into the fin leading edge."""
+    z_stations = np.linspace(-7.80, -12.70, 16)
+    segs = 20
+    rings = []
+    for z in z_stations:
+        t = float((z + 7.80) / (-12.70 + 7.80))
+        height = 0.18 + 2.85 * (t ** 0.85)
+        half_w = 0.55 * (1.0 - 0.62 * t)
+        cy = float(surface(float(z), np.deg2rad(90.0), offset=0.0)[1]) + 0.04
+        ring = []
+        for i in range(segs):
+            ang = 2.0 * np.pi * i / segs
+            # Flatten the underside so it sits on the fuselage crown.
+            y = cy + height * max(0.0, np.sin(ang)) * 0.95
+            x = half_w * np.cos(ang)
+            ring.append([x, y, float(z)])
+        rings.append(np.asarray(ring, np.float32))
+    return _loft_rings(rings)
+
+
+def tailplane_saddle_mesh():
+    """Rounded T-tail bullet fairing (Dash 8 empennage junction)."""
+    stations = [
+        (-11.35, 0.62, 0.26, 7.48),
+        (-11.85, 0.82, 0.38, 7.62),
+        (-12.40, 0.88, 0.42, 7.74),
+        (-12.95, 0.72, 0.34, 7.84),
+        (-13.40, 0.42, 0.18, 7.90),
+        (-13.75, 0.16, 0.08, 7.92),
+    ]
+    segs = 32
+    rings = []
+    for z, rx, ry, cy in stations:
+        ring = []
+        for i in range(segs):
+            ang = 2.0 * np.pi * i / segs
+            ring.append([rx * np.cos(ang), cy + ry * np.sin(ang), z])
+        rings.append(np.asarray(ring, np.float32))
+    return _loft_rings(rings)
+
+
+def pitched_prop_blade(cx, cy, cz, angle_degrees, *, radial_start=0.20, radial_end=1.90, tip=False):
+    """Dowty R408-class blade: broad chord, clear twist, solid root into the hub."""
+    angle = np.deg2rad(angle_degrees)
+    radial = np.array([-np.sin(angle), np.cos(angle), 0.0])
+    tangent = np.array([np.cos(angle), np.sin(angle), 0.0])
+    axis = np.array([0.0, 0.0, 1.0])
+    if tip:
+        stations = [
+            (radial_start, 0.110, 11.0, 0.022),
+            (0.5 * (radial_start + radial_end), 0.075, 8.0, 0.016),
+            (radial_end, 0.040, 5.0, 0.012),
+        ]
+    else:
+        # Scimitar planform + strong pitch so all six blades read at Hangar range.
+        stations = [
+            (radial_start, 0.145, 46.0, 0.055),
+            (0.45, 0.255, 36.0, 0.048),
+            (0.85, 0.220, 26.0, 0.038),
+            (1.25, 0.155, 16.0, 0.028),
+            (1.55, 0.100, 11.0, 0.020),
+            (radial_end, 0.060, 7.0, 0.014),
+        ]
+    loops = []
+    centre = np.array([cx, cy, cz], np.float64)
+    for radius, half_chord, twist_degrees, half_thickness in stations:
+        twist = np.deg2rad(twist_degrees)
+        chord_axis = tangent * np.cos(twist) + axis * np.sin(twist)
+        thickness_axis = -tangent * np.sin(twist) + axis * np.cos(twist)
+        # Slight forward rake toward the tip (scimitar).
+        rake = 0.04 * max(0.0, radius - radial_start)
+        station_centre = centre + radial * radius + axis * rake
+        loops.append(
+            np.asarray(
+                [
+                    station_centre - chord_axis * half_chord - thickness_axis * half_thickness,
+                    station_centre + chord_axis * half_chord - thickness_axis * half_thickness,
+                    station_centre + chord_axis * half_chord + thickness_axis * half_thickness,
+                    station_centre - chord_axis * half_chord + thickness_axis * half_thickness,
+                ],
+                np.float32,
+            )
+        )
+    vertices: list = []
+    indices: list = []
+    for index in range(len(loops) - 1):
+        inner, outer = loops[index], loops[index + 1]
+        for corner in range(4):
+            following = (corner + 1) % 4
+            base = len(vertices)
+            vertices.extend([inner[corner], inner[following], outer[following], outer[corner]])
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
-    return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
+    for loop, reverse in ((loops[0], True), (loops[-1], False)):
+        centre_point = loop.mean(axis=0)
+        for corner in range(4):
+            following = (corner + 1) % 4
+            base = len(vertices)
+            a = loop[following] if reverse else loop[corner]
+            b = loop[corner] if reverse else loop[following]
+            vertices.extend([centre_point, a, b])
+            indices.extend([base, base + 1, base + 2])
+    return np.asarray(vertices, np.float32), np.asarray(indices, np.uint16)
 
 
 def q400_meshes():
@@ -331,7 +544,7 @@ def q400_meshes():
 
     meshes["fuselage"] = fuselage_body()
 
-    wing_root = (1.15, 4.48, 3.25, 4.35, 0.42)
+    wing_root = (1.55, 4.52, 3.25, 4.35, 0.40)
     wing_mid = (6.40, 4.62, 2.85, 2.95, 0.26)
     wing_outer = (11.80, 4.78, 2.15, 1.65, 0.14)
     wing_tip = (HALF_SPAN, 4.92, 1.72, 1.05, 0.09)
@@ -369,90 +582,93 @@ def q400_meshes():
         meshes[f"flap_track_{name[0]}1"] = box(side * 3.20, 4.22, -0.55, 0.10, 0.16, 0.55)
         meshes[f"flap_track_{name[0]}2"] = box(side * 5.80, 4.35, -0.20, 0.10, 0.14, 0.48)
 
+    # Continuous centre wing box across the cabin crown — kills the left/right
+    # valley so the high-wing root reads as one fuselage saddle.
+    meshes["wing_centre_saddle"] = wing_centre_saddle()
+
     for side, name in ((-1.0, "left"), (1.0, "right")):
         x = side * 4.35
+        # One continuous nacelle assembly — intake lip and exhaust are part of
+        # the loft; keep only a short wing pylon and a recessed cooler scoop.
         meshes[f"engine_{name}"] = nacelle_pod(x)
+        meshes[f"nacelle_fillet_{name}"] = nacelle_wing_fillet(x, side)
         meshes[f"intake_{name}"] = cylinder(
-            x, 3.62, 5.15, 0.42, 0.22, axis="z", segments=28
+            x, 3.56, 5.42, 0.36, 0.14, axis="z", segments=32
         )
         meshes[f"exhaust_{name}"] = cylinder(
-            x, 3.35, -3.55, 0.16, 0.70, axis="z", segments=18
+            x, 2.42, -4.85, 0.14, 0.55, axis="z", segments=20
         )
         meshes[f"exhaust_stack_{name[0]}"] = box(
-            x + side * 0.55, 3.85, -1.80, 0.18, 0.22, 1.10
+            x + side * 0.42, 3.55, -2.10, 0.14, 0.16, 0.85
         )
-        meshes[f"pylon_{name}"] = box(x, 4.20, 0.55, 0.48, 0.95, 2.85)
-        meshes[f"oil_cooler_{name[0]}"] = box(x, 3.05, 2.40, 0.55, 0.22, 0.85)
-        meshes[f"cowl_flap_{name[0]}"] = box(x, 3.15, 1.10, 0.70, 0.08, 0.55)
+        meshes[f"pylon_{name}"] = box(x, 4.05, 0.35, 0.38, 0.72, 2.40)
+        meshes[f"oil_cooler_{name[0]}"] = box(x, 2.88, 1.85, 0.48, 0.16, 0.70)
+        meshes[f"cowl_flap_{name[0]}"] = box(x, 3.05, 0.85, 0.55, 0.06, 0.42)
 
+        # Six pitched blades with clear tips, rooted into a credible hub/spinner.
         for index, suffix in enumerate(("", "_b", "_c", "_d", "_e", "_f")):
             angle = index * 60.0
-            meshes[f"propeller_{name}{suffix}"] = propeller_blade(
-                x, 3.60, 5.55, angle, radial_start=0.28, radial_end=1.82
+            meshes[f"propeller_{name}{suffix}"] = pitched_prop_blade(
+                x, 3.56, 5.62, angle, radial_start=0.22, radial_end=1.78
             )
-            meshes[f"propeller_{name}_tip{suffix}"] = propeller_blade(
+            meshes[f"propeller_{name}_tip{suffix}"] = pitched_prop_blade(
                 x,
-                3.60,
-                5.55,
+                3.56,
+                5.62,
                 angle,
-                radial_start=1.80,
+                radial_start=1.72,
                 radial_end=PROP_RADIUS,
                 tip=True,
             )
         meshes[f"prop_hub_{name}"] = cylinder(
-            x, 3.60, 5.50, 0.30, 0.34, axis="z", segments=26
+            x, 3.56, 5.48, 0.36, 0.42, axis="z", segments=28
         )
         meshes[f"spinner_{name}"] = translated(
             oval_lathe_fuselage(
                 [
-                    (5.40, 0.28, 0.28, 3.60),
-                    (5.75, 0.34, 0.34, 3.60),
-                    (6.05, 0.18, 0.18, 3.60),
-                    (6.28, 0.04, 0.04, 3.60),
+                    (5.28, 0.34, 0.34, 3.56),
+                    (5.55, 0.40, 0.40, 3.56),
+                    (5.88, 0.28, 0.28, 3.56),
+                    (6.12, 0.14, 0.14, 3.56),
+                    (6.30, 0.03, 0.03, 3.56),
                 ],
-                segments=28,
+                segments=32,
             ),
             x,
             0.0,
             0.0,
         )
         meshes[f"spinner_stripe_{name[0]}"] = cylinder(
-            x, 3.60, 5.72, 0.33, 0.06, axis="z", segments=24
+            x, 3.56, 5.68, 0.38, 0.05, axis="z", segments=24
         )
 
-    # Fin tip owns the exact 8.34 m height.
+    # Fin tip owns the exact 8.34 m height. Soft dorsal + root fillet clean the
+    # fin-to-fuselage join; rounded saddle cleans the T-tail junction.
     meshes["tail_fin"] = lofted_aerofoil(
         [
-            (3.35, 0.0, -9.60, 5.40, 0.32),
-            (5.40, 0.0, -11.40, 3.60, 0.22),
-            (7.20, 0.0, -12.90, 2.40, 0.15),
-            (8.34, 0.0, -14.05, 1.45, 0.10),
+            (3.20, 0.0, -9.40, 5.20, 0.30),
+            (5.20, 0.0, -11.20, 3.50, 0.20),
+            (7.05, 0.0, -12.80, 2.30, 0.14),
+            (8.34, 0.0, -14.05, 1.40, 0.09),
         ],
-        chord_points=18,
+        chord_points=20,
         vertical=True,
     )
     meshes["dorsal_fin"] = lofted_aerofoil(
         [
-            (3.20, 0.0, -7.80, 2.80, 0.20),
-            (4.80, 0.0, -10.40, 1.60, 0.12),
+            (2.95, 0.0, -7.40, 2.60, 0.18),
+            (4.55, 0.0, -10.10, 1.50, 0.11),
         ],
-        chord_points=12,
+        chord_points=14,
         vertical=True,
     )
-    meshes["tail_root_fairing"] = lofted_aerofoil(
-        [
-            (2.55, 0.0, -8.40, 2.20, 0.28),
-            (3.55, 0.0, -10.20, 1.40, 0.16),
-        ],
-        chord_points=10,
-        vertical=True,
-    )
+    meshes["tail_root_fairing"] = tail_root_fillet()
     meshes["rudder"] = lofted_aerofoil(
         [
-            (4.10, 0.0, -14.35, 0.72, 0.08),
-            (7.85, 0.0, -14.85, 0.55, 0.06),
+            (4.00, 0.0, -14.25, 0.70, 0.07),
+            (7.75, 0.0, -14.80, 0.52, 0.05),
         ],
-        chord_points=10,
+        chord_points=12,
         vertical=True,
     )
     meshes["tailplane"] = lofted_aerofoil(
@@ -464,9 +680,9 @@ def q400_meshes():
             (2.40, 7.90, -12.35, 2.20, 0.16),
             (6.80, 7.95, -13.45, 1.25, 0.09),
         ],
-        chord_points=14,
+        chord_points=16,
     )
-    meshes["tailplane_saddle"] = box(0.0, 7.72, -12.55, 0.85, 0.35, 1.80)
+    meshes["tailplane_saddle"] = tailplane_saddle_mesh()
     meshes["elevator_left"] = panel(
         -1.0, 0.40, 6.40, 7.88, 7.93, -14.35, -14.65, 0.55, 0.38, 0.06
     )
@@ -476,26 +692,41 @@ def q400_meshes():
     meshes["tailplane_tip_l"] = box(-6.70, 7.95, -13.55, 0.35, 0.08, 0.55)
     meshes["tailplane_tip_r"] = box(6.70, 7.95, -13.55, 0.35, 0.08, 0.55)
 
-    for index, z in enumerate(np.linspace(10.35, -8.60, 18), start=1):
+    # Even cabin pitch; panes sit just outside the curved skin.
+    for index, z in enumerate(np.linspace(10.20, -8.40, 18), start=1):
         meshes[f"cabin_window_{index}"] = cabin_window(float(z), -1.0)
         meshes[f"cabin_window_r{index}"] = cabin_window(float(z), 1.0)
 
-    meshes["windscreen_l"] = windscreen_pane(
-        -0.48, 2.72, 14.05, 0.92, 0.78, 0.055, pitch_deg=22
+    # Four discrete panes fitted to the nose curvature, separated by skin-coloured
+    # pillars / sill / brow so the flight deck reads as framed glass — not a mask.
+    meshes["windscreen_l"] = surface_quad(
+        [(13.85, 114), (13.90, 134), (14.75, 130), (14.90, 112)], 0.014
     )
-    meshes["windscreen_r"] = windscreen_pane(
-        0.48, 2.72, 14.05, 0.92, 0.78, 0.055, pitch_deg=22
+    meshes["windscreen_r"] = surface_quad(
+        [(13.85, 66), (13.90, 46), (14.90, 68), (14.75, 50)], 0.014
     )
     meshes["cockpit_side_l"] = surface_quad(
-        [(12.95, 122), (12.95, 152), (13.95, 148), (14.25, 120)], 0.014
+        [(13.05, 132), (13.10, 148), (13.85, 144), (14.05, 128)], 0.014
     )
     meshes["cockpit_side_r"] = surface_quad(
-        [(12.95, 58), (12.95, 28), (14.25, 60), (13.95, 32)], 0.014
+        [(13.05, 48), (13.10, 32), (14.05, 52), (13.85, 36)], 0.014
     )
-    meshes["windscreen_pillar_l"] = box(-0.92, 2.78, 13.85, 0.05, 0.72, 0.50)
-    meshes["windscreen_pillar_r"] = box(0.92, 2.78, 13.85, 0.05, 0.72, 0.50)
-    meshes["windscreen_pillar_c"] = box(0.0, 2.88, 14.15, 0.045, 0.58, 0.32)
-    meshes["cockpit_glare"] = box(0.0, 3.18, 13.45, 1.60, 0.07, 0.90)
+    meshes["windscreen_pillar_l"] = surface_quad(
+        [(13.70, 132), (13.80, 142), (14.80, 138), (14.70, 128)], 0.034
+    )
+    meshes["windscreen_pillar_r"] = surface_quad(
+        [(13.70, 48), (13.80, 38), (14.80, 42), (14.70, 52)], 0.034
+    )
+    meshes["windscreen_pillar_c"] = surface_quad(
+        [(14.05, 98), (14.05, 82), (14.95, 84), (14.95, 96)], 0.032
+    )
+    # Slim brow + sill hug the crown / belt — frame the panes without a dark slab.
+    meshes["cockpit_glare"] = surface_quad(
+        [(13.55, 84), (13.55, 96), (14.55, 94), (14.55, 86)], 0.036
+    )
+    meshes["cockpit_sill"] = surface_quad(
+        [(13.55, 108), (13.55, 72), (14.70, 74), (14.70, 106)], 0.028
+    )
 
     meshes["livery_stripe"] = box(-1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
     meshes["livery_stripe_lower"] = box(1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
@@ -522,42 +753,51 @@ def q400_meshes():
         ],
         segments=28,
     )
-    # oval_lathe adds a 0.12 m tip beyond the last station — end inboard so the
-    # tip lands exactly on the envelope nose.
+    # Soft radome continues the softened fuselage stations into the nose tip.
     meshes["radome"] = oval_lathe_fuselage(
         [
-            (14.40, 0.72, 0.62, 1.70),
-            (15.00, 0.48, 0.42, 1.52),
-            (15.45, 0.26, 0.22, 1.40),
-            (HALF_LENGTH - 0.12, 0.05, 0.04, 1.30),
+            (14.10, 0.98, 0.88, 1.86),
+            (14.60, 0.78, 0.70, 1.70),
+            (15.05, 0.52, 0.46, 1.54),
+            (15.40, 0.28, 0.24, 1.40),
+            (15.70, 0.12, 0.10, 1.33),
+            (HALF_LENGTH - 0.12, 0.04, 0.04, 1.30),
         ],
-        segments=36,
+        segments=40,
     )
 
+    # Long nacelle-mounted mains — thicker oleos and open bay doors that stay
+    # readable at Hangar / follow distance.
     for side, name in ((-1.0, "left"), (1.0, "right")):
         x = side * 4.35
-        meshes[f"gear_{name}"] = box(x, 1.40, -1.85, 0.18, 2.15, 0.28)
+        meshes[f"gear_{name}"] = box(x, 1.35, -1.90, 0.24, 2.35, 0.38)
         meshes[f"gear_oleo_{name}"] = cylinder(
-            x, 1.15, -1.85, 0.08, 1.55, axis="y", segments=16
+            x, 1.15, -1.90, 0.11, 1.75, axis="y", segments=18
         )
         meshes[f"gear_scissors_{name}"] = box(
-            x + side * 0.12, 1.55, -1.55, 0.06, 0.55, 0.35
+            x + side * 0.16, 1.45, -1.50, 0.09, 0.70, 0.45
         )
+        # Open main-gear doors hang below the nacelle so the bay reads clearly.
         meshes[f"gear_door_{name}"] = box(
-            x + side * 0.48, 2.35, -1.85, 0.08, 1.45, 1.35
+            x + side * 0.78, 1.85, -1.90, 0.12, 2.20, 1.70
         )
-        meshes[f"gear_fairing_{name}"] = box(x, 2.55, -2.10, 0.95, 0.85, 2.40)
-        wheel_set(meshes, f"{name}_forward", x, -1.45, 0.46, 0.28)
-        wheel_set(meshes, f"{name}_aft", x, -2.25, 0.46, 0.28)
+        meshes[f"gear_door_inner_{name[0]}"] = box(
+            x - side * 0.55, 2.05, -1.90, 0.10, 1.60, 1.40
+        )
+        meshes[f"gear_fairing_{name}"] = box(x, 2.45, -2.15, 1.15, 1.05, 2.70)
+        wheel_set(meshes, f"{name}_forward", x, -1.40, 0.50, 0.34)
+        wheel_set(meshes, f"{name}_aft", x, -2.40, 0.50, 0.34)
 
-    meshes["gear_nose"] = box(0.0, 0.95, 12.15, 0.14, 1.25, 0.20)
+    meshes["gear_nose"] = box(0.0, 0.95, 12.15, 0.18, 1.30, 0.26)
     meshes["gear_oleo_nose"] = cylinder(
-        0.0, 0.72, 12.15, 0.055, 0.85, axis="y", segments=16
+        0.0, 0.68, 12.15, 0.07, 1.00, axis="y", segments=16
     )
-    meshes["gear_scissors_nose"] = box(0.0, 1.05, 12.35, 0.05, 0.40, 0.28)
-    meshes["gear_door_nose"] = box(0.0, 1.35, 11.95, 0.55, 0.06, 1.15)
-    wheel_set(meshes, "nose_left", -0.20, 12.18, 0.32, 0.16)
-    wheel_set(meshes, "nose_right", 0.20, 12.18, 0.32, 0.16)
+    meshes["gear_scissors_nose"] = box(0.0, 0.98, 12.40, 0.07, 0.52, 0.34)
+    meshes["gear_door_nose"] = box(0.0, 1.15, 11.85, 0.78, 0.08, 1.45)
+    meshes["gear_door_nose_l"] = box(-0.42, 1.35, 11.90, 0.10, 0.85, 1.20)
+    meshes["gear_door_nose_r"] = box(0.42, 1.35, 11.90, 0.10, 0.85, 1.20)
+    wheel_set(meshes, "nose_left", -0.22, 12.18, 0.34, 0.18)
+    wheel_set(meshes, "nose_right", 0.22, 12.18, 0.34, 0.18)
 
     meshes["nav_light_left"] = box(-HALF_SPAN + 0.05, 4.95, 1.55, 0.10, 0.10, 0.10)
     meshes["nav_light_right"] = box(HALF_SPAN - 0.05, 4.95, 1.55, 0.10, 0.10, 0.10)

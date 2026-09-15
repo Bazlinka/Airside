@@ -67,3 +67,21 @@ Dash 8-400s there would be 1.2 m apart. All other bay pairings keep at least 4.5
 `Layout_ParkedRegionalAircraftKeepCodeCClearance` pins this so any new shortfall fails. A
 stand-assignment rule is a separate decision: barring the Q400 from 50D/50E outright can
 leave an aircraft without a bay overnight with six aircraft on six bays.
+
+## Visual quality pass (2026-09-15)
+
+Second in-place silhouette pass on the same AIR-006 path and envelope:
+
+- Continuous high-wing / fuselage saddle (centre wing box + outboard fairings) instead of a stepped root valley
+- Single aerodynamic nacelle loft with intake lip, gear-bay belly, exhaust taper and wing fillet
+- Framed four-pane flight deck with sill/brow fitted to the nose (no dark mask slab)
+- Pitched six-blade props with clear hubs/spinners and Hangar-readable tip stripes
+- Longer nacelle-mounted mains with thicker oleos and open doors
+- Soft dorsal fin-root fillet and rounded T-tail saddle
+- Even cabin window pitch on the curved skin
+
+Evidence: generator validate (exact 32.83 × 28.42 × 8.34 m, tyres on y=0);
+182 named meshes / 26752 triangles; Hangar thumbnail regenerated; StreamingAssets
+synced; orthographic front/side/top and game-camera reviews under `work/review/`.
+Unity EditMode re-run deferred to Mac (`scripts/test-unity.sh` — no Unity binary in
+this environment). Prior Mac verification on this branch was 331/331.

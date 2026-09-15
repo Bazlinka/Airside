@@ -3422,6 +3422,8 @@ namespace Airside.Presentation
                             Time.unscaledTime * AirsideReusableMotion.FloodFlickerHz * Mathf.PI * 2f + i * 2.1f + 0.8f)
                         : 1f;
                     light.intensity = street * flicker;
+                    // A 0.02 lamp is invisible but still costs a per-object light slot.
+                    light.enabled = street > 0.05f;
                 }
             }
 
@@ -3435,6 +3437,7 @@ namespace Airside.Presentation
                     if (light == null)
                         continue;
                     light.intensity = approach;
+                    light.enabled = approach > 0.05f;
                 }
             }
 
@@ -3502,6 +3505,7 @@ namespace Airside.Presentation
                     }
 
                     light.intensity = edge;
+                    light.enabled = edge > 0.05f;
                 }
             }
 
@@ -4159,8 +4163,11 @@ namespace Airside.Presentation
             if (daylight > 0.38f)
             {
                 _aerodromeBeacon.intensity = 0f;
+                _aerodromeBeacon.enabled = false;
                 return;
             }
+
+            _aerodromeBeacon.enabled = true;
 
             var pulse = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(PresentationClock * (AirsideReusableMotion.BeaconHz * Mathf.PI)));
             _aerodromeBeacon.intensity = pulse * Mathf.Lerp(2.4f, 0.2f, daylight / 0.38f);

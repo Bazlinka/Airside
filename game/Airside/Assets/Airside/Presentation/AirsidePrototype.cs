@@ -797,6 +797,12 @@ namespace Airside.Presentation
                     targetRotation,
                     AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
+                // A fleet aircraft away on a leg is hidden for hours. Its pose above stays
+                // current so it reappears on the right heading, but the prop, gear, light,
+                // door, glow, shadow and marker passes below touch nothing visible.
+                if (!view.gameObject.activeSelf)
+                    continue;
+
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
                 SpinJetFans(view, phase, engines);

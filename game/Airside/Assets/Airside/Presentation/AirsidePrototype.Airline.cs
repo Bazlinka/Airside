@@ -1260,7 +1260,12 @@ namespace Airside.Presentation
                 var tip = row.Reachable
                     ? $"{row.Destination.Name} · {row.DistanceKm:0} km · {DurationText(row.AirborneSeconds)}"
                     : $"{row.Destination.Name} · {row.DistanceKm:0} km · out of range";
-                var tipRect = new Rect(Mathf.Min(h.x + 12f, mapRect.xMax - 250f), h.y + 12f, 250f, 22f);
+                // Keep the tip inside the map: near the bottom edge (Hobart, Launceston) it used
+                // to hang below the panel over the 3D field, and it never clamped on the left.
+                var tipRect = new Rect(
+                    Mathf.Max(mapRect.x, Mathf.Min(h.x + 12f, mapRect.xMax - 250f)),
+                    h.y + 12f + 22f > mapRect.yMax ? h.y - 12f - 22f : h.y + 12f,
+                    250f, 22f);
                 DrawSolid(tipRect, new Color(ink.r, ink.g, ink.b, 0.92f));
                 AirsideTheme.DrawPanelFrame(tipRect, row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete);
                 GUI.Label(new Rect(tipRect.x + 6f, tipRect.y + 2f, tipRect.width - 12f, 18f), tip, small);

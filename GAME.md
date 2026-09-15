@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **2026-09-15 Claude — game polish pass, phase 1: HUD click-through fixes. Unity EditMode
-  335/335.** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
+  337/337 (after merging AIR-007).** Plan: `~/.claude/plans/woolly-noodling-finch.md` phases 1–6 (clicks, statuses,
   field mini-map, ground/graphics, performance, logic).
   - Field-tag pills and the toast now count as HUD (`_hudOverlays`, new pure `HudHitTest`), so
     clicking a tag no longer also 3D-picks behind it and dragging from a tag no longer pans.

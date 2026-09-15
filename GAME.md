@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Claude — polish phase 6: runway fairness + stand suggestion (ADR 0052). Unity
+  EditMode 376/376.**
+  - Tower: a departure holding short ≥ 6 min that has waited longer than the first arrival
+    gets the runway; otherwise arrivals still go first. No save change.
+  - `AirlineOperations.SuggestStand`: free fitting stand, avoiding a Dash 8-400 beside another
+    aircraft on 50D/50E when another stand is free, then shortest taxi in. AI aircraft use it
+    (was first-fit); the player's stand button shows it as "Best stand". It never refuses
+    the last free bay, so this softens — does not settle — the Q400 50D/50E question.
+  - Polish plan phases 1–6 are done. Build from #259 was launched for Bailey (phases 1–4); the
+    phase 5 perf and phase 6 logic changes still need a packaged look / soak.
+
 - **2026-09-15 Claude — polish phase 5: per-frame garbage cut. Unity EditMode 370/370.**
   - `AirsideNamedChildren.Names` caches child names alongside the cached transforms; the 29
     per-frame part passes (gear, doors, lights, props, control surfaces, vehicles, apron

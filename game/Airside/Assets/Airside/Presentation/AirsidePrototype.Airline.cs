@@ -634,7 +634,8 @@ namespace Airside.Presentation
                 case FleetState.AwaitingStand:
                     GUI.Label(new Rect(x, y, width, 20f), "Choose a stand:", label);
                     y += 22f;
-                    var quickest = StandNames.QuickestToTaxiIn(_operations.FreeStands());
+                    // Shortest taxi in, avoiding a bay too tight beside a Dash 8-400 when another is free.
+                    var quickest = _operations.SuggestStand(aircraft);
                     if (quickest.HasValue)
                     {
                         // One click for the usual choice: the free bay with the shortest taxi in.
@@ -642,7 +643,7 @@ namespace Airside.Presentation
                         if (IsGuided(aircraft, GuideStep.ChooseStand))
                             DrawGuideHighlight(quickRect);
                         var minutes = Mathf.Max(1, Mathf.RoundToInt(AirlineOperations.TaxiInSecondsTo(quickest.Value) / 60f));
-                        if (GUI.Button(quickRect, $"Quickest: {StandNames.Display(quickest.Value)} · {minutes} min taxi", smallButton))
+                        if (GUI.Button(quickRect, $"Best stand: {StandNames.Display(quickest.Value)} · {minutes} min taxi", smallButton))
                             AssignStandFromHud(aircraft, quickest.Value);
                         y += 30f;
                     }

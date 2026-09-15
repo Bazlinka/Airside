@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Fairer runway and smarter stands.** A departure held short for six minutes now gets the
+  runway ahead of newer arrivals, and aircraft (and the player's Best stand button) avoid
+  parking beside a Dash 8-400 on the tight 50D/50E pair when another bay is free (ADR 0052).
+  376/376 EditMode.
+
 - **Less per-frame garbage.** Aircraft part animation reads cached names, and the fleet view sync
   and follow-target refresh stop allocating every frame, cutting GC pressure that grows with
   every detailed aircraft on the field. 370/370 EditMode.

@@ -530,7 +530,7 @@ namespace Airside.Presentation
 
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(FleetPanelContentHeight(), 120f), area.height));
+            var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(FleetPanelContentHeight(area.width - 32f), 120f), area.height));
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
@@ -571,7 +571,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Mirrors the row heights drawn below so the panel hugs its content.</summary>
-        private float FleetPanelContentHeight()
+        private float FleetPanelContentHeight(float inner)
         {
             var height = 12f + 26f + 22f + 34f;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
@@ -580,7 +580,8 @@ namespace Airside.Presentation
                 if (_selectedAircraftId == aircraft.Registration) height += 46f;
                 if (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft)) height += 12f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
-                if (aircraft.State == FleetState.AwaitingStand) height += 84f;
+                if (aircraft.State == FleetState.AwaitingStand)
+                    height += 84f + 32f * (StandButtonRows(CountFreeStands(), inner) - 1);
             }
 
             foreach (var airline in _operations.Airlines)
@@ -648,14 +649,22 @@ namespace Airside.Presentation
                         y += 30f;
                     }
 
+                    // Wrap the bay buttons: six free bays at 82 px ran ~160 px past the 360 px
+                    // fleet panel and off its right edge.
                     var bx = x;
                     var any = false;
                     foreach (var stand in _operations.FreeStands())
                     {
+                        if (any && bx + StandButtonWidth > x + width)
+                        {
+                            bx = x;
+                            y += 32f;
+                        }
+
                         any = true;
-                        if (GUI.Button(new Rect(bx, y, 76f, 26f), StandNames.Short(stand), smallButton))
+                        if (GUI.Button(new Rect(bx, y, StandButtonWidth, 26f), StandNames.Short(stand), smallButton))
                             AssignStandFromHud(aircraft, stand);
-                        bx += 82f;
+                        bx += StandButtonWidth + StandButtonGap;
                     }
 
                     if (!any)
@@ -665,6 +674,24 @@ namespace Airside.Presentation
             }
 
             return y;
+        }
+
+        private const float StandButtonWidth = 76f;
+        private const float StandButtonGap = 6f;
+
+        private int CountFreeStands()
+        {
+            var count = 0;
+            foreach (var _ in _operations.FreeStands())
+                count++;
+            return count;
+        }
+
+        /// <summary>Rows the wrapped bay buttons take in <paramref name="width"/> (at least one).</summary>
+        private static int StandButtonRows(int buttons, float width)
+        {
+            var perRow = Mathf.Max(1, Mathf.FloorToInt((width + StandButtonGap) / (StandButtonWidth + StandButtonGap)));
+            return Mathf.Max(1, (buttons + perRow - 1) / perRow);
         }
 
         private void AssignStandFromHud(FleetAircraft aircraft, StableId stand)

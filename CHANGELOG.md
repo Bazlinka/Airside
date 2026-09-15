@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Bug sweep 8 (10 fixes): materials, grading, camera, editor.** Water is drawn as translucent
+  water instead of opaque wet asphalt. Translucent colours on authored templates now render
+  transparent. Tyre smoke, skid marks and engine heat are no longer drawn as glass. MAT-001
+  templates build from the newest reviewed maps. Noon contrast and golden-hour bloom fade in
+  instead of popping as the live clock crosses a threshold. Follow camera: pitch no longer fights
+  a right-drag, and follow ends when the aircraft view is hidden. Keyboard pan and lift speed
+  scale with zoom, and the orbit centre height is bounded. The editor only auto-opens the
+  prototype scene once per session. Unity EditMode 421/421.
+
 - **Bug sweep 7 (6 fixes): menu input, camera drags, per-frame cost.** With the Esc menu open, the
   camera no longer pans or orbits behind it, from the keyboard or from drags and scrolls beside
   it, and Esc closes the menu before touching the selection. Right- and middle-drags only move

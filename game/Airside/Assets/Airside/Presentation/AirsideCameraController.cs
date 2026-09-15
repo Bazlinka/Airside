@@ -226,7 +226,8 @@ namespace Airside.Presentation
             // A destroyed view (aircraft removed from the schedule) used to leave _following
             // set with no target: WASD panning stayed disabled and the HUD still read
             // "Follow on" while the camera sat still. Hand the camera back instead.
-            if (_following && _followTarget == null)
+            // Same for a view hidden while away: the camera kept chasing an invisible slot.
+            if (_following && (_followTarget == null || !_followTarget.gameObject.activeInHierarchy))
                 ReleaseFollow();
 
             if (_following && _followTarget != null)
@@ -307,9 +308,11 @@ namespace Airside.Presentation
                         var yawBias = YawBiasDegrees(_followPhase);
                         var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
                         _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-dt * 0.7f));
+                        // Pitch too: a right-drag while following used to be pulled back
+                        // against the player's hand every frame.
+                        var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
+                        _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
                     }
-                    var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
-                    _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
 
                     var targetFov = FollowFov(_followPhase, _followProgress);
                     _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-dt * 1.6f));
@@ -450,6 +453,22 @@ namespace Airside.Presentation
             _ => 52f
         };
 
+        /// <summary>
+        /// Keyboard pan speed for the current zoom. A flat 220 m/s shot a close-up
+        /// across half the apron in one tap and crawled at the 4.5 km zoom-out; the
+        /// speed now scales with distance, matching the old rate at the overview.
+        /// </summary>
+        public static float KeyboardPanMetresPerSecond(float distance) =>
+            AirsideBareField.OverviewPanMetresPerSecond
+            * Mathf.Clamp(distance / Mathf.Max(1f, OverviewDistance), 0.08f, 4f);
+
+        /// <summary>Z/X lift had no bounds: the orbit centre could sink under the field or climb out of sight.</summary>
+        public const float MinCentreHeightMetres = -20f;
+        public const float MaxCentreHeightMetres = 1500f;
+
+        public static float ClampCentreHeight(float y) =>
+            Mathf.Clamp(y, MinCentreHeightMetres, MaxCentreHeightMetres);
+
         private void ReadInput()
         {
             var keyboard = Keyboard.current;
@@ -478,7 +497,8 @@ namespace Airside.Presentation
                 if (keyboard.zKey.isPressed) keyLift -= 1f;
                 if (keyLift != 0f)
                 {
-                    _center += Vector3.up * (keyLift * AirsideBareField.OverviewPanMetresPerSecond * 0.5f * dt);
+                    _center += Vector3.up * (keyLift * KeyboardPanMetresPerSecond(_distance) * 0.5f * dt);
+                    _center.y = ClampCentreHeight(_center.y);
                     _easingOverview = false;
                 }
 
@@ -494,7 +514,7 @@ namespace Airside.Presentation
                         var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                         var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
                         _center += (planarForward * move.y + planarRight * move.x)
-                            * (AirsideBareField.OverviewPanMetresPerSecond * dt);
+                            * (KeyboardPanMetresPerSecond(_distance) * dt);
                         _easingOverview = false;
                     }
                 }
@@ -708,7 +728,7 @@ namespace Airside.Presentation
         public static float TestFollowDistance(AircraftPhase phase, float altitude, float progress) =>
             FollowDistance(phase, altitude, progress);
 
-                public bool IsFollowing => _following;
+        public bool IsFollowing => _following;
         public Transform FollowTarget => _followTarget;
     }
 }

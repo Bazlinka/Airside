@@ -11824,10 +11824,15 @@ namespace Airside.Presentation
             // material and reads as bright vertical shafts on thin Cube droplets.
             if (color.a < 0.99f)
             {
-                var isVfxMist = color.a < 0.55f && color.r > 0.55f && color.g > 0.55f && color.b > 0.55f;
-                if (isVfxMist)
-                    return AirsideMaterialLibrary.SurfaceKind.Default;
-                return AirsideMaterialLibrary.SurfaceKind.Glass;
+                // Only blue-tinted translucency is glazing (every window colour here is). The old
+                // rule sent anything but pale sub-0.55-alpha mist to the glass pane material, so
+                // tyre smoke (alpha exactly 0.55), dark skid marks and orange engine heat were
+                // drawn glossy and mirror-like.
+                // Pale blue-grey (rain, spray) stays default so droplets are not pane-bright.
+                var glazing = color.r < 0.5f && color.b > color.r + 0.1f && color.b >= color.g;
+                return glazing
+                    ? AirsideMaterialLibrary.SurfaceKind.Glass
+                    : AirsideMaterialLibrary.SurfaceKind.Default;
             }
             // Near-white / cream → painted markings, not aircraft skin (MAT-001 / 0025 item 4).
             if (color.r > 0.85f && color.g > 0.85f && color.b > 0.85f)

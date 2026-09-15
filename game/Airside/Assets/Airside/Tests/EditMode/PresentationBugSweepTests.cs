@@ -82,5 +82,56 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.EqualTo(0f));
             Assert.That(AirsideReusableMotion.FlapDegrees(Airside.Simulation.AircraftPhase.TaxiOut, 0.5f, drawnOnGround: true), Is.EqualTo(12f));
         }
+
+        [Test]
+        public void WaterMaterial_IsTranslucentNotWetAsphalt()
+        {
+            var material = AirsideMaterialLibrary.Create(new Color(0.2f, 0.4f, 0.5f), AirsideMaterialLibrary.SurfaceKind.Water);
+            try
+            {
+                Assert.That(material.renderQueue, Is.GreaterThanOrEqualTo(3000), "water is transparent");
+                var map = material.mainTexture;
+                if (map != null)
+                    Assert.That(map.name, Does.Not.Contain("asphalt"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
+        public void AuthoredTemplate_HonoursATranslucentColour()
+        {
+            var material = AirsideMaterialLibrary.Create(new Color(0.46f, 0.47f, 0.48f, 0.4f), AirsideMaterialLibrary.SurfaceKind.Concrete);
+            try
+            {
+                Assert.That(material.renderQueue, Is.GreaterThanOrEqualTo(3000));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
+        public void DayVolumeGrading_FadesInWithoutAStep()
+        {
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.749f, 0f), Is.EqualTo(AirsideDayVolume.NoonPunchWeight(0.751f, 0f)).Within(0.05f));
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.9f, 0f), Is.EqualTo(1f));
+            Assert.That(AirsideDayVolume.NoonPunchWeight(0.5f, 0f), Is.EqualTo(0f));
+            Assert.That(AirsideDayVolume.GoldenBloomWeight(0.349f), Is.EqualTo(AirsideDayVolume.GoldenBloomWeight(0.351f)).Within(0.05f));
+        }
+    
+        [Test]
+        public void CameraKeyboardPan_ScalesWithZoomAndLiftIsBounded()
+        {
+            Assert.That(AirsideCameraController.KeyboardPanMetresPerSecond(AirsideBareField.MinOrbitDistance),
+                Is.LessThan(AirsideBareField.OverviewPanMetresPerSecond * 0.25f));
+            Assert.That(AirsideCameraController.KeyboardPanMetresPerSecond(AirsideBareField.MaxOrbitDistance),
+                Is.GreaterThan(AirsideBareField.OverviewPanMetresPerSecond));
+            Assert.That(AirsideCameraController.ClampCentreHeight(-400f), Is.EqualTo(AirsideCameraController.MinCentreHeightMetres));
+            Assert.That(AirsideCameraController.ClampCentreHeight(9000f), Is.EqualTo(AirsideCameraController.MaxCentreHeightMetres));
+        }
     }
 }

@@ -108,10 +108,13 @@ namespace Airside.Editor
                 mat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
             }
 
-            AssignMap(mat, "_BaseMap", $"{SurfacesDir}/{spec.stem}_basecolor_v01.png");
-            AssignMap(mat, "_BumpMap", $"{SurfacesDir}/{spec.stem}_normal_v01.png");
-            AssignMap(mat, "_OcclusionMap", $"{SurfacesDir}/{spec.stem}_ao_v01.png");
-            AssignMap(mat, "_MetallicGlossMap", $"{SurfacesDir}/{spec.stem}_mask_v01.png");
+            // Newest reviewed map first, like AirsideMaterialLibrary.PreferAuthoredMap. Hard-coding
+            // _v01 left every template-served kit surface on the oldest maps while procedural
+            // surfaces used v03, so the same material kind looked different by code path.
+            AssignMap(mat, "_BaseMap", PreferredMap(spec.stem, "basecolor"));
+            AssignMap(mat, "_BumpMap", PreferredMap(spec.stem, "normal"));
+            AssignMap(mat, "_OcclusionMap", PreferredMap(spec.stem, "ao"));
+            AssignMap(mat, "_MetallicGlossMap", PreferredMap(spec.stem, "mask"));
             if (mat.GetTexture("_BumpMap") != null)
                 mat.EnableKeyword("_NORMALMAP");
             if (mat.GetTexture("_MetallicGlossMap") != null)
@@ -120,6 +123,18 @@ namespace Airside.Editor
                 mat.EnableKeyword("_OCCLUSIONMAP");
 
             EditorUtility.SetDirty(mat);
+        }
+
+        private static string PreferredMap(string stem, string map)
+        {
+            foreach (var version in new[] { "v03", "v02", "v01" })
+            {
+                var path = $"{SurfacesDir}/{stem}_{map}_{version}.png";
+                if (AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null)
+                    return path;
+            }
+
+            return $"{SurfacesDir}/{stem}_{map}_v01.png";
         }
 
         private static void AssignMap(Material mat, string prop, string assetPath)

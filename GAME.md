@@ -1,7 +1,15 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–7 merged:
-  62 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 417/417.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–8 merged:
+  72 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 421/421.**
+  - **Batch 8:** `SurfaceKind.Water` no longer maps to `mat_wet_v01`; translucent colours on
+    opaque authored templates call `ApplyTransparent`; `InferSurfaceKindFromColor` picks Glass only
+    for darker blue-tinted translucency; `AirsideMat001Menu.PreferredMap` takes v03 > v02 > v01
+    (the 8 MAT-001 .mat files were regenerated); `AirsideDayVolume` noon/golden weights
+    (`NoonPunchWeight`, `GoldenBloomWeight`); camera pitch waits out orbit suppression, follow
+    releases hidden targets, `KeyboardPanMetresPerSecond` scales with distance, and
+    `ClampCentreHeight` bounds lift; `AirsideEditorStartup` opens the scene once per session.
+    The grading and camera feel are unverified in a build.
   - **Batch 7:** Esc menu is modal for keyboard and pointer, and Esc closes it first; camera
     right/middle drags need a field press; `AircraftViewParts.HasFans/HasSeparateElevators`;
     per-frame fleet pose memo.

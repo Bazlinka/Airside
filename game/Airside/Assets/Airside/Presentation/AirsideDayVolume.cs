@@ -188,6 +188,13 @@ namespace Airside.Presentation
             }
         }
 
+        public static float NoonPunchWeight(float daylight, float warm) =>
+            Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.7f, 0.8f, daylight))
+            * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 0.25f, warm)));
+
+        public static float GoldenBloomWeight(float warm) =>
+            Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.4f, warm));
+
         /// <param name="daylight">0 night … 1 noon.</param>
         /// <param name="warm">Dawn/dusk warmth 0…1.</param>
         /// <param name="weatherGloom">Rain/fog/storm cool-down 0…1 (presentation only).</param>
@@ -281,15 +288,17 @@ namespace Airside.Presentation
             _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.12f - warmPush * 0.06f);
 
             // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
-            if (daylight > 0.75f && warm < 0.2f)
-            {
-                _color.contrast.Override(contrast + 1.8f);
-                _color.saturation.Override(Mathf.Lerp(6f, 10f, daylight) - weatherGloom * 7f);
-            }
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
-            else if (warm > 0.35f)
-                _bloom.intensity.Override(Mathf.Lerp(0.24f, 0.08f, daylight) * (1f - weatherGloom * 0.28f)
-                    + warm * 0.1f + weatherGloom * 0.04f);
+            // Both fade in: lighting follows the live clock, so hard thresholds popped the
+            // whole frame when daylight crossed 0.75 or warmth crossed 0.35.
+            var noon = NoonPunchWeight(daylight, warm);
+            _color.contrast.Override(contrast + 1.8f * noon);
+            var noonSaturation = Mathf.Lerp(6f, 10f, daylight) - weatherGloom * 7f;
+            _color.saturation.Override(Mathf.Lerp(_color.saturation.value, noonSaturation, noon));
+            var golden = GoldenBloomWeight(warm) * (1f - noon);
+            var goldenBloom = Mathf.Lerp(0.24f, 0.08f, daylight) * (1f - weatherGloom * 0.28f)
+                + warm * 0.1f + weatherGloom * 0.04f;
+            _bloom.intensity.Override(Mathf.Lerp(_bloom.intensity.value, goldenBloom, golden));
         }
     }
 }

@@ -1,7 +1,13 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–4 merged:
-  44 fixes, Unity EditMode 415/415.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–5 merged:
+  52 fixes, Unity EditMode 416/416.**
+  - **Batch 5 — assets fixed at source:** `trn_ground_*_v01.terrainlayer` `m_MaskMapRemapMax.w`
+    now equals each layer's authored smoothness, and `AirsideTerrainBakerMenu` writes it on
+    rebake. `AirsideTerrainGround.CalibratedLayer`'s smoothness cap is now a guard. The mask PNGs
+    are unchanged (alpha is the roughness shape the remap scales).
+  - **Batch 5 — fleet lamps:** `LandingLightsOn` / `FlapDegrees` take `drawnOnGround` for fleet
+    aircraft; taxi lights need running engines.
   - **Batch 4:** Saab/Q400 prop discs; per-pixel shadow coordinate in `Airside/AdelaideGround`
     (shader change, not compiled by the -nographics test run; needs an eyeball pass); terminal
     prism winding; road height sampling; DevTools null stand; kinematic pick proxies; prefab

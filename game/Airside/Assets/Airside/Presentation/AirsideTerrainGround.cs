@@ -45,7 +45,9 @@ namespace Airside.Presentation
         /// the layer's authored smoothness. The generated mask alphas average 0.27–0.45 — three
         /// to four times the authored 0.05–0.18 — and URP Terrain/Lit reads mask alpha as
         /// smoothness, so glancing sky reflection clipped the whole terrain to white.
-        /// The source asset is never modified.
+        /// The baked layers now carry that cap in their own mask remap (the terrain baker
+        /// writes it), so the smoothness clamp here is a guard for older bakes. The source
+        /// asset is never modified.
         /// </summary>
         public static TerrainLayer CalibratedLayer(TerrainLayer source)
         {

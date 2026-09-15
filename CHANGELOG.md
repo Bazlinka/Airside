@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Bug sweep 5 (8 fixes): terrain at source, fleet lamps, sky.** The Kingscote terrain layers are
+  now matte at source: the baker writes each layer's authored smoothness into the mask remap,
+  and the baked assets carry it. Parked and taxiing fleet aircraft no longer burn landing lights
+  (shadowed spot lights) or show flap all day. Taxi lights stay off on cold aircraft at night.
+  Full-airport clouds no longer turn opaque as their alpha compounded, the moon sits on the
+  camera sky sphere, the hangar bay light keeps its daylight tint, and coast water no longer
+  allocates names per frame. Unity EditMode 416/416.
+
 - **Bug sweep 4 (8 fixes): props, shadows, buildings, roads, tools.** Rex Saab 340 and QantasLink
   Dash 8-400 propellers no longer vanish at takeoff and approach power (no blur disc was built).
   Aircraft shadows on the bare-field grass no longer break along shadow cascade splits (the

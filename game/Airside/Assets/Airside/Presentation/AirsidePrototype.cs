@@ -82,6 +82,7 @@ namespace Airside.Presentation
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
         private int _cloudTintKey = int.MinValue;
+        private float[] _cloudBaseAlpha;
         private Transform _birdFlockRoot;
         private Transform[] _birdWingL;
         private Transform[] _birdWingR;
@@ -159,6 +160,9 @@ namespace Airside.Presentation
         private readonly List<(Transform Boat, Vector3 BasePos, float BaseYaw)> _coastBoats =
             new List<(Transform, Vector3, float)>();
         private readonly List<Renderer> _coastWaterRenderers = new List<Renderer>();
+        // Parallel to _coastWaterRenderers: shallows bob, deep water only scrolls. Resolved at
+        // collect time because Object.name allocates a string on every read.
+        private readonly List<bool> _coastWaterIsShallows = new List<bool>();
         private Transform _jettyDeck;
         private Transform _opsAntennaDish;
         private Transform _starFieldRoot;
@@ -837,7 +841,7 @@ namespace Airside.Presentation
                 SpinJetFans(view, phase, engines);
                 RollLandingGearTires(view, phase, progress);
                 ApplyOleoSettling(view, phase, progress);
-                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime);
+                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
@@ -890,7 +894,8 @@ namespace Airside.Presentation
         }
 
         private static void UpdateControlSurfaces(
-            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime)
+            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
+            bool drawnOnGround = false)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
             // deltaTime is the presentation clock, so surfaces hold still while paused
@@ -947,7 +952,7 @@ namespace Airside.Presentation
                 {
                     // Takeoff flap is set for the roll and milked off after rotation —
                     // it used to keep extending all the way through the climb.
-                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress);
+                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress, drawnOnGround);
                     var euler = child.localEulerAngles;
                     var current = euler.x > 180f ? euler.x - 360f : euler.x;
                     euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
@@ -1100,8 +1105,11 @@ namespace Airside.Presentation
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
-            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01);
-            var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
+            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
+            // Only with engines running: a cold, parked fleet aircraft used to light its taxi
+            // lamp (a spot light) all night, one per aircraft on the apron.
+            var taxiLights = !airborne && enginesOn
+                && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             var namedChildren1 = AirsideNamedChildren.Get(aircraft);
             var childNames1 = AirsideNamedChildren.Names(aircraft);
@@ -7430,7 +7438,12 @@ namespace Airside.Presentation
                     var moonDir = Quaternion.Euler(0f, 180f, 0f) * sunDir;
                     if (moonDir.y < 0.05f)
                         moonDir.y = 0.15f;
-                    _moonDisc.position = moonDir.normalized * 90f + Vector3.up * 6f;
+                    // On the same camera-centred sky sphere as the sun. It was placed 90 m from
+                    // the world origin, so orbiting or panning the camera moved past it and it
+                    // could sit inside the hills or among the apron buildings.
+                    _moonDisc.position = skyAnchor + moonDir.normalized * 420f;
+                    // 4.2 m at the old 90 m; keep the same apparent size at 420 m.
+                    _moonDisc.localScale = Vector3.one * (4.2f * 420f / 90f);
                     var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
                     if (_moonDiscRenderer == null)
                         _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();
@@ -7574,6 +7587,7 @@ namespace Airside.Presentation
             _coastFoamLayers.Clear();
             _coastFoamRenderers.Clear();
             _coastWaterRenderers.Clear();
+            _coastWaterIsShallows.Clear();
             _coastFoam = null;
             _coastFoamRenderer = null;
             // Prefix scan — foam/water pads are subdivided often; exact name lists go stale.
@@ -7596,6 +7610,7 @@ namespace Airside.Presentation
                     || n.StartsWith("Coast shallows", StringComparison.Ordinal))
                 {
                     _coastWaterRenderers.Add(renderer);
+                    _coastWaterIsShallows.Add(n.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0);
                 }
             }
 
@@ -7658,14 +7673,11 @@ namespace Airside.Presentation
                 var daySpill = openAmount * 1.55f;
                 var nightGlow = (1f - daylight) * 0.72f;
                 _hangarBayLight.intensity = Mathf.Max(0.1f, daySpill + nightGlow);
-                _hangarBayLight.color = Color.Lerp(
-                    new Color(1f, 0.82f, 0.55f),
-                    new Color(1f, 0.92f, 0.7f),
-                    daylight);
-                _hangarBayLight.color = Color.Lerp(
-                    new Color(1f, 0.78f, 0.48f),
-                    new Color(1f, 0.92f, 0.72f),
-                    openAmount);
+                // Warmer at night and when the door is shut. The daylight tint used to be written
+                // and then immediately overwritten by the door tint, so it never applied.
+                var dayTint = Color.Lerp(new Color(1f, 0.82f, 0.55f), new Color(1f, 0.92f, 0.7f), daylight);
+                var doorTint = Color.Lerp(new Color(1f, 0.78f, 0.48f), new Color(1f, 0.92f, 0.72f), openAmount);
+                _hangarBayLight.color = Color.Lerp(dayTint, doorTint, 0.5f);
             }
         }
 
@@ -7736,7 +7748,7 @@ namespace Airside.Presentation
                 if (renderer == null)
                     continue;
                 ApplyRendererTextureOffset(renderer, new Vector2(t * (0.012f + i * 0.004f), t * 0.008f));
-                if (renderer.gameObject.name.IndexOf("shallow", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (_coastWaterIsShallows[i])
                 {
                     var p = renderer.transform.position;
                     p.y = -0.35f + Mathf.Sin(t * 0.65f + i) * 0.03f;
@@ -7776,6 +7788,18 @@ namespace Airside.Presentation
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
                 _cloudTintKey = tintKey;
+            if (_cloudBaseAlpha == null || _cloudBaseAlpha.Length != _cloudRoot.childCount)
+            {
+                // Authored alpha per cluster, read once. The tint pass used to scale whatever
+                // alpha the previous pass had written, so every weather or daylight band change
+                // compounded by up to 1.35x and a day of live weather turned clouds opaque.
+                _cloudBaseAlpha = new float[_cloudRoot.childCount];
+                for (var i = 0; i < _cloudBaseAlpha.Length; i++)
+                {
+                    var authored = _cloudRoot.GetChild(i).GetComponent<Renderer>();
+                    _cloudBaseAlpha[i] = authored != null ? GetRendererColor(authored).a : 0f;
+                }
+            }
             for (var i = 0; i < _cloudRoot.childCount; i++)
             {
                 var cloud = _cloudRoot.GetChild(i);
@@ -7807,9 +7831,9 @@ namespace Airside.Presentation
                 var renderer = cloud.GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    var color = GetRendererColor(renderer);
-                    if (color.a > 0.01f)
-                        tint.a = Mathf.Max(tint.a, color.a * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
+                    var authoredAlpha = _cloudBaseAlpha[i];
+                    if (authoredAlpha > 0.01f)
+                        tint.a = Mathf.Max(tint.a, authoredAlpha * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
                     SetRendererColor(renderer, tint);
                 }
 

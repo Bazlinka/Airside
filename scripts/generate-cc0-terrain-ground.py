@@ -11,7 +11,13 @@ Two different mask conventions are in play and must not be mixed up:
   * Surfaces/  `*_mask_*`    -> Unity _MetallicGlossMap. RGB = metallic, A = smoothness.
                                This is what AirsideMaterialLibrary already binds.
   * Terrain/   `*_maskmap_*` -> URP TerrainLayer mask map. R = metallic, G = AO,
-                               B = height, A = smoothness.
+                               B = height, A = smoothness shape (1 - roughness).
+                               The alpha keeps the source's full range; the Unity
+                               terrain baker (AirsideTerrainBakerMenu) scales it by
+                               each layer's authored smoothness through the layer's
+                               mask remap. Used unscaled, these alphas average
+                               0.27-0.45 and URP Terrain/Lit rendered the ground as
+                               glossy as wet paint.
 
 Normals are taken from each source's OpenGL/Y+ variant because Unity expects Y+;
 no green-channel flip is applied anywhere.

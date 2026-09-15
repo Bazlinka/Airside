@@ -462,9 +462,10 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
+            // An old enough save gains both; the else-if used to swallow the jet's news.
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
-            else if (jetJoined > 0)
+            if (jetJoined > 0)
                 ShowToast("Wattlebird Jet's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();
             if (_awaySummary == null)

@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
-- **2026-09-15 HANDOFF → next aircraft slice (Codex). AIR-005 Boeing 737-8-class is ready
-  for merge to `main`; Unity EditMode 305/305.**
+- **2026-09-15 HANDOFF → next aircraft slice (Codex). AIR-005 Boeing 737-8-class is merged
+  on `main` by PR #244 (`555587f`); Unity EditMode 305/305.**
   - **Player-visible outcome:** a new original, unbranded, true-scale 737-8-class jet is
     parked at Adelaide's real Gate 13 nose-stop. It is clickable and followable, with a
     narrowbody-sized selection marker, identity card, pick volume, ground shadow and camera framing.

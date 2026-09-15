@@ -2258,8 +2258,10 @@ namespace Airside.Presentation
                 if (_commercialAircraft == null || i >= _commercialAircraft.Length)
                     continue;
                 lead = _commercialAircraft[i];
-                if (lead != null)
+                // A hidden fleet aircraft would leave spray hanging over empty tarmac.
+                if (lead != null && lead.gameObject.activeInHierarchy)
                     break;
+                lead = null;
             }
 
             var show = wetness > 0.12f && lead != null;

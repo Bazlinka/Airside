@@ -654,12 +654,19 @@ namespace Airside.Presentation
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>
         public void StartFollowFirst()
         {
-            if (_followTargets.Length == 0)
+            // Target arrays can hold null slots (flights past the visible limit) or views
+            // hidden while away; following one of those framed nothing.
+            for (var i = 0; i < _followTargets.Length; i++)
+            {
+                var target = _followTargets[i];
+                if (target == null || !target.gameObject.activeInHierarchy)
+                    continue;
+                _following = true;
+                _followIndex = i;
+                _followTarget = target;
+                _hasLastTargetPosition = false;
                 return;
-            _following = true;
-            _followIndex = 0;
-            _followTarget = _followTargets[0];
-            _hasLastTargetPosition = false;
+            }
         }
 
         /// <summary>HUD selection: follow one exact aircraft already registered as a target.</summary>

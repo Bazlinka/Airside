@@ -177,7 +177,11 @@ namespace Airside.Editor
             terrainLayer.diffuseRemapMin = Vector4.zero;
             terrainLayer.diffuseRemapMax = Vector4.one;
             terrainLayer.maskMapRemapMin = Vector4.zero;
-            terrainLayer.maskMapRemapMax = Vector4.one;
+            // URP Terrain/Lit reads mask alpha as smoothness. The CC0 roughness maps give
+            // alpha means of 0.27-0.45, three to four times the authored figure, which
+            // clipped the full-airport terrain to white; scale alpha by the authored
+            // smoothness here so the baked layer is matte without a runtime correction.
+            terrainLayer.maskMapRemapMax = new Vector4(1f, 1f, 1f, terrainLayer.smoothness);
 
             if (fresh)
                 AssetDatabase.CreateAsset(terrainLayer, path);

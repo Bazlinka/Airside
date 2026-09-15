@@ -86,8 +86,9 @@ namespace Airside.Presentation
         private Transform[] _birdWingL;
         private Transform[] _birdWingR;
         private Transform _apronLifeRoot;
-        private readonly List<(Transform Person, Vector3 BasePos, bool Walker)> _apronPeople =
-            new List<(Transform, Vector3, bool)>();
+        // Role flags are read from the name once; Object.name allocates on every access.
+        private readonly List<(Transform Person, Vector3 BasePos, bool Walker, bool Sitter, bool Marshaller)> _apronPeople =
+            new List<(Transform, Vector3, bool, bool, bool)>();
         private Transform _hangarDoor;
         private float _hangarDoorClosedX = -20f;
         private readonly List<(Transform Panel, float ClosedX, float OpenDelta)> _hangarDoorPanels =
@@ -5477,32 +5478,34 @@ namespace Airside.Presentation
                 for (var i = 0; i < _apronLifeRoot.childCount; i++)
                 {
                     var person = _apronLifeRoot.GetChild(i);
-                    var walker = person.name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0;
-                    _apronPeople.Add((person, person.position, walker));
+                    var name = person.name;
+                    _apronPeople.Add((person, person.position,
+                        name.IndexOf("walker", StringComparison.OrdinalIgnoreCase) >= 0,
+                        name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0,
+                        name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0));
+                }
+            }
+
+            // Marshallers wave while anything is inbound — one scan, not one per marshaller.
+            var inbound = false;
+            var flights = VisualFlights;
+            for (var f = 0; f < flights.Count; f++)
+            {
+                if (flights[f].Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
+                {
+                    inbound = true;
+                    break;
                 }
             }
 
             // Soft idle lean on torsos so figures don't read as frozen props.
             for (var i = 0; i < _apronPeople.Count; i++)
             {
-                var (person, basePos, walker) = _apronPeople[i];
-                if (person == null)
-                    continue;
-                if (person.name.IndexOf("sitter", StringComparison.OrdinalIgnoreCase) >= 0)
+                var (person, basePos, walker, sitter, marshaller) = _apronPeople[i];
+                if (person == null || sitter)
                     continue;
 
-                var wave = false;
-                if (person.name.IndexOf("marshaller", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    foreach (var flight in VisualFlights)
-                    {
-                        if (flight.Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
-                        {
-                            wave = true;
-                            break;
-                        }
-                    }
-                }
+                var wave = marshaller && inbound;
 
                 // Shuffle walkers around their spawn; other standing figures get a tiny idle sway.
                 if (walker)

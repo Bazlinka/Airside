@@ -5,6 +5,22 @@ change it describes.
 
 ## Unreleased
 
+- **Dash 8-400 visual quality pass.** AIR-006 tightened in place: continuous wing-root
+  saddle, single aerodynamic nacelle with gear bay, framed four-pane flight deck, pitched
+  six-blade props with readable hubs/spinners, longer nacelle-mounted gear and doors, soft
+  fin-root fillet and rounded T-tail saddle, even cabin windows. Same 32.83 × 28.42 × 8.34 m
+  envelope and asset path; Hangar thumbnail regenerated. 182 meshes / 26752 tris. No
+  simulation or save change. Generator validate + `work/review/` orthographic renders;
+  Unity EditMode re-run pending Mac (`scripts/test-unity.sh` unavailable here).
+
+- **Dash 8-400 looks like a Dash 8.** AIR-006 rebuilt in place: slender fuselage, fitted cabin
+  windows, pitched flight-deck panes, continuous nacelles with gear bays, six-blade props, high
+  wing with tip fences and root saddles, joined T-tail. Same 32.83 × 28.42 × 8.34 m envelope and
+  asset path; Hangar thumbnail regenerated. 174 meshes / 18,856 tris (was 139 / 6,728). No
+  simulation or save change. Domain pre-check + offline mesh review; Unity EditMode / packaged
+  QA still open.
+
+
 - **Statuses that flag trouble.** Long runway or circuit holds turn yellow then red, a stand you
   need to choose is red, waits show how long, and messages stack instead of overwriting each
   other, with the last ten kept on the Flights board. 343/343 EditMode.
@@ -13,6 +29,7 @@ change it describes.
   dragging on them no longer selects or pans the field behind; clicking empty ground deselects.
   337/337 EditMode.
 
+
 - **Genuine Saab 340B.** Rex's existing aircraft now use their own original, unbranded
   AIR-007 model rather than the ATR stand-in: exact 19.73 × 21.44 × 6.97 m scale (standard
   wing), compact low wing, four-blade propellers, nacelle-mounted twin main gear and a
@@ -20,6 +37,7 @@ change it describes.
   and selection, shadow and follow-camera framing use the Saab footprint. No flight plan,
   stand, timing, reservation or save data changed. Domain harness green; Unity EditMode
   not run here (no Mac editor). Not rebuilt or manually launched.
+
 
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and

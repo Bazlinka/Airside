@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Cursor — AIR-006 Dash 8-400 visual quality pass (same asset id). Unity EditMode
+  pending Mac re-run (`scripts/test-unity.sh` has no Unity binary here).**
+  - **Player-visible:** QantasLink's Dash 8-400 silhouette tightened in place: continuous
+    high-wing / fuselage saddle, single aerodynamic nacelle (intake → gear bay → exhaust),
+    framed four-pane flight deck, pitched six-blade props with clear hubs/spinners, longer
+    nacelle-mounted mains with open doors, soft fin-root fillet and rounded T-tail saddle,
+    even cabin windows. Hangar thumbnail regenerated. Envelope unchanged
+    (32.83 × 28.42 × 8.34 m). Path stays `mdl_dash8_q400_v01`.
+  - **How:** further rewrite of `scripts/generate-air-006-dash8-q400.py` (182 named meshes /
+    26752 triangles). Thumbnail colouring fixed so windscreen pillars / prop tips read at
+    Hangar distance. StreamingAssets synced. Review renders in `work/review/`. No simulation,
+    catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline front/side/top/
+    game-camera reviews. Prior Mac Unity EditMode on this branch: 331/331. This environment
+    cannot re-run `scripts/test-unity.sh` (Unity 6.3 missing).
+  - **NEXT MILESTONE:** Bailey to review this Dash 8 quality PR, then reprioritise the next
+    genuine aircraft slice (AIR-007 Saab already on `main`). Decide the 50D/50E Q400 stand
+    rule if a second Q400 is ever added.
+
 - **2026-09-15 Claude — polish phase 2: status severity + stacked messages. Unity EditMode
   343/343.**
   - New pure `AircraftStatus`: HoldingShort / HoldingForLanding go Attention after 3 min and
@@ -23,6 +42,7 @@
   - A plain click on open ground clears the selection (camera and overlays stay put).
   - Packaged check still open: tag click, drag from tag, click-empty-ground deselect.
 
+
 - **2026-09-15 Cursor — AIR-007 genuine Saab 340B visual (ADR 0050). Domain/EditMode harness run in this environment; Unity editor not available here.**
   - **Player-visible:** Rex's two Saab 340Bs now render as their own true-scale, compact
     low-wing turboprop with four-blade propellers, nacelle-mounted twin main gear and a
@@ -44,6 +64,25 @@
     one-at-a-time aircraft slice from ADR 0046 only after Bailey reprioritises — do not
     start a new family that is not yet in the simulation without that call. Decide the
     50D/50E Q400 stand rule if a second Q400 is ever added.
+
+- **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
+  331/331 (0 failed, 0 skipped).**
+  - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used
+    only the ATR span (it reported 16.7 m at 50D/50E). Replaced by
+    `Layout_ParkedRegionalAircraftKeepCodeCClearance`: parked plan-view outlines (wing, fuselage,
+    tailplane boxes from the runtime glTFs via new `AircraftModelBounds.TryMeasurePart`, root on
+    the stop as drawn) for every bay pair and every ATR / Saab stand-in / Dash 8-400 pairing.
+  - **Known limit it now exposes (needs Bailey's stand-assignment decision):** a Dash 8-400 on
+    50D or 50E next to a turboprop on the other is only **3.3–3.5 m** apart (ICAO code C 4.5 m);
+    two Q400s there would be 1.2 m (only one Q400 exists; the test guards that). Every other pair
+    keeps ≥ 4.5 m (ATR–ATR at 50D/50E 5.7 m). A simple "no Q400 on 50D/50E" rule can strand an
+    aircraft overnight with six aircraft on six bays, so no simulation change was made.
+  - New `AircraftDispatchTests`: the real `BuildAircraftForType` builds each catalogue type with its
+    own profile and drawn dimensions (placeholders draw at ATR size), AIR-006 has two six-blade
+    propellers and is not ATR-sized, and QantasLink/Rex/Emu/Wattlebird/player fly their catalogue
+    types with the matching visual profiles.
+  - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. Decide the 50D/50E Q400 rule first
+    if a second Q400 is ever added.
 
 
 - **2026-09-15 Codex — AIR-006 genuine Dash 8-400 visual (ADR 0049). Unity EditMode

@@ -47,11 +47,19 @@ def colour(name):
         return RUBBER
     if n.startswith(("wheel_", "rim_")):
         return METAL
-    if n.startswith(("cabin_window_frame", "cockpit_frame", "windscreen_pillar")):
+    # Pillars / brow must win before the broad windscreen/cockpit glass match,
+    # otherwise the flight deck collapses into one dark mask in the Hangar thumb.
+    if n.startswith(("cabin_window_frame", "cockpit_frame", "windscreen_pillar", "cockpit_glare", "cockpit_sill")):
         return LIGHT_GREY
     if n.startswith(("cabin_window", "cockpit", "windscreen")):
         return GLASS
-    if n.startswith(("gear_", "flap_track", "exhaust", "propeller", "prop_hub", "spinner", "hub_cap", "fan_")):
+    if "_tip" in n and n.startswith("propeller_"):
+        return (210, 180, 70)  # readable tip stripe at Hangar distance
+    if n.startswith(("spinner", "prop_hub", "hub_cap")):
+        return LIGHT_GREY
+    if n.startswith(("gear_door", "gear_fairing")):
+        return METAL
+    if n.startswith(("gear_", "flap_track", "exhaust", "propeller", "fan_")):
         return DARK
     if n.startswith(("livery_",)):
         return SLATE

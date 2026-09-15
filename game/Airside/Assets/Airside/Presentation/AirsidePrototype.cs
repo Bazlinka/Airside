@@ -137,6 +137,9 @@ namespace Airside.Presentation
         private float _lastAppliedWetness = float.NaN;
         private readonly List<Renderer> _holdShortRenderers = new List<Renderer>();
         private readonly List<Renderer> _airfieldLightRenderers = new List<Renderer>();
+        // Parallel to _airfieldLightRenderers. Object.name allocates a new string on every
+        // read, so the taxi/edge split is resolved once at collect time, not every frame.
+        private readonly List<bool> _airfieldLightIsTaxi = new List<bool>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private Transform _fuelTruck;
         private Transform _baggageCart;
@@ -2822,6 +2825,7 @@ namespace Airside.Presentation
         private void CollectAirfieldLights(Renderer[] renderers = null)
         {
             _airfieldLightRenderers.Clear();
+            _airfieldLightIsTaxi.Clear();
             renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
             {
@@ -2841,7 +2845,10 @@ namespace Airside.Presentation
                     n == "taxiway_light" ||
                     n == "apron_floodlight" ||
                     n == "obstruction_light")
+                {
                     _airfieldLightRenderers.Add(renderer);
+                    _airfieldLightIsTaxi.Add(n.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0);
+                }
             }
         }
 
@@ -3447,6 +3454,7 @@ namespace Airside.Presentation
                 var alsBase = Mathf.Lerp(2.1f, 0.03f, daylight);
                 var nightChase = daylight < 0.42f;
                 var chase = Time.unscaledTime * AirsideReusableMotion.AlsChaseHz;
+                _alsReilSide ??= ReilSides(_alsLights);
                 for (var i = 0; i < _alsLights.Length; i++)
                 {
                     var light = _alsLights[i];
@@ -3454,12 +3462,12 @@ namespace Airside.Presentation
                         continue;
 
                     // Far ALS REIL spots — sharp night flash, not centreline chase.
-                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    if (_alsReilSide[i] != 0)
                     {
                         var flash = daylight < 0.42f
                             && Mathf.Repeat(
                                 Time.unscaledTime * AirsideReusableMotion.ReilFlashHz
-                                + (light.name.EndsWith("R") ? 0.5f : 0f), 1f) < 0.18f;
+                                + (_alsReilSide[i] == 2 ? 0.5f : 0f), 1f) < 0.18f;
                         light.intensity = flash ? 4.2f : alsBase * 0.25f;
                         light.enabled = daylight < 0.55f;
                         continue;
@@ -3492,12 +3500,13 @@ namespace Airside.Presentation
                 var reilPulse = daylight < 0.42f
                     ? (Mathf.Repeat(Time.unscaledTime * 1.8f, 1f) < 0.22f ? 2.6f : 0.15f)
                     : 0f;
+                _runwayEdgeReilSide ??= ReilSides(_runwayEdgeLights);
                 for (var i = 0; i < _runwayEdgeLights.Length; i++)
                 {
                     var light = _runwayEdgeLights[i];
                     if (light == null)
                         continue;
-                    if (light.name.StartsWith("REIL", StringComparison.Ordinal))
+                    if (_runwayEdgeReilSide[i] != 0)
                     {
                         light.intensity = edge * 0.35f + reilPulse;
                         light.enabled = daylight < 0.55f;
@@ -3523,6 +3532,26 @@ namespace Airside.Presentation
             UpdateAerodromeBeacon(daylight);
         }
 
+        // Per-light REIL flags for _alsLights / _runwayEdgeLights: 0 not a REIL, 1 left, 2 right.
+        // Resolved once — reading Light.name every frame allocated a string per lamp.
+        private byte[] _alsReilSide;
+        private byte[] _runwayEdgeReilSide;
+
+        private static byte[] ReilSides(Light[] lights)
+        {
+            var sides = new byte[lights.Length];
+            for (var i = 0; i < lights.Length; i++)
+            {
+                if (lights[i] == null)
+                    continue;
+                var name = lights[i].name;
+                if (name.StartsWith("REIL", StringComparison.Ordinal))
+                    sides[i] = name.EndsWith("R", StringComparison.Ordinal) ? (byte)2 : (byte)1;
+            }
+
+            return sides;
+        }
+
         private void UpdateAirfieldNavLights(float daylight)
         {
             // Edge / taxi lights punch up at dusk/night so the airfield stays readable.
@@ -3534,7 +3563,7 @@ namespace Airside.Presentation
                 var renderer = _airfieldLightRenderers[i];
                 if (renderer == null)
                     continue;
-                var baseColor = renderer.gameObject.name.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
+                var baseColor = _airfieldLightIsTaxi[i]
                     ? new Color(0.25f, 0.55f, 1f)
                     : warmWhite;
                 var color = baseColor * intensity;

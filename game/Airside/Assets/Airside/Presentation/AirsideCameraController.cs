@@ -213,6 +213,12 @@ namespace Airside.Presentation
             }
 
             ReadInput();
+            // A destroyed view (aircraft removed from the schedule) used to leave _following
+            // set with no target: WASD panning stayed disabled and the HUD still read
+            // "Follow on" while the camera sat still. Hand the camera back instead.
+            if (_following && _followTarget == null)
+                ReleaseFollow();
+
             if (_following && _followTarget != null)
             {
                 // Look a little ahead of the aircraft so taxi/takeoff reads forward motion.

@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-15 Cursor — AIR-006 Dash 8-400 visual revision (same asset id). Domain tests pending
+  Unity EditMode on Mac.**
+  - **Player-visible:** QantasLink's Dash 8-400 silhouette is rebuilt in place: longer slender
+    fuselage with fitted cabin glazing, pitched four-pane flight deck, continuous nacelles with
+    main-gear bays, six-blade props, high wing with tip fences / root saddles, and a joined
+    T-tail. Hangar thumbnail regenerated from the runtime glTF. Envelope unchanged
+    (32.83 × 28.42 × 8.34 m). Path stays `mdl_dash8_q400_v01`.
+  - **How:** rewrite of `scripts/generate-air-006-dash8-q400.py` (174 named meshes /
+    18,856 triangles, was 139 / 6,728). StreamingAssets + Hangar thumb synced. No simulation,
+    catalogue id, save, reservation or schedule change.
+  - **Evidence:** generator validate (exact bounds, tyres on y=0); offline before/after mesh
+    reviews under `/opt/cursor/artifacts/dash8-q400-*-review.png`. Unity EditMode / packaged
+    overview-follow QA still open (no Mac build this session).
+  - **NEXT MILESTONE (4)** unchanged: Saab 340B genuine model. 50D/50E Q400 stand rule still
+    needs Bailey's decision if a second Q400 is added. Further Dash 8 polish (materials/panel
+    lines) can continue after Saab if Bailey wants another art pass.
+
 - **2026-09-15 Claude — wingtip clearance test fixed + aircraft dispatch tests. Unity EditMode
   331/331 (0 failed, 0 skipped).**
   - `Layout_ParkedAtrWingtipsKeepCodeCClearance` assumed the bay stop was the ATR's nose and used

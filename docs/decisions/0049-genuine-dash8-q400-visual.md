@@ -50,12 +50,14 @@ airline, stand, route, save field, save version or migration changes.
 ## Acceptance evidence
 
 - Emitted bounds are exactly 32.83 × 28.42 × 8.34 m and tyres touch local Y=0.
-- 139 named meshes / 6,728 triangles; separate propeller, gear, door and flight
-  control names retain the existing animation/pivot contracts.
+- Visual revision (2026-09-15): 174 named meshes / 18,856 triangles (was 139 /
+  6,728). Same asset path and animation/pivot part-name contracts; silhouette
+  now uses fitted cabin glazing, a pitched flight deck, continuous nacelles,
+  tip fences and a joined T-tail.
 - Dedicated 480 × 320 RGBA thumbnail rendered from the runtime glTF.
-- Unity 6.3 EditMode: 328/328 passed, zero failed/skipped.
-- No app build or manual packaged-player test requested; overview/follow and
-  day/dusk/night packaged visual QA remains open.
+- First integration: Unity 6.3 EditMode 328/328. Visual revision: domain
+  pre-check + offline mesh review; Unity EditMode / packaged overview-follow QA
+  still open (no Mac build that session).
 
 ## Known limit found after merge (2026-09-15)
 

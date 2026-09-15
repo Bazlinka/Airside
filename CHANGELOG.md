@@ -5,6 +5,13 @@ change it describes.
 
 ## Unreleased
 
+- **Dash 8-400 looks like a Dash 8.** AIR-006 rebuilt in place: slender fuselage, fitted cabin
+  windows, pitched flight-deck panes, continuous nacelles with gear bays, six-blade props, high
+  wing with tip fences and root saddles, joined T-tail. Same 32.83 × 28.42 × 8.34 m envelope and
+  asset path; Hangar thumbnail regenerated. 174 meshes / 18,856 tris (was 139 / 6,728). No
+  simulation or save change. Domain pre-check + offline mesh review; Unity EditMode / packaged
+  QA still open.
+
 - **Honest parked-clearance test and aircraft dispatch tests.** The regional wingtip test now
   measures parked outlines from the runtime models (it had assumed the stop was the nose) and
   covers the Dash 8-400; it records the one known shortfall — a Q400 beside a turboprop on

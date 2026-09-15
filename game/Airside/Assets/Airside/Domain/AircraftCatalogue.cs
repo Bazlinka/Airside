@@ -91,15 +91,15 @@ namespace Airside.Domain
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_atr42_starter_v02.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600");
 
-        // Rex's type. Saab publishes no range on its product page; 1,000 km stays a planning
-        // assumption until a manufacturer figure is recorded.
+        // Rex's type (AIR-007). Saab publishes no range on its product page; 1,000 km stays a
+        // planning assumption until a manufacturer figure is recorded.
         public static readonly AircraftSpec Saab340 = new(
             "SF34", "Saab 340B", "Regional turboprop · 34 seats",
             19.73, 21.44, 6.97,
             planningCruiseKmh: 500, practicalRangeKm: 1000,
             manufacturerMaxCruiseKmh: 524, manufacturerRangeKm: 0, manufacturerRangeBasis: "not published on the cited source",
-            StandClass.RegionalBay, ModelStatus.Placeholder,
-            null, null, "SPEC-SAAB-340B");
+            StandClass.RegionalBay, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_saab_340b_v01.gltf", "UI/Aircraft/thb_air_sf34_v01.png", "SPEC-SAAB-340B");
 
         // QantasLink's type (AIR-006). Practical range 1,500 km sits below the
         // 1,596 km full-passenger range.

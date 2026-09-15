@@ -189,6 +189,9 @@ namespace Airside.Presentation
         private static readonly bool PinDaylightPresentation =
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
 
+        /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
+        private WeatherKind CurrentWeather => FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather;
+
         private float PresentationDaylight =>
             DaylightPresentation.Resolve(PinDaylightPresentation, PresentationDayCycle.Daylight);
 
@@ -461,7 +464,11 @@ namespace Airside.Presentation
             if (wholeSeconds > _clock.Now.ElapsedSeconds)
             {
                 _clock.Set(new SimulationTime(wholeSeconds));
-                _simulation.Update();
+                // The demo circuit is not drawn once an airline runs. Its update steps one
+                // simulated second at a time with allocating reservation queries, so after the
+                // Mac slept for hours it spent a long frame re-flying a hidden circuit.
+                if (!FleetMode)
+                    _simulation.Update();
                 UpdateAirlineOperations();
             }
 
@@ -1042,7 +1049,7 @@ namespace Airside.Presentation
 
             EnsureAmbientClips();
 
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume;
@@ -2195,7 +2202,7 @@ namespace Airside.Presentation
 
         private void UpdateWeatherPresentation()
         {
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var wet = Weather.IsAdverse(weather);
             var storm = weather == WeatherKind.Storm;
@@ -3346,7 +3353,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var weatherGloom = weather == WeatherKind.Storm ? 0.55f
                 : weather == WeatherKind.Fog ? 0.42f
                 : weather == WeatherKind.Rain ? 0.28f
@@ -3423,9 +3430,9 @@ namespace Airside.Presentation
 
             // Soft depth fog only — thick enough for far hills, thin enough that runway,
             // apron and buildings stay obvious from the default overview.
-            if (!Weather.IsAdverse(_simulation.CurrentWeather))
+            if (!Weather.IsAdverse(CurrentWeather))
             {
-                var cloudy = _simulation.CurrentWeather == WeatherKind.Cloudy;
+                var cloudy = CurrentWeather == WeatherKind.Cloudy;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 var clearFog = Color.Lerp(
@@ -7785,7 +7792,7 @@ namespace Airside.Presentation
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
             var daylight = PresentationDaylight;
             var drift = Time.unscaledDeltaTime * 0.35f;
-            var weather = _simulation.CurrentWeather;
+            var weather = CurrentWeather;
             var overcast = weather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
             var cloudy = weather == WeatherKind.Cloudy;
             var thickSky = overcast || cloudy;

@@ -1102,7 +1102,10 @@ namespace Airside.Presentation
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
-            var taxiLights = !airborne && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
+            // Only with engines running: a cold, parked fleet aircraft used to light its taxi
+            // lamp (a spot light) all night, one per aircraft on the apron.
+            var taxiLights = !airborne && enginesOn
+                && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
             var namedChildren1 = AirsideNamedChildren.Get(aircraft);
             var childNames1 = AirsideNamedChildren.Names(aircraft);

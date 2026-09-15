@@ -13,6 +13,11 @@ namespace Airside.Presentation
     {
         public const string ShaderName = "Airside/AdelaideGround";
         public const string ObjectName = AirsideBareField.GroundObjectName;
+        public const string FarDetailKeyword = "_GROUND_FAR_DETAIL";
+        public const float MacroScaleMetres = 240f;
+        public const float MacroStrength = 0.14f;
+        public const float FarBlendStartMetres = 120f;
+        public const float FarBlendEndMetres = 900f;
 
         public static bool TryBuild(Transform root)
         {
@@ -77,14 +82,16 @@ namespace Airside.Presentation
                 }
             }
 
-            // Soft normals from neighbouring verts so the boundary lip reads as landform.
-            for (var zi = 1; zi < resZ - 1; zi++)
+            // Soft normals from neighbouring verts so the boundary lip reads as landform. Edge
+            // verts use one-sided differences: leaving them straight up lit the outermost row
+            // differently from its sloped neighbours and drew a faint line round the field.
+            for (var zi = 0; zi < resZ; zi++)
             {
-                for (var xi = 1; xi < resX - 1; xi++)
+                for (var xi = 0; xi < resX; xi++)
                 {
                     var i = zi * resX + xi;
-                    var dx = verts[i + 1] - verts[i - 1];
-                    var dz = verts[i + resX] - verts[i - resX];
+                    var dx = verts[zi * resX + Mathf.Min(xi + 1, resX - 1)] - verts[zi * resX + Mathf.Max(xi - 1, 0)];
+                    var dz = verts[Mathf.Min(zi + 1, resZ - 1) * resX + xi] - verts[Mathf.Max(zi - 1, 0) * resX + xi];
                     norms[i] = Vector3.Cross(dz, dx).normalized;
                 }
             }
@@ -152,6 +159,13 @@ namespace Airside.Presentation
             material.SetFloat("_Smoothness", 0.1f);
             // Albedo multiplier under a ~2.0 daytime sun; matches the URP Lit fallback's brightness.
             material.SetColor("_Tint", new Color(0.59f, 0.61f, 0.55f, 1f));
+            material.SetFloat("_MacroScale", MacroScaleMetres);
+            material.SetFloat("_MacroStrength", MacroStrength);
+            material.SetFloat("_FarBlendStart", FarBlendStartMetres);
+            material.SetFloat("_FarBlendEnd", FarBlendEndMetres);
+            // The far-detail samples cost six texture reads; Medium keeps the single scale.
+            if (AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High)
+                material.EnableKeyword(FarDetailKeyword);
             return material;
         }
 

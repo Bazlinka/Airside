@@ -4291,20 +4291,37 @@ namespace Airside.Presentation
         /// Dark rubber-deposit bands in the touchdown zone — presentation only,
         /// matching the darkened asphalt pilots see on a busy jet runway.
         /// </summary>
+        /// <summary>
+        /// Tyre rubber in both touchdown zones as seeded streaks on the gear tracks
+        /// (<see cref="RunwayRubberMarks"/>), two shades in two meshes, laid between the
+        /// runway top and its paint.
+        /// </summary>
         private static void BuildBareRunwayRubberMarks()
         {
-            var rubber = new Color(0.08f, 0.08f, 0.09f, 1f);
-            var y = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.52f;
-            // Aiming-point / TDZ region each end (≈ 400–900 m from threshold).
-            float[] centers = { -900f, -650f, 650f, 900f };
-            for (var i = 0; i < centers.Length; i++)
+            var root = new GameObject("Runway 05/23 rubber").transform;
+            if (_airfieldRoot != null)
+                root.SetParent(_airfieldRoot, false);
+
+            var runwayTop = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f;
+            var heavyY = runwayTop + 0.022f;
+            var lightY = runwayTop + 0.016f;
+            var heavy = new SurfaceMesh();
+            var light = new SurfaceMesh();
+            var corners = new float[8];
+            foreach (var streak in RunwayRubberMarks.All())
             {
-                CreateBlock(
-                    $"Runway rubber {i}",
-                    new Vector3(centers[i], y, 0f),
-                    new Vector3(180f, 0.02f, AirsideBareField.RunwayWidthMetres - 4f),
-                    rubber);
+                var hx = streak.Length * 0.5f;
+                var hz = streak.Width * 0.5f;
+                corners[0] = streak.CentreX - hx; corners[1] = streak.CentreZ - hz;
+                corners[2] = streak.CentreX + hx; corners[3] = streak.CentreZ - hz;
+                corners[4] = streak.CentreX + hx; corners[5] = streak.CentreZ + hz;
+                corners[6] = streak.CentreX - hx; corners[7] = streak.CentreZ + hz;
+                AddPolygon(streak.Heavy ? heavy : light, corners, streak.Heavy ? heavyY : lightY);
             }
+
+            var asphalt = PreferSurfaceBasecolor("tx_asphalt_runway");
+            SpawnSurface(root, "Rubber (old)", light, new Color(0.17f, 0.17f, 0.18f), asphalt, castShadows: false);
+            SpawnSurface(root, "Rubber (fresh)", heavy, new Color(0.09f, 0.09f, 0.10f), asphalt, castShadows: false);
         }
 
         /// <summary>

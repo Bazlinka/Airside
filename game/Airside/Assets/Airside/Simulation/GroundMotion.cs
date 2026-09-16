@@ -3,55 +3,6 @@ using System.Collections.Generic;
 
 namespace Airside.Simulation
 {
-    /// <summary>How an aircraft is allowed to move along a ground path.</summary>
-    public readonly struct GroundSpeedLimits
-    {
-        public GroundSpeedLimits(float maxSpeed, float acceleration, float braking, float lateralAcceleration)
-        {
-            MaxSpeed = maxSpeed;
-            Acceleration = acceleration;
-            Braking = braking;
-            LateralAcceleration = lateralAcceleration;
-        }
-
-        /// <summary>m/s on the straight.</summary>
-        public float MaxSpeed { get; }
-
-        /// <summary>m/s² when speeding up.</summary>
-        public float Acceleration { get; }
-
-        /// <summary>m/s² when slowing down.</summary>
-        public float Braking { get; }
-
-        /// <summary>m/s² allowed sideways in a turn; sets the cornering speed from the radius.</summary>
-        public float LateralAcceleration { get; }
-
-        /// <summary>
-        /// ATR taxi: 15 kt on the straight, 0.5 m/s² sideways in turns — about 10 kt round a
-        /// normal 45 m taxiway fillet, which is how they are flown. (0.35 m/s² crawled
-        /// round every corner at ~6 kt.)
-        /// </summary>
-        public static GroundSpeedLimits Taxi => new(CircuitProfile.Knots(15f), 0.5f, 0.7f, 0.5f);
-
-        /// <summary>Apron taxi lanes next to parked aircraft and people: 10 kt.</summary>
-        public const float ApronKnots = 10f;
-
-        /// <summary>Lead-in to a stand under guidance: walking pace, 5 kt.</summary>
-        public const float StandLeadInKnots = 5f;
-
-        /// <summary>How far out from the stop the lead-in pace starts.</summary>
-        public const float StandLeadInMetres = 45f;
-
-        /// <summary>Apron stretch leaving or entering the bays at <see cref="ApronKnots"/>.</summary>
-        public const float ApronMetres = 160f;
-
-        /// <summary>Tug pushback: 2 kt, very gentle starts and stops.</summary>
-        public static GroundSpeedLimits Pushback => new(CircuitProfile.Knots(2f), 0.15f, 0.25f, 0.2f);
-
-        /// <summary>Lining up: 8 kt onto the centreline, stopping at the takeoff point.</summary>
-        public static GroundSpeedLimits Lineup => new(CircuitProfile.Knots(8f), 0.4f, 0.6f, 0.35f);
-    }
-
     /// <summary>
     /// A path with a speed profile: every point gets the fastest speed the limits allow
     /// — capped on the straight, slowed by the curve radius in turns, and bounded by
@@ -59,20 +10,6 @@ namespace Airside.Simulation
     /// follows from that. Durations and positions both come from here, so the time an
     /// aircraft is given for a taxi is exactly the time the drawn motion takes.
     /// </summary>
-    /// <summary>A stretch at one end of a path with a lower speed limit (apron, stand lead-in).</summary>
-    public readonly struct GroundSpeedZone
-    {
-        public GroundSpeedZone(float metres, float maxSpeed)
-        {
-            Metres = metres;
-            MaxSpeed = maxSpeed;
-        }
-
-        public float Metres { get; }
-        public float MaxSpeed { get; }
-        public bool IsSet => Metres > 0f;
-    }
-
     public sealed class GroundPath
     {
         private const float MinimumSegmentSpeed = 0.25f;

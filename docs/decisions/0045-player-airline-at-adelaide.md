@@ -113,5 +113,27 @@ skip decisions above.
 Bailey: "use the real OSM layout and wire it in". OpenStreetMap geometry (ODbL,
 `scripts/generate-ypad-layout.py` → `AdelaideLayout`) is the single source for the
 airside: pavement, holding points, bays 50A–50D and baked routes. Ground timing is a
-speed profile over those routes (15 kt taxi, 2 kt pushback, radius-limited turns),
-replacing picked constants. Departures start at the 05 threshold.
+speed profile over those routes (verified taxi bands in
+`docs/data/AIRCRAFT_SPECIFICATIONS.md` — turboprop/jet straight 25 kt, apron 15/10 kt,
+turns ≈10 kt, pushback 3 kt, lineup 10 kt), replacing picked constants. Departures
+start at the 05 threshold.
+
+### Ground taxi speeds (2026-09-16)
+
+Bailey: taxi felt far too slow. The previous 15 kt straight band was below manufacturer
+and operator guidance. `GroundSpeedLimits` now carries verified regimes:
+
+| Regime | Turboprop (ATR / Saab / Q400) | Jet (737-8) | Source |
+|---|---|---|---|
+| Straight taxiway | 25 kt | 25 kt (long YPAD; FCTM allows ≤30) | ATR PIA SOP; Saab flow; Boeing FCTM; AIAA turboprop study |
+| Apron / ramp | 15 kt | 10 kt | Saab flow; Boeing FCTM ramp entry |
+| Turns | ≈10 kt (radius-limited) | ≈10 kt | Boeing FCTM; CAST; airline SOPs |
+| Stand lead-in | 5 kt | 5 kt | Marshaller / walking pace |
+| Pushback | 3 kt | 3 kt | Walking-pace tug |
+| Lineup | 10 kt | 10 kt | Boeing turn-entry band |
+| Vacate settle | — | 20 kt (shared) | Boeing “normal taxi ≈20 kt” after 12 kt exit |
+
+Regional bays use the turboprop profile; terminal gates use the jet profile. Durations
+still come from the path, so faster straights shorten taxi-out/in without changing
+route geometry.
+

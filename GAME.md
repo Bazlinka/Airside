@@ -1,17 +1,20 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Cursor — camera zoom/pan feel + taxi prop blur.** Branch
-  `cursor/camera-zoom-prop-taxi-d77c`.
-  - **Player-visible:** Scroll zoom and drag pan feel snappier across the real-metre
-    YPAD overview (one mouse notch ~25 % closer instead of ~11 %; trackpad can queue
-    a wider band; drag pan ~1.75×). Turboprop and 737 fan discs engage at taxi RPM so
-    blades no longer strobe while taxiing.
-  - **How:** `AirsideCameraFeel` owns the rates; `AirsideCameraController` applies them.
-    `PropHighRpmThreshold` 380 / `JetFanHighRpmThreshold` 1400.
-  - **Evidence:** `scripts/test-domain.sh` **240 passed** (includes new `CameraFeelTests`).
-    No Unity editor on this Cloud Agent — Mac `scripts/test-unity.sh` + a Play scroll/
-    taxi eyeball still needed before merge.
-  - **NEXT:** Mac Unity EditMode + packaged scroll/pan and taxi prop check. Then merge.
+- **2026-09-16 Cursor — verified taxi speeds.** Branch `cursor/taxi-speeds-verified-d77c`
+  (rebased onto main after #278 merged).
+  - **Player-visible:** Straight taxi is no longer a 15 kt crawl. Turboprops (ATR / Saab /
+    Q400) and the 737 now use verified bands: ~25 kt on long taxiways, ~10 kt in turns,
+    apron 15 kt (turboprop) / 10 kt (jet), 5 kt onto the stand, 3 kt pushback, 10 kt
+    lineup, vacate settles to 20 kt after the 12 kt runway exit.
+  - **How:** `GroundSpeedLimits` + bay vs gate wiring in `AdelaideGround`. Sources in
+    `docs/data/AIRCRAFT_SPECIFICATIONS.md` and ADR 0045.
+  - **Evidence:** `scripts/test-domain.sh` **242 passed** after rebase onto #278. Mac Unity EditMode + Play eyeball of a bay taxi-out and a Gate 13 jet
+    still needed.
+  - **NEXT:** Mac `scripts/test-unity.sh` and a packaged taxi watch. Merge when green.
+
+- **2026-09-16 Cursor — camera zoom/pan feel + taxi prop blur.** Merged as #278.
+  - **Player-visible:** Scroll zoom and drag pan feel snappier; turboprop and 737 fan
+    discs engage at taxi RPM.
 
 - **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). All 11 batches merged:
   100 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 430/430. The goal is met;

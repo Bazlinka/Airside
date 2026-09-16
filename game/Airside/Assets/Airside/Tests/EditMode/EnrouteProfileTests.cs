@@ -79,7 +79,7 @@ namespace Airside.Tests
                 new[] { new GroundSpeedZone(45f, CircuitProfile.Knots(5f)) });
 
             Assert.That(zoned.Seconds, Is.GreaterThan(free.Seconds));
-            // 30 m out from the stop it is at walking pace, not braking from 15 kt.
+            // 30 m out from the stop it is at walking pace, not braking from straight-taxi speed.
             var near = zoned.SampleAt(zoned.Seconds - 1.0);
             Assert.That(CircuitProfile.ToKnots(near.Speed), Is.LessThanOrEqualTo(5.01f));
             var t = 0.0;
@@ -90,7 +90,7 @@ namespace Airside.Tests
                 if (s.X > 380f - 45f && s.X < 400f - 45f)
                     mid = System.Math.Max(mid, CircuitProfile.ToKnots(s.Speed));
             }
-            Assert.That(mid, Is.LessThanOrEqualTo(15.01f));
+            Assert.That(mid, Is.LessThanOrEqualTo(GroundSpeedLimits.TurbopropStraightKnots + 0.01f));
         }
     }
 }

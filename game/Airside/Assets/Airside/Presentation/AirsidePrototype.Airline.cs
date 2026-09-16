@@ -171,6 +171,8 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
+            else
+                DrawStatusLine(placement.Guide, small);
             DrawWorkspaceNav(placement.NavStrip, smallButton);
             if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
@@ -298,8 +300,8 @@ namespace Airside.Presentation
             }
 
             _hudPanels.Add(placement.Clock);
-            if (showGuide)
-                _hudPanels.Add(placement.Guide);
+            // Always meaningful now: the tutorial card while it runs, the status line after.
+            _hudPanels.Add(placement.Guide);
             _hudPanels.Add(placement.NavStrip);
             if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
@@ -339,6 +341,24 @@ namespace Airside.Presentation
             var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 22f), heading, bold);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, rect.height - 40f), hint, small);
+        }
+
+        /// <summary>
+        /// The persistent one-line objective (ADR 0053) that replaces the guide card once it's
+        /// done: the player fleet's most urgent aircraft, or a quiet fleet-wide line.
+        /// </summary>
+        private void DrawStatusLine(Rect rect, GUIStyle small)
+        {
+            if (rect.height < 4f)
+                return;
+            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now);
+            var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
+                new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
+            var previousContent = GUI.contentColor;
+            if (severity != StatusSeverity.Normal)
+                GUI.contentColor = SeverityColour(severity, previousContent);
+            GUI.Label(new Rect(rect.x + 2f, rect.y + 4f, rect.width - 4f, rect.height - 4f), text, style);
+            GUI.contentColor = previousContent;
         }
 
         /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>

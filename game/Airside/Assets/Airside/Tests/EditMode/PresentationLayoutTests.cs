@@ -143,16 +143,15 @@ namespace Airside.Tests
                 Apart(airline.Toast, "toast", rect, name);
             }
 
-            if (showGuide)
-            {
-                Inside(airline.Guide, "guide");
-                Apart(airline.Guide, "guide", airline.Clock, "clock");
-                Apart(airline.Guide, "guide", airline.NavStrip, "nav strip");
-                Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
-                Apart(airline.Guide, "guide", airline.Map, "map");
-                foreach (var (rect, name) in readoutAndBar)
-                    Apart(airline.Guide, "guide", rect, name);
-            }
+            // Guide/status line: always sized now (the tutorial card while it runs, or the
+            // persistent one-line objective once it's done), so it is checked either way.
+            Inside(airline.Guide, "guide");
+            Apart(airline.Guide, "guide", airline.Clock, "clock");
+            Apart(airline.Guide, "guide", airline.NavStrip, "nav strip");
+            Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
+            Apart(airline.Guide, "guide", airline.Map, "map");
+            foreach (var (rect, name) in readoutAndBar)
+                Apart(airline.Guide, "guide", rect, name);
 
             Apart(airline.Clock, "clock", airline.FleetArea, "fleet");
             Apart(airline.Clock, "clock", airline.Map, "map");

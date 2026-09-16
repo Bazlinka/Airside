@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Persistent status/objective line.** Once the first-flight guide finishes, its card slot
+  under the clock now shows a quiet one-line objective instead of disappearing: the most urgent
+  player aircraft and what it needs, severity-tinted, or a calm fleet-wide line when nothing
+  needs attention. New `OperationsSummary` pure helper; `AirlineHudLayout`'s guide/status region
+  is never zero-sized any more. Presentation-only.
+
 - **Flight numbers and airport-glyph map markers.** Aircraft now read by a deterministic
   flight number (airline code + a stable 3-digit number derived from registration and route)
   in the map's in-flight labels, the Flights board and floating field tags, instead of a bare

@@ -1,5 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — persistent status/objective line, closing the remaining ADR 0053
+  Task 1 gap from the nav-shell slice below.**
+  - **Player-visible:** once the first-flight guide finishes, the card it used to occupy under
+    the clock doesn't just vanish — it becomes a quiet one-line objective: the most urgent player
+    aircraft and what it needs (`VH-ABC needs you — choose a stand.`), tinted safety-yellow or
+    signal-red to match its severity, or a calm fleet-wide line (`3 of 4 aircraft flying — on
+    schedule.` / `All aircraft on stand — ready for a flight.`) when nothing needs attention. This
+    is the "current operation, next objective" the Task 1 acceptance list asked for outside the
+    tutorial.
+  - **How:** new pure `Presentation/OperationsSummary.cs` picks the worst-severity player
+    aircraft via the existing `AircraftStatus.Severity`, or falls back to a fleet count. The
+    `Guide` region in `AirlineHudLayout` — previously zero-sized once the tutorial finished — is
+    now always sized (`StatusLineHeight` post-guide, `GuideHeight` during it), so `DrawAirlineHud`
+    draws either the tutorial card or the new `DrawStatusLine` in the same slot. `FieldMiniMap`
+    already cleared the guide column via the nav-strip fix below, so this needed no further
+    change there.
+  - **Evidence:** `PresentationLayoutTests.AirlineHudLayout_PanelsFitAndNeverOverlap` now checks
+    the guide/status rect unconditionally (it's never zero-sized any more) at the same 6
+    resolutions — not run here, no Unity editor in this session. `OperationsSummary` itself has
+    no dedicated unit test: `FleetAircraft` has an internal constructor and no existing test
+    fixture builds one directly, so it needs eyeballing on a Mac instead.
+  - **NEXT:** fold into the same Mac verification pass as everything below — nav shell, flight
+    numbers/airport glyphs, and this status line are all presentation-only and safe to review
+    together.
+
 - **2026-09-16 Claude — flight numbers and airport-glyph map markers (player-requested polish,
   outside the ADR 0053 task sequence).**
   - **Player-visible:** the Australia destinations map draws each destination — and Adelaide's

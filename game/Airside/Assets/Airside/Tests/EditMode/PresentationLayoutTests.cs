@@ -633,6 +633,20 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void WingFlex_LoadsAfterRotation_AndSettlesAfterTouchdown()
+        {
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.TaxiOut, 0.8f), Is.Zero);
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress - 0.01f), Is.Zero);
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.Takeoff, 1f), Is.GreaterThan(1f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.Approach, 0.5f), Is.GreaterThan(0f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress - 0.01f), Is.GreaterThan(0f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress + 0.15f), Is.Zero);
+        }
+
+        [Test]
         public void AircraftLights_FollowPowerAndRunwayPhases()
         {
             Assert.That(AirsideReusableMotion.NavigationLightsOn(false, false), Is.False,

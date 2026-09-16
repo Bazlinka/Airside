@@ -947,6 +947,7 @@ namespace Airside.Presentation
             var pitch = PhasePitchDegrees(phase, progress);
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
+            var wingFlex = AirsideReusableMotion.WingFlexDegrees(phase, progress);
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
             for (var childIndex = 0; childIndex < children.Length; childIndex++)
@@ -979,6 +980,16 @@ namespace Airside.Presentation
                     var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
                     var target = Mathf.Clamp(bankDegrees * 0.8f * side, -18f, 18f);
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
+                    child.localEulerAngles = euler;
+                }
+                else if (childName is "Wing L" or "Wing R")
+                {
+                    // Flex the authored wing roots in opposite directions so both tips
+                    // rise under load. Keep the cue subtle and ease it between phases.
+                    var euler = child.localEulerAngles;
+                    var current = euler.z > 180f ? euler.z - 360f : euler.z;
+                    var side = childName == "Wing L" ? -1f : 1f;
+                    euler.z = Mathf.MoveTowards(current, wingFlex * side, deltaTime * 3.5f);
                     child.localEulerAngles = euler;
                 }
                 else if (childName is "Flap L" or "Flap R")

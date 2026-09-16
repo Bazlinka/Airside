@@ -314,6 +314,30 @@ namespace Airside.Presentation
             };
         }
 
+        /// <summary>
+        /// Small visual wing-load cue in degrees. Flex builds only after rotation,
+        /// remains present while airborne, and unloads promptly once the mains settle.
+        /// This is deliberately restrained: it should make the silhouette breathe,
+        /// not turn the wing into rubber.
+        /// </summary>
+        public static float WingFlexDegrees(AircraftPhase phase, float progress01 = 1f)
+        {
+            var t = Mathf.Clamp01(progress01);
+            return phase switch
+            {
+                AircraftPhase.Takeoff => 1.45f * Mathf.SmoothStep(0f, 1f,
+                    Mathf.InverseLerp(AirsideFlightPath.RotateProgress, 1f, t)),
+                AircraftPhase.Departed => 1.25f,
+                AircraftPhase.Approach => Mathf.Lerp(1.1f, 0.85f, t),
+                AircraftPhase.Landing => t < AirsideFlightPath.TouchdownProgress
+                    ? 0.85f
+                    : Mathf.Lerp(0.85f, 0f, Mathf.InverseLerp(
+                        AirsideFlightPath.TouchdownProgress,
+                        Mathf.Min(1f, AirsideFlightPath.TouchdownProgress + 0.14f), t)),
+                _ => 0f
+            };
+        }
+
         public static float CabinDoorBias(AircraftPhase phase) =>
             phase == AircraftPhase.AtStand && !AirportCircuit.SkipGroundTaxi
                 ? DoorOpenAtStand

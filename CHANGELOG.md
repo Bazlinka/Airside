@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Bug sweep 10 (8 fixes): loading, saves, tooling, hidden aircraft.** Combined-kit cache keys are
+  built with the invariant culture, so a comma-decimal locale can no longer give two kits the same
+  key and the wrong materials. A corrupt save timestamp falls back to the default clock instead of
+  throwing from the start screen every frame. The build, terrain-bake and test scripts now say why
+  they failed and name the failing tests instead of aborting silently. Aircraft away on a leg no
+  longer show a field tag over empty tarmac. The scene index drops destroyed objects rather than
+  throwing, and a fleet view's cached child list is refreshed when it gains children. Unity
+  EditMode 427/427.
+
 - **Bug sweep 9 (10 fixes): mini-map, camera feel, weather, sky.** The mini-map no longer keeps a
   press that never saw its release (which turned later field drags into camera jumps), and your
   own aircraft and the selection draw on top of other operators' dots. M says on screen that it

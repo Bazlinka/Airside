@@ -1,7 +1,12 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–9 merged:
-  82 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 424/424.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–10 merged:
+  90 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 427/427.**
+  - **Batch 10:** invariant `CombinedKey` numbers in `ArtGltfLoader`; `AirlineSave.IsRealDate`
+    guards `ClockFor` (the start screen calls it from OnGUI); `build-mac.sh`, `bake-terrain.sh`
+    and `test-unity.sh` report failures and name failed tests; field tags skip hidden views;
+    `AirsideSceneIndex` drops destroyed entries and `FindGameObject` no longer uses `?.`;
+    `EnsureFleetPickables` calls `AirsideNamedChildren.Forget` (nothing called it before).
   - **Batch 9:** mini-map press disarm and three-pass dot order (`MiniMapDotPass`); hangar list
     reuse; mute toast; `ReadAirlineControls` returns early while help is open; `EaseWeatherGloom`
     /`WeatherGloomTarget`; `RainRootPosition` follows the camera focus; cached `_birdPhaseSeed`;

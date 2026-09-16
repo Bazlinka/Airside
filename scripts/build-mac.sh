@@ -14,10 +14,20 @@ if [ ! -x "$unity" ]; then
 fi
 
 mkdir -p "$root/work/builds"
+rm -rf "$destination"
+status=0
 "$unity" -batchmode -nographics -quit \
   -projectPath "$root/game/Airside" \
   -buildTarget StandaloneOSX \
   -buildOSXUniversalPlayer "$destination" \
-  -logFile "$log"
+  -logFile "$log" || status=$?
+
+# Everything Unity says goes to the log file, so a failure used to print nothing
+# at all. Show why, and never claim a build that is not on disk.
+if [ "$status" -ne 0 ] || [ ! -d "$destination" ]; then
+  echo "Mac build failed (Unity exit $status). Last lines of $log:" >&2
+  tail -40 "$log" >&2 || true
+  exit 1
+fi
 
 echo "Mac build created at $destination"

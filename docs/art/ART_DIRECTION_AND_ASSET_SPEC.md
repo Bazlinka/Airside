@@ -214,6 +214,9 @@ presentation has a deterministic 18 m expansion-joint overlay clipped to the OSM
 apron polygons. It adds no external asset. Noon, 17:30 golden-hour and 23:30 night
 captures passed at overview and follow distance; the detail reads up close without
 turning into an overview grid. Evidence is kept locally under `work/review/apron-*.png`.
+The same packaged review added sparse procedural taxiway-edge dust/scuff strips. They
+use no external asset, remain inside the asphalt edge, and passed close-day, overview
+and 23:30 night checks (`work/review/taxi-edge-*.png`).
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

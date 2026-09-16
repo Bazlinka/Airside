@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Taxiway edge weathering.** Adelaide taxiways now have sparse, warm-grey dust/scuff strips
+  just inside both pavement edges, breaking up the perfectly cut black ribbons without reading as
+  paint or changing pavement geometry. The combined mesh is deterministic, presentation-only and
+  naturally disappears at overview distance and at night. Headless tests: 249 passed.
+
 - **Adelaide apron slab structure.** Concrete aprons now carry a restrained 18 m expansion-joint
   grid clipped to the real OSM polygon boundaries, so large paved areas read as built slabs rather
   than flat sheets. The combined detail mesh is matte, deterministic and presentation-only;

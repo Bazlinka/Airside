@@ -58,6 +58,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RunwayRubberMarks.cs" />
     <!-- UnityEngine-free; apron joint generation stays presentation-only but is checked headlessly. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
+    <!-- UnityEngine-free; deterministic taxi edge wear is geometry-tested headlessly. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/TaxiwayEdgeWear.cs" />
     <!--
       Exclude EditMode tests that import UnityEngine / UnityEditor. Mini-map, named-children
       cache and ground-look tests belong in scripts/test-unity.sh, not this headless run.

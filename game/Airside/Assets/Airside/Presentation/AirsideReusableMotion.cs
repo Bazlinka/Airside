@@ -67,6 +67,51 @@ namespace Airside.Presentation
         // ANM-AIR-004 nav/beacon pulse
         public const float BeaconHz = 1.4f;
         public const float NavSteady = 1f;
+        public const float StrobeCycleSeconds = 1.2f;
+
+        /// <summary>Position lamps require a powered aircraft, not merely darkness.</summary>
+        public static bool NavigationLightsOn(bool enginesRunning, bool beaconOn) =>
+            enginesRunning || beaconOn;
+
+        /// <summary>White strobes operate from runway entry until runway exit.</summary>
+        public static bool StrobesOn(AircraftPhase phase) => phase is
+            AircraftPhase.Takeoff or AircraftPhase.Departed or AircraftPhase.Approach or AircraftPhase.Landing;
+
+        /// <summary>Two short white flashes per cycle, shared by both wingtips.</summary>
+        public static float StrobeIntensity(AircraftPhase phase, float presentationSeconds)
+        {
+            if (!StrobesOn(phase))
+                return 0f;
+            var cycle = Mathf.Repeat(presentationSeconds, StrobeCycleSeconds);
+            return cycle < 0.065f || cycle is >= 0.16f and < 0.225f ? 1f : 0f;
+        }
+
+        /// <summary>Soft, brief red anti-collision pulse instead of a square on/off blink.</summary>
+        public static float BeaconIntensity(bool commandedOn, float presentationSeconds)
+        {
+            if (!commandedOn)
+                return 0f;
+            var wave = Mathf.Max(0f, Mathf.Sin(presentationSeconds * BeaconHz * Mathf.PI * 2f));
+            return wave * wave * wave * wave;
+        }
+
+        /// <summary>
+        /// Ackermann-style nose-wheel angle from the aircraft heading change over a short
+        /// path sample. Wheelbase comes from the loaded model's gear pivots.
+        /// </summary>
+        public static float NoseWheelSteerDegrees(float currentNoseX, float currentNoseZ,
+            float futureNoseX, float futureNoseZ, float speedMetresPerSecond, float lookAheadSeconds,
+            float wheelbaseMetres, bool tailFirst)
+        {
+            if (speedMetresPerSecond < 0.2f || lookAheadSeconds <= 0f || wheelbaseMetres <= 0f)
+                return 0f;
+            var cross = currentNoseZ * futureNoseX - currentNoseX * futureNoseZ;
+            var dot = Mathf.Clamp(currentNoseX * futureNoseX + currentNoseZ * futureNoseZ, -1f, 1f);
+            var headingRadians = Mathf.Atan2(cross, dot);
+            var arcMetres = Mathf.Max(0.5f, speedMetresPerSecond * lookAheadSeconds);
+            var steer = Mathf.Atan(wheelbaseMetres * headingRadians / arcMetres) * Mathf.Rad2Deg;
+            return Mathf.Clamp(tailFirst ? -steer : steer, -65f, 65f);
+        }
 
         // ANM-VEH wheel spin scale (presentation)
         public const float VehicleWheelRpmTaxi = 180f;

@@ -633,6 +633,43 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftLights_FollowPowerAndRunwayPhases()
+        {
+            Assert.That(AirsideReusableMotion.NavigationLightsOn(false, false), Is.False,
+                "a cold parked aircraft stays dark even at night");
+            Assert.That(AirsideReusableMotion.NavigationLightsOn(false, true), Is.True,
+                "position lamps come on during the pre-start beacon sequence");
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.TaxiOut), Is.False);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Takeoff), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Departed), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Landing), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.TaxiIn), Is.False);
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.02f), Is.EqualTo(1f));
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.10f), Is.Zero);
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.18f), Is.EqualTo(1f));
+            Assert.That(AirsideReusableMotion.BeaconIntensity(false, 0.2f), Is.Zero);
+        }
+
+        [Test]
+        public void NoseWheelSteering_FollowsPathCurvatureAndReversesForPushback()
+        {
+            var straight = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, 0f, 1f, 5f, 1.5f, 10f, tailFirst: false);
+            var left = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, -0.15f, 0.9887f, 5f, 1.5f, 10f, tailFirst: false);
+            var pushed = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, -0.15f, 0.9887f, 2f, 1.5f, 10f, tailFirst: true);
+
+            Assert.That(straight, Is.Zero);
+            Assert.That(left, Is.LessThan(0f));
+            Assert.That(pushed, Is.GreaterThan(0f), "tow-controlled nose gear steers opposite while moving tail-first");
+            Assert.That(Mathf.Abs(pushed), Is.LessThanOrEqualTo(65f));
+            Assert.That(AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, 1f, 0f, 0f, 1.5f, 10f, tailFirst: false), Is.Zero,
+                "a stopped aircraft centres its nose wheels");
+        }
+
+        [Test]
         public void CircuitCues_TouchdownFiresOnTheRunwayNotShortFinal()
         {
             TaxiLoopFixture.RestoreCircuit();

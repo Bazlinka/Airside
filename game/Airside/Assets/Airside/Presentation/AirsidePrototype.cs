@@ -876,13 +876,17 @@ namespace Airside.Presentation
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
                 SpinJetFans(view, phase, engines);
+                var viewParts = PartsFor(view);
+                UpdateNoseWheelSteering(viewParts.GearNose,
+                    FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
                 RollLandingGearTires(view, phase, progress, aircraftType);
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue,
                     PartsFor(view).HasSeparateElevators);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
-                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
+                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime,
+                    PresentationClock, engines);
                 UpdateCabinDoor(view, phase, engines?.DoorsOpen);
                 UpdateCabinWindowGlow(view, phase, PresentationDaylight);
                 UpdateEngineHeat(view, phase, engines?.AnyRunning);
@@ -1121,7 +1125,7 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            EngineState? engines = null)
+            float presentationTime = 0f, EngineState? engines = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
@@ -1171,22 +1175,22 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
                     child.localEulerAngles = euler;
                 }
-                else if (childName.StartsWith("NavLight", StringComparison.Ordinal))
+                else if (AirsideAircraftParts.NavigationLightFor(childName) is var navigationLight
+                         && navigationLight != AircraftNavigationLight.None)
                 {
-                    var navOn = enginesOn || night;
+                    var navOn = AirsideReusableMotion.NavigationLightsOn(
+                        engines?.AnyRunning ?? enginesOn,
+                        engines?.Beacon ?? enginesOn);
                     child.gameObject.SetActive(navOn);
-                    EnsureNavPointLight(child, navOn, IsNavLightRight(childName));
+                    EnsureNavPointLight(child, navOn, navigationLight);
+                    if (navigationLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
+                        EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
                 }
                 else if (childName.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    // ANM-AIR-004 — pulse from the presentation clock so pause freezes the blink.
-                    var beaconOn = engines?.Beacon ?? enginesOn;
-                    if (beaconOn && deltaTime > 0f)
-                        beaconOn = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
-                    else if (beaconOn)
-                        beaconOn = child.gameObject.activeSelf;
-                    child.gameObject.SetActive(beaconOn);
-                    EnsureBeaconPointLight(child, beaconOn);
+                    var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
+                    child.gameObject.SetActive(beacon > 0.01f);
+                    EnsureBeaconPointLight(child, beacon);
                 }
                 else if (childName.StartsWith("LandingLight", StringComparison.Ordinal))
                 {
@@ -1217,33 +1221,19 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
-        private static bool IsNavLightRight(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return false;
-            var lower = name.ToLowerInvariant();
-            if (lower.Contains("right") || lower.Contains("_r") || lower.EndsWith(" r") || lower.EndsWith("-r"))
-                return true;
-            if (lower.Contains("left") || lower.Contains("_l") || lower.EndsWith(" l") || lower.EndsWith("-l"))
-                return false;
-            // Exact trailing R/L after a separator — avoid matching bare "NavLight".
-            if (name.EndsWith(" R", StringComparison.Ordinal) || name.EndsWith("_R", StringComparison.Ordinal))
-                return true;
-            if (name.EndsWith(" L", StringComparison.Ordinal) || name.EndsWith("_L", StringComparison.Ordinal))
-                return false;
-            return false;
-        }
-
-        private static void EnsureNavPointLight(Transform lamp, bool on, bool isRight)
+        private static void EnsureNavPointLight(Transform lamp, bool on, AircraftNavigationLight kind)
         {
             var light = lamp.GetComponent<Light>();
             if (light == null)
             {
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
-                light.color = isRight
-                    ? new Color(0.95f, 0.15f, 0.12f)
-                    : new Color(0.12f, 0.95f, 0.28f);
+                light.color = kind switch
+                {
+                    AircraftNavigationLight.Right => new Color(0.95f, 0.15f, 0.12f),
+                    AircraftNavigationLight.Tail => new Color(0.95f, 0.95f, 0.90f),
+                    _ => new Color(0.12f, 0.95f, 0.28f)
+                };
                 light.range = 8f;
                 light.shadows = LightShadows.None;
             }
@@ -1253,7 +1243,26 @@ namespace Airside.Presentation
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
 
-        private static void EnsureBeaconPointLight(Transform lamp, bool on)
+        private static void EnsureWingtipStrobe(Transform wingtip, float intensity)
+        {
+            var strobe = wingtip.Find("White strobe");
+            if (strobe == null)
+            {
+                strobe = new GameObject("White strobe").transform;
+                strobe.SetParent(wingtip, false);
+                var light = strobe.gameObject.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(0.92f, 0.96f, 1f);
+                light.range = 18f;
+                light.shadows = LightShadows.None;
+            }
+
+            var point = strobe.GetComponent<Light>();
+            point.enabled = intensity > 0.01f;
+            point.intensity = 12f * intensity;
+        }
+
+        private static void EnsureBeaconPointLight(Transform lamp, float intensity)
         {
             var light = lamp.GetComponent<Light>();
             if (light == null)
@@ -1265,9 +1274,8 @@ namespace Airside.Presentation
                 light.shadows = LightShadows.None;
             }
 
-            light.enabled = on;
-            if (on)
-                light.intensity = 2.6f;
+            light.enabled = intensity > 0.01f;
+            light.intensity = 2.6f * intensity;
         }
 
         /// <summary>
@@ -1655,6 +1663,16 @@ namespace Airside.Presentation
                 if (degrees > 0f)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
+        }
+
+        private static void UpdateNoseWheelSteering(Transform noseGear, float targetDegrees, float deltaTime)
+        {
+            if (noseGear == null || deltaTime <= 0f)
+                return;
+            var euler = noseGear.localEulerAngles;
+            var current = euler.y > 180f ? euler.y - 360f : euler.y;
+            euler.y = Mathf.MoveTowards(current, targetDegrees, deltaTime * 80f);
+            noseGear.localEulerAngles = euler;
         }
 
         /// <summary>
@@ -9855,6 +9873,8 @@ namespace Airside.Presentation
             public Renderer ShadowRenderer;
             public Transform Marker;
             public Renderer MarkerRenderer;
+            public Transform GearNose;
+            public float WheelbaseMetres;
             /// <summary>Carries "Fan L"/"Fan R" turbofan assemblies (the 737).</summary>
             public bool HasFans;
             /// <summary>Carries separate "Elevator" meshes, so the tailplane itself stays still.</summary>
@@ -9881,6 +9901,7 @@ namespace Airside.Presentation
             // Both used to be rediscovered by scanning every child name on every frame.
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
+            Transform mainLeft = null, mainRight = null;
             for (var i = 0; i < names.Length; i++)
             {
                 if (children[i] == null)
@@ -9889,6 +9910,21 @@ namespace Airside.Presentation
                     parts.HasFans = true;
                 else if (names[i].StartsWith("Elevator", StringComparison.Ordinal))
                     parts.HasSeparateElevators = true;
+                else if (names[i] == "Gear nose")
+                    parts.GearNose = children[i];
+                else if (names[i] == "Gear L")
+                    mainLeft = children[i];
+                else if (names[i] == "Gear R")
+                    mainRight = children[i];
+            }
+            if (parts.GearNose != null && (mainLeft != null || mainRight != null))
+            {
+                var main = mainLeft != null && mainRight != null
+                    ? (mainLeft.position + mainRight.position) * 0.5f
+                    : (mainLeft != null ? mainLeft.position : mainRight.position);
+                var delta = parts.GearNose.position - main;
+                delta.y = 0f;
+                parts.WheelbaseMetres = delta.magnitude;
             }
             _aircraftViewParts[id] = parts;
             return parts;

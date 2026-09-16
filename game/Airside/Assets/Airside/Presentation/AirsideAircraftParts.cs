@@ -2,6 +2,14 @@ using System;
 
 namespace Airside.Presentation
 {
+    public enum AircraftNavigationLight
+    {
+        None,
+        Left,
+        Right,
+        Tail
+    }
+
     /// <summary>
     /// Pure name contract for the aircraft landing-gear presentation passes. The
     /// authored kit ships every part as a flat node with its mesh baked at
@@ -20,6 +28,27 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideAircraftParts
     {
+        /// <summary>
+        /// Classifies both authored names and their friendly runtime names. The white tail
+        /// navigation lamp used to fall outside the "NavLight" prefix check and never lit.
+        /// </summary>
+        public static AircraftNavigationLight NavigationLightFor(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return AircraftNavigationLight.None;
+            if (partName.IndexOf("tail_nav_light", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("tail nav light", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("navlight tail", StringComparison.OrdinalIgnoreCase) >= 0)
+                return AircraftNavigationLight.Tail;
+            if (partName.IndexOf("nav_light_left", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("navlight l", StringComparison.OrdinalIgnoreCase) >= 0)
+                return AircraftNavigationLight.Left;
+            if (partName.IndexOf("nav_light_right", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("navlight r", StringComparison.OrdinalIgnoreCase) >= 0)
+                return AircraftNavigationLight.Right;
+            return AircraftNavigationLight.None;
+        }
+
         /// <summary>
         /// True for the rubber tyre, wheel and rim meshes that roll on the ground.
         /// Struts, oleos, scissors, fairings and doors are carried by the leg rather

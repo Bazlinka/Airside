@@ -211,6 +211,22 @@ namespace Airside.Presentation
             return FleetGroundPose(aircraft, visual, 0f).Speed;
         }
 
+        /// <summary>Visual steering angle from the current and near-future authored taxi poses.</summary>
+        private float FleetNoseWheelSteering(CommercialFlight flight, float wheelbaseMetres)
+        {
+            if (!TryFleetGround(flight, out var aircraft, out var visual)
+                || visual.Leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn
+                    or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
+                return 0f;
+
+            const float lookAhead = 1.5f;
+            var current = FleetGroundPose(aircraft, visual, 0f);
+            var future = FleetGroundPose(aircraft, visual, lookAhead);
+            return AirsideReusableMotion.NoseWheelSteerDegrees(
+                current.NoseX, current.NoseZ, future.NoseX, future.NoseZ,
+                current.Speed, lookAhead, wheelbaseMetres, current.TailFirst);
+        }
+
         /// <summary>Where the nose points on a ground leg — tail-first on the pushback, parked heading at the bay.</summary>
         private Vector3 FleetGroundFacing(CommercialFlight flight, Vector3 travel)
         {

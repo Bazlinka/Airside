@@ -22,11 +22,16 @@ namespace Airside.Presentation
         public const float SetupWidth = 420f;
         public const float MinimumMapWidth = 520f;
         public const float GuideHeight = 104f;
+        public const float NavStripHeight = 44f;
 
-        private AirlineHudLayout(Rect clock, Rect guide, Rect fleetArea, Rect toast, Rect map, bool mapCoversFleet, Rect setupArea)
+        /// <summary>Height of the persistent objective line once the first-flight guide is done.</summary>
+        public const float StatusLineHeight = 26f;
+
+        private AirlineHudLayout(Rect clock, Rect guide, Rect navStrip, Rect fleetArea, Rect toast, Rect map, bool mapCoversFleet, Rect setupArea)
         {
             Clock = clock;
             Guide = guide;
+            NavStrip = navStrip;
             FleetArea = fleetArea;
             Toast = toast;
             Map = map;
@@ -36,8 +41,14 @@ namespace Airside.Presentation
 
         public Rect Clock { get; }
 
-        /// <summary>First-session guide card under the clock; zero-sized when the guide is hidden.</summary>
+        /// <summary>
+        /// Under the clock: the first-session guide card while it runs, or — once it's done —
+        /// the persistent one-line objective/status (ADR 0053). Always sized; never zero.
+        /// </summary>
         public Rect Guide { get; }
+
+        /// <summary>The four-workspace nav strip (ADR 0053), directly under the clock/guide column.</summary>
+        public Rect NavStrip { get; }
 
         /// <summary>The most room the fleet panel may take; it shrinks to its content.</summary>
         public Rect FleetArea { get; }
@@ -60,11 +71,16 @@ namespace Airside.Presentation
             var floor = Mathf.Max(Margin + 1f, Mathf.Min(hud.SpeedReadout.y, hud.ControlBar.y) - Margin);
 
             var clock = new Rect(Margin, Margin, Mathf.Min(ClockWidth, inner), Mathf.Min(ClockHeight, floor - Margin));
-            var guide = showGuide
-                ? new Rect(Margin, clock.yMax + Margin, clock.width, Mathf.Max(1f, Mathf.Min(GuideHeight, floor - clock.yMax - Margin)))
-                : new Rect(Margin, clock.yMax, clock.width, 0f);
-            // Whatever sits below the left column starts under the guide when it shows.
-            var leftColumnBottom = showGuide ? guide.yMax : clock.yMax;
+            var guideHeight = showGuide ? GuideHeight : StatusLineHeight;
+            var guide = new Rect(Margin, clock.yMax + Margin, clock.width,
+                Mathf.Max(1f, Mathf.Min(guideHeight, floor - clock.yMax - Margin)));
+            // Whatever sits below the left column starts under the guide/status line.
+            var leftColumnBottom = guide.yMax;
+
+            var navStrip = new Rect(Margin, leftColumnBottom + Margin, clock.width,
+                Mathf.Max(1f, Mathf.Min(NavStripHeight, floor - leftColumnBottom - Margin)));
+            // Everything below the left column now starts under the nav strip.
+            leftColumnBottom = navStrip.yMax;
 
             var fleetWidth = Mathf.Min(FleetWidth, inner);
             var fleetBeside = clock.width + fleetWidth + Margin * 3f <= width;
@@ -84,7 +100,7 @@ namespace Airside.Presentation
 
             var setup = new Rect(Margin, Margin, inner, Mathf.Max(1f, floor - Margin));
 
-            return new AirlineHudLayout(clock, guide, fleet, toast, map, !mapBeside, setup);
+            return new AirlineHudLayout(clock, guide, navStrip, fleet, toast, map, !mapBeside, setup);
         }
 
         /// <summary>A panel of the preferred size, centred in <see cref="SetupArea"/> and never larger than it.</summary>

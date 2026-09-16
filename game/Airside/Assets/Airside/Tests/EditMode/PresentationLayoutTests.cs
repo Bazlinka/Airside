@@ -17,6 +17,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightNumber_AirlineCodeUsesIdForAiAndInitialsForPlayer()
+        {
+            Assert.That(FlightNumber.AirlineCode(Airline.Rex()), Is.EqualTo("REX"));
+            Assert.That(FlightNumber.AirlineCode(Airline.Player("Southern Cross Regional", "#1F3A93")), Is.EqualTo("SC"));
+            Assert.That(FlightNumber.AirlineCode(Airline.Player("Wattlebird", "#1F3A93")), Is.EqualTo("WA"));
+            Assert.That(FlightNumber.AirlineCode(null), Is.EqualTo("XX"));
+        }
+
+        [Test]
+        public void FlightNumber_IsDeterministicAndVariesByRoute()
+        {
+            var rex = Airline.Rex();
+            var a = FlightNumber.For(rex, "VH-ABC", "MEL");
+            var b = FlightNumber.For(rex, "VH-ABC", "MEL");
+            var c = FlightNumber.For(rex, "VH-ABC", "SYD");
+            Assert.That(a, Is.EqualTo(b), "same aircraft and route must read the same every time");
+            Assert.That(a, Is.Not.EqualTo(c), "a different destination should usually read a different number");
+            Assert.That(a, Does.StartWith("REX"));
+            Assert.That(int.Parse(a.Substring(3)), Is.InRange(100, 999));
+        }
+
+        [Test]
         public void AdelaideLighting_GuardFilterTargetsMainRunwayHoldingPoints()
         {
             Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(-1529.9f, 90.3f), Is.True);
@@ -105,6 +127,7 @@ namespace Airside.Tests
                 Assert.That(a.Overlaps(b), Is.False, $"{aName} overlaps {bName} at {screenWidth}x{screenHeight}");
 
             Inside(airline.Clock, "clock");
+            Inside(airline.NavStrip, "nav strip");
             Inside(airline.FleetArea, "fleet");
             Inside(airline.Toast, "toast");
             Inside(airline.Map, "map");
@@ -114,28 +137,33 @@ namespace Airside.Tests
             foreach (var (rect, name) in readoutAndBar)
             {
                 Apart(airline.Clock, "clock", rect, name);
+                Apart(airline.NavStrip, "nav strip", rect, name);
                 Apart(airline.FleetArea, "fleet", rect, name);
                 Apart(airline.Map, "map", rect, name);
                 Apart(airline.Toast, "toast", rect, name);
             }
 
-            if (showGuide)
-            {
-                Inside(airline.Guide, "guide");
-                Apart(airline.Guide, "guide", airline.Clock, "clock");
-                Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
-                Apart(airline.Guide, "guide", airline.Map, "map");
-                foreach (var (rect, name) in readoutAndBar)
-                    Apart(airline.Guide, "guide", rect, name);
-            }
+            // Guide/status line: always sized now (the tutorial card while it runs, or the
+            // persistent one-line objective once it's done), so it is checked either way.
+            Inside(airline.Guide, "guide");
+            Apart(airline.Guide, "guide", airline.Clock, "clock");
+            Apart(airline.Guide, "guide", airline.NavStrip, "nav strip");
+            Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
+            Apart(airline.Guide, "guide", airline.Map, "map");
+            foreach (var (rect, name) in readoutAndBar)
+                Apart(airline.Guide, "guide", rect, name);
 
             Apart(airline.Clock, "clock", airline.FleetArea, "fleet");
             Apart(airline.Clock, "clock", airline.Map, "map");
+            Apart(airline.NavStrip, "nav strip", airline.Clock, "clock");
+            Apart(airline.NavStrip, "nav strip", airline.Map, "map");
             Apart(airline.Toast, "toast", airline.Clock, "clock");
+            Apart(airline.Toast, "toast", airline.NavStrip, "nav strip");
             if (!airline.MapCoversFleet)
             {
                 Apart(airline.Map, "map", airline.FleetArea, "fleet");
                 Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
+                Apart(airline.NavStrip, "nav strip", airline.FleetArea, "fleet");
             }
         }
 

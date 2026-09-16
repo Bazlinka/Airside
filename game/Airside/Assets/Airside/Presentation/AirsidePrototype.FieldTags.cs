@@ -63,7 +63,8 @@ namespace Airside.Presentation
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var ink = AirsideTheme.RunwayInk;
 
-                var text = mine ? $"{Ownership.PlayerBadge} · {aircraft.Registration} · {AircraftStatus.TagPhase(aircraft)}" : aircraft.Registration;
+                var identity = FlightNumber.OrRegistration(aircraft);
+                var text = mine ? $"{Ownership.PlayerBadge} · {identity} · {AircraftStatus.TagPhase(aircraft)}" : identity;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above

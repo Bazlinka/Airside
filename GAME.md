@@ -1,5 +1,184 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — Task 3: wire the career (Task 2) into the HUD (ADR 0053).**
+  - **Player-visible:** the Contracts workspace is a real panel now, not a placeholder — it
+    shows funds/reliability/tier, `REG-KGC-INTRO`'s terms (route, aircraft, rotations,
+    payment, reliability gain, tier requirement) with an **Accept contract** button, and once
+    accepted, a progress card (rotations complete / required, a progress bar, the terms again)
+    in place of the offer. Completing an eligible rotation now shows a toast
+    ("VH-PAX earned $400 on REG-KGC-INTRO (2 rotations so far)."), with a distinct one on the
+    contract's last rotation ("...— REG-KGC-INTRO complete!"). The clock panel gained a third
+    line — funds and reliability, always visible, the persistent status strip ADR 0053 asked
+    for. The objective line (from the earlier status-line slice) now shows contract progress
+    once one is active, instead of falling straight to the generic fleet-count line. The away
+    summary reports funds/reliability change while you were gone, when there was one.
+  - **How:** `AirlineOperations` gained `RecentSettlements`/`TotalSettlements`, mirroring the
+    existing `RecentEvents`/`TotalEvents` pattern exactly, so Presentation can detect new
+    settlements the same way it already detects new state-change events
+    (`AnnounceNewSettlements`, next to `AnnounceNewEvents`). `OperationsSummary.Line` takes an
+    optional `AirlineCareerState` and prefers contract progress over the fleet-count fallback
+    when nothing more urgent (an aircraft needing attention) is going on. `AwaySummary.Build`
+    diffs `before.CareerFunds`/`CareerReliability` (the v6 save fields from Task 2) against
+    `after.CareerState`. Nothing here touches Domain/Simulation's actual settlement logic —
+    every new behaviour is read-only against what Task 2 built, or a new command
+    (`AcceptContract`) that already existed on `AirlineOperations`.
+  - **Evidence:** the Domain/Simulation side of this (the away-summary diff logic) is real,
+    verified evidence — `scripts/test-domain.sh` still passes, **282/282** (one new test,
+    `Summary_ReportsCareerEarningsWhileAway`, added to `AwayCatchUpTests.cs`; it initially
+    failed for an unrelated reason — the hardcoded return stand collided with an AI carrier's
+    bay — fixed by picking a free stand instead of assuming one, same mistake the codebase's
+    own `FreeStands()` helper exists to avoid). The HUD-drawing side
+    (`AirsidePrototype.Airline.cs`, `OperationsSummary.cs`) is Presentation: reviewed carefully
+    by inspection, matches established chrome/pattern precedent throughout, but **not run** —
+    still no Unity editor in this session. Same open items as every presentation slice this
+    session: `scripts/test-unity.sh`, a packaged build, the 1280x720/1440x900/Retina visual
+    pass.
+  - **Not done (real remaining scope):** nothing stops re-accepting `REG-KGC-INTRO` after it's
+    fulfilled once — there's no "completed contracts" ledger yet, so the player can keep
+    farming the starter contract indefinitely. That's consistent with Task 2's scope (no tier
+    advancement, no second contract) but is worth Bailey's call before Task 4: either that's
+    fine as a bridge until real progression exists, or it needs a guard now.
+  - **NEXT:** all of Task 1 (HUD shell), Task 2 (career domain) and Task 3 (this) are pushed
+    and ready for one batched Mac review — build, `scripts/test-unity.sh`, and the visual pass
+    across every screen the earlier slices' handoffs listed. Task 4 (regional growth: a second
+    contract, capacity, a second aircraft) waits on that review and on Bailey's read of the
+    re-acceptance question above.
+
+- **2026-09-16 Claude — Task 2: airline career domain and save v6 migration (ADR 0053).**
+  - **Process note:** `GAME.md`'s own standing instruction said not to begin Task 2 until
+    Bailey reviewed the cleaned HUD on a packaged build — that review has not happened (still
+    no Unity editor in this session). The user explicitly chose to proceed with Task 2 anyway
+    when asked directly. Recording that here rather than silently skipping the gate.
+  - **Scope, matching the plan doc exactly:** Domain, Simulation, save schema v6, migration and
+    tests — deliberately **no HUD/economy UI**. The Contracts workspace placeholder from the
+    earlier slice is unchanged; nothing here is visible to the player yet. That wiring is
+    Task 3.
+  - **What exists now:** a real `AcceptContract` command and one authored contract,
+    `REG-KGC-INTRO` (Adelaide↔Kingscote, ATR 42, 5 rotations, tuning-placeholder payment/
+    reward numbers — not balanced, Bailey tunes these). Completing an eligible rotation as the
+    player pays per-rotation, nudges reliability, and — on the contract's last required
+    rotation — pays a completion reward and clears the active contract. Everything else
+    (AI traffic, routes, taxi timing, saves for existing fields) is untouched; the hook lives
+    entirely inside the existing `TaxiIn → AtStand` transition
+    (`AirlineOperations.AdvanceAircraft`), the same place `CompletedTrips` already increments.
+  - **Idempotency — the acceptance bar the plan doc calls out by name:** every settlement gets
+    a `SettlementId` (registration + completed-trip number) and `AirlineCareerState` refuses a
+    repeat one. Proved directly (not just asserted): a test calls the internal guard twice
+    with the same id and checks the second call pays nothing — and, to make sure that test
+    isn't vacuous, I mutated the guard out, watched the test fail, then restored it and
+    confirmed it passes again. Save/restore reconstructs the exact processed-settlement set,
+    so a rotation already paid before a save can never be paid again after loading it.
+  - **Save v6:** `AirlineSaveData.CurrentVersion` is 6. A pre-6 save loads to a **fresh**
+    Provisional career (0 funds, 100 reliability, no contract) — it never retroactively pays
+    for trips flown before the career existed, per the plan doc's rule. Every existing v5
+    field (fleet, schedules, stands, movement data) is untouched and still restores exactly as
+    before; proved with a hand-built v5-shaped fixture in the new test file.
+  - **Evidence — this slice is different from the presentation-only ones below:** I installed
+    the .NET 8 SDK in this session (`/opt/dotnet`, via the official `dotnet-install.sh` script
+    — apt's cached package index 404'd) specifically so `scripts/test-domain.sh` could
+    actually run rather than being flagged as "not run here" again. **274/274 pre-existing
+    headless tests still pass; 7 new tests in `Tests/EditMode/AirlineCareerTests.cs` pass —
+    281/281 total.** This is real, verified evidence, not a claim. Unity EditMode (the real
+    source of truth) and a packaged build are still open — no Unity editor here — but the
+    Domain/Simulation logic itself has actually been exercised, unlike every earlier
+    Presentation-only slice this session.
+  - **One structural note for reviewers:** added `Simulation/AssemblyInfo.cs` with
+    `[assembly: InternalsVisibleTo("Airside.Tests.EditMode")]` — the first use of that
+    attribute in this codebase. It exists solely so the idempotency test can call the internal
+    settlement guard directly; every other new behaviour is still exercised only through
+    `AirlineOperations`'s public commands, matching how the rest of the test suite works.
+  - **Explicitly not done (real remaining scope, not silently skipped):** `CancelDeparture`
+    does not yet cost reliability for breaking a commitment against an active contract (left a
+    `// TODO(ADR 0053)` at the exact spot); no tier ever advances past Provisional yet (Task 4);
+    no HUD/away-summary wiring (Task 3).
+  - **NEXT:** Task 3 — wire `REG-KGC-INTRO` into the Contracts workspace placeholder, an
+    objective/status presentation, and the away-summary flow. Before any of that ships, still
+    needs: `scripts/test-unity.sh` on Mac, a packaged build, and the 1280x720/1440x900/Retina
+    visual pass this whole session's presentation work has been accumulating.
+
+- **2026-09-16 Claude — persistent status/objective line, closing the remaining ADR 0053
+  Task 1 gap from the nav-shell slice below.**
+  - **Player-visible:** once the first-flight guide finishes, the card it used to occupy under
+    the clock doesn't just vanish — it becomes a quiet one-line objective: the most urgent player
+    aircraft and what it needs (`VH-ABC needs you — choose a stand.`), tinted safety-yellow or
+    signal-red to match its severity, or a calm fleet-wide line (`3 of 4 aircraft flying — on
+    schedule.` / `All aircraft on stand — ready for a flight.`) when nothing needs attention. This
+    is the "current operation, next objective" the Task 1 acceptance list asked for outside the
+    tutorial.
+  - **How:** new pure `Presentation/OperationsSummary.cs` picks the worst-severity player
+    aircraft via the existing `AircraftStatus.Severity`, or falls back to a fleet count. The
+    `Guide` region in `AirlineHudLayout` — previously zero-sized once the tutorial finished — is
+    now always sized (`StatusLineHeight` post-guide, `GuideHeight` during it), so `DrawAirlineHud`
+    draws either the tutorial card or the new `DrawStatusLine` in the same slot. `FieldMiniMap`
+    already cleared the guide column via the nav-strip fix below, so this needed no further
+    change there.
+  - **Evidence:** `PresentationLayoutTests.AirlineHudLayout_PanelsFitAndNeverOverlap` now checks
+    the guide/status rect unconditionally (it's never zero-sized any more) at the same 6
+    resolutions — not run here, no Unity editor in this session. `OperationsSummary` itself has
+    no dedicated unit test: `FleetAircraft` has an internal constructor and no existing test
+    fixture builds one directly, so it needs eyeballing on a Mac instead.
+  - **NEXT:** fold into the same Mac verification pass as everything below — nav shell, flight
+    numbers/airport glyphs, and this status line are all presentation-only and safe to review
+    together.
+
+- **2026-09-16 Claude — flight numbers and airport-glyph map markers (player-requested polish,
+  outside the ADR 0053 task sequence).**
+  - **Player-visible:** the Australia destinations map draws each destination — and Adelaide's
+    own ADL marker — as a small airport glyph (a ringed compass with crossed runway bars) instead
+    of a plain coloured square, growing modestly with zoom so it still reads as a field once
+    you're in close. Flight identity through the HUD now leads with a flight number
+    (e.g. `REX 404`, or two letters from the player's own airline name, e.g. `SC 217`) instead of
+    a bare registration: the map's in-flight labels, the Flights board's small aircraft line
+    (flight number · registration) and the floating field tags (flight number, falling back to
+    registration for an idle aircraft with nothing planned) all read this way. The map's detail
+    line (zoomed/selected/tracked) still spells out registration and type alongside the running
+    commentary, so both identities stay available.
+  - **How:** new pure `Presentation/FlightNumber.cs` — `AirlineCode` (the airline's own short id
+    for AI operators, two letters drawn from the player's chosen name otherwise) and `For`/
+    `ForAircraft`/`OrRegistration`, deterministic from airline + registration + destination via
+    an FNV hash so the same aircraft on the same route always reads the same number. No Domain
+    or save change: nothing is stored, it's derived fresh every draw. The airport glyph is a
+    baked 48×48 texture (`AirportIcon`/`DrawAirportIcon` beside the existing `PlaneIcon` in
+    `AirsidePrototype.Airline.cs`), tinted per marker exactly like the square it replaced.
+  - **Evidence:** two new `FlightNumber` tests in `PresentationLayoutTests` (airline-code
+    derivation, determinism/route-sensitivity) — not run here, no Unity editor in this session;
+    same open items as below (Unity EditMode, packaged build, visual pass).
+  - **NEXT:** fold into the same Mac verification pass as the HUD shell slice below — nothing
+    here touches simulation/save, so it's safe to review together.
+
+- **2026-09-16 Claude — Task 1 HUD shell cleanup, first slice: workspace nav consolidation.**
+  - **Player-visible:** the clock panel's three ad hoc buttons (Plan/Hangar/Flights) are replaced
+    by a nav strip directly under it with the four ADR 0053 workspaces — **Operations** (the
+    flight board), **Map** (destinations/planner), **Fleet** (Hangar) and **Contracts** (a
+    "coming in a future update" placeholder; no career state exists yet). Exactly one workspace
+    is open at a time; the active tab reads in safety yellow. Existing hotkeys are unchanged
+    (Tab → Map, H → Fleet, T → Operations). Dev Tools (F8) now shows a red frame and "DEV" badge
+    so it reads as a diagnostic overlay rather than one more player tab.
+  - **How:** new `HudWorkspace` enum (`Presentation/HudWorkspace.cs`) and one `_activeWorkspace`
+    field replace the four independent `_mapOpen`/`_hangarOpen`/`_flightsOpen`/`_devToolsOpen`
+    booleans that were hand-kept mutually exclusive across a dozen call sites. `AirlineHudLayout`
+    gains a pure `NavStrip` rect (same tested pattern as `Clock`/`Guide`/`FleetArea`/`Map`/
+    `Toast`), placed under the clock/guide column; everything below it (fleet, map, toast) now
+    starts below the strip instead of directly under the clock. `FieldMiniMap.PanelFor` was
+    updated to also clear the new strip so the mini-map can't sit under it on a short window.
+    All existing panel content (`DrawFlightsPanel`, `DrawDestinationsMap`, `DrawHangarPanel`) is
+    unchanged — only which field selects them.
+  - **Invariants / unchanged:** no Domain, Simulation, save, route, schedule, reservation or
+    traffic code touched. Grepped for every remaining reference to the removed booleans across
+    `Assets/` before deleting them (including `AirsidePrototype.MiniMap.cs` and
+    `AirsidePrototype.Soak.cs`'s review-panel dispatcher) to keep the project compiling.
+  - **Evidence:** `PresentationLayoutTests.AirlineHudLayout_PanelsFitAndNeverOverlap` extended
+    for the new `NavStrip` rect (fits-on-screen + no-overlap) at the existing 6 resolutions,
+    `showGuide` true/false — not run here (no Unity editor in this session).
+    `scripts/test-domain.sh` is unaffected (Domain/Simulation untouched).
+  - **NEXT:** run `scripts/test-unity.sh` and a packaged Mac build, then the visual pass at
+    1280x720, 1440x900 and Retina across setup, first-flight guide, planner, map, fleet, Hangar,
+    Flights, away summary and stand assignment (Task 1's own acceptance list) before merging.
+    Remaining Task 1 scope not attempted in this slice: a restyled persistent status strip/single
+    objective layer and any further contextual-primary-action polish beyond what already exists
+    at `DrawSelectedAircraftDetail`. Do not begin career state (Task 2) until Bailey has reviewed
+    the cleaned HUD on a packaged build.
+
 - **2026-09-16 Bailey/Codex — airline career progression and HUD direction approved (ADR 0053).**
   - **Product identity:** Airside is a player-airline growth game inside an autonomous Adelaide
     Airport. The retired Kingscote airport-management economy is not the direction.

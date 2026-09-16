@@ -75,6 +75,27 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Summary_ReportsCareerEarningsWhileAway()
+        {
+            var (clock, ops) = Game();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            var saved = AirlineSave.Capture(ops, SavedAt);
+
+            clock.Set(clock.Now.Advance(3 * 3600));
+            ops.Update();
+            var plane = ops.FleetOf(ops.PlayerAirline).Single();
+            Assert.That(plane.State, Is.EqualTo(FleetState.AwaitingStand), "still needs a stand chosen for it");
+            var freeStand = ops.FreeStands().First();
+            Assert.That(ops.AssignStand(plane, freeStand).Accepted, Is.True);
+            clock.Set(clock.Now.Advance(AirlineOperations.TaxiInSecondsTo(freeStand)));
+            ops.Update();
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand), "the rotation settles once it reaches its stand");
+
+            var summary = AwaySummary.Build(saved, ops, 3 * 3600);
+            Assert.That(summary.Lines.Any(l => l.Contains("earned $")), Is.True);
+        }
+
+        [Test]
         public void VersionOneSave_StillLoads()
         {
             var (clock, ops) = Game();

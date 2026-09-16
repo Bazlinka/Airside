@@ -106,6 +106,15 @@ namespace Airside.Simulation
                 lines.Add(flown > 0 ? $"{airline.Name} flew {Plural(flown, "trip")}." : $"{airline.Name} flew no trips.");
             }
 
+            var fundsEarned = after.CareerState.Funds - before.CareerFunds;
+            if (fundsEarned > 0)
+                lines.Add($"Your airline earned ${fundsEarned:N0} while you were away.");
+            var reliabilityChange = after.CareerState.Reliability - before.CareerReliability;
+            if (reliabilityChange != 0)
+                lines.Add(reliabilityChange > 0
+                    ? $"Reliability rose {reliabilityChange} points to {after.CareerState.Reliability}%."
+                    : $"Reliability fell {-reliabilityChange} points to {after.CareerState.Reliability}%.");
+
             if (awaySeconds >= AwayCatchUp.MaxSeconds)
                 lines.Add("The airport caught up one week; longer absences are not simulated.");
 

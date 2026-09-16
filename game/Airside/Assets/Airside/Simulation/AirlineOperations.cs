@@ -163,6 +163,7 @@ namespace Airside.Simulation
         private readonly List<FleetAircraft> _fleet = new();
         private readonly List<StableId> _stands;
         private readonly List<FleetEvent> _recentEvents = new();
+        private readonly List<FlightSettlement> _recentSettlements = new();
         private SimulationTime _processedTo;
         private SimulationTime _runwayFreeAt;
 
@@ -177,6 +178,7 @@ namespace Airside.Simulation
             _stands = new List<StableId>(stands);
             _processedTo = clock.Now;
             _runwayFreeAt = clock.Now;
+            CareerState = new AirlineCareerState();
         }
 
         /// <summary>Staggered opening departures; an arrival is already inbound as play begins.</summary>
@@ -343,7 +345,17 @@ namespace Airside.Simulation
         /// <summary>Events emitted since start, so a reader can tell which recent ones are new.</summary>
         public long TotalEvents { get; private set; }
 
+        /// <summary>Newest last, capped at <see cref="MaxRecentEvents"/>. Not persisted — a
+        /// fresh session has no settlement history to show, only the career totals it produced.</summary>
+        public IReadOnlyList<FlightSettlement> RecentSettlements => _recentSettlements;
+
+        /// <summary>Settlements applied since start, so a reader can tell which recent ones are new.</summary>
+        public long TotalSettlements { get; private set; }
+
         public Airline PlayerAirline => _airlines.Find(a => a.IsPlayer);
+
+        /// <summary>The player airline's career progress (ADR 0053): funds, reliability, tier and contract.</summary>
+        public AirlineCareerState CareerState { get; private set; }
 
         public IEnumerable<FleetAircraft> FleetOf(Airline airline)
         {
@@ -429,6 +441,30 @@ namespace Airside.Simulation
         {
             _runwayFreeAt = runwayFreeAt;
             TotalEvents = Math.Max(0, totalEvents);
+        }
+
+        /// <summary>Rebuilds career state (ADR 0053) from a v6+ save, or a fresh Provisional
+        /// state when migrating an older one — never from anything it doesn't recognise.</summary>
+        internal void RestoreCareerState(
+            long funds, int reliability, string tier, string activeContractId,
+            long contractAcceptedAtSeconds, int contractCompletedRotations, IEnumerable<string> processedSettlementKeys)
+        {
+            if (string.IsNullOrWhiteSpace(tier)
+                || !Enum.TryParse(tier, out OperatingTier parsedTier)
+                || !Enum.IsDefined(typeof(OperatingTier), parsedTier)
+                || !string.Equals(parsedTier.ToString(), tier.Trim(), StringComparison.Ordinal))
+                throw new FormatException($"Unknown career tier '{tier}'.");
+
+            ActiveRouteContract contract = null;
+            if (!string.IsNullOrEmpty(activeContractId))
+            {
+                if (!RouteContractCatalogue.TryFind(activeContractId, out _))
+                    throw new FormatException($"Unknown contract '{activeContractId}'.");
+                contract = new ActiveRouteContract(
+                    activeContractId, new SimulationTime(contractAcceptedAtSeconds), contractCompletedRotations);
+            }
+
+            CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys);
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -614,8 +650,58 @@ namespace Airside.Simulation
             if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"{aircraft.Registration} has no departure waiting to start.");
 
+            // TODO(ADR 0053): a broken commitment against an active career contract should
+            // cost reliability. Not implemented — Task 2's acceptance list only asks for
+            // deterministic settlement of completed flights; this is real remaining scope.
             aircraft.Scheduled = null;
             return CommandResult.Ok;
+        }
+
+        /// <summary>
+        /// Accepts an authored route contract (ADR 0053) as the player's one active career
+        /// contract. Refused while another is already active, or the player hasn't reached
+        /// the tier it requires.
+        /// </summary>
+        public CommandResult AcceptContract(RouteContractDefinition definition)
+        {
+            if (definition == null)
+                return CommandResult.Refused("Unknown contract.");
+            if (CareerState.ActiveContract != null)
+                return CommandResult.Refused("Already operating a contract.");
+            if (CareerState.Tier < definition.RequiredTier)
+                return CommandResult.Refused($"{definition.Id} needs {definition.RequiredTier} tier.");
+
+            CareerState.ActiveContract = new ActiveRouteContract(definition.Id, _processedTo);
+            return CommandResult.Ok;
+        }
+
+        /// <summary>
+        /// Settles a player aircraft's just-completed rotation against the active career
+        /// contract, if any — a no-op unless the route and aircraft type match. Idempotent:
+        /// <see cref="AirlineCareerState.TryApplySettlement"/> refuses a repeat settlement id,
+        /// so a duplicate call (an extra frame, a replayed event) never pays twice.
+        /// </summary>
+        private void TrySettleFlight(FleetAircraft aircraft, Destination? justFlown, SimulationTime now)
+        {
+            var contract = CareerState.ActiveContract;
+            if (contract == null || !justFlown.HasValue)
+                return;
+            if (!RouteContractCatalogue.TryFind(contract.DefinitionId, out var definition))
+                return;
+            if (definition.EligibleType != aircraft.Type)
+                return;
+            if (!definition.MatchesRoute(Home.Code, justFlown.Value.Code))
+                return;
+
+            var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
+            var settlement = CareerState.TryApplySettlement(settlementId, definition);
+            if (settlement == null)
+                return;
+
+            _recentSettlements.Add(settlement.Value);
+            TotalSettlements++;
+            if (_recentSettlements.Count > MaxRecentEvents)
+                _recentSettlements.RemoveAt(0);
         }
 
         public CommandResult AssignStand(FleetAircraft aircraft, StableId stand)
@@ -743,11 +829,14 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.TaxiIn:
+                    var justFlown = aircraft.CurrentDestination;
                     aircraft.CompletedTrips++;
                     aircraft.CurrentDestination = null;
                     aircraft.WentAroundThisTrip = false;
                     Transition(aircraft, FleetState.AtStand, now, null);
-                    if (!aircraft.Airline.IsPlayer)
+                    if (aircraft.Airline.IsPlayer)
+                        TrySettleFlight(aircraft, justFlown, now);
+                    else
                         ScheduleAiDeparture(aircraft, now);
                     return true;
 

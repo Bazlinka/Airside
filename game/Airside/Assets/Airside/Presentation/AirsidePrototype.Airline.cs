@@ -27,9 +27,8 @@ namespace Airside.Presentation
         private AirlineOperations _operations;
         private string _airlineNameDraft = "Southern Cross Regional";
         private int _liveryChoice;
-        private bool _mapOpen;
-        private bool _hangarOpen;
-        private bool _flightsOpen;
+        /// <summary>The single player workspace open at a time (ADR 0053).</summary>
+        private HudWorkspace _activeWorkspace;
         private bool _devToolsOpen;
         private bool _controlsHelpOpen;
         private readonly AustraliaMapLens _mapLens = new();
@@ -61,6 +60,7 @@ namespace Airside.Presentation
         private long _departureDelaySeconds = 15 * 60;
         private string _mapMessage;
         private long _seenEvents;
+        private long _seenSettlements;
         private readonly ToastQueue _toasts = new();
         private readonly List<ToastEntry> _visibleToasts = new();
 
@@ -93,6 +93,7 @@ namespace Airside.Presentation
             _operations.Update();
             RefreshFleetFlights();
             AnnounceNewEvents();
+            AnnounceNewSettlements();
             AutosaveIfDue();
         }
 
@@ -119,9 +120,9 @@ namespace Airside.Presentation
             if (keyboard.rightBracketKey.wasPressedThisFrame)
                 CycleSelection(1);
             if (keyboard.hKey.wasPressedThisFrame)
-                ToggleHangar();
+                SetWorkspace(HudWorkspace.Fleet);
             if (keyboard.tKey.wasPressedThisFrame)
-                ToggleFlights();
+                SetWorkspace(HudWorkspace.Operations);
             if (keyboard.f8Key.wasPressedThisFrame)
                 ToggleDevTools();
             if (keyboard.f1Key.wasPressedThisFrame)
@@ -172,16 +173,28 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
+            else
+                DrawStatusLine(placement.Guide, small);
+            DrawWorkspaceNav(placement.NavStrip, smallButton);
+            if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
             if (_devToolsOpen)
                 DrawDevToolsPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_flightsOpen)
-                DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_hangarOpen)
-                DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_mapOpen)
-                DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+            else switch (_activeWorkspace)
+            {
+                case HudWorkspace.Operations:
+                    DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Fleet:
+                    DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Map:
+                    DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Contracts:
+                    DrawContractsPanel(placement.Map, panel, title, label, small, smallButton);
+                    break;
+            }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             DrawSelectionHudCard(layout, panel, label, small);
             if (_controlsHelpOpen)
@@ -255,6 +268,7 @@ namespace Airside.Presentation
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player,
                 AirlineClock.Aligned(_clock.Now, DateTime.UtcNow));
             _seenEvents = _operations.TotalEvents;
+            _seenSettlements = _operations.TotalSettlements;
             RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             SaveAirline();
@@ -289,11 +303,12 @@ namespace Airside.Presentation
             }
 
             _hudPanels.Add(placement.Clock);
-            if (showGuide)
-                _hudPanels.Add(placement.Guide);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
+            // Always meaningful now: the tutorial card while it runs, the status line after.
+            _hudPanels.Add(placement.Guide);
+            _hudPanels.Add(placement.NavStrip);
+            if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
-            if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
+            if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 _hudPanels.Add(placement.Map);
             if (MiniMapShows)
             {
@@ -329,6 +344,24 @@ namespace Airside.Presentation
             var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 22f), heading, bold);
             GUI.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, rect.height - 40f), hint, small);
+        }
+
+        /// <summary>
+        /// The persistent one-line objective (ADR 0053) that replaces the guide card once it's
+        /// done: the player fleet's most urgent aircraft, or a quiet fleet-wide line.
+        /// </summary>
+        private void DrawStatusLine(Rect rect, GUIStyle small)
+        {
+            if (rect.height < 4f)
+                return;
+            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState);
+            var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
+                new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
+            var previousContent = GUI.contentColor;
+            if (severity != StatusSeverity.Normal)
+                GUI.contentColor = SeverityColour(severity, previousContent);
+            GUI.Label(new Rect(rect.x + 2f, rect.y + 4f, rect.width - 4f, rect.height - 4f), text, style);
+            GUI.contentColor = previousContent;
         }
 
         /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>
@@ -478,6 +511,7 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
+            _seenSettlements = _operations.TotalSettlements;
             // An old enough save gains both; the else-if used to swallow the jet's news.
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
@@ -537,14 +571,137 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
                 $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
-            if (GUI.Button(new Rect(rect.x + 10f, rect.y + 60f, 86f, 24f), _mapOpen ? "Close plan" : "Plan (Tab)", smallButton))
-                TogglePlanner();
-            if (GUI.Button(new Rect(rect.x + 102f, rect.y + 60f, 90f, 24f), _hangarOpen ? "Close hangar" : "Hangar (H)", smallButton))
-                ToggleHangar();
-            if (GUI.Button(new Rect(rect.x + 198f, rect.y + 60f, 90f, 24f), _flightsOpen ? "Close board" : "Flights (T)", smallButton))
-                ToggleFlights();
+            // ADR 0053's persistent status strip: funds and reliability, quiet, always visible.
+            GUI.Label(new Rect(rect.x + 32f, rect.y + 58f, rect.width - 46f, 20f),
+                $"${_operations.CareerState.Funds:N0}  ·  {_operations.CareerState.Reliability}% reliability", small);
         }
 
+        private static readonly (HudWorkspace workspace, string label, string hotkey)[] WorkspaceTabs =
+        {
+            (HudWorkspace.Operations, "Operations", "T"),
+            (HudWorkspace.Map, "Map", "Tab"),
+            (HudWorkspace.Fleet, "Fleet", "H"),
+            (HudWorkspace.Contracts, "Contracts", null)
+        };
+
+        private GUIStyle _navActiveButtonStyle;
+
+        /// <summary>
+        /// The four player workspaces (ADR 0053), one open at a time. Replaces the previous
+        /// three ad hoc clock-panel buttons; the active tab reads distinctly from the rest.
+        /// </summary>
+        private void DrawWorkspaceNav(Rect rect, GUIStyle smallButton)
+        {
+            var active = _navActiveButtonStyle ??= AirsideTheme.TextStyle(
+                new GUIStyle(smallButton) { fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow);
+
+            var slot = rect.width / WorkspaceTabs.Length;
+            for (var i = 0; i < WorkspaceTabs.Length; i++)
+            {
+                var (workspace, label, hotkey) = WorkspaceTabs[i];
+                var tabRect = new Rect(rect.x + i * slot, rect.y, slot - 4f, rect.height);
+                var text = hotkey != null ? $"{label} ({hotkey})" : label;
+                var style = _activeWorkspace == workspace ? active : smallButton;
+                if (GUI.Button(tabRect, text, style))
+                    SetWorkspace(workspace);
+            }
+        }
+
+        /// <summary>The Contracts workspace (ADR 0053): career summary, the active contract's
+        /// progress, or the authored contracts on offer when none is active.</summary>
+        private void DrawContractsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
+            GUI.Box(rect, GUIContent.none, panel);
+
+            var x = rect.x + 16f;
+            var inner = rect.width - 32f;
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Contracts", title);
+            if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
+                SetWorkspace(HudWorkspace.Contracts);
+
+            var career = _operations.CareerState;
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(x, rect.y + 46f, inner, 20f),
+                $"{career.Tier} tier  ·  ${career.Funds:N0}  ·  {career.Reliability}% reliability", bold);
+
+            var y = rect.y + 78f;
+            if (career.ActiveContract != null && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var active))
+            {
+                DrawActiveContractCard(x, y, inner, active, career.ActiveContract, label, small);
+            }
+            else
+            {
+                foreach (var definition in RouteContractCatalogue.All)
+                    y = DrawContractOffer(x, y, inner, definition, career, label, small, smallButton) + 12f;
+            }
+        }
+
+        private void DrawActiveContractCard(float x, float y, float width, RouteContractDefinition definition,
+            ActiveRouteContract active, GUIStyle label, GUIStyle small)
+        {
+            var card = new Rect(x, y, width, 112f);
+            DrawSolid(card, new Color(1f, 1f, 1f, 0.05f));
+            AirsideTheme.DrawPanelFrame(card, AirsideTheme.SafetyYellow);
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(card.x + 12f, card.y + 10f, card.width - 24f, 22f),
+                $"{definition.Id}  ·  {definition.OriginCode} ↔ {definition.DestinationCode}", bold);
+            GUI.Label(new Rect(card.x + 12f, card.y + 32f, card.width - 24f, 20f),
+                $"{active.CompletedRotations} of {definition.RequiredRotations} rotations complete", small);
+            AirsideTheme.DrawProgressBar(new Rect(card.x + 12f, card.y + 54f, card.width - 24f, 8f),
+                Mathf.Clamp01((float)active.CompletedRotations / definition.RequiredRotations),
+                AirsideTheme.ClearGreen, AirsideTheme.Tarmac);
+            GUI.Label(new Rect(card.x + 12f, card.y + 70f, card.width - 24f, 20f),
+                $"${definition.PaymentPerRotation:N0} per rotation  ·  ${definition.CompletionReward:N0} on completion", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 90f, card.width - 24f, 20f),
+                $"Fly a {definition.EligibleType.Name} between {definition.OriginCode} and {definition.DestinationCode} to progress.", small);
+        }
+
+        /// <summary>One authored contract not yet accepted; returns the y just past it.</summary>
+        private float DrawContractOffer(float x, float y, float width, RouteContractDefinition definition,
+            AirlineCareerState career, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var card = new Rect(x, y, width, 132f);
+            DrawSolid(card, new Color(1f, 1f, 1f, 0.04f));
+            AirsideTheme.DrawPanelFrame(card, AirsideTheme.Concrete);
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(card.x + 12f, card.y + 10f, card.width - 24f, 22f),
+                $"{definition.Id}  ·  {definition.OriginCode} ↔ {definition.DestinationCode}", bold);
+            GUI.Label(new Rect(card.x + 12f, card.y + 32f, card.width - 24f, 20f),
+                $"{definition.RequiredRotations} rotations  ·  {definition.EligibleType.Name}  ·  {definition.RequiredTier} tier", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 52f, card.width - 24f, 20f),
+                $"${definition.PaymentPerRotation:N0} per rotation, +${definition.CompletionReward:N0} on completion", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 72f, card.width - 24f, 20f),
+                $"+{definition.ReliabilityGainPerRotation} reliability per rotation", small);
+
+            var eligible = career.Tier >= definition.RequiredTier;
+            GUI.enabled = eligible;
+            if (GUI.Button(new Rect(card.x + 12f, card.y + 96f, 160f, 26f), "Accept contract", smallButton))
+            {
+                var result = _operations.AcceptContract(definition);
+                if (result.Accepted)
+                {
+                    ShowToast($"Accepted {definition.Id}: {definition.OriginCode} ↔ {definition.DestinationCode}.");
+                    SaveAirline();
+                }
+                else
+                {
+                    ShowToast(result.Reason);
+                }
+            }
+            GUI.enabled = true;
+            if (!eligible)
+                GUI.Label(new Rect(card.x + 180f, card.y + 100f, card.width - 192f, 20f),
+                    $"Needs {definition.RequiredTier} tier.", small);
+
+            return card.yMax;
+        }
+
+        /// <summary>
+        /// The always-visible roster sidebar — distinct from the <see cref="HudWorkspace.Fleet"/>
+        /// nav tab, which opens the Hangar panel (<see cref="DrawHangarPanel"/>).
+        /// </summary>
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
             var estimatedInner = area.width - 48f;
@@ -839,7 +996,7 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_selectedAircraftId) || _operations == null)
                 return false;
             // Every overlay already shows the selection, and the card would sit over its buttons.
-            if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
+            if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
             var width = Mathf.Min(420f, layout.Viewport.x - AirlineHudLayout.Margin * 2f);
             var height = 72f;
@@ -852,13 +1009,11 @@ namespace Airside.Presentation
         private void SelectAircraft(FleetAircraft aircraft)
         {
             _selectedAircraftId = aircraft.Registration;
-            var plannerStaysOpen = _mapOpen && aircraft.Airline.IsPlayer;
+            var plannerStaysOpen = _activeWorkspace == HudWorkspace.Map && aircraft.Airline.IsPlayer;
             if (aircraft.Airline.IsPlayer)
                 SetPlanningAircraft(aircraft);
 
             var following = TryFollowFleetAircraft(aircraft.Registration);
-            _hangarOpen = false;
-            _flightsOpen = false;
             _devToolsOpen = false;
             if (plannerStaysOpen)
             {
@@ -866,14 +1021,14 @@ namespace Airside.Presentation
             }
             else if (following)
             {
-                _mapOpen = false;
+                _activeWorkspace = HudWorkspace.None;
             }
             else
             {
                 // Away from Adelaide: the route map is where it can be seen, flying live.
-                if (!_mapOpen)
+                if (_activeWorkspace != HudWorkspace.Map)
                     _mapLens.Reset();
-                _mapOpen = true;
+                _activeWorkspace = HudWorkspace.Map;
             }
 
             if (!following && aircraft.IsOffMap)
@@ -890,7 +1045,7 @@ namespace Airside.Presentation
             if (_operations == null)
                 return;
             IReadOnlyList<FleetAircraft> pool;
-            if (_mapOpen)
+            if (_activeWorkspace == HudWorkspace.Map)
             {
                 pool = PlayerFleet();
                 var next = FlightPlanner.Cycle(pool, _mapAircraft?.Registration, delta);
@@ -918,9 +1073,7 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_selectedAircraftId))
                 return false;
             _selectedAircraftId = null;
-            _mapOpen = false;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = false;
             return true;
         }
@@ -928,11 +1081,9 @@ namespace Airside.Presentation
         /// <summary>Esc closes whichever overlay is open before it touches the selection.</summary>
         private bool TryCloseAirlineOverlay()
         {
-            if (!(_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen))
+            if (_activeWorkspace == HudWorkspace.None && !_devToolsOpen)
                 return false;
-            _mapOpen = false;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = false;
             _mapPressed = false;
             _mapPanning = false;
@@ -969,9 +1120,9 @@ namespace Airside.Presentation
 
         private void TogglePlanner()
         {
-            if (_mapOpen)
+            if (_activeWorkspace == HudWorkspace.Map)
             {
-                _mapOpen = false;
+                _activeWorkspace = HudWorkspace.None;
                 PlayUiClick();
                 return;
             }
@@ -985,9 +1136,7 @@ namespace Airside.Presentation
         /// </summary>
         private void OpenPlanner(FleetAircraft aircraft)
         {
-            _mapOpen = true;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.Map;
             _devToolsOpen = false;
             _mapLens.Reset();
             _mapTrackId = null;
@@ -1034,27 +1183,15 @@ namespace Airside.Presentation
             }
         }
 
-        private void ToggleHangar()
+        /// <summary>
+        /// Opens <paramref name="target"/> as the one active workspace (ADR 0053), or closes it
+        /// if it is already open. Shared by the workspace nav strip and its hotkeys (H/T).
+        /// </summary>
+        private void SetWorkspace(HudWorkspace target)
         {
-            _hangarOpen = !_hangarOpen;
-            if (_hangarOpen)
-            {
-                _mapOpen = false;
-                _flightsOpen = false;
+            _activeWorkspace = _activeWorkspace == target ? HudWorkspace.None : target;
+            if (_activeWorkspace != HudWorkspace.None)
                 _devToolsOpen = false;
-            }
-            PlayUiClick();
-        }
-
-        private void ToggleFlights()
-        {
-            _flightsOpen = !_flightsOpen;
-            if (_flightsOpen)
-            {
-                _mapOpen = false;
-                _hangarOpen = false;
-                _devToolsOpen = false;
-            }
             PlayUiClick();
         }
 
@@ -1062,11 +1199,7 @@ namespace Airside.Presentation
         {
             _devToolsOpen = !_devToolsOpen;
             if (_devToolsOpen)
-            {
-                _mapOpen = false;
-                _hangarOpen = false;
-                _flightsOpen = false;
-            }
+                _activeWorkspace = HudWorkspace.None;
             PlayUiClick();
         }
 
@@ -1225,21 +1358,25 @@ namespace Airside.Presentation
                 if (!mapRect.Contains(point))
                     continue;
 
+                // A small airport glyph, not a plain dot, so a zoomed-in map reads as real
+                // fields rather than abstract markers — this is where parked aircraft sit.
                 var colour = selected ? AirsideTheme.SafetyYellow : row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete;
-                var size = selected ? 13f : i == hovered ? 12f : 9f;
-                DrawSolid(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), colour);
+                var zoomBoost = Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
+                var size = (selected ? 20f : i == hovered ? 18f : 14f) * zoomBoost;
+                DrawAirportIcon(point, size, colour);
                 if (i == hovered)
-                    AirsideTheme.DrawPanelFrame(new Rect(point.x - 9f, point.y - 9f, 18f, 18f), AirsideTheme.Cloud);
-                GUI.Label(new Rect(point.x + 8f, point.y - 9f, _mapLens.Zoom >= 6f ? 140f : 60f, 18f),
+                    AirsideTheme.DrawPanelFrame(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), AirsideTheme.Cloud);
+                GUI.Label(new Rect(point.x + size * 0.5f + 2f, point.y - 9f, _mapLens.Zoom >= 6f ? 140f : 60f, 18f),
                     _mapLens.Zoom >= 6f ? $"{row.Destination.Code} {row.Destination.Name}" : row.Destination.Code, small);
             }
 
             if (mapRect.Contains(homePoint))
             {
-                DrawSolid(new Rect(homePoint.x - 7f, homePoint.y - 7f, 14f, 14f), AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
+                var homeSize = 22f * Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
+                DrawAirportIcon(homePoint, homeSize, AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
                 // Left of the dot: Kingscote and Port Lincoln sit just to its right and below.
                 var adlStyle = Styled(label, "middle-right", s => new GUIStyle(s) { alignment = TextAnchor.MiddleRight });
-                GUI.Label(new Rect(homePoint.x - 89f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
+                GUI.Label(new Rect(homePoint.x - 89f - homeSize * 0.5f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
             }
 
             // Aircraft icons on top of everything else on the map.
@@ -1269,9 +1406,10 @@ namespace Airside.Presentation
                 if (detailed)
                     DrawSolid(labelRect, new Color(ink.r, ink.g, ink.b, 0.75f));
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),
-                    $"{flight.Aircraft.Registration} → {flight.To.Code}", small);
+                    $"{FlightNumber.OrRegistration(flight.Aircraft)} → {flight.To.Code}", small);
                 if (detailed)
-                    GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f), MapFlightDetail(flight), small);
+                    GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
+                        $"{MapFlightDetail(flight)} · {flight.Aircraft.Registration} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
             }
 
@@ -1460,6 +1598,53 @@ namespace Airside.Presentation
             texture.Apply(false, true);
             _planeIcon = texture;
             return _planeIcon;
+        }
+
+        private static Texture2D _airportIcon;
+
+        /// <summary>A small ring with crossed runway bars — reads as "airport" at a glance.</summary>
+        private static void DrawAirportIcon(Vector2 centre, float size, Color colour)
+        {
+            var previous = GUI.color;
+            GUI.color = colour;
+            GUI.DrawTexture(new Rect(centre.x - size * 0.5f, centre.y - size * 0.5f, size, size), AirportIcon());
+            GUI.color = previous;
+        }
+
+        private static Texture2D AirportIcon()
+        {
+            if (_airportIcon != null)
+                return _airportIcon;
+
+            const int n = 48;
+            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            var pixels = new Color32[n * n];
+            var centre = (n - 1) * 0.5f;
+            for (var y = 0; y < n; y++)
+            for (var x = 0; x < n; x++)
+            {
+                var dx = (x - centre) / centre;
+                var dy = (y - centre) / centre;
+                var r = Mathf.Sqrt(dx * dx + dy * dy);
+                var ring = r < 0.98f && r > 0.76f;
+                // Two crossing runway bars through the hub, angled like a real two-runway field.
+                var barA = Mathf.Abs(dx * 0.87f - dy * 0.5f) < 0.10f && r < 0.6f;
+                var barB = Mathf.Abs(dx * 0.87f + dy * 0.5f) < 0.10f && r < 0.6f;
+                var hub = r < 0.16f;
+                pixels[y * n + x] = ring || barA || barB || hub
+                    ? new Color32(255, 255, 255, 255)
+                    : new Color32(255, 255, 255, 0);
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            _airportIcon = texture;
+            return _airportIcon;
         }
 
         /// <summary>
@@ -1705,7 +1890,7 @@ namespace Airside.Presentation
                 if (result.Accepted)
                 {
                     ShowToast($"{aircraft.Registration} pushes back {ClockText(departAt)} for {destination.Name}.");
-                    _mapOpen = false;
+                    _activeWorkspace = HudWorkspace.None;
                     _mapSelection = null;
                     SaveAirline();
                 }
@@ -1897,7 +2082,7 @@ namespace Airside.Presentation
             var inner = rect.width - 32f;
             GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Adelaide flights", title);
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
-                ToggleFlights();
+                SetWorkspace(HudWorkspace.Operations);
 
             GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
                 $"RUNWAY {RunwayWeather.Label(_operations.ActiveRunway)}  ·  WIND {_operations.Wind.Text}", small);
@@ -1974,7 +2159,11 @@ namespace Airside.Presentation
                 var boardContent = GUI.contentColor;
                 if (boardSeverity != StatusSeverity.Normal)
                     GUI.contentColor = SeverityColour(boardSeverity, boardContent);
-                GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), aircraft.Registration, boardTiny);
+                var boardFlightNumber = FlightNumber.ForAircraft(aircraft);
+                var boardIdentity = boardFlightNumber != null
+                    ? $"{boardFlightNumber} · {aircraft.Registration}"
+                    : aircraft.Registration;
+                GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), boardIdentity, boardTiny);
                 GUI.Label(new Rect(routeX + routeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
                 GUI.contentColor = boardContent;
                 var aircraftX = routeX + routeW + phaseW;
@@ -2029,10 +2218,15 @@ namespace Airside.Presentation
             var ink = AirsideTheme.RunwayInk;
             DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
             GUI.Box(rect, GUIContent.none, panel);
+            // Diagnostic overlay, not a player workspace (ADR 0053): a distinct accent and
+            // badge keep it from reading as one more tab beside Operations/Map/Fleet/Contracts.
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SignalRed);
 
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
-            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Dev tools", title);
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 174f, 26f), "Dev tools", title);
+            GUI.Label(new Rect(rect.xMax - 172f, rect.y + 16f, 50f, 20f), "DEV", Styled(small, "devBadge", st =>
+                AirsideTheme.TextStyle(new GUIStyle(st) { fontStyle = FontStyle.Bold }, AirsideTheme.SignalRed)));
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
                 ToggleDevTools();
 
@@ -2145,7 +2339,7 @@ namespace Airside.Presentation
             var inner = rect.width - 32f;
             GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Hangar", title);
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
-                ToggleHangar();
+                SetWorkspace(HudWorkspace.Fleet);
 
             var tabs = new[] { "Fleet", "Aircraft types" };
             for (var i = 0; i < tabs.Length; i++)
@@ -2421,6 +2615,28 @@ namespace Airside.Presentation
                         ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
                         break;
                 }
+            }
+        }
+
+        /// <summary>One toast per newly-applied career settlement (ADR 0053) — the result the
+        /// plan doc asks the player to see after every eligible flight.</summary>
+        private void AnnounceNewSettlements()
+        {
+            var fresh = _operations.TotalSettlements - _seenSettlements;
+            _seenSettlements = _operations.TotalSettlements;
+            if (fresh <= 0)
+                return;
+
+            var settlements = _operations.RecentSettlements;
+            var start = Math.Max(0, settlements.Count - (int)Math.Min(fresh, settlements.Count));
+            for (var i = start; i < settlements.Count; i++)
+            {
+                var s = settlements[i];
+                var reg = s.SettlementId.Registration;
+                if (s.ContractFulfilled)
+                    ShowToast($"{reg} earned ${s.Payment:N0} — {s.ContractDefinitionId} complete!");
+                else
+                    ShowToast($"{reg} earned ${s.Payment:N0} on {s.ContractDefinitionId} ({s.RotationsCompleted} rotations so far).");
             }
         }
 

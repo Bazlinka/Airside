@@ -59,8 +59,8 @@ namespace Airside.Presentation
             switch (args[index + 1])
             {
                 case "plan": OpenPlanner(null); break;
-                case "hangar": ToggleHangar(); break;
-                case "flights": ToggleFlights(); break;
+                case "hangar": SetWorkspace(HudWorkspace.Fleet); break;
+                case "flights": SetWorkspace(HudWorkspace.Operations); break;
                 case "devtools": ToggleDevTools(); break;
                 case "help": ToggleControlsHelp(); break;
             }

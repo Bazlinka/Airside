@@ -1,5 +1,48 @@
 ## Unreleased
 
+- **Wire the airline career into the HUD (Task 3, ADR 0053).** The Contracts workspace shows
+  real terms and an Accept button, then a progress card once accepted; the clock panel shows
+  funds and reliability; the objective line shows contract progress; completing a rotation
+  shows a toast (a distinct one on contract completion); the away summary reports
+  funds/reliability earned while gone. All read-only against the Task 2 domain layer — no new
+  simulation logic. 1 new test (`AwayCatchUpTests`); 282/282 passing under
+  `scripts/test-domain.sh`.
+
+- **Airline career domain and save v6 (Task 2, ADR 0053).** New deterministic career state —
+  funds, reliability, operating tier, an acceptable/accepted route contract — plus a real
+  `AcceptContract` command and one authored contract (`REG-KGC-INTRO`, Adelaide↔Kingscote).
+  Completing an eligible player rotation settles it against the active contract exactly once
+  (`SettlementId` = registration + trip number, guarded against repeats); save schema moves to
+  v6, and a pre-6 save migrates to a fresh Provisional career without retroactively paying
+  historical trips or losing any existing fleet/schedule/stand data. Domain/Simulation and
+  tests only — no HUD wiring yet (Task 3). 7 new tests; 281/281 passing under
+  `scripts/test-domain.sh` (the .NET SDK was installed this session specifically to run it).
+
+- **Persistent status/objective line.** Once the first-flight guide finishes, its card slot
+  under the clock now shows a quiet one-line objective instead of disappearing: the most urgent
+  player aircraft and what it needs, severity-tinted, or a calm fleet-wide line when nothing
+  needs attention. New `OperationsSummary` pure helper; `AirlineHudLayout`'s guide/status region
+  is never zero-sized any more. Presentation-only.
+
+- **Flight numbers and airport-glyph map markers.** Aircraft now read by a deterministic
+  flight number (airline code + a stable 3-digit number derived from registration and route)
+  in the map's in-flight labels, the Flights board and floating field tags, instead of a bare
+  registration — the map's detail line and the Flights board still show registration and type
+  alongside it. Destinations on the Australia map, including Adelaide, draw as a small airport
+  glyph (ring + crossed runway bars) rather than a plain square, growing gently with zoom.
+  Presentation-only, deterministic, nothing stored: new `FlightNumber` pure helper with tests.
+
+- **HUD shell cleanup, Task 1 (ADR 0053).** The four independent booleans behind the
+  Plan/Hangar/Flights panels are one `_activeWorkspace` field, and a new nav strip under the
+  clock replaces the three ad hoc buttons with the four ADR 0053 workspaces (Operations, Map,
+  Fleet, Contracts — Contracts is a placeholder until Task 2/3 add career state). Existing
+  hotkeys (Tab/H/T), panel content and behaviour are unchanged; the mini-map no longer risks
+  sitting under the new strip on short windows. Dev Tools gets a red frame + "DEV" badge so it
+  reads as a diagnostic overlay, not a player workspace. Presentation-only: no simulation, save,
+  route or traffic change. `PresentationLayoutTests` extended for the new nav-strip rect at the
+  existing 6 resolutions; Unity EditMode, a packaged build and the 1280x720/1440x900/Retina
+  visual pass are still open (no Unity editor in this session).
+
 - **Singapore Airlines 787-10.** Singapore Airlines' Gate 20 rotation now uses its own genuine
   AIR-010 Boeing 787-10 instead of borrowing the A350. The 227-part, true-scale model has the
   787-10's narrower 5.77 m cabin, four-pane Boeing flight deck, swept/raked wing, chevron

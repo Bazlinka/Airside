@@ -26,7 +26,7 @@ namespace Airside.Presentation
         }
 
         private bool MiniMapShows =>
-            _miniMapVisible && !(_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen || _controlsHelpOpen);
+            _miniMapVisible && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
 
         private Texture2D MiniMapTexture()
         {

@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 using Airside.Presentation;
 using NUnit.Framework;
@@ -29,6 +30,18 @@ namespace Airside.Tests
             var midnight = new DayCycle(DayCycle.MidnightOfDay(1));
             Assert.That(midnight.Phase, Is.EqualTo(DayPhase.Night));
             Assert.That(DaylightPresentation.Resolve(false, midnight.Daylight), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void ReviewLocalTime_ReadsStrictTwentyFourHourTime()
+        {
+            Assert.That(DaylightPresentation.ReviewLocalTime(new[] { "Airside", "-airsideReviewTime", "18:45" }),
+                Is.EqualTo(new TimeSpan(18, 45, 0)));
+            Assert.That(DaylightPresentation.ReviewLocalTime(new[] { "Airside", "-airsideReviewTime", "6:45" }),
+                Is.Null);
+            Assert.That(DaylightPresentation.ReviewLocalTime(new[] { "Airside", "-airsideReviewTime", "24:00" }),
+                Is.Null);
+            Assert.That(DaylightPresentation.ReviewLocalTime(new[] { "Airside" }), Is.Null);
         }
     }
 }

@@ -44,6 +44,7 @@ namespace Airside.Presentation
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|hangar|flights|devtools|help   open one panel at start
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
+        //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         private const string ReviewPanelFlag = "-airsideReviewPanel";
         private const string ReviewShotFlag = "-airsideReviewShot";
         private const string ReviewDelayFlag = "-airsideReviewDelay";

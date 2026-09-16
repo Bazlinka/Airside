@@ -190,6 +190,8 @@ namespace Airside.Presentation
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
         private static readonly bool PinDaylightPresentation =
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
+        private static readonly TimeSpan? ReviewLocalTime =
+            DaylightPresentation.ReviewLocalTime(Environment.GetCommandLineArgs());
 
         /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
         private WeatherKind CurrentWeather => FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather;
@@ -218,7 +220,7 @@ namespace Airside.Presentation
                     var local = FleetMode
                         ? _operations.Clock.LocalAt(_clock.Now)
                         : TimeZoneInfo.ConvertTimeFromUtc(utc, AirlineClock.Adelaide);
-                    _dayCycle = DayCycle.AtLocalTime(local.TimeOfDay);
+                    _dayCycle = DayCycle.AtLocalTime(ReviewLocalTime ?? local.TimeOfDay);
                 }
 
                 return _dayCycle;

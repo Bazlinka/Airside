@@ -185,5 +185,16 @@ namespace Airside.Tests
                 Is.EqualTo(Airside.Domain.AirlineClock.Default.EpochUtcTicks));
             Assert.That(Airside.Simulation.AirlineSave.IsRealDate(-5), Is.False);
         }
+    
+        [Test]
+        public void SceneIndex_ForgetsDestroyedObjects()
+        {
+            var go = new GameObject("bug-sweep-probe");
+            AirsideSceneIndex.Remember(go);
+            Object.DestroyImmediate(go);
+            Assert.That(AirsideSceneIndex.Find("bug-sweep-probe"), Is.Null);
+            Assert.DoesNotThrow(() => AirsideSceneIndex.FindGameObject("bug-sweep-probe"));
+            Assert.That(AirsideSceneIndex.FindGameObject("bug-sweep-probe"), Is.Null);
+        }
     }
 }

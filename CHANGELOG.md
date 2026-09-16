@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Adelaide apron slab structure.** Concrete aprons now carry a restrained 18 m expansion-joint
+  grid clipped to the real OSM polygon boundaries, so large paved areas read as built slabs rather
+  than flat sheets. The combined detail mesh is matte, deterministic and presentation-only;
+  routes, stands, collisions and saves are unchanged. Headless tests: 245 passed.
+
 - **Verified taxi speeds.** Straight taxi rises from 15 kt to the published operating
   bands (turboprop/jet ~25 kt on long taxiways, ~10 kt turns, apron 15/10 kt, 5 kt stand
   lead-in, 3 kt pushback, 10 kt lineup). Sources recorded in

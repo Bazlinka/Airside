@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — real-scale apron slab joints implemented; headless 245/245.**
+  - **Player-visible:** Adelaide's concrete aprons now read as constructed slabs instead of
+    broad unbroken sheets. A restrained 18 m expansion-joint grid is clipped to each real OSM
+    apron outline, including concave boundaries.
+  - **Scope:** presentation mesh only. `ApronSlabJoints` generates deterministic inset line
+    segments; `BuildYpadTaxiwaysAndAprons` combines them into one non-shadowing matte mesh.
+  - **Invariants / unchanged:** pavement outlines, taxi routes, stands, collision, simulation
+    timing, saves, aircraft and the developer-only full-airport mode are unchanged. No external
+    asset or licence was added.
+  - **Acceptance / evidence:** rectangle, concave-outline and full-Adelaide density tests added;
+    `scripts/test-domain.sh` **245/245 passed**. Unity 6.4 imported the project, but EditMode and
+    render capture remain blocked because Unity Hub is signed out and the licensing client cannot
+    activate headlessly. The repo's pinned 6.3.23f1 editor is also not installed.
+  - **NEXT:** sign into Unity Hub, run `scripts/test-unity.sh` with Unity 6.3.23f1, then inspect
+    overview/follow at day, dusk and rain before merging.
+
 - **2026-09-16 Cursor — verified taxi speeds.** Branch `cursor/taxi-speeds-verified-d77c`
   (rebased onto main after #278 merged).
   - **Player-visible:** Straight taxi is no longer a 15 kt crawl. Turboprops (ATR / Saab /

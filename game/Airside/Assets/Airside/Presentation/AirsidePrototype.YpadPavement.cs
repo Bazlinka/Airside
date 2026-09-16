@@ -47,8 +47,20 @@ namespace Airside.Presentation
             }
 
             var aprons = new SurfaceMesh();
+            var apronJoints = new SurfaceMesh();
             foreach (var apron in AdelaideLayout.Aprons)
+            {
                 AddPolygon(aprons, apron.Xz, apronY);
+                foreach (var joint in ApronSlabJoints.Generate(apron.Xz))
+                {
+                    AddRibbon(
+                        apronJoints,
+                        new[] { joint.StartX, joint.StartZ, joint.EndX, joint.EndZ },
+                        ApronSlabJoints.WidthMetres * 0.5f,
+                        apronY + 0.004f,
+                        roundJoints: false);
+                }
+            }
 
             var holdBars = new SurfaceMesh();
             for (var i = 0; i + 1 < AdelaideLayout.HoldingPositions.Length; i += 2)
@@ -56,6 +68,8 @@ namespace Airside.Presentation
 
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName + " shoulders", shoulders, sealedShoulder, asphaltAlbedo, castShadows: false);
             SpawnSurface(root, AirsideAdelaidePavement.ApronsName, aprons, apronConcrete, concreteAlbedo, castShadows: false);
+            SpawnSurface(root, "Apron slab joints", apronJoints, new Color(0.27f, 0.28f, 0.28f), null,
+                castShadows: false, useTextures: false);
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName, taxi, taxiAsphalt, asphaltAlbedo, castShadows: false);
             SpawnSurface(root, "Taxiway centrelines", centrelines, taxiYellow, null, castShadows: false);
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
@@ -348,7 +362,14 @@ namespace Airside.Presentation
             return result;
         }
 
-        private static void SpawnSurface(Transform parent, string name, SurfaceMesh surface, Color color, string albedo, bool castShadows)
+        private static void SpawnSurface(
+            Transform parent,
+            string name,
+            SurfaceMesh surface,
+            Color color,
+            string albedo,
+            bool castShadows,
+            bool useTextures = true)
         {
             if (surface.Triangles.Count == 0)
                 return;
@@ -364,7 +385,10 @@ namespace Airside.Presentation
             var go = new GameObject(name);
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = CreateSharedSurfaceMaterial(color, albedo, Vector2.one);
+            renderer.sharedMaterial = useTextures
+                ? CreateSharedSurfaceMaterial(color, albedo, Vector2.one)
+                : AirsideMaterialLibrary.CreateShared(
+                    color, AirsideMaterialLibrary.SurfaceKind.Default, null, Vector2.one, useTextures: false);
             renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             go.transform.SetParent(parent, false);

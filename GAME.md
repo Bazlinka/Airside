@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — AIR-009 A350-900 rebuilt as a genuine widebody silhouette.**
+  - **Player-visible:** Cathay Pacific's A350-900 now reads as an A350 before its colour: broad
+    six-metre cabin, long tapered nose, dark wraparound cockpit mask, flexed/raked wing tips,
+    large high-bypass engines and ten-wheel gear replace the former stretched-737 geometry.
+  - **Scope:** AIR-009 model, material hierarchy, identity-marking placement and runtime-model
+    Hangar thumbnail only. The exact 66.80 × 64.75 × 17.05 m envelope is unchanged.
+  - **Invariants / unchanged:** airline operations, Gate 18 route, performance, schedules,
+    runway separation, saves and all other aircraft are unchanged. Geometry is project-owned;
+    no external art or livery was added.
+  - **Evidence:** deterministic AIR-009 regression passes; generated output is 229 meshes /
+    14,192 triangles with 18 blades per fan and ten tyres. `scripts/test-domain.sh` passed
+    **274/274** and Unity 6000.3.23f1 EditMode passed **490/490**.
+  - **NEXT:** add a separate Singapore Airlines 787-10 type and replace its temporary A350.
+
 - **2026-09-16 Codex — real Adelaide night readability corrected and packaged.**
   - **Player-visible:** at 23:30 the terminal, parked aircraft and apron surface remain readable
     in a restrained blue night grade; 28 separated terminal bays carry warm interior light.

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Genuine A350-900 silhouette.** AIR-009 is no longer a uniformly stretched 737. Its
+  purpose-built 229-part model now has a 5.96 m widebody cabin, long tapered nose, dark
+  wraparound flight-deck mask, strongly swept high-aspect-ratio wing with raked tips, large
+  18-blade turbofans and the A350-900's ten-wheel undercarriage. The exact 66.80 × 64.75 ×
+  17.05 m envelope, schedules, routes and saves are unchanged; the Hangar thumbnail was
+  regenerated from the runtime model. Headless tests: 274/274; Unity EditMode: 490/490.
+
 - **Adelaide night readability.** The focused real-airport world now keeps its terminal window
   glow and seven roof-mounted apron floods instead of discarding all decorative lighting. A
   restrained cool night key, fill and trilight lift preserves aircraft, terminal and pavement

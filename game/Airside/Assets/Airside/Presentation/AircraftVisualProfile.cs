@@ -218,6 +218,8 @@ namespace Airside.Presentation
                 return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
             if (AircraftVisualProfiles.IsAirbusA321Neo(type))
                 return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
+            if (AircraftVisualProfiles.IsAirbusA350900(type))
+                return new AircraftIdentityMarkingLayout(3.04f, 6.58f, -13.0f, 6.40f, -55.0f, 0.30f, 0.17f);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
             if (AircraftVisualProfiles.IsSaab340(type))

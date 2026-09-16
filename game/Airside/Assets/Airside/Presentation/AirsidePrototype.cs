@@ -8383,13 +8383,16 @@ namespace Airside.Presentation
             var profile = profileOverride ?? AircraftVisualProfiles.Boeing7378;
             var root = new GameObject(name).transform;
             AircraftVisualProfileComponent.Ensure(root, profile);
+            var a350 = profile.ArtRelativePath.EndsWith("mdl_a350_900_v01.gltf", StringComparison.Ordinal);
 
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 profile.ArtRelativePath,
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => Boeing7378PartColor(kitName, accent),
+                kitName => a350
+                    ? AirbusA350900PartColor(kitName, accent)
+                    : Boeing7378PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -8957,6 +8960,53 @@ namespace Airside.Presentation
                 || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
                 || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
                 return new Color(0.045f, 0.12f, 0.18f);
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? AirbusA350900PartColor(string kitName, Color accent)
+        {
+            // The A350's identity comes from its dark wraparound flight-deck mask,
+            // long pale composite wing and raked tips. Keep airline colour on the
+            // fin/rudder instead of reusing the narrowbody colour hierarchy.
+            if (kitName.StartsWith("cockpit_mask_", StringComparison.Ordinal))
+                return new Color(0.025f, 0.065f, 0.09f);
+            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
+                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return new Color(0.035f, 0.10f, 0.15f);
+            if (kitName.StartsWith("door_", StringComparison.Ordinal))
+                return new Color(0.89f, 0.92f, 0.94f);
+
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wingtip_left":
+                case "wingtip_right":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.72f, 0.76f, 0.80f);
+                case "engine_left":
+                case "engine_right":
+                case "pylon_left":
+                case "pylon_right":
+                    return new Color(0.88f, 0.91f, 0.93f);
+                case "nacelle_left":
+                case "nacelle_right":
+                case "intake_left":
+                case "intake_right":
+                    return new Color(0.48f, 0.52f, 0.56f);
+                case "tail_fin":
+                case "rudder":
+                    return accent;
+            }
 
             return AircraftPartColor(kitName, accent);
         }

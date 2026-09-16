@@ -285,6 +285,11 @@ namespace Airside.Presentation
                 AircraftPickProxy.Ensure(view, registration);
                 EnsureSelectionMarker(view);
                 ForgetAircraftViewParts(view);
+                // Both calls above parent new children under the view. AirsideNamedChildren
+                // caches the child array for the life of the object and nothing was dropping
+                // it, so every later name lookup ran against a hierarchy snapshot taken
+                // before the pick proxy and selection marker existed.
+                AirsideNamedChildren.Forget(view);
             }
         }
 

@@ -196,5 +196,19 @@ namespace Airside.Tests
             Assert.DoesNotThrow(() => AirsideSceneIndex.FindGameObject("bug-sweep-probe"));
             Assert.That(AirsideSceneIndex.FindGameObject("bug-sweep-probe"), Is.Null);
         }
+    
+        [Test]
+        public void AwaySummary_SurvivesASaveWithNoFleetArray()
+        {
+            var clock = new Airside.Simulation.ManualSimulationClock(new Airside.Domain.SimulationTime(0));
+            var ops = Airside.Simulation.AirlineOperations.StartAtAdelaide(
+                clock, new Airside.Simulation.SeededRandomSource(31),
+                Airside.Domain.Airline.Player("Bight Air", "#1F3A93"));
+
+            // A save with no fleet array at all (an older build, or hand-edited) used to throw.
+            var summary = Airside.Simulation.AwaySummary.Build(
+                new Airside.Simulation.AirlineSaveData(), ops, 3600);
+            Assert.That(summary.Lines, Is.Not.Empty);
+        }
     }
 }

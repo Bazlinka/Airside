@@ -76,7 +76,9 @@ namespace Airside.Simulation
             if (after == null) throw new ArgumentNullException(nameof(after));
 
             var tripsBefore = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var record in before.Fleet)
+            // Restore already treats a missing fleet list as empty; a save written by an
+            // older build (or hand-edited) has no Fleet array at all and threw here.
+            foreach (var record in before.Fleet ?? new List<AircraftRecord>())
                 tripsBefore[record.Registration] = record.CompletedTrips;
 
             var lines = new List<string>();

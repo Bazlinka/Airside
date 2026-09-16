@@ -209,7 +209,11 @@ Generation evidence:
 **Batch B gate:** Bailey approved Batch B on 6 September 2026. Greybox surfaces
 and decals are Integrated in `AirsidePrototype` with solid-colour fallback.
 WLD kits load via `ArtGltfLoader` at runtime (primitive fallback when missing);
-Verified only after Unity Play.
+Verified in a packaged Unity build on 16 September 2026. The real Adelaide apron
+presentation has a deterministic 18 m expansion-joint overlay clipped to the OSM
+apron polygons. It adds no external asset. Noon, 17:30 golden-hour and 23:30 night
+captures passed at overview and follow distance; the detail reads up close without
+turning into an overview grid. Evidence is kept locally under `work/review/apron-*.png`.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

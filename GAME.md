@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — real-scale apron slab joints implemented and visually verified.**
+  - **Player-visible:** Adelaide's concrete aprons now read as constructed slabs instead of
+    broad unbroken sheets. A restrained 18 m expansion-joint grid is clipped to each real OSM
+    apron outline, including concave boundaries.
+  - **Scope:** presentation mesh only. `ApronSlabJoints` generates deterministic inset line
+    segments; `BuildYpadTaxiwaysAndAprons` combines them into one non-shadowing matte mesh.
+  - **Invariants / unchanged:** pavement outlines, taxi routes, stands, collision, simulation
+    timing, saves, aircraft and the developer-only full-airport mode are unchanged. No external
+    asset or licence was added.
+  - **Acceptance / evidence:** rectangle, concave-outline and full-Adelaide density tests added;
+    `scripts/test-domain.sh` **246/246 passed**. Unity 6000.3.23f1 produced a fresh packaged Mac
+    build. Overview and follow-camera captures were inspected at noon, 17:30 golden hour and
+    23:30 night; joints remain restrained up close and disappear cleanly at overview distance.
+    Local evidence is in `work/review/apron-*.png` (git-ignored). The full EditMode run compiled
+    and passed 440/441; its sole failure is the existing Gate 13 route tolerance (0.878 m movement
+    against a 0.873 m cap), unrelated to presentation.
+  - **Review tool:** packaged captures may use `-airsideReviewTime HH:mm` to override lighting only;
+    the simulation clock, schedules, weather and saves remain untouched.
+  - **NEXT:** merge the apron slice, then improve taxiway/shoulder edge breakup as the next ground
+    pass before changing aircraft models.
+
 - **2026-09-16 Cursor — verified taxi speeds.** Branch `cursor/taxi-speeds-verified-d77c`
   (rebased onto main after #278 merged).
   - **Player-visible:** Straight taxi is no longer a 15 kt crawl. Turboprops (ATR / Saab /

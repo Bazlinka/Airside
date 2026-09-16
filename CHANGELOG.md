@@ -3,7 +3,7 @@
 - **Verified taxi speeds.** Straight taxi rises from 15 kt to the published operating
   bands (turboprop/jet ~25 kt on long taxiways, ~10 kt turns, apron 15/10 kt, 5 kt stand
   lead-in, 3 kt pushback, 10 kt lineup). Sources recorded in
-  `docs/data/AIRCRAFT_SPECIFICATIONS.md` and ADR 0045. Domain tests 239 passed.
+  `docs/data/AIRCRAFT_SPECIFICATIONS.md` and ADR 0045. Domain tests 242 passed after rebase onto #278.
 
 - **Camera feel + taxi props.** Scroll zoom and drag pan are snappier on the real-metre
   overview (one mouse notch ~25 % closer; wider trackpad zoom queue; faster drag pan

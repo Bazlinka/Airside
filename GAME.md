@@ -8,8 +8,7 @@
     lineup, vacate settles to 20 kt after the 12 kt runway exit.
   - **How:** `GroundSpeedLimits` + bay vs gate wiring in `AdelaideGround`. Sources in
     `docs/data/AIRCRAFT_SPECIFICATIONS.md` and ADR 0045.
-  - **Evidence:** `scripts/test-domain.sh` **239 passed** on the pre-rebase tip; re-run
-    after rebase. Mac Unity EditMode + Play eyeball of a bay taxi-out and a Gate 13 jet
+  - **Evidence:** `scripts/test-domain.sh` **242 passed** after rebase onto #278. Mac Unity EditMode + Play eyeball of a bay taxi-out and a Gate 13 jet
     still needed.
   - **NEXT:** Mac `scripts/test-unity.sh` and a packaged taxi watch. Merge when green.
 

@@ -8191,6 +8191,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -8274,6 +8275,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -8356,6 +8358,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureJetFanDiscs(root);
                 EnsureAircraftLod(root);
             }
@@ -8445,6 +8448,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 if (finalAtr42)
                 {
                     PolishFinalAtrMaterials(root);
@@ -9459,6 +9463,92 @@ namespace Airside.Presentation
                 NestUnderProp(flapL, extra, extra.name);
             foreach (var extra in rightExtras)
                 NestUnderProp(flapR, extra, extra.name);
+        }
+
+        /// <summary>
+        /// Make wing flex a proper rig rather than rotating only the wing skin. Authored
+        /// glTF mesh nodes arrive as siblings, so flaps, engines, props/fans, tip devices,
+        /// lights and wing-mounted main gear otherwise remain behind and visibly separate.
+        /// Articulated roots keep their own pivots and animations after reparenting.
+        /// </summary>
+        private static void NestWingMountedParts(Transform aircraft)
+        {
+            Transform wingL = null, wingR = null;
+            var attached = new List<(Transform Part, int Side)>();
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < children.Length; i++)
+            {
+                var child = children[i];
+                var childName = names[i];
+                if (childName == "Wing L")
+                {
+                    wingL = child;
+                    continue;
+                }
+                if (childName == "Wing R")
+                {
+                    wingR = child;
+                    continue;
+                }
+
+                var side = WingMountedSide(childName);
+                if (side != 0)
+                    attached.Add((child, side));
+            }
+
+            foreach (var item in attached)
+            {
+                var wing = item.Side < 0 ? wingL : wingR;
+                if (wing == null || item.Part.IsChildOf(wing))
+                    continue;
+                NestUnderProp(wing, item.Part, item.Part.name);
+            }
+
+            AirsideNamedChildren.Forget(aircraft);
+        }
+
+        private static int WingMountedSide(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return 0;
+            var lower = partName.ToLowerInvariant();
+            var attached = lower.StartsWith("wing root")
+                           || lower.StartsWith("wing fairing")
+                           || lower.StartsWith("wingtip")
+                           || lower.StartsWith("winglet")
+                           || lower.StartsWith("wing fence")
+                           || lower.StartsWith("static wick")
+                           || lower.StartsWith("flap ")
+                           || lower.StartsWith("aileron")
+                           || lower.StartsWith("spoiler")
+                           || lower.StartsWith("engine ")
+                           || lower.StartsWith("engineheat")
+                           || lower.StartsWith("pylon")
+                           || lower.StartsWith("nacelle")
+                           || lower.StartsWith("intake")
+                           || lower.StartsWith("exhaust")
+                           || lower.StartsWith("oil cooler")
+                           || lower.StartsWith("oil_cooler")
+                           || lower.StartsWith("cowl flap")
+                           || lower.StartsWith("propeller")
+                           || lower.StartsWith("fan ")
+                           || lower.StartsWith("gear fairing")
+                           || lower is "gear l" or "gear r"
+                           || lower.StartsWith("gear door")
+                           || lower.StartsWith("gear_door_inner")
+                           || lower.StartsWith("navlight")
+                           || lower.StartsWith("landinglight");
+            if (!attached)
+                return 0;
+
+            if (lower.EndsWith(" l") || lower.EndsWith(" left")
+                                          || lower.EndsWith("_l") || lower.EndsWith("_left"))
+                return -1;
+            if (lower.EndsWith(" r") || lower.EndsWith(" right")
+                                          || lower.EndsWith("_r") || lower.EndsWith("_right"))
+                return 1;
+            return 0;
         }
 
         /// <summary>

@@ -232,5 +232,47 @@ namespace Airside.Tests
             Assert.That(q400.OperatorZ, Is.GreaterThan(0f),
                 "centred turboprop art places the operator title forward of its origin");
         }
+
+        [Test]
+        public void WingFlexRig_CarriesAttachedPartsOnEveryAircraftType()
+        {
+            foreach (var type in new[]
+                     {
+                         AircraftType.Atr42, AircraftType.Saab340,
+                         AircraftType.Dash8Q400, AircraftType.Boeing7378
+                     })
+            {
+                var root = Build(type);
+                try
+                {
+                    var all = root.GetComponentsInChildren<Transform>(true);
+                    foreach (var side in new[] { "L", "R" })
+                    {
+                        var wing = all.Single(t => t.name == $"Wing {side}");
+                        var flap = all.Single(t => t.name == $"Flap {side}");
+                        var engine = all.Single(t => t.name == $"Engine {side}");
+                        var nav = all.Single(t => t.name == $"NavLight {side}");
+                        var rotatingPowerplant = all.Single(t => t.name ==
+                            (type == AircraftType.Boeing7378 ? $"Fan {side}" : $"Propeller {side}"));
+                        Assert.That(flap.IsChildOf(wing), Is.True, $"{type.Id} {side} flap follows wing flex");
+                        Assert.That(engine.IsChildOf(wing), Is.True, $"{type.Id} {side} engine follows wing flex");
+                        Assert.That(rotatingPowerplant.IsChildOf(wing), Is.True,
+                            $"{type.Id} {side} propeller or fan follows wing flex");
+                        Assert.That(nav.IsChildOf(wing), Is.True, $"{type.Id} {side} tip light follows wing flex");
+                    }
+
+                    if (type == AircraftType.Dash8Q400)
+                    {
+                        Assert.That(all.Single(t => t.name == "gear_door_inner_l").IsChildOf(
+                            all.Single(t => t.name == "Wing L")), Is.True,
+                            "Q400 inner nacelle-bay door follows the high wing");
+                    }
+                }
+                finally
+                {
+                    Object.DestroyImmediate(root.gameObject);
+                }
+            }
+        }
     }
 }

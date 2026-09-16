@@ -94,7 +94,27 @@ namespace Airside.Presentation
                 AddPrism(buildings, terminal.Xz, runwayTop, height);
             }
 
-            SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.80f, 0.80f, 0.78f), null, castShadows: true);
+            SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
+            BuildAdelaideTerminalArchitecture(runwayTop);
+        }
+
+        private static void BuildAdelaideTerminalArchitecture(float groundY)
+        {
+            var glass = new Color(0.10f, 0.18f, 0.22f, 0.90f);
+            var brow = new Color(0.34f, 0.36f, 0.37f);
+            var skylight = new Color(0.16f, 0.24f, 0.27f);
+            var plant = new Color(0.39f, 0.41f, 0.41f);
+
+            foreach (var detail in AdelaideTerminalArchitecture.AirsideGlazing())
+                CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth), glass);
+            foreach (var detail in AdelaideTerminalArchitecture.RoofBrow())
+                CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth), brow);
+            foreach (var detail in AdelaideTerminalArchitecture.RoofDetails())
+                CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth),
+                    detail.Name.Contains("skylight") ? skylight : plant);
         }
 
         private static void BuildYpadStandMarkings(Transform root, float paintY, Color paint)

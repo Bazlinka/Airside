@@ -3,6 +3,78 @@ using Airside.Simulation;
 
 namespace Airside.Presentation
 {
+    /// <summary>A presentation-only box placed on the real Adelaide terminal shell.</summary>
+    public readonly struct AdelaideTerminalDetail
+    {
+        public AdelaideTerminalDetail(string name, float x, float y, float z, float width, float height, float depth)
+        {
+            Name = name;
+            X = x;
+            Y = y;
+            Z = z;
+            Width = width;
+            Height = height;
+            Depth = depth;
+        }
+
+        public string Name { get; }
+        public float X { get; }
+        public float Y { get; }
+        public float Z { get; }
+        public float Width { get; }
+        public float Height { get; }
+        public float Depth { get; }
+    }
+
+    /// <summary>
+    /// Restrained facade and roof breakup for the OSM terminal footprint. Coordinates are real
+    /// Adelaide world metres and deliberately remain separate from routes, collision and saves.
+    /// </summary>
+    public static class AdelaideTerminalArchitecture
+    {
+        public const float ShellHeightMetres = 14f;
+
+        public static AdelaideTerminalDetail[] AirsideGlazing()
+        {
+            const float startX = 986f;
+            const float bayPitch = 22f;
+            const float paneWidth = 19f;
+            var result = new AdelaideTerminalDetail[28];
+            for (var i = 0; i < result.Length; i++)
+            {
+                var centreX = startX + paneWidth * 0.5f + i * bayPitch;
+                result[i] = new AdelaideTerminalDetail(
+                    $"Terminal airside glazing {i + 1:00}", centreX, 7.1f, 435.55f, paneWidth, 7.2f, 0.32f);
+            }
+
+            return result;
+        }
+
+        public static AdelaideTerminalDetail[] RoofBrow() => new[]
+        {
+            new AdelaideTerminalDetail("Terminal airside brow W", 1040f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
+            new AdelaideTerminalDetail("Terminal airside brow WC", 1150f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
+            new AdelaideTerminalDetail("Terminal airside brow C", 1260f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
+            new AdelaideTerminalDetail("Terminal airside brow EC", 1370f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
+            new AdelaideTerminalDetail("Terminal airside brow E", 1480f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
+            new AdelaideTerminalDetail("Terminal airside brow far E", 1584f, 11.35f, 434.65f, 98f, 0.7f, 3.0f)
+        };
+
+        public static AdelaideTerminalDetail[] RoofDetails() => new[]
+        {
+            new AdelaideTerminalDetail("Terminal skylight W", 1045f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight WC", 1130f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight C", 1215f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight EC", 1300f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight E", 1385f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight far E", 1470f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight end", 1555f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            new AdelaideTerminalDetail("Terminal roof plant W", 1110f, 15.1f, 463f, 24f, 2.2f, 10f),
+            new AdelaideTerminalDetail("Terminal roof plant C", 1270f, 15.1f, 463f, 28f, 2.2f, 10f),
+            new AdelaideTerminalDetail("Terminal roof plant E", 1450f, 15.1f, 468f, 26f, 2.2f, 10f)
+        };
+    }
+
     /// <summary>
     /// Real-metre YPAD pavement for the Adelaide field, from the OpenStreetMap layout in
     /// <see cref="AdelaideLayout"/> (ADR 0045): main 05/23, cross 12/30 at its real

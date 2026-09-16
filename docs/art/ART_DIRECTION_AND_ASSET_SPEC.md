@@ -217,6 +217,11 @@ turning into an overview grid. Evidence is kept locally under `work/review/apron
 The same packaged review added sparse procedural taxiway-edge dust/scuff strips. They
 use no external asset, remain inside the asphalt edge, and passed close-day, overview
 and 23:30 night checks (`work/review/taxi-edge-*.png`).
+The real Adelaide OSM terminal shell now carries procedural architectural breakup: 28
+separated airside glass bays, a six-part projecting brow, seven skylight strips and three
+roof-plant blocks. This detail uses real-world coordinates, adds no external asset and does
+not participate in routing, collision or save state. Packaged close day/night evidence is
+under `work/review/terminal-facade-final-*.png`.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

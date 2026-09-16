@@ -35,7 +35,11 @@ namespace Airside.Presentation
             foreach (var pair in _fleetViewById)
             {
                 var view = pair.Value;
-                if (view == null || !_fleetAircraftById.TryGetValue(pair.Key, out var aircraft))
+                // An aircraft away on a leg keeps its view at a stale pose with the object
+                // hidden. Its tag was still drawn, floating over empty tarmac and taking
+                // clicks that then selected an aircraft nowhere near the airport.
+                if (view == null || !view.gameObject.activeInHierarchy
+                    || !_fleetAircraftById.TryGetValue(pair.Key, out var aircraft))
                     continue;
 
                 var world = view.position + Vector3.up * FieldTagLiftMetres;

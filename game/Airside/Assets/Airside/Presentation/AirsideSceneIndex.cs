@@ -53,10 +53,27 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(name))
                 return null;
-            return ByName.TryGetValue(name, out var transform) ? transform : null;
+            if (!ByName.TryGetValue(name, out var transform))
+                return null;
+            // A remembered object that has since been destroyed is Unity-null but not
+            // reference-null. Drop it rather than handing back a dead transform.
+            if (transform == null)
+            {
+                ByName.Remove(name);
+                return null;
+            }
+
+            return transform;
         }
 
-        public static GameObject FindGameObject(string name) => Find(name)?.gameObject;
+        public static GameObject FindGameObject(string name)
+        {
+            // Not Find(name)?.gameObject: C# null-conditional skips Unity's destroyed-object
+            // check, so a destroyed entry threw MissingReferenceException instead of
+            // returning null.
+            var transform = Find(name);
+            return transform != null ? transform.gameObject : null;
+        }
 
         public static bool IsKnownMissing(string name) =>
             !string.IsNullOrEmpty(name) && Missing.Contains(name);

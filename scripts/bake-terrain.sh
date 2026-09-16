@@ -28,10 +28,19 @@ if [ ! -x "$unity" ]; then
 fi
 
 mkdir -p "$root/work"
+status=0
 "$unity" -batchmode -nographics \
   -projectPath "$root/game/Airside" \
   -executeMethod Airside.Editor.AirsideTerrainBakerMenu.BakeFromCommandLine \
-  -logFile "$log"
+  -logFile "$log" || status=$?
+
+# The bake reports failure through the editor's exit code and writes everything
+# to the log, so a failed bake used to print the success message below.
+if [ "$status" -ne 0 ]; then
+  echo "Terrain bake failed (Unity exit $status). Last lines of $log:" >&2
+  tail -40 "$log" >&2 || true
+  exit 1
+fi
 
 echo "Terrain baked. Log: $log"
 echo "Commit the new/updated assets under Assets/Airside/Art/Terrain and"

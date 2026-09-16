@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **ATR high-wing hierarchy.** Player and Emu Air ATRs now keep airline colour on the fin and
+  compact wingtips while the broad high wing, moving surfaces and horizontal tail use a neutral
+  finish. Darker glazing remains readable across both white and generated player liveries.
+  Geometry, scale, six-blade prop rig, routes and saves are unchanged. Headless tests: 249 passed;
+  packaged daylight capture passed; Unity EditMode 445/446 with only the existing Gate 13 miss.
+
 - **Q400 high-wing hierarchy.** QantasLink's Q400 now keeps operator red on its fin and compact
   tip devices while its high wing, moving wing surfaces and horizontal tail use a neutral
   painted-metal finish. Darker glazing strengthens the long regional-turboprop read. Geometry,

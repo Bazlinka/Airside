@@ -8344,7 +8344,7 @@ namespace Airside.Presentation
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => AircraftPartColor(kitName, accent),
+                kitName => Atr42PartColor(kitName, accent),
                 localPosition: new Vector3(0f, -0.7f, 0f));
 
             if (usedArt)
@@ -8857,6 +8857,43 @@ namespace Airside.Presentation
                 case "elevator_left":
                 case "elevator_right":
                     return new Color(0.56f, 0.60f, 0.65f);
+            }
+
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
+                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
+                return new Color(0.045f, 0.12f, 0.18f);
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? Atr42PartColor(string kitName, Color accent)
+        {
+            // Keep the ATR's operator identity on its fin and compact wingtips.
+            // The broad high wing and T-tail planes should read as aircraft
+            // structure, not as two large blocks of airline colour.
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wing_root_left":
+                case "wing_root_right":
+                case "wing_fairing_left":
+                case "wing_fairing_right":
+                case "wing_centre_saddle":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "tailplane_saddle":
+                case "tailplane_tip_l":
+                case "tailplane_tip_r":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.58f, 0.62f, 0.67f);
             }
 
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)

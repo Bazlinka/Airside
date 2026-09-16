@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — ATR high-wing hierarchy corrected and packaged.**
+  - **Player-visible:** the player/Emu Air ATR now reads as a stocky high-wing, T-tail regional
+    aircraft before its livery. Broad wing and horizontal-tail surfaces use a neutral finish;
+    airline colour stays on the fin and compact wingtips. Dark cabin/flight-deck glazing remains
+    legible against both white operator paint and the generated Soak Air livery.
+  - **Invariants / unchanged:** AIR-001 v03 geometry, exact 22.67 × 24.57 × 7.59 m envelope,
+    183 parts / 19,704 triangles, six-blade prop rig, wheel scale, routes, schedules and saves are
+    unchanged. No external asset or licence was added.
+  - **Evidence:** `scripts/test-domain.sh` **249/249 passed**; Unity 6000.3.23f1 produced a fresh
+    packaged Mac build and the Bay 50D daylight view was inspected. Unity EditMode compiled and
+    passed **445/446**; the new ATR material test passed and only the existing unrelated Gate 13
+    tolerance miss remains (0.878 m against a 0.873 m cap).
+  - **NEXT:** merge this final aircraft-colour slice. The four operational aircraft types then
+    share a consistent visual hierarchy; switch focus back to airport structures or lighting.
+
 - **2026-09-16 Codex — Q400 high-wing hierarchy corrected and packaged.**
   - **Player-visible:** QantasLink's Q400 now reads as a long high-wing, T-tail turboprop instead
     of a bright red wing block. The wing, control surfaces and horizontal tail use a neutral

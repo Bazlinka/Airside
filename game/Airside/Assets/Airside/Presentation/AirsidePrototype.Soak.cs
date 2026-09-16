@@ -141,7 +141,11 @@ namespace Airside.Presentation
             {
                 if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
                 {
+                    // An aircraft type that cannot reach anything in the catalogue would have
+                    // indexed an empty list and ended the unattended run with an exception.
                     var reachable = _operations.MapDestinations().Where(d => _operations.CanReach(aircraft, d)).ToList();
+                    if (reachable.Count == 0)
+                        continue;
                     var destination = reachable[_soakChoices.NextInt(0, reachable.Count)];
                     // The first flight leaves four minutes in, so every soak covers a full
                     // engine start early; later ones are spread over half an hour.

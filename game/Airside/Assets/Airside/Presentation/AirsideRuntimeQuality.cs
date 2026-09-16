@@ -76,6 +76,9 @@ namespace Airside.Presentation
 
         public static int PanePointLights => Current == Ladder.High ? 4 : 0;
 
+        /// <summary>False in the Editor, where the pipeline asset is a tracked project file.</summary>
+        public static bool WritesPipelineAsset => !Application.isEditor;
+
         public static void Apply(Camera camera)
         {
             Current = ChooseLadder();
@@ -87,7 +90,11 @@ namespace Airside.Presentation
             Application.targetFrameRate = -1;
             Application.backgroundLoadingPriority = ThreadPriority.High;
 
-            if (GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
+            // Writing to the pipeline asset in the Editor edits the committed asset itself:
+            // a Play on a Medium-ladder machine left 2x MSAA and a 55 m shadow distance in
+            // PC_RPAsset.asset, ready to be committed by accident. The player writes it; the
+            // Editor keeps the authored settings.
+            if (WritesPipelineAsset && GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.msaaSampleCount = MsaaSamples;
                 urp.supportsDynamicBatching = true;

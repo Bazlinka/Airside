@@ -1,7 +1,18 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–10 merged:
-  90 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 427/427.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). All 11 batches merged:
+  100 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 430/430. The goal is met;
+  nothing below has been seen in a build.**
+  - **Batch 11 — the three known-unfixed items are now fixed:** stand identifiers get their own
+    material with `unity_GUIZTestMode` = LessEqual; `UpdateWindsock` ripples from each segment's
+    captured rest rotation; the procedural ambience beds snap tone frequencies to whole cycles
+    and crossfade the loop (`LoopFrequency`, `CrossfadeLoop`).
+  - **Batch 11 — also:** `HangarDoorOpensWithinMetres` gates the door; the touchdown cue moved to
+    its own audio child (it was moving the prototype transform and the tyre-smoke pool);
+    `AwaySummary.Build` tolerates a missing fleet array; the soak scheduler skips an aircraft
+    that can reach nothing; `AirsideRuntimeQuality.WritesPipelineAsset` keeps Play mode out of
+    the tracked URP asset; `AirsideArtTextures` remembers misses and destroys the placeholder
+    texture on a failed decode.
   - **Batch 10:** invariant `CombinedKey` numbers in `ArtGltfLoader`; `AirlineSave.IsRealDate`
     guards `ClockFor` (the start screen calls it from OnGUI); `build-mac.sh`, `bake-terrain.sh`
     and `test-unity.sh` report failures and name failed tests; field tags skip hidden views;

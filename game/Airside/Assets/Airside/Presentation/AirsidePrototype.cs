@@ -154,6 +154,7 @@ namespace Airside.Presentation
         private Transform _gpuCart;
         private Transform _pushbackTug;
         private Transform _windsockSock;
+        private Quaternion[] _windsockSegmentRest;
         private Transform _terminalFlag;
         private Transform _coastFoam;
         private readonly List<Transform> _coastFoamLayers = new List<Transform>();
@@ -297,7 +298,12 @@ namespace Airside.Presentation
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
             _rotateClip = CreateRotateClip();
-            _touchdownAudio = gameObject.AddComponent<AudioSource>();
+            // Its own child: the touchdown and rotate cues move this source to the aircraft,
+            // and on the prototype's own object that dragged the prototype transform — and
+            // the tyre-smoke pool parented to it — across the field on every landing.
+            var touchdownAudioHost = new GameObject("Touchdown audio");
+            touchdownAudioHost.transform.SetParent(transform, false);
+            _touchdownAudio = touchdownAudioHost.AddComponent<AudioSource>();
             _touchdownAudio.playOnAwake = false;
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;
@@ -1878,13 +1884,23 @@ namespace Airside.Presentation
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
             // Keep parent scale stable; ripple fabric segments so authored children keep shape.
             _windsockSock.localScale = Vector3.one;
+            // Each segment's ripple is an offset from the rotation it was built with. Writing
+            // the ripple absolutely stood the fallback sock cylinder (built rolled 90 degrees
+            // to lie along the wind) up on its end as a vertical tube.
+            if (_windsockSegmentRest == null || _windsockSegmentRest.Length != _windsockSock.childCount)
+            {
+                _windsockSegmentRest = new Quaternion[_windsockSock.childCount];
+                for (var i = 0; i < _windsockSegmentRest.Length; i++)
+                    _windsockSegmentRest[i] = _windsockSock.GetChild(i).localRotation;
+            }
+
             for (var i = 0; i < _windsockSock.childCount; i++)
             {
                 var seg = _windsockSock.GetChild(i);
                 var ripple = Mathf.Sin(
                     Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f * 1.4f
                     + i * 1.35f) * 5f;
-                seg.localRotation = Quaternion.Euler(ripple * 0.25f, 0f, ripple);
+                seg.localRotation = _windsockSegmentRest[i] * Quaternion.Euler(ripple * 0.25f, 0f, ripple);
             }
         }
 
@@ -7678,6 +7694,9 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>How close an aircraft has to be for the hangar to open for it.</summary>
+        public const float HangarDoorOpensWithinMetres = 110f;
+
         private void UpdateHangarDoor()
         {
             if (_hangarDoor == null && _hangarBayLight == null && _hangarDoorPanels.Count == 0)
@@ -7687,12 +7706,28 @@ namespace Airside.Presentation
             // Also opens wider when a commercial aircraft is near the hangar apron.
             var daylight = PresentationDaylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
-            for (var i = 0; i < VisualFlights.Count; i++)
+            // Only an aircraft actually near the hangar opens the door further. The test used
+            // to be "anything on the field is parked or taxiing", which in airline mode is
+            // true around the clock, so the door never closed at night.
+            var hangar = _hangarDoor != null ? _hangarDoor.position
+                : _hangarDoorPanels.Count > 0 && _hangarDoorPanels[0].Panel != null
+                    ? _hangarDoorPanels[0].Panel.position
+                    : (Vector3?)null;
+            if (hangar.HasValue)
             {
-                var flight = VisualFlights[i];
-                if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.AtStand
-                    or AircraftPhase.TaxiOut or AircraftPhase.Pushback)
+                for (var i = 0; i < VisualFlights.Count && i < _commercialAircraft.Length; i++)
                 {
+                    var flight = VisualFlights[i];
+                    if (flight.Operation.Phase is not (AircraftPhase.TaxiIn or AircraftPhase.AtStand
+                        or AircraftPhase.TaxiOut or AircraftPhase.Pushback))
+                        continue;
+                    var view = _commercialAircraft[i];
+                    if (view == null || !view.gameObject.activeInHierarchy)
+                        continue;
+                    var offset = view.position - hangar.Value;
+                    offset.y = 0f;
+                    if (offset.sqrMagnitude > HangarDoorOpensWithinMetres * HangarDoorOpensWithinMetres)
+                        continue;
                     openAmount = Mathf.Max(openAmount, 0.85f);
                     break;
                 }
@@ -11645,20 +11680,53 @@ namespace Airside.Presentation
             return clip;
         }
 
+        /// <summary>
+        /// The nearest frequency that completes a whole number of cycles in a buffer of
+        /// <paramref name="seconds"/>, so a looped bed does not jump at the wrap. The gust,
+        /// hush and swell tones were all cut mid-cycle, which clicked once per loop.
+        /// </summary>
+        public static float LoopFrequency(float desiredHz, float seconds)
+        {
+            if (seconds <= 0f)
+                return desiredHz;
+            var cycles = Mathf.Max(1f, Mathf.Round(desiredHz * seconds));
+            return cycles / seconds;
+        }
+
+        /// <summary>
+        /// Blend the tail of a looping buffer into its head. Filtered noise starts from a
+        /// silent filter state and ends wherever it happens to be, so even a whole number of
+        /// cycles left a step at the loop point.
+        /// </summary>
+        public static void CrossfadeLoop(float[] samples, int fadeSamples)
+        {
+            if (samples == null || fadeSamples <= 1 || samples.Length < fadeSamples * 2)
+                return;
+            var start = samples.Length - fadeSamples;
+            for (var i = 0; i < fadeSamples; i++)
+            {
+                var t = i / (float)fadeSamples;
+                samples[start + i] = Mathf.Lerp(samples[start + i], samples[i], t);
+            }
+        }
+
         private static AudioClip CreateWindClip()
         {
             // Soft filtered noise bed for regional airfield air (presentation only).
             const int sampleRate = 22050;
-            var samples = new float[sampleRate * 2];
+            const float seconds = 2f;
+            var samples = new float[(int)(sampleRate * seconds)];
             var state = 0f;
+            var gustHz = LoopFrequency(0.35f, seconds);
             for (var i = 0; i < samples.Length; i++)
             {
                 var white = (UnityEngine.Random.value * 2f - 1f);
                 state = state * 0.92f + white * 0.08f;
-                var gust = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * 0.35f) * 0.15f;
+                var gust = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * gustHz) * 0.15f;
                 samples[i] = (state * 0.55f + white * 0.08f + gust * state) * 0.35f;
             }
 
+            CrossfadeLoop(samples, sampleRate / 10);
             var clip = AudioClip.Create("Ambient wind", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
@@ -11668,13 +11736,15 @@ namespace Airside.Presentation
         {
             const int sampleRate = 22050;
             var samples = new float[sampleRate];
+            var hushHz = LoopFrequency(0.015f * sampleRate / (2f * Mathf.PI), 1f);
             for (var i = 0; i < samples.Length; i++)
             {
                 var crackle = UnityEngine.Random.value * 2f - 1f;
-                var hush = Mathf.Sin(i * 0.015f) * 0.1f;
+                var hush = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * hushHz) * 0.1f;
                 samples[i] = crackle * 0.22f + hush * crackle;
             }
 
+            CrossfadeLoop(samples, sampleRate / 20);
             var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
@@ -11684,18 +11754,22 @@ namespace Airside.Presentation
         private static AudioClip CreateCoastClip()
         {
             const int sampleRate = 22050;
-            var samples = new float[sampleRate * 3];
+            const float seconds = 3f;
+            var samples = new float[(int)(sampleRate * seconds)];
             var state = 0f;
+            var swellHz = LoopFrequency(0.22f, seconds);
+            var washHz = LoopFrequency(0.55f, seconds);
             for (var i = 0; i < samples.Length; i++)
             {
                 var t = i / (float)sampleRate;
                 var white = UnityEngine.Random.value * 2f - 1f;
                 state = state * 0.96f + white * 0.04f;
-                var swell = Mathf.Sin(t * 2f * Mathf.PI * 0.22f) * 0.5f + 0.5f;
-                var wash = Mathf.Sin(t * 2f * Mathf.PI * 0.55f + 1.3f) * 0.35f + 0.65f;
+                var swell = Mathf.Sin(t * 2f * Mathf.PI * swellHz) * 0.5f + 0.5f;
+                var wash = Mathf.Sin(t * 2f * Mathf.PI * washHz + 1.3f) * 0.35f + 0.65f;
                 samples[i] = state * 0.4f * swell * wash;
             }
 
+            CrossfadeLoop(samples, sampleRate / 8);
             var clip = AudioClip.Create("Ambient coast", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;

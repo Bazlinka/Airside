@@ -13,7 +13,9 @@ namespace Airside.Presentation
     /// as sea, then tinted by real OSM land cover (<see cref="AdelaideLandCover"/>) so
     /// parks, suburbs, car parks and the Patawalonga read in the right place. Stylised
     /// to the Airside palette rather than photographic — it is there so the overview
-    /// reads as Adelaide. Presentation only; fails soft to no surroundings.
+    /// reads as Adelaide. A runway-aligned ESA Sentinel-2 composite supplies the broad
+    /// albedo while the mesh still supplies playable heights and water response.
+    /// Presentation only; fails soft to no surroundings.
     /// </summary>
     public static class AirsideAdelaideSurroundings
     {
@@ -27,9 +29,11 @@ namespace Airside.Presentation
         private const float InlandWaterBelowPavement = 4.8f;
         private const float TuckUnderMetres = 4f;
         private const float EdgeBlendMetres = 700f;
-        public const float EdgeTextureBlendMetres = 520f;
-        // Wider than the real sand so the 60 m grid draws a continuous strip, not dashes.
-        private const float BeachWidthMetres = 150f;
+        public const float EdgeTextureBlendMetres = 2f;
+        private const float BeachWidthMetres = 55f;
+        public const float SatelliteExtentMetres = 12000f;
+        public const string SatelliteTexturePath =
+            "Textures/Environment/tx_adelaide_sentinel2_2021_v01.png";
 
         // Tuned against the airfield ground as rendered in a packaged build (measured pixel
         // values; the tonemapper makes these sensitive), so the field edge disappears.
@@ -68,7 +72,6 @@ namespace Airside.Presentation
                 renderer.sharedMaterial = BuildMaterial(shader);
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
-                AirsideAdelaideRoads.TryBuild(root, AirsideAdelaideGround.PavementWorldY, HeightSampler(grid, heights));
                 return true;
             }
             catch (Exception e)
@@ -89,6 +92,12 @@ namespace Airside.Presentation
                 AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerDryGrass));
             if (dry != null)
                 material.SetTexture("_AirfieldAlbedo", dry);
+            var satellite = AirsideArtTextures.Load(SatelliteTexturePath, wrap: TextureWrapMode.Clamp);
+            if (satellite != null)
+                material.SetTexture("_SatelliteAlbedo", satellite);
+            material.SetFloat("_SatelliteExtent", SatelliteExtentMetres);
+            material.SetFloat("_SatelliteStrength", satellite != null ? 0.92f : 0f);
+            material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
             material.SetColor("_AirfieldTint", new Color(0.59f, 0.61f, 0.55f, 1f));
             material.SetFloat("_AirfieldHalfX", AirsideAdelaideGround.SizeX * 0.5f);
             material.SetFloat("_AirfieldHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
@@ -165,7 +174,9 @@ namespace Airside.Presentation
                     vertices[i] = new Vector3(x, pavement - SeaBelowPavement, z);
                     var c = Color.Lerp(Shallows, DeepWater, Mathf.SmoothStep(0f, 1f, coast / CoastGrid.MaxDistanceMetres));
                     c = c.linear;
-                    c.a = 1f;
+                    // Satellite water carries the exact shoreline and shallows; dissolve it
+                    // into the stylised Gulf over distance, where WMS tile gaps can occur.
+                    c.a = Mathf.SmoothStep(0f, 1f, coast / 450f);
                     colors[i] = c;
                     continue;
                 }

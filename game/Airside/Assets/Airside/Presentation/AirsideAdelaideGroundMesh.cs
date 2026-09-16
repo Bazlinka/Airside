@@ -146,6 +146,16 @@ namespace Airside.Presentation
             material.SetTexture("_DryAlbedo", dry);
             material.SetTexture("_GreenAlbedo", green);
             material.SetTexture("_DirtAlbedo", dirt);
+            var satellite = AirsideArtTextures.Load(
+                AirsideAdelaideSurroundings.SatelliteTexturePath, wrap: TextureWrapMode.Clamp);
+            if (satellite != null)
+                material.SetTexture("_SatelliteAlbedo", satellite);
+            material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
+            material.SetFloat("_SatelliteStrength", satellite != null ? 0.92f : 0f);
+            material.SetFloat("_SatelliteEdgeBlend", 1050f);
+            material.SetFloat("_GroundHalfX", AirsideAdelaideGround.SizeX * 0.5f);
+            material.SetFloat("_GroundHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
+            material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
 
             var dryN = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, GroundMap.Normal);
             var greenN = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, GroundMap.Normal);

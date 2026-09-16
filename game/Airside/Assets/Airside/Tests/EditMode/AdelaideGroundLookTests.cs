@@ -28,6 +28,11 @@ namespace Airside.Tests
             var material = AirsideAdelaideSurroundings.BuildMaterial(shader);
             Assert.That(material, Is.Not.Null);
             Assert.That(material.GetTexture("_AirfieldAlbedo"), Is.Not.Null);
+            Assert.That(material.GetTexture("_SatelliteAlbedo"), Is.Not.Null,
+                "runway-aligned ESA Adelaide ground image is missing");
+            Assert.That(material.GetFloat("_SatelliteExtent"),
+                Is.EqualTo(AirsideAdelaideSurroundings.SatelliteExtentMetres));
+            Assert.That(material.GetFloat("_SatelliteStrength"), Is.GreaterThan(0.85f));
             Assert.That(material.GetFloat("_EdgeTextureBlend"), Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
             Object.DestroyImmediate(material);
         }
@@ -68,6 +73,8 @@ namespace Airside.Tests
             Assert.That(material.GetTexture("_DryMask"), Is.Not.Null);
             Assert.That(material.GetTexture("_GreenMask"), Is.Not.Null);
             Assert.That(material.GetTexture("_DirtMask"), Is.Not.Null);
+            Assert.That(material.GetTexture("_SatelliteAlbedo"), Is.Not.Null);
+            Assert.That(material.GetFloat("_SatelliteEdgeBlend"), Is.GreaterThan(500f));
             Object.DestroyImmediate(material);
         }
 

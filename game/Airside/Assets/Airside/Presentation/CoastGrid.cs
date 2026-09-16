@@ -12,9 +12,9 @@ namespace Airside.Presentation
     /// </summary>
     public sealed class CoastGrid
     {
-        public const float FineStepMetres = 60f;
-        public const float FineExtentMetres = 5200f;
-        public const float CoarseStepMetres = 320f;
+        public const float FineStepMetres = 35f;
+        public const float FineExtentMetres = 6000f;
+        public const float CoarseStepMetres = 180f;
         public const float ExtentMetres = 12000f;
 
         /// <summary>How far inside the airfield rectangle the surroundings tuck under it.</summary>

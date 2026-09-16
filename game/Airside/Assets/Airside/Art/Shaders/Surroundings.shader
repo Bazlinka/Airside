@@ -9,6 +9,10 @@ Shader "Airside/Surroundings"
         _HorizonFadeStart ("Horizon Fade Start", Float) = 6500
         _HorizonFadeEnd ("Horizon Fade End", Float) = 9600
         _AirfieldAlbedo ("Airfield edge albedo", 2D) = "white" {}
+        _SatelliteAlbedo ("Adelaide Sentinel-2 albedo", 2D) = "gray" {}
+        _SatelliteExtent ("Satellite half extent metres", Float) = 12000
+        _SatelliteStrength ("Satellite blend", Range(0, 1)) = 0.92
+        _SatelliteTint ("Satellite exposure tint", Color) = (0.56, 0.58, 0.56, 1)
         _AirfieldTint ("Airfield edge tint", Color) = (0.59, 0.61, 0.55, 1)
         _AirfieldHalfX ("Airfield half width X", Float) = 1950
         _AirfieldHalfZ ("Airfield half width Z", Float) = 1400
@@ -44,11 +48,15 @@ Shader "Airside/Surroundings"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             TEXTURE2D(_AirfieldAlbedo); SAMPLER(sampler_AirfieldAlbedo);
+            TEXTURE2D(_SatelliteAlbedo); SAMPLER(sampler_SatelliteAlbedo);
 
             CBUFFER_START(UnityPerMaterial)
                 float _HorizonFadeStart;
                 float _HorizonFadeEnd;
                 float4 _AirfieldTint;
+                float4 _SatelliteTint;
+                float _SatelliteExtent;
+                float _SatelliteStrength;
                 float _AirfieldHalfX;
                 float _AirfieldHalfZ;
                 float _EdgeTextureBlend;
@@ -140,7 +148,17 @@ Shader "Airside/Surroundings"
                 edgeAlbedo *= 1.0 + macro * 2.0 * _MacroStrength;
                 edgeAlbedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
 
-                float3 albedo = lerp(input.color.rgb, edgeAlbedo, edgeBlend);
+                // The source image has already been rotated into Airside's runway-local x/z
+                // frame. It replaces the coarse map palette at overview distance while the
+                // detailed dry-grass material continues smoothly past the airfield edge.
+                float2 satelliteUv = saturate(xz / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);
+                float3 satellite = SAMPLE_TEXTURE2D(_SatelliteAlbedo, sampler_SatelliteAlbedo, satelliteUv).rgb
+                    * _SatelliteTint.rgb;
+                // Sea keeps the purpose-built water shading; the satellite composite is used
+                // for land and the real beach only. This also avoids offshore source-tile gaps.
+                float satelliteBlend = _SatelliteStrength * (1.0 - saturate(input.color.a));
+                float3 broadAlbedo = lerp(input.color.rgb, satellite, satelliteBlend);
+                float3 albedo = lerp(broadAlbedo, edgeAlbedo, edgeBlend);
                 float3 color = albedo * (mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS));
 
                 // Water sheen: a broad sun glint, strongest looking into the light.

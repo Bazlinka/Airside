@@ -6,6 +6,13 @@ Shader "Airside/AdelaideGround"
         _DryAlbedo ("Dry Grass", 2D) = "white" {}
         _GreenAlbedo ("Green Grass", 2D) = "white" {}
         _DirtAlbedo ("Worn Dirt", 2D) = "white" {}
+        _SatelliteAlbedo ("Adelaide Sentinel-2 albedo", 2D) = "gray" {}
+        _SatelliteTint ("Satellite exposure tint", Color) = (0.56, 0.58, 0.56, 1)
+        _SatelliteExtent ("Satellite half extent metres", Float) = 12000
+        _SatelliteStrength ("Satellite blend", Range(0, 1)) = 0.92
+        _SatelliteEdgeBlend ("Satellite blend inside edge", Float) = 720
+        _GroundHalfX ("Ground half width X", Float) = 1950
+        _GroundHalfZ ("Ground half width Z", Float) = 1400
         _DryNormal ("Dry Normal", 2D) = "bump" {}
         _GreenNormal ("Green Normal", 2D) = "bump" {}
         _DirtNormal ("Dirt Normal", 2D) = "bump" {}
@@ -60,9 +67,16 @@ Shader "Airside/AdelaideGround"
             TEXTURE2D(_DryMask);      SAMPLER(sampler_DryMask);
             TEXTURE2D(_GreenMask);    SAMPLER(sampler_GreenMask);
             TEXTURE2D(_DirtMask);     SAMPLER(sampler_DirtMask);
+            TEXTURE2D(_SatelliteAlbedo); SAMPLER(sampler_SatelliteAlbedo);
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _Tint;
+                float4 _SatelliteTint;
+                float _SatelliteExtent;
+                float _SatelliteStrength;
+                float _SatelliteEdgeBlend;
+                float _GroundHalfX;
+                float _GroundHalfZ;
                 float _DryTile;
                 float _GreenTile;
                 float _DirtTile;
@@ -198,6 +212,15 @@ Shader "Airside/AdelaideGround"
                 float macro = MacroNoise(xz) - 0.5;
                 albedo *= 1.0 + macro * 2.0 * _MacroStrength;
                 albedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
+                // Dissolve the large rectangular field into the same real Adelaide image
+                // used outside it. The central operational area keeps authored grass detail.
+                float insideEdge = min(_GroundHalfX - abs(xz.x), _GroundHalfZ - abs(xz.y));
+                float satelliteBlend = _SatelliteStrength
+                    * (1.0 - smoothstep(0.0, max(_SatelliteEdgeBlend, 1.0), insideEdge));
+                float2 satelliteUv = saturate(xz / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);
+                float3 satellite = SAMPLE_TEXTURE2D(_SatelliteAlbedo, sampler_SatelliteAlbedo, satelliteUv).rgb
+                    * _SatelliteTint.rgb;
+                albedo = lerp(albedo, satellite, satelliteBlend);
                 float3 normalWS = normalize(nDry * w.r + nGreen * w.g + nDirt * w.b);
                 float ao = dot(float3(mDry.x, mGreen.x, mDirt.x), w);
                 float smoothness = dot(float3(mDry.z, mGreen.z, mDirt.z), w) * _Smoothness;

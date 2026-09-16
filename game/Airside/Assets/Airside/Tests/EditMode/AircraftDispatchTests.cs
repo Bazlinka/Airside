@@ -111,6 +111,13 @@ namespace Airside.Tests
                 Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Flap L"), Is.True);
                 Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Flap R"), Is.True);
 
+                var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
+                var wingColor = wing.GetComponent<Renderer>().sharedMaterial.color;
+                Assert.That(wingColor.r, Is.EqualTo(0.76f).Within(0.01f), "Saab wings use restrained painted aluminium");
+                var window = root.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Cabin window "));
+                var windowColor = window.GetComponent<Renderer>().sharedMaterial.color;
+                Assert.That(windowColor.r, Is.LessThan(0.1f), "Saab glazing remains readable at follow distance");
+
                 var drawn = RenderedBounds(root);
                 Assert.That(drawn.size.z, Is.EqualTo(AircraftCatalogue.Saab340.LengthMetres).Within(0.05f * AircraftCatalogue.Saab340.LengthMetres),
                     "compact Saab length, not the ATR stand-in");

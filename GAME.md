@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — Saab 340 silhouette/material pass implemented and packaged.**
+  - **Player-visible:** Rex's Saab now reads as a compact aluminium/white commuter aircraft
+    rather than a solid airline-colour toy. Broad wings, flaps, ailerons and the horizontal tail
+    use a restrained neutral finish; the operator accent stays on the vertical tail. Slightly
+    larger, skin-proud cabin glazing remains visible in the oblique follow camera.
+  - **Invariants / unchanged:** AIR-007 stays at 19.73 × 21.44 × 6.97 m with 120 named meshes,
+    6,868 triangles, four-blade props, animation names, schedules, routes and saves unchanged.
+    No external asset or licence was added.
+  - **Evidence:** deterministic AIR-007 geometry regression passed; `scripts/test-domain.sh`
+    **249/249 passed**; Unity 6000.3.23f1 produced a fresh packaged Mac build and the close
+    daylight and 23:30 follow captures at `work/review/saab-*.png` were inspected against the
+    baseline; the neutral surfaces remain readable without glowing at night.
+    Unity EditMode compiled and passed **444/445**; only the existing unrelated Gate 13 tolerance
+    miss remains (0.878 m against a 0.873 m cap). The new Saab integration/material test passed.
+  - **NEXT:** merge this narrow aircraft slice, then assess the 737 at the same follow-camera
+    distance before adding more map decoration.
+
 - **2026-09-16 Codex — taxiway edge weathering implemented and visually verified.**
   - **Player-visible:** sparse warm-grey dust/scuff strips now break up both edges of Adelaide's
     taxiways. They sit inside the asphalt, stay clear of centreline/hold paint and disappear at

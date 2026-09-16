@@ -31,6 +31,12 @@ for pane in ("windscreen_l", "windscreen_r", "cockpit_side_l", "cockpit_side_r")
     assert len(pane_vertices) == 8, f"{pane} must remain a thin fitted panel"
     assert np.ptp(pane_vertices, axis=0)[2] < 1.2, f"{pane} is too long for the flight deck"
 
+# Cabin panes remain readable above the skin at follow-camera distance.
+for pane in ("cabin_window_1", "cabin_window_7", "cabin_window_r1", "cabin_window_r7"):
+    pane_vertices, _ = meshes[pane]
+    assert np.max(np.abs(pane_vertices[:, 0])) > 1.17, f"{pane} is buried in the skin"
+    assert np.ptp(pane_vertices, axis=0)[1] >= 0.375, f"{pane} is too small to read"
+
 # Main-gear fairings are a curved nacelle continuation, not a six-faced block.
 for fairing in ("gear_fairing_left", "gear_fairing_right"):
     fairing_vertices, _ = meshes[fairing]

@@ -8096,7 +8096,7 @@ namespace Airside.Presentation
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => AircraftPartColor(kitName, accent),
+                kitName => Saab340PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -8763,6 +8763,35 @@ namespace Airside.Presentation
             "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null
             };
+        }
+
+        private static Color? Saab340PartColor(string kitName, Color accent)
+        {
+            // The Saab is a compact commuter aircraft, not a flying colour block.
+            // Reserve the operator accent for the vertical tail while keeping the
+            // broad lifting surfaces a restrained painted-aluminium grey.
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wing_fairing_left":
+                case "wing_fairing_right":
+                case "flap_left":
+                case "flap_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.76f, 0.79f, 0.82f);
+            }
+
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
+                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
+                return new Color(0.055f, 0.14f, 0.20f);
+
+            return AircraftPartColor(kitName, accent);
         }
 
         /// <summary>

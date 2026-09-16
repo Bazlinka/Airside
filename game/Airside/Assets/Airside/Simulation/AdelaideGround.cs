@@ -6,9 +6,11 @@ namespace Airside.Simulation
 {
     /// <summary>
     /// The ground legs fleet aircraft drive at Adelaide, built from the real routes in
-    /// <see cref="AdelaideLayout"/> with ATR ground-speed limits (ADR 0045). Every ground
-    /// duration the airline simulation uses comes from here, so time on the ground is
-    /// the time the motion really takes — nothing is a picked number.
+    /// <see cref="AdelaideLayout"/> with verified ground-speed limits (ADR 0045, taxi
+    /// section of <c>AIRCRAFT_SPECIFICATIONS.md</c>). Regional bays use the turboprop
+    /// band (ATR / Saab / Q400); terminal gates use the 737 band. Every ground duration
+    /// the airline simulation uses comes from here, so time on the ground is the time
+    /// the motion really takes — nothing is a picked number.
     /// </summary>
     public static class AdelaideGround
     {
@@ -122,10 +124,11 @@ namespace Airside.Simulation
             var bay = Bay(stand);
             if (!TaxiOutLegs.TryGetValue(bay.Id, out var leg))
             {
+                var limits = GroundSpeedLimits.TaxiTurboprop;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
-                    new GroundLegPart(new GroundPath(bay.TaxiOut, GroundSpeedLimits.Taxi, 0f, 0f,
-                        new[] { ApronZone }, null), tailFirst: false, TugDisconnectSeconds));
+                    new GroundLegPart(new GroundPath(bay.TaxiOut, limits, 0f, 0f,
+                        new[] { ApronZone(StandClass.RegionalBay) }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[bay.Id] = leg;
             }
 
@@ -140,8 +143,9 @@ namespace Airside.Simulation
             var bay = Bay(stand);
             if (!TaxiInLegs.TryGetValue(bay.Id, out var leg))
             {
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, GroundSpeedLimits.Taxi, 0f, 0f,
-                    null, new[] { ApronZone, StandLeadInZone }), tailFirst: false));
+                var limits = GroundSpeedLimits.TaxiTurboprop;
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, limits, 0f, 0f,
+                    null, new[] { ApronZone(StandClass.RegionalBay), StandLeadInZone }), tailFirst: false));
                 TaxiInLegs[bay.Id] = leg;
             }
 
@@ -183,9 +187,10 @@ namespace Airside.Simulation
         {
             if (!TaxiOutLegs.TryGetValue(gate.Id, out var leg))
             {
+                var limits = GroundSpeedLimits.TaxiJet;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: JetTrackMetres),
-                    new GroundLegPart(new GroundPath(gate.TaxiOut, GroundSpeedLimits.Taxi, 0f, 0f, new[] { ApronZone }, null),
+                    new GroundLegPart(new GroundPath(gate.TaxiOut, limits, 0f, 0f, new[] { ApronZone(StandClass.TerminalGate) }, null),
                         tailFirst: false, TugDisconnectSeconds, JetTrackMetres));
                 TaxiOutLegs[gate.Id] = leg;
             }
@@ -197,24 +202,24 @@ namespace Airside.Simulation
         {
             if (!TaxiInLegs.TryGetValue(gate.Id, out var leg))
             {
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, GroundSpeedLimits.Taxi, 0f, 0f,
-                    null, new[] { ApronZone, StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
+                var limits = GroundSpeedLimits.TaxiJet;
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, limits, 0f, 0f,
+                    null, new[] { ApronZone(StandClass.TerminalGate), StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
                 TaxiInLegs[gate.Id] = leg;
             }
 
             return leg;
         }
 
-        /// <summary>10 kt on the apron lane beside the bays.</summary>
-        private static GroundSpeedZone ApronZone =>
-            new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnots));
+        private static GroundSpeedZone ApronZone(StandClass standClass) =>
+            new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnotsFor(standClass)));
 
         /// <summary>5 kt for the last stretch onto the stand line.</summary>
         private static GroundSpeedZone StandLeadInZone =>
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
         /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
-        private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Taxi,
+        private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Vacate,
             entrySpeed: CircuitProfile.Knots(CircuitProfile.RunwayExitKnots));
     }
 }

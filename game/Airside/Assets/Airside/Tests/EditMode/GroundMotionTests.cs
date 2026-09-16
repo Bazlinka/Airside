@@ -5,36 +5,79 @@ using NUnit.Framework;
 
 namespace Airside.Tests
 {
-    /// <summary>Realistic ATR ground speeds on the real Adelaide routes (Bailey 2026-09-14).</summary>
+    /// <summary>Verified ground speeds on the real Adelaide routes.</summary>
     public sealed class GroundMotionTests
     {
-        private const float Kt = 0.514444f;
+        private const float Kt = CircuitProfile.KnotsToMetresPerSecond;
 
         [Test]
-        public void Speeds_StayWithinAtrGroundLimits()
+        public void Speeds_MatchVerifiedTurbopropAndJetBands()
         {
+            Assert.That(GroundSpeedLimits.TurbopropStraightKnots, Is.EqualTo(25f));
+            Assert.That(GroundSpeedLimits.JetStraightKnots, Is.EqualTo(25f));
+            Assert.That(GroundSpeedLimits.JetNormalTaxiKnots, Is.EqualTo(20f));
+            Assert.That(GroundSpeedLimits.ApronTurbopropKnots, Is.EqualTo(15f));
+            Assert.That(GroundSpeedLimits.ApronJetKnots, Is.EqualTo(10f));
+            Assert.That(GroundSpeedLimits.PushbackKnots, Is.EqualTo(3f));
+            Assert.That(GroundSpeedLimits.LineupKnots, Is.EqualTo(10f));
+            Assert.That(GroundSpeedLimits.TurnKnotsAtRadiusMetres(45f), Is.EqualTo(10f).Within(0.3f));
+
             foreach (var bay in AdelaideLayout.Bays)
             {
                 var push = new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback);
-                var taxi = new GroundPath(bay.TaxiOut, GroundSpeedLimits.Taxi);
-                Assert.That(push.TopSpeed / Kt, Is.LessThanOrEqualTo(2.01f), "pushback is a walking-pace tug");
-                Assert.That(taxi.TopSpeed / Kt, Is.LessThanOrEqualTo(15.01f), "taxi is capped at 15 kt");
-                Assert.That(taxi.TopSpeed / Kt, Is.GreaterThan(14f), "and reaches it on the straights");
+                var taxi = new GroundPath(bay.TaxiOut, GroundSpeedLimits.TaxiTurboprop);
+                Assert.That(push.TopSpeed / Kt, Is.LessThanOrEqualTo(3.01f), "pushback stays a walking-pace tug");
+                Assert.That(taxi.TopSpeed / Kt, Is.LessThanOrEqualTo(25.01f), "turboprop taxi capped at 25 kt");
+                Assert.That(taxi.TopSpeed / Kt, Is.GreaterThan(20f), "and reaches a real straight-taxi pace");
             }
 
-            Assert.That(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup).TopSpeed / Kt, Is.LessThanOrEqualTo(8.01f));
+            foreach (var gate in AdelaideLayout.TerminalGates)
+            {
+                var taxi = new GroundPath(gate.TaxiOut, GroundSpeedLimits.TaxiJet);
+                Assert.That(taxi.TopSpeed / Kt, Is.LessThanOrEqualTo(25.01f));
+                // Gate routes are short and curved — they may not reach the full straight
+                // band, but they must clear the old 15 kt crawl.
+                Assert.That(taxi.TopSpeed / Kt, Is.GreaterThan(15f));
+            }
+
+            Assert.That(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup).TopSpeed / Kt,
+                Is.LessThanOrEqualTo(10.01f));
         }
 
         [Test]
-        public void Turns_AreTakenSlowerThanStraights()
+        public void Turns_AreTakenNearTenKnotsNotStraightTaxi()
         {
-            // Sample the taxi-out and record the slowest moving speed away from the ends.
-            var leg = new GroundPath(AdelaideLayout.Bays[0].TaxiOut, GroundSpeedLimits.Taxi);
+            var leg = new GroundPath(AdelaideLayout.Bays[0].TaxiOut, GroundSpeedLimits.TaxiTurboprop);
             var slowest = float.MaxValue;
             for (var t = 60.0; t < leg.Seconds - 60.0; t += 1.0)
                 slowest = Math.Min(slowest, leg.SampleAt(t).Speed);
-            Assert.That(slowest / Kt, Is.LessThan(10f), "the junction turns slow the aircraft well below 15 kt");
-            Assert.That(slowest, Is.GreaterThan(0.5f), "but it does not stop mid-route");
+            Assert.That(slowest / Kt, Is.LessThan(12f), "junction turns sit near the 10 kt band");
+            Assert.That(slowest / Kt, Is.GreaterThan(5f), "but not a crawl");
+            Assert.That(slowest, Is.GreaterThan(0.5f), "and it does not stop mid-route");
+        }
+
+        [Test]
+        public void ApronAndStandZones_AreSlowerThanTheStraight()
+        {
+            var bay = AdelaideLayout.Bays[0];
+            var outPath = new GroundPath(bay.TaxiOut, GroundSpeedLimits.TaxiTurboprop, 0f, 0f,
+                new[] { new GroundSpeedZone(GroundSpeedLimits.ApronMetres,
+                    CircuitProfile.Knots(GroundSpeedLimits.ApronTurbopropKnots)) }, null);
+            var early = outPath.SampleAt(Math.Min(20.0, outPath.Seconds * 0.1));
+            Assert.That(CircuitProfile.ToKnots(early.Speed),
+                Is.LessThanOrEqualTo(GroundSpeedLimits.ApronTurbopropKnots + 0.2f));
+
+            var inPath = new GroundPath(bay.TaxiIn, GroundSpeedLimits.TaxiTurboprop, 0f, 0f, null,
+                new[]
+                {
+                    new GroundSpeedZone(GroundSpeedLimits.ApronMetres,
+                        CircuitProfile.Knots(GroundSpeedLimits.ApronTurbopropKnots)),
+                    new GroundSpeedZone(GroundSpeedLimits.StandLeadInMetres,
+                        CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots))
+                });
+            var nearStand = inPath.SampleAt(Math.Max(0.0, inPath.Seconds - 2.0));
+            Assert.That(CircuitProfile.ToKnots(nearStand.Speed),
+                Is.LessThanOrEqualTo(GroundSpeedLimits.StandLeadInKnots + 0.2f));
         }
 
         [Test]
@@ -43,12 +86,13 @@ namespace Airside.Tests
             foreach (var bay in AdelaideLayout.Bays)
             {
                 var stand = new StableId(bay.Id);
-                Assert.That(AirlineOperations.TaxiOutSecondsFrom(stand) / 60.0, Is.InRange(6.0, 13.0), $"{bay.Reference} taxi-out");
-                Assert.That(AirlineOperations.TaxiInSecondsTo(stand) / 60.0, Is.InRange(2.5, 7.0), $"{bay.Reference} taxi-in");
+                // Faster straight taxi shortens the old 6–13 min band; pushback + disconnect remain.
+                Assert.That(AirlineOperations.TaxiOutSecondsFrom(stand) / 60.0, Is.InRange(4.0, 11.0), $"{bay.Reference} taxi-out");
+                Assert.That(AirlineOperations.TaxiInSecondsTo(stand) / 60.0, Is.InRange(1.5, 6.0), $"{bay.Reference} taxi-in");
             }
 
-            Assert.That(AirlineOperations.VacateSeconds, Is.InRange(60, 180));
-            Assert.That(AirlineOperations.LineupSeconds, Is.InRange(25, 90));
+            Assert.That(AirlineOperations.VacateSeconds, Is.InRange(45, 180));
+            Assert.That(AirlineOperations.LineupSeconds, Is.InRange(20, 90));
         }
 
         [Test]
@@ -67,7 +111,7 @@ namespace Airside.Tests
             }
 
             var push = new GroundPath(AdelaideLayout.Bays[1].Pushback, GroundSpeedLimits.Pushback);
-            var taxi = new GroundPath(AdelaideLayout.Bays[1].TaxiOut, GroundSpeedLimits.Taxi);
+            var taxi = new GroundPath(AdelaideLayout.Bays[1].TaxiOut, GroundSpeedLimits.TaxiTurboprop);
             Assert.That(travelled, Is.EqualTo(push.Length + taxi.Length).Within(15.0));
         }
 
@@ -90,6 +134,19 @@ namespace Airside.Tests
             var parked = leg.PoseAt(0);
             var heading = bay.HeadingDegrees * Math.PI / 180.0;
             Assert.That(parked.NoseX * Math.Sin(heading) + parked.NoseZ * Math.Cos(heading), Is.GreaterThan(0.95), "starts facing the stand heading");
+        }
+
+        [Test]
+        public void StandClass_SelectsTheMatchingTaxiProfile()
+        {
+            Assert.That(GroundSpeedLimits.TaxiFor(StandClass.RegionalBay).MaxSpeed,
+                Is.EqualTo(GroundSpeedLimits.TaxiTurboprop.MaxSpeed));
+            Assert.That(GroundSpeedLimits.TaxiFor(StandClass.TerminalGate).MaxSpeed,
+                Is.EqualTo(GroundSpeedLimits.TaxiJet.MaxSpeed));
+            Assert.That(GroundSpeedLimits.ApronKnotsFor(StandClass.RegionalBay),
+                Is.EqualTo(GroundSpeedLimits.ApronTurbopropKnots));
+            Assert.That(GroundSpeedLimits.ApronKnotsFor(StandClass.TerminalGate),
+                Is.EqualTo(GroundSpeedLimits.ApronJetKnots));
         }
     }
 }

@@ -31,10 +31,12 @@ namespace Airside.Presentation
         private static Texture2D _panelBackgroundLight;
         private static Texture2D _solidWhite;
         private static Texture2D _wordmarkLight;
+        private static Texture2D _appMarkLight;
         private static Texture2D _splashDawn;
         private static bool _panelBackgroundResolved;
         private static bool _panelBackgroundLightResolved;
         private static bool _wordmarkResolved;
+        private static bool _appMarkResolved;
         private static bool _splashResolved;
 
         /// <summary>BRD-001 light wordmark (transparent). Null when the art file is missing.</summary>
@@ -49,6 +51,21 @@ namespace Airside.Presentation
                 }
 
                 return _wordmarkLight;
+            }
+        }
+
+        /// <summary>BRD-003 transparent approach-runway mark for the launch sequence.</summary>
+        public static Texture2D AppMarkLight
+        {
+            get
+            {
+                if (!_appMarkResolved)
+                {
+                    _appMarkResolved = true;
+                    _appMarkLight = LoadArtTexture("Brand/airside_brand_mark_v02.png");
+                }
+
+                return _appMarkLight;
             }
         }
 

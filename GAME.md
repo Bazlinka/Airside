@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — Airside identity and launch sequence.**
+  - **Player-visible:** the Dock/Finder icon and opening now use a new original approach-runway
+    mark. The former seven-second distant glide is a 4.8-second, skippable runway-signal
+    hand-off: brand mark first, regional-operations context second, then an unobstructed playable
+    overview.
+  - **How:** `BRD-002 v02` is the opaque macOS icon; `BRD-003` is its transparent in-game mark.
+    Their editable SVG sources live under `docs/art/source/`. The opening does not alter airport,
+    flight, save, clock or camera-control behaviour once it ends.
+  - **Evidence:** Unity 6000.3.23f1 EditMode passed 493/493; a fresh macOS build succeeded.
+
 - **2026-09-16 Claude — Task 3: wire the career (Task 2) into the HUD (ADR 0053).**
   - **Player-visible:** the Contracts workspace is a real panel now, not a placeholder — it
     shows funds/reliability/tier, `REG-KGC-INTRO`'s terms (route, aircraft, rotations,

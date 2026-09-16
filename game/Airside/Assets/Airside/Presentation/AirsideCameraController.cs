@@ -172,12 +172,12 @@ namespace Airside.Presentation
                 _fov = _camera.fieldOfView;
         }
 
-        // Launch intro: a single eased glide from a low, wide establishing shot into the
-        // overview. Input is ignored while it plays; SkipIntro jumps to the end.
-        private const float IntroStartDistance = 5600f;
-        private const float IntroStartPitch = 16f;
-        private const float IntroStartYawOffset = -120f;
-        private const float IntroStartFov = 38f;
+        // Launch intro: a close, oblique reveal into the working overview. Keeping the
+        // opening in the same playable scale avoids an empty long-distance fly-over.
+        private static float IntroStartDistance => AirsideBareField.Enabled ? 330f : 285f;
+        private const float IntroStartPitch = 25f;
+        private const float IntroStartYawOffset = -42f;
+        private const float IntroStartFov = 44f;
         private float _introDuration;
         private float _introElapsed;
 

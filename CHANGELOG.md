@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Bug sweep 11 (10 fixes): known issues cleared, live-world details.** The painted stand
+  identifiers are depth-tested, so they no longer show through a parked aircraft, and the fallback
+  windsock lies along the wind instead of standing upright. The hangar door only opens for aircraft
+  actually near the hangar, so it closes at night again. The touchdown cue no longer drags the
+  prototype transform (and the tyre-smoke pool) across the field on every landing. Resuming a save
+  with no fleet array works, the unattended soak survives an aircraft that can reach nothing, and
+  the quality ladder stops editing the tracked URP asset in the Editor. The fallback ambience beds
+  loop without a click, and missing art textures are remembered rather than re-read from disk every
+  time. Unity EditMode 430/430.
+
 - **Bug sweep 10 (8 fixes): loading, saves, tooling, hidden aircraft.** Combined-kit cache keys are
   built with the invariant culture, so a comma-decimal locale can no longer give two kits the same
   key and the wrong materials. A corrupt save timestamp falls back to the default clock instead of

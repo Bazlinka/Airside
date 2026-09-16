@@ -23,6 +23,10 @@ Shader "Airside/Surroundings"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            // Without this the soft-shadow variant is never compiled for this shader, so
+            // the coastal plain took hard-edged shadows while the airfield beside it (which
+            // does declare it, in Airside/AdelaideGround) took soft ones.
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 

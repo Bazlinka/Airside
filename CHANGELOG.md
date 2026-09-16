@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Flight numbers and airport-glyph map markers.** Aircraft now read by a deterministic
+  flight number (airline code + a stable 3-digit number derived from registration and route)
+  in the map's in-flight labels, the Flights board and floating field tags, instead of a bare
+  registration — the map's detail line and the Flights board still show registration and type
+  alongside it. Destinations on the Australia map, including Adelaide, draw as a small airport
+  glyph (ring + crossed runway bars) rather than a plain square, growing gently with zoom.
+  Presentation-only, deterministic, nothing stored: new `FlightNumber` pure helper with tests.
+
 - **HUD shell cleanup, Task 1 (ADR 0053).** The four independent booleans behind the
   Plan/Hangar/Flights panels are one `_activeWorkspace` field, and a new nav strip under the
   clock replaces the three ad hoc buttons with the four ADR 0053 workspaces (Operations, Map,

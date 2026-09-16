@@ -1,5 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — flight numbers and airport-glyph map markers (player-requested polish,
+  outside the ADR 0053 task sequence).**
+  - **Player-visible:** the Australia destinations map draws each destination — and Adelaide's
+    own ADL marker — as a small airport glyph (a ringed compass with crossed runway bars) instead
+    of a plain coloured square, growing modestly with zoom so it still reads as a field once
+    you're in close. Flight identity through the HUD now leads with a flight number
+    (e.g. `REX 404`, or two letters from the player's own airline name, e.g. `SC 217`) instead of
+    a bare registration: the map's in-flight labels, the Flights board's small aircraft line
+    (flight number · registration) and the floating field tags (flight number, falling back to
+    registration for an idle aircraft with nothing planned) all read this way. The map's detail
+    line (zoomed/selected/tracked) still spells out registration and type alongside the running
+    commentary, so both identities stay available.
+  - **How:** new pure `Presentation/FlightNumber.cs` — `AirlineCode` (the airline's own short id
+    for AI operators, two letters drawn from the player's chosen name otherwise) and `For`/
+    `ForAircraft`/`OrRegistration`, deterministic from airline + registration + destination via
+    an FNV hash so the same aircraft on the same route always reads the same number. No Domain
+    or save change: nothing is stored, it's derived fresh every draw. The airport glyph is a
+    baked 48×48 texture (`AirportIcon`/`DrawAirportIcon` beside the existing `PlaneIcon` in
+    `AirsidePrototype.Airline.cs`), tinted per marker exactly like the square it replaced.
+  - **Evidence:** two new `FlightNumber` tests in `PresentationLayoutTests` (airline-code
+    derivation, determinism/route-sensitivity) — not run here, no Unity editor in this session;
+    same open items as below (Unity EditMode, packaged build, visual pass).
+  - **NEXT:** fold into the same Mac verification pass as the HUD shell slice below — nothing
+    here touches simulation/save, so it's safe to review together.
+
 - **2026-09-16 Claude — Task 1 HUD shell cleanup, first slice: workspace nav consolidation.**
   - **Player-visible:** the clock panel's three ad hoc buttons (Plan/Hangar/Flights) are replaced
     by a nav strip directly under it with the four ADR 0053 workspaces — **Operations** (the

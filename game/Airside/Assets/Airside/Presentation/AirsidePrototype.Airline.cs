@@ -1249,21 +1249,25 @@ namespace Airside.Presentation
                 if (!mapRect.Contains(point))
                     continue;
 
+                // A small airport glyph, not a plain dot, so a zoomed-in map reads as real
+                // fields rather than abstract markers — this is where parked aircraft sit.
                 var colour = selected ? AirsideTheme.SafetyYellow : row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete;
-                var size = selected ? 13f : i == hovered ? 12f : 9f;
-                DrawSolid(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), colour);
+                var zoomBoost = Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
+                var size = (selected ? 20f : i == hovered ? 18f : 14f) * zoomBoost;
+                DrawAirportIcon(point, size, colour);
                 if (i == hovered)
-                    AirsideTheme.DrawPanelFrame(new Rect(point.x - 9f, point.y - 9f, 18f, 18f), AirsideTheme.Cloud);
-                GUI.Label(new Rect(point.x + 8f, point.y - 9f, _mapLens.Zoom >= 6f ? 140f : 60f, 18f),
+                    AirsideTheme.DrawPanelFrame(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), AirsideTheme.Cloud);
+                GUI.Label(new Rect(point.x + size * 0.5f + 2f, point.y - 9f, _mapLens.Zoom >= 6f ? 140f : 60f, 18f),
                     _mapLens.Zoom >= 6f ? $"{row.Destination.Code} {row.Destination.Name}" : row.Destination.Code, small);
             }
 
             if (mapRect.Contains(homePoint))
             {
-                DrawSolid(new Rect(homePoint.x - 7f, homePoint.y - 7f, 14f, 14f), AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
+                var homeSize = 22f * Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
+                DrawAirportIcon(homePoint, homeSize, AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex));
                 // Left of the dot: Kingscote and Port Lincoln sit just to its right and below.
                 var adlStyle = Styled(label, "middle-right", s => new GUIStyle(s) { alignment = TextAnchor.MiddleRight });
-                GUI.Label(new Rect(homePoint.x - 89f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
+                GUI.Label(new Rect(homePoint.x - 89f - homeSize * 0.5f, homePoint.y - 9f, 80f, 18f), "ADL", adlStyle);
             }
 
             // Aircraft icons on top of everything else on the map.
@@ -1293,9 +1297,10 @@ namespace Airside.Presentation
                 if (detailed)
                     DrawSolid(labelRect, new Color(ink.r, ink.g, ink.b, 0.75f));
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),
-                    $"{flight.Aircraft.Registration} → {flight.To.Code}", small);
+                    $"{FlightNumber.OrRegistration(flight.Aircraft)} → {flight.To.Code}", small);
                 if (detailed)
-                    GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f), MapFlightDetail(flight), small);
+                    GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
+                        $"{MapFlightDetail(flight)} · {flight.Aircraft.Registration} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
             }
 
@@ -1484,6 +1489,53 @@ namespace Airside.Presentation
             texture.Apply(false, true);
             _planeIcon = texture;
             return _planeIcon;
+        }
+
+        private static Texture2D _airportIcon;
+
+        /// <summary>A small ring with crossed runway bars — reads as "airport" at a glance.</summary>
+        private static void DrawAirportIcon(Vector2 centre, float size, Color colour)
+        {
+            var previous = GUI.color;
+            GUI.color = colour;
+            GUI.DrawTexture(new Rect(centre.x - size * 0.5f, centre.y - size * 0.5f, size, size), AirportIcon());
+            GUI.color = previous;
+        }
+
+        private static Texture2D AirportIcon()
+        {
+            if (_airportIcon != null)
+                return _airportIcon;
+
+            const int n = 48;
+            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            var pixels = new Color32[n * n];
+            var centre = (n - 1) * 0.5f;
+            for (var y = 0; y < n; y++)
+            for (var x = 0; x < n; x++)
+            {
+                var dx = (x - centre) / centre;
+                var dy = (y - centre) / centre;
+                var r = Mathf.Sqrt(dx * dx + dy * dy);
+                var ring = r < 0.98f && r > 0.76f;
+                // Two crossing runway bars through the hub, angled like a real two-runway field.
+                var barA = Mathf.Abs(dx * 0.87f - dy * 0.5f) < 0.10f && r < 0.6f;
+                var barB = Mathf.Abs(dx * 0.87f + dy * 0.5f) < 0.10f && r < 0.6f;
+                var hub = r < 0.16f;
+                pixels[y * n + x] = ring || barA || barB || hub
+                    ? new Color32(255, 255, 255, 255)
+                    : new Color32(255, 255, 255, 0);
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            _airportIcon = texture;
+            return _airportIcon;
         }
 
         /// <summary>
@@ -1998,7 +2050,11 @@ namespace Airside.Presentation
                 var boardContent = GUI.contentColor;
                 if (boardSeverity != StatusSeverity.Normal)
                     GUI.contentColor = SeverityColour(boardSeverity, boardContent);
-                GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), aircraft.Registration, boardTiny);
+                var boardFlightNumber = FlightNumber.ForAircraft(aircraft);
+                var boardIdentity = boardFlightNumber != null
+                    ? $"{boardFlightNumber} · {aircraft.Registration}"
+                    : aircraft.Registration;
+                GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), boardIdentity, boardTiny);
                 GUI.Label(new Rect(routeX + routeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
                 GUI.contentColor = boardContent;
                 var aircraftX = routeX + routeW + phaseW;

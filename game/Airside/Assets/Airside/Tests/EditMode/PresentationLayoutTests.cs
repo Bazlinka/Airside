@@ -17,6 +17,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightNumber_AirlineCodeUsesIdForAiAndInitialsForPlayer()
+        {
+            Assert.That(FlightNumber.AirlineCode(Airline.Rex()), Is.EqualTo("REX"));
+            Assert.That(FlightNumber.AirlineCode(Airline.Player("Southern Cross Regional", "#1F3A93")), Is.EqualTo("SC"));
+            Assert.That(FlightNumber.AirlineCode(Airline.Player("Wattlebird", "#1F3A93")), Is.EqualTo("WA"));
+            Assert.That(FlightNumber.AirlineCode(null), Is.EqualTo("XX"));
+        }
+
+        [Test]
+        public void FlightNumber_IsDeterministicAndVariesByRoute()
+        {
+            var rex = Airline.Rex();
+            var a = FlightNumber.For(rex, "VH-ABC", "MEL");
+            var b = FlightNumber.For(rex, "VH-ABC", "MEL");
+            var c = FlightNumber.For(rex, "VH-ABC", "SYD");
+            Assert.That(a, Is.EqualTo(b), "same aircraft and route must read the same every time");
+            Assert.That(a, Is.Not.EqualTo(c), "a different destination should usually read a different number");
+            Assert.That(a, Does.StartWith("REX"));
+            Assert.That(int.Parse(a.Substring(3)), Is.InRange(100, 999));
+        }
+
+        [Test]
         public void AdelaideLighting_GuardFilterTargetsMainRunwayHoldingPoints()
         {
             Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(-1529.9f, 90.3f), Is.True);

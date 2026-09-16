@@ -650,9 +650,15 @@ namespace Airside.Simulation
             if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"{aircraft.Registration} has no departure waiting to start.");
 
-            // TODO(ADR 0053): a broken commitment against an active career contract should
-            // cost reliability. Not implemented — Task 2's acceptance list only asks for
-            // deterministic settlement of completed flights; this is real remaining scope.
+            // ADR 0053: a broken commitment against the active career contract costs
+            // reliability — only when the cancelled flight would actually have counted
+            // (right airline, aircraft, route); an unrelated cancellation is free.
+            if (aircraft.Airline.IsPlayer && CareerState.ActiveContract != null
+                && RouteContractCatalogue.TryFind(CareerState.ActiveContract.DefinitionId, out var contract)
+                && contract.EligibleType == aircraft.Type
+                && contract.MatchesRoute(Home.Code, aircraft.Scheduled.Value.Destination.Code))
+                CareerState.PenalizeCancellation(contract.Id, contract.ReliabilityLossOnCancel);
+
             aircraft.Scheduled = null;
             return CommandResult.Ok;
         }

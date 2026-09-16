@@ -227,5 +227,33 @@ namespace Airside.Tests
             Assert.That(ops.CareerState.ActiveContract, Is.Not.Null);
             Assert.That(ops.CareerState.ActiveContract.CompletedRotations, Is.Zero);
         }
+
+        [Test]
+        public void CancellingAContractFlight_CostsReliability()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+
+            Assert.That(ops.CancelDeparture(plane).Accepted, Is.True);
+
+            Assert.That(ops.CareerState.Reliability,
+                Is.EqualTo(AirlineCareerState.StartingReliability - definition.ReliabilityLossOnCancel));
+            Assert.That(ops.CareerState.ActiveContract.CompletedRotations, Is.Zero, "a cancellation is not a rotation");
+        }
+
+        [Test]
+        public void CancellingAnUnrelatedFlight_CostsNothing()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            // Port Lincoln has nothing to do with the accepted KGC contract.
+            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(600)).Accepted, Is.True);
+
+            Assert.That(ops.CancelDeparture(plane).Accepted, Is.True);
+
+            Assert.That(ops.CareerState.Reliability, Is.EqualTo(AirlineCareerState.StartingReliability));
+        }
     }
 }

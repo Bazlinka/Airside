@@ -1171,10 +1171,14 @@ namespace Airside.Presentation
 
         private void CancelPlannedFlight(FleetAircraft aircraft)
         {
+            var reliabilityBefore = _operations.CareerState.Reliability;
             var result = _operations.CancelDeparture(aircraft);
             if (result.Accepted)
             {
-                ShowToast($"{aircraft.Registration}'s flight is cancelled.");
+                var lost = reliabilityBefore - _operations.CareerState.Reliability;
+                ShowToast(lost > 0
+                    ? $"{aircraft.Registration}'s flight is cancelled — reliability down {lost}."
+                    : $"{aircraft.Registration}'s flight is cancelled.");
                 SaveAirline();
             }
             else

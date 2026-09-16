@@ -14,7 +14,7 @@ namespace Airside.Domain
         public RouteContractDefinition(
             string id, string originCode, string destinationCode, AircraftType eligibleType,
             int requiredRotations, long paymentPerRotation, long completionReward,
-            int reliabilityGainPerRotation, OperatingTier requiredTier)
+            int reliabilityGainPerRotation, OperatingTier requiredTier, int reliabilityLossOnCancel = 0)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("A contract id is required.", nameof(id));
@@ -40,6 +40,7 @@ namespace Airside.Domain
             CompletionReward = completionReward;
             ReliabilityGainPerRotation = reliabilityGainPerRotation;
             RequiredTier = requiredTier;
+            ReliabilityLossOnCancel = Math.Max(0, reliabilityLossOnCancel);
         }
 
         public string Id { get; }
@@ -56,6 +57,10 @@ namespace Airside.Domain
 
         public int ReliabilityGainPerRotation { get; }
         public OperatingTier RequiredTier { get; }
+
+        /// <summary>Reliability cost of cancelling a scheduled flight that would have counted
+        /// towards this contract — a broken commitment, not a flight that was never planned.</summary>
+        public int ReliabilityLossOnCancel { get; }
 
         /// <summary>True when <paramref name="fromCode"/>/<paramref name="toCode"/> match this contract's route, either direction.</summary>
         public bool MatchesRoute(string fromCode, string toCode) =>
@@ -81,7 +86,8 @@ namespace Airside.Domain
             paymentPerRotation: 400,
             completionReward: 1000,
             reliabilityGainPerRotation: 2,
-            requiredTier: OperatingTier.Provisional);
+            requiredTier: OperatingTier.Provisional,
+            reliabilityLossOnCancel: 3);
 
         public static readonly IReadOnlyList<RouteContractDefinition> All = new[]
         {

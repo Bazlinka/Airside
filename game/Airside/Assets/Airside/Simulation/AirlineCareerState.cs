@@ -65,6 +65,19 @@ namespace Airside.Simulation
             return new FlightSettlement(id, definition.Id, payment, definition.ReliabilityGainPerRotation, rotations, fulfilled);
         }
 
+        /// <summary>
+        /// Docks reliability for breaking a commitment against the active contract (ADR 0053:
+        /// "a broken commitment ... should cost reliability"). A no-op unless
+        /// <paramref name="definitionId"/> is the contract currently active, so cancelling a
+        /// flight unrelated to any contract never costs anything.
+        /// </summary>
+        internal void PenalizeCancellation(string definitionId, int amount)
+        {
+            if (amount <= 0 || ActiveContract == null || ActiveContract.DefinitionId != definitionId)
+                return;
+            Reliability = Clamp(Reliability - amount);
+        }
+
         private static int Clamp(int reliability) => Math.Max(0, Math.Min(100, reliability));
     }
 }

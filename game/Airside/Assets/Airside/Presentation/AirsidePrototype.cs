@@ -297,7 +297,12 @@ namespace Airside.Presentation
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
             _touchdownClip = CreateTouchdownClip();
             _rotateClip = CreateRotateClip();
-            _touchdownAudio = gameObject.AddComponent<AudioSource>();
+            // Its own child: the touchdown and rotate cues move this source to the aircraft,
+            // and on the prototype's own object that dragged the prototype transform — and
+            // the tyre-smoke pool parented to it — across the field on every landing.
+            var touchdownAudioHost = new GameObject("Touchdown audio");
+            touchdownAudioHost.transform.SetParent(transform, false);
+            _touchdownAudio = touchdownAudioHost.AddComponent<AudioSource>();
             _touchdownAudio.playOnAwake = false;
             _touchdownAudio.spatialBlend = 0.55f;
             _touchdownAudio.volume = 0.22f;

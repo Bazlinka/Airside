@@ -1,166 +1,168 @@
-# Airside Delivery Plan
+# Airside Product Plan
 
-## First playable execution plan
+Version 3.0
+16 September 2026
 
-Version 2.0
-7 September 2026
+## Approved product direction
 
-## Purpose
+Airside is an airline management game set inside an autonomous Adelaide Airport.
+The player owns and grows an airline; the airport, tower and other operators continue
+to function around it. The first aircraft is an ATR 42 and the long-term aspiration is
+to build a credible domestic and international operation.
 
-Airside is a real-time airport management game for macOS. The player runs a small regional airport while aircraft and ground services operate automatically. The immediate goal is a coherent, enjoyable first playable that a new player can launch, understand and play without developer help.
+This plan supersedes the old Kingscote airport-management plan. Decision 0045 remains
+the foundation for the player's role. Decision 0053 defines the career progression and
+HUD direction approved by Bailey on 16 September 2026.
 
-The project already has more systems than the first playable needs. Development now concentrates on joining those systems into one reliable player experience. New platforms, major simulation layers and additional asset batches wait until external players confirm that the current airport loop is understandable and fun.
+## Product promise
 
-## Delivery decision
+Airside should take time to master and progress through, without making individual
+sessions feel unrewarding.
 
-The Mac first playable is the only active product target. One implementation branch owns the next player-visible outcome. Planning, documentation and asset work support that branch and do not become parallel milestones.
+- **Slow progression:** meaningful aircraft, route and capability unlocks take days,
+  weeks and eventually months of play.
+- **Fast feedback:** every completed rotation advances a visible objective and reports
+  its operational and financial result.
+- **Operational ownership:** progress comes from planning and reliably operating an
+  airline, not from passive waiting, generic XP or daily-login rewards.
+- **A living airport:** AI traffic makes Adelaide feel active but does not compete for
+  resources unfairly or obscure the player's next decision.
 
-The next development step is:
+## Current playable foundation
 
-1. **Fix the packaged art pipeline** so macOS builds load the same kits/PNGs as
-   the Editor (`StreamingAssets` + `ArtRuntimePaths`; decision 0025). Rebuild and
-   confirm the turboprop/terminal/UI icons appear in the packaged app — not only
-   coloured primitives.
-2. Launch that exact build and complete a focused visual test at 1280 by 720,
-   1440 by 900 and the development Mac's Retina resolution.
-3. Fix only failures that stop a new player from completing or understanding the
-   first session (first-session flow is already on `main`).
-4. Treat Bailey's visual backlog (replace placeholder 3D, environment, materials,
-   lighting, HUD rebuild, motion, brand) as the presentation track after the
-   pipeline works in packaged builds — do not mark REF screenshots as shipped.
+The game already provides the foundation for the career:
 
-PR 34, cloud tooling and further parallel simulation systems are useful but are
-not on the critical path to a trustworthy visual playtest.
+- a deterministic aircraft movement and reservation simulation;
+- a player airline with a persistent ATR 42;
+- player-selected destinations, departure times and stands;
+- schedule, cancel and stand-assignment commands;
+- autonomous Adelaide traffic across regional, domestic and international aircraft;
+- first-flight onboarding, map, fleet, Hangar, flight board, follow camera and
+  away-summary flows;
+- save compatibility and deterministic headless and Unity tests.
 
-## Honest presentation status
+The missing layer is consequence: a completed flight currently increases the aircraft's
+trip count, but does not materially grow the airline or create a longer-term objective.
 
-As of the 2026-09-07 packaged-build assessment, presentation is roughly **~20% of
-the REF target**. Simulation and first-session systems are ahead of final art.
-See decision **0025**.
+## Career loop
 
-## What is already built
+The career is built around airline service contracts:
 
-The current game includes the core aircraft cycle, deterministic time, persistence and offline catch-up, route offers, cash, reputation, staffing, weather, daily reports, research, a third stand, insolvency, concurrent commercial flights, ground traffic, a scalable HUD, approved surfaces, UI art and integrated model kits with primitive fallbacks.
+1. Accept an authored route contract.
+2. Schedule and operate the required rotations.
+3. Complete them safely and reliably.
+4. Receive funds, reliability movement and contract progress after each rotation.
+5. Unlock the capacity, aircraft and contracts needed for the next operating tier.
 
-These systems are sufficient for the first playable. The current work is integration, onboarding, tuning and verification.
+Three persistent values carry the progression:
 
-## First playable player journey
+- **Funds** pay for airline growth and later operating commitments.
+- **Reliability** measures whether the airline delivers the service it promises.
+- **Operating tier** represents real capability: Provisional, Regional, Domestic and
+  International. A tier is earned by completing explicit requirements, not by filling
+  an arbitrary experience bar.
 
-A new player starts at Kingscote with a small operating airport, a clear cash position and one immediate route opportunity. Within the first two minutes, the player sees an aircraft movement and understands the airport's current state. Within ten minutes, the player makes a useful decision about a route, staffing, priority turnaround or research. The consequences appear in the world and in the daily financial result.
+Initial pacing targets, to be tuned through playtesting:
 
-The session should have a simple arc:
+| Stage | Target time | Meaningful outcome |
+|---|---:|---|
+| Provisional | 2-3 real days | Complete the first service contract and prove reliability |
+| Regional | 1-2 weeks | Add regional capacity, routes and a second aircraft |
+| Domestic | 3-6 weeks | Operate regular interstate jet services |
+| International | Multiple months | Sustain widebody-capable international operations |
 
-- Start or continue the airport.
-- Read a short status summary.
-- Watch an aircraft arrive, taxi and turn around.
-- Make one operational or investment decision.
-- See the effect on time, service, cash or reputation.
-- Reach a daily report or another clear checkpoint.
-- Quit and relaunch without losing or corrupting progress.
+These are progression targets, not mandatory real-time lockouts. A good operator can
+move faster, while a player who returns after time away is not punished for absence.
 
-The player should never need to read a design document, debug log or raw event stream to know what to do.
+## First career vertical slice
 
-## Immediate implementation slice
+The first implementation proves the model with one authored Adelaide-Kingscote service
+contract:
 
-### Outcome
+- the player sees a clear contract objective;
+- each eligible completed rotation pays a fixed, transparent amount;
+- cancellations or broken commitments can reduce reliability;
+- contract progress persists and settles exactly once;
+- completing the contract unlocks the next regional contract;
+- the result is visible immediately in the HUD and after returning to the game.
 
-Turn the current prototype into a self-explanatory 15 to 30 minute first session.
+Do not add a full economy, wages, maintenance, fuel market or automated route income in
+this slice. The player can currently schedule individual round trips, so a broad economy
+would create fake depth before the operating model can support it.
 
-### Work in scope
+## Fleet and capacity progression
 
-- A clean new-game path that does not depend on an old developer save.
-- A brief opening explanation of the player's role and the first useful decision.
-- Clear priority between status, alerts, offers and optional detail in the HUD.
-- Tuning so a first-session decision produces a visible result within the session.
-- Reliable save, quit, relaunch and away-summary behaviour.
-- Visual correction of model placement, scale, lighting, panel layout and unreadable text.
-- A packaged macOS build suitable for a small external playtest.
+Aircraft acquisition follows operational readiness:
 
-### Acceptance criteria
+- every aircraft requires compatible dedicated Adelaide capacity before acquisition;
+- route and aircraft offers state their requirements and practical purpose;
+- the next purchase should open a useful decision, not merely make a number larger;
+- current AI stands are not silently reassigned to solve player capacity;
+- aircraft families and destinations are introduced in authored steps so the player can
+  understand what changed.
 
-- The game compiles and builds in Unity 6000.3.23f1.
-- All EditMode tests pass with no failed or skipped tests.
-- A new player can start without an existing save.
-- The first aircraft cycle is visible and understandable.
-- The player can identify the next useful action within two minutes.
-- At least one decision has a visible operational or financial consequence within 15 minutes.
-- HUD panels do not overlap or clip at the three target display sizes.
-- Aircraft and ground vehicles do not visibly share reserved space or slide through released space.
-- Saving, quitting and relaunching preserve state and produce a readable away summary.
-- A 30 minute soak completes without a crash, deadlock or unexplained stop.
-- One external player completes the session without coaching and can explain what happened.
+## HUD direction
 
-## Build sequence
+The present HUD is functional but visually busy, button-heavy and hard to scan. Career
+systems must not be added as another layer of panels and badges. The HUD is simplified
+before the progression UI is introduced.
 
-### Step 1 Restore a trustworthy build
+The target structure is:
 
-Merge PR 35 after reviewing its narrow compiler repair. Pull main, run the Unity tests, create the macOS build and launch the resulting app. Record the commit, Unity version, test count and screenshots from the exact build.
+- one quiet persistent status strip for time, airline, funds and reliability;
+- one active objective showing what matters now and its progress;
+- one navigation strip: **Operations, Map, Fleet, Contracts**;
+- one major workspace open at a time;
+- one contextual primary aircraft action, such as **Plan**, **Track**, **View plan** or
+  **Assign stand**, rather than several competing buttons;
+- secondary actions visually subordinate to the next useful action;
+- developer tools isolated from the player interface.
 
-### Step 2 Verify the integrated presentation
+The visual language is game-like but restrained: navy and charcoal foundations, warm
+white text, safety yellow only for priority, airline colour used sparingly and red reserved
+for warnings. Use sentence case and natural language. Reduce nested boxes, badges and
+repeated labels.
 
-Test the current models, surfaces, lights, weather effects and HUD together. Fix showstoppers such as missing assets, unreadable panels, overlaps, severe scale errors, broken cameras and misleading aircraft positions. Cosmetic polish that does not affect understanding moves to the backlog.
+The first cleanup stays on the existing IMGUI path. Introducing a parallel UI framework
+would increase inconsistency and risk; any later technology migration requires its own
+decision and acceptance plan.
 
-### Step 3 Make the first session playable
+## Delivery sequence
 
-Add or tighten the new-game entry, opening guidance and decision pacing. Reuse the systems already present. Do not add another economy, research, passenger, construction or airline subsystem during this step.
+1. **HUD information architecture:** reorganise the current controls without changing
+   simulation behaviour.
+2. **Career domain:** add deterministic contract, funds, reliability and tier state with
+   save migration and settlement idempotency.
+3. **Starter contract:** connect Adelaide-Kingscote completion to the HUD, save and
+   away-summary flows.
+4. **Regional growth:** add a second contract, capacity decision and aircraft acquisition.
+5. **Domestic growth:** introduce interstate jet operations only after the regional loop
+   is proven enjoyable.
+6. **International growth:** treat widebody operations as a long-term capability goal,
+   not an early catalogue purchase.
 
-### Step 4 External playtest and tune
+The detailed task packets and acceptance criteria are in
+`AIRLINE_PROGRESSION_AND_HUD_PLAN.md`.
 
-Give the packaged build to one or two people who have not read the plan. Observe where they become confused or bored. Fix the three most serious problems, rebuild and repeat once. Evidence from players decides the next system, not the size of the long-term backlog.
+## Safety and fairness rules
 
-## Working rules for speed
+- No purchasable shortcut, daily-login streak or generic XP grind.
+- No state-changing command is applied more than once.
+- Frame rate and reload timing do not change career outcomes.
+- Save changes have explicit versions and migrations.
+- AI traffic cannot consume capacity already promised to the player.
+- Costs and rewards are disclosed before the player commits.
+- Missing a real-world day does not damage the airline.
 
-- Keep one active player-visible implementation slice.
-- Prefer a working greybox or existing fallback over waiting for a perfect asset.
-- Use the current approved art direction; do not run another approval round for work that clearly follows it.
-- Stop creating new reference art until the integrated assets have been played and assessed.
-- Write documentation only when it preserves a decision, explains a handoff or supports verification.
-- Keep pull requests small enough to review quickly, but do not split one working outcome into artificial micro-PRs.
-- Run focused tests while iterating and the full Unity suite before merging.
-- Treat a build as complete only after the exact packaged app launches and is played.
-- Put non-blocking defects in the backlog and continue toward the playable.
+## Verification standard
 
-## Core rules that remain mandatory
+Each behavioural slice requires deterministic domain tests, Unity EditMode coverage,
+save migration coverage and a Mac playtest. HUD work is checked at 1280x720, 1440x900
+and Retina resolution across setup, first flight, planner, map, fleet, Hangar, Flights,
+away summary and stand assignment.
 
-Speed does not justify corrupt saves or inconsistent simulation. These rules protect the game and remain in force:
+At any moment the game should answer three questions without opening several panels:
 
-- Simulation time comes from an injected clock.
-- Random choices come from a seeded source.
-- Runways, taxiways and stands are reserved before use.
-- Frame rate does not change simulation outcomes.
-- State-changing commands are safe to apply exactly once.
-- Persisted schema changes include a version and migration path.
-- Offline catch-up produces results compatible with live play.
-- External assets and data have recorded source, licence and fallback.
-- Simulation state drives presentation; animation and effects do not decide operational outcomes.
-
-## First playable scope
-
-The first playable includes one regional airport, one runway network, two or three stands, commercial aircraft and supporting ground traffic, route decisions, staffing, two research choices, weather, reputation, daily finances, saving, offline catch-up and failure through insolvency.
-
-The current integrated art may ship with procedural fallbacks where an asset fails. A consistent, readable airport is more valuable than complete asset replacement.
-
-## Deferred until the first playable is proven
-
-The following work remains part of the long-term direction but is not active now:
-
-- iPhone companion and CloudKit synchronisation
-- detailed individual passenger simulation
-- modular terminal interiors and baggage networks
-- cargo and general aviation operations
-- multiple airports or save slots
-- live weather, live schedules or other external services
-- real airline names and liveries
-- multiplayer and social features
-- advanced construction staging and land acquisition
-- maintenance, regulation and certification depth
-- financing, monetisation and release operations
-- additional broad art, animation and VFX batches
-
-Any deferred item returns only when the first playable exposes a clear need for it or external testing proves the central loop works.
-
-## Long-term direction
-
-After the first playable succeeds, Airside can grow from a tiny regional airfield through domestic and international stages. The player will continue acting as the airport operator rather than directly controlling aircraft or vehicles. Expansion should add new operational pressure, visible consequences and meaningful choices without weakening save integrity or readability.
-
-The long-term product remains a premium stylised miniature airport that continues operating while the player is away. The first playable is the evidence that this larger game is worth building.
+1. What is my airline doing now?
+2. What needs my attention?
+3. What am I working toward?

@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Bailey/Codex — airline career progression and HUD direction approved (ADR 0053).**
+  - **Product identity:** Airside is a player-airline growth game inside an autonomous Adelaide
+    Airport. The retired Kingscote airport-management economy is not the direction.
+  - **Progression:** authored service contracts turn completed rotations into funds, reliability
+    and capability-based operating tiers. Feedback occurs after each eligible flight, while
+    regional, domestic and international growth is paced over days, weeks and months. No generic
+    XP, daily-login rewards, paid acceleration or waiting-only gates.
+  - **HUD:** simplify before adding career information: one quiet status/objective layer, four
+    workspaces (Operations, Map, Fleet, Contracts), one workspace at a time and one contextual
+    primary aircraft action. Keep the first pass on the current IMGUI path.
+  - **Authoritative detail:** `docs/product/PROJECT_PLAN.md`,
+    `docs/product/AIRLINE_PROGRESSION_AND_HUD_PLAN.md` and
+    `docs/decisions/0053-airline-career-and-hud-direction.md`.
+  - **NEXT:** implement Task 1, HUD shell cleanup only. Preserve all simulation, traffic, routes,
+    commands, saves and aircraft behaviour. Verify setup, first-flight guide, planner, map, fleet,
+    Hangar, Flights, away summary and stand assignment at 1280x720, 1440x900 and Retina. Do not
+    begin career state until Bailey has reviewed the cleaned HUD.
 - **2026-09-16 Codex — AIR-010 Singapore Airlines 787-10 implemented.**
   - **Player-visible:** Singapore Airlines' Gate 20 aircraft is now the published Adelaide-route
     type, a Boeing 787-10, rather than an A350 stand-in. It has its own long/narrow widebody

@@ -286,7 +286,10 @@ namespace Airside.Presentation
             }
             else
             {
-                _apronLights = Array.Empty<Light>();
+                // The real Adelaide pavement owns its terminal shell even in the focused
+                // release world. Keep only its seven roof floods; the wider decorative
+                // lighting set (streetlights, ALS, beacon) remains excluded here.
+                _apronLights = AirsideBareField.Enabled ? BuildApronLights() : Array.Empty<Light>();
                 _landsideLights = Array.Empty<Light>();
                 _thresholdLights = Array.Empty<Light>();
                 _alsLights = Array.Empty<Light>();
@@ -329,7 +332,7 @@ namespace Airside.Presentation
             _uiAudio.spatialBlend = 0f;
             _uiAudio.volume = 0.3f;
             AirsideSceneIndex.Capture();
-            if (AirsideFocusMode.ShowBuildings)
+            if (AirsideFocusMode.ShowBuildings || AirsideBareField.Enabled)
                 CollectNightGlowWindows();
             _fuelFarmLight = AirsideFocusMode.ShowDecorativeLights
                 ? AirsideSceneIndex.FindLight("Fuel farm light") : null;
@@ -3395,7 +3398,7 @@ namespace Airside.Presentation
                 : Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
-            _sun.intensity = Mathf.Lerp(0.12f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
+            _sun.intensity = Mathf.Lerp(0.18f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -3415,28 +3418,28 @@ namespace Airside.Presentation
                     new Color(0.28f, 0.34f, 0.52f),
                     Color.Lerp(new Color(0.62f, 0.72f, 0.9f), new Color(1f, 0.82f, 0.68f), warm * 0.45f),
                     daylight);
-                _fillLight.intensity = Mathf.Lerp(0.38f, 0.22f, daylight) + warm * 0.05f;
+                _fillLight.intensity = Mathf.Lerp(0.52f, 0.22f, daylight) + warm * 0.05f;
             }
 
             // Trilight: day = bright cool sky / warm ground separation; night = deep blue-grey
             // that still lets hangar/terminal silhouettes read outside flood pools.
             var ambientDay = new Color(0.58f, 0.64f, 0.72f);
             var ambientDusk = new Color(0.52f, 0.36f, 0.3f);
-            var ambientNight = new Color(0.12f, 0.14f, 0.22f);
+            var ambientNight = new Color(0.20f, 0.23f, 0.32f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.55f);
             var ambientEquator = Color.Lerp(
-                new Color(0.16f, 0.18f, 0.26f),
+                new Color(0.22f, 0.24f, 0.32f),
                 Color.Lerp(new Color(0.46f, 0.5f, 0.52f), new Color(0.5f, 0.38f, 0.32f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
-                new Color(0.08f, 0.09f, 0.11f),
+                new Color(0.13f, 0.14f, 0.17f),
                 Color.Lerp(new Color(0.26f, 0.28f, 0.22f), new Color(0.3f, 0.2f, 0.15f), warm),
                 daylight);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(0.72f, 1.12f, daylight) + warm * 0.06f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.88f, 1.12f, daylight) + warm * 0.06f;
             if (weatherGloom > 0f)
             {
                 // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.
@@ -3499,7 +3502,10 @@ namespace Airside.Presentation
             if (_apronLights != null)
             {
                 // Warm night pools so REF-002 apron reads; day floods stay off.
-                var flood = Mathf.Lerp(3.6f, 0.04f, Mathf.SmoothStep(0f, 1f, daylight));
+                // The Adelaide roof floods throw roughly 50 m onto the stands; inverse-square
+                // attenuation needs materially more intensity than the 16 m legacy diorama.
+                var flood = Mathf.Lerp(AirsideBareField.Enabled ? 40f : 3.6f, 0.04f,
+                    Mathf.SmoothStep(0f, 1f, daylight));
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
                     var light = _apronLights[i];
@@ -3755,6 +3761,8 @@ namespace Airside.Presentation
                     continue;
                 var n = renderer.gameObject.name;
                 if (!(n.StartsWith("glass_pane", StringComparison.Ordinal)
+                      || n.StartsWith("Terminal airside glazing", StringComparison.Ordinal)
+                      || n.StartsWith("Terminal airside interior glow", StringComparison.Ordinal)
                       || n.StartsWith("skylight_l", StringComparison.Ordinal)
                       || n.StartsWith("skylight_r", StringComparison.Ordinal)
                       || n.StartsWith("skylight_mid", StringComparison.Ordinal)
@@ -3774,7 +3782,7 @@ namespace Airside.Presentation
                     light = renderer.gameObject.AddComponent<Light>();
                     light.type = LightType.Point;
                     light.color = new Color(1f, 0.78f, 0.45f);
-                    light.range = 10f;
+                    light.range = n.StartsWith("Terminal airside glazing", StringComparison.Ordinal) ? 30f : 10f;
                     light.shadows = LightShadows.None;
                     light.intensity = 0f;
                 }
@@ -3805,6 +3813,29 @@ namespace Airside.Presentation
                     ? 1f + 0.06f * Mathf.Sin(
                         Time.unscaledTime * (AirsideReusableMotion.WindowFlickerHz * Mathf.PI * 2f + i * 0.37f) + i)
                     : 1f;
+                if (renderer.gameObject.name.StartsWith("Terminal airside glazing", StringComparison.Ordinal))
+                {
+                    var lit = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.35f, 0.85f, night));
+                    var facade = Color.Lerp(
+                        new Color(0.08f, 0.16f, 0.21f, 0.9f),
+                        new Color(1.55f, 0.78f, 0.2f, 1f),
+                        lit) * flicker;
+                    facade.a = Mathf.Lerp(0.9f, 1f, lit);
+                    SetRendererColor(renderer, facade, facade * lit);
+                    continue;
+                }
+                if (renderer.gameObject.name.StartsWith("Terminal airside interior glow", StringComparison.Ordinal))
+                {
+                    // Behind the blue glass, use HDR unlit interior cards. At real-airport
+                    // overview distance ordinary Lit emission is lost to night exposure.
+                    var interior = Color.Lerp(
+                        new Color(0.05f, 0.07f, 0.09f),
+                        new Color(3.4f, 1.75f, 0.38f),
+                        night * night) * flicker;
+                    interior.a = 1f;
+                    SetRendererColor(renderer, interior, interior);
+                    continue;
+                }
                 var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f) * flicker;
                 color.a = 1f;
                 var emission = new Color(1f, 0.72f, 0.32f) * (0.2f + glow * 2.4f) * flicker;
@@ -3894,7 +3925,7 @@ namespace Airside.Presentation
         {
             // Spot floods aimed at stand / hangar apron so authored metal picks up
             // directional wash at dusk (0025 item 5) — fewer omnidirectional spills.
-            var specs = new[]
+            var legacySpecs = new[]
             {
                 // Four corner masts — SpotLight height matches ~9 m authored flood heads.
                 (new Vector3(8f, 9.2f, 12f), new Vector3(17f, 0.2f, 14f)),
@@ -3906,6 +3937,13 @@ namespace Airside.Presentation
                 (new Vector3(-8f, 5.8f, 22f), new Vector3(-8f, 0.2f, 26f)),
                 (new Vector3(20f, 6.5f, 10f), new Vector3(20f, 0.2f, 17f))
             };
+            var specs = AirsideBareField.Enabled
+                ? AdelaideTerminalArchitecture.ApronFloods()
+                    .Select(f => (
+                        new Vector3(f.X, AdelaideTerminalArchitecture.FloodHeightMetres, f.Z),
+                        new Vector3(f.TargetX, 0.2f, f.TargetZ)))
+                    .ToArray()
+                : legacySpecs;
             var lights = new Light[AirsideRuntimeQuality.ApronFloodCount(specs.Length)];
             for (var i = 0; i < lights.Length; i++)
             {
@@ -3916,7 +3954,7 @@ namespace Airside.Presentation
                 var light = go.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.88f, 0.55f);
-                light.range = 36f;
+                light.range = AirsideBareField.Enabled ? AdelaideTerminalArchitecture.FloodRangeMetres : 36f;
                 light.spotAngle = 78f;
                 light.innerSpotAngle = 42f;
                 light.intensity = 0.05f;

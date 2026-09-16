@@ -106,8 +106,23 @@ namespace Airside.Presentation
             var plant = new Color(0.39f, 0.41f, 0.41f);
 
             foreach (var detail in AdelaideTerminalArchitecture.AirsideGlazing())
-                CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+            {
+                var pane = CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
                     new Vector3(detail.Width, detail.Height, detail.Depth), glass);
+                // Use a runtime Lit glass instance here rather than the authored shared pane.
+                // The night pass drives per-pane emission, which the authored material may not
+                // expose in a packaged build.
+                pane.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                    glass, AirsideMaterialLibrary.SurfaceKind.Glass, null, Vector2.one, useTextures: false);
+
+                var interior = CreateBlock(detail.Name.Replace("glazing", "interior glow"),
+                    new Vector3(detail.X, groundY + detail.Y, detail.Z + 0.22f),
+                    new Vector3(detail.Width - 1.2f, detail.Height - 1.0f, 0.08f),
+                    new Color(0.16f, 0.11f, 0.045f));
+                interior.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                    new Color(0.16f, 0.11f, 0.045f), AirsideMaterialLibrary.SurfaceKind.UnlitSky,
+                    null, Vector2.one, useTextures: false);
+            }
             foreach (var detail in AdelaideTerminalArchitecture.RoofBrow())
                 CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
                     new Vector3(detail.Width, detail.Height, detail.Depth), brow);

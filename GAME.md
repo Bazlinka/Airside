@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — real Adelaide night readability corrected and packaged.**
+  - **Player-visible:** at 23:30 the terminal, parked aircraft and apron surface remain readable
+    in a restrained blue night grade; 28 separated terminal bays carry warm interior light.
+    Daylight still uses the approved blue-glass facade.
+  - **How:** the focused real-airport world now retains only the terminal's seven roof floods
+    while the broader decorative light set stays excluded. Real-scale flood throw, cool ambient
+    key/fill and night-only HDR interior cards replace the prior near-black terminal/apron view.
+  - **Invariants / unchanged:** routes, stands, collision, operations, aircraft and saves are
+    unchanged. No external asset or licence was added.
+  - **Evidence:** `scripts/test-domain.sh` **252/252 passed**; Unity 6000.3.23f1 built the packaged
+    Mac app; matched 23:30/day captures passed at `work/review/night-lighting-accepted.png` and
+    `work/review/night-lighting-day-accepted.png`. Unity EditMode passed **448/449**; only the
+    existing unrelated Gate 13 route tolerance miss remains.
+  - **NEXT:** merge this lighting slice, then inspect landside roads/car-park structure in daylight.
+
 - **2026-09-16 Codex — real Adelaide terminal facade implemented and packaged.**
   - **Player-visible:** the full-scale OSM terminal is no longer a single blank block. Its apron
     side now has separated dark-glass bays, a projecting brow, roof skylights and plant boxes.

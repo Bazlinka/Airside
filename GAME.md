@@ -18,10 +18,6 @@
     packaged fleet UI confirms `9V-SCA · Boeing 787-10` at Gate 20L.
   - **NEXT:** use an interactive follow-camera playtest for a close Gate 20 day/dusk/night review;
     unattended overview framing confirms integration but does not isolate the aircraft closely.
-  - **Sync:** implementation commits `232c282` and `db3048f` are on local `main`; pushing to
-    `origin` is blocked because this Mac has no usable GitHub HTTPS credentials (`gh` is also not
-    installed). Authenticate GitHub, then run `git push origin main` before another machine works.
-
 - **2026-09-16 Codex — AIR-009 A350-900 rebuilt as a genuine widebody silhouette.**
   - **Player-visible:** Cathay Pacific's A350-900 now reads as an A350 before its colour: broad
     six-metre cabin, long tapered nose, dark wraparound cockpit mask, flexed/raked wing tips,

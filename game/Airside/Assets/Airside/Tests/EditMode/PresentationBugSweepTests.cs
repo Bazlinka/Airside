@@ -210,5 +210,18 @@ namespace Airside.Tests
                 new Airside.Simulation.AirlineSaveData(), ops, 3600);
             Assert.That(summary.Lines, Is.Not.Empty);
         }
+    
+        [Test]
+        public void ProceduralAmbience_LoopsWithoutAStep()
+        {
+            Assert.That(AirsidePrototype.LoopFrequency(0.35f, 2f) * 2f, Is.EqualTo(Mathf.Round(AirsidePrototype.LoopFrequency(0.35f, 2f) * 2f)));
+            Assert.That(AirsidePrototype.LoopFrequency(0.22f, 3f), Is.GreaterThan(0f));
+
+            var samples = new float[1000];
+            for (var i = 0; i < samples.Length; i++)
+                samples[i] = i < 500 ? 0f : 1f;
+            AirsidePrototype.CrossfadeLoop(samples, 100);
+            Assert.That(Mathf.Abs(samples[^1] - samples[0]), Is.LessThan(0.05f));
+        }
     }
 }

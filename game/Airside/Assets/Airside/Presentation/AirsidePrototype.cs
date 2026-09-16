@@ -11680,20 +11680,53 @@ namespace Airside.Presentation
             return clip;
         }
 
+        /// <summary>
+        /// The nearest frequency that completes a whole number of cycles in a buffer of
+        /// <paramref name="seconds"/>, so a looped bed does not jump at the wrap. The gust,
+        /// hush and swell tones were all cut mid-cycle, which clicked once per loop.
+        /// </summary>
+        public static float LoopFrequency(float desiredHz, float seconds)
+        {
+            if (seconds <= 0f)
+                return desiredHz;
+            var cycles = Mathf.Max(1f, Mathf.Round(desiredHz * seconds));
+            return cycles / seconds;
+        }
+
+        /// <summary>
+        /// Blend the tail of a looping buffer into its head. Filtered noise starts from a
+        /// silent filter state and ends wherever it happens to be, so even a whole number of
+        /// cycles left a step at the loop point.
+        /// </summary>
+        public static void CrossfadeLoop(float[] samples, int fadeSamples)
+        {
+            if (samples == null || fadeSamples <= 1 || samples.Length < fadeSamples * 2)
+                return;
+            var start = samples.Length - fadeSamples;
+            for (var i = 0; i < fadeSamples; i++)
+            {
+                var t = i / (float)fadeSamples;
+                samples[start + i] = Mathf.Lerp(samples[start + i], samples[i], t);
+            }
+        }
+
         private static AudioClip CreateWindClip()
         {
             // Soft filtered noise bed for regional airfield air (presentation only).
             const int sampleRate = 22050;
-            var samples = new float[sampleRate * 2];
+            const float seconds = 2f;
+            var samples = new float[(int)(sampleRate * seconds)];
             var state = 0f;
+            var gustHz = LoopFrequency(0.35f, seconds);
             for (var i = 0; i < samples.Length; i++)
             {
                 var white = (UnityEngine.Random.value * 2f - 1f);
                 state = state * 0.92f + white * 0.08f;
-                var gust = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * 0.35f) * 0.15f;
+                var gust = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * gustHz) * 0.15f;
                 samples[i] = (state * 0.55f + white * 0.08f + gust * state) * 0.35f;
             }
 
+            CrossfadeLoop(samples, sampleRate / 10);
             var clip = AudioClip.Create("Ambient wind", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
@@ -11703,13 +11736,15 @@ namespace Airside.Presentation
         {
             const int sampleRate = 22050;
             var samples = new float[sampleRate];
+            var hushHz = LoopFrequency(0.015f * sampleRate / (2f * Mathf.PI), 1f);
             for (var i = 0; i < samples.Length; i++)
             {
                 var crackle = UnityEngine.Random.value * 2f - 1f;
-                var hush = Mathf.Sin(i * 0.015f) * 0.1f;
+                var hush = Mathf.Sin(i / (float)sampleRate * 2f * Mathf.PI * hushHz) * 0.1f;
                 samples[i] = crackle * 0.22f + hush * crackle;
             }
 
+            CrossfadeLoop(samples, sampleRate / 20);
             var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
@@ -11719,18 +11754,22 @@ namespace Airside.Presentation
         private static AudioClip CreateCoastClip()
         {
             const int sampleRate = 22050;
-            var samples = new float[sampleRate * 3];
+            const float seconds = 3f;
+            var samples = new float[(int)(sampleRate * seconds)];
             var state = 0f;
+            var swellHz = LoopFrequency(0.22f, seconds);
+            var washHz = LoopFrequency(0.55f, seconds);
             for (var i = 0; i < samples.Length; i++)
             {
                 var t = i / (float)sampleRate;
                 var white = UnityEngine.Random.value * 2f - 1f;
                 state = state * 0.96f + white * 0.04f;
-                var swell = Mathf.Sin(t * 2f * Mathf.PI * 0.22f) * 0.5f + 0.5f;
-                var wash = Mathf.Sin(t * 2f * Mathf.PI * 0.55f + 1.3f) * 0.35f + 0.65f;
+                var swell = Mathf.Sin(t * 2f * Mathf.PI * swellHz) * 0.5f + 0.5f;
+                var wash = Mathf.Sin(t * 2f * Mathf.PI * washHz + 1.3f) * 0.35f + 0.65f;
                 samples[i] = state * 0.4f * swell * wash;
             }
 
+            CrossfadeLoop(samples, sampleRate / 8);
             var clip = AudioClip.Create("Ambient coast", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;

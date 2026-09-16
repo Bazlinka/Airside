@@ -17,7 +17,10 @@ namespace Airside.Presentation
         public const float PropRpmApproach = 1100f;
         public const float PropRpmTaxi = 420f;
         public const float PropRpmCruise = 720f;
-        public const float PropHighRpmThreshold = 1000f;
+        // Blur the disc at taxi RPM and above. Discrete blades at 420 RPM strobe
+        // against a 60 Hz frame (wagon-wheel), which read as broken rather than idle.
+        // Slow spool / shutdown still shows the blades.
+        public const float PropHighRpmThreshold = 380f;
 
         // ANM-AIR-001b turbofan presentation. These are fan RPMs (not N1 data):
         // deliberately modest visual values that make the 737 intake read alive at
@@ -26,7 +29,15 @@ namespace Airside.Presentation
         public const float JetFanRpmApproach = 2800f;
         public const float JetFanRpmTaxi = 1500f;
         public const float JetFanRpmCruise = 2400f;
-        public const float JetFanHighRpmThreshold = 1900f;
+        // Same idea as the props: taxi spool is already fast enough that individual
+        // fan blades strobe; show the intake disc whenever the engine is at taxi-or-above.
+        public const float JetFanHighRpmThreshold = 1400f;
+
+        /// <summary>True when individual blades should hide behind the translucent disc.</summary>
+        public static bool PropBlurActive(float rpm) => rpm >= PropHighRpmThreshold;
+
+        /// <summary>True when the 737 intake should show its restrained fan disc.</summary>
+        public static bool JetFanBlurActive(float rpm) => rpm >= JetFanHighRpmThreshold;
 
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;

@@ -133,6 +133,45 @@ namespace Airside.Tests
             Assert.That(AirsideCameraController.ClampCentreHeight(-400f), Is.EqualTo(AirsideCameraController.MinCentreHeightMetres));
             Assert.That(AirsideCameraController.ClampCentreHeight(9000f), Is.EqualTo(AirsideCameraController.MaxCentreHeightMetres));
         }
+
+        [Test]
+        public void CameraScrollZoom_OneNotchMovesAUsefulFraction()
+        {
+            // ~120 is one macOS mouse-wheel notch. The old 0.001 rate only moved ~11 %;
+            // players needed dozens of notches to leave the 2.4 km overview.
+            var factor = AirsideCameraController.ZoomFactorForScroll(120f);
+            Assert.That(factor, Is.LessThan(0.8f));
+            Assert.That(factor, Is.GreaterThan(0.65f));
+            Assert.That(AirsideCameraController.ZoomFactorForScroll(-120f), Is.EqualTo(1f / factor).Within(0.001f));
+
+            // A continuous trackpad flick must be allowed to queue more than one doubling,
+            // otherwise zooming in from overview still crawls even when scrolling hard.
+            var queued = AirsideCameraController.QueueScrollZoom(0f, 120f);
+            queued = AirsideCameraController.QueueScrollZoom(queued, 120f);
+            queued = AirsideCameraController.QueueScrollZoom(queued, 120f);
+            Assert.That(queued, Is.LessThan(-0.8f));
+            Assert.That(Mathf.Abs(queued), Is.LessThanOrEqualTo(AirsideCameraController.MaxZoomPendingLog));
+        }
+
+        [Test]
+        public void CameraDragPan_ScalesWithDistance()
+        {
+            Assert.That(AirsideCameraController.PanMetresPerPixel(AirsideBareField.OverviewDistance),
+                Is.GreaterThan(AirsideCameraController.PanMetresPerPixel(80f) * 10f));
+            Assert.That(AirsideCameraController.PanMetresPerPixel(1000f),
+                Is.EqualTo(1000f * AirsideCameraController.PanMetresPerPixelAtUnitDistance).Within(0.0001f));
+        }
+
+        [Test]
+        public void PropAndFanBlur_EngageAtTaxiRpm()
+        {
+            Assert.That(AirsideReusableMotion.PropBlurActive(AirsideReusableMotion.PropRpmTaxi), Is.True,
+                "taxi props must use the disc — discrete blades strobe at ~7 rps");
+            Assert.That(AirsideReusableMotion.PropBlurActive(AirsideReusableMotion.PropRpmCruise), Is.True);
+            Assert.That(AirsideReusableMotion.PropBlurActive(AirsideReusableMotion.PropHighRpmThreshold - 1f), Is.False);
+            Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanRpmTaxi), Is.True);
+            Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanHighRpmThreshold - 1f), Is.False);
+        }
     
         [Test]
         public void MiniMapDots_DrawSelectionAndOwnAircraftLast()

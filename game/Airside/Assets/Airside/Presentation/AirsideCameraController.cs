@@ -533,8 +533,8 @@ namespace Airside.Presentation
             if (mouse.rightButton.isPressed && _rightPressOnField)
             {
                 var delta = mouse.delta.ReadValue();
-                _yaw += delta.x * 0.18f;
-                _pitch = Mathf.Clamp(_pitch - delta.y * 0.14f, MinPitchDegrees, MaxPitchDegrees);
+                _yaw += delta.x * AirsideCameraFeel.OrbitYawDegreesPerPixel;
+                _pitch = Mathf.Clamp(_pitch - delta.y * AirsideCameraFeel.OrbitPitchDegreesPerPixel, MinPitchDegrees, MaxPitchDegrees);
                 SuppressFollowOrbit();
                 _easingOverview = false;
             }
@@ -582,19 +582,30 @@ namespace Airside.Presentation
                 // Queue zoom in log space so every notch is the same proportion whether you
                 // are 30 m or 3 km out, cap how much one frame can ask for (trackpads report
                 // big pixel deltas), then ease it in below instead of jumping.
-                var clamped = Mathf.Clamp(scroll, -MaxScrollPerFrame, MaxScrollPerFrame);
-                _zoomPendingLog = Mathf.Clamp(_zoomPendingLog - clamped * ZoomLogPerScrollUnit, -MaxZoomPendingLog, MaxZoomPendingLog);
+                _zoomPendingLog = AirsideCameraFeel.QueueScrollZoom(_zoomPendingLog, scroll);
             }
 
             ApplyZoomEasing();
         }
 
-        // One mouse-wheel notch (~120 units on macOS) is ~11 % closer or further.
-        private const float ZoomLogPerScrollUnit = 0.001f;
-        private const float MaxScrollPerFrame = 240f;
-        private const float MaxZoomPendingLog = 0.9f;
-        private const float ZoomEaseRate = 10f;
+        // Rates live in AirsideCameraFeel so the headless harness can lock them without Unity.
+        public const float ZoomLogPerScrollUnit = AirsideCameraFeel.ZoomLogPerScrollUnit;
+        public const float MaxScrollPerFrame = AirsideCameraFeel.MaxScrollPerFrame;
+        public const float MaxZoomPendingLog = AirsideCameraFeel.MaxZoomPendingLog;
+        public const float ZoomEaseRate = AirsideCameraFeel.ZoomEaseRate;
+        public const float OrbitYawDegreesPerPixel = AirsideCameraFeel.OrbitYawDegreesPerPixel;
+        public const float OrbitPitchDegreesPerPixel = AirsideCameraFeel.OrbitPitchDegreesPerPixel;
+        public const float PanMetresPerPixelAtUnitDistance = AirsideCameraFeel.PanMetresPerPixelAtUnitDistance;
         private float _zoomPendingLog;
+
+        public static float QueueScrollZoom(float pendingLog, float scrollUnits) =>
+            AirsideCameraFeel.QueueScrollZoom(pendingLog, scrollUnits);
+
+        public static float ZoomFactorForScroll(float scrollUnits) =>
+            AirsideCameraFeel.ZoomFactorForScroll(scrollUnits);
+
+        public static float PanMetresPerPixel(float distance) =>
+            AirsideCameraFeel.PanMetresPerPixel(distance);
 
         private void ApplyZoomEasing()
         {
@@ -636,8 +647,7 @@ namespace Airside.Presentation
             var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
             var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
             // Scale with distance so the drag tracks the ground under the cursor.
-            var metresPerPixel = _distance * 0.0016f;
-            _center -= (planarRight * delta.x + planarForward * delta.y) * metresPerPixel;
+            _center -= (planarRight * delta.x + planarForward * delta.y) * PanMetresPerPixel(_distance);
             _easingOverview = false;
         }
 

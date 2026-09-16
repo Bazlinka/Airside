@@ -34,6 +34,7 @@
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideCameraFeel.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaideGround.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaidePavement.cs" />

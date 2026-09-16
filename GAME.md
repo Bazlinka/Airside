@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — Q400 high-wing hierarchy corrected and packaged.**
+  - **Player-visible:** QantasLink's Q400 now reads as a long high-wing, T-tail turboprop instead
+    of a bright red wing block. The wing, control surfaces and horizontal tail use a neutral
+    painted-metal finish; operator red stays on the tall fin and compact tip devices. Darker
+    cabin/flight-deck glazing remains legible in the follow view.
+  - **Invariants / unchanged:** AIR-006 geometry, exact 32.83 × 28.42 × 8.34 m envelope, 182
+    parts / 27,288 triangles, six-blade prop rig, wheel scale, routes, schedules and saves are
+    unchanged. No external asset or licence was added.
+  - **Evidence:** `scripts/test-domain.sh` **249/249 passed**; Unity 6000.3.23f1 produced a fresh
+    packaged Mac build and the Bay 50A daylight view was inspected. Unity EditMode compiled and
+    passed **444/445**; the new Q400 material assertions passed and only the existing unrelated
+    Gate 13 tolerance miss remains (0.878 m against a 0.873 m cap).
+  - **NEXT:** merge this presentation-only slice, then assess whether the ATR needs the same
+    restraint or whether its existing ochre scheme already reads acceptably.
+
 - **2026-09-16 Codex — 737 livery hierarchy corrected and packaged.**
   - **Player-visible:** Wattlebird Jet's 737 keeps its blue fin and split winglets, but the broad
     wing, flap, spoiler, aileron and horizontal-tail surfaces now use a neutral painted-metal

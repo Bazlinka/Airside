@@ -80,6 +80,16 @@ namespace Airside.Tests
                     Assert.That(blades, Is.EqualTo(6), $"six blades on the {side} propeller");
                 }
 
+                var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
+                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.EqualTo(0.56f).Within(0.01f),
+                    "Q400 high wing uses a restrained neutral finish");
+                var winglet = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Winglet L");
+                Assert.That(winglet.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
+                    "Q400 tip devices retain the airline accent");
+                var window = root.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Cabin window "));
+                Assert.That(window.GetComponent<Renderer>().sharedMaterial.color.r, Is.LessThan(0.1f),
+                    "Q400 glazing remains readable at follow distance");
+
                 var drawn = RenderedBounds(root);
                 Assert.That(drawn.size.z, Is.GreaterThan(AircraftCatalogue.Atr42.LengthMetres * 1.2f), "not the 22.7 m ATR");
             }

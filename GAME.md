@@ -1,5 +1,35 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — themed every button in the HUD; the status line and guide card now
+  match. The single biggest lever found for "it still looks ugly."**
+  - **What I found, re-reading Bailey's screenshots:** they don't just show the nav-strip
+    overflow bug (fixed separately) — the whole HUD's buttons look like generic Unity UI
+    against the navy/charcoal panels. Root cause: `AirsideTheme.cs` had `PanelStyle` (themed
+    box backgrounds) and `TextStyle` (themed text colour) but **no themed button background
+    at all** — every button in the entire game used `GUI.skin.button`'s stock grey bevel with
+    only its text colour ever touched. Checked how widespread this was: only **two** places in
+    the whole codebase ever construct a button GUIStyle (`AirsidePrototype.cs`'s
+    `_hudButtonStyle`, `AirsidePrototype.Airline.cs`'s `_hudSmallButton`), and every other
+    button style in the game (`Styled(smallButton, ...)` variants, the nav tabs, etc.) derives
+    from one of those two by copying it — so fixing those two construction sites themes
+    essentially every clickable control in the HUD in one small, targeted change.
+  - **How:** new `AirsideTheme.ButtonStyle` sets normal/hover/active backgrounds to solid
+    fills already in the approved palette — Tarmac at rest, Coastal Blue on hover/press (the
+    palette's own documented "selection/accent" colour, so it reads consistently with the row-
+    selection highlight colour used elsewhere). No new hues introduced; no art asset added.
+  - **Also fixed:** the persistent status line (from an earlier slice) drew as bare floating
+    text with no panel behind it, inconsistent with the guide card it replaces, which does
+    have one — gave it the same quiet panel chrome.
+  - **Evidence:** reviewed by inspection only — `AirsideTheme.cs` isn't Unity-free, so it
+    can't be checked by the headless `scripts/test-domain.sh` harness either (still 284/284,
+    unaffected). **This is a real, structural fix backed by a from-scratch audit of every
+    button-style construction site in the codebase, not a guess** — but it has not been seen
+    rendered. A fresh screenshot is the only way to confirm it actually reads better.
+  - **NEXT:** waiting on a screenshot. If buttons still look wrong, the likely next thing to
+    check is whether Unity's runtime IMGUI actually honours `.hover`/`.active` states outside
+    the Editor the way I'm assuming — if not, the `.normal` background alone still fixes the
+    resting-state mismatch, which was the main complaint.
+
 - **2026-09-16 Claude — fixed a real HUD bug from Bailey's first screenshots of the nav-shell
   work: the workspace nav strip's text overflowed off the left edge of the window.**
   - **What the screenshots showed:** the four nav tabs read "erations / Map (Tab) / Fleet (H) /

@@ -154,7 +154,7 @@ namespace Airside.Presentation
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
             var small = _hudSmall ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
-            var smallButton = _hudSmallButton ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
+            var smallButton = _hudSmallButton ??= AirsideTheme.ButtonStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
 
             if (AirlineSetupOpen)
             {
@@ -174,7 +174,7 @@ namespace Airside.Presentation
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
             else
-                DrawStatusLine(placement.Guide, small);
+                DrawStatusLine(placement.Guide, panel, small);
             DrawWorkspaceNav(placement.NavStrip, smallButton);
             if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
@@ -350,17 +350,20 @@ namespace Airside.Presentation
         /// The persistent one-line objective (ADR 0053) that replaces the guide card once it's
         /// done: the player fleet's most urgent aircraft, or a quiet fleet-wide line.
         /// </summary>
-        private void DrawStatusLine(Rect rect, GUIStyle small)
+        private void DrawStatusLine(Rect rect, GUIStyle panel, GUIStyle small)
         {
             if (rect.height < 4f)
                 return;
+            // The guide card it replaces has a panel behind it; bare floating text here read
+            // as unfinished next to it, so this gets the same quiet chrome, not a border colour.
+            GUI.Box(rect, GUIContent.none, panel);
             var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState);
             var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
                 new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
             var previousContent = GUI.contentColor;
             if (severity != StatusSeverity.Normal)
                 GUI.contentColor = SeverityColour(severity, previousContent);
-            GUI.Label(new Rect(rect.x + 2f, rect.y + 4f, rect.width - 4f, rect.height - 4f), text, style);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 4f, rect.width - 16f, rect.height - 4f), text, style);
             GUI.contentColor = previousContent;
         }
 

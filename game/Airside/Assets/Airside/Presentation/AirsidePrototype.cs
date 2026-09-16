@@ -675,7 +675,7 @@ namespace Airside.Presentation
                 padding = new RectOffset(18, 18, 14, 14)
             });
             var title = _hudTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
-            var button = _hudButtonStyle ??= AirsideTheme.TextStyle(
+            var button = _hudButtonStyle ??= AirsideTheme.ButtonStyle(
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 

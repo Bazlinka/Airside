@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Theme every button in the HUD.** Every button in the game used Unity's stock grey
+  `GUI.skin.button` background with only its text colour ever touched — no button background
+  in the entire codebase was themed. New `AirsideTheme.ButtonStyle` (Tarmac at rest, Coastal
+  Blue on hover/press, matching the palette's existing selection colour) is applied at the two
+  places in the whole game that construct a button style, which every other button derives
+  from — themes essentially the entire HUD in one change. Also gave the persistent status line
+  a panel background to match the guide card it replaces, instead of floating as bare text.
+
 - **Fix nav strip text overflowing the window.** The workspace nav strip was locked to the
   300 px clock column's width, giving four tabs ~75 px each — nowhere near enough for
   "Operations", which overflowed clean off the left edge of the window (confirmed from a

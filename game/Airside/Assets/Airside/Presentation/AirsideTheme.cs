@@ -30,6 +30,9 @@ namespace Airside.Presentation
         private static Texture2D _panelBackground;
         private static Texture2D _panelBackgroundLight;
         private static Texture2D _solidWhite;
+        private static Texture2D _buttonNormal;
+        private static Texture2D _buttonHover;
+        private static Texture2D _buttonActive;
         private static Texture2D _wordmarkLight;
         private static Texture2D _appMarkLight;
         private static Texture2D _splashDawn;
@@ -203,6 +206,45 @@ namespace Airside.Presentation
             style.normal.textColor = textColor ?? Cloud;
             return style;
         }
+
+        /// <summary>
+        /// A themed button: every control in the HUD funnels through the two style-cache
+        /// sites that call this (<c>_hudButtonStyle</c>, <c>_hudSmallButton</c>), so this one
+        /// change is what stops every button in the game being Unity's stock grey bevel with
+        /// only its text colour touched — the single biggest gap between the approved
+        /// navy/charcoal palette and what was actually on screen.
+        /// </summary>
+        public static GUIStyle ButtonStyle(GUIStyle basis, Color? textColor = null)
+        {
+            var style = new GUIStyle(basis);
+            style.normal.background = ButtonNormal;
+            style.normal.textColor = textColor ?? Cloud;
+            style.hover.background = ButtonHover;
+            style.hover.textColor = textColor ?? Cloud;
+            style.active.background = ButtonActive;
+            style.active.textColor = textColor ?? Cloud;
+            style.focused.background = ButtonNormal;
+            style.focused.textColor = textColor ?? Cloud;
+            return style;
+        }
+
+        private static Texture2D Solid(Color colour)
+        {
+            var texture = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
+            texture.SetPixel(0, 0, colour);
+            texture.Apply();
+            return texture;
+        }
+
+        /// <summary>Resting button fill — a shade lighter than the panels behind it, so a
+        /// control reads as raised and clickable rather than melting into the panel.</summary>
+        public static Texture2D ButtonNormal => _buttonNormal ??= Solid(Tarmac);
+
+        /// <summary>Hover fill — Coastal Blue, the approved accent for interaction.</summary>
+        public static Texture2D ButtonHover => _buttonHover ??= Solid(new Color(CoastalBlue.r, CoastalBlue.g, CoastalBlue.b, 0.82f));
+
+        /// <summary>Pressed fill — the full-strength accent colour.</summary>
+        public static Texture2D ButtonActive => _buttonActive ??= Solid(CoastalBlue);
 
         internal static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;

@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — taxiway edge weathering implemented and visually verified.**
+  - **Player-visible:** sparse warm-grey dust/scuff strips now break up both edges of Adelaide's
+    taxiways. They sit inside the asphalt, stay clear of centreline/hold paint and disappear at
+    overview distance instead of turning the map into an outline drawing.
+  - **Scope:** `TaxiwayEdgeWear` generates deterministic 9 m patches on a 23 m rhythm with
+    independent phase per side; all strips are combined into one non-shadowing mesh.
+  - **Invariants / unchanged:** taxiway widths, sealed shoulders, routes, collision, operations,
+    aircraft and saves are unchanged. No external asset or licence was added.
+  - **Evidence:** straight-edge, deterministic/degenerate and full-Adelaide density tests added;
+    `scripts/test-domain.sh` **249/249 passed**. Unity 6000.3.23f1 produced a fresh packaged Mac
+    build. Close daylight and airport overview captures confirm the wear reads only near the
+    ground; a 23:30 capture confirms it does not glow. Local evidence is under
+    `work/review/taxi-edge-*.png` (git-ignored).
+  - **NEXT:** improve the weakest aircraft silhouette—the Saab 340—before adding more ground noise.
+
 - **2026-09-16 Codex — real-scale apron slab joints implemented and visually verified.**
   - **Player-visible:** Adelaide's concrete aprons now read as constructed slabs instead of
     broad unbroken sheets. A restrained 18 m expansion-joint grid is clipped to each real OSM

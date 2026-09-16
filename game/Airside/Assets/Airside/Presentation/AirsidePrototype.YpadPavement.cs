@@ -37,12 +37,22 @@ namespace Airside.Presentation
 
             var taxi = new SurfaceMesh();
             var shoulders = new SurfaceMesh();
+            var edgeWear = new SurfaceMesh();
             var centrelines = new SurfaceMesh();
             foreach (var taxiway in AdelaideLayout.Taxiways)
             {
                 var half = taxiway.Width * 0.5f;
                 AddRibbon(taxi, taxiway.Xz, half, taxiY, roundJoints: true);
                 AddRibbon(shoulders, taxiway.Xz, half + AirsideAdelaidePavement.TaxiSealedShoulderMetres, shoulderY, roundJoints: true);
+                foreach (var strip in TaxiwayEdgeWear.Generate(taxiway.Xz, half))
+                {
+                    AddRibbon(
+                        edgeWear,
+                        new[] { strip.StartX, strip.StartZ, strip.EndX, strip.EndZ },
+                        TaxiwayEdgeWear.WidthMetres * 0.5f,
+                        taxiY + 0.003f,
+                        roundJoints: false);
+                }
                 AddRibbon(centrelines, taxiway.Xz, 0.15f, paintY, roundJoints: false);
             }
 
@@ -71,6 +81,8 @@ namespace Airside.Presentation
             SpawnSurface(root, "Apron slab joints", apronJoints, new Color(0.27f, 0.28f, 0.28f), null,
                 castShadows: false, useTextures: false);
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName, taxi, taxiAsphalt, asphaltAlbedo, castShadows: false);
+            SpawnSurface(root, "Taxi edge wear", edgeWear, new Color(0.30f, 0.265f, 0.21f), null,
+                castShadows: false, useTextures: false);
             SpawnSurface(root, "Taxiway centrelines", centrelines, taxiYellow, null, castShadows: false);
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
             BuildYpadStandMarkings(root, paintY, taxiYellow);

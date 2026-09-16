@@ -214,5 +214,23 @@ namespace Airside.Tests
             Assert.That(AircraftVisualProfiles.For(TypeOf("Rex")), Is.EqualTo(AircraftVisualProfiles.Saab340),
                 "Rex's Saab 340Bs draw with AIR-007, not the ATR stand-in");
         }
+
+        [Test]
+        public void IdentityMarkings_FitEachAuthoredFuselageDatum()
+        {
+            var atr = AircraftIdentityMarkings.For(AircraftType.Atr42);
+            var saab = AircraftIdentityMarkings.For(AircraftType.Saab340);
+            var q400 = AircraftIdentityMarkings.For(AircraftType.Dash8Q400);
+            var jet = AircraftIdentityMarkings.For(AircraftType.Boeing7378);
+
+            Assert.That(atr.SideX, Is.LessThan(saab.SideX));
+            Assert.That(saab.SideX, Is.LessThan(q400.SideX));
+            Assert.That(q400.SideX, Is.LessThan(jet.SideX));
+            Assert.That(jet.OperatorZ, Is.LessThan(0f),
+                "the 737 art root is its nose stop, so fuselage paint sits aft of zero");
+            Assert.That(jet.RegistrationZ, Is.LessThan(jet.OperatorZ));
+            Assert.That(q400.OperatorZ, Is.GreaterThan(0f),
+                "centred turboprop art places the operator title forward of its origin");
+        }
     }
 }

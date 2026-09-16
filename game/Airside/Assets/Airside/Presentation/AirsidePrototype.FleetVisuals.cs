@@ -247,12 +247,12 @@ namespace Airside.Presentation
             var accent = AirsideTheme.FromHex(airline.LiveryHex);
             var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent, null);
 
-            if (airline.IsPlayer)
-            {
-                var decal = TintedPlayerDecal(airline.LiveryHex, accent);
-                if (decal != null)
-                    ApplyLiveryTexture(view, decal);
-            }
+            // The same neutral skin sheet works across every authored type. Repainting
+            // it here gives AI traffic a coherent operator colour instead of leaving
+            // Rex, QantasLink and Virgin in the old generic blue traffic texture.
+            var decal = TintedLiveryDecal(airline.LiveryHex, accent);
+            if (decal != null)
+                ApplyLiveryTexture(view, decal);
 
             var namedChildren1 = AirsideNamedChildren.Get(view);
             var childNames1 = AirsideNamedChildren.Names(view);
@@ -267,6 +267,8 @@ namespace Airside.Presentation
                     SetRendererColor(renderer, accent);
             }
 
+            EnsureAircraftIdentityMarkings(view, aircraft, accent);
+
             return view;
         }
 
@@ -274,7 +276,7 @@ namespace Airside.Presentation
         /// The neutral traffic livery with its blue bands repainted in the player's
         /// colour: darker blues take the colour, lighter ones a paler tint of it.
         /// </summary>
-        private Texture2D TintedPlayerDecal(string hex, Color accent)
+        private Texture2D TintedLiveryDecal(string hex, Color accent)
         {
             if (_tintedDecals.TryGetValue(hex, out var cached))
                 return cached;
@@ -312,6 +314,79 @@ namespace Airside.Presentation
 
             _tintedDecals[hex] = tinted;
             return tinted;
+        }
+
+        /// <summary>
+        /// Add readable, depth-tested operator and registration paint to both sides of
+        /// the fuselage. TextMesh is used as geometry rather than a screen overlay so
+        /// the marks correctly disappear behind wings, buildings and the aircraft body.
+        /// </summary>
+        private static void EnsureAircraftIdentityMarkings(
+            Transform aircraftView,
+            FleetAircraft aircraft,
+            Color operatorColour)
+        {
+            if (aircraftView == null || aircraft == null || aircraft.Airline == null)
+                return;
+
+            var layout = AircraftIdentityMarkings.For(aircraft.Type);
+            var operatorText = aircraft.Airline.Name.ToUpperInvariant();
+            for (var side = -1; side <= 1; side += 2)
+            {
+                AddAircraftIdentityText(
+                    aircraftView,
+                    side < 0 ? "Operator title L" : "Operator title R",
+                    operatorText,
+                    new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
+                    side,
+                    layout.OperatorCharacterSize,
+                    operatorColour,
+                    FontStyle.Bold);
+                AddAircraftIdentityText(
+                    aircraftView,
+                    side < 0 ? "Registration L" : "Registration R",
+                    aircraft.Registration,
+                    new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
+                    side,
+                    layout.RegistrationCharacterSize,
+                    new Color(0.10f, 0.12f, 0.14f),
+                    FontStyle.Normal);
+            }
+
+            AirsideNamedChildren.Forget(aircraftView);
+        }
+
+        private static void AddAircraftIdentityText(
+            Transform parent,
+            string name,
+            string value,
+            Vector3 localPosition,
+            int side,
+            float characterSize,
+            Color colour,
+            FontStyle style)
+        {
+            var label = new GameObject(name);
+            label.transform.SetParent(parent, false);
+            label.transform.localPosition = localPosition;
+            // TextMesh's readable face points along local -Z (the same reason stand
+            // identifiers use +90 degrees around X to face upward). Turn that face
+            // outward from each side of the fuselage rather than into its skin.
+            label.transform.localRotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
+
+            var text = label.AddComponent<TextMesh>();
+            text.text = value;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignment.Center;
+            text.fontSize = 64;
+            text.characterSize = characterSize;
+            text.fontStyle = style;
+            text.color = colour;
+
+            var renderer = label.GetComponent<MeshRenderer>();
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            DepthTestStandLabel(renderer);
         }
 
         /// <summary>

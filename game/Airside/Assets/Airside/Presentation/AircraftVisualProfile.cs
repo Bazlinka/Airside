@@ -139,6 +139,54 @@ namespace Airside.Presentation
     }
 
     /// <summary>
+    /// Local-space placement for the painted operator title and registration on an
+    /// aircraft's two fuselage sides. The authored 737 uses a nose-stop origin while
+    /// the turboprops use a centred origin, so one generic offset cannot fit them all.
+    /// </summary>
+    public readonly struct AircraftIdentityMarkingLayout
+    {
+        public AircraftIdentityMarkingLayout(
+            float sideX,
+            float operatorY,
+            float operatorZ,
+            float registrationY,
+            float registrationZ,
+            float operatorCharacterSize,
+            float registrationCharacterSize)
+        {
+            SideX = sideX;
+            OperatorY = operatorY;
+            OperatorZ = operatorZ;
+            RegistrationY = registrationY;
+            RegistrationZ = registrationZ;
+            OperatorCharacterSize = operatorCharacterSize;
+            RegistrationCharacterSize = registrationCharacterSize;
+        }
+
+        public float SideX { get; }
+        public float OperatorY { get; }
+        public float OperatorZ { get; }
+        public float RegistrationY { get; }
+        public float RegistrationZ { get; }
+        public float OperatorCharacterSize { get; }
+        public float RegistrationCharacterSize { get; }
+    }
+
+    public static class AircraftIdentityMarkings
+    {
+        public static AircraftIdentityMarkingLayout For(AircraftType type)
+        {
+            if (AircraftVisualProfiles.IsBoeing7378(type))
+                return new AircraftIdentityMarkingLayout(1.91f, 4.05f, -8.0f, 3.92f, -31.0f, 0.22f, 0.13f);
+            if (AircraftVisualProfiles.IsDash8Q400(type))
+                return new AircraftIdentityMarkingLayout(1.39f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
+            if (AircraftVisualProfiles.IsSaab340(type))
+                return new AircraftIdentityMarkingLayout(1.17f, 1.48f, 3.1f, 1.42f, -5.7f, 0.13f, 0.085f);
+            return new AircraftIdentityMarkingLayout(0.82f, 1.48f, 3.3f, 1.40f, -5.2f, 0.13f, 0.085f);
+        }
+    }
+
+    /// <summary>
     /// Stores the selected profile on an instantiated aircraft so generic pick,
     /// shadow and camera code can frame the actual silhouette instead of assuming
     /// every aircraft is the original ATR.

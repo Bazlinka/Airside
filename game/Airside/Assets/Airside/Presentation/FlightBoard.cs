@@ -50,7 +50,7 @@ namespace Airside.Presentation
                     => $"{HomeCode} → {code}",
                 FleetState.AtDestination => $"At {code}",
                 FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing
-                    or FleetState.AwaitingStand or FleetState.TaxiIn
+                    or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn
                     => $"{code} → {HomeCode}",
                 _ => aircraft.Stand.Value.Length > 0 ? StandNames.Display(aircraft.Stand) : HomeCode
             };
@@ -72,6 +72,7 @@ namespace Airside.Presentation
                 FleetState.AtDestination => "Turnaround",
                 FleetState.Inbound => "Returning",
                 FleetState.HoldingForLanding => "In circuit",
+                FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
                 FleetState.AwaitingStand => "Needs stand",
                 FleetState.TaxiIn => "Taxi in",
@@ -128,6 +129,7 @@ namespace Airside.Presentation
                 FleetState.AtDestination => "RETURNS",
                 FleetState.Inbound => "IN CIRCUIT",
                 FleetState.HoldingForLanding => "HOLD SINCE",
+                FleetState.GoAround => "RE-SEQUENCE",
                 FleetState.Landing => "CLEAR RWY",
                 FleetState.AwaitingStand => "WAIT SINCE",
                 FleetState.TaxiIn => "ON STAND",
@@ -139,6 +141,36 @@ namespace Airside.Presentation
         {
             var delay = DepartureDelayMinutes(aircraft, now);
             return delay > 0 ? $"LATE +{delay} MIN" : TimeMeaning(aircraft);
+        }
+
+        public static bool IsArrival(FleetAircraft aircraft) => aircraft != null && aircraft.State is
+            FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+
+        public static bool IsDeparture(FleetAircraft aircraft) => aircraft != null && !IsArrival(aircraft);
+
+        public static string GateText(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return "—";
+            var stand = !string.IsNullOrEmpty(aircraft.Stand.Value) ? aircraft.Stand : aircraft.DepartureStand;
+            return string.IsNullOrEmpty(stand.Value) ? "—" : AdelaideGround.StandLabel(stand).Replace("Gate ", "");
+        }
+
+        public static string ScheduledTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
+        {
+            if (aircraft == null || clockText == null)
+                return "—";
+            if (aircraft.Scheduled.HasValue)
+                return clockText(aircraft.Scheduled.Value.DepartAt);
+            return clockText(aircraft.StateStartedAt);
+        }
+
+        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
+        {
+            if (aircraft == null || clockText == null)
+                return "—";
+            return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
         }
 
         /// <summary>Stable sort: next event time, then registration.</summary>

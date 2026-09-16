@@ -13,6 +13,7 @@ assumptions where none is.
 | SPEC-DASH8-400 | De Havilland Canada Dash 8-400 | 32.83 m | 28.42 m | 8.34 m | 360 kt / 667 km/h max cruise | 1,596 km (862 nm) full-passenger range, 102 kg per passenger | 667 km/h / 1,500 km (was 1,800 km, above the manufacturer figure) | De Havilland Canada, *Dash 8-400 spec sheet* v11, July 2026 — https://dehavilland.com/wp-content/uploads/2026/07/DHC_Dash8_Spec-Sheet_v11_Digital.pdf |
 | SPEC-BOEING-737-8 | Boeing 737-8 | 39.5 m (129 ft 6 in) | 35.9 m (117 ft 10 in) | 12.3 m (40 ft 4 in) | Not published on the cited page | Up to 3,500 nmi (6,480 km) | 839 km/h (≈ Mach 0.79) / 5,200 km — **cruise is a planning assumption** | Boeing, *737 MAX* specifications — https://www.boeing.com/commercial/737max ; tail height range 11.86–12.45 m in Boeing D6-38A004 *737 MAX Airplane Characteristics for Airport Planning*, Rev K (July 2025), §2.3.2 — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf |
 | SPEC-AIRBUS-A321NEO | Airbus A321neo | 44.51 m | 35.80 m | 11.76 m | M0.82 / ≈871 km/h at cruise altitude | 7,400 km (4,000 nm) | 833 km/h (≈M0.78) / 6,000 km — **planning assumptions** | Airbus, *A321neo* product page and airport-planning data — https://www.aircraft.airbus.com/en/aircraft/a320-family/a321neo ; https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-07/AC_A321_20250715.pdf |
+| SPEC-AIRBUS-A350-900 | Airbus A350-900 | 66.80 m | 64.75 m | 17.05 m | M0.85 / ≈903 km/h | 15,750 km | 903 km/h / 15,000 km | Airbus, *A350-900 key figures* — https://www.aircraft.airbus.com/en/aircraft/a350/a350-900 |
 
 ## Flight behaviour (simulation)
 
@@ -28,6 +29,7 @@ remaining values are conservative representative planning values for believable 
 | Dash 8-400 | 125 / 110 kt | 116 / 135 / 185 kt | 1,150 m | FL250 |
 | Boeing 737-8 | 145 / 132 kt | 145 / 165 / 210 kt | 1,650 m | FL410 |
 | Airbus A321neo | 140 / 128 kt | 145 / 165 / 210 kt | 1,800 m | FL398 |
+| Airbus A350-900 | 150 / 138 kt | 158 / 180 / 225 kt | 2,050 m | FL430 |
 
 ATR anchors: V2 minimum 112 KCAS, Vref 104 KIAS, optimum climb 160 KCAS and 1,107 m
 takeoff distance at the published reference condition (ATR factsheet above). Dash 8 anchors:
@@ -44,11 +46,22 @@ A321 Airbus narrowbodies for Christchurch; Air New Zealand's April 2026 fleet pa
 A320neo/A321neo fleet. The simulation uses one representative international A321neo rotation at
 Gate 15, with Auckland as the opening arrival and Auckland/Christchurch as its network.
 
+The widebody layer uses Gate 18L for Cathay Pacific's southern-summer Hong Kong service
+and Gate 20L for the requested Singapore Airlines scenario. Cathay's Adelaide announcement
+specifies the A350-900. Singapore Airlines' current Adelaide route page specifies a 787-10,
+so its A350 in this personal scenario is intentionally not presented as the current published
+scheduled type.
+
 Sources: Adelaide Airport, *Our International Destinations — April 2026* —
 https://corporate.adelaideairport.com.au/media-centre/adelaide-airport-passenger-statistics-march-2026 ;
 Adelaide Airport, *Air New Zealand announces first Adelaide-Christchurch service* —
 https://corporate.adelaideairport.com.au/media-centre/air-new-zealand-announces-first-adelaide-christchurch-service ;
 Air New Zealand, *Operating fleet* — https://www.airnewzealand.com/fleet .
+
+Widebody sources: Adelaide Airport, *Cathay Pacific returns to South Australia* —
+https://corporate.adelaideairport.com.au/media-centre/cathay-pacific-returns-to-south-australia ;
+Singapore Airlines, *Flights from Adelaide to Singapore* —
+https://www.singaporeair.com/au/en/plan-travel/destinations/flights-from-adelaide/ .
 
 ## Ground taxi speeds (simulation)
 
@@ -83,3 +96,4 @@ Genuine runtime models are measured from their glTF POSITION bounds by
 | Boeing 737-8 | `Models/Aircraft/mdl_737_8_narrowbody_v01.gltf` (AIR-005) | 39.47 × 35.92 × 12.42 m |
 | Airbus A321neo | `Models/Aircraft/mdl_a321neo_v01.gltf` (AIR-008) | 44.51 × 35.80 × 11.76 m |
 | Saab 340B | `Models/Aircraft/mdl_saab_340b_v01.gltf` (AIR-007) | 19.73 × 21.44 × 6.97 m |
+| Airbus A350-900 | `Models/Aircraft/mdl_a350_900_v01.gltf` (AIR-009) | 66.80 × 64.75 × 17.05 m |

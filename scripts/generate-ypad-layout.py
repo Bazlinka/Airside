@@ -38,6 +38,7 @@ RWY30 = {"lat": -34.9493491, "lon": 138.5368788}
 ROLLOUT_END_X = -200.0
 TAKEOFF_START_X = -1500.0
 HOLD_05 = (-1530.0, 90.0)
+HOLD_23 = (1539.9, 103.3)
 E2_HOLD = (237.0, 199.0)
 # Regional bays along taxilane T4. BAY-1..BAY-4 are 50D..50A (the original four); BAY-5/6
 # are 50E/50F, added for more regional traffic. 50G is left out: it sits on the bend of T4,
@@ -50,7 +51,7 @@ PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the push
 # Terminal gates (ADR 0047) are a separate stand system from the regional BAYS. Gate 13
 # hosts the domestic 737; Gate 15 hosts trans-Tasman A321neo traffic. Both parking lines
 # come directly from the committed OSM snapshot.
-TERMINAL_GATES = [("GATE-13", "13"), ("GATE-15", "15")]
+TERMINAL_GATES = [("GATE-13", "13"), ("GATE-15", "15"), ("GATE-18", "18L"), ("GATE-20", "20L")]
 
 # Gate 13 ground geometry, all anchored on OSM features. Its real parking line starts at
 # the T1/T2/B1 junction, but OSM's terminal apron only begins at z = 358, leaving a 50 m
@@ -60,10 +61,14 @@ GATE_LEAD_IN = 60.0                    # straight nose-in stretch before each st
 GATE13_LINK = [(1520.0, 294.0), (1568.0, 295.0), (1577.0, 297.0), (1611.0, 304.0), (1626.0, 307.2),
                (1626.0, 358.0), (1520.0, 358.0)]
 GATE15_LINK = [(1435.0, 300.0), (1518.0, 300.0), (1518.0, 358.0), (1435.0, 358.0)]
+GATE18_LINK = [(1300.0, 300.0), (1435.0, 300.0), (1435.0, 358.0), (1300.0, 358.0)]
+GATE20_LINK = [(1210.0, 300.0), (1300.0, 300.0), (1300.0, 358.0), (1210.0, 358.0)]
 
 GATE_ROUTE = {
     "13": ((1543.0, 294.0), (1600.0, 301.7), (1568.0, 295.0)),
     "15": ((1483.0, 300.7), (1515.0, 301.0), (1483.0, 300.7)),
+    "18L": ((1348.0, 300.5), (1385.0, 301.0), (1348.0, 300.5)),
+    "20L": ((1260.0, 299.8), (1295.0, 300.5), (1260.0, 299.8)),
 }
 
 
@@ -244,6 +249,14 @@ def main():
     lineup = dedupe(lineup)
     report.append(("lineup", lineup, ["F6", "05"]))
 
+    b2, b2_names = route((45.0, 0.0), E2_HOLD)
+    vacate23 = round_corners([(200.0, 0.0)] + b2 + [E2_HOLD], 45.0)
+    lineup23 = [HOLD_23, (1539.5, 55.0)] + bezier((1539.5, 55.0), (1540.0, 20.0),
+        (1530.0, 0.0), (1500.0, 0.0), 12)[1:]
+    lineup23 = dedupe(lineup23)
+    report.append(("vacate 23", vacate23, ["05/23"] + b2_names))
+    report.append(("lineup 23", lineup23, ["B2", "23"]))
+
     bays = []
     for bay_id, ref in BAYS:
         lane, stop = parking[ref][0], parking[ref][-1]
@@ -263,8 +276,10 @@ def main():
 
         depart, depart_names = route(push_end, HOLD_05)
         taxi_out = round_corners([push_end] + depart + [HOLD_05], 35.0)
+        depart23, _ = route(push_end, HOLD_23)
+        taxi_out23 = round_corners([push_end] + depart23 + [HOLD_23], 35.0)
 
-        bays.append((bay_id, ref, stop, heading, taxi_in, pushback, taxi_out))
+        bays.append((bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23))
         report.append((f"taxi-in {bay_id}/{ref}", taxi_in, ["E2"] + arrive_names))
         report.append((f"pushback {bay_id}/{ref}", pushback, ["stand"]))
         report.append((f"taxi-out {bay_id}/{ref}", taxi_out, depart_names))
@@ -272,6 +287,8 @@ def main():
     # Terminal gates: routes follow the jet's nose datum (AIR-005's model root), nose in.
     aprons.append(("Gate 13 apron link", GATE13_LINK))
     aprons.append(("Gate 15 apron link", GATE15_LINK))
+    aprons.append(("Gate 18 apron link", GATE18_LINK))
+    aprons.append(("Gate 20 apron link", GATE20_LINK))
     terminal_gates = []
     for gate_id, ref in TERMINAL_GATES:
         route_entry, push_end, route_junction = GATE_ROUTE[ref]
@@ -303,8 +320,10 @@ def main():
         # Taxi-out: forward west along T1 to the junction, then the normal route to runway 05.
         depart, depart_names = route(route_junction, HOLD_05)
         taxi_out = round_corners([push_end, route_junction] + depart + [HOLD_05], 35.0)
+        depart23, _ = route(route_junction, HOLD_23)
+        taxi_out23 = round_corners([push_end, route_junction] + depart23 + [HOLD_23], 35.0)
 
-        terminal_gates.append((gate_id, ref, stop, heading, taxi_in, pushback, taxi_out))
+        terminal_gates.append((gate_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23))
         report.append((f"taxi-in {gate_id}/{ref}", taxi_in, ["E2"] + arrive_names + ["lead-in"]))
         report.append((f"pushback {gate_id}/{ref}", pushback, ["stand", "T1"]))
         report.append((f"taxi-out {gate_id}/{ref}", taxi_out, ["T1"] + depart_names))
@@ -348,10 +367,10 @@ def main():
         "    public readonly struct AdelaideBay",
         "    {",
         "        public AdelaideBay(string id, string reference, float stopX, float stopZ, float headingDegrees,",
-        "            float[] taxiIn, float[] pushback, float[] taxiOut)",
+        "            float[] taxiIn, float[] pushback, float[] taxiOut, float[] taxiOut23)",
         "        {",
         "            Id = id; Reference = reference; StopX = stopX; StopZ = stopZ; HeadingDegrees = headingDegrees;",
-        "            TaxiIn = taxiIn; Pushback = pushback; TaxiOut = taxiOut;",
+        "            TaxiIn = taxiIn; Pushback = pushback; TaxiOut = taxiOut; TaxiOut23 = taxiOut23;",
         "        }",
         "        public string Id { get; }",
         "        /// <summary>The real bay number at Adelaide.</summary>",
@@ -366,6 +385,7 @@ def main():
         "        public float[] Pushback { get; }",
         "        /// <summary>End of pushback to the runway 05 holding point.</summary>",
         "        public float[] TaxiOut { get; }",
+        "        public float[] TaxiOut23 { get; }",
         "    }",
         "",
         "    /// <summary>",
@@ -376,10 +396,10 @@ def main():
         "    public readonly struct AdelaideTerminalGate",
         "    {",
         "        public AdelaideTerminalGate(string id, string reference, float noseX, float noseZ, float headingDegrees,",
-        "            float[] taxiIn, float[] pushback, float[] taxiOut)",
+        "            float[] taxiIn, float[] pushback, float[] taxiOut, float[] taxiOut23)",
         "        {",
         "            Id = id; Reference = reference; NoseX = noseX; NoseZ = noseZ; HeadingDegrees = headingDegrees;",
-        "            TaxiIn = taxiIn; Pushback = pushback; TaxiOut = taxiOut;",
+        "            TaxiIn = taxiIn; Pushback = pushback; TaxiOut = taxiOut; TaxiOut23 = taxiOut23;",
         "        }",
         "        public string Id { get; }",
         "        public string Reference { get; }",
@@ -394,6 +414,7 @@ def main():
         "        public float[] Pushback { get; }",
         "        /// <summary>End of pushback to the runway 05 holding point, nose first.</summary>",
         "        public float[] TaxiOut { get; }",
+        "        public float[] TaxiOut23 { get; }",
         "    }",
         "",
         "    /// <summary>",
@@ -421,19 +442,21 @@ def main():
         "",
         "        public static readonly float[] Vacate = " + arr(vacate, 3.0) + ";",
         "        public static readonly float[] Lineup = " + arr(lineup, 3.0) + ";",
+        "        public static readonly float[] Vacate23 = " + arr(vacate23, 3.0) + ";",
+        "        public static readonly float[] Lineup23 = " + arr(lineup23, 3.0) + ";",
         "",
         "        public static readonly AdelaideBay[] Bays =",
         "        {",
     ]
-    for bay_id, ref, stop, heading, taxi_in, pushback, taxi_out in bays:
+    for bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23 in bays:
         lines.append(
             f'            new AdelaideBay("{bay_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)},\n'
-            f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)}),")
+            f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)},\n                {arr(taxi_out23, 3.0)}),")
     lines += ["        };", "", "        public static readonly AdelaideTerminalGate[] TerminalGates =", "        {"]
-    for gate_id, ref, stop, heading, taxi_in, pushback, taxi_out in terminal_gates:
+    for gate_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23 in terminal_gates:
         lines.append(
             f'            new AdelaideTerminalGate("{gate_id}", "{ref}", {fmt(stop[0])}, {fmt(stop[1])}, {fmt(heading)},\n'
-            f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)}),")
+            f"                {arr(taxi_in, 3.0)},\n                {arr(pushback, 1.5)},\n                {arr(taxi_out, 3.0)},\n                {arr(taxi_out23, 3.0)}),")
     lines += ["        };", "", "        public static readonly AdelaideTaxiway[] Taxiways =", "        {"]
     for ref, width, pts in taxiways:
         lines.append(f'            new AdelaideTaxiway("{ref}", {fmt(width)}, {arr(pts)}),')

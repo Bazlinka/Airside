@@ -70,9 +70,10 @@ namespace Airside.Simulation
                     return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.HoldingShort, start, 0);
 
                 case FleetState.TakingOff:
-                    if (elapsed < AirlineOperations.LineupSeconds)
-                        return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.Lineup, start, AirlineOperations.LineupSeconds);
-                    return Air(AircraftPhase.Takeoff, start.Advance(AirlineOperations.LineupSeconds));
+                    var lineupSeconds = AdelaideGround.LineupFor(aircraft.AssignedRunway).WholeSeconds;
+                    if (elapsed < lineupSeconds)
+                        return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.Lineup, start, lineupSeconds);
+                    return Air(AircraftPhase.Takeoff, start.Advance(lineupSeconds));
 
                 case FleetState.Outbound:
                     return elapsed < performance.DepartedSeconds
@@ -89,8 +90,11 @@ namespace Airside.Simulation
                         return Air(AircraftPhase.Landing, start.Advance(approach));
                     var vacateAt = start.Advance(approach + landing);
                     return Ground(AircraftPhase.TaxiIn, vacateAt, FleetGroundLeg.Vacate, vacateAt,
-                        AirlineOperations.VacateSecondsFor(aircraft.Type));
+                        AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds);
                 }
+
+                case FleetState.GoAround:
+                    return Air(AircraftPhase.Departed, start);
 
                 case FleetState.AwaitingStand:
                     return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.AwaitingStand, start, 0);

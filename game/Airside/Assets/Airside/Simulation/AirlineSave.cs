@@ -19,7 +19,7 @@ namespace Airside.Simulation
         /// clock is aligned so the save moment reads as when it was saved, a v1 clock
         /// uses <see cref="AirlineClock.DefaultEpochUtc"/>.
         /// </summary>
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         public int Version = CurrentVersion;
 
@@ -63,6 +63,8 @@ namespace Airside.Simulation
         public string ScheduledDestination;
         public long ScheduledDepartAt;
         public int CompletedTrips;
+        public string AssignedRunway;
+        public bool WentAroundThisTrip;
     }
 
     public static class AirlineSave
@@ -107,7 +109,9 @@ namespace Airside.Simulation
                     HasScheduled = a.Scheduled.HasValue,
                     ScheduledDestination = a.Scheduled?.Destination.Code ?? string.Empty,
                     ScheduledDepartAt = a.Scheduled?.DepartAt.ElapsedSeconds ?? 0,
-                    CompletedTrips = a.CompletedTrips
+                    CompletedTrips = a.CompletedTrips,
+                    AssignedRunway = a.AssignedRunway.ToString(),
+                    WentAroundThisTrip = a.WentAroundThisTrip
                 });
             }
 
@@ -192,11 +196,16 @@ namespace Airside.Simulation
                             new SimulationTime(record.ScheduledDepartAt))
                         : null,
                     record.CompletedTrips);
+                if (data.Version >= 5)
+                    operations.RestoreMovementData(record.Registration,
+                        Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
+                            ? runway : RunwayDirection.Runway05,
+                        record.WentAroundThisTrip);
             }
 
             operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
             operations.Clock = ClockFor(data);
-            if (data.Version <= 3)
+            if (data.Version <= 4)
             {
                 operations.AddMissingRegionalCarriers();
                 operations.AddMissingTerminalOperators();

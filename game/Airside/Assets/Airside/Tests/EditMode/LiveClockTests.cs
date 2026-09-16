@@ -69,7 +69,7 @@ namespace Airside.Tests
             ops.Update();
 
             var saved = AirlineSave.Capture(ops, epoch.AddSeconds(600));
-            Assert.That(saved.Version, Is.EqualTo(4));
+            Assert.That(saved.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             var restored = AirlineSave.Restore(saved, new ManualSimulationClock(clock.Now));
             Assert.That(restored.Clock.EpochUtcTicks, Is.EqualTo(epoch.Ticks));
 

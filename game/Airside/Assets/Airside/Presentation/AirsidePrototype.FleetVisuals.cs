@@ -125,16 +125,16 @@ namespace Airside.Presentation
                 // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
-                        FleetVisual.QueueSlot(_operations.Fleet, aircraft));
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway);
                 case FleetGroundLeg.AwaitingStand:
                     return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft));
                 default:
                 {
                     var leg = visual.Leg switch
                     {
-                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type),
-                        FleetGroundLeg.Lineup => AdelaideGround.Lineup,
-                        FleetGroundLeg.Vacate => AdelaideGround.VacateFor(aircraft.Type),
+                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway),
+                        FleetGroundLeg.Lineup => AdelaideGround.LineupFor(aircraft.AssignedRunway),
+                        FleetGroundLeg.Vacate => AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway),
                         _ => AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type)
                     };
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;

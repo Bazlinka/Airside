@@ -52,6 +52,7 @@ namespace Airside.Simulation
         public const long DestinationTurnaroundSeconds = 40 * 60;
         public const long AiStandTurnaroundSeconds = 45 * 60;
         public const long RunwaySeparationSeconds = 90;
+        public const long GoAroundCircuitSeconds = 4 * 60;
         /// <summary>
         /// Minimum interval between pushback clearances. This keeps two aircraft from being
         /// released onto the shared apron/taxi route together while still allowing a useful queue.
@@ -65,6 +66,8 @@ namespace Airside.Simulation
         /// <summary>Pushback, tug disconnect and taxi from <paramref name="stand"/> to the runway 05 holding point.</summary>
         public static long TaxiOutSecondsFrom(StableId stand) => AdelaideGround.TaxiOut(stand).WholeSeconds;
         public static long TaxiOutSecondsFrom(StableId stand, AircraftType type) => AdelaideGround.TaxiOut(stand, type).WholeSeconds;
+        public static long TaxiOutSecondsFrom(StableId stand, AircraftType type, RunwayDirection runway) =>
+            AdelaideGround.TaxiOut(stand, type, runway).WholeSeconds;
 
         /// <summary>Taxi from the E2 holding point into <paramref name="stand"/>.</summary>
         public static long TaxiInSecondsTo(StableId stand) => AdelaideGround.TaxiIn(stand).WholeSeconds;
@@ -103,13 +106,14 @@ namespace Airside.Simulation
         /// <summary>Terminal gates (ADR 0047): jets only, a separate stand system from the regional bays.</summary>
         public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = new[]
         {
-            new StableId("GATE-13"), new StableId("GATE-15")
+            new StableId("GATE-13"), new StableId("GATE-15"), new StableId("GATE-18"), new StableId("GATE-20")
         };
 
         /// <summary>Every stand at Adelaide: the regional bays, then the terminal gates.</summary>
         public static readonly IReadOnlyList<StableId> AdelaideStands = new List<StableId>(AdelaideRegionalBays)
         {
-            AdelaideTerminalGates[0], AdelaideTerminalGates[1]
+            AdelaideTerminalGates[0], AdelaideTerminalGates[1],
+            AdelaideTerminalGates[2], AdelaideTerminalGates[3]
         };
 
         /// <summary>
@@ -119,7 +123,9 @@ namespace Airside.Simulation
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type, StableId Gate)[] Fleet)> TerminalOperators = new (Func<Airline>, (string, AircraftType, StableId)[])[]
         {
             (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) }),
-            (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) })
+            (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
+            (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
+            (Airline.SingaporeAirlines, new[] { ("9V-SMA", AircraftType.AirbusA350900, new StableId("GATE-20")) })
         };
 
         /// <summary>
@@ -278,6 +284,8 @@ namespace Airside.Simulation
             foreach (var (make, fleet) in TerminalOperators)
             {
                 var template = make();
+                if (template.Id.Value == "CPA" && !IsCathaySeason(_processedTo))
+                    continue;
                 var airline = _airlines.Find(a => a.Id.Equals(template.Id));
                 foreach (var (registration, type, gate) in fleet)
                 {
@@ -300,6 +308,16 @@ namespace Airside.Simulation
             return count;
         }
 
+        /// <summary>Cathay's Adelaide service operates through the southern summer season.</summary>
+        public bool IsCathaySeason(SimulationTime at)
+        {
+            var local = Clock.LocalAt(at);
+            return local.Month == 11 && local.Day >= 10
+                   || local.Month == 12
+                   || local.Month <= 2
+                   || local.Month == 3 && local.Day <= 27;
+        }
+
         public Destination Home { get; }
 
         /// <summary>Maps simulation time to real Adelaide time. Live: one simulated second per real second.</summary>
@@ -310,6 +328,8 @@ namespace Airside.Simulation
 
         /// <summary>When the tower may next clear a runway movement.</summary>
         public SimulationTime RunwayFreeAt => _runwayFreeAt;
+        public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
+        public RunwayDirection ActiveRunway => RunwayWeather.Select(Wind);
 
         /// <summary>Generator state for saving; 0 when the source is not a <see cref="SeededRandomSource"/>.</summary>
         public uint RandomState => _random is SeededRandomSource seeded ? seeded.State : 0;
@@ -394,6 +414,15 @@ namespace Airside.Simulation
             aircraft.Scheduled = scheduled;
             aircraft.CompletedTrips = Math.Max(0, completedTrips);
             _fleet.Add(aircraft);
+        }
+
+        internal void RestoreMovementData(string registration, RunwayDirection runway, bool wentAroundThisTrip)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                throw new FormatException($"{registration}: movement data has no aircraft.");
+            aircraft.AssignedRunway = runway;
+            aircraft.WentAroundThisTrip = wentAroundThisTrip;
         }
 
         internal void RestoreTower(SimulationTime runwayFreeAt, long totalEvents)
@@ -617,6 +646,11 @@ namespace Airside.Simulation
             if (target.CompareTo(_processedTo) < 0)
                 throw new InvalidOperationException("Simulation time cannot move backwards.");
 
+            // A save may cross into the Cathay summer season while it remains open.
+            // Backfill the seasonal operator at that point; the method is idempotent.
+            if (IsCathaySeason(target))
+                AddMissingTerminalOperators();
+
             while (true)
             {
                 ProcessDue(_processedTo);
@@ -663,7 +697,10 @@ namespace Airside.Simulation
                     aircraft.Scheduled = null;
                     aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
-                    Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSecondsFrom(aircraft.DepartureStand, aircraft.Type));
+                    aircraft.AssignedRunway = ActiveRunway;
+                    aircraft.WentAroundThisTrip = false;
+                    Transition(aircraft, FleetState.TaxiOut, now,
+                        TaxiOutSecondsFrom(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway));
                     return true;
 
                 case FleetState.TaxiOut:
@@ -683,6 +720,11 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Inbound:
+                    aircraft.AssignedRunway = ActiveRunway;
+                    Transition(aircraft, FleetState.HoldingForLanding, now, null);
+                    return true;
+
+                case FleetState.GoAround:
                     Transition(aircraft, FleetState.HoldingForLanding, now, null);
                     return true;
 
@@ -703,6 +745,7 @@ namespace Airside.Simulation
                 case FleetState.TaxiIn:
                     aircraft.CompletedTrips++;
                     aircraft.CurrentDestination = null;
+                    aircraft.WentAroundThisTrip = false;
                     Transition(aircraft, FleetState.AtStand, now, null);
                     if (!aircraft.Airline.IsPlayer)
                         ScheduleAiDeparture(aircraft, now);
@@ -850,10 +893,40 @@ namespace Airside.Simulation
                 return false;
 
             var landing = next.State == FleetState.HoldingForLanding;
-            var runwaySeconds = landing ? LandingRunwaySecondsFor(next.Type) : TakeoffRunwaySecondsFor(next.Type);
+            if (landing && ShouldGoAround(next, now))
+            {
+                next.WentAroundThisTrip = true;
+                Transition(next, FleetState.GoAround, now, GoAroundCircuitSeconds);
+                return true;
+            }
+            var profile = AircraftPerformance.For(next.Type);
+            var runwaySeconds = landing
+                ? profile.ApproachSeconds + profile.LandingSeconds
+                  + AdelaideGround.VacateFor(next.Type, next.AssignedRunway).WholeSeconds
+                : AdelaideGround.LineupFor(next.AssignedRunway).WholeSeconds + profile.TakeoffSeconds;
             Transition(next, landing ? FleetState.Landing : FleetState.TakingOff, now, runwaySeconds);
-            _runwayFreeAt = now.Advance(runwaySeconds + RunwaySeparationSeconds);
+            _runwayFreeAt = now.Advance(runwaySeconds + WakeSeparationSeconds(next.Type));
             return true;
+        }
+
+        private bool ShouldGoAround(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft.WentAroundThisTrip)
+                return false;
+            var arrivals = 0;
+            foreach (var candidate in _fleet)
+                if (candidate.State == FleetState.HoldingForLanding)
+                    arrivals++;
+            var seed = aircraft.CompletedTrips * 17 + aircraft.Registration.Length * 7
+                       + (int)(now.ElapsedSeconds / 3600);
+            return arrivals >= 2 && Math.Abs(seed % 11) == 0;
+        }
+
+        public static long WakeSeparationSeconds(AircraftType type)
+        {
+            if (type?.Id == "A359")
+                return 180;
+            return type?.Id is "B38M" or "A21N" ? 120 : RunwaySeparationSeconds;
         }
 
         private FleetAircraft LongestWaiting(FleetState state)
@@ -883,7 +956,7 @@ namespace Airside.Simulation
         internal static bool RequiresTripDestination(FleetState state) => state is
             FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
             or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
-            or FleetState.HoldingForLanding or FleetState.Landing;
+            or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing;
 
         /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
         public const int AiFirstDepartureHour = 6;
@@ -928,12 +1001,17 @@ namespace Airside.Simulation
             ("AKL", 3), ("CHC", 1)
         };
 
+        public static readonly IReadOnlyList<(string Code, int Weight)> SingaporeNetwork = new[] { ("SIN", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> CathayNetwork = new[] { ("HKG", 1) };
+
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
             "REX" => RexNetwork,
             "QLK" => QantasLinkNetwork,
             "VOZ" => VirginNetwork,
             "ANZ" => AirNewZealandNetwork,
+            "SIA" => SingaporeNetwork,
+            "CPA" => CathayNetwork,
             _ => AiNetwork
         };
 
@@ -954,6 +1032,14 @@ namespace Airside.Simulation
                 var code = AirNewZealandRotation[aircraft.CompletedTrips % AirNewZealandRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+                return;
+            }
+            if (aircraft.Airline.Id.Value is "SIA" or "CPA")
+            {
+                var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
+                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                    aircraft.Scheduled = new ScheduledDeparture(next,
+                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
                 return;
             }
 

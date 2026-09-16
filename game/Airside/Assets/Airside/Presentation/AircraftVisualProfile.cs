@@ -100,6 +100,19 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.59f,
             noseTireRadiusMetres: 0.52f);
 
+        public static readonly AircraftVisualProfile AirbusA350900 = new(
+            artRelativePath: "Models/Aircraft/mdl_a350_900_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -33.40f),
+            pickSizeMetres: new Vector3(68f, 20f, 72f),
+            pickCentreYMetres: 8.5f,
+            shadowWidthMetres: 63f,
+            shadowDepthMetres: 66f,
+            selectionMarkerDiameterMetres: 69f,
+            followDistanceMultiplier: 2.4f,
+            mainTireRadiusMetres: 0.70f,
+            noseTireRadiusMetres: 0.55f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -138,6 +151,8 @@ namespace Airside.Presentation
                 return Boeing7378;
             if (type != null && type.Id == AircraftType.AirbusA321Neo.Id)
                 return AirbusA321Neo;
+            if (type != null && type.Id == AircraftType.AirbusA350900.Id)
+                return AirbusA350900;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)
@@ -150,6 +165,9 @@ namespace Airside.Presentation
 
         public static bool IsAirbusA321Neo(AircraftType type) =>
             type != null && type.Id == AircraftType.AirbusA321Neo.Id;
+
+        public static bool IsAirbusA350900(AircraftType type) =>
+            type != null && type.Id == AircraftType.AirbusA350900.Id;
 
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;

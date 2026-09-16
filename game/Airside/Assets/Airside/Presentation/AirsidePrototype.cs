@@ -505,6 +505,34 @@ namespace Airside.Presentation
             UpdateOpsAntenna();
             UpdateStarField();
             UpdateApronLife();
+            UpdateGateServicing();
+        }
+
+        /// <summary>Cycle a small GSE team around one parked terminal aircraft, kept on the apron.</summary>
+        private void UpdateGateServicing()
+        {
+            if (!FleetMode)
+                return;
+            FleetAircraft parked = null;
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (aircraft.State == FleetState.AtStand && AdelaideGround.IsTerminalGate(aircraft.Stand))
+                {
+                    parked = aircraft;
+                    break;
+                }
+            }
+            if (parked == null)
+                return;
+
+            var pose = AdelaideGround.StandPose(parked.Stand);
+            var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
+            var side = new Vector3(-nose.z, 0f, nose.x);
+            var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+            var cycle = (float)(_preciseTime % 120.0);
+            UpdateVehicle(_fuelTruck, cycle < 72f, stop - nose * 24f + side * 8f, stop - nose * 42f + side * 18f);
+            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f, stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
+            UpdateVehicle(_passengerBus, cycle >= 48f, stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
         }
 
         /// <summary>
@@ -844,14 +872,16 @@ namespace Airside.Presentation
                     ? fleetAircraft.Type : AircraftType.Atr42;
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = FleetGroundPosition(flight, 0f) ?? PositionFor(phase, progress, route, lane, aircraftType);
+                var position = FleetGroundPosition(flight, 0f) ?? RunwayPosition(flight,
+                    PositionFor(phase, progress, route, lane, aircraftType));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
                 var next = FleetGroundPosition(flight, lookAhead)
-                           ?? PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane, aircraftType);
+                           ?? RunwayPosition(flight,
+                               PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane, aircraftType));
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -8164,6 +8194,8 @@ namespace Airside.Presentation
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsAirbusA321Neo(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA321Neo);
+            if (AircraftVisualProfiles.IsAirbusA350900(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA350900);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -12180,6 +12212,14 @@ namespace Airside.Presentation
                 AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type),
                 _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type)
             };
+        }
+
+        private Vector3 RunwayPosition(CommercialFlight flight, Vector3 position)
+        {
+            if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                && aircraft.AssignedRunway == RunwayDirection.Runway23)
+                return new Vector3(-position.x, position.y, -position.z);
+            return position;
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)

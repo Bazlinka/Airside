@@ -73,7 +73,9 @@ namespace Airside.Tests
             }
 
             foreach (var aircraft in ops.Fleet)
-                Assert.That(aircraft.CompletedTrips, Is.GreaterThan(Days * 2), $"{aircraft.Registration} flew too few trips");
+                Assert.That(aircraft.CompletedTrips,
+                    Is.GreaterThan(aircraft.Type.Id == "A359" ? Days : Days * 2),
+                    $"{aircraft.Registration} flew too few trips");
 
             Assert.That(events, Is.LessThan(200_000), "event count stays bounded");
         }

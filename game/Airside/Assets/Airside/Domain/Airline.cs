@@ -44,6 +44,10 @@ namespace Airside.Domain
         /// <summary>Air New Zealand trans-Tasman services from Adelaide (A321neo).</summary>
         public static Airline AirNewZealand() => new("ANZ", "Air New Zealand", "#111111", isPlayer: false);
 
+        public static Airline SingaporeAirlines() => new("SIA", "Singapore Airlines", "#1B3F8B", isPlayer: false);
+
+        public static Airline CathayPacific() => new("CPA", "Cathay Pacific", "#006564", isPlayer: false);
+
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 
         public (byte r, byte g, byte b) LiveryRgb()

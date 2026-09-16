@@ -84,6 +84,7 @@ namespace Airside.Domain
             new Destination("CHC", "Christchurch", "New Zealand", -43.489, 172.532),
             new Destination("DPS", "Denpasar (Bali)", "Indonesia", -8.748, 115.167),
             new Destination("SIN", "Singapore", "Singapore", 1.364, 103.991),
+            new Destination("HKG", "Hong Kong", "Hong Kong", 22.308, 113.918),
         };
 
         public static IEnumerable<Destination> All

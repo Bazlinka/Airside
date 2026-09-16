@@ -50,6 +50,7 @@ namespace Airside.Presentation
         private Vector2 _hangarScroll;
         private Vector2 _fleetScroll;
         private Vector2 _flightsScroll;
+        private bool _flightsShowArrivals = true;
         private Vector2 _devToolsScroll;
         private readonly List<FleetAircraft> _flightsBoardRows = new();
         private readonly SeededRandomSource _devToolsRandom = new(4242);
@@ -1894,26 +1895,41 @@ namespace Airside.Presentation
 
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
-            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Flights", title);
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Adelaide flights", title);
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
                 ToggleFlights();
 
             GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
-                "Every movement at Adelaide — yours and the other airlines — ordered by the next time that matters.", small);
+                $"RUNWAY {RunwayWeather.Label(_operations.ActiveRunway)}  ·  WIND {_operations.Wind.Text}", small);
+
+            var tabY = rect.y + 62f;
+            GUI.color = _flightsShowArrivals ? AirsideTheme.SafetyYellow : Color.white;
+            if (GUI.Button(new Rect(x, tabY, 132f, 27f), "ARRIVALS", smallButton))
+                _flightsShowArrivals = true;
+            GUI.color = !_flightsShowArrivals ? AirsideTheme.SafetyYellow : Color.white;
+            if (GUI.Button(new Rect(x + 140f, tabY, 132f, 27f), "DEPARTURES", smallButton))
+                _flightsShowArrivals = false;
+            GUI.color = Color.white;
 
             _flightsBoardRows.Clear();
             foreach (var aircraft in _operations.Fleet)
-                _flightsBoardRows.Add(aircraft);
+                if (_flightsShowArrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
+                    _flightsBoardRows.Add(aircraft);
             FlightBoard.Sort(_flightsBoardRows);
 
-            var headerY = rect.y + 64f;
-            var timeW = 86f;
-            var phaseW = 108f;
-            var routeW = Mathf.Min(150f, inner * 0.25f);
-            GUI.Label(new Rect(x, headerY, timeW, 18f), "NEXT", small);
-            GUI.Label(new Rect(x + timeW, headerY, phaseW, 18f), "STATUS", small);
-            GUI.Label(new Rect(x + timeW + phaseW, headerY, routeW, 18f), "ROUTE", small);
-            GUI.Label(new Rect(x + timeW + phaseW + routeW, headerY, inner - timeW - phaseW - routeW, 18f), "AIRCRAFT / OPERATOR", small);
+            var headerY = rect.y + 98f;
+            var schedW = 58f;
+            var estimateW = 58f;
+            var gateW = 48f;
+            var routeW = Mathf.Min(118f, inner * 0.20f);
+            var phaseW = 112f;
+            GUI.Label(new Rect(x, headerY, schedW, 18f), "SCHED", small);
+            GUI.Label(new Rect(x + schedW, headerY, estimateW, 18f), "EST", small);
+            GUI.Label(new Rect(x + schedW + estimateW, headerY, gateW, 18f), "GATE", small);
+            GUI.Label(new Rect(x + schedW + estimateW + gateW, headerY, routeW, 18f), "FLIGHT", small);
+            GUI.Label(new Rect(x + schedW + estimateW + gateW + routeW, headerY, phaseW, 18f), "STATUS", small);
+            GUI.Label(new Rect(x + schedW + estimateW + gateW + routeW + phaseW, headerY,
+                inner - schedW - estimateW - gateW - routeW - phaseW, 18f), "AIRCRAFT / OPERATOR", small);
 
             var view = new Rect(x, headerY + 22f, inner, rect.height - (headerY - rect.y) - 36f);
             var rowHeight = 52f;
@@ -1949,29 +1965,32 @@ namespace Airside.Presentation
                 DrawSolid(new Rect(row.x, row.y, 4f, row.height), AirsideTheme.FromHex(aircraft.Airline.LiveryHex));
                 if (!mine && !selected)
                     GUI.color = new Color(1f, 1f, 1f, Ownership.AlphaFor(aircraft.Airline));
-                GUI.Label(new Rect(10f, y + 5f, timeW - 8f, 18f), FlightBoard.TimeLabel(aircraft, ClockText), boardBold);
-                GUI.Label(new Rect(10f, y + 25f, timeW - 8f, 15f), FlightBoard.TimeMeaning(aircraft, _clock.Now), boardTiny);
+                GUI.Label(new Rect(10f, y + 5f, schedW - 8f, 18f), FlightBoard.ScheduledTime(aircraft, ClockText), boardBold);
+                GUI.Label(new Rect(schedW, y + 5f, estimateW - 4f, 18f), FlightBoard.EstimatedTime(aircraft, ClockText), label);
+                GUI.Label(new Rect(schedW + estimateW, y + 5f, gateW - 4f, 18f), FlightBoard.GateText(aircraft), label);
+                var routeX = schedW + estimateW + gateW;
+                GUI.Label(new Rect(routeX, y + 5f, routeW - 4f, 20f), FlightBoard.RouteText(aircraft), boardBold);
                 var boardSeverity = AircraftStatus.Severity(aircraft, _clock.Now);
                 var boardContent = GUI.contentColor;
                 if (boardSeverity != StatusSeverity.Normal)
                     GUI.contentColor = SeverityColour(boardSeverity, boardContent);
-                GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
+                GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), aircraft.Registration, boardTiny);
+                GUI.Label(new Rect(routeX + routeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
                 GUI.contentColor = boardContent;
-                GUI.Label(new Rect(timeW + phaseW, y + 6f, routeW - 4f, 20f), FlightBoard.RouteText(aircraft), boardBold);
-                var aircraftX = timeW + phaseW + routeW;
+                var aircraftX = routeX + routeW + phaseW;
                 GUI.Label(new Rect(aircraftX, y + 5f, rowWidth - aircraftX - 8f, 18f),
-                    $"{aircraft.Registration}  ·  {aircraft.Type.Name}{EnrouteAltitudeText(aircraft)}", small);
+                    $"{aircraft.Type.Name}{EnrouteAltitudeText(aircraft)}", small);
                 GUI.Label(new Rect(aircraftX, y + 24f, rowWidth - aircraftX - 8f, 16f), aircraft.Airline.Name, boardTiny);
 
                 if (aircraft.StateEndsAt.HasValue)
                 {
-                    AirsideTheme.DrawProgressBar(new Rect(timeW, y + 40f, rowWidth - timeW - 12f, 4f),
+                    AirsideTheme.DrawProgressBar(new Rect(schedW, y + 40f, rowWidth - schedW - 12f, 4f),
                         (float)aircraft.StateProgress(_clock.Now),
                         mine ? AirsideTheme.FromHex(aircraft.Airline.LiveryHex) : AirsideTheme.Concrete, AirsideTheme.Tarmac);
                 }
                 else if (AircraftStatus.IsWaiting(aircraft))
                 {
-                    AirsideTheme.DrawProgressBar(new Rect(timeW, y + 40f, rowWidth - timeW - 12f, 4f),
+                    AirsideTheme.DrawProgressBar(new Rect(schedW, y + 40f, rowWidth - schedW - 12f, 4f),
                         AircraftStatus.WaitProgress(aircraft, _clock.Now),
                         SeverityColour(boardSeverity, AirsideTheme.Concrete), AirsideTheme.Tarmac);
                 }

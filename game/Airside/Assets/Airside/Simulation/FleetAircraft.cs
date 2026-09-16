@@ -25,6 +25,8 @@ namespace Airside.Simulation
         Inbound,
         /// <summary>Back in the home circuit, holding for a landing slot.</summary>
         HoldingForLanding,
+        /// <summary>Climbing away after an unstable approach, before rejoining the arrival sequence.</summary>
+        GoAround,
         /// <summary>On the runway for the approach and landing roll.</summary>
         Landing,
         /// <summary>Vacated the runway; waiting for a stand to be chosen.</summary>
@@ -92,6 +94,12 @@ namespace Airside.Simulation
         public StableId DepartureStand { get; internal set; }
 
         public int CompletedTrips { get; internal set; }
+
+        /// <summary>Runway fixed when the movement enters the airport sequence.</summary>
+        public RunwayDirection AssignedRunway { get; internal set; } = RunwayDirection.Runway05;
+
+        /// <summary>Prevents repeated go-arounds on the same round trip.</summary>
+        public bool WentAroundThisTrip { get; internal set; }
 
         public bool IsOffMap => State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound;
 

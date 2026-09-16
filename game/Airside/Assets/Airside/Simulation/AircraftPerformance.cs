@@ -146,6 +146,10 @@ namespace Airside.Simulation
             155f, 140f, 128f, 145f, 165f, 210f, 1800f, 11.0f, 9.5f,
             39800, 1900, 1800, 20f, 10f, 15f);
 
+        public static readonly AircraftPerformanceProfile AirbusA350900 = new(
+            165f, 150f, 138f, 158f, 180f, 225f, 2050f, 11.5f, 10.0f,
+            43000, 1800, 1800, 20f, 8f, 14f);
+
         public static AircraftPerformanceProfile For(AircraftType type)
         {
             if (type == null)
@@ -156,6 +160,7 @@ namespace Airside.Simulation
                 "DH8D" => Dash8Q400,
                 "B38M" => Boeing7378,
                 "A21N" => AirbusA321Neo,
+                "A359" => AirbusA350900,
                 _ => Atr42
             };
         }

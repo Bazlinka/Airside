@@ -8162,6 +8162,8 @@ namespace Airside.Presentation
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsAirbusA321Neo(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA321Neo);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -8343,9 +8345,10 @@ namespace Airside.Presentation
         private static Transform BuildNarrowbody7378(
             string name,
             Color accent,
-            string liveryDecalRelativePath = null)
+            string liveryDecalRelativePath = null,
+            AircraftVisualProfile? profileOverride = null)
         {
-            var profile = AircraftVisualProfiles.Boeing7378;
+            var profile = profileOverride ?? AircraftVisualProfiles.Boeing7378;
             var root = new GameObject(name).transform;
             AircraftVisualProfileComponent.Ensure(root, profile);
 

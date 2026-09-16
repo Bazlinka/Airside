@@ -101,12 +101,15 @@ namespace Airside.Simulation
         };
 
         /// <summary>Terminal gates (ADR 0047): jets only, a separate stand system from the regional bays.</summary>
-        public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = new[] { new StableId("GATE-13") };
+        public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = new[]
+        {
+            new StableId("GATE-13"), new StableId("GATE-15")
+        };
 
         /// <summary>Every stand at Adelaide: the regional bays, then the terminal gates.</summary>
         public static readonly IReadOnlyList<StableId> AdelaideStands = new List<StableId>(AdelaideRegionalBays)
         {
-            AdelaideTerminalGates[0]
+            AdelaideTerminalGates[0], AdelaideTerminalGates[1]
         };
 
         /// <summary>
@@ -115,7 +118,8 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type, StableId Gate)[] Fleet)> TerminalOperators = new (Func<Airline>, (string, AircraftType, StableId)[])[]
         {
-            (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) })
+            (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) }),
+            (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) })
         };
 
         /// <summary>
@@ -124,6 +128,9 @@ namespace Airside.Simulation
         /// numbers, so adding the jet leaves the regional carriers' random sequence untouched.
         /// </summary>
         public static readonly IReadOnlyList<string> VirginRotation = new[] { "MEL", "SYD", "MEL", "BNE", "SYD", "PER", "MEL", "CBR" };
+
+        /// <summary>Representative Air New Zealand trans-Tasman rotation from Adelaide.</summary>
+        public static readonly IReadOnlyList<string> AirNewZealandRotation = new[] { "AKL", "AKL", "CHC", "AKL" };
 
         /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
         public static bool NeedsTerminalGate(AircraftType type) =>
@@ -205,7 +212,11 @@ namespace Airside.Simulation
             }
 
             // The terminal jet joins after the regional openings are fixed, so they are unchanged.
-            operations.AddMissingTerminalOperators();
+            var terminalFleet = new List<FleetAircraft>();
+            operations.AddMissingTerminalOperators(terminalFleet);
+            var internationalInbound = terminalFleet.Find(a => a.Airline.Id.Value == "ANZ");
+            if (internationalInbound != null && DestinationCatalogue.TryFind("AKL", out var auckland))
+                operations.SeedOpeningInbound(internationalInbound, auckland, 17 * 60);
 
             operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
@@ -261,7 +272,7 @@ namespace Airside.Simulation
         /// own gate with its first rotation flight booked. Skipped when this airport has no such
         /// gate or it is taken. Returns how many aircraft joined; safe to call on every load.
         /// </summary>
-        public int AddMissingTerminalOperators()
+        public int AddMissingTerminalOperators(List<FleetAircraft> added = null)
         {
             var count = 0;
             foreach (var (make, fleet) in TerminalOperators)
@@ -280,7 +291,8 @@ namespace Airside.Simulation
                         AddAirline(airline);
                     }
 
-                    AddAircraft(airline, registration, type, gate);
+                    var aircraft = AddAircraft(airline, registration, type, gate);
+                    added?.Add(aircraft);
                     count++;
                 }
             }
@@ -746,6 +758,16 @@ namespace Airside.Simulation
             if (aircraft == null)
                 return null;
 
+            // Scheduled terminal operators return to their own gate when it is available.
+            // This keeps the Air New Zealand and Virgin streams operationally legible while
+            // still allowing an alternate compatible gate if the home position is occupied.
+            if (NeedsTerminalGate(aircraft.Type)
+                && !string.IsNullOrEmpty(aircraft.DepartureStand.Value)
+                && _stands.Contains(aircraft.DepartureStand)
+                && IsStandFree(aircraft.DepartureStand)
+                && IsLeadInFree(aircraft.DepartureStand, aircraft))
+                return aircraft.DepartureStand;
+
             // The player should never return to find every regional bay occupied by AI.
             // When their aircraft is away, keep the last compatible bay reserved; AI
             // arrivals can queue at E2 until another operator pushes back.
@@ -900,11 +922,18 @@ namespace Airside.Simulation
             ("MEL", 3), ("SYD", 2), ("BNE", 1), ("PER", 1), ("CBR", 1)
         };
 
+        /// <summary>Air New Zealand trans-Tasman service from Adelaide.</summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> AirNewZealandNetwork = new[]
+        {
+            ("AKL", 3), ("CHC", 1)
+        };
+
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
             "REX" => RexNetwork,
             "QLK" => QantasLinkNetwork,
             "VOZ" => VirginNetwork,
+            "ANZ" => AirNewZealandNetwork,
             _ => AiNetwork
         };
 
@@ -914,6 +943,15 @@ namespace Airside.Simulation
             {
                 // Rotation, not a random draw, so the mainline timetable is stable.
                 var code = VirginRotation[aircraft.CompletedTrips % VirginRotation.Count];
+                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+                return;
+            }
+
+            if (aircraft.Airline.Id.Value == "ANZ")
+            {
+                // Rotation, not a random draw, so international traffic is stable too.
+                var code = AirNewZealandRotation[aircraft.CompletedTrips % AirNewZealandRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
                 return;

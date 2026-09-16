@@ -13,11 +13,11 @@ namespace Airside.Tests
         {
             var markings = AdelaideStandMarkings.All();
 
-            Assert.That(markings.Length, Is.EqualTo(7));
+            Assert.That(markings.Length, Is.EqualTo(8));
             Assert.That(markings.Select(marking => marking.StandId),
-                Is.EqualTo(new[] { "BAY-1", "BAY-2", "BAY-3", "BAY-4", "BAY-5", "BAY-6", "GATE-13" }));
+                Is.EqualTo(new[] { "BAY-1", "BAY-2", "BAY-3", "BAY-4", "BAY-5", "BAY-6", "GATE-13", "GATE-15" }));
             Assert.That(markings.Select(marking => marking.Reference),
-                Is.EqualTo(new[] { "50D", "50C", "50B", "50A", "50E", "50F", "13" }));
+                Is.EqualTo(new[] { "50D", "50C", "50B", "50A", "50E", "50F", "13", "15" }));
         }
 
         [Test]

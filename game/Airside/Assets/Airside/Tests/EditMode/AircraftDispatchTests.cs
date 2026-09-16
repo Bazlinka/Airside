@@ -198,6 +198,27 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AirbusA321Neo_BuildsAsTheLongInternationalNarrowbody()
+        {
+            var root = Build(AircraftType.AirbusA321Neo);
+            try
+            {
+                var all = root.GetComponentsInChildren<Transform>(true);
+                Assert.That(root.GetComponent<AircraftVisualProfileComponent>().PickSizeMetres.z, Is.EqualTo(48f));
+                Assert.That(all.Count(t => t.name == "Fan L" || t.name == "Fan R"), Is.EqualTo(2));
+                Assert.That(all.Any(t => t.name == "Winglet L"), Is.True, "single Airbus-style sharklet");
+                Assert.That(all.Any(t => t.name == "Wingtip L"), Is.False, "no lower 737 scimitar");
+                var drawn = RenderedBounds(root);
+                Assert.That(drawn.size.z, Is.EqualTo(AircraftCatalogue.AirbusA321Neo.LengthMetres)
+                    .Within(0.05f * AircraftCatalogue.AirbusA321Neo.LengthMetres));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
         public void Operators_FlyTheirCatalogueTypes_AndDrawThemWithThoseProfiles()
         {
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(9),
@@ -207,10 +228,12 @@ namespace Airside.Tests
             Assert.That(TypeOf("QantasLink"), Is.SameAs(AircraftType.Dash8Q400));
             Assert.That(TypeOf("Rex"), Is.SameAs(AircraftType.Saab340));
             Assert.That(TypeOf("Virgin Australia"), Is.SameAs(AircraftType.Boeing7378));
+            Assert.That(TypeOf("Air New Zealand"), Is.SameAs(AircraftType.AirbusA321Neo));
             Assert.That(ops.Fleet.Single(a => a.Airline.IsPlayer).Type, Is.SameAs(AircraftType.Atr42));
 
             Assert.That(AircraftVisualProfiles.For(TypeOf("QantasLink")), Is.EqualTo(AircraftVisualProfiles.Dash8Q400));
             Assert.That(AircraftVisualProfiles.For(TypeOf("Virgin Australia")), Is.EqualTo(AircraftVisualProfiles.Boeing7378));
+            Assert.That(AircraftVisualProfiles.For(TypeOf("Air New Zealand")), Is.EqualTo(AircraftVisualProfiles.AirbusA321Neo));
             Assert.That(AircraftVisualProfiles.For(TypeOf("Rex")), Is.EqualTo(AircraftVisualProfiles.Saab340),
                 "Rex's Saab 340Bs draw with AIR-007, not the ATR stand-in");
         }
@@ -222,6 +245,7 @@ namespace Airside.Tests
             var saab = AircraftIdentityMarkings.For(AircraftType.Saab340);
             var q400 = AircraftIdentityMarkings.For(AircraftType.Dash8Q400);
             var jet = AircraftIdentityMarkings.For(AircraftType.Boeing7378);
+            var a321 = AircraftIdentityMarkings.For(AircraftType.AirbusA321Neo);
 
             Assert.That(atr.SideX, Is.LessThan(saab.SideX));
             Assert.That(saab.SideX, Is.LessThan(q400.SideX));
@@ -229,6 +253,7 @@ namespace Airside.Tests
             Assert.That(jet.OperatorZ, Is.LessThan(0f),
                 "the 737 art root is its nose stop, so fuselage paint sits aft of zero");
             Assert.That(jet.RegistrationZ, Is.LessThan(jet.OperatorZ));
+            Assert.That(a321.RegistrationZ, Is.LessThan(jet.RegistrationZ), "longer fuselage places the registration farther aft");
             Assert.That(q400.OperatorZ, Is.GreaterThan(0f),
                 "centred turboprop art places the operator title forward of its origin");
         }
@@ -239,7 +264,7 @@ namespace Airside.Tests
             foreach (var type in new[]
                      {
                          AircraftType.Atr42, AircraftType.Saab340,
-                         AircraftType.Dash8Q400, AircraftType.Boeing7378
+                         AircraftType.Dash8Q400, AircraftType.Boeing7378, AircraftType.AirbusA321Neo
                      })
             {
                 var root = Build(type);
@@ -253,7 +278,8 @@ namespace Airside.Tests
                         var engine = all.Single(t => t.name == $"Engine {side}");
                         var nav = all.Single(t => t.name == $"NavLight {side}");
                         var rotatingPowerplant = all.Single(t => t.name ==
-                            (type == AircraftType.Boeing7378 ? $"Fan {side}" : $"Propeller {side}"));
+                            (type == AircraftType.Boeing7378 || type == AircraftType.AirbusA321Neo
+                                ? $"Fan {side}" : $"Propeller {side}"));
                         Assert.That(flap.IsChildOf(wing), Is.True, $"{type.Id} {side} flap follows wing flex");
                         Assert.That(engine.IsChildOf(wing), Is.True, $"{type.Id} {side} engine follows wing flex");
                         Assert.That(rotatingPowerplant.IsChildOf(wing), Is.True,

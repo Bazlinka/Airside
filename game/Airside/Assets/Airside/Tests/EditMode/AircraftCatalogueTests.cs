@@ -19,6 +19,7 @@ namespace Airside.Tests
             Assert.That(AircraftType.Saab340, Is.SameAs(AircraftCatalogue.Saab340.Type));
             Assert.That(AircraftType.Dash8Q400, Is.SameAs(AircraftCatalogue.Dash8Q400.Type));
             Assert.That(AircraftType.Boeing7378, Is.SameAs(AircraftCatalogue.Boeing7378.Type));
+            Assert.That(AircraftType.AirbusA321Neo, Is.SameAs(AircraftCatalogue.AirbusA321Neo.Type));
             foreach (var spec in AircraftCatalogue.All)
             {
                 Assert.That(AircraftType.TryFromId(spec.Id, out var type), Is.True);
@@ -45,7 +46,7 @@ namespace Airside.Tests
         public void GenuineModels_MatchRealDimensionsWithinFivePercent_AndHaveTheirOwnThumbnail()
         {
             var genuine = AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine).ToList();
-            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M" }));
+            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M", "A21N" }));
             var thumbnails = new HashSet<string>();
             foreach (var spec in genuine)
             {
@@ -94,9 +95,10 @@ namespace Airside.Tests
             var player = Airline.Player("Catalogue Air", "#1F3A93");
             ops.AddAirline(player);
             var bays = new Queue<StableId>(AirlineOperations.AdelaideRegionalBays);
+            var terminalGates = new Queue<StableId>(AirlineOperations.AdelaideTerminalGates);
             foreach (var spec in AircraftCatalogue.All)
             {
-                var stand = spec.StandClass == StandClass.TerminalGate ? AirlineOperations.AdelaideTerminalGates[0] : bays.Dequeue();
+                var stand = spec.StandClass == StandClass.TerminalGate ? terminalGates.Dequeue() : bays.Dequeue();
                 var aircraft = ops.AddAircraft(player, "VH-C" + spec.Id.Substring(0, 2), spec.Type, stand);
                 foreach (var row in FlightPlanner.DestinationsFor(ops, aircraft))
                 {

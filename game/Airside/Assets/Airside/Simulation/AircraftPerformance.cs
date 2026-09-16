@@ -140,6 +140,12 @@ namespace Airside.Simulation
             155f, 145f, 132f, 145f, 165f, 210f, 1650f, 12.0f, 10.0f,
             41000, 2100, 1900, 20f, 10f, 15f);
 
+        // Representative normal-weight A321neo values. Like the other jets these are
+        // visual-planning values; crews calculate actual speeds for each departure.
+        public static readonly AircraftPerformanceProfile AirbusA321Neo = new(
+            155f, 140f, 128f, 145f, 165f, 210f, 1800f, 11.0f, 9.5f,
+            39800, 1900, 1800, 20f, 10f, 15f);
+
         public static AircraftPerformanceProfile For(AircraftType type)
         {
             if (type == null)
@@ -149,6 +155,7 @@ namespace Airside.Simulation
                 "SF34" => Saab340,
                 "DH8D" => Dash8Q400,
                 "B38M" => Boeing7378,
+                "A21N" => AirbusA321Neo,
                 _ => Atr42
             };
         }

@@ -41,6 +41,9 @@ namespace Airside.Domain
         /// <summary>Virgin Australia domestic services from Adelaide (737-8).</summary>
         public static Airline VirginAustralia() => new("VOZ", "Virgin Australia", "#D71964", isPlayer: false);
 
+        /// <summary>Air New Zealand trans-Tasman services from Adelaide (A321neo).</summary>
+        public static Airline AirNewZealand() => new("ANZ", "Air New Zealand", "#111111", isPlayer: false);
+
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 
         public (byte r, byte g, byte b) LiveryRgb()

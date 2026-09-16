@@ -16,6 +16,7 @@ namespace Airside.Tests
     public sealed class TerminalGateOperationsTests
     {
         private static readonly StableId Gate13 = new("GATE-13");
+        private static readonly StableId Gate15 = new("GATE-15");
         private const string JetRegistration = "VH-8IA";
 
         private static AirlineOperations NewGame(out ManualSimulationClock clock, int seed = 77)
@@ -41,6 +42,21 @@ namespace Airside.Tests
             Assert.That(jet.Stand, Is.EqualTo(Gate13));
             Assert.That(jet.Scheduled.HasValue, Is.True);
             Assert.That(AirlineOperations.VirginRotation, Does.Contain(jet.Scheduled.Value.Destination.Code));
+        }
+
+        [Test]
+        public void NewGame_HasAnAirNewZealandA321NeoInboundFromAucklandForGate15()
+        {
+            var ops = NewGame(out _);
+            var aircraft = ops.Fleet.Single(a => a.Registration == "ZK-NNA");
+            Assert.That(aircraft.Airline.Name, Is.EqualTo("Air New Zealand"));
+            Assert.That(aircraft.Type, Is.SameAs(AircraftType.AirbusA321Neo));
+            Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
+            Assert.That(aircraft.CurrentDestination?.Code, Is.EqualTo("AKL"));
+            Assert.That(aircraft.DepartureStand, Is.EqualTo(Gate15));
+            Assert.That(AdelaideGround.StandLabel(Gate15), Is.EqualTo("Gate 15"));
+            Assert.That(DestinationCatalogue.Adelaide.DistanceKmTo(aircraft.CurrentDestination.Value),
+                Is.LessThan(AircraftType.AirbusA321Neo.PracticalRangeKm));
         }
 
         [Test]

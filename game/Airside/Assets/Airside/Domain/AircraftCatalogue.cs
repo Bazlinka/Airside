@@ -121,7 +121,18 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png", "SPEC-BOEING-737-8");
 
-        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378 };
+        // Air New Zealand's trans-Tasman type (AIR-008). Airbus publishes M0.82 as
+        // maximum cruise and 7,400 km as the advertised range; the lower figures are
+        // representative schedule-planning values rather than dispatch limits.
+        public static readonly AircraftSpec AirbusA321Neo = new(
+            "A21N", "Airbus A321neo", "International narrowbody · 180–220 seats",
+            44.51, 35.80, 11.76,
+            planningCruiseKmh: 833, practicalRangeKm: 6000,
+            manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 7400, manufacturerRangeBasis: "up to 4,000 nm",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png", "SPEC-AIRBUS-A321NEO");
+
+        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378, AirbusA321Neo };
 
         public static bool TryFor(AircraftType type, out AircraftSpec found)
         {

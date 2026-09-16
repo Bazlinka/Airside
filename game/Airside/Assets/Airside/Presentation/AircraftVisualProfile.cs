@@ -85,6 +85,21 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.62f,
             noseTireRadiusMetres: 0.55f);
 
+        // AIR-008: A321neo-class international narrowbody. Like the 737 kit its
+        // authored origin is the nose-stop datum and its tyres sit at local y=0.
+        public static readonly AircraftVisualProfile AirbusA321Neo = new(
+            artRelativePath: "Models/Aircraft/mdl_a321neo_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -22.255f),
+            pickSizeMetres: new Vector3(40f, 14f, 48f),
+            pickCentreYMetres: 5.9f,
+            shadowWidthMetres: 34f,
+            shadowDepthMetres: 44f,
+            selectionMarkerDiameterMetres: 46f,
+            followDistanceMultiplier: 1.7f,
+            mainTireRadiusMetres: 0.59f,
+            noseTireRadiusMetres: 0.52f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -121,6 +136,8 @@ namespace Airside.Presentation
         {
             if (type != null && type.Id == AircraftType.Boeing7378.Id)
                 return Boeing7378;
+            if (type != null && type.Id == AircraftType.AirbusA321Neo.Id)
+                return AirbusA321Neo;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)
@@ -130,6 +147,9 @@ namespace Airside.Presentation
 
         public static bool IsBoeing7378(AircraftType type) =>
             type != null && type.Id == AircraftType.Boeing7378.Id;
+
+        public static bool IsAirbusA321Neo(AircraftType type) =>
+            type != null && type.Id == AircraftType.AirbusA321Neo.Id;
 
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;
@@ -178,6 +198,8 @@ namespace Airside.Presentation
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
                 return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
+            if (AircraftVisualProfiles.IsAirbusA321Neo(type))
+                return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
             if (AircraftVisualProfiles.IsSaab340(type))

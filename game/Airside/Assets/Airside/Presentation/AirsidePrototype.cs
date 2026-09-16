@@ -85,6 +85,7 @@ namespace Airside.Presentation
         private float[] _cloudBaseAlpha;
         private Transform _birdFlockRoot;
         private Transform[] _birdWingL;
+        private float[] _birdPhaseSeed;
         private Transform[] _birdWingR;
         private Transform _apronLifeRoot;
         // Role flags are read from the name once; Object.name allocates on every access.
@@ -543,7 +544,13 @@ namespace Airside.Presentation
             if (keyboard.rKey.wasPressedThisFrame)
                 ResetView();
             if (keyboard.mKey.wasPressedThisFrame)
+            {
+                // Muting used to be silent in both senses: nothing on screen said the
+                // sound was off, so a stray M looked like broken audio.
                 _audioMuted = !_audioMuted;
+                ShowToast(_audioMuted ? "Sound off (M)." : "Sound on (M).");
+                PlayUiClick();
+            }
         }
 
         private void ToggleMenu()
@@ -2203,6 +2210,11 @@ namespace Airside.Presentation
 
             if (raining && _rainRoot != null)
             {
+                // The drop box is 80 x 50 m. Built once at the origin, it only ever rained
+                // where the world origin happened to be on screen, never round a followed
+                // aircraft; it now travels with what the camera is looking at.
+                if (_cameraController != null)
+                    _rainRoot.position = RainRootPosition(_cameraController.FocusPoint);
                 var fallBase = storm ? 20f : 12f;
                 var drift = storm ? -3.2f : -1.5f;
                 for (var i = 0; i < _rainRoot.childCount; i++)
@@ -2902,6 +2914,10 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>Drops span local z −10…40, so the box is centred on the camera focus at ground level.</summary>
+        public static Vector3 RainRootPosition(Vector3 focus) =>
+            new(focus.x, AirsideAdelaideGround.WorldHeight(focus.x, focus.z), focus.z - 15f);
+
         private static Transform BuildRainRoot()
         {
             var root = new GameObject("Rain").transform;
@@ -3320,6 +3336,27 @@ namespace Airside.Presentation
             return named != null ? named.GetComponent<Light>() : null;
         }
 
+        private float _weatherGloom;
+        private bool _weatherGloomReady;
+
+        public static float WeatherGloomTarget(WeatherKind weather) => weather switch
+        {
+            WeatherKind.Storm => 0.55f,
+            WeatherKind.Fog => 0.42f,
+            WeatherKind.Rain => 0.28f,
+            WeatherKind.Overcast => 0.22f,
+            WeatherKind.Cloudy => 0.16f,
+            _ => 0f
+        };
+
+        /// <summary>
+        /// Weather is a discrete forecast, so a change of kind snapped sun intensity, trilight
+        /// and the whole post grade in one frame. Gloom now drifts at 0.05/s (clear to storm
+        /// in about 11 s). The first frame lands on the target.
+        /// </summary>
+        public static float EaseWeatherGloom(float current, float target, float deltaSeconds) =>
+            Mathf.MoveTowards(current, target, deltaSeconds * 0.05f);
+
         private void ApplyDayCycle()
         {
             var cycle = PresentationDayCycle;
@@ -3344,13 +3381,10 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weather = CurrentWeather;
-            var weatherGloom = weather == WeatherKind.Storm ? 0.55f
-                : weather == WeatherKind.Fog ? 0.42f
-                : weather == WeatherKind.Rain ? 0.28f
-                : weather == WeatherKind.Cloudy ? 0.16f
-                : weather == WeatherKind.Overcast ? 0.22f
-                : 0f;
+            var weatherGloom = EaseWeatherGloom(_weatherGloom, WeatherGloomTarget(CurrentWeather),
+                _weatherGloomReady ? Time.unscaledDeltaTime : float.PositiveInfinity);
+            _weatherGloom = weatherGloom;
+            _weatherGloomReady = true;
             if (weatherGloom > 0f)
                 _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
             _dayVolume?.Apply(daylight, warm, weatherGloom);
@@ -7321,6 +7355,10 @@ namespace Airside.Presentation
             _opsAntennaDish.Rotate(Vector3.up, Time.unscaledDeltaTime * 18f, Space.World);
         }
 
+        /// <summary>Star brightness for the daylight level: full at night, gone by mid-dawn.</summary>
+        public static float StarFieldFade(float daylight) =>
+            (1.1f - Mathf.Clamp01(daylight)) * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 0.12f, daylight));
+
         private void UpdateStarField()
         {
             if (_starFieldRoot == null)
@@ -7332,8 +7370,12 @@ namespace Airside.Presentation
                 return;
 
             var daylight = PresentationDaylight;
-            var show = daylight < 0.35f;
-            _starFieldRoot.gameObject.SetActive(show);
+            // Stars used to switch off at daylight 0.35 while still three-quarters bright,
+            // so the whole sky blinked once every dawn and dusk. Fade them out instead.
+            var fade = StarFieldFade(daylight);
+            var show = fade > 0.002f;
+            if (_starFieldRoot.gameObject.activeSelf != show)
+                _starFieldRoot.gameObject.SetActive(show);
             if (!show)
                 return;
 
@@ -7347,7 +7389,7 @@ namespace Airside.Presentation
 
             if (_starFieldRenderer == null)
                 return;
-            var c = new Color(twinkle, twinkle, 1f) * (1.1f - daylight);
+            var c = new Color(twinkle, twinkle, 1f) * fade;
             SetRendererColor(_starFieldRenderer, c, c);
         }
 
@@ -7919,9 +7961,14 @@ namespace Airside.Presentation
             {
                 _birdWingL = new Transform[nBirds];
                 _birdWingR = new Transform[nBirds];
+                _birdPhaseSeed = new float[nBirds];
                 for (var i = 0; i < nBirds; i++)
                 {
                     var bird = _birdFlockRoot.GetChild(i);
+                    // The builder stores each bird's orbit offset in its roll. Read it once:
+                    // the loop below turns birds with LookRotation (zero roll), so reading it
+                    // every frame decayed the offsets, and birds jittered and bunched up.
+                    _birdPhaseSeed[i] = bird.localEulerAngles.z * Mathf.Deg2Rad;
                     for (var c = 0; c < bird.childCount; c++)
                     {
                         var child = bird.GetChild(c);
@@ -7938,7 +7985,7 @@ namespace Airside.Presentation
             for (var i = 0; i < nBirds; i++)
             {
                 var bird = _birdFlockRoot.GetChild(i);
-                var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.35f;
+                var phase = _birdPhaseSeed[i] + t + i * 0.35f;
                 var radius = 26f + (i % 5) * 3.2f;
                 var x = Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
                 var z = -42f + Mathf.Sin(phase) * radius * 0.45f;

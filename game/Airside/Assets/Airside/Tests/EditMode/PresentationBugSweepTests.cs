@@ -133,5 +133,29 @@ namespace Airside.Tests
             Assert.That(AirsideCameraController.ClampCentreHeight(-400f), Is.EqualTo(AirsideCameraController.MinCentreHeightMetres));
             Assert.That(AirsideCameraController.ClampCentreHeight(9000f), Is.EqualTo(AirsideCameraController.MaxCentreHeightMetres));
         }
+    
+        [Test]
+        public void MiniMapDots_DrawSelectionAndOwnAircraftLast()
+        {
+            Assert.That(AirsidePrototype.MiniMapDotPass(mine: false, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: true, selected: false)));
+            Assert.That(AirsidePrototype.MiniMapDotPass(mine: true, selected: false), Is.LessThan(AirsidePrototype.MiniMapDotPass(mine: false, selected: true)));
+        }
+    
+        [Test]
+        public void WeatherGloom_EasesBetweenForecastKinds()
+        {
+            var storm = AirsidePrototype.WeatherGloomTarget(Airside.Simulation.WeatherKind.Storm);
+            Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, 1f / 60f), Is.LessThan(0.01f));
+            Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, float.PositiveInfinity), Is.EqualTo(storm));
+        }
+    
+        [Test]
+        public void StarField_FadesOutRatherThanBlinkingOff()
+        {
+            Assert.That(AirsidePrototype.StarFieldFade(0f), Is.GreaterThan(1f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.42f), Is.EqualTo(0f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.34f), Is.LessThan(0.2f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.2f), Is.GreaterThan(AirsidePrototype.StarFieldFade(0.3f)));
+        }
     }
 }

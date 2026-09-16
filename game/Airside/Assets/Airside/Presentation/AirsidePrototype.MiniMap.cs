@@ -60,7 +60,12 @@ namespace Airside.Presentation
         private void DrawMiniMap(Rect panelRect, GUIStyle panel, GUIStyle small)
         {
             if (!MiniMapShows || panelRect.width <= 0f || panelRect.height <= 0f)
+            {
+                // A press held while the map hid (N, a dialog) would otherwise come back
+                // armed and turn the next field drag into a mini-map recentre.
+                _miniMapPressed = _miniMapDragging = false;
                 return;
+            }
 
             GUI.Box(panelRect, GUIContent.none, panel);
             GUI.Label(new Rect(panelRect.x + 10f, panelRect.y + 2f, panelRect.width - 20f, FieldMiniMap.HeaderHeight),
@@ -103,10 +108,18 @@ namespace Airside.Presentation
         {
             _miniMapDots.Clear();
             _miniMapDotIds.Clear();
+            // Three passes so your own aircraft draw over other operators and the
+            // selection draws over everything; dictionary order used to bury them.
+            for (var pass = 0; pass < 3; pass++)
             foreach (var pair in _fleetViewById)
             {
                 var view = pair.Value;
                 if (view == null || !view.gameObject.activeInHierarchy || !_fleetAircraftById.TryGetValue(pair.Key, out var aircraft))
+                    continue;
+
+                var mine = aircraft.Airline.IsPlayer;
+                var selected = pair.Key == _selectedAircraftId;
+                if (MiniMapDotPass(mine, selected) != pass)
                     continue;
 
                 var point = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
@@ -115,8 +128,6 @@ namespace Airside.Presentation
                 _miniMapDots.Add(point);
                 _miniMapDotIds.Add(pair.Key);
 
-                var mine = aircraft.Airline.IsPlayer;
-                var selected = pair.Key == _selectedAircraftId;
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var size = mine || selected ? 8f : 6f;
                 var severity = AircraftStatus.Severity(aircraft, _clock.Now);
@@ -129,6 +140,9 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>Draw order: other operators, then yours, then the selection on top.</summary>
+        public static int MiniMapDotPass(bool mine, bool selected) => selected ? 2 : mine ? 1 : 0;
+
         private void HandleMiniMapPointer(Rect map)
         {
             var ev = Event.current;
@@ -137,6 +151,12 @@ namespace Airside.Presentation
 
             switch (ev.type)
             {
+                // A release outside the window never reaches OnGUI. Without this, a later
+                // left-drag on the field kept recentring the camera through the map.
+                case EventType.MouseDown when !map.Contains(ev.mousePosition):
+                    _miniMapPressed = _miniMapDragging = false;
+                    break;
+
                 case EventType.MouseDown when ev.button == 0 && map.Contains(ev.mousePosition):
                     _miniMapPressed = true;
                     _miniMapDragging = false;

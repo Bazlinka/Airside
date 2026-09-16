@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — reliability cost for cancelling a contract flight (closes the
+  `CancelDeparture` TODO from the Task 2/3 PR, #291).**
+  - **Player-visible:** cancelling a scheduled departure that would have counted towards the
+    active career contract now costs reliability (`REG-KGC-INTRO`: 3 points), with a toast
+    saying so ("...reliability down 3."). Cancelling a flight that has nothing to do with the
+    active contract (wrong route, or no contract at all) still costs nothing — this was never
+    a blanket penalty on cancelling.
+  - **How:** `RouteContractDefinition` gained `ReliabilityLossOnCancel` (new optional
+    constructor parameter, default 0, so the earlier 9-arg call in `AirlineCareerTests` still
+    compiles unchanged). `AirlineCareerState.PenalizeCancellation` is a no-op unless the
+    cancelled flight's route/type matches the contract currently active — mirrors
+    `TrySettleFlight`'s own eligibility check. Wired into `AirlineOperations.CancelDeparture`
+    right where the TODO comment was.
+  - **Evidence:** genuinely verified — `scripts/test-domain.sh`, **284/284** (2 new tests:
+    cancelling a contract flight costs reliability; cancelling an unrelated one costs
+    nothing). The one-line toast change in `CancelPlannedFlight`
+    (`AirsidePrototype.Airline.cs`) is Presentation and reviewed by inspection only, same
+    standing caveat as everything else this session — no Unity editor available.
+  - **NEXT:** pushed to `claude/great-heisenberg-qitw2l`, PR not yet opened/merged — small
+    enough to fold into the same Mac review pass as #291 rather than needing its own.
+
 - **2026-09-16 Codex — Airside identity and launch sequence.**
   - **Player-visible:** the Dock/Finder icon and opening now use a new original approach-runway
     mark. The former seven-second distant glide is a 4.8-second, skippable runway-signal

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Reliability cost for cancelling a contract flight.** Cancelling a scheduled departure that
+  would have counted towards the active career contract now costs reliability (closes the
+  `CancelDeparture` TODO from #291); cancelling anything unrelated to the active contract
+  still costs nothing. 2 new tests; 284/284 passing under `scripts/test-domain.sh`.
+
 - **New Airside app identity and opening.** The app now uses an original, unbranded
   approach-runway mark: deep Runway Ink, coastal-blue rails, a Cloud centreline and three
   safety-yellow approach lights. Launch is a 4.8-second runway-signal sequence rather than a

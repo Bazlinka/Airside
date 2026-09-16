@@ -90,7 +90,16 @@ namespace Airside.Tests
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
-            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("LANDS"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("IN CIRCUIT"));
+        }
+
+        [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
+        [TestCase(FleetState.HoldingForLanding, "HOLD SINCE")]
+        [TestCase(FleetState.Landing, "CLEAR RWY")]
+        [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
+        public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
+        {
+            Assert.That(FlightBoard.TimeMeaning(state), Is.EqualTo(expected));
         }
 
         [Test]

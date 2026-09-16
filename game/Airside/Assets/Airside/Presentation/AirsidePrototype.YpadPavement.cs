@@ -158,7 +158,7 @@ namespace Airside.Presentation
                 AirsideSceneIndex.Remember(label);
             }
 
-            SpawnSurface(root, "Regional stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
+            SpawnSurface(root, "Aircraft stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
         }
 
         /// <summary>

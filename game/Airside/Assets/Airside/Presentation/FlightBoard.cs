@@ -111,17 +111,25 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return string.Empty;
-            return aircraft.State switch
+            return TimeMeaning(aircraft.State, aircraft.Scheduled.HasValue);
+        }
+
+        /// <summary>Pure milestone label used by the board and its layout tests.</summary>
+        public static string TimeMeaning(FleetState state, bool hasScheduledDeparture = false)
+        {
+            return state switch
             {
-                FleetState.AtStand when aircraft.Scheduled.HasValue => "DEPARTS",
+                FleetState.AtStand when hasScheduledDeparture => "DEPARTS",
                 FleetState.AtStand => "SINCE",
                 FleetState.TaxiOut => "AT HOLD",
-                FleetState.HoldingShort => "WAITING",
+                FleetState.HoldingShort => "HOLD SINCE",
                 FleetState.TakingOff => "AIRBORNE",
                 FleetState.Outbound => "ARRIVES",
                 FleetState.AtDestination => "RETURNS",
-                FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing => "LANDS",
-                FleetState.AwaitingStand => "WAITING",
+                FleetState.Inbound => "IN CIRCUIT",
+                FleetState.HoldingForLanding => "HOLD SINCE",
+                FleetState.Landing => "CLEAR RWY",
+                FleetState.AwaitingStand => "WAIT SINCE",
                 FleetState.TaxiIn => "ON STAND",
                 _ => "NEXT"
             };

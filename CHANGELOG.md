@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Bug sweep 9 (10 fixes): mini-map, camera feel, weather, sky.** The mini-map no longer keeps a
+  press that never saw its release (which turned later field drags into camera jumps), and your
+  own aircraft and the selection draw on top of other operators' dots. M says on screen that it
+  muted the sound, and hotkeys no longer open the hangar or planner behind the controls help.
+  Weather gloom eases in over about ten seconds instead of snapping the sun, ambient and grade in
+  one frame. Rain falls around the camera rather than only at the world origin. The seagull flock
+  keeps its orbit spacing instead of jittering and bunching. Stars fade out at dawn instead of
+  blinking off, the coastal plain takes soft shadows like the airfield, and the hangar screen
+  stops allocating lists every GUI event. Unity EditMode 424/424.
+
 - **Bug sweep 8 (10 fixes): materials, grading, camera, editor.** Water is drawn as translucent
   water instead of opaque wet asphalt. Translucent colours on authored templates now render
   transparent. Tyre smoke, skid marks and engine heat are no longer drawn as glass. MAT-001

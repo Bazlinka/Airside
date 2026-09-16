@@ -1,7 +1,12 @@
 ## Where to resume — session handoff
 
-- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–8 merged:
-  72 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 421/421.**
+- **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). Batches 1–9 merged:
+  82 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 424/424.**
+  - **Batch 9:** mini-map press disarm and three-pass dot order (`MiniMapDotPass`); hangar list
+    reuse; mute toast; `ReadAirlineControls` returns early while help is open; `EaseWeatherGloom`
+    /`WeatherGloomTarget`; `RainRootPosition` follows the camera focus; cached `_birdPhaseSeed`;
+    `StarFieldFade`; `_SHADOWS_SOFT` in `Airside/Surroundings` (shader change — not compiled by
+    the -nographics run, needs an eyeball pass).
   - **Batch 8:** `SurfaceKind.Water` no longer maps to `mat_wet_v01`; translucent colours on
     opaque authored templates call `ApplyTransparent`; `InferSurfaceKindFromColor` picks Glass only
     for darker blue-tinted translucency; `AirsideMat001Menu.PreferredMap` takes v03 > v02 > v01

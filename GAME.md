@@ -1,5 +1,49 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — Task 3: wire the career (Task 2) into the HUD (ADR 0053).**
+  - **Player-visible:** the Contracts workspace is a real panel now, not a placeholder — it
+    shows funds/reliability/tier, `REG-KGC-INTRO`'s terms (route, aircraft, rotations,
+    payment, reliability gain, tier requirement) with an **Accept contract** button, and once
+    accepted, a progress card (rotations complete / required, a progress bar, the terms again)
+    in place of the offer. Completing an eligible rotation now shows a toast
+    ("VH-PAX earned $400 on REG-KGC-INTRO (2 rotations so far)."), with a distinct one on the
+    contract's last rotation ("...— REG-KGC-INTRO complete!"). The clock panel gained a third
+    line — funds and reliability, always visible, the persistent status strip ADR 0053 asked
+    for. The objective line (from the earlier status-line slice) now shows contract progress
+    once one is active, instead of falling straight to the generic fleet-count line. The away
+    summary reports funds/reliability change while you were gone, when there was one.
+  - **How:** `AirlineOperations` gained `RecentSettlements`/`TotalSettlements`, mirroring the
+    existing `RecentEvents`/`TotalEvents` pattern exactly, so Presentation can detect new
+    settlements the same way it already detects new state-change events
+    (`AnnounceNewSettlements`, next to `AnnounceNewEvents`). `OperationsSummary.Line` takes an
+    optional `AirlineCareerState` and prefers contract progress over the fleet-count fallback
+    when nothing more urgent (an aircraft needing attention) is going on. `AwaySummary.Build`
+    diffs `before.CareerFunds`/`CareerReliability` (the v6 save fields from Task 2) against
+    `after.CareerState`. Nothing here touches Domain/Simulation's actual settlement logic —
+    every new behaviour is read-only against what Task 2 built, or a new command
+    (`AcceptContract`) that already existed on `AirlineOperations`.
+  - **Evidence:** the Domain/Simulation side of this (the away-summary diff logic) is real,
+    verified evidence — `scripts/test-domain.sh` still passes, **282/282** (one new test,
+    `Summary_ReportsCareerEarningsWhileAway`, added to `AwayCatchUpTests.cs`; it initially
+    failed for an unrelated reason — the hardcoded return stand collided with an AI carrier's
+    bay — fixed by picking a free stand instead of assuming one, same mistake the codebase's
+    own `FreeStands()` helper exists to avoid). The HUD-drawing side
+    (`AirsidePrototype.Airline.cs`, `OperationsSummary.cs`) is Presentation: reviewed carefully
+    by inspection, matches established chrome/pattern precedent throughout, but **not run** —
+    still no Unity editor in this session. Same open items as every presentation slice this
+    session: `scripts/test-unity.sh`, a packaged build, the 1280x720/1440x900/Retina visual
+    pass.
+  - **Not done (real remaining scope):** nothing stops re-accepting `REG-KGC-INTRO` after it's
+    fulfilled once — there's no "completed contracts" ledger yet, so the player can keep
+    farming the starter contract indefinitely. That's consistent with Task 2's scope (no tier
+    advancement, no second contract) but is worth Bailey's call before Task 4: either that's
+    fine as a bridge until real progression exists, or it needs a guard now.
+  - **NEXT:** all of Task 1 (HUD shell), Task 2 (career domain) and Task 3 (this) are pushed
+    and ready for one batched Mac review — build, `scripts/test-unity.sh`, and the visual pass
+    across every screen the earlier slices' handoffs listed. Task 4 (regional growth: a second
+    contract, capacity, a second aircraft) waits on that review and on Bailey's read of the
+    re-acceptance question above.
+
 - **2026-09-16 Claude — Task 2: airline career domain and save v6 migration (ADR 0053).**
   - **Process note:** `GAME.md`'s own standing instruction said not to begin Task 2 until
     Bailey reviewed the cleaned HUD on a packaged build — that review has not happened (still

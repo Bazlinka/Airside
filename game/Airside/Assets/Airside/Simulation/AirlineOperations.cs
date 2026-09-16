@@ -163,6 +163,7 @@ namespace Airside.Simulation
         private readonly List<FleetAircraft> _fleet = new();
         private readonly List<StableId> _stands;
         private readonly List<FleetEvent> _recentEvents = new();
+        private readonly List<FlightSettlement> _recentSettlements = new();
         private SimulationTime _processedTo;
         private SimulationTime _runwayFreeAt;
 
@@ -343,6 +344,13 @@ namespace Airside.Simulation
 
         /// <summary>Events emitted since start, so a reader can tell which recent ones are new.</summary>
         public long TotalEvents { get; private set; }
+
+        /// <summary>Newest last, capped at <see cref="MaxRecentEvents"/>. Not persisted — a
+        /// fresh session has no settlement history to show, only the career totals it produced.</summary>
+        public IReadOnlyList<FlightSettlement> RecentSettlements => _recentSettlements;
+
+        /// <summary>Settlements applied since start, so a reader can tell which recent ones are new.</summary>
+        public long TotalSettlements { get; private set; }
 
         public Airline PlayerAirline => _airlines.Find(a => a.IsPlayer);
 
@@ -686,7 +694,14 @@ namespace Airside.Simulation
                 return;
 
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
-            CareerState.TryApplySettlement(settlementId, definition);
+            var settlement = CareerState.TryApplySettlement(settlementId, definition);
+            if (settlement == null)
+                return;
+
+            _recentSettlements.Add(settlement.Value);
+            TotalSettlements++;
+            if (_recentSettlements.Count > MaxRecentEvents)
+                _recentSettlements.RemoveAt(0);
         }
 
         public CommandResult AssignStand(FleetAircraft aircraft, StableId stand)

@@ -60,6 +60,7 @@ namespace Airside.Presentation
         private long _departureDelaySeconds = 15 * 60;
         private string _mapMessage;
         private long _seenEvents;
+        private long _seenSettlements;
         private readonly ToastQueue _toasts = new();
         private readonly List<ToastEntry> _visibleToasts = new();
 
@@ -92,6 +93,7 @@ namespace Airside.Presentation
             _operations.Update();
             RefreshFleetFlights();
             AnnounceNewEvents();
+            AnnounceNewSettlements();
             AutosaveIfDue();
         }
 
@@ -190,7 +192,7 @@ namespace Airside.Presentation
                     DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
                     break;
                 case HudWorkspace.Contracts:
-                    DrawContractsPlaceholder(placement.Map, panel, title, label);
+                    DrawContractsPanel(placement.Map, panel, title, label, small, smallButton);
                     break;
             }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
@@ -266,6 +268,7 @@ namespace Airside.Presentation
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player,
                 AirlineClock.Aligned(_clock.Now, DateTime.UtcNow));
             _seenEvents = _operations.TotalEvents;
+            _seenSettlements = _operations.TotalSettlements;
             RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             SaveAirline();
@@ -351,7 +354,7 @@ namespace Airside.Presentation
         {
             if (rect.height < 4f)
                 return;
-            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now);
+            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState);
             var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
                 new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
             var previousContent = GUI.contentColor;
@@ -508,6 +511,7 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
             _operations = restored;
             _seenEvents = _operations.TotalEvents;
+            _seenSettlements = _operations.TotalSettlements;
             // An old enough save gains both; the else-if used to swallow the jet's news.
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
@@ -567,6 +571,9 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
                 $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
+            // ADR 0053's persistent status strip: funds and reliability, quiet, always visible.
+            GUI.Label(new Rect(rect.x + 32f, rect.y + 58f, rect.width - 46f, 20f),
+                $"${_operations.CareerState.Funds:N0}  ·  {_operations.CareerState.Reliability}% reliability", small);
         }
 
         private static readonly (HudWorkspace workspace, string label, string hotkey)[] WorkspaceTabs =
@@ -600,13 +607,95 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Stands in for the Contracts workspace (ADR 0053) until career state (Task 2/3) exists.</summary>
-        private void DrawContractsPlaceholder(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label)
+        /// <summary>The Contracts workspace (ADR 0053): career summary, the active contract's
+        /// progress, or the authored contracts on offer when none is active.</summary>
+        private void DrawContractsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
+            var ink = AirsideTheme.RunwayInk;
+            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
             GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 36f, 28f), "Contracts", title);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 50f, rect.width - 36f, 24f),
-                "Coming in a future update.", label);
+
+            var x = rect.x + 16f;
+            var inner = rect.width - 32f;
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Contracts", title);
+            if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
+                SetWorkspace(HudWorkspace.Contracts);
+
+            var career = _operations.CareerState;
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(x, rect.y + 46f, inner, 20f),
+                $"{career.Tier} tier  ·  ${career.Funds:N0}  ·  {career.Reliability}% reliability", bold);
+
+            var y = rect.y + 78f;
+            if (career.ActiveContract != null && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var active))
+            {
+                DrawActiveContractCard(x, y, inner, active, career.ActiveContract, label, small);
+            }
+            else
+            {
+                foreach (var definition in RouteContractCatalogue.All)
+                    y = DrawContractOffer(x, y, inner, definition, career, label, small, smallButton) + 12f;
+            }
+        }
+
+        private void DrawActiveContractCard(float x, float y, float width, RouteContractDefinition definition,
+            ActiveRouteContract active, GUIStyle label, GUIStyle small)
+        {
+            var card = new Rect(x, y, width, 112f);
+            DrawSolid(card, new Color(1f, 1f, 1f, 0.05f));
+            AirsideTheme.DrawPanelFrame(card, AirsideTheme.SafetyYellow);
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(card.x + 12f, card.y + 10f, card.width - 24f, 22f),
+                $"{definition.Id}  ·  {definition.OriginCode} ↔ {definition.DestinationCode}", bold);
+            GUI.Label(new Rect(card.x + 12f, card.y + 32f, card.width - 24f, 20f),
+                $"{active.CompletedRotations} of {definition.RequiredRotations} rotations complete", small);
+            AirsideTheme.DrawProgressBar(new Rect(card.x + 12f, card.y + 54f, card.width - 24f, 8f),
+                Mathf.Clamp01((float)active.CompletedRotations / definition.RequiredRotations),
+                AirsideTheme.ClearGreen, AirsideTheme.Tarmac);
+            GUI.Label(new Rect(card.x + 12f, card.y + 70f, card.width - 24f, 20f),
+                $"${definition.PaymentPerRotation:N0} per rotation  ·  ${definition.CompletionReward:N0} on completion", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 90f, card.width - 24f, 20f),
+                $"Fly a {definition.EligibleType.Name} between {definition.OriginCode} and {definition.DestinationCode} to progress.", small);
+        }
+
+        /// <summary>One authored contract not yet accepted; returns the y just past it.</summary>
+        private float DrawContractOffer(float x, float y, float width, RouteContractDefinition definition,
+            AirlineCareerState career, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        {
+            var card = new Rect(x, y, width, 132f);
+            DrawSolid(card, new Color(1f, 1f, 1f, 0.04f));
+            AirsideTheme.DrawPanelFrame(card, AirsideTheme.Concrete);
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(card.x + 12f, card.y + 10f, card.width - 24f, 22f),
+                $"{definition.Id}  ·  {definition.OriginCode} ↔ {definition.DestinationCode}", bold);
+            GUI.Label(new Rect(card.x + 12f, card.y + 32f, card.width - 24f, 20f),
+                $"{definition.RequiredRotations} rotations  ·  {definition.EligibleType.Name}  ·  {definition.RequiredTier} tier", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 52f, card.width - 24f, 20f),
+                $"${definition.PaymentPerRotation:N0} per rotation, +${definition.CompletionReward:N0} on completion", small);
+            GUI.Label(new Rect(card.x + 12f, card.y + 72f, card.width - 24f, 20f),
+                $"+{definition.ReliabilityGainPerRotation} reliability per rotation", small);
+
+            var eligible = career.Tier >= definition.RequiredTier;
+            GUI.enabled = eligible;
+            if (GUI.Button(new Rect(card.x + 12f, card.y + 96f, 160f, 26f), "Accept contract", smallButton))
+            {
+                var result = _operations.AcceptContract(definition);
+                if (result.Accepted)
+                {
+                    ShowToast($"Accepted {definition.Id}: {definition.OriginCode} ↔ {definition.DestinationCode}.");
+                    SaveAirline();
+                }
+                else
+                {
+                    ShowToast(result.Reason);
+                }
+            }
+            GUI.enabled = true;
+            if (!eligible)
+                GUI.Label(new Rect(card.x + 180f, card.y + 100f, card.width - 192f, 20f),
+                    $"Needs {definition.RequiredTier} tier.", small);
+
+            return card.yMax;
         }
 
         /// <summary>
@@ -2526,6 +2615,28 @@ namespace Airside.Presentation
                         ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
                         break;
                 }
+            }
+        }
+
+        /// <summary>One toast per newly-applied career settlement (ADR 0053) — the result the
+        /// plan doc asks the player to see after every eligible flight.</summary>
+        private void AnnounceNewSettlements()
+        {
+            var fresh = _operations.TotalSettlements - _seenSettlements;
+            _seenSettlements = _operations.TotalSettlements;
+            if (fresh <= 0)
+                return;
+
+            var settlements = _operations.RecentSettlements;
+            var start = Math.Max(0, settlements.Count - (int)Math.Min(fresh, settlements.Count));
+            for (var i = start; i < settlements.Count; i++)
+            {
+                var s = settlements[i];
+                var reg = s.SettlementId.Registration;
+                if (s.ContractFulfilled)
+                    ShowToast($"{reg} earned ${s.Payment:N0} — {s.ContractDefinitionId} complete!");
+                else
+                    ShowToast($"{reg} earned ${s.Payment:N0} on {s.ContractDefinitionId} ({s.RotationsCompleted} rotations so far).");
             }
         }
 

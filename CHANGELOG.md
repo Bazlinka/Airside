@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Wire the airline career into the HUD (Task 3, ADR 0053).** The Contracts workspace shows
+  real terms and an Accept button, then a progress card once accepted; the clock panel shows
+  funds and reliability; the objective line shows contract progress; completing a rotation
+  shows a toast (a distinct one on contract completion); the away summary reports
+  funds/reliability earned while gone. All read-only against the Task 2 domain layer — no new
+  simulation logic. 1 new test (`AwayCatchUpTests`); 282/282 passing under
+  `scripts/test-domain.sh`.
+
 - **Airline career domain and save v6 (Task 2, ADR 0053).** New deterministic career state —
   funds, reliability, operating tier, an acceptable/accepted route contract — plus a real
   `AcceptContract` command and one authored contract (`REG-KGC-INTRO`, Adelaide↔Kingscote).

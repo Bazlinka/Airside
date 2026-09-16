@@ -1,20 +1,23 @@
 using System.Collections.Generic;
+using Airside.Domain;
 using Airside.Simulation;
 
 namespace Airside.Presentation
 {
     /// <summary>
     /// The one-line "what's my airline doing, what needs me" objective (ADR 0053's persistent
-    /// status/objective layer), shown once the first-flight guide is done. Reads fleet state
-    /// only — it decides nothing and stores nothing.
+    /// status/objective layer), shown once the first-flight guide is done. Reads fleet and
+    /// career state only — it decides nothing and stores nothing.
     /// </summary>
     public static class OperationsSummary
     {
         /// <summary>
-        /// The most urgent aircraft's situation, or a quiet fleet-wide line when nothing needs
-        /// attention. <paramref name="playerFleet"/> in any order; the worst severity wins.
+        /// The most urgent aircraft's situation; failing that, the active contract's progress;
+        /// failing that, a quiet fleet-wide line. <paramref name="playerFleet"/> in any order —
+        /// the worst severity wins.
         /// </summary>
-        public static (string Text, StatusSeverity Severity) Line(IReadOnlyList<FleetAircraft> playerFleet, SimulationTime now)
+        public static (string Text, StatusSeverity Severity) Line(
+            IReadOnlyList<FleetAircraft> playerFleet, SimulationTime now, AirlineCareerState career = null)
         {
             if (playerFleet == null || playerFleet.Count == 0)
                 return ("No aircraft yet.", StatusSeverity.Normal);
@@ -33,6 +36,14 @@ namespace Airside.Presentation
 
             if (worst != null)
                 return ($"{worst.Registration} needs you — {ActionHint(worst)}", worstSeverity);
+
+            if (career?.ActiveContract != null
+                && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var definition))
+            {
+                var remaining = definition.RequiredRotations - career.ActiveContract.CompletedRotations;
+                return ($"{definition.Id}: {career.ActiveContract.CompletedRotations} of " +
+                    $"{definition.RequiredRotations} rotations — {remaining} to go.", StatusSeverity.Normal);
+            }
 
             var flying = 0;
             foreach (var aircraft in playerFleet)

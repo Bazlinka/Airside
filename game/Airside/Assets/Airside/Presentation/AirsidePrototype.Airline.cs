@@ -598,11 +598,13 @@ namespace Airside.Presentation
             var slot = rect.width / WorkspaceTabs.Length;
             for (var i = 0; i < WorkspaceTabs.Length; i++)
             {
-                var (workspace, label, hotkey) = WorkspaceTabs[i];
+                var (workspace, label, _) = WorkspaceTabs[i];
                 var tabRect = new Rect(rect.x + i * slot, rect.y, slot - 4f, rect.height);
-                var text = hotkey != null ? $"{label} ({hotkey})" : label;
+                // The hotkey used to print in the label ("Operations (T)") but four of those
+                // never fit the strip without overflowing it — the hotkeys still work, Controls
+                // Help (F1) still lists them, the button just doesn't spell it out any more.
                 var style = _activeWorkspace == workspace ? active : smallButton;
-                if (GUI.Button(tabRect, text, style))
+                if (GUI.Button(tabRect, label, style))
                     SetWorkspace(workspace);
             }
         }
@@ -1606,7 +1608,7 @@ namespace Airside.Presentation
 
         private static Texture2D _airportIcon;
 
-        /// <summary>A small ring with crossed runway bars — reads as "airport" at a glance.</summary>
+        /// <summary>A clean antialiased dot marking a destination on the map.</summary>
         private static void DrawAirportIcon(Vector2 centre, float size, Color colour)
         {
             var previous = GUI.color;
@@ -1620,7 +1622,10 @@ namespace Airside.Presentation
             if (_airportIcon != null)
                 return _airportIcon;
 
-            const int n = 48;
+            // A plain crossed-runway glyph read as a target/"no entry" mark at the 14-30 px
+            // this actually draws at (Bailey screenshot, 2026-09-16) — a clean antialiased dot
+            // is unambiguous at any size and still reads as a place, not a plain flat square.
+            const int n = 32;
             var texture = new Texture2D(n, n, TextureFormat.RGBA32, false)
             {
                 filterMode = FilterMode.Bilinear,
@@ -1635,14 +1640,9 @@ namespace Airside.Presentation
                 var dx = (x - centre) / centre;
                 var dy = (y - centre) / centre;
                 var r = Mathf.Sqrt(dx * dx + dy * dy);
-                var ring = r < 0.98f && r > 0.76f;
-                // Two crossing runway bars through the hub, angled like a real two-runway field.
-                var barA = Mathf.Abs(dx * 0.87f - dy * 0.5f) < 0.10f && r < 0.6f;
-                var barB = Mathf.Abs(dx * 0.87f + dy * 0.5f) < 0.10f && r < 0.6f;
-                var hub = r < 0.16f;
-                pixels[y * n + x] = ring || barA || barB || hub
-                    ? new Color32(255, 255, 255, 255)
-                    : new Color32(255, 255, 255, 0);
+                // A soft-edged disc: one pixel of antialiasing at the rim, solid inside.
+                var alpha = Mathf.Clamp01((0.94f - r) / 0.16f);
+                pixels[y * n + x] = new Color32(255, 255, 255, (byte)(255f * alpha));
             }
 
             texture.SetPixels32(pixels);

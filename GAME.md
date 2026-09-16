@@ -1,5 +1,40 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — fixed a real HUD bug from Bailey's first screenshots of the nav-shell
+  work: the workspace nav strip's text overflowed off the left edge of the window.**
+  - **What the screenshots showed:** the four nav tabs read "erations / Map (Tab) / Fleet (H) /
+    Contracts" — "Operations" was cut down to "erations", missing its first two letters,
+    because the button text overflowed past the window's own left edge. Also flagged (broader,
+    not yet resolved): the overall HUD still reads as sparse/dark and needs more style work.
+  - **Root cause:** `AirlineHudLayout.NavStrip` was locked to the clock column's width
+    (≤300 px) — four tabs at ~75 px each, nowhere near enough for labels like
+    "Operations (T)". Unity's `GUI.Button` centres and does not clip overflowing text to its
+    own rect, so the extra width spilled out both sides — left far enough to go off-window.
+  - **Fix:** the nav strip is no longer tied to the clock's width. It now uses the same
+    "room beside/below the fleet panel" the destinations map already gets, capped at
+    `NavStripMaxWidth` (420 px) so it doesn't stretch absurdly on very wide windows — computing
+    that required reordering `AirlineHudLayout.Create` so the fleet panel's horizontal
+    placement (which only ever depended on width, not on anything below the clock) is worked
+    out before the nav strip is sized, not after. Tab labels also dropped their `(T)`/`(Tab)`/
+    `(H)` hotkey suffixes — they were making an already-tight fit worse, and Controls Help
+    (F1) already lists every hotkey.
+  - **Also fixed, same evidence:** the destination-map marker glyph (ring + crossed runway
+    bars, added in the same earlier slice) risked reading as a target/"no entry" symbol at the
+    14-30 px it actually draws at. Replaced with a clean antialiased dot — same texture-baking
+    approach, much safer at small sizes, no longer claims to be a literal airport glyph.
+  - **Evidence:** the by-hand math for the widened nav strip was checked against every
+    existing overlap/fits-on-screen invariant in `PresentationLayoutTests.cs` (all still hold —
+    reasoned through explicitly, not just re-run, since this file needs Unity and none is
+    available here) and a **new** `AirlineHudLayout_NavStripFitsFourReadableTabs` test locks in
+    a minimum 65 px/tab at all 6 existing resolutions specifically so this exact regression
+    can't come back silently. `scripts/test-domain.sh` still 284/284 (unaffected — these are
+    Presentation-only files the headless harness doesn't compile).
+  - **NEXT:** genuinely need a fresh screenshot to confirm the nav strip actually reads right
+    now — this was diagnosed from a screenshot, not from running the game. The broader "still
+    looks ugly, style needs work" feedback is real and larger than this one bug; wants either
+    more screenshots pointing at specific panels, or a proper Mac visual pass, before guessing
+    further at what else to change.
+
 - **2026-09-16 Claude — reliability cost for cancelling a contract flight (closes the
   `CancelDeparture` TODO from the Task 2/3 PR, #291).**
   - **Player-visible:** cancelling a scheduled departure that would have counted towards the

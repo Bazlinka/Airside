@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Fix nav strip text overflowing the window.** The workspace nav strip was locked to the
+  300 px clock column's width, giving four tabs ~75 px each — nowhere near enough for
+  "Operations", which overflowed clean off the left edge of the window (confirmed from a
+  screenshot). It now sizes itself using the same room the destinations map already gets,
+  capped at 420 px; tab labels dropped their hotkey suffixes. Also replaced the destination-map
+  marker glyph (a ring with crossed runway bars) with a plain antialiased dot — the original
+  risked reading as a target/"no entry" symbol at the small size it actually draws at. New
+  regression test locks in a minimum tab width at all 6 tested resolutions.
+
 - **Reliability cost for cancelling a contract flight.** Cancelling a scheduled departure that
   would have counted towards the active career contract now costs reliability (closes the
   `CancelDeparture` TODO from #291); cancelling anything unrelated to the active contract

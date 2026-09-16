@@ -154,6 +154,7 @@ namespace Airside.Presentation
         private Transform _gpuCart;
         private Transform _pushbackTug;
         private Transform _windsockSock;
+        private Quaternion[] _windsockSegmentRest;
         private Transform _terminalFlag;
         private Transform _coastFoam;
         private readonly List<Transform> _coastFoamLayers = new List<Transform>();
@@ -1883,13 +1884,23 @@ namespace Airside.Presentation
             _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
             // Keep parent scale stable; ripple fabric segments so authored children keep shape.
             _windsockSock.localScale = Vector3.one;
+            // Each segment's ripple is an offset from the rotation it was built with. Writing
+            // the ripple absolutely stood the fallback sock cylinder (built rolled 90 degrees
+            // to lie along the wind) up on its end as a vertical tube.
+            if (_windsockSegmentRest == null || _windsockSegmentRest.Length != _windsockSock.childCount)
+            {
+                _windsockSegmentRest = new Quaternion[_windsockSock.childCount];
+                for (var i = 0; i < _windsockSegmentRest.Length; i++)
+                    _windsockSegmentRest[i] = _windsockSock.GetChild(i).localRotation;
+            }
+
             for (var i = 0; i < _windsockSock.childCount; i++)
             {
                 var seg = _windsockSock.GetChild(i);
                 var ripple = Mathf.Sin(
                     Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f * 1.4f
                     + i * 1.35f) * 5f;
-                seg.localRotation = Quaternion.Euler(ripple * 0.25f, 0f, ripple);
+                seg.localRotation = _windsockSegmentRest[i] * Quaternion.Euler(ripple * 0.25f, 0f, ripple);
             }
         }
 

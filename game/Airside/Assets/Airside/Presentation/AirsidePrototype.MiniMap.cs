@@ -5,13 +5,11 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Corner map of the Adelaide airfield: the layout baked once into a texture, every
-    /// aircraft on the field as a dot and the camera's view outlined. Click a dot to select,
+    /// aircraft on the field as a dot and the camera's heading marked. Click a dot to select,
     /// click or drag elsewhere to move the camera there. N toggles it.
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private const float MiniMapFarMetres = 2600f;
-
         private bool _miniMapVisible = true;
         private Texture2D _miniMapTexture;
         private bool _miniMapDragging;
@@ -19,12 +17,6 @@ namespace Airside.Presentation
         private Vector2 _miniMapPressAt;
         private readonly List<Vector2> _miniMapDots = new();
         private readonly List<string> _miniMapDotIds = new();
-        private readonly Vector2[] _miniMapView = new Vector2[4];
-
-        private static readonly Vector2[] ViewportCorners =
-        {
-            new(0f, 0f), new(1f, 0f), new(1f, 1f), new(0f, 1f)
-        };
 
         private void ToggleMiniMap()
         {
@@ -82,26 +74,20 @@ namespace Airside.Presentation
 
         private void DrawMiniMapView(Rect map)
         {
-            if (_mainCamera == null)
+            if (_mainCamera == null || _cameraController == null)
                 return;
 
-            for (var i = 0; i < 4; i++)
-            {
-                var ray = _mainCamera.ViewportPointToRay(new Vector3(ViewportCorners[i].x, ViewportCorners[i].y, 0f));
-                var ground = FieldMiniMap.GroundPoint(ray.origin, ray.direction, MiniMapFarMetres);
-                _miniMapView[i] = ClampToRect(FieldMiniMap.WorldToMap(map, ground.x, ground.y), map);
-            }
+            var focus = _cameraController.FocusPoint;
+            var centre = ClampToRect(FieldMiniMap.WorldToMap(map, focus.x, focus.z), map);
+            var flatForward = Vector3.ProjectOnPlane(_mainCamera.transform.forward, Vector3.up);
+            // World +z is up on the map, while GUI +y points down.
+            var mapForward = new Vector2(flatForward.x, -flatForward.z);
+            FieldMiniMap.ViewChevron(map, centre, mapForward, out var tip, out var left, out var right);
 
-            var outline = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.8f);
-            for (var i = 0; i < 4; i++)
-                DrawLine(_miniMapView[i], _miniMapView[(i + 1) % 4], outline, 1.2f);
-
-            if (_cameraController != null)
-            {
-                var focus = _cameraController.FocusPoint;
-                var centre = ClampToRect(FieldMiniMap.WorldToMap(map, focus.x, focus.z), map);
-                DrawSolid(new Rect(centre.x - 2f, centre.y - 2f, 4f, 4f), AirsideTheme.SafetyYellow);
-            }
+            var heading = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.72f);
+            DrawLine(left, tip, heading, 1.4f);
+            DrawLine(tip, right, heading, 1.4f);
+            DrawSolid(new Rect(centre.x - 2f, centre.y - 2f, 4f, 4f), AirsideTheme.SafetyYellow);
         }
 
         private void DrawMiniMapAircraft(Rect map)

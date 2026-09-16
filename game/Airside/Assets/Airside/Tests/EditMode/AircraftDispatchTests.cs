@@ -66,6 +66,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Atr42_UsesNeutralLiftingSurfacesAndReadableGlazing()
+        {
+            var root = Build(AircraftType.Atr42);
+            try
+            {
+                var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
+                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.EqualTo(0.58f).Within(0.01f),
+                    "ATR high wing uses a restrained neutral finish");
+                var tail = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Tail");
+                Assert.That(tail.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
+                    "ATR fin retains the airline accent");
+                var window = root.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Cabin window "));
+                Assert.That(window.GetComponent<Renderer>().sharedMaterial.color.r, Is.LessThan(0.1f),
+                    "ATR glazing remains readable at follow distance");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
         public void Dash8Q400_BuildsAir006_WithSixBladePropellersRatherThanTheAtr()
         {
             var root = Build(AircraftType.Dash8Q400);

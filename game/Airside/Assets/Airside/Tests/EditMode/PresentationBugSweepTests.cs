@@ -175,5 +175,15 @@ namespace Airside.Tests
                 System.Threading.Thread.CurrentThread.CurrentCulture = previous;
             }
         }
+    
+        [Test]
+        public void SavedClock_FallsBackWhenTheTicksAreCorrupt()
+        {
+            var data = new Airside.Simulation.AirlineSaveData { ClockSeconds = 120, SavedAtUtcTicks = long.MaxValue };
+            Assert.DoesNotThrow(() => Airside.Simulation.AirlineSave.ClockFor(data));
+            Assert.That(Airside.Simulation.AirlineSave.ClockFor(data).EpochUtcTicks,
+                Is.EqualTo(Airside.Domain.AirlineClock.Default.EpochUtcTicks));
+            Assert.That(Airside.Simulation.AirlineSave.IsRealDate(-5), Is.False);
+        }
     }
 }

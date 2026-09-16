@@ -197,12 +197,19 @@ namespace Airside.Simulation
         public static AirlineClock ClockFor(AirlineSaveData data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
-            if (data.EpochUtcTicks > 0)
+            // A corrupt or truncated tick count used to throw straight out of here. Restore
+            // caught that, but the menu's saved-game summary calls this from OnGUI, so a bad
+            // save threw every frame behind the panel instead of offering a new airline.
+            if (IsRealDate(data.EpochUtcTicks))
                 return new AirlineClock(data.EpochUtcTicks);
-            return data.SavedAtUtcTicks > 0
+            return IsRealDate(data.SavedAtUtcTicks)
                 ? AirlineClock.Aligned(new SimulationTime(data.ClockSeconds), new DateTime(data.SavedAtUtcTicks, DateTimeKind.Utc))
                 : AirlineClock.Default;
         }
+
+        /// <summary>True for a tick count DateTime accepts and a save could plausibly hold.</summary>
+        public static bool IsRealDate(long utcTicks) =>
+            utcTicks > 0 && utcTicks <= DateTime.MaxValue.Ticks;
 
         private static StableId Stand(string value) =>
             string.IsNullOrWhiteSpace(value) ? default : new StableId(value);

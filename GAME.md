@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — real Adelaide terminal facade implemented and packaged.**
+  - **Player-visible:** the full-scale OSM terminal is no longer a single blank block. Its apron
+    side now has separated dark-glass bays, a projecting brow, roof skylights and plant boxes.
+  - **Invariants / unchanged:** the real terminal footprint and height, Gate 13 route, all
+    pavement, collision, aircraft, operations and saves are unchanged. No external asset or
+    licence was added.
+  - **Evidence:** `scripts/test-domain.sh` **251/251 passed**; Unity 6000.3.23f1 produced a fresh
+    packaged Mac build; close day and 23:30 captures were inspected at
+    `work/review/terminal-facade-final-*.png`. Unity EditMode compiled and passed **447/448**;
+    only the existing unrelated Gate 13 tolerance miss remains. The unattended review camera now
+    accepts explicit centre coordinates and correctly seeds that centre when soak skips the intro.
+  - **NEXT:** merge this presentation slice, then address the very dark night apron/terminal
+    lighting as a separate lighting pass rather than making facade materials glow all day.
+
 - **2026-09-16 Codex — ATR high-wing hierarchy corrected and packaged.**
   - **Player-visible:** the player/Emu Air ATR now reads as a stocky high-wing, T-tail regional
     aircraft before its livery. Broad wing and horizontal-tail surfaces use a neutral finish;

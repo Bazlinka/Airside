@@ -15,11 +15,14 @@ namespace Airside.Presentation
         // QA route retains the older architectural-miniature scene, so it needs its own
         // framing instead of inheriting a 3.1 km overview and appearing almost empty.
         private readonly Vector3 _overviewCenter = AirsideBareField.Enabled
-            ? new Vector3(150f, 0f, 350f)
+            ? new Vector3(
+                CommandLineFloat("-airsideOverviewCenterX", 150f),
+                0f,
+                CommandLineFloat("-airsideOverviewCenterZ", 350f))
             : new Vector3(12f, 0f, 16f);
-        // Review shots: -airsideOverviewYaw / -airsideOverviewPitch / -airsideOverviewDistance
-        // re-aim the overview from the command line, so packaged-build screenshots of the
-        // surroundings can be repeated from the same place.
+        // Review shots: -airsideOverviewCenterX / -airsideOverviewCenterZ plus yaw, pitch and
+        // distance re-aim the overview from the command line, so packaged-build screenshots of
+        // a specific part of the real airport can be repeated from the same place.
         private static float OverviewDistance => CommandLineFloat(
             "-airsideOverviewDistance", AirsideBareField.Enabled ? AirsideBareField.OverviewDistance : 155f);
         private static float OverviewFov => AirsideBareField.Enabled ? AirsideBareField.OverviewFov : 50f;
@@ -160,6 +163,10 @@ namespace Airside.Presentation
 
         private void Awake()
         {
+            // Soak/review mode deliberately skips the launch intro, which normally seeds the
+            // orbit centre. Seed it here as well so unattended captures honour the same default
+            // (and any explicit review centre) instead of silently orbiting world zero.
+            _center = _overviewCenter;
             _camera = GetComponent<Camera>();
             if (_camera != null)
                 _fov = _camera.fieldOfView;

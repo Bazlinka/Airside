@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Adelaide terminal facade.** The real OSM terminal shell now has a segmented glass airside
+  frontage, projecting roof brow, skylight strips and rooftop plant instead of reading as one
+  blank block. The shell uses a restrained neutral finish; the detail is presentation-only and
+  does not affect routes, collision or saves. Repeatable packaged-build review shots can now set
+  their overview centre as well as yaw, pitch and distance. Headless tests: 251 passed; packaged
+  day/night captures passed; Unity EditMode 447/448 with only the existing Gate 13 tolerance miss.
+
 - **ATR high-wing hierarchy.** Player and Emu Air ATRs now keep airline colour on the fin and
   compact wingtips while the broad high wing, moving surfaces and horizontal tail use a neutral
   finish. Darker glazing remains readable across both white and generated player liveries.

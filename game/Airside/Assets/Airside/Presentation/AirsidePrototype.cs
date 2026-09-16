@@ -8179,7 +8179,7 @@ namespace Airside.Presentation
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => AircraftPartColor(kitName, accent),
+                kitName => Dash8Q400PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -8821,6 +8821,42 @@ namespace Airside.Presentation
                 case "elevator_left":
                 case "elevator_right":
                     return new Color(0.58f, 0.62f, 0.67f);
+            }
+
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
+                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
+                return new Color(0.045f, 0.12f, 0.18f);
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? Dash8Q400PartColor(string kitName, Color accent)
+        {
+            // Preserve airline colour on the tall fin and compact tip devices,
+            // not across the Q400's entire high wing and T-tail.
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wing_fairing_left":
+                case "wing_fairing_right":
+                case "wing_centre_saddle":
+                case "wing_fence_left":
+                case "wing_fence_right":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "tailplane_saddle":
+                case "tailplane_tip_l":
+                case "tailplane_tip_r":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.56f, 0.60f, 0.65f);
             }
 
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)

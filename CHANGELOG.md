@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Q400 high-wing hierarchy.** QantasLink's Q400 now keeps operator red on its fin and compact
+  tip devices while its high wing, moving wing surfaces and horizontal tail use a neutral
+  painted-metal finish. Darker glazing strengthens the long regional-turboprop read. Geometry,
+  scale, propeller rig, routes and saves are unchanged. Headless tests: 249 passed; packaged
+  daylight capture passed; Unity EditMode 444/445 with only the existing Gate 13 tolerance miss.
+
 - **737 livery hierarchy.** Wattlebird Jet's 737 now reserves its blue accent for the fin and
   split winglets. Wings, moving wing surfaces and the horizontal tail use a neutral painted-metal
   finish, with darker glazing for better narrowbody readability. Geometry, scale, fan animation,

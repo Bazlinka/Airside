@@ -50,6 +50,9 @@ namespace Airside.Presentation
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
                 if (!texture.LoadImage(bytes, markNonReadable: !keepReadable))
                 {
+                    // The 2x2 placeholder is already on the GPU; dropping the reference
+                    // without destroying it leaked one texture per unreadable file.
+                    Object.Destroy(texture);
                     Misses.Add(key);
                     return null;
                 }

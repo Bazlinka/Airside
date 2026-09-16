@@ -28,7 +28,8 @@ while IFS= read -r -d '' file; do
   mkdir -p "$dst/$(dirname "$rel")"
   cp -f "$file" "$dst/$rel"
 done < <(find "$src" -type f \
-  \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) -print0)
+  \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) \
+  ! -name '* [0-9].*' -print0)
 
 # A source that was deleted or renamed leaves its old .meta behind; Unity warns about every
 # orphan on import. Remove metas for owned types whose file no longer exists.
@@ -37,6 +38,6 @@ while IFS= read -r -d '' meta; do
 done < <(find "$dst" -type f \( -name '*.gltf.meta' -o -name '*.bin.meta' -o -name '*.png.meta' -o -name '*.jpg.meta' -o -name '*.jpeg.meta' \) -print0)
 
 # Count the synced art only; the old count included every .meta file as well.
-count="$(find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) | wc -l | tr -d ' ')"
+count="$(find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) ! -name '* [0-9].*' | wc -l | tr -d ' ')"
 echo "Synced $count runtime art files → $dst"
 echo "Remember: Unity will generate .meta files for StreamingAssets on next Editor open."

@@ -46,6 +46,7 @@ namespace Airside.Presentation
         {
             var lights = new List<Light>();
             var white = new Color(1f, 0.96f, 0.82f);
+            var caution = new Color(1f, 0.67f, 0.10f);
 
             var mainCount = AdelaideAirfieldLighting.EvenStationCount(
                 AirsideBareField.RunwayLengthMetres,
@@ -53,14 +54,17 @@ namespace Airside.Presentation
             for (var i = 0; i < mainCount; i++)
             {
                 var x = AdelaideAirfieldLighting.EvenStation(AirsideBareField.RunwayHalfLength, i, mainCount);
-                PlaceYpadLens($"Runway edge 05/23 N {i:00}", new Vector3(x, 0.22f, AirsideBareField.RunwayHalfWidth + 0.65f), white);
-                PlaceYpadLens($"Runway edge 05/23 S {i:00}", new Vector3(x, 0.22f, -AirsideBareField.RunwayHalfWidth - 0.65f), white);
+                // The final 600 m caution zones read amber from the overhead game camera.
+                // Real fittings are directional; this is the honest top-down equivalent.
+                var edgeColour = Mathf.Abs(x) >= AirsideBareField.RunwayHalfLength - 600f ? caution : white;
+                PlaceYpadLens($"Runway edge 05/23 N {i:00}", new Vector3(x, 0.22f, AirsideBareField.RunwayHalfWidth + 0.65f), edgeColour, 0.24f);
+                PlaceYpadLens($"Runway edge 05/23 S {i:00}", new Vector3(x, 0.22f, -AirsideBareField.RunwayHalfWidth - 0.65f), edgeColour, 0.24f);
                 if (i % 4 == 0 || i == mainCount - 1)
                 {
                     lights.Add(CreateYpadPointLight($"Runway edge point 05/23 N {i:00}",
-                        new Vector3(x, 0.35f, AirsideBareField.RunwayHalfWidth + 0.65f), white, 92f));
+                        new Vector3(x, 0.35f, AirsideBareField.RunwayHalfWidth + 0.65f), edgeColour, 18f));
                     lights.Add(CreateYpadPointLight($"Runway edge point 05/23 S {i:00}",
-                        new Vector3(x, 0.35f, -AirsideBareField.RunwayHalfWidth - 0.65f), white, 92f));
+                        new Vector3(x, 0.35f, -AirsideBareField.RunwayHalfWidth - 0.65f), edgeColour, 18f));
                 }
             }
 
@@ -74,11 +78,11 @@ namespace Airside.Presentation
                 {
                     var world = CrossRunwayWorld(along, side * (AirsideAdelaidePavement.CrossHalfWidth + 0.65f));
                     PlaceYpadLens($"Runway edge 12/30 {(side < 0 ? "L" : "R")} {i:00}",
-                        world + Vector3.up * 0.22f, white);
+                        world + Vector3.up * 0.22f, white, 0.24f);
                     if (i % 4 == 0 || i == crossCount - 1)
                         lights.Add(CreateYpadPointLight(
                             $"Runway edge point 12/30 {(side < 0 ? "L" : "R")} {i:00}",
-                            world + Vector3.up * 0.35f, white, 92f));
+                            world + Vector3.up * 0.35f, white, 18f));
                 }
             }
 
@@ -121,7 +125,7 @@ namespace Airside.Presentation
                             PlaceYpadLens($"Taxi CL green {fixture:000}", position, green, 0.25f);
                             if (fixture % 18 == 0)
                                 lights.Add(CreateYpadPointLight($"Taxi CL point {fixture:000}",
-                                    position + Vector3.up * 0.12f, green, 32f));
+                                    position + Vector3.up * 0.12f, green, 10f));
                             fixture++;
                         }
                         distanceUntilFixture += AdelaideAirfieldLighting.TaxiCentrelineVisualSpacingMetres;
@@ -148,7 +152,7 @@ namespace Airside.Presentation
                     PlaceYpadLens($"Runway guard {i / 2:00} {(side < 0 ? "L" : "R")}",
                         position, yellow, 0.48f);
                     lights.Add(CreateYpadPointLight($"Runway guard point {i / 2:00} {(side < 0 ? "L" : "R")}",
-                        position + Vector3.up * 0.15f, yellow, 28f));
+                        position + Vector3.up * 0.15f, yellow, 12f));
                 }
             }
         }
@@ -177,7 +181,7 @@ namespace Airside.Presentation
                         new Vector3(thresholdX + end * 1.2f, 0.24f, z), red, 0.42f);
                     if (i is -3 or 0 or 3)
                         lights.Add(CreateYpadPointLight($"Threshold point 05/23 {end} {i + 3}",
-                            new Vector3(thresholdX - end * 1.2f, 0.38f, z), green, 70f));
+                            new Vector3(thresholdX - end * 1.2f, 0.38f, z), green, 16f));
                 }
             }
 
@@ -200,7 +204,7 @@ namespace Airside.Presentation
                 PlaceYpadLens($"ALS 23 centre {station:00}", new Vector3(x, 0.25f, 0f), white, 0.40f);
                 if (station % 3 == 0)
                     lights.Add(CreateYpadPointLight($"HIAL 23 point {station:00}",
-                        new Vector3(x, 0.42f, 0f), white, 95f));
+                        new Vector3(x, 0.42f, 0f), white, 20f));
             }
             PlaceYpadLens("ALS 23 centre end", new Vector3(hialEnd, 0.25f, 0f), white, 0.40f);
 
@@ -220,7 +224,7 @@ namespace Airside.Presentation
                 var position = origin + lateral * (i * 3f);
                 PlaceYpadLens($"{name} unit {i + 1}", position, colour, 0.55f);
                 lights.Add(CreateYpadPointLight($"{name} point {i + 1}", position + Vector3.up * 0.18f,
-                    colour, 38f));
+                    colour, 12f));
             }
         }
 
@@ -233,7 +237,7 @@ namespace Airside.Presentation
                 var position = CrossRunwayWorld(localX, localZ + direction * i * 3f) + Vector3.up * 0.28f;
                 PlaceYpadLens($"{name} unit {i + 1}", position, colour, 0.55f);
                 lights.Add(CreateYpadPointLight($"{name} point {i + 1}", position + Vector3.up * 0.18f,
-                    colour, 38f));
+                    colour, 12f));
             }
         }
 
@@ -256,7 +260,9 @@ namespace Airside.Presentation
                 return;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
-            SetRendererColor(renderer, colour, colour * 2.2f);
+            // Restrained emission preserves individual fixtures; a stronger value blooms
+            // neighbouring stations into the continuous neon rails seen in the old build.
+            SetRendererColor(renderer, colour, colour * 1.25f);
         }
 
         private static Light CreateYpadPointLight(

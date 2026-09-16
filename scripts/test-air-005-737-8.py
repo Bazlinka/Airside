@@ -44,6 +44,20 @@ for tip in ("winglet_left", "winglet_right"):
     assert tip_vertices[:, 1].max() <= 7.26, f"{tip} grew into a tall plate"
     assert np.ptp(tip_vertices, axis=0)[1] < 2.0
 
+# Engines use open annular lips, swept tapered blades and one continuous
+# serrated nozzle per side. The obsolete floating chevron boxes must stay gone.
+for side, short in (("left", "l"), ("right", "r")):
+    lip_vertices, _ = meshes[f"nacelle_{side}"]
+    centre = np.array([-5.35 if side == "left" else 5.35, 3.13])
+    radii = np.linalg.norm(lip_vertices[:, :2] - centre, axis=1)
+    assert radii.min() > 0.80, f"{side} inlet is capped instead of open"
+    assert f"exhaust_chevron_{side}" in meshes
+    assert not any(name.startswith(f"exhaust_chevron_{side}_") for name in meshes)
+    for index in range(1, 13):
+        blade, _ = meshes[f"fan_blade_{short}{index}"]
+        radial = np.linalg.norm(blade[:, :2] - centre, axis=1)
+        assert radial.max() > 0.74 and radial.min() < 0.22
+
 for name, (part_vertices, indices) in meshes.items():
     assert np.isfinite(part_vertices).all(), name
     assert len(indices) % 3 == 0 and int(indices.max()) < len(part_vertices), name

@@ -369,8 +369,7 @@ namespace Airside.Presentation
             var label = new GameObject(name);
             label.transform.SetParent(parent, false);
             label.transform.localPosition = localPosition;
-            // TextMesh's readable face points along local -Z (the same reason stand
-            // identifiers use +90 degrees around X to face upward). Turn that face
+            // TextMesh's readable face points along local -Z. Turn that face
             // outward from each side of the fuselage rather than into its skin.
             label.transform.localRotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
 
@@ -384,9 +383,17 @@ namespace Airside.Presentation
             text.color = colour;
 
             var renderer = label.GetComponent<MeshRenderer>();
+            renderer.sortingOrder = 2;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
+
             DepthTestStandLabel(renderer);
+
+            // The legacy font shader is double-sided. Keep only the camera-facing
+            // fuselage title enabled so the opposite title cannot appear backwards
+            // through the top of the aircraft in elevated follow views.
+            label.AddComponent<AircraftIdentitySideVisibility>()
+                .Initialise(parent, renderer, side);
         }
 
         /// <summary>
@@ -599,6 +606,32 @@ namespace Airside.Presentation
                 return;
             _selectedAircraftId = null;
             PlayUiClick();
+        }
+    }
+
+    internal sealed class AircraftIdentitySideVisibility : MonoBehaviour
+    {
+        private Transform _aircraft;
+        private Renderer _renderer;
+        private int _side;
+
+        public void Initialise(Transform aircraft, Renderer labelRenderer, int side)
+        {
+            _aircraft = aircraft;
+            _renderer = labelRenderer;
+            _side = side;
+            Refresh();
+        }
+
+        private void LateUpdate() => Refresh();
+
+        private void Refresh()
+        {
+            var camera = Camera.main;
+            if (_aircraft == null || _renderer == null || camera == null)
+                return;
+            var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
+            _renderer.enabled = cameraSide == _side;
         }
     }
 }

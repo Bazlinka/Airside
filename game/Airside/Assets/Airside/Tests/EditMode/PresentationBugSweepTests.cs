@@ -88,6 +88,27 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftGlazing_LegacyTintAlphaCannotMakeThePlaneSeeThrough()
+        {
+            var material = AirsideMaterialLibrary.Create(
+                new Color(0.05f, 0.12f, 0.18f, 0.42f),
+                AirsideMaterialLibrary.SurfaceKind.AircraftGlazing,
+                useTextures: false);
+            try
+            {
+                var colour = material.HasProperty("_BaseColor")
+                    ? material.GetColor("_BaseColor")
+                    : material.color;
+                Assert.That(colour.a, Is.EqualTo(1f));
+                Assert.That(material.renderQueue, Is.LessThan(3000));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
         public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
         {
             Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.False);

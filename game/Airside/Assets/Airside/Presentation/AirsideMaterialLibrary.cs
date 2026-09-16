@@ -351,6 +351,10 @@ namespace Airside.Presentation
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
+            // Aircraft glazing is a painted illusion over a sealed fuselage: retain the
+            // dark tint but never let a legacy colour alpha route it back to transparency.
+            if (kind == SurfaceKind.AircraftGlazing)
+                color.a = 1f;
             // Opaque RGB callers (terminal glass colors) still need real alpha panes.
             if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
@@ -616,6 +620,8 @@ namespace Airside.Presentation
             out Material instance)
         {
             instance = null;
+            if (kind == SurfaceKind.AircraftGlazing)
+                color.a = 1f;
             var key = AuthoredMaterialKey(kind);
             if (key == null)
                 return false;

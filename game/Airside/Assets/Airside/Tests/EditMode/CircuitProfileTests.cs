@@ -51,10 +51,10 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void TheAircraftLandsOnTheThreeHundredMetreMarkings()
+        public void TheAircraftTouchesDownInsideTheNormalTouchdownZone()
         {
             Assert.That(CircuitProfile.TouchdownX - CircuitProfile.WestThresholdX,
-                Is.EqualTo(300f).Within(0.5f));
+                Is.EqualTo(450f).Within(0.5f));
         }
 
         [Test]
@@ -74,12 +74,10 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void ThresholdCrossingIsLowButDeliberate()
+        public void ThresholdCrossingIsFiftyFeet()
         {
-            // Landing on the paint with a 300 m float costs threshold height. Locked so
-            // the trade-off cannot drift unnoticed; see FlareFloatMetres.
             var feet = CircuitProfile.ThresholdCrossingHeight * 3.281f;
-            Assert.That(feet, Is.EqualTo(30f).Within(2f));
+            Assert.That(feet, Is.EqualTo(50f).Within(1f));
         }
 
         [Test]
@@ -99,9 +97,9 @@ namespace Airside.Tests
         public void TouchdownIsSofterThanTheApproachDescent()
         {
             var fpm = CircuitProfile.TouchdownSinkMetresPerSecond * 196.85f;
-            // Well under the 600 ft/min that counts as a hard landing.
+            // A visible positive touchdown, still far below hard-landing territory.
             Assert.That(fpm, Is.LessThan(200f));
-            Assert.That(fpm, Is.GreaterThan(0f));
+            Assert.That(fpm, Is.InRange(70f, 120f));
         }
 
         [Test]

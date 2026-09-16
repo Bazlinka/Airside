@@ -177,12 +177,12 @@ namespace Airside.Presentation
         public static AircraftIdentityMarkingLayout For(AircraftType type)
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
-                return new AircraftIdentityMarkingLayout(1.91f, 4.05f, -8.0f, 3.92f, -31.0f, 0.22f, 0.13f);
+                return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
             if (AircraftVisualProfiles.IsDash8Q400(type))
-                return new AircraftIdentityMarkingLayout(1.39f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
+                return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
             if (AircraftVisualProfiles.IsSaab340(type))
-                return new AircraftIdentityMarkingLayout(1.17f, 1.48f, 3.1f, 1.42f, -5.7f, 0.13f, 0.085f);
-            return new AircraftIdentityMarkingLayout(0.82f, 1.48f, 3.3f, 1.40f, -5.2f, 0.13f, 0.085f);
+                return new AircraftIdentityMarkingLayout(1.22f, 1.48f, 3.1f, 1.42f, -5.7f, 0.13f, 0.085f);
+            return new AircraftIdentityMarkingLayout(0.88f, 1.48f, 3.3f, 1.40f, -5.2f, 0.13f, 0.085f);
         }
     }
 

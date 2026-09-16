@@ -14,10 +14,10 @@ namespace Airside.Presentation
     /// any progress is the scheduled one rather than whatever a hand-picked duration
     /// happened to produce.
     ///
-    /// The approach is a true 3° glideslope. The flare is a real round-out: it
-    /// begins at 30 ft, right as the threshold goes under, and floats 300 m past
-    /// the aim point onto the touchdown-zone markings while the sink is arrested
-    /// from 584 ft/min to about 60.
+    /// The approach is a true 3° glideslope, crossing the threshold at 50 ft.
+    /// The flare is a real round-out from about 30 ft and carries the aircraft to
+    /// a touchdown 450 m into the zone while the sink is arrested from roughly
+    /// 584 ft/min to about 90.
     /// </summary>
     public static class AirsideFlightPath
     {

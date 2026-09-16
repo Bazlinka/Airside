@@ -61,29 +61,21 @@ namespace Airside.Simulation
         public const float WestThresholdX = -1550f;
 
         /// <summary>
-        /// Where the wheels arrive: on the 300 m touchdown-zone markings, which are
-        /// painted there. Everything else on the approach is derived backwards from
-        /// this so the aeroplane lands where the runway says it should.
+        /// Where the wheels arrive: 450 m beyond the threshold, inside the touchdown
+        /// zone after a normal threshold crossing and round-out.
         /// </summary>
-        public const float TouchdownX = -1250f;
+        public const float TouchdownX = -1100f;
 
         /// <summary>
-        /// Ground covered between flare entry and the wheels touching. The aircraft
-        /// floats past the aim point while the sink is arrested; without this the
-        /// "flare" is just the glideslope continued into the tarmac.
-        ///
-        /// 300 m is what buys a soft arrival. The trade-off is the threshold
-        /// crossing: holding the wheels on the 300 m markings with this much float
-        /// puts the aircraft over the fence at about 30 ft rather than the textbook
-        /// 50. Crossing at 50 ft instead would need the float cut to ~180 m, and the
-        /// sink could then only be arrested to about 430 ft/min — a firm arrival
-        /// that reads as a thump. Landing on the paint with a soft touchdown is the
-        /// better-looking half of that trade.
+        /// Ground covered between flare entry and touchdown. Derived below so the
+        /// approach crosses the threshold at 50 ft, rounds out at 30 ft and touches
+        /// down 450 m into the zone instead of beginning an implausible 300 m float
+        /// exactly over the threshold.
         /// </summary>
-        public const float FlareFloatMetres = 300f;
+        public static float FlareFloatMetres => TouchdownX - FlareStartX;
 
-        /// <summary>Sink rate at touchdown, about 60 ft/min — firm but not a thump.</summary>
-        public const float TouchdownSinkMetresPerSecond = 0.30f;
+        /// <summary>Sink rate at touchdown, about 90 ft/min — positive and visibly settled.</summary>
+        public const float TouchdownSinkMetresPerSecond = 0.45f;
 
         /// <summary>Rollout end, still on the 3 100 m strip, at <see cref="RunwayExitKnots"/>.</summary>
         public const float RolloutEndX = -200f;
@@ -105,6 +97,9 @@ namespace Airside.Simulation
         /// <summary>Standard 3° glideslope, flown from the approach start to the flare.</summary>
         public const float GlideslopeDegrees = 3f;
 
+        /// <summary>Standard threshold crossing height for the visual 3° path: 50 ft.</summary>
+        public const float ThresholdCrossingHeightMetres = 15.24f;
+
         /// <summary>
         /// Height above the touchdown plane at which the flare begins — about 30 ft,
         /// which is where a turboprop of this size is rounded out.
@@ -122,27 +117,23 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Where the flare starts: the point on the glideslope that is
-        /// <see cref="FlareHeightMetres"/> above the touchdown plane. About 172 m
-        /// short of the aim point, giving a flare of roughly three seconds.
+        /// <see cref="FlareHeightMetres"/> above the touchdown plane.
         /// </summary>
-        /// <summary>Where the round-out begins, one float short of the wheels arriving.</summary>
-        public static float FlareStartX => TouchdownX - FlareFloatMetres;
+        public static float FlareStartX => AimPointX - FlareHeightMetres / GlideslopeTangent;
 
         /// <summary>
         /// Where the glideslope meets the ground — what the aircraft is aimed at, and
-        /// deliberately short of where it lands. Derived so the slope passes through
-        /// <see cref="FlareHeightMetres"/> exactly at <see cref="FlareStartX"/>.
+        /// deliberately short of where it lands. It is derived from the published-style
+        /// 50 ft threshold crossing rather than moved backwards from the touchdown.
         /// </summary>
-        public static float AimPointX => FlareStartX + FlareHeightMetres / GlideslopeTangent;
+        public static float AimPointX => WestThresholdX + ThresholdCrossingHeightMetres / GlideslopeTangent;
 
         /// <summary>Height above the ground at station <paramref name="x"/> on the glideslope.</summary>
         public static float GlideslopeHeight(float x) =>
             x >= AimPointX ? 0f : (AimPointX - x) * GlideslopeTangent;
 
         /// <summary>
-        /// Height crossing the threshold. About 30 ft here rather than the textbook
-        /// 50 — the cost of landing on the paint with a 300 m float. See
-        /// <see cref="FlareFloatMetres"/>.
+        /// Height crossing the threshold: 50 ft on the visual 3° path.
         /// </summary>
         public static float ThresholdCrossingHeight => GlideslopeHeight(WestThresholdX);
 

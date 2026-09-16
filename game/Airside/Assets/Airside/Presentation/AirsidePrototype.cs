@@ -286,14 +286,18 @@ namespace Airside.Presentation
             }
             else
             {
-                // The real Adelaide pavement owns its terminal shell even in the focused
-                // release world. Keep only its seven roof floods; the wider decorative
-                // lighting set (streetlights, ALS, beacon) remains excluded here.
+                // Operational YPAD lighting is not decoration. The focused release keeps
+                // real-metre runway edges, thresholds, PAPI and the runway 23 HIAL while
+                // omitting only landside/decorative lighting.
                 _apronLights = AirsideBareField.Enabled ? BuildApronLights() : Array.Empty<Light>();
                 _landsideLights = Array.Empty<Light>();
-                _thresholdLights = Array.Empty<Light>();
+                _thresholdLights = AirsideBareField.Enabled
+                    ? BuildYpadThresholdPapiAndApproachLights()
+                    : Array.Empty<Light>();
                 _alsLights = Array.Empty<Light>();
-                _runwayEdgeLights = Array.Empty<Light>();
+                _runwayEdgeLights = AirsideBareField.Enabled
+                    ? BuildYpadRunwayEdgeLights()
+                    : Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
             // Touchdown smoke is circuit presentation, independent of disabled world props.
@@ -4018,6 +4022,8 @@ namespace Airside.Presentation
         /// </summary>
         private static Light[] BuildRunwayEdgePointLights()
         {
+            if (AirsideBareField.Enabled)
+                return BuildYpadRunwayEdgeLights();
             var lights = new System.Collections.Generic.List<Light>();
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -4145,6 +4151,8 @@ namespace Airside.Presentation
         /// </summary>
         private static Light[] BuildThresholdApproachLights()
         {
+            if (AirsideBareField.Enabled)
+                return BuildYpadThresholdPapiAndApproachLights();
             var specs = new (Vector3 Pos, Color Color, float Range)[]
             {
                 // West threshold (09) — warm white bars + green wing-bar hint.

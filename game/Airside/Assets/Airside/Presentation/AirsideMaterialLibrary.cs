@@ -24,6 +24,7 @@ namespace Airside.Presentation
             Metal,
             PaintedMetal,
             AircraftSkin,
+            AircraftGlazing,
             PaintedLine,
             Glass,
             Rubber,
@@ -61,6 +62,9 @@ namespace Airside.Presentation
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
             [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.68f, 0.14f, 0.98f),
+            // Aircraft windows are deliberately opaque. With no modelled cabin behind them,
+            // transparent panes expose the opposite fuselage and read as missing geometry.
+            [SurfaceKind.AircraftGlazing] = new Profile(0.06f, 0.82f, 0.02f, 1f),
             // Flat painted markings — matte, not aircraft-skin gloss.
             [SurfaceKind.PaintedLine] = new Profile(0.02f, 0.22f, 0.08f, 0.96f),
             // Slightly softer glass so curtain walls read as panes, not chrome mirrors.
@@ -80,6 +84,7 @@ namespace Airside.Presentation
             [SurfaceKind.Sand] = "tx_sand_coast",
             [SurfaceKind.Water] = "tx_water_coast",
             [SurfaceKind.AircraftSkin] = "tx_aircraft_skin",
+            [SurfaceKind.AircraftGlazing] = "tx_glass_pane",
             [SurfaceKind.Metal] = "tx_corrugated_metal",
             // PaintedMetal is deliberately absent. It is InferFromMeshName's catch-all (bark,
             // rocks, benches, planters, unnamed kit parts) and InferSurfaceKindFromColor's
@@ -103,6 +108,7 @@ namespace Airside.Presentation
             [SurfaceKind.Metal] = new Vector2(2.5f, 1.5f),
             [SurfaceKind.PaintedMetal] = new Vector2(2f, 1.2f),
             [SurfaceKind.AircraftSkin] = new Vector2(1.5f, 1.5f),
+            [SurfaceKind.AircraftGlazing] = new Vector2(1.2f, 1.2f),
             [SurfaceKind.PaintedLine] = new Vector2(3f, 1f),
             [SurfaceKind.Glass] = new Vector2(1.2f, 1.2f),
             [SurfaceKind.Rubber] = new Vector2(2.5f, 2.5f),
@@ -164,10 +170,12 @@ namespace Airside.Presentation
                 || n.Contains("windscreen_pillar") || n.Contains("windscreen pillar")
                 || n.Contains("cockpit_frame") || n.Contains("cockpit frame"))
                 return SurfaceKind.Metal;
+            if (n.Equals("cockpit") || n.Contains("cockpit glass") || n.Contains("cockpit window")
+                || n.Contains("cabin_windows") || n.Contains("cabin window")
+                || n.Contains("windshield") || n.Contains("windscreen"))
+                return SurfaceKind.AircraftGlazing;
             if (n.Contains("glass") || n.Contains("window") || n.Contains("glass_pane")
-                || n.Equals("cockpit") || n.Contains("cabin_windows") || n.Contains("cabin window")
                 || n.Contains("landside_glass") || n.Contains("door_glass")
-                || n.Contains("windshield") || n.Contains("windscreen")
                 || n.Equals("rear_window") || n.Contains("skylight"))
                 return SurfaceKind.Glass;
             if (n.Contains("tire") || n.Contains("tyre") || n.Contains("rubber")
@@ -663,6 +671,7 @@ namespace Airside.Presentation
                 SurfaceKind.Glass => "mat_glass_v01",
                 SurfaceKind.PaintedLine => "mat_painted_line_v01",
                 SurfaceKind.AircraftSkin => "mat_aircraft_v01",
+                SurfaceKind.AircraftGlazing => "mat_aircraft_glazing_v01",
                 // No Water template: mat_wet_v01 is wet *asphalt* (MAT-001 builds it from the
                 // asphalt maps, opaque), so coast water and puddles rendered as solid tarmac.
                 // Water uses the procedural path with the tx_water_coast maps and transparency.

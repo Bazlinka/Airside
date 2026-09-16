@@ -17,6 +17,15 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AdelaideLighting_GuardFilterTargetsMainRunwayHoldingPoints()
+        {
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(-1529.9f, 90.3f), Is.True);
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(614.1f, 92.5f), Is.True);
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(237f, 199f), Is.False);
+            Assert.That(AdelaideAirfieldLighting.TaxiCentrelineVisualSpacingMetres, Is.InRange(30f, 60f));
+        }
+
+        [Test]
         public void HudScale_RetinaDisplayIsNotCappedAtTheOldTinyScale()
         {
             Assert.That(HudLayout.ScaleFor(3456, 2168), Is.EqualTo(2.25f).Within(0.001f));
@@ -681,6 +690,41 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.NoseWheelSteerDegrees(
                 0f, 1f, 1f, 0f, 0f, 1.5f, 10f, tailFirst: false), Is.Zero,
                 "a stopped aircraft centres its nose wheels");
+        }
+
+        [Test]
+        public void ApproachPicking_OpensOnlyInsideAUsefulViewingDistance()
+        {
+            var threshold = AirsideFlightPath.WestThresholdX;
+            var cutoff = threshold - AircraftPickRouting.ApproachSelectableDistanceFromThresholdMetres;
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(cutoff - 1f, threshold), Is.False);
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(cutoff, threshold), Is.True);
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(
+                AirsideFlightPath.ShortFinalX, threshold), Is.True,
+                "an aircraft on short final can always be clicked and followed through touchdown");
+        }
+
+        [Test]
+        public void AdelaideLighting_UsesPublishedRunwaySystemsAndSpacing()
+        {
+            Assert.That(AdelaideAirfieldLighting.MainRunwayEdgeSpacingMetres, Is.EqualTo(57f));
+            Assert.That(AdelaideAirfieldLighting.CrossRunwayEdgeSpacingMetres, Is.EqualTo(59f));
+            Assert.That(AdelaideAirfieldLighting.Runway23HialLengthMetres, Is.EqualTo(801f));
+            Assert.That(AdelaideAirfieldLighting.PapiSlopeDegrees, Is.EqualTo(3f));
+            Assert.That(AdelaideAirfieldLighting.Runway05PapiThresholdHeightFeet, Is.EqualTo(61f));
+            Assert.That(AdelaideAirfieldLighting.Runway23PapiThresholdHeightFeet, Is.EqualTo(59f));
+            Assert.That(AdelaideAirfieldLighting.CrossRunwayPapiThresholdHeightFeet, Is.EqualTo(51f));
+
+            var mainCount = AdelaideAirfieldLighting.EvenStationCount(
+                AirsideBareField.RunwayLengthMetres,
+                AdelaideAirfieldLighting.MainRunwayEdgeSpacingMetres);
+            Assert.That(mainCount, Is.EqualTo(55));
+            Assert.That(AdelaideAirfieldLighting.EvenStation(
+                AirsideBareField.RunwayHalfLength, 0, mainCount),
+                Is.EqualTo(-AirsideBareField.RunwayHalfLength));
+            Assert.That(AdelaideAirfieldLighting.EvenStation(
+                AirsideBareField.RunwayHalfLength, mainCount - 1, mainCount),
+                Is.EqualTo(AirsideBareField.RunwayHalfLength));
         }
 
         [Test]

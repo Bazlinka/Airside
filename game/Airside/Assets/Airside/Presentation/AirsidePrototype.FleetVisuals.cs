@@ -500,6 +500,11 @@ namespace Airside.Presentation
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
+                if (i < VisualFlights.Count
+                    && VisualFlights[i].Operation.Phase == AircraftPhase.Approach
+                    && !AircraftPickRouting.ApproachIsCloseEnough(
+                        view.position.x, AirsideFlightPath.WestThresholdX))
+                    continue;
                 _fleetActiveViews.Add(view);
                 if (i < VisualFlights.Count)
                     _fleetViewById[VisualFlights[i].AircraftId] = view;

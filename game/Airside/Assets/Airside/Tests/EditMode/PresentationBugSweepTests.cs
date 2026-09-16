@@ -73,6 +73,20 @@ namespace Airside.Tests
             Assert.That(AirsideMaterialLibrary.InferFromMeshName(mesh), Is.EqualTo(expected));
         }
 
+        [TestCase("Windscreen L")]
+        [TestCase("Cockpit")]
+        [TestCase("Cabin Windows")]
+        public void AircraftGlazing_IsOpaqueAndDistinctFromTerminalGlass(string mesh)
+        {
+            var kind = AirsideMaterialLibrary.InferFromMeshName(mesh);
+            Assert.That(kind, Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.AircraftGlazing));
+            Assert.That(AirsideMaterialLibrary.GetProfile(kind).Transparent, Is.False);
+            Assert.That(AirsideMaterialLibrary.InferFromMeshName("terminal glass pane"),
+                Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.Glass));
+            Assert.That(AirsideMaterialLibrary.GetProfile(AirsideMaterialLibrary.SurfaceKind.Glass).Transparent,
+                Is.True);
+        }
+
         [Test]
         public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
         {

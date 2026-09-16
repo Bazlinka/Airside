@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Camera feel + taxi props.** Scroll zoom and drag pan are snappier on the real-metre
+  overview (one mouse notch ~25 % closer; wider trackpad zoom queue; faster drag pan
+  and orbit). Turboprop and jet-fan blur discs engage at taxi RPM so blades no longer
+  strobe while taxiing. Headless `CameraFeelTests` lock the rates.
+
 - **Bug sweep 11 (10 fixes): known issues cleared, live-world details.** The painted stand
   identifiers are depth-tested, so they no longer show through a parked aircraft, and the fallback
   windsock lies along the wind instead of standing upright. The hangar door only opens for aircraft

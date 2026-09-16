@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Cursor — camera zoom/pan feel + taxi prop blur.** Branch
+  `cursor/camera-zoom-prop-taxi-d77c`.
+  - **Player-visible:** Scroll zoom and drag pan feel snappier across the real-metre
+    YPAD overview (one mouse notch ~25 % closer instead of ~11 %; trackpad can queue
+    a wider band; drag pan ~1.75×). Turboprop and 737 fan discs engage at taxi RPM so
+    blades no longer strobe while taxiing.
+  - **How:** `AirsideCameraFeel` owns the rates; `AirsideCameraController` applies them.
+    `PropHighRpmThreshold` 380 / `JetFanHighRpmThreshold` 1400.
+  - **Evidence:** `scripts/test-domain.sh` **240 passed** (includes new `CameraFeelTests`).
+    No Unity editor on this Cloud Agent — Mac `scripts/test-unity.sh` + a Play scroll/
+    taxi eyeball still needed before merge.
+  - **NEXT:** Mac Unity EditMode + packaged scroll/pan and taxi prop check. Then merge.
+
 - **2026-09-16 Claude — bug sweep in progress (goal: 100 merged fixes). All 11 batches merged:
   100 fixes (batch 5 was 7, not 8 as first recorded), Unity EditMode 430/430. The goal is met;
   nothing below has been seen in a build.**

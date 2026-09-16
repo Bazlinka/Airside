@@ -1448,7 +1448,7 @@ namespace Airside.Presentation
             var degrees = PresentationDeltaTime * rpm * 6f;
             if (degrees <= 0f)
                 return;
-            var highRpm = rpm >= AirsideReusableMotion.PropHighRpmThreshold;
+            var highRpm = AirsideReusableMotion.PropBlurActive(rpm);
             var namedChildren5 = AirsideNamedChildren.Get(aircraft);
             var childNames5 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex5 = 0; childIndex5 < namedChildren5.Length; childIndex5++)
@@ -1488,7 +1488,7 @@ namespace Airside.Presentation
                 if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 var rpm = childName.EndsWith(" L", StringComparison.Ordinal) ? left : right;
-                ApplyPropBlurToHub(child, rpm >= AirsideReusableMotion.PropHighRpmThreshold);
+                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurActive(rpm));
                 if (rpm >= 1f)
                     child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }
@@ -1523,7 +1523,7 @@ namespace Airside.Presentation
                 if (fan == aircraft || !(names[i] is "Fan L" or "Fan R"))
                     continue;
                 var rpm = names[i] == "Fan L" ? left : right;
-                ApplyJetFanBlurToHub(fan, rpm >= AirsideReusableMotion.JetFanHighRpmThreshold);
+                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurActive(rpm));
                 if (rpm >= 1f && PresentationDeltaTime > 0f)
                     fan.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }

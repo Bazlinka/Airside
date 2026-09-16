@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Adelaide night readability.** The focused real-airport world now keeps its terminal window
+  glow and seven roof-mounted apron floods instead of discarding all decorative lighting. A
+  restrained cool night key, fill and trilight lift preserves aircraft, terminal and pavement
+  silhouettes at 23:30; separated interior cards warm the airside glazing only after dusk, while
+  daytime glass remains blue. Headless tests: 252 passed; packaged day/night captures passed;
+  Unity EditMode 448/449 with only the existing Gate 13 tolerance miss.
+
 - **Adelaide terminal facade.** The real OSM terminal shell now has a segmented glass airside
   frontage, projecting roof brow, skylight strips and rooftop plant instead of reading as one
   blank block. The shell uses a restrained neutral finish; the detail is presentation-only and

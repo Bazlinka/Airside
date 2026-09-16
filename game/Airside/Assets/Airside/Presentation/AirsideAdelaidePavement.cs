@@ -26,6 +26,23 @@ namespace Airside.Presentation
         public float Depth { get; }
     }
 
+    /// <summary>A roof-mounted apron flood and its ground aim point, in Adelaide world metres.</summary>
+    public readonly struct AdelaideTerminalFlood
+    {
+        public AdelaideTerminalFlood(float x, float z, float targetX, float targetZ)
+        {
+            X = x;
+            Z = z;
+            TargetX = targetX;
+            TargetZ = targetZ;
+        }
+
+        public float X { get; }
+        public float Z { get; }
+        public float TargetX { get; }
+        public float TargetZ { get; }
+    }
+
     /// <summary>
     /// Restrained facade and roof breakup for the OSM terminal footprint. Coordinates are real
     /// Adelaide world metres and deliberately remain separate from routes, collision and saves.
@@ -33,6 +50,8 @@ namespace Airside.Presentation
     public static class AdelaideTerminalArchitecture
     {
         public const float ShellHeightMetres = 14f;
+        public const float FloodHeightMetres = 18f;
+        public const float FloodRangeMetres = 115f;
 
         public static AdelaideTerminalDetail[] AirsideGlazing()
         {
@@ -72,6 +91,17 @@ namespace Airside.Presentation
             new AdelaideTerminalDetail("Terminal roof plant W", 1110f, 15.1f, 463f, 24f, 2.2f, 10f),
             new AdelaideTerminalDetail("Terminal roof plant C", 1270f, 15.1f, 463f, 28f, 2.2f, 10f),
             new AdelaideTerminalDetail("Terminal roof plant E", 1450f, 15.1f, 468f, 26f, 2.2f, 10f)
+        };
+
+        public static AdelaideTerminalFlood[] ApronFloods() => new[]
+        {
+            new AdelaideTerminalFlood(1005f, 434f, 1005f, 388f),
+            new AdelaideTerminalFlood(1100f, 434f, 1100f, 388f),
+            new AdelaideTerminalFlood(1195f, 434f, 1195f, 388f),
+            new AdelaideTerminalFlood(1290f, 434f, 1290f, 388f),
+            new AdelaideTerminalFlood(1385f, 434f, 1385f, 388f),
+            new AdelaideTerminalFlood(1480f, 434f, 1480f, 388f),
+            new AdelaideTerminalFlood(1575f, 434f, 1575f, 388f)
         };
     }
 

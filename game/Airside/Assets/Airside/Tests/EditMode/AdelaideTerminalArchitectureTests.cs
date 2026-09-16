@@ -29,5 +29,17 @@ namespace Airside.Tests
             Assert.That(details.All(d => d.X - d.Width * 0.5f > 975f && d.X + d.Width * 0.5f < 1616f), Is.True);
             Assert.That(details.All(d => d.Z - d.Depth * 0.5f >= 436f && d.Z + d.Depth * 0.5f < 474f), Is.True);
         }
+
+        [Test]
+        public void ApronFloods_RunAlongTheRealTerminalAndAimSouthOntoTheStands()
+        {
+            var floods = AdelaideTerminalArchitecture.ApronFloods();
+
+            Assert.That(floods.Length, Is.EqualTo(7));
+            Assert.That(floods.All(f => f.X > 975f && f.X < 1616f), Is.True);
+            Assert.That(floods.All(f => f.Z < 436f && f.TargetZ < f.Z - 40f), Is.True);
+            Assert.That(AdelaideTerminalArchitecture.FloodHeightMetres, Is.GreaterThan(AdelaideTerminalArchitecture.ShellHeightMetres));
+            Assert.That(AdelaideTerminalArchitecture.FloodRangeMetres, Is.GreaterThan(100f));
+        }
     }
 }

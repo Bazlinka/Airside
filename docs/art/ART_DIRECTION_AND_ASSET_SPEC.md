@@ -222,6 +222,11 @@ separated airside glass bays, a six-part projecting brow, seven skylight strips 
 roof-plant blocks. This detail uses real-world coordinates, adds no external asset and does
 not participate in routing, collision or save state. Packaged close day/night evidence is
 under `work/review/terminal-facade-final-*.png`.
+The focused Adelaide world keeps seven real-coordinate terminal roof floods, with 115 m throw
+aimed south over the stands, plus night-only warm interior cards behind the 28 blue glass bays.
+The 23:30 ambient key/fill/trilight is lifted enough to preserve pavement and aircraft silhouettes
+without making night read as day. Matched packaged evidence is under
+`work/review/night-lighting-accepted.png` and `work/review/night-lighting-day-accepted.png`.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

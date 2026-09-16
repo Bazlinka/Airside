@@ -111,7 +111,7 @@ namespace Airside.Domain
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400");
 
-        // Wattlebird Jet's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
+        // Virgin Australia's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
         // (about Mach 0.79) is the planning figure.
         public static readonly AircraftSpec Boeing7378 = new(
             "B38M", "Boeing 737-8", "Narrowbody jet · 160–180 seats",
@@ -121,7 +121,34 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png", "SPEC-BOEING-737-8");
 
-        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378 };
+        // Air New Zealand's trans-Tasman type (AIR-008). Airbus publishes M0.82 as
+        // maximum cruise and 7,400 km as the advertised range; the lower figures are
+        // representative schedule-planning values rather than dispatch limits.
+        public static readonly AircraftSpec AirbusA321Neo = new(
+            "A21N", "Airbus A321neo", "International narrowbody · 180–220 seats",
+            44.51, 35.80, 11.76,
+            planningCruiseKmh: 833, practicalRangeKm: 6000,
+            manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 7400, manufacturerRangeBasis: "up to 4,000 nm",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png", "SPEC-AIRBUS-A321NEO");
+
+        public static readonly AircraftSpec AirbusA350900 = new(
+            "A359", "Airbus A350-900", "Long-haul widebody · 300–350 seats",
+            66.80, 64.75, 17.05,
+            planningCruiseKmh: 903, practicalRangeKm: 15000,
+            manufacturerMaxCruiseKmh: 903, manufacturerRangeKm: 15750, manufacturerRangeBasis: "Airbus key figures",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png", "SPEC-AIRBUS-A350-900");
+
+        public static readonly AircraftSpec Boeing78710 = new(
+            "B78X", "Boeing 787-10", "Long-haul widebody · 300–375 seats",
+            68.30, 60.12, 17.02,
+            planningCruiseKmh: 903, practicalRangeKm: 12000,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 13890, manufacturerRangeBasis: "up to 7,500 nmi",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10");
+
+        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378, AirbusA321Neo, AirbusA350900, Boeing78710 };
 
         public static bool TryFor(AircraftType type, out AircraftSpec found)
         {

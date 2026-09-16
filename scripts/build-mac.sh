@@ -30,4 +30,12 @@ if [ "$status" -ne 0 ] || [ ! -d "$destination" ]; then
   exit 1
 fi
 
+# Burst may leave empty *.app-shaped debug bundles beside the real build. Spotlight
+# indexes those as extra Airside applications even though they are not playable.
+# They are explicitly marked DoNotShip and are not needed for a local playtest.
+debug_bundle="$root/work/builds/Airside_BurstDebugInformation_DoNotShip"
+if [ -d "$debug_bundle" ]; then
+  rm -rf "$debug_bundle"
+fi
+
 echo "Mac build created at $destination"

@@ -156,24 +156,48 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Tower_SequencesSimultaneousDeparturesWithSeparation()
+        public void Tower_SequencesQueuedDeparturesWithRunwaySeparation()
         {
             var (clock, ops, first) = PlayerOnly(aircraft: 2);
             var second = ops.Fleet[1];
-            // Stagger the pushbacks so both reach the holding point in the same second.
-            var holdingAt = 1000 + AirlineOperations.TaxiOutSecondsFrom(first.Stand);
+            var firstHoldingAt = 1000 + AirlineOperations.TaxiOutSecondsFrom(first.Stand);
+            var secondHoldingAt = 1000 + AirlineOperations.TaxiReleaseSeparationSeconds
+                                  + AirlineOperations.TaxiOutSecondsFrom(second.Stand);
             ops.ScheduleDeparture(first, Code("KGC"), new SimulationTime(1000));
-            ops.ScheduleDeparture(second, Code("PLO"), new SimulationTime(holdingAt - AirlineOperations.TaxiOutSecondsFrom(second.Stand)));
+            ops.ScheduleDeparture(second, Code("PLO"), new SimulationTime(1000));
 
-            RunTo(clock, ops, holdingAt);
-            Assert.That(first.State, Is.EqualTo(FleetState.TakingOff));
+            RunTo(clock, ops, secondHoldingAt);
             Assert.That(second.State, Is.EqualTo(FleetState.HoldingShort));
 
-            var released = holdingAt + AirlineOperations.TakeoffRunwaySeconds + AirlineOperations.RunwaySeparationSeconds;
+            var released = firstHoldingAt + AirlineOperations.TakeoffRunwaySecondsFor(first.Type) + AirlineOperations.RunwaySeparationSeconds;
             RunTo(clock, ops, released - 1);
             Assert.That(second.State, Is.EqualTo(FleetState.HoldingShort));
             RunTo(clock, ops, released);
             Assert.That(second.State, Is.EqualTo(FleetState.TakingOff));
+        }
+
+        [Test]
+        public void Ground_StaggersSimultaneousPushbacksWithoutLosingEitherFlight()
+        {
+            var (clock, ops, first) = PlayerOnly(aircraft: 2);
+            var second = ops.Fleet[1];
+            var firstDestination = Code("KGC");
+            var secondDestination = Code("PLO");
+            ops.ScheduleDeparture(first, firstDestination, new SimulationTime(600));
+            ops.ScheduleDeparture(second, secondDestination, new SimulationTime(600));
+
+            RunTo(clock, ops, 600);
+            Assert.That(first.State, Is.EqualTo(FleetState.TaxiOut));
+            Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(second.Scheduled.Value.Destination, Is.EqualTo(secondDestination));
+            Assert.That(ops.NextEventAt(), Is.EqualTo(new SimulationTime(600 + AirlineOperations.TaxiReleaseSeparationSeconds)));
+
+            RunTo(clock, ops, 600 + AirlineOperations.TaxiReleaseSeparationSeconds - 1);
+            Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
+            RunTo(clock, ops, 600 + AirlineOperations.TaxiReleaseSeparationSeconds);
+            Assert.That(second.State, Is.EqualTo(FleetState.TaxiOut));
+            Assert.That(second.CurrentDestination, Is.EqualTo(secondDestination));
+            Assert.That(second.Scheduled, Is.Null);
         }
 
         [Test]
@@ -238,10 +262,11 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11), Player());
-            var emu = ops.Airlines.Single(a => a.Name == "Emu Air");
+            var emu = ops.Airlines.Single(a => a.Name == "Rex");
 
-            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(2));
-            Assert.That(ops.FleetOf(emu).All(a => a.Scheduled.HasValue), Is.True, "AI schedules itself");
+            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(3));
+            Assert.That(ops.FleetOf(emu).Where(a => a.State == FleetState.AtStand).All(a => a.Scheduled.HasValue),
+                Is.True, "parked AI schedules itself while the opening arrival is already flying");
 
             for (var steps = 0; steps < 10000; steps++)
             {

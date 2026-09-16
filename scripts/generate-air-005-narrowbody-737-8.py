@@ -291,16 +291,15 @@ def wing_slab(
 
 
 def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
-    """Large forward-hung turbofan — intake lip, fat core, tapered nozzle."""
+    """Open-front high-bypass nacelle shell with a subtly flattened lower cowl."""
     # Stations: (z, rx, ry, cy) in centred aircraft space.
     stations = [
-        (5.85, 0.55, 0.55, 3.05),
-        (5.55, 0.92, 0.92, 3.08),
-        (5.05, 1.05, 1.05, 3.10),
-        (4.20, 1.08, 1.08, 3.12),
-        (3.00, 1.05, 1.02, 3.12),
-        (1.60, 0.95, 0.90, 3.10),
-        (0.60, 0.78, 0.72, 3.08),
+        (5.48, 1.02, 0.94, 3.13),
+        (5.12, 1.08, 1.00, 3.15),
+        (4.20, 1.10, 1.02, 3.15),
+        (3.00, 1.07, 0.99, 3.14),
+        (1.60, 0.97, 0.88, 3.12),
+        (0.60, 0.79, 0.68, 3.10),
         (-0.20, 0.58, 0.52, 3.05),
         (-0.70, 0.38, 0.34, 3.02),
         (-1.05, 0.22, 0.20, 3.00),
@@ -323,7 +322,10 @@ def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
             base = len(verts)
             verts.extend([a, b, c, d])
             indices.extend([base, base + 1, base + 2, base, base + 2, base + 3])
-    for ring, z_sign in ((rings[0], 1.0), (rings[-1], -1.0)):
+    # Keep the inlet physically open; only close the narrow tail where the exhaust
+    # hardware takes over. The old front cap overlapped the intake and fan as three
+    # coplanar discs, which made the engines flicker and read like solid triangles.
+    for ring, z_sign in ((rings[-1], -1.0),):
         tip = ring.mean(axis=0).copy()
         tip[2] += z_sign * 0.06
         for i in range(segs):
@@ -337,16 +339,61 @@ def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
-def chevron_finger(cx, cy, cz, angle_deg, *, radius):
+def annulus(cx, cy, z_front, z_back, outer_radius, inner_radius, segments=40):
+    """Closed intake-lip ring with an actual opening through its centre."""
+    verts: list[list[float]] = []
+    indices: list[int] = []
+    for z in (z_front, z_back):
+        for radius in (outer_radius, inner_radius):
+            for i in range(segments):
+                angle = 2.0 * np.pi * i / segments
+                verts.append([cx + radius * np.cos(angle), cy + radius * np.sin(angle), z])
+
+    def ring(z_index, radius_index):
+        return (z_index * 2 + radius_index) * segments
+
+    for i in range(segments):
+        j = (i + 1) % segments
+        of, inf = ring(0, 0), ring(0, 1)
+        ob, inb = ring(1, 0), ring(1, 1)
+        indices.extend((of+i, of+j, ob+j, of+i, ob+j, ob+i))
+        indices.extend((inf+i, inb+j, inf+j, inf+i, inb+i, inb+j))
+        indices.extend((of+i, inf+j, of+j, of+i, inf+i, inf+j))
+        indices.extend((ob+i, ob+j, inb+j, ob+i, inb+j, inb+i))
+    return orient_outward(np.asarray(verts, np.float32), np.asarray(indices, np.uint16))
+
+
+def turbofan_blade(cx, cy, z, angle_deg):
+    """One swept, tapered fan blade; thin in Z but not a billboard rectangle."""
     angle = np.deg2rad(angle_deg)
-    dx, dy = float(np.cos(angle)), float(np.sin(angle))
-    verts, indices = box(0.0, 0.0, -0.14, 0.11, 0.14, 0.32)
-    out = verts.copy()
-    for i, vertex in enumerate(verts):
-        out[i, 0] = cx + dx * (radius + vertex[0])
-        out[i, 1] = cy + dy * (radius + vertex[1])
-        out[i, 2] = cz + vertex[2]
-    return out, indices
+    corners = []
+    for radius, offset in ((0.17, -8.0), (0.17, 8.0), (0.78, 16.0), (0.78, 5.0)):
+        a = angle + np.deg2rad(offset)
+        corners.append((cx + radius * np.cos(a), cy + radius * np.sin(a)))
+    depth = 0.045
+    points = np.asarray(
+        [(x, y, z - depth) for x, y in corners] + [(x, y, z + depth) for x, y in corners],
+        dtype=np.float32,
+    )
+    return _closed_prism(points)
+
+
+def serrated_nozzle(cx, cy, z, *, radius, teeth=12):
+    """Continuous chevron nozzle ring rather than floating box fingers."""
+    verts: list[list[float]] = []
+    indices: list[int] = []
+    for i in range(teeth * 2):
+        angle = 2.0 * np.pi * i / (teeth * 2)
+        rear_z = z - (0.34 if i % 2 == 0 else 0.12)
+        rear_radius = radius * (0.82 if i % 2 == 0 else 0.90)
+        verts.append([cx + radius * np.cos(angle), cy + radius * np.sin(angle), z + 0.10])
+        verts.append([cx + rear_radius * np.cos(angle), cy + rear_radius * np.sin(angle), rear_z])
+    count = teeth * 2
+    for i in range(count):
+        j = (i + 1) % count
+        a, b, c, d = 2*i, 2*j, 2*j+1, 2*i+1
+        indices.extend((a, b, c, a, c, d))
+    return orient_outward(np.asarray(verts, np.float32), np.asarray(indices, np.uint16))
 
 
 def wheel_set(meshes, prefix, x, z, radius, width):
@@ -535,34 +582,30 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         x = side * 5.35
         meshes[f"engine_{suffix}"] = nacelle_pod(x)
-        meshes[f"nacelle_{suffix}"] = cylinder(
-            x, 3.10, 3.40, 1.00, 3.60, axis="z", segments=36
+        meshes[f"nacelle_{suffix}"] = annulus(
+            x, 3.13, 5.62, 5.30, 1.08, 0.82, segments=40
         )
-        meshes[f"intake_{suffix}"] = cylinder(
-            x, 3.08, 5.55, 0.88, 0.18, axis="z", segments=36
+        meshes[f"intake_{suffix}"] = annulus(
+            x, 3.13, 5.66, 5.55, 1.00, 0.86, segments=40
         )
         meshes[f"fan_{suffix}"] = cylinder(
-            x, 3.08, 5.35, 0.78, 0.08, axis="z", segments=32
+            x, 3.13, 5.23, 0.79, 0.035, axis="z", segments=40
         )
-        # Fan blades as thin radial slabs for a readable spinner/fan face.
+        # Proper swept fan blades instead of twelve unrotated rectangular bars.
         for bi, ang in enumerate(np.linspace(0, 360, 12, endpoint=False)):
-            rad = np.deg2rad(ang)
-            bx = x + 0.38 * np.cos(rad)
-            by = 3.08 + 0.38 * np.sin(rad)
-            meshes[f"fan_blade_{suffix[0]}{bi+1}"] = box(
-                float(bx), float(by), 5.38, 0.55, 0.04, 0.06
+            meshes[f"fan_blade_{suffix[0]}{bi+1}"] = turbofan_blade(
+                x, 3.13, 5.29, float(ang)
             )
-        meshes[f"pylon_{suffix}"] = box(x, 4.25, 3.40, 0.38, 1.95, 2.40)
+        meshes[f"pylon_{suffix}"] = box(x, 4.28, 3.20, 0.38, 1.85, 2.75)
         meshes[f"exhaust_{suffix}"] = cylinder(
             x, 3.02, 0.10, 0.48, 0.55, axis="z", segments=28
         )
         meshes[f"exhaust_stack_{'l' if side < 0 else 'r'}"] = cylinder(
             x, 3.02, -0.35, 0.36, 0.35, axis="z", segments=24
         )
-        for index, angle in enumerate(range(0, 360, 60), start=1):
-            meshes[f"exhaust_chevron_{suffix}_{index}"] = chevron_finger(
-                x, 3.02, -0.55, float(angle), radius=0.40
-            )
+        meshes[f"exhaust_chevron_{suffix}"] = serrated_nozzle(
+            x, 3.02, -0.53, radius=0.42
+        )
 
     # Conventional swept fin — tip owns the exact 12.42 m height.
     meshes["tail_fin"] = lofted_aerofoil(

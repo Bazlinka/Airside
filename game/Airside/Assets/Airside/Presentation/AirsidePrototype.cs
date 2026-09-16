@@ -15,7 +15,7 @@ namespace Airside.Presentation
         private AirportSimulation _simulation;
         private Transform[] _commercialAircraft;
         // Each commercial keeps a stable livery slot (0 = Coastline Regional blue,
-        // 1 = Emu Air teal) for its lifetime. Slots are keyed by AircraftId so a
+        // 1 = first traffic accent) for its lifetime. Slots are keyed by AircraftId so a
         // respawn-driven re-sort of the flight list can no longer repaint a plane
         // or leave two aircraft in the same livery.
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
@@ -286,14 +286,18 @@ namespace Airside.Presentation
             }
             else
             {
-                // The real Adelaide pavement owns its terminal shell even in the focused
-                // release world. Keep only its seven roof floods; the wider decorative
-                // lighting set (streetlights, ALS, beacon) remains excluded here.
+                // Operational YPAD lighting is not decoration. The focused release keeps
+                // real-metre runway edges, thresholds, PAPI and the runway 23 HIAL while
+                // omitting only landside/decorative lighting.
                 _apronLights = AirsideBareField.Enabled ? BuildApronLights() : Array.Empty<Light>();
                 _landsideLights = Array.Empty<Light>();
-                _thresholdLights = Array.Empty<Light>();
+                _thresholdLights = AirsideBareField.Enabled
+                    ? BuildYpadThresholdPapiAndApproachLights()
+                    : Array.Empty<Light>();
                 _alsLights = Array.Empty<Light>();
-                _runwayEdgeLights = Array.Empty<Light>();
+                _runwayEdgeLights = AirsideBareField.Enabled
+                    ? BuildYpadRunwayEdgeLights()
+                    : Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
             // Touchdown smoke is circuit presentation, independent of disabled world props.
@@ -501,6 +505,34 @@ namespace Airside.Presentation
             UpdateOpsAntenna();
             UpdateStarField();
             UpdateApronLife();
+            UpdateGateServicing();
+        }
+
+        /// <summary>Cycle a small GSE team around one parked terminal aircraft, kept on the apron.</summary>
+        private void UpdateGateServicing()
+        {
+            if (!FleetMode)
+                return;
+            FleetAircraft parked = null;
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (aircraft.State == FleetState.AtStand && AdelaideGround.IsTerminalGate(aircraft.Stand))
+                {
+                    parked = aircraft;
+                    break;
+                }
+            }
+            if (parked == null)
+                return;
+
+            var pose = AdelaideGround.StandPose(parked.Stand);
+            var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
+            var side = new Vector3(-nose.z, 0f, nose.x);
+            var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+            var cycle = (float)(_preciseTime % 120.0);
+            UpdateVehicle(_fuelTruck, cycle < 72f, stop - nose * 24f + side * 8f, stop - nose * 42f + side * 18f);
+            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f, stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
+            UpdateVehicle(_passengerBus, cycle >= 48f, stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
         }
 
         /// <summary>
@@ -696,9 +728,11 @@ namespace Airside.Presentation
 
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                ? fleetAircraft.Type : AircraftType.Atr42;
             var knots = FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
-                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f));
+                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type);
 
             var rect = layout.SpeedReadout;
             GUI.Box(rect, GUIContent.none, panel);
@@ -834,16 +868,20 @@ namespace Airside.Presentation
                     continue;
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
+                var aircraftType = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                    ? fleetAircraft.Type : AircraftType.Atr42;
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = FleetGroundPosition(flight, 0f) ?? PositionFor(phase, progress, route, lane);
+                var position = FleetGroundPosition(flight, 0f) ?? RunwayPosition(flight,
+                    PositionFor(phase, progress, route, lane, aircraftType));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
                 var next = FleetGroundPosition(flight, lookAhead)
-                           ?? PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane);
+                           ?? RunwayPosition(flight,
+                               PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane, aircraftType));
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -872,13 +910,17 @@ namespace Airside.Presentation
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
                 SpinJetFans(view, phase, engines);
-                RollLandingGearTires(view, phase, progress);
+                var viewParts = PartsFor(view);
+                UpdateNoseWheelSteering(viewParts.GearNose,
+                    FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
+                RollLandingGearTires(view, phase, progress, aircraftType);
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue,
                     PartsFor(view).HasSeparateElevators);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
-                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime, engines);
+                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime,
+                    PresentationClock, engines);
                 UpdateCabinDoor(view, phase, engines?.DoorsOpen);
                 UpdateCabinWindowGlow(view, phase, PresentationDaylight);
                 UpdateEngineHeat(view, phase, engines?.AnyRunning);
@@ -939,6 +981,7 @@ namespace Airside.Presentation
             var pitch = PhasePitchDegrees(phase, progress);
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
+            var wingFlex = AirsideReusableMotion.WingFlexDegrees(phase, progress);
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
             for (var childIndex = 0; childIndex < children.Length; childIndex++)
@@ -971,6 +1014,16 @@ namespace Airside.Presentation
                     var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
                     var target = Mathf.Clamp(bankDegrees * 0.8f * side, -18f, 18f);
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
+                    child.localEulerAngles = euler;
+                }
+                else if (childName is "Wing L" or "Wing R")
+                {
+                    // Flex the authored wing roots in opposite directions so both tips
+                    // rise under load. Keep the cue subtle and ease it between phases.
+                    var euler = child.localEulerAngles;
+                    var current = euler.z > 180f ? euler.z - 360f : euler.z;
+                    var side = childName == "Wing L" ? -1f : 1f;
+                    euler.z = Mathf.MoveTowards(current, wingFlex * side, deltaTime * 3.5f);
                     child.localEulerAngles = euler;
                 }
                 else if (childName is "Flap L" or "Flap R")
@@ -1117,7 +1170,7 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            EngineState? engines = null)
+            float presentationTime = 0f, EngineState? engines = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
@@ -1167,22 +1220,22 @@ namespace Airside.Presentation
                     euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
                     child.localEulerAngles = euler;
                 }
-                else if (childName.StartsWith("NavLight", StringComparison.Ordinal))
+                else if (AirsideAircraftParts.NavigationLightFor(childName) is var navigationLight
+                         && navigationLight != AircraftNavigationLight.None)
                 {
-                    var navOn = enginesOn || night;
+                    var navOn = AirsideReusableMotion.NavigationLightsOn(
+                        engines?.AnyRunning ?? enginesOn,
+                        engines?.Beacon ?? enginesOn);
                     child.gameObject.SetActive(navOn);
-                    EnsureNavPointLight(child, navOn, IsNavLightRight(childName));
+                    EnsureNavPointLight(child, navOn, navigationLight);
+                    if (navigationLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
+                        EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
                 }
                 else if (childName.StartsWith("Beacon", StringComparison.Ordinal))
                 {
-                    // ANM-AIR-004 — pulse from the presentation clock so pause freezes the blink.
-                    var beaconOn = engines?.Beacon ?? enginesOn;
-                    if (beaconOn && deltaTime > 0f)
-                        beaconOn = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
-                    else if (beaconOn)
-                        beaconOn = child.gameObject.activeSelf;
-                    child.gameObject.SetActive(beaconOn);
-                    EnsureBeaconPointLight(child, beaconOn);
+                    var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
+                    child.gameObject.SetActive(beacon > 0.01f);
+                    EnsureBeaconPointLight(child, beacon);
                 }
                 else if (childName.StartsWith("LandingLight", StringComparison.Ordinal))
                 {
@@ -1213,33 +1266,19 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
-        private static bool IsNavLightRight(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return false;
-            var lower = name.ToLowerInvariant();
-            if (lower.Contains("right") || lower.Contains("_r") || lower.EndsWith(" r") || lower.EndsWith("-r"))
-                return true;
-            if (lower.Contains("left") || lower.Contains("_l") || lower.EndsWith(" l") || lower.EndsWith("-l"))
-                return false;
-            // Exact trailing R/L after a separator — avoid matching bare "NavLight".
-            if (name.EndsWith(" R", StringComparison.Ordinal) || name.EndsWith("_R", StringComparison.Ordinal))
-                return true;
-            if (name.EndsWith(" L", StringComparison.Ordinal) || name.EndsWith("_L", StringComparison.Ordinal))
-                return false;
-            return false;
-        }
-
-        private static void EnsureNavPointLight(Transform lamp, bool on, bool isRight)
+        private static void EnsureNavPointLight(Transform lamp, bool on, AircraftNavigationLight kind)
         {
             var light = lamp.GetComponent<Light>();
             if (light == null)
             {
                 light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
-                light.color = isRight
-                    ? new Color(0.95f, 0.15f, 0.12f)
-                    : new Color(0.12f, 0.95f, 0.28f);
+                light.color = kind switch
+                {
+                    AircraftNavigationLight.Right => new Color(0.95f, 0.15f, 0.12f),
+                    AircraftNavigationLight.Tail => new Color(0.95f, 0.95f, 0.90f),
+                    _ => new Color(0.12f, 0.95f, 0.28f)
+                };
                 light.range = 8f;
                 light.shadows = LightShadows.None;
             }
@@ -1249,7 +1288,26 @@ namespace Airside.Presentation
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
 
-        private static void EnsureBeaconPointLight(Transform lamp, bool on)
+        private static void EnsureWingtipStrobe(Transform wingtip, float intensity)
+        {
+            var strobe = wingtip.Find("White strobe");
+            if (strobe == null)
+            {
+                strobe = new GameObject("White strobe").transform;
+                strobe.SetParent(wingtip, false);
+                var light = strobe.gameObject.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = new Color(0.92f, 0.96f, 1f);
+                light.range = 18f;
+                light.shadows = LightShadows.None;
+            }
+
+            var point = strobe.GetComponent<Light>();
+            point.enabled = intensity > 0.01f;
+            point.intensity = 12f * intensity;
+        }
+
+        private static void EnsureBeaconPointLight(Transform lamp, float intensity)
         {
             var light = lamp.GetComponent<Light>();
             if (light == null)
@@ -1261,9 +1319,8 @@ namespace Airside.Presentation
                 light.shadows = LightShadows.None;
             }
 
-            light.enabled = on;
-            if (on)
-                light.intensity = 2.6f;
+            light.enabled = intensity > 0.01f;
+            light.intensity = 2.6f * intensity;
         }
 
         /// <summary>
@@ -1445,7 +1502,7 @@ namespace Airside.Presentation
             var rpm = SpooledPropRpm(aircraft, targetRpm);
             if (rpm < 1f)
             {
-                ApplyPropBlur(aircraft, highRpm: false);
+                ApplyPropBlur(aircraft, 0f);
                 return;
             }
 
@@ -1453,7 +1510,7 @@ namespace Airside.Presentation
             var degrees = PresentationDeltaTime * rpm * 6f;
             if (degrees <= 0f)
                 return;
-            var highRpm = AirsideReusableMotion.PropBlurActive(rpm);
+            var blur = AirsideReusableMotion.PropBlurBlend(rpm);
             var namedChildren5 = AirsideNamedChildren.Get(aircraft);
             var childNames5 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex5 = 0; childIndex5 < namedChildren5.Length; childIndex5++)
@@ -1465,7 +1522,7 @@ namespace Airside.Presentation
                 if (!childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 child.Rotate(Vector3.forward, degrees, Space.Self);
-                ApplyPropBlurToHub(child, highRpm);
+                ApplyPropBlurToHub(child, blur);
             }
         }
 
@@ -1493,7 +1550,7 @@ namespace Airside.Presentation
                 if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 var rpm = childName.EndsWith(" L", StringComparison.Ordinal) ? left : right;
-                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurActive(rpm));
+                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurBlend(rpm));
                 if (rpm >= 1f)
                     child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }
@@ -1528,7 +1585,7 @@ namespace Airside.Presentation
                 if (fan == aircraft || !(names[i] is "Fan L" or "Fan R"))
                     continue;
                 var rpm = names[i] == "Fan L" ? left : right;
-                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurActive(rpm));
+                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurBlend(rpm));
                 if (rpm >= 1f && PresentationDeltaTime > 0f)
                     fan.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }
@@ -1562,7 +1619,7 @@ namespace Airside.Presentation
         /// <summary>
         /// At high RPM hide individual blades and show a translucent disc (Batch D life).
         /// </summary>
-        private static void ApplyPropBlur(Transform aircraft, bool highRpm)
+        private static void ApplyPropBlur(Transform aircraft, float blend)
         {
             var namedChildren7 = AirsideNamedChildren.Get(aircraft);
             var childNames7 = AirsideNamedChildren.Names(aircraft);
@@ -1572,39 +1629,49 @@ namespace Airside.Presentation
                 var childName = childNames7[childIndex7];
                 if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
-                ApplyPropBlurToHub(child, highRpm);
+                ApplyPropBlurToHub(child, blend);
             }
         }
 
-        private static void ApplyPropBlurToHub(Transform propeller, bool highRpm)
+        private static void ApplyPropBlurToHub(Transform propeller, float blend)
         {
+            blend = Mathf.Clamp01(blend);
+            var showBlades = blend < 0.92f;
             var selfRenderer = propeller.GetComponent<Renderer>();
             if (selfRenderer != null)
-                selfRenderer.enabled = !highRpm;
+                selfRenderer.enabled = showBlades;
 
             for (var i = 0; i < propeller.childCount; i++)
             {
                 var child = propeller.GetChild(i);
                 if (child.name == "PropDisc")
                 {
-                    child.gameObject.SetActive(highRpm);
+                    child.gameObject.SetActive(blend > 0.01f);
+                    var discRenderer = child.GetComponent<Renderer>();
+                    if (discRenderer != null)
+                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, 0.11f * blend));
                     continue;
                 }
 
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
-                    renderer.enabled = !highRpm;
+                    renderer.enabled = showBlades;
             }
         }
 
-        private static void ApplyJetFanBlurToHub(Transform fan, bool highRpm)
+        private static void ApplyJetFanBlurToHub(Transform fan, float blend)
         {
+            blend = Mathf.Clamp01(blend);
+            var showBlades = blend < 0.92f;
             for (var i = 0; i < fan.childCount; i++)
             {
                 var child = fan.GetChild(i);
                 if (child.name == "FanDisc")
                 {
-                    child.gameObject.SetActive(highRpm);
+                    child.gameObject.SetActive(blend > 0.01f);
+                    var discRenderer = child.GetComponent<Renderer>();
+                    if (discRenderer != null)
+                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, 0.18f * blend));
                     continue;
                 }
 
@@ -1612,15 +1679,15 @@ namespace Airside.Presentation
                 {
                     var renderer = child.GetComponent<Renderer>();
                     if (renderer != null)
-                        renderer.enabled = !highRpm;
+                        renderer.enabled = showBlades;
                 }
             }
         }
 
-        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress)
+        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress, AircraftType type)
         {
             // Distance travelled / radius — stops naturally when ground speed is zero.
-            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress);
+            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress, type);
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
@@ -1641,6 +1708,16 @@ namespace Airside.Presentation
                 if (degrees > 0f)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
+        }
+
+        private static void UpdateNoseWheelSteering(Transform noseGear, float targetDegrees, float deltaTime)
+        {
+            if (noseGear == null || deltaTime <= 0f)
+                return;
+            var euler = noseGear.localEulerAngles;
+            var current = euler.y > 180f ? euler.y - 360f : euler.y;
+            euler.y = Mathf.MoveTowards(current, targetDegrees, deltaTime * 80f);
+            noseGear.localEulerAngles = euler;
         }
 
         /// <summary>
@@ -1850,7 +1927,9 @@ namespace Airside.Presentation
 
             var operation = flight.Operation;
             var phase = operation.Phase;
-            var duration = AirsideFlightPath.PhaseSeconds(phase);
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                ? aircraft.Type : AircraftType.Atr42;
+            var duration = AirsideFlightPath.PhaseSeconds(phase, type);
             var progress = PhaseProgressNow(flight, duration);
 
             if (lookAheadSeconds <= 0f || duration <= 0f)
@@ -3973,6 +4052,8 @@ namespace Airside.Presentation
         /// </summary>
         private static Light[] BuildRunwayEdgePointLights()
         {
+            if (AirsideBareField.Enabled)
+                return BuildYpadRunwayEdgeLights();
             var lights = new System.Collections.Generic.List<Light>();
             var lightingKit = PreferArtKit(
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
@@ -4100,6 +4181,8 @@ namespace Airside.Presentation
         /// </summary>
         private static Light[] BuildThresholdApproachLights()
         {
+            if (AirsideBareField.Enabled)
+                return BuildYpadThresholdPapiAndApproachLights();
             var specs = new (Vector3 Pos, Color Color, float Range)[]
             {
                 // West threshold (09) — warm white bars + green wing-bar hint.
@@ -8109,6 +8192,12 @@ namespace Airside.Presentation
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsAirbusA321Neo(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA321Neo);
+            if (AircraftVisualProfiles.IsAirbusA350900(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA350900);
+            if (AircraftVisualProfiles.IsBoeing78710(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing78710);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -8146,6 +8235,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -8229,6 +8319,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -8288,18 +8379,25 @@ namespace Airside.Presentation
         private static Transform BuildNarrowbody7378(
             string name,
             Color accent,
-            string liveryDecalRelativePath = null)
+            string liveryDecalRelativePath = null,
+            AircraftVisualProfile? profileOverride = null)
         {
-            var profile = AircraftVisualProfiles.Boeing7378;
+            var profile = profileOverride ?? AircraftVisualProfiles.Boeing7378;
             var root = new GameObject(name).transform;
             AircraftVisualProfileComponent.Ensure(root, profile);
+            var a350 = profile.ArtRelativePath.EndsWith("mdl_a350_900_v01.gltf", StringComparison.Ordinal);
+            var boeing787 = profile.ArtRelativePath.EndsWith("mdl_787_10_v01.gltf", StringComparison.Ordinal);
 
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 profile.ArtRelativePath,
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => Boeing7378PartColor(kitName, accent),
+                kitName => a350
+                    ? AirbusA350900PartColor(kitName, accent)
+                    : boeing787
+                        ? Boeing78710PartColor(kitName, accent)
+                        : Boeing7378PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -8311,6 +8409,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 EnsureJetFanDiscs(root);
                 EnsureAircraftLod(root);
             }
@@ -8400,6 +8499,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
                 NestFlapParts(root);
+                NestWingMountedParts(root);
                 if (finalAtr42)
                 {
                     PolishFinalAtrMaterials(root);
@@ -8865,6 +8965,98 @@ namespace Airside.Presentation
                 || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
                 || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
                 return new Color(0.045f, 0.12f, 0.18f);
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? AirbusA350900PartColor(string kitName, Color accent)
+        {
+            // The A350's identity comes from its dark wraparound flight-deck mask,
+            // long pale composite wing and raked tips. Keep airline colour on the
+            // fin/rudder instead of reusing the narrowbody colour hierarchy.
+            if (kitName.StartsWith("cockpit_mask_", StringComparison.Ordinal))
+                return new Color(0.025f, 0.065f, 0.09f);
+            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
+                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return new Color(0.035f, 0.10f, 0.15f);
+            if (kitName.StartsWith("door_", StringComparison.Ordinal))
+                return new Color(0.89f, 0.92f, 0.94f);
+
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wingtip_left":
+                case "wingtip_right":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.72f, 0.76f, 0.80f);
+                case "engine_left":
+                case "engine_right":
+                case "pylon_left":
+                case "pylon_right":
+                    return new Color(0.88f, 0.91f, 0.93f);
+                case "nacelle_left":
+                case "nacelle_right":
+                case "intake_left":
+                case "intake_right":
+                    return new Color(0.48f, 0.52f, 0.56f);
+                case "tail_fin":
+                case "rudder":
+                    return accent;
+            }
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? Boeing78710PartColor(string kitName, Color accent)
+        {
+            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
+                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return new Color(0.035f, 0.10f, 0.15f);
+            if (kitName.StartsWith("door_", StringComparison.Ordinal))
+                return new Color(0.89f, 0.92f, 0.94f);
+
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wingtip_left":
+                case "wingtip_right":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.70f, 0.74f, 0.78f);
+                case "engine_left":
+                case "engine_right":
+                case "pylon_left":
+                case "pylon_right":
+                    return new Color(0.88f, 0.91f, 0.93f);
+                case "nacelle_left":
+                case "nacelle_right":
+                case "intake_left":
+                case "intake_right":
+                    return new Color(0.48f, 0.52f, 0.56f);
+                case "exhaust_chevron_left":
+                case "exhaust_chevron_right":
+                    return new Color(0.34f, 0.36f, 0.38f);
+                case "tail_fin":
+                case "rudder":
+                    return accent;
+            }
 
             return AircraftPartColor(kitName, accent);
         }
@@ -9417,6 +9609,92 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Make wing flex a proper rig rather than rotating only the wing skin. Authored
+        /// glTF mesh nodes arrive as siblings, so flaps, engines, props/fans, tip devices,
+        /// lights and wing-mounted main gear otherwise remain behind and visibly separate.
+        /// Articulated roots keep their own pivots and animations after reparenting.
+        /// </summary>
+        private static void NestWingMountedParts(Transform aircraft)
+        {
+            Transform wingL = null, wingR = null;
+            var attached = new List<(Transform Part, int Side)>();
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            for (var i = 0; i < children.Length; i++)
+            {
+                var child = children[i];
+                var childName = names[i];
+                if (childName == "Wing L")
+                {
+                    wingL = child;
+                    continue;
+                }
+                if (childName == "Wing R")
+                {
+                    wingR = child;
+                    continue;
+                }
+
+                var side = WingMountedSide(childName);
+                if (side != 0)
+                    attached.Add((child, side));
+            }
+
+            foreach (var item in attached)
+            {
+                var wing = item.Side < 0 ? wingL : wingR;
+                if (wing == null || item.Part.IsChildOf(wing))
+                    continue;
+                NestUnderProp(wing, item.Part, item.Part.name);
+            }
+
+            AirsideNamedChildren.Forget(aircraft);
+        }
+
+        private static int WingMountedSide(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return 0;
+            var lower = partName.ToLowerInvariant();
+            var attached = lower.StartsWith("wing root")
+                           || lower.StartsWith("wing fairing")
+                           || lower.StartsWith("wingtip")
+                           || lower.StartsWith("winglet")
+                           || lower.StartsWith("wing fence")
+                           || lower.StartsWith("static wick")
+                           || lower.StartsWith("flap ")
+                           || lower.StartsWith("aileron")
+                           || lower.StartsWith("spoiler")
+                           || lower.StartsWith("engine ")
+                           || lower.StartsWith("engineheat")
+                           || lower.StartsWith("pylon")
+                           || lower.StartsWith("nacelle")
+                           || lower.StartsWith("intake")
+                           || lower.StartsWith("exhaust")
+                           || lower.StartsWith("oil cooler")
+                           || lower.StartsWith("oil_cooler")
+                           || lower.StartsWith("cowl flap")
+                           || lower.StartsWith("propeller")
+                           || lower.StartsWith("fan ")
+                           || lower.StartsWith("gear fairing")
+                           || lower is "gear l" or "gear r"
+                           || lower.StartsWith("gear door")
+                           || lower.StartsWith("gear_door_inner")
+                           || lower.StartsWith("navlight")
+                           || lower.StartsWith("landinglight");
+            if (!attached)
+                return 0;
+
+            if (lower.EndsWith(" l") || lower.EndsWith(" left")
+                                          || lower.EndsWith("_l") || lower.EndsWith("_left"))
+                return -1;
+            if (lower.EndsWith(" r") || lower.EndsWith(" right")
+                                          || lower.EndsWith("_r") || lower.EndsWith("_right"))
+                return 1;
+            return 0;
+        }
+
+        /// <summary>
         /// Nest densified cargo bags under the first Cargo crate so bag unload bob carries them.
         /// </summary>
         private static void NestCargoBags(Transform vehicle)
@@ -9839,6 +10117,8 @@ namespace Airside.Presentation
             public Renderer ShadowRenderer;
             public Transform Marker;
             public Renderer MarkerRenderer;
+            public Transform GearNose;
+            public float WheelbaseMetres;
             /// <summary>Carries "Fan L"/"Fan R" turbofan assemblies (the 737).</summary>
             public bool HasFans;
             /// <summary>Carries separate "Elevator" meshes, so the tailplane itself stays still.</summary>
@@ -9865,6 +10145,7 @@ namespace Airside.Presentation
             // Both used to be rediscovered by scanning every child name on every frame.
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
+            Transform mainLeft = null, mainRight = null;
             for (var i = 0; i < names.Length; i++)
             {
                 if (children[i] == null)
@@ -9873,6 +10154,21 @@ namespace Airside.Presentation
                     parts.HasFans = true;
                 else if (names[i].StartsWith("Elevator", StringComparison.Ordinal))
                     parts.HasSeparateElevators = true;
+                else if (names[i] == "Gear nose")
+                    parts.GearNose = children[i];
+                else if (names[i] == "Gear L")
+                    mainLeft = children[i];
+                else if (names[i] == "Gear R")
+                    mainRight = children[i];
+            }
+            if (parts.GearNose != null && (mainLeft != null || mainRight != null))
+            {
+                var main = mainLeft != null && mainRight != null
+                    ? (mainLeft.position + mainRight.position) * 0.5f
+                    : (mainLeft != null ? mainLeft.position : mainRight.position);
+                var delta = parts.GearNose.position - main;
+                delta.y = 0f;
+                parts.WheelbaseMetres = delta.magnitude;
             }
             _aircraftViewParts[id] = parts;
             return parts;
@@ -11793,9 +12089,9 @@ namespace Airside.Presentation
                 (x: -40.5f, z: 11.5f, yaw: 85f),
                 (x: -27f, z: 11f, yaw: 110f)
             };
-            // Prefab GA reads heavier than greybox — three airframes keep the bay calm.
-            var hasGaPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_ga_v01");
-            var count = hasGaPrefab ? 3 : spots.Length;
+            // Fill all five authored tie-downs. These are background GA visitors, not
+            // airline stands, so they add airport life without consuming a fleet bay.
+            var count = spots.Length;
             for (var i = 0; i < count; i++)
             {
                 var spot = spots[i];
@@ -11993,7 +12289,8 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f,
+            AircraftType type = null)
         {
             // Every phase hands over where the previous one ended: landing rolls out to
             // the A1 entry TaxiIn starts from, taxi-out stops at the runway hold-short
@@ -12006,22 +12303,37 @@ namespace Airside.Presentation
                 t = 0.82f + (t - 0.82f) * 0.08f;
             return phase switch
             {
-                AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
-                AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
+                AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset, type),
+                AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset, type),
                 AircraftPhase.TaxiIn => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.AtStand => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
-                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX),
-                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX)
+                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type),
+                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type)
             };
+        }
+
+        private Vector3 RunwayPosition(CommercialFlight flight, Vector3 position)
+        {
+            if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                && aircraft.AssignedRunway == RunwayDirection.Runway23)
+                return new Vector3(-position.x, position.y, -position.z);
+            return position;
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)
         {
             // The tower clears one fleet arrival at a time, so there is never a number two.
             if (FleetMode)
-                return 0f;
+            {
+                // A hand-flown final is not pixel-perfect until it settles onto the
+                // centreline. AirsideFlightPath damps this offset through the flare.
+                var seed = StableRegistrationHash(flight.AircraftId);
+                var direction = (seed & 1) == 0 ? -1f : 1f;
+                var drift = Mathf.Sin((float)_preciseTime * 0.025f + seed * 0.001f) * 0.05f;
+                return direction * 0.14f + drift;
+            }
             if (VisualFlights.Count < 2)
                 return 0f;
             // Number-two / later flights take a parallel final left of centreline.

@@ -75,11 +75,17 @@ namespace Airside.Presentation
         public static string LayerNormalPath(int layer) =>
             $"Textures/Terrain/tx_ground_{LayerName(layer)}_normal_v01.png";
 
-        /// <summary>High mesh density; Medium may drop one step without losing the authored look.</summary>
-        public const int HighResolutionX = 97;
-        public const int HighResolutionZ = 65;
-        public const int MediumResolutionX = 65;
-        public const int MediumResolutionZ = 45;
+        public static string LayerMaskPath(int layer) =>
+            $"Textures/Terrain/tx_ground_{LayerName(layer)}_maskmap_v01.png";
+
+        /// <summary>
+        /// Material weights live on mesh vertices. This grid preserves the narrow authored
+        /// pavement shoulders instead of smearing them across the old ~35 m cells.
+        /// </summary>
+        public const int HighResolutionX = 225;
+        public const int HighResolutionZ = 161;
+        public const int MediumResolutionX = 161;
+        public const int MediumResolutionZ = 113;
 
         /// <summary>
         /// Distance to the nearest <b>pavement of any kind</b> — runways, taxi
@@ -193,12 +199,6 @@ namespace Airside.Presentation
             var metres = 0f;
             metres += (WarpedFbm(worldX, worldZ, 420f, 4211, 3) - 0.5f) * 1.8f;
             metres += (WarpedFbm(worldX, worldZ, 160f, 5323, 2) - 0.5f) * 0.55f;
-
-            // Soft boundary lip so the 3400 × 2309 m rectangle does not read as a board.
-            var edgeX = Math.Min(worldX - OriginX, OriginX + SizeX - worldX);
-            var edgeZ = Math.Min(worldZ - OriginZ, OriginZ + SizeZ - worldZ);
-            var edge = Math.Min(edgeX, edgeZ);
-            metres -= 2.4f * (1f - SmoothStep(0f, 85f, edge));
 
             return PavementNormalized + metres / SizeY;
         }

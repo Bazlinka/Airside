@@ -77,9 +77,30 @@ namespace Airside.Domain
             new Destination("PER", "Perth", "WA", -31.940, 115.967),
         };
 
+        /// <summary>International airports used by current Adelaide traffic.</summary>
+        public static readonly IReadOnlyList<Destination> International = new[]
+        {
+            new Destination("AKL", "Auckland", "New Zealand", -37.008, 174.792),
+            new Destination("CHC", "Christchurch", "New Zealand", -43.489, 172.532),
+            new Destination("DPS", "Denpasar (Bali)", "Indonesia", -8.748, 115.167),
+            new Destination("SIN", "Singapore", "Singapore", 1.364, 103.991),
+            new Destination("HKG", "Hong Kong", "Hong Kong", 22.308, 113.918),
+        };
+
+        public static IEnumerable<Destination> All
+        {
+            get
+            {
+                foreach (var destination in Australia)
+                    yield return destination;
+                foreach (var destination in International)
+                    yield return destination;
+            }
+        }
+
         public static bool TryFind(string code, out Destination destination)
         {
-            foreach (var candidate in Australia)
+            foreach (var candidate in All)
             {
                 if (string.Equals(candidate.Code, code, StringComparison.OrdinalIgnoreCase))
                 {

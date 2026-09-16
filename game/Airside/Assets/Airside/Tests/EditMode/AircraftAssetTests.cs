@@ -106,5 +106,77 @@ namespace Airside.Tests
                 Object.DestroyImmediate(material);
             }
         }
+
+        [Test]
+        public void A350900Kit_IsPurposeBuiltWidebodyWithCorrectEnvelopeAndParts()
+        {
+            var parent = new GameObject("a350-kit-test").transform;
+            try
+            {
+                Assert.That(ArtPresentationLoader.TryInstantiate(
+                    "Models/Aircraft/mdl_a350_900_v01.gltf", parent, out var root),
+                    Is.True, "the AIR-009 glTF kit should load");
+
+                var filters = root.GetComponentsInChildren<MeshFilter>(true);
+                Assert.That(filters.Length, Is.GreaterThan(220));
+                var bounds = filters[0].sharedMesh.bounds;
+                for (var i = 1; i < filters.Length; i++)
+                    bounds.Encapsulate(filters[i].sharedMesh.bounds);
+
+                Assert.That(bounds.size.x, Is.EqualTo(64.75f).Within(0.03f));
+                Assert.That(bounds.size.y, Is.EqualTo(17.05f).Within(0.03f));
+                Assert.That(bounds.size.z, Is.EqualTo(66.80f).Within(0.03f));
+                Assert.That(bounds.min.y, Is.EqualTo(0f).Within(0.02f));
+                Assert.That(bounds.max.z, Is.EqualTo(0f).Within(0.02f));
+
+                var transforms = root.GetComponentsInChildren<Transform>(true);
+                Assert.That(System.Array.Exists(transforms, t => t.name == "cockpit_mask_left"), Is.True);
+                Assert.That(System.Array.Exists(transforms, t => t.name == "wingtip_left"), Is.True);
+                Assert.That(System.Array.FindAll(transforms, t => t.name.StartsWith("tire_")).Length,
+                    Is.EqualTo(10), "A350-900 should carry twin nose and two four-wheel main bogies");
+                Assert.That(System.Array.FindAll(transforms, t => t.name.StartsWith("fan_blade_l")).Length,
+                    Is.EqualTo(18));
+            }
+            finally
+            {
+                Object.DestroyImmediate(parent.gameObject);
+            }
+        }
+
+        [Test]
+        public void Boeing78710Kit_HasOwnEnvelopeFlightDeckAndChevronNacelles()
+        {
+            var parent = new GameObject("787-kit-test").transform;
+            try
+            {
+                Assert.That(ArtPresentationLoader.TryInstantiate(
+                    "Models/Aircraft/mdl_787_10_v01.gltf", parent, out var root),
+                    Is.True, "the AIR-010 glTF kit should load");
+
+                var filters = root.GetComponentsInChildren<MeshFilter>(true);
+                Assert.That(filters.Length, Is.GreaterThan(220));
+                var bounds = filters[0].sharedMesh.bounds;
+                for (var i = 1; i < filters.Length; i++)
+                    bounds.Encapsulate(filters[i].sharedMesh.bounds);
+
+                Assert.That(bounds.size.x, Is.EqualTo(60.12f).Within(0.03f));
+                Assert.That(bounds.size.y, Is.EqualTo(17.02f).Within(0.03f));
+                Assert.That(bounds.size.z, Is.EqualTo(68.30f).Within(0.03f));
+                Assert.That(bounds.min.y, Is.EqualTo(0f).Within(0.02f));
+                Assert.That(bounds.max.z, Is.EqualTo(0f).Within(0.02f));
+
+                var transforms = root.GetComponentsInChildren<Transform>(true);
+                Assert.That(System.Array.FindAll(transforms, t => t.name.StartsWith("windscreen_")).Length,
+                    Is.EqualTo(4));
+                Assert.That(System.Array.Exists(transforms, t => t.name == "cockpit_mask_left"), Is.False);
+                Assert.That(System.Array.Exists(transforms, t => t.name == "exhaust_chevron_left"), Is.True);
+                Assert.That(System.Array.FindAll(transforms, t => t.name.StartsWith("tire_")).Length,
+                    Is.EqualTo(10));
+            }
+            finally
+            {
+                Object.DestroyImmediate(parent.gameObject);
+            }
+        }
     }
 }

@@ -17,7 +17,7 @@ fi
 # running the sync deleted tracked files and would have had Unity reissue fresh
 # GUIDs for every synced asset.
 mkdir -p "$dst"
-find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) -delete
+find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) -delete
 
 # Runtime loaders need glTF kits (+ bins), UI/surface PNGs, and the CC0 Terrain
 # layer maps used by the Adelaide bare-field ground mesh (ArtRuntimePaths).
@@ -28,15 +28,16 @@ while IFS= read -r -d '' file; do
   mkdir -p "$dst/$(dirname "$rel")"
   cp -f "$file" "$dst/$rel"
 done < <(find "$src" -type f \
-  \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) -print0)
+  \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) \
+  ! -name '* [0-9].*' -print0)
 
 # A source that was deleted or renamed leaves its old .meta behind; Unity warns about every
 # orphan on import. Remove metas for owned types whose file no longer exists.
 while IFS= read -r -d '' meta; do
   [[ -e "${meta%.meta}" ]] || rm -f "$meta"
-done < <(find "$dst" -type f \( -name '*.gltf.meta' -o -name '*.bin.meta' -o -name '*.png.meta' \) -print0)
+done < <(find "$dst" -type f \( -name '*.gltf.meta' -o -name '*.bin.meta' -o -name '*.png.meta' -o -name '*.jpg.meta' -o -name '*.jpeg.meta' \) -print0)
 
 # Count the synced art only; the old count included every .meta file as well.
-count="$(find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' \) | wc -l | tr -d ' ')"
+count="$(find "$dst" -type f \( -name '*.gltf' -o -name '*.bin' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) ! -name '* [0-9].*' | wc -l | tr -d ' ')"
 echo "Synced $count runtime art files → $dst"
 echo "Remember: Unity will generate .meta files for StreamingAssets on next Editor open."

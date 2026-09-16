@@ -14,11 +14,12 @@ namespace Airside.Simulation
     {
         /// <summary>
         /// 2 added <see cref="SavedAtUtcTicks"/> for away catch-up. 3 added
-        /// <see cref="EpochUtcTicks"/> for live real time. Older saves still load: a v2
+        /// <see cref="EpochUtcTicks"/> for live real time. 4 replaces the two fictional
+        /// AI operators with real Adelaide airlines. Older saves still load: a v2
         /// clock is aligned so the save moment reads as when it was saved, a v1 clock
         /// uses <see cref="AirlineClock.DefaultEpochUtc"/>.
         /// </summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 5;
 
         public int Version = CurrentVersion;
 
@@ -62,6 +63,8 @@ namespace Airside.Simulation
         public string ScheduledDestination;
         public long ScheduledDepartAt;
         public int CompletedTrips;
+        public string AssignedRunway;
+        public bool WentAroundThisTrip;
     }
 
     public static class AirlineSave
@@ -106,7 +109,9 @@ namespace Airside.Simulation
                     HasScheduled = a.Scheduled.HasValue,
                     ScheduledDestination = a.Scheduled?.Destination.Code ?? string.Empty,
                     ScheduledDepartAt = a.Scheduled?.DepartAt.ElapsedSeconds ?? 0,
-                    CompletedTrips = a.CompletedTrips
+                    CompletedTrips = a.CompletedTrips,
+                    AssignedRunway = a.AssignedRunway.ToString(),
+                    WentAroundThisTrip = a.WentAroundThisTrip
                 });
             }
 
@@ -137,18 +142,24 @@ namespace Airside.Simulation
             var airlines = new Dictionary<string, Airline>(StringComparer.Ordinal);
             foreach (var record in data.Airlines ?? new List<AirlineRecord>())
             {
+                if (data.Version <= 3 && record.Id == "EMU")
+                    continue;
                 Airline airline;
                 try
                 {
-                    airline = new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer);
+                    airline = data.Version <= 3 && record.Id == "WTB"
+                        ? Airline.VirginAustralia()
+                        : new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer);
                 }
                 catch (ArgumentException e)
                 {
                     throw new FormatException($"Airline '{record.Id}' is invalid: {e.Message}");
                 }
 
-                operations.AddAirline(airline);
+                if (!airlines.ContainsKey(airline.Id.Value))
+                    operations.AddAirline(airline);
                 airlines[record.Id] = airline;
+                airlines[airline.Id.Value] = airline;
             }
 
             if (operations.PlayerAirline == null)
@@ -156,9 +167,19 @@ namespace Airside.Simulation
 
             foreach (var record in data.Fleet ?? new List<AircraftRecord>())
             {
+                if (data.Version <= 3 && record.AirlineId == "EMU")
+                    continue;
                 if (!airlines.TryGetValue(record.AirlineId ?? string.Empty, out var airline))
                     throw new FormatException($"{record.Registration} belongs to unknown airline '{record.AirlineId}'.");
-                if (!AircraftType.TryFromId(record.TypeId, out var type))
+                // AIR-010 replaces the short-lived Singapore A350 placeholder that shipped in
+                // v5 saves. Keep the rotation's exact state, timing and stand while moving only
+                // that known registration/type pair onto the real 787-10 fleet entry.
+                var migrateSingapore787 = record.AirlineId == "SIA"
+                    && record.Registration == "9V-SMA"
+                    && record.TypeId == "A359";
+                var registration = migrateSingapore787 ? "9V-SCA" : record.Registration;
+                var typeId = migrateSingapore787 ? "B78X" : record.TypeId;
+                if (!AircraftType.TryFromId(typeId, out var type))
                     throw new FormatException($"{record.Registration} has unknown aircraft type '{record.TypeId}'.");
                 // Enum.TryParse also accepts numbers ("99") and comma lists, which yield values
                 // no state machine branch handles; only a declared state name is a state.
@@ -169,7 +190,7 @@ namespace Airside.Simulation
                     throw new FormatException($"{record.Registration} has unknown state '{record.State}'.");
 
                 operations.RestoreAircraft(
-                    record.Registration,
+                    data.Version <= 3 && record.AirlineId == "WTB" ? "VH-8IA" : registration,
                     airline,
                     type,
                     state,
@@ -183,10 +204,20 @@ namespace Airside.Simulation
                             new SimulationTime(record.ScheduledDepartAt))
                         : null,
                     record.CompletedTrips);
+                if (data.Version >= 5)
+                    operations.RestoreMovementData(registration,
+                        Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
+                            ? runway : RunwayDirection.Runway05,
+                        record.WentAroundThisTrip);
             }
 
             operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
             operations.Clock = ClockFor(data);
+            if (data.Version <= 4)
+            {
+                operations.AddMissingRegionalCarriers();
+                operations.AddMissingTerminalOperators();
+            }
             return operations;
         }
 

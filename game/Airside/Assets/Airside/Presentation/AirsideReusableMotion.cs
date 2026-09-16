@@ -21,6 +21,8 @@ namespace Airside.Presentation
         // against a 60 Hz frame (wagon-wheel), which read as broken rather than idle.
         // Slow spool / shutdown still shows the blades.
         public const float PropHighRpmThreshold = 380f;
+        public const float PropBlurFadeStartRpm = 180f;
+        public const float PropBlurFadeEndRpm = 520f;
 
         // ANM-AIR-001b turbofan presentation. These are fan RPMs (not N1 data):
         // deliberately modest visual values that make the 737 intake read alive at
@@ -32,12 +34,25 @@ namespace Airside.Presentation
         // Same idea as the props: taxi spool is already fast enough that individual
         // fan blades strobe; show the intake disc whenever the engine is at taxi-or-above.
         public const float JetFanHighRpmThreshold = 1400f;
+        public const float JetFanBlurFadeStartRpm = 700f;
+        public const float JetFanBlurFadeEndRpm = 1800f;
 
         /// <summary>True when individual blades should hide behind the translucent disc.</summary>
         public static bool PropBlurActive(float rpm) => rpm >= PropHighRpmThreshold;
 
         /// <summary>True when the 737 intake should show its restrained fan disc.</summary>
         public static bool JetFanBlurActive(float rpm) => rpm >= JetFanHighRpmThreshold;
+
+        /// <summary>0..1 overlap between visible blades and the motion-blur disc.</summary>
+        public static float PropBlurBlend(float rpm) => SmoothBand(rpm, PropBlurFadeStartRpm, PropBlurFadeEndRpm);
+
+        public static float JetFanBlurBlend(float rpm) => SmoothBand(rpm, JetFanBlurFadeStartRpm, JetFanBlurFadeEndRpm);
+
+        private static float SmoothBand(float value, float from, float to)
+        {
+            var t = Mathf.Clamp01((value - from) / (to - from));
+            return t * t * (3f - 2f * t);
+        }
 
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;
@@ -52,6 +67,51 @@ namespace Airside.Presentation
         // ANM-AIR-004 nav/beacon pulse
         public const float BeaconHz = 1.4f;
         public const float NavSteady = 1f;
+        public const float StrobeCycleSeconds = 1.2f;
+
+        /// <summary>Position lamps require a powered aircraft, not merely darkness.</summary>
+        public static bool NavigationLightsOn(bool enginesRunning, bool beaconOn) =>
+            enginesRunning || beaconOn;
+
+        /// <summary>White strobes operate from runway entry until runway exit.</summary>
+        public static bool StrobesOn(AircraftPhase phase) => phase is
+            AircraftPhase.Takeoff or AircraftPhase.Departed or AircraftPhase.Approach or AircraftPhase.Landing;
+
+        /// <summary>Two short white flashes per cycle, shared by both wingtips.</summary>
+        public static float StrobeIntensity(AircraftPhase phase, float presentationSeconds)
+        {
+            if (!StrobesOn(phase))
+                return 0f;
+            var cycle = Mathf.Repeat(presentationSeconds, StrobeCycleSeconds);
+            return cycle < 0.065f || cycle is >= 0.16f and < 0.225f ? 1f : 0f;
+        }
+
+        /// <summary>Soft, brief red anti-collision pulse instead of a square on/off blink.</summary>
+        public static float BeaconIntensity(bool commandedOn, float presentationSeconds)
+        {
+            if (!commandedOn)
+                return 0f;
+            var wave = Mathf.Max(0f, Mathf.Sin(presentationSeconds * BeaconHz * Mathf.PI * 2f));
+            return wave * wave * wave * wave;
+        }
+
+        /// <summary>
+        /// Ackermann-style nose-wheel angle from the aircraft heading change over a short
+        /// path sample. Wheelbase comes from the loaded model's gear pivots.
+        /// </summary>
+        public static float NoseWheelSteerDegrees(float currentNoseX, float currentNoseZ,
+            float futureNoseX, float futureNoseZ, float speedMetresPerSecond, float lookAheadSeconds,
+            float wheelbaseMetres, bool tailFirst)
+        {
+            if (speedMetresPerSecond < 0.2f || lookAheadSeconds <= 0f || wheelbaseMetres <= 0f)
+                return 0f;
+            var cross = currentNoseZ * futureNoseX - currentNoseX * futureNoseZ;
+            var dot = Mathf.Clamp(currentNoseX * futureNoseX + currentNoseZ * futureNoseZ, -1f, 1f);
+            var headingRadians = Mathf.Atan2(cross, dot);
+            var arcMetres = Mathf.Max(0.5f, speedMetresPerSecond * lookAheadSeconds);
+            var steer = Mathf.Atan(wheelbaseMetres * headingRadians / arcMetres) * Mathf.Rad2Deg;
+            return Mathf.Clamp(tailFirst ? -steer : steer, -65f, 65f);
+        }
 
         // ANM-VEH wheel spin scale (presentation)
         public const float VehicleWheelRpmTaxi = 180f;
@@ -250,6 +310,30 @@ namespace Airside.Presentation
                 AircraftPhase.Landing => t < 0.6f
                     ? 22f
                     : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, t)),
+                _ => 0f
+            };
+        }
+
+        /// <summary>
+        /// Small visual wing-load cue in degrees. Flex builds only after rotation,
+        /// remains present while airborne, and unloads promptly once the mains settle.
+        /// This is deliberately restrained: it should make the silhouette breathe,
+        /// not turn the wing into rubber.
+        /// </summary>
+        public static float WingFlexDegrees(AircraftPhase phase, float progress01 = 1f)
+        {
+            var t = Mathf.Clamp01(progress01);
+            return phase switch
+            {
+                AircraftPhase.Takeoff => 1.45f * Mathf.SmoothStep(0f, 1f,
+                    Mathf.InverseLerp(AirsideFlightPath.RotateProgress, 1f, t)),
+                AircraftPhase.Departed => 1.25f,
+                AircraftPhase.Approach => Mathf.Lerp(1.1f, 0.85f, t),
+                AircraftPhase.Landing => t < AirsideFlightPath.TouchdownProgress
+                    ? 0.85f
+                    : Mathf.Lerp(0.85f, 0f, Mathf.InverseLerp(
+                        AirsideFlightPath.TouchdownProgress,
+                        Mathf.Min(1f, AirsideFlightPath.TouchdownProgress + 0.14f), t)),
                 _ => 0f
             };
         }

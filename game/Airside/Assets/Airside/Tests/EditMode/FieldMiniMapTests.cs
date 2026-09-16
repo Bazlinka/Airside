@@ -100,6 +100,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ViewChevron_IsCompactAndPointsInTheCameraDirection()
+        {
+            var map = new Rect(10f, 20f, 280f, 120f);
+            var centre = new Vector2(100f, 80f);
+            FieldMiniMap.ViewChevron(map, centre, Vector2.right, out var tip, out var left, out var right);
+
+            Assert.That(tip.x, Is.GreaterThan(centre.x));
+            Assert.That(left.x, Is.LessThan(centre.x));
+            Assert.That(right.x, Is.LessThan(centre.x));
+            Assert.That(Vector2.Distance(centre, tip), Is.EqualTo(18f).Within(0.01f));
+            Assert.That(Vector2.Distance(left, right), Is.EqualTo(14f).Within(0.01f));
+            Assert.That(map.Contains(tip) && map.Contains(left) && map.Contains(right), Is.True);
+        }
+
+        [Test]
         public void NearestDot_PicksTheClosestWithinRadius()
         {
             var dots = new List<Vector2> { new(0f, 0f), new(6f, 0f), new(40f, 0f) };

@@ -10,15 +10,15 @@ namespace Airside.Tests
     public sealed class AiTimetableTests
     {
         [Test]
-        public void EmuAir_FliesItsRegionalNetworkInsideOperatingHours()
+        public void Rex_FliesItsRegionalNetworkInsideOperatingHours()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             // Start just before midnight in Adelaide so the first turnarounds land at night.
             var utc = new DateTime(2026, 9, 14, 14, 20, 0, DateTimeKind.Utc);
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(99),
                 Airline.Player("Test Air", "#C8102E"), AirlineClock.Aligned(clock.Now, utc));
-            var emu = ops.Airlines.First(a => !a.IsPlayer);
-            var network = new HashSet<string>(AirlineOperations.AiNetwork.Select(n => n.Code));
+            var emu = ops.Airlines.First(a => a.Id.Value == "REX");
+            var network = new HashSet<string>(AirlineOperations.RexNetwork.Select(n => n.Code));
 
             var previous = ops.FleetOf(emu).ToDictionary(a => a.Registration, a => a.State);
             var departures = 0;
@@ -45,7 +45,7 @@ namespace Airside.Tests
                 }
             }
 
-            Assert.That(departures, Is.GreaterThan(6), "Emu Air should keep flying across four days");
+            Assert.That(departures, Is.GreaterThan(6), "Rex should keep flying across four days");
         }
 
         [Test]

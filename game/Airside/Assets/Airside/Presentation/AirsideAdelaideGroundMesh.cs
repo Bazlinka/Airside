@@ -15,7 +15,7 @@ namespace Airside.Presentation
         public const string ObjectName = AirsideBareField.GroundObjectName;
         public const string FarDetailKeyword = "_GROUND_FAR_DETAIL";
         public const float MacroScaleMetres = 240f;
-        public const float MacroStrength = 0.14f;
+        public const float MacroStrength = 0.08f;
         public const float FarBlendStartMetres = 120f;
         public const float FarBlendEndMetres = 900f;
 
@@ -43,7 +43,9 @@ namespace Airside.Presentation
             var renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = BuildMaterial()
                 ?? BuildFallbackMaterial();
-            renderer.shadowCastingMode = ShadowCastingMode.On;
+            // The ground only receives shadows. Casting from its lowered outer lip draws a
+            // rectangular line onto the surroundings beneath it in the overview camera.
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             return true;
         }
@@ -134,9 +136,9 @@ namespace Airside.Presentation
             if (shader == null)
                 return null;
 
-            var dry = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, normal: false);
-            var green = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, normal: false);
-            var dirt = LoadGroundMap(AirsideAdelaideGround.LayerWornDirt, normal: false);
+            var dry = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, GroundMap.Basecolor);
+            var green = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, GroundMap.Basecolor);
+            var dirt = LoadGroundMap(AirsideAdelaideGround.LayerWornDirt, GroundMap.Basecolor);
             if (dry == null || green == null || dirt == null)
                 return null;
 
@@ -144,19 +146,37 @@ namespace Airside.Presentation
             material.SetTexture("_DryAlbedo", dry);
             material.SetTexture("_GreenAlbedo", green);
             material.SetTexture("_DirtAlbedo", dirt);
+            var satellite = AirsideArtTextures.Load(
+                AirsideAdelaideSurroundings.SatelliteTexturePath, wrap: TextureWrapMode.Clamp);
+            if (satellite != null)
+                material.SetTexture("_SatelliteAlbedo", satellite);
+            material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
+            material.SetFloat("_SatelliteStrength", satellite != null ? 0.92f : 0f);
+            material.SetFloat("_SatelliteEdgeBlend", 1050f);
+            material.SetFloat("_GroundHalfX", AirsideAdelaideGround.SizeX * 0.5f);
+            material.SetFloat("_GroundHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
+            material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
 
-            var dryN = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, normal: true);
-            var greenN = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, normal: true);
-            var dirtN = LoadGroundMap(AirsideAdelaideGround.LayerWornDirt, normal: true);
+            var dryN = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, GroundMap.Normal);
+            var greenN = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, GroundMap.Normal);
+            var dirtN = LoadGroundMap(AirsideAdelaideGround.LayerWornDirt, GroundMap.Normal);
             if (dryN != null) material.SetTexture("_DryNormal", dryN);
             if (greenN != null) material.SetTexture("_GreenNormal", greenN);
             if (dirtN != null) material.SetTexture("_DirtNormal", dirtN);
 
+            var dryM = LoadGroundMap(AirsideAdelaideGround.LayerDryGrass, GroundMap.Mask);
+            var greenM = LoadGroundMap(AirsideAdelaideGround.LayerGreenGrass, GroundMap.Mask);
+            var dirtM = LoadGroundMap(AirsideAdelaideGround.LayerWornDirt, GroundMap.Mask);
+            if (dryM != null) material.SetTexture("_DryMask", dryM);
+            if (greenM != null) material.SetTexture("_GreenMask", greenM);
+            if (dirtM != null) material.SetTexture("_DirtMask", dirtM);
+
             material.SetFloat("_DryTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerDryGrass));
             material.SetFloat("_GreenTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerGreenGrass));
             material.SetFloat("_DirtTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerWornDirt));
-            material.SetFloat("_BumpScale", 0.55f);
-            material.SetFloat("_Smoothness", 0.1f);
+            material.SetFloat("_BumpScale", 0.42f);
+            // Multiplies each source mask's restrained smoothness (roughly 0.27–0.45).
+            material.SetFloat("_Smoothness", 0.28f);
             // Albedo multiplier under a ~2.0 daytime sun; matches the URP Lit fallback's brightness.
             material.SetColor("_Tint", new Color(0.59f, 0.61f, 0.55f, 1f));
             material.SetFloat("_MacroScale", MacroScaleMetres);
@@ -185,12 +205,17 @@ namespace Airside.Presentation
                     AirsideBareField.GroundWidthMetres / 37f));
         }
 
-        private static Texture2D LoadGroundMap(int layer, bool normal)
+        private enum GroundMap { Basecolor, Normal, Mask }
+
+        private static Texture2D LoadGroundMap(int layer, GroundMap map)
         {
-            var path = normal
-                ? AirsideAdelaideGround.LayerNormalPath(layer)
-                : AirsideAdelaideGround.LayerBasecolorPath(layer);
-            return AirsideArtTextures.Load(path, linear: normal);
+            var path = map switch
+            {
+                GroundMap.Normal => AirsideAdelaideGround.LayerNormalPath(layer),
+                GroundMap.Mask => AirsideAdelaideGround.LayerMaskPath(layer),
+                _ => AirsideAdelaideGround.LayerBasecolorPath(layer)
+            };
+            return AirsideArtTextures.Load(path, linear: map != GroundMap.Basecolor);
         }
     }
 }

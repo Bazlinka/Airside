@@ -60,7 +60,7 @@ namespace Airside.Tests
                     if (aircraft.StateEndsAt.HasValue)
                         continue;
                     // Parked overnight with the first flight of the day booked is a schedule,
-                    // not a stall — Emu Air only departs 06:00–21:00 — as long as it is booked.
+                    // not a stall — AI operators only depart 06:00–21:00 — as long as it is booked.
                     if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
                     {
                         Assert.That(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - clock.Now.ElapsedSeconds,
@@ -73,7 +73,9 @@ namespace Airside.Tests
             }
 
             foreach (var aircraft in ops.Fleet)
-                Assert.That(aircraft.CompletedTrips, Is.GreaterThan(Days * 2), $"{aircraft.Registration} flew too few trips");
+                Assert.That(aircraft.CompletedTrips,
+                    Is.GreaterThan(aircraft.Type.Id is "A359" or "B78X" ? Days : Days * 2),
+                    $"{aircraft.Registration} flew too few trips");
 
             Assert.That(events, Is.LessThan(200_000), "event count stays bounded");
         }

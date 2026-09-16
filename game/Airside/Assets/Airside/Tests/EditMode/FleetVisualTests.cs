@@ -66,9 +66,10 @@ namespace Airside.Tests
 
             // Each drawn airborne phase lasts exactly the circuit's duration, so the flown
             // curves hand over seamlessly.
-            Assert.That(departedAt.Value.ElapsedSeconds - takeoffPhaseAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.TakeoffSeconds));
-            Assert.That(landingAt.Value.ElapsedSeconds - approachAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.ApproachSeconds));
-            Assert.That(vacateAt.Value.ElapsedSeconds - landingAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.LandingSeconds));
+            var performance = AircraftPerformance.For(plane.Type);
+            Assert.That(departedAt.Value.ElapsedSeconds - takeoffPhaseAt.Value.ElapsedSeconds, Is.EqualTo(performance.TakeoffSeconds));
+            Assert.That(landingAt.Value.ElapsedSeconds - approachAt.Value.ElapsedSeconds, Is.EqualTo(performance.ApproachSeconds));
+            Assert.That(vacateAt.Value.ElapsedSeconds - landingAt.Value.ElapsedSeconds, Is.EqualTo(performance.LandingSeconds));
             Assert.That(hiddenSeconds, Is.GreaterThan(3600), "the Kingscote legs are flown off the map");
         }
 
@@ -86,12 +87,12 @@ namespace Airside.Tests
             ops.ScheduleDeparture(first, kingscote, new SimulationTime(0));
             ops.ScheduleDeparture(second, kingscote, new SimulationTime(0));
 
-            // Both push back at 0 from neighbouring bays; run until both have reached the hold.
-            var both = System.Math.Max(AirlineOperations.TaxiOutSecondsFrom(first.Stand), AirlineOperations.TaxiOutSecondsFrom(second.Stand));
-            clock.Set(new SimulationTime(both + 5));
+            // Ground releases the neighbour one minute later; inspect once it reaches the queue.
+            var secondAtHold = AirlineOperations.TaxiReleaseSeparationSeconds
+                               + AirlineOperations.TaxiOutSecondsFrom(second.Stand);
+            clock.Set(new SimulationTime(secondAtHold + 5));
             ops.Update();
 
-            Assert.That(FleetVisual.For(first, clock.Now).Leg, Is.EqualTo(FleetGroundLeg.Lineup));
             var waiting = FleetVisual.For(second, clock.Now);
             Assert.That(waiting.Leg, Is.EqualTo(FleetGroundLeg.HoldingShort));
             Assert.That(waiting.Phase, Is.EqualTo(AircraftPhase.TaxiOut), "engines stay running at the hold");
@@ -114,8 +115,13 @@ namespace Airside.Tests
                 ops.ScheduleDeparture(plane, kingscote, new SimulationTime(0));
 
             long longest = 0;
+            var releaseIndex = 0;
             foreach (var plane in new[] { a, b, c })
-                longest = System.Math.Max(longest, AirlineOperations.TaxiOutSecondsFrom(plane.Stand));
+            {
+                longest = System.Math.Max(longest, releaseIndex * AirlineOperations.TaxiReleaseSeparationSeconds
+                                                   + AirlineOperations.TaxiOutSecondsFrom(plane.Stand));
+                releaseIndex++;
+            }
             clock.Set(new SimulationTime(longest + 5));
             ops.Update();
 

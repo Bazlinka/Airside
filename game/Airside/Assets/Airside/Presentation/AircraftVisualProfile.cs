@@ -85,6 +85,47 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.62f,
             noseTireRadiusMetres: 0.55f);
 
+        // AIR-008: A321neo-class international narrowbody. Like the 737 kit its
+        // authored origin is the nose-stop datum and its tyres sit at local y=0.
+        public static readonly AircraftVisualProfile AirbusA321Neo = new(
+            artRelativePath: "Models/Aircraft/mdl_a321neo_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -22.255f),
+            pickSizeMetres: new Vector3(40f, 14f, 48f),
+            pickCentreYMetres: 5.9f,
+            shadowWidthMetres: 34f,
+            shadowDepthMetres: 44f,
+            selectionMarkerDiameterMetres: 46f,
+            followDistanceMultiplier: 1.7f,
+            mainTireRadiusMetres: 0.59f,
+            noseTireRadiusMetres: 0.52f);
+
+        public static readonly AircraftVisualProfile AirbusA350900 = new(
+            artRelativePath: "Models/Aircraft/mdl_a350_900_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -33.40f),
+            pickSizeMetres: new Vector3(68f, 20f, 72f),
+            pickCentreYMetres: 8.5f,
+            shadowWidthMetres: 63f,
+            shadowDepthMetres: 66f,
+            selectionMarkerDiameterMetres: 69f,
+            followDistanceMultiplier: 2.4f,
+            mainTireRadiusMetres: 0.70f,
+            noseTireRadiusMetres: 0.55f);
+
+        public static readonly AircraftVisualProfile Boeing78710 = new(
+            artRelativePath: "Models/Aircraft/mdl_787_10_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -34.15f),
+            pickSizeMetres: new Vector3(64f, 20f, 74f),
+            pickCentreYMetres: 8.5f,
+            shadowWidthMetres: 59f,
+            shadowDepthMetres: 68f,
+            selectionMarkerDiameterMetres: 65f,
+            followDistanceMultiplier: 2.45f,
+            mainTireRadiusMetres: 0.70f,
+            noseTireRadiusMetres: 0.55f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -121,6 +162,12 @@ namespace Airside.Presentation
         {
             if (type != null && type.Id == AircraftType.Boeing7378.Id)
                 return Boeing7378;
+            if (type != null && type.Id == AircraftType.AirbusA321Neo.Id)
+                return AirbusA321Neo;
+            if (type != null && type.Id == AircraftType.AirbusA350900.Id)
+                return AirbusA350900;
+            if (type != null && type.Id == AircraftType.Boeing78710.Id)
+                return Boeing78710;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)
@@ -131,11 +178,74 @@ namespace Airside.Presentation
         public static bool IsBoeing7378(AircraftType type) =>
             type != null && type.Id == AircraftType.Boeing7378.Id;
 
+        public static bool IsAirbusA321Neo(AircraftType type) =>
+            type != null && type.Id == AircraftType.AirbusA321Neo.Id;
+
+        public static bool IsAirbusA350900(AircraftType type) =>
+            type != null && type.Id == AircraftType.AirbusA350900.Id;
+
+        public static bool IsBoeing78710(AircraftType type) =>
+            type != null && type.Id == AircraftType.Boeing78710.Id;
+
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;
 
         public static bool IsSaab340(AircraftType type) =>
             type != null && type.Id == AircraftType.Saab340.Id;
+    }
+
+    /// <summary>
+    /// Local-space placement for the painted operator title and registration on an
+    /// aircraft's two fuselage sides. The authored 737 uses a nose-stop origin while
+    /// the turboprops use a centred origin, so one generic offset cannot fit them all.
+    /// </summary>
+    public readonly struct AircraftIdentityMarkingLayout
+    {
+        public AircraftIdentityMarkingLayout(
+            float sideX,
+            float operatorY,
+            float operatorZ,
+            float registrationY,
+            float registrationZ,
+            float operatorCharacterSize,
+            float registrationCharacterSize)
+        {
+            SideX = sideX;
+            OperatorY = operatorY;
+            OperatorZ = operatorZ;
+            RegistrationY = registrationY;
+            RegistrationZ = registrationZ;
+            OperatorCharacterSize = operatorCharacterSize;
+            RegistrationCharacterSize = registrationCharacterSize;
+        }
+
+        public float SideX { get; }
+        public float OperatorY { get; }
+        public float OperatorZ { get; }
+        public float RegistrationY { get; }
+        public float RegistrationZ { get; }
+        public float OperatorCharacterSize { get; }
+        public float RegistrationCharacterSize { get; }
+    }
+
+    public static class AircraftIdentityMarkings
+    {
+        public static AircraftIdentityMarkingLayout For(AircraftType type)
+        {
+            if (AircraftVisualProfiles.IsBoeing7378(type))
+                return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
+            if (AircraftVisualProfiles.IsAirbusA321Neo(type))
+                return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
+            if (AircraftVisualProfiles.IsAirbusA350900(type))
+                return new AircraftIdentityMarkingLayout(3.04f, 6.58f, -13.0f, 6.40f, -55.0f, 0.30f, 0.17f);
+            if (AircraftVisualProfiles.IsBoeing78710(type))
+                return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -13.5f, 6.28f, -56.0f, 0.30f, 0.17f);
+            if (AircraftVisualProfiles.IsDash8Q400(type))
+                return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
+            if (AircraftVisualProfiles.IsSaab340(type))
+                return new AircraftIdentityMarkingLayout(1.22f, 1.48f, 3.1f, 1.42f, -5.7f, 0.13f, 0.085f);
+            return new AircraftIdentityMarkingLayout(0.88f, 1.48f, 3.3f, 1.40f, -5.2f, 0.13f, 0.085f);
+        }
     }
 
     /// <summary>

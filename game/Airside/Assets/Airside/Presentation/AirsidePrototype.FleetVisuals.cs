@@ -8,7 +8,6 @@ namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
-        private const string EmuAirDecal = "Textures/Decals/dc_livery_emu_air_v01.png";
         private const string PlayerDecalTemplate = "Textures/Decals/dc_livery_airside_traffic_v01.png";
 
         private readonly List<CommercialFlight> _fleetFlights = new();
@@ -31,7 +30,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Rebuild the drawn flights from the fleets. Player aircraft come first so
-        /// Follow picks your aircraft before Emu Air's.
+        /// Follow picks your aircraft before the AI traffic.
         /// </summary>
         private void RefreshFleetFlights()
         {
@@ -126,22 +125,59 @@ namespace Airside.Presentation
                 // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
-                        FleetVisual.QueueSlot(_operations.Fleet, aircraft));
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway);
                 case FleetGroundLeg.AwaitingStand:
                     return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft));
                 default:
                 {
                     var leg = visual.Leg switch
                     {
-                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand),
-                        FleetGroundLeg.Lineup => AdelaideGround.Lineup,
-                        FleetGroundLeg.Vacate => AdelaideGround.Vacate,
-                        _ => AdelaideGround.TaxiIn(aircraft.Stand)
+                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway),
+                        FleetGroundLeg.Lineup => AdelaideGround.LineupFor(aircraft.AssignedRunway),
+                        FleetGroundLeg.Vacate => AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway),
+                        _ => AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type)
                     };
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
                     var scale = visual.LegSeconds > 0 ? leg.Seconds / visual.LegSeconds : 1.0;
-                    return leg.PoseAt(elapsed * scale);
+                    return HumanGroundPose(aircraft, visual.Leg, leg.PoseAt(elapsed * scale));
                 }
+            }
+        }
+
+        /// <summary>
+        /// Small, smooth tracking corrections keep taxiing from looking rail-guided.
+        /// They are deterministic per registration, stay well inside the pavement and
+        /// disappear when stopped; there is no frame-to-frame random wobble.
+        /// </summary>
+        private GroundPose HumanGroundPose(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose pose)
+        {
+            if (pose.Speed < 0.5f || leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
+                return pose;
+
+            var seed = StableRegistrationHash(aircraft.Registration);
+            var phase = (seed % 997) * 0.013f;
+            var wave = Mathf.Sin((float)_preciseTime * 0.12f + phase)
+                       + 0.35f * Mathf.Sin((float)_preciseTime * 0.037f + phase * 1.7f);
+            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.08f : 0.22f);
+            var normalX = -pose.NoseZ;
+            var normalZ = pose.NoseX;
+            var headingBias = Mathf.Sin((float)_preciseTime * 0.09f + phase * 0.7f) * 0.7f * Mathf.Deg2Rad;
+            var cos = Mathf.Cos(headingBias);
+            var sin = Mathf.Sin(headingBias);
+            var noseX = pose.NoseX * cos + pose.NoseZ * sin;
+            var noseZ = -pose.NoseX * sin + pose.NoseZ * cos;
+            return new GroundPose(pose.X + normalX * offset, pose.Z + normalZ * offset,
+                noseX, noseZ, pose.Speed, pose.TailFirst);
+        }
+
+        private static int StableRegistrationHash(string value)
+        {
+            unchecked
+            {
+                var hash = 23;
+                foreach (var ch in value ?? string.Empty)
+                    hash = hash * 31 + ch;
+                return hash & int.MaxValue;
             }
         }
 
@@ -175,6 +211,22 @@ namespace Airside.Presentation
             return FleetGroundPose(aircraft, visual, 0f).Speed;
         }
 
+        /// <summary>Visual steering angle from the current and near-future authored taxi poses.</summary>
+        private float FleetNoseWheelSteering(CommercialFlight flight, float wheelbaseMetres)
+        {
+            if (!TryFleetGround(flight, out var aircraft, out var visual)
+                || visual.Leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn
+                    or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
+                return 0f;
+
+            const float lookAhead = 1.5f;
+            var current = FleetGroundPose(aircraft, visual, 0f);
+            var future = FleetGroundPose(aircraft, visual, lookAhead);
+            return AirsideReusableMotion.NoseWheelSteerDegrees(
+                current.NoseX, current.NoseZ, future.NoseX, future.NoseZ,
+                current.Speed, lookAhead, wheelbaseMetres, current.TailFirst);
+        }
+
         /// <summary>Where the nose points on a ground leg — tail-first on the pushback, parked heading at the bay.</summary>
         private Vector3 FleetGroundFacing(CommercialFlight flight, Vector3 travel)
         {
@@ -193,15 +245,14 @@ namespace Airside.Presentation
 
             var airline = aircraft.Airline;
             var accent = AirsideTheme.FromHex(airline.LiveryHex);
-            var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent,
-                airline.Id.Value == "EMU" ? EmuAirDecal : null);
+            var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent, null);
 
-            if (airline.IsPlayer)
-            {
-                var decal = TintedPlayerDecal(airline.LiveryHex, accent);
-                if (decal != null)
-                    ApplyLiveryTexture(view, decal);
-            }
+            // The same neutral skin sheet works across every authored type. Repainting
+            // it here gives AI traffic a coherent operator colour instead of leaving
+            // Rex, QantasLink and Virgin in the old generic blue traffic texture.
+            var decal = TintedLiveryDecal(airline.LiveryHex, accent);
+            if (decal != null)
+                ApplyLiveryTexture(view, decal);
 
             var namedChildren1 = AirsideNamedChildren.Get(view);
             var childNames1 = AirsideNamedChildren.Names(view);
@@ -216,6 +267,8 @@ namespace Airside.Presentation
                     SetRendererColor(renderer, accent);
             }
 
+            EnsureAircraftIdentityMarkings(view, aircraft, accent);
+
             return view;
         }
 
@@ -223,7 +276,7 @@ namespace Airside.Presentation
         /// The neutral traffic livery with its blue bands repainted in the player's
         /// colour: darker blues take the colour, lighter ones a paler tint of it.
         /// </summary>
-        private Texture2D TintedPlayerDecal(string hex, Color accent)
+        private Texture2D TintedLiveryDecal(string hex, Color accent)
         {
             if (_tintedDecals.TryGetValue(hex, out var cached))
                 return cached;
@@ -261,6 +314,86 @@ namespace Airside.Presentation
 
             _tintedDecals[hex] = tinted;
             return tinted;
+        }
+
+        /// <summary>
+        /// Add readable, depth-tested operator and registration paint to both sides of
+        /// the fuselage. TextMesh is used as geometry rather than a screen overlay so
+        /// the marks correctly disappear behind wings, buildings and the aircraft body.
+        /// </summary>
+        private static void EnsureAircraftIdentityMarkings(
+            Transform aircraftView,
+            FleetAircraft aircraft,
+            Color operatorColour)
+        {
+            if (aircraftView == null || aircraft == null || aircraft.Airline == null)
+                return;
+
+            var layout = AircraftIdentityMarkings.For(aircraft.Type);
+            var operatorText = aircraft.Airline.Name.ToUpperInvariant();
+            for (var side = -1; side <= 1; side += 2)
+            {
+                AddAircraftIdentityText(
+                    aircraftView,
+                    side < 0 ? "Operator title L" : "Operator title R",
+                    operatorText,
+                    new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
+                    side,
+                    layout.OperatorCharacterSize,
+                    operatorColour,
+                    FontStyle.Bold);
+                AddAircraftIdentityText(
+                    aircraftView,
+                    side < 0 ? "Registration L" : "Registration R",
+                    aircraft.Registration,
+                    new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
+                    side,
+                    layout.RegistrationCharacterSize,
+                    new Color(0.10f, 0.12f, 0.14f),
+                    FontStyle.Normal);
+            }
+
+            AirsideNamedChildren.Forget(aircraftView);
+        }
+
+        private static void AddAircraftIdentityText(
+            Transform parent,
+            string name,
+            string value,
+            Vector3 localPosition,
+            int side,
+            float characterSize,
+            Color colour,
+            FontStyle style)
+        {
+            var label = new GameObject(name);
+            label.transform.SetParent(parent, false);
+            label.transform.localPosition = localPosition;
+            // TextMesh's readable face points along local -Z. Turn that face
+            // outward from each side of the fuselage rather than into its skin.
+            label.transform.localRotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
+
+            var text = label.AddComponent<TextMesh>();
+            text.text = value;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignment.Center;
+            text.fontSize = 64;
+            text.characterSize = characterSize;
+            text.fontStyle = style;
+            text.color = colour;
+
+            var renderer = label.GetComponent<MeshRenderer>();
+            renderer.sortingOrder = 2;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+
+            DepthTestStandLabel(renderer);
+
+            // The legacy font shader is double-sided. Keep only the camera-facing
+            // fuselage title enabled so the opposite title cannot appear backwards
+            // through the top of the aircraft in elevated follow views.
+            label.AddComponent<AircraftIdentitySideVisibility>()
+                .Initialise(parent, renderer, side);
         }
 
         /// <summary>
@@ -374,6 +507,11 @@ namespace Airside.Presentation
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
+                if (i < VisualFlights.Count
+                    && VisualFlights[i].Operation.Phase == AircraftPhase.Approach
+                    && !AircraftPickRouting.ApproachIsCloseEnough(
+                        view.position.x, AirsideFlightPath.WestThresholdX))
+                    continue;
                 _fleetActiveViews.Add(view);
                 if (i < VisualFlights.Count)
                     _fleetViewById[VisualFlights[i].AircraftId] = view;
@@ -468,6 +606,32 @@ namespace Airside.Presentation
                 return;
             _selectedAircraftId = null;
             PlayUiClick();
+        }
+    }
+
+    internal sealed class AircraftIdentitySideVisibility : MonoBehaviour
+    {
+        private Transform _aircraft;
+        private Renderer _renderer;
+        private int _side;
+
+        public void Initialise(Transform aircraft, Renderer labelRenderer, int side)
+        {
+            _aircraft = aircraft;
+            _renderer = labelRenderer;
+            _side = side;
+            Refresh();
+        }
+
+        private void LateUpdate() => Refresh();
+
+        private void Refresh()
+        {
+            var camera = Camera.main;
+            if (_aircraft == null || _renderer == null || camera == null)
+                return;
+            var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
+            _renderer.enabled = cameraSide == _side;
         }
     }
 }

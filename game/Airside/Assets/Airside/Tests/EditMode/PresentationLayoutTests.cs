@@ -17,6 +17,15 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AdelaideLighting_GuardFilterTargetsMainRunwayHoldingPoints()
+        {
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(-1529.9f, 90.3f), Is.True);
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(614.1f, 92.5f), Is.True);
+            Assert.That(AdelaideAirfieldLighting.IsMainRunwayGuardPosition(237f, 199f), Is.False);
+            Assert.That(AdelaideAirfieldLighting.TaxiCentrelineVisualSpacingMetres, Is.InRange(30f, 60f));
+        }
+
+        [Test]
         public void HudScale_RetinaDisplayIsNotCappedAtTheOldTinyScale()
         {
             Assert.That(HudLayout.ScaleFor(3456, 2168), Is.EqualTo(2.25f).Within(0.001f));
@@ -584,19 +593,19 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void FlightPath_TouchdownSitsOnTheThreeHundredMetreTdz()
+        public void FlightPath_TouchdownSitsInsideThePublishedTouchdownZone()
         {
             // Headless BareFieldTests cannot compile AirsideFlightPath. Keep this
             // equality in both Unity EditMode and work/flightcheck.
             Assert.That(AirsideFlightPath.TouchdownX,
-                Is.EqualTo(AirsideRunwayMarkings.WestTouchdownZoneX(300f)).Within(0.01f));
+                Is.EqualTo(AirsideRunwayMarkings.WestTouchdownZoneX(450f)).Within(0.01f));
             Assert.That(AirsideFlightPath.WestThresholdX,
                 Is.EqualTo(AirsideRunwayMarkings.WestThresholdX).Within(0.01f));
             var half = AirsideRunwayMarkings.TouchdownZoneLength * 0.5f;
             Assert.That(AirsideFlightPath.TouchdownX,
                 Is.InRange(
-                    AirsideRunwayMarkings.WestTouchdownZoneX(300f) - half,
-                    AirsideRunwayMarkings.WestTouchdownZoneX(300f) + half));
+                    AirsideRunwayMarkings.WestTouchdownZoneX(450f) - half,
+                    AirsideRunwayMarkings.WestTouchdownZoneX(450f) + half));
         }
 
         [Test]
@@ -630,6 +639,92 @@ namespace Airside.Tests
                 Is.EqualTo(AirsideFlightPath.ApproachPitchStartDegrees).Within(0.01f));
             Assert.That(AirsideReusableMotion.FlapDegrees(AircraftPhase.Approach, 1f),
                 Is.GreaterThan(AirsideReusableMotion.FlapDegrees(AircraftPhase.Approach, 0f)));
+        }
+
+        [Test]
+        public void WingFlex_LoadsAfterRotation_AndSettlesAfterTouchdown()
+        {
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.TaxiOut, 0.8f), Is.Zero);
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Takeoff, AirsideFlightPath.RotateProgress - 0.01f), Is.Zero);
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.Takeoff, 1f), Is.GreaterThan(1f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(AircraftPhase.Approach, 0.5f), Is.GreaterThan(0f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress - 0.01f), Is.GreaterThan(0f));
+            Assert.That(AirsideReusableMotion.WingFlexDegrees(
+                AircraftPhase.Landing, AirsideFlightPath.TouchdownProgress + 0.15f), Is.Zero);
+        }
+
+        [Test]
+        public void AircraftLights_FollowPowerAndRunwayPhases()
+        {
+            Assert.That(AirsideReusableMotion.NavigationLightsOn(false, false), Is.False,
+                "a cold parked aircraft stays dark even at night");
+            Assert.That(AirsideReusableMotion.NavigationLightsOn(false, true), Is.True,
+                "position lamps come on during the pre-start beacon sequence");
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.TaxiOut), Is.False);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Takeoff), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Departed), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.Landing), Is.True);
+            Assert.That(AirsideReusableMotion.StrobesOn(AircraftPhase.TaxiIn), Is.False);
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.02f), Is.EqualTo(1f));
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.10f), Is.Zero);
+            Assert.That(AirsideReusableMotion.StrobeIntensity(AircraftPhase.Takeoff, 0.18f), Is.EqualTo(1f));
+            Assert.That(AirsideReusableMotion.BeaconIntensity(false, 0.2f), Is.Zero);
+        }
+
+        [Test]
+        public void NoseWheelSteering_FollowsPathCurvatureAndReversesForPushback()
+        {
+            var straight = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, 0f, 1f, 5f, 1.5f, 10f, tailFirst: false);
+            var left = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, -0.15f, 0.9887f, 5f, 1.5f, 10f, tailFirst: false);
+            var pushed = AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, -0.15f, 0.9887f, 2f, 1.5f, 10f, tailFirst: true);
+
+            Assert.That(straight, Is.Zero);
+            Assert.That(left, Is.LessThan(0f));
+            Assert.That(pushed, Is.GreaterThan(0f), "tow-controlled nose gear steers opposite while moving tail-first");
+            Assert.That(Mathf.Abs(pushed), Is.LessThanOrEqualTo(65f));
+            Assert.That(AirsideReusableMotion.NoseWheelSteerDegrees(
+                0f, 1f, 1f, 0f, 0f, 1.5f, 10f, tailFirst: false), Is.Zero,
+                "a stopped aircraft centres its nose wheels");
+        }
+
+        [Test]
+        public void ApproachPicking_OpensOnlyInsideAUsefulViewingDistance()
+        {
+            var threshold = AirsideFlightPath.WestThresholdX;
+            var cutoff = threshold - AircraftPickRouting.ApproachSelectableDistanceFromThresholdMetres;
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(cutoff - 1f, threshold), Is.False);
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(cutoff, threshold), Is.True);
+            Assert.That(AircraftPickRouting.ApproachIsCloseEnough(
+                AirsideFlightPath.ShortFinalX, threshold), Is.True,
+                "an aircraft on short final can always be clicked and followed through touchdown");
+        }
+
+        [Test]
+        public void AdelaideLighting_UsesPublishedRunwaySystemsAndSpacing()
+        {
+            Assert.That(AdelaideAirfieldLighting.MainRunwayEdgeSpacingMetres, Is.EqualTo(57f));
+            Assert.That(AdelaideAirfieldLighting.CrossRunwayEdgeSpacingMetres, Is.EqualTo(59f));
+            Assert.That(AdelaideAirfieldLighting.Runway23HialLengthMetres, Is.EqualTo(801f));
+            Assert.That(AdelaideAirfieldLighting.PapiSlopeDegrees, Is.EqualTo(3f));
+            Assert.That(AdelaideAirfieldLighting.Runway05PapiThresholdHeightFeet, Is.EqualTo(61f));
+            Assert.That(AdelaideAirfieldLighting.Runway23PapiThresholdHeightFeet, Is.EqualTo(59f));
+            Assert.That(AdelaideAirfieldLighting.CrossRunwayPapiThresholdHeightFeet, Is.EqualTo(51f));
+
+            var mainCount = AdelaideAirfieldLighting.EvenStationCount(
+                AirsideBareField.RunwayLengthMetres,
+                AdelaideAirfieldLighting.MainRunwayEdgeSpacingMetres);
+            Assert.That(mainCount, Is.EqualTo(55));
+            Assert.That(AdelaideAirfieldLighting.EvenStation(
+                AirsideBareField.RunwayHalfLength, 0, mainCount),
+                Is.EqualTo(-AirsideBareField.RunwayHalfLength));
+            Assert.That(AdelaideAirfieldLighting.EvenStation(
+                AirsideBareField.RunwayHalfLength, mainCount - 1, mainCount),
+                Is.EqualTo(AirsideBareField.RunwayHalfLength));
         }
 
         [Test]

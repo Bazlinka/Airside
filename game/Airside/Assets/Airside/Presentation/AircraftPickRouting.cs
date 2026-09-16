@@ -18,6 +18,13 @@ namespace Airside.Presentation
         public const float ProxyHeightMetres = 10f;
         public const float ProxyCentreYMetres = 3.5f;
 
+        /// <summary>
+        /// An arrival becomes a field interaction once it is within this distance of
+        /// the landing threshold. Earlier than this it is still a map/contact return,
+        /// not a practical object to click in the 3D airport view.
+        /// </summary>
+        public const float ApproachSelectableDistanceFromThresholdMetres = 1800f;
+
         public const string ViewNamePrefix = "Commercial ";
         public const string ProxyChildName = "AircraftPickProxy";
         public const string MarkerChildName = "SelectionMarker";
@@ -87,6 +94,9 @@ namespace Airside.Presentation
                    && onFieldById.TryGetValue(aircraftId, out var onField)
                    && onField;
         }
+
+        public static bool ApproachIsCloseEnough(float aircraftWorldX, float landingThresholdWorldX) =>
+            aircraftWorldX >= landingThresholdWorldX - ApproachSelectableDistanceFromThresholdMetres;
     }
 
     /// <summary>One raycast candidate for <see cref="AircraftPickRouting.ResolveNearest"/>.</summary>

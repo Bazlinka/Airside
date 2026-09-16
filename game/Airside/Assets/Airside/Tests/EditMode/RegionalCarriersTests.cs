@@ -17,14 +17,14 @@ namespace Airside.Tests
         public void NewGame_HasRexAndQantasLinkOnTheExtraBays()
         {
             var ops = NewGame(out _);
-            Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Emu Air"));
+            Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink"));
             var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
             Assert.That(regional.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
-                "one regional aircraft per bay: nobody can be left without a stand");
-            Assert.That(regional.All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
-            Assert.That(ops.Fleet.Select(a => a.Stand).Distinct().Count(), Is.EqualTo(ops.Fleet.Count));
+                "four parked regional aircraft plus two opening arrivals");
+            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count - 2));
+            Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
-            Assert.That(ops.Fleet.Where(a => !a.Airline.IsPlayer).All(a => a.Scheduled.HasValue), Is.True);
+            Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.EqualTo(2));
         }
 
         [Test]
@@ -56,10 +56,10 @@ namespace Airside.Tests
             var player = Airline.Player("Old Save Air", "#2E7D32");
             ops.AddAirline(player);
             ops.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var emu = Airline.EmuAir();
-            ops.AddAirline(emu);
-            ops.AddAircraft(emu, "VH-EMA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
-            ops.AddAircraft(emu, "VH-EMB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
+            var legacy = new Airline("LEG", "Legacy Regional", "#A66F32", isPlayer: false);
+            ops.AddAirline(legacy);
+            ops.AddAircraft(legacy, "VH-LEA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
+            ops.AddAircraft(legacy, "VH-LEB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
 
             Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(3));
             Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(0), "idempotent across reloads");
@@ -104,10 +104,9 @@ namespace Airside.Tests
             ops.AddAirline(player);
             ops.AddAircraft(player, "VH-QQQ", AircraftType.Dash8Q400, new StableId("BAY-1"));
 
-            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(3));
-            foreach (var aircraft in ops.Fleet.Where(a => a.Registration != "VH-QQQ"))
-                Assert.That(aircraft.Stand, Is.Not.EqualTo(new StableId("BAY-5")),
-                    $"{aircraft.Registration} should not park on 50E beside the Dash 8-400");
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(5));
+            Assert.That(ops.Fleet.First(a => a.Registration == "VH-ZRC").Stand,
+                Is.Not.EqualTo(new StableId("BAY-5")), "the first choice avoids the tight neighbour while alternatives exist");
         }
 
         [Test]

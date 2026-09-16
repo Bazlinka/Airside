@@ -85,5 +85,17 @@ namespace Airside.Tests
 
             Assert.That(covered, Is.EqualTo(18), "the v02 kit ships 18 rolling parts");
         }
+
+        [TestCase("nav_light_left", AircraftNavigationLight.Left)]
+        [TestCase("NavLight L", AircraftNavigationLight.Left)]
+        [TestCase("nav_light_right", AircraftNavigationLight.Right)]
+        [TestCase("NavLight R", AircraftNavigationLight.Right)]
+        [TestCase("tail_nav_light", AircraftNavigationLight.Tail)]
+        [TestCase("Tail nav light", AircraftNavigationLight.Tail)]
+        [TestCase("LandingLight L", AircraftNavigationLight.None)]
+        public void NavigationLights_AreClassifiedByColourPosition(string name, AircraftNavigationLight expected)
+        {
+            Assert.That(AirsideAircraftParts.NavigationLightFor(name), Is.EqualTo(expected));
+        }
     }
 }

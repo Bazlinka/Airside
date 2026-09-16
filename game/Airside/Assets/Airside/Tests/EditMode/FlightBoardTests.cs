@@ -48,6 +48,7 @@ namespace Airside.Tests
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → MEL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Scheduled"));
             Assert.That(FlightBoard.TimeLabel(aircraft, t => $"T{t.ElapsedSeconds}"), Is.EqualTo("T600"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("DEPARTS"));
         }
 
         [Test]
@@ -82,12 +83,23 @@ namespace Airside.Tests
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → BHQ"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("En route"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("ARRIVES"));
 
             var inboundAt = outboundAt - 1 + airborne + AirlineOperations.DestinationTurnaroundSeconds + 1;
             RunTo(clock, ops, inboundAt);
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("IN CIRCUIT"));
+        }
+
+        [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
+        [TestCase(FleetState.HoldingForLanding, "HOLD SINCE")]
+        [TestCase(FleetState.Landing, "CLEAR RWY")]
+        [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
+        public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
+        {
+            Assert.That(FlightBoard.TimeMeaning(state), Is.EqualTo(expected));
         }
 
         [Test]
@@ -97,6 +109,19 @@ namespace Airside.Tests
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("On stand"));
             Assert.That(FlightBoard.RouteText(aircraft), Does.StartWith("Bay "));
             Assert.That(FlightBoard.SortKeySeconds(aircraft), Is.EqualTo(long.MaxValue));
+        }
+
+        [Test]
+        public void DelayedDeparture_IsClearlyLabelledAfterOneMinute()
+        {
+            var (_, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("MEL"), new SimulationTime(600));
+
+            Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Scheduled"));
+            Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft, new SimulationTime(720)), Is.EqualTo("LATE +2 MIN"));
         }
     }
 }

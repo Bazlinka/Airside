@@ -134,6 +134,25 @@ namespace Airside.Presentation
             return new Vector2(origin.x, origin.z) + flat * farMetres;
         }
 
+        /// <summary>
+        /// A compact camera-heading chevron. Unlike projecting the whole camera frustum, its
+        /// screen size stays useful when the camera looks near the horizon.
+        /// </summary>
+        public static void ViewChevron(Rect map, Vector2 centre, Vector2 direction,
+            out Vector2 tip, out Vector2 left, out Vector2 right)
+        {
+            const float length = 18f;
+            const float rearOffset = 4f;
+            const float halfWidth = 7f;
+            const float inset = 2f;
+
+            var forward = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.up;
+            var side = new Vector2(-forward.y, forward.x);
+            tip = ClampToMap(centre + forward * length, map, inset);
+            left = ClampToMap(centre - forward * rearOffset + side * halfWidth, map, inset);
+            right = ClampToMap(centre - forward * rearOffset - side * halfWidth, map, inset);
+        }
+
         /// <summary>Index of the dot nearest <paramref name="click"/> within <paramref name="radius"/>, or -1.</summary>
         public static int NearestDot(IReadOnlyList<Vector2> dots, Vector2 click, float radius = DotHitRadius)
         {
@@ -151,6 +170,10 @@ namespace Airside.Presentation
 
             return best;
         }
+
+        private static Vector2 ClampToMap(Vector2 point, Rect map, float inset) =>
+            new(Mathf.Clamp(point.x, map.xMin + inset, map.xMax - inset),
+                Mathf.Clamp(point.y, map.yMin + inset, map.yMax - inset));
 
         /// <summary>
         /// Paint the airfield into a <paramref name="width"/> × <paramref name="height"/> pixel

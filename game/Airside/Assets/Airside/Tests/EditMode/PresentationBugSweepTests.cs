@@ -73,6 +73,41 @@ namespace Airside.Tests
             Assert.That(AirsideMaterialLibrary.InferFromMeshName(mesh), Is.EqualTo(expected));
         }
 
+        [TestCase("Windscreen L")]
+        [TestCase("Cockpit")]
+        [TestCase("Cabin Windows")]
+        public void AircraftGlazing_IsOpaqueAndDistinctFromTerminalGlass(string mesh)
+        {
+            var kind = AirsideMaterialLibrary.InferFromMeshName(mesh);
+            Assert.That(kind, Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.AircraftGlazing));
+            Assert.That(AirsideMaterialLibrary.GetProfile(kind).Transparent, Is.False);
+            Assert.That(AirsideMaterialLibrary.InferFromMeshName("terminal glass pane"),
+                Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.Glass));
+            Assert.That(AirsideMaterialLibrary.GetProfile(AirsideMaterialLibrary.SurfaceKind.Glass).Transparent,
+                Is.True);
+        }
+
+        [Test]
+        public void AircraftGlazing_LegacyTintAlphaCannotMakeThePlaneSeeThrough()
+        {
+            var material = AirsideMaterialLibrary.Create(
+                new Color(0.05f, 0.12f, 0.18f, 0.42f),
+                AirsideMaterialLibrary.SurfaceKind.AircraftGlazing,
+                useTextures: false);
+            try
+            {
+                var colour = material.HasProperty("_BaseColor")
+                    ? material.GetColor("_BaseColor")
+                    : material.color;
+                Assert.That(colour.a, Is.EqualTo(1f));
+                Assert.That(material.renderQueue, Is.LessThan(3000));
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
         [Test]
         public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
         {
@@ -171,6 +206,11 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.PropBlurActive(AirsideReusableMotion.PropHighRpmThreshold - 1f), Is.False);
             Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanRpmTaxi), Is.True);
             Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanHighRpmThreshold - 1f), Is.False);
+            Assert.That(AirsideReusableMotion.PropBlurBlend(AirsideReusableMotion.PropBlurFadeStartRpm), Is.Zero);
+            Assert.That(AirsideReusableMotion.PropBlurBlend(
+                (AirsideReusableMotion.PropBlurFadeStartRpm + AirsideReusableMotion.PropBlurFadeEndRpm) * 0.5f),
+                Is.InRange(0.45f, 0.55f), "blade and disc overlap instead of popping");
+            Assert.That(AirsideReusableMotion.PropBlurBlend(AirsideReusableMotion.PropBlurFadeEndRpm), Is.EqualTo(1f));
         }
     
         [Test]

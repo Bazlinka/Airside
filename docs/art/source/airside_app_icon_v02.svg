@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- AIRSIDE BRD-002 v02: macOS app-icon export; use the transparent mark source for UI. -->
+  <rect width="1024" height="1024" rx="190" fill="#17242A"/>
+  <path fill="#39708A" fill-rule="evenodd" d="M112 880 410 246Q512 82 614 246L912 880H754L512 356 270 880Zm190 0h420L512 424Z"/>
+  <path fill="#EEF1EC" d="M420 866 487 370Q512 312 537 370L604 866H420Z"/>
+  <path fill="#F2C14B" d="M484 713h56l8 106h-72l8-106Zm10-192h36l5 78h-46l5-78Zm8-139h20l3 46h-26l3-46Z"/>
+</svg>

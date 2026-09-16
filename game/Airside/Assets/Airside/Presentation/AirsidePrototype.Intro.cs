@@ -6,14 +6,14 @@ using UnityEngine.InputSystem;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Launch intro (Bailey 2026-09-14): the camera glides in over Adelaide while the
-    /// wordmark and the live local time fade up, then the start panel appears. Any key
+    /// Launch intro: a brief runway-signal hand-off. The new approach mark appears before
+    /// the airport is revealed, then leaves the player in the playable overview. Any key
     /// or click skips it. Soak runs skip it entirely.
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        public const float IntroSeconds = 7f;
-        private const float IntroFadeSeconds = 1.2f;
+        public const float IntroSeconds = 4.8f;
+        public const float IntroMarkRevealSeconds = 0.8f;
 
         private bool IntroActive => _cameraController != null && _cameraController.IsPlayingIntro;
 
@@ -39,45 +39,66 @@ namespace Airside.Presentation
         // OnGUI runs several times a frame; build the intro styles once.
         private GUIStyle _introTitleStyle, _introSubtitleStyle, _introHintStyle;
 
+        private static float Smooth01(float value)
+        {
+            value = Mathf.Clamp01(value);
+            return value * value * (3f - 2f * value);
+        }
+
         private void DrawIntro(HudLayout layout)
         {
             var elapsed = _cameraController.IntroElapsed;
-            var fadeIn = Mathf.Clamp01((elapsed - 0.4f) / IntroFadeSeconds);
-            var fadeOut = Mathf.Clamp01((IntroSeconds - elapsed) / IntroFadeSeconds);
-            var alpha = Mathf.Min(fadeIn, fadeOut);
+            var markIn = Smooth01((elapsed - 0.12f) / IntroMarkRevealSeconds);
+            var handoff = Smooth01((elapsed - 3.55f) / 1.05f);
+            var alpha = markIn * (1f - handoff);
             if (alpha <= 0f)
                 return;
 
             var width = layout.Viewport.x;
             var height = layout.Viewport.y;
             var previous = GUI.color;
-            GUI.color = new Color(1f, 1f, 1f, alpha);
+            // The world is visible from the first frame, but starts under an ink wash so the
+            // mark leads the eye instead of fighting the camera movement.
+            GUI.color = new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b,
+                Mathf.Lerp(0.82f, 0.04f, Smooth01((elapsed - 1.3f) / 2.6f)) * alpha);
+            GUI.DrawTexture(new Rect(0f, 0f, width, height), AirsideTheme.SolidWhite);
 
-            var centreY = height * 0.38f;
-            var wordmark = AirsideTheme.WordmarkLight;
-            if (wordmark != null)
+            var centreY = height * 0.34f;
+            var mark = AirsideTheme.AppMarkLight;
+            if (mark != null)
             {
-                var w = Mathf.Min(520f, width * 0.6f);
-                var h = w * wordmark.height / Mathf.Max(1f, wordmark.width);
-                GUI.DrawTexture(new Rect((width - w) * 0.5f, centreY - h * 0.5f, w, h), wordmark, ScaleMode.ScaleToFit);
-                centreY += h * 0.5f + 18f;
+                var size = Mathf.Lerp(156f, 112f, Smooth01((elapsed - 0.78f) / 0.7f));
+                GUI.color = new Color(1f, 1f, 1f, alpha);
+                GUI.DrawTexture(new Rect((width - size) * 0.5f, centreY - size * 0.5f, size, size), mark, ScaleMode.ScaleToFit, true);
+                centreY += size * 0.5f + 20f;
             }
             else
             {
-                var titleStyle = _introTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                var fallbackTitleStyle = _introTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                     { fontSize = 56, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter });
-                GUI.Label(new Rect(0f, centreY - 40f, width, 80f), "AIRSIDE", titleStyle);
-                centreY += 52f;
+                GUI.color = new Color(1f, 1f, 1f, alpha);
+                GUI.Label(new Rect(0f, centreY - 40f, width, 80f), "A", fallbackTitleStyle);
+                centreY += 44f;
             }
+
+            var titleStyle = _introTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                { fontSize = 42, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter });
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            GUI.Label(new Rect(0f, centreY, width, 54f), "AIRSIDE", titleStyle);
+            centreY += 46f;
 
             var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AirlineClock.Adelaide);
             var subtitle = _introSubtitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
-                { fontSize = 18, alignment = TextAnchor.MiddleCenter }, AirsideTheme.Cloud);
-            GUI.Label(new Rect(0f, centreY, width, 28f), $"Adelaide  ·  {local:HH:mm}  ·  live", subtitle);
+                { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter }, AirsideTheme.OpenSky);
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            GUI.Label(new Rect(0f, centreY, width, 28f), "REGIONAL AIRPORT OPERATIONS", subtitle);
+            centreY += 25f;
+            GUI.Label(new Rect(0f, centreY, width, 28f), $"ADELAIDE  ·  {local:HH:mm}  ·  LIVE", subtitle);
 
             var hint = _introHintStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                 { fontSize = 13, alignment = TextAnchor.MiddleCenter }, AirsideTheme.OpenSky);
-            GUI.Label(new Rect(0f, height - 60f, width, 22f), "Press any key to skip", hint);
+            GUI.color = new Color(1f, 1f, 1f, alpha * 0.88f);
+            GUI.Label(new Rect(0f, height - 54f, width, 22f), "Press any key to enter", hint);
 
             GUI.color = previous;
         }

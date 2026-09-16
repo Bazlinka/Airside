@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **New Airside app identity and opening.** The app now uses an original, unbranded
+  approach-runway mark: deep Runway Ink, coastal-blue rails, a Cloud centreline and three
+  safety-yellow approach lights. Launch is a 4.8-second runway-signal sequence rather than a
+  long distant fly-over: the mark leads, local operations information settles in, then the
+  ink wash gives way to the playable overview. Any key or click still enters immediately.
+
 - **Wire the airline career into the HUD (Task 3, ADR 0053).** The Contracts workspace shows
   real terms and an Accept button, then a progress card once accepted; the clock panel shows
   funds and reliability; the objective line shows contract progress; completing a rotation

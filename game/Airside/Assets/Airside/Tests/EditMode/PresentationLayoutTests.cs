@@ -9,6 +9,14 @@ namespace Airside.Tests
 {
     public sealed class PresentationLayoutTests
     {
+        [Test]
+        public void LaunchIntro_IsBriefAndHasADeliberateMarkReveal()
+        {
+            Assert.That(AirsidePrototype.IntroSeconds, Is.EqualTo(4.8f).Within(0.001f));
+            Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.GreaterThan(0f));
+            Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.LessThan(AirsidePrototype.IntroSeconds));
+        }
+
         [TestCase(1440, 900, 1f)]
         [TestCase(1280, 720, 0.8f)]
         public void HudScale_NormalWindowsUseReadableVirtualSize(int width, int height, float expected)

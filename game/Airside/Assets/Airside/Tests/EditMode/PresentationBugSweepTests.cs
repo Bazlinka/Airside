@@ -223,5 +223,14 @@ namespace Airside.Tests
             AirsidePrototype.CrossfadeLoop(samples, 100);
             Assert.That(Mathf.Abs(samples[^1] - samples[0]), Is.LessThan(0.05f));
         }
+    
+        [Test]
+        public void ArtTextures_RememberAMissingFile()
+        {
+            Assert.That(AirsideArtTextures.Load("Textures/Surfaces/tx_not_a_real_map_v99.png"), Is.Null);
+            var misses = AirsideArtTextures.MissCount;
+            Assert.That(AirsideArtTextures.Load("Textures/Surfaces/tx_not_a_real_map_v99.png"), Is.Null);
+            Assert.That(AirsideArtTextures.MissCount, Is.EqualTo(misses), "the second look-up must not hit the disk again");
+        }
     }
 }

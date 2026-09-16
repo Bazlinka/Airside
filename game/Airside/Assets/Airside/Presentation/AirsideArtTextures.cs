@@ -13,6 +13,11 @@ namespace Airside.Presentation
     {
         private static readonly Dictionary<string, Texture2D> Cache = new(System.StringComparer.Ordinal);
 
+        // A file that is absent or unreadable was recorded as a null cache entry, which the
+        // lookup below could not tell from "not cached", so every request for a missing map
+        // went back to the disk — once per material built, for the life of the run.
+        private static readonly HashSet<string> Misses = new(System.StringComparer.Ordinal);
+
         /// <param name="keepReadable">
         /// Keep the CPU-side pixel copy. Only callers that read pixels back need it; everyone
         /// else lets LoadImage release it, halving each surface map's memory footprint.
@@ -29,11 +34,13 @@ namespace Airside.Presentation
             var key = CacheKey(artRelativePath, linear, wrap, keepReadable);
             if (Cache.TryGetValue(key, out var cached) && cached != null)
                 return cached;
+            if (Misses.Contains(key))
+                return null;
 
             var fullPath = ArtRuntimePaths.ResolveExisting(artRelativePath);
             if (fullPath == null)
             {
-                Cache[key] = null;
+                Misses.Add(key);
                 return null;
             }
 
@@ -43,7 +50,7 @@ namespace Airside.Presentation
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
                 if (!texture.LoadImage(bytes, markNonReadable: !keepReadable))
                 {
-                    Cache[key] = null;
+                    Misses.Add(key);
                     return null;
                 }
 
@@ -55,10 +62,13 @@ namespace Airside.Presentation
             }
             catch
             {
-                Cache[key] = null;
+                Misses.Add(key);
                 return null;
             }
         }
+
+        /// <summary>Test seam: how many paths are remembered as unavailable.</summary>
+        public static int MissCount => Misses.Count;
 
         public static void ApplyRuntimeFilter(Texture2D texture)
         {

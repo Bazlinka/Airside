@@ -85,6 +85,7 @@ namespace Airside.Presentation
         private float[] _cloudBaseAlpha;
         private Transform _birdFlockRoot;
         private Transform[] _birdWingL;
+        private float[] _birdPhaseSeed;
         private Transform[] _birdWingR;
         private Transform _apronLifeRoot;
         // Role flags are read from the name once; Object.name allocates on every access.
@@ -7952,9 +7953,14 @@ namespace Airside.Presentation
             {
                 _birdWingL = new Transform[nBirds];
                 _birdWingR = new Transform[nBirds];
+                _birdPhaseSeed = new float[nBirds];
                 for (var i = 0; i < nBirds; i++)
                 {
                     var bird = _birdFlockRoot.GetChild(i);
+                    // The builder stores each bird's orbit offset in its roll. Read it once:
+                    // the loop below turns birds with LookRotation (zero roll), so reading it
+                    // every frame decayed the offsets, and birds jittered and bunched up.
+                    _birdPhaseSeed[i] = bird.localEulerAngles.z * Mathf.Deg2Rad;
                     for (var c = 0; c < bird.childCount; c++)
                     {
                         var child = bird.GetChild(c);
@@ -7971,7 +7977,7 @@ namespace Airside.Presentation
             for (var i = 0; i < nBirds; i++)
             {
                 var bird = _birdFlockRoot.GetChild(i);
-                var phase = bird.localEulerAngles.z * Mathf.Deg2Rad + t + i * 0.35f;
+                var phase = _birdPhaseSeed[i] + t + i * 0.35f;
                 var radius = 26f + (i % 5) * 3.2f;
                 var x = Mathf.Cos(phase) * radius + (i % 3) * 1.5f;
                 var z = -42f + Mathf.Sin(phase) * radius * 0.45f;

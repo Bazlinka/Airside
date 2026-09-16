@@ -150,6 +150,31 @@ namespace Airside.Tests
             Assert.That(restored.Fleet.Single(a => a.Type == AircraftType.Boeing7378).Registration, Is.EqualTo("VH-8IA"));
         }
 
+        [Test]
+        public void VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Keep My Airline", "#2E7D32"));
+            var data = AirlineSave.Capture(ops);
+            var singapore = data.Fleet.Single(a => a.AirlineId == "SIA");
+            singapore.Registration = "9V-SMA";
+            singapore.TypeId = "A359";
+            singapore.CompletedTrips = 7;
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            var migrated = restored.Fleet.Single(a => a.Airline.Id.Value == "SIA");
+
+            Assert.That(migrated.Registration, Is.EqualTo("9V-SCA"));
+            Assert.That(migrated.Type, Is.EqualTo(AircraftType.Boeing78710));
+            Assert.That(migrated.Stand.Value, Is.EqualTo(singapore.Stand));
+            Assert.That(migrated.Scheduled?.Destination.Code, Is.EqualTo(singapore.ScheduledDestination));
+            Assert.That(migrated.Scheduled?.DepartAt.ElapsedSeconds, Is.EqualTo(singapore.ScheduledDepartAt));
+            Assert.That(migrated.CompletedTrips, Is.EqualTo(7));
+            Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(0), "migration must not backfill a duplicate");
+            Assert.That(restored.Fleet.Any(a => a.Registration == "9V-SMA"), Is.False);
+        }
+
         private static string Snapshot(AirlineOperations ops)
         {
             var text = new StringBuilder();

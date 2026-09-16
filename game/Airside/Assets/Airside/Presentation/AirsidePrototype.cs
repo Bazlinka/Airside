@@ -8196,6 +8196,8 @@ namespace Airside.Presentation
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA321Neo);
             if (AircraftVisualProfiles.IsAirbusA350900(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA350900);
+            if (AircraftVisualProfiles.IsBoeing78710(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing78710);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -8384,6 +8386,7 @@ namespace Airside.Presentation
             var root = new GameObject(name).transform;
             AircraftVisualProfileComponent.Ensure(root, profile);
             var a350 = profile.ArtRelativePath.EndsWith("mdl_a350_900_v01.gltf", StringComparison.Ordinal);
+            var boeing787 = profile.ArtRelativePath.EndsWith("mdl_787_10_v01.gltf", StringComparison.Ordinal);
 
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 profile.ArtRelativePath,
@@ -8392,7 +8395,9 @@ namespace Airside.Presentation
                 RenameAircraftPart,
                 kitName => a350
                     ? AirbusA350900PartColor(kitName, accent)
-                    : Boeing7378PartColor(kitName, accent),
+                    : boeing787
+                        ? Boeing78710PartColor(kitName, accent)
+                        : Boeing7378PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -9003,6 +9008,51 @@ namespace Airside.Presentation
                 case "intake_left":
                 case "intake_right":
                     return new Color(0.48f, 0.52f, 0.56f);
+                case "tail_fin":
+                case "rudder":
+                    return accent;
+            }
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? Boeing78710PartColor(string kitName, Color accent)
+        {
+            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
+                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
+                return new Color(0.035f, 0.10f, 0.15f);
+            if (kitName.StartsWith("door_", StringComparison.Ordinal))
+                return new Color(0.89f, 0.92f, 0.94f);
+
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wingtip_left":
+                case "wingtip_right":
+                case "flap_left":
+                case "flap_right":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.70f, 0.74f, 0.78f);
+                case "engine_left":
+                case "engine_right":
+                case "pylon_left":
+                case "pylon_right":
+                    return new Color(0.88f, 0.91f, 0.93f);
+                case "nacelle_left":
+                case "nacelle_right":
+                case "intake_left":
+                case "intake_right":
+                    return new Color(0.48f, 0.52f, 0.56f);
+                case "exhaust_chevron_left":
+                case "exhaust_chevron_right":
+                    return new Color(0.34f, 0.36f, 0.38f);
                 case "tail_fin":
                 case "rudder":
                     return accent;

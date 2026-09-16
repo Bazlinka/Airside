@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — AIR-010 Singapore Airlines 787-10 implemented.**
+  - **Player-visible:** Singapore Airlines' Gate 20 aircraft is now the published Adelaide-route
+    type, a Boeing 787-10, rather than an A350 stand-in. It has its own long/narrow widebody
+    proportions, four-pane flight deck, swept/raked wing, chevron nacelles and ten-wheel gear.
+  - **Scope:** new B78X catalogue/performance/presentation type, AIR-010 runtime model, Hangar
+    thumbnail and the existing Singapore Airlines rotation only.
+  - **Invariants / unchanged:** Gate 20 route and timing, destination network, reservation rules,
+    other operators are unchanged. Existing v5 Singapore `9V-SMA`/A350 placeholder saves migrate
+    once to `9V-SCA`/787-10 while preserving stand, schedule, movement state and completed trips.
+    The new project-owned model contains no
+    copied livery or third-party art.
+  - **Evidence:** deterministic AIR-010 geometry regression passes at the exact 68.30 × 60.12 ×
+    17.02 m envelope; generated output is 227 meshes / 14,256 triangles. Headless passed
+    **274/274**, Unity 6000.3.23f1 EditMode passed **492/492**, and a fresh packaged Mac build
+    completed successfully. The generated runtime-model thumbnail was visually inspected; the
+    packaged fleet UI confirms `9V-SCA · Boeing 787-10` at Gate 20L.
+  - **NEXT:** use an interactive follow-camera playtest for a close Gate 20 day/dusk/night review;
+    unattended overview framing confirms integration but does not isolate the aircraft closely.
+
 - **2026-09-16 Codex — AIR-009 A350-900 rebuilt as a genuine widebody silhouette.**
   - **Player-visible:** Cathay Pacific's A350-900 now reads as an A350 before its colour: broad
     six-metre cabin, long tapered nose, dark wraparound cockpit mask, flexed/raked wing tips,
@@ -12,7 +31,7 @@
   - **Evidence:** deterministic AIR-009 regression passes; generated output is 229 meshes /
     14,192 triangles with 18 blades per fan and ten tyres. `scripts/test-domain.sh` passed
     **274/274** and Unity 6000.3.23f1 EditMode passed **490/490**.
-  - **NEXT:** add a separate Singapore Airlines 787-10 type and replace its temporary A350.
+  - **NEXT:** completed by AIR-010 immediately above.
 
 - **2026-09-16 Codex — real Adelaide night readability corrected and packaged.**
   - **Player-visible:** at 23:30 the terminal, parked aircraft and apron surface remain readable

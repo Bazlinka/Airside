@@ -113,6 +113,19 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.70f,
             noseTireRadiusMetres: 0.55f);
 
+        public static readonly AircraftVisualProfile Boeing78710 = new(
+            artRelativePath: "Models/Aircraft/mdl_787_10_v01.gltf",
+            modelGroundOffsetMetres: -0.68f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -34.15f),
+            pickSizeMetres: new Vector3(64f, 20f, 74f),
+            pickCentreYMetres: 8.5f,
+            shadowWidthMetres: 59f,
+            shadowDepthMetres: 68f,
+            selectionMarkerDiameterMetres: 65f,
+            followDistanceMultiplier: 2.45f,
+            mainTireRadiusMetres: 0.70f,
+            noseTireRadiusMetres: 0.55f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -153,6 +166,8 @@ namespace Airside.Presentation
                 return AirbusA321Neo;
             if (type != null && type.Id == AircraftType.AirbusA350900.Id)
                 return AirbusA350900;
+            if (type != null && type.Id == AircraftType.Boeing78710.Id)
+                return Boeing78710;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)
@@ -168,6 +183,9 @@ namespace Airside.Presentation
 
         public static bool IsAirbusA350900(AircraftType type) =>
             type != null && type.Id == AircraftType.AirbusA350900.Id;
+
+        public static bool IsBoeing78710(AircraftType type) =>
+            type != null && type.Id == AircraftType.Boeing78710.Id;
 
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;
@@ -220,6 +238,8 @@ namespace Airside.Presentation
                 return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
             if (AircraftVisualProfiles.IsAirbusA350900(type))
                 return new AircraftIdentityMarkingLayout(3.04f, 6.58f, -13.0f, 6.40f, -55.0f, 0.30f, 0.17f);
+            if (AircraftVisualProfiles.IsBoeing78710(type))
+                return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -13.5f, 6.28f, -56.0f, 0.30f, 0.17f);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
             if (AircraftVisualProfiles.IsSaab340(type))

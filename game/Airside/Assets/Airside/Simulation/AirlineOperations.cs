@@ -125,7 +125,7 @@ namespace Airside.Simulation
             (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
-            (Airline.SingaporeAirlines, new[] { ("9V-SMA", AircraftType.AirbusA350900, new StableId("GATE-20")) })
+            (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) })
         };
 
         /// <summary>
@@ -924,7 +924,7 @@ namespace Airside.Simulation
 
         public static long WakeSeparationSeconds(AircraftType type)
         {
-            if (type?.Id == "A359")
+            if (type?.Id is "A359" or "B78X")
                 return 180;
             return type?.Id is "B38M" or "A21N" ? 120 : RunwaySeparationSeconds;
         }

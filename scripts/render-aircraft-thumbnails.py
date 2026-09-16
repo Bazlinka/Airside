@@ -28,6 +28,7 @@ MODELS = [
     ("B38M", "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png"),
     ("A21N", "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png"),
     ("A359", "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png"),
+    ("B78X", "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png"),
 ]
 
 WIDTH, HEIGHT, SUPERSAMPLE = 480, 320, 3

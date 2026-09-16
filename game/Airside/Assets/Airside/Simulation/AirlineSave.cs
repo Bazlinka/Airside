@@ -171,7 +171,15 @@ namespace Airside.Simulation
                     continue;
                 if (!airlines.TryGetValue(record.AirlineId ?? string.Empty, out var airline))
                     throw new FormatException($"{record.Registration} belongs to unknown airline '{record.AirlineId}'.");
-                if (!AircraftType.TryFromId(record.TypeId, out var type))
+                // AIR-010 replaces the short-lived Singapore A350 placeholder that shipped in
+                // v5 saves. Keep the rotation's exact state, timing and stand while moving only
+                // that known registration/type pair onto the real 787-10 fleet entry.
+                var migrateSingapore787 = record.AirlineId == "SIA"
+                    && record.Registration == "9V-SMA"
+                    && record.TypeId == "A359";
+                var registration = migrateSingapore787 ? "9V-SCA" : record.Registration;
+                var typeId = migrateSingapore787 ? "B78X" : record.TypeId;
+                if (!AircraftType.TryFromId(typeId, out var type))
                     throw new FormatException($"{record.Registration} has unknown aircraft type '{record.TypeId}'.");
                 // Enum.TryParse also accepts numbers ("99") and comma lists, which yield values
                 // no state machine branch handles; only a declared state name is a state.
@@ -182,7 +190,7 @@ namespace Airside.Simulation
                     throw new FormatException($"{record.Registration} has unknown state '{record.State}'.");
 
                 operations.RestoreAircraft(
-                    data.Version <= 3 && record.AirlineId == "WTB" ? "VH-8IA" : record.Registration,
+                    data.Version <= 3 && record.AirlineId == "WTB" ? "VH-8IA" : registration,
                     airline,
                     type,
                     state,
@@ -197,7 +205,7 @@ namespace Airside.Simulation
                         : null,
                     record.CompletedTrips);
                 if (data.Version >= 5)
-                    operations.RestoreMovementData(record.Registration,
+                    operations.RestoreMovementData(registration,
                         Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
                             ? runway : RunwayDirection.Runway05,
                         record.WentAroundThisTrip);

@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Singapore Airlines 787-10.** Singapore Airlines' Gate 20 rotation now uses its own genuine
+  AIR-010 Boeing 787-10 instead of borrowing the A350. The 227-part, true-scale model has the
+  787-10's narrower 5.77 m cabin, four-pane Boeing flight deck, swept/raked wing, chevron
+  nacelles and ten-wheel gear inside the official 68.30 × 60.12 × 17.02 m envelope. Catalogue,
+  performance, heavy wake spacing, Hangar thumbnail and save-safe type lookup are type-specific.
+  Existing v5 saves migrate the temporary `9V-SMA` A350 entry without losing its operational
+  state. Headless tests: 274/274; Unity EditMode: 492/492; packaged Mac build passed.
+
 - **Genuine A350-900 silhouette.** AIR-009 is no longer a uniformly stretched 737. Its
   purpose-built 229-part model now has a 5.96 m widebody cabin, long tapered nose, dark
   wraparound flight-deck mask, strongly swept high-aspect-ratio wing with raked tips, large

@@ -21,6 +21,7 @@ namespace Airside.Tests
             Assert.That(AircraftType.Boeing7378, Is.SameAs(AircraftCatalogue.Boeing7378.Type));
             Assert.That(AircraftType.AirbusA321Neo, Is.SameAs(AircraftCatalogue.AirbusA321Neo.Type));
             Assert.That(AircraftType.AirbusA350900, Is.SameAs(AircraftCatalogue.AirbusA350900.Type));
+            Assert.That(AircraftType.Boeing78710, Is.SameAs(AircraftCatalogue.Boeing78710.Type));
             foreach (var spec in AircraftCatalogue.All)
             {
                 Assert.That(AircraftType.TryFromId(spec.Id, out var type), Is.True);
@@ -47,7 +48,7 @@ namespace Airside.Tests
         public void GenuineModels_MatchRealDimensionsWithinFivePercent_AndHaveTheirOwnThumbnail()
         {
             var genuine = AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine).ToList();
-            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M", "A21N", "A359" }));
+            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M", "A21N", "A359", "B78X" }));
             var thumbnails = new HashSet<string>();
             foreach (var spec in genuine)
             {

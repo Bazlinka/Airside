@@ -150,6 +150,10 @@ namespace Airside.Simulation
             165f, 150f, 138f, 158f, 180f, 225f, 2050f, 11.5f, 10.0f,
             43000, 1800, 1800, 20f, 8f, 14f);
 
+        public static readonly AircraftPerformanceProfile Boeing78710 = new(
+            166f, 151f, 139f, 159f, 181f, 226f, 2200f, 11.0f, 9.5f,
+            43000, 1800, 1800, 20f, 8f, 14f);
+
         public static AircraftPerformanceProfile For(AircraftType type)
         {
             if (type == null)
@@ -161,6 +165,7 @@ namespace Airside.Simulation
                 "B38M" => Boeing7378,
                 "A21N" => AirbusA321Neo,
                 "A359" => AirbusA350900,
+                "B78X" => Boeing78710,
                 _ => Atr42
             };
         }

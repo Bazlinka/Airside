@@ -140,7 +140,15 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png", "SPEC-AIRBUS-A350-900");
 
-        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378, AirbusA321Neo, AirbusA350900 };
+        public static readonly AircraftSpec Boeing78710 = new(
+            "B78X", "Boeing 787-10", "Long-haul widebody · 300–375 seats",
+            68.30, 60.12, 17.02,
+            planningCruiseKmh: 903, practicalRangeKm: 12000,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 13890, manufacturerRangeBasis: "up to 7,500 nmi",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10");
+
+        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378, AirbusA321Neo, AirbusA350900, Boeing78710 };
 
         public static bool TryFor(AircraftType type, out AircraftSpec found)
         {

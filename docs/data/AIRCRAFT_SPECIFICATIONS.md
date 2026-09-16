@@ -47,7 +47,7 @@ the verified operating bands used by `GroundSpeedLimits` (ADR 0045). Retrieved
 | Stand lead-in | 5 kt | 5 kt | 5 kt | 5 kt | Marshaller / walking-pace guidance |
 | Pushback (tug) | 3 kt | 3 kt | 3 kt | 3 kt | Walking-pace tow |
 | Lineup onto runway | 10 kt | 10 kt | 10 kt | 10 kt | Boeing turn-entry band; leg ends stopped at roll start |
-| Vacate after landing | 12→20 kt | 12→20 kt | 12→20 kt | 12→20 kt | Boeing normal taxi ≈20 kt; `CircuitProfile.RunwayExitKnots` |
+| Vacate after landing | 12→22 kt | 12→20 kt | 14→24 kt | 15→20 kt | Type-specific runway-exit speed hands directly into the actual taxi profile; turn curvature may trim it slightly |
 
 Breakaway / taxi acceleration uses ≈0.55 m/s² (turboprop ADS-B study average peak
 ≈0.5 m/s²; ETS literature ≈0.4 m/s² to 15 kt). Cornering uses 0.59 m/s² lateral so a

@@ -17,7 +17,7 @@ namespace Airside.Simulation
             float takeoffRollMetres, float initialClimbRateMetresPerSecond,
             float climbOutRateMetresPerSecond, double maxCruiseFeet,
             double climbFeetPerMinute, double descentFeetPerMinute,
-            float taxiStraightKnots, float taxiApronKnots)
+            float taxiStraightKnots, float taxiApronKnots, float runwayExitKnots)
         {
             ApproachEntryKnots = approachEntryKnots;
             ApproachKnots = approachKnots;
@@ -33,6 +33,7 @@ namespace Airside.Simulation
             DescentFeetPerMinute = descentFeetPerMinute;
             TaxiStraightKnots = taxiStraightKnots;
             TaxiApronKnots = taxiApronKnots;
+            RunwayExitKnots = runwayExitKnots;
         }
 
         public float ApproachEntryKnots { get; }
@@ -49,6 +50,7 @@ namespace Airside.Simulation
         public double DescentFeetPerMinute { get; }
         public float TaxiStraightKnots { get; }
         public float TaxiApronKnots { get; }
+        public float RunwayExitKnots { get; }
 
         public float RotateX => CircuitProfile.TakeoffStartX + TakeoffRollMetres;
         public float TakeoffEndX => RotateX + 950f;
@@ -69,7 +71,7 @@ namespace Airside.Simulation
             CircuitProfile.Knots(ApproachKnots), CircuitProfile.Knots(TouchdownKnots));
         public float RolloutExactSeconds => CircuitProfile.SegmentSeconds(
             CircuitProfile.RolloutEndX - CircuitProfile.TouchdownX,
-            CircuitProfile.Knots(TouchdownKnots), CircuitProfile.Knots(CircuitProfile.RunwayExitKnots));
+            CircuitProfile.Knots(TouchdownKnots), CircuitProfile.Knots(RunwayExitKnots));
         public float LandingExactSeconds => FinalGlideExactSeconds + FlareExactSeconds + RolloutExactSeconds;
         public float TakeoffRollExactSeconds => CircuitProfile.SegmentSeconds(
             TakeoffRollMetres, 0f, CircuitProfile.Knots(RotateKnots));
@@ -99,7 +101,7 @@ namespace Airside.Simulation
                         return ApproachKnots;
                     if (t < TouchdownProgress)
                         return Lerp(ApproachKnots, TouchdownKnots, Local(t, FlareProgress, TouchdownProgress));
-                    return Lerp(TouchdownKnots, CircuitProfile.RunwayExitKnots, Local(t, TouchdownProgress, 1f));
+                    return Lerp(TouchdownKnots, RunwayExitKnots, Local(t, TouchdownProgress, 1f));
                 case AircraftPhase.Takeoff:
                     if (t < RotateProgress)
                         return Lerp(0f, RotateKnots, Local(t, 0f, RotateProgress));
@@ -122,21 +124,21 @@ namespace Airside.Simulation
         // ATR published V2 minimum 112 KCAS, Vref 104 KIAS and optimum climb 160 KCAS.
         public static readonly AircraftPerformanceProfile Atr42 = new(
             120f, 110f, 95f, 104f, 120f, 160f, 900f, 6.6f, 6.1f,
-            25000, 1200, 1500, 22f, 14f);
+            25000, 1200, 1500, 22f, 14f, 12f);
 
         // Saab/Q400/737 figures are representative normal-weight planning values.
         // They intentionally remain inside the range pilots calculate for each flight.
         public static readonly AircraftPerformanceProfile Saab340 = new(
             120f, 108f, 94f, 105f, 120f, 155f, 980f, 6.0f, 5.6f,
-            25000, 1100, 1400, 20f, 13f);
+            25000, 1100, 1400, 20f, 13f, 12f);
 
         public static readonly AircraftPerformanceProfile Dash8Q400 = new(
             135f, 125f, 110f, 116f, 135f, 185f, 1150f, 8.0f, 7.2f,
-            25000, 1450, 1700, 24f, 15f);
+            25000, 1450, 1700, 24f, 15f, 14f);
 
         public static readonly AircraftPerformanceProfile Boeing7378 = new(
             155f, 145f, 132f, 145f, 165f, 210f, 1650f, 12.0f, 10.0f,
-            41000, 2100, 1900, 20f, 10f);
+            41000, 2100, 1900, 20f, 10f, 15f);
 
         public static AircraftPerformanceProfile For(AircraftType type)
         {

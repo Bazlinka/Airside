@@ -21,6 +21,8 @@ namespace Airside.Presentation
         // against a 60 Hz frame (wagon-wheel), which read as broken rather than idle.
         // Slow spool / shutdown still shows the blades.
         public const float PropHighRpmThreshold = 380f;
+        public const float PropBlurFadeStartRpm = 180f;
+        public const float PropBlurFadeEndRpm = 520f;
 
         // ANM-AIR-001b turbofan presentation. These are fan RPMs (not N1 data):
         // deliberately modest visual values that make the 737 intake read alive at
@@ -32,12 +34,25 @@ namespace Airside.Presentation
         // Same idea as the props: taxi spool is already fast enough that individual
         // fan blades strobe; show the intake disc whenever the engine is at taxi-or-above.
         public const float JetFanHighRpmThreshold = 1400f;
+        public const float JetFanBlurFadeStartRpm = 700f;
+        public const float JetFanBlurFadeEndRpm = 1800f;
 
         /// <summary>True when individual blades should hide behind the translucent disc.</summary>
         public static bool PropBlurActive(float rpm) => rpm >= PropHighRpmThreshold;
 
         /// <summary>True when the 737 intake should show its restrained fan disc.</summary>
         public static bool JetFanBlurActive(float rpm) => rpm >= JetFanHighRpmThreshold;
+
+        /// <summary>0..1 overlap between visible blades and the motion-blur disc.</summary>
+        public static float PropBlurBlend(float rpm) => SmoothBand(rpm, PropBlurFadeStartRpm, PropBlurFadeEndRpm);
+
+        public static float JetFanBlurBlend(float rpm) => SmoothBand(rpm, JetFanBlurFadeStartRpm, JetFanBlurFadeEndRpm);
+
+        private static float SmoothBand(float value, float from, float to)
+        {
+            var t = Mathf.Clamp01((value - from) / (to - from));
+            return t * t * (3f - 2f * t);
+        }
 
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;

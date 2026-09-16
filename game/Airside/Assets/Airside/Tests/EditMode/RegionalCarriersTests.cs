@@ -20,11 +20,11 @@ namespace Airside.Tests
             Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink"));
             var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
             Assert.That(regional.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
-                "five parked regional aircraft plus one opening arrival");
-            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count - 1));
+                "four parked regional aircraft plus two opening arrivals");
+            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count - 2));
             Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.EqualTo(1));
+            Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.EqualTo(2));
         }
 
         [Test]

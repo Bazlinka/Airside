@@ -195,11 +195,12 @@ namespace Airside.Tests
                 ("Dash 8-400", dash8)
             };
 
-            // Only one Dash 8-400 flies here, so two of them are never side by side.
+            // More than one Q400 may operate, but the opening traffic and stand chooser
+            // keep at most one parked until a clearance-safe bay becomes available.
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(1),
                 Airline.Player("Clearance Air", "#1F3A93"));
-            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Dash8Q400), Is.EqualTo(1),
-                "a second Dash 8-400 needs a stand-assignment rule for 50D/50E first (1.2 m apart there)");
+            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Dash8Q400 && a.State == FleetState.AtStand), Is.EqualTo(1),
+                "only one Q400 starts parked; the other is inbound and uses the clearance-aware stand chooser");
 
             var shortfalls = new List<string>();
             var bays = AdelaideLayout.Bays;

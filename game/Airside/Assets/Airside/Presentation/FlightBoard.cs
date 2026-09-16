@@ -93,6 +93,27 @@ namespace Airside.Presentation
             return clockText(aircraft.StateStartedAt);
         }
 
+        /// <summary>What the board's NEXT time represents, so a clock value is never ambiguous.</summary>
+        public static string TimeMeaning(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return string.Empty;
+            return aircraft.State switch
+            {
+                FleetState.AtStand when aircraft.Scheduled.HasValue => "DEPARTS",
+                FleetState.AtStand => "SINCE",
+                FleetState.TaxiOut => "AT HOLD",
+                FleetState.HoldingShort => "WAITING",
+                FleetState.TakingOff => "AIRBORNE",
+                FleetState.Outbound => "ARRIVES",
+                FleetState.AtDestination => "RETURNS",
+                FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing => "LANDS",
+                FleetState.AwaitingStand => "WAITING",
+                FleetState.TaxiIn => "ON STAND",
+                _ => "NEXT"
+            };
+        }
+
         /// <summary>Stable sort: next event time, then registration.</summary>
         public static void Sort(List<FleetAircraft> aircraft)
         {

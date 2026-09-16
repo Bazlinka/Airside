@@ -134,7 +134,7 @@ namespace Airside.Presentation
                     {
                         FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type),
                         FleetGroundLeg.Lineup => AdelaideGround.Lineup,
-                        FleetGroundLeg.Vacate => AdelaideGround.Vacate,
+                        FleetGroundLeg.Vacate => AdelaideGround.VacateFor(aircraft.Type),
                         _ => AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type)
                     };
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;

@@ -1449,7 +1449,7 @@ namespace Airside.Presentation
             var rpm = SpooledPropRpm(aircraft, targetRpm);
             if (rpm < 1f)
             {
-                ApplyPropBlur(aircraft, highRpm: false);
+                ApplyPropBlur(aircraft, 0f);
                 return;
             }
 
@@ -1457,7 +1457,7 @@ namespace Airside.Presentation
             var degrees = PresentationDeltaTime * rpm * 6f;
             if (degrees <= 0f)
                 return;
-            var highRpm = AirsideReusableMotion.PropBlurActive(rpm);
+            var blur = AirsideReusableMotion.PropBlurBlend(rpm);
             var namedChildren5 = AirsideNamedChildren.Get(aircraft);
             var childNames5 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex5 = 0; childIndex5 < namedChildren5.Length; childIndex5++)
@@ -1469,7 +1469,7 @@ namespace Airside.Presentation
                 if (!childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 child.Rotate(Vector3.forward, degrees, Space.Self);
-                ApplyPropBlurToHub(child, highRpm);
+                ApplyPropBlurToHub(child, blur);
             }
         }
 
@@ -1497,7 +1497,7 @@ namespace Airside.Presentation
                 if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
                 var rpm = childName.EndsWith(" L", StringComparison.Ordinal) ? left : right;
-                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurActive(rpm));
+                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurBlend(rpm));
                 if (rpm >= 1f)
                     child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }
@@ -1532,7 +1532,7 @@ namespace Airside.Presentation
                 if (fan == aircraft || !(names[i] is "Fan L" or "Fan R"))
                     continue;
                 var rpm = names[i] == "Fan L" ? left : right;
-                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurActive(rpm));
+                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurBlend(rpm));
                 if (rpm >= 1f && PresentationDeltaTime > 0f)
                     fan.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
             }
@@ -1566,7 +1566,7 @@ namespace Airside.Presentation
         /// <summary>
         /// At high RPM hide individual blades and show a translucent disc (Batch D life).
         /// </summary>
-        private static void ApplyPropBlur(Transform aircraft, bool highRpm)
+        private static void ApplyPropBlur(Transform aircraft, float blend)
         {
             var namedChildren7 = AirsideNamedChildren.Get(aircraft);
             var childNames7 = AirsideNamedChildren.Names(aircraft);
@@ -1576,39 +1576,49 @@ namespace Airside.Presentation
                 var childName = childNames7[childIndex7];
                 if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
                     continue;
-                ApplyPropBlurToHub(child, highRpm);
+                ApplyPropBlurToHub(child, blend);
             }
         }
 
-        private static void ApplyPropBlurToHub(Transform propeller, bool highRpm)
+        private static void ApplyPropBlurToHub(Transform propeller, float blend)
         {
+            blend = Mathf.Clamp01(blend);
+            var showBlades = blend < 0.92f;
             var selfRenderer = propeller.GetComponent<Renderer>();
             if (selfRenderer != null)
-                selfRenderer.enabled = !highRpm;
+                selfRenderer.enabled = showBlades;
 
             for (var i = 0; i < propeller.childCount; i++)
             {
                 var child = propeller.GetChild(i);
                 if (child.name == "PropDisc")
                 {
-                    child.gameObject.SetActive(highRpm);
+                    child.gameObject.SetActive(blend > 0.01f);
+                    var discRenderer = child.GetComponent<Renderer>();
+                    if (discRenderer != null)
+                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, 0.11f * blend));
                     continue;
                 }
 
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
-                    renderer.enabled = !highRpm;
+                    renderer.enabled = showBlades;
             }
         }
 
-        private static void ApplyJetFanBlurToHub(Transform fan, bool highRpm)
+        private static void ApplyJetFanBlurToHub(Transform fan, float blend)
         {
+            blend = Mathf.Clamp01(blend);
+            var showBlades = blend < 0.92f;
             for (var i = 0; i < fan.childCount; i++)
             {
                 var child = fan.GetChild(i);
                 if (child.name == "FanDisc")
                 {
-                    child.gameObject.SetActive(highRpm);
+                    child.gameObject.SetActive(blend > 0.01f);
+                    var discRenderer = child.GetComponent<Renderer>();
+                    if (discRenderer != null)
+                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, 0.18f * blend));
                     continue;
                 }
 
@@ -1616,7 +1626,7 @@ namespace Airside.Presentation
                 {
                     var renderer = child.GetComponent<Renderer>();
                     if (renderer != null)
-                        renderer.enabled = !highRpm;
+                        renderer.enabled = showBlades;
                 }
             }
         }
@@ -11799,9 +11809,9 @@ namespace Airside.Presentation
                 (x: -40.5f, z: 11.5f, yaw: 85f),
                 (x: -27f, z: 11f, yaw: 110f)
             };
-            // Prefab GA reads heavier than greybox — three airframes keep the bay calm.
-            var hasGaPrefab = ArtPresentationLoader.HasPrefab("mdl_parked_ga_v01");
-            var count = hasGaPrefab ? 3 : spots.Length;
+            // Fill all five authored tie-downs. These are background GA visitors, not
+            // airline stands, so they add airport life without consuming a fleet bay.
+            var count = spots.Length;
             for (var i = 0; i < count; i++)
             {
                 var spot = spots[i];

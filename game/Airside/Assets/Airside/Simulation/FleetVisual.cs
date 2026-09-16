@@ -88,7 +88,8 @@ namespace Airside.Simulation
                     if (elapsed < approach + landing)
                         return Air(AircraftPhase.Landing, start.Advance(approach));
                     var vacateAt = start.Advance(approach + landing);
-                    return Ground(AircraftPhase.TaxiIn, vacateAt, FleetGroundLeg.Vacate, vacateAt, AirlineOperations.VacateSeconds);
+                    return Ground(AircraftPhase.TaxiIn, vacateAt, FleetGroundLeg.Vacate, vacateAt,
+                        AirlineOperations.VacateSecondsFor(aircraft.Type));
                 }
 
                 case FleetState.AwaitingStand:

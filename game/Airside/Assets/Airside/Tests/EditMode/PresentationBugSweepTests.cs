@@ -171,6 +171,11 @@ namespace Airside.Tests
             Assert.That(AirsideReusableMotion.PropBlurActive(AirsideReusableMotion.PropHighRpmThreshold - 1f), Is.False);
             Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanRpmTaxi), Is.True);
             Assert.That(AirsideReusableMotion.JetFanBlurActive(AirsideReusableMotion.JetFanHighRpmThreshold - 1f), Is.False);
+            Assert.That(AirsideReusableMotion.PropBlurBlend(AirsideReusableMotion.PropBlurFadeStartRpm), Is.Zero);
+            Assert.That(AirsideReusableMotion.PropBlurBlend(
+                (AirsideReusableMotion.PropBlurFadeStartRpm + AirsideReusableMotion.PropBlurFadeEndRpm) * 0.5f),
+                Is.InRange(0.45f, 0.55f), "blade and disc overlap instead of popping");
+            Assert.That(AirsideReusableMotion.PropBlurBlend(AirsideReusableMotion.PropBlurFadeEndRpm), Is.EqualTo(1f));
         }
     
         [Test]

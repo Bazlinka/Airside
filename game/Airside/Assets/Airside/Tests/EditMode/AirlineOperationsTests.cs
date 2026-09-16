@@ -240,8 +240,9 @@ namespace Airside.Tests
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11), Player());
             var emu = ops.Airlines.Single(a => a.Name == "Rex");
 
-            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(4));
-            Assert.That(ops.FleetOf(emu).All(a => a.Scheduled.HasValue), Is.True, "AI schedules itself");
+            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(3));
+            Assert.That(ops.FleetOf(emu).Where(a => a.State == FleetState.AtStand).All(a => a.Scheduled.HasValue),
+                Is.True, "parked AI schedules itself while the opening arrival is already flying");
 
             for (var steps = 0; steps < 10000; steps++)
             {

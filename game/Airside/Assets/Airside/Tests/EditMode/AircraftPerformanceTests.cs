@@ -17,6 +17,8 @@ namespace Airside.Tests
             Assert.That(profiles.Select(p => p.ApproachKnots).Distinct().Count(), Is.EqualTo(types.Length));
             Assert.That(AircraftPerformance.Boeing7378.RotateX, Is.GreaterThan(AircraftPerformance.Dash8Q400.RotateX));
             Assert.That(AircraftPerformance.Dash8Q400.RotateX, Is.GreaterThan(AircraftPerformance.Atr42.RotateX));
+            Assert.That(AircraftPerformance.Boeing7378.RunwayExitKnots,
+                Is.GreaterThan(AircraftPerformance.Atr42.RunwayExitKnots));
         }
 
         [Test]
@@ -34,6 +36,8 @@ namespace Airside.Tests
             var stand = new StableId("BAY-2");
             Assert.That(AdelaideGround.TaxiOut(stand, AircraftType.Dash8Q400).WholeSeconds,
                 Is.LessThan(AdelaideGround.TaxiOut(stand, AircraftType.Saab340).WholeSeconds));
+            Assert.That(AdelaideGround.VacateFor(AircraftType.Boeing7378).PoseAt(0).Speed,
+                Is.EqualTo(CircuitProfile.Knots(AircraftPerformance.Boeing7378.RunwayExitKnots)).Within(0.15f));
             Assert.That(EnrouteProfile.PlannedCruiseFeet(1200, AircraftType.Boeing7378),
                 Is.GreaterThan(EnrouteProfile.PlannedCruiseFeet(1200, AircraftType.Atr42)));
             Assert.That(EnrouteProfile.PlannedCruiseFeet(4000, AircraftType.Dash8Q400), Is.EqualTo(25000));

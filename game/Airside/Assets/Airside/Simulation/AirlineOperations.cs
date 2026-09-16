@@ -70,6 +70,7 @@ namespace Airside.Simulation
 
         /// <summary>Rollout end, along the runway to exit E2 and clear to its holding point.</summary>
         public static long VacateSeconds => AdelaideGround.Vacate.WholeSeconds;
+        public static long VacateSecondsFor(AircraftType type) => AdelaideGround.VacateFor(type).WholeSeconds;
 
         /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
         public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
@@ -85,7 +86,7 @@ namespace Airside.Simulation
         public static long LandingRunwaySecondsFor(AircraftType type)
         {
             var profile = AircraftPerformance.For(type);
-            return profile.ApproachSeconds + profile.LandingSeconds + VacateSeconds;
+            return profile.ApproachSeconds + profile.LandingSeconds + VacateSecondsFor(type);
         }
 
         public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = new[]
@@ -134,7 +135,7 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
-            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340), ("VH-ZRE", AircraftType.Saab340), ("VH-ZRF", AircraftType.Saab340) }),
+            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340), ("VH-ZRE", AircraftType.Saab340) }),
             (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400) })
         };
 
@@ -161,7 +162,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>Staggered opening departures; an arrival is already inbound as play begins.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 7 * 60, 18 * 60, 31 * 60, 47 * 60 };
+        public static readonly long[] AiOpeningDepartureSeconds = { 7 * 60, 18 * 60, 31 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
@@ -185,6 +186,9 @@ namespace Airside.Simulation
             if (inbound != null && DestinationCatalogue.TryFind("PLO", out var portLincoln))
             {
                 operations.SeedOpeningInbound(inbound, portLincoln, 4 * 60);
+                var secondInbound = aiFleet.FindLast(a => a.Airline.Id.Value == "REX");
+                if (secondInbound != null && DestinationCatalogue.TryFind("MGB", out var mountGambier))
+                    operations.SeedOpeningInbound(secondInbound, mountGambier, 11 * 60);
             }
 
             var departureIndex = 0;
@@ -704,8 +708,34 @@ namespace Airside.Simulation
         /// one that does not crowd a tight neighbour, then the shortest taxi in, then list
         /// order. Never refuses a free stand only for clearance, so nobody is stranded.
         /// </summary>
-        public StableId? SuggestStand(FleetAircraft aircraft) =>
-            aircraft == null ? null : SuggestStandFor(aircraft.Type, aircraft);
+        public StableId? SuggestStand(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return null;
+
+            // The player should never return to find every regional bay occupied by AI.
+            // When their aircraft is away, keep the last compatible bay reserved; AI
+            // arrivals can queue at E2 until another operator pushes back.
+            if (!aircraft.Airline.IsPlayer && !NeedsTerminalGate(aircraft.Type)
+                && PlayerAirline != null && !PlayerOwnsRegionalStand())
+            {
+                var free = 0;
+                foreach (var stand in FreeStandsFor(aircraft.Type))
+                    free++;
+                if (free <= 1)
+                    return null;
+            }
+
+            return SuggestStandFor(aircraft.Type, aircraft);
+        }
+
+        private bool PlayerOwnsRegionalStand()
+        {
+            foreach (var aircraft in _fleet)
+                if (aircraft.Airline.IsPlayer && HoldsStand(aircraft) && !AdelaideGround.IsTerminalGate(aircraft.Stand))
+                    return true;
+            return false;
+        }
 
         /// <summary>
         /// Same ranking as <see cref="SuggestStand"/> for a type that is not yet on the field

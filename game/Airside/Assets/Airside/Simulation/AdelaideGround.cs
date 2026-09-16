@@ -33,8 +33,8 @@ namespace Airside.Simulation
 
         /// <summary>The paved link and lead-in between T1/T2 and a terminal gate, reserved per gate.</summary>
         public static string LeadInResource(StableId gate) => gate.Value + "/lead-in";
-        private static GroundPath _vacate;
-        private static GroundLeg _vacateLeg;
+        private static readonly Dictionary<string, GroundPath> VacatePaths = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, GroundLeg> VacateLegs = new(StringComparer.Ordinal);
         private static GroundLeg _lineupLeg;
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
@@ -84,7 +84,18 @@ namespace Airside.Simulation
         }
 
         /// <summary>Runway 05 rollout end → exit E2 → holding point clear of the runway.</summary>
-        public static GroundLeg Vacate => _vacateLeg ??= new GroundLeg(new GroundLegPart(VacatePath, tailFirst: false));
+        public static GroundLeg Vacate => VacateFor(AircraftType.Atr42);
+
+        public static GroundLeg VacateFor(AircraftType type)
+        {
+            var key = type?.Id ?? "ATR42";
+            if (!VacateLegs.TryGetValue(key, out var leg))
+            {
+                leg = new GroundLeg(new GroundLegPart(VacatePathFor(type), tailFirst: false));
+                VacateLegs[key] = leg;
+            }
+            return leg;
+        }
 
         /// <summary>F6 holding point → centreline at the 05 takeoff start, stopped and ready to roll.</summary>
         public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
@@ -232,7 +243,19 @@ namespace Airside.Simulation
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
         /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
-        private static GroundPath VacatePath => _vacate ??= new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.Vacate,
-            entrySpeed: CircuitProfile.Knots(CircuitProfile.RunwayExitKnots));
+        private static GroundPath VacatePath => VacatePathFor(AircraftType.Atr42);
+
+        private static GroundPath VacatePathFor(AircraftType type)
+        {
+            var key = type?.Id ?? "ATR42";
+            if (!VacatePaths.TryGetValue(key, out var path))
+            {
+                var performance = AircraftPerformance.For(type);
+                path = new GroundPath(AdelaideLayout.Vacate, GroundSpeedLimits.TaxiFor(type),
+                    entrySpeed: CircuitProfile.Knots(performance.RunwayExitKnots));
+                VacatePaths[key] = path;
+            }
+            return path;
+        }
     }
 }

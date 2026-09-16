@@ -48,6 +48,7 @@ namespace Airside.Tests
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → MEL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Scheduled"));
             Assert.That(FlightBoard.TimeLabel(aircraft, t => $"T{t.ElapsedSeconds}"), Is.EqualTo("T600"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("DEPARTS"));
         }
 
         [Test]
@@ -82,12 +83,14 @@ namespace Airside.Tests
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → BHQ"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("En route"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("ARRIVES"));
 
             var inboundAt = outboundAt - 1 + airborne + AirlineOperations.DestinationTurnaroundSeconds + 1;
             RunTo(clock, ops, inboundAt);
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("LANDS"));
         }
 
         [Test]

@@ -88,7 +88,7 @@ namespace Airside.Tests
             var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && !AirlineOperations.NeedsTerminalGate(a.Type) && a.Scheduled.HasValue)
                 .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).ToArray();
             Assert.That(departures, Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds));
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.EqualTo(1));
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.EqualTo(2));
             Assert.That(departures.Max(), Is.LessThanOrEqualTo(70 * 60), "departures are spread across the opening hour");
         }
     }

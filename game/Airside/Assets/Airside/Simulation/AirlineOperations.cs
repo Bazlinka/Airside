@@ -52,6 +52,11 @@ namespace Airside.Simulation
         public const long DestinationTurnaroundSeconds = 40 * 60;
         public const long AiStandTurnaroundSeconds = 45 * 60;
         public const long RunwaySeparationSeconds = 90;
+        /// <summary>
+        /// Minimum interval between pushback clearances. This keeps two aircraft from being
+        /// released onto the shared apron/taxi route together while still allowing a useful queue.
+        /// </summary>
+        public const long TaxiReleaseSeparationSeconds = 60;
         public const int MaxRecentEvents = 30;
 
         // Ground times are measured off the real Adelaide routes with ATR speed limits
@@ -484,6 +489,25 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Next time ground can issue another pushback clearance. It is derived from active
+        /// taxi-out state, so save files and event-driven catch-up remain deterministic.
+        /// </summary>
+        private SimulationTime? NextTaxiReleaseAt(SimulationTime now)
+        {
+            SimulationTime? release = null;
+            foreach (var aircraft in _fleet)
+            {
+                if (aircraft.State != FleetState.TaxiOut)
+                    continue;
+                var candidate = aircraft.StateStartedAt.Advance(TaxiReleaseSeparationSeconds);
+                if (candidate.CompareTo(now) > 0 && (release == null || candidate.CompareTo(release.Value) > 0))
+                    release = candidate;
+            }
+
+            return release;
+        }
+
+        /// <summary>
         /// The next moment anything changes on its own, for skip-to-next-event. Null when
         /// everything is waiting on an owner — such as a player aircraft needing a stand.
         /// </summary>
@@ -499,18 +523,25 @@ namespace Airside.Simulation
             }
 
             var runwayWanted = false;
+            var taxiReleaseWanted = false;
             foreach (var aircraft in _fleet)
             {
                 if (aircraft.StateEndsAt.HasValue)
                     Consider(aircraft.StateEndsAt.Value);
                 if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
+                {
                     Consider(aircraft.Scheduled.Value.DepartAt);
+                    if (aircraft.Scheduled.Value.DepartAt.CompareTo(now) <= 0)
+                        taxiReleaseWanted = true;
+                }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
                     runwayWanted = true;
             }
 
             if (runwayWanted)
                 Consider(_runwayFreeAt);
+            if (taxiReleaseWanted && NextTaxiReleaseAt(now) is { } taxiRelease)
+                Consider(taxiRelease);
 
             return next;
         }
@@ -609,6 +640,8 @@ namespace Airside.Simulation
             {
                 case FleetState.AtStand:
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
+                        return false;
+                    if (NextTaxiReleaseAt(now).HasValue)
                         return false;
                     // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
                     // whenever anything else finishes, since that is the only way it frees.

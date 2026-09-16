@@ -101,5 +101,18 @@ namespace Airside.Tests
             Assert.That(FlightBoard.RouteText(aircraft), Does.StartWith("Bay "));
             Assert.That(FlightBoard.SortKeySeconds(aircraft), Is.EqualTo(long.MaxValue));
         }
+
+        [Test]
+        public void DelayedDeparture_IsClearlyLabelledAfterOneMinute()
+        {
+            var (_, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("MEL"), new SimulationTime(600));
+
+            Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Scheduled"));
+            Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft, new SimulationTime(720)), Is.EqualTo("LATE +2 MIN"));
+        }
     }
 }

@@ -46,6 +46,12 @@ namespace Airside.Presentation
             if (aircraft == null)
                 return StatusSeverity.Normal;
 
+            var departureDelay = FlightBoard.DepartureDelayMinutes(aircraft, now) * 60;
+            if (departureDelay >= HoldWarningSeconds)
+                return StatusSeverity.Warning;
+            if (departureDelay >= HoldAttentionSeconds)
+                return StatusSeverity.Attention;
+
             if (aircraft.State == FleetState.AwaitingStand)
                 // The player must choose a bay; other operators pick their own.
                 return aircraft.Airline.IsPlayer ? StatusSeverity.Warning : StatusSeverity.Attention;

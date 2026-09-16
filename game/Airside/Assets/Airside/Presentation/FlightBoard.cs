@@ -79,6 +79,19 @@ namespace Airside.Presentation
             };
         }
 
+        /// <summary>Clock-aware status for a departure still held at its stand after departure time.</summary>
+        public static string PhaseLabel(FleetAircraft aircraft, SimulationTime now) =>
+            DepartureDelayMinutes(aircraft, now) > 0 ? "Gate hold" : PhaseLabel(aircraft);
+
+        /// <summary>Whole minutes late, once a scheduled aircraft is at least a minute overdue.</summary>
+        public static long DepartureDelayMinutes(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft == null || aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
+                return 0;
+            var seconds = now.ElapsedSeconds - aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+            return seconds >= 60 ? seconds / 60 : 0;
+        }
+
         public static string TimeLabel(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
         {
             if (aircraft == null || clockText == null)
@@ -112,6 +125,12 @@ namespace Airside.Presentation
                 FleetState.TaxiIn => "ON STAND",
                 _ => "NEXT"
             };
+        }
+
+        public static string TimeMeaning(FleetAircraft aircraft, SimulationTime now)
+        {
+            var delay = DepartureDelayMinutes(aircraft, now);
+            return delay > 0 ? $"LATE +{delay} MIN" : TimeMeaning(aircraft);
         }
 
         /// <summary>Stable sort: next event time, then registration.</summary>

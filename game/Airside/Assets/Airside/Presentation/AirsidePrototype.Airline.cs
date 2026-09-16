@@ -1950,12 +1950,12 @@ namespace Airside.Presentation
                 if (!mine && !selected)
                     GUI.color = new Color(1f, 1f, 1f, Ownership.AlphaFor(aircraft.Airline));
                 GUI.Label(new Rect(10f, y + 5f, timeW - 8f, 18f), FlightBoard.TimeLabel(aircraft, ClockText), boardBold);
-                GUI.Label(new Rect(10f, y + 25f, timeW - 8f, 15f), FlightBoard.TimeMeaning(aircraft), boardTiny);
+                GUI.Label(new Rect(10f, y + 25f, timeW - 8f, 15f), FlightBoard.TimeMeaning(aircraft, _clock.Now), boardTiny);
                 var boardSeverity = AircraftStatus.Severity(aircraft, _clock.Now);
                 var boardContent = GUI.contentColor;
                 if (boardSeverity != StatusSeverity.Normal)
                     GUI.contentColor = SeverityColour(boardSeverity, boardContent);
-                GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft), label);
+                GUI.Label(new Rect(timeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
                 GUI.contentColor = boardContent;
                 GUI.Label(new Rect(timeW + phaseW, y + 6f, routeW - 4f, 20f), FlightBoard.RouteText(aircraft), boardBold);
                 var aircraftX = timeW + phaseW + routeW;

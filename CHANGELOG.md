@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Saab 340 visual hierarchy.** Rex's Saab now uses restrained neutral wings and horizontal
+  tail surfaces, keeping airline colour on the vertical tail instead of turning the full
+  silhouette into a bright colour block. Cabin and cockpit glazing is darker and slightly more
+  prominent at follow-camera distance while the exact AIR-007 dimensions, 120-part mesh budget,
+  propeller rig, routes and saves remain unchanged. Headless tests: 249 passed; packaged Mac
+  daylight and 23:30 captures passed; Unity EditMode 444/445 with only the existing Gate 13
+  tolerance miss.
+
 - **Taxiway edge weathering.** Adelaide taxiways now have sparse, warm-grey dust/scuff strips
   just inside both pavement edges, breaking up the perfectly cut black ribbons without reading as
   paint or changing pavement geometry. The combined mesh is deterministic, presentation-only and

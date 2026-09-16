@@ -302,10 +302,12 @@ def saab_meshes():
     meshes["elevator_right"] = box(2.30, 3.18, -8.95, 4.20, 0.06, 0.38)
     meshes["tail_root_fairing"] = box(0.0, 2.85, -6.40, 0.55, 1.15, 1.60)
 
-    # Even cabin window pitch on the curved sides (~14 panes each side).
+    # Even cabin window pitch on the curved sides (~14 panes each side). Keep
+    # the glazing slightly proud of the skin so the small panes survive the
+    # follow camera's oblique angle instead of z-fighting into the fuselage.
     for index, z in enumerate(np.linspace(6.40, -5.20, 14), start=1):
-        meshes[f"cabin_window_{index}"] = box(-1.13, 2.35, float(z), 0.03, 0.34, 0.38)
-        meshes[f"cabin_window_r{index}"] = box(1.13, 2.35, float(z), 0.03, 0.34, 0.38)
+        meshes[f"cabin_window_{index}"] = box(-1.16, 2.35, float(z), 0.035, 0.38, 0.44)
+        meshes[f"cabin_window_r{index}"] = box(1.16, 2.35, float(z), 0.035, 0.38, 0.44)
 
     # Four compact panes follow the rounded nose; gaps are the pillars.  The
     # former box panes and glare slab projected past the nose as a dark mask.

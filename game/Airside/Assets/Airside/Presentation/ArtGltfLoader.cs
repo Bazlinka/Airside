@@ -294,18 +294,34 @@ namespace Airside.Presentation
             {
                 var part = parts[i];
                 sb.Append('|').Append(part.Name).Append('#');
-                sb.Append(part.Color.r).Append(',').Append(part.Color.g).Append(',')
-                    .Append(part.Color.b).Append(',').Append(part.Color.a);
+                // Invariant: a comma-decimal locale writes "0,5", which collides with the
+                // ',' separators, so two different colours could share a cache key and the
+                // second kit would be drawn with the first one's materials.
+                Number(sb, part.Color.r); sb.Append(',');
+                Number(sb, part.Color.g); sb.Append(',');
+                Number(sb, part.Color.b); sb.Append(',');
+                Number(sb, part.Color.a);
                 if (localOffsets != null && i < localOffsets.Length)
                 {
                     var o = localOffsets[i];
                     if (o.sqrMagnitude > 0f)
-                        sb.Append('@').Append(o.x).Append(',').Append(o.y).Append(',').Append(o.z);
+                    {
+                        sb.Append('@');
+                        Number(sb, o.x); sb.Append(',');
+                        Number(sb, o.y); sb.Append(',');
+                        Number(sb, o.z);
+                    }
                 }
             }
 
             return sb.ToString();
         }
+
+        private static void Number(StringBuilder sb, float value) =>
+            sb.Append(value.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+
+        public static string TestCombinedKey(string artRelativePath, (string Name, Color Color)[] parts, Vector3[] localOffsets) =>
+            CombinedKey(artRelativePath, parts, localOffsets);
 
         private static CombinedTemplate BuildCombined(
             GltfKit kit,

@@ -157,5 +157,23 @@ namespace Airside.Tests
             Assert.That(AirsidePrototype.StarFieldFade(0.34f), Is.LessThan(0.2f));
             Assert.That(AirsidePrototype.StarFieldFade(0.2f), Is.GreaterThan(AirsidePrototype.StarFieldFade(0.3f)));
         }
+    
+        [Test]
+        public void CombinedKitKey_SeparatesColoursInEveryCulture()
+        {
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
+                var a = ArtGltfLoader.TestCombinedKey("kit", new[] { ("body", new Color(0.5f, 0.5f, 0.5f, 1f)) }, null);
+                var b = ArtGltfLoader.TestCombinedKey("kit", new[] { ("body", new Color(0.5f, 0.50001f, 0.5f, 1f)) }, null);
+                Assert.That(a, Does.Not.Contain("0,5"));
+                Assert.That(a, Is.Not.EqualTo(b));
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
     }
 }

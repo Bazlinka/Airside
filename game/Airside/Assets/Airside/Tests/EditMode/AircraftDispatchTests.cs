@@ -206,12 +206,11 @@ namespace Airside.Tests
 
             Assert.That(TypeOf("QantasLink"), Is.SameAs(AircraftType.Dash8Q400));
             Assert.That(TypeOf("Rex"), Is.SameAs(AircraftType.Saab340));
-            Assert.That(TypeOf("Emu Air"), Is.SameAs(AircraftType.Atr42));
-            Assert.That(TypeOf("Wattlebird Jet"), Is.SameAs(AircraftType.Boeing7378));
+            Assert.That(TypeOf("Virgin Australia"), Is.SameAs(AircraftType.Boeing7378));
             Assert.That(ops.Fleet.Single(a => a.Airline.IsPlayer).Type, Is.SameAs(AircraftType.Atr42));
 
             Assert.That(AircraftVisualProfiles.For(TypeOf("QantasLink")), Is.EqualTo(AircraftVisualProfiles.Dash8Q400));
-            Assert.That(AircraftVisualProfiles.For(TypeOf("Wattlebird Jet")), Is.EqualTo(AircraftVisualProfiles.Boeing7378));
+            Assert.That(AircraftVisualProfiles.For(TypeOf("Virgin Australia")), Is.EqualTo(AircraftVisualProfiles.Boeing7378));
             Assert.That(AircraftVisualProfiles.For(TypeOf("Rex")), Is.EqualTo(AircraftVisualProfiles.Saab340),
                 "Rex's Saab 340Bs draw with AIR-007, not the ATR stand-in");
         }

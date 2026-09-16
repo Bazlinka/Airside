@@ -169,7 +169,7 @@ namespace Airside.Tests
             Assert.That(first.State, Is.EqualTo(FleetState.TakingOff));
             Assert.That(second.State, Is.EqualTo(FleetState.HoldingShort));
 
-            var released = holdingAt + AirlineOperations.TakeoffRunwaySeconds + AirlineOperations.RunwaySeparationSeconds;
+            var released = holdingAt + AirlineOperations.TakeoffRunwaySecondsFor(first.Type) + AirlineOperations.RunwaySeparationSeconds;
             RunTo(clock, ops, released - 1);
             Assert.That(second.State, Is.EqualTo(FleetState.HoldingShort));
             RunTo(clock, ops, released);
@@ -238,9 +238,9 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11), Player());
-            var emu = ops.Airlines.Single(a => a.Name == "Emu Air");
+            var emu = ops.Airlines.Single(a => a.Name == "Rex");
 
-            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(2));
+            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(4));
             Assert.That(ops.FleetOf(emu).All(a => a.Scheduled.HasValue), Is.True, "AI schedules itself");
 
             for (var steps = 0; steps < 10000; steps++)

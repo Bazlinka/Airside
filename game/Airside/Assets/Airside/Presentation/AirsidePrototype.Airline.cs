@@ -237,7 +237,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(x, rect.y + 190f, inner, 36f),
                 hasSave
                     ? "A new airline replaces your saved one."
-                    : "You start with one ATR 42-600, sharing the regional apron with Emu Air, Rex and QantasLink.", label);
+                    : "You start with one ATR 42-600, sharing the regional apron with Rex and QantasLink.", label);
 
             var name = (_airlineNameDraft ?? string.Empty).Trim();
             GUI.enabled = name.Length > 0;
@@ -480,7 +480,7 @@ namespace Airside.Presentation
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
             if (jetJoined > 0)
-                ShowToast("Wattlebird Jet's 737-8 now operates from Gate 13.");
+                ShowToast("Virgin Australia's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
@@ -1362,7 +1362,7 @@ namespace Airside.Presentation
                 return false;
             var started = aircraft.StateStartedAt.ElapsedSeconds;
             profile = new EnrouteProfile(_operations.DistanceKm(aircraft.CurrentDestination.Value),
-                aircraft.StateEndsAt.Value.ElapsedSeconds - started);
+                aircraft.StateEndsAt.Value.ElapsedSeconds - started, aircraft.Type);
             elapsedSeconds = Math.Max(0.0, _preciseTime - started);
             return true;
         }

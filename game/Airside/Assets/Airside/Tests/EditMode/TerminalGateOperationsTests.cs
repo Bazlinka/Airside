@@ -16,7 +16,7 @@ namespace Airside.Tests
     public sealed class TerminalGateOperationsTests
     {
         private static readonly StableId Gate13 = new("GATE-13");
-        private const string JetRegistration = "VH-WTJ";
+        private const string JetRegistration = "VH-8IA";
 
         private static AirlineOperations NewGame(out ManualSimulationClock clock, int seed = 77)
         {
@@ -35,12 +35,12 @@ namespace Airside.Tests
             var jets = ops.Fleet.Where(a => a.Type == AircraftType.Boeing7378).ToList();
             Assert.That(jets.Count, Is.EqualTo(1), "only one 737 exists");
             var jet = jets[0];
-            Assert.That(jet.Airline.Name, Is.EqualTo("Wattlebird Jet"));
+            Assert.That(jet.Airline.Name, Is.EqualTo("Virgin Australia"));
             Assert.That(jet.Airline.IsPlayer, Is.False, "the player is not given a 737");
             Assert.That(jet.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(jet.Stand, Is.EqualTo(Gate13));
             Assert.That(jet.Scheduled.HasValue, Is.True);
-            Assert.That(AirlineOperations.WattlebirdRotation, Does.Contain(jet.Scheduled.Value.Destination.Code));
+            Assert.That(AirlineOperations.VirginRotation, Does.Contain(jet.Scheduled.Value.Destination.Code));
         }
 
         [Test]
@@ -129,7 +129,8 @@ namespace Airside.Tests
                     if (previous is { } p)
                     {
                         var jump = Mathf.Sqrt(Mathf.Pow(pose.X - p.X, 2) + Mathf.Pow(pose.Z - p.Z, 2));
-                        Assert.That(jump, Is.LessThan(CircuitProfile.Knots(16f) * (float)step + 0.05f), $"{name} teleport at {t:0.0}s");
+                        var physicalLimit = Math.Max(p.Speed, pose.Speed) * (float)step + 0.05f;
+                        Assert.That(jump, Is.LessThan(physicalLimit), $"{name} teleport at {t:0.0}s");
                         Assert.That(Degrees(pose.NoseX, pose.NoseZ, p.NoseX, p.NoseZ), Is.LessThan(4f), $"{name} nose snapped at {t:0.0}s");
                     }
 
@@ -248,11 +249,11 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideStands);
-            var operatorAirline = Airline.WattlebirdJet();
+            var operatorAirline = Airline.VirginAustralia();
             ops.AddAirline(operatorAirline);
-            var first = ops.AddAircraft(operatorAirline, "VH-WTJ", AircraftType.Boeing7378, Gate13);
-            Assert.Throws<InvalidOperationException>(() => ops.AddAircraft(operatorAirline, "VH-WTK", AircraftType.Boeing7378, Gate13));
-            Assert.Throws<InvalidOperationException>(() => ops.AddAircraft(operatorAirline, "VH-WTL", AircraftType.Boeing7378, new StableId("BAY-1")));
+            var first = ops.AddAircraft(operatorAirline, "VH-8IA", AircraftType.Boeing7378, Gate13);
+            Assert.Throws<InvalidOperationException>(() => ops.AddAircraft(operatorAirline, "VH-8IB", AircraftType.Boeing7378, Gate13));
+            Assert.Throws<InvalidOperationException>(() => ops.AddAircraft(operatorAirline, "VH-8IC", AircraftType.Boeing7378, new StableId("BAY-1")));
             Assert.That(ops.AssignStand(first, new StableId("BAY-1")).Accepted, Is.False);
             Assert.That(ops.GroundResourceHolder(Gate13.Value), Is.SameAs(first));
         }
@@ -274,7 +275,7 @@ namespace Airside.Tests
             saved.Update();
 
             var json = JsonUtility.ToJson(AirlineSave.Capture(saved));
-            Assert.That(json, Does.Contain("GATE-13").And.Contain("B38M").And.Contain("WTB"), "saved with the existing schema");
+            Assert.That(json, Does.Contain("GATE-13").And.Contain("B38M").And.Contain("VOZ"), "saved with the existing schema");
             var restoredClock = new ManualSimulationClock(new SimulationTime(9 * 3600));
             var restored = AirlineSave.Restore(JsonUtility.FromJson<AirlineSaveData>(json), restoredClock);
             Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(0), "no duplicate after a normal reload");
@@ -299,9 +300,9 @@ namespace Airside.Tests
         {
             var ops = NewGame(out var clock);
             var data = JsonUtility.FromJson<AirlineSaveData>(JsonUtility.ToJson(AirlineSave.Capture(ops)));
-            // Make it a save from before this change: no Wattlebird Jet, no 737.
+            // Make it a save from before this change: no Virgin Australia, no 737.
             data.Fleet.RemoveAll(r => r.Registration == JetRegistration);
-            data.Airlines.RemoveAll(r => r.Id == "WTB");
+            data.Airlines.RemoveAll(r => r.Id == "VOZ");
 
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(new SimulationTime(data.ClockSeconds)));
             Assert.That(restored.Fleet.Any(a => a.Type == AircraftType.Boeing7378), Is.False);
@@ -329,7 +330,7 @@ namespace Airside.Tests
             var regionalOnly = new AirlineOperations(clock, new SeededRandomSource(9), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideRegionalBays);
             regionalOnly.AddAirline(Airline.Player("No Gate Air", "#2E7D32"));
             Assert.That(regionalOnly.AddMissingTerminalOperators(), Is.EqualTo(0));
-            Assert.That(regionalOnly.Airlines.Any(a => a.Id.Value == "WTB"), Is.False, "no orphan airline without its aircraft");
+            Assert.That(regionalOnly.Airlines.Any(a => a.Id.Value == "VOZ"), Is.False, "no orphan airline without its aircraft");
         }
 
         // ---- Presentation identity ---------------------------------------------------------------

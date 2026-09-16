@@ -59,9 +59,11 @@ namespace Airside.Simulation
 
         /// <summary>Pushback, tug disconnect and taxi from <paramref name="stand"/> to the runway 05 holding point.</summary>
         public static long TaxiOutSecondsFrom(StableId stand) => AdelaideGround.TaxiOut(stand).WholeSeconds;
+        public static long TaxiOutSecondsFrom(StableId stand, AircraftType type) => AdelaideGround.TaxiOut(stand, type).WholeSeconds;
 
         /// <summary>Taxi from the E2 holding point into <paramref name="stand"/>.</summary>
         public static long TaxiInSecondsTo(StableId stand) => AdelaideGround.TaxiIn(stand).WholeSeconds;
+        public static long TaxiInSecondsTo(StableId stand, AircraftType type) => AdelaideGround.TaxiIn(stand, type).WholeSeconds;
 
         /// <summary>Holding point onto the centreline at the 05 threshold.</summary>
         public static long LineupSeconds => AdelaideGround.Lineup.WholeSeconds;
@@ -71,6 +73,8 @@ namespace Airside.Simulation
 
         /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
         public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
+        public static long TakeoffRunwaySecondsFor(AircraftType type) =>
+            LineupSeconds + AircraftPerformance.For(type).TakeoffSeconds;
 
         /// <summary>
         /// Runway time from the landing clearance on long final through flare, rollout
@@ -78,6 +82,11 @@ namespace Airside.Simulation
         /// </summary>
         public static long LandingRunwaySeconds =>
             CircuitProfile.ApproachSeconds + CircuitProfile.LandingSeconds + VacateSeconds;
+        public static long LandingRunwaySecondsFor(AircraftType type)
+        {
+            var profile = AircraftPerformance.For(type);
+            return profile.ApproachSeconds + profile.LandingSeconds + VacateSeconds;
+        }
 
         public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = new[]
         {
@@ -95,20 +104,20 @@ namespace Airside.Simulation
         };
 
         /// <summary>
-        /// The fictional terminal jet operator and its aircraft, each tied to its gate. New games
+        /// The terminal jet operator and its aircraft, tied to its gate. New games
         /// start with it; older saves gain it on load (<see cref="AddMissingTerminalOperators"/>).
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type, StableId Gate)[] Fleet)> TerminalOperators = new (Func<Airline>, (string, AircraftType, StableId)[])[]
         {
-            (Airline.WattlebirdJet, new[] { ("VH-WTJ", AircraftType.Boeing7378, new StableId("GATE-13")) })
+            (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) })
         };
 
         /// <summary>
-        /// Wattlebird Jet's mainland rotation, flown in order by completed trips — Melbourne and
+        /// Virgin Australia's representative mainland rotation — Melbourne and
         /// Sydney most, then Brisbane, Perth and Canberra. Deterministic and drawn from no random
         /// numbers, so adding the jet leaves the regional carriers' random sequence untouched.
         /// </summary>
-        public static readonly IReadOnlyList<string> WattlebirdRotation = new[] { "MEL", "SYD", "MEL", "BNE", "SYD", "PER", "MEL", "CBR" };
+        public static readonly IReadOnlyList<string> VirginRotation = new[] { "MEL", "SYD", "MEL", "BNE", "SYD", "PER", "MEL", "CBR" };
 
         /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
         public static bool NeedsTerminalGate(AircraftType type) =>
@@ -119,14 +128,14 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Real regional carriers that share Adelaide's regional apron with the player and
-        /// Emu Air. New games start with them; older saves gain them on load
+        /// the player's airline. New games start with them; older saves gain them on load
         /// (<see cref="AddMissingRegionalCarriers"/>). Six aircraft in all on six bays, so
         /// everyone always has a stand.
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
-            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340) }),
-            (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400) })
+            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340), ("VH-ZRE", AircraftType.Saab340), ("VH-ZRF", AircraftType.Saab340) }),
+            (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400) })
         };
 
         private readonly ISimulationClock _clock;
@@ -151,12 +160,12 @@ namespace Airside.Simulation
             _runwayFreeAt = clock.Now;
         }
 
-        /// <summary>First Emu Air departures after a new game starts, so the field is not empty for 45 real minutes.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 10 * 60, 20 * 60, 32 * 60, 45 * 60, 58 * 60 };
+        /// <summary>Staggered opening departures; an arrival is already inbound as play begins.</summary>
+        public static readonly long[] AiOpeningDepartureSeconds = { 7 * 60, 18 * 60, 31 * 60, 47 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
-        /// ATR, and Emu Air with two whose first flights leave within twenty minutes.
+        /// ATR, real Adelaide operators on the apron, and one aircraft already inbound.
         /// </summary>
         public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
             AirlineClock airlineClock = null)
@@ -165,22 +174,25 @@ namespace Airside.Simulation
             if (!player.IsPlayer) throw new ArgumentException("The starting airline must be the player's.", nameof(player));
 
             var operations = new AirlineOperations(clock, random, DestinationCatalogue.Adelaide, AdelaideStands);
-            var emu = Airline.EmuAir();
             operations.AddAirline(player);
-            operations.AddAirline(emu);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
-            var aiFleet = new List<FleetAircraft>
-            {
-                operations.AddAircraft(emu, "VH-EMA", AircraftType.Atr42, AdelaideRegionalBays[1]),
-                operations.AddAircraft(emu, "VH-EMB", AircraftType.Atr42, AdelaideRegionalBays[2])
-            };
+            var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
-            // Stagger the first departures so a new game sees a movement every ~12 minutes.
-            for (var i = 0; i < aiFleet.Count && i < AiOpeningDepartureSeconds.Length; i++)
+            // One QantasLink service is already returning from Port Lincoln. This puts
+            // an arrival on screen in the opening minutes instead of only after a
+            // complete out-and-back cycle, while leaving room for the player's return.
+            var inbound = aiFleet.FindLast(a => a.Airline.Id.Value == "QLK");
+            if (inbound != null && DestinationCatalogue.TryFind("PLO", out var portLincoln))
             {
-                if (aiFleet[i].Scheduled is { } first)
+                operations.SeedOpeningInbound(inbound, portLincoln, 4 * 60);
+            }
+
+            var departureIndex = 0;
+            for (var i = 0; i < aiFleet.Count && departureIndex < AiOpeningDepartureSeconds.Length; i++)
+            {
+                if (aiFleet[i].State == FleetState.AtStand && aiFleet[i].Scheduled is { } first)
                     aiFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
-                        operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[i]));
+                        operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
             }
 
             // The terminal jet joins after the regional openings are fixed, so they are unchanged.
@@ -188,6 +200,15 @@ namespace Airside.Simulation
 
             operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
+        }
+
+        private void SeedOpeningInbound(FleetAircraft aircraft, Destination destination, long secondsToCircuit)
+        {
+            aircraft.DepartureStand = aircraft.Stand;
+            aircraft.Stand = default;
+            aircraft.Scheduled = null;
+            aircraft.CurrentDestination = destination;
+            aircraft.Restore(FleetState.Inbound, _processedTo, _processedTo.Advance(secondsToCircuit));
         }
 
         /// <summary>
@@ -537,7 +558,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)}'s lead-in is in use.");
 
             aircraft.Stand = stand;
-            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand));
+            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand, aircraft.Type));
             return CommandResult.Ok;
         }
 
@@ -593,7 +614,7 @@ namespace Airside.Simulation
                     aircraft.Scheduled = null;
                     aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
-                    Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSecondsFrom(aircraft.DepartureStand));
+                    Transition(aircraft, FleetState.TaxiOut, now, TaxiOutSecondsFrom(aircraft.DepartureStand, aircraft.Type));
                     return true;
 
                 case FleetState.TaxiOut:
@@ -627,7 +648,7 @@ namespace Airside.Simulation
                     if (chosen == null)
                         return false;
                     aircraft.Stand = chosen.Value;
-                    Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value));
+                    Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type));
                     return true;
 
                 case FleetState.TaxiIn:
@@ -706,7 +727,7 @@ namespace Airside.Simulation
                 if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
                     continue;
                 var crowds = CrowdsNeighbour(type, stand);
-                var seconds = TaxiInSecondsTo(stand);
+                var seconds = TaxiInSecondsTo(stand, type);
                 if (best != null && (crowds && !bestCrowds || crowds == bestCrowds && seconds >= bestSeconds))
                     continue;
                 best = stand;
@@ -744,7 +765,7 @@ namespace Airside.Simulation
                 return false;
 
             var landing = next.State == FleetState.HoldingForLanding;
-            var runwaySeconds = landing ? LandingRunwaySeconds : TakeoffRunwaySeconds;
+            var runwaySeconds = landing ? LandingRunwaySecondsFor(next.Type) : TakeoffRunwaySecondsFor(next.Type);
             Transition(next, landing ? FleetState.Landing : FleetState.TakingOff, now, runwaySeconds);
             _runwayFreeAt = now.Advance(runwaySeconds + RunwaySeparationSeconds);
             return true;
@@ -779,16 +800,14 @@ namespace Airside.Simulation
             or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
             or FleetState.HoldingForLanding or FleetState.Landing;
 
-        /// <summary>Emu Air pushes back no earlier than this Adelaide hour…</summary>
+        /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
         public const int AiFirstDepartureHour = 6;
 
         /// <summary>…and no later than this one, like a regional operator's day.</summary>
         public const int AiLastDepartureHour = 21;
 
         /// <summary>
-        /// Emu Air's network, weighted by how often a regional carrier from Adelaide serves
-        /// each port: the Eyre Peninsula, Kangaroo Island and Mount Gambier most, the outback
-        /// and Melbourne less. Airports not listed are not Emu Air routes.
+        /// Fallback regional network for a future AI operator.
         /// </summary>
         public static readonly IReadOnlyList<(string Code, int Weight)> AiNetwork = new[]
         {
@@ -812,8 +831,8 @@ namespace Airside.Simulation
             ("PLO", 2), ("ASP", 2)
         };
 
-        /// <summary>Wattlebird Jet's destinations, weighted by how often <see cref="WattlebirdRotation"/> visits them.</summary>
-        public static readonly IReadOnlyList<(string Code, int Weight)> WattlebirdNetwork = new[]
+        /// <summary>Virgin Australia's representative domestic network from Adelaide.</summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> VirginNetwork = new[]
         {
             ("MEL", 3), ("SYD", 2), ("BNE", 1), ("PER", 1), ("CBR", 1)
         };
@@ -822,18 +841,18 @@ namespace Airside.Simulation
         {
             "REX" => RexNetwork,
             "QLK" => QantasLinkNetwork,
-            "WTB" => WattlebirdNetwork,
+            "VOZ" => VirginNetwork,
             _ => AiNetwork
         };
 
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
         {
-            if (aircraft.Airline.Id.Value == "WTB")
+            if (aircraft.Airline.Id.Value == "VOZ")
             {
-                // Rotation, not a random draw (see WattlebirdRotation).
-                var code = WattlebirdRotation[aircraft.CompletedTrips % WattlebirdRotation.Count];
+                // Rotation, not a random draw, so the mainline timetable is stable.
+                var code = VirginRotation[aircraft.CompletedTrips % VirginRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiStandTurnaroundSeconds)));
+                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
                 return;
             }
 
@@ -863,10 +882,27 @@ namespace Airside.Simulation
                 roll -= weight;
             }
 
-            aircraft.Scheduled = new ScheduledDeparture(pick, AiDepartureWithinHours(now.Advance(AiStandTurnaroundSeconds)));
+            aircraft.Scheduled = new ScheduledDeparture(pick, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
         }
 
-        /// <summary>The ready time if it falls in Emu Air's operating day, otherwise the next 06:00 in Adelaide.</summary>
+        /// <summary>
+        /// Repeatable 30–64 minute turnarounds. The variation is tied to registration
+        /// and trip number, so traffic feels human without changing every load.
+        /// </summary>
+        private static long AiTurnaroundSeconds(FleetAircraft aircraft)
+        {
+            unchecked
+            {
+                var hash = 17;
+                foreach (var ch in aircraft.Registration)
+                    hash = hash * 31 + ch;
+                hash = hash * 31 + aircraft.CompletedTrips;
+                var minutes = 30 + Math.Abs(hash % 35);
+                return minutes * 60L;
+            }
+        }
+
+        /// <summary>The ready time if it falls in the operating day, otherwise the next 06:00 in Adelaide.</summary>
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt)
         {
             var local = Clock.LocalAt(readyAt);

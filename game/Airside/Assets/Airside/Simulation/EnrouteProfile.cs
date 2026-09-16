@@ -1,4 +1,5 @@
 using System;
+using Airside.Domain;
 
 namespace Airside.Simulation
 {
@@ -38,15 +39,21 @@ namespace Airside.Simulation
         private const double MaxClimbDescentShare = 0.85;
 
         public EnrouteProfile(double legKm, double legSeconds)
+            : this(legKm, legSeconds, AircraftType.Atr42)
         {
+        }
+
+        public EnrouteProfile(double legKm, double legSeconds, AircraftType type)
+        {
+            var performance = AircraftPerformance.For(type);
             LegMetres = Math.Max(0.0, legKm * 1000.0);
             LegSeconds = Math.Max(1.0, legSeconds);
-            StartFeet = CircuitProfile.DepartedEndHeight * FeetPerMetre;
+            StartFeet = performance.DepartedEndHeight * FeetPerMetre;
             EndFeet = CircuitProfile.ApproachStartHeight * FeetPerMetre;
 
-            var wanted = PlannedCruiseFeet(legKm);
-            var climbPerSecond = ClimbFeetPerMinute / 60.0;
-            var descentPerSecond = DescentFeetPerMinute / 60.0;
+            var wanted = PlannedCruiseFeet(legKm, type);
+            var climbPerSecond = performance.ClimbFeetPerMinute / 60.0;
+            var descentPerSecond = performance.DescentFeetPerMinute / 60.0;
             // Highest level whose climb and descent fit in the allowed share of the leg.
             var fits = (MaxClimbDescentShare * LegSeconds + StartFeet / climbPerSecond + EndFeet / descentPerSecond)
                        / (1.0 / climbPerSecond + 1.0 / descentPerSecond);
@@ -58,6 +65,8 @@ namespace Airside.Simulation
 
             var weighted = ClimbSpeedFraction * ClimbSeconds + CruiseSeconds + DescentSpeedFraction * DescentSeconds;
             CruiseMetresPerSecond = weighted > 1e-6 ? LegMetres / weighted : 0.0;
+            ClimbRateFeetPerMinute = performance.ClimbFeetPerMinute;
+            DescentRateFeetPerMinute = performance.DescentFeetPerMinute;
         }
 
         public double LegMetres { get; }
@@ -69,13 +78,20 @@ namespace Airside.Simulation
         public double CruiseSeconds { get; }
         public double DescentSeconds { get; }
         public double CruiseMetresPerSecond { get; }
+        public double ClimbRateFeetPerMinute { get; }
+        public double DescentRateFeetPerMinute { get; }
 
         /// <summary>Cruise level an ATR 42 would plan for a leg: ~6 000 ft + 25 ft/km, to the nearest 1 000 ft.</summary>
         public static double PlannedCruiseFeet(double legKm)
+            => PlannedCruiseFeet(legKm, AircraftType.Atr42);
+
+        public static double PlannedCruiseFeet(double legKm, AircraftType type)
         {
-            var raw = 6000 + 25 * Math.Max(0.0, legKm);
+            var performance = AircraftPerformance.For(type);
+            var jet = type?.Id == "B38M";
+            var raw = (jet ? 8000 : 6000) + (jet ? 38 : 25) * Math.Max(0.0, legKm);
             var rounded = Math.Round(raw / 1000.0) * 1000.0;
-            return Math.Max(MinCruiseFeet, Math.Min(MaxCruiseFeet, rounded));
+            return Math.Max(MinCruiseFeet, Math.Min(performance.MaxCruiseFeet, rounded));
         }
 
         public EnroutePhase PhaseAt(double seconds)
@@ -98,8 +114,8 @@ namespace Airside.Simulation
 
         public double VerticalSpeedFeetPerMinuteAt(double seconds) => PhaseAt(Clamp(seconds, 0, LegSeconds)) switch
         {
-            EnroutePhase.Climb => ClimbSeconds > 0 ? ClimbFeetPerMinute : 0,
-            EnroutePhase.Descent => DescentSeconds > 0 ? -DescentFeetPerMinute : 0,
+            EnroutePhase.Climb => ClimbSeconds > 0 ? ClimbRateFeetPerMinute : 0,
+            EnroutePhase.Descent => DescentSeconds > 0 ? -DescentRateFeetPerMinute : 0,
             _ => 0
         };
 

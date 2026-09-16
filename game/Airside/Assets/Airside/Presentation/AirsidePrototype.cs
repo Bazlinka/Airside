@@ -15,7 +15,7 @@ namespace Airside.Presentation
         private AirportSimulation _simulation;
         private Transform[] _commercialAircraft;
         // Each commercial keeps a stable livery slot (0 = Coastline Regional blue,
-        // 1 = Emu Air teal) for its lifetime. Slots are keyed by AircraftId so a
+        // 1 = first traffic accent) for its lifetime. Slots are keyed by AircraftId so a
         // respawn-driven re-sort of the flight list can no longer repaint a plane
         // or leave two aircraft in the same livery.
         private readonly Dictionary<string, int> _commercialLiverySlot = new();
@@ -696,9 +696,11 @@ namespace Airside.Presentation
 
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                ? fleetAircraft.Type : AircraftType.Atr42;
             var knots = FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
-                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f));
+                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type);
 
             var rect = layout.SpeedReadout;
             GUI.Box(rect, GUIContent.none, panel);
@@ -834,16 +836,18 @@ namespace Airside.Presentation
                     continue;
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
+                var aircraftType = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                    ? fleetAircraft.Type : AircraftType.Atr42;
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = FleetGroundPosition(flight, 0f) ?? PositionFor(phase, progress, route, lane);
+                var position = FleetGroundPosition(flight, 0f) ?? PositionFor(phase, progress, route, lane, aircraftType);
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
                 var next = FleetGroundPosition(flight, lookAhead)
-                           ?? PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane);
+                           ?? PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane, aircraftType);
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -872,7 +876,7 @@ namespace Airside.Presentation
                 var engines = FleetEngines(flight);
                 SpinPropellers(view, phase, engines);
                 SpinJetFans(view, phase, engines);
-                RollLandingGearTires(view, phase, progress);
+                RollLandingGearTires(view, phase, progress, aircraftType);
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue,
                     PartsFor(view).HasSeparateElevators);
@@ -1617,10 +1621,10 @@ namespace Airside.Presentation
             }
         }
 
-        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress)
+        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress, AircraftType type)
         {
             // Distance travelled / radius — stops naturally when ground speed is zero.
-            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress);
+            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress, type);
             if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
                 return;
 
@@ -1850,7 +1854,9 @@ namespace Airside.Presentation
 
             var operation = flight.Operation;
             var phase = operation.Phase;
-            var duration = AirsideFlightPath.PhaseSeconds(phase);
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                ? aircraft.Type : AircraftType.Atr42;
+            var duration = AirsideFlightPath.PhaseSeconds(phase, type);
             var progress = PhaseProgressNow(flight, duration);
 
             if (lookAheadSeconds <= 0f || duration <= 0f)
@@ -11993,7 +11999,8 @@ namespace Airside.Presentation
             return clip;
         }
 
-        private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f)
+        private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f,
+            AircraftType type = null)
         {
             // Every phase hands over where the previous one ended: landing rolls out to
             // the A1 entry TaxiIn starts from, taxi-out stops at the runway hold-short
@@ -12006,14 +12013,14 @@ namespace Airside.Presentation
                 t = 0.82f + (t - 0.82f) * 0.08f;
             return phase switch
             {
-                AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset),
-                AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset),
+                AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset, type),
+                AircraftPhase.Landing => AirsideFlightPath.Landing(t, laneOffset, type),
                 AircraftPhase.TaxiIn => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.AtStand => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
-                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX),
-                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX)
+                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type),
+                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type)
             };
         }
 
@@ -12021,7 +12028,14 @@ namespace Airside.Presentation
         {
             // The tower clears one fleet arrival at a time, so there is never a number two.
             if (FleetMode)
-                return 0f;
+            {
+                // A hand-flown final is not pixel-perfect until it settles onto the
+                // centreline. AirsideFlightPath damps this offset through the flare.
+                var seed = StableRegistrationHash(flight.AircraftId);
+                var direction = (seed & 1) == 0 ? -1f : 1f;
+                var drift = Mathf.Sin((float)_preciseTime * 0.025f + seed * 0.001f) * 0.05f;
+                return direction * 0.14f + drift;
+            }
             if (VisualFlights.Count < 2)
                 return 0f;
             // Number-two / later flights take a parallel final left of centreline.

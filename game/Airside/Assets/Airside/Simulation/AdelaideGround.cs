@@ -118,18 +118,22 @@ namespace Airside.Simulation
         /// disconnect, then forward along T1/T2 to runway 05.
         /// </summary>
         public static GroundLeg TaxiOut(StableId stand)
+            => TaxiOut(stand, IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42);
+
+        public static GroundLeg TaxiOut(StableId stand, AircraftType type)
         {
             if (TryTerminalGate(stand, out var gate))
-                return GateTaxiOut(gate);
+                return GateTaxiOut(gate, type);
             var bay = Bay(stand);
-            if (!TaxiOutLegs.TryGetValue(bay.Id, out var leg))
+            var key = bay.Id + "/" + (type?.Id ?? "ATR42");
+            if (!TaxiOutLegs.TryGetValue(key, out var leg))
             {
-                var limits = GroundSpeedLimits.TaxiTurboprop;
+                var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
                     new GroundLegPart(new GroundPath(bay.TaxiOut, limits, 0f, 0f,
-                        new[] { ApronZone(StandClass.RegionalBay) }, null), tailFirst: false, TugDisconnectSeconds));
-                TaxiOutLegs[bay.Id] = leg;
+                        new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
+                TaxiOutLegs[key] = leg;
             }
 
             return leg;
@@ -137,16 +141,20 @@ namespace Airside.Simulation
 
         /// <summary>E2 holding point → nose into the assigned bay or terminal gate.</summary>
         public static GroundLeg TaxiIn(StableId stand)
+            => TaxiIn(stand, IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42);
+
+        public static GroundLeg TaxiIn(StableId stand, AircraftType type)
         {
             if (TryTerminalGate(stand, out var gate))
-                return GateTaxiIn(gate);
+                return GateTaxiIn(gate, type);
             var bay = Bay(stand);
-            if (!TaxiInLegs.TryGetValue(bay.Id, out var leg))
+            var key = bay.Id + "/" + (type?.Id ?? "ATR42");
+            if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
-                var limits = GroundSpeedLimits.TaxiTurboprop;
+                var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, limits, 0f, 0f,
-                    null, new[] { ApronZone(StandClass.RegionalBay), StandLeadInZone }), tailFirst: false));
-                TaxiInLegs[bay.Id] = leg;
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
+                TaxiInLegs[key] = leg;
             }
 
             return leg;
@@ -183,29 +191,31 @@ namespace Airside.Simulation
             return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
         }
 
-        private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate)
+        private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate, AircraftType type)
         {
-            if (!TaxiOutLegs.TryGetValue(gate.Id, out var leg))
+            var key = gate.Id + "/" + (type?.Id ?? "B38M");
+            if (!TaxiOutLegs.TryGetValue(key, out var leg))
             {
-                var limits = GroundSpeedLimits.TaxiJet;
+                var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: JetTrackMetres),
-                    new GroundLegPart(new GroundPath(gate.TaxiOut, limits, 0f, 0f, new[] { ApronZone(StandClass.TerminalGate) }, null),
+                    new GroundLegPart(new GroundPath(gate.TaxiOut, limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, JetTrackMetres));
-                TaxiOutLegs[gate.Id] = leg;
+                TaxiOutLegs[key] = leg;
             }
 
             return leg;
         }
 
-        private static GroundLeg GateTaxiIn(AdelaideTerminalGate gate)
+        private static GroundLeg GateTaxiIn(AdelaideTerminalGate gate, AircraftType type)
         {
-            if (!TaxiInLegs.TryGetValue(gate.Id, out var leg))
+            var key = gate.Id + "/" + (type?.Id ?? "B38M");
+            if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
-                var limits = GroundSpeedLimits.TaxiJet;
+                var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, limits, 0f, 0f,
-                    null, new[] { ApronZone(StandClass.TerminalGate), StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
-                TaxiInLegs[gate.Id] = leg;
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
+                TaxiInLegs[key] = leg;
             }
 
             return leg;
@@ -213,6 +223,9 @@ namespace Airside.Simulation
 
         private static GroundSpeedZone ApronZone(StandClass standClass) =>
             new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnotsFor(standClass)));
+
+        private static GroundSpeedZone ApronZone(AircraftType type) =>
+            new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnotsFor(type)));
 
         /// <summary>5 kt for the last stretch onto the stand line.</summary>
         private static GroundSpeedZone StandLeadInZone =>

@@ -66,9 +66,10 @@ namespace Airside.Tests
 
             // Each drawn airborne phase lasts exactly the circuit's duration, so the flown
             // curves hand over seamlessly.
-            Assert.That(departedAt.Value.ElapsedSeconds - takeoffPhaseAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.TakeoffSeconds));
-            Assert.That(landingAt.Value.ElapsedSeconds - approachAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.ApproachSeconds));
-            Assert.That(vacateAt.Value.ElapsedSeconds - landingAt.Value.ElapsedSeconds, Is.EqualTo(CircuitProfile.LandingSeconds));
+            var performance = AircraftPerformance.For(plane.Type);
+            Assert.That(departedAt.Value.ElapsedSeconds - takeoffPhaseAt.Value.ElapsedSeconds, Is.EqualTo(performance.TakeoffSeconds));
+            Assert.That(landingAt.Value.ElapsedSeconds - approachAt.Value.ElapsedSeconds, Is.EqualTo(performance.ApproachSeconds));
+            Assert.That(vacateAt.Value.ElapsedSeconds - landingAt.Value.ElapsedSeconds, Is.EqualTo(performance.LandingSeconds));
             Assert.That(hiddenSeconds, Is.GreaterThan(3600), "the Kingscote legs are flown off the map");
         }
 

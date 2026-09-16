@@ -52,6 +52,7 @@ namespace Airside.Simulation
 
         public static FleetVisual For(FleetAircraft aircraft, SimulationTime now)
         {
+            var performance = AircraftPerformance.For(aircraft.Type);
             var start = aircraft.StateStartedAt;
             var elapsed = now.ElapsedSeconds - start.ElapsedSeconds;
             // Taxi legs last as long as the state the simulation gave them.
@@ -74,14 +75,14 @@ namespace Airside.Simulation
                     return Air(AircraftPhase.Takeoff, start.Advance(AirlineOperations.LineupSeconds));
 
                 case FleetState.Outbound:
-                    return elapsed < CircuitProfile.DepartedSeconds
+                    return elapsed < performance.DepartedSeconds
                         ? Air(AircraftPhase.Departed, start)
                         : Hidden(start);
 
                 case FleetState.Landing:
                 {
-                    var approach = CircuitProfile.ApproachSeconds;
-                    var landing = CircuitProfile.LandingSeconds;
+                    var approach = performance.ApproachSeconds;
+                    var landing = performance.LandingSeconds;
                     if (elapsed < approach)
                         return Air(AircraftPhase.Approach, start);
                     if (elapsed < approach + landing)

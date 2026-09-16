@@ -140,8 +140,21 @@ namespace Airside.Simulation
         public static GroundSpeedLimits TaxiFor(StandClass standClass) =>
             standClass == StandClass.TerminalGate ? TaxiJet : TaxiTurboprop;
 
+        /// <summary>Each type uses its own normal straight-taxi target.</summary>
+        public static GroundSpeedLimits TaxiFor(AircraftType type)
+        {
+            var profile = AircraftPerformance.For(type);
+            return new GroundSpeedLimits(
+                CircuitProfile.Knots(profile.TaxiStraightKnots),
+                TaxiAcceleration,
+                TaxiBraking,
+                TurnLateralMetresPerSecondSquared);
+        }
+
         public static float ApronKnotsFor(StandClass standClass) =>
             standClass == StandClass.TerminalGate ? ApronJetKnots : ApronTurbopropKnots;
+
+        public static float ApronKnotsFor(AircraftType type) => AircraftPerformance.For(type).TaxiApronKnots;
 
         /// <summary>Cornering speed (kt) on a fillet of the given radius at the shared turn lateral limit.</summary>
         public static float TurnKnotsAtRadiusMetres(float radiusMetres)

@@ -111,7 +111,7 @@ namespace Airside.Domain
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400");
 
-        // Wattlebird Jet's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
+        // Virgin Australia's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
         // (about Mach 0.79) is the planning figure.
         public static readonly AircraftSpec Boeing7378 = new(
             "B38M", "Boeing 737-8", "Narrowbody jet · 160–180 seats",

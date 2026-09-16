@@ -14,8 +14,8 @@ namespace Airside.Simulation
     /// figure it came from is wrong.
     ///
     /// Figures are typical ATR 42-600 values at a normal operating weight, not a
-    /// performance manual: Vr 100 kt, V2 105 kt, Vapp/Vref 110 kt, touchdown 95 kt,
-    /// initial climb 120 kt, climb-out 170 kt. Deliberately UnityEngine-free so the
+    /// performance manual: Vr 104 kt, V2 112 kt, Vapp/Vref 110 kt, touchdown 95 kt,
+    /// initial climb 120 kt, climb-out 160 kt. Deliberately UnityEngine-free so the
     /// headless harness can check every one of them.
     /// </summary>
     public static class CircuitProfile
@@ -44,13 +44,13 @@ namespace Airside.Simulation
         public const float RunwayExitKnots = 12f;
 
         /// <summary>Vr — nose comes up here, not before.</summary>
-        public const float RotateKnots = 100f;
+        public const float RotateKnots = 104f;
 
         /// <summary>Initial climb, gear up, at the end of the takeoff phase.</summary>
         public const float InitialClimbKnots = 120f;
 
         /// <summary>Climb-out speed once clear of the field.</summary>
-        public const float ClimbOutKnots = 170f;
+        public const float ClimbOutKnots = 160f;
 
         // --- stations along the runway centreline (metres, aircraft flies +X) ---------
 

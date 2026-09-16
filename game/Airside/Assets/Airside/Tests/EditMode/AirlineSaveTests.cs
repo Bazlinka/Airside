@@ -18,7 +18,7 @@ namespace Airside.Tests
             return destination;
         }
 
-        /// <summary>A busy mid-game moment: the player away, Emu Air mid-rotation.</summary>
+        /// <summary>A busy mid-game moment: the player away, AI traffic mid-rotation.</summary>
         private static (ManualSimulationClock clock, AirlineOperations ops) MidGame()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
@@ -115,6 +115,39 @@ namespace Airside.Tests
                 System.IO.File.Delete(path);
                 System.IO.File.Delete(path + ".tmp");
             }
+        }
+
+        [Test]
+        public void VersionThreeSave_ReplacesFictionalOperatorsWithRealTraffic()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(31),
+                Airline.Player("Keep My Name", "#2E7D32"));
+            var data = AirlineSave.Capture(ops);
+            data.Version = 3;
+            data.Airlines.RemoveAll(a => !a.IsPlayer);
+            data.Fleet.RemoveAll(a => a.AirlineId != "PLAYER");
+            data.Airlines.Add(new AirlineRecord { Id = "EMU", Name = "Legacy Regional", LiveryHex = "#A66F32" });
+            data.Airlines.Add(new AirlineRecord { Id = "WTB", Name = "Legacy Jet", LiveryHex = "#2F7F86" });
+            data.Fleet.Add(new AircraftRecord
+            {
+                Registration = "VH-EMA", AirlineId = "EMU", TypeId = "ATR42", State = nameof(FleetState.AtStand),
+                Stand = "BAY-2", StateStartedAt = 0
+            });
+            data.Fleet.Add(new AircraftRecord
+            {
+                Registration = "VH-WTJ", AirlineId = "WTB", TypeId = "B38M", State = nameof(FleetState.AtStand),
+                Stand = "GATE-13", StateStartedAt = 0
+            });
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+
+            Assert.That(restored.PlayerAirline.Name, Is.EqualTo("Keep My Name"));
+            Assert.That(restored.Airlines.Select(a => a.Name),
+                Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Virgin Australia"));
+            Assert.That(restored.Airlines.Any(a => a.Id.Value is "EMU" or "WTB"), Is.False);
+            Assert.That(restored.Fleet.Any(a => a.Registration is "VH-EMA" or "VH-WTJ"), Is.False);
+            Assert.That(restored.Fleet.Single(a => a.Type == AircraftType.Boeing7378).Registration, Is.EqualTo("VH-8IA"));
         }
 
         private static string Snapshot(AirlineOperations ops)

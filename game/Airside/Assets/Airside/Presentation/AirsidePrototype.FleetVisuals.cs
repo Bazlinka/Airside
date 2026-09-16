@@ -8,7 +8,6 @@ namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
-        private const string EmuAirDecal = "Textures/Decals/dc_livery_emu_air_v01.png";
         private const string PlayerDecalTemplate = "Textures/Decals/dc_livery_airside_traffic_v01.png";
 
         private readonly List<CommercialFlight> _fleetFlights = new();
@@ -31,7 +30,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Rebuild the drawn flights from the fleets. Player aircraft come first so
-        /// Follow picks your aircraft before Emu Air's.
+        /// Follow picks your aircraft before the AI traffic.
         /// </summary>
         private void RefreshFleetFlights()
         {
@@ -133,15 +132,52 @@ namespace Airside.Presentation
                 {
                     var leg = visual.Leg switch
                     {
-                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand),
+                        FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type),
                         FleetGroundLeg.Lineup => AdelaideGround.Lineup,
                         FleetGroundLeg.Vacate => AdelaideGround.Vacate,
-                        _ => AdelaideGround.TaxiIn(aircraft.Stand)
+                        _ => AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type)
                     };
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
                     var scale = visual.LegSeconds > 0 ? leg.Seconds / visual.LegSeconds : 1.0;
-                    return leg.PoseAt(elapsed * scale);
+                    return HumanGroundPose(aircraft, visual.Leg, leg.PoseAt(elapsed * scale));
                 }
+            }
+        }
+
+        /// <summary>
+        /// Small, smooth tracking corrections keep taxiing from looking rail-guided.
+        /// They are deterministic per registration, stay well inside the pavement and
+        /// disappear when stopped; there is no frame-to-frame random wobble.
+        /// </summary>
+        private GroundPose HumanGroundPose(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose pose)
+        {
+            if (pose.Speed < 0.5f || leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
+                return pose;
+
+            var seed = StableRegistrationHash(aircraft.Registration);
+            var phase = (seed % 997) * 0.013f;
+            var wave = Mathf.Sin((float)_preciseTime * 0.12f + phase)
+                       + 0.35f * Mathf.Sin((float)_preciseTime * 0.037f + phase * 1.7f);
+            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.08f : 0.22f);
+            var normalX = -pose.NoseZ;
+            var normalZ = pose.NoseX;
+            var headingBias = Mathf.Sin((float)_preciseTime * 0.09f + phase * 0.7f) * 0.7f * Mathf.Deg2Rad;
+            var cos = Mathf.Cos(headingBias);
+            var sin = Mathf.Sin(headingBias);
+            var noseX = pose.NoseX * cos + pose.NoseZ * sin;
+            var noseZ = -pose.NoseX * sin + pose.NoseZ * cos;
+            return new GroundPose(pose.X + normalX * offset, pose.Z + normalZ * offset,
+                noseX, noseZ, pose.Speed, pose.TailFirst);
+        }
+
+        private static int StableRegistrationHash(string value)
+        {
+            unchecked
+            {
+                var hash = 23;
+                foreach (var ch in value ?? string.Empty)
+                    hash = hash * 31 + ch;
+                return hash & int.MaxValue;
             }
         }
 
@@ -193,8 +229,7 @@ namespace Airside.Presentation
 
             var airline = aircraft.Airline;
             var accent = AirsideTheme.FromHex(airline.LiveryHex);
-            var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent,
-                airline.Id.Value == "EMU" ? EmuAirDecal : null);
+            var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent, null);
 
             if (airline.IsPlayer)
             {

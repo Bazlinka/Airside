@@ -14,11 +14,12 @@ namespace Airside.Simulation
     {
         /// <summary>
         /// 2 added <see cref="SavedAtUtcTicks"/> for away catch-up. 3 added
-        /// <see cref="EpochUtcTicks"/> for live real time. Older saves still load: a v2
+        /// <see cref="EpochUtcTicks"/> for live real time. 4 replaces the two fictional
+        /// AI operators with real Adelaide airlines. Older saves still load: a v2
         /// clock is aligned so the save moment reads as when it was saved, a v1 clock
         /// uses <see cref="AirlineClock.DefaultEpochUtc"/>.
         /// </summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         public int Version = CurrentVersion;
 
@@ -137,18 +138,24 @@ namespace Airside.Simulation
             var airlines = new Dictionary<string, Airline>(StringComparer.Ordinal);
             foreach (var record in data.Airlines ?? new List<AirlineRecord>())
             {
+                if (data.Version <= 3 && record.Id == "EMU")
+                    continue;
                 Airline airline;
                 try
                 {
-                    airline = new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer);
+                    airline = data.Version <= 3 && record.Id == "WTB"
+                        ? Airline.VirginAustralia()
+                        : new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer);
                 }
                 catch (ArgumentException e)
                 {
                     throw new FormatException($"Airline '{record.Id}' is invalid: {e.Message}");
                 }
 
-                operations.AddAirline(airline);
+                if (!airlines.ContainsKey(airline.Id.Value))
+                    operations.AddAirline(airline);
                 airlines[record.Id] = airline;
+                airlines[airline.Id.Value] = airline;
             }
 
             if (operations.PlayerAirline == null)
@@ -156,6 +163,8 @@ namespace Airside.Simulation
 
             foreach (var record in data.Fleet ?? new List<AircraftRecord>())
             {
+                if (data.Version <= 3 && record.AirlineId == "EMU")
+                    continue;
                 if (!airlines.TryGetValue(record.AirlineId ?? string.Empty, out var airline))
                     throw new FormatException($"{record.Registration} belongs to unknown airline '{record.AirlineId}'.");
                 if (!AircraftType.TryFromId(record.TypeId, out var type))
@@ -169,7 +178,7 @@ namespace Airside.Simulation
                     throw new FormatException($"{record.Registration} has unknown state '{record.State}'.");
 
                 operations.RestoreAircraft(
-                    record.Registration,
+                    data.Version <= 3 && record.AirlineId == "WTB" ? "VH-8IA" : record.Registration,
                     airline,
                     type,
                     state,
@@ -187,6 +196,11 @@ namespace Airside.Simulation
 
             operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
             operations.Clock = ClockFor(data);
+            if (data.Version <= 3)
+            {
+                operations.AddMissingRegionalCarriers();
+                operations.AddMissingTerminalOperators();
+            }
             return operations;
         }
 

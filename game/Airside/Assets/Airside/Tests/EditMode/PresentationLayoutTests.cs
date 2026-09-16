@@ -105,6 +105,7 @@ namespace Airside.Tests
                 Assert.That(a.Overlaps(b), Is.False, $"{aName} overlaps {bName} at {screenWidth}x{screenHeight}");
 
             Inside(airline.Clock, "clock");
+            Inside(airline.NavStrip, "nav strip");
             Inside(airline.FleetArea, "fleet");
             Inside(airline.Toast, "toast");
             Inside(airline.Map, "map");
@@ -114,6 +115,7 @@ namespace Airside.Tests
             foreach (var (rect, name) in readoutAndBar)
             {
                 Apart(airline.Clock, "clock", rect, name);
+                Apart(airline.NavStrip, "nav strip", rect, name);
                 Apart(airline.FleetArea, "fleet", rect, name);
                 Apart(airline.Map, "map", rect, name);
                 Apart(airline.Toast, "toast", rect, name);
@@ -123,6 +125,7 @@ namespace Airside.Tests
             {
                 Inside(airline.Guide, "guide");
                 Apart(airline.Guide, "guide", airline.Clock, "clock");
+                Apart(airline.Guide, "guide", airline.NavStrip, "nav strip");
                 Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
                 Apart(airline.Guide, "guide", airline.Map, "map");
                 foreach (var (rect, name) in readoutAndBar)
@@ -131,11 +134,15 @@ namespace Airside.Tests
 
             Apart(airline.Clock, "clock", airline.FleetArea, "fleet");
             Apart(airline.Clock, "clock", airline.Map, "map");
+            Apart(airline.NavStrip, "nav strip", airline.Clock, "clock");
+            Apart(airline.NavStrip, "nav strip", airline.Map, "map");
             Apart(airline.Toast, "toast", airline.Clock, "clock");
+            Apart(airline.Toast, "toast", airline.NavStrip, "nav strip");
             if (!airline.MapCoversFleet)
             {
                 Apart(airline.Map, "map", airline.FleetArea, "fleet");
                 Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
+                Apart(airline.NavStrip, "nav strip", airline.FleetArea, "fleet");
             }
         }
 

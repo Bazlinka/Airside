@@ -27,9 +27,8 @@ namespace Airside.Presentation
         private AirlineOperations _operations;
         private string _airlineNameDraft = "Southern Cross Regional";
         private int _liveryChoice;
-        private bool _mapOpen;
-        private bool _hangarOpen;
-        private bool _flightsOpen;
+        /// <summary>The single player workspace open at a time (ADR 0053).</summary>
+        private HudWorkspace _activeWorkspace;
         private bool _devToolsOpen;
         private bool _controlsHelpOpen;
         private readonly AustraliaMapLens _mapLens = new();
@@ -119,9 +118,9 @@ namespace Airside.Presentation
             if (keyboard.rightBracketKey.wasPressedThisFrame)
                 CycleSelection(1);
             if (keyboard.hKey.wasPressedThisFrame)
-                ToggleHangar();
+                SetWorkspace(HudWorkspace.Fleet);
             if (keyboard.tKey.wasPressedThisFrame)
-                ToggleFlights();
+                SetWorkspace(HudWorkspace.Operations);
             if (keyboard.f8Key.wasPressedThisFrame)
                 ToggleDevTools();
             if (keyboard.f1Key.wasPressedThisFrame)
@@ -172,16 +171,26 @@ namespace Airside.Presentation
             DrawClockPanel(placement.Clock, panel, label, small, smallButton);
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
+            DrawWorkspaceNav(placement.NavStrip, smallButton);
+            if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
             if (_devToolsOpen)
                 DrawDevToolsPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_flightsOpen)
-                DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_hangarOpen)
-                DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
-            else if (_mapOpen)
-                DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+            else switch (_activeWorkspace)
+            {
+                case HudWorkspace.Operations:
+                    DrawFlightsPanel(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Fleet:
+                    DrawHangarPanel(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Map:
+                    DrawDestinationsMap(placement.Map, panel, title, label, small, smallButton);
+                    break;
+                case HudWorkspace.Contracts:
+                    DrawContractsPlaceholder(placement.Map, panel, title, label);
+                    break;
+            }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             DrawSelectionHudCard(layout, panel, label, small);
             if (_controlsHelpOpen)
@@ -291,9 +300,10 @@ namespace Airside.Presentation
             _hudPanels.Add(placement.Clock);
             if (showGuide)
                 _hudPanels.Add(placement.Guide);
-            if (!((_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen) && placement.MapCoversFleet))
+            _hudPanels.Add(placement.NavStrip);
+            if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 _hudPanels.Add(placement.FleetArea);
-            if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
+            if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 _hudPanels.Add(placement.Map);
             if (MiniMapShows)
             {
@@ -537,14 +547,52 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 32f, rect.y + 12f, rect.width - 46f, 24f), airline.Name, label);
             GUI.Label(new Rect(rect.x + 32f, rect.y + 36f, rect.width - 46f, 20f),
                 $"Adelaide  {ClockText(_clock.Now)}  ·  {_operations.Clock.DateText(_clock.Now)}", small);
-            if (GUI.Button(new Rect(rect.x + 10f, rect.y + 60f, 86f, 24f), _mapOpen ? "Close plan" : "Plan (Tab)", smallButton))
-                TogglePlanner();
-            if (GUI.Button(new Rect(rect.x + 102f, rect.y + 60f, 90f, 24f), _hangarOpen ? "Close hangar" : "Hangar (H)", smallButton))
-                ToggleHangar();
-            if (GUI.Button(new Rect(rect.x + 198f, rect.y + 60f, 90f, 24f), _flightsOpen ? "Close board" : "Flights (T)", smallButton))
-                ToggleFlights();
         }
 
+        private static readonly (HudWorkspace workspace, string label, string hotkey)[] WorkspaceTabs =
+        {
+            (HudWorkspace.Operations, "Operations", "T"),
+            (HudWorkspace.Map, "Map", "Tab"),
+            (HudWorkspace.Fleet, "Fleet", "H"),
+            (HudWorkspace.Contracts, "Contracts", null)
+        };
+
+        private GUIStyle _navActiveButtonStyle;
+
+        /// <summary>
+        /// The four player workspaces (ADR 0053), one open at a time. Replaces the previous
+        /// three ad hoc clock-panel buttons; the active tab reads distinctly from the rest.
+        /// </summary>
+        private void DrawWorkspaceNav(Rect rect, GUIStyle smallButton)
+        {
+            var active = _navActiveButtonStyle ??= AirsideTheme.TextStyle(
+                new GUIStyle(smallButton) { fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow);
+
+            var slot = rect.width / WorkspaceTabs.Length;
+            for (var i = 0; i < WorkspaceTabs.Length; i++)
+            {
+                var (workspace, label, hotkey) = WorkspaceTabs[i];
+                var tabRect = new Rect(rect.x + i * slot, rect.y, slot - 4f, rect.height);
+                var text = hotkey != null ? $"{label} ({hotkey})" : label;
+                var style = _activeWorkspace == workspace ? active : smallButton;
+                if (GUI.Button(tabRect, text, style))
+                    SetWorkspace(workspace);
+            }
+        }
+
+        /// <summary>Stands in for the Contracts workspace (ADR 0053) until career state (Task 2/3) exists.</summary>
+        private void DrawContractsPlaceholder(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label)
+        {
+            GUI.Box(rect, GUIContent.none, panel);
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 36f, 28f), "Contracts", title);
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 50f, rect.width - 36f, 24f),
+                "Coming in a future update.", label);
+        }
+
+        /// <summary>
+        /// The always-visible roster sidebar — distinct from the <see cref="HudWorkspace.Fleet"/>
+        /// nav tab, which opens the Hangar panel (<see cref="DrawHangarPanel"/>).
+        /// </summary>
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
             var estimatedInner = area.width - 48f;
@@ -839,7 +887,7 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_selectedAircraftId) || _operations == null)
                 return false;
             // Every overlay already shows the selection, and the card would sit over its buttons.
-            if (_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen)
+            if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
             var width = Mathf.Min(420f, layout.Viewport.x - AirlineHudLayout.Margin * 2f);
             var height = 72f;
@@ -852,13 +900,11 @@ namespace Airside.Presentation
         private void SelectAircraft(FleetAircraft aircraft)
         {
             _selectedAircraftId = aircraft.Registration;
-            var plannerStaysOpen = _mapOpen && aircraft.Airline.IsPlayer;
+            var plannerStaysOpen = _activeWorkspace == HudWorkspace.Map && aircraft.Airline.IsPlayer;
             if (aircraft.Airline.IsPlayer)
                 SetPlanningAircraft(aircraft);
 
             var following = TryFollowFleetAircraft(aircraft.Registration);
-            _hangarOpen = false;
-            _flightsOpen = false;
             _devToolsOpen = false;
             if (plannerStaysOpen)
             {
@@ -866,14 +912,14 @@ namespace Airside.Presentation
             }
             else if (following)
             {
-                _mapOpen = false;
+                _activeWorkspace = HudWorkspace.None;
             }
             else
             {
                 // Away from Adelaide: the route map is where it can be seen, flying live.
-                if (!_mapOpen)
+                if (_activeWorkspace != HudWorkspace.Map)
                     _mapLens.Reset();
-                _mapOpen = true;
+                _activeWorkspace = HudWorkspace.Map;
             }
 
             if (!following && aircraft.IsOffMap)
@@ -890,7 +936,7 @@ namespace Airside.Presentation
             if (_operations == null)
                 return;
             IReadOnlyList<FleetAircraft> pool;
-            if (_mapOpen)
+            if (_activeWorkspace == HudWorkspace.Map)
             {
                 pool = PlayerFleet();
                 var next = FlightPlanner.Cycle(pool, _mapAircraft?.Registration, delta);
@@ -918,9 +964,7 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_selectedAircraftId))
                 return false;
             _selectedAircraftId = null;
-            _mapOpen = false;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = false;
             return true;
         }
@@ -928,11 +972,9 @@ namespace Airside.Presentation
         /// <summary>Esc closes whichever overlay is open before it touches the selection.</summary>
         private bool TryCloseAirlineOverlay()
         {
-            if (!(_mapOpen || _hangarOpen || _flightsOpen || _devToolsOpen))
+            if (_activeWorkspace == HudWorkspace.None && !_devToolsOpen)
                 return false;
-            _mapOpen = false;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = false;
             _mapPressed = false;
             _mapPanning = false;
@@ -969,9 +1011,9 @@ namespace Airside.Presentation
 
         private void TogglePlanner()
         {
-            if (_mapOpen)
+            if (_activeWorkspace == HudWorkspace.Map)
             {
-                _mapOpen = false;
+                _activeWorkspace = HudWorkspace.None;
                 PlayUiClick();
                 return;
             }
@@ -985,9 +1027,7 @@ namespace Airside.Presentation
         /// </summary>
         private void OpenPlanner(FleetAircraft aircraft)
         {
-            _mapOpen = true;
-            _hangarOpen = false;
-            _flightsOpen = false;
+            _activeWorkspace = HudWorkspace.Map;
             _devToolsOpen = false;
             _mapLens.Reset();
             _mapTrackId = null;
@@ -1034,27 +1074,15 @@ namespace Airside.Presentation
             }
         }
 
-        private void ToggleHangar()
+        /// <summary>
+        /// Opens <paramref name="target"/> as the one active workspace (ADR 0053), or closes it
+        /// if it is already open. Shared by the workspace nav strip and its hotkeys (H/T).
+        /// </summary>
+        private void SetWorkspace(HudWorkspace target)
         {
-            _hangarOpen = !_hangarOpen;
-            if (_hangarOpen)
-            {
-                _mapOpen = false;
-                _flightsOpen = false;
+            _activeWorkspace = _activeWorkspace == target ? HudWorkspace.None : target;
+            if (_activeWorkspace != HudWorkspace.None)
                 _devToolsOpen = false;
-            }
-            PlayUiClick();
-        }
-
-        private void ToggleFlights()
-        {
-            _flightsOpen = !_flightsOpen;
-            if (_flightsOpen)
-            {
-                _mapOpen = false;
-                _hangarOpen = false;
-                _devToolsOpen = false;
-            }
             PlayUiClick();
         }
 
@@ -1062,11 +1090,7 @@ namespace Airside.Presentation
         {
             _devToolsOpen = !_devToolsOpen;
             if (_devToolsOpen)
-            {
-                _mapOpen = false;
-                _hangarOpen = false;
-                _flightsOpen = false;
-            }
+                _activeWorkspace = HudWorkspace.None;
             PlayUiClick();
         }
 
@@ -1705,7 +1729,7 @@ namespace Airside.Presentation
                 if (result.Accepted)
                 {
                     ShowToast($"{aircraft.Registration} pushes back {ClockText(departAt)} for {destination.Name}.");
-                    _mapOpen = false;
+                    _activeWorkspace = HudWorkspace.None;
                     _mapSelection = null;
                     SaveAirline();
                 }
@@ -1897,7 +1921,7 @@ namespace Airside.Presentation
             var inner = rect.width - 32f;
             GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Adelaide flights", title);
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
-                ToggleFlights();
+                SetWorkspace(HudWorkspace.Operations);
 
             GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
                 $"RUNWAY {RunwayWeather.Label(_operations.ActiveRunway)}  ·  WIND {_operations.Wind.Text}", small);
@@ -2029,10 +2053,15 @@ namespace Airside.Presentation
             var ink = AirsideTheme.RunwayInk;
             DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
             GUI.Box(rect, GUIContent.none, panel);
+            // Diagnostic overlay, not a player workspace (ADR 0053): a distinct accent and
+            // badge keep it from reading as one more tab beside Operations/Map/Fleet/Contracts.
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SignalRed);
 
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
-            GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Dev tools", title);
+            GUI.Label(new Rect(x, rect.y + 10f, inner - 174f, 26f), "Dev tools", title);
+            GUI.Label(new Rect(rect.xMax - 172f, rect.y + 16f, 50f, 20f), "DEV", Styled(small, "devBadge", st =>
+                AirsideTheme.TextStyle(new GUIStyle(st) { fontStyle = FontStyle.Bold }, AirsideTheme.SignalRed)));
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
                 ToggleDevTools();
 
@@ -2145,7 +2174,7 @@ namespace Airside.Presentation
             var inner = rect.width - 32f;
             GUI.Label(new Rect(x, rect.y + 10f, inner - 120f, 26f), "Hangar", title);
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
-                ToggleHangar();
+                SetWorkspace(HudWorkspace.Fleet);
 
             var tabs = new[] { "Fleet", "Aircraft types" };
             for (var i = 0; i < tabs.Length; i++)

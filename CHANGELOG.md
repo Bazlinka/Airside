@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **HUD shell cleanup, Task 1 (ADR 0053).** The four independent booleans behind the
+  Plan/Hangar/Flights panels are one `_activeWorkspace` field, and a new nav strip under the
+  clock replaces the three ad hoc buttons with the four ADR 0053 workspaces (Operations, Map,
+  Fleet, Contracts — Contracts is a placeholder until Task 2/3 add career state). Existing
+  hotkeys (Tab/H/T), panel content and behaviour are unchanged; the mini-map no longer risks
+  sitting under the new strip on short windows. Dev Tools gets a red frame + "DEV" badge so it
+  reads as a diagnostic overlay, not a player workspace. Presentation-only: no simulation, save,
+  route or traffic change. `PresentationLayoutTests` extended for the new nav-strip rect at the
+  existing 6 resolutions; Unity EditMode, a packaged build and the 1280x720/1440x900/Retina
+  visual pass are still open (no Unity editor in this session).
+
 - **Singapore Airlines 787-10.** Singapore Airlines' Gate 20 rotation now uses its own genuine
   AIR-010 Boeing 787-10 instead of borrowing the A350. The 227-part, true-scale model has the
   787-10's narrower 5.77 m cabin, four-pane Boeing flight deck, swept/raked wing, chevron

@@ -1,5 +1,38 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — Task 1 HUD shell cleanup, first slice: workspace nav consolidation.**
+  - **Player-visible:** the clock panel's three ad hoc buttons (Plan/Hangar/Flights) are replaced
+    by a nav strip directly under it with the four ADR 0053 workspaces — **Operations** (the
+    flight board), **Map** (destinations/planner), **Fleet** (Hangar) and **Contracts** (a
+    "coming in a future update" placeholder; no career state exists yet). Exactly one workspace
+    is open at a time; the active tab reads in safety yellow. Existing hotkeys are unchanged
+    (Tab → Map, H → Fleet, T → Operations). Dev Tools (F8) now shows a red frame and "DEV" badge
+    so it reads as a diagnostic overlay rather than one more player tab.
+  - **How:** new `HudWorkspace` enum (`Presentation/HudWorkspace.cs`) and one `_activeWorkspace`
+    field replace the four independent `_mapOpen`/`_hangarOpen`/`_flightsOpen`/`_devToolsOpen`
+    booleans that were hand-kept mutually exclusive across a dozen call sites. `AirlineHudLayout`
+    gains a pure `NavStrip` rect (same tested pattern as `Clock`/`Guide`/`FleetArea`/`Map`/
+    `Toast`), placed under the clock/guide column; everything below it (fleet, map, toast) now
+    starts below the strip instead of directly under the clock. `FieldMiniMap.PanelFor` was
+    updated to also clear the new strip so the mini-map can't sit under it on a short window.
+    All existing panel content (`DrawFlightsPanel`, `DrawDestinationsMap`, `DrawHangarPanel`) is
+    unchanged — only which field selects them.
+  - **Invariants / unchanged:** no Domain, Simulation, save, route, schedule, reservation or
+    traffic code touched. Grepped for every remaining reference to the removed booleans across
+    `Assets/` before deleting them (including `AirsidePrototype.MiniMap.cs` and
+    `AirsidePrototype.Soak.cs`'s review-panel dispatcher) to keep the project compiling.
+  - **Evidence:** `PresentationLayoutTests.AirlineHudLayout_PanelsFitAndNeverOverlap` extended
+    for the new `NavStrip` rect (fits-on-screen + no-overlap) at the existing 6 resolutions,
+    `showGuide` true/false — not run here (no Unity editor in this session).
+    `scripts/test-domain.sh` is unaffected (Domain/Simulation untouched).
+  - **NEXT:** run `scripts/test-unity.sh` and a packaged Mac build, then the visual pass at
+    1280x720, 1440x900 and Retina across setup, first-flight guide, planner, map, fleet, Hangar,
+    Flights, away summary and stand assignment (Task 1's own acceptance list) before merging.
+    Remaining Task 1 scope not attempted in this slice: a restyled persistent status strip/single
+    objective layer and any further contextual-primary-action polish beyond what already exists
+    at `DrawSelectedAircraftDetail`. Do not begin career state (Task 2) until Bailey has reviewed
+    the cleaned HUD on a packaged build.
+
 - **2026-09-16 Bailey/Codex — airline career progression and HUD direction approved (ADR 0053).**
   - **Product identity:** Airside is a player-airline growth game inside an autonomous Adelaide
     Airport. The retired Kingscote airport-management economy is not the direction.

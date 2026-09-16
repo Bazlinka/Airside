@@ -102,7 +102,7 @@ namespace Airside.Presentation
             var margin = AirlineHudLayout.Margin;
             var width = Mathf.Min(PanelWidth, hud.Viewport.x - margin * 2f);
             var rect = new Rect(margin, hud.Viewport.y - margin - PanelHeight, width, PanelHeight);
-            var leftColumnBottom = Mathf.Max(airline.Clock.yMax, airline.Guide.yMax);
+            var leftColumnBottom = Mathf.Max(Mathf.Max(airline.Clock.yMax, airline.Guide.yMax), airline.NavStrip.yMax);
             if (width < PanelWidth * 0.8f
                 || rect.y < leftColumnBottom + margin
                 || rect.Overlaps(hud.ControlBar)

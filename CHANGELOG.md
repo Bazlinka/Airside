@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **737 livery hierarchy.** Wattlebird Jet's 737 now reserves its blue accent for the fin and
+  split winglets. Wings, moving wing surfaces and the horizontal tail use a neutral painted-metal
+  finish, with darker glazing for better narrowbody readability. Geometry, scale, fan animation,
+  Gate 13 routing and saves are unchanged. Headless tests: 249 passed; packaged daylight capture
+  passed; Unity EditMode 444/445 with only the existing Gate 13 tolerance miss.
+
 - **Saab 340 visual hierarchy.** Rex's Saab now uses restrained neutral wings and horizontal
   tail surfaces, keeping airline colour on the vertical tail instead of turning the full
   silhouette into a bright colour block. Cabin and cockpit glazing is darker and slightly more

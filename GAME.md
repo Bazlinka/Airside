@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Codex — 737 livery hierarchy corrected and packaged.**
+  - **Player-visible:** Wattlebird Jet's 737 keeps its blue fin and split winglets, but the broad
+    wing, flap, spoiler, aileron and horizontal-tail surfaces now use a neutral painted-metal
+    finish. Darker cabin/flight-deck glazing holds the long narrowbody read without turning the
+    whole aircraft cyan at Gate 13.
+  - **Invariants / unchanged:** AIR-005 geometry, exact 39.47 × 35.92 × 12.42 m envelope, 199
+    parts / 17,404 triangles, nose-stop datum, wheel scale, fan rig, Gate 13 route and saves are
+    unchanged. No external asset or licence was added.
+  - **Evidence:** `scripts/test-domain.sh` **249/249 passed**; Unity 6000.3.23f1 produced a fresh
+    packaged Mac build and the Gate 13 daylight follow view was compared before/after. Unity
+    EditMode compiled and passed **444/445**; the new 737 colour/material assertions passed and
+    only the existing unrelated Gate 13 tolerance miss remains (0.878 m against a 0.873 m cap).
+  - **NEXT:** merge this presentation-only slice, then inspect the Q400 from the same camera.
+
 - **2026-09-16 Codex — Saab 340 silhouette/material pass implemented and packaged.**
   - **Player-visible:** Rex's Saab now reads as a compact aluminium/white commuter aircraft
     rather than a solid airline-colour toy. Broad wings, flaps, ailerons and the horizontal tail

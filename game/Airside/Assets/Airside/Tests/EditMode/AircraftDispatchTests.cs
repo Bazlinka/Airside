@@ -148,6 +148,16 @@ namespace Airside.Tests
                     Assert.That(fan.Find("FanDisc"), Is.Not.Null,
                         "high-RPM intake blur exists rather than leaving a frozen fan face");
                 }
+
+                var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
+                var wingColor = wing.GetComponent<Renderer>().sharedMaterial.color;
+                Assert.That(wingColor.r, Is.EqualTo(0.58f).Within(0.01f), "737 wings use a restrained neutral finish");
+                var winglet = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Winglet L");
+                Assert.That(winglet.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
+                    "split winglets retain the airline accent");
+                var window = root.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Cabin window "));
+                Assert.That(window.GetComponent<Renderer>().sharedMaterial.color.r, Is.LessThan(0.1f),
+                    "737 glazing remains readable at follow distance");
             }
             finally
             {

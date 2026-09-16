@@ -8261,7 +8261,7 @@ namespace Airside.Presentation
                 root,
                 out _,
                 RenameAircraftPart,
-                kitName => AircraftPartColor(kitName, accent),
+                kitName => Boeing7378PartColor(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
 
             if (usedArt)
@@ -8790,6 +8790,43 @@ namespace Airside.Presentation
                 || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
                 || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
                 return new Color(0.055f, 0.14f, 0.20f);
+
+            return AircraftPartColor(kitName, accent);
+        }
+
+        private static Color? Boeing7378PartColor(string kitName, Color accent)
+        {
+            // Keep the broad lifting surfaces visually light. Airline colour is
+            // strongest on the fin and split winglets, where it reads as livery
+            // rather than making the whole aircraft look moulded from plastic.
+            switch (kitName)
+            {
+                case "wing_left":
+                case "wing_right":
+                case "wing_root_left":
+                case "wing_root_right":
+                case "wing_fairing_left":
+                case "wing_fairing_right":
+                case "flap_left":
+                case "flap_right":
+                case "flap_fairing_l":
+                case "flap_fairing_r":
+                case "spoiler_left":
+                case "spoiler_right":
+                case "aileron_left":
+                case "aileron_right":
+                case "tailplane":
+                case "tailplane_tip_l":
+                case "tailplane_tip_r":
+                case "elevator_left":
+                case "elevator_right":
+                    return new Color(0.58f, 0.62f, 0.67f);
+            }
+
+            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
+                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
+                return new Color(0.045f, 0.12f, 0.18f);
 
             return AircraftPartColor(kitName, accent);
         }

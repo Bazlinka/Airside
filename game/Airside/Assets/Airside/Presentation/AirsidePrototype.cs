@@ -7678,6 +7678,9 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>How close an aircraft has to be for the hangar to open for it.</summary>
+        public const float HangarDoorOpensWithinMetres = 110f;
+
         private void UpdateHangarDoor()
         {
             if (_hangarDoor == null && _hangarBayLight == null && _hangarDoorPanels.Count == 0)
@@ -7687,12 +7690,28 @@ namespace Airside.Presentation
             // Also opens wider when a commercial aircraft is near the hangar apron.
             var daylight = PresentationDaylight;
             var openAmount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((daylight - 0.15f) / 0.35f));
-            for (var i = 0; i < VisualFlights.Count; i++)
+            // Only an aircraft actually near the hangar opens the door further. The test used
+            // to be "anything on the field is parked or taxiing", which in airline mode is
+            // true around the clock, so the door never closed at night.
+            var hangar = _hangarDoor != null ? _hangarDoor.position
+                : _hangarDoorPanels.Count > 0 && _hangarDoorPanels[0].Panel != null
+                    ? _hangarDoorPanels[0].Panel.position
+                    : (Vector3?)null;
+            if (hangar.HasValue)
             {
-                var flight = VisualFlights[i];
-                if (flight.Operation.Phase is AircraftPhase.TaxiIn or AircraftPhase.AtStand
-                    or AircraftPhase.TaxiOut or AircraftPhase.Pushback)
+                for (var i = 0; i < VisualFlights.Count && i < _commercialAircraft.Length; i++)
                 {
+                    var flight = VisualFlights[i];
+                    if (flight.Operation.Phase is not (AircraftPhase.TaxiIn or AircraftPhase.AtStand
+                        or AircraftPhase.TaxiOut or AircraftPhase.Pushback))
+                        continue;
+                    var view = _commercialAircraft[i];
+                    if (view == null || !view.gameObject.activeInHierarchy)
+                        continue;
+                    var offset = view.position - hangar.Value;
+                    offset.y = 0f;
+                    if (offset.sqrMagnitude > HangarDoorOpensWithinMetres * HangarDoorOpensWithinMetres)
+                        continue;
                     openAmount = Mathf.Max(openAmount, 0.85f);
                     break;
                 }

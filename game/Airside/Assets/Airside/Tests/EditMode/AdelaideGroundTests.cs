@@ -1,3 +1,4 @@
+using System;
 using Airside.Presentation;
 using NUnit.Framework;
 
@@ -69,11 +70,11 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AdelaideGround_BoundaryDropsAwayFromTheBoardEdge()
+        public void AdelaideGround_BoundaryDoesNotCarveARectangularTrench()
         {
-            var centre = AirsideAdelaideGround.WorldHeight(0f, 400f);
             var edge = AirsideAdelaideGround.WorldHeight(0f, AirsideAdelaideGround.OriginZ + 8f);
-            Assert.That(edge, Is.LessThan(centre - 0.5f));
+            var nearby = AirsideAdelaideGround.WorldHeight(0f, AirsideAdelaideGround.OriginZ + 108f);
+            Assert.That(Math.Abs(edge - nearby), Is.LessThan(1.2f));
         }
     }
 }

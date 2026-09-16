@@ -20,6 +20,19 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void SurroundingsShader_CompilesAndCarriesTheGroundTextureAcrossTheEdge()
+        {
+            var shader = Shader.Find(AirsideAdelaideSurroundings.ShaderName);
+            Assert.That(shader, Is.Not.Null);
+            Assert.That(ShaderUtil.ShaderHasError(shader), Is.False, "Surroundings.shader has compile errors");
+            var material = AirsideAdelaideSurroundings.BuildMaterial(shader);
+            Assert.That(material, Is.Not.Null);
+            Assert.That(material.GetTexture("_AirfieldAlbedo"), Is.Not.Null);
+            Assert.That(material.GetFloat("_EdgeTextureBlend"), Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
+            Object.DestroyImmediate(material);
+        }
+
+        [Test]
         public void GroundMesh_EdgeNormalsFollowTheSlopeLikeTheirNeighbours()
         {
             const int resX = 65, resZ = 45;
@@ -52,7 +65,19 @@ namespace Airside.Tests
             var high = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High;
             Assert.That(material.IsKeywordEnabled(AirsideAdelaideGroundMesh.FarDetailKeyword), Is.EqualTo(high));
             Assert.That(material.GetFloat("_MacroStrength"), Is.EqualTo(AirsideAdelaideGroundMesh.MacroStrength));
+            Assert.That(material.GetTexture("_DryMask"), Is.Not.Null);
+            Assert.That(material.GetTexture("_GreenMask"), Is.Not.Null);
+            Assert.That(material.GetTexture("_DirtMask"), Is.Not.Null);
             Object.DestroyImmediate(material);
+        }
+
+        [Test]
+        public void GroundMesh_HighQualityBlendGridIsFineEnoughForPavementShoulders()
+        {
+            var spacingX = AirsideAdelaideGround.SizeX / (AirsideAdelaideGround.HighResolutionX - 1f);
+            var spacingZ = AirsideAdelaideGround.SizeZ / (AirsideAdelaideGround.HighResolutionZ - 1f);
+            Assert.That(spacingX, Is.LessThan(18f));
+            Assert.That(spacingZ, Is.LessThan(19f));
         }
     }
 }

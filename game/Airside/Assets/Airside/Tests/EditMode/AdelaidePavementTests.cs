@@ -315,15 +315,14 @@ namespace Airside.Tests
         [Test]
         public void Perimeter_FenceFollowsTheGroundItStandsOn()
         {
-            // The bug this guards: every panel was pinned to world Y = 0 while the
-            // authored ground drops ~2.4 m into the boundary lip at the fence line,
-            // leaving the whole 11 km fence hanging in the air.
+            // The bug this guards: every panel was pinned to world Y = 0 instead of
+            // following the authored ground, leaving sections of the 11 km fence floating.
             var hx = AirsideAdelaidePerimeter.FenceHalfX;
             var hz = AirsideAdelaidePerimeter.FenceHalfZ;
 
             var groundAtFence = AirsideAdelaideGround.WorldHeight(0f, hz);
-            Assert.That(groundAtFence, Is.LessThan(-1f),
-                "sanity: the authored boundary lip really does drop at the fence line");
+            Assert.That(groundAtFence, Is.InRange(-1f, 1f),
+                "the seamless boundary should remain close to the airfield datum");
 
             foreach (var x in new[] { -hx * 0.9f, 0f, hx * 0.9f })
             {

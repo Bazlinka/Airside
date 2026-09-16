@@ -27,6 +27,7 @@ namespace Airside.Presentation
         private const float InlandWaterBelowPavement = 4.8f;
         private const float TuckUnderMetres = 4f;
         private const float EdgeBlendMetres = 700f;
+        public const float EdgeTextureBlendMetres = 520f;
         // Wider than the real sand so the 60 m grid draws a continuous strip, not dashes.
         private const float BeachWidthMetres = 150f;
 
@@ -64,7 +65,7 @@ namespace Airside.Presentation
                 go.transform.SetParent(root, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var renderer = go.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = new Material(shader) { name = "mat_adelaide_surroundings_v01", enableInstancing = true };
+                renderer.sharedMaterial = BuildMaterial(shader);
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
                 AirsideAdelaideRoads.TryBuild(root, AirsideAdelaideGround.PavementWorldY, HeightSampler(grid, heights));
@@ -75,6 +76,29 @@ namespace Airside.Presentation
                 Debug.LogWarning($"[Airside] Surroundings failed to build: {e.Message}");
                 return false;
             }
+        }
+
+        public static Material BuildMaterial(Shader shader = null)
+        {
+            shader ??= Shader.Find(ShaderName);
+            if (shader == null)
+                return null;
+
+            var material = new Material(shader) { name = "mat_adelaide_surroundings_v01", enableInstancing = true };
+            var dry = AirsideArtTextures.Load(
+                AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerDryGrass));
+            if (dry != null)
+                material.SetTexture("_AirfieldAlbedo", dry);
+            material.SetColor("_AirfieldTint", new Color(0.59f, 0.61f, 0.55f, 1f));
+            material.SetFloat("_AirfieldHalfX", AirsideAdelaideGround.SizeX * 0.5f);
+            material.SetFloat("_AirfieldHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
+            material.SetFloat("_EdgeTextureBlend", EdgeTextureBlendMetres);
+            material.SetFloat("_DryTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerDryGrass));
+            material.SetFloat("_MacroScale", AirsideAdelaideGroundMesh.MacroScaleMetres);
+            material.SetFloat("_MacroStrength", AirsideAdelaideGroundMesh.MacroStrength);
+            material.SetFloat("_FarBlendStart", AirsideAdelaideGroundMesh.FarBlendStartMetres);
+            material.SetFloat("_FarBlendEnd", AirsideAdelaideGroundMesh.FarBlendEndMetres);
+            return material;
         }
 
         public static Mesh BuildMesh(CoastGrid grid) => BuildMesh(grid, out _);

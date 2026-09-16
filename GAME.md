@@ -1,5 +1,57 @@
 ## Where to resume — session handoff
 
+- **2026-09-16 Claude — Task 2: airline career domain and save v6 migration (ADR 0053).**
+  - **Process note:** `GAME.md`'s own standing instruction said not to begin Task 2 until
+    Bailey reviewed the cleaned HUD on a packaged build — that review has not happened (still
+    no Unity editor in this session). The user explicitly chose to proceed with Task 2 anyway
+    when asked directly. Recording that here rather than silently skipping the gate.
+  - **Scope, matching the plan doc exactly:** Domain, Simulation, save schema v6, migration and
+    tests — deliberately **no HUD/economy UI**. The Contracts workspace placeholder from the
+    earlier slice is unchanged; nothing here is visible to the player yet. That wiring is
+    Task 3.
+  - **What exists now:** a real `AcceptContract` command and one authored contract,
+    `REG-KGC-INTRO` (Adelaide↔Kingscote, ATR 42, 5 rotations, tuning-placeholder payment/
+    reward numbers — not balanced, Bailey tunes these). Completing an eligible rotation as the
+    player pays per-rotation, nudges reliability, and — on the contract's last required
+    rotation — pays a completion reward and clears the active contract. Everything else
+    (AI traffic, routes, taxi timing, saves for existing fields) is untouched; the hook lives
+    entirely inside the existing `TaxiIn → AtStand` transition
+    (`AirlineOperations.AdvanceAircraft`), the same place `CompletedTrips` already increments.
+  - **Idempotency — the acceptance bar the plan doc calls out by name:** every settlement gets
+    a `SettlementId` (registration + completed-trip number) and `AirlineCareerState` refuses a
+    repeat one. Proved directly (not just asserted): a test calls the internal guard twice
+    with the same id and checks the second call pays nothing — and, to make sure that test
+    isn't vacuous, I mutated the guard out, watched the test fail, then restored it and
+    confirmed it passes again. Save/restore reconstructs the exact processed-settlement set,
+    so a rotation already paid before a save can never be paid again after loading it.
+  - **Save v6:** `AirlineSaveData.CurrentVersion` is 6. A pre-6 save loads to a **fresh**
+    Provisional career (0 funds, 100 reliability, no contract) — it never retroactively pays
+    for trips flown before the career existed, per the plan doc's rule. Every existing v5
+    field (fleet, schedules, stands, movement data) is untouched and still restores exactly as
+    before; proved with a hand-built v5-shaped fixture in the new test file.
+  - **Evidence — this slice is different from the presentation-only ones below:** I installed
+    the .NET 8 SDK in this session (`/opt/dotnet`, via the official `dotnet-install.sh` script
+    — apt's cached package index 404'd) specifically so `scripts/test-domain.sh` could
+    actually run rather than being flagged as "not run here" again. **274/274 pre-existing
+    headless tests still pass; 7 new tests in `Tests/EditMode/AirlineCareerTests.cs` pass —
+    281/281 total.** This is real, verified evidence, not a claim. Unity EditMode (the real
+    source of truth) and a packaged build are still open — no Unity editor here — but the
+    Domain/Simulation logic itself has actually been exercised, unlike every earlier
+    Presentation-only slice this session.
+  - **One structural note for reviewers:** added `Simulation/AssemblyInfo.cs` with
+    `[assembly: InternalsVisibleTo("Airside.Tests.EditMode")]` — the first use of that
+    attribute in this codebase. It exists solely so the idempotency test can call the internal
+    settlement guard directly; every other new behaviour is still exercised only through
+    `AirlineOperations`'s public commands, matching how the rest of the test suite works.
+  - **Explicitly not done (real remaining scope, not silently skipped):** `CancelDeparture`
+    does not yet cost reliability for breaking a commitment against an active contract (left a
+    `// TODO(ADR 0053)` at the exact spot); no tier ever advances past Provisional yet (Task 4);
+    no HUD/away-summary wiring (Task 3).
+  - **NEXT:** Task 3 — wire `REG-KGC-INTRO` into the Contracts workspace placeholder, an
+    objective/status presentation, and the away-summary flow. Before any of that ships, still
+    needs: `scripts/test-unity.sh` on Mac, a packaged build, and the 1280x720/1440x900/Retina
+    visual pass this whole session's presentation work has been accumulating.
+
 - **2026-09-16 Claude — persistent status/objective line, closing the remaining ADR 0053
   Task 1 gap from the nav-shell slice below.**
   - **Player-visible:** once the first-flight guide finishes, the card it used to occupy under

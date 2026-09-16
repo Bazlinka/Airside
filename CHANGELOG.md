@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Airline career domain and save v6 (Task 2, ADR 0053).** New deterministic career state —
+  funds, reliability, operating tier, an acceptable/accepted route contract — plus a real
+  `AcceptContract` command and one authored contract (`REG-KGC-INTRO`, Adelaide↔Kingscote).
+  Completing an eligible player rotation settles it against the active contract exactly once
+  (`SettlementId` = registration + trip number, guarded against repeats); save schema moves to
+  v6, and a pre-6 save migrates to a fresh Provisional career without retroactively paying
+  historical trips or losing any existing fleet/schedule/stand data. Domain/Simulation and
+  tests only — no HUD wiring yet (Task 3). 7 new tests; 281/281 passing under
+  `scripts/test-domain.sh` (the .NET SDK was installed this session specifically to run it).
+
 - **Persistent status/objective line.** Once the first-flight guide finishes, its card slot
   under the clock now shows a quiet one-line objective instead of disappearing: the most urgent
   player aircraft and what it needs, severity-tinted, or a calm fleet-wide line when nothing

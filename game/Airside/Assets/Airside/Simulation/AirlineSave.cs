@@ -17,9 +17,12 @@ namespace Airside.Simulation
         /// <see cref="EpochUtcTicks"/> for live real time. 4 replaces the two fictional
         /// AI operators with real Adelaide airlines. Older saves still load: a v2
         /// clock is aligned so the save moment reads as when it was saved, a v1 clock
-        /// uses <see cref="AirlineClock.DefaultEpochUtc"/>.
+        /// uses <see cref="AirlineClock.DefaultEpochUtc"/>. 6 adds the ADR 0053 airline
+        /// career: funds, reliability, tier, an accepted contract and every settlement
+        /// already applied. A pre-6 save gets a fresh Provisional career on load — it
+        /// never retroactively pays trips completed before the career existed.
         /// </summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int Version = CurrentVersion;
 
@@ -35,6 +38,16 @@ namespace Airside.Simulation
         public uint RandomState;
         public List<AirlineRecord> Airlines = new();
         public List<AircraftRecord> Fleet = new();
+
+        // ---- Career (ADR 0053, v6) ------------------------------------------------
+        public long CareerFunds;
+        public int CareerReliability;
+        public string CareerTier;
+        public bool HasActiveContract;
+        public string ContractDefinitionId;
+        public long ContractAcceptedAtSeconds;
+        public int ContractCompletedRotations;
+        public List<string> ProcessedSettlementKeys = new();
     }
 
     [Serializable]
@@ -81,8 +94,16 @@ namespace Airside.Simulation
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
                 TotalEvents = operations.TotalEvents,
-                RandomState = operations.RandomState
+                RandomState = operations.RandomState,
+                CareerFunds = operations.CareerState.Funds,
+                CareerReliability = operations.CareerState.Reliability,
+                CareerTier = operations.CareerState.Tier.ToString(),
+                HasActiveContract = operations.CareerState.ActiveContract != null,
+                ContractDefinitionId = operations.CareerState.ActiveContract?.DefinitionId ?? string.Empty,
+                ContractAcceptedAtSeconds = operations.CareerState.ActiveContract?.AcceptedAt.ElapsedSeconds ?? 0,
+                ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0
             };
+            data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
 
             foreach (var airline in operations.Airlines)
             {
@@ -218,6 +239,19 @@ namespace Airside.Simulation
                 operations.AddMissingRegionalCarriers();
                 operations.AddMissingTerminalOperators();
             }
+
+            // A pre-6 save never had a career: start fresh Provisional rather than
+            // back-computing rewards for trips flown before contracts existed.
+            operations.RestoreCareerState(
+                data.Version >= 6 ? data.CareerFunds : 0,
+                data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
+                data.Version >= 6 && !string.IsNullOrEmpty(data.CareerTier)
+                    ? data.CareerTier : OperatingTier.Provisional.ToString(),
+                data.Version >= 6 && data.HasActiveContract ? data.ContractDefinitionId : null,
+                data.Version >= 6 ? data.ContractAcceptedAtSeconds : 0,
+                data.Version >= 6 ? data.ContractCompletedRotations : 0,
+                data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>());
+
             return operations;
         }
 

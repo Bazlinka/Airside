@@ -93,11 +93,30 @@ namespace Airside.Presentation
                 var renderer = label.GetComponent<MeshRenderer>();
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                DepthTestStandLabel(renderer);
                 AirsideSceneIndex.Remember(label);
             }
 
             SpawnSurface(root, "Regional stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
         }
+
+        /// <summary>
+        /// TextMesh renders through the default font material on <c>GUI/Text Shader</c>, whose
+        /// depth test is the global <c>unity_GUIZTestMode</c> — Always. The painted stand
+        /// identifiers therefore drew on top of anything in front of them, including a parked
+        /// aircraft standing on the very stand they name. The material's own copy of that
+        /// property makes the labels depth-tested like the paint they sit on.
+        /// </summary>
+        private static void DepthTestStandLabel(MeshRenderer renderer)
+        {
+            if (renderer == null || renderer.sharedMaterial == null)
+                return;
+            var material = new Material(renderer.sharedMaterial) { name = "mat_stand_identifier_depth_tested" };
+            material.SetInt(GuiZTestMode, (int)CompareFunction.LessEqual);
+            renderer.sharedMaterial = material;
+        }
+
+        private static readonly int GuiZTestMode = Shader.PropertyToID("unity_GUIZTestMode");
 
         // ---- Mesh construction ----------------------------------------------------------
 

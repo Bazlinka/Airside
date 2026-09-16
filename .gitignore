@@ -45,3 +45,7 @@ xcuserdata/
 /game/Airside/Assets/Resources/PerformanceTestRunSettings.json*
 /game/Airside/Assets/Resources.meta
 __pycache__/
+
+# Finder/iCloud occasionally materialises numbered conflict copies beside generated
+# runtime art. The canonical unnumbered assets are rebuilt by the sync script.
+/game/Airside/Assets/StreamingAssets/**/* [0-9].*

@@ -148,5 +148,14 @@ namespace Airside.Tests
             Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, 1f / 60f), Is.LessThan(0.01f));
             Assert.That(AirsidePrototype.EaseWeatherGloom(0f, storm, float.PositiveInfinity), Is.EqualTo(storm));
         }
+    
+        [Test]
+        public void StarField_FadesOutRatherThanBlinkingOff()
+        {
+            Assert.That(AirsidePrototype.StarFieldFade(0f), Is.GreaterThan(1f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.42f), Is.EqualTo(0f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.34f), Is.LessThan(0.2f));
+            Assert.That(AirsidePrototype.StarFieldFade(0.2f), Is.GreaterThan(AirsidePrototype.StarFieldFade(0.3f)));
+        }
     }
 }

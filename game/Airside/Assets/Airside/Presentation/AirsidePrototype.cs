@@ -7355,6 +7355,10 @@ namespace Airside.Presentation
             _opsAntennaDish.Rotate(Vector3.up, Time.unscaledDeltaTime * 18f, Space.World);
         }
 
+        /// <summary>Star brightness for the daylight level: full at night, gone by mid-dawn.</summary>
+        public static float StarFieldFade(float daylight) =>
+            (1.1f - Mathf.Clamp01(daylight)) * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 0.12f, daylight));
+
         private void UpdateStarField()
         {
             if (_starFieldRoot == null)
@@ -7366,8 +7370,12 @@ namespace Airside.Presentation
                 return;
 
             var daylight = PresentationDaylight;
-            var show = daylight < 0.35f;
-            _starFieldRoot.gameObject.SetActive(show);
+            // Stars used to switch off at daylight 0.35 while still three-quarters bright,
+            // so the whole sky blinked once every dawn and dusk. Fade them out instead.
+            var fade = StarFieldFade(daylight);
+            var show = fade > 0.002f;
+            if (_starFieldRoot.gameObject.activeSelf != show)
+                _starFieldRoot.gameObject.SetActive(show);
             if (!show)
                 return;
 
@@ -7381,7 +7389,7 @@ namespace Airside.Presentation
 
             if (_starFieldRenderer == null)
                 return;
-            var c = new Color(twinkle, twinkle, 1f) * (1.1f - daylight);
+            var c = new Color(twinkle, twinkle, 1f) * fade;
             SetRendererColor(_starFieldRenderer, c, c);
         }
 

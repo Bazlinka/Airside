@@ -502,12 +502,19 @@ namespace Airside.Presentation
 
             _fleetActiveViews.Clear();
             _fleetViewById.Clear();
+            var followed = _cameraController.FollowTarget;
             for (var i = 0; i < views.Length; i++)
             {
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
-                if (i < VisualFlights.Count
+                // A far-approach aircraft is excluded as a new cycling/pick candidate (too
+                // small and distant to be a sensible target) but never dropped out from
+                // under a follow already in progress — that used to release the camera the
+                // instant an inbound aircraft you were following entered its Approach phase,
+                // well before it was anywhere near the runway, reading as a stutter/glitch.
+                if (view != followed
+                    && i < VisualFlights.Count
                     && VisualFlights[i].Operation.Phase == AircraftPhase.Approach
                     && !AircraftPickRouting.ApproachIsCloseEnough(
                         view.position.x, AirsideFlightPath.WestThresholdX))

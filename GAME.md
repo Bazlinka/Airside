@@ -1,5 +1,74 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — the speed/altitude readout showed no indication of which aircraft
+  it was for ("this as well - makes no sense what it does", per Bailey's screenshot of
+  "120 kt · 310 ft ▲" with no other context).**
+  - **What was actually wrong:** `DrawSpeedReadout`/`TryReadoutFlight` always show a reading —
+    the followed aircraft if one is followed, else the first visible aircraft on the field —
+    but the box never said whose it was. In the old single-ATR42 demo circuit that ambiguity
+    didn't matter (there was only ever one aircraft). Now that an airline is running, the
+    field has the player's fleet *and* every AI carrier's traffic, and "player aircraft come
+    first" (`RefreshFleetFlights`) only guarantees the default reading is the player's own
+    when the player actually has a visible aircraft on the field — if their one plane is away
+    on a leg, the same unlabelled box would show an AI competitor's speed with nothing to
+    say so. Bailey's screenshot is exactly that failure mode: a number with no explanation
+    is not confusing about *what it does* (it's a speed/altitude readout), it's confusing
+    about *whose* it is.
+  - **Fix:** `DrawSpeedReadout` now resolves the reading's aircraft and labels the box with
+    its flight number (falling back to registration), reusing the same `FlightNumber` helper
+    already used on the map and flight board. `ReadoutText` takes the label as an optional
+    parameter so the demo-circuit call path (no label) is unaffected.
+  - **Evidence:** Presentation-only IMGUI change, no Unity editor in this session — reviewed
+    by inspection, not rendered. `scripts/test-domain.sh` unaffected (285/285, this file isn't
+    Unity-free so it was never in that harness's scope).
+  - **NEXT:** a fresh screenshot would confirm the label reads cleanly at the readout's small
+    size and doesn't crowd the "kt / ft" figures next to it.
+
+- **2026-09-17 Claude — found and fixed the likely cause of the landing "stutter" Bailey
+  reported, plus a real speed-accuracy bug in the touchdown wheel smoke.**
+  - **The stutter:** `RefreshFleetFollowTargets` (`AirsidePrototype.FleetVisuals.cs`) excludes
+    an inbound aircraft still more than 1800 m from the runway threshold from the
+    follow/cycling candidate list — a filter borrowed from `AircraftPickRouting`'s
+    click-to-select rules (a distant aircraft is too small to be a sensible click target).
+    But that same filter was also applied to the list `SetFollowTargets` uses to decide
+    whether your *currently followed* aircraft is still valid. The moment your own inbound
+    aircraft's visual phase switched to `Approach` — which happens well out over the field,
+    long before it is anywhere near the runway — it dropped out of that list, `IndexOfSame`
+    came back -1, and `AirsideCameraController.ReleaseFollow()` fired: the camera stopped
+    tracking it and just sat still while the aircraft kept flying on. That is exactly what
+    "stutter... before approaching runway" would look like: motion suddenly interrupted, well
+    before touchdown, well before the runway. Fixed by never excluding the aircraft the camera
+    is already following, whatever its distance from the threshold — the far-approach filter
+    still keeps distant aircraft out of new-follow/cycling candidates, it just no longer yanks
+    an active follow out from under you.
+  - **Speed-accuracy audit (the second ask):** re-verified every aircraft type's derived
+    circuit figures (approach/landing/takeoff seconds, rotate/touchdown/flare progress
+    fractions) are positive, monotonic and sane across all 7 authored types — they are; the
+    underlying `AircraftPerformance.cs` table and `CircuitProfile`/`AircraftPerformanceProfile`
+    derivation are correct. The bug wasn't in the numbers, it was in *applying* them: the
+    touchdown wheel-smoke functions (`EmitTouchdownWheelSmoke`, `UpdateRollingWheelSmoke`)
+    called the type-less `AirsideFlightPath.GroundSpeedMetresPerSecond` overload, which
+    silently defaults to the ATR 42's speed curve for every aircraft — so a landing Boeing
+    737, A321, A350 or 787 (each with a materially different touchdown speed) had its
+    wheel-smoke intensity computed off the wrong aircraft's numbers. Fixed both call sites to
+    resolve and pass the aircraft's actual type, matching every other render-path call site
+    (position, pitch, gear roll, airspeed readout), which were already correct.
+  - **Evidence:** both fixes are Presentation-only (IMGUI/Unity scene code), so
+    `scripts/test-domain.sh` can't compile or run them — still 285/285, unaffected. The
+    follow-drop mechanism was traced by reading the exact call chain
+    (`RefreshFleetFollowTargets` → `AirsideCameraController.SetFollowTargets` →
+    `AircraftPickRouting.IndexOfSame` → `ReleaseFollow`), not observed directly (no Unity
+    editor in this session) — a fresh play session following your own aircraft in from its
+    Approach phase is the only way to confirm the stutter is actually gone. The speed table
+    itself was checked with a standalone script reproducing the exact `CircuitProfile`/
+    `AircraftPerformanceProfile` formulas for all 7 types.
+  - **NEXT:** confirm in a live build that following your own aircraft in no longer drops out
+    around the Approach phase. If a stutter is still visible even after this fix, the next
+    place to look is the whole-second `FleetState.Landing` clock (`FleetVisual.For`) versus
+    the fractional presentation clock (`_preciseTime`) that drives `VisualPhaseProgress` — I
+    traced through this by hand and found it consistent, but it's the next candidate if the
+    camera-follow fix doesn't fully explain what was seen.
+
 - **2026-09-17 Claude — bug-hunting pass across the codebase ("massive bug fix"), 6 files, all
   verified where verification is possible.**
   - **Away-summary can misreport a save migration as something that happened while you were

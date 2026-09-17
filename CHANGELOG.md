@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **Label the speed/altitude readout with the aircraft it's for.** The HUD's persistent
+  speed/altitude box always showed a reading (the followed aircraft, else the first visible
+  one) with no indication of whose it was — harmless with the old single-aircraft demo
+  circuit, but with an airline running and AI traffic sharing the field, the box could show
+  a competitor's speed with nothing to say so. Now prefixed with the aircraft's flight number
+  (or registration), same as the map and flight board already show.
+
+- **Fix the landing camera "stutter" and a touchdown-smoke speed bug.** Following your own
+  aircraft in would silently drop the camera follow the instant it entered its Approach visual
+  phase — well before the runway — because the far-approach pick-distance filter was also
+  gating whether an already-followed aircraft stayed a valid follow target. Fixed so an active
+  follow is never dropped by that filter (new-follow/cycling candidates are still filtered as
+  before). Also fixed the touchdown wheel-smoke effect using the ATR 42's speed curve for every
+  aircraft type regardless of what actually landed — Boeing/Airbus touchdowns now use their own
+  speeds like every other render-path call site already did. Audited all 7 aircraft types'
+  derived circuit timings (approach/landing/takeoff seconds, rotate/touchdown/flare fractions):
+  all sane and correctly derived, no accuracy issues found in the underlying numbers.
+
 - **Bug-hunting pass: 6 fixes across the codebase.** Fixed the away-summary misreporting a
   save migration (v5→v6) as reliability/funds change that happened while away; deduplicated
   `FlightNumber`'s hash function to reuse the canonical `StableNameHash`; fixed the Map nav tab

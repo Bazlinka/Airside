@@ -3152,7 +3152,9 @@ namespace Airside.Presentation
 
             TryGetMainGearContacts(aircraft, out var left, out var right);
             var aft = -aircraft.forward;
-            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f));
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                ? fleetAircraft.Type : AircraftType.Atr42;
+            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f), type);
             // Touchdown speed is the top of the range, so this is near full strength.
             var strength = Mathf.Clamp01(speed / TouchdownSmokeReferenceSpeed);
 
@@ -3178,7 +3180,9 @@ namespace Airside.Presentation
             if (_wheelPuffs == null || aircraft == null)
                 return;
 
-            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f));
+            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
+                ? fleetAircraft.Type : AircraftType.Atr42;
+            var speed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, VisualPhaseProgress(flight, 0f), type);
             var strength = Mathf.Clamp01(speed / TouchdownSmokeReferenceSpeed);
             if (strength <= 0.18f)
                 return;

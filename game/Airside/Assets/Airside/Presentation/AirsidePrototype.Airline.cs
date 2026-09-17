@@ -579,12 +579,17 @@ namespace Airside.Presentation
                 $"${_operations.CareerState.Funds:N0}  ·  {_operations.CareerState.Reliability}% reliability", small);
         }
 
-        private static readonly (HudWorkspace workspace, string label, string hotkey)[] WorkspaceTabs =
+        // The hotkeys (T/Tab/H) used to print in each label ("Operations (T)") but four of
+        // those never fit the strip without overflowing it — the hotkeys still work, Controls
+        // Help (F1) still lists them (from its own ControlsHelp.Sections data), the button
+        // just doesn't spell it out any more, so there is nothing left for this table to carry
+        // beyond the workspace and its label.
+        private static readonly (HudWorkspace workspace, string label)[] WorkspaceTabs =
         {
-            (HudWorkspace.Operations, "Operations", "T"),
-            (HudWorkspace.Map, "Map", "Tab"),
-            (HudWorkspace.Fleet, "Fleet", "H"),
-            (HudWorkspace.Contracts, "Contracts", null)
+            (HudWorkspace.Operations, "Operations"),
+            (HudWorkspace.Map, "Map"),
+            (HudWorkspace.Fleet, "Fleet"),
+            (HudWorkspace.Contracts, "Contracts")
         };
 
         private GUIStyle _navActiveButtonStyle;
@@ -608,7 +613,17 @@ namespace Airside.Presentation
                 // Help (F1) still lists them, the button just doesn't spell it out any more.
                 var style = _activeWorkspace == workspace ? active : smallButton;
                 if (GUI.Button(tabRect, label, style))
-                    SetWorkspace(workspace);
+                {
+                    // The Map workspace needs a planning aircraft chosen and the lens reset —
+                    // TogglePlanner/OpenPlanner already do that (it's what Tab and field-tag
+                    // selection use); a plain SetWorkspace would open an empty "No aircraft to
+                    // plan" planner the first time a player clicks this tab before selecting
+                    // any aircraft.
+                    if (workspace == HudWorkspace.Map)
+                        TogglePlanner();
+                    else
+                        SetWorkspace(workspace);
+                }
             }
         }
 
@@ -1367,8 +1382,7 @@ namespace Airside.Presentation
                 if (!mapRect.Contains(point))
                     continue;
 
-                // A small airport glyph, not a plain dot, so a zoomed-in map reads as real
-                // fields rather than abstract markers — this is where parked aircraft sit.
+                // A clean dot marks the destination — this is where parked aircraft sit.
                 var colour = selected ? AirsideTheme.SafetyYellow : row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete;
                 var zoomBoost = Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
                 var size = (selected ? 20f : i == hovered ? 18f : 14f) * zoomBoost;

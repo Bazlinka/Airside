@@ -1,5 +1,52 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — bug-hunting pass across the codebase ("massive bug fix"), 6 files, all
+  verified where verification is possible.**
+  - **Away-summary can misreport a save migration as something that happened while you were
+    away.** `AwaySummary.Build` compared the *fresh* v6-migrated career (starts at 100%
+    reliability, 0 funds) against the *raw* pre-6 save fields, which JsonUtility leaves at 0
+    (no such fields existed before v6). Loading an old save and stepping forward would then
+    read "Reliability rose 100 points to 100%." — a migration artifact, not something that
+    happened in the time away. Fixed in `Simulation/AwayCatchUp.cs`: the "before" values used
+    for the delta are now the fresh Provisional starting values when the save predates v6,
+    not the raw zeroed fields. New regression test
+    `Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway` added to
+    `AwayCatchUpTests.cs`, mutation-tested (reverted the fix, confirmed the new test fails;
+    restored it, confirmed 285/285 pass).
+  - **Duplicate FNV-1a hash implementation.** `FlightNumber.For` hand-rolled its own hash
+    function instead of reusing `AirsidePrototype.StableNameHash` (the canonical shared
+    implementation already used elsewhere for deterministic display values). Two
+    implementations of the same algorithm drift silently if one is ever tuned. Made
+    `StableNameHash` `internal` (was `private`) and had `FlightNumber.For` call it directly,
+    deleting the duplicate.
+  - **Workspace nav button dead-clicked the Map tab.** `DrawWorkspaceNav`'s button handler
+    called a plain `SetWorkspace(HudWorkspace.Map)` for the Map tab, which — unlike
+    `TogglePlanner`/`OpenPlanner` (what Tab and field-tag selection already use to enter the
+    map) — doesn't choose a planning aircraft or reset the lens. First click on the Map tab
+    before selecting any aircraft opened an empty "No aircraft to plan" planner instead of the
+    map. Fixed to route through `TogglePlanner()` for the Map tab specifically.
+  - **Style-cache collision in the intro screen.** `AirsidePrototype.Intro.cs` had two
+    different visual roles (the title, and a fallback mark) sharing one `??=`-cached
+    `_introTitleStyle` field — whichever one rendered first "won" and silently applied its
+    style to the other. Split into `_introTitleStyle` and a new `_introFallbackMarkStyle`.
+  - **Unused hotkey field and a stale comment.** `WorkspaceTabs`' tuple carried a hotkey string
+    field that was never read after the hotkey suffixes were dropped from tab labels (see the
+    nav-strip fix above) — removed. A doc comment above the destination marker still described
+    the old ring-and-crossed-bars glyph after it was replaced with a plain dot — corrected.
+  - **Evidence:** found via two passes of the `code-review` skill (the first was interrupted by
+    a session usage limit partway through applying fixes; re-run to completion) plus manual
+    read-through of the affected files. The `AwayCatchUp.cs` fix is the only one with behavior
+    provable by a real test — it's Simulation, so `scripts/test-domain.sh` covers it directly
+    (285/285 passing, up from 284). The `FlightNumber`/nav-button/intro-style/comment fixes are
+    all Presentation-layer IMGUI code with no Unity editor available in this session — reviewed
+    by inspection and by tracing the exact call sites, not rendered or clicked.
+  - **On "fix planes":** re-ran all 8 aircraft-geometry generator/test scripts
+    (`scripts/test-air-*.py`) — all still pass, no geometry bugs found. If "fix planes" meant
+    something else (aircraft behavior, visuals only visible in a build), that needs a more
+    specific pointer — nothing else aircraft-related turned up in this pass.
+  - **NEXT:** a fresh screenshot would confirm the Map-tab click fix and let button theming
+    (previous entry) actually be judged. No further bug-hunting queued unless asked.
+
 - **2026-09-16 Claude — themed every button in the HUD; the status line and guide card now
   match. The single biggest lever found for "it still looks ugly."**
   - **What I found, re-reading Bailey's screenshots:** they don't just show the nav-strip

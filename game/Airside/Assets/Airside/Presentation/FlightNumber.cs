@@ -66,7 +66,10 @@ namespace Airside.Presentation
         /// </summary>
         public static string For(Airline airline, string registration, string destinationCode)
         {
-            var number = 100 + (int)(Hash(registration, destinationCode) % 900);
+            // "|" keeps a registration/destination pair from hashing the same as a different
+            // split of the same characters (e.g. "AB"+"C" vs "A"+"BC").
+            var hash = AirsidePrototype.StableNameHash($"{registration}|{destinationCode}");
+            var number = 100 + (int)(hash % 900);
             return $"{AirlineCode(airline)}{number}";
         }
 
@@ -85,27 +88,5 @@ namespace Airside.Presentation
         /// <summary>The flight number for an aircraft, or its registration when it has no route yet.</summary>
         public static string OrRegistration(FleetAircraft aircraft) =>
             ForAircraft(aircraft) ?? aircraft?.Registration;
-
-        private static uint Hash(string a, string b)
-        {
-            unchecked
-            {
-                const uint fnvPrime = 16777619;
-                var hash = 2166136261;
-                foreach (var c in a ?? string.Empty)
-                {
-                    hash ^= c;
-                    hash *= fnvPrime;
-                }
-                hash ^= '|';
-                hash *= fnvPrime;
-                foreach (var c in b ?? string.Empty)
-                {
-                    hash ^= c;
-                    hash *= fnvPrime;
-                }
-                return hash;
-            }
-        }
     }
 }

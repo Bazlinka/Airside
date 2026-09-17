@@ -37,7 +37,7 @@ namespace Airside.Presentation
         }
 
         // OnGUI runs several times a frame; build the intro styles once.
-        private GUIStyle _introTitleStyle, _introSubtitleStyle, _introHintStyle;
+        private GUIStyle _introTitleStyle, _introFallbackMarkStyle, _introSubtitleStyle, _introHintStyle;
 
         private static float Smooth01(float value)
         {
@@ -74,7 +74,7 @@ namespace Airside.Presentation
             }
             else
             {
-                var fallbackTitleStyle = _introTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
+                var fallbackTitleStyle = _introFallbackMarkStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                     { fontSize = 56, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter });
                 GUI.color = new Color(1f, 1f, 1f, alpha);
                 GUI.Label(new Rect(0f, centreY - 40f, width, 80f), "A", fallbackTitleStyle);

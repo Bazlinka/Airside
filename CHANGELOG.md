@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Bug-hunting pass: 6 fixes across the codebase.** Fixed the away-summary misreporting a
+  save migration (v5→v6) as reliability/funds change that happened while away; deduplicated
+  `FlightNumber`'s hash function to reuse the canonical `StableNameHash`; fixed the Map nav tab
+  dead-clicking into an empty planner on first use instead of routing through
+  `TogglePlanner`; fixed a style-cache collision between the intro title and its fallback mark;
+  removed a dead hotkey field and corrected a stale comment. New regression test for the
+  away-summary fix; 285/285 passing under `scripts/test-domain.sh`.
+
 - **Theme every button in the HUD.** Every button in the game used Unity's stock grey
   `GUI.skin.button` background with only its text colour ever touched — no button background
   in the entire codebase was themed. New `AirsideTheme.ButtonStyle` (Tarmac at rest, Coastal

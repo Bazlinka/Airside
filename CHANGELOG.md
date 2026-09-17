@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Fix the known 320×240 airline HUD overlaps.** Bottom-band toast no longer sits on
+  the map/fleet, and the left column (guide/nav) reserves space so stacked fleet/map
+  rects stay above the speed readout on tiny windows. `AirlineHudLayout_PanelsFitAndNeverOverlap`
+  now asserts toast≠map and toast≠fleet at every target size including 320×240.
+
 - **Field camera zoom and navigation mechanics (ADR 0054).** Free-camera scroll
   zooms toward the ground under the pointer; left/middle drag grabs that ground
   the same way the destinations map does; WASD drops follow then pans; soft pan

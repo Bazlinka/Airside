@@ -30,6 +30,13 @@ namespace Airside.Presentation
         /// <summary>Height of the persistent objective line once the first-flight guide is done.</summary>
         public const float StatusLineHeight = 26f;
 
+        /// <summary>
+        /// Minimum band left under the left column on a stacked (narrow) window so the
+        /// fleet/map rects stay above the toast and speed readout instead of collapsing
+        /// onto them — the known 320×240 failure mode.
+        /// </summary>
+        public const float MinStackedContentHeight = 28f;
+
         private AirlineHudLayout(Rect clock, Rect guide, Rect navStrip, Rect fleetArea, Rect toast, Rect map, bool mapCoversFleet, Rect setupArea)
         {
             Clock = clock;
@@ -77,45 +84,73 @@ namespace Airside.Presentation
             // Everything above the speed readout (itself above the control bar).
             var floor = Mathf.Max(Margin + 1f, Mathf.Min(hud.SpeedReadout.y, hud.ControlBar.y) - Margin);
 
-            var clock = new Rect(Margin, Margin, Mathf.Min(ClockWidth, inner), Mathf.Min(ClockHeight, floor - Margin));
-            var guideHeight = showGuide ? GuideHeight : StatusLineHeight;
-            var guide = new Rect(Margin, clock.yMax + Margin, clock.width,
-                Mathf.Max(1f, Mathf.Min(guideHeight, floor - clock.yMax - Margin)));
-            // Whatever sits below the left column starts under the guide/status line.
-            var leftColumnBottom = guide.yMax;
-
-            // The fleet panel's horizontal placement depends only on width, not on anything
-            // below the clock, so it is worked out now and used to size the nav strip too —
-            // four tab labels ("Operations", "Contracts", ...) need far more room than the
-            // 300 px clock column alone ever gives them.
+            var clockWidth = Mathf.Min(ClockWidth, inner);
             var fleetWidth = Mathf.Min(FleetWidth, inner);
-            var fleetBeside = clock.width + fleetWidth + Margin * 3f <= width;
+            var fleetBeside = clockWidth + fleetWidth + Margin * 3f <= width;
             var fleetLeft = width - Margin - fleetWidth;
 
-            var navAvailable = (fleetBeside ? fleetLeft - Margin : width - Margin) - Margin;
-            var navWidth = Mathf.Min(Mathf.Max(clock.width, navAvailable), NavStripMaxWidth);
-            var navStrip = new Rect(Margin, leftColumnBottom + Margin, Mathf.Min(navWidth, inner),
-                Mathf.Max(1f, Mathf.Min(NavStripHeight, floor - leftColumnBottom - Margin)));
-            // Everything below the left column now starts under the nav strip.
-            leftColumnBottom = navStrip.yMax;
-
-            var fleetTop = fleetBeside ? Margin : leftColumnBottom + Margin;
-            var fleet = new Rect(fleetLeft, fleetTop, fleetWidth, Mathf.Max(1f, floor - fleetTop));
-
             var toastWidth = Mathf.Min(ToastWidth, inner);
-            var toastBetween = fleetBeside && clock.xMax + Margin + toastWidth + Margin <= fleet.x;
+            var toastBetween = fleetBeside && clockWidth + Margin + toastWidth + Margin <= fleetLeft - Margin;
+            // Bottom-band toast: keep every other panel out of that strip so toast cannot
+            // sit on the map/fleet/nav (320×240 and other short stacked windows).
+            var contentFloor = toastBetween
+                ? floor
+                : Mathf.Max(Margin + 1f, floor - ToastHeight - Margin);
+
+            // On a stacked window, leave a real band under the left column for fleet/map.
+            var leftLimit = fleetBeside
+                ? contentFloor
+                : Mathf.Max(Margin + 8f, contentFloor - MinStackedContentHeight);
+
+            var clock = new Rect(Margin, Margin, clockWidth,
+                Mathf.Max(1f, Mathf.Min(ClockHeight, leftLimit - Margin)));
+
+            // Always leave a one-pixel nav strip (+ gap) under the guide so ClampBelow
+            // cannot park the nav on top of a guide that already filled leftLimit.
+            var guideHeight = showGuide ? GuideHeight : StatusLineHeight;
+            var guideTop = clock.yMax + Margin;
+            var guideLimit = Mathf.Max(guideTop + 1f, leftLimit - Margin - 1f);
+            var guide = ClampBelow(Margin, guideTop, clock.width, guideHeight, guideLimit);
+
+            var navAvailable = (fleetBeside ? fleetLeft - Margin : width - Margin) - Margin;
+            var navWidth = Mathf.Min(Mathf.Max(clock.width, Mathf.Max(1f, navAvailable)), NavStripMaxWidth);
+            var navTop = guide.yMax + Margin;
+            var navStrip = ClampBelow(Margin, navTop, Mathf.Min(navWidth, inner), NavStripHeight, leftLimit);
+
+            var leftColumnBottom = navStrip.yMax;
+            var fleetTop = fleetBeside ? Margin : leftColumnBottom + Margin;
+            if (!fleetBeside)
+                fleetTop = Mathf.Min(fleetTop, contentFloor - 1f);
+            var fleet = new Rect(fleetLeft, fleetTop, fleetWidth, Mathf.Max(1f, contentFloor - fleetTop));
+
             var toast = toastBetween
                 ? new Rect((clock.xMax + fleet.x - toastWidth) * 0.5f, Margin, toastWidth, ToastHeight)
                 : new Rect((width - toastWidth) * 0.5f, Mathf.Max(Margin, floor - ToastHeight), toastWidth, ToastHeight);
 
-            var mapTop = leftColumnBottom + Margin;
             var mapBeside = fleetBeside && fleet.x - Margin - Margin >= MinimumMapWidth;
             var mapRight = mapBeside ? fleet.x - Margin : width - Margin;
-            var map = new Rect(Margin, mapTop, Mathf.Max(1f, mapRight - Margin), Mathf.Max(1f, floor - mapTop));
+            var mapTop = leftColumnBottom + Margin;
+            if (!mapBeside)
+                mapTop = Mathf.Min(mapTop, contentFloor - 1f);
+            // When the map covers the fleet they share the same vertical band on purpose.
+            if (!mapBeside && !fleetBeside)
+                mapTop = fleet.y;
+            var map = new Rect(Margin, mapTop, Mathf.Max(1f, mapRight - Margin), Mathf.Max(1f, contentFloor - mapTop));
 
-            var setup = new Rect(Margin, Margin, inner, Mathf.Max(1f, floor - Margin));
+            var setup = new Rect(Margin, Margin, inner, Mathf.Max(1f, contentFloor - Margin));
 
             return new AirlineHudLayout(clock, guide, navStrip, fleet, toast, map, !mapBeside, setup);
+        }
+
+        /// <summary>
+        /// A panel that starts at <paramref name="y"/> and never crosses <paramref name="limit"/>.
+        /// Degenerates to a 1 px strip just under the limit when the window has already run out.
+        /// </summary>
+        private static Rect ClampBelow(float x, float y, float width, float preferredHeight, float limit)
+        {
+            if (y >= limit - 0.01f)
+                return new Rect(x, Mathf.Max(Margin, limit - 1f), width, 1f);
+            return new Rect(x, y, width, Mathf.Max(1f, Mathf.Min(preferredHeight, limit - y)));
         }
 
         /// <summary>A panel of the preferred size, centred in <see cref="SetupArea"/> and never larger than it.</summary>

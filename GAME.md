@@ -1,23 +1,18 @@
 ## Where to resume — session handoff
 
-- **2026-09-17 Cursor — field camera zoom/nav mechanics (ADR 0054).**
-  - **Branch:** `cursor/camera-zoom-nav-mechanics-b9dd` (open as a PR; `main` is
-    protected).
-  - **Player-visible outcome:** free-camera scroll now zooms toward the ground
-    under the pointer (a stand on the edge of frame comes closer instead of the
-    orbit centre alone shrinking). Left/middle drag grabs the ground under the
-    cursor the same way the destinations map does. WASD drops follow then pans,
-    matching drag. Soft pan limit keeps you within ~3.8 km of the overview so
-    you cannot lose the airfield. Follow-mode scroll bias is unchanged.
-  - **Scope/invariants:** presentation-only (`AirsideCameraFeel`,
-    `AirsideCameraController`). Simulation, saves, follow framing curves and
-    zoom/pan *rates* from #278 are unchanged.
-  - **Evidence:** `scripts/test-domain.sh` **316/316** (12 new camera-feel
-    locks). No Unity editor in this cloud session — live feel at overview/apron
-    still needs a Mac Play / packaged build check.
-  - **NEXT:** Mac playtest — scroll toward a stand off-centre, drag-pan near the
-    horizon, WASD while following, confirm soft pan limit at the edges. Merge
-    once that feels right.
+- **2026-09-17 Cursor — camera zoom/nav (ADR 0054) + fix known 320×240 HUD overlaps.**
+  - **Branch:** `cursor/camera-zoom-nav-mechanics-b9dd` (PR #300).
+  - **Camera:** free-camera scroll zooms toward the ground under the pointer;
+    left/middle drag grabs that ground; WASD drops follow then pans; soft pan
+    limit ~3.8 km. Follow-mode zoom bias unchanged.
+  - **HUD:** `AirlineHudLayout` reserves a bottom toast band and a stacked
+    fleet/map band so toast/map/fleet/readout no longer overlap at 320×240
+    (guide on or off). Layout tests now assert toast≠map and toast≠fleet.
+  - **Evidence:** `scripts/test-domain.sh` **316/316**; headless layout matrix
+    ALL CLEAR across the six target sizes. Unity EditMode
+    `PresentationLayoutTests` remains the HUD source of truth (UnityEngine).
+  - **NEXT:** Mac Play — camera feel at overview/apron, and eyeball the
+    compressed guide+nav at 320×240 / 800×500 before merge.
 
 - **2026-09-17 Claude — second bug-hunting pass (a dedicated research subagent plus manual
   review), 5 more fixes: 2 latent Domain lookup bugs, 1 wrong dead constant, 2 real

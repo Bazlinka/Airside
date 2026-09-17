@@ -44,6 +44,27 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PlannedCruiseFeet_UsesTheJetFormulaForEveryAuthoredJetNotJustThe737()
+        {
+            // A321neo, A350-900 and 787-10 used to fall through to the turboprop climb
+            // formula (6000 ft base, 25 ft/km) because only "B38M" was checked, planning a
+            // widebody international service at roughly turboprop altitude on a medium leg
+            // instead of the ~33,000 ft a jet formula gives - directly visible in the HUD's
+            // "FLxxx" cruise readout.
+            var mediumLegKm = 650.0;
+            var turboprop = EnrouteProfile.PlannedCruiseFeet(mediumLegKm, AircraftType.Atr42);
+            foreach (var jetType in new[]
+                     {
+                         AircraftType.Boeing7378, AircraftType.AirbusA321Neo,
+                         AircraftType.AirbusA350900, AircraftType.Boeing78710
+                     })
+            {
+                Assert.That(EnrouteProfile.PlannedCruiseFeet(mediumLegKm, jetType), Is.GreaterThan(turboprop),
+                    $"{jetType.Id} should plan well above a turboprop's cruise level");
+            }
+        }
+
+        [Test]
         public void TypicalSpeedsStayInCredibleOrderedBands()
         {
             foreach (var spec in AircraftCatalogue.All)

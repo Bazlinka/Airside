@@ -90,6 +90,63 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Estimate_UsesTheAircraftsOwnTaxiAndTakeoffTimeNotAlwaysTheAtr42()
+        {
+            // Estimate used to call the untyped AirlineOperations overloads, which default
+            // to an ATR 42 regardless of what is actually parked - so a 787's departure
+            // preview showed exactly the same taxi/takeoff time as a turboprop's.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Southern Cross Regional", "#C8102E");
+            ops.AddAirline(player);
+            var atr = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+
+            var depart = new SimulationTime(1000);
+            var jetTrip = FlightPlanner.Estimate(jet, 3600, depart);
+
+            // Pin the exact expected value using the aircraft's own type-aware timings,
+            // so a regression back to the untyped (always-ATR-42) overloads fails this
+            // test even when a stand-class heuristic happens to partly compensate.
+            var expectedAirborne = depart.Advance(
+                AirlineOperations.TaxiOutSecondsFrom(jet.Stand, jet.Type) + AirlineOperations.TakeoffRunwaySecondsFor(jet.Type));
+            Assert.That(jetTrip.Airborne.ElapsedSeconds, Is.EqualTo(expectedAirborne.ElapsedSeconds));
+
+            var atrTrip = FlightPlanner.Estimate(atr, 3600, depart);
+            Assert.That(jetTrip.Airborne.ElapsedSeconds, Is.Not.EqualTo(atrTrip.Airborne.ElapsedSeconds),
+                "a 787's taxi-out + takeoff roll is not an ATR 42's");
+        }
+
+        [Test]
+        public void ExpectedBackAt_UsesTheAircraftsOwnTakeoffTimeNotAlwaysTheAtr42()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Southern Cross Regional", "#C8102E");
+            ops.AddAirline(player);
+            var atr = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
+            ops.ScheduleDeparture(atr, melbourne, new SimulationTime(600));
+            ops.ScheduleDeparture(jet, melbourne, new SimulationTime(600));
+            clock.Set(new SimulationTime(650));
+            ops.Update();
+
+            var atrBack = FlightPlanner.ExpectedBackAt(atr, 3600, clock.Now);
+            var jetBack = FlightPlanner.ExpectedBackAt(jet, 3600, clock.Now);
+            Assert.That(atrBack.HasValue && jetBack.HasValue, Is.True);
+
+            Assert.That(jet.State, Is.EqualTo(FleetState.TaxiOut), "still taxiing out when the estimate is taken");
+            var expectedJetBack = jet.StateEndsAt!.Value.Advance(
+                AirlineOperations.TakeoffRunwaySecondsFor(jet.Type) + 3600 * 2 + AirlineOperations.DestinationTurnaroundSeconds);
+            Assert.That(jetBack.Value.ElapsedSeconds, Is.EqualTo(expectedJetBack.ElapsedSeconds));
+            Assert.That(jetBack.Value.ElapsedSeconds, Is.Not.EqualTo(atrBack.Value.ElapsedSeconds),
+                "a 787's takeoff runway time is not an ATR 42's");
+        }
+
+        [Test]
         public void NearestWithin_PicksClosestDotInsideRadius()
         {
             var points = new List<(float x, float y)> { (100f, 100f), (110f, 100f), (300f, 300f) };

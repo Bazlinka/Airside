@@ -566,15 +566,24 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Next time ground can issue another pushback clearance. It is derived from active
-        /// taxi-out state, so save files and event-driven catch-up remain deterministic.
+        /// Next time ground can issue another pushback clearance on the same apron as
+        /// <paramref name="terminalGate"/>. It is derived from active taxi-out state, so
+        /// save files and event-driven catch-up remain deterministic.
+        ///
+        /// Regional bays and terminal gates sit on separate aprons with their own taxi
+        /// routes (<see cref="AirportTaxiNetwork"/>) and never share pavement, so this used
+        /// to serialise every pushback in the fleet through one global 60 s gate — a Rex
+        /// Saab pushing back from a regional bay held up an unrelated Virgin 737 push from
+        /// the terminal gates for no physical reason.
         /// </summary>
-        private SimulationTime? NextTaxiReleaseAt(SimulationTime now)
+        private SimulationTime? NextTaxiReleaseAt(SimulationTime now, bool terminalGate)
         {
             SimulationTime? release = null;
             foreach (var aircraft in _fleet)
             {
                 if (aircraft.State != FleetState.TaxiOut)
+                    continue;
+                if (AdelaideGround.IsTerminalGate(aircraft.DepartureStand) != terminalGate)
                     continue;
                 var candidate = aircraft.StateStartedAt.Advance(TaxiReleaseSeparationSeconds);
                 if (candidate.CompareTo(now) > 0 && (release == null || candidate.CompareTo(release.Value) > 0))
@@ -600,7 +609,8 @@ namespace Airside.Simulation
             }
 
             var runwayWanted = false;
-            var taxiReleaseWanted = false;
+            var taxiReleaseWantedBay = false;
+            var taxiReleaseWantedGate = false;
             foreach (var aircraft in _fleet)
             {
                 if (aircraft.StateEndsAt.HasValue)
@@ -609,7 +619,12 @@ namespace Airside.Simulation
                 {
                     Consider(aircraft.Scheduled.Value.DepartAt);
                     if (aircraft.Scheduled.Value.DepartAt.CompareTo(now) <= 0)
-                        taxiReleaseWanted = true;
+                    {
+                        if (AdelaideGround.IsTerminalGate(aircraft.Stand))
+                            taxiReleaseWantedGate = true;
+                        else
+                            taxiReleaseWantedBay = true;
+                    }
                 }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
                     runwayWanted = true;
@@ -617,8 +632,13 @@ namespace Airside.Simulation
 
             if (runwayWanted)
                 Consider(_runwayFreeAt);
-            if (taxiReleaseWanted && NextTaxiReleaseAt(now) is { } taxiRelease)
-                Consider(taxiRelease);
+            // Bay and gate pushback releases are tracked separately (NextTaxiReleaseAt):
+            // the two aprons never share pavement, so one waiting on the other's release
+            // would skip past its own.
+            if (taxiReleaseWantedBay && NextTaxiReleaseAt(now, terminalGate: false) is { } bayRelease)
+                Consider(bayRelease);
+            if (taxiReleaseWantedGate && NextTaxiReleaseAt(now, terminalGate: true) is { } gateRelease)
+                Consider(gateRelease);
 
             return next;
         }
@@ -779,11 +799,12 @@ namespace Airside.Simulation
                 case FleetState.AtStand:
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
                         return false;
-                    if (NextTaxiReleaseAt(now).HasValue)
+                    var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
+                    if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
                         return false;
                     // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
                     // whenever anything else finishes, since that is the only way it frees.
-                    if (AdelaideGround.IsTerminalGate(aircraft.Stand) && !IsLeadInFree(aircraft.Stand, aircraft))
+                    if (pushingBackFromGate && !IsLeadInFree(aircraft.Stand, aircraft))
                         return false;
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
@@ -1012,16 +1033,52 @@ namespace Airside.Simulation
             foreach (var candidate in _fleet)
                 if (candidate.State == FleetState.HoldingForLanding)
                     arrivals++;
-            var seed = aircraft.CompletedTrips * 17 + aircraft.Registration.Length * 7
-                       + (int)(now.ElapsedSeconds / 3600);
+            var seed = GoAroundSeed(aircraft.CompletedTrips, aircraft.Registration, now.ElapsedSeconds);
             return arrivals >= 2 && Math.Abs(seed % 11) == 0;
         }
 
+        /// <summary>
+        /// Deterministic per-aircraft, per-hour go-around seed. Every registration in the
+        /// fleet follows the same "VH-XXX" format (<see cref="StableRegistrationHash"/>
+        /// exists because of this): a registration's *length* is therefore the same for
+        /// every aircraft in the game and contributed nothing to this seed, so any two
+        /// aircraft with the same completed-trip count in the same hour (e.g. sister ships
+        /// fresh out of the gate) went around, or didn't, in lockstep forever. Hashing the
+        /// whole registration instead of just its length gives each aircraft its own draw.
+        /// </summary>
+        internal static int GoAroundSeed(int completedTrips, string registration, long nowSeconds) =>
+            unchecked(completedTrips * 17 + StableRegistrationHash(registration) + (int)(nowSeconds / 3600));
+
+        internal static int StableRegistrationHash(string value)
+        {
+            unchecked
+            {
+                var hash = 23;
+                foreach (var ch in value ?? string.Empty)
+                    hash = hash * 31 + ch;
+                return hash;
+            }
+        }
+
+        /// <summary>Wingspan (m) at or above which a departing/landing aircraft is Heavy wake category.</summary>
+        public const double HeavyWakeWingspanMetres = 50.0;
+
+        /// <summary>Wingspan (m) at or above which a departing/landing aircraft is Medium wake category.</summary>
+        public const double MediumWakeWingspanMetres = 30.0;
+
+        /// <summary>
+        /// Wake-turbulence separation owed to whoever uses the runway next, derived from the
+        /// leading aircraft's own wingspan (<see cref="AircraftCatalogue"/>) rather than a
+        /// hand-picked list of type IDs — a second, disconnected classification that would
+        /// silently give any newly added heavy jet only the smallest 90 s separation if its
+        /// ID were never added here to match.
+        /// </summary>
         public static long WakeSeparationSeconds(AircraftType type)
         {
-            if (type?.Id is "A359" or "B78X")
+            var wingspan = AircraftCatalogue.TryFor(type, out var spec) ? spec.WingspanMetres : 0;
+            if (wingspan >= HeavyWakeWingspanMetres)
                 return 180;
-            return type?.Id is "B38M" or "A21N" ? 120 : RunwaySeparationSeconds;
+            return wingspan >= MediumWakeWingspanMetres ? 120 : RunwaySeparationSeconds;
         }
 
         private FleetAircraft LongestWaiting(FleetState state)

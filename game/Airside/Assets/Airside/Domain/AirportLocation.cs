@@ -10,7 +10,7 @@ namespace Airside.Domain
     /// </summary>
     public readonly struct AirportLocation : IEquatable<AirportLocation>
     {
-        public AirportLocation(string id, string name, string region, int utcOffsetHours, float latitudeDegrees)
+        public AirportLocation(string id, string name, string region, float utcOffsetHours, float latitudeDegrees)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("A location id is required.", nameof(id));
@@ -27,22 +27,27 @@ namespace Airside.Domain
         public string Id { get; }
         public string Name { get; }
         public string Region { get; }
-        public int UtcOffsetHours { get; }
+        /// <summary>Standard-time UTC offset (ACST is +9:30, not a flat +9 — DST is not modelled here).</summary>
+        public float UtcOffsetHours { get; }
         public float LatitudeDegrees { get; }
 
         // Small starter set of real airfields. Adelaide is the starter airport
         // (ADR 0045); the picker and the full dataset come later.
+        // South Australia is ACST, UTC+9:30 (not a flat +9) - the field used to be an int
+        // and could not represent this at all. Currently unread outside this file (the
+        // real in-game clock goes through AirlineClock/TimeZoneInfo instead), but a wrong
+        // constant here would mislead whatever reads it first.
         public static readonly AirportLocation Adelaide =
-            new("ADL", "Adelaide", "South Australia", 9, -34.945f);
+            new("ADL", "Adelaide", "South Australia", 9.5f, -34.945f);
 
         public static readonly AirportLocation Kingscote =
-            new("KGC", "Kingscote", "Kangaroo Island, South Australia", 9, -35.71f);
+            new("KGC", "Kingscote", "Kangaroo Island, South Australia", 9.5f, -35.71f);
 
         public static readonly AirportLocation PortLincoln =
-            new("PLO", "Port Lincoln", "Eyre Peninsula, South Australia", 9, -34.60f);
+            new("PLO", "Port Lincoln", "Eyre Peninsula, South Australia", 9.5f, -34.60f);
 
         public static readonly AirportLocation CooberPedy =
-            new("CPD", "Coober Pedy", "Outback South Australia", 9, -29.04f);
+            new("CPD", "Coober Pedy", "Outback South Australia", 9.5f, -29.04f);
 
         public static readonly AirportLocation[] Presets = { Adelaide, Kingscote, PortLincoln, CooberPedy };
 

@@ -44,6 +44,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAircraftParts.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <!-- UnityEngine-free; great-circle/zoom math is checked headlessly. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightBoard.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DevTools.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
@@ -66,7 +68,7 @@
       Exclude EditMode tests that import UnityEngine / UnityEditor. Mini-map, named-children
       cache and ground-look tests belong in scripts/test-unity.sh, not this headless run.
     -->
-    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePavementTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDispatchTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/HudHitTestTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/TerminalGateOperationsTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftCatalogueTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/EnrouteProfileTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideGroundLookTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideNamedChildrenTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/FieldMiniMapTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideTerrainGroundCalibrationTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/PresentationBugSweepTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePavementTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDispatchTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/HudHitTestTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/TerminalGateOperationsTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftCatalogueTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/EnrouteProfileTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideGroundLookTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideNamedChildrenTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/FieldMiniMapTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideTerrainGroundCalibrationTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/PresentationBugSweepTests.cs" />
   </ItemGroup>
 
 </Project>

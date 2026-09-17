@@ -1,5 +1,76 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — aircraft mesh smoothing + identity-marking lighting response
+  (branch `feature/aircraft-mesh-smoothing-and-markings`; part of a 3-part night lighting
+  / taxi accuracy / aircraft visuals request from Bailey — the other two parts are
+  separate branches/PRs).**
+  - **Root cause found by reading the actual geometry generators (`scripts/generate-*.py`)
+    and the loader, not guessed:** `ArtGltfLoader.ParseKit()` calls the parameterless
+    `Mesh.RecalculateNormals()`, which only averages a vertex's normal across faces
+    sharing its exact vertex *index*. Most of the procedural primitives used across every
+    aircraft type (`oval_lathe_fuselage`, `cylinder`, `nacelle_pod`, `annulus`, wing/
+    control-surface slabs, fan blades) emit four fresh, unshared vertices per quad face,
+    so even a 72-segment "round" fuselage tube renders with a hard facet per quad no
+    matter how dense the segmentation is. One generator (AIR-005's hand-written
+    `fuselage_body()`) happens to share vertices and renders smoothly — confirms the
+    mechanism directly rather than by theory. Unity has no runtime angle-threshold/weld
+    overload of `RecalculateNormals` (confirmed — that convenience only exists at
+    *import* time via `ModelImporter.normalSmoothingAngle`), so this needed a real custom
+    pass, not a one-line API swap.
+  - **Fix:** new `MeshNormalSmoothing.cs` welds vertices sharing a position and only
+    averages face normals within a 60° angle threshold — matching the exact convention
+    this codebase's own authored-FBX pipeline already uses (`normalSmoothAngle: 60` in
+    `generate-authored-fbx-turboprop-terminal.py`'s `.fbx.meta` stub), so runtime-loaded
+    and import-time models shade consistently. Wired into `ArtGltfLoader.ParseKit()` in
+    place of the bare call — one shared fix, every procedurally-loaded kit in the game
+    benefits (aircraft, vehicles, buildings, props), no changes needed to any Python
+    generator. Deliberately left the separate `CombineKit` static-batching path (used for
+    decorative world clutter, off by default in the bare-field release) untouched — it
+    merges unrelated parts' vertex buffers together, and a position-weld there risks
+    incorrectly blending normals across objects that happen to touch, for a path that
+    isn't even part of the default player experience.
+  - **Identity markings ("not just text"):** the operator title/registration are legacy
+    Unity `TextMesh` objects on the unlit built-in font shader — they never received any
+    of the aircraft's own lighting, which is why they read as text pasted in space rather
+    than paint on metal. `AircraftIdentitySideVisibility` (already touching every label
+    once per aircraft per real frame since the recent perf pass) now also tints each
+    label's colour by a new `AirsidePrototype.CurrentDaylight` static (updated once per
+    frame in `ApplyDayCycle`, floored at 0.4 so text stays legible under apron
+    floodlight) — real titles are paint, so dimming with the airframe's own day/night
+    grade is the *correct* behaviour, not just a trick. Also added a small, deliberately
+    subtle anti-glare-style backing panel behind each title/registration
+    (`AddIdentityBackingPanel`), sized from character count and character size rather
+    than exact glyph metrics — kept low-contrast specifically so an imprecise fit can't
+    look visually wrong even before it's been seen rendered.
+  - **Deliberately not done — colour space:** the project runs URP in **Gamma** colour
+    space (`ProjectSettings.asset: m_ActiveColorSpace: 0`), atypical for URP and a
+    plausible contributor to "not colour correct." Converting to Linear recolours every
+    light/material/UI element in the whole game, not just aircraft — full blast radius,
+    no Unity editor available this session to re-verify the HUD/terminal glass/livery
+    hexes against the shift. Flagging as a known, sourced follow-up for a dedicated
+    session with real visual verification, not attempting it on a plan scoped to
+    aircraft.
+  - **Evidence:** `MeshNormalSmoothing.Compute` is pure `Vector3`/`Mathf` math with no
+    Unity-runtime dependency beyond those two types, so it was verified against a
+    hand-written minimal stand-in for that slice of the UnityEngine API (not the real
+    engine) — 3 EditMode-style tests (`MeshNormalSmoothingTests.cs`, excluded from
+    `scripts/test-domain.sh` since it needs the real `UnityEngine.Vector3`/`Mathf`/`Mesh`
+    types) covering: a shallow fold blends, a hard fold stays crisp, an already-welded
+    quad is unchanged — all 3 pass against the stub, and the hard-edge test was
+    mutation-tested (disabled the angle check, confirmed it failed with the expected
+    message, restored it, confirmed 3/3 again). This is real algorithmic verification,
+    genuinely stronger than "reviewed by inspection," but it is **not** the same as
+    compiling or running under the actual Unity engine — the identity-marking and
+    backing-panel changes have no equivalent stub coverage (too much live
+    GameObject/MonoBehaviour/TextMesh lifecycle to usefully fake) and are inspection-only.
+  - **NEXT:** `scripts/test-unity.sh`, then a close-up Play-mode look at: a widebody
+    fuselage/nacelle for the smoothing fix (A350-900/787-10 are the ones built entirely
+    from the unwelded `oval_lathe_fuselage` primitive, so they should show the largest
+    visible change), and any aircraft's fuselage titles at dusk/night for the tint +
+    backing panel. If the backing panel's sizing looks off once seen rendered, the
+    character-count/character-size approximation in `AddIdentityBackingPanel` is the
+    first place to tune, not the tint logic.
+
 - **2026-09-17 Claude — per-stand night lighting, plus a documentation backfill for the
   ERSA runway lighting system (branch `feature/night-gate-lighting`; part of a 3-part
   night lighting / taxi accuracy / aircraft visuals request from Bailey — the other two

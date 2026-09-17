@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Restore the Mac build after the workspace-tab cleanup.** The HUD renderer now
+  deconstructs the two fields that `WorkspaceTabs` actually contains, removing the
+  stale third discard that prevented Unity from compiling the latest `main`.
+
 - **Bug-hunting pass: 6 fixes across the codebase.** Fixed the away-summary misreporting a
   save migration (v5→v6) as reliability/funds change that happened while away; deduplicated
   `FlightNumber`'s hash function to reuse the canonical `StableNameHash`; fixed the Map nav tab

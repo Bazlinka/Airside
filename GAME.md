@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Codex — Mac compile repair (`fix/workspace-tab-deconstruction`):**
+  the workspace-tab cleanup reduced each tuple from three fields to two but left
+  `DrawWorkspaceNav` deconstructing a third discard. Unity 6.3 rejected the latest
+  `main` with CS8132/CS8130/CS8183. The renderer now deconstructs only `workspace`
+  and `label`; behaviour and layout are unchanged. Unity compiles and the universal
+  Mac package builds successfully. EditMode is **511/512**: the only failure is the
+  pre-existing fleet/speed-readout overlap at the synthetic 320×240 size.
+
 - **2026-09-17 Claude — bug-hunting pass across the codebase ("massive bug fix"), 6 files, all
   verified where verification is possible.**
   - **Away-summary can misreport a save migration as something that happened while you were

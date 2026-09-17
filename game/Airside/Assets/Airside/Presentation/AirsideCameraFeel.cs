@@ -9,14 +9,23 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideCameraFeel
     {
-        // One mouse-wheel notch (~120 units on macOS) is ~25 % closer / ~33 % further —
-        // the previous 0.001 rate needed ~27 notches to leave the 2.4 km overview, which
-        // felt stuck on both mouse wheels and trackpads. Keep the log-space queue so a
-        // fast trackpad flick can still cover a wide band without a hard jump.
-        public const float ZoomLogPerScrollUnit = 0.0024f;
-        public const float MaxScrollPerFrame = 480f;
+        // Scroll magnitude is not portable: Windows reports 120 units per wheel notch,
+        // macOS reports single digits for the same notch (the route map's IMGUI path sees
+        // ~3), and trackpads stream continuous values. Assuming 120 made one real notch on
+        // a Mac worth well under 1 % — zoom that never arrives. Scroll is normalised to
+        // notches first, and the rate below is per *notch*, not per raw unit.
+        /// <summary>Distance change per wheel notch: e^-0.5, about 39 % closer in, 65 % further out.</summary>
+        public const float ZoomLogPerNotch = 0.5f;
+
+        /// <summary>At or above this the sample is the Windows-style 120-per-notch convention.</summary>
+        public const float NormalisedWheelThreshold = 40f;
+        public const float NormalisedWheelUnitsPerNotch = 120f;
+
+        /// <summary>Most notches one frame may queue, so a trackpad flick cannot teleport.</summary>
+        public const float MaxNotchesPerFrame = 3f;
+
         public const float MaxZoomPendingLog = 2.4f;
-        public const float ZoomEaseRate = 14f;
+        public const float ZoomEaseRate = 22f;
         public const float OrbitYawDegreesPerPixel = 0.26f;
         public const float OrbitPitchDegreesPerPixel = 0.2f;
         /// <summary>Fallback drag pan scale when a ground ray misses (horizon / sky).</summary>
@@ -30,22 +39,35 @@ namespace Airside.Presentation
         public const float MaxPanRadiusMetres = 3800f;
 
         /// <summary>
-        /// How much one scroll sample grows the pending log-zoom queue. Positive scroll
-        /// zooms in (distance shrinks). Caps a single frame so a huge trackpad delta cannot
-        /// skip the whole field in one tick.
+        /// One scroll sample as wheel notches, whatever units the platform reports.
+        /// Large samples are the normalised 120-per-notch convention; small ones are
+        /// already notch-sized (macOS wheel, trackpad steps).
         /// </summary>
-        public static float QueueScrollZoom(float pendingLog, float scrollUnits)
+        public static float ScrollNotches(float scrollUnits)
         {
-            var clamped = Clamp(scrollUnits, -MaxScrollPerFrame, MaxScrollPerFrame);
-            return Clamp(pendingLog - clamped * ZoomLogPerScrollUnit, -MaxZoomPendingLog, MaxZoomPendingLog);
+            var magnitude = Math.Abs(scrollUnits);
+            if (magnitude < 0.0001f)
+                return 0f;
+            var notches = magnitude >= NormalisedWheelThreshold
+                ? magnitude / NormalisedWheelUnitsPerNotch
+                : magnitude;
+            if (notches > MaxNotchesPerFrame)
+                notches = MaxNotchesPerFrame;
+            return scrollUnits < 0f ? -notches : notches;
         }
 
+        /// <summary>
+        /// How much one scroll sample grows the pending log-zoom queue. Positive scroll
+        /// zooms in (distance shrinks). The queue is capped so a long flick eases in over
+        /// several frames instead of jumping.
+        /// </summary>
+        public static float QueueScrollZoom(float pendingLog, float scrollUnits) =>
+            Clamp(pendingLog - ScrollNotches(scrollUnits) * ZoomLogPerNotch,
+                -MaxZoomPendingLog, MaxZoomPendingLog);
+
         /// <summary>Distance multiplier for a fully applied scroll sample (before easing).</summary>
-        public static float ZoomFactorForScroll(float scrollUnits)
-        {
-            var clamped = Clamp(scrollUnits, -MaxScrollPerFrame, MaxScrollPerFrame);
-            return (float)Math.Exp(-clamped * ZoomLogPerScrollUnit);
-        }
+        public static float ZoomFactorForScroll(float scrollUnits) =>
+            (float)Math.Exp(-ScrollNotches(scrollUnits) * ZoomLogPerNotch);
 
         /// <summary>Ground metres moved per drag pixel at the given orbit distance.</summary>
         public static float PanMetresPerPixel(float distance) =>

@@ -172,11 +172,12 @@ namespace Airside.Tests
         [Test]
         public void CameraScrollZoom_OneNotchMovesAUsefulFraction()
         {
-            // ~120 is one macOS mouse-wheel notch. The old 0.001 rate only moved ~11 %;
-            // players needed dozens of notches to leave the 2.4 km overview.
+            // A wheel notch is 120 units on Windows and single digits on macOS; both must
+            // normalise to the same step, and that step has to be big.
             var factor = AirsideCameraController.ZoomFactorForScroll(120f);
-            Assert.That(factor, Is.LessThan(0.8f));
-            Assert.That(factor, Is.GreaterThan(0.65f));
+            Assert.That(factor, Is.EqualTo(AirsideCameraController.ZoomFactorForScroll(1f)).Within(0.001f));
+            Assert.That(factor, Is.LessThan(0.65f));
+            Assert.That(factor, Is.GreaterThan(0.5f));
             Assert.That(AirsideCameraController.ZoomFactorForScroll(-120f), Is.EqualTo(1f / factor).Within(0.001f));
 
             // A continuous trackpad flick must be allowed to queue more than one doubling,

@@ -70,7 +70,7 @@ namespace Airside.Presentation
         public const float CameraFarClip = 10000f;
         public const float MinOrbitDistance = 18f;
         public const float MaxOrbitDistance = 4500f;
-        public const float OverviewPanMetresPerSecond = 220f;
+        public const float OverviewPanMetresPerSecond = 650f;
         public const float DayFogDensity = 0.00016f;
         public const float NightFogDensity = 0.00024f;
 

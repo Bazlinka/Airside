@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Make zoom and drag pan actually fast (ADR 0054 follow-up).** Scroll magnitude is not
+  portable: the rate assumed one wheel notch is ~120 units, but macOS reports single digits,
+  so a real notch was worth 0.24-0.7 % and it took 500-1500 notches to get from the 2400 m
+  overview to the apron. Scroll samples are normalised to notches first and the rate is per
+  notch (~39 % closer), making it 8 notches on any platform, with the easing landing in
+  0.15 s. Drag pan now tracks pointer positions through the camera's own ray instead of
+  reconstructing them from `mouse.delta`, whose scale can differ from `mouse.position` on a
+  Retina display and silently halved the drag. Keyboard pan at the overview: 220 -> 650 m/s.
+
 - **Fix the known 320×240 airline HUD overlaps.** Bottom-band toast no longer sits on
   the map/fleet, and the left column (guide/nav) reserves space so stacked fleet/map
   rects stay above the speed readout on tiny windows. `AirlineHudLayout_PanelsFitAndNeverOverlap`

@@ -190,12 +190,24 @@ namespace Airside.Presentation
             GUI.color = previous;
         }
 
+        /// <summary>
+        /// The dark panel art's beveled edge, in source-texture pixels — measured directly
+        /// off <c>ui_panel_9slice_dark_v01.png</c> (128x128, 8px bevel on every edge). Applied
+        /// as <see cref="GUIStyle.border"/> so Unity nine-slices the texture instead of
+        /// stretching the whole 128x128 image (bevel included) across the panel's actual
+        /// size — every panel in the HUD was smearing that crisp edge into a soft, blurry
+        /// gradient tens of pixels wide instead of drawing it at its authored thickness. The
+        /// asset is literally named "9slice" but nothing ever set this before.
+        /// </summary>
+        private static readonly RectOffset PanelBorder = new(8, 8, 8, 8);
+
         /// <summary>A box/panel style on the given basis, themed with the Runway Ink panel and Cloud text.</summary>
         public static GUIStyle PanelStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
             style.normal.background = PanelBackground;
             style.normal.textColor = Cloud;
+            style.border = PanelBorder;
             return style;
         }
 

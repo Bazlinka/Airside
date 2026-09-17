@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Fix panels never being nine-sliced, and wire up a whole batch of unused approved icon
+  art.** The dark panel background behind every HUD panel has a real 8px beveled edge baked
+  in, but nothing ever set `GUIStyle.border`, so Unity stretched the entire texture —
+  bevel included — to fill each panel, turning a crisp edge into a soft blur on anything
+  wider than the 128px source. Fixed with a proper nine-slice border, affecting every panel
+  in the game at once. Separately: 33 "Bailey Approved" Batch E icons (weather,
+  operation-phase, service-task, system-control, economy) were generated and wired into
+  `AirsideTheme` helper methods that nothing ever called — the whole HUD was text-only
+  despite this art existing. Wired up weather + operation-phase icons on the Flights board,
+  economy icons on the Contracts summary, and system icons on Follow/Overview/Resume.
+
 - **5 more fixes: 2 latent lookup bugs, a wrong dead constant, and 2 real perf/behaviour
   bugs.** `AircraftType.TryFromId`/`AircraftCatalogue.TryFor` never returned on a match and
   silently kept the *last* one instead of the first — harmless while catalogue ids are

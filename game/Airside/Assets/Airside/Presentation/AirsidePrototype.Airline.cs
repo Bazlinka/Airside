@@ -84,6 +84,25 @@ namespace Airside.Presentation
             return style;
         }
 
+        /// <summary>
+        /// One "[icon] label" segment in a horizontal stat line — degrades to text-only when
+        /// the icon is missing, same as every other Batch E/F icon call. Returns the x just
+        /// past this segment, so callers can chain several without hand-measuring gaps.
+        /// </summary>
+        private static float DrawIconStat(float x, float y, Texture2D icon, string text, GUIStyle style)
+        {
+            const float iconSize = 18f;
+            const float gap = 6f;
+            var textWidth = style.CalcSize(new GUIContent(text)).x;
+            if (icon != null)
+            {
+                GUI.DrawTexture(new Rect(x, y + 1f, iconSize, iconSize), icon);
+                x += iconSize + 4f;
+            }
+            GUI.Label(new Rect(x, y, textWidth + 4f, 20f), text, style);
+            return x + textWidth + gap + (icon != null ? 10f : 0f);
+        }
+
         // ---- Frame hooks called from AirsidePrototype ----------------------------
 
         private void UpdateAirlineOperations()
@@ -653,8 +672,13 @@ namespace Airside.Presentation
 
             var career = _operations.CareerState;
             var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
-            GUI.Label(new Rect(x, rect.y + 46f, inner, 20f),
-                $"{career.Tier} tier  ·  ${career.Funds:N0}  ·  {career.Reliability}% reliability", bold);
+            // Batch E's approved economy icons were generated and wired into
+            // AirsideTheme.Icon("economy", …) but never actually drawn anywhere.
+            var summaryY = rect.y + 46f;
+            var summaryX = x;
+            summaryX = DrawIconStat(summaryX, summaryY, AirsideTheme.Icon("economy", "route"), $"{career.Tier} tier", bold);
+            summaryX = DrawIconStat(summaryX, summaryY, AirsideTheme.Icon("economy", "cash"), $"${career.Funds:N0}", bold);
+            DrawIconStat(summaryX, summaryY, AirsideTheme.Icon("economy", "reputation"), $"{career.Reliability}% reliability", bold);
 
             var y = rect.y + 78f;
             if (career.ActiveContract != null && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var active))
@@ -2150,7 +2174,16 @@ namespace Airside.Presentation
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
                 SetWorkspace(HudWorkspace.Operations);
 
-            GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
+            // Batch E's approved weather icons were generated and wired into
+            // AirsideTheme.WeatherIcon but never actually drawn anywhere in the HUD.
+            var weatherIcon = AirsideTheme.WeatherIcon(CurrentWeather);
+            var weatherTextX = x;
+            if (weatherIcon != null)
+            {
+                GUI.DrawTexture(new Rect(x, rect.y + 40f, 18f, 18f), weatherIcon);
+                weatherTextX = x + 22f;
+            }
+            GUI.Label(new Rect(weatherTextX, rect.y + 40f, inner - (weatherTextX - x), 18f),
                 $"RUNWAY {RunwayWeather.Label(_operations.ActiveRunway)}  ·  WIND {_operations.Wind.Text}", small);
 
             var tabY = rect.y + 62f;
@@ -2173,7 +2206,10 @@ namespace Airside.Presentation
             var estimateW = 58f;
             var gateW = 48f;
             var routeW = Mathf.Min(118f, inner * 0.20f);
-            var phaseW = 112f;
+            // Widened from 112f to make room for the phase icon without cramping the
+            // longest label ("Holding short") — the trailing aircraft/operator column
+            // absorbs the difference since its width is computed from what's left over.
+            var phaseW = 130f;
             GUI.Label(new Rect(x, headerY, schedW, 18f), "SCHED", small);
             GUI.Label(new Rect(x + schedW, headerY, estimateW, 18f), "EST", small);
             GUI.Label(new Rect(x + schedW + estimateW, headerY, gateW, 18f), "GATE", small);
@@ -2230,7 +2266,18 @@ namespace Airside.Presentation
                     ? $"{boardFlightNumber} · {aircraft.Registration}"
                     : aircraft.Registration;
                 GUI.Label(new Rect(routeX, y + 25f, routeW - 4f, 16f), boardIdentity, boardTiny);
-                GUI.Label(new Rect(routeX + routeW, y + 6f, phaseW - 4f, 20f), FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
+                // Batch E's approved operation-phase icons were generated and wired into
+                // AirsideTheme.OperationIcon but never actually drawn anywhere — the board
+                // was text-only where a real airport display would show a phase glyph.
+                var phaseIcon = AirsideTheme.OperationIcon(FleetVisual.For(aircraft, _clock.Now).Phase);
+                var phaseTextX = routeX + routeW;
+                if (phaseIcon != null)
+                {
+                    GUI.DrawTexture(new Rect(phaseTextX, y + 6f, 16f, 16f), phaseIcon);
+                    phaseTextX += 20f;
+                }
+                GUI.Label(new Rect(phaseTextX, y + 6f, routeX + routeW + phaseW - phaseTextX - 4f, 20f),
+                    FlightBoard.PhaseLabel(aircraft, _clock.Now), label);
                 GUI.contentColor = boardContent;
                 var aircraftX = routeX + routeW + phaseW;
                 GUI.Label(new Rect(aircraftX, y + 5f, rowWidth - aircraftX - 8f, 18f),

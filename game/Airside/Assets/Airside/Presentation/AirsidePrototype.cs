@@ -845,9 +845,16 @@ namespace Airside.Presentation
         {
             var following = _cameraController != null && _cameraController.IsFollowing;
 
-            if (GUI.Button(layout.ButtonAt(0), following ? "Follow on" : "Follow", button))
+            // Batch F4's approved system icons (docs/art/prompts/batch-f4-motion-vfx-ui-…)
+            // were generated and wired into AirsideTheme.SystemIcon but never actually drawn
+            // anywhere — every control in the HUD was text-only despite the art existing.
+            // GUIContent degrades to text-only when the icon file is missing, same as every
+            // other Batch E/F icon call in this theme.
+            if (GUI.Button(layout.ButtonAt(0),
+                    new GUIContent(following ? "Follow on" : "Follow", AirsideTheme.SystemIcon("follow")), button))
                 ToggleFollow();
-            if (GUI.Button(layout.ButtonAt(1), "Overview", button))
+            if (GUI.Button(layout.ButtonAt(1),
+                    new GUIContent("Overview", AirsideTheme.SystemIcon("overview")), button))
                 ResetView();
         }
 
@@ -859,7 +866,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Menu", title);
 
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
-            if (GUI.Button(row, "Resume", button))
+            if (GUI.Button(row, new GUIContent("Resume", AirsideTheme.SystemIcon("play")), button))
                 ToggleMenu();
 
             row.y += 52f;

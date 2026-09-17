@@ -1,5 +1,53 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — a real visual design pass, not just bug fixes: found why the HUD
+  reads as flat/dated, and wired up an entire batch of approved art that was sitting on
+  disk unused.**
+  - **The panel art was never actually 9-sliced.** `ui_panel_9slice_dark_v01.png` — the dark
+    Runway Ink panel background behind *every* panel in the HUD — has a genuine 8px beveled
+    edge baked in (measured directly off the file: flat interior colour from pixel 8 inward
+    on all four sides). But nothing in `AirsideTheme.cs` ever set `GUIStyle.border`, so Unity
+    stretched the *entire* 128×128 texture, bevel included, to fill whatever size the panel
+    actually was. On a 500-800px-wide HUD panel, an 8px crisp edge stretched by 4-6x becomes
+    a soft ~35-50px blur — exactly what "flat and dated" looks like: no defined edge, just a
+    faint gradient. Fixed by giving `PanelStyle` a `border = new RectOffset(8,8,8,8)` (in
+    source-texture pixels, matched to the measured bevel), so Unity now nine-slices the
+    corners/edges at their authored thickness and only stretches the flat interior — this one
+    change affects every panel in the game since they all funnel through `PanelStyle`.
+  - **An entire approved icon set existed and was never drawn anywhere.** Batch E generated
+    33 icons — weather (7), operation-phase (7), service-task (7), system-control (8),
+    economy (7) — all present on disk, all wired into `AirsideTheme.Icon`/`WeatherIcon`/
+    `OperationIcon`/`SystemIcon`/`ServiceIconForTask` helper methods... which nothing in the
+    entire codebase ever called (confirmed by grep — zero call sites outside their own
+    declarations). The whole HUD was text-only despite this art being generated and
+    "Bailey Approved" months ago. Wired up the highest-visibility ones:
+    - Weather icon next to the runway/wind line (Flights board).
+    - Operation-phase icon per row (Flights board) — widened that column (112→130px) so
+      the icon doesn't crowd the longest label ("Holding short").
+    - Economy icons (route/cash/reputation) on the Contracts summary line, via a new
+      `DrawIconStat` helper that chains "[icon] label" segments without hand-measured gaps.
+    - System icons on Follow/Overview (control bar) and Resume (pause menu), via
+      `GUIContent(text, icon)` — no layout changes needed since `GUIStyle.imagePosition`
+      defaults to `ImageLeft`.
+    Every one degrades to text-only if its icon file is ever missing, same fallback pattern
+    the theme already used everywhere else — nothing regresses if an asset is absent.
+  - **Evidence:** all Presentation-only (IMGUI/Unity texture and style code), reviewed by
+    inspection and by directly measuring the actual PNG's pixel data with a standalone script
+    (confirmed the 8px bevel and that the alpha-usability check in `PanelBackground` already
+    passes, so this wasn't previously falling back to a flat colour — the real art was being
+    used, just stretched wrong). No Unity editor available in this session to render and
+    confirm — `scripts/test-domain.sh` is unaffected (304/304, none of this is
+    Simulation/Domain).
+  - **On the "redesign the whole look" ask:** a full freehand re-skin of every panel's layout
+    and colours, done completely blind with no way to see the result, is a real risk of
+    making things worse rather than better. This pass instead targeted the two most
+    defensible, verifiable-by-reasoning-alone problems: a genuine rendering bug (missing
+    9-slice) and genuinely unused approved art (the icon set) — both concrete, both low-risk
+    since they only add detail using assets the project already commissioned and approved,
+    neither invents new colours or layout from scratch. **This needs a screenshot before
+    going further** — if the 9-slice fix alone meaningfully sharpens the panels, that changes
+    what "still looks dated" actually points at next.
+
 - **2026-09-17 Claude — second bug-hunting pass (a dedicated research subagent plus manual
   review), 5 more fixes: 2 latent Domain lookup bugs, 1 wrong dead constant, 2 real
   Presentation perf/behaviour bugs.**

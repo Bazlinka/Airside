@@ -167,10 +167,13 @@ namespace Airside.Tests
             Apart(airline.NavStrip, "nav strip", airline.Map, "map");
             Apart(airline.Toast, "toast", airline.Clock, "clock");
             Apart(airline.Toast, "toast", airline.NavStrip, "nav strip");
+            // Toast must stay clear of the map and fleet at every size — including the
+            // stacked 320×240 case where a bottom-band toast used to sit on the map.
+            Apart(airline.Toast, "toast", airline.Map, "map");
+            Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
             if (!airline.MapCoversFleet)
             {
                 Apart(airline.Map, "map", airline.FleetArea, "fleet");
-                Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
                 Apart(airline.NavStrip, "nav strip", airline.FleetArea, "fleet");
             }
         }

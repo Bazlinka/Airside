@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Individual terminal gates and regional bays are now lit at night**, not just the 7
+  uniform terminal roof floods. Each stand gets a lit marker at its stop position and a
+  short blue lead-in trail along the final ~32-40 m into the stand, matching the same
+  emissive-lens + sparse-point-light pattern the runway/taxi lighting already uses.
+  Also backfills a `GAME.md` entry for the ERSA-sourced runway/PAPI/approach-lighting
+  system (`AirsidePrototype.YpadLighting.cs`) that shipped previously with no changelog
+  trail. Presentation-only, reviewed by inspection — no Unity editor in this session.
+
 - **Each jet now taxis a gate turn with its own wheelbase, not a shared 19 m constant.**
   `AdelaideGround.GateTaxiOut`/`GateTaxiIn` steered every jet's main gear through terminal
   turns using one flat `JetTrackMetres = 19f` figure (the 737's own nose-to-main-gear

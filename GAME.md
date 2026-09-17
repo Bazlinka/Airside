@@ -1,5 +1,52 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — per-stand night lighting, plus a documentation backfill for the
+  ERSA runway lighting system (branch `feature/night-gate-lighting`; part of a 3-part
+  night lighting / taxi accuracy / aircraft visuals request from Bailey — the other two
+  parts are separate branches/PRs).**
+  - **Research first:** three parallel Explore passes over the lighting, taxi and
+    aircraft-visual systems, before touching anything. Headline finding for lighting:
+    the runway/approach system (`AirsidePrototype.YpadLighting.cs`) is already
+    substantially accurate and ERSA-sourced — edge-light spacing (57/59 m), the
+    white→amber caution zone in the final 600 m, green threshold/red runway-end lights,
+    the real 801 m Runway 23 CAT-I approach system, and PAPI bars at all four runway
+    ends already render the correct real-world 2-red/2-white "on-slope" pattern.
+    Deliberately **not** adding dynamic glideslope-angle PAPI colour — this game's
+    cameras are overview/follow, not a pilot's eye-line on final, so that precision
+    would be invisible almost all the time.
+  - **Documentation gap found and backfilled:** commit `ef49538` ("Add accurate Adelaide
+    airfield lighting," 2026-09-16) shipped the entire system above — 277 new lines,
+    plus real test coverage (`PresentationLayoutTests.AdelaideLighting_
+    UsesPublishedRunwaySystemsAndSpacing`/`_GuardFilterTargetsMainRunwayHoldingPoints`,
+    Unity EditMode only) — with **no `GAME.md`/`CHANGELOG.md` entry at all**. The most
+    detailed, best-sourced work in the lighting system had no evidence trail, breaking
+    this project's own discipline. This entry is that backfill.
+  - **What was actually missing — "gate lights" genuinely didn't exist:** apron/stand
+    illumination was 7 uniform roof floods plus terminal facade glow, with no way to
+    tell one parking position from another at night (the only "Gate light" hit in the
+    codebase was an unrelated landside car-park boom-gate lamp). New
+    `BuildStandLighting()` in `AirsidePrototype.YpadLighting.cs`: a lit marker at every
+    terminal gate/regional bay stop, plus a short blue lead-in trail (5 fixtures, 8 m
+    spacing) walked backward along each stand's own `TaxiIn` polyline — same
+    emissive-lens + sparse-real-`Light` pattern already used for every other YPAD
+    fixture. Wired into `ApplyDayCycle` next to the runway-edge driving code, same
+    night-only visibility rule, with its own gentler flicker so it doesn't compete with
+    the runway/apron lighting.
+  - **Considered and dropped:** consolidating the scattered "night begins" daylight
+    cutoffs (0.35/0.4/0.42/0.55 across different call sites) into one shared constant.
+    On direct inspection these are a **deliberate graduated dusk sequence** (window
+    flicker starts earliest, then apron/landside, then ALS chase/REIL flash, then the
+    wider REIL/ALS "lamp present at all" cutoff) — not an inconsistency. Consolidating
+    them would have flattened an intentional layered effect, so left as-is.
+  - **Evidence:** Presentation-only (`UnityEngine` throughout), so no headless harness
+    can compile or run this — reviewed by inspection only, same standing caveat as
+    every Presentation slice this session. No claim of "it works" beyond that.
+  - **NEXT:** `scripts/test-unity.sh` and a Play-mode look at a gate at night (both the
+    new stand markers/lead-in trail and, since it's never been visually confirmed
+    either, the existing PAPI/threshold/ALS/apron-flood system from the backfilled
+    commit) — the explicit outstanding step for whoever has a Mac Unity editor
+    available next.
+
 - **2026-09-17 Claude — per-jet taxi-turn wheelbase, part of a 3-part night lighting /
   taxi accuracy / aircraft visuals request from Bailey (branch
   `feature/taxi-wheelbase-accuracy`; the other two parts are separate branches/PRs).**

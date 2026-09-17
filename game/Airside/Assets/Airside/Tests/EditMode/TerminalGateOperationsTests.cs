@@ -103,14 +103,17 @@ namespace Airside.Tests
         [Test]
         public void Gate13Routes_NoseAndMainGearStayOnRenderedPavement()
         {
+            // Gate13's default TaxiIn/TaxiOut (no type given) resolves to the 737-8 — its own
+            // wheelbase, not a shared flat constant, is what actually steers the main gear now.
+            var wheelbase = AircraftPerformance.Boeing7378.NoseToMainGearMetres;
             foreach (var (name, leg) in new[] { ("taxi-in", AdelaideGround.TaxiIn(Gate13)), ("taxi-out", AdelaideGround.TaxiOut(Gate13)) })
             {
                 foreach (var (t, pose) in Sample(leg, 0.5))
                 {
                     Assert.That(AirsideAdelaidePavement.DistanceToPavement(pose.X, pose.Z), Is.LessThanOrEqualTo(0.5f),
                         $"{name} nose off pavement at {t:0.0}s ({pose.X:0.0}, {pose.Z:0.0})");
-                    var mainsX = pose.X - pose.NoseX * AdelaideGround.JetTrackMetres;
-                    var mainsZ = pose.Z - pose.NoseZ * AdelaideGround.JetTrackMetres;
+                    var mainsX = pose.X - pose.NoseX * wheelbase;
+                    var mainsZ = pose.Z - pose.NoseZ * wheelbase;
                     Assert.That(AirsideAdelaidePavement.DistanceToPavement(mainsX, mainsZ), Is.LessThanOrEqualTo(0.5f),
                         $"{name} main gear off pavement at {t:0.0}s ({mainsX:0.0}, {mainsZ:0.0})");
                 }

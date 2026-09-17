@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Each jet now taxis a gate turn with its own wheelbase, not a shared 19 m constant.**
+  `AdelaideGround.GateTaxiOut`/`GateTaxiIn` steered every jet's main gear through terminal
+  turns using one flat `JetTrackMetres = 19f` figure (the 737's own nose-to-main-gear
+  distance) regardless of type — so the A350-900 and 787-10 widebodies tracked corners as if
+  they had a narrowbody's gear geometry. `AircraftPerformanceProfile` gained a sourced
+  `NoseToMainGearMetres` per jet type (737-8 17.68 m, A321neo 16.90 m, A350-900 28.66 m,
+  787-10 28.88 m — sources in `docs/data/AIRCRAFT_SPECIFICATIONS.md`); `AdelaideGround` now
+  reads each type's own value. Also removed the confirmed-dead `AdelaideGround.ApronZone
+  (StandClass)` overload (zero callers anywhere, including tests) and documented the
+  previously-unlabelled A350-900/787-10 taxi-speed figures instead of letting them silently
+  inherit the narrowbody-jet column. Evidence: `scripts/test-domain.sh` **320/320** (one new
+  test, mutation-tested — reverted the fix, confirmed it fails, restored it, confirmed green).
+
 - **Presentation CPU performance pass, no graphics/quality changes.** Six per-frame aircraft
   passes (control surfaces, lights/gear, cabin doors, cabin window glow, engine heat,
   propeller/jet-fan spin) each re-scanned and re-classified every named child on every

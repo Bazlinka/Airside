@@ -128,6 +128,15 @@ namespace Airside.Presentation
         private const float MinFollowZoom = 0.35f;
         private const float MaxFollowZoom = 3.5f;
 
+        /// <summary>
+        /// Free-camera scroll zooms toward the ground under the pointer, the same way the
+        /// destinations map's <c>ZoomAtGui</c> keeps its pivot. The pivot is latched when
+        /// scroll arrives and reused for every eased step so the point does not drift.
+        /// </summary>
+        private bool _zoomPivotValid;
+        private float _zoomPivotX;
+        private float _zoomPivotZ;
+
         /// <summary>Hold off the follow yaw bias briefly so orbit is not fought every frame.</summary>
         private void SuppressFollowOrbit() => _orbitSuppressUntil = Time.unscaledTime + 0.9f;
 
@@ -509,21 +518,23 @@ namespace Airside.Presentation
                     _easingOverview = false;
                 }
 
-                if (!_following)
+                var move = Vector2.zero;
+                if (keyboard.wKey.isPressed) move.y += 1f;
+                if (keyboard.sKey.isPressed) move.y -= 1f;
+                if (keyboard.dKey.isPressed) move.x += 1f;
+                if (keyboard.aKey.isPressed) move.x -= 1f;
+                if (move != Vector2.zero)
                 {
-                    var move = Vector2.zero;
-                    if (keyboard.wKey.isPressed) move.y += 1f;
-                    if (keyboard.sKey.isPressed) move.y -= 1f;
-                    if (keyboard.dKey.isPressed) move.x += 1f;
-                    if (keyboard.aKey.isPressed) move.x -= 1f;
-                    if (move != Vector2.zero)
-                    {
-                        var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-                        var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                        _center += (planarForward * move.y + planarRight * move.x)
-                            * (KeyboardPanMetresPerSecond(_distance) * dt);
-                        _easingOverview = false;
-                    }
+                    // Match left/middle drag: panning a followed aircraft only fights the
+                    // follow, so WASD is read as "hand the camera back and move".
+                    if (_following)
+                        ReleaseFollow();
+                    var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                    var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+                    _center += (planarForward * move.y + planarRight * move.x)
+                        * (KeyboardPanMetresPerSecond(_distance) * dt);
+                    ClampPanCentre();
+                    _easingOverview = false;
                 }
             }
 
@@ -590,6 +601,10 @@ namespace Airside.Presentation
                 // are 30 m or 3 km out, cap how much one frame can ask for (trackpads report
                 // big pixel deltas), then ease it in below instead of jumping.
                 _zoomPendingLog = AirsideCameraFeel.QueueScrollZoom(_zoomPendingLog, scroll);
+                // Free camera: latch the ground under the pointer as the zoom pivot so
+                // easing pulls toward what you aimed at, not the orbit centre.
+                if (!_following)
+                    LatchZoomPivot(mouse.position.ReadValue());
             }
 
             ApplyZoomEasing();
@@ -619,6 +634,7 @@ namespace Airside.Presentation
             if (Mathf.Abs(_zoomPendingLog) < 0.0002f)
             {
                 _zoomPendingLog = 0f;
+                _zoomPivotValid = false;
                 return;
             }
 
@@ -631,19 +647,35 @@ namespace Airside.Presentation
                 // Following: bias the phase framing instead of setting an absolute
                 // distance, which the follow lerp would erase on the next frame.
                 _followZoom = Mathf.Clamp(_followZoom * factor, MinFollowZoom, MaxFollowZoom);
+                _zoomPivotValid = false;
             }
             else
             {
+                var previous = _distance;
                 _distance = Mathf.Clamp(_distance * factor,
                     AirsideBareField.MinOrbitDistance,
                     AirsideBareField.MaxOrbitDistance);
+                // Recompute the factor from the clamped distance so a hit on Min/Max
+                // orbit does not keep sliding the centre toward a pivot that distance
+                // can no longer honour.
+                var applied = previous > 0.0001f ? _distance / previous : 1f;
+                if (_zoomPivotValid && Mathf.Abs(applied - 1f) > 0.0001f)
+                {
+                    AirsideCameraFeel.ZoomTowardPivot(
+                        _center.x, _center.z, _zoomPivotX, _zoomPivotZ, applied,
+                        out var cx, out var cz);
+                    _center.x = cx;
+                    _center.z = cz;
+                    ClampPanCentre();
+                }
             }
         }
 
         /// <summary>
-        /// Slide the view across the field in the plane you are looking along. Panning a
-        /// followed aircraft would only fight the follow, so it drops follow and hands the
-        /// camera back to you.
+        /// Slide the view so the ground under the cursor follows the drag — the same
+        /// grab-the-map feel as the destinations map. Falls back to distance-scaled
+        /// planar pan when the ray hits the sky. Panning a followed aircraft would only
+        /// fight the follow, so it drops follow and hands the camera back to you.
         /// </summary>
         private void PanByPixels(Vector2 delta)
         {
@@ -651,11 +683,72 @@ namespace Airside.Presentation
                 return;
             if (_following)
                 ReleaseFollow();
-            var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-            var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-            // Scale with distance so the drag tracks the ground under the cursor.
-            _center -= (planarRight * delta.x + planarForward * delta.y) * PanMetresPerPixel(_distance);
+
+            var mouse = Mouse.current;
+            if (mouse != null && TryGroundUnderPointer(mouse.position.ReadValue(), out var afterX, out var afterZ)
+                && TryGroundUnderPointer(mouse.position.ReadValue() - delta, out var beforeX, out var beforeZ))
+            {
+                _center.x += beforeX - afterX;
+                _center.z += beforeZ - afterZ;
+            }
+            else
+            {
+                var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+                _center -= (planarRight * delta.x + planarForward * delta.y) * PanMetresPerPixel(_distance);
+            }
+
+            ClampPanCentre();
             _easingOverview = false;
+        }
+
+        private void LatchZoomPivot(Vector2 screenPosition)
+        {
+            if (TryGroundUnderPointer(screenPosition, out var x, out var z))
+            {
+                _zoomPivotX = x;
+                _zoomPivotZ = z;
+                _zoomPivotValid = true;
+            }
+        }
+
+        /// <summary>
+        /// Ground (x,z) under a screen point for the current orbit pose. Uses a flat plane
+        /// at the orbit centre's height so Z/X lift and terrain clearance do not fight the
+        /// grab; far-plane fallback matches the mini-map chevron maths.
+        /// </summary>
+        private bool TryGroundUnderPointer(Vector2 screenPosition, out float x, out float z)
+        {
+            x = z = 0f;
+            var width = Screen.width;
+            var height = Screen.height;
+            if (width < 1 || height < 1)
+                return false;
+
+            var fov = _camera != null ? _camera.fieldOfView : _fov;
+            AirsideCameraFeel.OrbitPose(
+                _center.x, _center.y, _center.z, _pitch, _yaw, _distance,
+                out var camX, out var camY, out var camZ,
+                out var fx, out var fy, out var fz,
+                out var rx, out var ry, out var rz,
+                out var ux, out var uy, out var uz);
+            AirsideCameraFeel.ScreenRay(
+                screenPosition.x, screenPosition.y, width, height, fov,
+                fx, fy, fz, rx, ry, rz, ux, uy, uz,
+                out var dx, out var dy, out var dz);
+            AirsideCameraFeel.GroundHit(
+                camX, camY, camZ, dx, dy, dz, _center.y, AirsideBareField.MaxOrbitDistance,
+                out x, out z);
+            return true;
+        }
+
+        private void ClampPanCentre()
+        {
+            AirsideCameraFeel.ClampPanCentre(
+                _overviewCenter.x, _overviewCenter.z, _center.x, _center.z,
+                out var cx, out var cz);
+            _center.x = cx;
+            _center.z = cz;
         }
 
         /// <summary>The ground point the camera orbits, for the mini-map's view marker.</summary>
@@ -671,6 +764,7 @@ namespace Airside.Presentation
                 ReleaseFollow();
             _easingOverview = false;
             _center = new Vector3(x, _center.y, z);
+            ClampPanCentre();
         }
 
         /// <summary>

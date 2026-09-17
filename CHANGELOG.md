@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Field camera zoom and navigation mechanics (ADR 0054).** Free-camera scroll
+  zooms toward the ground under the pointer; left/middle drag grabs that ground
+  the same way the destinations map does; WASD drops follow then pans; soft pan
+  limit keeps the orbit centre within ~3.8 km of the overview. Follow-mode zoom
+  bias and #278 rates are unchanged. `scripts/test-domain.sh`: 316/316.
+
 - **5 more fixes: 2 latent lookup bugs, a wrong dead constant, and 2 real perf/behaviour
   bugs.** `AircraftType.TryFromId`/`AircraftCatalogue.TryFor` never returned on a match and
   silently kept the *last* one instead of the first — harmless while catalogue ids are

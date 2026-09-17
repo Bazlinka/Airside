@@ -10,14 +10,47 @@ namespace Airside.Tests
     public sealed class CameraFeelTests
     {
         [Test]
-        public void ScrollZoom_OneNotchMovesAUsefulFraction()
+        public void ScrollZoom_OneNotchMovesABigStepOnEveryPlatform()
         {
-            // ~120 is one macOS mouse-wheel notch. The old 0.001 rate only moved ~11 %;
-            // players needed dozens of notches to leave the 2.4 km overview.
-            var factor = AirsideCameraFeel.ZoomFactorForScroll(120f);
-            Assert.That(factor, Is.LessThan(0.8f));
-            Assert.That(factor, Is.GreaterThan(0.65f));
-            Assert.That(AirsideCameraFeel.ZoomFactorForScroll(-120f), Is.EqualTo(1f / factor).Within(0.001f));
+            // A wheel notch is 120 units on Windows and single digits on macOS. Both must
+            // be worth one notch — assuming 120 made a real Mac notch worth under 1 %.
+            var windows = AirsideCameraFeel.ZoomFactorForScroll(120f);
+            var mac = AirsideCameraFeel.ZoomFactorForScroll(1f);
+            Assert.That(windows, Is.EqualTo(mac).Within(0.001f));
+            Assert.That(windows, Is.LessThan(0.65f), "one notch must be a big step, not a nudge");
+            Assert.That(windows, Is.GreaterThan(0.5f), "one notch must not skip half the field");
+            Assert.That(AirsideCameraFeel.ZoomFactorForScroll(-120f), Is.EqualTo(1f / windows).Within(0.001f));
+        }
+
+        [Test]
+        public void ScrollNotches_NormalisesEveryReportingConvention()
+        {
+            Assert.That(AirsideCameraFeel.ScrollNotches(120f), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.ScrollNotches(-120f), Is.EqualTo(-1f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.ScrollNotches(1f), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.ScrollNotches(3f), Is.EqualTo(3f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.ScrollNotches(0f), Is.Zero);
+            // A flung trackpad is capped rather than teleporting across the field.
+            Assert.That(AirsideCameraFeel.ScrollNotches(30f),
+                Is.EqualTo(AirsideCameraFeel.MaxNotchesPerFrame).Within(0.001f));
+            Assert.That(AirsideCameraFeel.ScrollNotches(-4800f),
+                Is.EqualTo(-AirsideCameraFeel.MaxNotchesPerFrame).Within(0.001f));
+        }
+
+        [Test]
+        public void ScrollZoom_ASixNotchRollCoversTheWholeOverviewRange()
+        {
+            // Overview is 2400 m; the apron reads at ~60 m. That must be a short roll of
+            // the wheel, not thirty notches.
+            var distance = AirsideBareField.OverviewDistance;
+            var notches = 0;
+            while (distance > 60f && notches < 100)
+            {
+                distance *= AirsideCameraFeel.ZoomFactorForScroll(120f);
+                notches++;
+            }
+
+            Assert.That(notches, Is.LessThanOrEqualTo(8), $"took {notches} notches to reach the apron");
         }
 
         [Test]
@@ -28,6 +61,18 @@ namespace Airside.Tests
             queued = AirsideCameraFeel.QueueScrollZoom(queued, 120f);
             Assert.That(queued, Is.LessThan(-0.8f));
             Assert.That(Math.Abs(queued), Is.LessThanOrEqualTo(AirsideCameraFeel.MaxZoomPendingLog));
+        }
+
+        [Test]
+        public void ZoomEasing_LandsInsideAQuarterSecond()
+        {
+            // "Takes too long" was partly latency: the queue must be almost spent within
+            // a few frames of the notch that filled it.
+            var pending = AirsideCameraFeel.QueueScrollZoom(0f, 120f);
+            var start = Math.Abs(pending);
+            for (var frame = 0; frame < 15; frame++)
+                pending -= pending * (1f - (float)Math.Exp(-(1f / 60f) * AirsideCameraFeel.ZoomEaseRate));
+            Assert.That(Math.Abs(pending), Is.LessThan(start * 0.05f));
         }
 
         [Test]

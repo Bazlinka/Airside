@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Cursor — zoom/pan speed fix (ADR 0054 follow-up).**
+  - **Branch:** `cursor/faster-zoom-and-pan-b9dd`.
+  - **Why:** Bailey: "zoom still sucks ... takes too long - and dragging around
+    takes ages too." Root cause was a non-portable scroll scale: the rate was per
+    *raw* scroll unit assuming 120 per notch (Windows), but macOS reports single
+    digits, so one real notch moved 0.24-0.7 % and overview-to-apron took 500-1500
+    notches.
+  - **Fix:** `AirsideCameraFeel.ScrollNotches` normalises any platform's scroll to
+    notches (>=40 units means the 120-per-notch convention; smaller values are
+    already notch-sized; capped at 3/frame) and the rate is per notch
+    (`ZoomLogPerNotch` 0.5, ~39 % closer). Overview to apron is 8 notches anywhere.
+    Ease rate 14 -> 22. Drag pan now tracks pointer *positions* resolved through
+    `Camera.ScreenPointToRay` instead of reconstructing them from `mouse.delta`
+    (whose scale can differ from `mouse.position` on Retina and halved the drag).
+    Keyboard pan 220 -> 650 m/s.
+  - **Evidence:** `scripts/test-domain.sh` **319/319**; both rate/normalisation
+    mutations verified red (3 and 2 failures) before restoring.
+  - **NEXT:** Mac Play - one notch should be a clear step, overview to apron a
+    short roll, and a drag should move the ground exactly with the cursor.
+
 - **2026-09-17 Cursor — camera zoom/nav (ADR 0054) + fix known 320×240 HUD overlaps.**
   - **Branch:** `cursor/camera-zoom-nav-mechanics-b9dd` (PR #300).
   - **Camera:** free-camera scroll zooms toward the ground under the pointer;

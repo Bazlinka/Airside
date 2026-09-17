@@ -137,6 +137,10 @@ namespace Airside.Presentation
         private float _zoomPivotX;
         private float _zoomPivotZ;
 
+        /// <summary>Last pointer position while dragging, so pan reads positions not deltas.</summary>
+        private bool _panPointerValid;
+        private Vector2 _panPointer;
+
         /// <summary>Hold off the follow yaw bias briefly so orbit is not fought every frame.</summary>
         private void SuppressFollowOrbit() => _orbitSuppressUntil = Time.unscaledTime + 0.9f;
 
@@ -589,8 +593,26 @@ namespace Airside.Presentation
                 _leftDragging = true;
             }
 
+            // Pan from pointer *positions*, not from mouse.delta: delta and position are
+            // not guaranteed to share a scale (Retina backing pixels vs points), and a
+            // mismatch there silently halves the drag. Positions always agree with the
+            // camera's own screen space, so the grabbed ground stays under the cursor.
             if ((mouse.middleButton.isPressed && _middlePressOnField) || _leftDragging)
-                PanByPixels(mouse.delta.ReadValue());
+            {
+                var pointer = mouse.position.ReadValue();
+                if (!_panPointerValid)
+                {
+                    _panPointer = pointer;
+                    _panPointerValid = true;
+                }
+
+                PanFromPointer(_panPointer, pointer);
+                _panPointer = pointer;
+            }
+            else
+            {
+                _panPointerValid = false;
+            }
 
             var scroll = mouse.scroll.ReadValue().y;
             // Scrolling a HUD panel (the route map, a list) belongs to that panel, not the camera.
@@ -598,8 +620,8 @@ namespace Airside.Presentation
             {
                 _easingOverview = false;
                 // Queue zoom in log space so every notch is the same proportion whether you
-                // are 30 m or 3 km out, cap how much one frame can ask for (trackpads report
-                // big pixel deltas), then ease it in below instead of jumping.
+                // are 30 m or 3 km out. The sample is normalised to notches first, because
+                // one physical notch is 120 units on Windows and single digits on macOS.
                 _zoomPendingLog = AirsideCameraFeel.QueueScrollZoom(_zoomPendingLog, scroll);
                 // Free camera: latch the ground under the pointer as the zoom pivot so
                 // easing pulls toward what you aimed at, not the orbit centre.
@@ -611,14 +633,17 @@ namespace Airside.Presentation
         }
 
         // Rates live in AirsideCameraFeel so the headless harness can lock them without Unity.
-        public const float ZoomLogPerScrollUnit = AirsideCameraFeel.ZoomLogPerScrollUnit;
-        public const float MaxScrollPerFrame = AirsideCameraFeel.MaxScrollPerFrame;
+        public const float ZoomLogPerNotch = AirsideCameraFeel.ZoomLogPerNotch;
+        public const float MaxNotchesPerFrame = AirsideCameraFeel.MaxNotchesPerFrame;
         public const float MaxZoomPendingLog = AirsideCameraFeel.MaxZoomPendingLog;
         public const float ZoomEaseRate = AirsideCameraFeel.ZoomEaseRate;
         public const float OrbitYawDegreesPerPixel = AirsideCameraFeel.OrbitYawDegreesPerPixel;
         public const float OrbitPitchDegreesPerPixel = AirsideCameraFeel.OrbitPitchDegreesPerPixel;
         public const float PanMetresPerPixelAtUnitDistance = AirsideCameraFeel.PanMetresPerPixelAtUnitDistance;
         private float _zoomPendingLog;
+
+        public static float ScrollNotches(float scrollUnits) =>
+            AirsideCameraFeel.ScrollNotches(scrollUnits);
 
         public static float QueueScrollZoom(float pendingLog, float scrollUnits) =>
             AirsideCameraFeel.QueueScrollZoom(pendingLog, scrollUnits);
@@ -672,21 +697,22 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Slide the view so the ground under the cursor follows the drag — the same
-        /// grab-the-map feel as the destinations map. Falls back to distance-scaled
-        /// planar pan when the ray hits the sky. Panning a followed aircraft would only
-        /// fight the follow, so it drops follow and hands the camera back to you.
+        /// Slide the view so the ground grabbed at <paramref name="from"/> ends up under
+        /// <paramref name="to"/> — the same grab-the-map feel as the destinations map.
+        /// Falls back to a distance-scaled planar pan when either ray hits the sky.
+        /// Panning a followed aircraft would only fight the follow, so it drops follow and
+        /// hands the camera back to you.
         /// </summary>
-        private void PanByPixels(Vector2 delta)
+        private void PanFromPointer(Vector2 from, Vector2 to)
         {
+            var delta = to - from;
             if (delta.sqrMagnitude <= 0.0001f)
                 return;
             if (_following)
                 ReleaseFollow();
 
-            var mouse = Mouse.current;
-            if (mouse != null && TryGroundUnderPointer(mouse.position.ReadValue(), out var afterX, out var afterZ)
-                && TryGroundUnderPointer(mouse.position.ReadValue() - delta, out var beforeX, out var beforeZ))
+            if (TryGroundUnderPointer(from, out var beforeX, out var beforeZ)
+                && TryGroundUnderPointer(to, out var afterX, out var afterZ))
             {
                 _center.x += beforeX - afterX;
                 _center.z += beforeZ - afterZ;
@@ -713,9 +739,10 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Ground (x,z) under a screen point for the current orbit pose. Uses a flat plane
-        /// at the orbit centre's height so Z/X lift and terrain clearance do not fight the
-        /// grab; far-plane fallback matches the mini-map chevron maths.
+        /// Ground (x,z) under a screen point. Uses the live camera's own ray when there is
+        /// one, so field of view, aspect and the ground-clearance clamp are all accounted
+        /// for exactly; the orbit-pose maths is only a fallback. The plane sits at the orbit
+        /// centre's height so Z/X lift does not fight the grab.
         /// </summary>
         private bool TryGroundUnderPointer(Vector2 screenPosition, out float x, out float z)
         {
@@ -725,20 +752,32 @@ namespace Airside.Presentation
             if (width < 1 || height < 1)
                 return false;
 
-            var fov = _camera != null ? _camera.fieldOfView : _fov;
-            AirsideCameraFeel.OrbitPose(
-                _center.x, _center.y, _center.z, _pitch, _yaw, _distance,
-                out var camX, out var camY, out var camZ,
-                out var fx, out var fy, out var fz,
-                out var rx, out var ry, out var rz,
-                out var ux, out var uy, out var uz);
-            AirsideCameraFeel.ScreenRay(
-                screenPosition.x, screenPosition.y, width, height, fov,
-                fx, fy, fz, rx, ry, rz, ux, uy, uz,
-                out var dx, out var dy, out var dz);
+            Vector3 origin, direction;
+            if (_camera != null)
+            {
+                var ray = _camera.ScreenPointToRay(new Vector3(screenPosition.x, screenPosition.y, 0f));
+                origin = ray.origin;
+                direction = ray.direction;
+            }
+            else
+            {
+                AirsideCameraFeel.OrbitPose(
+                    _center.x, _center.y, _center.z, _pitch, _yaw, _distance,
+                    out var camX, out var camY, out var camZ,
+                    out var fx, out var fy, out var fz,
+                    out var rx, out var ry, out var rz,
+                    out var ux, out var uy, out var uz);
+                AirsideCameraFeel.ScreenRay(
+                    screenPosition.x, screenPosition.y, width, height, _fov,
+                    fx, fy, fz, rx, ry, rz, ux, uy, uz,
+                    out var dx, out var dy, out var dz);
+                origin = new Vector3(camX, camY, camZ);
+                direction = new Vector3(dx, dy, dz);
+            }
+
             AirsideCameraFeel.GroundHit(
-                camX, camY, camZ, dx, dy, dz, _center.y, AirsideBareField.MaxOrbitDistance,
-                out x, out z);
+                origin.x, origin.y, origin.z, direction.x, direction.y, direction.z,
+                _center.y, AirsideBareField.MaxOrbitDistance, out x, out z);
             return true;
         }
 

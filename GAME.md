@@ -1,5 +1,42 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Claude — documentation-only: a real texture-tiling finding, flagged not
+  fixed (part of a larger autonomous visual-quality session Bailey asked for directly —
+  "improve aircraft visuals dramatically and improve world heaps as well... use
+  remaining session credits... going to bed" — continued after an overnight account
+  rate-limit pause. The rest of that session's work is on five other branches:
+  `feature/taxi-wheelbase-accuracy`, `feature/night-gate-lighting`,
+  `feature/aircraft-mesh-smoothing-and-markings`, `feature/world-rendering-quality`,
+  `feature/terminal-facade-detail`, `feature/aircraft-geometry-fidelity` — none merged
+  yet, each with its own GAME.md entry on its own branch since `main` hasn't moved).**
+  - **What was found, while investigating whether aircraft surface detail (rivets/panel
+    lines) was being applied at a physically sensible scale:** `ArtGltfLoader.
+    BuildPlanarUvs()` (`Presentation/ArtGltfLoader.cs:427-474`) generates UVs normalized
+    to **each mesh part's own bounding box** — UV (0,0)-(1,1) always spans that one
+    part's full extent, regardless of its actual size in metres. Combined with
+    `AirsideMaterialLibrary`'s fixed tiling constants (e.g. `SurfaceKind.AircraftSkin`
+    at `(1.5, 1.5)`, `AirsideMaterialLibrary.cs:110`), this means the same texture
+    repeats the same number of times across a tiny gear-door panel as across an entire
+    66 m A350-900 fuselage — panel-line/rivet detail has no consistent physical scale
+    across different-sized parts, let alone across different aircraft. This plausibly
+    contributes to a "not quite right" / "not colour correct" read on close inspection,
+    separate from the faceted-shading issue already fixed this session
+    (`feature/aircraft-mesh-smoothing-and-markings`).
+  - **Why not fixed tonight:** this is the shared UV-generation path for **every**
+    procedurally-loaded kit in the game (aircraft, vehicles, buildings, props) — moving
+    to true world-scale UVs (the way `Airside/AdelaideGround`'s own shader already does
+    it, worldXZ / tileMetres) would need per-part real-world-scale reasoning to avoid
+    trading "wrong scale" for "seams/stretching on curved surfaces," and there is no way
+    to visually verify the result without a Unity editor. Flagging instead of guessing —
+    same discipline as skipping the Gamma-color-space conversion and the coastsand
+    ground-texture layer earlier in this session, for the same reason.
+  - **NEXT:** worth a dedicated slice, with Unity Play-mode available, that either (a)
+    computes tiling per-part from the part's actual world-space bounding box size before
+    handing it to the material system, or (b) authors true world-scale UVs in
+    `BuildPlanarUvs` for parts that are meant to tile continuously (skin panels) while
+    keeping normalized 0-1 UVs for parts that shouldn't tile (decals, glazing, markings).
+    Not urgent — cosmetic, not a correctness bug — but a real, verifiable-once-seen gap.
+
 - **2026-09-17 Claude — aircraft geometry fidelity pass across all 7 types (branch
   `feature/aircraft-geometry-fidelity`), the most substantial piece of the autonomous
   visual-quality work Bailey asked for tonight.**

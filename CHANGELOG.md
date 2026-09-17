@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **World rendering quality: real-scale reflection probe for the shipped Adelaide world,
+  a finer ground mesh, and corrected SSAO settings.** The apron/terminal realtime
+  reflection probes from Decision 0025 item 5 only ever existed on the legacy 1:20
+  miniature circuit — the real Adelaide bare-field world (the shipped default) never got
+  its own, so wet asphalt and the 28 terminal glazing bays picked up no local floodlight
+  reflections at all. New `BuildBareApronReflectionProbe()` adds one real-scale,
+  box-projected probe sized from `AdelaideTerminalArchitecture`'s actual coordinates,
+  covering both the stand apron and the terminal glass. `AirsideAdelaideGround`'s vertex
+  grid roughly doubles in linear density (High 225x161 -> 337x241, ~17 m -> ~12 m
+  spacing; Medium now gets the old High values, so both tiers step up) for tighter
+  pavement-shoulder blending, verified safe under `AirsideAdelaideGroundMesh`'s existing
+  16-/32-bit index-format switch. Also corrected two SSAO settings in `PC_Renderer.asset`
+  that were left at their non-default tier (`Samples` Medium->High, `NormalSamples`
+  Medium->High) after checking the actual URP 17.3 enum values in the cached package
+  source — the other settings researched as "low" (`BlurQuality`, `Downsample`) turned
+  out to already be at their best value once checked against the real source, so were
+  left alone rather than "corrected" on a wrong assumption.
+
 - **Every procedurally-loaded model (aircraft, vehicles, buildings, props) now shades
   smoothly on continuously curved surfaces instead of reading as faceted/"triangular."**
   `ArtGltfLoader.ParseKit()`'s bare `Mesh.RecalculateNormals()` only smooths across faces

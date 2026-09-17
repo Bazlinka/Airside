@@ -1,5 +1,71 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — world rendering quality pass (branch
+  `feature/world-rendering-quality`), first of several autonomous visual-quality
+  improvements Bailey asked for directly ("improve aircraft visuals dramatically and
+  improve world heaps as well... use remaining session credits... going to bed"). No
+  further check-in expected until Bailey is back; each improvement still lands as its own
+  narrow, documented, tested branch/PR per `AGENTS.md`, not one large mixed change.**
+  - **Guardrail checked first, before any code:** researched whether "improve the world"
+    could mean turning the dormant decorative layer (buildings, ground vehicles, people,
+    landside lights — `AirsideFocusMode.Show*`, all off by default) back on. Two explicit
+    ADRs (`0032-bare-adelaide-field.md`, `0041-strip-to-a-bare-circuit-sandbox.md`) record
+    Bailey asking directly for the *opposite* — a clean, minimal field — with reasons
+    given each time. Treating that as a real constraint even under tonight's broad
+    autonomy grant: nothing in this pass (or planned for the rest of the session) enables
+    any `AirsideBareField`/`AirsideFocusMode` flag by default. Everything below improves
+    what's already in the shipped bare-field world.
+  - **Real bug found, not just a polish opportunity:** the Decision 0025 item 5 realtime
+    apron/terminal reflection probes were only ever constructed on the legacy 1:20
+    miniature circuit's code path (`AirsideFocusMode.ShowDecorativeLights`) — the real
+    Adelaide bare-field world (the shipped default) never built its own, so `_apronProbe`/
+    `_terminalProbe` were always `null` there and wet asphalt / the 28 terminal glazing
+    bays picked up zero local floodlight reflection, silently, since whenever this system
+    was built. New `BuildBareApronReflectionProbe()` in `AirsidePrototype.cs`, sized from
+    `AdelaideTerminalArchitecture`'s real coordinates (stands Z 388, roof floods/glazing Z
+    434-435.55, X 1005-1575 — under 50 m deep along Z, so one probe reaches both the apron
+    and the glass instead of needing two), wired into the bare-field constructor branch
+    next to the other YPAD builders. The existing `ApplyDayCycle`/`MaybeRefreshApronProbe`
+    driving code already null-checks `_apronProbe`, so no other wiring was needed.
+  - **Ground mesh resolution doubled (linear).** `AirsideAdelaideGround`'s High vertex
+    grid was 225x161 over the ~3900x2800 m field (~17 m spacing) — now 337x241 (~12 m
+    spacing); Medium now gets the old High values, so both tiers read as a genuine step
+    up. Verified against `AirsideAdelaideGroundMesh`'s existing automatic 16-/32-bit
+    index-format switch (`verts.Length > 65000 ? UInt32 : UInt16`) before picking the new
+    numbers, so this can't silently overflow a 16-bit mesh.
+  - **SSAO settings corrected against the real URP 17.3 source, not guessed.** The
+    research pass that found `PC_Renderer.asset`'s SSAO feature flagged `Samples: 1` and
+    `BlurQuality: 0` as "(Low)" — I checked the actual enum definitions in the cached
+    `com.unity.render-pipelines.universal@17.3.0` package source
+    (`Runtime/RendererFeatures/ScreenSpaceAmbientOcclusion.cs`) before touching anything,
+    and that guess was **wrong for one of the two**: `AOSampleOption` is `High=0
+    (12 samples), Medium=1 (8 samples), Low=2 (4 samples)`, so `Samples: 1` really was
+    Medium, not Low — corrected to `0` (High). But `BlurQualityOptions` is `High=0
+    (Bilateral), Medium=1 (Gaussian), Low=2 (Kawase)` — `BlurQuality: 0` was **already at
+    its best setting**; "improving" it as originally guessed would have been a real
+    regression (High→Gaussian/Kawase). Left it untouched, and also raised `NormalSamples`
+    (Medium→High). `Downsample`/`AfterOpaque`/`AOMethod`/`Source` were already at their
+    best values once checked — left alone.
+  - **Deliberately not done this pass:** wiring the unused `coastsand` texture (full
+    basecolor/normal/maskmap set on disk, never consumed by the live
+    `AirsideAdelaideGround` shader/blend — only the dormant Kingscote `AirsideTerrainField`
+    uses it) into the ground blend near the shore. Real opportunity, flagged for later,
+    but it's shader/blend-logic work I have no way to visually verify this session, for a
+    corner-of-map detail — lower value-per-risk than the terminal/aircraft work still
+    queued tonight.
+  - **Evidence:** `AirsideAdelaideGround.cs` is UnityEngine-free and compiles into the
+    headless harness — `scripts/test-domain.sh` **319/319** after the resolution change
+    (confirmed `AdelaideGroundTests.cs` has no hardcoded resolution expectations to break).
+    The reflection-probe and SSAO changes are Presentation/asset-only — reviewed by
+    inspection and, for SSAO, against the actual package source rather than guessed; no
+    Unity editor available this session to see either rendered.
+  - **NEXT:** `scripts/test-unity.sh` and a Play-mode look at the apron/terminal at night
+    (probe reflections on wet asphalt/glass), and eyeballing the finer ground mesh doesn't
+    introduce any visible seam at the plateau/shoulder boundary it wasn't designed to
+    change. More visual-quality work continuing on separate branches — check `git log`/
+    open PRs for what landed after this entry, since this was written mid-session with
+    more still to come.
+
 - **2026-09-17 Claude — aircraft mesh smoothing + identity-marking lighting response
   (branch `feature/aircraft-mesh-smoothing-and-markings`; part of a 3-part night lighting
   / taxi accuracy / aircraft visuals request from Bailey — the other two parts are

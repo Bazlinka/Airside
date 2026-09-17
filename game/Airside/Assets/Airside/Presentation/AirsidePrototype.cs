@@ -675,7 +675,7 @@ namespace Airside.Presentation
                 padding = new RectOffset(18, 18, 14, 14)
             });
             var title = _hudTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
-            var button = _hudButtonStyle ??= AirsideTheme.TextStyle(
+            var button = _hudButtonStyle ??= AirsideTheme.ButtonStyle(
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 
@@ -5698,8 +5698,10 @@ namespace Airside.Presentation
             return placed >= 3;
         }
 
-        /// <summary>Deterministic 32-bit FNV-1a over the UTF-16 code units of <paramref name="text"/>.</summary>
-        private static uint StableNameHash(string text)
+        /// <summary>Deterministic 32-bit FNV-1a over the UTF-16 code units of <paramref name="text"/>.
+        /// Internal so other presentation-only helpers (e.g. <see cref="FlightNumber"/>) share
+        /// this one implementation instead of each hand-rolling FNV-1a.</summary>
+        internal static uint StableNameHash(string text)
         {
             var hash = 2166136261u;
             if (text == null)

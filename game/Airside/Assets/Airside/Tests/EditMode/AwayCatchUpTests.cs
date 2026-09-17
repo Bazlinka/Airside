@@ -96,6 +96,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway()
+        {
+            var (clock, ops) = Game();
+            var saved = AirlineSave.Capture(ops, SavedAt);
+            // A real pre-6 save never wrote these fields — JsonUtility leaves them at the
+            // field's default, not at the fresh-Provisional starting values.
+            saved.Version = 5;
+            saved.CareerFunds = 0;
+            saved.CareerReliability = 0;
+
+            clock.Set(clock.Now.Advance(3 * 3600));
+            ops.Update();
+
+            // No contract was ever active, so nothing should read as having happened. In
+            // particular, comparing the pre-6 default (0% reliability) against the actually
+            // fresh-migrated Provisional career (100%) must not misreport that gap as
+            // something that occurred while the player was away.
+            var summary = AwaySummary.Build(saved, ops, 3 * 3600);
+            Assert.That(summary.Lines.Any(l => l.Contains("Reliability rose")), Is.False);
+            Assert.That(summary.Lines.Any(l => l.Contains("earned $")), Is.False);
+        }
+
+        [Test]
         public void VersionOneSave_StillLoads()
         {
             var (clock, ops) = Game();

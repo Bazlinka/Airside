@@ -154,7 +154,7 @@ namespace Airside.Presentation
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
             var small = _hudSmall ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
-            var smallButton = _hudSmallButton ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
+            var smallButton = _hudSmallButton ??= AirsideTheme.ButtonStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
 
             if (AirlineSetupOpen)
             {
@@ -174,7 +174,7 @@ namespace Airside.Presentation
             if (showGuide)
                 DrawGuide(placement.Guide, panel, label, small);
             else
-                DrawStatusLine(placement.Guide, small);
+                DrawStatusLine(placement.Guide, panel, small);
             DrawWorkspaceNav(placement.NavStrip, smallButton);
             if (!((_activeWorkspace != HudWorkspace.None || _devToolsOpen) && placement.MapCoversFleet))
                 DrawFleetPanel(placement.FleetArea, panel, label, small, smallButton);
@@ -350,17 +350,20 @@ namespace Airside.Presentation
         /// The persistent one-line objective (ADR 0053) that replaces the guide card once it's
         /// done: the player fleet's most urgent aircraft, or a quiet fleet-wide line.
         /// </summary>
-        private void DrawStatusLine(Rect rect, GUIStyle small)
+        private void DrawStatusLine(Rect rect, GUIStyle panel, GUIStyle small)
         {
             if (rect.height < 4f)
                 return;
+            // The guide card it replaces has a panel behind it; bare floating text here read
+            // as unfinished next to it, so this gets the same quiet chrome, not a border colour.
+            GUI.Box(rect, GUIContent.none, panel);
             var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState);
             var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
                 new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
             var previousContent = GUI.contentColor;
             if (severity != StatusSeverity.Normal)
                 GUI.contentColor = SeverityColour(severity, previousContent);
-            GUI.Label(new Rect(rect.x + 2f, rect.y + 4f, rect.width - 4f, rect.height - 4f), text, style);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 4f, rect.width - 16f, rect.height - 4f), text, style);
             GUI.contentColor = previousContent;
         }
 
@@ -576,12 +579,17 @@ namespace Airside.Presentation
                 $"${_operations.CareerState.Funds:N0}  ·  {_operations.CareerState.Reliability}% reliability", small);
         }
 
-        private static readonly (HudWorkspace workspace, string label, string hotkey)[] WorkspaceTabs =
+        // The hotkeys (T/Tab/H) used to print in each label ("Operations (T)") but four of
+        // those never fit the strip without overflowing it — the hotkeys still work, Controls
+        // Help (F1) still lists them (from its own ControlsHelp.Sections data), the button
+        // just doesn't spell it out any more, so there is nothing left for this table to carry
+        // beyond the workspace and its label.
+        private static readonly (HudWorkspace workspace, string label)[] WorkspaceTabs =
         {
-            (HudWorkspace.Operations, "Operations", "T"),
-            (HudWorkspace.Map, "Map", "Tab"),
-            (HudWorkspace.Fleet, "Fleet", "H"),
-            (HudWorkspace.Contracts, "Contracts", null)
+            (HudWorkspace.Operations, "Operations"),
+            (HudWorkspace.Map, "Map"),
+            (HudWorkspace.Fleet, "Fleet"),
+            (HudWorkspace.Contracts, "Contracts")
         };
 
         private GUIStyle _navActiveButtonStyle;
@@ -598,12 +606,24 @@ namespace Airside.Presentation
             var slot = rect.width / WorkspaceTabs.Length;
             for (var i = 0; i < WorkspaceTabs.Length; i++)
             {
-                var (workspace, label, hotkey) = WorkspaceTabs[i];
+                var (workspace, label, _) = WorkspaceTabs[i];
                 var tabRect = new Rect(rect.x + i * slot, rect.y, slot - 4f, rect.height);
-                var text = hotkey != null ? $"{label} ({hotkey})" : label;
+                // The hotkey used to print in the label ("Operations (T)") but four of those
+                // never fit the strip without overflowing it — the hotkeys still work, Controls
+                // Help (F1) still lists them, the button just doesn't spell it out any more.
                 var style = _activeWorkspace == workspace ? active : smallButton;
-                if (GUI.Button(tabRect, text, style))
-                    SetWorkspace(workspace);
+                if (GUI.Button(tabRect, label, style))
+                {
+                    // The Map workspace needs a planning aircraft chosen and the lens reset —
+                    // TogglePlanner/OpenPlanner already do that (it's what Tab and field-tag
+                    // selection use); a plain SetWorkspace would open an empty "No aircraft to
+                    // plan" planner the first time a player clicks this tab before selecting
+                    // any aircraft.
+                    if (workspace == HudWorkspace.Map)
+                        TogglePlanner();
+                    else
+                        SetWorkspace(workspace);
+                }
             }
         }
 
@@ -1362,8 +1382,7 @@ namespace Airside.Presentation
                 if (!mapRect.Contains(point))
                     continue;
 
-                // A small airport glyph, not a plain dot, so a zoomed-in map reads as real
-                // fields rather than abstract markers — this is where parked aircraft sit.
+                // A clean dot marks the destination — this is where parked aircraft sit.
                 var colour = selected ? AirsideTheme.SafetyYellow : row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete;
                 var zoomBoost = Mathf.Lerp(1f, 1.5f, Mathf.InverseLerp(1f, 10f, _mapLens.Zoom));
                 var size = (selected ? 20f : i == hovered ? 18f : 14f) * zoomBoost;
@@ -1606,7 +1625,7 @@ namespace Airside.Presentation
 
         private static Texture2D _airportIcon;
 
-        /// <summary>A small ring with crossed runway bars — reads as "airport" at a glance.</summary>
+        /// <summary>A clean antialiased dot marking a destination on the map.</summary>
         private static void DrawAirportIcon(Vector2 centre, float size, Color colour)
         {
             var previous = GUI.color;
@@ -1620,7 +1639,10 @@ namespace Airside.Presentation
             if (_airportIcon != null)
                 return _airportIcon;
 
-            const int n = 48;
+            // A plain crossed-runway glyph read as a target/"no entry" mark at the 14-30 px
+            // this actually draws at (Bailey screenshot, 2026-09-16) — a clean antialiased dot
+            // is unambiguous at any size and still reads as a place, not a plain flat square.
+            const int n = 32;
             var texture = new Texture2D(n, n, TextureFormat.RGBA32, false)
             {
                 filterMode = FilterMode.Bilinear,
@@ -1635,14 +1657,9 @@ namespace Airside.Presentation
                 var dx = (x - centre) / centre;
                 var dy = (y - centre) / centre;
                 var r = Mathf.Sqrt(dx * dx + dy * dy);
-                var ring = r < 0.98f && r > 0.76f;
-                // Two crossing runway bars through the hub, angled like a real two-runway field.
-                var barA = Mathf.Abs(dx * 0.87f - dy * 0.5f) < 0.10f && r < 0.6f;
-                var barB = Mathf.Abs(dx * 0.87f + dy * 0.5f) < 0.10f && r < 0.6f;
-                var hub = r < 0.16f;
-                pixels[y * n + x] = ring || barA || barB || hub
-                    ? new Color32(255, 255, 255, 255)
-                    : new Color32(255, 255, 255, 0);
+                // A soft-edged disc: one pixel of antialiasing at the rim, solid inside.
+                var alpha = Mathf.Clamp01((0.94f - r) / 0.16f);
+                pixels[y * n + x] = new Color32(255, 255, 255, (byte)(255f * alpha));
             }
 
             texture.SetPixels32(pixels);

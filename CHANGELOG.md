@@ -1,5 +1,30 @@
 ## Unreleased
 
+- **Bug-hunting pass: 6 fixes across the codebase.** Fixed the away-summary misreporting a
+  save migration (v5→v6) as reliability/funds change that happened while away; deduplicated
+  `FlightNumber`'s hash function to reuse the canonical `StableNameHash`; fixed the Map nav tab
+  dead-clicking into an empty planner on first use instead of routing through
+  `TogglePlanner`; fixed a style-cache collision between the intro title and its fallback mark;
+  removed a dead hotkey field and corrected a stale comment. New regression test for the
+  away-summary fix; 285/285 passing under `scripts/test-domain.sh`.
+
+- **Theme every button in the HUD.** Every button in the game used Unity's stock grey
+  `GUI.skin.button` background with only its text colour ever touched — no button background
+  in the entire codebase was themed. New `AirsideTheme.ButtonStyle` (Tarmac at rest, Coastal
+  Blue on hover/press, matching the palette's existing selection colour) is applied at the two
+  places in the whole game that construct a button style, which every other button derives
+  from — themes essentially the entire HUD in one change. Also gave the persistent status line
+  a panel background to match the guide card it replaces, instead of floating as bare text.
+
+- **Fix nav strip text overflowing the window.** The workspace nav strip was locked to the
+  300 px clock column's width, giving four tabs ~75 px each — nowhere near enough for
+  "Operations", which overflowed clean off the left edge of the window (confirmed from a
+  screenshot). It now sizes itself using the same room the destinations map already gets,
+  capped at 420 px; tab labels dropped their hotkey suffixes. Also replaced the destination-map
+  marker glyph (a ring with crossed runway bars) with a plain antialiased dot — the original
+  risked reading as a target/"no entry" symbol at the small size it actually draws at. New
+  regression test locks in a minimum tab width at all 6 tested resolutions.
+
 - **Reliability cost for cancelling a contract flight.** Cancelling a scheduled departure that
   would have counted towards the active career contract now costs reliability (closes the
   `CancelDeparture` TODO from #291); cancelling anything unrelated to the active contract

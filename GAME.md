@@ -1,5 +1,117 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — bug-hunting pass across the codebase ("massive bug fix"), 6 files, all
+  verified where verification is possible.**
+  - **Away-summary can misreport a save migration as something that happened while you were
+    away.** `AwaySummary.Build` compared the *fresh* v6-migrated career (starts at 100%
+    reliability, 0 funds) against the *raw* pre-6 save fields, which JsonUtility leaves at 0
+    (no such fields existed before v6). Loading an old save and stepping forward would then
+    read "Reliability rose 100 points to 100%." — a migration artifact, not something that
+    happened in the time away. Fixed in `Simulation/AwayCatchUp.cs`: the "before" values used
+    for the delta are now the fresh Provisional starting values when the save predates v6,
+    not the raw zeroed fields. New regression test
+    `Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway` added to
+    `AwayCatchUpTests.cs`, mutation-tested (reverted the fix, confirmed the new test fails;
+    restored it, confirmed 285/285 pass).
+  - **Duplicate FNV-1a hash implementation.** `FlightNumber.For` hand-rolled its own hash
+    function instead of reusing `AirsidePrototype.StableNameHash` (the canonical shared
+    implementation already used elsewhere for deterministic display values). Two
+    implementations of the same algorithm drift silently if one is ever tuned. Made
+    `StableNameHash` `internal` (was `private`) and had `FlightNumber.For` call it directly,
+    deleting the duplicate.
+  - **Workspace nav button dead-clicked the Map tab.** `DrawWorkspaceNav`'s button handler
+    called a plain `SetWorkspace(HudWorkspace.Map)` for the Map tab, which — unlike
+    `TogglePlanner`/`OpenPlanner` (what Tab and field-tag selection already use to enter the
+    map) — doesn't choose a planning aircraft or reset the lens. First click on the Map tab
+    before selecting any aircraft opened an empty "No aircraft to plan" planner instead of the
+    map. Fixed to route through `TogglePlanner()` for the Map tab specifically.
+  - **Style-cache collision in the intro screen.** `AirsidePrototype.Intro.cs` had two
+    different visual roles (the title, and a fallback mark) sharing one `??=`-cached
+    `_introTitleStyle` field — whichever one rendered first "won" and silently applied its
+    style to the other. Split into `_introTitleStyle` and a new `_introFallbackMarkStyle`.
+  - **Unused hotkey field and a stale comment.** `WorkspaceTabs`' tuple carried a hotkey string
+    field that was never read after the hotkey suffixes were dropped from tab labels (see the
+    nav-strip fix above) — removed. A doc comment above the destination marker still described
+    the old ring-and-crossed-bars glyph after it was replaced with a plain dot — corrected.
+  - **Evidence:** found via two passes of the `code-review` skill (the first was interrupted by
+    a session usage limit partway through applying fixes; re-run to completion) plus manual
+    read-through of the affected files. The `AwayCatchUp.cs` fix is the only one with behavior
+    provable by a real test — it's Simulation, so `scripts/test-domain.sh` covers it directly
+    (285/285 passing, up from 284). The `FlightNumber`/nav-button/intro-style/comment fixes are
+    all Presentation-layer IMGUI code with no Unity editor available in this session — reviewed
+    by inspection and by tracing the exact call sites, not rendered or clicked.
+  - **On "fix planes":** re-ran all 8 aircraft-geometry generator/test scripts
+    (`scripts/test-air-*.py`) — all still pass, no geometry bugs found. If "fix planes" meant
+    something else (aircraft behavior, visuals only visible in a build), that needs a more
+    specific pointer — nothing else aircraft-related turned up in this pass.
+  - **NEXT:** a fresh screenshot would confirm the Map-tab click fix and let button theming
+    (previous entry) actually be judged. No further bug-hunting queued unless asked.
+
+- **2026-09-16 Claude — themed every button in the HUD; the status line and guide card now
+  match. The single biggest lever found for "it still looks ugly."**
+  - **What I found, re-reading Bailey's screenshots:** they don't just show the nav-strip
+    overflow bug (fixed separately) — the whole HUD's buttons look like generic Unity UI
+    against the navy/charcoal panels. Root cause: `AirsideTheme.cs` had `PanelStyle` (themed
+    box backgrounds) and `TextStyle` (themed text colour) but **no themed button background
+    at all** — every button in the entire game used `GUI.skin.button`'s stock grey bevel with
+    only its text colour ever touched. Checked how widespread this was: only **two** places in
+    the whole codebase ever construct a button GUIStyle (`AirsidePrototype.cs`'s
+    `_hudButtonStyle`, `AirsidePrototype.Airline.cs`'s `_hudSmallButton`), and every other
+    button style in the game (`Styled(smallButton, ...)` variants, the nav tabs, etc.) derives
+    from one of those two by copying it — so fixing those two construction sites themes
+    essentially every clickable control in the HUD in one small, targeted change.
+  - **How:** new `AirsideTheme.ButtonStyle` sets normal/hover/active backgrounds to solid
+    fills already in the approved palette — Tarmac at rest, Coastal Blue on hover/press (the
+    palette's own documented "selection/accent" colour, so it reads consistently with the row-
+    selection highlight colour used elsewhere). No new hues introduced; no art asset added.
+  - **Also fixed:** the persistent status line (from an earlier slice) drew as bare floating
+    text with no panel behind it, inconsistent with the guide card it replaces, which does
+    have one — gave it the same quiet panel chrome.
+  - **Evidence:** reviewed by inspection only — `AirsideTheme.cs` isn't Unity-free, so it
+    can't be checked by the headless `scripts/test-domain.sh` harness either (still 284/284,
+    unaffected). **This is a real, structural fix backed by a from-scratch audit of every
+    button-style construction site in the codebase, not a guess** — but it has not been seen
+    rendered. A fresh screenshot is the only way to confirm it actually reads better.
+  - **NEXT:** waiting on a screenshot. If buttons still look wrong, the likely next thing to
+    check is whether Unity's runtime IMGUI actually honours `.hover`/`.active` states outside
+    the Editor the way I'm assuming — if not, the `.normal` background alone still fixes the
+    resting-state mismatch, which was the main complaint.
+
+- **2026-09-16 Claude — fixed a real HUD bug from Bailey's first screenshots of the nav-shell
+  work: the workspace nav strip's text overflowed off the left edge of the window.**
+  - **What the screenshots showed:** the four nav tabs read "erations / Map (Tab) / Fleet (H) /
+    Contracts" — "Operations" was cut down to "erations", missing its first two letters,
+    because the button text overflowed past the window's own left edge. Also flagged (broader,
+    not yet resolved): the overall HUD still reads as sparse/dark and needs more style work.
+  - **Root cause:** `AirlineHudLayout.NavStrip` was locked to the clock column's width
+    (≤300 px) — four tabs at ~75 px each, nowhere near enough for labels like
+    "Operations (T)". Unity's `GUI.Button` centres and does not clip overflowing text to its
+    own rect, so the extra width spilled out both sides — left far enough to go off-window.
+  - **Fix:** the nav strip is no longer tied to the clock's width. It now uses the same
+    "room beside/below the fleet panel" the destinations map already gets, capped at
+    `NavStripMaxWidth` (420 px) so it doesn't stretch absurdly on very wide windows — computing
+    that required reordering `AirlineHudLayout.Create` so the fleet panel's horizontal
+    placement (which only ever depended on width, not on anything below the clock) is worked
+    out before the nav strip is sized, not after. Tab labels also dropped their `(T)`/`(Tab)`/
+    `(H)` hotkey suffixes — they were making an already-tight fit worse, and Controls Help
+    (F1) already lists every hotkey.
+  - **Also fixed, same evidence:** the destination-map marker glyph (ring + crossed runway
+    bars, added in the same earlier slice) risked reading as a target/"no entry" symbol at the
+    14-30 px it actually draws at. Replaced with a clean antialiased dot — same texture-baking
+    approach, much safer at small sizes, no longer claims to be a literal airport glyph.
+  - **Evidence:** the by-hand math for the widened nav strip was checked against every
+    existing overlap/fits-on-screen invariant in `PresentationLayoutTests.cs` (all still hold —
+    reasoned through explicitly, not just re-run, since this file needs Unity and none is
+    available here) and a **new** `AirlineHudLayout_NavStripFitsFourReadableTabs` test locks in
+    a minimum 65 px/tab at all 6 existing resolutions specifically so this exact regression
+    can't come back silently. `scripts/test-domain.sh` still 284/284 (unaffected — these are
+    Presentation-only files the headless harness doesn't compile).
+  - **NEXT:** genuinely need a fresh screenshot to confirm the nav strip actually reads right
+    now — this was diagnosed from a screenshot, not from running the game. The broader "still
+    looks ugly, style needs work" feedback is real and larger than this one bug; wants either
+    more screenshots pointing at specific panels, or a proper Mac visual pass, before guessing
+    further at what else to change.
+
 - **2026-09-16 Claude — reliability cost for cancelling a contract flight (closes the
   `CancelDeparture` TODO from the Task 2/3 PR, #291).**
   - **Player-visible:** cancelling a scheduled departure that would have counted towards the

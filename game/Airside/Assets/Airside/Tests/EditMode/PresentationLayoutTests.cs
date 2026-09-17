@@ -175,6 +175,26 @@ namespace Airside.Tests
             }
         }
 
+        [TestCase(1280, 720)]
+        [TestCase(1440, 900)]
+        [TestCase(3456, 2168)]
+        [TestCase(800, 500)]
+        [TestCase(400, 780)]
+        [TestCase(320, 240)]
+        public void AirlineHudLayout_NavStripFitsFourReadableTabs(int screenWidth, int screenHeight)
+        {
+            var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
+            var hud = HudLayout.Create(screenWidth / scale, screenHeight / scale);
+            var airline = AirlineHudLayout.Create(hud);
+
+            // Regression guard: the nav strip used to be locked to the 300 px clock column,
+            // giving four tabs ~75 px each — nowhere near enough for "Operations", which
+            // overflowed clean off the left edge of the window in a packaged build.
+            const float tabs = 4f;
+            Assert.That(airline.NavStrip.width / tabs, Is.GreaterThanOrEqualTo(65f),
+                $"{screenWidth}x{screenHeight}: nav tabs too narrow to hold their labels");
+        }
+
         [Test]
         public void AirlineHudLayout_DesktopKeepsMapBesideTheFleet()
         {

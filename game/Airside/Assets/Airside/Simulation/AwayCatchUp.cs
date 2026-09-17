@@ -106,10 +106,17 @@ namespace Airside.Simulation
                 lines.Add(flown > 0 ? $"{airline.Name} flew {Plural(flown, "trip")}." : $"{airline.Name} flew no trips.");
             }
 
-            var fundsEarned = after.CareerState.Funds - before.CareerFunds;
+            // A pre-6 save has no career fields (they default to 0), but the career itself
+            // is restored fresh at these same starting values (AirlineSave.Restore) — comparing
+            // against the raw zero would misreport that migration jump (e.g. 0 -> 100
+            // reliability) as something that happened while the player was away.
+            var fundsBefore = before.Version >= 6 ? before.CareerFunds : 0;
+            var reliabilityBefore = before.Version >= 6 ? before.CareerReliability : AirlineCareerState.StartingReliability;
+
+            var fundsEarned = after.CareerState.Funds - fundsBefore;
             if (fundsEarned > 0)
                 lines.Add($"Your airline earned ${fundsEarned:N0} while you were away.");
-            var reliabilityChange = after.CareerState.Reliability - before.CareerReliability;
+            var reliabilityChange = after.CareerState.Reliability - reliabilityBefore;
             if (reliabilityChange != 0)
                 lines.Add(reliabilityChange > 0
                     ? $"Reliability rose {reliabilityChange} points to {after.CareerState.Reliability}%."

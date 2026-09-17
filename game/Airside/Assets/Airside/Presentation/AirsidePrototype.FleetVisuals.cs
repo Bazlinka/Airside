@@ -18,6 +18,8 @@ namespace Airside.Presentation
         // Reused every frame: the follow set only changes when an aircraft appears or leaves.
         private readonly List<Transform> _fleetActiveViews = new();
         private Transform[] _fleetFollowTargets = Array.Empty<Transform>();
+        // Reused every click instead of a fresh List<AircraftPickHit> per raycast.
+        private readonly List<AircraftPickHit> _pickCandidates = new();
 
         /// <summary>Fleet departures roll from the real 05 threshold; the demo circuit from where it stopped.</summary>
         private float TakeoffOffsetX => FleetMode ? 0f : AirsideFlightPath.CircuitTakeoffOffsetX;
@@ -580,7 +582,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var candidates = new List<AircraftPickHit>(hits.Length);
+            _pickCandidates.Clear();
             for (var i = 0; i < hits.Length; i++)
             {
                 var proxy = hits[i].collider != null
@@ -589,10 +591,10 @@ namespace Airside.Presentation
                 if (proxy == null || string.IsNullOrEmpty(proxy.AircraftId))
                     continue;
                 var selectable = _fleetViewById.ContainsKey(proxy.AircraftId);
-                candidates.Add(new AircraftPickHit(proxy.AircraftId, hits[i].distance, selectable));
+                _pickCandidates.Add(new AircraftPickHit(proxy.AircraftId, hits[i].distance, selectable));
             }
 
-            var id = AircraftPickRouting.ResolveNearest(candidates);
+            var id = AircraftPickRouting.ResolveNearest(_pickCandidates);
 
             if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
             {

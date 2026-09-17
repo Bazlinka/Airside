@@ -1755,6 +1755,9 @@ namespace Airside.Presentation
         private readonly HashSet<string> _syncLiveIds = new();
         private readonly List<string> _syncStaleSlots = new();
         private readonly HashSet<Transform> _syncKept = new();
+        // Tracks slots already handed out so a new one is found in O(1) instead of
+        // rescanning every current assignment for every candidate slot.
+        private readonly HashSet<int> _syncUsedSlots = new();
         private Transform[] _syncNextViews = Array.Empty<Transform>();
         private string[] _syncNextIds = Array.Empty<string>();
 
@@ -1794,6 +1797,11 @@ namespace Airside.Presentation
             foreach (var id in staleSlots)
                 _commercialLiverySlot.Remove(id);
 
+            var usedSlots = _syncUsedSlots;
+            usedSlots.Clear();
+            foreach (var pair in _commercialLiverySlot)
+                usedSlots.Add(pair.Value);
+
             if (_syncNextViews.Length != needed)
             {
                 _syncNextViews = new Transform[needed];
@@ -1815,17 +1823,9 @@ namespace Airside.Presentation
                 if (!_commercialLiverySlot.TryGetValue(flight.AircraftId, out var slot))
                 {
                     slot = 0;
-                    while (true)
-                    {
-                        var taken = false;
-                        foreach (var pair in _commercialLiverySlot)
-                        {
-                            if (pair.Value == slot) { taken = true; break; }
-                        }
-                        if (!taken)
-                            break;
+                    while (usedSlots.Contains(slot))
                         slot++;
-                    }
+                    usedSlots.Add(slot);
                     _commercialLiverySlot[flight.AircraftId] = slot;
                 }
 

@@ -616,7 +616,7 @@ namespace Airside.Presentation
             var slot = rect.width / WorkspaceTabs.Length;
             for (var i = 0; i < WorkspaceTabs.Length; i++)
             {
-                var (workspace, label, _) = WorkspaceTabs[i];
+                var (workspace, label) = WorkspaceTabs[i];
                 var tabRect = new Rect(rect.x + i * slot, rect.y, slot - 4f, rect.height);
                 // The hotkey used to print in the label ("Operations (T)") but four of those
                 // never fit the strip without overflowing it — the hotkeys still work, Controls

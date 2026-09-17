@@ -147,7 +147,11 @@ namespace Airside.Presentation
         /// <summary>Expected trip timeline if pushed back at <paramref name="departAt"/>, before any runway queue.</summary>
         public static PlannedTrip Estimate(FleetAircraft aircraft, long airborneSeconds, SimulationTime departAt)
         {
-            var airborne = departAt.Advance(AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand) + AirlineOperations.TakeoffRunwaySeconds);
+            // The untyped overloads default to an ATR 42, so every aircraft's departure
+            // preview showed the same taxi/takeoff time regardless of what was actually
+            // parked on the stand — a 787 planned exactly like an ATR 42.
+            var airborne = departAt.Advance(AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand, aircraft.Type)
+                + AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type));
             var arrive = airborne.Advance(airborneSeconds);
             var leave = arrive.Advance(AirlineOperations.DestinationTurnaroundSeconds);
             var back = leave.Advance(airborneSeconds);
@@ -176,12 +180,13 @@ namespace Airside.Presentation
             if (endsAt.CompareTo(now) < 0)
                 endsAt = now;
             var turnaround = AirlineOperations.DestinationTurnaroundSeconds;
+            var takeoffRunwaySeconds = AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type);
             return aircraft.State switch
             {
                 FleetState.AtStand => null,
-                FleetState.TaxiOut => endsAt.Advance(AirlineOperations.TakeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
+                FleetState.TaxiOut => endsAt.Advance(takeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
                 FleetState.HoldingShort or FleetState.TakingOff =>
-                    now.Advance(AirlineOperations.TakeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
+                    now.Advance(takeoffRunwaySeconds + airborneSeconds * 2 + turnaround),
                 FleetState.Outbound => endsAt.Advance(turnaround + airborneSeconds),
                 FleetState.AtDestination => endsAt.Advance(airborneSeconds),
                 FleetState.Inbound => endsAt,

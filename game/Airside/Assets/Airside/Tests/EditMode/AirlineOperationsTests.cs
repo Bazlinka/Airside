@@ -201,6 +201,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Ground_PushbacksOnSeparateApronsDoNotDelayEachOther()
+        {
+            // Regional bays and terminal gates sit on separate aprons with their own taxi
+            // routes and never share pavement (AirportTaxiNetwork), so a bay pushback has
+            // no reason to hold up an unrelated gate pushback. This used to be gated by one
+            // fleet-wide 60 s release regardless of which apron either aircraft was on.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Player();
+            ops.AddAirline(player);
+            var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(600));
+            ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(600));
+
+            RunTo(clock, ops, 600);
+            Assert.That(bayPlane.State, Is.EqualTo(FleetState.TaxiOut));
+            Assert.That(gatePlane.State, Is.EqualTo(FleetState.TaxiOut),
+                "a different apron's pushback should not be held up by the bay's release gate");
+        }
+
+        [Test]
         public void Tower_LandsArrivalsBeforeReleasingDepartures()
         {
             var (clock, ops, arriving) = PlayerOnly(aircraft: 2);
@@ -294,6 +317,22 @@ namespace Airside.Tests
 
             var (_, ops, _) = PlayerOnly();
             Assert.Throws<InvalidOperationException>(() => ops.AddAirline(Airline.Player("Another", "#000000")));
+        }
+
+        [Test]
+        public void GoAroundSeed_DiffersForSameLengthRegistrationsAtTheSameTripCountAndHour()
+        {
+            // Every registration in the fleet is the same "VH-XXX" format/length, so a seed
+            // built from Length instead of the full string gave identical sister ships
+            // (e.g. Rex's three Saab 340s) the exact same go-around draw whenever their trip
+            // counts and the wall-clock hour happened to line up - they all went around, or
+            // none did, in lockstep forever. Hashing the whole registration fixes that.
+            var rex1 = AirlineOperations.GoAroundSeed(3, "VH-ZRC", 3600);
+            var rex2 = AirlineOperations.GoAroundSeed(3, "VH-ZRD", 3600);
+            var rex3 = AirlineOperations.GoAroundSeed(3, "VH-ZRE", 3600);
+            Assert.That(rex1, Is.Not.EqualTo(rex2));
+            Assert.That(rex2, Is.Not.EqualTo(rex3));
+            Assert.That(rex1, Is.Not.EqualTo(rex3));
         }
 
         private static string Snapshot(AirlineOperations ops)

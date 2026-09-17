@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **Fix a compile-breaking bug on `main` plus 9 more performance, realism, logic and taxi
+  fixes.** The workspace nav strip had a tuple-arity mismatch (`WorkspaceTabs[i]`
+  destructured into 3 variables from a 2-element array) left over from an earlier commit
+  this session that trimmed the array but missed the call site — the project would not
+  compile. Also: sister aircraft went around in lockstep because the go-around "random" seed
+  hashed registration *length* (identical for every "VH-XXX" rego) instead of the
+  registration itself; 3 of 7 jets (A321neo, A350, 787-10) planned cruise altitude using the
+  turboprop formula instead of the jet one; the flight planner's departure/return-time
+  preview used an ATR 42's taxi and takeoff timing for every aircraft type; a bay pushback
+  and a gate pushback could delay each other despite sharing no pavement; wake-turbulence
+  separation was reclassified to derive from the catalogue's own wingspan data instead of a
+  second, disconnected type-ID list; the "quickest stand" ranking now accepts an aircraft
+  type instead of always assuming an ATR 42; and two allocation/O(n²) spots in the fleet
+  render path (a per-click list allocation, an O(n²) livery-slot scan) now reuse fields.
+  14 new tests, all mutation-tested where the fix is Simulation/Domain-testable;
+  `FlightPlanner.cs` and its 10-test suite now run in the headless harness for the first
+  time. `scripts/test-domain.sh`: 299/299, up from 285.
+
 - **Keep modal screens modal.** The airline setup and away-summary screens no longer leave
   the live speed readout or Follow / Overview buttons visible and clickable underneath them.
   Opening the Escape menu also hides the underlying airline panels, preventing the setup form

@@ -88,7 +88,12 @@ namespace Airside.Simulation
         public static double PlannedCruiseFeet(double legKm, AircraftType type)
         {
             var performance = AircraftPerformance.For(type);
-            var jet = type?.Id == "B38M";
+            // Every authored jet climbs like a jet, not just the 737 — A321neo, A350 and
+            // 787 fell through to the turboprop formula and planned a widebody
+            // international service at ~22,000 ft on a medium leg instead of the
+            // ~33,000 ft a jet would actually plan, which showed up directly in the HUD's
+            // "FLxxx" readout.
+            var jet = type?.Id is "B38M" or "A21N" or "A359" or "B78X";
             var raw = (jet ? 8000 : 6000) + (jet ? 38 : 25) * Math.Max(0.0, legKm);
             var rounded = Math.Round(raw / 1000.0) * 1000.0;
             return Math.Max(MinCruiseFeet, Math.Min(performance.MaxCruiseFeet, rounded));

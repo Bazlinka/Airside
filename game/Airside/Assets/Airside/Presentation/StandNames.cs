@@ -26,14 +26,18 @@ namespace Airside.Presentation
         /// <summary>"Bay 50C" — the simulation's own label, so summaries and HUD agree.</summary>
         public static string Display(StableId stand) => AdelaideGround.StandLabel(stand);
 
-        /// <summary>The free stand with the shortest taxi in, or null when none is free.</summary>
-        public static StableId? QuickestToTaxiIn(IEnumerable<StableId> freeStands)
+        /// <summary>The free stand with the shortest taxi in for <paramref name="type"/>, or null when none is free.</summary>
+        public static StableId? QuickestToTaxiIn(IEnumerable<StableId> freeStands, AircraftType type = null)
         {
             StableId? best = null;
             var bestSeconds = long.MaxValue;
             foreach (var stand in freeStands)
             {
-                var seconds = AirlineOperations.TaxiInSecondsTo(stand);
+                // The untyped overload defaults to an ATR 42, so this always ranked stands
+                // by a turboprop's taxi time even for a jet choosing among terminal gates.
+                var seconds = type != null
+                    ? AirlineOperations.TaxiInSecondsTo(stand, type)
+                    : AirlineOperations.TaxiInSecondsTo(stand);
                 if (seconds >= bestSeconds)
                     continue;
                 bestSeconds = seconds;

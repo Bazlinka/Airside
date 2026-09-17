@@ -1,5 +1,104 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — 10 fixes across performance, realism, game logic and taxi behaviour,
+  found by re-reading the codebase from scratch plus a dedicated research pass.**
+  - **#1, critical: the game did not compile.** `AirsidePrototype.Airline.cs`'s
+    `DrawWorkspaceNav` destructured `WorkspaceTabs[i]` as a 3-element tuple
+    (`var (workspace, label, _) = ...`) but the array itself had been trimmed to 2 elements
+    in an earlier commit this session (`863687b`, the hotkey-field removal) — the call site
+    was never updated to match. This has been sitting on `main` since PR #293 merged. Fixed
+    to `var (workspace, label) = WorkspaceTabs[i];`. No headless test catches a Presentation
+    compile error (the harness only compiles a UnityEngine-free allowlist), so this kind of
+    break is invisible to `scripts/test-domain.sh` — a real Unity compile (or at minimum a
+    grep sweep of every tuple destructure after touching a tuple's shape) is the only thing
+    that would have caught it, and neither ran between the two commits.
+  - **#2: sister aircraft went around, or didn't, in lockstep forever.** `ShouldGoAround`'s
+    "random" seed used `aircraft.Registration.Length * 7` — every registration in the fleet
+    is the same "VH-XXX" format, so every aircraft's length is identical and contributed
+    nothing. Two aircraft with the same completed-trip count in the same hour (e.g. any two
+    of Rex's three fresh Saab 340s) got the exact same go-around decision. Fixed to hash the
+    whole registration string. New test proves VH-ZRC/ZRD/ZRE (same length, real fleet regos)
+    now get distinct seeds; mutation-tested.
+  - **#3: three of seven jets planned cruise altitude like a turboprop.** `EnrouteProfile.
+    PlannedCruiseFeet`'s jet-vs-turboprop climb formula only checked `type?.Id == "B38M"` —
+    the A321neo, A350-900 and 787-10 fell through to the turboprop formula (6,000 ft base,
+    25 ft/km) instead of the jet one (8,000 ft base, 38 ft/km), planning a widebody
+    international service at ~22,000 ft on a medium leg instead of ~33,000 ft — visible
+    directly in the HUD's "FLxxx" cruise readout. Fixed to check all four authored jet IDs.
+    New test asserts every jet type plans well above a turboprop on the same leg;
+    mutation-tested.
+  - **#4/#5: the flight planner's departure preview used an ATR 42's timing for every
+    aircraft.** `FlightPlanner.Estimate` (the "when will it be airborne" preview) and
+    `ExpectedBackAt` (the "when is it back" HUD line) both called the untyped
+    `AirlineOperations.TaxiOutSecondsFrom`/`TakeoffRunwaySeconds` overloads, which silently
+    default to an ATR 42 — so a 787's departure preview showed exactly the same taxi/takeoff
+    time as a turboprop's. Fixed to thread the aircraft's actual type through to the
+    type-aware overloads that already existed and were already used correctly everywhere
+    else in the render path. `FlightPlanner.cs` was UnityEngine-free but not in the headless
+    harness's compile list — added it (plus un-excluded `FlightPlannerTests.cs`), so this
+    file now gets real headless coverage going forward. Two new tests pin the exact expected
+    value against the type-aware formula directly (not just "differs from ATR") so a
+    regression back to the untyped overloads can't slip past a stand-class heuristic that
+    partly masks it; both mutation-tested.
+  - **#6: a bay departure and a gate departure delayed each other for no physical reason.**
+    `NextTaxiReleaseAt` scanned the *entire* fleet for any aircraft currently taxiing out and
+    blocked the next pushback fleet-wide for 60 s — even though the regional bays and
+    terminal gates are on physically separate aprons with entirely separate taxi routes
+    (`AirportTaxiNetwork`) that never share pavement. A Rex Saab pushing back from a bay
+    could hold up an unrelated Virgin 737 push from the terminal gates. Fixed to scope the
+    release gate per apron (bay vs. gate), so only pushbacks sharing actual pavement wait on
+    each other. `NextEventAt`'s skip-to-next-event logic updated to match. New test drives
+    one bay departure and one gate departure at the same instant and asserts neither is held
+    up by the other; mutation-tested.
+  - **#7: wake-turbulence separation was a second, disconnected classification.**
+    `WakeSeparationSeconds` hardcoded a switch on literal type-ID strings ("A359"/"B78X" →
+    180s, "B38M"/"A21N" → 120s), duplicating a classification the catalogue already encodes
+    properly via `AircraftCatalogue.WingspanMetres`. Every current type still classifies
+    identically, but any future type added to the catalogue without a matching case here
+    would have silently fallen back to the smallest 90s separation regardless of how large
+    it actually is. Fixed to derive the band from the aircraft's own wingspan. New test
+    confirms the medium-jet band (737-8, A321neo) and the turboprop default (Saab 340,
+    Dash 8) still classify correctly under the new derivation.
+  - **#8: the "quickest stand" ranking always used an ATR 42's taxi time.**
+    `StandNames.QuickestToTaxiIn` called the untyped `TaxiInSecondsTo` overload. Currently
+    unreachable in the live game (nothing calls it — `SuggestStand` has its own separate
+    ranking), but it's the same untyped-overload foot-gun as #4/#5/#7's root cause and would
+    misrank stands the moment anything does call it for a non-ATR aircraft. Fixed to accept
+    an optional `AircraftType` and use the type-aware overload when given one.
+  - **#9/#10: two real per-frame/per-click allocation and O(n²) spots in the fleet render
+    path.** `TrySelectAircraftAtScreen` allocated a fresh `List<AircraftPickHit>` on every
+    field click — every other per-frame collection in the same file already reuses a field
+    for exactly this reason, this one was missed; now reuses `_pickCandidates`. The livery
+    slot assignment in `SyncCommercialAircraftViews` rescanned the *entire* current
+    slot-assignment dictionary once per candidate slot per newly-appearing aircraft
+    (O(n²) per batch of new arrivals); now tracks used slots in a reused `HashSet<int>` for
+    an O(1) "is this slot free" check. Both unnoticeable at the current fleet size (~13
+    aircraft) but exactly the kind of per-frame/per-batch full-fleet work that stops scaling.
+  - **Evidence:** #2, #3, #4, #5, #6, #7 are Domain/Simulation or now-headless-testable
+    Presentation logic — all mutation-tested (broke the fix, confirmed the new test failed,
+    restored it, confirmed the full suite passes). `scripts/test-domain.sh` **299/299**,
+    up from 285 (14 new tests, plus `FlightPlannerTests.cs` — 10 tests — coming online for
+    the first time by adding `FlightPlanner.cs` to the harness). #1, #8, #9, #10 are
+    Presentation-only with no Unity editor available in this session — reviewed by inspection
+    and, for #1, by manually re-deriving the C# tuple-arity rule that made it a compile
+    error, not run through an actual compiler.
+  - **On the "completely new interface for viewing flights" ask:** before building anything
+    new, I read what already exists — it's substantial. The **Operations** tab already has a
+    full arrivals/departures board (`DrawFlightsPanel`/`FlightBoard.cs`) with scheduled/
+    estimated times, gate, route, live status, a progress bar per flight, and ownership
+    dimming so AI traffic reads visually distinct from the player's own aircraft. The **Map**
+    tab already draws live great-circle routes for every in-progress flight, coloured by each
+    airline's own livery, with aircraft icons oriented to their heading and click-to-track.
+    Building a second, parallel system risked duplicating this rather than improving it, and
+    I have no Unity editor to visually verify a new screen against the existing ones. **#1
+    above was actively blocking all of it** — with the compile break, none of these panels,
+    nor the workspace nav strip that switches between them, would have built at all. Fixing
+    that arguably does more for "being able to see flights, the map and what's mine" than a
+    new screen would have. **NEXT:** if the existing Operations/Map tabs, now that they'll
+    actually compile, still don't cover what "who has gone where / what's mine" was asking
+    for once seen rendered, the more precise ask (a combined view? a history log of
+    completed trips? something else?) would sharpen what to build next.
+
 - **2026-09-17 Codex — live modal-boundary playtest and fix.**
   - **Branch:** `codex/modal-hud-isolation` (commit and push this review branch; `main` is
     protected and requires a pull request).

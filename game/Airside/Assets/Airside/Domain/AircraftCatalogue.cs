@@ -156,9 +156,13 @@ namespace Airside.Domain
             if (type == null)
                 return false;
             foreach (var spec in All)
-                if (spec.Id == type.Id)
-                    found = spec;
-            return found != null;
+            {
+                if (spec.Id != type.Id)
+                    continue;
+                found = spec;
+                return true;
+            }
+            return false;
         }
 
         public static AircraftSpec For(AircraftType type)

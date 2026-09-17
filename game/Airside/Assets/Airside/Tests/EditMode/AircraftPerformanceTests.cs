@@ -8,6 +8,30 @@ namespace Airside.Tests
     public sealed class AircraftPerformanceTests
     {
         [Test]
+        public void CatalogueIds_AreAllUnique()
+        {
+            // AircraftType.TryFromId and AircraftCatalogue.TryFor both used to scan every
+            // entry without returning on the first match, silently keeping the *last*
+            // match instead of the first - harmless only as long as every id really is
+            // unique. Both now return immediately, but that only matters if this
+            // invariant ever breaks, so it is worth locking in directly.
+            var ids = AircraftCatalogue.All.Select(spec => spec.Id).ToList();
+            Assert.That(ids.Distinct().Count(), Is.EqualTo(ids.Count));
+        }
+
+        [Test]
+        public void TryFromId_ReturnsTheMatchingTypeForEveryCatalogueEntry()
+        {
+            foreach (var spec in AircraftCatalogue.All)
+            {
+                Assert.That(AircraftType.TryFromId(spec.Id, out var type), Is.True);
+                Assert.That(type, Is.SameAs(spec.Type));
+            }
+
+            Assert.That(AircraftType.TryFromId("NOPE", out _), Is.False);
+        }
+
+        [Test]
         public void EveryFleetType_HasItsOwnTakeoffAndApproachProfile()
         {
             var types = AircraftCatalogue.All.Select(spec => spec.Type).ToArray();

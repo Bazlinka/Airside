@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **5 more fixes: 2 latent lookup bugs, a wrong dead constant, and 2 real perf/behaviour
+  bugs.** `AircraftType.TryFromId`/`AircraftCatalogue.TryFor` never returned on a match and
+  silently kept the *last* one instead of the first — harmless while catalogue ids are
+  unique, now fixed and locked in with tests before it isn't. `AirportLocation`'s UTC offset
+  was a flat `9` for every South Australian airport (real ACST is +9:30, and the field was an
+  `int` so it couldn't even represent that) — confirmed dead/unread elsewhere, fixed to
+  `9.5f`. The gate-servicing GSE team could get permanently stuck on one terminal aircraft
+  while every other jet on the gates got no service vehicles at all; now rotates between
+  every currently-parked terminal aircraft. The always-visible Fleet sidebar and the Hangar
+  panel each scanned the whole fleet twice per airline per frame (once for content height,
+  again to draw); both now group the fleet once and reuse it. `scripts/test-domain.sh`:
+  304/304, up from 302.
+
 - **Bring `RouteMap.cs`'s great-circle/zoom math into the headless test harness.**
   UnityEngine-free like its neighbour `AustraliaMapLens.cs` (already covered) but excluded
   from `scripts/dotnet-harness` along with its 3-test suite, apparently only because it

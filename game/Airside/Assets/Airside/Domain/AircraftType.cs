@@ -49,9 +49,13 @@ namespace Airside.Domain
         {
             type = null;
             foreach (var spec in AircraftCatalogue.All)
-                if (string.Equals(id, spec.Id, StringComparison.Ordinal))
-                    type = spec.Type;
-            return type != null;
+            {
+                if (!string.Equals(id, spec.Id, StringComparison.Ordinal))
+                    continue;
+                type = spec.Type;
+                return true;
+            }
+            return false;
         }
     }
 }

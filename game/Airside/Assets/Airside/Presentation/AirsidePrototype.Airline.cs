@@ -732,8 +732,39 @@ namespace Airside.Presentation
         /// The always-visible roster sidebar — distinct from the <see cref="HudWorkspace.Fleet"/>
         /// nav tab, which opens the Hangar panel (<see cref="DrawHangarPanel"/>).
         /// </summary>
+        private readonly List<FleetAircraft> _fleetPanelMine = new();
+        private readonly Dictionary<Airline, List<FleetAircraft>> _fleetPanelOtherFleets = new();
+
+        /// <summary>One pass over the whole fleet, reused by both the height pass and the draw
+        /// pass below — each used to call FleetOf(airline) separately (itself a full fleet
+        /// scan) for the height total and again to draw the rows, doubling the fleet scans
+        /// on this always-visible sidebar every single OnGUI invocation.</summary>
+        private void GroupFleetPanelAircraft()
+        {
+            var player = _operations.PlayerAirline;
+            var mine = _fleetPanelMine;
+            mine.Clear();
+            foreach (var pair in _fleetPanelOtherFleets)
+                pair.Value.Clear();
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (ReferenceEquals(aircraft.Airline, player))
+                {
+                    mine.Add(aircraft);
+                    continue;
+                }
+                if (!_fleetPanelOtherFleets.TryGetValue(aircraft.Airline, out var list))
+                {
+                    list = new List<FleetAircraft>();
+                    _fleetPanelOtherFleets[aircraft.Airline] = list;
+                }
+                list.Add(aircraft);
+            }
+        }
+
         private void DrawFleetPanel(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
+            GroupFleetPanelAircraft();
             var estimatedInner = area.width - 48f;
             var contentHeight = FleetPanelContentHeight(estimatedInner);
             var rect = new Rect(area.x, area.y, area.width, Mathf.Min(Mathf.Max(contentHeight + 12f, 120f), area.height));
@@ -751,7 +782,7 @@ namespace Airside.Presentation
             y += 26f;
             GUI.Label(new Rect(x, y, inner, 18f), "Click an aircraft on the field — or a registration here.", small);
             y += 22f;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            foreach (var aircraft in _fleetPanelMine)
             {
                 y = DrawPlayerAircraftRow(aircraft, x, y, inner, label, small, smallButton);
                 y += 10f;
@@ -771,9 +802,12 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(x + 12f, y, inner - 12f, 20f), airline.Name, small);
                 GUI.color = previous;
                 y += 22f;
-                foreach (var aircraft in _operations.FleetOf(airline))
+                if (_fleetPanelOtherFleets.TryGetValue(airline, out var fleet))
                 {
-                    y = DrawTrafficAircraftRow(aircraft, x, y, inner, label, small);
+                    foreach (var aircraft in fleet)
+                    {
+                        y = DrawTrafficAircraftRow(aircraft, x, y, inner, label, small);
+                    }
                 }
             }
             GUI.EndScrollView();
@@ -783,7 +817,7 @@ namespace Airside.Presentation
         private float FleetPanelContentHeight(float inner)
         {
             var height = 12f + 26f + 22f + 34f;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            foreach (var aircraft in _fleetPanelMine)
             {
                 height += 56f + 10f;
                 if (_selectedAircraftId == aircraft.Registration) height += 52f;
@@ -798,8 +832,9 @@ namespace Airside.Presentation
                 if (airline.IsPlayer)
                     continue;
                 height += 22f;
-                foreach (var aircraft in _operations.FleetOf(airline))
-                    height += 54f + (_selectedAircraftId == aircraft.Registration ? 52f : 0f);
+                if (_fleetPanelOtherFleets.TryGetValue(airline, out var fleet))
+                    foreach (var aircraft in fleet)
+                        height += 54f + (_selectedAircraftId == aircraft.Registration ? 52f : 0f);
             }
 
             return height + 4f;
@@ -2395,16 +2430,36 @@ namespace Airside.Presentation
 
         private readonly List<FleetAircraft> _hangarMine = new();
         private readonly List<Airline> _hangarOthers = new();
+        private readonly Dictionary<Airline, List<FleetAircraft>> _hangarOtherFleets = new();
 
         private void DrawHangarFleet(Rect view, GUIStyle label, GUIStyle small)
         {
             var player = _operations.PlayerAirline;
             // Reused: OnGUI runs this several times a frame while the hangar is open.
+            // One pass over the whole fleet here, instead of calling FleetOf(airline) once
+            // per airline for the content-height total and again to draw the rows — each
+            // FleetOf call itself scans the entire fleet, so that used to be two full
+            // fleet scans per airline, every OnGUI invocation.
             var mine = _hangarMine;
             var others = _hangarOthers;
             mine.Clear();
             others.Clear();
-            mine.AddRange(_operations.FleetOf(player));
+            foreach (var pair in _hangarOtherFleets)
+                pair.Value.Clear();
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (ReferenceEquals(aircraft.Airline, player))
+                {
+                    mine.Add(aircraft);
+                    continue;
+                }
+                if (!_hangarOtherFleets.TryGetValue(aircraft.Airline, out var list))
+                {
+                    list = new List<FleetAircraft>();
+                    _hangarOtherFleets[aircraft.Airline] = list;
+                }
+                list.Add(aircraft);
+            }
             foreach (var airline in _operations.Airlines)
                 if (!airline.IsPlayer)
                     others.Add(airline);
@@ -2414,8 +2469,8 @@ namespace Airside.Presentation
             foreach (var airline in others)
             {
                 contentHeight += 22f;
-                foreach (var _ in _operations.FleetOf(airline))
-                    contentHeight += 60f;
+                if (_hangarOtherFleets.TryGetValue(airline, out var fleet))
+                    contentHeight += fleet.Count * 60f;
             }
 
             var inner = view.width;
@@ -2443,10 +2498,13 @@ namespace Airside.Presentation
                 GUI.Label(new Rect(12f, y, rowWidth - 12f, 20f), airline.Name, small);
                 GUI.color = previous;
                 y += 22f;
-                foreach (var aircraft in _operations.FleetOf(airline))
+                if (_hangarOtherFleets.TryGetValue(airline, out var fleet))
                 {
-                    DrawHangarRow(aircraft, new Rect(0f, y, rowWidth, 54f), label, small, quiet: true);
-                    y += 60f;
+                    foreach (var aircraft in fleet)
+                    {
+                        DrawHangarRow(aircraft, new Rect(0f, y, rowWidth, 54f), label, small, quiet: true);
+                        y += 60f;
+                    }
                 }
             }
 

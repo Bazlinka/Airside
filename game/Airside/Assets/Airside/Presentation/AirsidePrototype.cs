@@ -508,22 +508,28 @@ namespace Airside.Presentation
             UpdateGateServicing();
         }
 
-        /// <summary>Cycle a small GSE team around one parked terminal aircraft, kept on the apron.</summary>
+        private readonly List<FleetAircraft> _gateServicingCandidates = new();
+
+        /// <summary>
+        /// Cycle a small GSE team around whichever parked terminal aircraft is due, kept on
+        /// the apron. One team, so with more than one jet on the gates at once it rotates
+        /// between them a full 120 s service cycle at a time, rather than parking itself on
+        /// whichever aircraft happened to be first in fleet order and never moving again.
+        /// </summary>
         private void UpdateGateServicing()
         {
             if (!FleetMode)
                 return;
-            FleetAircraft parked = null;
+            var candidates = _gateServicingCandidates;
+            candidates.Clear();
             foreach (var aircraft in _operations.Fleet)
-            {
                 if (aircraft.State == FleetState.AtStand && AdelaideGround.IsTerminalGate(aircraft.Stand))
-                {
-                    parked = aircraft;
-                    break;
-                }
-            }
-            if (parked == null)
+                    candidates.Add(aircraft);
+            if (candidates.Count == 0)
                 return;
+
+            var cycleIndex = (int)(_preciseTime / 120.0) % candidates.Count;
+            var parked = candidates[cycleIndex];
 
             var pose = AdelaideGround.StandPose(parked.Stand);
             var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);

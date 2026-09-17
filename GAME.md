@@ -1,5 +1,50 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — second bug-hunting pass (a dedicated research subagent plus manual
+  review), 5 more fixes: 2 latent Domain lookup bugs, 1 wrong dead constant, 2 real
+  Presentation perf/behaviour bugs.**
+  - **`AircraftType.TryFromId` and `AircraftCatalogue.TryFor` never returned on a match** —
+    both kept scanning the whole catalogue and silently kept the *last* match instead of the
+    first. Harmless today because every catalogue id is unique, but a future copy-paste
+    duplicate in `AircraftCatalogue.cs` would have silently resolved to the wrong type with
+    no error — exactly the kind of bug that stays invisible until it randomly isn't. Both now
+    return immediately on the first match. New tests lock in first-match semantics and a
+    catalogue-uniqueness invariant so a future duplicate id fails loudly instead of silently
+    picking the wrong aircraft.
+  - **`AirportLocation`'s UTC offset was wrong and couldn't have been right** — every South
+    Australian preset (Adelaide, Kingscote, Port Lincoln, Coober Pedy) was `9` (a flat UTC+9);
+    South Australia is ACST, UTC+9:30, and the field was an `int`, so it structurally could
+    not hold the correct value. Confirmed unread anywhere outside its own declaration (the
+    real in-game clock goes through `AirlineClock`/`TimeZoneInfo` instead) — inert today, but
+    a wrong, unfixable-as-typed constant left for "a later build" (its own doc comment) to
+    trip over. Changed the field to `float` and the value to `9.5f`.
+  - **The gate-servicing GSE team could get stuck servicing one aircraft forever.**
+    `UpdateGateServicing` picked the *first* terminal-gate aircraft found in fleet order and
+    animated the fuel truck/baggage cart/bus around it — with more than one jet on the gates
+    at once (very plausible once VOZ/ANZ/QF/SQ traffic is all running), every aircraft after
+    the first in fleet order got no ground service vehicles, ever, for as long as that first
+    one kept using the gates. Fixed to rotate the one GSE team between every currently-parked
+    terminal aircraft a full 120 s service cycle at a time, instead of camping on whichever
+    one happened to be first.
+  - **The always-visible Fleet sidebar and the Hangar panel both scanned the whole fleet
+    twice per frame, per airline.** `FleetOf(airline)` itself scans the entire fleet; both
+    panels called it once per airline to total up the panel's content height and again to
+    actually draw the rows — for every AI airline, every single `OnGUI` invocation (which
+    IMGUI calls several times per real frame). Not a correctness bug, just wasted CPU that
+    scales with fleet size and airline count; fixed both panels to group the fleet by airline
+    in one pass and reuse that grouping for both the height total and the draw loop.
+  - **Evidence:** the two catalogue lookup fixes are Domain, fully headless-tested (new tests
+    added, full suite green). The UTC-offset and gate-servicing/fleet-panel fixes are
+    Presentation-only — reviewed by inspection, no Unity editor available in this session.
+    `scripts/test-domain.sh`: **304/304**, up from 302 (itself up from 299 after bringing
+    `RouteMap.cs`'s great-circle/zoom math into the harness earlier this pass — it had no
+    UnityEngine dependency but had never been added, same gap as `FlightPlanner.cs` last
+    time).
+  - **NEXT:** the research subagent's report also flagged `DestinationCatalogue`/route-
+    reachability, `AirlineCareerState` settlement idempotency, `AirlineSave` migrations,
+    `GroundMotion` taxi pose math and `RunwayWeather` as checked closely and found correct —
+    no need to re-audit those next time.
+
 - **2026-09-17 Claude — 10 fixes across performance, realism, game logic and taxi behaviour,
   found by re-reading the codebase from scratch plus a dedicated research pass.**
   - **#1, critical: the game did not compile.** `AirsidePrototype.Airline.cs`'s

@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Codex — live modal-boundary playtest and fix.**
+  - **Branch:** `codex/modal-hud-isolation` (commit and push this review branch; `main` is
+    protected and requires a pull request).
+  - **Player-visible outcome:** the airline setup and away-summary screens now stand alone;
+    the live speed/altitude readout and Follow / Overview controls are no longer visible or
+    clickable beneath them. Pressing Escape still exposes Resume/Quit, but the menu no longer
+    stacks its labels and buttons over the airline setup or other airline HUD panels.
+  - **Reproduction:** the existing packaged Mac build showed both defects immediately: the
+    start form had a changing speed readout and flight controls underneath it, and Escape drew
+    the Menu panel directly over the form. The current `main` source had the same unconditional
+    draw paths, so this was not treated as an old-build-only artefact.
+  - **Scope/invariants:** presentation-only changes in `AirsidePrototype.cs` and
+    `AirsidePrototype.Airline.cs`. Simulation, live clock, saves, fleets, routes and camera
+    movement are unchanged. The menu continues to record full-screen pointer capture, so the
+    earlier no-camera-movement-behind-menu invariant remains intact.
+  - **Evidence:** `scripts/test-domain.sh` passes 285/285 and `git diff --check` is clean.
+    Unity 6000.3.23f1 imported the project, but its headless licensing client repeatedly lost
+    its IPC channel, so EditMode did not produce a result and a fresh post-fix build could not
+    be claimed in this session.
+  - **NEXT:** once the Unity licensing client is healthy, run `scripts/test-unity.sh`, make a
+    fresh Mac build, and visually confirm setup, away-summary and Escape-menu states at
+    1280x720 and 1440x900 before merging further presentation work.
+
 - **2026-09-17 Claude — the speed/altitude readout showed no indication of which aircraft
   it was for ("this as well - makes no sense what it does", per Bailey's screenshot of
   "120 kt · 310 ft ▲" with no other context).**

@@ -679,8 +679,14 @@ namespace Airside.Presentation
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 
-            DrawSpeedReadout(layout, panel);
-            DrawControlBar(layout, button);
+            // The setup and away-summary panels are modal. Keeping the live flight
+            // controls underneath them made the start screen look unfinished and,
+            // worse, left Follow / Overview clickable while the modal owned input.
+            if (!AirlineModalOpen && !_menuOpen)
+            {
+                DrawSpeedReadout(layout, panel);
+                DrawControlBar(layout, button);
+            }
             DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
             if (_menuOpen)

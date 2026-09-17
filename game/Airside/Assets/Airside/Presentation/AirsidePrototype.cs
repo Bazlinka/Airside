@@ -728,15 +728,20 @@ namespace Airside.Presentation
 
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
-            var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
-                ? fleetAircraft.Type : AircraftType.Atr42;
+            _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft);
+            var type = FleetMode && fleetAircraft != null ? fleetAircraft.Type : AircraftType.Atr42;
             var knots = FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
                 : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type);
 
+            // Once an airline is running, several aircraft share the field (the player's
+            // and every AI carrier's) — with no callsign shown, this box read as an
+            // unexplained, seemingly random speed with no indication whose it was.
+            var label = FleetMode && fleetAircraft != null ? FlightNumber.OrRegistration(fleetAircraft) : null;
+
             var rect = layout.SpeedReadout;
             GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(rect, ReadoutText(knots, view), _speedReadoutStyle ??= SpeedReadoutStyle());
+            GUI.Label(rect, ReadoutText(knots, view, label), _speedReadoutStyle ??= SpeedReadoutStyle());
         }
 
         private Transform _readoutView;
@@ -747,11 +752,15 @@ namespace Airside.Presentation
         /// <summary>
         /// Speed, plus height above the field and vertical speed once airborne — read off the
         /// aircraft as drawn, so the numbers are the motion on screen. Below 10 ft it is on
-        /// the wheels and only speed shows.
+        /// the wheels and only speed shows. <paramref name="label"/> is the flight number or
+        /// registration this reading is for — with several airlines sharing the field, an
+        /// unlabelled number gave no way to tell whose it was, or that it might not even be
+        /// the player's own aircraft.
         /// </summary>
-        private string ReadoutText(float knots, Transform view)
+        private string ReadoutText(float knots, Transform view, string label = null)
         {
-            var speed = $"{Mathf.RoundToInt(knots)} kt";
+            var prefix = string.IsNullOrEmpty(label) ? string.Empty : $"{label}  ";
+            var speed = $"{prefix}{Mathf.RoundToInt(knots)} kt";
             if (view == null)
                 return speed;
 

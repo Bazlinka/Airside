@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Label the speed/altitude readout with the aircraft it's for.** The HUD's persistent
+  speed/altitude box always showed a reading (the followed aircraft, else the first visible
+  one) with no indication of whose it was — harmless with the old single-aircraft demo
+  circuit, but with an airline running and AI traffic sharing the field, the box could show
+  a competitor's speed with nothing to say so. Now prefixed with the aircraft's flight number
+  (or registration), same as the map and flight board already show.
+
 - **Fix the landing camera "stutter" and a touchdown-smoke speed bug.** Following your own
   aircraft in would silently drop the camera follow the instant it entered its Approach visual
   phase — well before the runway — because the far-approach pick-distance filter was also

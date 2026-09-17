@@ -1,5 +1,29 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — the speed/altitude readout showed no indication of which aircraft
+  it was for ("this as well - makes no sense what it does", per Bailey's screenshot of
+  "120 kt · 310 ft ▲" with no other context).**
+  - **What was actually wrong:** `DrawSpeedReadout`/`TryReadoutFlight` always show a reading —
+    the followed aircraft if one is followed, else the first visible aircraft on the field —
+    but the box never said whose it was. In the old single-ATR42 demo circuit that ambiguity
+    didn't matter (there was only ever one aircraft). Now that an airline is running, the
+    field has the player's fleet *and* every AI carrier's traffic, and "player aircraft come
+    first" (`RefreshFleetFlights`) only guarantees the default reading is the player's own
+    when the player actually has a visible aircraft on the field — if their one plane is away
+    on a leg, the same unlabelled box would show an AI competitor's speed with nothing to
+    say so. Bailey's screenshot is exactly that failure mode: a number with no explanation
+    is not confusing about *what it does* (it's a speed/altitude readout), it's confusing
+    about *whose* it is.
+  - **Fix:** `DrawSpeedReadout` now resolves the reading's aircraft and labels the box with
+    its flight number (falling back to registration), reusing the same `FlightNumber` helper
+    already used on the map and flight board. `ReadoutText` takes the label as an optional
+    parameter so the demo-circuit call path (no label) is unaffected.
+  - **Evidence:** Presentation-only IMGUI change, no Unity editor in this session — reviewed
+    by inspection, not rendered. `scripts/test-domain.sh` unaffected (285/285, this file isn't
+    Unity-free so it was never in that harness's scope).
+  - **NEXT:** a fresh screenshot would confirm the label reads cleanly at the readout's small
+    size and doesn't crowd the "kt / ft" figures next to it.
+
 - **2026-09-17 Claude — found and fixed the likely cause of the landing "stutter" Bailey
   reported, plus a real speed-accuracy bug in the touchdown wheel smoke.**
   - **The stutter:** `RefreshFleetFollowTargets` (`AirsidePrototype.FleetVisuals.cs`) excludes

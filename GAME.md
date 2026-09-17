@@ -1,5 +1,47 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — Presentation-layer CPU performance pass (research subagent audit plus
+  manual implementation), no graphics/quality changes.**
+  - **Every visible aircraft re-classified its own children by string, from scratch, every
+    single frame, across six separate full scans** — `UpdateControlSurfaces`,
+    `UpdateAircraftLightsAndGear`, `UpdateCabinDoor`, `UpdateCabinWindowGlow`,
+    `UpdateEngineHeat` and the propeller/jet-fan spin passes in `AirsidePrototype.cs` each
+    walked the aircraft's full cached child-name array and ran `StartsWith`/`IndexOf` against
+    every child to find their handful of targets (rudder, ailerons, gear doors, nav lights,
+    cabin doors, cockpit glass, engine-heat vents, propellers, fans) — for every visible
+    aircraft, every frame, scaling with fleet size. Extended the existing `PartsFor`
+    once-per-view cache (already used for gear/fan detection) to classify all of this in one
+    pass, cached for the life of the view; the per-frame passes now iterate only the small
+    pre-filtered lists that matched, with the exact same dispatch logic per part (behaviour
+    unchanged, verified by reading the moved code side by side). Same pattern applied to the
+    apron ground-crew idle/wave/walk animation (`UpdateApronLife`), which had an identical
+    per-frame torso/wand/arm/leg string scan.
+  - **Each aircraft's camera-facing identity label (operator title + registration, both
+    sides — 4 per aircraft) ran its own `LateUpdate`, independently calling `Camera.main`
+    and re-deriving the same aircraft-relative camera side** — `AircraftIdentitySideVisibility`
+    in `AirsidePrototype.FleetVisuals.cs`. Replaced with one tracker per aircraft driving all
+    4 labels from a single `InverseTransformPoint`, with the main-camera lookup cached once
+    per real frame and shared across the whole fleet instead of resolved per label.
+  - **The Flights board panel rescanned and re-sorted the entire fleet on every OnGUI pass**
+    (`DrawFlightsPanel` in `AirsidePrototype.Airline.cs`) — IMGUI fires OnGUI several times per
+    real frame (Layout, Repaint, every mouse-move), so this ran far more often than once per
+    frame while the tab was open. Same class of bug as the already-fixed `FleetOf` double-scan
+    in the Fleet/Hangar panels. Capped the rebuild+sort to once per real frame.
+  - **Evidence:** compiled clean in the real Unity 6.3.23f1 editor (interactive, since batchmode
+    couldn't get a license lease in this environment) — 928 scripts, fresh
+    `Airside.Presentation.dll`/`.pdb`, no `error CS` anywhere in `Editor.log`. Did not run the
+    EditMode suite this pass (the open interactive editor holds the project lock batchmode
+    needs); Domain/Simulation code was untouched, so no regression there is expected, but this
+    is not itself proof — get a full `scripts/test-unity.sh` run before relying on this beyond
+    what's stated. Presentation animation behaviour (control surfaces, lights, doors, glow,
+    heat, props/fans) is reviewed by inspection only — every runtime consumer's logic was moved
+    verbatim, not rewritten, but there is no automated coverage for this code and it has not
+    been visually verified in Play mode this session.
+  - **NEXT:** run `scripts/test-unity.sh` (close the interactive editor first so batchmode can
+    get the project lock) and, ideally, Play-test a gate full of aircraft to visually confirm
+    control surfaces/lights/gear/doors/window glow/engine heat/props still animate correctly —
+    this refactor touched the classification for all of them at once.
+
 - **2026-09-17 Cursor — zoom/pan speed fix (ADR 0054 follow-up).**
   - **Branch:** `cursor/faster-zoom-and-pan-b9dd`.
   - **Why:** Bailey: "zoom still sucks ... takes too long - and dragging around

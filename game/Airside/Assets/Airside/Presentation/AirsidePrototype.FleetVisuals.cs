@@ -333,6 +333,11 @@ namespace Airside.Presentation
 
             var layout = AircraftIdentityMarkings.For(aircraft.Type);
             var operatorText = aircraft.Airline.Name.ToUpperInvariant();
+            // One tracker drives all four labels' side visibility per aircraft (was one
+            // MonoBehaviour per label, each independently resolving Camera.main and
+            // re-deriving the same aircraft-relative camera side every LateUpdate).
+            var sideVisibility = aircraftView.gameObject.AddComponent<AircraftIdentitySideVisibility>();
+            sideVisibility.Initialise(aircraftView);
             for (var side = -1; side <= 1; side += 2)
             {
                 AddAircraftIdentityText(
@@ -343,7 +348,8 @@ namespace Airside.Presentation
                     side,
                     layout.OperatorCharacterSize,
                     operatorColour,
-                    FontStyle.Bold);
+                    FontStyle.Bold,
+                    sideVisibility);
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Registration L" : "Registration R",
@@ -352,7 +358,8 @@ namespace Airside.Presentation
                     side,
                     layout.RegistrationCharacterSize,
                     new Color(0.10f, 0.12f, 0.14f),
-                    FontStyle.Normal);
+                    FontStyle.Normal,
+                    sideVisibility);
             }
 
             AirsideNamedChildren.Forget(aircraftView);
@@ -366,7 +373,8 @@ namespace Airside.Presentation
             int side,
             float characterSize,
             Color colour,
-            FontStyle style)
+            FontStyle style,
+            AircraftIdentitySideVisibility sideVisibility)
         {
             var label = new GameObject(name);
             label.transform.SetParent(parent, false);
@@ -394,8 +402,7 @@ namespace Airside.Presentation
             // The legacy font shader is double-sided. Keep only the camera-facing
             // fuselage title enabled so the opposite title cannot appear backwards
             // through the top of the aircraft in elevated follow views.
-            label.AddComponent<AircraftIdentitySideVisibility>()
-                .Initialise(parent, renderer, side);
+            sideVisibility.Register(renderer, side);
         }
 
         /// <summary>
@@ -618,29 +625,67 @@ namespace Airside.Presentation
         }
     }
 
+    /// <summary>
+    /// Drives camera-facing visibility for every identity label (operator title and
+    /// registration, both sides) on one aircraft from a single LateUpdate. Previously
+    /// each of the 4 labels carried its own tracker, so every aircraft paid for 4
+    /// independent Camera.main resolutions and 4 identical InverseTransformPoint calls
+    /// per frame; this does one of each per aircraft and shares one cached main-camera
+    /// lookup across the whole fleet.
+    /// </summary>
     internal sealed class AircraftIdentitySideVisibility : MonoBehaviour
     {
-        private Transform _aircraft;
-        private Renderer _renderer;
-        private int _side;
+        private static Camera _cachedCamera;
+        private static int _cachedCameraFrame = -1;
 
-        public void Initialise(Transform aircraft, Renderer labelRenderer, int side)
+        private Transform _aircraft;
+        private readonly List<Renderer> _renderers = new();
+        private readonly List<int> _sides = new();
+
+        public void Initialise(Transform aircraft)
         {
             _aircraft = aircraft;
-            _renderer = labelRenderer;
-            _side = side;
-            Refresh();
+        }
+
+        public void Register(Renderer labelRenderer, int side)
+        {
+            _renderers.Add(labelRenderer);
+            _sides.Add(side);
+            RefreshOne(_renderers.Count - 1, ResolveCamera());
         }
 
         private void LateUpdate() => Refresh();
 
+        private static Camera ResolveCamera()
+        {
+            var frame = Time.frameCount;
+            if (_cachedCameraFrame != frame || _cachedCamera == null)
+            {
+                _cachedCamera = Camera.main;
+                _cachedCameraFrame = frame;
+            }
+            return _cachedCamera;
+        }
+
         private void Refresh()
         {
-            var camera = Camera.main;
-            if (_aircraft == null || _renderer == null || camera == null)
+            var camera = ResolveCamera();
+            if (_aircraft == null || camera == null)
                 return;
             var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
-            _renderer.enabled = cameraSide == _side;
+            for (var i = 0; i < _renderers.Count; i++)
+            {
+                if (_renderers[i] != null)
+                    _renderers[i].enabled = cameraSide == _sides[i];
+            }
+        }
+
+        private void RefreshOne(int index, Camera camera)
+        {
+            if (_aircraft == null || camera == null || _renderers[index] == null)
+                return;
+            var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
+            _renderers[index].enabled = cameraSide == _sides[index];
         }
     }
 }

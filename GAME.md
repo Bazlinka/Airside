@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Cursor — field camera zoom/nav mechanics (ADR 0054).**
+  - **Branch:** `cursor/camera-zoom-nav-mechanics-b9dd` (open as a PR; `main` is
+    protected).
+  - **Player-visible outcome:** free-camera scroll now zooms toward the ground
+    under the pointer (a stand on the edge of frame comes closer instead of the
+    orbit centre alone shrinking). Left/middle drag grabs the ground under the
+    cursor the same way the destinations map does. WASD drops follow then pans,
+    matching drag. Soft pan limit keeps you within ~3.8 km of the overview so
+    you cannot lose the airfield. Follow-mode scroll bias is unchanged.
+  - **Scope/invariants:** presentation-only (`AirsideCameraFeel`,
+    `AirsideCameraController`). Simulation, saves, follow framing curves and
+    zoom/pan *rates* from #278 are unchanged.
+  - **Evidence:** `scripts/test-domain.sh` **316/316** (12 new camera-feel
+    locks). No Unity editor in this cloud session — live feel at overview/apron
+    still needs a Mac Play / packaged build check.
+  - **NEXT:** Mac playtest — scroll toward a stand off-centre, drag-pan near the
+    horizon, WASD while following, confirm soft pan limit at the edges. Merge
+    once that feels right.
+
 - **2026-09-17 Claude — second bug-hunting pass (a dedicated research subagent plus manual
   review), 5 more fixes: 2 latent Domain lookup bugs, 1 wrong dead constant, 2 real
   Presentation perf/behaviour bugs.**
@@ -2046,14 +2065,14 @@ Camera:
 - R / Overview: reset to the overview framing and clear the current aircraft
   selection
 - Right-drag: orbit / look around
-- Left-drag or middle-drag: pan across the field (drops follow, since panning a
-  followed aircraft would only fight the follow). A left press on a HUD panel stays
-  a click, and a left press only becomes a drag after a few pixels of movement so
-  a plain click can still select an aircraft.
-- Scroll: zoom. While following this biases the phase framing rather than
-  setting an absolute distance, so it survives the follow easing instead of
-  being erased on the next frame.
-- WASD: pan (free camera only)
+- Left-drag or middle-drag: pan across the field by grabbing the ground under the
+  cursor (drops follow, since panning a followed aircraft would only fight the
+  follow). A left press on a HUD panel stays a click, and a left press only becomes
+  a drag after a few pixels of movement so a plain click can still select an aircraft.
+- Scroll: zoom toward the ground under the pointer while free. While following this
+  biases the phase framing rather than setting an absolute distance, so it survives
+  the follow easing instead of being erased on the next frame.
+- WASD: pan (drops follow, same as drag)
 - Q / E: orbit left / right without a mouse
 - Z / X: lower / raise the camera
 

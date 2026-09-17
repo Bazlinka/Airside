@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Keep modal screens modal.** The airline setup and away-summary screens no longer leave
+  the live speed readout or Follow / Overview buttons visible and clickable underneath them.
+  Opening the Escape menu also hides the underlying airline panels, preventing the setup form
+  and menu labels/buttons from stacking while retaining full-screen camera-input capture.
+
 - **Label the speed/altitude readout with the aircraft it's for.** The HUD's persistent
   speed/altitude box always showed a reading (the followed aircraft, else the first visible
   one) with no indication of whose it was — harmless with the old single-aircraft demo

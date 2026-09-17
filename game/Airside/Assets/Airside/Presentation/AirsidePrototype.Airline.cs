@@ -65,6 +65,7 @@ namespace Airside.Presentation
         private readonly List<ToastEntry> _visibleToasts = new();
 
         private bool AirlineSetupOpen => _operations == null;
+        private bool AirlineModalOpen => AirlineSetupOpen || _awaySummary != null;
 
         // IMGUI runs several times a frame (layout, repaint, input). Styles built inline were
         // allocated on every pass — dozens a frame, one per fleet row — and fed the garbage
@@ -101,7 +102,7 @@ namespace Airside.Presentation
         private bool ReadAirlineControls(Keyboard keyboard)
         {
             // The start and away-summary panels own the keyboard until dismissed.
-            if (AirlineSetupOpen || _awaySummary != null)
+            if (AirlineModalOpen)
                 return true;
 
             // Help owns the keyboard while open (except F1 here and Esc in Prototype). The
@@ -142,13 +143,22 @@ namespace Airside.Presentation
                 // The Esc menu owns the keyboard too: the camera reads WASD/QE/ZX itself, so without
                 // this the view kept panning and orbiting behind the open menu.
                 _cameraController.KeyboardCaptured =
-                    _menuOpen || AirlineSetupOpen || _awaySummary != null || _controlsHelpOpen
+                    _menuOpen || AirlineModalOpen || _controlsHelpOpen
                     || GUIUtility.keyboardControl != 0;
+            // The pause menu is itself modal. Drawing the airline setup, away summary or
+            // workspace panels behind it produced overlapping labels and live buttons.
+            if (_menuOpen)
+            {
+                // Keep the full-screen pointer capture that prevents camera drags and
+                // scrolls behind the menu even though the underlying HUD is not drawn.
+                RememberHudPanels(layout, AirlineHudLayout.Create(layout, false), false);
+                return;
+            }
             _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
             if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
             _lastGuideStep = _guideStep;
-            var showGuide = !AirlineSetupOpen && _awaySummary == null && _guideStep != GuideStep.Complete;
+            var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
             var placement = AirlineHudLayout.Create(layout, showGuide);
             RememberHudPanels(layout, placement, showGuide);
 
@@ -295,7 +305,7 @@ namespace Airside.Presentation
             // beside it no longer orbits, pans or zooms the camera behind it.
             if (_menuOpen)
                 _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
-            if (AirlineSetupOpen || _awaySummary != null)
+            if (AirlineModalOpen)
             {
                 // Modal panels: the whole screen belongs to the HUD until dismissed.
                 _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));

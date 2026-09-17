@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Bring `RouteMap.cs`'s great-circle/zoom math into the headless test harness.**
+  UnityEngine-free like its neighbour `AustraliaMapLens.cs` (already covered) but excluded
+  from `scripts/dotnet-harness` along with its 3-test suite, apparently only because it
+  hadn't been added to the harness's compile list. `RouteMapTests.cs` now runs headlessly.
+
 - **Fix a compile-breaking bug on `main` plus 9 more performance, realism, logic and taxi
   fixes.** The workspace nav strip had a tuple-arity mismatch (`WorkspaceTabs[i]`
   destructured into 3 variables from a 2-element array) left over from an earlier commit

@@ -52,6 +52,11 @@ namespace Airside.Presentation
         private bool _flightsShowArrivals = true;
         private Vector2 _devToolsScroll;
         private readonly List<FleetAircraft> _flightsBoardRows = new();
+        // IMGUI calls OnGUI several times per real frame (Layout, Repaint, every mouse-move);
+        // without this the whole fleet was rescanned and re-sorted on every one of those
+        // passes while the Flights tab was open, not just once per frame.
+        private int _flightsBoardRowsFrame = -1;
+        private bool _flightsBoardRowsForArrivals;
         private readonly SeededRandomSource _devToolsRandom = new(4242);
         /// <summary>The player aircraft the flight planner is planning.</summary>
         private FleetAircraft _mapAircraft;
@@ -2162,11 +2167,16 @@ namespace Airside.Presentation
                 _flightsShowArrivals = false;
             GUI.color = Color.white;
 
-            _flightsBoardRows.Clear();
-            foreach (var aircraft in _operations.Fleet)
-                if (_flightsShowArrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
-                    _flightsBoardRows.Add(aircraft);
-            FlightBoard.Sort(_flightsBoardRows);
+            if (_flightsBoardRowsFrame != Time.frameCount || _flightsBoardRowsForArrivals != _flightsShowArrivals)
+            {
+                _flightsBoardRows.Clear();
+                foreach (var aircraft in _operations.Fleet)
+                    if (_flightsShowArrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
+                        _flightsBoardRows.Add(aircraft);
+                FlightBoard.Sort(_flightsBoardRows);
+                _flightsBoardRowsFrame = Time.frameCount;
+                _flightsBoardRowsForArrivals = _flightsShowArrivals;
+            }
 
             var headerY = rect.y + 98f;
             var schedW = 58f;

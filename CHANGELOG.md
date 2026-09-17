@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Presentation CPU performance pass, no graphics/quality changes.** Six per-frame aircraft
+  passes (control surfaces, lights/gear, cabin doors, cabin window glow, engine heat,
+  propeller/jet-fan spin) each re-scanned and re-classified every named child on every
+  visible aircraft by string, every frame — now classified once per aircraft view and cached,
+  same pattern applied to the apron ground-crew animation. Each aircraft's 4 camera-facing
+  identity labels (operator title + registration, both sides) ran independent `Camera.main`
+  lookups and camera-side math every frame; now one shared, per-frame-cached lookup drives all
+  4 from a single calculation per aircraft. The Flights board panel rescanned and re-sorted the
+  whole fleet on every OnGUI pass instead of once per frame (same class of bug as the earlier
+  Fleet/Hangar panel fix). Compiled clean in Unity 6.3.23f1 (928 scripts, no errors); EditMode
+  suite not re-run this pass (see GAME.md handoff) — Presentation animation behaviour not yet
+  visually verified in Play mode.
+
 - **Make zoom and drag pan actually fast (ADR 0054 follow-up).** Scroll magnitude is not
   portable: the rate assumed one wheel notch is ~120 units, but macOS reports single digits,
   so a real notch was worth 0.24-0.7 % and it took 500-1500 notches to get from the 2400 m

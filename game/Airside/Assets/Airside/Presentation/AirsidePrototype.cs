@@ -929,22 +929,22 @@ namespace Airside.Presentation
                     continue;
 
                 var engines = FleetEngines(flight);
-                SpinPropellers(view, phase, engines);
-                SpinJetFans(view, phase, engines);
                 var viewParts = PartsFor(view);
+                SpinPropellers(view, viewParts.Propellers, phase, engines);
+                SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines);
                 UpdateNoseWheelSteering(viewParts.GearNose,
                     FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
                 RollLandingGearTires(view, phase, progress, aircraftType);
                 ApplyOleoSettling(view, phase, progress);
-                UpdateControlSurfaces(view, phase, progress, bank, PresentationDeltaTime, engines.HasValue,
-                    PartsFor(view).HasSeparateElevators);
+                UpdateControlSurfaces(viewParts.ControlSurfaces, phase, progress, bank, PresentationDeltaTime,
+                    engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
-                UpdateAircraftLightsAndGear(view, phase, PresentationDaylight, progress, PresentationDeltaTime,
-                    PresentationClock, engines);
-                UpdateCabinDoor(view, phase, engines?.DoorsOpen);
-                UpdateCabinWindowGlow(view, phase, PresentationDaylight);
-                UpdateEngineHeat(view, phase, engines?.AnyRunning);
+                UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
+                    PresentationDeltaTime, PresentationClock, engines);
+                UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
+                UpdateCabinWindowGlow(viewParts.CabinWindowGlass, phase, PresentationDaylight);
+                UpdateEngineHeat(viewParts.EngineHeatVents, phase, engines?.AnyRunning);
 
                 if (_cameraController != null
                     && _cameraController.IsFollowing
@@ -991,8 +991,8 @@ namespace Airside.Presentation
         }
 
         private static void UpdateControlSurfaces(
-            Transform aircraft, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
-            bool drawnOnGround = false, bool hasSeparateElevators = false)
+            ControlSurfacePart[] parts, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
+            bool drawnOnGround = false)
         {
             // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
             // deltaTime is the presentation clock, so surfaces hold still while paused
@@ -1003,74 +1003,77 @@ namespace Airside.Presentation
             var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
             var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
             var wingFlex = AirsideReusableMotion.WingFlexDegrees(phase, progress);
-            var children = AirsideNamedChildren.Get(aircraft);
-            var names = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex = 0; childIndex < children.Length; childIndex++)
+            for (var i = 0; i < parts.Length; i++)
             {
-                var child = children[childIndex];
-                var childName = names[childIndex];
-                if (child == aircraft)
+                var child = parts[i].Transform;
+                if (child == null)
                     continue;
-                if (childName.StartsWith("Rudder", StringComparison.Ordinal))
+                switch (parts[i].Kind)
                 {
-                    var euler = child.localEulerAngles;
-                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, rudder, deltaTime * 90f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                         (!hasSeparateElevators && childName.StartsWith("Tailplane", StringComparison.Ordinal)))
-                {
-                    // Soft elevator cue on the whole tailplane when no separate elevator mesh.
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = childName.StartsWith("Tailplane", StringComparison.Ordinal) ? elevator * 0.35f : elevator;
-                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 80f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName.StartsWith("Aileron", StringComparison.Ordinal))
-                {
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
-                    var target = Mathf.Clamp(bankDegrees * 0.8f * side, -18f, 18f);
-                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName is "Wing L" or "Wing R")
-                {
-                    // Flex the authored wing roots in opposite directions so both tips
-                    // rise under load. Keep the cue subtle and ease it between phases.
-                    var euler = child.localEulerAngles;
-                    var current = euler.z > 180f ? euler.z - 360f : euler.z;
-                    var side = childName == "Wing L" ? -1f : 1f;
-                    euler.z = Mathf.MoveTowards(current, wingFlex * side, deltaTime * 3.5f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName is "Flap L" or "Flap R")
-                {
-                    // Takeoff flap is set for the roll and milked off after rotation —
-                    // it used to keep extending all the way through the climb.
-                    var deploy = AirsideReusableMotion.FlapDegrees(phase, progress, drawnOnGround);
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName.StartsWith("Spoiler", StringComparison.Ordinal))
-                {
-                    // Spoilers pop on touchdown and stow as the rollout ends, rather
-                    // than creeping up from zero through the whole flare.
-                    var raise = phase == AircraftPhase.Landing
-                        ? 35f * Mathf.Clamp01(Mathf.InverseLerp(
-                              AirsideFlightPath.TouchdownProgress,
-                              AirsideFlightPath.TouchdownProgress + 0.06f, progress)
-                            - Mathf.InverseLerp(0.86f, 1f, progress))
-                        : 0f;
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    euler.x = Mathf.MoveTowards(current, -raise, deltaTime * 55f);
-                    child.localEulerAngles = euler;
+                    case ControlSurfaceKind.Rudder:
+                    {
+                        var euler = child.localEulerAngles;
+                        var current = euler.y > 180f ? euler.y - 360f : euler.y;
+                        euler.y = Mathf.MoveTowards(current, rudder, deltaTime * 90f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case ControlSurfaceKind.Elevator:
+                    {
+                        // Soft elevator cue on the whole tailplane when no separate elevator mesh.
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        var target = elevator * parts[i].Factor;
+                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 80f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case ControlSurfaceKind.Aileron:
+                    {
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        var target = Mathf.Clamp(bankDegrees * 0.8f * parts[i].Factor, -18f, 18f);
+                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case ControlSurfaceKind.Wing:
+                    {
+                        // Flex the authored wing roots in opposite directions so both tips
+                        // rise under load. Keep the cue subtle and ease it between phases.
+                        var euler = child.localEulerAngles;
+                        var current = euler.z > 180f ? euler.z - 360f : euler.z;
+                        euler.z = Mathf.MoveTowards(current, wingFlex * parts[i].Factor, deltaTime * 3.5f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case ControlSurfaceKind.Flap:
+                    {
+                        // Takeoff flap is set for the roll and milked off after rotation —
+                        // it used to keep extending all the way through the climb.
+                        var deploy = AirsideReusableMotion.FlapDegrees(phase, progress, drawnOnGround);
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case ControlSurfaceKind.Spoiler:
+                    {
+                        // Spoilers pop on touchdown and stow as the rollout ends, rather
+                        // than creeping up from zero through the whole flare.
+                        var raise = phase == AircraftPhase.Landing
+                            ? 35f * Mathf.Clamp01(Mathf.InverseLerp(
+                                  AirsideFlightPath.TouchdownProgress,
+                                  AirsideFlightPath.TouchdownProgress + 0.06f, progress)
+                                - Mathf.InverseLerp(0.86f, 1f, progress))
+                            : 0f;
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        euler.x = Mathf.MoveTowards(current, -raise, deltaTime * 55f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
                 }
             }
         }
@@ -1190,7 +1193,7 @@ namespace Airside.Presentation
         }
 
         private static void UpdateAircraftLightsAndGear(
-            Transform aircraft, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
+            LightGearPart[] parts, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
             float presentationTime = 0f, EngineState? engines = null)
         {
             if (deltaTime < 0f)
@@ -1210,76 +1213,81 @@ namespace Airside.Presentation
             var taxiLights = !airborne && enginesOn
                 && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
 
-            var namedChildren1 = AirsideNamedChildren.Get(aircraft);
-            var childNames1 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex1 = 0; childIndex1 < namedChildren1.Length; childIndex1++)
+            for (var i = 0; i < parts.Length; i++)
             {
-                var child = namedChildren1[childIndex1];
-                var childName = childNames1[childIndex1];
-                if (child == aircraft)
+                var child = parts[i].Transform;
+                if (child == null)
                     continue;
-                if (childName.StartsWith("Gear door", StringComparison.Ordinal))
+                switch (parts[i].Kind)
                 {
-                    // Doors open only while the gear is in transit; closed when locked
-                    // up or locked down so the wells read correctly on the rollout.
-                    child.gameObject.SetActive(true);
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01);
-                    var target = Mathf.Lerp(0f, 78f, doorOpen);
-                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
-                    child.localEulerAngles = euler;
-                }
-                else if (childName is "Gear nose" or "Gear L" or "Gear R")
-                {
-                    // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
-                    // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
-                    child.gameObject.SetActive(true);
-                    var euler = child.localEulerAngles;
-                    var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                    var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
-                    euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
-                    child.localEulerAngles = euler;
-                }
-                else if (AirsideAircraftParts.NavigationLightFor(childName) is var navigationLight
-                         && navigationLight != AircraftNavigationLight.None)
-                {
-                    var navOn = AirsideReusableMotion.NavigationLightsOn(
-                        engines?.AnyRunning ?? enginesOn,
-                        engines?.Beacon ?? enginesOn);
-                    child.gameObject.SetActive(navOn);
-                    EnsureNavPointLight(child, navOn, navigationLight);
-                    if (navigationLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
-                        EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
-                }
-                else if (childName.StartsWith("Beacon", StringComparison.Ordinal))
-                {
-                    var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
-                    child.gameObject.SetActive(beacon > 0.01f);
-                    EnsureBeaconPointLight(child, beacon);
-                }
-                else if (childName.StartsWith("LandingLight", StringComparison.Ordinal))
-                {
-                    child.gameObject.SetActive(landingLights);
-                    EnsureLandingSpotLight(child, landingLights, night);
-                    var lamp = child.GetComponent<Renderer>();
-                    if (lamp != null)
+                    case LightGearKind.GearDoor:
                     {
-                        // Through SetRendererColor so the lamp material's _EMISSION keyword is
-                        // on: an emission colour in a property block alone is ignored by URP
-                        // Lit, so the lit landing lamps never glowed.
-                        var color = landingLights
-                            ? new Color(1f, 0.97f, 0.88f)
-                            : new Color(0.55f, 0.55f, 0.5f);
-                        SetRendererColor(lamp, color, landingLights
-                            ? new Color(2.6f, 2.5f, 2.1f)
-                            : Color.black);
+                        // Doors open only while the gear is in transit; closed when locked
+                        // up or locked down so the wells read correctly on the rollout.
+                        child.gameObject.SetActive(true);
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01);
+                        var target = Mathf.Lerp(0f, 78f, doorOpen);
+                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
+                        child.localEulerAngles = euler;
+                        break;
                     }
-                }
-                else if (childName.StartsWith("TaxiLight", StringComparison.Ordinal))
-                {
-                    child.gameObject.SetActive(taxiLights);
-                    EnsureTaxiSpotLight(child, taxiLights);
+                    case LightGearKind.GearStrut:
+                    {
+                        // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
+                        // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
+                        child.gameObject.SetActive(true);
+                        var euler = child.localEulerAngles;
+                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
+                        var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
+                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
+                        child.localEulerAngles = euler;
+                        break;
+                    }
+                    case LightGearKind.NavigationLight:
+                    {
+                        var navOn = AirsideReusableMotion.NavigationLightsOn(
+                            engines?.AnyRunning ?? enginesOn,
+                            engines?.Beacon ?? enginesOn);
+                        child.gameObject.SetActive(navOn);
+                        EnsureNavPointLight(child, navOn, parts[i].NavLight);
+                        if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
+                            EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
+                        break;
+                    }
+                    case LightGearKind.Beacon:
+                    {
+                        var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
+                        child.gameObject.SetActive(beacon > 0.01f);
+                        EnsureBeaconPointLight(child, beacon);
+                        break;
+                    }
+                    case LightGearKind.LandingLight:
+                    {
+                        child.gameObject.SetActive(landingLights);
+                        EnsureLandingSpotLight(child, landingLights, night);
+                        var lamp = child.GetComponent<Renderer>();
+                        if (lamp != null)
+                        {
+                            // Through SetRendererColor so the lamp material's _EMISSION keyword is
+                            // on: an emission colour in a property block alone is ignored by URP
+                            // Lit, so the lit landing lamps never glowed.
+                            var color = landingLights
+                                ? new Color(1f, 0.97f, 0.88f)
+                                : new Color(0.55f, 0.55f, 0.5f);
+                            SetRendererColor(lamp, color, landingLights
+                                ? new Color(2.6f, 2.5f, 2.1f)
+                                : Color.black);
+                        }
+                        break;
+                    }
+                    case LightGearKind.TaxiLight:
+                    {
+                        child.gameObject.SetActive(taxiLights);
+                        EnsureTaxiSpotLight(child, taxiLights);
+                        break;
+                    }
                 }
             }
         }
@@ -1392,7 +1400,7 @@ namespace Airside.Presentation
             light.enabled = on;
         }
 
-        private static void UpdateCabinDoor(Transform aircraft, AircraftPhase phase, bool? doorsOpen = null)
+        private static void UpdateCabinDoor(CabinDoorPart[] parts, AircraftPhase phase, bool? doorsOpen = null)
         {
             // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
             // ANM-AIR-003 — open bias from AirsideReusableMotion; fleet aircraft follow their
@@ -1402,23 +1410,19 @@ namespace Airside.Presentation
                 : AirsideReusableMotion.CabinDoorBias(phase);
             var cabinTargetY = Mathf.Lerp(0f, -85f, doorBias);
             var cargoTargetY = Mathf.Lerp(0f, 70f, doorBias);
-            var namedChildren2 = AirsideNamedChildren.Get(aircraft);
-            var childNames2 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex2 = 0; childIndex2 < namedChildren2.Length; childIndex2++)
+            for (var i = 0; i < parts.Length; i++)
             {
-                var child = namedChildren2[childIndex2];
-                var childName = childNames2[childIndex2];
-                if (child == aircraft)
+                var child = parts[i].Transform;
+                if (child == null)
                     continue;
-                if (childName.StartsWith("CabinDoor", StringComparison.Ordinal))
+                if (parts[i].Kind == CabinDoorKind.Cabin)
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
                     euler.y = Mathf.MoveTowards(current, cabinTargetY, Time.unscaledDeltaTime * 120f);
                     child.localEulerAngles = euler;
                 }
-                else if (childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
-                         || childName.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
+                else
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
@@ -1432,7 +1436,8 @@ namespace Airside.Presentation
         /// Decision 0025 items 5+7 — cabin / cockpit glass picks up warm emissive glow
         /// at night and a softer stand dwell glow so the airframe reads alive.
         /// </summary>
-        private static void UpdateCabinWindowGlow(Transform aircraft, AircraftPhase phase, float daylight)
+        private static void UpdateCabinWindowGlow(
+            (Transform Transform, Renderer Renderer)[] glass, AircraftPhase phase, float daylight)
         {
             var night = daylight < 0.4f;
             var atStand = phase == AircraftPhase.AtStand;
@@ -1444,44 +1449,24 @@ namespace Airside.Presentation
                 intensity = 0.22f;
 
             var glow = new Color(1f, 0.82f, 0.55f) * intensity;
-            var namedChildren3 = AirsideNamedChildren.Get(aircraft);
-            var childNames3 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex3 = 0; childIndex3 < namedChildren3.Length; childIndex3++)
+            for (var i = 0; i < glass.Length; i++)
             {
-                var child = namedChildren3[childIndex3];
-                var childName = childNames3[childIndex3];
-                if (child == aircraft)
+                if (glass[i].Renderer == null)
                     continue;
-                var n = childName;
-                // Exact glass only — densified Cockpit frame / pillars / cabin window
-                // frames must not emit (InferFromMeshName treats those as Metal).
-                if (!(n == "Cockpit"
-                      || n == "Cockpit glare"
-                      || ((n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
-                           || n.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
-                           || n.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0)
-                          && n.IndexOf("frame", StringComparison.OrdinalIgnoreCase) < 0)))
-                    continue;
-
-                var renderer = child.GetComponent<Renderer>();
-                if (renderer == null)
-                    continue;
-                SetRendererColor(renderer, Color.white, intensity > 0.01f ? glow : Color.black);
+                SetRendererColor(glass[i].Renderer, Color.white, intensity > 0.01f ? glow : Color.black);
             }
         }
 
-        private static void UpdateEngineHeat(Transform aircraft, AircraftPhase phase, bool? running = null)
+        private static void UpdateEngineHeat(
+            (Transform Transform, Renderer Renderer)[] vents, AircraftPhase phase, bool? running = null)
         {
             // Presentation-only: subtle heat shimmer behind running engines.
             var enginesOn = running ?? (phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed);
             var intensity = phase is AircraftPhase.Takeoff or AircraftPhase.Approach ? 1.25f : 1f;
-            var namedChildren4 = AirsideNamedChildren.Get(aircraft);
-            var childNames4 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex4 = 0; childIndex4 < namedChildren4.Length; childIndex4++)
+            for (var i = 0; i < vents.Length; i++)
             {
-                var child = namedChildren4[childIndex4];
-                var childName = childNames4[childIndex4];
-                if (child == aircraft || !childName.StartsWith("EngineHeat", StringComparison.Ordinal))
+                var child = vents[i].Transform;
+                if (child == null)
                     continue;
 
                 child.gameObject.SetActive(enginesOn);
@@ -1492,7 +1477,7 @@ namespace Airside.Presentation
                     Time.unscaledTime * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f
                     + child.GetInstanceID() * 0.01f);
                 child.localScale = new Vector3(0.35f * pulse * intensity, 0.35f * pulse * intensity, 0.7f);
-                var renderer = child.GetComponent<Renderer>();
+                var renderer = vents[i].Renderer;
                 if (renderer != null)
                 {
                     var color = GetRendererColor(renderer);
@@ -1505,11 +1490,11 @@ namespace Airside.Presentation
         /// <summary>Sim-rate presentation dt — freezes when paused, scales with the selected rate.</summary>
         private float PresentationDeltaTime => Time.unscaledDeltaTime;
 
-        private void SpinPropellers(Transform aircraft, AircraftPhase phase, EngineState? engines = null)
+        private void SpinPropellers(Transform aircraft, PropellerPart[] propellers, AircraftPhase phase, EngineState? engines = null)
         {
             if (engines is { } perEngine)
             {
-                SpinPropellersPerEngine(aircraft, phase, perEngine);
+                SpinPropellersPerEngine(aircraft, propellers, phase, perEngine);
                 return;
             }
 
@@ -1523,7 +1508,7 @@ namespace Airside.Presentation
             var rpm = SpooledPropRpm(aircraft, targetRpm);
             if (rpm < 1f)
             {
-                ApplyPropBlur(aircraft, 0f);
+                ApplyPropBlur(propellers, 0f);
                 return;
             }
 
@@ -1532,15 +1517,10 @@ namespace Airside.Presentation
             if (degrees <= 0f)
                 return;
             var blur = AirsideReusableMotion.PropBlurBlend(rpm);
-            var namedChildren5 = AirsideNamedChildren.Get(aircraft);
-            var childNames5 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex5 = 0; childIndex5 < namedChildren5.Length; childIndex5++)
+            for (var i = 0; i < propellers.Length; i++)
             {
-                var child = namedChildren5[childIndex5];
-                var childName = childNames5[childIndex5];
-                if (child == aircraft)
-                    continue;
-                if (!childName.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = propellers[i].Transform;
+                if (child == null)
                     continue;
                 child.Rotate(Vector3.forward, degrees, Space.Self);
                 ApplyPropBlurToHub(child, blur);
@@ -1551,7 +1531,7 @@ namespace Airside.Presentation
         /// Fleet aircraft: each propeller follows its own engine through the start and
         /// shutdown sequence, at ground idle while parked and at phase RPM otherwise.
         /// </summary>
-        private void SpinPropellersPerEngine(Transform aircraft, AircraftPhase phase, EngineState engines)
+        private void SpinPropellersPerEngine(Transform aircraft, PropellerPart[] propellers, AircraftPhase phase, EngineState engines)
         {
             var phaseRpm = phase == AircraftPhase.AtStand
                 ? AirsideReusableMotion.PropRpmTaxi
@@ -1562,15 +1542,12 @@ namespace Airside.Presentation
             // Engine audio reads the aircraft's own key; give it the stronger engine.
             _propRpm[id] = Mathf.Max(left, right);
 
-            var namedChildren6 = AirsideNamedChildren.Get(aircraft);
-            var childNames6 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex6 = 0; childIndex6 < namedChildren6.Length; childIndex6++)
+            for (var i = 0; i < propellers.Length; i++)
             {
-                var child = namedChildren6[childIndex6];
-                var childName = childNames6[childIndex6];
-                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
+                var child = propellers[i].Transform;
+                if (child == null)
                     continue;
-                var rpm = childName.EndsWith(" L", StringComparison.Ordinal) ? left : right;
+                var rpm = propellers[i].IsLeft ? left : right;
                 ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurBlend(rpm));
                 if (rpm >= 1f)
                     child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
@@ -1583,12 +1560,10 @@ namespace Airside.Presentation
         /// own, blades become a restrained intake blur at high power, and the stronger
         /// spool also drives the existing generic engine audio response.
         /// </summary>
-        private void SpinJetFans(Transform aircraft, AircraftPhase phase, EngineState? engines = null)
+        private void SpinJetFans(Transform aircraft, Transform fanLeft, Transform fanRight, AircraftPhase phase, EngineState? engines = null)
         {
-            if (!PartsFor(aircraft).HasFans)
+            if (fanLeft == null && fanRight == null)
                 return;
-            var namedChildren = AirsideNamedChildren.Get(aircraft);
-            var names = AirsideNamedChildren.Names(aircraft);
 
             var target = AirsideReusableMotion.JetFanRpmForPhase(phase);
             var id = aircraft.GetInstanceID();
@@ -1600,15 +1575,17 @@ namespace Airside.Presentation
                 AirsideReusableMotion.PropRpmTakeoff,
                 Mathf.Clamp01(Mathf.Max(left, right) / AirsideReusableMotion.JetFanRpmTakeoff));
 
-            for (var i = 0; i < namedChildren.Length; i++)
+            if (fanLeft != null)
             {
-                var fan = namedChildren[i];
-                if (fan == aircraft || !(names[i] is "Fan L" or "Fan R"))
-                    continue;
-                var rpm = names[i] == "Fan L" ? left : right;
-                ApplyJetFanBlurToHub(fan, AirsideReusableMotion.JetFanBlurBlend(rpm));
-                if (rpm >= 1f && PresentationDeltaTime > 0f)
-                    fan.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
+                ApplyJetFanBlurToHub(fanLeft, AirsideReusableMotion.JetFanBlurBlend(left));
+                if (left >= 1f && PresentationDeltaTime > 0f)
+                    fanLeft.Rotate(Vector3.forward, PresentationDeltaTime * left * 6f, Space.Self);
+            }
+            if (fanRight != null)
+            {
+                ApplyJetFanBlurToHub(fanRight, AirsideReusableMotion.JetFanBlurBlend(right));
+                if (right >= 1f && PresentationDeltaTime > 0f)
+                    fanRight.Rotate(Vector3.forward, PresentationDeltaTime * right * 6f, Space.Self);
             }
         }
 
@@ -1640,17 +1617,13 @@ namespace Airside.Presentation
         /// <summary>
         /// At high RPM hide individual blades and show a translucent disc (Batch D life).
         /// </summary>
-        private static void ApplyPropBlur(Transform aircraft, float blend)
+        private static void ApplyPropBlur(PropellerPart[] propellers, float blend)
         {
-            var namedChildren7 = AirsideNamedChildren.Get(aircraft);
-            var childNames7 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex7 = 0; childIndex7 < namedChildren7.Length; childIndex7++)
+            for (var i = 0; i < propellers.Length; i++)
             {
-                var child = namedChildren7[childIndex7];
-                var childName = childNames7[childIndex7];
-                if (child == aircraft || !childName.StartsWith("Propeller", StringComparison.Ordinal))
-                    continue;
-                ApplyPropBlurToHub(child, blend);
+                var child = propellers[i].Transform;
+                if (child != null)
+                    ApplyPropBlurToHub(child, blend);
             }
         }
 
@@ -5802,42 +5775,99 @@ namespace Airside.Presentation
                     person.position = new Vector3(basePos.x + sway, basePos.y, basePos.z);
                 }
 
-                var namedChildren16 = AirsideNamedChildren.Get(person);
-                var childNames16 = AirsideNamedChildren.Names(person);
-                for (var childIndex16 = 0; childIndex16 < namedChildren16.Length; childIndex16++)
+                var bodyParts = ApronBodyPartsFor(person);
+                for (var partIndex = 0; partIndex < bodyParts.Length; partIndex++)
                 {
-                    var child = namedChildren16[childIndex16];
-                    var childName = childNames16[childIndex16];
-                    if (child == person)
+                    var part = bodyParts[partIndex];
+                    var child = part.Transform;
+                    if (child == null)
                         continue;
-                    if (childName.IndexOf("torso", StringComparison.OrdinalIgnoreCase) >= 0)
+                    switch (part.Kind)
                     {
-                        var lean = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronIdleSwayHz * Mathf.PI * 2f * 1.6f + i * 1.3f) * 4f;
-                        if (wave)
-                            lean += Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f) * 16f;
-                        child.localEulerAngles = new Vector3(0f, 0f, lean);
-                    }
-                    else if (wave && childName.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        var tip = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.5f) * 28f;
-                        child.localEulerAngles = new Vector3(tip, 0f, 12f);
-                    }
-                    else if (wave && childName.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        var left = IsLeftSideLimb(childName);
-                        var swing = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.25f
-                            + (left ? 0f : 1.2f)) * 35f;
-                        child.localEulerAngles = new Vector3(swing, 0f, left ? -12f : 12f);
-                    }
-                    else if (walker && childName.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        var left = IsLeftSideLimb(childName);
-                        var stride = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronStrideHz
-                            + (left ? 0f : 3.14f)) * 18f;
-                        child.localEulerAngles = new Vector3(stride, 0f, 0f);
+                        case ApronBodyPartKind.Torso:
+                        {
+                            var lean = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronIdleSwayHz * Mathf.PI * 2f * 1.6f + i * 1.3f) * 4f;
+                            if (wave)
+                                lean += Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f) * 16f;
+                            child.localEulerAngles = new Vector3(0f, 0f, lean);
+                            break;
+                        }
+                        case ApronBodyPartKind.Wand when wave:
+                        {
+                            var tip = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.5f) * 28f;
+                            child.localEulerAngles = new Vector3(tip, 0f, 12f);
+                            break;
+                        }
+                        case ApronBodyPartKind.Arm when wave:
+                        {
+                            var swing = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronWaveHz * Mathf.PI * 2f * 1.25f
+                                + (part.IsLeft ? 0f : 1.2f)) * 35f;
+                            child.localEulerAngles = new Vector3(swing, 0f, part.IsLeft ? -12f : 12f);
+                            break;
+                        }
+                        case ApronBodyPartKind.Leg when walker:
+                        {
+                            var stride = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.ApronStrideHz
+                                + (part.IsLeft ? 0f : 3.14f)) * 18f;
+                            child.localEulerAngles = new Vector3(stride, 0f, 0f);
+                            break;
+                        }
                     }
                 }
             }
+        }
+
+        private enum ApronBodyPartKind { Torso, Wand, Arm, Leg }
+
+        private readonly struct ApronBodyPart
+        {
+            public readonly Transform Transform;
+            public readonly ApronBodyPartKind Kind;
+            public readonly bool IsLeft;
+
+            public ApronBodyPart(Transform transform, ApronBodyPartKind kind, bool isLeft)
+            {
+                Transform = transform;
+                Kind = kind;
+                IsLeft = isLeft;
+            }
+        }
+
+        private readonly Dictionary<int, ApronBodyPart[]> _apronBodyParts = new();
+
+        /// <summary>
+        /// Classified once per apron figure instead of every frame — <see cref="UpdateApronLife"/>
+        /// used to re-test every child's name against torso/wand/arm/leg substrings each frame,
+        /// for every figure on the apron.
+        /// </summary>
+        private ApronBodyPart[] ApronBodyPartsFor(Transform person)
+        {
+            var id = person.GetInstanceID();
+            if (_apronBodyParts.TryGetValue(id, out var cached))
+                return cached;
+
+            var children = AirsideNamedChildren.Get(person);
+            var names = AirsideNamedChildren.Names(person);
+            var parts = new List<ApronBodyPart>();
+            for (var i = 0; i < names.Length; i++)
+            {
+                var child = children[i];
+                var childName = names[i];
+                if (child == null || child == person)
+                    continue;
+                if (childName.IndexOf("torso", StringComparison.OrdinalIgnoreCase) >= 0)
+                    parts.Add(new ApronBodyPart(child, ApronBodyPartKind.Torso, false));
+                else if (childName.IndexOf("wand", StringComparison.OrdinalIgnoreCase) >= 0)
+                    parts.Add(new ApronBodyPart(child, ApronBodyPartKind.Wand, false));
+                else if (childName.IndexOf("arm", StringComparison.OrdinalIgnoreCase) >= 0)
+                    parts.Add(new ApronBodyPart(child, ApronBodyPartKind.Arm, IsLeftSideLimb(childName)));
+                else if (childName.IndexOf("leg", StringComparison.OrdinalIgnoreCase) >= 0)
+                    parts.Add(new ApronBodyPart(child, ApronBodyPartKind.Leg, IsLeftSideLimb(childName)));
+            }
+
+            var result = parts.ToArray();
+            _apronBodyParts[id] = result;
+            return result;
         }
 
         /// <summary>
@@ -10131,10 +10161,78 @@ namespace Airside.Presentation
             renderer.receiveShadows = false;
         }
 
+        private enum ControlSurfaceKind { Rudder, Elevator, Aileron, Wing, Flap, Spoiler }
+
+        /// <summary>
+        /// A classified control surface. <see cref="Factor"/> means the elevator multiplier
+        /// (1 for a dedicated elevator mesh, 0.35 for the whole tailplane) on
+        /// <see cref="ControlSurfaceKind.Elevator"/>, or the L/R sign on
+        /// <see cref="ControlSurfaceKind.Aileron"/>/<see cref="ControlSurfaceKind.Wing"/>.
+        /// </summary>
+        private readonly struct ControlSurfacePart
+        {
+            public readonly Transform Transform;
+            public readonly ControlSurfaceKind Kind;
+            public readonly float Factor;
+
+            public ControlSurfacePart(Transform transform, ControlSurfaceKind kind, float factor)
+            {
+                Transform = transform;
+                Kind = kind;
+                Factor = factor;
+            }
+        }
+
+        private enum LightGearKind { GearDoor, GearStrut, NavigationLight, Beacon, LandingLight, TaxiLight }
+
+        private readonly struct LightGearPart
+        {
+            public readonly Transform Transform;
+            public readonly LightGearKind Kind;
+            public readonly AircraftNavigationLight NavLight;
+
+            public LightGearPart(Transform transform, LightGearKind kind, AircraftNavigationLight navLight = AircraftNavigationLight.None)
+            {
+                Transform = transform;
+                Kind = kind;
+                NavLight = navLight;
+            }
+        }
+
+        private enum CabinDoorKind { Cabin, Cargo }
+
+        private readonly struct CabinDoorPart
+        {
+            public readonly Transform Transform;
+            public readonly CabinDoorKind Kind;
+
+            public CabinDoorPart(Transform transform, CabinDoorKind kind)
+            {
+                Transform = transform;
+                Kind = kind;
+            }
+        }
+
+        private readonly struct PropellerPart
+        {
+            public readonly Transform Transform;
+            public readonly bool IsLeft;
+
+            public PropellerPart(Transform transform, bool isLeft)
+            {
+                Transform = transform;
+                IsLeft = isLeft;
+            }
+        }
+
         /// <summary>
         /// Components the per-frame aircraft passes need, resolved once per view. Each frame
         /// used to repeat Transform.Find over the aircraft's children and GetComponent for the
-        /// shadow, selection marker and visual profile of every aircraft.
+        /// shadow, selection marker and visual profile of every aircraft — and, separately,
+        /// the control-surface, light/gear, cabin-door, window-glow, engine-heat and propeller
+        /// passes each re-classified every named child by string every single frame. All of
+        /// that classification now happens once here instead; the per-frame passes only touch
+        /// the handful of children that actually matched.
         /// </summary>
         private struct AircraftViewParts
         {
@@ -10148,8 +10246,16 @@ namespace Airside.Presentation
             public float WheelbaseMetres;
             /// <summary>Carries "Fan L"/"Fan R" turbofan assemblies (the 737).</summary>
             public bool HasFans;
+            public Transform FanLeft;
+            public Transform FanRight;
             /// <summary>Carries separate "Elevator" meshes, so the tailplane itself stays still.</summary>
             public bool HasSeparateElevators;
+            public ControlSurfacePart[] ControlSurfaces;
+            public LightGearPart[] LightsAndGear;
+            public CabinDoorPart[] CabinDoors;
+            public (Transform Transform, Renderer Renderer)[] CabinWindowGlass;
+            public (Transform Transform, Renderer Renderer)[] EngineHeatVents;
+            public PropellerPart[] Propellers;
         }
 
         private readonly Dictionary<int, AircraftViewParts> _aircraftViewParts = new();
@@ -10169,7 +10275,9 @@ namespace Airside.Presentation
             };
             parts.ShadowRenderer = parts.Shadow != null ? parts.Shadow.GetComponent<Renderer>() : null;
             parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
-            // Both used to be rediscovered by scanning every child name on every frame.
+            // All of these used to be rediscovered by scanning every child name on every frame,
+            // once per aircraft per pass (fans/elevators/gear here, plus six more full scans
+            // spread across the per-frame update methods). One pass now resolves everything.
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
             Transform mainLeft = null, mainRight = null;
@@ -10197,8 +10305,116 @@ namespace Airside.Presentation
                 delta.y = 0f;
                 parts.WheelbaseMetres = delta.magnitude;
             }
+
+            ClassifyAnimatedParts(children, names, ref parts);
+
             _aircraftViewParts[id] = parts;
             return parts;
+        }
+
+        /// <summary>
+        /// Second pass, kept separate from the gear/fan pass above only for readability —
+        /// reproduces exactly the per-frame predicates that used to run every frame in
+        /// <c>UpdateControlSurfaces</c>, <c>UpdateAircraftLightsAndGear</c>, <c>UpdateCabinDoor</c>,
+        /// <c>UpdateCabinWindowGlow</c>, <c>UpdateEngineHeat</c> and the propeller spin passes,
+        /// so behaviour is unchanged — only how often the classification runs.
+        /// </summary>
+        private static void ClassifyAnimatedParts(Transform[] children, string[] names, ref AircraftViewParts parts)
+        {
+            var controlSurfaces = new List<ControlSurfacePart>();
+            var lightsAndGear = new List<LightGearPart>();
+            var cabinDoors = new List<CabinDoorPart>();
+            var cabinWindowGlass = new List<(Transform, Renderer)>();
+            var engineHeatVents = new List<(Transform, Renderer)>();
+            var propellers = new List<PropellerPart>();
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                var child = children[i];
+                var childName = names[i];
+                if (child == null || child == parts.Owner)
+                    continue;
+
+                // -- control surfaces (UpdateControlSurfaces) --
+                if (childName.StartsWith("Rudder", StringComparison.Ordinal))
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Rudder, 0f));
+                else if (childName.IndexOf("elevator", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                         (!parts.HasSeparateElevators && childName.StartsWith("Tailplane", StringComparison.Ordinal)))
+                {
+                    var factor = childName.StartsWith("Tailplane", StringComparison.Ordinal) ? 0.35f : 1f;
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Elevator, factor));
+                }
+                else if (childName.StartsWith("Aileron", StringComparison.Ordinal))
+                {
+                    var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Aileron, side));
+                }
+                else if (childName is "Wing L" or "Wing R")
+                {
+                    var side = childName == "Wing L" ? -1f : 1f;
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Wing, side));
+                }
+                else if (childName is "Flap L" or "Flap R")
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Flap, 0f));
+                else if (childName.StartsWith("Spoiler", StringComparison.Ordinal))
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Spoiler, 0f));
+
+                // -- lights and gear (UpdateAircraftLightsAndGear) --
+                if (childName.StartsWith("Gear door", StringComparison.Ordinal))
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearDoor));
+                else if (childName is "Gear nose" or "Gear L" or "Gear R")
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearStrut));
+                else if (AirsideAircraftParts.NavigationLightFor(childName) is var navigationLight
+                         && navigationLight != AircraftNavigationLight.None)
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.NavigationLight, navigationLight));
+                else if (childName.StartsWith("Beacon", StringComparison.Ordinal))
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.Beacon));
+                else if (childName.StartsWith("LandingLight", StringComparison.Ordinal))
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.LandingLight));
+                else if (childName.StartsWith("TaxiLight", StringComparison.Ordinal))
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.TaxiLight));
+
+                // -- cabin/cargo doors (UpdateCabinDoor) --
+                if (childName.StartsWith("CabinDoor", StringComparison.Ordinal))
+                    cabinDoors.Add(new CabinDoorPart(child, CabinDoorKind.Cabin));
+                else if (childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
+                         || childName.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
+                    cabinDoors.Add(new CabinDoorPart(child, CabinDoorKind.Cargo));
+
+                // -- cabin/cockpit glass (UpdateCabinWindowGlow) --
+                if (childName == "Cockpit"
+                    || childName == "Cockpit glare"
+                    || ((childName.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                         || childName.StartsWith("Cabin windows", StringComparison.OrdinalIgnoreCase)
+                         || childName.IndexOf("cabin_window", StringComparison.OrdinalIgnoreCase) >= 0)
+                        && childName.IndexOf("frame", StringComparison.OrdinalIgnoreCase) < 0))
+                {
+                    var glassRenderer = child.GetComponent<Renderer>();
+                    if (glassRenderer != null)
+                        cabinWindowGlass.Add((child, glassRenderer));
+                }
+
+                // -- engine heat shimmer (UpdateEngineHeat) --
+                if (childName.StartsWith("EngineHeat", StringComparison.Ordinal))
+                    engineHeatVents.Add((child, child.GetComponent<Renderer>()));
+
+                // -- propellers (SpinPropellers / SpinPropellersPerEngine) --
+                if (childName.StartsWith("Propeller", StringComparison.Ordinal))
+                    propellers.Add(new PropellerPart(child, childName.EndsWith(" L", StringComparison.Ordinal)));
+
+                // -- turbofans (SpinJetFans) --
+                if (childName == "Fan L")
+                    parts.FanLeft = child;
+                else if (childName == "Fan R")
+                    parts.FanRight = child;
+            }
+
+            parts.ControlSurfaces = controlSurfaces.ToArray();
+            parts.LightsAndGear = lightsAndGear.ToArray();
+            parts.CabinDoors = cabinDoors.ToArray();
+            parts.CabinWindowGlass = cabinWindowGlass.ToArray();
+            parts.EngineHeatVents = engineHeatVents.ToArray();
+            parts.Propellers = propellers.ToArray();
         }
 
         /// <summary>Re-resolve a view's parts after children were added to it (selection marker).</summary>

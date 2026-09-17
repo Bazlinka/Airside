@@ -163,7 +163,7 @@ def pillar_strip(z0, z1, theta0, theta1, offset=0.018):
     )
 
 
-def oval_pod(stations, segments=36):
+def oval_pod(stations, segments=48):
     return v01._v05.oval_lathe_fuselage(stations, segments=segments)
 
 
@@ -179,7 +179,7 @@ def engine_pod(x):
             (4.45, 0.46, 0.42, 2.83),
             (5.05, 0.18, 0.16, 2.81),
         ],
-        segments=40,
+        segments=52,
     )
     return v01.translated(pod, x, 0.0, 0.0)
 
@@ -193,7 +193,7 @@ def wing_nacelle_blend(x):
             (1.75, 0.22, 0.14, 3.10),
             (2.25, 0.08, 0.05, 3.04),
         ],
-        segments=24,
+        segments=32,
     )
     return v01.translated(fair, x, 0.0, 0.0)
 
@@ -208,7 +208,7 @@ def gear_sponson(side):
             (-1.25, 0.32, 0.38, 1.50),
             (-1.65, 0.14, 0.18, 1.48),
         ],
-        segments=28,
+        segments=36,
     )
     return v01.translated(fair, side * 1.22, 0.0, 0.15)
 
@@ -310,10 +310,10 @@ def final_meshes():
         x = side * 3.99
         meshes[f"engine_{label}"] = engine_pod(x)
         meshes[f"intake_{label}"] = v01._v05.cylinder(
-            x, 2.83, 4.92, 0.36, 0.11, axis="z", segments=28
+            x, 2.83, 4.92, 0.36, 0.11, axis="z", segments=36
         )
         meshes[f"exhaust_{label}"] = v01._v05.cylinder(
-            x, 2.80, -1.48, 0.13, 0.46, axis="z", segments=20
+            x, 2.80, -1.48, 0.13, 0.46, axis="z", segments=28
         )
         meshes[f"pylon_{label}"] = v01.panel(x, 3.10, 0.85, 0.42, 0.28, 1.55)
         meshes[f"pylon_{label}_blend"] = wing_nacelle_blend(x)
@@ -332,7 +332,7 @@ def final_meshes():
                 (1.35, 0.40, 0.24, 3.10),
                 (1.95, 0.14, 0.09, 3.00),
             ],
-            segments=28,
+            segments=36,
         )
         meshes[f"wing_root_{label}"] = v01.translated(fairing, side * 1.10, 0.0, 0.0)
 
@@ -378,7 +378,7 @@ def final_meshes():
             (-7.42, 0.60, 0.10, 7.45),
             (-6.60, 0.24, 0.05, 7.42),
         ],
-        segments=30,
+        segments=38,
     )
 
     for name in list(meshes):
@@ -414,14 +414,14 @@ def final_meshes():
                 (5.70, 0.36, 0.36, prop_y),
                 (6.05, 0.04, 0.04, prop_y),
             ],
-            segments=30,
+            segments=38,
         )
         meshes[f"spinner_{side_name}"] = v01.translated(spinner, x, 0.0, 0.0)
         meshes[f"prop_hub_{side_name}"] = v01._v05.cylinder(
-            x, prop_y, 5.52, 0.24, 0.28, axis="z", segments=24
+            x, prop_y, 5.52, 0.24, 0.28, axis="z", segments=32
         )
         meshes[f"hub_cap_{side_name}"] = v01._v05.cylinder(
-            x, prop_y, 5.88, 0.12, 0.12, axis="z", segments=20
+            x, prop_y, 5.88, 0.12, 0.12, axis="z", segments=28
         )
 
     # Enforce tyre contact and exact envelope after edits.

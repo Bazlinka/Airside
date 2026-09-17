@@ -1,5 +1,61 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — aircraft geometry fidelity pass across all 7 types (branch
+  `feature/aircraft-geometry-fidelity`), the most substantial piece of the autonomous
+  visual-quality work Bailey asked for tonight.**
+  - **Discovery that changed the whole approach:** research first confirmed this sandbox
+    can actually run the Python geometry generators, their regression tests, *and*
+    render real offline images of the result (`scripts/render-aircraft-thumbnails.py` —
+    a genuine PIL-based rasterizer with per-triangle Lambert shading, not a text
+    description) — `numpy`/`Pillow` are both installed. This meant aircraft geometry
+    changes could be genuinely verified this session, unlike every other Presentation
+    change tonight, which is why this became the largest piece of work.
+  - **What changed:** raised segment counts in every `scripts/generate-air-*.py`
+    generator on the specific parts identified as still low and close to camera —
+    engine nacelles, intake/exhaust rings, fan discs, wheels/tyres/rims, landing-gear
+    oleos, propeller hubs/spinners, and radome/belly-fairing/wing-root loft fillets.
+    Left main fuselage segment counts alone (already 64-72, high enough that further
+    gains there are marginal at gameplay camera distance — this was a finding from the
+    research pass, not a guess). Typical increases +25-60% per part. Two of the seven
+    kits (A321neo, 787-10) are pure derivatives that re-execute their base generator's
+    module (737-8, A350-900 respectively) and rescale — regenerated the base first,
+    then the derivative, so both picked up the improvement automatically without
+    duplicating the edits.
+  - **The one real constraint respected:** `scripts/test-air-001-atr42-v02.py` hardcodes
+    an upper bound (`< 22,000` triangles) on the ATR42 v02 kit's own output — the *only*
+    test file in the whole suite with a hard ceiling rather than an envelope/name/count
+    check. Measured v02's standalone triangle count before and after every edit to that
+    file's chain (14,456 -> 16,072, comfortably under the ceiling) rather than editing
+    blind and hoping.
+  - **Evidence — real, not just inspection:** every one of the 7 kits was actually
+    regenerated (`python3 scripts/generate-air-*.py`), its existing dimensional-envelope/
+    part-inventory/mesh-integrity regression test re-run (all 8 `test-air-*.py` scripts
+    pass — they check bounds, ground contact, named-part counts and non-degenerate
+    triangles, none of which segment-count increases affect, confirmed by reading each
+    test before trusting it wouldn't need updating), and then **actually rendered and
+    visually inspected** via `scripts/render-aircraft-thumbnails.py` — all 7 read as
+    correct, intact, recognisable aircraft with no holes, inverted normals or broken
+    proportions. `write_kit`'s existing `.meta`-GUID-preservation behaviour means no
+    Unity asset reference broke (confirmed — `git status` shows no `.meta` files
+    changed). Triangle counts: 737-8 17,404->20,156, A321neo 17,620->19,892, A350-900
+    14,192->16,416, 787-10 14,256->16,480, ATR42 v03 19,704->21,648, Saab 340B (smallest,
+    largest relative gain) 6,868->8,564, Dash 8-400 27,288->30,968.
+    `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` updated to match.
+  - **What this doesn't cover:** the *runtime* faceted/"triangular" look (unwelded
+    vertices + naive `RecalculateNormals()`) is a separate, already-open fix
+    (`MeshNormalSmoothing.cs`, branch `feature/aircraft-mesh-smoothing-and-markings`,
+    not yet merged) — the two changes compound (more segments gives that smoothing pass
+    more geometry to work with) but neither depends on the other; either can merge
+    first. Also did not add genuinely new part types (rivets, vortex generators, wing
+    fences, APU exhaust) — raised the density of what already exists rather than
+    growing the part inventory; that's a reasonable next slice if more time exists.
+  - **NEXT:** `scripts/test-unity.sh` and a close follow-camera Play-mode look at a
+    widebody (A350-900/787-10 have the most triangle headroom used, and their entire
+    main fuselage is built from the same `oval_lathe_fuselage` primitive the smoothing
+    fix targets, so they should show the most combined visual change) — the offline
+    render confirms structural correctness but not final in-engine PBR shading/lighting
+    response, which needs the real engine.
+
 - **2026-09-17 Claude — terminal facade architectural detail (branch
   `feature/terminal-facade-detail`), continuing the autonomous visual-quality pass.**
   - **What was plain:** the 28 airside glazing bays (real coordinates, `AdelaideTerminal

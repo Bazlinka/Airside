@@ -228,6 +228,50 @@ namespace Airside.Presentation
             return style;
         }
 
+        /// <summary>Filled Coastal Blue primary action — one dominant button per card.</summary>
+        public static GUIStyle PrimaryButtonStyle(GUIStyle basis)
+        {
+            var style = new GUIStyle(basis);
+            style.normal.background = ButtonActive;
+            style.normal.textColor = Cloud;
+            style.hover.background = ButtonHover;
+            style.hover.textColor = Cloud;
+            style.active.background = ButtonActive;
+            style.active.textColor = Cloud;
+            style.focused.background = ButtonActive;
+            style.focused.textColor = Cloud;
+            style.fontStyle = FontStyle.Bold;
+            style.alignment = TextAnchor.MiddleCenter;
+            return style;
+        }
+
+        /// <summary>Red-outline destructive action, visually secondary to the primary.</summary>
+        public static GUIStyle DestructiveButtonStyle(GUIStyle basis)
+        {
+            var style = new GUIStyle(basis);
+            style.normal.background = ButtonNormal;
+            style.normal.textColor = SignalRed;
+            style.hover.background = ButtonNormal;
+            style.hover.textColor = SignalRed;
+            style.active.background = ButtonNormal;
+            style.active.textColor = SignalRed;
+            style.focused.background = ButtonNormal;
+            style.focused.textColor = SignalRed;
+            style.alignment = TextAnchor.MiddleCenter;
+            return style;
+        }
+
+        /// <summary>Opaque navy fill so runway markings cannot wash out HUD text.</summary>
+        public static void DrawOpaquePanel(Rect rect, float alpha = 0.96f)
+        {
+            var previous = GUI.color;
+            var fill = RunwayInk;
+            fill.a = alpha;
+            GUI.color = fill;
+            GUI.DrawTexture(rect, SolidWhite);
+            GUI.color = previous;
+        }
+
         private static Texture2D Solid(Color colour)
         {
             var texture = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);

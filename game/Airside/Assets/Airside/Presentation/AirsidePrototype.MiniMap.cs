@@ -61,7 +61,7 @@ namespace Airside.Presentation
 
             GUI.Box(panelRect, GUIContent.none, panel);
             GUI.Label(new Rect(panelRect.x + 10f, panelRect.y + 2f, panelRect.width - 20f, FieldMiniMap.HeaderHeight),
-                "ADELAIDE AIRFIELD  ·  N hides", small);
+                "ADELAIDE AIRFIELD", small);
             var area = new Rect(panelRect.x + 6f, panelRect.y + FieldMiniMap.HeaderHeight, panelRect.width - 12f,
                 panelRect.height - FieldMiniMap.HeaderHeight - 6f);
             var map = FieldMiniMap.FitMap(area);

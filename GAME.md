@@ -1,7 +1,21 @@
 ## Where to resume — session handoff
 
-- **2026-09-18 Cursor — departure prep progress (branch
-  `feature/prep-stage-progress`).** Bailey asked to see how far along
+- **2026-09-18 Cursor — HUD shell redesign (branch `feature/hud-shell`).**
+  Bailey asked for the calmer interaction shell from the reference: slim navy
+  top bar, current-objective card, compact player Operations, contextual
+  selected-aircraft card, smaller mini-map, four workspaces. Presentation
+  only — live career/sim values, no hardcoded airline or times. Follow /
+  Overview left the overview; Esc/R and F still work. Full Adelaide flights
+  board remains under Operations.
+  - **Evidence:** Unity 6.3 EditMode **577/577, 0 failed**. `scripts/test-domain.sh`
+    skipped (no .NET 8 SDK on this Mac). Mac player built at
+    `work/builds/Airside.app`. Played a continued save: top bar, Kingscote
+    objective, compact player Operations, selected-aircraft card with View plan /
+    Cancel, smaller mini-map, no Follow/Overview pair. Airport stayed dominant.
+  - **NEXT:** Play the overview at 1280×720 / 1440×900 / 1920×1080 against
+    the reference. Do not add buildings or vehicles.
+
+- **2026-09-18 Cursor — departure prep progress (now on `main`, #316).** Bailey asked to see how far along
   refuelling and the other ground stages are, not just the current stage name.
   Simulation already owned durations; `DeparturePrepStatus` now exposes
   fuel/catering/boarding 0–1 plus a percent label. Presentation draws all three

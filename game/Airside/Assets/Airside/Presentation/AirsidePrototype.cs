@@ -697,10 +697,9 @@ namespace Airside.Presentation
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
                 AirsideTheme.Cloud);
 
-            // The setup and away-summary panels are modal. Keeping the live flight
-            // controls underneath them made the start screen look unfinished and,
-            // worse, left Follow / Overview clickable while the modal owned input.
-            if (!AirlineModalOpen && !_menuOpen)
+            // Follow / Overview live on the circuit HUD only. The airline overview
+            // uses the selected-aircraft card and Esc/R instead (ADR 0053).
+            if (!AirlineModalOpen && !_menuOpen && !FleetMode)
             {
                 DrawSpeedReadout(layout, panel);
                 DrawControlBar(layout, button);

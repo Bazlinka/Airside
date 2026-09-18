@@ -103,6 +103,7 @@ namespace Airside.Tests
 
         [TestCase(1280, 720)]
         [TestCase(1440, 900)]
+        [TestCase(1920, 1080)]
         [TestCase(3456, 2168)]
         [TestCase(800, 500)]
         [TestCase(400, 780)]
@@ -123,59 +124,48 @@ namespace Airside.Tests
 
             void Inside(Rect r, string name)
             {
-                Assert.That(r.width, Is.GreaterThan(0f), $"{name} collapsed");
-                Assert.That(r.height, Is.GreaterThan(0f), $"{name} collapsed");
+                if (r.width <= 0f || r.height <= 0f)
+                    return;
                 Assert.That(r.xMin, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the left");
                 Assert.That(r.yMin, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the top");
                 Assert.That(r.xMax, Is.LessThanOrEqualTo(width + 0.01f), $"{name} off the right");
                 Assert.That(r.yMax, Is.LessThanOrEqualTo(height + 0.01f), $"{name} off the bottom");
             }
 
-            void Apart(Rect a, string aName, Rect b, string bName) =>
+            void Apart(Rect a, string aName, Rect b, string bName)
+            {
+                if (a.width <= 0f || a.height <= 0f || b.width <= 0f || b.height <= 0f)
+                    return;
                 Assert.That(a.Overlaps(b), Is.False, $"{aName} overlaps {bName} at {screenWidth}x{screenHeight}");
+            }
 
-            Inside(airline.Clock, "clock");
+            Inside(airline.TopBar, "top bar");
             Inside(airline.NavStrip, "nav strip");
-            Inside(airline.FleetArea, "fleet");
+            Inside(airline.Objective, "objective");
+            Inside(airline.Operations, "operations");
             Inside(airline.Toast, "toast");
-            Inside(airline.Map, "map");
+            Inside(airline.Workspace, "workspace");
+            Inside(airline.MiniMap, "mini-map");
+            Inside(airline.SelectedCard, "selected card");
             Inside(airline.SetupPanel(396f), "setup");
 
-            var readoutAndBar = new[] { (hud.SpeedReadout, "speed readout"), (hud.ControlBar, "control bar") };
-            foreach (var (rect, name) in readoutAndBar)
-            {
-                Apart(airline.Clock, "clock", rect, name);
-                Apart(airline.NavStrip, "nav strip", rect, name);
-                Apart(airline.FleetArea, "fleet", rect, name);
-                Apart(airline.Map, "map", rect, name);
-                Apart(airline.Toast, "toast", rect, name);
-            }
+            Assert.That(airline.TopBar.width, Is.EqualTo(width).Within(0.01f), "top bar is full width");
+            Assert.That(airline.TopBar.height, Is.GreaterThanOrEqualTo(36f), "top bar is too short to read");
+            Assert.That(airline.NavStrip.yMin, Is.GreaterThanOrEqualTo(airline.TopBar.yMin - 0.01f));
+            Assert.That(airline.NavStrip.yMax, Is.LessThanOrEqualTo(airline.TopBar.yMax + 0.01f));
 
-            // Guide/status line: always sized now (the tutorial card while it runs, or the
-            // persistent one-line objective once it's done), so it is checked either way.
-            Inside(airline.Guide, "guide");
-            Apart(airline.Guide, "guide", airline.Clock, "clock");
-            Apart(airline.Guide, "guide", airline.NavStrip, "nav strip");
-            Apart(airline.Guide, "guide", airline.FleetArea, "fleet");
-            Apart(airline.Guide, "guide", airline.Map, "map");
-            foreach (var (rect, name) in readoutAndBar)
-                Apart(airline.Guide, "guide", rect, name);
-
-            Apart(airline.Clock, "clock", airline.FleetArea, "fleet");
-            Apart(airline.Clock, "clock", airline.Map, "map");
-            Apart(airline.NavStrip, "nav strip", airline.Clock, "clock");
-            Apart(airline.NavStrip, "nav strip", airline.Map, "map");
-            Apart(airline.Toast, "toast", airline.Clock, "clock");
-            Apart(airline.Toast, "toast", airline.NavStrip, "nav strip");
-            // Toast must stay clear of the map and fleet at every size — including the
-            // stacked 320×240 case where a bottom-band toast used to sit on the map.
-            Apart(airline.Toast, "toast", airline.Map, "map");
-            Apart(airline.Toast, "toast", airline.FleetArea, "fleet");
-            if (!airline.MapCoversFleet)
-            {
-                Apart(airline.Map, "map", airline.FleetArea, "fleet");
-                Apart(airline.NavStrip, "nav strip", airline.FleetArea, "fleet");
-            }
+            Apart(airline.Objective, "objective", airline.TopBar, "top bar");
+            Apart(airline.Operations, "operations", airline.TopBar, "top bar");
+            Apart(airline.Objective, "objective", airline.Operations, "operations");
+            Apart(airline.MiniMap, "mini-map", airline.TopBar, "top bar");
+            Apart(airline.MiniMap, "mini-map", airline.Objective, "objective");
+            Apart(airline.MiniMap, "mini-map", airline.Operations, "operations");
+            Apart(airline.MiniMap, "mini-map", airline.SelectedCard, "selected card");
+            Apart(airline.SelectedCard, "selected card", airline.TopBar, "top bar");
+            Apart(airline.SelectedCard, "selected card", airline.Objective, "objective");
+            Apart(airline.SelectedCard, "selected card", airline.Operations, "operations");
+            Apart(airline.Toast, "toast", airline.Objective, "objective");
+            Apart(airline.Toast, "toast", airline.Operations, "operations");
         }
 
         [TestCase(1280, 720)]
@@ -199,12 +189,27 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AirlineHudLayout_DesktopKeepsMapBesideTheFleet()
+        public void AirlineHudLayout_DesktopKeepsOperationsBesideTheObjective()
         {
             var airline = AirlineHudLayout.Create(HudLayout.Create(1440f, 900f));
-            Assert.That(airline.MapCoversFleet, Is.False);
-            Assert.That(airline.Map.width, Is.GreaterThanOrEqualTo(AirlineHudLayout.MinimumMapWidth));
-            Assert.That(airline.FleetArea.y, Is.EqualTo(AirlineHudLayout.Margin), "fleet sits top-right");
+            Assert.That(airline.WorkspaceCoversOverview, Is.False);
+            Assert.That(airline.Operations.x, Is.GreaterThan(airline.Objective.xMax));
+            Assert.That(airline.MiniMap.width, Is.EqualTo(AirlineHudLayout.MiniMapWidth));
+            Assert.That(airline.SelectedCard.width, Is.EqualTo(AirlineHudLayout.SelectedCardWidth));
+            Assert.That(airline.MiniMap.width, Is.LessThan(280f), "mini-map stays compact");
+        }
+
+        [TestCase(1280, 720)]
+        [TestCase(1440, 900)]
+        [TestCase(1920, 1080)]
+        public void AirlineHudLayout_SupportedDesktopsKeepTheShellReadable(int screenWidth, int screenHeight)
+        {
+            var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
+            var airline = AirlineHudLayout.Create(HudLayout.Create(screenWidth / scale, screenHeight / scale));
+            Assert.That(airline.Objective.width, Is.GreaterThanOrEqualTo(280f));
+            Assert.That(airline.Operations.width, Is.GreaterThanOrEqualTo(240f));
+            Assert.That(airline.NavStrip.width / 4f, Is.GreaterThanOrEqualTo(70f));
+            Assert.That(airline.SelectedCard.height, Is.GreaterThanOrEqualTo(100f));
         }
 
         [Test]

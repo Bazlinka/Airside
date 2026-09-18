@@ -481,18 +481,23 @@ namespace Airside.Presentation
             into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, quiet ? 0.5f : 1f,
                 row.LiveryHex);
 
-            var standWidth = 74f;
+            var standWidth = box.Width >= 240f ? 74f : 0f;
             var body = new HudBox(box.X + 12f, box.Y + 7f, box.Width - 12f - standWidth, 18f);
-            var regWidth = 74f;
-            var typeWidth = 108f;
+            const float regWidth = 70f;
+            // Status is the column worth reading; on a narrow roster the type gives way to it
+            // rather than squeezing it to nothing.
+            var typeWidth = body.Width >= 290f ? 104f : 0f;
+
             into.Text(body.WithWidth(regWidth), row.Registration, 13f, HudTone.Default, HudTextStyle.Bold,
                 alpha: alpha);
-            into.Text(body.Offset(regWidth, 0f).WithWidth(typeWidth - 8f), row.TypeName, 11f, HudTone.Muted,
-                alpha: alpha);
+            if (typeWidth > 0f)
+                into.Text(body.Offset(regWidth, 0f).WithWidth(typeWidth - 8f), row.TypeName, 11f,
+                    HudTone.Muted, alpha: alpha);
             into.Text(body.Offset(regWidth + typeWidth, 0f).WithWidth(body.Width - regWidth - typeWidth),
                 row.Status, 12f, row.StatusTone, alpha: alpha);
-            into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand, 12f,
-                HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);
+            if (standWidth > 0f)
+                into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand,
+                    12f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);
             into.Hotspot(box, HudAction.Select(row.Registration));
         }
 

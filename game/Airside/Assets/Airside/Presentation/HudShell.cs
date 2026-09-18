@@ -180,7 +180,9 @@ namespace Airside.Presentation
             var limit = navStrip.IsEmpty ? bar.Right - EdgePadding : navStrip.X - SegmentGap;
             for (var i = 0; i < values.Count; i++)
             {
-                var width = Measure(values[i], 12f, letterSpacing: 1f) + 4f;
+                // Caption tracking is a tenth of the size; measuring without it is how a
+                // value ended up touching the first workspace tab on a narrow window.
+                var width = Measure(values[i], 12f, letterSpacing: 1.2f) + 6f;
                 if (x + width > limit)
                     break;
                 into.Add(new HudTopBarSegment(new HudBox(x, bar.Y, width, bar.Height), values[i],
@@ -242,9 +244,10 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(text))
                 return 0f;
-            // 0.56 em is a good average advance for the mixed upper/lower HUD copy in
-            // Unity's default sans face; digits and capitals sit slightly above it.
-            return text.Length * (fontSize * 0.56f + letterSpacing);
+            // 0.70 em per glyph: generous enough to cover bold capitals in both Unity's
+            // default sans face and the one the offline renderer has, because a box that
+            // measures short clips its own text rather than merely looking loose.
+            return text.Length * (fontSize * 0.70f + letterSpacing);
         }
 
         private static float Clamp(float value, float min, float max) =>
@@ -291,8 +294,16 @@ namespace Airside.Presentation
                 }
             }
 
-            if (tabs == null)
+            if (tabs == null || tabs.Count == 0)
                 return;
+
+            // "CONTRACTS" is the longest label; a narrow window shrinks every tab together
+            // rather than clipping one of them off the right edge.
+            var slot = tabs[0].Box.Width;
+            var fontSize = 12f;
+            while (fontSize > 9f && HudShell.Measure("CONTRACTS", fontSize, fontSize * 0.1f) > slot - 10f)
+                fontSize -= 0.5f;
+
             foreach (var tab in tabs)
             {
                 if (tab.Selected)
@@ -302,7 +313,7 @@ namespace Airside.Presentation
                 }
 
                 into.Text(tab.Box.Inset(0f, (tab.Box.Height - 16f) * 0.5f, 0f, 0f).WithHeight(16f),
-                    tab.Label, 12f, tab.Selected ? HudTone.Default : HudTone.Muted,
+                    tab.Label, fontSize, tab.Selected ? HudTone.Default : HudTone.Muted,
                     HudTextStyle.Bold | HudTextStyle.Caption, HudAlign.Center);
                 into.Hotspot(tab.Box, WorkspaceAction(tab.Workspace));
             }

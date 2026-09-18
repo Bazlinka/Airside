@@ -143,6 +143,11 @@ def draw_text(image, command):
     draw = ImageDraw.Draw(layer)
 
     lines = [value]
+    if not wrap:
+        # IMGUI clips non-wrapping labels to their rect (TextClipping.Clip); do the same, or
+        # the mockup shows an overrun the game does not have.
+        while len(lines[0]) > 1 and text_width(draw, lines[0], f, tracking) > w:
+            lines[0] = lines[0][:-1]
     if wrap:
         lines = []
         current = ""

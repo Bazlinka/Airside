@@ -1700,7 +1700,7 @@ namespace Airside.Presentation
         private void DrawContractsWorkspace(Rect rect)
         {
             _contractsWorkspace.Rebuild(_operations, _clock.Now);
-            var layout = ContractsWorkspaceLayout.Create(Box(rect));
+            var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
                 _highlightedContractId);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));

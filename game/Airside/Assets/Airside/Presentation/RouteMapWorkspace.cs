@@ -180,7 +180,9 @@ namespace Airside.Presentation
                 return;
             }
 
-            AvailabilityLine = $"Available with {BandLabel(RouteAccess.Ceiling(type))} capability";
+            // The band the route needs, not the ceiling of the aircraft looking at it: a
+            // Dash 8 on a Kingscote hop is flying a Regional route, not a Domestic one.
+            AvailabilityLine = $"Available with {BandLabel(band)} capability";
             AvailabilityTone = HudTone.Caution;
 
             var delay = FlightPlanner.ClampDelay(departureDelaySeconds, type);
@@ -232,10 +234,15 @@ namespace Airside.Presentation
     public readonly struct RouteMapWorkspaceLayout
     {
         public const float FilterHeight = 28f;
-        public const float FilterWidth = 106f;
-        public const float DetailWidth = 296f;
+        public const float FilterWidth = 128f;
+        public const float DetailWidth = 276f;
         public const float DetailGap = 20f;
-        public const float MinMapWidth = 320f;
+
+        /// <summary>
+        /// Below this the map is not worth looking at, and the detail pane gives way. Kept
+        /// low enough that a 1024-point window still gets both.
+        /// </summary>
+        public const float MinMapWidth = 256f;
 
         private RouteMapWorkspaceLayout(HudBox surface, HudBox header, HudBox filters, HudBox map, HudBox detail)
         {
@@ -313,9 +320,9 @@ namespace Airside.Presentation
         {
             if (into == null || model == null)
                 return;
-            into.Button(layout.FilterBox(0), $"AVAILABLE  {model.AvailableCount}", HudAction.FilterAvailable,
+            into.Button(layout.FilterBox(0), $"AVAILABLE {model.AvailableCount}", HudAction.FilterAvailable,
                 model.Filter == RouteMapFilter.Available ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
-            into.Button(layout.FilterBox(1), $"LOCKED  {model.LockedCount}", HudAction.FilterLocked,
+            into.Button(layout.FilterBox(1), $"LOCKED {model.LockedCount}", HudAction.FilterLocked,
                 model.Filter == RouteMapFilter.Locked ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
         }
 

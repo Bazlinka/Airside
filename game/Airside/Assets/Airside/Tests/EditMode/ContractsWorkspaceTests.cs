@@ -91,10 +91,12 @@ namespace Airside.Tests
             foreach (var (width, height) in HudTestAirline.Viewports)
             {
                 var surface = HudShell.WorkspaceSurface(width, height);
-                var layout = ContractsWorkspaceLayout.Create(surface);
+                var layout = ContractsWorkspaceLayout.Create(surface, activeTerms: 4);
                 var label = $"{width}x{height}";
 
                 Assert.That(layout.ActiveColumn.Overlaps(layout.OffersColumn), Is.False, label);
+                Assert.That(layout.ActiveCard.Bottom, Is.LessThanOrEqualTo(layout.ActiveColumn.Bottom + 0.01f),
+                    label);
                 Assert.That(layout.OffersColumn.Right, Is.LessThanOrEqualTo(surface.Right + 0.01f), label);
                 Assert.That(layout.ActiveColumn.Overlaps(layout.Footer), Is.False, label);
                 Assert.That(layout.OffersColumn.Overlaps(layout.Footer), Is.False, label);

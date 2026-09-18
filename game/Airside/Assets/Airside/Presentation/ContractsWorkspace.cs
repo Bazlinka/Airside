@@ -201,6 +201,11 @@ namespace Airside.Presentation
         public const float OfferGap = 10f;
         public const float MinColumnWidth = 300f;
 
+        public const float ActiveTermHeight = 19f;
+
+        /// <summary>Everything in the active card except its list of terms.</summary>
+        public const float ActiveCardChrome = 162f;
+
         private ContractsWorkspaceLayout(HudBox surface, HudBox header, HudBox activeColumn,
             HudBox offersColumn, HudBox divider, HudBox footer)
         {
@@ -211,6 +216,10 @@ namespace Airside.Presentation
             Divider = divider;
             Footer = footer;
         }
+
+        /// <summary>Height an active card needs to show <paramref name="terms"/> terms in full.</summary>
+        public static float ActiveCardHeightFor(int terms) =>
+            ActiveCardChrome + (terms < 0 ? 0 : terms) * ActiveTermHeight;
 
         public HudBox Surface { get; }
         public HudBox Header { get; }
@@ -244,7 +253,12 @@ namespace Airside.Presentation
             }
         }
 
-        public static ContractsWorkspaceLayout Create(HudBox surface)
+        /// <summary>
+        /// <paramref name="activeTerms"/> is how many lines the active contract's terms take;
+        /// a stacked narrow window sizes the top half around them instead of guessing, which
+        /// is what used to push the card's own button down over the first offer.
+        /// </summary>
+        public static ContractsWorkspaceLayout Create(HudBox surface, int activeTerms = 4)
         {
             var header = HudShell.Header(surface);
             var footer = HudShell.Footer(surface);
@@ -258,9 +272,11 @@ namespace Airside.Presentation
             if (columnWidth < 0f || body.Width < MinColumnWidth * 2f + ColumnGap)
             {
                 // Too narrow for two columns: stack the active contract above the offers.
-                var half = body.Height * 0.42f;
-                var stackedActive = new HudBox(body.X, body.Y, body.Width, half);
-                var stackedOffers = new HudBox(body.X, body.Y + half + 12f, body.Width, body.Height - half - 12f);
+                var wanted = CaptionHeight + 8f + ActiveCardHeightFor(activeTerms);
+                var top = wanted > body.Height * 0.62f ? body.Height * 0.62f : wanted;
+                var stackedActive = new HudBox(body.X, body.Y, body.Width, top);
+                var stackedOffers = new HudBox(body.X, body.Y + top + 12f, body.Width,
+                    body.Height - top - 12f);
                 return new ContractsWorkspaceLayout(surface, header, stackedActive, stackedOffers,
                     HudBox.Empty, footer);
             }
@@ -316,7 +332,8 @@ namespace Airside.Presentation
                 return;
             }
 
-            var body = card.WithHeight(Math.Min(card.Height, 232f));
+            var wanted = ContractsWorkspaceLayout.ActiveCardHeightFor(model.ActiveTerms.Count);
+            var body = card.WithHeight(Math.Min(card.Height, wanted));
             into.Fill(body, HudTone.Default, 0.05f);
             into.Outline(body, HudTone.Caution, 0.7f);
 
@@ -334,13 +351,18 @@ namespace Airside.Presentation
                 HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
             y += 22f;
 
+            // A short card drops the terms it cannot show rather than painting them over
+            // whatever is underneath it.
+            var termsFloor = body.Bottom - 52f;
             foreach (var term in model.ActiveTerms)
             {
+                if (y + ContractsWorkspaceLayout.ActiveTermHeight > termsFloor)
+                    break;
                 into.Text(new HudBox(x, y, width, 18f), term, 12f);
-                y += 19f;
+                y += ContractsWorkspaceLayout.ActiveTermHeight;
             }
 
-            y += 8f;
+            y = body.Bottom - 44f;
             into.Button(new HudBox(x, y, width, 30f),
                 model.HasEligibleAircraft ? $"ELIGIBLE: {model.EligibleAircraftLine}" : "NO ELIGIBLE AIRCRAFT",
                 HudAction.ViewEligibleAircraft, HudButtonStyle.Secondary, model.HasEligibleAircraft);

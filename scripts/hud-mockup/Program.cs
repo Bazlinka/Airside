@@ -171,7 +171,8 @@ public static class Program
 
         var model = new ContractsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now);
-        var layout = ContractsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+        var layout = ContractsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height),
+            model.ActiveTerms.Count);
 
         var highlighted = string.Empty;
         foreach (var offer in model.Offers)

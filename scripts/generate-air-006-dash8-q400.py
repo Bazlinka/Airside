@@ -234,13 +234,13 @@ def wheel_set(meshes, prefix, x, z, radius, width):
     # cy = radius puts the tyre contact patch on y=0 when axis is X.
     # Segment counts are multiples of 4 so a vertex lands exactly at bottom.
     meshes[f"tire_{prefix}"] = cylinder(
-        x, radius, z, radius, width, axis="x", segments=24
+        x, radius, z, radius, width, axis="x", segments=32
     )
     meshes[f"wheel_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.62, width + 0.025, axis="x", segments=20
+        x, radius, z, radius * 0.62, width + 0.025, axis="x", segments=28
     )
     meshes[f"rim_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.34, width + 0.045, axis="x", segments=16
+        x, radius, z, radius * 0.34, width + 0.045, axis="x", segments=24
     )
 
 
@@ -294,7 +294,7 @@ def nacelle_pod(x):
         (-4.65, 0.22, 0.36, 2.38),
         (-5.10, 0.09, 0.12, 2.34),  # exhaust taper
     ]
-    segs = 56
+    segs = 64
     rings = []
     for z, rx, ry, cy in stations:
         ring = []
@@ -318,7 +318,7 @@ def nacelle_pod(x):
 def nacelle_wing_fillet(x, side):
     """Blend the nacelle crown into the wing undersurface (one assembly read)."""
     z_stations = np.linspace(-1.80, 3.40, 14)
-    segs = 20
+    segs = 28
     rings = []
     for z in z_stations:
         t = float(np.clip((z + 1.80) / 5.20, 0.0, 1.0))
@@ -353,7 +353,7 @@ def nacelle_gear_fairing(x):
             (-1.40, 0.60, 0.54, 2.48),
             (-0.72, 0.34, 0.32, 2.66),
         ],
-        segments=28,
+        segments=36,
     )
     return translated(local, x, 0.0, 0.0)
 
@@ -366,7 +366,7 @@ def wing_fairing(side):
     forms a continuous saddle with no centre valley or stepped root.
     """
     z_stations = np.linspace(-2.40, 3.55, 22)
-    segs = 28
+    segs = 36
     rings = []
     for z in z_stations:
         t = float(np.clip((z + 2.40) / 5.95, 0.0, 1.0))
@@ -420,7 +420,7 @@ def wing_fairing(side):
 def wing_centre_saddle():
     """Full-span centre wing box that kills the left/right valley at the crown."""
     z_stations = np.linspace(-2.20, 3.40, 20)
-    segs = 32
+    segs = 40
     rings = []
     for z in z_stations:
         t = float(np.clip((z + 2.20) / 5.60, 0.0, 1.0))
@@ -452,7 +452,7 @@ def wing_centre_saddle():
 def tail_root_fillet():
     """Smooth dorsal blend from rear fuselage into the fin leading edge."""
     z_stations = np.linspace(-7.80, -12.70, 16)
-    segs = 20
+    segs = 28
     rings = []
     for z in z_stations:
         t = float((z + 7.80) / (-12.70 + 7.80))
@@ -480,7 +480,7 @@ def tailplane_saddle_mesh():
         (-13.40, 0.42, 0.18, 7.90),
         (-13.75, 0.16, 0.08, 7.92),
     ]
-    segs = 32
+    segs = 40
     rings = []
     for z, rx, ry, cy in stations:
         ring = []
@@ -608,10 +608,10 @@ def q400_meshes():
         meshes[f"engine_{name}"] = nacelle_pod(x)
         meshes[f"nacelle_fillet_{name}"] = nacelle_wing_fillet(x, side)
         meshes[f"intake_{name}"] = cylinder(
-            x, 3.56, 5.42, 0.36, 0.14, axis="z", segments=32
+            x, 3.56, 5.42, 0.36, 0.14, axis="z", segments=40
         )
         meshes[f"exhaust_{name}"] = cylinder(
-            x, 2.42, -4.85, 0.14, 0.55, axis="z", segments=20
+            x, 2.42, -4.85, 0.14, 0.55, axis="z", segments=28
         )
         meshes[f"exhaust_stack_{name[0]}"] = box(
             x + side * 0.42, 3.55, -2.10, 0.14, 0.16, 0.85
@@ -636,7 +636,7 @@ def q400_meshes():
                 tip=True,
             )
         meshes[f"prop_hub_{name}"] = cylinder(
-            x, 3.56, 5.48, 0.36, 0.42, axis="z", segments=28
+            x, 3.56, 5.48, 0.36, 0.42, axis="z", segments=36
         )
         meshes[f"spinner_{name}"] = translated(
             oval_lathe_fuselage(
@@ -647,14 +647,14 @@ def q400_meshes():
                     (6.12, 0.14, 0.14, 3.56),
                     (6.30, 0.03, 0.03, 3.56),
                 ],
-                segments=32,
+                segments=40,
             ),
             x,
             0.0,
             0.0,
         )
         meshes[f"spinner_stripe_{name[0]}"] = cylinder(
-            x, 3.56, 5.68, 0.38, 0.05, axis="z", segments=24
+            x, 3.56, 5.68, 0.38, 0.05, axis="z", segments=32
         )
 
     # Fin tip owns the exact 8.34 m height. Soft dorsal + root fillet clean the
@@ -766,7 +766,7 @@ def q400_meshes():
             (8.50, 0.40, 0.16, 1.05),
             (11.00, 0.18, 0.08, 1.15),
         ],
-        segments=28,
+        segments=36,
     )
     # Soft radome continues the softened fuselage stations into the nose tip.
     meshes["radome"] = oval_lathe_fuselage(
@@ -778,7 +778,7 @@ def q400_meshes():
             (15.70, 0.12, 0.10, 1.33),
             (HALF_LENGTH - 0.12, 0.04, 0.04, 1.30),
         ],
-        segments=40,
+        segments=44,
     )
 
     # Long nacelle-mounted mains — thicker oleos and open bay doors that stay
@@ -787,7 +787,7 @@ def q400_meshes():
         x = side * 4.35
         meshes[f"gear_{name}"] = box(x, 1.35, -1.90, 0.24, 2.35, 0.38)
         meshes[f"gear_oleo_{name}"] = cylinder(
-            x, 1.15, -1.90, 0.11, 1.75, axis="y", segments=18
+            x, 1.15, -1.90, 0.11, 1.75, axis="y", segments=26
         )
         meshes[f"gear_scissors_{name}"] = box(
             x + side * 0.16, 1.45, -1.50, 0.09, 0.70, 0.45
@@ -805,7 +805,7 @@ def q400_meshes():
 
     meshes["gear_nose"] = box(0.0, 0.95, 12.15, 0.18, 1.30, 0.26)
     meshes["gear_oleo_nose"] = cylinder(
-        0.0, 0.68, 12.15, 0.07, 1.00, axis="y", segments=16
+        0.0, 0.68, 12.15, 0.07, 1.00, axis="y", segments=24
     )
     meshes["gear_scissors_nose"] = box(0.0, 0.98, 12.40, 0.07, 0.52, 0.34)
     meshes["gear_door_nose"] = box(0.0, 1.15, 11.85, 0.78, 0.08, 1.45)

@@ -1,5 +1,35 @@
 ## Unreleased
 
+- **Static discharge wicks added to the Saab 340B and A350-900 wingtips** (the 787-10
+  inherits them automatically since it derives from the A350-900's generator module).
+  Every real airliner has these small trailing-edge antennas; previously only the 737-8
+  (and its A321neo derivative) and the Dash 8-400 had them modelled, so half the fleet's
+  wingtips read as slightly unfinished up close. Placed from each aircraft's own already
+  -verified wingtip navigation-light position (a known-good anchor) rather than
+  re-deriving wingtip geometry from scratch. `scripts/test-air-007-saab-340b.py` and
+  `scripts/test-air-009-a350-900.py`/`-010-787-10.py` still pass; all three regenerated
+  models were rendered and visually inspected (no bounds violation — the wicks sit safely
+  inboard of each wing's existing extremity, confirmed against each file's own dimension
+  tolerance before regenerating, not after).
+- **Every aircraft's nacelles, wheels, landing gear, propeller hubs/spinners and radome/
+  belly-fairing lofts are meaningfully rounder** — raised the Python geometry generators'
+  segment counts on the smallest, closest-to-camera round parts across all 7 types
+  (737-8, A321neo, A350-900, 787-10, ATR 42, Saab 340B, Dash 8-400), typically +25-60%
+  per part (e.g. engine nacelles 40->56/48->64, wheels/tyres +33%, gear oleos +50%).
+  Combines with the runtime mesh-smoothing fix (separate branch) — more segments gives
+  that smoothing pass more geometry to work with, so the two changes compound. Triangle
+  counts rose 10-25% per aircraft (e.g. 737-8 17,404->20,156; Saab 340B, the smallest,
+  6,868->8,564 at +25%), all well within normal game-asset budgets. Left main fuselage
+  segment counts alone (64-72, already high per prior research; further gains there are
+  marginal/invisible at gameplay camera distance) and focused entirely on the parts that
+  were still low. **Real, not just reviewed-by-inspection, verification:** every regenerated
+  model passed its existing Python dimensional-envelope/part-inventory regression test
+  (`scripts/test-air-*.py`, all 8 pass) and was actually rendered and visually inspected
+  via `scripts/render-aircraft-thumbnails.py` (a real offline rasterizer, not a text
+  description) before being called done — caught nothing wrong, all 7 read as correct,
+  intact aircraft. `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`'s triangle counts updated
+  to match.
+
 - **The terminal's 28 airside glazing bays now read as a framed curtain wall, and the
   roof canopy has real volume and a corrugated-metal material.** Both were flat boxes
   before — the panes butted up against each other with nothing marking the 3 m gaps

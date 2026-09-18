@@ -144,13 +144,13 @@ def panel(
 def wheel_set(meshes, prefix, x, z, radius, width):
     # cy = radius puts the tyre contact patch on y=0 when the axis is X.
     meshes[f"tire_{prefix}"] = cylinder(
-        x, radius, z, radius, width, axis="x", segments=20
+        x, radius, z, radius, width, axis="x", segments=28
     )
     meshes[f"wheel_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.62, width + 0.025, axis="x", segments=16
+        x, radius, z, radius * 0.62, width + 0.025, axis="x", segments=24
     )
     meshes[f"rim_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.34, width + 0.045, axis="x", segments=14
+        x, radius, z, radius * 0.34, width + 0.045, axis="x", segments=20
     )
 
 
@@ -159,7 +159,7 @@ def saab_meshes():
 
     # Narrow circular fuselage. The lathe helper adds a 0.12 m tip beyond each
     # end station, so stations are inset by 0.12 m to hit exact length.
-    meshes["fuselage"] = oval_lathe_fuselage(FUSE_STATIONS.tolist(), segments=40)
+    meshes["fuselage"] = oval_lathe_fuselage(FUSE_STATIONS.tolist(), segments=48)
 
     # Low wing — the Saab's defining contrast with ATR / Q400 high wings.
     # Outer tip stations own the exact 21.44 m standard span.
@@ -197,17 +197,17 @@ def saab_meshes():
                     (2.10, 0.55, 0.52, 1.72),
                     (2.85, 0.28, 0.26, 1.74),
                 ],
-                segments=28,
+                segments=40,
             ),
             x,
             0.0,
             0.0,
         )
         meshes[f"intake_{name}"] = cylinder(
-            x, 1.74, 2.55, 0.34, 0.14, axis="z", segments=26
+            x, 1.74, 2.55, 0.34, 0.14, axis="z", segments=36
         )
         meshes[f"exhaust_{name}"] = cylinder(
-            x, 1.48, -2.35, 0.16, 0.42, axis="z", segments=16
+            x, 1.48, -2.35, 0.16, 0.42, axis="z", segments=24
         )
         meshes[f"pylon_{name}"] = box(x, 1.85, 0.35, 0.42, 0.55, 1.85)
         meshes[f"gear_fairing_{name}"] = translated(
@@ -218,7 +218,7 @@ def saab_meshes():
                     (-0.30, 0.40, 0.42, 1.15),
                     (0.38, 0.26, 0.28, 1.23),
                 ],
-                segments=20,
+                segments=28,
             ),
             x,
             0.0,
@@ -242,7 +242,7 @@ def saab_meshes():
                 tip=True,
             )
         meshes[f"prop_hub_{name}"] = cylinder(
-            x, 1.74, 2.88, 0.17, 0.22, axis="z", segments=22
+            x, 1.74, 2.88, 0.17, 0.22, axis="z", segments=32
         )
         meshes[f"spinner_{name}"] = translated(
             oval_lathe_fuselage(
@@ -251,7 +251,7 @@ def saab_meshes():
                     (3.05, 0.21, 0.21, 1.74),
                     (3.32, 0.04, 0.04, 1.74),
                 ],
-                segments=22,
+                segments=32,
             ),
             x,
             0.0,
@@ -340,7 +340,7 @@ def saab_meshes():
             (3.50, 0.40, 0.15, 0.92),
             (5.80, 0.22, 0.08, 0.98),
         ],
-        segments=24,
+        segments=32,
     )
     meshes["radome"] = oval_lathe_fuselage(
         [
@@ -349,7 +349,7 @@ def saab_meshes():
             (9.25, 0.24, 0.20, 1.46),
             (HALF_LENGTH - 0.12, 0.04, 0.03, 1.46),
         ],
-        segments=28,
+        segments=36,
     )
 
     # Tricycle gear: twin-wheel nose and twin side-by-side mains that retract
@@ -359,7 +359,7 @@ def saab_meshes():
         x = side * 3.55
         meshes[f"gear_{name}"] = box(x, 0.95, -0.55, 0.16, 1.55, 0.26)
         meshes[f"gear_oleo_{name}"] = cylinder(
-            x, 0.78, -0.55, 0.07, 1.15, axis="y", segments=14
+            x, 0.78, -0.55, 0.07, 1.15, axis="y", segments=20
         )
         meshes[f"gear_door_{name}"] = box(
             x + side * 0.48, 1.15, -0.55, 0.08, 1.15, 1.05
@@ -369,7 +369,7 @@ def saab_meshes():
 
     meshes["gear_nose"] = box(0.0, 0.72, 7.15, 0.12, 1.05, 0.18)
     meshes["gear_oleo_nose"] = cylinder(
-        0.0, 0.58, 7.15, 0.05, 0.72, axis="y", segments=14
+        0.0, 0.58, 7.15, 0.05, 0.72, axis="y", segments=20
     )
     meshes["gear_door_nose"] = box(0.0, 1.05, 6.95, 0.48, 0.06, 0.95)
     wheel_set(meshes, "nose_left", -0.16, 7.18, 0.28, 0.14)
@@ -377,6 +377,8 @@ def saab_meshes():
 
     meshes["nav_light_left"] = box(-HALF_SPAN + 0.04, 2.20, 0.55, 0.08, 0.08, 0.08)
     meshes["nav_light_right"] = box(HALF_SPAN - 0.04, 2.20, 0.55, 0.08, 0.08, 0.08)
+    meshes["static_wick_left"] = box(-HALF_SPAN + 0.10, 2.15, 0.30, 0.03, 0.02, 0.15)
+    meshes["static_wick_right"] = box(HALF_SPAN - 0.10, 2.15, 0.30, 0.03, 0.02, 0.15)
     meshes["tail_nav_light"] = box(0.0, 6.75, -9.72, 0.08, 0.08, 0.08)
     meshes["beacon_top"] = box(0.0, 3.15, -0.40, 0.10, 0.10, 0.10)
     meshes["landing_light_l"] = box(-3.55, 1.45, 2.70, 0.16, 0.12, 0.08)

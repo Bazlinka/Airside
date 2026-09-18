@@ -71,9 +71,9 @@ def panel(cx: float, cy: float, cz: float, sx: float, sy: float, sz: float):
 
 
 def wheel_parts(meshes: dict, prefix: str, x: float, y: float, z: float, radius: float, width: float):
-    meshes[f"tire_{prefix}"] = _v05.cylinder(x, y, z, radius, width, axis="x", segments=28)
-    meshes[f"wheel_{prefix}"] = _v05.cylinder(x, y, z, radius * 0.57, width * 1.04, axis="x", segments=24)
-    meshes[f"rim_{prefix}"] = _v05.cylinder(x, y, z, radius * 0.29, width * 1.08, axis="x", segments=20)
+    meshes[f"tire_{prefix}"] = _v05.cylinder(x, y, z, radius, width, axis="x", segments=32)
+    meshes[f"wheel_{prefix}"] = _v05.cylinder(x, y, z, radius * 0.57, width * 1.04, axis="x", segments=28)
+    meshes[f"rim_{prefix}"] = _v05.cylinder(x, y, z, radius * 0.29, width * 1.08, axis="x", segments=24)
 
 
 def final_meshes():
@@ -136,11 +136,11 @@ def final_meshes():
             )
         spinner = _v05.oval_lathe_fuselage(
             [(5.42, 0.29, 0.29, prop_y), (5.74, 0.34, 0.34, prop_y), (6.10, 0.035, 0.035, prop_y)],
-            segments=28,
+            segments=36,
         )
         meshes[f"spinner_{side_name}"] = translated(spinner, x, 0.0, 0.0)
-        meshes[f"prop_hub_{side_name}"] = _v05.cylinder(x, prop_y, 5.56, 0.22, 0.25, axis="z", segments=24)
-        meshes[f"hub_cap_{side_name}"] = _v05.cylinder(x, prop_y, 5.92, 0.11, 0.11, axis="z", segments=20)
+        meshes[f"prop_hub_{side_name}"] = _v05.cylinder(x, prop_y, 5.56, 0.22, 0.25, axis="z", segments=32)
+        meshes[f"hub_cap_{side_name}"] = _v05.cylinder(x, prop_y, 5.92, 0.11, 0.11, axis="z", segments=28)
 
     # ATR-pattern undercarriage: twin nose wheels and two tandem wheels per main
     # leg. The main legs emerge from compact fuselage-side sponsons rather than
@@ -153,18 +153,18 @@ def final_meshes():
         if name.startswith(gear_prefixes):
             del meshes[name]
     meshes["gear_fairing_left"] = _v05.oval_lathe_fuselage(
-        [(0.35, 0.34, 0.42, 1.46), (-0.30, 0.42, 0.48, 1.48), (-1.05, 0.28, 0.34, 1.50)], segments=24
+        [(0.35, 0.34, 0.42, 1.46), (-0.30, 0.42, 0.48, 1.48), (-1.05, 0.28, 0.34, 1.50)], segments=30
     )
     meshes["gear_fairing_left"] = translated(meshes["gear_fairing_left"], -1.20, 0.0, 0.0)
     meshes["gear_fairing_right"] = translated(
         _v05.oval_lathe_fuselage(
-            [(0.35, 0.34, 0.42, 1.46), (-0.30, 0.42, 0.48, 1.48), (-1.05, 0.28, 0.34, 1.50)], segments=24
+            [(0.35, 0.34, 0.42, 1.46), (-0.30, 0.42, 0.48, 1.48), (-1.05, 0.28, 0.34, 1.50)], segments=30
         ), 1.20, 0.0, 0.0
     )
     meshes["gear_left"] = _v06.rotated_box(-1.70, 1.02, -0.40, 0.16, 1.35, 0.24, z_degrees=-15.0)
     meshes["gear_right"] = _v06.rotated_box(1.70, 1.02, -0.40, 0.16, 1.35, 0.24, z_degrees=15.0)
-    meshes["gear_oleo_left"] = _v05.cylinder(-2.05, 0.72, -0.40, 0.065, 0.70, axis="y", segments=18)
-    meshes["gear_oleo_right"] = _v05.cylinder(2.05, 0.72, -0.40, 0.065, 0.70, axis="y", segments=18)
+    meshes["gear_oleo_left"] = _v05.cylinder(-2.05, 0.72, -0.40, 0.065, 0.70, axis="y", segments=26)
+    meshes["gear_oleo_right"] = _v05.cylinder(2.05, 0.72, -0.40, 0.065, 0.70, axis="y", segments=26)
     meshes["gear_scissors_left"] = _v06.rotated_box(-2.02, 0.66, -0.64, 0.07, 0.34, 0.16, z_degrees=-12.0)
     meshes["gear_scissors_right"] = _v06.rotated_box(2.02, 0.66, -0.64, 0.07, 0.34, 0.16, z_degrees=12.0)
     meshes["gear_door_left"] = panel(-1.37, 1.37, -0.42, 0.06, 0.62, 1.38)
@@ -175,7 +175,7 @@ def final_meshes():
     wheel_parts(meshes, "right_aft", 2.05, 0.37, -0.75, 0.37, 0.22)
 
     meshes["gear_nose"] = panel(0.0, 1.03, 7.30, 0.15, 1.36, 0.22)
-    meshes["gear_oleo_nose"] = _v05.cylinder(0.0, 0.77, 7.30, 0.052, 0.92, axis="y", segments=18)
+    meshes["gear_oleo_nose"] = _v05.cylinder(0.0, 0.77, 7.30, 0.052, 0.92, axis="y", segments=26)
     meshes["gear_scissors_nose"] = _v06.rotated_box(0.0, 0.65, 7.14, 0.07, 0.35, 0.15)
     meshes["gear_door_nose"] = panel(0.0, 1.37, 7.10, 0.54, 0.06, 1.24)
     wheel_parts(meshes, "nose_left", -0.18, 0.31, 7.34, 0.31, 0.16)

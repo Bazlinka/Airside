@@ -304,7 +304,10 @@ def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
         (-0.70, 0.38, 0.34, 3.02),
         (-1.05, 0.22, 0.20, 3.00),
     ]
-    segs = 40
+    # Fidelity pass: engine nacelles are large, round and close to camera in every
+    # follow/apron view, so raised from 40 to 56 (was the single biggest lever
+    # among the round parts still on the runtime-smoothing fix's benefit curve).
+    segs = 56
     rings = []
     for z, rx, ry, cy in stations:
         ring = []
@@ -339,7 +342,7 @@ def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
-def annulus(cx, cy, z_front, z_back, outer_radius, inner_radius, segments=40):
+def annulus(cx, cy, z_front, z_back, outer_radius, inner_radius, segments=56):
     """Closed intake-lip ring with an actual opening through its centre."""
     verts: list[list[float]] = []
     indices: list[int] = []
@@ -399,13 +402,13 @@ def serrated_nozzle(cx, cy, z, *, radius, teeth=12):
 def wheel_set(meshes, prefix, x, z, radius, width):
     # Segment counts are multiples of 4 so a vertex lands exactly on y=0.
     meshes[f"tire_{prefix}"] = cylinder(
-        x, radius, z, radius, width, axis="x", segments=24
+        x, radius, z, radius, width, axis="x", segments=32
     )
     meshes[f"wheel_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.62, width + 0.030, axis="x", segments=20
+        x, radius, z, radius * 0.62, width + 0.030, axis="x", segments=28
     )
     meshes[f"rim_{prefix}"] = cylinder(
-        x, radius, z, radius * 0.36, width + 0.050, axis="x", segments=16
+        x, radius, z, radius * 0.36, width + 0.050, axis="x", segments=24
     )
 
 
@@ -424,7 +427,7 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
             (19.45, 0.28, 0.26, 4.12),
             (HALF_LENGTH - 0.12, 0.06, 0.05, 4.08),
         ],
-        segments=36,
+        segments=48,
     )
     meshes["flightdeck_crown"] = oval_lathe_fuselage(
         [
@@ -433,7 +436,7 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
             (18.10, 1.15, 0.58, 4.92),
             (18.55, 0.75, 0.42, 4.78),
         ],
-        segments=28,
+        segments=36,
     )
     # Three small, angled panes sit flush to the crown.  Their gaps make the
     # pillars readable without a separate dark brow or oversized visor slab.
@@ -464,7 +467,7 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
             (4.85, 0.40, 0.17, 2.81),
             (6.70, 0.15, 0.06, 2.90),
         ],
-        segments=32,
+        segments=40,
     )
 
     meshes["livery_stripe"] = box(0.0, 4.05, 1.50, 3.78, 0.11, 28.5)
@@ -583,13 +586,13 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         x = side * 5.35
         meshes[f"engine_{suffix}"] = nacelle_pod(x)
         meshes[f"nacelle_{suffix}"] = annulus(
-            x, 3.13, 5.62, 5.30, 1.08, 0.82, segments=40
+            x, 3.13, 5.62, 5.30, 1.08, 0.82, segments=56
         )
         meshes[f"intake_{suffix}"] = annulus(
-            x, 3.13, 5.66, 5.55, 1.00, 0.86, segments=40
+            x, 3.13, 5.66, 5.55, 1.00, 0.86, segments=56
         )
         meshes[f"fan_{suffix}"] = cylinder(
-            x, 3.13, 5.23, 0.79, 0.035, axis="z", segments=40
+            x, 3.13, 5.23, 0.79, 0.035, axis="z", segments=56
         )
         # Proper swept fan blades instead of twelve unrotated rectangular bars.
         for bi, ang in enumerate(np.linspace(0, 360, 12, endpoint=False)):
@@ -598,10 +601,10 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
             )
         meshes[f"pylon_{suffix}"] = box(x, 4.28, 3.20, 0.38, 1.85, 2.75)
         meshes[f"exhaust_{suffix}"] = cylinder(
-            x, 3.02, 0.10, 0.48, 0.55, axis="z", segments=28
+            x, 3.02, 0.10, 0.48, 0.55, axis="z", segments=40
         )
         meshes[f"exhaust_stack_{'l' if side < 0 else 'r'}"] = cylinder(
-            x, 3.02, -0.35, 0.36, 0.35, axis="z", segments=24
+            x, 3.02, -0.35, 0.36, 0.35, axis="z", segments=32
         )
         meshes[f"exhaust_chevron_{suffix}"] = serrated_nozzle(
             x, 3.02, -0.53, radius=0.42
@@ -659,17 +662,17 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     MAIN_X = 2.86
     meshes["gear_nose"] = box(0.0, 1.85, NOSE_Z, 0.18, 3.00, 0.38)
     meshes["gear_oleo_nose"] = cylinder(
-        0.0, 1.60, NOSE_Z, 0.09, 2.55, axis="y", segments=16
+        0.0, 1.60, NOSE_Z, 0.09, 2.55, axis="y", segments=24
     )
     meshes["gear_scissors_nose"] = box(0.0, 2.05, NOSE_Z - 0.20, 0.14, 0.58, 0.32)
     meshes["gear_door_nose"] = box(0.0, 3.10, NOSE_Z, 0.88, 0.07, 1.15)
     meshes["gear_left"] = box(-MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
     meshes["gear_right"] = box(MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
     meshes["gear_oleo_left"] = cylinder(
-        -MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=16
+        -MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=24
     )
     meshes["gear_oleo_right"] = cylinder(
-        MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=16
+        MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=24
     )
     meshes["gear_scissors_left"] = box(
         -MAIN_X, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35

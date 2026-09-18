@@ -145,7 +145,7 @@ def engine_pod(x):
         (-1.78,.14,.12,2.77),(-1.38,.38,.34,2.79),(-.45,.58,.53,2.81),
         (1.55,.68,.62,2.83),(3.55,.65,.60,2.84),(4.55,.53,.49,2.84),
         (5.10,.22,.20,2.82)
-    ],segments=36)
+    ],segments=48)
     return v01.translated(pod,x,0,0)
 
 
@@ -165,9 +165,9 @@ def final_meshes():
         meshes['spoiler_'+label]=aero_panel(side,2.35,5.45,.45,-.34,.32,-.36,3.19,3.24,.025,.02)
 
         for index,x_abs in enumerate((2.65,4.75),1):
-            fair=v01._v05.oval_lathe_fuselage([(-1.35,.08,.06,2.89),(-.55,.15,.10,2.90),(.22,.11,.07,2.93),(.48,.03,.025,2.95)],segments=18)
+            fair=v01._v05.oval_lathe_fuselage([(-1.35,.08,.06,2.89),(-.55,.15,.10,2.90),(.22,.11,.07,2.93),(.48,.03,.025,2.95)],segments=24)
             meshes[f'flap_track_{label[0]}{index}']=v01.translated(fair,side*x_abs,0,0)
-        fair=v01._v05.oval_lathe_fuselage([(-1.42,.10,.07,2.88),(-.48,.19,.12,2.91),(.35,.12,.08,2.94)],segments=20)
+        fair=v01._v05.oval_lathe_fuselage([(-1.42,.10,.07,2.88),(-.48,.19,.12,2.91),(.35,.12,.08,2.94)],segments=26)
         meshes['flap_fairing_'+label[0]]=v01.translated(fair,side*5.55,0,0)
 
     # One compact nacelle per side. v01 contained a long engine shell plus a
@@ -178,8 +178,8 @@ def final_meshes():
     for side,label in ((-1,'left'),(1,'right')):
         x=side*3.99
         meshes['engine_'+label]=engine_pod(x)
-        meshes['intake_'+label]=v01._v05.cylinder(x,2.82,4.96,.38,.10,axis='z',segments=28)
-        meshes['exhaust_'+label]=v01._v05.cylinder(x,2.79,-1.52,.14,.48,axis='z',segments=20)
+        meshes['intake_'+label]=v01._v05.cylinder(x,2.82,4.96,.38,.10,axis='z',segments=36)
+        meshes['exhaust_'+label]=v01._v05.cylinder(x,2.79,-1.52,.14,.48,axis='z',segments=28)
         meshes['pylon_'+label]=v01.panel(x,3.12,1.15,.50,.34,1.75)
     # Replace the old raised cockpit boxes with four fitted panes. Their spacing
     # leaves real body-colour pillars instead of coplanar backing panels, removing
@@ -243,7 +243,7 @@ def final_meshes():
     meshes['tailplane_saddle']=v01._v05.oval_lathe_fuselage([
         (-9.55,.10,.04,7.47),(-9.12,.35,.08,7.48),(-8.52,.58,.11,7.46),
         (-7.42,.54,.10,7.46),(-6.58,.18,.05,7.47)
-    ],segments=28)
+    ],segments=36)
     meshes['hf_antenna']=profile_prism([(-9.18,7.22),(-8.58,7.22),(-8.74,7.47)],.025)
     verts,idx=meshes['tail_nav_light'];verts=verts.copy()
     verts += np.array([0,7.50,-9.28])-verts.mean(axis=0)
@@ -258,7 +258,7 @@ def final_meshes():
     # Smooth saddle fillets where the high wing meets the cabin roof. These are
     # static skin, separate from the flaps and other articulated surfaces.
     for side,label in ((-1,'left'),(1,'right')):
-        fairing=v01._v05.oval_lathe_fuselage([(-1.72,.10,.07,2.94),(-1.35,.34,.18,3.01),(1.20,.40,.21,3.08),(1.82,.12,.08,3.02)],segments=24)
+        fairing=v01._v05.oval_lathe_fuselage([(-1.72,.10,.07,2.94),(-1.35,.34,.18,3.01),(1.20,.40,.21,3.08),(1.82,.12,.08,3.02)],segments=32)
         meshes['wing_root_'+label]=v01.translated(fairing,side*1.12,0,0)
     return {name:v01._v06.outward_winding(mesh) for name,mesh in meshes.items()}
 

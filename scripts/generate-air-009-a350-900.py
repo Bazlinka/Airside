@@ -144,12 +144,12 @@ def _nacelle(cx: float):
         (5.50, 1.92, 1.85, 4.08), (7.45, 1.88, 1.82, 4.07),
         (8.00, 1.78, 1.72, 4.05),
     ]
-    verts, indices = oval_lathe_fuselage(stations, segments=48)
+    verts, indices = oval_lathe_fuselage(stations, segments=64)
     verts[:, 0] += cx
     return verts, indices
 
 
-def _annulus(cx, cy, z_front, z_back, outer, inner, segments=48):
+def _annulus(cx, cy, z_front, z_back, outer, inner, segments=64):
     verts: list[list[float]] = []
     indices: list[int] = []
     for z in (z_front, z_back):
@@ -183,9 +183,9 @@ def _fan_blade(cx: float, cy: float, z: float, angle_deg: float):
 
 
 def _wheel(meshes, key: str, x: float, z: float, radius: float, width: float):
-    meshes[f"tire_{key}"] = cylinder(x, radius, z, radius, width, axis="x", segments=28)
-    meshes[f"wheel_{key}"] = cylinder(x, radius, z, radius * 0.61, width + 0.04, axis="x", segments=24)
-    meshes[f"rim_{key}"] = cylinder(x, radius, z, radius * 0.34, width + 0.07, axis="x", segments=20)
+    meshes[f"tire_{key}"] = cylinder(x, radius, z, radius, width, axis="x", segments=36)
+    meshes[f"wheel_{key}"] = cylinder(x, radius, z, radius * 0.61, width + 0.04, axis="x", segments=32)
+    meshes[f"rim_{key}"] = cylinder(x, radius, z, radius * 0.34, width + 0.07, axis="x", segments=28)
 
 
 def a350_900_meshes():
@@ -217,7 +217,7 @@ def a350_900_meshes():
     meshes["belly_fairing"] = oval_lathe_fuselage(
         [(-12.0, 0.35, 0.10, 3.32), (-7.0, 1.05, 0.38, 3.18),
          (1.0, 1.28, 0.52, 3.10), (10.5, 0.92, 0.31, 3.22),
-         (15.0, 0.30, 0.09, 3.36)], segments=36)
+         (15.0, 0.30, 0.09, 3.36)], segments=44)
 
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         meshes[f"wing_{suffix}"] = _wing(side)
@@ -229,17 +229,18 @@ def a350_900_meshes():
              (side * 31.4, 9.65, -2.55, 1.45, 0.09),
              (side * HALF_SPAN, 10.45, -3.50, 0.72, 0.055)], chord_points=14)
         meshes[f"nav_light_{suffix}"] = box(side * 32.28, 10.45, -3.15, 0.10, 0.10, 0.12)
+        meshes[f"static_wick_{suffix}"] = box(side * 32.0, 10.40, -4.0, 0.03, 0.02, 0.20)
 
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         x = side * 10.75
         meshes[f"engine_{suffix}"] = _nacelle(x)
         meshes[f"nacelle_{suffix}"] = _annulus(x, 4.05, 8.18, 7.55, 1.88, 1.48)
         meshes[f"intake_{suffix}"] = _annulus(x, 4.05, 8.23, 8.08, 1.75, 1.54)
-        meshes[f"fan_{suffix}"] = cylinder(x, 4.05, 7.48, 1.43, 0.06, axis="z", segments=48)
+        meshes[f"fan_{suffix}"] = cylinder(x, 4.05, 7.48, 1.43, 0.06, axis="z", segments=64)
         for index, angle in enumerate(np.linspace(0, 360, 18, endpoint=False), 1):
             meshes[f"fan_blade_{suffix[0]}{index}"] = _fan_blade(x, 4.05, 7.53, float(angle))
         meshes[f"pylon_{suffix}"] = box(x, 6.15, 4.6, 0.70, 3.00, 4.20)
-        meshes[f"exhaust_{suffix}"] = cylinder(x, 3.92, -2.0, 0.74, 0.72, axis="z", segments=32)
+        meshes[f"exhaust_{suffix}"] = cylinder(x, 3.92, -2.0, 0.74, 0.72, axis="z", segments=44)
 
     meshes["tail_fin"] = lofted_aerofoil(
         [(7.85, 0.0, -22.6, 10.8, 0.48), (11.8, 0.0, -26.2, 7.2, 0.30),

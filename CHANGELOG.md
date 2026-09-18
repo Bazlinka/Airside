@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Contracts separate the commitment you made from the market (ADR 0057).**
+  The active contract has its own column with real progress, per-rotation and
+  completion payment, the cancellation reliability penalty and which of your
+  registrations can actually fly it. The three rotating offers sit apart with
+  their real totals and a countdown to the market refresh. A locked offer names
+  the actual missing capability — a tier, an aircraft type you do not own, or an
+  active contract. A fulfilled contract is not drawn at all, so it can never be
+  clicked.
+
 - **Fleet shows your aircraft first and a market that cannot lie (ADR 0057).**
   The roster lists the player's aircraft above the other operators; selecting one
   gives its route-band capability, rotations flown, planning range, current

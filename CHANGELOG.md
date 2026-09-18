@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Departure prep now shows how far through fuel, catering and boarding you are.**
+  Each stage keeps its own 0–100% bar (done / in progress / waiting). The
+  follow card, fleet panel, Flights board and field tags all read the same
+  simulation progress — presentation still does not decide when prep finishes.
+
 - **Career fleet, rotating contracts, departure prep and auto-stand (ADR 0056).**
   Player types unlock route bands (ATR/Saab Regional, Dash 8 Domestic, 737
   National, A321 Tasman, widebodies long-haul) and those legs pay more. Hangar

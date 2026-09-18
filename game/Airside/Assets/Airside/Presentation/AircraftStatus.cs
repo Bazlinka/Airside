@@ -77,17 +77,31 @@ namespace Airside.Presentation
             System.Math.Min(1f, WaitingSeconds(aircraft, now) / (float)HoldWarningSeconds);
 
         /// <summary>The one or two words on a player's field tag.</summary>
-        public static string TagPhase(FleetAircraft aircraft) => aircraft.State switch
+        public static string TagPhase(FleetAircraft aircraft) => TagPhase(aircraft, default);
+
+        /// <summary>Field-tag words, including how far through fuel / catering / boarding.</summary>
+        public static string TagPhase(FleetAircraft aircraft, SimulationTime now)
         {
-            FleetState.AtStand => aircraft.Scheduled.HasValue ? "planned" : "free",
-            FleetState.TaxiOut => "taxiing",
-            FleetState.HoldingShort => "holding",
-            FleetState.TakingOff => "takeoff",
-            FleetState.HoldingForLanding => "circuit",
-            FleetState.Landing => "landing",
-            FleetState.AwaitingStand => "needs stand",
-            FleetState.TaxiIn => "taxiing in",
-            _ => "away"
-        };
+            if (aircraft == null)
+                return string.Empty;
+            if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
+            {
+                var prep = DeparturePrep.For(aircraft, now);
+                return prep.Ready ? "ready" : prep.Label.ToLowerInvariant();
+            }
+
+            return aircraft.State switch
+            {
+                FleetState.AtStand => aircraft.Scheduled.HasValue ? "planned" : "free",
+                FleetState.TaxiOut => "taxiing",
+                FleetState.HoldingShort => "holding",
+                FleetState.TakingOff => "takeoff",
+                FleetState.HoldingForLanding => "circuit",
+                FleetState.Landing => "landing",
+                FleetState.AwaitingStand => "needs stand",
+                FleetState.TaxiIn => "taxiing in",
+                _ => "away"
+            };
+        }
     }
 }

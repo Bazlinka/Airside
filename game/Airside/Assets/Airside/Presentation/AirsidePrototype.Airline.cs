@@ -853,7 +853,7 @@ namespace Airside.Presentation
                 height += 56f + 10f;
                 if (_selectedAircraftId == aircraft.Registration) height += 52f;
                 if (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft)) height += 12f;
-                if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue) height += 22f;
+                if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue) height += 58f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
                 if (aircraft.State == FleetState.AwaitingStand)
                     height += 84f + 32f * (StandButtonRows(CountFreeStands(), inner) - 1);
@@ -898,14 +898,7 @@ namespace Airside.Presentation
             {
                 case FleetState.AtStand:
                     if (aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
-                    {
-                        var prep = DeparturePrep.For(aircraft, _clock.Now);
-                        GUI.Label(new Rect(x, y, width, 16f), prep.Label, small);
-                        AirsideTheme.DrawProgressBar(new Rect(x, y + 16f, width, 6f),
-                            prep.Ready ? 1f : (float)prep.StageProgress,
-                            prep.Ready ? AirsideTheme.ClearGreen : AirsideTheme.SafetyYellow, AirsideTheme.Tarmac);
-                        y += 26f;
-                    }
+                        y = DrawDeparturePrepStages(aircraft, x, y, width, small);
                     var planRect = new Rect(x, y, 140f, 26f);
                     if (IsGuided(aircraft, GuideStep.PlanFirstFlight))
                         DrawGuideHighlight(planRect);
@@ -1041,6 +1034,41 @@ namespace Airside.Presentation
                 SelectAircraft(aircraft);
         }
 
+        /// <summary>Fuel / catering / boarding each get their own bar so you can see how far along they are.</summary>
+        private float DrawDeparturePrepStages(FleetAircraft aircraft, float x, float y, float width, GUIStyle small)
+        {
+            var prep = DeparturePrep.For(aircraft, _clock.Now);
+            y = DrawDeparturePrepRow(x, y, width, "Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel, small);
+            y = DrawDeparturePrepRow(x, y, width, "Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering, small);
+            y = DrawDeparturePrepRow(x, y, width, "Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding, small);
+            return y + 4f;
+        }
+
+        private float DrawDeparturePrepRow(float x, float y, float width, string name, double progress, bool active, GUIStyle small)
+        {
+            var icon = AirsideTheme.ServiceIconForTask(name);
+            var labelX = x;
+            if (icon != null)
+            {
+                var previous = GUI.color;
+                GUI.color = active || progress > 0 ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+                GUI.DrawTexture(new Rect(x, y + 1f, 14f, 14f), icon, ScaleMode.ScaleToFit, true);
+                GUI.color = previous;
+                labelX = x + 18f;
+            }
+
+            var done = progress >= 1;
+            var waiting = progress <= 0 && !active;
+            var text = done ? "done" : waiting ? "waiting" : $"{DeparturePrep.Percent(progress)}%";
+            var fill = done ? AirsideTheme.ClearGreen : active ? AirsideTheme.SafetyYellow : AirsideTheme.Concrete;
+            GUI.Label(new Rect(labelX, y, 72f, 16f), name, small);
+            var barX = labelX + 76f;
+            var barWidth = Mathf.Max(24f, width - (barX - x) - 52f);
+            AirsideTheme.DrawProgressBar(new Rect(barX, y + 5f, barWidth, 6f), (float)progress, fill, AirsideTheme.Tarmac);
+            GUI.Label(new Rect(x + width - 48f, y, 48f, 16f), text, small);
+            return y + 18f;
+        }
+
         private float DrawSelectedAircraftDetail(FleetAircraft aircraft, float x, float y, float width, GUIStyle small)
         {
             if (_selectedAircraftId != aircraft.Registration)
@@ -1094,7 +1122,13 @@ namespace Airside.Presentation
                     ? $"{StatusText(aircraft)}\nCamera following — Overview / R / Esc clears."
                     : $"{StatusText(aircraft)}\nAway from Adelaide — tracked on the map.",
                 small);
+            if (ShowsDeparturePrep(aircraft))
+                DrawDeparturePrepStages(aircraft, rect.x + 14f, rect.y + 68f, rect.width - 28f, small);
         }
+
+        private static bool ShowsDeparturePrep(FleetAircraft aircraft) =>
+            aircraft != null && aircraft.Airline.IsPlayer
+            && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue;
 
         private bool TrySelectionHudCardRect(HudLayout layout, out Rect rect)
         {
@@ -1106,6 +1140,8 @@ namespace Airside.Presentation
                 return false;
             var width = Mathf.Min(420f, layout.Viewport.x - AirlineHudLayout.Margin * 2f);
             var height = 72f;
+            if (_fleetAircraftById.TryGetValue(_selectedAircraftId, out var aircraft) && ShowsDeparturePrep(aircraft))
+                height += 58f;
             var x = (layout.Viewport.x - width) * 0.5f;
             var y = Mathf.Max(AirlineHudLayout.Margin, layout.SpeedReadout.y - height - 12f);
             rect = new Rect(x, y, width, height);

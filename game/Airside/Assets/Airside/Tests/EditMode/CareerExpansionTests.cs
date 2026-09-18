@@ -49,12 +49,61 @@ namespace Airside.Tests
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
             Assert.That(plane.PrepStartedAt, Is.EqualTo(new SimulationTime(0)));
 
-            Assert.That(DeparturePrep.For(plane, new SimulationTime(0)).Stage, Is.EqualTo(DeparturePrepStage.Fuel));
-            Assert.That(DeparturePrep.For(plane, new SimulationTime(DeparturePrep.FuelSeconds)).Stage,
-                Is.EqualTo(DeparturePrepStage.Catering));
-            Assert.That(DeparturePrep.For(plane, new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds)).Stage,
-                Is.EqualTo(DeparturePrepStage.Boarding));
-            Assert.That(DeparturePrep.IsReady(plane, new SimulationTime(DeparturePrep.TotalSeconds(plane.Type))), Is.True);
+            var start = DeparturePrep.For(plane, new SimulationTime(0));
+            Assert.That(start.Stage, Is.EqualTo(DeparturePrepStage.Fuel));
+            Assert.That(start.FuelProgress, Is.EqualTo(0));
+            Assert.That(start.CateringProgress, Is.EqualTo(0));
+            Assert.That(start.BoardingProgress, Is.EqualTo(0));
+            Assert.That(start.Label, Is.EqualTo("Fuelling 0%"));
+            Assert.That(start.RemainingSeconds, Is.EqualTo(DeparturePrep.FuelSeconds));
+
+            var midFuel = DeparturePrep.For(plane, new SimulationTime(DeparturePrep.FuelSeconds / 2));
+            Assert.That(midFuel.Stage, Is.EqualTo(DeparturePrepStage.Fuel));
+            Assert.That(midFuel.FuelProgress, Is.EqualTo(0.5).Within(0.001));
+            Assert.That(midFuel.CateringProgress, Is.EqualTo(0));
+            Assert.That(midFuel.BoardingProgress, Is.EqualTo(0));
+            Assert.That(midFuel.Label, Is.EqualTo("Fuelling 50%"));
+            Assert.That(midFuel.RemainingSeconds, Is.EqualTo(DeparturePrep.FuelSeconds / 2));
+
+            var catering = DeparturePrep.For(plane, new SimulationTime(DeparturePrep.FuelSeconds));
+            Assert.That(catering.Stage, Is.EqualTo(DeparturePrepStage.Catering));
+            Assert.That(catering.FuelProgress, Is.EqualTo(1));
+            Assert.That(catering.CateringProgress, Is.EqualTo(0));
+            Assert.That(catering.BoardingProgress, Is.EqualTo(0));
+            Assert.That(catering.Label, Is.EqualTo("Catering 0%"));
+
+            var midCatering = DeparturePrep.For(plane,
+                new SimulationTime(DeparturePrep.FuelSeconds + 30));
+            Assert.That(midCatering.Stage, Is.EqualTo(DeparturePrepStage.Catering));
+            Assert.That(midCatering.FuelProgress, Is.EqualTo(1));
+            Assert.That(midCatering.CateringProgress, Is.EqualTo(0.4).Within(0.001));
+            Assert.That(midCatering.BoardingProgress, Is.EqualTo(0));
+            Assert.That(midCatering.Label, Is.EqualTo("Catering 40%"));
+
+            var boarding = DeparturePrep.For(plane,
+                new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds));
+            Assert.That(boarding.Stage, Is.EqualTo(DeparturePrepStage.Boarding));
+            Assert.That(boarding.FuelProgress, Is.EqualTo(1));
+            Assert.That(boarding.CateringProgress, Is.EqualTo(1));
+            Assert.That(boarding.BoardingProgress, Is.EqualTo(0));
+            Assert.That(boarding.Label, Is.EqualTo("Boarding 0%"));
+
+            var midBoard = DeparturePrep.For(plane,
+                new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds
+                    + DeparturePrep.BoardingSeconds / 2));
+            Assert.That(midBoard.Stage, Is.EqualTo(DeparturePrepStage.Boarding));
+            Assert.That(midBoard.FuelProgress, Is.EqualTo(1));
+            Assert.That(midBoard.CateringProgress, Is.EqualTo(1));
+            Assert.That(midBoard.BoardingProgress, Is.EqualTo(0.5).Within(0.001));
+            Assert.That(midBoard.Label, Is.EqualTo("Boarding 50%"));
+
+            var readyAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type));
+            var ready = DeparturePrep.For(plane, readyAt);
+            Assert.That(DeparturePrep.IsReady(plane, readyAt), Is.True);
+            Assert.That(ready.FuelProgress, Is.EqualTo(1));
+            Assert.That(ready.CateringProgress, Is.EqualTo(1));
+            Assert.That(ready.BoardingProgress, Is.EqualTo(1));
+            Assert.That(ready.Label, Is.EqualTo("Ready for pushback"));
 
             clock.Set(new SimulationTime(DeparturePrep.TotalSeconds(plane.Type) - 1));
             ops.Update();

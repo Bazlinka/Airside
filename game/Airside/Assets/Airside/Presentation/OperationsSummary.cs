@@ -17,7 +17,8 @@ namespace Airside.Presentation
         /// the worst severity wins.
         /// </summary>
         public static (string Text, StatusSeverity Severity) Line(
-            IReadOnlyList<FleetAircraft> playerFleet, SimulationTime now, AirlineCareerState career = null)
+            IReadOnlyList<FleetAircraft> playerFleet, SimulationTime now, AirlineCareerState career = null,
+            IReadOnlyList<RouteContractDefinition> marketOffers = null)
         {
             if (playerFleet == null || playerFleet.Count == 0)
                 return ("No aircraft yet.", StatusSeverity.Normal);
@@ -38,7 +39,7 @@ namespace Airside.Presentation
                 return ($"{worst.Registration} needs you — {ActionHint(worst)}", worstSeverity);
 
             if (career?.ActiveContract != null
-                && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var definition))
+                && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition))
             {
                 var remaining = definition.RequiredRotations - career.ActiveContract.CompletedRotations;
                 return ($"{definition.Id}: {career.ActiveContract.CompletedRotations} of " +
@@ -52,7 +53,7 @@ namespace Airside.Presentation
 
             if (career != null)
             {
-                var next = NextOffer(career);
+                var next = NextOffer(career, marketOffers);
                 if (next != null)
                     return ($"Accept {next.Id}: {next.OriginCode} ↔ {next.DestinationCode} — each rotation pays.",
                         StatusSeverity.Normal);
@@ -67,15 +68,23 @@ namespace Airside.Presentation
 
         private static string ActionHint(FleetAircraft aircraft) => aircraft.State switch
         {
-            FleetState.AwaitingStand => "choose a stand.",
+            FleetState.AwaitingStand => "is waiting for a stand.",
             FleetState.AtStand when !aircraft.Scheduled.HasValue => "plan a flight.",
             _ => "check its status."
         };
 
-        private static RouteContractDefinition NextOffer(AirlineCareerState career)
+        private static RouteContractDefinition NextOffer(AirlineCareerState career,
+            IReadOnlyList<RouteContractDefinition> marketOffers)
         {
             if (career.ActiveContract != null)
                 return null;
+            if (marketOffers != null)
+            {
+                foreach (var offer in marketOffers)
+                    if (!career.HasCompleted(offer.Id))
+                        return offer;
+            }
+
             foreach (var definition in RouteContractCatalogue.All)
             {
                 if (career.HasCompleted(definition.Id) || career.Tier < definition.RequiredTier)

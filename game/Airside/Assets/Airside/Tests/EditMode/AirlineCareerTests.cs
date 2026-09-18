@@ -61,10 +61,6 @@ namespace Airside.Tests
             Assert.That(plane.State, Is.EqualTo(FleetState.Landing));
 
             RunTo(clock, ops, landingAt + AirlineOperations.LandingRunwaySecondsFor(plane.Type) + 3600);
-            Assert.That(plane.State, Is.EqualTo(FleetState.AwaitingStand));
-
-            Assert.That(ops.AssignStand(plane, returnStand).Accepted, Is.True);
-            RunTo(clock, ops, clock.Now.ElapsedSeconds + AirlineOperations.TaxiInSecondsTo(returnStand, plane.Type));
             Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
         }
 
@@ -306,35 +302,36 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void MelbourneContract_IsAchievableOnTheStarterATRAndUnlocksDomestic()
+        public void MelbourneContract_NeedsADash8AndPaysTheDomesticBand()
         {
             var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("MEL"), new SimulationTime(600)).Accepted, Is.False,
+                "the starter ATR is Regional only");
+            Assert.That(ops.CanOperate(plane, Code("MEL")), Is.False);
+            Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "range still reaches Melbourne; the band does not");
+
+            ops.RestoreCareerState(50_000, 90, nameof(OperatingTier.Regional), null, 0, 0, Array.Empty<string>(),
+                Array.Empty<string>(), 12);
+            Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
+            FleetAircraft dash = null;
+            foreach (var aircraft in ops.FleetOf(ops.PlayerAirline))
+                if (aircraft.Type.Id == AircraftType.Dash8Q400.Id)
+                    dash = aircraft;
+            Assert.That(dash, Is.Not.Null);
+            Assert.That(ops.CanOperate(dash, Code("MEL")), Is.True);
+
             var definition = RouteContractCatalogue.DomesticMelbourneIntro;
-            Assert.That(ops.AcceptContract(definition).Accepted, Is.False, "Domestic needs Regional first");
-            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
-            var kingscote = Code("KGC");
-            var departAt = 600L;
-            for (var rotation = 1; rotation <= RouteContractCatalogue.RegionalKingscoteIntro.RequiredRotations; rotation++)
-            {
-                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
-                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
-                departAt = clock.Now.ElapsedSeconds + 300;
-            }
-
-            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Regional));
-            Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "the starter ATR can actually fly the Domestic goal");
             Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
-
             var melbourne = Code("MEL");
-            for (var rotation = 1; rotation <= definition.RequiredRotations; rotation++)
-            {
-                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
-                FlyRoundTrip(clock, ops, plane, melbourne, departAt, stand);
-                departAt = clock.Now.ElapsedSeconds + 300;
-            }
+            var departAt = 600L;
+            FlyRoundTrip(clock, ops, dash, melbourne, departAt, AirlineOperations.AdelaideRegionalBays[2]);
 
-            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Domestic));
-            Assert.That(ops.CareerState.HasCompleted(definition.Id), Is.True);
+            var cost = FlightEconomics.DispatchCost(dash.Type, ops.DistanceKm(melbourne));
+            var pay = FlightEconomics.FlightPay(dash.Type, ops.DistanceKm(melbourne), RouteBand.Domestic);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(50_000 - AircraftAcquisition.Dash8Q400.Price - cost + pay
+                + definition.PaymentPerRotation));
+            Assert.That(pay, Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42,
+                ops.DistanceKm(Code("KGC")), RouteBand.Regional)));
         }
 
         [Test]

@@ -42,7 +42,7 @@ namespace Airside.Tests
             Assert.That(steps, Is.EqualTo(new[]
             {
                 GuideStep.PlanFirstFlight, GuideStep.WaitForDeparture, GuideStep.Departing, GuideStep.Away,
-                GuideStep.Landing, GuideStep.ChooseStand, GuideStep.TaxiingIn, GuideStep.Complete
+                GuideStep.Landing, GuideStep.TaxiingIn, GuideStep.Complete
             }));
 
             // A second flight never brings the guide back.

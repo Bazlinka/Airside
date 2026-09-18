@@ -29,8 +29,17 @@ namespace Airside.Tests
                 Is.LessThan(FlightEconomics.DispatchCost(AircraftType.Boeing78710, km)));
             Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km),
                 Is.LessThan(FlightEconomics.FlightPay(AircraftType.Boeing78710, km)));
-            Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km),
-                Is.GreaterThan(FlightEconomics.DispatchCost(AircraftType.Atr42, km)));
+            Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km, RouteBand.Domestic),
+                Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42, km, RouteBand.Regional)));
+        }
+
+        [Test]
+        public void DomesticBand_PaysMoreThanRegionalOnTheSameLeg()
+        {
+            const double km = 650;
+            Assert.That(FlightEconomics.FlightPay(AircraftType.Dash8Q400, km, RouteBand.Domestic),
+                Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Dash8Q400, km, RouteBand.Regional)));
+            Assert.That(RouteAccess.PayMultiplier(RouteBand.LongHaul), Is.GreaterThan(RouteAccess.PayMultiplier(RouteBand.National)));
         }
 
         [Test]

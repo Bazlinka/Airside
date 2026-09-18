@@ -114,14 +114,7 @@ namespace Airside.Tests
             Assert.That(plane.State, Is.EqualTo(FleetState.Landing));
 
             RunTo(clock, ops, landingAt + AirlineOperations.LandingRunwaySeconds + 3600);
-            Assert.That(plane.State, Is.EqualTo(FleetState.AwaitingStand), "player aircraft wait for the player");
-            Assert.That(ops.NextEventAt(), Is.Null);
-
-            var bay = AirlineOperations.AdelaideRegionalBays[3];
-            Assert.That(ops.AssignStand(plane, bay).Accepted, Is.True);
-            RunTo(clock, ops, clock.Now.ElapsedSeconds + AirlineOperations.TaxiInSecondsTo(bay));
-            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
-            Assert.That(plane.Stand, Is.EqualTo(bay));
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand), "player aircraft auto-park when a stand is free");
             Assert.That(plane.CompletedTrips, Is.EqualTo(1));
             Assert.That(plane.CurrentDestination, Is.Null);
         }
@@ -133,25 +126,25 @@ namespace Airside.Tests
             var other = ops.Fleet[1];
 
             Assert.That(ops.ScheduleDeparture(plane, Code("PER"), new SimulationTime(60)).Accepted, Is.False, "out of range");
+            Assert.That(ops.ScheduleDeparture(plane, Code("MEL"), new SimulationTime(600)).Accepted, Is.False, "band");
             Assert.That(ops.ScheduleDeparture(plane, DestinationCatalogue.Adelaide, new SimulationTime(60)).Accepted, Is.False, "home");
             Assert.That(ops.AssignStand(plane, AirlineOperations.AdelaideRegionalBays[2]).Accepted, Is.False, "not awaiting a stand");
 
             RunTo(clock, ops, 100);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(50)).Accepted, Is.False, "in the past");
 
-            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(100));
-            RunTo(clock, ops, 101);
-            Assert.That(ops.ScheduleDeparture(plane, Code("MEL"), new SimulationTime(200)).Accepted, Is.False, "already taxiing");
+            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(400));
+            RunTo(clock, ops, 401);
+            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(500)).Accepted, Is.False, "already taxiing");
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.False);
 
-            Assert.That(ops.ScheduleDeparture(other, Code("MEL"), new SimulationTime(5000)).Accepted, Is.True);
+            Assert.That(ops.ScheduleDeparture(other, Code("KGC"), new SimulationTime(5000)).Accepted, Is.True);
             Assert.That(ops.CancelDeparture(other).Accepted, Is.True);
             Assert.That(other.Scheduled, Is.Null);
 
-            // Fly the first home and try to park it on the occupied bay.
             RunTo(clock, ops, 20000);
-            Assert.That(plane.State, Is.EqualTo(FleetState.AwaitingStand));
-            Assert.That(ops.AssignStand(plane, other.Stand).Accepted, Is.False, "occupied");
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(ops.AssignStand(plane, other.Stand).Accepted, Is.False, "not awaiting a stand");
             Assert.That(ops.AssignStand(plane, new StableId("BAY-99")).Accepted, Is.False, "not a stand");
         }
 
@@ -228,9 +221,9 @@ namespace Airside.Tests
         {
             var (clock, ops, arriving) = PlayerOnly(aircraft: 2);
             var departing = ops.Fleet[1];
-            ops.ScheduleDeparture(arriving, Code("KGC"), new SimulationTime(0));
+            ops.ScheduleDeparture(arriving, Code("KGC"), new SimulationTime(600));
             var airborne = ops.AirborneSeconds(arriving, Code("KGC"));
-            var backInCircuit = AirlineOperations.TaxiOutSecondsFrom(arriving.Stand) + AirlineOperations.TakeoffRunwaySeconds
+            var backInCircuit = 600 + AirlineOperations.TaxiOutSecondsFrom(arriving.Stand) + AirlineOperations.TakeoffRunwaySeconds
                                 + airborne + AirlineOperations.DestinationTurnaroundSeconds + airborne;
 
             // The departure reaches the holding point at the same second the arrival does.
@@ -252,7 +245,7 @@ namespace Airside.Tests
                 var clock = new ManualSimulationClock(new SimulationTime(0));
                 var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
                 var mine = ops.FleetOf(ops.PlayerAirline).Single();
-                ops.ScheduleDeparture(mine, Code("MEL"), new SimulationTime(1800));
+                ops.ScheduleDeparture(mine, Code("KGC"), new SimulationTime(1800));
                 // The player's plane is left waiting for a stand once home: a stand choice
                 // made "when noticed" would differ by step size, which is the player's
                 // doing rather than the simulation's.

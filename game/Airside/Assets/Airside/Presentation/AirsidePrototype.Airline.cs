@@ -372,7 +372,8 @@ namespace Airside.Presentation
             // The guide card it replaces has a panel behind it; bare floating text here read
             // as unfinished next to it, so this gets the same quiet chrome, not a border colour.
             GUI.Box(rect, GUIContent.none, panel);
-            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState);
+            var (text, severity) = OperationsSummary.Line(PlayerFleet(), _clock.Now, _operations.CareerState,
+                _operations.MarketOffers());
             var style = Styled(small, "status-line", s => AirsideTheme.TextStyle(
                 new GUIStyle(s) { fontStyle = FontStyle.Bold, wordWrap = false }, AirsideTheme.Cloud));
             var previousContent = GUI.contentColor;
@@ -399,17 +400,17 @@ namespace Airside.Presentation
             {
                 GuideStep.PlanFirstFlight => ("1 · Plan your first flight",
                     $"Click Plan flight for {reg}, pick a green destination and when it leaves. Kingscote is a short hop."),
-                GuideStep.WaitForDeparture => ("2 · Flight planned",
-                    $"{reg} leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — click the aircraft on the field, or press Follow (F)."),
+                GuideStep.WaitForDeparture => ("2 · Getting ready",
+                    $"{reg} is fuelling, catering and boarding, then leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — click the aircraft on the field, or press Follow (F)."),
                 GuideStep.Departing => ("3 · Departing",
                     $"{reg} is heading out. Click it on the field (or press Follow) to ride along through the taxi and takeoff."),
                 GuideStep.Away => ("4 · Away to " + dest,
                     "Flights take real time. Track it on the route map (Tab), or close the game — the airport keeps running and tells you what happened."),
                 GuideStep.Landing => ("5 · Coming home",
                     $"The tower is bringing {reg} in to land. Click the aircraft on final (or Follow) to watch the touchdown."),
-                GuideStep.ChooseStand => ("6 · Choose a stand",
-                    $"{reg} has landed. Pick a free bay in Your Fleet so it can taxi in."),
-                GuideStep.TaxiingIn => ("7 · Taxiing in",
+                GuideStep.ChooseStand => ("6 · Parking",
+                    $"{reg} has landed and is taking a stand on its own."),
+                GuideStep.TaxiingIn => ("6 · Taxiing in",
                     $"{reg} is taxiing to {StandNames.Display(aircraft.Stand)}. That completes your first trip."),
                 _ => (string.Empty, string.Empty)
             };
@@ -642,8 +643,8 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>The Contracts workspace (ADR 0053): career summary, the active contract's
-        /// progress, or the authored contracts on offer when none is active.</summary>
+        /// <summary>The Contracts workspace (ADR 0056): career summary, the active contract,
+        /// or the rotating market offers for this window.</summary>
         private void DrawContractsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
             var ink = AirsideTheme.RunwayInk;
@@ -659,23 +660,26 @@ namespace Airside.Presentation
             var career = _operations.CareerState;
             var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
             GUI.Label(new Rect(x, rect.y + 46f, inner, 20f),
-                $"{career.Tier} tier  ·  ${career.Funds:N0}  ·  {career.Reliability}% reliability", bold);
+                $"{career.Tier} tier  ·  ${career.Funds:N0}  ·  {career.Reliability}% reliability  ·  {career.CompletedPlayerRotations} rotations", bold);
 
             var y = rect.y + 78f;
-            if (career.ActiveContract != null && RouteContractCatalogue.TryFind(career.ActiveContract.DefinitionId, out var active))
+            if (career.ActiveContract != null && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var active))
             {
                 DrawActiveContractCard(x, y, inner, active, career.ActiveContract, label, small);
             }
             else
             {
-                foreach (var definition in RouteContractCatalogue.All)
+                var offers = _operations.MarketOffers();
+                var windowEnd = ContractMarket.WindowEnd(_clock.Now);
+                GUI.Label(new Rect(x, y, inner, 18f),
+                    offers.Count == 0
+                        ? "No offers this window — fly, raise reliability, or buy a type that opens longer routes."
+                        : $"Offers refresh {ClockText(windowEnd)}  ·  one active contract at a time", small);
+                y += 24f;
+                foreach (var definition in offers)
                 {
                     if (career.HasCompleted(definition.Id))
-                    {
-                        y = DrawCompletedContract(x, y, inner, definition, label, small) + 8f;
                         continue;
-                    }
-
                     y = DrawContractOffer(x, y, inner, definition, career, label, small, smallButton) + 12f;
                 }
             }
@@ -849,6 +853,7 @@ namespace Airside.Presentation
                 height += 56f + 10f;
                 if (_selectedAircraftId == aircraft.Registration) height += 52f;
                 if (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft)) height += 12f;
+                if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue) height += 22f;
                 if (aircraft.State == FleetState.AtStand) height += 32f;
                 if (aircraft.State == FleetState.AwaitingStand)
                     height += 84f + 32f * (StandButtonRows(CountFreeStands(), inner) - 1);
@@ -892,6 +897,15 @@ namespace Airside.Presentation
             switch (aircraft.State)
             {
                 case FleetState.AtStand:
+                    if (aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
+                    {
+                        var prep = DeparturePrep.For(aircraft, _clock.Now);
+                        GUI.Label(new Rect(x, y, width, 16f), prep.Label, small);
+                        AirsideTheme.DrawProgressBar(new Rect(x, y + 16f, width, 6f),
+                            prep.Ready ? 1f : (float)prep.StageProgress,
+                            prep.Ready ? AirsideTheme.ClearGreen : AirsideTheme.SafetyYellow, AirsideTheme.Tarmac);
+                        y += 26f;
+                    }
                     var planRect = new Rect(x, y, 140f, 26f);
                     if (IsGuided(aircraft, GuideStep.PlanFirstFlight))
                         DrawGuideHighlight(planRect);
@@ -904,7 +918,7 @@ namespace Airside.Presentation
                     break;
 
                 case FleetState.AwaitingStand:
-                    GUI.Label(new Rect(x, y, width, 20f), "Choose a stand:", label);
+                    GUI.Label(new Rect(x, y, width, 20f), "Taking a stand…", label);
                     y += 22f;
                     // Shortest taxi in, avoiding a bay too tight beside a Dash 8-400 when another is free.
                     var quickest = _operations.SuggestStand(aircraft);
@@ -1192,7 +1206,7 @@ namespace Airside.Presentation
             return aircraft.State switch
             {
                 FleetState.AtStand => aircraft.Scheduled.HasValue
-                    ? $"On {StandNames.Display(aircraft.Stand)} · departs {ClockText(aircraft.Scheduled.Value.DepartAt)} for {aircraft.Scheduled.Value.Destination.Name}"
+                    ? StandDepartureStatus(aircraft)
                     : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to the runway · {dest}",
                 FleetState.HoldingShort => $"Holding short for the runway · {dest}{wait}",
@@ -1203,10 +1217,20 @@ namespace Airside.Presentation
                 FleetState.HoldingForLanding => $"In the Adelaide circuit, waiting to land{wait}",
                 FleetState.GoAround => "Going around at Adelaide",
                 FleetState.Landing => "Landing at Adelaide",
-                FleetState.AwaitingStand => $"Landed · needs a stand{wait}",
+                FleetState.AwaitingStand => $"Landed · parking{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()
             };
+        }
+
+        private string StandDepartureStatus(FleetAircraft aircraft)
+        {
+            var dest = aircraft.Scheduled.Value.Destination.Name;
+            var when = ClockText(aircraft.Scheduled.Value.DepartAt);
+            var prep = DeparturePrep.For(aircraft, _clock.Now);
+            if (!prep.Ready)
+                return $"On {StandNames.Display(aircraft.Stand)} · {prep.Label} · departs {when} for {dest}";
+            return $"On {StandNames.Display(aircraft.Stand)} · ready · departs {when} for {dest}";
         }
 
         // ---- Destinations map ---------------------------------------------------------
@@ -1254,9 +1278,10 @@ namespace Airside.Presentation
             if (aircraft != null && aircraft.Scheduled.HasValue)
             {
                 _mapSelection = aircraft.Scheduled.Value.Destination;
-                _departureDelaySeconds = FlightPlanner.ClampDelay(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds);
+                _departureDelaySeconds = FlightPlanner.ClampDelay(
+                    aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft.Type);
             }
-            else if (_mapSelection.HasValue && aircraft != null && !_operations.CanReach(aircraft, _mapSelection.Value))
+            else if (_mapSelection.HasValue && aircraft != null && !_operations.CanOperate(aircraft, _mapSelection.Value))
             {
                 _mapSelection = null;
             }
@@ -1931,22 +1956,24 @@ namespace Airside.Presentation
             if (aircraft == null)
                 return y;
 
-            if (!_operations.CanReach(aircraft, destination))
+            if (!_operations.CanOperate(aircraft, destination))
             {
                 GUI.Label(new Rect(x, y, width, 20f), $"{km:0} km from Adelaide", small);
                 y += 22f;
-                GUI.Label(new Rect(x, y, width, 54f),
-                    $"Locked — beyond the {aircraft.Type.Name}'s {aircraft.Type.PracticalRangeKm:0} km range. A longer-range aircraft will open it.", small);
+                var reason = !_operations.CanReach(aircraft, destination)
+                    ? $"Locked — beyond the {aircraft.Type.Name}'s {aircraft.Type.PracticalRangeKm:0} km range. A longer-range aircraft will open it."
+                    : $"Locked — a {aircraft.Type.Name} flies {RouteAccess.Ceiling(aircraft.Type)} routes. {destination.Name} is {RouteAccess.BandOf(destination)}; buy a type cleared for that band.";
+                GUI.Label(new Rect(x, y, width, 54f), reason, small);
                 return y + 56f;
             }
 
             var airborne = _operations.AirborneSeconds(aircraft, destination);
             var cost = FlightEconomics.DispatchCost(aircraft.Type, km);
-            var pay = FlightEconomics.FlightPay(aircraft.Type, km);
+            var pay = FlightEconomics.FlightPay(aircraft.Type, km, RouteAccess.BandOf(destination));
             GUI.Label(new Rect(x, y, width, 20f), $"{km:0} km · {DurationText(airborne)} each way", small);
             y += 20f;
             GUI.Label(new Rect(x, y, width, 20f),
-                $"Costs ${cost:N0} to dispatch · pays ${pay:N0} on return", small);
+                $"Costs ${cost:N0} to dispatch · pays ${pay:N0} on return ({RouteAccess.BandOf(destination)})", small);
             y += 26f;
 
             if (aircraft.State != FleetState.AtStand)
@@ -1957,7 +1984,7 @@ namespace Airside.Presentation
             }
 
             // ---- When
-            _departureDelaySeconds = FlightPlanner.ClampDelay(_departureDelaySeconds);
+            _departureDelaySeconds = FlightPlanner.ClampDelay(_departureDelaySeconds, aircraft.Type);
             var departAt = _clock.Now.Advance(_departureDelaySeconds);
             GUI.Label(new Rect(x, y, width, 20f), $"Pushback {ClockText(departAt)}  ·  in {DurationText(_departureDelaySeconds)}", label);
             y += 24f;
@@ -2412,7 +2439,7 @@ namespace Airside.Presentation
                     continue;
                 var reachable = new List<Destination>();
                 foreach (var destination in _operations.MapDestinations())
-                    if (_operations.CanReach(aircraft, destination))
+                    if (_operations.CanOperate(aircraft, destination))
                         reachable.Add(destination);
                 if (reachable.Count == 0)
                     continue;
@@ -2485,7 +2512,7 @@ namespace Airside.Presentation
 
             var view = new Rect(x, rect.y + 76f, inner, rect.height - 90f);
             if (_hangarTab == 1)
-                DrawHangarTypes(view, label, small);
+                DrawHangarTypes(view, label, small, smallButton);
             else
                 DrawHangarFleet(view, label, small);
         }
@@ -2629,9 +2656,9 @@ namespace Airside.Presentation
                 SelectAircraft(aircraft);
         }
 
-        private void DrawHangarTypes(Rect view, GUIStyle label, GUIStyle small)
+        private void DrawHangarTypes(Rect view, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            const float cardHeight = 148f;
+            const float cardHeight = 188f;
             var types = AircraftCatalogue.All;
             var inner = view.width;
             _hangarScroll = GUI.BeginScrollView(view, _hangarScroll, new Rect(0f, 0f, inner - 18f, 8f + types.Count * (cardHeight + 10f)));
@@ -2640,15 +2667,14 @@ namespace Airside.Presentation
             var y = 4f;
             foreach (var spec in types)
             {
-                DrawAircraftTypeCard(spec, new Rect(0f, y, width, cardHeight), bold, small);
+                DrawAircraftTypeCard(spec, new Rect(0f, y, width, cardHeight), bold, small, smallButton);
                 y += cardHeight + 10f;
             }
 
             GUI.EndScrollView();
         }
 
-        /// <summary>One catalogue card: a thumbnail rendered from the runtime model, or a clearly labelled placeholder.</summary>
-        private void DrawAircraftTypeCard(AircraftSpec spec, Rect card, GUIStyle bold, GUIStyle small)
+        private void DrawAircraftTypeCard(AircraftSpec spec, Rect card, GUIStyle bold, GUIStyle small, GUIStyle smallButton)
         {
             DrawSolid(card, new Color(AirsideTheme.Tarmac.r, AirsideTheme.Tarmac.g, AirsideTheme.Tarmac.b, 0.55f));
             var thumbRect = new Rect(card.x + 8f, card.y + 8f, 186f, 124f);
@@ -2678,7 +2704,8 @@ namespace Airside.Presentation
                 $"Length {spec.LengthMetres:0.0} m  ·  Span {spec.WingspanMetres:0.0} m  ·  Height {spec.HeightMetres:0.0} m", small);
             GUI.Label(new Rect(tx, card.y + 64f, tw, 18f),
                 $"Cruise {spec.PlanningCruiseKmh:0} km/h  ·  Planning range {spec.PracticalRangeKm:#,0} km", small);
-            GUI.Label(new Rect(tx, card.y + 82f, tw, 18f), $"Uses: {spec.StandClassLabel}", small);
+            GUI.Label(new Rect(tx, card.y + 82f, tw, 18f),
+                $"Uses: {spec.StandClassLabel}  ·  routes: {RouteAccess.Ceiling(spec.Type)}", small);
 
             var here = 0;
             var yours = 0;
@@ -2697,7 +2724,30 @@ namespace Airside.Presentation
             var statusStyle = spec.ModelStatus == ModelStatus.Genuine
                 ? small
                 : Styled(small, "placeholder-status", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow));
-            GUI.Label(new Rect(tx, card.y + 120f, tw, 18f), status, statusStyle);
+            GUI.Label(new Rect(tx, card.y + 118f, tw, 18f), status, statusStyle);
+
+            if (!AircraftAcquisition.TryFor(spec.Type, out var offer))
+            {
+                GUI.Label(new Rect(tx, card.y + 140f, tw, 18f), "Starter aircraft — already on the line.", small);
+                return;
+            }
+
+            var career = _operations.CareerState;
+            var gate = $"{offer.RequiredTier} · {offer.RequiredReliability}% · {offer.RequiredRotations} rotations";
+            GUI.Label(new Rect(tx, card.y + 140f, tw, 18f), $"Buy ${offer.Price:N0}  ·  needs {gate}", small);
+            GUI.enabled = yours < AircraftAcquisition.MaxPlayerAircraft;
+            if (GUI.Button(new Rect(tx, card.y + 158f, 160f, 24f), $"Buy {spec.Name}", smallButton))
+            {
+                var result = _operations.BuyAircraft(spec.Type);
+                if (result.Accepted)
+                {
+                    ShowToast($"Bought a {spec.Name} for ${offer.Price:N0}.");
+                    SaveAirline();
+                }
+                else
+                    ShowToast(result.Reason);
+            }
+            GUI.enabled = true;
         }
 
 

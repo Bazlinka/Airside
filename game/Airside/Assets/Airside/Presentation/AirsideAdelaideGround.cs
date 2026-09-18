@@ -80,12 +80,18 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Material weights live on mesh vertices. This grid preserves the narrow authored
-        /// pavement shoulders instead of smearing them across the old ~35 m cells.
+        /// pavement shoulders instead of smearing them across cells that are too coarse.
+        /// High roughly doubles the linear density of the previous 225x161 grid (~17 m
+        /// spacing over the ~3900x2800 m field) to ~12 m spacing — still comfortably under
+        /// <see cref="AirsideAdelaideGroundMesh"/>'s automatic 16-/32-bit index-format
+        /// switch. Medium reuses the old High values as its own step up from the previous
+        /// Medium tier, so both tiers read as a genuine improvement rather than one moving
+        /// and the other standing still.
         /// </summary>
-        public const int HighResolutionX = 225;
-        public const int HighResolutionZ = 161;
-        public const int MediumResolutionX = 161;
-        public const int MediumResolutionZ = 113;
+        public const int HighResolutionX = 337;
+        public const int HighResolutionZ = 241;
+        public const int MediumResolutionX = 225;
+        public const int MediumResolutionZ = 161;
 
         /// <summary>
         /// Distance to the nearest <b>pavement of any kind</b> — runways, taxi

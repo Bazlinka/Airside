@@ -302,6 +302,13 @@ namespace Airside.Presentation
                 _standLights = AirsideBareField.Enabled
                     ? BuildStandLighting()
                     : Array.Empty<Light>();
+                // Decision 0025 item 5's realtime apron/terminal reflection probes only ever
+                // existed on the legacy 1:20 miniature circuit (built in the branch above) —
+                // the real Adelaide bare-field world never got its own, so wet asphalt and
+                // the 28 terminal glazing bays picked up no local floodlight reflections at
+                // all. One real-scale probe covers both (the whole apron/glazing frontage is
+                // under 50 m deep along Z, so a single box-projected probe reaches both).
+                _apronProbe = AirsideBareField.Enabled ? BuildBareApronReflectionProbe() : null;
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
             // Touchdown smoke is circuit presentation, independent of disabled world props.
@@ -4296,6 +4303,36 @@ namespace Airside.Presentation
             probe.shadowDistance = 28f;
             probe.nearClipPlane = 0.3f;
             probe.farClipPlane = 90f;
+            return probe;
+        }
+
+        /// <summary>
+        /// Decision 0025 item 5, extended to the real Adelaide bare-field world — the
+        /// original apron/terminal probes above only ever existed on the legacy 1:20
+        /// miniature circuit, so the real terminal's wet asphalt and 28 glazing bays never
+        /// picked up local floodlight reflections. Sized from
+        /// <see cref="AdelaideTerminalArchitecture"/>'s real coordinates (stands at Z 388,
+        /// roof floods/glazing at Z 434-435.55, X 1005-1575) — the whole frontage is under
+        /// 50 m deep along Z, so one box-projected probe reaches both the stand apron and
+        /// the terminal glass instead of needing two.
+        /// </summary>
+        private static ReflectionProbe BuildBareApronReflectionProbe()
+        {
+            var go = new GameObject("Bare apron/terminal reflection probe");
+            go.transform.position = new Vector3(1290f, 7f, 411f);
+            var probe = go.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            probe.resolution = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High ? 128 : 64;
+            probe.size = new Vector3(650f, 26f, 100f);
+            probe.center = Vector3.zero;
+            probe.intensity = 1f;
+            probe.boxProjection = true;
+            probe.shadowDistance = 180f;
+            probe.nearClipPlane = 0.3f;
+            probe.farClipPlane = 800f;
+            AirsideSceneIndex.Remember(go);
             return probe;
         }
 

@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
-- **2026-09-18 Cursor — career fleet, rotating contracts, prep, auto-stand (branch
-  `cursor/career-fleet-and-turnaround-7e45`, ADR 0056).** Bailey asked to map then
+- **2026-09-18 Cursor — career fleet, rotating contracts, prep, auto-stand (now
+  on `main`, ADR 0056).** Bailey asked to map then
   implement: costings and unlocking planes; routes tied to those types with higher
   pay; contracts that come and go instead of a fixed ladder; auto-stand on landing;
   fuel → catering → boarding on a booked departure. No buildings or vehicles.
@@ -2690,9 +2690,9 @@ It does not cover Presentation, which needs UnityEngine.
 
 ## Next work
 
-1. **On `cursor/career-fleet-and-turnaround-7e45` (ADR 0056):** `scripts/test-unity.sh`
-   when a Mac editor is available. Career loop is rotating contracts, type-locked
-   routes, hangar buy, auto-stand and departure prep — no buildings or vehicles yet.
+1. **On `main` (ADR 0056):** `scripts/test-unity.sh` when a Mac editor is
+   available. Career loop is rotating contracts, type-locked routes, hangar buy,
+   auto-stand and departure prep — no buildings or vehicles yet.
 2. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
    and one stand** only when Bailey says so.
 3. No Companion/CloudKit. The retired Kingscote airport-manager economy stays

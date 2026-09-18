@@ -62,6 +62,7 @@ namespace Airside.Tests
 
         [TestCase(1280, 720)]
         [TestCase(1440, 900)]
+        [TestCase(1920, 1080)]
         [TestCase(3456, 2168)]
         [TestCase(800, 500)]
         [TestCase(400, 780)]
@@ -75,8 +76,12 @@ namespace Airside.Tests
                 var panel = FieldMiniMap.PanelFor(hud, airline);
                 if (panel.width <= 0f)
                     continue;
-                foreach (var other in new[] { hud.ControlBar, hud.SpeedReadout, airline.Clock, airline.Guide, airline.FleetArea, airline.Toast })
+                foreach (var other in new[] { airline.TopBar, airline.Objective, airline.Operations, airline.Toast, airline.SelectedCard })
+                {
+                    if (other.width <= 0f || other.height <= 0f)
+                        continue;
                     Assert.That(panel.Overlaps(other), Is.False, $"{screenWidth}x{screenHeight} guide={guide} overlaps {other}");
+                }
                 Assert.That(panel.yMax, Is.LessThanOrEqualTo(hud.Viewport.y));
             }
         }

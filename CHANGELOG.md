@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Airline HUD shell matches the career overview reference (ADR 0053).** A slim
+  navy top bar holds the airline, Adelaide time, funds, reliability, tier and
+  workspaces. The current-objective card and compact player Operations sit on
+  the overview; the selected-aircraft card shows one primary action plus Cancel.
+  The mini-map is smaller. Follow / Overview left the airline overview (Esc/R
+  and F remain). Domain, simulation, saves and economy are unchanged.
+
 - **Departure prep now shows how far through fuel, catering and boarding you are.**
   Each stage keeps its own 0–100% bar (done / in progress / waiting). The
   follow card, fleet panel, Flights board and field tags all read the same

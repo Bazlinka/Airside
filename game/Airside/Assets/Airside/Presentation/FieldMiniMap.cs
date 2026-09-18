@@ -13,8 +13,8 @@ namespace Airside.Presentation
     /// </summary>
     public static class FieldMiniMap
     {
-        public const float PanelWidth = 300f;
-        public const float PanelHeight = 164f;
+        public const float PanelWidth = AirlineHudLayout.MiniMapWidth;
+        public const float PanelHeight = AirlineHudLayout.MiniMapHeight;
         public const float HeaderHeight = 20f;
         public const float PaddingMetres = 90f;
         public const float DotHitRadius = 10f;
@@ -94,23 +94,13 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// The mini-map panel: bottom-left, clear of the control bar, speed readout, toast and
-        /// the left column. Zero-sized when the window has no room for it.
+        /// The mini-map panel: lower-left reservation from <see cref="AirlineHudLayout"/>.
+        /// Zero-sized when the window has no room for it.
         /// </summary>
         public static Rect PanelFor(HudLayout hud, AirlineHudLayout airline)
         {
-            var margin = AirlineHudLayout.Margin;
-            var width = Mathf.Min(PanelWidth, hud.Viewport.x - margin * 2f);
-            var rect = new Rect(margin, hud.Viewport.y - margin - PanelHeight, width, PanelHeight);
-            var leftColumnBottom = Mathf.Max(Mathf.Max(airline.Clock.yMax, airline.Guide.yMax), airline.NavStrip.yMax);
-            if (width < PanelWidth * 0.8f
-                || rect.y < leftColumnBottom + margin
-                || rect.Overlaps(hud.ControlBar)
-                || rect.Overlaps(hud.SpeedReadout)
-                || rect.Overlaps(airline.Toast)
-                || rect.Overlaps(airline.FleetArea))
-                return new Rect(margin, hud.Viewport.y - margin, 0f, 0f);
-            return rect;
+            _ = hud;
+            return airline.MiniMap;
         }
 
         /// <summary>

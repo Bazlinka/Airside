@@ -52,6 +52,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideStandMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsSummary.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandNames.cs" />

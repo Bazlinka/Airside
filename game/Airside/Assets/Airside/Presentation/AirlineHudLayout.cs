@@ -3,154 +3,179 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Placement of the airline panels (ADR 0045) around the circuit HUD, in the same
-    /// virtual GUI points as <see cref="HudLayout"/>. Kept pure so the fits-on-screen
-    /// and no-overlap contract is tested at every target display size.
+    /// Placement of the airline HUD shell (ADR 0053): a slim full-width top bar, the
+    /// current-objective card, compact player Operations, a contextual selected-aircraft
+    /// card and a smaller mini-map. Kept pure so the fits-on-screen and no-overlap
+    /// contract is tested at every target display size.
     ///
-    /// Wide windows put the clock top-left, the fleet top-right and the toast between
-    /// them. Narrow windows stack the fleet under the clock, move the toast down
-    /// above the speed readout, and let the open map cover the fleet panel.
+    /// Wide windows put the objective left and compact Operations right under the top
+    /// bar. Narrow windows stack Operations under the objective. The mini-map and
+    /// selected card sit on the bottom band; either hides when that band has no room.
     /// </summary>
     public readonly struct AirlineHudLayout
     {
-        public const float Margin = 22f;
-        public const float ClockWidth = 300f;
-        public const float ClockHeight = 92f;
-        public const float FleetWidth = 360f;
+        public const float Margin = 16f;
+        public const float TopBarHeight = 44f;
+        public const float ObjectiveWidth = 360f;
+        public const float ObjectiveHeight = 122f;
+        public const float GuideHeight = 104f;
+        public const float OperationsWidth = 340f;
+        public const float OperationsMaxHeight = 184f;
+        public const float NavStripMaxWidth = 420f;
+        public const float NavTabMinWidth = 72f;
         public const float ToastWidth = 460f;
         public const float ToastHeight = 40f;
         public const float SetupWidth = 420f;
-        public const float MinimumMapWidth = 520f;
-        public const float GuideHeight = 104f;
-        public const float NavStripHeight = 44f;
+        public const float MinimumWorkspaceWidth = 520f;
+        public const float SelectedCardWidth = 440f;
+        public const float SelectedCardHeight = 148f;
+        public const float MiniMapWidth = 220f;
+        public const float MiniMapHeight = 132f;
 
-        /// <summary>The nav strip never grows wider than this, even with a lot of spare room.</summary>
-        public const float NavStripMaxWidth = 420f;
-
-        /// <summary>Height of the persistent objective line once the first-flight guide is done.</summary>
-        public const float StatusLineHeight = 26f;
-
-        /// <summary>
-        /// Minimum band left under the left column on a stacked (narrow) window so the
-        /// fleet/map rects stay above the toast and speed readout instead of collapsing
-        /// onto them — the known 320×240 failure mode.
-        /// </summary>
-        public const float MinStackedContentHeight = 28f;
-
-        private AirlineHudLayout(Rect clock, Rect guide, Rect navStrip, Rect fleetArea, Rect toast, Rect map, bool mapCoversFleet, Rect setupArea)
+        private AirlineHudLayout(
+            Rect topBar, Rect navStrip, Rect objective, Rect operations, Rect workspace,
+            Rect toast, Rect miniMap, Rect selectedCard, Rect setupArea, bool workspaceCoversOverview)
         {
-            Clock = clock;
-            Guide = guide;
+            TopBar = topBar;
             NavStrip = navStrip;
-            FleetArea = fleetArea;
+            Objective = objective;
+            Operations = operations;
+            Workspace = workspace;
             Toast = toast;
-            Map = map;
-            MapCoversFleet = mapCoversFleet;
+            MiniMap = miniMap;
+            SelectedCard = selectedCard;
             SetupArea = setupArea;
+            WorkspaceCoversOverview = workspaceCoversOverview;
         }
 
-        public Rect Clock { get; }
+        /// <summary>Full-width persistent status and navigation strip.</summary>
+        public Rect TopBar { get; }
 
-        /// <summary>
-        /// Under the clock: the first-session guide card while it runs, or — once it's done —
-        /// the persistent one-line objective/status (ADR 0053). Always sized; never zero.
-        /// </summary>
-        public Rect Guide { get; }
-
-        /// <summary>
-        /// The four-workspace nav strip (ADR 0053), directly under the clock/guide column.
-        /// Wider than the clock itself — up to <see cref="NavStripMaxWidth"/> — since four tab
-        /// labels need more room than the narrow clock column alone provides.
-        /// </summary>
+        /// <summary>The four workspace tabs, right-aligned inside <see cref="TopBar"/>.</summary>
         public Rect NavStrip { get; }
 
-        /// <summary>The most room the fleet panel may take; it shrinks to its content.</summary>
-        public Rect FleetArea { get; }
+        /// <summary>
+        /// Upper-left current-objective card, or the first-flight guide while it runs.
+        /// </summary>
+        public Rect Objective { get; }
+
+        /// <summary>Upper-right compact player Operations list. Zero-sized when stacked windows run out of room.</summary>
+        public Rect Operations { get; }
+
+        /// <summary>The one major workspace surface (Map, Fleet, Contracts, full flights board).</summary>
+        public Rect Workspace { get; }
 
         public Rect Toast { get; }
-        public Rect Map { get; }
 
-        /// <summary>True when the window is too narrow for the map beside the fleet, so the fleet hides while it is open.</summary>
-        public bool MapCoversFleet { get; }
+        /// <summary>Lower-left airfield mini-map. Zero-sized when it would collide or not fit.</summary>
+        public Rect MiniMap { get; }
+
+        /// <summary>Bottom-centre selected-aircraft card reservation. Zero-sized on very short windows.</summary>
+        public Rect SelectedCard { get; }
 
         /// <summary>The centred region the start-your-airline panel is fitted into.</summary>
         public Rect SetupArea { get; }
+
+        /// <summary>True when the window is too narrow for Operations beside the objective.</summary>
+        public bool WorkspaceCoversOverview { get; }
 
         public static AirlineHudLayout Create(HudLayout hud, bool showGuide = false)
         {
             var width = hud.Viewport.x;
             var height = hud.Viewport.y;
             var inner = Mathf.Max(1f, width - Margin * 2f);
-            // Everything above the speed readout (itself above the control bar).
-            var floor = Mathf.Max(Margin + 1f, Mathf.Min(hud.SpeedReadout.y, hud.ControlBar.y) - Margin);
+            var floor = height - Margin;
 
-            var clockWidth = Mathf.Min(ClockWidth, inner);
-            var fleetWidth = Mathf.Min(FleetWidth, inner);
-            var fleetBeside = clockWidth + fleetWidth + Margin * 3f <= width;
-            var fleetLeft = width - Margin - fleetWidth;
+            var topBar = new Rect(0f, 0f, width, Mathf.Min(TopBarHeight, Mathf.Max(1f, height)));
+            var navWidth = Mathf.Min(NavStripMaxWidth, Mathf.Max(NavTabMinWidth * 4f, inner * 0.38f));
+            navWidth = Mathf.Min(navWidth, Mathf.Max(1f, width * 0.5f));
+            var navStrip = new Rect(width - navWidth, 0f, navWidth, topBar.height);
+
+            var contentTop = topBar.yMax + 10f;
+            var cardWidth = Mathf.Min(ObjectiveWidth, inner);
+            var objectiveHeight = showGuide ? GuideHeight : ObjectiveHeight;
+            var objective = ClampBelow(Margin, contentTop, cardWidth, objectiveHeight, floor);
+
+            var opsBeside = cardWidth + OperationsWidth + Margin * 3f <= width;
+            Rect operations;
+            if (opsBeside)
+            {
+                var opsLeft = width - Margin - Mathf.Min(OperationsWidth, inner);
+                operations = ClampBelow(opsLeft, contentTop, Mathf.Min(OperationsWidth, inner), OperationsMaxHeight, floor);
+            }
+            else
+            {
+                var stackedTop = objective.yMax + Margin;
+                operations = ClampBelow(Margin, stackedTop, cardWidth, OperationsMaxHeight, floor);
+                if (operations.height < 64f)
+                    operations = new Rect(operations.x, operations.y, 0f, 0f);
+            }
+
+            var selectedWidth = Mathf.Min(SelectedCardWidth, inner);
+            var selectedHeight = Mathf.Min(SelectedCardHeight, Mathf.Max(1f, floor - contentTop));
+            var selectedX = (width - selectedWidth) * 0.5f;
+            var selectedY = floor - selectedHeight;
+            var selectedCard = selectedY >= contentTop
+                ? new Rect(selectedX, selectedY, selectedWidth, selectedHeight)
+                : new Rect(selectedX, floor, selectedWidth, 0f);
+
+            if (selectedCard.height > 0f && selectedCard.Overlaps(operations) && operations.width > 0f)
+            {
+                if (!opsBeside)
+                    operations = new Rect(operations.x, operations.y, 0f, 0f);
+                else
+                    operations = ShrinkAbove(operations, selectedCard.y - Margin);
+            }
+
+            if (selectedCard.height > 0f && selectedCard.Overlaps(objective))
+                selectedCard = new Rect(selectedCard.x, selectedCard.y, selectedCard.width, 0f);
+
+            var miniWidth = Mathf.Min(MiniMapWidth, inner);
+            var miniHeight = MiniMapHeight;
+            var mini = new Rect(Margin, floor - miniHeight, miniWidth, miniHeight);
+            var leftColumnBottom = Mathf.Max(objective.yMax, operations.width > 0f && !opsBeside ? operations.yMax : objective.yMax);
+            if (miniWidth < MiniMapWidth * 0.7f
+                || mini.y < leftColumnBottom + 8f
+                || (selectedCard.height > 0f && mini.Overlaps(selectedCard))
+                || (operations.width > 0f && mini.Overlaps(operations))
+                || mini.Overlaps(objective))
+                mini = new Rect(Margin, floor, 0f, 0f);
 
             var toastWidth = Mathf.Min(ToastWidth, inner);
-            var toastBetween = fleetBeside && clockWidth + Margin + toastWidth + Margin <= fleetLeft - Margin;
-            // Bottom-band toast: keep every other panel out of that strip so toast cannot
-            // sit on the map/fleet/nav (320×240 and other short stacked windows).
-            var contentFloor = toastBetween
-                ? floor
-                : Mathf.Max(Margin + 1f, floor - ToastHeight - Margin);
+            var toastY = contentTop;
+            var toast = new Rect((width - toastWidth) * 0.5f, toastY, toastWidth, ToastHeight);
+            if (toast.Overlaps(objective) || (operations.width > 0f && toast.Overlaps(operations)))
+            {
+                var toastBottom = selectedCard.height > 0f ? selectedCard.y - 8f : floor - ToastHeight;
+                toast = new Rect((width - toastWidth) * 0.5f, Mathf.Max(contentTop, toastBottom - ToastHeight), toastWidth, ToastHeight);
+                if (toast.Overlaps(objective) || (operations.width > 0f && toast.Overlaps(operations))
+                    || (selectedCard.height > 0f && toast.Overlaps(selectedCard))
+                    || (mini.width > 0f && toast.Overlaps(mini)))
+                    toast = new Rect(toast.x, topBar.yMax + 4f, toastWidth, Mathf.Min(ToastHeight, 20f));
+            }
 
-            // On a stacked window, leave a real band under the left column for fleet/map.
-            var leftLimit = fleetBeside
-                ? contentFloor
-                : Mathf.Max(Margin + 8f, contentFloor - MinStackedContentHeight);
+            var workspaceTop = topBar.yMax + 10f;
+            var workspace = new Rect(Margin, workspaceTop, inner, Mathf.Max(1f, floor - workspaceTop));
+            var setup = new Rect(Margin, workspaceTop, inner, Mathf.Max(1f, floor - workspaceTop));
 
-            var clock = new Rect(Margin, Margin, clockWidth,
-                Mathf.Max(1f, Mathf.Min(ClockHeight, leftLimit - Margin)));
-
-            // Always leave a one-pixel nav strip (+ gap) under the guide so ClampBelow
-            // cannot park the nav on top of a guide that already filled leftLimit.
-            var guideHeight = showGuide ? GuideHeight : StatusLineHeight;
-            var guideTop = clock.yMax + Margin;
-            var guideLimit = Mathf.Max(guideTop + 1f, leftLimit - Margin - 1f);
-            var guide = ClampBelow(Margin, guideTop, clock.width, guideHeight, guideLimit);
-
-            var navAvailable = (fleetBeside ? fleetLeft - Margin : width - Margin) - Margin;
-            var navWidth = Mathf.Min(Mathf.Max(clock.width, Mathf.Max(1f, navAvailable)), NavStripMaxWidth);
-            var navTop = guide.yMax + Margin;
-            var navStrip = ClampBelow(Margin, navTop, Mathf.Min(navWidth, inner), NavStripHeight, leftLimit);
-
-            var leftColumnBottom = navStrip.yMax;
-            var fleetTop = fleetBeside ? Margin : leftColumnBottom + Margin;
-            if (!fleetBeside)
-                fleetTop = Mathf.Min(fleetTop, contentFloor - 1f);
-            var fleet = new Rect(fleetLeft, fleetTop, fleetWidth, Mathf.Max(1f, contentFloor - fleetTop));
-
-            var toast = toastBetween
-                ? new Rect((clock.xMax + fleet.x - toastWidth) * 0.5f, Margin, toastWidth, ToastHeight)
-                : new Rect((width - toastWidth) * 0.5f, Mathf.Max(Margin, floor - ToastHeight), toastWidth, ToastHeight);
-
-            var mapBeside = fleetBeside && fleet.x - Margin - Margin >= MinimumMapWidth;
-            var mapRight = mapBeside ? fleet.x - Margin : width - Margin;
-            var mapTop = leftColumnBottom + Margin;
-            if (!mapBeside)
-                mapTop = Mathf.Min(mapTop, contentFloor - 1f);
-            // When the map covers the fleet they share the same vertical band on purpose.
-            if (!mapBeside && !fleetBeside)
-                mapTop = fleet.y;
-            var map = new Rect(Margin, mapTop, Mathf.Max(1f, mapRight - Margin), Mathf.Max(1f, contentFloor - mapTop));
-
-            var setup = new Rect(Margin, Margin, inner, Mathf.Max(1f, contentFloor - Margin));
-
-            return new AirlineHudLayout(clock, guide, navStrip, fleet, toast, map, !mapBeside, setup);
+            return new AirlineHudLayout(
+                topBar, navStrip, objective, operations, workspace, toast, mini, selectedCard, setup, !opsBeside);
         }
 
-        /// <summary>
-        /// A panel that starts at <paramref name="y"/> and never crosses <paramref name="limit"/>.
-        /// Degenerates to a 1 px strip just under the limit when the window has already run out.
-        /// </summary>
         private static Rect ClampBelow(float x, float y, float width, float preferredHeight, float limit)
         {
+            if (width <= 0f)
+                return new Rect(x, y, 0f, 0f);
             if (y >= limit - 0.01f)
-                return new Rect(x, Mathf.Max(Margin, limit - 1f), width, 1f);
+                return new Rect(x, Mathf.Max(0f, limit - 1f), width, 1f);
             return new Rect(x, y, width, Mathf.Max(1f, Mathf.Min(preferredHeight, limit - y)));
+        }
+
+        private static Rect ShrinkAbove(Rect rect, float limit)
+        {
+            if (rect.y >= limit - 1f)
+                return new Rect(rect.x, rect.y, 0f, 0f);
+            return new Rect(rect.x, rect.y, rect.width, Mathf.Max(0f, limit - rect.y));
         }
 
         /// <summary>A panel of the preferred size, centred in <see cref="SetupArea"/> and never larger than it.</summary>

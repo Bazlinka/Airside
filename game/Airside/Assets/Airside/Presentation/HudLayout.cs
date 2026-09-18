@@ -6,11 +6,11 @@ namespace Airside.Presentation
     /// Resolution-independent placement for the circuit HUD. All rectangles are
     /// expressed in virtual GUI points after <see cref="ScaleFor"/> is applied.
     ///
-    /// The HUD is a control bar carrying pause, follow, the speed buttons and
-    /// skip-to-next-event (ADR 0041), a centred pause menu, and a live airspeed
-    /// readout above the bar (ADR 0044). The airline panels (ADR 0045) place
-    /// themselves around it. Keeping the arithmetic here makes the fits-on-screen
-    /// contract testable without an editor.
+    /// The HUD is a centred pause menu. Live airline time has no pause, rates or skip
+    /// (ADR 0045). Follow / Overview sit on the circuit HUD only; the airline overview
+    /// uses the selected-aircraft card and Esc/R instead (ADR 0053). The airline panels
+    /// place themselves around the pause menu. Keeping the arithmetic here makes the
+    /// fits-on-screen contract testable without an editor.
     /// </summary>
     public readonly struct HudLayout
     {

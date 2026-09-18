@@ -42,10 +42,51 @@ public static class Program
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         }));
 
+        var titles = Path.Combine(directory ?? ".", "title-metrics.json");
+        File.WriteAllText(titles, JsonSerializer.Serialize(TitleMetrics(scenario),
+            new JsonSerializerOptions { WriteIndented = false }));
+
         Console.WriteLine($"Wrote {pages.Count} pages to {output}");
+        Console.WriteLine($"Wrote fuselage title metrics to {titles}");
         Console.WriteLine(scenario.Describe());
         return 0;
     }
+
+    /// <summary>
+    /// To-scale fuselage title measurements per type, so scripts/render-aircraft-titles.py
+    /// can show what the paint actually comes out at against the real airframe length.
+    /// </summary>
+    private static List<TitleMetric> TitleMetrics(Scenario scenario)
+    {
+        var name = scenario.Operations.PlayerAirline.Name.ToUpperInvariant();
+        var metrics = new List<TitleMetric>();
+        foreach (var spec in AircraftCatalogue.All)
+        {
+            var layout = AircraftIdentityMarkings.For(spec.Type);
+            var fitted = AircraftTitlePaint.OperatorCharacterSize(spec.Type, name,
+                layout.OperatorCharacterSize);
+            metrics.Add(new TitleMetric(
+                spec.Name,
+                (float)spec.LengthMetres,
+                (float)spec.HeightMetres,
+                name,
+                layout.OperatorCharacterSize,
+                fitted,
+                AircraftTitlePaint.LineHeightMetres(fitted),
+                AircraftTitlePaint.WidthMetres(name, fitted),
+                AircraftTitlePaint.TitleLengthBudgetMetres(spec.Type),
+                // What the removed backing plate measured: sized in character-size units
+                // instead of metres, so it came out 6.4x smaller than the text it framed.
+                Math.Max(0.6f, name.Length * layout.OperatorCharacterSize * 0.62f + 0.3f),
+                layout.OperatorCharacterSize * 1.9f));
+        }
+
+        return metrics;
+    }
+
+    private sealed record TitleMetric(string Type, float LengthMetres, float HeightMetres,
+        string Title, float AuthoredCharacterSize, float FittedCharacterSize, float TitleHeightMetres,
+        float TitleWidthMetres, float BudgetMetres, float OldPlateWidthMetres, float OldPlateHeightMetres);
 
     // ---- Pages ---------------------------------------------------------------------
 

@@ -69,6 +69,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StableHash.cs" />
+    <!-- Fuselage title sizing is pure float maths; checked here, not by eye. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftTitlePaint.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandNames.cs" />

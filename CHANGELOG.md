@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Fuselage titles read as paint again.** The dark plate behind each airline name
+  was sized in TextMesh character-size units instead of metres, so it came out
+  6.4x too small — a small dark rectangle sitting across the middle of the name
+  on every aircraft. It is gone: real titles are paint on the skin, not a panel.
+  The registration is no longer near-black on a near-black plate, and a long
+  airline name is now shrunk to fit the type's real fuselage length instead of
+  running off the end of the aeroplane.
+
 - **The HUD now draws the four workspaces from the shared painters (ADR 0057).**
   Operations, Map, Fleet and Contracts are rasterised from the same draw lists
   the headless tests and the offline mockups use, so what is reviewed is what is

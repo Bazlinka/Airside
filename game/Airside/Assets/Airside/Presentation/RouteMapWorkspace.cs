@@ -471,8 +471,9 @@ namespace Airside.Presentation
                     into.Dot(x, y, isSelected ? 13f : 9f, tone);
                     into.Text(new HudBox(x + 9f, y - 9f, 128f, 17f), row.Destination.Name, 12f,
                         row.Reachable ? HudTone.Default : HudTone.Muted);
-                    into.Hotspot(new HudBox(x - 12f, y - 12f, 24f, 24f),
-                        HudAction.Destination(row.Destination.Code));
+                    // No hotspot: the map's own pointer handler picks the nearest dot, so it
+                    // can tell a click from the start of a pan. An IMGUI control here would
+                    // also come and go as zoom culls dots, which is how control ids drift.
                 }
             }
 

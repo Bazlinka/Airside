@@ -1211,7 +1211,7 @@ namespace Airside.Presentation
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
                 _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex);
-            var networkAction = _hudPainter.Draw(_mapNetworkDrawList);
+            _hudPainter.Draw(_mapNetworkDrawList);
             DrawMapLabels(mapRect);
 
             var mouse = Event.current.mousePosition;
@@ -1342,7 +1342,7 @@ namespace Airside.Presentation
             RouteMapWorkspacePainter.PaintFilters(_mapFilterDrawList, _routeMapWorkspace, workspaceLayout);
             var filterAction = _hudPainter.Draw(_mapFilterDrawList);
 
-            DispatchWorkspaceAction(chromeAction ?? networkAction ?? filterAction);
+            DispatchWorkspaceAction(chromeAction ?? filterAction);
         }
 
         private float _mapZoomPending;

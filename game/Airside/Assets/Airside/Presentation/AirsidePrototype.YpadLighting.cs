@@ -158,6 +158,79 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// A lit marker at every terminal gate and regional bay stop, plus a short blue
+        /// lead-in trail along the final approach into each stand. Apron illumination
+        /// before this was 7 uniform roof floods with no way to tell one parking position
+        /// from another at night; real stands are individually marked this way so a gate
+        /// reads as its own spot, not just part of a floodlit apron.
+        /// </summary>
+        private static Light[] BuildStandLighting()
+        {
+            var lights = new List<Light>();
+            var marker = new Color(1f, 0.86f, 0.55f);
+            var leadIn = new Color(0.25f, 0.55f, 1f);
+
+            foreach (var gate in AdelaideLayout.TerminalGates)
+            {
+                var stop = new Vector3(gate.NoseX, 0.24f, gate.NoseZ);
+                PlaceYpadLens($"Stand marker {gate.Id}", stop, marker, 0.5f);
+                lights.Add(CreateYpadPointLight($"Stand marker point {gate.Id}", stop + Vector3.up * 0.3f, marker, 14f));
+                AddStandLeadIn(lights, gate.Id, gate.TaxiIn, leadIn);
+            }
+
+            foreach (var bay in AdelaideLayout.Bays)
+            {
+                var stop = new Vector3(bay.StopX, 0.24f, bay.StopZ);
+                PlaceYpadLens($"Stand marker {bay.Id}", stop, marker, 0.42f);
+                lights.Add(CreateYpadPointLight($"Stand marker point {bay.Id}", stop + Vector3.up * 0.3f, marker, 12f));
+                AddStandLeadIn(lights, bay.Id, bay.TaxiIn, leadIn);
+            }
+
+            return lights.ToArray();
+        }
+
+        /// <summary>
+        /// Walks a stand's nose-first TaxiIn polyline backward from its stop (toward the
+        /// holding point) placing a lens fixture every 8 m for a short ~32-40 m trail —
+        /// the same distance-accumulator walk as <see cref="AddYpadTaxiCentrelineLights"/>,
+        /// just reversed and capped by fixture count instead of running the full taxiway.
+        /// </summary>
+        private static void AddStandLeadIn(List<Light> lights, string standId, float[] path, Color colour)
+        {
+            if (path == null || path.Length < 4)
+                return;
+
+            const float spacingMetres = 8f;
+            const int maxFixtures = 5;
+            var distanceUntilFixture = spacingMetres;
+            var fixture = 0;
+
+            for (var i = path.Length - 2; i >= 2 && fixture < maxFixtures; i -= 2)
+            {
+                var from = new Vector2(path[i], path[i + 1]);
+                var to = new Vector2(path[i - 2], path[i - 1]);
+                var segment = to - from;
+                var length = segment.magnitude;
+                if (length < 0.01f)
+                    continue;
+                var direction = segment / length;
+
+                while (distanceUntilFixture <= length && fixture < maxFixtures)
+                {
+                    var point = from + direction * distanceUntilFixture;
+                    var position = new Vector3(point.x, 0.19f, point.y);
+                    PlaceYpadLens($"Stand lead-in {standId} {fixture:00}", position, colour, 0.22f);
+                    if (fixture % 2 == 1)
+                        lights.Add(CreateYpadPointLight($"Stand lead-in point {standId} {fixture:00}",
+                            position + Vector3.up * 0.12f, colour, 8f));
+                    fixture++;
+                    distanceUntilFixture += spacingMetres;
+                }
+                distanceUntilFixture -= length;
+            }
+        }
+
+        /// <summary>
         /// Green thresholds, red runway ends, PAPI at both ends of both strips, and
         /// the published 801 m distance-coded CAT-I centreline for runway 23 only.
         /// No REIL is added: ERSA does not list RTIL/REIL for YPAD.

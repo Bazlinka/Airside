@@ -36,6 +36,7 @@ namespace Airside.Presentation
         private Light[] _thresholdLights;
         private Light[] _alsLights;
         private Light[] _runwayEdgeLights;
+        private Light[] _standLights;
         private Light _aerodromeBeacon;
         private ReflectionProbe _apronProbe;
         private ReflectionProbe _terminalProbe;
@@ -297,6 +298,9 @@ namespace Airside.Presentation
                 _alsLights = Array.Empty<Light>();
                 _runwayEdgeLights = AirsideBareField.Enabled
                     ? BuildYpadRunwayEdgeLights()
+                    : Array.Empty<Light>();
+                _standLights = AirsideBareField.Enabled
+                    ? BuildStandLighting()
                     : Array.Empty<Light>();
             }
             _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
@@ -3700,6 +3704,25 @@ namespace Airside.Presentation
 
                     light.intensity = edge;
                     light.enabled = edge > 0.05f;
+                }
+            }
+
+            // Per-stand marker + lead-in lights: a gentler night flicker than the runway/
+            // apron lighting so individual stands read as marked without competing with it.
+            if (_standLights != null)
+            {
+                var stand = Mathf.Lerp(1.1f, 0.03f, daylight);
+                for (var i = 0; i < _standLights.Length; i++)
+                {
+                    var light = _standLights[i];
+                    if (light == null)
+                        continue;
+                    var flicker = daylight < 0.4f
+                        ? 1f + 0.03f * Mathf.Sin(
+                            Time.unscaledTime * AirsideReusableMotion.FloodFlickerHz * Mathf.PI * 2f + i * 1.7f)
+                        : 1f;
+                    light.intensity = stand * flicker;
+                    light.enabled = stand > 0.05f;
                 }
             }
 

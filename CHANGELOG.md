@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Fleet shows your aircraft first and a market that cannot lie (ADR 0057).**
+  The roster lists the player's aircraft above the other operators; selecting one
+  gives its route-band capability, rotations flown, planning range, current
+  assignment and live turnaround — no invented maintenance, wear or upgrades. The
+  aircraft market reads AircraftAcquisition for price, tier, reliability and
+  rotation gates, names the first gate you have not met, and says whether the
+  airframe would park on a free bay or ferry in. A purchase is only offered when
+  AirlineOperations.BuyAircraft would accept it.
+
 - **The Route Map prices a destination from the rules that charge you (ADR 0057).**
   Available and locked come from the selected aircraft's real range and route
   band, and the detail pane reads dispatch cost and estimated return straight

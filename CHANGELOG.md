@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Career fleet, rotating contracts, departure prep and auto-stand (ADR 0056).**
+  Player types unlock route bands (ATR/Saab Regional, Dash 8 Domestic, 737
+  National, A321 Tasman, widebodies long-haul) and those legs pay more. Hangar
+  buy uses authored prices and gates; a free stand parks the new aircraft,
+  otherwise it ferries inbound. Contracts are a 6-hour market of three offers
+  drawn from owned types, not a fixed ladder. Player landings auto-take a stand;
+  a booked departure runs fuel → catering → boarding and will not push until
+  ready. Save schema 8 (prep start, market-contract snapshot, rotation count).
+
 - **Living airport and first-playable career loop (ADR 0055).** Holding
   traffic now flies a visible right-hand circuit south of runway 05 instead
   of vanishing; a go-around flies the approach, aborts off short final and
@@ -11,8 +20,8 @@
   is charged when you book and refunded if you cancel before pushback; every
   completed rotation pays, and contracts (Kingscote, Port Lincoln, Whyalla,
   Melbourne) add a bonus. Completed contracts cannot be re-accepted; Kingscote
-  or Port Lincoln unlock Regional, Melbourne unlocks Domestic — all four routes
-  are inside the starter ATR's range. Other-airport corridors (PER–MEL, PER–SYD,
+  or Port Lincoln unlock Regional, Melbourne is a Dash 8 Domestic goal.
+  Other-airport corridors (PER–MEL, PER–SYD,
   DRW–MEL and the east-coast pairs) draw on the map always and in 3D when
   they pass within 260 km of Adelaide. Save schema 7.
 

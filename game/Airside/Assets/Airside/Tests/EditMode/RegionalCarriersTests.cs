@@ -85,7 +85,8 @@ namespace Airside.Tests
 
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
             var parked = ops.Fleet.First(a => a.Airline.IsPlayer && a.State == FleetState.AtStand);
-            Assert.That(ops.ScheduleDeparture(parked, kgc, clock.Now).Accepted, Is.True);
+            Assert.That(ops.ScheduleDeparture(parked, kgc, clock.Now.Advance(DeparturePrep.LeadSeconds(parked.Type))).Accepted, Is.True);
+            clock.Set(clock.Now.Advance(DeparturePrep.LeadSeconds(parked.Type)));
             ops.Update();
             Assert.That(parked.State, Is.EqualTo(FleetState.TaxiOut));
 

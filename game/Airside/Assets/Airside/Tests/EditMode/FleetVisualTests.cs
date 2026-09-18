@@ -49,15 +49,13 @@ namespace Airside.Tests
 
                 if (plane.State == FleetState.AtStand && plane.CompletedTrips == 1)
                     break;
-                if (plane.State == FleetState.AwaitingStand)
-                    ops.AssignStand(plane, AirlineOperations.AdelaideRegionalBays[2]);
             }
 
             Assert.That(seenLegs, Is.EqualTo(new[]
             {
                 FleetGroundLeg.Parked, FleetGroundLeg.TaxiOut, FleetGroundLeg.Lineup, FleetGroundLeg.None,
-                FleetGroundLeg.Vacate, FleetGroundLeg.AwaitingStand, FleetGroundLeg.TaxiIn, FleetGroundLeg.Parked
-            }), "the empty runway means no hold at the holding point");
+                FleetGroundLeg.Vacate, FleetGroundLeg.TaxiIn, FleetGroundLeg.Parked
+            }), "the empty runway means no hold at the holding point; auto-stand skips the wait");
             Assert.That(seenPhases, Is.EqualTo(new[]
             {
                 AircraftPhase.AtStand, AircraftPhase.TaxiOut, AircraftPhase.Takeoff, AircraftPhase.Departed,
@@ -84,11 +82,11 @@ namespace Airside.Tests
             var first = ops.AddAircraft(player, "VH-TSA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             var second = ops.AddAircraft(player, "VH-TSB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
             DestinationCatalogue.TryFind("KGC", out var kingscote);
-            ops.ScheduleDeparture(first, kingscote, new SimulationTime(0));
-            ops.ScheduleDeparture(second, kingscote, new SimulationTime(0));
+            ops.ScheduleDeparture(first, kingscote, new SimulationTime(600));
+            ops.ScheduleDeparture(second, kingscote, new SimulationTime(600));
 
             // Ground releases the neighbour one minute later; inspect once it reaches the queue.
-            var secondAtHold = AirlineOperations.TaxiReleaseSeparationSeconds
+            var secondAtHold = 600 + AirlineOperations.TaxiReleaseSeparationSeconds
                                + AirlineOperations.TaxiOutSecondsFrom(second.Stand);
             clock.Set(new SimulationTime(secondAtHold + 5));
             ops.Update();
@@ -112,13 +110,13 @@ namespace Airside.Tests
             var c = ops.AddAircraft(player, "VH-TSC", AircraftType.Atr42, bays[2]);
             DestinationCatalogue.TryFind("KGC", out var kingscote);
             foreach (var plane in new[] { a, b, c })
-                ops.ScheduleDeparture(plane, kingscote, new SimulationTime(0));
+                ops.ScheduleDeparture(plane, kingscote, new SimulationTime(600));
 
             long longest = 0;
             var releaseIndex = 0;
             foreach (var plane in new[] { a, b, c })
             {
-                longest = System.Math.Max(longest, releaseIndex * AirlineOperations.TaxiReleaseSeparationSeconds
+                longest = System.Math.Max(longest, 600 + releaseIndex * AirlineOperations.TaxiReleaseSeparationSeconds
                                                    + AirlineOperations.TaxiOutSecondsFrom(plane.Stand));
                 releaseIndex++;
             }
@@ -229,7 +227,7 @@ namespace Airside.Tests
             Assert.That(missed.Leg, Is.EqualTo(FleetGroundLeg.None));
 
             var deadline = abort + AirlineOperations.GoAroundCircuitSeconds + 30 * 60;
-            while (first.State != FleetState.AwaitingStand && clock.Now.ElapsedSeconds < deadline)
+            while (first.State != FleetState.AtStand && clock.Now.ElapsedSeconds < deadline)
             {
                 var next = ops.NextEventAt() ?? clock.Now.Advance(1);
                 if (next.ElapsedSeconds > deadline)
@@ -238,7 +236,7 @@ namespace Airside.Tests
                 ops.Update();
             }
 
-            Assert.That(first.State, Is.EqualTo(FleetState.AwaitingStand),
+            Assert.That(first.State, Is.EqualTo(FleetState.AtStand),
                 "a go-around must still reach a stand instead of looping the circuit");
         }
     }

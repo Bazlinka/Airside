@@ -27,8 +27,8 @@ namespace Airside.Tests
         public void ChoosePlanningAircraft_PrefersSelectedThenUnplannedParked()
         {
             var (_, ops, fleet) = PlayerFleet(3);
-            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
-            ops.ScheduleDeparture(fleet[0], melbourne, new SimulationTime(600));
+            var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
+            ops.ScheduleDeparture(fleet[0], kingscote, new SimulationTime(600));
 
             Assert.That(FlightPlanner.ChoosePlanningAircraft(fleet, "VH-PAC"), Is.SameAs(fleet[2]));
             Assert.That(FlightPlanner.ChoosePlanningAircraft(fleet, null), Is.SameAs(fleet[1]));
@@ -128,8 +128,9 @@ namespace Airside.Tests
             ops.AddAirline(player);
             var atr = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
             var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
-            ops.ScheduleDeparture(atr, melbourne, new SimulationTime(600));
+            ops.ScheduleDeparture(atr, kingscote, new SimulationTime(600));
             ops.ScheduleDeparture(jet, melbourne, new SimulationTime(600));
             clock.Set(new SimulationTime(650));
             ops.Update();
@@ -160,8 +161,8 @@ namespace Airside.Tests
         public void NextFreeAircraft_SkipsBookedAndExcluded()
         {
             var (_, ops, fleet) = PlayerFleet(3);
-            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
-            ops.ScheduleDeparture(fleet[1], melbourne, new SimulationTime(600));
+            var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
+            ops.ScheduleDeparture(fleet[1], kingscote, new SimulationTime(600));
 
             Assert.That(FlightPlanner.NextFreeAircraft(fleet, "VH-PAA"), Is.SameAs(fleet[2]));
             Assert.That(FlightPlanner.NextFreeAircraft(fleet, null), Is.SameAs(fleet[0]));
@@ -172,11 +173,11 @@ namespace Airside.Tests
         {
             var (clock, ops, fleet) = PlayerFleet(1);
             var plane = fleet[0];
-            var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
+            var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
             Assert.That(FlightPlanner.ExpectedBackAt(plane, 3600, clock.Now), Is.Null);
 
-            ops.ScheduleDeparture(plane, melbourne, new SimulationTime(300));
-            var airborne = ops.AirborneSeconds(plane, melbourne);
+            ops.ScheduleDeparture(plane, kingscote, new SimulationTime(600));
+            var airborne = ops.AirborneSeconds(plane, kingscote);
             while (plane.State != FleetState.Outbound && clock.Now.ElapsedSeconds < 7200)
             {
                 clock.Advance(5);

@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Cursor — career fleet, rotating contracts, prep, auto-stand (branch
+  `cursor/career-fleet-and-turnaround-7e45`, ADR 0056).** Bailey asked to map then
+  implement: costings and unlocking planes; routes tied to those types with higher
+  pay; contracts that come and go instead of a fixed ladder; auto-stand on landing;
+  fuel → catering → boarding on a booked departure. No buildings or vehicles.
+  - **Bands:** player types unlock Regional / Domestic / National / Tasman /
+    Long-haul. The starter ATR stays Regional (KGC/PLO/…); a Dash 8 opens MEL/CBR/
+    SYD/HBA; jets open the rest. `FlightPay` uses the band multiplier.
+  - **Market:** `ContractMarket` draws three offers per 6-hour window from owned
+    types (own RNG). Accepting snapshots the definition so settlement survives
+    the window. Authored intro contracts remain for save compatibility.
+  - **Hangar buy:** authored prices/gates in `AircraftAcquisition`. Parks if a
+    compatible stand is free (leaving bays for away player turboprops); otherwise
+    a short inbound ferry. Max four player aircraft.
+  - **Turnaround:** player landings auto-take `SuggestStand`; booked departures
+    run fuel/catering/boarding and will not push until ready. Save **v8**.
+  - **Evidence:** `scripts/test-domain.sh` after this commit. No Mac Unity editor
+    on this Cloud Linux VM. Bailey skipped playtests.
+  - **NEXT:** `scripts/test-unity.sh` when a Mac editor is available. Do not add
+    buildings or service vehicles yet.
+
 - **2026-09-18 Cursor — living airport + first-playable career loop (branch
   `cursor/living-airport-and-career-7e45`, ADR 0055).** Bailey asked for three
   things after liking the git state: visible circuit/go-around traffic, real
@@ -15,20 +36,13 @@
   - **Economy / objectives:** opening float **$4,000**; dispatch cost at
     book, refund on cancel; `FlightPay` on every player return; contracts
     `REG-KGC-INTRO`, `REG-PLO-INTRO` (Provisional → Regional), `REG-WYA-INTRO`
-    (Regional SA), `DOM-MEL-INTRO` (Regional → Domestic, still inside ATR
-    1 100 km). Save **v7** completed-contract ids. Turboprops priced as
-    turboprops (ATR cruise 556 km/h would have been charged as a jet).
+    (Regional SA), `DOM-MEL-INTRO` (now a Dash 8 Domestic goal — the ATR is
+    Regional only under ADR 0056). Save **v7** completed-contract ids.
   - **Sky traffic:** authored corridors that never use ADL as an endpoint.
     Map always; 3D when within 260 km (PER–MEL closest approach ~230 km),
     compressed to a 7.5 km draw radius.
   - **Evidence:** `scripts/test-domain.sh` **340/340**. No Mac Unity editor
     on this Cloud Linux VM.
-  - **NEXT:** `scripts/test-unity.sh` and a Mac Play look at (1) two arrivals
-    holding in the circuit, (2) a go-around off short final that then lands,
-    (3) a PER–MEL overflight from overview, (4) planner cost/pay and the
-    Contracts workspace ladder. Do not start fleet purchase / extra player
-    aircraft until Bailey signs off — capacity is still the six regional
-    bays plus terminal gates shared with AI.
 
 - **2026-09-18 Claude — fixed a real Cathay-season timing bug (branch
   `feature/fix-cathay-season-stale-time-check`), from a targeted bug-hunting pass over
@@ -2676,14 +2690,10 @@ It does not cover Presentation, which needs UnityEngine.
 
 ## Next work
 
-1. **On `cursor/living-airport-and-career-7e45` (ADR 0055):** Mac Play of the
-   visible circuit, go-around, sky overflights, and the $4,000 / per-flight
-   pay / four-contract ladder. Then `scripts/test-unity.sh`. Do not start
-   fleet purchase until Bailey says so.
+1. **On `cursor/career-fleet-and-turnaround-7e45` (ADR 0056):** `scripts/test-unity.sh`
+   when a Mac editor is available. Career loop is rotating contracts, type-locked
+   routes, hangar buy, auto-stand and departure prep — no buildings or vehicles yet.
 2. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
    and one stand** only when Bailey says so.
 3. No Companion/CloudKit. The retired Kingscote airport-manager economy stays
    retired.
-4. **Player airline at Adelaide (ADR 0045 / 0053 / 0055).** First-playable
-   career loop is on this branch; next after playtest is regional fleet
-   growth (a second player aircraft with dedicated capacity).

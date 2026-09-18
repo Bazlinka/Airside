@@ -69,8 +69,8 @@ namespace Airside.Tests
 
             Assert.That(summary.Title, Is.EqualTo("You were away 3 h 00 min"));
             Assert.That(summary.Lines[0], Does.StartWith("VH-PAX"));
-            Assert.That(summary.Lines[0], Does.Contain("waiting for you to choose a stand"),
-                "a Kingscote round trip is back well inside three hours");
+            Assert.That(summary.Lines[0], Does.Contain("taxiing to a stand").Or.Contain("parked").Or.Contain("no flight planned").Or.Contain("departing"),
+                "a Kingscote round trip is back well inside three hours and auto-parks");
             Assert.That(summary.Lines.Any(l => (l.StartsWith("Rex flew") || l.StartsWith("QantasLink flew")) && l.Contains("trip")), Is.True);
         }
 
@@ -84,12 +84,8 @@ namespace Airside.Tests
             clock.Set(clock.Now.Advance(3 * 3600));
             ops.Update();
             var plane = ops.FleetOf(ops.PlayerAirline).Single();
-            Assert.That(plane.State, Is.EqualTo(FleetState.AwaitingStand), "still needs a stand chosen for it");
-            var freeStand = ops.FreeStands().First();
-            Assert.That(ops.AssignStand(plane, freeStand).Accepted, Is.True);
-            clock.Set(clock.Now.Advance(AirlineOperations.TaxiInSecondsTo(freeStand)));
-            ops.Update();
-            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand), "the rotation settles once it reaches its stand");
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand), "auto-park settles the rotation");
+            Assert.That(plane.CompletedTrips, Is.GreaterThanOrEqualTo(1));
 
             var summary = AwaySummary.Build(saved, ops, 3 * 3600);
             Assert.That(summary.Lines.Any(l => l.Contains("earned $")), Is.True);

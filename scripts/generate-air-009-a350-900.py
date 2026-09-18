@@ -229,6 +229,7 @@ def a350_900_meshes():
              (side * 31.4, 9.65, -2.55, 1.45, 0.09),
              (side * HALF_SPAN, 10.45, -3.50, 0.72, 0.055)], chord_points=14)
         meshes[f"nav_light_{suffix}"] = box(side * 32.28, 10.45, -3.15, 0.10, 0.10, 0.12)
+        meshes[f"static_wick_{suffix}"] = box(side * 32.0, 10.40, -4.0, 0.03, 0.02, 0.20)
 
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         x = side * 10.75

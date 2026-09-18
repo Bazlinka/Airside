@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_saab_340b_v01.bin",
-      "byteLength": 286968
+      "byteLength": 287688
     }
   ],
   "bufferViews": [
@@ -1447,6 +1447,30 @@
     {
       "buffer": 0,
       "byteOffset": 286896,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 286968,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 287256,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 287328,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 287616,
       "byteLength": 72,
       "target": 34963
     }
@@ -3988,6 +4012,50 @@
       "count": 24,
       "type": "VEC3",
       "max": [
+        -10.604999542236328,
+        2.1600000858306885,
+        0.375
+      ],
+      "min": [
+        -10.635000228881836,
+        2.140000104904175,
+        0.22499999403953552
+      ]
+    },
+    {
+      "bufferView": 231,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 232,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
+        10.635000228881836,
+        2.1600000858306885,
+        0.375
+      ],
+      "min": [
+        10.604999542236328,
+        2.140000104904175,
+        0.22499999403953552
+      ]
+    },
+    {
+      "bufferView": 233,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 234,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "max": [
         0.03999999910593033,
         6.789999961853027,
         -9.680000305175781
@@ -3999,13 +4067,13 @@
       ]
     },
     {
-      "bufferView": 231,
+      "bufferView": 235,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 232,
+      "bufferView": 236,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -4021,13 +4089,13 @@
       ]
     },
     {
-      "bufferView": 233,
+      "bufferView": 237,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 234,
+      "bufferView": 238,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -4043,13 +4111,13 @@
       ]
     },
     {
-      "bufferView": 235,
+      "bufferView": 239,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 236,
+      "bufferView": 240,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -4065,13 +4133,13 @@
       ]
     },
     {
-      "bufferView": 237,
+      "bufferView": 241,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
     },
     {
-      "bufferView": 238,
+      "bufferView": 242,
       "componentType": 5126,
       "count": 24,
       "type": "VEC3",
@@ -4087,7 +4155,7 @@
       ]
     },
     {
-      "bufferView": 239,
+      "bufferView": 243,
       "componentType": 5123,
       "count": 36,
       "type": "SCALAR"
@@ -5475,7 +5543,7 @@
       ]
     },
     {
-      "name": "tail_nav_light",
+      "name": "static_wick_left",
       "primitives": [
         {
           "attributes": {
@@ -5487,7 +5555,7 @@
       ]
     },
     {
-      "name": "beacon_top",
+      "name": "static_wick_right",
       "primitives": [
         {
           "attributes": {
@@ -5499,7 +5567,7 @@
       ]
     },
     {
-      "name": "landing_light_l",
+      "name": "tail_nav_light",
       "primitives": [
         {
           "attributes": {
@@ -5511,7 +5579,7 @@
       ]
     },
     {
-      "name": "landing_light_r",
+      "name": "beacon_top",
       "primitives": [
         {
           "attributes": {
@@ -5523,13 +5591,37 @@
       ]
     },
     {
-      "name": "taxi_light",
+      "name": "landing_light_l",
       "primitives": [
         {
           "attributes": {
             "POSITION": 238
           },
           "indices": 239,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "landing_light_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 240
+          },
+          "indices": 241,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "taxi_light",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 242
+          },
+          "indices": 243,
           "mode": 4
         }
       ]
@@ -5997,24 +6089,32 @@
       "mesh": 114
     },
     {
-      "name": "tail_nav_light",
+      "name": "static_wick_left",
       "mesh": 115
     },
     {
-      "name": "beacon_top",
+      "name": "static_wick_right",
       "mesh": 116
     },
     {
-      "name": "landing_light_l",
+      "name": "tail_nav_light",
       "mesh": 117
     },
     {
-      "name": "landing_light_r",
+      "name": "beacon_top",
       "mesh": 118
     },
     {
-      "name": "taxi_light",
+      "name": "landing_light_l",
       "mesh": 119
+    },
+    {
+      "name": "landing_light_r",
+      "mesh": 120
+    },
+    {
+      "name": "taxi_light",
+      "mesh": 121
     }
   ],
   "scenes": [
@@ -6140,7 +6240,9 @@
         116,
         117,
         118,
-        119
+        119,
+        120,
+        121
       ]
     }
   ],

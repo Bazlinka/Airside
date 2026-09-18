@@ -377,6 +377,8 @@ def saab_meshes():
 
     meshes["nav_light_left"] = box(-HALF_SPAN + 0.04, 2.20, 0.55, 0.08, 0.08, 0.08)
     meshes["nav_light_right"] = box(HALF_SPAN - 0.04, 2.20, 0.55, 0.08, 0.08, 0.08)
+    meshes["static_wick_left"] = box(-HALF_SPAN + 0.10, 2.15, 0.30, 0.03, 0.02, 0.15)
+    meshes["static_wick_right"] = box(HALF_SPAN - 0.10, 2.15, 0.30, 0.03, 0.02, 0.15)
     meshes["tail_nav_light"] = box(0.0, 6.75, -9.72, 0.08, 0.08, 0.08)
     meshes["beacon_top"] = box(0.0, 3.15, -0.40, 0.10, 0.10, 0.10)
     meshes["landing_light_l"] = box(-3.55, 1.45, 2.70, 0.16, 0.12, 0.08)

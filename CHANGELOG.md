@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Static discharge wicks added to the Saab 340B and A350-900 wingtips** (the 787-10
+  inherits them automatically since it derives from the A350-900's generator module).
+  Every real airliner has these small trailing-edge antennas; previously only the 737-8
+  (and its A321neo derivative) and the Dash 8-400 had them modelled, so half the fleet's
+  wingtips read as slightly unfinished up close. Placed from each aircraft's own already
+  -verified wingtip navigation-light position (a known-good anchor) rather than
+  re-deriving wingtip geometry from scratch. `scripts/test-air-007-saab-340b.py` and
+  `scripts/test-air-009-a350-900.py`/`-010-787-10.py` still pass; all three regenerated
+  models were rendered and visually inspected (no bounds violation — the wicks sit safely
+  inboard of each wing's existing extremity, confirmed against each file's own dimension
+  tolerance before regenerating, not after).
 - **Every aircraft's nacelles, wheels, landing gear, propeller hubs/spinners and radome/
   belly-fairing lofts are meaningfully rounder** — raised the Python geometry generators'
   segment counts on the smallest, closest-to-camera round parts across all 7 types

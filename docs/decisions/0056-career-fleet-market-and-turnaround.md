@@ -87,9 +87,9 @@ When a player departure is booked, a three-stage prep runs in order:
 3. Boarding
 
 Durations are type-scaled, owned by Simulation (`DeparturePrep`).
-Pushback will not start until prep is ready. Presentation only displays
-the stage. Engines still spool from `EngineStartSequence` in the last
-minutes.
+Pushback will not start until prep is ready. Presentation draws each
+stage's 0–100% progress; it never decides when a stage finishes.
+Engines still spool from `EngineStartSequence` in the last minutes.
 
 ## Save
 

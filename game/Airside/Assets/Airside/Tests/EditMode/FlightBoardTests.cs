@@ -118,7 +118,8 @@ namespace Airside.Tests
             ops.ScheduleDeparture(aircraft, Code("KGC"), new SimulationTime(600));
 
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
-            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Scheduled"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(45)), Is.EqualTo("Fuelling 50%"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Ready"));
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));
             Assert.That(FlightBoard.TimeMeaning(aircraft, new SimulationTime(720)), Is.EqualTo("LATE +2 MIN"));

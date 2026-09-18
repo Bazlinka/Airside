@@ -70,6 +70,25 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void TagPhase_ShowsPrepPercentWhileOnStand()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#39708A");
+            ops.AddAirline(player);
+            var plane = ops.AddAircraft(player, "VH-PRP", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
+            Assert.That(ops.ScheduleDeparture(plane, kgc, new SimulationTime(600)).Accepted, Is.True);
+
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(0)), Is.EqualTo("fuelling 0%"));
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(DeparturePrep.FuelSeconds / 2)),
+                Is.EqualTo("fuelling 50%"));
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(DeparturePrep.TotalSeconds(plane.Type))),
+                Is.EqualTo("ready"));
+        }
+
+        [Test]
         public void ToastQueue_StacksNewestFirstAndCapsVisible()
         {
             var queue = new ToastQueue();

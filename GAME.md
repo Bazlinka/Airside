@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Cursor — departure prep progress (branch
+  `feature/prep-stage-progress`).** Bailey asked to see how far along
+  refuelling and the other ground stages are, not just the current stage name.
+  Simulation already owned durations; `DeparturePrepStatus` now exposes
+  fuel/catering/boarding 0–1 plus a percent label. Presentation draws all three
+  bars on the follow card and fleet row; the Flights board and field tags show
+  the same percent. No save change.
+  - **Evidence:** Unity 6.3 EditMode **567/567, 0 failed**.
+  - **NEXT:** `scripts/test-unity.sh` and a Mac Play look at a booked departure:
+    fuel fills, then catering, then boarding, then ready. Do not add vehicles.
+
 - **2026-09-18 Cursor — career fleet, rotating contracts, prep, auto-stand (now
   on `main`, ADR 0056).** Bailey asked to map then
   implement: costings and unlocking planes; routes tied to those types with higher

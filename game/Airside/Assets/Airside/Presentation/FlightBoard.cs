@@ -80,9 +80,20 @@ namespace Airside.Presentation
             };
         }
 
-        /// <summary>Clock-aware status for a departure still held at its stand after departure time.</summary>
-        public static string PhaseLabel(FleetAircraft aircraft, SimulationTime now) =>
-            DepartureDelayMinutes(aircraft, now) > 0 ? "Gate hold" : PhaseLabel(aircraft);
+        /// <summary>Clock-aware status: prep percent while turning around, else a gate-hold or phase chip.</summary>
+        public static string PhaseLabel(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (DepartureDelayMinutes(aircraft, now) > 0)
+                return "Gate hold";
+            if (aircraft != null && aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
+                && aircraft.Scheduled.HasValue)
+            {
+                var prep = DeparturePrep.For(aircraft, now);
+                return prep.Ready ? "Ready" : prep.Label;
+            }
+
+            return PhaseLabel(aircraft);
+        }
 
         /// <summary>Whole minutes late, once a scheduled aircraft is at least a minute overdue.</summary>
         public static long DepartureDelayMinutes(FleetAircraft aircraft, SimulationTime now)

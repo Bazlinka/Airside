@@ -3459,10 +3459,18 @@ namespace Airside.Presentation
         public static float EaseWeatherGloom(float current, float target, float deltaSeconds) =>
             Mathf.MoveTowards(current, target, deltaSeconds * 0.05f);
 
+        /// <summary>The current daylight value (0 night, 1 day), updated once per frame here
+        /// so other Presentation types that are not <see cref="AirsidePrototype"/> itself —
+        /// e.g. <see cref="AircraftIdentitySideVisibility"/> tinting fuselage titles with the
+        /// same day/night grade as the rest of the airframe — can read it without needing
+        /// access to a private instance member.</summary>
+        internal static float CurrentDaylight { get; private set; }
+
         private void ApplyDayCycle()
         {
             var cycle = PresentationDayCycle;
             var daylight = PresentationDaylight;
+            CurrentDaylight = daylight;
 
             var elevation = PinDaylightPresentation ? 48f : (float)cycle.SunElevationDegrees;
             _sun.transform.rotation = PinDaylightPresentation

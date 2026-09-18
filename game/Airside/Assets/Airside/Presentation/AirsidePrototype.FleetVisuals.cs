@@ -340,6 +340,11 @@ namespace Airside.Presentation
             sideVisibility.Initialise(aircraftView);
             for (var side = -1; side <= 1; side += 2)
             {
+                AddIdentityBackingPanel(
+                    aircraftView,
+                    side < 0 ? "Operator title panel L" : "Operator title panel R",
+                    new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
+                    side, layout.OperatorCharacterSize, operatorText.Length);
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Operator title L" : "Operator title R",
@@ -350,6 +355,11 @@ namespace Airside.Presentation
                     operatorColour,
                     FontStyle.Bold,
                     sideVisibility);
+                AddIdentityBackingPanel(
+                    aircraftView,
+                    side < 0 ? "Registration panel L" : "Registration panel R",
+                    new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
+                    side, layout.RegistrationCharacterSize, aircraft.Registration.Length);
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Registration L" : "Registration R",
@@ -363,6 +373,38 @@ namespace Airside.Presentation
             }
 
             AirsideNamedChildren.Forget(aircraftView);
+        }
+
+        /// <summary>
+        /// A thin, subtly-tinted plate set just behind each title/registration mark, sized
+        /// generously around the text (an approximation from character count and
+        /// <paramref name="characterSize"/>, not exact glyph metrics — deliberately
+        /// conservative in colour so an imprecise fit still reads fine). Real airliner
+        /// titles/registrations commonly sit on a dark anti-glare panel rather than bare
+        /// paint; this gives the mark a painted region to sit in instead of floating free.
+        /// </summary>
+        private static void AddIdentityBackingPanel(
+            Transform parent, string name, Vector3 textLocalPosition, int side,
+            float characterSize, int textLength)
+        {
+            const float inset = 0.03f;
+            const float thickness = 0.015f;
+            var width = Mathf.Max(0.6f, textLength * characterSize * 0.62f + 0.3f);
+            var height = characterSize * 1.9f;
+
+            var panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            panel.name = name;
+            AirsideRuntimeQuality.StripVisualCollider(panel);
+            panel.transform.SetParent(parent, false);
+            panel.transform.localPosition = textLocalPosition - new Vector3(side * inset, 0f, 0f);
+            panel.transform.localScale = new Vector3(thickness, height, width);
+
+            var colour = new Color(0.12f, 0.13f, 0.15f);
+            var renderer = panel.GetComponent<Renderer>();
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour, AirsideMaterialLibrary.SurfaceKind.AircraftSkin);
+            SetRendererColor(renderer, colour);
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         private static void AddAircraftIdentityText(
@@ -402,7 +444,7 @@ namespace Airside.Presentation
             // The legacy font shader is double-sided. Keep only the camera-facing
             // fuselage title enabled so the opposite title cannot appear backwards
             // through the top of the aircraft in elevated follow views.
-            sideVisibility.Register(renderer, side);
+            sideVisibility.Register(text, renderer, side, colour);
         }
 
         /// <summary>
@@ -639,18 +681,22 @@ namespace Airside.Presentation
         private static int _cachedCameraFrame = -1;
 
         private Transform _aircraft;
+        private readonly List<TextMesh> _labels = new();
         private readonly List<Renderer> _renderers = new();
         private readonly List<int> _sides = new();
+        private readonly List<Color> _baseColours = new();
 
         public void Initialise(Transform aircraft)
         {
             _aircraft = aircraft;
         }
 
-        public void Register(Renderer labelRenderer, int side)
+        public void Register(TextMesh label, Renderer labelRenderer, int side, Color baseColour)
         {
+            _labels.Add(label);
             _renderers.Add(labelRenderer);
             _sides.Add(side);
+            _baseColours.Add(baseColour);
             RefreshOne(_renderers.Count - 1, ResolveCamera());
         }
 
@@ -673,10 +719,13 @@ namespace Airside.Presentation
             if (_aircraft == null || camera == null)
                 return;
             var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
+            var tint = DaylightTint();
             for (var i = 0; i < _renderers.Count; i++)
             {
-                if (_renderers[i] != null)
-                    _renderers[i].enabled = cameraSide == _sides[i];
+                if (_renderers[i] == null)
+                    continue;
+                _renderers[i].enabled = cameraSide == _sides[i];
+                ApplyTint(i, tint);
             }
         }
 
@@ -686,6 +735,20 @@ namespace Airside.Presentation
                 return;
             var cameraSide = _aircraft.InverseTransformPoint(camera.transform.position).x < 0f ? -1 : 1;
             _renderers[index].enabled = cameraSide == _sides[index];
+            ApplyTint(index, DaylightTint());
+        }
+
+        // Real fuselage titles are paint, not a decal light — they should dim/warm with the
+        // same day/night grade as the rest of the airframe instead of sitting unlit-bright
+        // at night. Floored well above zero so they stay legible under apron floodlight.
+        private static float DaylightTint() => Mathf.Lerp(0.4f, 1f, AirsidePrototype.CurrentDaylight);
+
+        private void ApplyTint(int index, float tint)
+        {
+            if (_labels[index] == null)
+                return;
+            var baseColour = _baseColours[index];
+            _labels[index].color = new Color(baseColour.r * tint, baseColour.g * tint, baseColour.b * tint, baseColour.a);
         }
     }
 }

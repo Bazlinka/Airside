@@ -1,5 +1,27 @@
 ## Unreleased
 
+- **Every procedurally-loaded model (aircraft, vehicles, buildings, props) now shades
+  smoothly on continuously curved surfaces instead of reading as faceted/"triangular."**
+  `ArtGltfLoader.ParseKit()`'s bare `Mesh.RecalculateNormals()` only smooths across faces
+  sharing the exact same vertex index; most of this project's procedural geometry
+  generators (fuselage tubes, nacelles, gear, wing slabs, fan blades) emit fresh, unshared
+  vertices per quad, so even a 72-segment "round" fuselage rendered with a hard facet per
+  quad regardless of segment count. New `MeshNormalSmoothing.cs` welds vertices by
+  position and smooths by a 60° angle threshold instead (matching this project's own
+  authored-FBX import convention), preserving genuine hard edges while smoothing the
+  continuously curved surfaces that were faceted. Verified against a minimal UnityEngine
+  API stub (3 tests, mutation-tested) since no Unity editor is available this session —
+  not the same as compiling/running under the real engine; `scripts/test-unity.sh` and a
+  close-up Play-mode look at a widebody fuselage/nacelle is the outstanding step.
+- **Fuselage operator titles and registrations now dim/warm with the same day/night grade
+  as the rest of the airframe, and sit on a small painted backing panel instead of
+  reading as flat, unlit text floating in space.** The identity marks are legacy Unity
+  `TextMesh` objects on the unlit built-in font shader, so they never received any of the
+  aircraft's own lighting. `AircraftIdentitySideVisibility` (already touching every label
+  once per aircraft per frame after the recent perf pass) now also tints each label's
+  colour by the live daylight value, and a new subtle anti-glare-style backing plate sits
+  behind each title/registration. Presentation-only, reviewed by inspection.
+
 - **Individual terminal gates and regional bays are now lit at night**, not just the 7
   uniform terminal roof floods. Each stand gets a lit marker at its stop position and a
   short blue lead-in trail along the final ~32-40 m into the stand, matching the same

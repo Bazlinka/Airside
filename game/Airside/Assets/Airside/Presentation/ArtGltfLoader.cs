@@ -264,7 +264,13 @@ namespace Airside.Presentation
                 var mesh = new Mesh { name = name };
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
-                mesh.RecalculateNormals();
+                // A bare RecalculateNormals() only smooths across faces sharing the exact
+                // same vertex index — most of this project's procedural generators emit
+                // fresh, unshared vertices per quad, so a fuselage tube or nacelle rendered
+                // with a hard facet per quad regardless of segment count. This welds by
+                // position and smooths by angle instead, matching how Unity's own asset
+                // importer treats a smoothing-angle setting.
+                MeshNormalSmoothing.RecalculateSmoothNormals(mesh, vertices, indices);
                 var uvs = BuildPlanarUvs(vertices);
                 mesh.SetUVs(0, uvs);
                 mesh.RecalculateBounds();

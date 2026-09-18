@@ -224,7 +224,7 @@ namespace Airside.Presentation
             ProbeSavedAirline();
             var hasSave = _savedAirline != null;
             var saveBlock = hasSave || !string.IsNullOrEmpty(_saveError) ? 96f : 0f;
-            var panelHeight = 300f + saveBlock;
+            var panelHeight = 312f + saveBlock;
             var rect = placement.SetupPanel(panelHeight);
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 20f;
@@ -264,10 +264,10 @@ namespace Airside.Presentation
                     _liveryChoice = i;
             }
 
-            GUI.Label(new Rect(x, rect.y + 190f, inner, 36f),
+            GUI.Label(new Rect(x, rect.y + 190f, inner, 48f),
                 hasSave
                     ? "A new airline replaces your saved one."
-                    : "You start with one ATR 42-600, sharing the regional apron with Rex and QantasLink.", label);
+                    : $"You start with ${AirlineCareerState.StartingFunds:N0} and one ATR 42-600. Dispatch costs come out of that float; every completed flight pays, and contracts add a bonus.", label);
 
             var name = (_airlineNameDraft ?? string.Empty).Trim();
             GUI.enabled = name.Length > 0;
@@ -669,7 +669,15 @@ namespace Airside.Presentation
             else
             {
                 foreach (var definition in RouteContractCatalogue.All)
+                {
+                    if (career.HasCompleted(definition.Id))
+                    {
+                        y = DrawCompletedContract(x, y, inner, definition, label, small) + 8f;
+                        continue;
+                    }
+
                     y = DrawContractOffer(x, y, inner, definition, career, label, small, smallButton) + 12f;
+                }
             }
         }
 
@@ -691,6 +699,20 @@ namespace Airside.Presentation
                 $"${definition.PaymentPerRotation:N0} per rotation  ·  ${definition.CompletionReward:N0} on completion", small);
             GUI.Label(new Rect(card.x + 12f, card.y + 90f, card.width - 24f, 20f),
                 $"Fly a {definition.EligibleType.Name} between {definition.OriginCode} and {definition.DestinationCode} to progress.", small);
+        }
+
+        private float DrawCompletedContract(float x, float y, float width, RouteContractDefinition definition,
+            GUIStyle label, GUIStyle small)
+        {
+            var card = new Rect(x, y, width, 52f);
+            DrawSolid(card, new Color(1f, 1f, 1f, 0.03f));
+            AirsideTheme.DrawPanelFrame(card, AirsideTheme.ClearGreen);
+            var bold = Styled(label, "bold", st => new GUIStyle(st) { fontStyle = FontStyle.Bold });
+            GUI.Label(new Rect(card.x + 12f, card.y + 8f, card.width - 24f, 20f),
+                $"{definition.Id}  ·  complete", bold);
+            GUI.Label(new Rect(card.x + 12f, card.y + 28f, card.width - 24f, 18f),
+                $"{definition.OriginCode} ↔ {definition.DestinationCode} — you can still fly it for the per-flight pay.", small);
+            return card.yMax;
         }
 
         /// <summary>One authored contract not yet accepted; returns the y just past it.</summary>
@@ -1179,6 +1201,7 @@ namespace Airside.Presentation
                 FleetState.AtDestination => $"On the ground at {dest} · departs {ends}",
                 FleetState.Inbound => $"Returning from {dest}{EnrouteAltitudeText(aircraft)} · back {ends}",
                 FleetState.HoldingForLanding => $"In the Adelaide circuit, waiting to land{wait}",
+                FleetState.GoAround => "Going around at Adelaide",
                 FleetState.Landing => "Landing at Adelaide",
                 FleetState.AwaitingStand => $"Landed · needs a stand{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
@@ -1484,6 +1507,30 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
                         $"{MapFlightDetail(flight)} · {flight.Aircraft.Registration} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
+            }
+
+            foreach (var sky in SkyTraffic.At(_preciseTime))
+            {
+                var point = Project(mapRect, sky.Longitude, sky.Latitude);
+                if (!mapRect.Contains(point))
+                    continue;
+                RouteMap.GreatCirclePoint(sky.From.Latitude, sky.From.Longitude, sky.To.Latitude, sky.To.Longitude,
+                    Math.Min(1.0, sky.Progress + 0.004), out var aheadLat, out var aheadLon);
+                var ahead = Project(mapRect, aheadLon, aheadLat);
+                var delta = ahead - point;
+                var heading = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
+                var iconSize = Mathf.Lerp(12f, 20f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * 0.8f;
+                var colour = new Color(0.78f, 0.82f, 0.88f, 0.55f);
+                DrawPlaneIcon(point, iconSize + 2f, heading, new Color(0f, 0f, 0f, 0.35f));
+                DrawPlaneIcon(point, iconSize, heading, colour);
+                if (_mapLens.Zoom >= 5f)
+                {
+                    var previous = GUI.color;
+                    GUI.color = new Color(1f, 1f, 1f, 0.7f);
+                    GUI.Label(new Rect(point.x + iconSize * 0.55f, point.y - 8f, 160f, 16f),
+                        $"{sky.Callsign} → {sky.To.Code}", small);
+                    GUI.color = previous;
+                }
             }
 
             if (hovered >= 0)
@@ -1894,7 +1941,12 @@ namespace Airside.Presentation
             }
 
             var airborne = _operations.AirborneSeconds(aircraft, destination);
+            var cost = FlightEconomics.DispatchCost(aircraft.Type, km);
+            var pay = FlightEconomics.FlightPay(aircraft.Type, km);
             GUI.Label(new Rect(x, y, width, 20f), $"{km:0} km · {DurationText(airborne)} each way", small);
+            y += 20f;
+            GUI.Label(new Rect(x, y, width, 20f),
+                $"Costs ${cost:N0} to dispatch · pays ${pay:N0} on return", small);
             y += 26f;
 
             if (aircraft.State != FleetState.AtStand)
@@ -2734,8 +2786,10 @@ namespace Airside.Presentation
                 var reg = s.SettlementId.Registration;
                 if (s.ContractFulfilled)
                     ShowToast($"{reg} earned ${s.Payment:N0} — {s.ContractDefinitionId} complete!");
-                else
+                else if (!string.IsNullOrEmpty(s.ContractDefinitionId))
                     ShowToast($"{reg} earned ${s.Payment:N0} on {s.ContractDefinitionId} ({s.RotationsCompleted} rotations so far).");
+                else
+                    ShowToast($"{reg} earned ${s.Payment:N0} from that rotation.");
             }
         }
 

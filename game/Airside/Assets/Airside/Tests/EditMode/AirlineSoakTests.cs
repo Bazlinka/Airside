@@ -36,7 +36,11 @@ namespace Airside.Tests
                 // stand, and park straight away on landing.
                 if (mine.State == FleetState.AtStand && !mine.Scheduled.HasValue)
                 {
-                    var destination = reachable[choices.NextInt(0, reachable.Count)];
+                    var affordable = reachable.Where(d =>
+                        ops.CareerState.CanAfford(FlightEconomics.DispatchCost(mine.Type, ops.DistanceKm(d)))).ToList();
+                    Assert.That(affordable, Is.Not.Empty,
+                        $"broke at {clock.Now}: ${ops.CareerState.Funds:N0} cannot dispatch any reachable hop");
+                    var destination = affordable[choices.NextInt(0, affordable.Count)];
                     Assert.That(ops.ScheduleDeparture(mine, destination, clock.Now.Advance(choices.NextInt(0, 3600))).Accepted, Is.True);
                 }
 

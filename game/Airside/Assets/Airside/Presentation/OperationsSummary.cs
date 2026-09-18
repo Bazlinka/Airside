@@ -50,6 +50,15 @@ namespace Airside.Presentation
                 if (aircraft.State != FleetState.AtStand)
                     flying++;
 
+            if (career != null)
+            {
+                var next = NextOffer(career);
+                if (next != null)
+                    return ($"Accept {next.Id}: {next.OriginCode} ↔ {next.DestinationCode} — each rotation pays.",
+                        StatusSeverity.Normal);
+                return ($"${career.Funds:N0} on hand — fly any route; each rotation pays.", StatusSeverity.Normal);
+            }
+
             var text = flying > 0
                 ? $"{flying} of {playerFleet.Count} aircraft flying — on schedule."
                 : "All aircraft on stand — ready for a flight.";
@@ -62,5 +71,19 @@ namespace Airside.Presentation
             FleetState.AtStand when !aircraft.Scheduled.HasValue => "plan a flight.",
             _ => "check its status."
         };
+
+        private static RouteContractDefinition NextOffer(AirlineCareerState career)
+        {
+            if (career.ActiveContract != null)
+                return null;
+            foreach (var definition in RouteContractCatalogue.All)
+            {
+                if (career.HasCompleted(definition.Id) || career.Tier < definition.RequiredTier)
+                    continue;
+                return definition;
+            }
+
+            return null;
+        }
     }
 }

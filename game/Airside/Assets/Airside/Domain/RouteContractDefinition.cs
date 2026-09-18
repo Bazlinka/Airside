@@ -14,7 +14,8 @@ namespace Airside.Domain
         public RouteContractDefinition(
             string id, string originCode, string destinationCode, AircraftType eligibleType,
             int requiredRotations, long paymentPerRotation, long completionReward,
-            int reliabilityGainPerRotation, OperatingTier requiredTier, int reliabilityLossOnCancel = 0)
+            int reliabilityGainPerRotation, OperatingTier requiredTier, int reliabilityLossOnCancel = 0,
+            OperatingTier unlocksTier = OperatingTier.Provisional)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("A contract id is required.", nameof(id));
@@ -41,6 +42,7 @@ namespace Airside.Domain
             ReliabilityGainPerRotation = reliabilityGainPerRotation;
             RequiredTier = requiredTier;
             ReliabilityLossOnCancel = Math.Max(0, reliabilityLossOnCancel);
+            UnlocksTier = unlocksTier;
         }
 
         public string Id { get; }
@@ -62,6 +64,9 @@ namespace Airside.Domain
         /// towards this contract — a broken commitment, not a flight that was never planned.</summary>
         public int ReliabilityLossOnCancel { get; }
 
+        /// <summary>If this is above the airline's current tier, completing the contract grants it.</summary>
+        public OperatingTier UnlocksTier { get; }
+
         /// <summary>True when <paramref name="fromCode"/>/<paramref name="toCode"/> match this contract's route, either direction.</summary>
         public bool MatchesRoute(string fromCode, string toCode) =>
             (string.Equals(OriginCode, fromCode, StringComparison.OrdinalIgnoreCase)
@@ -71,9 +76,10 @@ namespace Airside.Domain
     }
 
     /// <summary>
-    /// The authored contract set (ADR 0053). One entry today: the starter Adelaide-Kingscote
-    /// regional contract from the plan doc. Bailey tunes the exact payment/reliability
-    /// numbers before this reaches players — they are placeholders here, not balanced values.
+    /// The authored contract set (ADR 0053 / 0055). Kingscote and Port Lincoln are available
+    /// from Provisional and each unlocks Regional. Whyalla is a Regional SA hop. Melbourne is
+    /// the first Domestic goal — still inside the starter ATR's 1 100 km planning range.
+    /// Bailey tunes the exact payment/reliability numbers — they are placeholders, not final.
     /// </summary>
     public static class RouteContractCatalogue
     {
@@ -87,11 +93,53 @@ namespace Airside.Domain
             completionReward: 1000,
             reliabilityGainPerRotation: 2,
             requiredTier: OperatingTier.Provisional,
+            reliabilityLossOnCancel: 3,
+            unlocksTier: OperatingTier.Regional);
+
+        public static readonly RouteContractDefinition RegionalPortLincolnIntro = new(
+            id: "REG-PLO-INTRO",
+            originCode: "ADL",
+            destinationCode: "PLO",
+            eligibleType: AircraftType.Atr42,
+            requiredRotations: 4,
+            paymentPerRotation: 550,
+            completionReward: 1400,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Provisional,
+            reliabilityLossOnCancel: 3,
+            unlocksTier: OperatingTier.Regional);
+
+        public static readonly RouteContractDefinition RegionalWhyallaIntro = new(
+            id: "REG-WYA-INTRO",
+            originCode: "ADL",
+            destinationCode: "WYA",
+            eligibleType: AircraftType.Atr42,
+            requiredRotations: 4,
+            paymentPerRotation: 500,
+            completionReward: 1200,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
             reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition DomesticMelbourneIntro = new(
+            id: "DOM-MEL-INTRO",
+            originCode: "ADL",
+            destinationCode: "MEL",
+            eligibleType: AircraftType.Atr42,
+            requiredRotations: 3,
+            paymentPerRotation: 900,
+            completionReward: 2500,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 4,
+            unlocksTier: OperatingTier.Domestic);
 
         public static readonly IReadOnlyList<RouteContractDefinition> All = new[]
         {
-            RegionalKingscoteIntro
+            RegionalKingscoteIntro,
+            RegionalPortLincolnIntro,
+            RegionalWhyallaIntro,
+            DomesticMelbourneIntro
         };
 
         public static bool TryFind(string id, out RouteContractDefinition definition)

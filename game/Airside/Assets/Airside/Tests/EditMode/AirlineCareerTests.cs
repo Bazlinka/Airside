@@ -73,7 +73,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Provisional));
-            Assert.That(ops.CareerState.Funds, Is.Zero);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds));
             Assert.That(ops.CareerState.Reliability, Is.EqualTo(AirlineCareerState.StartingReliability));
             Assert.That(ops.CareerState.ActiveContract, Is.Null);
         }
@@ -108,14 +108,21 @@ namespace Airside.Tests
 
                 Assert.That(plane.CompletedTrips, Is.EqualTo(rotation));
                 var fulfilled = rotation == definition.RequiredRotations;
-                var expectedFunds = (long)rotation * definition.PaymentPerRotation
+                var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+                var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+                var expectedFunds = AirlineCareerState.StartingFunds
+                    + (long)rotation * (pay - cost + definition.PaymentPerRotation)
                     + (fulfilled ? definition.CompletionReward : 0);
                 Assert.That(ops.CareerState.Funds, Is.EqualTo(expectedFunds), $"funds after rotation {rotation}");
                 Assert.That(ops.CareerState.Reliability, Is.EqualTo(Math.Min(100,
                     AirlineCareerState.StartingReliability + rotation * definition.ReliabilityGainPerRotation)));
 
                 if (fulfilled)
+                {
                     Assert.That(ops.CareerState.ActiveContract, Is.Null, "contract fulfilled and cleared");
+                    Assert.That(ops.CareerState.HasCompleted(definition.Id), Is.True);
+                    Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Regional));
+                }
                 else
                     Assert.That(ops.CareerState.ActiveContract?.CompletedRotations, Is.EqualTo(rotation));
 
@@ -162,7 +169,7 @@ namespace Airside.Tests
 
             var fundsBeforeSave = ops.CareerState.Funds;
             var data = AirlineSave.Capture(ops);
-            Assert.That(data.Version, Is.EqualTo(6));
+            Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(1));
 
             var resumedClock = new ManualSimulationClock(clock.Now);
@@ -204,7 +211,8 @@ namespace Airside.Tests
             var restored = AirlineSave.Restore(data, clock);
 
             Assert.That(restored.CareerState.Tier, Is.EqualTo(OperatingTier.Provisional));
-            Assert.That(restored.CareerState.Funds, Is.Zero, "no retroactive payment for pre-career trips");
+            Assert.That(restored.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds),
+                "no retroactive payment for pre-career trips — opening float only");
             Assert.That(restored.CareerState.Reliability, Is.EqualTo(AirlineCareerState.StartingReliability));
             Assert.That(restored.CareerState.ActiveContract, Is.Null);
 
@@ -223,7 +231,10 @@ namespace Airside.Tests
             // Port Lincoln is within the ATR's range but is not the accepted KGC contract's route.
             FlyRoundTrip(clock, ops, plane, Code("PLO"), 600, AirlineOperations.AdelaideRegionalBays[1]);
 
-            Assert.That(ops.CareerState.Funds, Is.Zero);
+            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(Code("PLO")));
+            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(Code("PLO")));
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds - cost + pay),
+                "an unmatched route still pays the flight, just not the contract bonus");
             Assert.That(ops.CareerState.ActiveContract, Is.Not.Null);
             Assert.That(ops.CareerState.ActiveContract.CompletedRotations, Is.Zero);
         }
@@ -254,6 +265,85 @@ namespace Airside.Tests
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.True);
 
             Assert.That(ops.CareerState.Reliability, Is.EqualTo(AirlineCareerState.StartingReliability));
+        }
+
+        [Test]
+        public void Scheduling_ChargesDispatchAndRefusesWhenBroke()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            var kingscote = Code("KGC");
+            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+            Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(600)).Accepted, Is.True);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds - cost));
+
+            Assert.That(ops.CancelDeparture(plane).Accepted, Is.True);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds), "cancel refunds the dispatch cost");
+
+            ops.CareerState.TryChargeDispatch(AirlineCareerState.StartingFunds);
+            Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(600)).Accepted, Is.False);
+            Assert.That(ops.CareerState.Funds, Is.Zero);
+        }
+
+        [Test]
+        public void CompletingTheStarterContract_UnlocksRegionalAndRefusesARepeat()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            var kingscote = Code("KGC");
+            var departAt = 600L;
+            for (var rotation = 1; rotation <= definition.RequiredRotations; rotation++)
+            {
+                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+            }
+
+            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Regional));
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.False, "cannot farm a completed contract");
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalWhyallaIntro).Accepted, Is.True,
+                "Regional unlocks the Whyalla contract");
+        }
+
+        [Test]
+        public void MelbourneContract_IsAchievableOnTheStarterATRAndUnlocksDomestic()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.DomesticMelbourneIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.False, "Domestic needs Regional first");
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            var kingscote = Code("KGC");
+            var departAt = 600L;
+            for (var rotation = 1; rotation <= RouteContractCatalogue.RegionalKingscoteIntro.RequiredRotations; rotation++)
+            {
+                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+            }
+
+            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Regional));
+            Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "the starter ATR can actually fly the Domestic goal");
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+
+            var melbourne = Code("MEL");
+            for (var rotation = 1; rotation <= definition.RequiredRotations; rotation++)
+            {
+                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, melbourne, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+            }
+
+            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Domestic));
+            Assert.That(ops.CareerState.HasCompleted(definition.Id), Is.True);
+        }
+
+        [Test]
+        public void PortLincolnContract_IsOfferedFromTheStart()
+        {
+            var (_, ops, _) = PlayerOnly();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalPortLincolnIntro).Accepted, Is.True);
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.False,
+                "one active contract");
         }
     }
 }

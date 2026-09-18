@@ -20,9 +20,11 @@ namespace Airside.Simulation
         /// uses <see cref="AirlineClock.DefaultEpochUtc"/>. 6 adds the ADR 0053 airline
         /// career: funds, reliability, tier, an accepted contract and every settlement
         /// already applied. A pre-6 save gets a fresh Provisional career on load — it
-        /// never retroactively pays trips completed before the career existed.
+        /// never retroactively pays trips completed before the career existed. 7 adds
+        /// fulfilled-contract ids (so a completed contract cannot be farmed) and the
+        /// opening funds / per-flight pay / dispatch-cost loop from ADR 0055.
         /// </summary>
-        public const int CurrentVersion = 6;
+        public const int CurrentVersion = 7;
 
         public int Version = CurrentVersion;
 
@@ -48,6 +50,7 @@ namespace Airside.Simulation
         public long ContractAcceptedAtSeconds;
         public int ContractCompletedRotations;
         public List<string> ProcessedSettlementKeys = new();
+        public List<string> CompletedContractIds = new();
     }
 
     [Serializable]
@@ -104,6 +107,7 @@ namespace Airside.Simulation
                 ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0
             };
             data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
+            data.CompletedContractIds.AddRange(operations.CareerState.CompletedContractIds);
 
             foreach (var airline in operations.Airlines)
             {
@@ -240,17 +244,19 @@ namespace Airside.Simulation
                 operations.AddMissingTerminalOperators();
             }
 
-            // A pre-6 save never had a career: start fresh Provisional rather than
-            // back-computing rewards for trips flown before contracts existed.
+            // A pre-6 save never had a career: start fresh Provisional with the same
+            // opening float a new airline gets, rather than back-computing rewards for
+            // trips flown before contracts existed.
             operations.RestoreCareerState(
-                data.Version >= 6 ? data.CareerFunds : 0,
+                data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
                 data.Version >= 6 && !string.IsNullOrEmpty(data.CareerTier)
                     ? data.CareerTier : OperatingTier.Provisional.ToString(),
                 data.Version >= 6 && data.HasActiveContract ? data.ContractDefinitionId : null,
                 data.Version >= 6 ? data.ContractAcceptedAtSeconds : 0,
                 data.Version >= 6 ? data.ContractCompletedRotations : 0,
-                data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>());
+                data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>(),
+                data.Version >= 7 ? data.CompletedContractIds ?? new List<string>() : new List<string>());
 
             return operations;
         }

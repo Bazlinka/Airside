@@ -42,7 +42,7 @@ namespace Airside.Simulation
                 FleetState.AtStand => aircraft.Scheduled.HasValue ? GuideStep.WaitForDeparture : GuideStep.PlanFirstFlight,
                 FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff => GuideStep.Departing,
                 FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound => GuideStep.Away,
-                FleetState.HoldingForLanding or FleetState.Landing => GuideStep.Landing,
+                FleetState.HoldingForLanding or FleetState.Landing or FleetState.GoAround => GuideStep.Landing,
                 FleetState.AwaitingStand => GuideStep.ChooseStand,
                 FleetState.TaxiIn => GuideStep.TaxiingIn,
                 _ => GuideStep.Complete

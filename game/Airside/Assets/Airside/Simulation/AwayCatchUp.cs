@@ -110,11 +110,11 @@ namespace Airside.Simulation
             // is restored fresh at these same starting values (AirlineSave.Restore) — comparing
             // against the raw zero would misreport that migration jump (e.g. 0 -> 100
             // reliability) as something that happened while the player was away.
-            var fundsBefore = before.Version >= 6 ? before.CareerFunds : 0;
+            var fundsBefore = before.Version >= 6 ? before.CareerFunds : after.CareerState.Funds;
             var reliabilityBefore = before.Version >= 6 ? before.CareerReliability : AirlineCareerState.StartingReliability;
 
             var fundsEarned = after.CareerState.Funds - fundsBefore;
-            if (fundsEarned > 0)
+            if (before.Version >= 6 && fundsEarned > 0)
                 lines.Add($"Your airline earned ${fundsEarned:N0} while you were away.");
             var reliabilityChange = after.CareerState.Reliability - reliabilityBefore;
             if (reliabilityChange != 0)
@@ -141,6 +141,7 @@ namespace Airside.Simulation
                 FleetState.AtDestination => $"is on the ground at {dest}",
                 FleetState.Inbound => $"is flying home from {dest}",
                 FleetState.HoldingForLanding or FleetState.Landing => "is landing at Adelaide",
+                FleetState.GoAround => "is going around at Adelaide",
                 FleetState.AwaitingStand => "has landed and is waiting for you to choose a stand",
                 FleetState.TaxiIn => $"is taxiing to {AdelaideGround.StandLabel(aircraft.Stand)}",
                 _ => $"is {aircraft.State}"

@@ -94,7 +94,10 @@ namespace Airside.Simulation
                 }
 
                 case FleetState.GoAround:
-                    return Air(AircraftPhase.Departed, start);
+                    return Air(AircraftPhase.GoAround, start);
+
+                case FleetState.HoldingForLanding:
+                    return Air(AircraftPhase.Circuit, start);
 
                 case FleetState.AwaitingStand:
                     return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.AwaitingStand, start, 0);
@@ -103,8 +106,7 @@ namespace Airside.Simulation
                     return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.TaxiIn, start, stateSeconds);
 
                 default:
-                    // Away, turning around at the destination, or holding in the circuit
-                    // for a landing slot: not drawn at the field.
+                    // Away or turning around at the destination: not drawn at the field.
                     return Hidden(start);
             }
         }

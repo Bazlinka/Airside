@@ -453,7 +453,8 @@ namespace Airside.Simulation
         /// state when migrating an older one — never from anything it doesn't recognise.</summary>
         internal void RestoreCareerState(
             long funds, int reliability, string tier, string activeContractId,
-            long contractAcceptedAtSeconds, int contractCompletedRotations, IEnumerable<string> processedSettlementKeys)
+            long contractAcceptedAtSeconds, int contractCompletedRotations, IEnumerable<string> processedSettlementKeys,
+            IEnumerable<string> completedContractIds = null)
         {
             if (string.IsNullOrWhiteSpace(tier)
                 || !Enum.TryParse(tier, out OperatingTier parsedTier)
@@ -470,7 +471,8 @@ namespace Airside.Simulation
                     activeContractId, new SimulationTime(contractAcceptedAtSeconds), contractCompletedRotations);
             }
 
-            CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys);
+            CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys,
+                completedContractIds);
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -665,6 +667,20 @@ namespace Airside.Simulation
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
 
+            if (aircraft.Airline.IsPlayer)
+            {
+                var cost = FlightEconomics.DispatchCost(aircraft.Type, DistanceKm(destination));
+                var alreadyPaid = aircraft.Scheduled.HasValue
+                    ? FlightEconomics.DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination))
+                    : 0;
+                if (CareerState.Funds + alreadyPaid < cost)
+                    return CommandResult.Refused(
+                        $"This flight costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                if (alreadyPaid > 0)
+                    CareerState.RefundDispatch(alreadyPaid);
+                CareerState.TryChargeDispatch(cost);
+            }
+
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt);
             return CommandResult.Ok;
         }
@@ -675,6 +691,10 @@ namespace Airside.Simulation
                 return CommandResult.Refused("Unknown aircraft.");
             if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"{aircraft.Registration} has no departure waiting to start.");
+
+            if (aircraft.Airline.IsPlayer && aircraft.Scheduled.HasValue)
+                CareerState.RefundDispatch(FlightEconomics.DispatchCost(aircraft.Type,
+                    DistanceKm(aircraft.Scheduled.Value.Destination)));
 
             // ADR 0053: a broken commitment against the active career contract costs
             // reliability — only when the cancelled flight would actually have counted
@@ -700,6 +720,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused("Unknown contract.");
             if (CareerState.ActiveContract != null)
                 return CommandResult.Refused("Already operating a contract.");
+            if (CareerState.HasCompleted(definition.Id))
+                return CommandResult.Refused($"{definition.Id} is already complete.");
             if (CareerState.Tier < definition.RequiredTier)
                 return CommandResult.Refused($"{definition.Id} needs {definition.RequiredTier} tier.");
 
@@ -708,25 +730,26 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Settles a player aircraft's just-completed rotation against the active career
-        /// contract, if any — a no-op unless the route and aircraft type match. Idempotent:
-        /// <see cref="AirlineCareerState.TryApplySettlement"/> refuses a repeat settlement id,
-        /// so a duplicate call (an extra frame, a replayed event) never pays twice.
+        /// Settles a player aircraft's just-completed rotation: every flight pays its
+        /// operating revenue, and a matching active contract adds its bonus. Idempotent
+        /// via <see cref="AirlineCareerState.RecordCompletedRotation"/>.
         /// </summary>
         private void TrySettleFlight(FleetAircraft aircraft, Destination? justFlown, SimulationTime now)
         {
-            var contract = CareerState.ActiveContract;
-            if (contract == null || !justFlown.HasValue)
-                return;
-            if (!RouteContractCatalogue.TryFind(contract.DefinitionId, out var definition))
-                return;
-            if (definition.EligibleType != aircraft.Type)
-                return;
-            if (!definition.MatchesRoute(Home.Code, justFlown.Value.Code))
+            if (!justFlown.HasValue)
                 return;
 
+            RouteContractDefinition matching = null;
+            var contract = CareerState.ActiveContract;
+            if (contract != null
+                && RouteContractCatalogue.TryFind(contract.DefinitionId, out var definition)
+                && definition.EligibleType == aircraft.Type
+                && definition.MatchesRoute(Home.Code, justFlown.Value.Code))
+                matching = definition;
+
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
-            var settlement = CareerState.TryApplySettlement(settlementId, definition);
+            var settlement = CareerState.RecordCompletedRotation(
+                settlementId, FlightEconomics.FlightPay(aircraft.Type, DistanceKm(justFlown.Value)), matching);
             if (settlement == null)
                 return;
 
@@ -852,6 +875,15 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Landing:
+                    // A missed approach is stored as Landing for ApproachSeconds only. The
+                    // real landing after that is a longer state (approach + roll + vacate)
+                    // and must still reach a stand even though WentAroundThisTrip stays set
+                    // so the tower will not send them around again on the same trip.
+                    if (aircraft.WentAroundThisTrip && IsMissedApproachLanding(aircraft))
+                    {
+                        Transition(aircraft, FleetState.GoAround, now, GoAroundCircuitSeconds);
+                        return true;
+                    }
                     Transition(aircraft, FleetState.AwaitingStand, now, null);
                     return true;
 
@@ -1019,13 +1051,17 @@ namespace Airside.Simulation
                 return false;
 
             var landing = next.State == FleetState.HoldingForLanding;
+            var profile = AircraftPerformance.For(next.Type);
             if (landing && ShouldGoAround(next, now))
             {
+                // Fly the approach so the go-around is visible off short final, then abort
+                // before the landing roll. The runway frees at the abort, not after the
+                // four-minute circuit the missed approach continues into.
                 next.WentAroundThisTrip = true;
-                Transition(next, FleetState.GoAround, now, GoAroundCircuitSeconds);
+                Transition(next, FleetState.Landing, now, profile.ApproachSeconds);
+                _runwayFreeAt = now.Advance(profile.ApproachSeconds + WakeSeparationSeconds(next.Type));
                 return true;
             }
-            var profile = AircraftPerformance.For(next.Type);
             var runwaySeconds = landing
                 ? profile.ApproachSeconds + profile.LandingSeconds
                   + AdelaideGround.VacateFor(next.Type, next.AssignedRunway).WholeSeconds
@@ -1119,6 +1155,19 @@ namespace Airside.Simulation
             FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
             or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
             or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing;
+
+        /// <summary>
+        /// The tower stores a missed approach as <see cref="FleetState.Landing"/> lasting only
+        /// the approach. A subsequent real landing is longer, so <see cref="FleetAircraft.WentAroundThisTrip"/>
+        /// can stay set (no second go-around) without trapping the aircraft in the circuit.
+        /// </summary>
+        private static bool IsMissedApproachLanding(FleetAircraft aircraft)
+        {
+            if (!aircraft.StateEndsAt.HasValue)
+                return false;
+            var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+            return duration <= AircraftPerformance.For(aircraft.Type).ApproachSeconds;
+        }
 
         /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
         public const int AiFirstDepartureHour = 6;

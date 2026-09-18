@@ -25,12 +25,6 @@ namespace Airside.Simulation
         private static readonly Dictionary<string, GroundLeg> TaxiInLegs = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, AdelaideTerminalGate> GatesById = new(StringComparer.Ordinal);
 
-        /// <summary>
-        /// A jet's main gear trails its nose datum by about this much on a gate route (737-8
-        /// nose to main gear ≈ 19 m), which is how its body is steered through the turns.
-        /// </summary>
-        public const float JetTrackMetres = 19f;
-
         /// <summary>The paved link and lead-in between T1/T2 and a terminal gate, reserved per gate.</summary>
         public static string LeadInResource(StableId gate) => gate.Value + "/lead-in";
         private static readonly Dictionary<string, GroundPath> VacatePaths = new(StringComparer.Ordinal);
@@ -222,11 +216,15 @@ namespace Airside.Simulation
             if (!TaxiOutLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
+                // Each jet steers its main gear (not its nose) through the turns, trailing
+                // the nose datum by its own actual wheelbase — a 737 and an A350 do not
+                // track a corner the same way. See AircraftPerformanceProfile.NoseToMainGearMetres.
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: JetTrackMetres),
+                    new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: wheelbase),
                     new GroundLegPart(new GroundPath(runway == RunwayDirection.Runway23 ? gate.TaxiOut23 : gate.TaxiOut,
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
-                        tailFirst: false, TugDisconnectSeconds, JetTrackMetres));
+                        tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
             }
 
@@ -239,16 +237,14 @@ namespace Airside.Simulation
             if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, limits, 0f, 0f,
-                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: JetTrackMetres));
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
                 TaxiInLegs[key] = leg;
             }
 
             return leg;
         }
-
-        private static GroundSpeedZone ApronZone(StandClass standClass) =>
-            new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnotsFor(standClass)));
 
         private static GroundSpeedZone ApronZone(AircraftType type) =>
             new(GroundSpeedLimits.ApronMetres, CircuitProfile.Knots(GroundSpeedLimits.ApronKnotsFor(type)));

@@ -1,5 +1,48 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — per-jet taxi-turn wheelbase, part of a 3-part night lighting /
+  taxi accuracy / aircraft visuals request from Bailey (branch
+  `feature/taxi-wheelbase-accuracy`; the other two parts are separate branches/PRs).**
+  - **What was wrong:** research first (three parallel Explore passes over the lighting,
+    taxi and aircraft-visual systems) found the runway lighting and per-type taxi *speed*
+    wiring already substantially correct and sourced — but `AdelaideGround.JetTrackMetres`
+    was a single flat 19 m "nose-to-main-gear" steering offset applied to **all four jet
+    types** in `GateTaxiOut`/`GateTaxiIn` (`GroundLegPart.TrackMetres`, which steers the
+    main gear rather than the nose through a turn so a long jet doesn't swing its tail off
+    the pavement). The 737-8, A321neo, A350-900 and 787-10 have very different actual
+    wheelbases, so both widebodies were turning as if built on a 737's short gear.
+  - **Fix:** `AircraftPerformanceProfile` gained a sourced `NoseToMainGearMetres` field per
+    type (737-8 17.68 m — the one figure not independently confirmed against a fetched
+    primary source this session, flagged for a direct Boeing ACAP cross-check; A321neo
+    16.90 m; A350-900 28.66 m; 787-10 28.88 m, corroborated by its length matching this
+    project's own recorded AIR-010 envelope exactly). `AdelaideGround` now reads each
+    type's own value instead of the flat constant. Also removed the confirmed-dead
+    `AdelaideGround.ApronZone(StandClass)` overload (verified zero callers anywhere,
+    including tests) and backfilled the previously-undocumented A350-900/787-10 rows in
+    `docs/data/AIRCRAFT_SPECIFICATIONS.md`'s taxi-speed table instead of leaving them to
+    silently inherit the narrowbody-jet column.
+  - **Evidence — real, not just reviewed-by-inspection:** this is Simulation code
+    (UnityEngine-free), so `scripts/test-domain.sh` actually exercises it. Installed the
+    .NET 8 SDK fresh this session (no SDK was present) and ran it: **320/320** (319
+    pre-existing + 1 new). The new test
+    (`AircraftPerformanceTests.GateTaxi_SteersEachJetsMainGearByItsOwnWheelbaseNotAFlatConstant`)
+    asserts each jet's constructed `GroundLeg` carries its own `TrackMetres` and that the
+    four jets' wheelbases are no longer all equal — mutation-tested directly (temporarily
+    set the A321neo's wheelbase back to the 737's, confirmed the test failed with the
+    exact expected assertion, restored it, confirmed 320/320 again).
+  - **What did NOT change:** straight-taxi/apron speed-by-type, pushback/lineup/turn
+    speed bands, and cornering lateral acceleration were all reviewed and found already
+    correct (sourced to ADR 0045/Boeing FCTM, and the flat SOP-band figures for
+    pushback/lineup/turns are genuinely type-independent in real operations, not a gap).
+    Not touched.
+  - **NEXT:** `scripts/test-unity.sh` / a Mac compile still hasn't run this pass (no Unity
+    editor in this session) — this change is Simulation-only so a Unity compile is a
+    formality, not a real risk, but get it before merging per `AGENTS.md`. Also worth a
+    direct look at the Boeing 737 MAX ACAP PDF (linked in
+    `AIRCRAFT_SPECIFICATIONS.md`) to confirm 17.68 m precisely; the other three wheelbase
+    figures were confirmed against fetched primary/near-primary sources this session, that
+    one wasn't (the PDF exceeded the fetch tool's size limit).
+
 - **2026-09-17 Claude — Presentation-layer CPU performance pass (research subagent audit plus
   manual implementation), no graphics/quality changes.**
   - **Every visible aircraft re-classified its own children by string, from scratch, every

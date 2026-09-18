@@ -68,21 +68,41 @@ https://www.singaporeair.com/au/en/plan-travel/destinations/flights-from-adelaid
 
 Taxi is not published as a hard AFM limitation for these types; the figures below are
 the verified operating bands used by `GroundSpeedLimits` (ADR 0045). Retrieved
-2026-09-16.
+2026-09-16, widebody columns added 2026-09-17.
 
-| Regime | ATR 42 | Saab 340B | Dash 8-400 | Boeing 737-8 / Airbus A321neo | Primary sources |
-|---|---:|---:|---:|---:|---|
-| Straight taxiway target | 22 kt | 20 kt | 24 kt | 20 kt | Type-specific targets stay inside the documented 20–25 kt normal regional band; Boeing FCTM normal ≈20 kt |
-| Apron / ramp | 14 kt | 13 kt | 15 kt | 10 kt | Saab operator flow apron 15 kt; Boeing FCTM ramp / apron entry ≈10 kt |
-| Turns (≥~30°) | ≈10 kt | ≈10 kt | ≈10 kt | ≈10 kt | Boeing 737 FCTM turn entry; CAST / airline SOPs |
-| Stand lead-in | 5 kt | 5 kt | 5 kt | 5 kt | Marshaller / walking-pace guidance |
-| Pushback (tug) | 3 kt | 3 kt | 3 kt | 3 kt | Walking-pace tow |
-| Lineup onto runway | 10 kt | 10 kt | 10 kt | 10 kt | Boeing turn-entry band; leg ends stopped at roll start |
-| Vacate after landing | 12→22 kt | 12→20 kt | 14→24 kt | 15→20 kt | Type-specific runway-exit speed hands directly into the actual taxi profile; turn curvature may trim it slightly |
+| Regime | ATR 42 | Saab 340B | Dash 8-400 | Boeing 737-8 / Airbus A321neo | Airbus A350-900 / Boeing 787-10 | Primary sources |
+|---|---:|---:|---:|---:|---:|---|
+| Straight taxiway target | 22 kt | 20 kt | 24 kt | 20 kt | 20 kt | Type-specific targets stay inside the documented 20–25 kt normal regional band; Boeing FCTM normal ≈20 kt for narrowbody and widebody alike |
+| Apron / ramp | 14 kt | 13 kt | 15 kt | 10 kt | 8 kt | Saab operator flow apron 15 kt; Boeing FCTM ramp / apron entry ≈10 kt narrowbody; widebodies taken slightly slower given wingtip/tail clearance margins on a tighter apron |
+| Turns (≥~30°) | ≈10 kt | ≈10 kt | ≈10 kt | ≈10 kt | ≈10 kt | Boeing 737 FCTM turn entry; CAST / airline SOPs |
+| Stand lead-in | 5 kt | 5 kt | 5 kt | 5 kt | 5 kt | Marshaller / walking-pace guidance |
+| Pushback (tug) | 3 kt | 3 kt | 3 kt | 3 kt | 3 kt | Walking-pace tow |
+| Lineup onto runway | 10 kt | 10 kt | 10 kt | 10 kt | 10 kt | Boeing turn-entry band; leg ends stopped at roll start |
+| Vacate after landing | 12→22 kt | 12→20 kt | 14→24 kt | 15→20 kt | 14→20 kt | Type-specific runway-exit speed hands directly into the actual taxi profile; turn curvature may trim it slightly |
 
 Breakaway / taxi acceleration uses ≈0.55 m/s² (turboprop ADS-B study average peak
 ≈0.5 m/s²; ETS literature ≈0.4 m/s² to 15 kt). Cornering uses 0.59 m/s² lateral so a
-45 m fillet settles near 10 kt.
+45 m fillet settles near 10 kt — this lateral limit and the turn/stand-lead-in/pushback/
+lineup bands above are deliberately not type-specific: they are SOP/walking-pace figures
+independent of aircraft size in real operations, not a gap in this data.
+
+### Gate-turn steering geometry (nose-to-main-gear wheelbase)
+
+`AdelaideGround.GateTaxiOut`/`GateTaxiIn` steers each jet's main gear — not its nose —
+through terminal-gate turns, trailing the nose datum by the aircraft's own wheelbase
+(`AircraftPerformanceProfile.NoseToMainGearMetres`) so its body tracks the pavement
+instead of swinging its tail across the grass. Retrieved 2026-09-17.
+
+| Type | Wheelbase (nose→main gear) | Source |
+|---|---:|---|
+| Boeing 737-8 | 17.68 m | Commonly published Boeing 737-800/-8 airport-planning figure. **Not independently confirmed against a fetched primary source** — cross-check against the Boeing 737 MAX ACAP (Rev K, cited above) "Ground Maneuvering" section before relying on this beyond taxi-turn visuals. |
+| Airbus A321neo | 16.90 m | Airbus, *A321 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-techdata-AC_A321_0322%20(2).pdf |
+| Airbus A350-900 | 28.66 m | Airbus, *A350-900/-1000 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-Commercial-Aircraft-AC-A350-900-1000.pdf |
+| Boeing 787-10 | 28.88 m | Boeing 787 ACAP (787_Rev_P.pdf); its 68.30 m overall-length figure matches this project's own recorded AIR-010 runtime-model envelope exactly (see the specifications table above), corroborating the source. |
+
+Turboprops (ATR 42, Saab 340B, Dash 8-400) are not currently steered by this mechanism —
+only the terminal-gate jets are — so their wheelbase is left at 0 in
+`AircraftPerformance.cs` rather than recording an unsourced figure that nothing reads.
 
 ## Runtime model check
 

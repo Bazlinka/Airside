@@ -68,6 +68,39 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void GateTaxi_SteersEachJetsMainGearByItsOwnWheelbaseNotAFlatConstant()
+        {
+            // AdelaideGround.GateTaxiOut/In used to steer every jet's main gear through
+            // turns with one flat 19 m constant (the 737's own figure) regardless of type,
+            // so a widebody with a materially longer wheelbase tracked a corner as if it
+            // had a narrowbody's gear geometry. Each jet now supplies its own
+            // AircraftPerformanceProfile.NoseToMainGearMetres.
+            var gate = new StableId("GATE-13");
+            var jetTypes = new[]
+            {
+                AircraftType.Boeing7378, AircraftType.AirbusA321Neo,
+                AircraftType.AirbusA350900, AircraftType.Boeing78710
+            };
+            foreach (var type in jetTypes)
+            {
+                var expected = AircraftPerformance.For(type).NoseToMainGearMetres;
+                Assert.That(expected, Is.GreaterThan(0f), $"{type.Id} should have a real wheelbase");
+
+                var outLeg = AdelaideGround.TaxiOut(gate, type);
+                Assert.That(outLeg.Parts[outLeg.Parts.Count - 1].TrackMetres, Is.EqualTo(expected),
+                    $"{type.Id} taxi-out should steer its main gear by its own wheelbase");
+
+                var inLeg = AdelaideGround.TaxiIn(gate, type);
+                Assert.That(inLeg.Parts[0].TrackMetres, Is.EqualTo(expected),
+                    $"{type.Id} taxi-in should steer its main gear by its own wheelbase");
+            }
+
+            var wheelbases = jetTypes.Select(type => AircraftPerformance.For(type).NoseToMainGearMetres).ToArray();
+            Assert.That(wheelbases.Distinct().Count(), Is.EqualTo(wheelbases.Length),
+                "the four jets must not all share one flat wheelbase any more");
+        }
+
+        [Test]
         public void PlannedCruiseFeet_UsesTheJetFormulaForEveryAuthoredJetNotJustThe737()
         {
             // A321neo, A350-900 and 787-10 used to fall through to the turboprop climb

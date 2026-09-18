@@ -17,7 +17,8 @@ namespace Airside.Simulation
             float takeoffRollMetres, float initialClimbRateMetresPerSecond,
             float climbOutRateMetresPerSecond, double maxCruiseFeet,
             double climbFeetPerMinute, double descentFeetPerMinute,
-            float taxiStraightKnots, float taxiApronKnots, float runwayExitKnots)
+            float taxiStraightKnots, float taxiApronKnots, float runwayExitKnots,
+            float noseToMainGearMetres)
         {
             ApproachEntryKnots = approachEntryKnots;
             ApproachKnots = approachKnots;
@@ -34,6 +35,7 @@ namespace Airside.Simulation
             TaxiStraightKnots = taxiStraightKnots;
             TaxiApronKnots = taxiApronKnots;
             RunwayExitKnots = runwayExitKnots;
+            NoseToMainGearMetres = noseToMainGearMetres;
         }
 
         public float ApproachEntryKnots { get; }
@@ -51,6 +53,11 @@ namespace Airside.Simulation
         public float TaxiStraightKnots { get; }
         public float TaxiApronKnots { get; }
         public float RunwayExitKnots { get; }
+        /// <summary>Longitudinal distance from nose gear to main gear, used to steer the
+        /// main gear (not the nose) through taxiway turns instead of every type sharing one
+        /// generic offset. Sources are recorded in
+        /// docs/data/AIRCRAFT_SPECIFICATIONS.md's ground taxi section.</summary>
+        public float NoseToMainGearMetres { get; }
 
         public float RotateX => CircuitProfile.TakeoffStartX + TakeoffRollMetres;
         public float TakeoffEndX => RotateX + 950f;
@@ -122,37 +129,48 @@ namespace Airside.Simulation
     public static class AircraftPerformance
     {
         // ATR published V2 minimum 112 KCAS, Vref 104 KIAS and optimum climb 160 KCAS.
+        // Wheelbase: not currently steering-corrected (only the terminal-gate jets are —
+        // see AdelaideGround.GateTaxiOut/In), so left at 0 rather than an unsourced guess.
         public static readonly AircraftPerformanceProfile Atr42 = new(
             120f, 110f, 95f, 104f, 120f, 160f, 900f, 6.6f, 6.1f,
-            25000, 1200, 1500, 22f, 14f, 12f);
+            25000, 1200, 1500, 22f, 14f, 12f, 0f);
 
         // Saab/Q400/737 figures are representative normal-weight planning values.
         // They intentionally remain inside the range pilots calculate for each flight.
         public static readonly AircraftPerformanceProfile Saab340 = new(
             120f, 108f, 94f, 105f, 120f, 155f, 980f, 6.0f, 5.6f,
-            25000, 1100, 1400, 20f, 13f, 12f);
+            25000, 1100, 1400, 20f, 13f, 12f, 0f);
 
         public static readonly AircraftPerformanceProfile Dash8Q400 = new(
             135f, 125f, 110f, 116f, 135f, 185f, 1150f, 8.0f, 7.2f,
-            25000, 1450, 1700, 24f, 15f, 14f);
+            25000, 1450, 1700, 24f, 15f, 14f, 0f);
 
+        // Wheelbase (nose gear to main gear): commonly published Boeing 737-800/-8
+        // airport-planning figure. Not independently cross-checked against a fetched
+        // primary ACAP PDF this session — verify against the Boeing 737 MAX ACAP
+        // "Ground Maneuvering" section if precision matters beyond taxi-turn visuals.
         public static readonly AircraftPerformanceProfile Boeing7378 = new(
             155f, 145f, 132f, 145f, 165f, 210f, 1650f, 12.0f, 10.0f,
-            41000, 2100, 1900, 20f, 10f, 15f);
+            41000, 2100, 1900, 20f, 10f, 15f, 17.68f);
 
         // Representative normal-weight A321neo values. Like the other jets these are
         // visual-planning values; crews calculate actual speeds for each departure.
+        // Wheelbase: Airbus A321 Aircraft Characteristics (aircraft.airbus.com).
         public static readonly AircraftPerformanceProfile AirbusA321Neo = new(
             155f, 140f, 128f, 145f, 165f, 210f, 1800f, 11.0f, 9.5f,
-            39800, 1900, 1800, 20f, 10f, 15f);
+            39800, 1900, 1800, 20f, 10f, 15f, 16.90f);
 
+        // Wheelbase: Airbus A350-900/-1000 Aircraft Characteristics (aircraft.airbus.com).
         public static readonly AircraftPerformanceProfile AirbusA350900 = new(
             165f, 150f, 138f, 158f, 180f, 225f, 2050f, 11.5f, 10.0f,
-            43000, 1800, 1800, 20f, 8f, 14f);
+            43000, 1800, 1800, 20f, 8f, 14f, 28.66f);
 
+        // Wheelbase: Boeing 787 Airplane Characteristics for Airport Planning
+        // (787_Rev_P.pdf) — its 68.30 m length figure matches this project's own
+        // recorded AIR-010 runtime-model envelope exactly, corroborating the source.
         public static readonly AircraftPerformanceProfile Boeing78710 = new(
             166f, 151f, 139f, 159f, 181f, 226f, 2200f, 11.0f, 9.5f,
-            43000, 1800, 1800, 20f, 8f, 14f);
+            43000, 1800, 1800, 20f, 8f, 14f, 28.88f);
 
         public static AircraftPerformanceProfile For(AircraftType type)
         {

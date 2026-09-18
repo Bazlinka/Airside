@@ -16,7 +16,7 @@
     a short inbound ferry. Max four player aircraft.
   - **Turnaround:** player landings auto-take `SuggestStand`; booked departures
     run fuel/catering/boarding and will not push until ready. Save **v8**.
-  - **Evidence:** `scripts/test-domain.sh` after this commit. No Mac Unity editor
+  - **Evidence:** `scripts/test-domain.sh` **347/347**. No Mac Unity editor
     on this Cloud Linux VM. Bailey skipped playtests.
   - **NEXT:** `scripts/test-unity.sh` when a Mac editor is available. Do not add
     buildings or service vehicles yet.

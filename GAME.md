@@ -1,5 +1,51 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Claude — fixed a real Cathay-season timing bug (branch
+  `feature/fix-cathay-season-stale-time-check`), from a targeted bug-hunting pass over
+  career/settlement/scheduling logic — part of the same autonomous visual-quality
+  session Bailey asked for directly, continued after an overnight account rate-limit
+  pause (the first two attempts at a broad Domain/Simulation bug hunt failed on
+  infrastructure — a rate limit, then an agent stall — not on finding nothing; a
+  narrower retry focused on 3-4 named areas completed cleanly).**
+  - **What was checked and found correct** (worth recording so it isn't re-audited
+    unnecessarily): `AirlineCareerState`'s settlement idempotency (`SettlementId` is
+    built from `(Registration, CompletedTrips)` *after* the count increments, and
+    `_processedSettlements.Add` runs before any funds/reliability mutation — no
+    ordering can double-pay), rotation counting and reliability/funds arithmetic
+    (already well covered by `AirlineCareerTests.cs`), and `AirlineOperations.
+    NextEventAt`'s runway/taxi-separation skip-to-next-event logic (every boundary
+    traced against its consumer's actual advance condition — all consistent; already
+    covered end-to-end by `AirlineOperationsTests.Timeline_IsIdenticalForAnyStepSize
+    OrSkipping`, a 36-simulated-hour three-way equivalence test).
+  - **The real bug:** `Update()` (`AirlineOperations.cs:757-775`) gates its Cathay
+    Pacific seasonal backfill on `IsCathaySeason(target)` — `target` being the time
+    it's advancing *to* — then calls `AddMissingTerminalOperators()`, which internally
+    checked the season against `_processedTo`, the time being advanced *from*, not yet
+    updated at that point in `Update()`. On the exact `Update()` call that crosses the
+    Nov 10 season boundary, the outer check says "yes, backfill" but the inner check
+    still reads pre-season and skips it — self-heals on the next `Update()` call, so
+    the practical impact is a one-call lag, worse if a big away/catch-up jump lands
+    exactly on the boundary or nothing calls `Update()` again soon after.
+  - **Fix:** `AddMissingTerminalOperators` gained an explicit `at` time parameter
+    (defaulting to `_processedTo`, preserving the other call site's — `StartAtAdelaide`
+    — existing behaviour, where `_processedTo` genuinely is "now"); `Update()` now
+    passes `target` explicitly instead of relying on the default.
+  - **Evidence:** new test `AirlineOperationsTests.AddMissingTerminalOperators_
+    ChecksTheGivenTimeNotWhateverProcessedToStillIs` — constructs an operations
+    instance whose `_processedTo` is pre-season (the default `AirlineClock` epoch, 14
+    Sep 2026, is pre-season) and asserts Cathay joins when `at` is passed an in-season
+    time, proving the parameter is actually honoured rather than the stale field.
+    Mutation-tested directly: reverted `asOf = at ?? _processedTo` back to
+    `asOf = _processedTo`, confirmed the new test failed with the exact expected
+    assertion, restored it, confirmed `scripts/test-domain.sh` **320/320** again. Real,
+    not just reviewed-by-inspection, evidence — this is Simulation code, fully
+    UnityEngine-free.
+  - **NEXT:** `scripts/test-unity.sh` before merging, per `AGENTS.md` — this is
+    Simulation-only so a Unity compile is a formality, not a real risk, but the project
+    convention still asks for it. No further bug-hunting queued unless asked; the
+    3-4 named areas from this pass were checked thoroughly enough to not need
+    re-auditing next time.
+
 - **2026-09-18 Claude — documentation-only: a real texture-tiling finding, flagged not
   fixed (part of a larger autonomous visual-quality session Bailey asked for directly —
   "improve aircraft visuals dramatically and improve world heaps as well... use

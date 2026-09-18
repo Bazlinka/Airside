@@ -1,5 +1,19 @@
 ## Unreleased
 
+- **Fixed a stale-time bug delaying Cathay Pacific's seasonal arrival by one `Update()`
+  call at the season boundary.** `AirlineOperations.Update()` gated its Cathay-season
+  backfill on `IsCathaySeason(target)` (the time being advanced *to*) but the callee,
+  `AddMissingTerminalOperators()`, checked the season against `_processedTo` (the time
+  being advanced *from*, not yet updated) — so on the exact `Update()` call that crossed
+  into season, the backfill was skipped and only succeeded on the next call. Gave
+  `AddMissingTerminalOperators` an explicit `at` time parameter; `Update()` now passes
+  `target`. New regression test, mutation-tested (reverted the fix, confirmed it failed
+  with the exact expected assertion, restored it, confirmed 320/320 again). Found by a
+  targeted bug-hunting pass over career/settlement/scheduling logic — that same pass
+  traced `AirlineCareerState` settlement idempotency and `NextEventAt`'s skip-to-
+  next-event logic in detail and found both correct, already well covered by existing
+  tests.
+
 - **Static discharge wicks added to the Saab 340B and A350-900 wingtips** (the 787-10
   inherits them automatically since it derives from the A350-900's generator module).
   Every real airliner has these small trailing-edge antennas; previously only the 737-8

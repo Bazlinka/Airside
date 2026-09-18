@@ -335,6 +335,29 @@ namespace Airside.Tests
             Assert.That(rex1, Is.Not.EqualTo(rex3));
         }
 
+        [Test]
+        public void AddMissingTerminalOperators_ChecksTheGivenTimeNotWhateverProcessedToStillIs()
+        {
+            // Update() calls this with the time it is advancing TO, before _processedTo
+            // itself is advanced - the method must honour that explicit time rather than
+            // silently falling back to the stale _processedTo, or Cathay Pacific's seasonal
+            // arrival lags by a full Update() call every time a save crosses the boundary.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(1),
+                DestinationCatalogue.Adelaide, AirlineOperations.AdelaideStands);
+            // AirlineClock.Default's epoch (14 Sep 2026) makes _processedTo (SimulationTime(0),
+            // unchanged here) pre-season - the exact "stale time" this bug read from.
+            Assert.That(ops.IsCathaySeason(ops.ProcessedTo), Is.False, "fixture must start pre-season");
+
+            var inSeason = ops.Clock.AtLocal(new DateTime(2026, 12, 1, 12, 0, 0));
+            Assert.That(ops.IsCathaySeason(inSeason), Is.True, "fixture's 'at' time must be in-season");
+
+            var added = ops.AddMissingTerminalOperators(at: inSeason);
+
+            Assert.That(added, Is.GreaterThan(0), "Cathay's aircraft should join when checked against the in-season time");
+            Assert.That(ops.Fleet.Any(a => a.Airline.Id.Value == "CPA"), Is.True);
+        }
+
         private static string Snapshot(AirlineOperations ops)
         {
             var text = new StringBuilder();

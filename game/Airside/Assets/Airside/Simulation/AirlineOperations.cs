@@ -280,13 +280,19 @@ namespace Airside.Simulation
         /// own gate with its first rotation flight booked. Skipped when this airport has no such
         /// gate or it is taken. Returns how many aircraft joined; safe to call on every load.
         /// </summary>
-        public int AddMissingTerminalOperators(List<FleetAircraft> added = null)
+        /// <param name="at">The time to evaluate seasonal operators (e.g. Cathay) against.
+        /// Defaults to <see cref="_processedTo"/> for the load/startup call sites, which are
+        /// evaluating "now". <see cref="Update"/> must pass its own target time explicitly —
+        /// it calls this before advancing <see cref="_processedTo"/>, so the default would
+        /// check the time being advanced *from*, not the time being advanced *to*.</param>
+        public int AddMissingTerminalOperators(List<FleetAircraft> added = null, SimulationTime? at = null)
         {
+            var asOf = at ?? _processedTo;
             var count = 0;
             foreach (var (make, fleet) in TerminalOperators)
             {
                 var template = make();
-                if (template.Id.Value == "CPA" && !IsCathaySeason(_processedTo))
+                if (template.Id.Value == "CPA" && !IsCathaySeason(asOf))
                     continue;
                 var airline = _airlines.Find(a => a.Id.Equals(template.Id));
                 foreach (var (registration, type, gate) in fleet)
@@ -760,8 +766,12 @@ namespace Airside.Simulation
 
             // A save may cross into the Cathay summer season while it remains open.
             // Backfill the seasonal operator at that point; the method is idempotent.
+            // Passes target explicitly: _processedTo (the default) is still the time
+            // being advanced *from* at this point in Update(), so checking the season
+            // against it instead of target used to miss the exact call where the season
+            // boundary was crossed, catching up only on the next Update() call.
             if (IsCathaySeason(target))
-                AddMissingTerminalOperators();
+                AddMissingTerminalOperators(at: target);
 
             while (true)
             {

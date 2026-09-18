@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **One HUD draw list, one palette, one persistent shell (ADR 0057).** The top bar
+  and the current-objective card are now described by UnityEngine-free painters
+  that emit a shared draw list, which IMGUI rasterises at runtime. The card stays
+  in the same place on every page instead of only on the overview, so the pages
+  read as one screen; a window too narrow for both gives the width to the
+  workspace. Colours come from one `AirsidePalette`, so the runtime HUD, the
+  headless layout tests and the offline mockup renderer cannot drift apart.
+
 - **Airline HUD shell matches the career overview reference (ADR 0053).** A slim
   navy top bar holds the airline, Adelaide time, funds, reliability, tier and
   workspaces. The current-objective card and compact player Operations sit on

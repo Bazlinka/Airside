@@ -14,18 +14,20 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideTheme
     {
-        public static readonly Color RunwayInk = FromHex("#17242A");
-        public static readonly Color Tarmac = FromHex("#343B40");
-        public static readonly Color Concrete = FromHex("#9CA3A2");
-        public static readonly Color Eucalyptus = FromHex("#4F6F60");
-        public static readonly Color DryGrass = FromHex("#8A8A58");
-        public static readonly Color Sand = FromHex("#C8B286");
-        public static readonly Color CoastalBlue = FromHex("#39708A");
-        public static readonly Color SafetyYellow = FromHex("#F2C14B");
-        public static readonly Color SignalRed = FromHex("#C95D50");
-        public static readonly Color ClearGreen = FromHex("#5F8B68");
-        public static readonly Color Cloud = FromHex("#EEF1EC");
-        public static readonly Color OpenSky = FromHex("#A7C9D9");
+        // Parsed from AirsidePalette, which is UnityEngine-free, so the runtime HUD, the
+        // headless workspace layer and the offline mockup renderer cannot drift apart.
+        public static readonly Color RunwayInk = FromHex(AirsidePalette.RunwayInkHex);
+        public static readonly Color Tarmac = FromHex(AirsidePalette.TarmacHex);
+        public static readonly Color Concrete = FromHex(AirsidePalette.ConcreteHex);
+        public static readonly Color Eucalyptus = FromHex(AirsidePalette.EucalyptusHex);
+        public static readonly Color DryGrass = FromHex(AirsidePalette.DryGrassHex);
+        public static readonly Color Sand = FromHex(AirsidePalette.SandHex);
+        public static readonly Color CoastalBlue = FromHex(AirsidePalette.CoastalBlueHex);
+        public static readonly Color SafetyYellow = FromHex(AirsidePalette.SafetyYellowHex);
+        public static readonly Color SignalRed = FromHex(AirsidePalette.SignalRedHex);
+        public static readonly Color ClearGreen = FromHex(AirsidePalette.ClearGreenHex);
+        public static readonly Color Cloud = FromHex(AirsidePalette.CloudHex);
+        public static readonly Color OpenSky = FromHex(AirsidePalette.OpenSkyHex);
 
         private static Texture2D _panelBackground;
         private static Texture2D _panelBackgroundLight;

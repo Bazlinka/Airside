@@ -3,12 +3,16 @@
 - **Living airport and first-playable career loop (ADR 0055).** Holding
   traffic now flies a visible right-hand circuit south of runway 05 instead
   of vanishing; a go-around flies the approach, aborts off short final and
-  joins that circuit. New airlines start with $4,000; dispatch is charged
-  when you book and refunded if you cancel before pushback; every completed
-  rotation pays, and contracts (Kingscote, Port Lincoln, Whyalla, Melbourne)
-  add a bonus. Completed contracts cannot be re-accepted; Kingscote or Port
-  Lincoln unlock Regional, Melbourne unlocks Domestic — all four routes are
-  inside the starter ATR's range. Other-airport corridors (PER–MEL, PER–SYD,
+  joins that circuit. The first cut of that go-around trapped the aircraft
+  in a forever-circuit (`WentAroundThisTrip` also meant "this landing is a
+  missed approach," so the real landing after the abort was sent around
+  again); a missed approach is now only the short approach, and the following
+  full landing still reaches a stand. New airlines start with $4,000; dispatch
+  is charged when you book and refunded if you cancel before pushback; every
+  completed rotation pays, and contracts (Kingscote, Port Lincoln, Whyalla,
+  Melbourne) add a bonus. Completed contracts cannot be re-accepted; Kingscote
+  or Port Lincoln unlock Regional, Melbourne unlocks Domestic — all four routes
+  are inside the starter ATR's range. Other-airport corridors (PER–MEL, PER–SYD,
   DRW–MEL and the east-coast pairs) draw on the map always and in 3D when
   they pass within 260 km of Adelaide. Save schema 7.
 

@@ -19,7 +19,10 @@ runway 05 (`CircuitTraffic`) and a missed-approach that starts on short final,
 climbs to circuit height, then joins that same lap. The tower flies the
 approach (`ApproachSeconds` as `Landing` with `WentAroundThisTrip`) then
 aborts onto `GoAround` so the missed approach is actually seen. The runway
-frees at the abort, not after the four-minute circuit.
+frees at the abort, not after the four-minute circuit. A later full landing
+on the same trip still has `WentAroundThisTrip` set (so the tower will not
+send them around twice); only a `Landing` whose duration is the approach
+alone is treated as the abort.
 
 ### Per-flight economy and authored objectives
 
@@ -87,6 +90,6 @@ retroactive pay, as in ADR 0053.
 
 ## Acceptance and evidence
 
-`scripts/test-domain.sh` on this branch (headless Domain/Simulation
+`scripts/test-domain.sh` **340/340** on this branch (headless Domain/Simulation
 EditMode). Live Mac Play still needed to judge the racetrack, missed
 approach and compressed overflights at overview / follow.

@@ -9,6 +9,9 @@
   - **Circuit:** `HoldingForLanding` draws a right-hand racetrack south of
     runway 05 (`CircuitTraffic`); a go-around flies the approach then a
     missed-approach lap instead of vanishing. Tower frees the runway at abort.
+    A missed-approach `Landing` lasts only `ApproachSeconds`; the next full
+    landing still reaches a stand (`WentAroundThisTrip` no longer traps the
+    aircraft in a forever-circuit).
   - **Economy / objectives:** opening float **$4,000**; dispatch cost at
     book, refund on cancel; `FlightPay` on every player return; contracts
     `REG-KGC-INTRO`, `REG-PLO-INTRO` (Provisional → Regional), `REG-WYA-INTRO`
@@ -18,12 +21,14 @@
   - **Sky traffic:** authored corridors that never use ADL as an endpoint.
     Map always; 3D when within 260 km (PER–MEL closest approach ~230 km),
     compressed to a 7.5 km draw radius.
+  - **Evidence:** `scripts/test-domain.sh` **340/340**. No Mac Unity editor
+    on this Cloud Linux VM.
   - **NEXT:** `scripts/test-unity.sh` and a Mac Play look at (1) two arrivals
-    holding in the circuit, (2) a go-around off short final, (3) a PER–MEL
-    overflight from overview, (4) planner cost/pay and the Contracts workspace
-    ladder. No Unity editor on this Cloud Linux VM. Do not start fleet
-    purchase / extra player aircraft until Bailey signs off — capacity is
-    still the six regional bays plus terminal gates shared with AI.
+    holding in the circuit, (2) a go-around off short final that then lands,
+    (3) a PER–MEL overflight from overview, (4) planner cost/pay and the
+    Contracts workspace ladder. Do not start fleet purchase / extra player
+    aircraft until Bailey signs off — capacity is still the six regional
+    bays plus terminal gates shared with AI.
 
 - **2026-09-18 Claude — fixed a real Cathay-season timing bug (branch
   `feature/fix-cathay-season-stale-time-check`), from a targeted bug-hunting pass over

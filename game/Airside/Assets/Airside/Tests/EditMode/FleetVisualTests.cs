@@ -227,6 +227,19 @@ namespace Airside.Tests
             Assert.That(missed.Visible, Is.True);
             Assert.That(missed.Phase, Is.EqualTo(AircraftPhase.GoAround));
             Assert.That(missed.Leg, Is.EqualTo(FleetGroundLeg.None));
+
+            var deadline = abort + AirlineOperations.GoAroundCircuitSeconds + 30 * 60;
+            while (first.State != FleetState.AwaitingStand && clock.Now.ElapsedSeconds < deadline)
+            {
+                var next = ops.NextEventAt() ?? clock.Now.Advance(1);
+                if (next.ElapsedSeconds > deadline)
+                    break;
+                clock.Set(next);
+                ops.Update();
+            }
+
+            Assert.That(first.State, Is.EqualTo(FleetState.AwaitingStand),
+                "a go-around must still reach a stand instead of looping the circuit");
         }
     }
 }

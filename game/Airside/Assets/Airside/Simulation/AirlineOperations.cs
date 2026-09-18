@@ -875,7 +875,11 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Landing:
-                    if (aircraft.WentAroundThisTrip)
+                    // A missed approach is stored as Landing for ApproachSeconds only. The
+                    // real landing after that is a longer state (approach + roll + vacate)
+                    // and must still reach a stand even though WentAroundThisTrip stays set
+                    // so the tower will not send them around again on the same trip.
+                    if (aircraft.WentAroundThisTrip && IsMissedApproachLanding(aircraft))
                     {
                         Transition(aircraft, FleetState.GoAround, now, GoAroundCircuitSeconds);
                         return true;
@@ -1151,6 +1155,19 @@ namespace Airside.Simulation
             FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
             or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
             or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing;
+
+        /// <summary>
+        /// The tower stores a missed approach as <see cref="FleetState.Landing"/> lasting only
+        /// the approach. A subsequent real landing is longer, so <see cref="FleetAircraft.WentAroundThisTrip"/>
+        /// can stay set (no second go-around) without trapping the aircraft in the circuit.
+        /// </summary>
+        private static bool IsMissedApproachLanding(FleetAircraft aircraft)
+        {
+            if (!aircraft.StateEndsAt.HasValue)
+                return false;
+            var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+            return duration <= AircraftPerformance.For(aircraft.Type).ApproachSeconds;
+        }
 
         /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
         public const int AiFirstDepartureHour = 6;

@@ -564,9 +564,9 @@ namespace Airside.Presentation
                 return;
             }
 
-            var buttonY = pane.Bottom - 38f;
-            if (buttonY < y)
-                buttonY = y;
+            var buttonY = y + 8f;
+            if (buttonY + 34f > pane.Bottom)
+                buttonY = pane.Bottom - 38f;
             var half = (pane.Width - 10f) * 0.5f;
             if (model.PrimaryAction != AircraftHudAction.None)
                 into.Button(new HudBox(pane.X, buttonY, half, 34f), model.PrimaryActionLabel,

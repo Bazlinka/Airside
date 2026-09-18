@@ -1,5 +1,48 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Cursor (Cloud Linux) — HUD workspaces on a shared draw list
+  (branch `cursor/hud-workspaces-redesign-c5a4`, PR #318, ADR 0057).** Bailey
+  supplied five concept references (overview / operations / map / fleet /
+  contracts) and asked for them as staged, reviewable changes, with every value
+  from live game state and the existing behaviour preserved.
+  - **Shape of the change:** `HudBox` / `HudDraw` / `HudShell` and the four
+    `*Workspace.cs` files are UnityEngine-free. They read live simulation and
+    career state and emit a `HudDrawList`; `HudPainter` is the only Unity code
+    left between a workspace and the screen, and it reports the clicked action
+    id, which is dispatched to an `AirlineOperations` command.
+  - **Persistent shell:** top bar plus the current-objective card, same place on
+    every page. A window under ~560 points of workspace width gives the card's
+    space to the workspace instead.
+  - **Operations:** movement board sorted by the TIME column it prints
+    (`FlightBoard.SortForBoard`), player exceptions pinned above it, selected
+    flight detail with live prep and one primary action, event-history footer.
+  - **Map:** AVAILABLE / LOCKED from real range and route band; dispatch and
+    return from `FlightEconomics`. Zoom, pan, tracking and planning untouched.
+  - **Fleet:** owned aircraft first; market offers from `AircraftAcquisition`
+    gates and prices, and anything drawn locked is also refused by `BuyAircraft`.
+  - **Contracts:** active commitment apart from the three rotating offers, real
+    penalties and refresh countdown; a completed contract is never drawn.
+  - **Also:** fuselage titles. The dark plate behind each airline name was sized
+    in TextMesh character-size units rather than metres, so it came out 6.4x too
+    small — a dark rectangle across the middle of every name. Removed; the
+    registration is no longer near-black on near-black; long airline names are
+    shrunk to a third of the type's real fuselage length.
+  - **Removed:** the Hangar's aircraft-types catalogue tab (its purchase
+    information is in the Fleet market strip) and the fleet roster sidebar and
+    scrolling planner pane, both dead since ADR 0053.
+  - **Evidence:** `scripts/test-domain.sh` **386/386**. `scripts/hud-mockup`
+    plays a real headless airline for four simulated hours and dumps the same
+    draw lists the runtime paints; `scripts/render-hud-mockups.py` renders each
+    page at 1440x900 and 1024x640, which is how each page was compared against
+    its reference. Roslyn parse of every file under `Assets/Airside`: no syntax
+    errors, every unqualified call and field in the `AirsidePrototype` partial
+    class resolves.
+  - **NEXT:** `scripts/test-unity.sh` and a Mac Play session — this VM is Cloud
+    Linux, so neither the Unity compile nor a player build could be run here,
+    and no `work/builds/Airside.app` was produced or replaced. Look first at the
+    top bar and tabs at 1280x720, the Operations detail pane, two-click contract
+    accept, and the fuselage titles at follow-camera distance.
+
 - **2026-09-18 Cursor — HUD shell redesign (branch `feature/hud-shell`).**
   Bailey asked for the calmer interaction shell from the reference: slim navy
   top bar, current-objective card, compact player Operations, contextual

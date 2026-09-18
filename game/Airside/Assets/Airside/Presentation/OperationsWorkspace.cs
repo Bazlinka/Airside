@@ -669,7 +669,12 @@ namespace Airside.Presentation
                 return;
             }
 
-            var buttonY = pane.Bottom - (model.CanCancel ? 76f : 40f);
+            // Under the content it belongs to, not pinned to the bottom of a tall pane —
+            // an action marooned half a screen below its flight reads as unrelated to it.
+            var stack = model.CanCancel ? 76f : 40f;
+            var buttonY = y + 8f;
+            if (buttonY + stack > pane.Bottom)
+                buttonY = pane.Bottom - stack;
             if (model.PrimaryAction != AircraftHudAction.None)
                 into.Button(new HudBox(pane.X, buttonY, pane.Width, 34f), model.PrimaryActionLabel,
                     HudAction.Primary, HudButtonStyle.Primary);

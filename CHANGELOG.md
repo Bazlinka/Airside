@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Operations is a real movement board (ADR 0057).** Departures and arrivals each
+  sort by the TIME column they print instead of by a hidden next-event key, and
+  carry flight number, registration, route, stand, status, type and operator.
+  Your own airline reads at full contrast and other operators stay visible but
+  subordinate. Player exceptions — a landing with no free bay, a departure
+  running late — are pinned above the board; when nothing is wrong the band shows
+  the next commitment instead. Selecting a flight gives its live turnaround and
+  the one action that fits it.
+
 - **One HUD draw list, one palette, one persistent shell (ADR 0057).** The top bar
   and the current-objective card are now described by UnityEngine-free painters
   that emit a shared draw list, which IMGUI rasterises at runtime. The card stays

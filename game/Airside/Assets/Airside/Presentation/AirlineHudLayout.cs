@@ -14,19 +14,22 @@ namespace Airside.Presentation
     /// </summary>
     public readonly struct AirlineHudLayout
     {
-        public const float Margin = 16f;
-        public const float TopBarHeight = 44f;
-        public const float ObjectiveWidth = 360f;
-        public const float ObjectiveHeight = 122f;
-        public const float GuideHeight = 104f;
+        // The persistent shell's own measurements live in HudShell, which is UnityEngine-free
+        // so the headless harness and the offline mockup renderer place it identically.
+        public const float Margin = HudShell.Margin;
+        public const float TopBarHeight = HudShell.TopBarHeight;
+        public const float ObjectiveWidth = HudShell.ObjectiveWidth;
+        public const float ObjectiveHeight = HudShell.ObjectiveHeight;
+        public const float GuideHeight = HudShell.GuideHeight;
+        public const float NavStripMaxWidth = HudShell.NavStripMaxWidth;
+        public const float NavTabMinWidth = HudShell.NavTabMinWidth;
+        public const float MinimumWorkspaceWidth = HudShell.MinimumWorkspaceWidth;
+
         public const float OperationsWidth = 340f;
         public const float OperationsMaxHeight = 184f;
-        public const float NavStripMaxWidth = 420f;
-        public const float NavTabMinWidth = 72f;
         public const float ToastWidth = 460f;
         public const float ToastHeight = 40f;
         public const float SetupWidth = 420f;
-        public const float MinimumWorkspaceWidth = 520f;
         public const float SelectedCardWidth = 440f;
         public const float SelectedCardHeight = 148f;
         public const float MiniMapWidth = 220f;
@@ -86,15 +89,12 @@ namespace Airside.Presentation
             var inner = Mathf.Max(1f, width - Margin * 2f);
             var floor = height - Margin;
 
-            var topBar = new Rect(0f, 0f, width, Mathf.Min(TopBarHeight, Mathf.Max(1f, height)));
-            var navWidth = Mathf.Min(NavStripMaxWidth, Mathf.Max(NavTabMinWidth * 4f, inner * 0.38f));
-            navWidth = Mathf.Min(navWidth, Mathf.Max(1f, width * 0.5f));
-            var navStrip = new Rect(width - navWidth, 0f, navWidth, topBar.height);
+            var topBar = ToRect(HudShell.TopBar(width, height));
+            var navStrip = ToRect(HudShell.NavStrip(width, height));
 
-            var contentTop = topBar.yMax + 10f;
-            var cardWidth = Mathf.Min(ObjectiveWidth, inner);
-            var objectiveHeight = showGuide ? GuideHeight : ObjectiveHeight;
-            var objective = ClampBelow(Margin, contentTop, cardWidth, objectiveHeight, floor);
+            var contentTop = topBar.yMax + HudShell.ContentGap;
+            var objective = ToRect(HudShell.Objective(width, height, showGuide));
+            var cardWidth = objective.width;
 
             var opsBeside = cardWidth + OperationsWidth + Margin * 3f <= width;
             Rect operations;
@@ -154,13 +154,15 @@ namespace Airside.Presentation
                     toast = new Rect(toast.x, topBar.yMax + 4f, toastWidth, Mathf.Min(ToastHeight, 20f));
             }
 
-            var workspaceTop = topBar.yMax + 10f;
-            var workspace = new Rect(Margin, workspaceTop, inner, Mathf.Max(1f, floor - workspaceTop));
+            var workspaceTop = topBar.yMax + HudShell.ContentGap;
+            var workspace = ToRect(HudShell.WorkspaceSurface(width, height));
             var setup = new Rect(Margin, workspaceTop, inner, Mathf.Max(1f, floor - workspaceTop));
 
             return new AirlineHudLayout(
                 topBar, navStrip, objective, operations, workspace, toast, mini, selectedCard, setup, !opsBeside);
         }
+
+        private static Rect ToRect(HudBox box) => new(box.X, box.Y, box.Width, box.Height);
 
         private static Rect ClampBelow(float x, float y, float width, float preferredHeight, float limit)
         {

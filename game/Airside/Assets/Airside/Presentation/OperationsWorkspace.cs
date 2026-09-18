@@ -1,0 +1,704 @@
+using System.Collections.Generic;
+using Airside.Domain;
+using Airside.Simulation;
+
+namespace Airside.Presentation
+{
+    /// <summary>Which half of the movement board is showing.</summary>
+    public enum OperationsBoardTab
+    {
+        Departures,
+        Arrivals
+    }
+
+    /// <summary>One movement on the Operations board. Every value is read from live state.</summary>
+    public readonly struct OperationsFlightRow
+    {
+        public OperationsFlightRow(string registration, string scheduledTime, string estimatedTime,
+            string flightNumber, string route, string stand, string status, string typeName,
+            string operatorName, string liveryHex, StatusSeverity severity, bool isPlayer,
+            bool hasProgress, float progress01)
+        {
+            Registration = registration ?? string.Empty;
+            ScheduledTime = scheduledTime ?? string.Empty;
+            EstimatedTime = estimatedTime ?? string.Empty;
+            FlightNumber = flightNumber ?? string.Empty;
+            Route = route ?? string.Empty;
+            Stand = stand ?? string.Empty;
+            Status = status ?? string.Empty;
+            TypeName = typeName ?? string.Empty;
+            OperatorName = operatorName ?? string.Empty;
+            LiveryHex = liveryHex ?? AirsidePalette.ConcreteHex;
+            Severity = severity;
+            IsPlayer = isPlayer;
+            HasProgress = hasProgress;
+            Progress01 = progress01;
+        }
+
+        public string Registration { get; }
+        public string ScheduledTime { get; }
+        public string EstimatedTime { get; }
+        public string FlightNumber { get; }
+        public string Route { get; }
+        public string Stand { get; }
+        public string Status { get; }
+        public string TypeName { get; }
+        public string OperatorName { get; }
+        public string LiveryHex { get; }
+        public StatusSeverity Severity { get; }
+
+        /// <summary>Your airline reads at full contrast; other operators stay visible but subordinate.</summary>
+        public bool IsPlayer { get; }
+
+        public bool HasProgress { get; }
+        public float Progress01 { get; }
+
+        /// <summary>The estimate is only worth printing when it differs from the scheduled time.</summary>
+        public bool ShowsEstimate =>
+            EstimatedTime.Length > 0 && EstimatedTime != "—" && EstimatedTime != ScheduledTime;
+
+        public HudTone StatusTone => Severity switch
+        {
+            StatusSeverity.Warning => HudTone.Negative,
+            StatusSeverity.Attention => HudTone.Caution,
+            _ => HudTone.Default
+        };
+    }
+
+    /// <summary>One player exception or imminent commitment, pinned above the board.</summary>
+    public readonly struct OperationsAttentionRow
+    {
+        public OperationsAttentionRow(string registration, string text, StatusSeverity severity)
+        {
+            Registration = registration ?? string.Empty;
+            Text = text ?? string.Empty;
+            Severity = severity;
+        }
+
+        public string Registration { get; }
+        public string Text { get; }
+        public StatusSeverity Severity { get; }
+
+        public HudTone Tone => Severity == StatusSeverity.Warning ? HudTone.Negative : HudTone.Caution;
+    }
+
+    /// <summary>One turnaround stage on the selected-flight pane.</summary>
+    public readonly struct OperationsPrepCheck
+    {
+        public OperationsPrepCheck(string label, bool done, bool active)
+        {
+            Label = label ?? string.Empty;
+            Done = done;
+            Active = active;
+        }
+
+        public string Label { get; }
+        public bool Done { get; }
+        public bool Active { get; }
+
+        public HudTone Tone => Done ? HudTone.Positive : Active ? HudTone.Caution : HudTone.Muted;
+    }
+
+    /// <summary>One line of the event history strip along the bottom of the workspace.</summary>
+    public readonly struct OperationsEventLine
+    {
+        public OperationsEventLine(string time, string text)
+        {
+            Time = time ?? string.Empty;
+            Text = text ?? string.Empty;
+        }
+
+        public string Time { get; }
+        public string Text { get; }
+    }
+
+    /// <summary>
+    /// The Operations workspace as data (ADR 0057): a detailed movement board for the whole
+    /// airport, player exceptions pinned above it, and the actionable detail of whichever
+    /// flight is selected.
+    ///
+    /// Every string comes from live simulation and career state — this projects, it never
+    /// decides. UnityEngine-free so the headless harness and the offline mockup renderer
+    /// build exactly what the runtime HUD draws.
+    /// </summary>
+    public sealed class OperationsWorkspaceModel
+    {
+        private readonly List<OperationsFlightRow> _rows = new();
+        private readonly List<OperationsAttentionRow> _attention = new();
+        private readonly List<OperationsPrepCheck> _prep = new();
+        private readonly List<OperationsEventLine> _events = new();
+        private readonly List<FleetAircraft> _scratch = new();
+
+        public string Title { get; private set; } = "OPERATIONS";
+        public string Subtitle { get; private set; } = string.Empty;
+        public OperationsBoardTab Tab { get; private set; }
+
+        public IReadOnlyList<OperationsFlightRow> Rows => _rows;
+        public IReadOnlyList<OperationsAttentionRow> Attention => _attention;
+        public IReadOnlyList<OperationsEventLine> Events => _events;
+
+        /// <summary>The registration the board and the detail pane agree on, or empty.</summary>
+        public string SelectedRegistration { get; private set; } = string.Empty;
+
+        public bool HasSelection => SelectedRegistration.Length > 0;
+        public string SelectedTypeName { get; private set; } = string.Empty;
+        public string SelectedRouteLine { get; private set; } = string.Empty;
+        public string SelectedStatusLine { get; private set; } = string.Empty;
+        public bool SelectedIsPlayer { get; private set; }
+        public IReadOnlyList<OperationsPrepCheck> SelectedPrep => _prep;
+        public AircraftHudAction PrimaryAction { get; private set; }
+        public string PrimaryActionLabel { get; private set; } = string.Empty;
+        public bool CanCancel { get; private set; }
+
+        /// <summary>
+        /// Rebuild from live state. <paramref name="selectedRegistration"/> may name any
+        /// aircraft on the field; an unknown one simply leaves the detail pane empty.
+        /// </summary>
+        public void Rebuild(AirlineOperations operations, SimulationTime now, OperationsBoardTab tab,
+            string selectedRegistration, IReadOnlyList<OperationsEventLine> events)
+        {
+            _rows.Clear();
+            _attention.Clear();
+            _prep.Clear();
+            _events.Clear();
+            Tab = tab;
+            SelectedRegistration = string.Empty;
+            SelectedTypeName = string.Empty;
+            SelectedRouteLine = string.Empty;
+            SelectedStatusLine = string.Empty;
+            SelectedIsPlayer = false;
+            PrimaryAction = AircraftHudAction.None;
+            PrimaryActionLabel = string.Empty;
+            CanCancel = false;
+            if (operations == null)
+                return;
+
+            var clock = operations.Clock ?? AirlineClock.Default;
+            Subtitle = $"Adelaide movement  ·  Runway {RunwayWeather.Label(operations.ActiveRunway)}"
+                       + $"  ·  Wind {operations.Wind.Text}";
+
+            FillBoard(operations, now, tab, clock);
+            FillAttention(operations, now, clock);
+
+            if (events != null)
+                foreach (var line in events)
+                    _events.Add(line);
+
+            var selected = Find(operations, selectedRegistration);
+            if (selected != null)
+                FillSelection(selected, now, clock);
+        }
+
+        private void FillBoard(AirlineOperations operations, SimulationTime now, OperationsBoardTab tab,
+            AirlineClock clock)
+        {
+            _scratch.Clear();
+            var arrivals = tab == OperationsBoardTab.Arrivals;
+            foreach (var aircraft in operations.Fleet)
+                if (arrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
+                    _scratch.Add(aircraft);
+            FlightBoard.SortForBoard(_scratch, arrivals);
+
+            foreach (var aircraft in _scratch)
+            {
+                var severity = AircraftStatus.Severity(aircraft, now);
+                var hasProgress = aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft);
+                var progress = aircraft.StateEndsAt.HasValue
+                    ? (float)aircraft.StateProgress(now)
+                    : AircraftStatus.WaitProgress(aircraft, now);
+                _rows.Add(new OperationsFlightRow(
+                    aircraft.Registration,
+                    FlightBoard.BoardTime(aircraft, arrivals, clock.TimeText),
+                    FlightBoard.EstimatedTime(aircraft, clock.TimeText),
+                    FlightNumber.OrRegistration(aircraft),
+                    FlightBoard.RouteText(aircraft),
+                    StandColumn(aircraft),
+                    FlightBoard.PhaseLabel(aircraft, now),
+                    aircraft.Type.Name,
+                    aircraft.Airline.Name,
+                    aircraft.Airline.LiveryHex,
+                    severity,
+                    aircraft.Airline.IsPlayer,
+                    hasProgress,
+                    progress));
+            }
+        }
+
+        /// <summary>
+        /// Player exceptions first, worst severity first; when nothing is wrong, the one
+        /// commitment coming up next so the band is never an empty promise.
+        /// </summary>
+        private void FillAttention(AirlineOperations operations, SimulationTime now, AirlineClock clock)
+        {
+            var player = operations.PlayerAirline;
+            if (player == null)
+                return;
+
+            foreach (var aircraft in operations.FleetOf(player))
+            {
+                var severity = AircraftStatus.Severity(aircraft, now);
+                if (severity < StatusSeverity.Attention)
+                    continue;
+                _attention.Add(new OperationsAttentionRow(aircraft.Registration,
+                    $"{aircraft.Registration}  ·  {ExceptionText(aircraft, now, clock)}", severity));
+            }
+
+            if (_attention.Count > 0)
+            {
+                _attention.Sort((a, b) => b.Severity.CompareTo(a.Severity));
+                return;
+            }
+
+            _scratch.Clear();
+            foreach (var aircraft in operations.FleetOf(player))
+                _scratch.Add(aircraft);
+            var priority = OperationsSummary.PriorityAircraft(_scratch, now);
+            if (priority == null)
+                return;
+            _attention.Add(new OperationsAttentionRow(priority.Registration,
+                $"{priority.Registration}  ·  {ExceptionText(priority, now, clock)}", StatusSeverity.Normal));
+        }
+
+        private static string ExceptionText(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
+        {
+            if (aircraft.State == FleetState.AwaitingStand)
+                return $"Landed · needs a stand{AircraftStatus.WaitSuffix(aircraft, now)}";
+
+            if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
+            {
+                var prep = DeparturePrep.For(aircraft, now);
+                var late = FlightBoard.DepartureDelayMinutes(aircraft, now);
+                var when = clock.TimeText(aircraft.Scheduled.Value.DepartAt);
+                if (late > 0)
+                    return $"{(prep.Ready ? "Ready" : prep.Label)}  ·  {late} min late for {when}";
+                return $"{(prep.Ready ? "Ready" : prep.Label)}  ·  Departs {when}";
+            }
+
+            if (aircraft.State == FleetState.AtStand)
+                return $"Available on {StandNames.Display(aircraft.Stand)} · no flight planned";
+
+            var suffix = AircraftStatus.WaitSuffix(aircraft, now);
+            var status = OperationsSummary.CompactState(aircraft, now);
+            var destination = aircraft.CurrentDestination;
+            return destination.HasValue
+                ? $"{status} · {destination.Value.Name}{suffix}"
+                : $"{status}{suffix}";
+        }
+
+        private void FillSelection(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
+        {
+            SelectedRegistration = aircraft.Registration;
+            SelectedTypeName = aircraft.Type.Name;
+            SelectedIsPlayer = aircraft.Airline.IsPlayer;
+            SelectedStatusLine = FlightBoard.PhaseLabel(aircraft, now);
+
+            if (aircraft.Scheduled.HasValue)
+                SelectedRouteLine =
+                    $"Adelaide → {aircraft.Scheduled.Value.Destination.Name}"
+                    + $"  ·  Departs {clock.TimeText(aircraft.Scheduled.Value.DepartAt)}";
+            else if (aircraft.CurrentDestination.HasValue)
+                SelectedRouteLine = aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding
+                    or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn
+                    ? $"{aircraft.CurrentDestination.Value.Name} → Adelaide"
+                    : $"Adelaide → {aircraft.CurrentDestination.Value.Name}";
+            else
+                SelectedRouteLine = $"{StandNames.Display(aircraft.Stand)}  ·  {aircraft.Airline.Name}";
+
+            if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
+            {
+                var prep = DeparturePrep.For(aircraft, now);
+                _prep.Add(Check("Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
+                _prep.Add(Check("Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
+                _prep.Add(Check("Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
+            }
+
+            PrimaryAction = OperationsSummary.PrimaryAction(aircraft);
+            PrimaryActionLabel = OperationsSummary.ActionLabel(PrimaryAction).ToUpperInvariant();
+            CanCancel = aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
+                        && aircraft.Scheduled.HasValue;
+        }
+
+
+        private static OperationsPrepCheck Check(string name, double progress, bool active)
+        {
+            var done = progress >= 1;
+            var label = done ? name : active ? $"{name} {DeparturePrep.Percent(progress)}%" : name;
+            return new OperationsPrepCheck(label, done, active);
+        }
+
+        private static string StandColumn(FleetAircraft aircraft)
+        {
+            var stand = !string.IsNullOrEmpty(aircraft.Stand.Value) ? aircraft.Stand : aircraft.DepartureStand;
+            return string.IsNullOrEmpty(stand.Value) ? "—" : StandNames.Short(stand);
+        }
+
+        private static FleetAircraft Find(AirlineOperations operations, string registration)
+        {
+            if (string.IsNullOrEmpty(registration))
+                return null;
+            foreach (var aircraft in operations.Fleet)
+                if (aircraft.Registration == registration)
+                    return aircraft;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Where every part of the Operations workspace is drawn. Pure arithmetic so the
+    /// no-overlap and fits-on-screen contract is testable without an editor.
+    /// </summary>
+    public readonly struct OperationsWorkspaceLayout
+    {
+        public const float AttentionRowHeight = 26f;
+        public const float AttentionCaptionHeight = 18f;
+        public const float TabHeight = 30f;
+        public const float TabWidth = 124f;
+        public const float ColumnHeaderHeight = 22f;
+        public const float FlightRowHeight = 38f;
+        public const float DetailWidth = 268f;
+        public const float DetailGap = 20f;
+        public const float MinBoardWidth = 340f;
+
+        private OperationsWorkspaceLayout(HudBox surface, HudBox header, HudBox attention, HudBox tabs,
+            HudBox board, HudBox detail, HudBox footer, float[] columns)
+        {
+            Surface = surface;
+            Header = header;
+            Attention = attention;
+            Tabs = tabs;
+            Board = board;
+            Detail = detail;
+            Footer = footer;
+            _columns = columns;
+        }
+
+        private readonly float[] _columns;
+
+        public HudBox Surface { get; }
+        public HudBox Header { get; }
+
+        /// <summary>The pinned player-exception band. Empty when there is nothing to pin.</summary>
+        public HudBox Attention { get; }
+
+        public HudBox Tabs { get; }
+
+        /// <summary>The scrolling movement board, excluding the column header.</summary>
+        public HudBox Board { get; }
+
+        /// <summary>The selected-flight pane, or empty when the surface is too narrow for it.</summary>
+        public HudBox Detail { get; }
+
+        public HudBox Footer { get; }
+
+        public HudBox TitleBox => new(Header.X + HudShell.SurfacePadding, Header.Y + 12f,
+            Header.Width - HudShell.SurfacePadding * 2f, 30f);
+
+        public HudBox SubtitleBox => new(Header.X + HudShell.SurfacePadding, Header.Y + 40f,
+            Header.Width - HudShell.SurfacePadding * 2f, 18f);
+
+        public HudBox AttentionCaption => Attention.IsEmpty
+            ? HudBox.Empty
+            : Attention.Inset(10f, 6f, 10f, 0f).WithHeight(AttentionCaptionHeight);
+
+
+        public HudBox AttentionRow(int index) => Attention.IsEmpty
+            ? HudBox.Empty
+            : new HudBox(Attention.X + 8f, Attention.Y + AttentionCaptionHeight + 6f + index * AttentionRowHeight,
+                Attention.Width - 16f, AttentionRowHeight);
+
+        public HudBox TabBox(int index) =>
+            new(Tabs.X + index * (TabWidth + 8f), Tabs.Y, TabWidth, TabHeight);
+
+        /// <summary>Column header strip, immediately above <see cref="Board"/>.</summary>
+        public HudBox ColumnHeader => new(Board.X, Board.Y - ColumnHeaderHeight, Board.Width, ColumnHeaderHeight);
+
+        public HudBox FlightRow(int index) =>
+            new(Board.X, Board.Y + index * FlightRowHeight, Board.Width, FlightRowHeight - 2f);
+
+        /// <summary>How many rows fit before the board needs to scroll.</summary>
+        public int VisibleRows => Board.Height <= 0f ? 0 : (int)(Board.Height / FlightRowHeight);
+
+        /// <summary>Left edge of board column <paramref name="index"/>, relative to the surface.</summary>
+        public float ColumnX(int index) => _columns[index < 0 ? 0 : index >= _columns.Length ? _columns.Length - 1 : index];
+
+
+        public float ColumnWidth(int index) =>
+            index + 1 < _columns.Length ? _columns[index + 1] - _columns[index] - 8f : Board.Right - _columns[index];
+
+        public static readonly string[] ColumnLabels = { "TIME", "FLIGHT", "ROUTE", "STAND", "STATUS", "AIRCRAFT" };
+
+        public static OperationsWorkspaceLayout Create(HudBox surface, int attentionRows)
+        {
+            var header = HudShell.Header(surface);
+            var footer = HudShell.Footer(surface);
+            var body = HudShell.Body(surface, hasFooter: true);
+
+            var attention = HudBox.Empty;
+            var y = body.Y;
+            if (attentionRows > 0)
+            {
+                var height = AttentionCaptionHeight + 10f + attentionRows * AttentionRowHeight;
+                attention = new HudBox(body.X, y, body.Width, height);
+                y = attention.Bottom + 16f;
+            }
+
+            var tabs = new HudBox(body.X, y, body.Width, TabHeight);
+            y = tabs.Bottom + 16f;
+
+            var detailWidth = body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
+            var boardWidth = detailWidth > 0f ? body.Width - detailWidth - DetailGap : body.Width;
+            var boardTop = y + ColumnHeaderHeight;
+            var boardHeight = body.Bottom - boardTop;
+            var board = new HudBox(body.X, boardTop, boardWidth, boardHeight < 0f ? 0f : boardHeight);
+            var detail = detailWidth > 0f
+                ? new HudBox(body.Right - detailWidth, y, detailWidth, body.Bottom - y)
+                : HudBox.Empty;
+
+            // Widths are proportional so the board stays readable from a narrow laptop
+            // window to a wide desktop one; STATUS and AIRCRAFT absorb the slack.
+            var columns = new float[ColumnLabels.Length];
+            var w = board.Width;
+            columns[0] = board.X;
+            columns[1] = board.X + Fit(w, 0.10f, 56f, 84f);
+            columns[2] = columns[1] + Fit(w, 0.13f, 70f, 110f);
+            columns[3] = columns[2] + Fit(w, 0.20f, 108f, 170f);
+            columns[4] = columns[3] + Fit(w, 0.09f, 52f, 76f);
+            columns[5] = columns[4] + Fit(w, 0.21f, 110f, 180f);
+
+            return new OperationsWorkspaceLayout(surface, header, attention, tabs, board, detail, footer, columns);
+        }
+
+        private static float Fit(float total, float fraction, float min, float max)
+        {
+            var value = total * fraction;
+            return value < min ? min : value > max ? max : value;
+        }
+    }
+
+    /// <summary>
+    /// Turns the Operations model and layout into the shared draw list. Pure, so the
+    /// runtime HUD and the offline mockup renderer paint byte-for-byte the same surface.
+    /// </summary>
+    public static class OperationsWorkspacePainter
+    {
+        /// <summary>Other operators stay on the board but read below your own airline.</summary>
+        public const float SubordinateAlpha = 0.62f;
+
+        public static void Paint(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+        {
+            if (into == null || model == null)
+                return;
+
+            into.Clear();
+            into.Surface(layout.Surface);
+            PaintHeader(into, model, layout);
+            PaintAttention(into, model, layout);
+            PaintTabs(into, model, layout);
+            PaintBoard(into, model, layout, selectedRegistration, scrollRow);
+            PaintDetail(into, model, layout);
+            PaintFooter(into, model, layout);
+        }
+
+        private static void PaintHeader(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
+            into.Text(layout.SubtitleBox, model.Subtitle, 12f, HudTone.Muted);
+            into.Button(CloseBox(layout.Surface), "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
+            into.Hairline(HudShell.HeaderRule(layout.Surface));
+        }
+
+        internal static HudBox CloseBox(HudBox surface) =>
+            new(surface.Right - HudShell.SurfacePadding - 78f, surface.Y + 18f, 78f, 26f);
+
+        private static void PaintAttention(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            if (layout.Attention.IsEmpty || model.Attention.Count == 0)
+                return;
+
+            var worst = model.Attention[0].Severity;
+            var tone = worst >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Muted;
+            into.Fill(layout.Attention, tone, 0.07f);
+            into.Outline(layout.Attention, tone, 0.75f);
+            into.Caption(layout.AttentionCaption.Inset(10f, 0f, 10f, 0f),
+                worst >= StatusSeverity.Attention ? "NEEDS ATTENTION" : "COMING UP", tone);
+
+            for (var i = 0; i < model.Attention.Count; i++)
+            {
+                var row = model.Attention[i];
+                var box = layout.AttentionRow(i);
+                into.Fill(box, HudTone.Default, 0.05f);
+                into.Fill(new HudBox(box.X + 6f, box.Y + 6f, 3f, box.Height - 12f), row.Tone, 1f);
+                into.Text(new HudBox(box.X + 16f, box.Y + 4f, box.Width - 24f, 18f), row.Text, 13f, row.Tone,
+                    HudTextStyle.Bold);
+                into.Hotspot(box, HudAction.Select(row.Registration));
+            }
+        }
+
+        private static void PaintTabs(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            into.Button(layout.TabBox(0), "DEPARTURES", HudAction.TabDepartures,
+                model.Tab == OperationsBoardTab.Departures ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
+            into.Button(layout.TabBox(1), "ARRIVALS", HudAction.TabArrivals,
+                model.Tab == OperationsBoardTab.Arrivals ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
+        }
+
+        private static void PaintBoard(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+        {
+            var header = layout.ColumnHeader;
+            for (var c = 0; c < OperationsWorkspaceLayout.ColumnLabels.Length; c++)
+                into.Caption(new HudBox(layout.ColumnX(c), header.Y + 4f, layout.ColumnWidth(c), 16f),
+                    OperationsWorkspaceLayout.ColumnLabels[c]);
+            into.Hairline(new HudBox(layout.Board.X, header.Bottom - 1f, layout.Board.Width, 1f));
+
+            if (model.Rows.Count == 0)
+            {
+                into.Text(new HudBox(layout.Board.X, layout.Board.Y + 14f, layout.Board.Width, 20f),
+                    model.Tab == OperationsBoardTab.Arrivals
+                        ? "Nothing inbound to Adelaide right now."
+                        : "Nothing outbound from Adelaide right now.", 13f, HudTone.Muted);
+                return;
+            }
+
+            var first = scrollRow < 0 ? 0 : scrollRow;
+            var last = first + layout.VisibleRows;
+            if (last > model.Rows.Count)
+                last = model.Rows.Count;
+
+            for (var i = first; i < last; i++)
+            {
+                var row = model.Rows[i];
+                var box = layout.FlightRow(i - first);
+                var selected = row.Registration == selectedRegistration;
+                var alpha = row.IsPlayer ? 1f : SubordinateAlpha;
+
+                if (selected)
+                    into.Fill(box, HudTone.Accent, 0.26f);
+                else if (((i - first) & 1) == 1)
+                    into.Fill(box, HudTone.Default, 0.025f);
+                if (row.IsPlayer)
+                    into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, 1f, row.LiveryHex);
+
+                var textY = box.Y + 5f;
+                into.Text(Cell(layout, 0, textY), row.ScheduledTime, 13f, HudTone.Default,
+                    HudTextStyle.Bold, alpha: alpha);
+                if (row.ShowsEstimate)
+                    into.Text(Cell(layout, 0, box.Y + 20f), "est " + row.EstimatedTime, 10f, HudTone.Muted,
+                        alpha: alpha);
+
+                into.Text(Cell(layout, 1, textY), row.FlightNumber, 13f, HudTone.Default, alpha: alpha);
+                if (row.FlightNumber != row.Registration)
+                    into.Text(Cell(layout, 1, box.Y + 20f), row.Registration, 10f, HudTone.Muted, alpha: alpha);
+
+                into.Text(Cell(layout, 2, textY), row.Route, 13f, HudTone.Default, alpha: alpha);
+                into.Text(Cell(layout, 3, textY), row.Stand, 13f, HudTone.Default, alpha: alpha);
+                into.Text(Cell(layout, 4, textY), row.Status, 13f, row.StatusTone,
+                    row.Severity == StatusSeverity.Normal ? HudTextStyle.Regular : HudTextStyle.Bold,
+                    alpha: alpha);
+                into.Text(Cell(layout, 5, textY), row.TypeName, 12f, HudTone.Default, alpha: alpha);
+                into.Text(Cell(layout, 5, box.Y + 20f), row.OperatorName, 10f, HudTone.Muted, alpha: alpha);
+
+                if (row.HasProgress)
+                    into.Bar(new HudBox(layout.ColumnX(0), box.Bottom - 3f, layout.Board.Right - layout.ColumnX(0), 2f),
+                        row.Progress01, row.IsPlayer ? HudTone.Accent : HudTone.Muted);
+
+                into.Hotspot(box, HudAction.Select(row.Registration));
+            }
+
+            if (last < model.Rows.Count)
+                into.Text(new HudBox(layout.Board.X, layout.Board.Bottom - 16f, layout.Board.Width, 16f),
+                    $"{model.Rows.Count - last} more below", 11f, HudTone.Muted, HudTextStyle.Caption);
+        }
+
+        private static HudBox Cell(OperationsWorkspaceLayout layout, int column, float y) =>
+            new(layout.ColumnX(column) + (column == 0 ? 10f : 0f), y,
+                layout.ColumnWidth(column) - (column == 0 ? 10f : 0f), 18f);
+
+        private static void PaintDetail(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            var pane = layout.Detail;
+            if (pane.IsEmpty)
+                return;
+
+            into.Hairline(new HudBox(pane.X - OperationsWorkspaceLayout.DetailGap * 0.5f, pane.Y, 1f, pane.Height));
+
+            if (!model.HasSelection)
+            {
+                into.Text(new HudBox(pane.X, pane.Y + 8f, pane.Width, 44f),
+                    "Select a flight to see what you can do with it.", 13f, HudTone.Muted,
+                    HudTextStyle.Wrap);
+                return;
+            }
+
+            into.Fill(new HudBox(pane.X, pane.Y + 4f, 3f, 28f), HudTone.Accent, 1f);
+            into.Text(new HudBox(pane.X + 12f, pane.Y + 4f, pane.Width - 12f, 26f), model.SelectedRegistration,
+                20f, HudTone.Default, HudTextStyle.Bold);
+            into.Text(new HudBox(pane.X + 12f, pane.Y + 30f, pane.Width - 12f, 18f), model.SelectedRouteLine,
+                12f, HudTone.Muted);
+
+            var y = pane.Y + 60f;
+            if (model.SelectedPrep.Count > 0)
+            {
+                foreach (var check in model.SelectedPrep)
+                {
+                    into.Text(new HudBox(pane.X, y, 18f, 18f), check.Done ? "✓" : check.Active ? "●" : "○",
+                        13f, check.Tone, HudTextStyle.Bold);
+                    into.Text(new HudBox(pane.X + 20f, y, pane.Width - 20f, 18f), check.Label, 13f, check.Tone,
+                        check.Active ? HudTextStyle.Bold : HudTextStyle.Regular);
+                    y += 21f;
+                }
+
+                y += 8f;
+            }
+            else
+            {
+                into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.SelectedStatusLine, 13f, HudTone.Default);
+                y += 28f;
+            }
+
+            if (!model.SelectedIsPlayer)
+            {
+                into.Text(new HudBox(pane.X, y, pane.Width, 36f),
+                    "Another operator's flight — you can watch it, but not command it.", 12f, HudTone.Muted,
+                    HudTextStyle.Wrap);
+                return;
+            }
+
+            // Under the content it belongs to, not pinned to the bottom of a tall pane —
+            // an action marooned half a screen below its flight reads as unrelated to it.
+            var stack = model.CanCancel ? 76f : 40f;
+            var buttonY = y + 8f;
+            if (buttonY + stack > pane.Bottom)
+                buttonY = pane.Bottom - stack;
+            if (model.PrimaryAction != AircraftHudAction.None)
+                into.Button(new HudBox(pane.X, buttonY, pane.Width, 34f), model.PrimaryActionLabel,
+                    HudAction.Primary, HudButtonStyle.Primary);
+            if (model.CanCancel)
+                into.Button(new HudBox(pane.X, buttonY + 42f, pane.Width, 30f), "CANCEL", HudAction.Cancel,
+                    HudButtonStyle.Destructive);
+        }
+
+        private static void PaintFooter(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            into.Hairline(HudShell.FooterRule(layout.Surface));
+            var footer = layout.Footer.Inset(HudShell.SurfacePadding, 6f, HudShell.SurfacePadding, 5f);
+            into.Caption(footer.WithHeight(13f), "EVENT HISTORY");
+            var lineBox = new HudBox(footer.X, footer.Y + 14f, footer.Width, 15f);
+            if (model.Events.Count == 0)
+            {
+                into.Text(lineBox, "Nothing yet today.", 11f, HudTone.Muted);
+                return;
+            }
+
+            var line = model.Events[0];
+            into.Text(lineBox.WithWidth(52f), line.Time, 11f, HudTone.Muted);
+            into.Text(lineBox.Offset(58f, 0f).WithWidth(footer.Width - 58f), line.Text, 11f);
+        }
+    }
+}

@@ -1,5 +1,63 @@
 ## Unreleased
 
+- **Fuselage titles read as paint again.** The dark plate behind each airline name
+  was sized in TextMesh character-size units instead of metres, so it came out
+  6.4x too small — a small dark rectangle sitting across the middle of the name
+  on every aircraft. It is gone: real titles are paint on the skin, not a panel.
+  The registration is no longer near-black on a near-black plate, and a long
+  airline name is now shrunk to fit the type's real fuselage length instead of
+  running off the end of the aeroplane.
+
+- **The HUD now draws the four workspaces from the shared painters (ADR 0057).**
+  Operations, Map, Fleet and Contracts are rasterised from the same draw lists
+  the headless tests and the offline mockups use, so what is reviewed is what is
+  drawn. `C` opens Contracts. The Hangar's aircraft-types catalogue tab and the
+  long-dead fleet roster sidebar are gone; purchase information moved to the
+  Fleet workspace's market strip. `scripts/hud-mockup` plays a real headless
+  airline and `scripts/render-hud-mockups.py` renders each page to PNG.
+
+- **Contracts separate the commitment you made from the market (ADR 0057).**
+  The active contract has its own column with real progress, per-rotation and
+  completion payment, the cancellation reliability penalty and which of your
+  registrations can actually fly it. The three rotating offers sit apart with
+  their real totals and a countdown to the market refresh. A locked offer names
+  the actual missing capability — a tier, an aircraft type you do not own, or an
+  active contract. A fulfilled contract is not drawn at all, so it can never be
+  clicked.
+
+- **Fleet shows your aircraft first and a market that cannot lie (ADR 0057).**
+  The roster lists the player's aircraft above the other operators; selecting one
+  gives its route-band capability, rotations flown, planning range, current
+  assignment and live turnaround — no invented maintenance, wear or upgrades. The
+  aircraft market reads AircraftAcquisition for price, tier, reliability and
+  rotation gates, names the first gate you have not met, and says whether the
+  airframe would park on a free bay or ferry in. A purchase is only offered when
+  AirlineOperations.BuyAircraft would accept it.
+
+- **The Route Map prices a destination from the rules that charge you (ADR 0057).**
+  Available and locked come from the selected aircraft's real range and route
+  band, and the detail pane reads dispatch cost and estimated return straight
+  from FlightEconomics. A locked destination says whether it is out of range or
+  above the type's band. Plan flight is offered only when the simulation would
+  accept the booking. Zoom, pan, aircraft tracking and planning are unchanged.
+
+- **Operations is a real movement board (ADR 0057).** Departures and arrivals each
+  sort by the TIME column they print instead of by a hidden next-event key, and
+  carry flight number, registration, route, stand, status, type and operator.
+  Your own airline reads at full contrast and other operators stay visible but
+  subordinate. Player exceptions — a landing with no free bay, a departure
+  running late — are pinned above the board; when nothing is wrong the band shows
+  the next commitment instead. Selecting a flight gives its live turnaround and
+  the one action that fits it.
+
+- **One HUD draw list, one palette, one persistent shell (ADR 0057).** The top bar
+  and the current-objective card are now described by UnityEngine-free painters
+  that emit a shared draw list, which IMGUI rasterises at runtime. The card stays
+  in the same place on every page instead of only on the overview, so the pages
+  read as one screen; a window too narrow for both gives the width to the
+  workspace. Colours come from one `AirsidePalette`, so the runtime HUD, the
+  headless layout tests and the offline mockup renderer cannot drift apart.
+
 - **Airline HUD shell matches the career overview reference (ADR 0053).** A slim
   navy top bar holds the airline, Adelaide time, funds, reliability, tier and
   workspaces. The current-objective card and compact player Operations sit on

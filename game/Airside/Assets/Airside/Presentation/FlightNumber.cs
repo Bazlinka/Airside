@@ -68,7 +68,7 @@ namespace Airside.Presentation
         {
             // "|" keeps a registration/destination pair from hashing the same as a different
             // split of the same characters (e.g. "AB"+"C" vs "A"+"BC").
-            var hash = AirsidePrototype.StableNameHash($"{registration}|{destinationCode}");
+            var hash = StableHash.Of($"{registration}|{destinationCode}");
             var number = 100 + (int)(hash % 900);
             return $"{AirlineCode(airline)}{number}";
         }

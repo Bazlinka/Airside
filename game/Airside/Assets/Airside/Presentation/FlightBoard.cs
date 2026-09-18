@@ -184,6 +184,49 @@ namespace Airside.Presentation
             return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
         }
 
+        /// <summary>
+        /// The clock value a movement reads under TIME on its half of the board: a
+        /// departure's pushback, an arrival's touchdown. Idle parked aircraft have none and
+        /// sort to the bottom.
+        /// </summary>
+        public static long BoardTimeSeconds(FleetAircraft aircraft, bool arrivals)
+        {
+            if (aircraft == null)
+                return long.MaxValue;
+            if (arrivals)
+                return aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
+            if (aircraft.State == FleetState.AtStand)
+                return aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? long.MaxValue;
+            return aircraft.StateStartedAt.ElapsedSeconds;
+        }
+
+        public static string BoardTime(FleetAircraft aircraft, bool arrivals,
+            Func<SimulationTime, string> clockText)
+        {
+            if (aircraft == null || clockText == null)
+                return "—";
+            var seconds = BoardTimeSeconds(aircraft, arrivals);
+            return seconds == long.MaxValue ? "—" : clockText(new SimulationTime(seconds));
+        }
+
+        /// <summary>
+        /// Board order: the column the player is reading. A timetable that sorts on a value
+        /// it does not print looks shuffled, which is what the next-event <see cref="Sort"/>
+        /// did once both halves showed a single TIME column.
+        /// </summary>
+        public static void SortForBoard(List<FleetAircraft> aircraft, bool arrivals)
+        {
+            if (aircraft == null)
+                return;
+            aircraft.Sort((a, b) =>
+            {
+                var byTime = BoardTimeSeconds(a, arrivals).CompareTo(BoardTimeSeconds(b, arrivals));
+                return byTime != 0
+                    ? byTime
+                    : string.CompareOrdinal(a?.Registration, b?.Registration);
+            });
+        }
+
         /// <summary>Stable sort: next event time, then registration.</summary>
         public static void Sort(List<FleetAircraft> aircraft)
         {

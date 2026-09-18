@@ -333,6 +333,9 @@ namespace Airside.Presentation
 
             var layout = AircraftIdentityMarkings.For(aircraft.Type);
             var operatorText = aircraft.Airline.Name.ToUpperInvariant();
+            // A long airline name is painted smaller rather than off the end of the fuselage.
+            var operatorSize = AircraftTitlePaint.OperatorCharacterSize(
+                aircraft.Type, operatorText, layout.OperatorCharacterSize);
             // One tracker drives all four labels' side visibility per aircraft (was one
             // MonoBehaviour per label, each independently resolving Camera.main and
             // re-deriving the same aircraft-relative camera side every LateUpdate).
@@ -340,26 +343,16 @@ namespace Airside.Presentation
             sideVisibility.Initialise(aircraftView);
             for (var side = -1; side <= 1; side += 2)
             {
-                AddIdentityBackingPanel(
-                    aircraftView,
-                    side < 0 ? "Operator title panel L" : "Operator title panel R",
-                    new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
-                    side, layout.OperatorCharacterSize, operatorText.Length);
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Operator title L" : "Operator title R",
                     operatorText,
                     new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
                     side,
-                    layout.OperatorCharacterSize,
+                    operatorSize,
                     operatorColour,
                     FontStyle.Bold,
                     sideVisibility);
-                AddIdentityBackingPanel(
-                    aircraftView,
-                    side < 0 ? "Registration panel L" : "Registration panel R",
-                    new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
-                    side, layout.RegistrationCharacterSize, aircraft.Registration.Length);
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Registration L" : "Registration R",
@@ -367,7 +360,7 @@ namespace Airside.Presentation
                     new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
                     side,
                     layout.RegistrationCharacterSize,
-                    new Color(0.10f, 0.12f, 0.14f),
+                    RegistrationInk,
                     FontStyle.Normal,
                     sideVisibility);
             }
@@ -376,36 +369,11 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// A thin, subtly-tinted plate set just behind each title/registration mark, sized
-        /// generously around the text (an approximation from character count and
-        /// <paramref name="characterSize"/>, not exact glyph metrics — deliberately
-        /// conservative in colour so an imprecise fit still reads fine). Real airliner
-        /// titles/registrations commonly sit on a dark anti-glare panel rather than bare
-        /// paint; this gives the mark a painted region to sit in instead of floating free.
+        /// Registration paint: a dark charcoal, the way a real registration is stencilled on
+        /// a light fuselage. It used to be near-black (0.10, 0.12, 0.14) on a near-black
+        /// backing plate, so the two cancelled out wherever they overlapped.
         /// </summary>
-        private static void AddIdentityBackingPanel(
-            Transform parent, string name, Vector3 textLocalPosition, int side,
-            float characterSize, int textLength)
-        {
-            const float inset = 0.03f;
-            const float thickness = 0.015f;
-            var width = Mathf.Max(0.6f, textLength * characterSize * 0.62f + 0.3f);
-            var height = characterSize * 1.9f;
-
-            var panel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            panel.name = name;
-            AirsideRuntimeQuality.StripVisualCollider(panel);
-            panel.transform.SetParent(parent, false);
-            panel.transform.localPosition = textLocalPosition - new Vector3(side * inset, 0f, 0f);
-            panel.transform.localScale = new Vector3(thickness, height, width);
-
-            var colour = new Color(0.12f, 0.13f, 0.15f);
-            var renderer = panel.GetComponent<Renderer>();
-            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour, AirsideMaterialLibrary.SurfaceKind.AircraftSkin);
-            SetRendererColor(renderer, colour);
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-        }
+        private static readonly Color RegistrationInk = new(0.16f, 0.18f, 0.20f);
 
         private static void AddAircraftIdentityText(
             Transform parent,
@@ -429,7 +397,7 @@ namespace Airside.Presentation
             text.text = value;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
-            text.fontSize = 64;
+            text.fontSize = AircraftTitlePaint.FontPixelSize;
             text.characterSize = characterSize;
             text.fontStyle = style;
             text.color = colour;

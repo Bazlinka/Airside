@@ -5779,21 +5779,9 @@ namespace Airside.Presentation
         }
 
         /// <summary>Deterministic 32-bit FNV-1a over the UTF-16 code units of <paramref name="text"/>.
-        /// Internal so other presentation-only helpers (e.g. <see cref="FlightNumber"/>) share
-        /// this one implementation instead of each hand-rolling FNV-1a.</summary>
-        internal static uint StableNameHash(string text)
-        {
-            var hash = 2166136261u;
-            if (text == null)
-                return hash;
-            for (var i = 0; i < text.Length; i++)
-            {
-                hash ^= text[i];
-                hash *= 16777619u;
-            }
-
-            return hash;
-        }
+        /// The implementation lives in <see cref="StableHash"/>, which is UnityEngine-free so
+        /// the headless harness gets the same numbers a player build does.</summary>
+        internal static uint StableNameHash(string text) => StableHash.Of(text);
 
         private void UpdateApronLife()
         {

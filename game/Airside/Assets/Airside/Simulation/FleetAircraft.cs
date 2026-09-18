@@ -101,6 +101,9 @@ namespace Airside.Simulation
         /// <summary>Prevents repeated go-arounds on the same round trip.</summary>
         public bool WentAroundThisTrip { get; internal set; }
 
+        /// <summary>When player departure prep (fuel → catering → boarding) started. Null if none.</summary>
+        public SimulationTime? PrepStartedAt { get; internal set; }
+
         public bool IsOffMap => State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound;
 
         /// <summary>0..1 through a timed state; 0 for waiting states.</summary>

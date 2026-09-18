@@ -76,10 +76,9 @@ namespace Airside.Domain
     }
 
     /// <summary>
-    /// The authored contract set (ADR 0053 / 0055). Kingscote and Port Lincoln are available
-    /// from Provisional and each unlocks Regional. Whyalla is a Regional SA hop. Melbourne is
-    /// the first Domestic goal — still inside the starter ATR's 1 100 km planning range.
-    /// Bailey tunes the exact payment/reliability numbers — they are placeholders, not final.
+    /// Authored intro contracts kept for save compatibility (ADR 0053 / 0055). Live offers
+    /// come from <c>ContractMarket</c> (ADR 0056). Melbourne needs a Dash 8 — the starter ATR
+    /// is Regional only. Payment numbers are placeholders.
     /// </summary>
     public static class RouteContractCatalogue
     {
@@ -125,7 +124,7 @@ namespace Airside.Domain
             id: "DOM-MEL-INTRO",
             originCode: "ADL",
             destinationCode: "MEL",
-            eligibleType: AircraftType.Atr42,
+            eligibleType: AircraftType.Dash8Q400,
             requiredRotations: 3,
             paymentPerRotation: 900,
             completionReward: 2500,

@@ -43,9 +43,9 @@ namespace Airside.Tests
         public void RouteText_UsesOutboundAndInboundArrows()
         {
             var (_, ops, aircraft) = PlayerOnly();
-            ops.ScheduleDeparture(aircraft, Code("MEL"), new SimulationTime(600));
+            ops.ScheduleDeparture(aircraft, Code("KGC"), new SimulationTime(600));
 
-            Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → MEL"));
+            Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → KGC"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Scheduled"));
             Assert.That(FlightBoard.TimeLabel(aircraft, t => $"T{t.ElapsedSeconds}"), Is.EqualTo("T600"));
             Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("DEPARTS"));
@@ -57,7 +57,7 @@ namespace Airside.Tests
             var (_, ops, later) = PlayerOnly(aircraft: 3);
             var sooner = ops.Fleet[1];
             var parked = ops.Fleet[2];
-            ops.ScheduleDeparture(later, Code("MEL"), new SimulationTime(1_800));
+            ops.ScheduleDeparture(later, Code("PLO"), new SimulationTime(1_800));
             ops.ScheduleDeparture(sooner, Code("KGC"), new SimulationTime(600));
 
             var list = new List<FleetAircraft> { later, parked, sooner };
@@ -74,10 +74,10 @@ namespace Airside.Tests
         public void PhaseLabel_CoversAwayAndArrivalStates()
         {
             var (clock, ops, aircraft) = PlayerOnly();
-            ops.ScheduleDeparture(aircraft, Code("BHQ"), new SimulationTime(0));
+            ops.ScheduleDeparture(aircraft, Code("BHQ"), new SimulationTime(600));
 
             var airborne = ops.AirborneSeconds(aircraft, Code("BHQ"));
-            var outboundAt = AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand)
+            var outboundAt = 600 + AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand)
                              + AirlineOperations.TakeoffRunwaySeconds + 1;
             RunTo(clock, ops, outboundAt);
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
@@ -115,7 +115,7 @@ namespace Airside.Tests
         public void DelayedDeparture_IsClearlyLabelledAfterOneMinute()
         {
             var (_, ops, aircraft) = PlayerOnly();
-            ops.ScheduleDeparture(aircraft, Code("MEL"), new SimulationTime(600));
+            ops.ScheduleDeparture(aircraft, Code("KGC"), new SimulationTime(600));
 
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Scheduled"));

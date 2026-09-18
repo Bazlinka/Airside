@@ -24,7 +24,7 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(99), Airline.Player("Gulf Air Link", "#2E7D32"));
             var mine = ops.FleetOf(ops.PlayerAirline).Single();
-            ops.ScheduleDeparture(mine, Code("MEL"), new SimulationTime(1200));
+            ops.ScheduleDeparture(mine, Code("KGC"), new SimulationTime(1200));
             clock.Set(new SimulationTime(3 * 3600 + 17));
             ops.Update();
             return (clock, ops);
@@ -49,7 +49,11 @@ namespace Airside.Tests
                     ops.Update();
                     var mine = ops.FleetOf(ops.PlayerAirline).Single();
                     if (mine.State == FleetState.AwaitingStand)
-                        ops.AssignStand(mine, ops.FreeStands().Last());
+                    {
+                        var stand = ops.SuggestStand(mine);
+                        if (stand.HasValue)
+                            ops.AssignStand(mine, stand.Value);
+                    }
                 }
             }
 

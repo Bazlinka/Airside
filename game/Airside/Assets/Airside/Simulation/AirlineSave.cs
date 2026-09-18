@@ -22,9 +22,11 @@ namespace Airside.Simulation
         /// already applied. A pre-6 save gets a fresh Provisional career on load — it
         /// never retroactively pays trips completed before the career existed. 7 adds
         /// fulfilled-contract ids (so a completed contract cannot be farmed) and the
-        /// opening funds / per-flight pay / dispatch-cost loop from ADR 0055.
+        /// opening funds / per-flight pay / dispatch-cost loop from ADR 0055. 8 adds
+        /// departure-prep start time, a snapshot of a generated market contract, and
+        /// completed player-rotation count (ADR 0056).
         /// </summary>
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int Version = CurrentVersion;
 
@@ -51,6 +53,18 @@ namespace Airside.Simulation
         public int ContractCompletedRotations;
         public List<string> ProcessedSettlementKeys = new();
         public List<string> CompletedContractIds = new();
+        public int CompletedPlayerRotations;
+        public bool HasContractSnapshot;
+        public string ContractOriginCode;
+        public string ContractDestinationCode;
+        public string ContractTypeId;
+        public int ContractRequiredRotations;
+        public long ContractPaymentPerRotation;
+        public long ContractCompletionReward;
+        public int ContractReliabilityGain;
+        public string ContractRequiredTier;
+        public int ContractReliabilityLoss;
+        public string ContractUnlocksTier;
     }
 
     [Serializable]
@@ -81,6 +95,8 @@ namespace Airside.Simulation
         public int CompletedTrips;
         public string AssignedRunway;
         public bool WentAroundThisTrip;
+        public bool HasPrepStart;
+        public long PrepStartedAt;
     }
 
     public static class AirlineSave
@@ -104,10 +120,27 @@ namespace Airside.Simulation
                 HasActiveContract = operations.CareerState.ActiveContract != null,
                 ContractDefinitionId = operations.CareerState.ActiveContract?.DefinitionId ?? string.Empty,
                 ContractAcceptedAtSeconds = operations.CareerState.ActiveContract?.AcceptedAt.ElapsedSeconds ?? 0,
-                ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0
+                ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0,
+                CompletedPlayerRotations = operations.CareerState.CompletedPlayerRotations
             };
             data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
             data.CompletedContractIds.AddRange(operations.CareerState.CompletedContractIds);
+            if (operations.CareerState.ActiveContract != null
+                && operations.CareerState.TryFindDefinition(operations.CareerState.ActiveContract.DefinitionId,
+                    out var definition))
+            {
+                data.HasContractSnapshot = true;
+                data.ContractOriginCode = definition.OriginCode;
+                data.ContractDestinationCode = definition.DestinationCode;
+                data.ContractTypeId = definition.EligibleType.Id;
+                data.ContractRequiredRotations = definition.RequiredRotations;
+                data.ContractPaymentPerRotation = definition.PaymentPerRotation;
+                data.ContractCompletionReward = definition.CompletionReward;
+                data.ContractReliabilityGain = definition.ReliabilityGainPerRotation;
+                data.ContractRequiredTier = definition.RequiredTier.ToString();
+                data.ContractReliabilityLoss = definition.ReliabilityLossOnCancel;
+                data.ContractUnlocksTier = definition.UnlocksTier.ToString();
+            }
 
             foreach (var airline in operations.Airlines)
             {
@@ -136,7 +169,9 @@ namespace Airside.Simulation
                     ScheduledDepartAt = a.Scheduled?.DepartAt.ElapsedSeconds ?? 0,
                     CompletedTrips = a.CompletedTrips,
                     AssignedRunway = a.AssignedRunway.ToString(),
-                    WentAroundThisTrip = a.WentAroundThisTrip
+                    WentAroundThisTrip = a.WentAroundThisTrip,
+                    HasPrepStart = a.PrepStartedAt.HasValue,
+                    PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0
                 });
             }
 
@@ -234,6 +269,8 @@ namespace Airside.Simulation
                         Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
                             ? runway : RunwayDirection.Runway05,
                         record.WentAroundThisTrip);
+                if (data.Version >= 8 && record.HasPrepStart)
+                    operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
             }
 
             operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
@@ -247,6 +284,34 @@ namespace Airside.Simulation
             // A pre-6 save never had a career: start fresh Provisional with the same
             // opening float a new airline gets, rather than back-computing rewards for
             // trips flown before contracts existed.
+            RouteContractDefinition snapshot = null;
+            if (data.Version >= 8 && data.HasContractSnapshot && data.HasActiveContract
+                && !string.IsNullOrEmpty(data.ContractDefinitionId)
+                && !RouteContractCatalogue.TryFind(data.ContractDefinitionId, out _))
+            {
+                if (!AircraftType.TryFromId(data.ContractTypeId, out var contractType))
+                    throw new FormatException($"Unknown contract aircraft type '{data.ContractTypeId}'.");
+                if (string.IsNullOrWhiteSpace(data.ContractRequiredTier)
+                    || !Enum.TryParse(data.ContractRequiredTier, out OperatingTier requiredTier)
+                    || !Enum.IsDefined(typeof(OperatingTier), requiredTier))
+                    throw new FormatException($"Unknown contract tier '{data.ContractRequiredTier}'.");
+                var unlocksTier = OperatingTier.Provisional;
+                if (!string.IsNullOrEmpty(data.ContractUnlocksTier)
+                    && Enum.TryParse(data.ContractUnlocksTier, out OperatingTier parsedUnlock)
+                    && Enum.IsDefined(typeof(OperatingTier), parsedUnlock))
+                    unlocksTier = parsedUnlock;
+                snapshot = new RouteContractDefinition(
+                    data.ContractDefinitionId, data.ContractOriginCode, data.ContractDestinationCode, contractType,
+                    Math.Max(1, data.ContractRequiredRotations), Math.Max(0, data.ContractPaymentPerRotation),
+                    Math.Max(0, data.ContractCompletionReward), data.ContractReliabilityGain, requiredTier,
+                    data.ContractReliabilityLoss, unlocksTier);
+            }
+
+            var processedKeys = data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>();
+            var rotationCount = data.Version >= 8
+                ? data.CompletedPlayerRotations
+                : processedKeys.Count;
+
             operations.RestoreCareerState(
                 data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
@@ -255,8 +320,10 @@ namespace Airside.Simulation
                 data.Version >= 6 && data.HasActiveContract ? data.ContractDefinitionId : null,
                 data.Version >= 6 ? data.ContractAcceptedAtSeconds : 0,
                 data.Version >= 6 ? data.ContractCompletedRotations : 0,
-                data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>(),
-                data.Version >= 7 ? data.CompletedContractIds ?? new List<string>() : new List<string>());
+                processedKeys,
+                data.Version >= 7 ? data.CompletedContractIds ?? new List<string>() : new List<string>(),
+                rotationCount,
+                snapshot);
 
             return operations;
         }

@@ -28,10 +28,15 @@ namespace Airside.Simulation
         }
 
         /// <summary>Paid once when a player aircraft returns to stand, with or without a contract.</summary>
-        public static long FlightPay(AircraftType type, double oneWayKm)
+        public static long FlightPay(AircraftType type, double oneWayKm) =>
+            FlightPay(type, oneWayKm, RouteBand.Regional);
+
+        public static long FlightPay(AircraftType type, double oneWayKm, RouteBand band)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            return Math.Max(120, (long)Math.Round(140 + Math.Max(0, oneWayKm) * 2.0 * Weight(type)));
+            var raw = Math.Max(120, (long)Math.Round(140 + Math.Max(0, oneWayKm) * 2.0 * Weight(type)
+                * RouteAccess.PayMultiplier(band)));
+            return raw;
         }
 
         /// <summary>

@@ -62,13 +62,11 @@ namespace Airside.Tests
         {
             var (clock, ops, plane) = Parked();
             DestinationCatalogue.TryFind("KGC", out var kgc);
-            ops.ScheduleDeparture(plane, kgc, new SimulationTime(200));
+            ops.ScheduleDeparture(plane, kgc, new SimulationTime(400));
             for (var t = 0L; t < 3 * 3600 && plane.CompletedTrips == 0; t += 5)
             {
                 clock.Set(new SimulationTime(t));
                 ops.Update();
-                if (plane.State == FleetState.AwaitingStand)
-                    ops.AssignStand(plane, ops.FreeStands().First());
             }
 
             Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));

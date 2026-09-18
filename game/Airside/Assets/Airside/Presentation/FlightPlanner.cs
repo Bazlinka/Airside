@@ -58,13 +58,20 @@ namespace Airside.Presentation
         public static readonly (string label, long seconds)[] QuickDepartures =
         {
             // The soonest option still leaves time to board, close up and start both engines.
-            ("3 min", EngineStartSequence.MinimumDepartureLeadSeconds), ("15 min", 15 * 60), ("30 min", 30 * 60),
+            ("5 min", 5 * 60), ("15 min", 15 * 60), ("30 min", 30 * 60),
             ("1 h", 3600), ("2 h", 7200), ("4 h", 4 * 3600)
         };
 
-        /// <summary>Clamp a departure delay to what the planner offers.</summary>
-        public static long ClampDelay(long seconds) =>
-            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, Math.Min(MaxDepartureDelaySeconds, seconds));
+        /// <summary>Clamp a departure delay to what the planner offers, including prep lead for a type.</summary>
+        public static long ClampDelay(long seconds) => ClampDelay(seconds, null);
+
+        public static long ClampDelay(long seconds, AircraftType type)
+        {
+            var floor = type == null
+                ? EngineStartSequence.MinimumDepartureLeadSeconds
+                : DeparturePrep.LeadSeconds(type);
+            return Math.Max(floor, Math.Min(MaxDepartureDelaySeconds, seconds));
+        }
 
         /// <summary>Nudge a delay by whole steps, snapping to the step grid (except the 3 min floor).</summary>
         public static long StepDelay(long seconds, int steps)
@@ -128,7 +135,7 @@ namespace Airside.Presentation
             list.Clear();
             foreach (var destination in operations.MapDestinations())
             {
-                var reachable = aircraft != null && operations.CanReach(aircraft, destination);
+                var reachable = aircraft != null && operations.CanOperate(aircraft, destination);
                 var airborne = aircraft != null ? operations.AirborneSeconds(aircraft, destination) : 0L;
                 list.Add(new PlannerDestination(destination, operations.DistanceKm(destination), airborne, reachable));
             }

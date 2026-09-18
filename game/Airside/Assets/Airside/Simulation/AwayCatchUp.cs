@@ -142,7 +142,7 @@ namespace Airside.Simulation
                 FleetState.Inbound => $"is flying home from {dest}",
                 FleetState.HoldingForLanding or FleetState.Landing => "is landing at Adelaide",
                 FleetState.GoAround => "is going around at Adelaide",
-                FleetState.AwaitingStand => "has landed and is waiting for you to choose a stand",
+                FleetState.AwaitingStand => "has landed and is taxiing to a stand",
                 FleetState.TaxiIn => $"is taxiing to {AdelaideGround.StandLabel(aircraft.Stand)}",
                 _ => $"is {aircraft.State}"
             };

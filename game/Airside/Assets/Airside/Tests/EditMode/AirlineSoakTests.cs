@@ -22,7 +22,7 @@ namespace Airside.Tests
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(424242), Airline.Player("Soak Air", "#6A3FA0"));
             var mine = ops.FleetOf(ops.PlayerAirline).Single();
             var choices = new SeededRandomSource(99);
-            var reachable = ops.MapDestinations().Where(d => ops.CanReach(mine, d)).ToList();
+            var reachable = ops.MapDestinations().Where(d => ops.CanOperate(mine, d)).ToList();
             var horizon = Days * DayCycle.DaySeconds;
 
             // The longest any aircraft may sit in one waiting state before it counts as
@@ -45,7 +45,11 @@ namespace Airside.Tests
                 }
 
                 if (mine.State == FleetState.AwaitingStand)
-                    Assert.That(ops.AssignStand(mine, ops.FreeStands().First()).Accepted, Is.True, "a stand is always free: six aircraft on six bays");
+                {
+                    var stand = ops.SuggestStand(mine);
+                    if (stand.HasValue)
+                        Assert.That(ops.AssignStand(mine, stand.Value).Accepted, Is.True);
+                }
 
                 var next = ops.NextEventAt();
                 Assert.That(next, Is.Not.Null, $"the airport stopped at {clock.Now}: nothing left to happen");

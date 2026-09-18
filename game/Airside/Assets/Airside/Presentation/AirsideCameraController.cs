@@ -315,6 +315,7 @@ namespace Airside.Presentation
                 {
                     AircraftPhase.Takeoff or AircraftPhase.Departed => 8f,
                     AircraftPhase.Approach or AircraftPhase.Landing => 6f,
+                    AircraftPhase.Circuit or AircraftPhase.GoAround => 7f,
                     _ => 4.2f
                 };
                 if (dt > 0f)
@@ -408,6 +409,8 @@ namespace Airside.Presentation
                 AircraftPhase.Approach => Mathf.Lerp(28f, 40f, progress),
                 AircraftPhase.Landing => Mathf.Lerp(32f, 20f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.55f, 1f, progress))),
                 AircraftPhase.Departed => 48f,
+                AircraftPhase.Circuit => 42f,
+                AircraftPhase.GoAround => Mathf.Lerp(36f, 44f, progress),
                 _ => air
             };
         }
@@ -437,6 +440,8 @@ namespace Airside.Presentation
                 AircraftPhase.Approach => Mathf.Lerp(68f, 52f, progress),
                 AircraftPhase.Landing => Mathf.Lerp(54f, 42f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1f, progress))),
                 AircraftPhase.Departed => Mathf.Lerp(80f, 240f, progress),
+                AircraftPhase.Circuit => 90f,
+                AircraftPhase.GoAround => Mathf.Lerp(70f, 110f, progress),
                 _ => air
             };
         }

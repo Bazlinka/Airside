@@ -144,7 +144,9 @@ namespace Airside.Presentation
                 {
                     // An aircraft type that cannot reach anything in the catalogue would have
                     // indexed an empty list and ended the unattended run with an exception.
-                    var reachable = _operations.MapDestinations().Where(d => _operations.CanReach(aircraft, d)).ToList();
+                    var reachable = _operations.MapDestinations().Where(d => _operations.CanReach(aircraft, d)
+                        && _operations.CareerState.CanAfford(
+                            FlightEconomics.DispatchCost(aircraft.Type, _operations.DistanceKm(d)))).ToList();
                     if (reachable.Count == 0)
                         continue;
                     var destination = reachable[_soakChoices.NextInt(0, reachable.Count)];

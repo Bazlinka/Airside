@@ -75,7 +75,8 @@ namespace Airside.Presentation
 
         /// <summary>White strobes operate from runway entry until runway exit.</summary>
         public static bool StrobesOn(AircraftPhase phase) => phase is
-            AircraftPhase.Takeoff or AircraftPhase.Departed or AircraftPhase.Approach or AircraftPhase.Landing;
+            AircraftPhase.Takeoff or AircraftPhase.Departed or AircraftPhase.Approach
+            or AircraftPhase.Landing or AircraftPhase.Circuit or AircraftPhase.GoAround;
 
         /// <summary>Two short white flashes per cycle, shared by both wingtips.</summary>
         public static float StrobeIntensity(AircraftPhase phase, float presentationSeconds)
@@ -209,6 +210,9 @@ namespace Airside.Presentation
                     return GearDeployed;
                 case AircraftPhase.Departed:
                     return GearRetracted;
+                case AircraftPhase.Circuit:
+                case AircraftPhase.GoAround:
+                    return GearRetracted;
                 default:
                     return GearDeployed;
             }
@@ -283,7 +287,8 @@ namespace Airside.Presentation
         /// </param>
         public static bool LandingLightsOn(AircraftPhase phase, float progress01 = 1f, bool drawnOnGround = false)
         {
-            if (phase is AircraftPhase.Approach or AircraftPhase.Landing)
+            if (phase is AircraftPhase.Approach or AircraftPhase.Landing
+                or AircraftPhase.Circuit or AircraftPhase.GoAround)
                 return true;
             if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback or AircraftPhase.AtStand)
                 return !drawnOnGround && AirportCircuit.IsSkippedGroundPhase(phase);
@@ -310,6 +315,8 @@ namespace Airside.Presentation
                 AircraftPhase.Landing => t < 0.6f
                     ? 22f
                     : Mathf.Lerp(22f, 0f, Mathf.InverseLerp(0.6f, 1f, t)),
+                AircraftPhase.Circuit => 15f,
+                AircraftPhase.GoAround => t < 0.28f ? 10f : 5f,
                 _ => 0f
             };
         }
@@ -334,6 +341,8 @@ namespace Airside.Presentation
                     : Mathf.Lerp(0.85f, 0f, Mathf.InverseLerp(
                         AirsideFlightPath.TouchdownProgress,
                         Mathf.Min(1f, AirsideFlightPath.TouchdownProgress + 0.14f), t)),
+                AircraftPhase.Circuit => 1.1f,
+                AircraftPhase.GoAround => 1.2f,
                 _ => 0f
             };
         }

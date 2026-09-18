@@ -502,6 +502,7 @@ namespace Airside.Presentation
             ApplyDayCycle();
             AdvancePresentationClock();
             UpdateAircraftVisual();
+            UpdateSkyTraffic();
             UpdateWindsock();
             UpdateTerminalFlag();
             UpdateEngineAudio();
@@ -1213,8 +1214,8 @@ namespace Airside.Presentation
             if (deltaTime <= 0f)
                 deltaTime = 0f;
             var gearBias = AirsideReusableMotion.GearBias(phase, progress01);
-            var airborne = phase == AircraftPhase.Departed
-                || phase == AircraftPhase.Approach
+            var airborne = phase is AircraftPhase.Departed or AircraftPhase.Approach
+                or AircraftPhase.Circuit or AircraftPhase.GoAround
                 || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
@@ -1932,6 +1933,20 @@ namespace Airside.Presentation
 
             var operation = flight.Operation;
             var phase = operation.Phase;
+            if (phase == AircraftPhase.Circuit)
+            {
+                var slot = 0;
+                if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding))
+                    slot = FleetVisual.QueueSlot(_operations.Fleet, holding);
+                return (float)CircuitTraffic.HoldingProgress(_preciseTime + lookAheadSeconds, slot);
+            }
+
+            if (phase == AircraftPhase.GoAround)
+            {
+                var elapsed = _preciseTime - operation.PhaseStartedAt.ElapsedSeconds + lookAheadSeconds;
+                return (float)CircuitTraffic.GoAroundProgress(elapsed);
+            }
+
             var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
                 ? aircraft.Type : AircraftType.Atr42;
             var duration = AirsideFlightPath.PhaseSeconds(phase, type);
@@ -12621,6 +12636,8 @@ namespace Airside.Presentation
                 AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type),
+                AircraftPhase.Circuit => AirsideFlightPath.Circuit(t),
+                AircraftPhase.GoAround => AirsideFlightPath.GoAround(t),
                 _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type)
             };
         }
@@ -12790,6 +12807,8 @@ namespace Airside.Presentation
             AircraftPhase.TaxiOut => "Taxi — hold short 09",
             AircraftPhase.Takeoff => "Cleared for takeoff",
             AircraftPhase.Departed => "Departed",
+            AircraftPhase.Circuit => "In the circuit",
+            AircraftPhase.GoAround => "Going around",
             _ => phase.ToString()
         };
 

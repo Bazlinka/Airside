@@ -94,14 +94,17 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(5), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideStands);
-            var player = Airline.Player("Catalogue Air", "#1F3A93");
-            ops.AddAirline(player);
+            // Range checks must not be gated by the player's opening float: a 787 to Perth
+            // costs more than a Provisional airline starts with, and this test is about
+            // CanReach, not career funds. A non-player airline is not charged.
+            var airline = Airline.Rex();
+            ops.AddAirline(airline);
             var bays = new Queue<StableId>(AirlineOperations.AdelaideRegionalBays);
             var terminalGates = new Queue<StableId>(AirlineOperations.AdelaideTerminalGates);
             foreach (var spec in AircraftCatalogue.All)
             {
                 var stand = spec.StandClass == StandClass.TerminalGate ? terminalGates.Dequeue() : bays.Dequeue();
-                var aircraft = ops.AddAircraft(player, "VH-C" + spec.Id.Substring(0, 2), spec.Type, stand);
+                var aircraft = ops.AddAircraft(airline, "VH-C" + spec.Id.Substring(0, 2), spec.Type, stand);
                 foreach (var row in FlightPlanner.DestinationsFor(ops, aircraft))
                 {
                     var km = ops.DistanceKm(row.Destination);

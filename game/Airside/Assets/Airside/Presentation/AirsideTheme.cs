@@ -291,6 +291,8 @@ namespace Airside.Presentation
             AircraftPhase.Pushback => Icon("operation", "hold"),
             AircraftPhase.Takeoff => Icon("operation", "departure"),
             AircraftPhase.Departed => Icon("operation", "completed"),
+            AircraftPhase.Circuit => Icon("operation", "hold"),
+            AircraftPhase.GoAround => Icon("operation", "departure"),
             _ => Icon("operation", "stand")
         };
 

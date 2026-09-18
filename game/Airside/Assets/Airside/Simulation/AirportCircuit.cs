@@ -42,6 +42,8 @@ namespace Airside.Simulation
                 AircraftPhase.Pushback => 12,
                 AircraftPhase.TaxiOut => 25,
                 AircraftPhase.Takeoff => SkipGroundTaxi ? TakeoffSeconds : 15,
+                AircraftPhase.Circuit => AirlineOperations.GoAroundCircuitSeconds,
+                AircraftPhase.GoAround => AirlineOperations.GoAroundCircuitSeconds,
                 _ => long.MaxValue
             };
         }

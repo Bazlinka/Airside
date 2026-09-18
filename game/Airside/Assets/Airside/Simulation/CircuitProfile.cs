@@ -249,6 +249,10 @@ namespace Airside.Simulation
                     return Lerp(RotateKnots, InitialClimbKnots, Local(t, RotateProgress, 1f));
                 case AircraftPhase.Departed:
                     return Lerp(InitialClimbKnots, ClimbOutKnots, t);
+                case AircraftPhase.Circuit:
+                    return ApproachEntryKnots;
+                case AircraftPhase.GoAround:
+                    return Lerp(ApproachKnots, InitialClimbKnots, t < 0.28f ? t / 0.28f : 1f);
                 default:
                     // Skipped ground phases: the aircraft is stopped on the rollout end.
                     return 0f;

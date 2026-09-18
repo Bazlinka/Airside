@@ -12,7 +12,11 @@ namespace Airside.Simulation
         Pushback,
         TaxiOut,
         Takeoff,
-        Departed
+        Departed,
+        /// <summary>Right-hand visual circuit south of the strip, used while holding for a landing slot.</summary>
+        Circuit,
+        /// <summary>Missed approach: climb off short final and rejoin the visual circuit.</summary>
+        GoAround
     }
 
     public sealed class AircraftOperation

@@ -35,6 +35,8 @@ namespace Airside.Presentation
                 AircraftPhase.Landing => profile.LandingSeconds,
                 AircraftPhase.Takeoff => profile.TakeoffSeconds,
                 AircraftPhase.Departed => profile.DepartedSeconds,
+                AircraftPhase.Circuit => (float)CircuitTraffic.LoopSeconds,
+                AircraftPhase.GoAround => (float)CircuitTraffic.LoopSeconds,
                 _ => PhaseSeconds(phase)
             };
         }
@@ -246,6 +248,21 @@ namespace Airside.Presentation
             return new Vector3(cx, GroundY + profile.TakeoffEndHeight * climbShape, 0f);
         }
 
+        /// <summary>Right-hand visual circuit south of runway 05. <paramref name="t"/> is 0..1 around the lap.</summary>
+        public static Vector3 Circuit(float t)
+        {
+            CircuitTraffic.OnLap(Mathf.Clamp01(t) * CircuitTraffic.LapMetres, CircuitTraffic.CircuitHeightMetres,
+                out var x, out var y, out var z);
+            return new Vector3((float)x, GroundY + (float)y, (float)z);
+        }
+
+        /// <summary>Missed approach from short final, then one circuit lap. <paramref name="t"/> is 0..1.</summary>
+        public static Vector3 GoAround(float t)
+        {
+            CircuitTraffic.GoAround(Mathf.Clamp01(t) * CircuitTraffic.LoopSeconds, out var x, out var y, out var z);
+            return new Vector3((float)x, GroundY + (float)y, (float)z);
+        }
+
         /// <summary>Accelerating climb-out to 170 kt until the slot recycles off-field.</summary>
         public static Vector3 Departed(float t) => Departed(t, CircuitTakeoffOffsetX);
 
@@ -389,6 +406,12 @@ namespace Airside.Presentation
                 }
                 case AircraftPhase.Departed:
                     return Mathf.Lerp(ClimbPitchDegrees, DepartedPitchEndDegrees, t);
+                case AircraftPhase.Circuit:
+                    return ClimbPitchDegrees * 0.45f;
+                case AircraftPhase.GoAround:
+                    return t < 0.28f
+                        ? Mathf.Lerp(ApproachPitchEndDegrees, ClimbPitchDegrees, Mathf.SmoothStep(0f, 1f, t / 0.28f))
+                        : ClimbPitchDegrees * 0.45f;
                 default:
                     return 0f;
             }

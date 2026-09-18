@@ -34,7 +34,7 @@ namespace Airside.Tests
                 if (!visual.Visible)
                 {
                     hiddenSeconds++;
-                    Assert.That(new[] { FleetState.Outbound, FleetState.AtDestination, FleetState.Inbound, FleetState.HoldingForLanding }, Does.Contain(plane.State));
+                    Assert.That(new[] { FleetState.Outbound, FleetState.AtDestination, FleetState.Inbound }, Does.Contain(plane.State));
                     continue;
                 }
 
@@ -144,6 +144,89 @@ namespace Airside.Tests
             var w0 = AdelaideGround.AwaitingPose(0);
             var w1 = AdelaideGround.AwaitingPose(1);
             Assert.That(System.Math.Abs(w0.X - w1.X) + System.Math.Abs(w0.Z - w1.Z), Is.GreaterThan(30f));
+        }
+
+        [Test]
+        public void HoldingForLanding_IsDrawnOnTheVisualCircuit()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#123456");
+            ops.AddAirline(player);
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+
+            var method = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(ops, new object[]
+            {
+                "VH-HLD", player, AircraftType.Atr42, FleetState.HoldingForLanding, new SimulationTime(0),
+                null, default(StableId), default(StableId), kingscote, null, 0
+            });
+            var tower = typeof(AirlineOperations).GetMethod("RestoreTower",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            tower.Invoke(ops, new object[] { new SimulationTime(600), 0L });
+            clock.Set(new SimulationTime(10));
+            ops.Update();
+
+            var plane = ops.Fleet[0];
+            Assert.That(plane.State, Is.EqualTo(FleetState.HoldingForLanding));
+            var visual = FleetVisual.For(plane, clock.Now);
+            Assert.That(visual.Visible, Is.True, "circuit traffic must be drawn, not hidden off the field");
+            Assert.That(visual.Phase, Is.EqualTo(AircraftPhase.Circuit));
+            Assert.That(visual.Leg, Is.EqualTo(FleetGroundLeg.None));
+        }
+
+        [Test]
+        public void GoAround_FliesTheApproachThenTheMissedApproach()
+        {
+            long goAroundAt = -1;
+            for (var hour = 0; hour < 24 && goAroundAt < 0; hour++)
+            {
+                var t = hour * 3600L;
+                if (System.Math.Abs(AirlineOperations.GoAroundSeed(0, "VH-GA1", t) % 11) != 0)
+                    continue;
+                goAroundAt = t;
+            }
+            Assert.That(goAroundAt, Is.GreaterThanOrEqualTo(0), "a seed that actually goes around");
+
+            var clock = new ManualSimulationClock(new SimulationTime(goAroundAt));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#123456");
+            ops.AddAirline(player);
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+            restore.Invoke(ops, new object[]
+            {
+                "VH-GA1", player, AircraftType.Atr42, FleetState.HoldingForLanding, new SimulationTime(goAroundAt),
+                null, default(StableId), default(StableId), kingscote, null, 0
+            });
+            restore.Invoke(ops, new object[]
+            {
+                "VH-GA2", player, AircraftType.Atr42, FleetState.HoldingForLanding, new SimulationTime(goAroundAt),
+                null, default(StableId), default(StableId), kingscote, null, 0
+            });
+            var first = ops.Fleet[0];
+
+            ops.Update();
+            Assert.That(first.WentAroundThisTrip, Is.True);
+            Assert.That(first.State, Is.EqualTo(FleetState.Landing), "the missed approach starts as a visible final");
+            var onFinal = FleetVisual.For(first, clock.Now);
+            Assert.That(onFinal.Visible, Is.True);
+            Assert.That(onFinal.Phase, Is.EqualTo(AircraftPhase.Approach));
+
+            var abort = goAroundAt + AircraftPerformance.For(first.Type).ApproachSeconds;
+            clock.Set(new SimulationTime(abort));
+            ops.Update();
+            Assert.That(first.State, Is.EqualTo(FleetState.GoAround));
+            var missed = FleetVisual.For(first, clock.Now);
+            Assert.That(missed.Visible, Is.True);
+            Assert.That(missed.Phase, Is.EqualTo(AircraftPhase.GoAround));
+            Assert.That(missed.Leg, Is.EqualTo(FleetGroundLeg.None));
         }
     }
 }

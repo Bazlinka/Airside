@@ -1,5 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Cursor — living airport + first-playable career loop (branch
+  `cursor/living-airport-and-career-7e45`, ADR 0055).** Bailey asked for three
+  things after liking the git state: visible circuit/go-around traffic, real
+  game objectives (start with money, spend to fly, get paid per flight, more
+  than one achievable contract), and air traffic between other airports.
+  Implemented as one first-playable cut, not three mixed dumps.
+  - **Circuit:** `HoldingForLanding` draws a right-hand racetrack south of
+    runway 05 (`CircuitTraffic`); a go-around flies the approach then a
+    missed-approach lap instead of vanishing. Tower frees the runway at abort.
+  - **Economy / objectives:** opening float **$4,000**; dispatch cost at
+    book, refund on cancel; `FlightPay` on every player return; contracts
+    `REG-KGC-INTRO`, `REG-PLO-INTRO` (Provisional → Regional), `REG-WYA-INTRO`
+    (Regional SA), `DOM-MEL-INTRO` (Regional → Domestic, still inside ATR
+    1 100 km). Save **v7** completed-contract ids. Turboprops priced as
+    turboprops (ATR cruise 556 km/h would have been charged as a jet).
+  - **Sky traffic:** authored corridors that never use ADL as an endpoint.
+    Map always; 3D when within 260 km (PER–MEL closest approach ~230 km),
+    compressed to a 7.5 km draw radius.
+  - **NEXT:** `scripts/test-unity.sh` and a Mac Play look at (1) two arrivals
+    holding in the circuit, (2) a go-around off short final, (3) a PER–MEL
+    overflight from overview, (4) planner cost/pay and the Contracts workspace
+    ladder. No Unity editor on this Cloud Linux VM. Do not start fleet
+    purchase / extra player aircraft until Bailey signs off — capacity is
+    still the six regional bays plus terminal gates shared with AI.
+
 - **2026-09-18 Claude — fixed a real Cathay-season timing bug (branch
   `feature/fix-cathay-season-stale-time-check`), from a targeted bug-hunting pass over
   career/settlement/scheduling logic — part of the same autonomous visual-quality
@@ -2646,9 +2671,14 @@ It does not cover Presentation, which needs UnityEngine.
 
 ## Next work
 
-1. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
+1. **On `cursor/living-airport-and-career-7e45` (ADR 0055):** Mac Play of the
+   visible circuit, go-around, sky overflights, and the $4,000 / per-flight
+   pay / four-contract ladder. Then `scripts/test-unity.sh`. Do not start
+   fleet purchase until Bailey says so.
+2. Watch the loop in Unity Play (F, one circuit, no HUD). Then **one taxiway
    and one stand** only when Bailey says so.
-2. No new economy systems; no Companion/CloudKit; no buildings/GSE restore.
-3. **Player airline at Adelaide (ADR 0045).** First slice built on
-   `feature/player-airline` (everything except save/load); fleets drawn in 3D on
-   `feature/fleet-3d-aircraft`; save/load on `feature/save-load`. Next: economy.
+3. No Companion/CloudKit. The retired Kingscote airport-manager economy stays
+   retired.
+4. **Player airline at Adelaide (ADR 0045 / 0053 / 0055).** First-playable
+   career loop is on this branch; next after playtest is regional fleet
+   growth (a second player aircraft with dedicated capacity).

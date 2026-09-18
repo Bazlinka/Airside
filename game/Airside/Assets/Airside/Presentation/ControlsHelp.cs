@@ -46,12 +46,13 @@ namespace Airside.Presentation
             }),
             new Section("Airline", new[]
             {
-                new Binding("Tab", "Flight planner and route map"),
+                new Binding("Tab", "Map workspace — routes and flight planning"),
                 new Binding("[ / ]", "Previous / next aircraft"),
                 new Binding("L", "Aircraft tags on the field"),
                 new Binding("N", "Airfield mini-map (click or drag to move)"),
-                new Binding("H", "Hangar roster"),
-                new Binding("T", "Flights board"),
+                new Binding("H", "Fleet workspace — aircraft and market"),
+                new Binding("T", "Operations workspace — movement board"),
+                new Binding("C", "Contracts workspace — active and offers"),
                 new Binding("F8", "Dev tools (playtest)"),
                 new Binding("F1", "This controls sheet"),
             }),

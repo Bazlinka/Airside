@@ -1,0 +1,55 @@
+<!--
+  Offline HUD mockup exporter. Compiles Domain/Simulation and the UnityEngine-free
+  Presentation shell/workspace layer straight from the Unity project (no copies),
+  drives a scripted airline, and writes each workspace's shared draw list to JSON.
+  scripts/render-hud-mockups.py rasterises that JSON so a workspace can be compared
+  against its concept reference without a Unity editor. Not shipped in the game.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Airside.Tools.HudMockup</RootNamespace>
+    <AssemblyName>HudMockup</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../game/Airside/Assets/Airside/Domain/**/*.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Simulation/**/*.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsidePalette.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FleetWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightBoard.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightPlanner.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudBox.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudShell.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsSummary.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/StableHash.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandNames.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideStandMarkings.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaideGround.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaidePavement.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAdelaidePerimeter.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideStripMarkings.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideFocusMode.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
+  </ItemGroup>
+
+</Project>

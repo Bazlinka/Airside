@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **The HUD now draws the four workspaces from the shared painters (ADR 0057).**
+  Operations, Map, Fleet and Contracts are rasterised from the same draw lists
+  the headless tests and the offline mockups use, so what is reviewed is what is
+  drawn. `C` opens Contracts. The Hangar's aircraft-types catalogue tab and the
+  long-dead fleet roster sidebar are gone; purchase information moved to the
+  Fleet workspace's market strip. `scripts/hud-mockup` plays a real headless
+  airline and `scripts/render-hud-mockups.py` renders each page to PNG.
+
 - **Contracts separate the commitment you made from the market (ADR 0057).**
   The active contract has its own column with real progress, per-rotation and
   completion payment, the cancellation reliability penalty and which of your

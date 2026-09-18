@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **The terminal's 28 airside glazing bays now read as a framed curtain wall, and the
+  roof canopy has real volume and a corrugated-metal material.** Both were flat boxes
+  before — the panes butted up against each other with nothing marking the 3 m gaps
+  between them, and the roof brow was a 0.7 m-tall, untextured slab. New
+  `AdelaideTerminalArchitecture.GlazingMullions()` places a dark structural mullion in
+  every gap; the roof brow is thicker (0.7 m -> 1.1 m) and deeper (3 m -> 5.5 m) with a
+  real `tx_corrugated_metal` material. The main shell prism's walls were deliberately
+  **not** textured — checked `SurfaceMesh.Add`'s UV generation first
+  (`AirsidePrototype.YpadPavement.cs`) and its world-planar `(x/9, z/9)` mapping is
+  ground-plane-only; applying a tiled texture to a vertical wall face with that UV
+  formula would smear rather than tile correctly, so it stays a flat colour rather than
+  shipping something that would look visibly broken.
+
 - **World rendering quality: real-scale reflection probe for the shipped Adelaide world,
   a finer ground mesh, and corrected SSAO settings.** The apron/terminal realtime
   reflection probes from Decision 0025 item 5 only ever existed on the legacy 1:20

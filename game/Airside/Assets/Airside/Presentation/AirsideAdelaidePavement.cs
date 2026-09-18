@@ -53,17 +53,40 @@ namespace Airside.Presentation
         public const float FloodHeightMetres = 18f;
         public const float FloodRangeMetres = 115f;
 
+        public const float GlazingBayPitchMetres = 22f;
+        public const float GlazingPaneWidthMetres = 19f;
+        public const float GlazingStartXMetres = 986f;
+        public const int GlazingBayCount = 28;
+
         public static AdelaideTerminalDetail[] AirsideGlazing()
         {
-            const float startX = 986f;
-            const float bayPitch = 22f;
-            const float paneWidth = 19f;
-            var result = new AdelaideTerminalDetail[28];
+            var result = new AdelaideTerminalDetail[GlazingBayCount];
             for (var i = 0; i < result.Length; i++)
             {
-                var centreX = startX + paneWidth * 0.5f + i * bayPitch;
+                var centreX = GlazingStartXMetres + GlazingPaneWidthMetres * 0.5f + i * GlazingBayPitchMetres;
                 result[i] = new AdelaideTerminalDetail(
-                    $"Terminal airside glazing {i + 1:00}", centreX, 7.1f, 435.55f, paneWidth, 7.2f, 0.32f);
+                    $"Terminal airside glazing {i + 1:00}", centreX, 7.1f, 435.55f, GlazingPaneWidthMetres, 7.2f, 0.32f);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// A dark structural mullion in each 3 m gap between adjacent glazing bays (bay
+        /// pitch 22 m, pane width 19 m), proud of the glass plane, so the 28 panes read as
+        /// a framed curtain wall instead of one continuous sheet of glass.
+        /// </summary>
+        public static AdelaideTerminalDetail[] GlazingMullions()
+        {
+            var result = new AdelaideTerminalDetail[GlazingBayCount - 1];
+            var gapWidth = GlazingBayPitchMetres - GlazingPaneWidthMetres;
+            for (var i = 0; i < result.Length; i++)
+            {
+                // Midpoint of the 3 m gap between bay i and bay i+1, not either bay's edge.
+                var gapCentreX = GlazingStartXMetres + GlazingPaneWidthMetres + gapWidth * 0.5f
+                    + i * GlazingBayPitchMetres;
+                result[i] = new AdelaideTerminalDetail(
+                    $"Terminal airside mullion {i + 1:00}", gapCentreX, 7.3f, 435.6f, 1.2f, 7.6f, 0.5f);
             }
 
             return result;
@@ -71,12 +94,12 @@ namespace Airside.Presentation
 
         public static AdelaideTerminalDetail[] RoofBrow() => new[]
         {
-            new AdelaideTerminalDetail("Terminal airside brow W", 1040f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
-            new AdelaideTerminalDetail("Terminal airside brow WC", 1150f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
-            new AdelaideTerminalDetail("Terminal airside brow C", 1260f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
-            new AdelaideTerminalDetail("Terminal airside brow EC", 1370f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
-            new AdelaideTerminalDetail("Terminal airside brow E", 1480f, 11.35f, 434.65f, 106f, 0.7f, 3.0f),
-            new AdelaideTerminalDetail("Terminal airside brow far E", 1584f, 11.35f, 434.65f, 98f, 0.7f, 3.0f)
+            new AdelaideTerminalDetail("Terminal airside brow W", 1040f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
+            new AdelaideTerminalDetail("Terminal airside brow WC", 1150f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
+            new AdelaideTerminalDetail("Terminal airside brow C", 1260f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
+            new AdelaideTerminalDetail("Terminal airside brow EC", 1370f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
+            new AdelaideTerminalDetail("Terminal airside brow E", 1480f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
+            new AdelaideTerminalDetail("Terminal airside brow far E", 1584f, 11.55f, 433.4f, 98f, 1.1f, 5.5f)
         };
 
         public static AdelaideTerminalDetail[] RoofDetails() => new[]

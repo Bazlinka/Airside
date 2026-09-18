@@ -101,9 +101,11 @@ namespace Airside.Presentation
         private static void BuildAdelaideTerminalArchitecture(float groundY)
         {
             var glass = new Color(0.10f, 0.18f, 0.22f, 0.90f);
+            var mullion = new Color(0.14f, 0.15f, 0.16f);
             var brow = new Color(0.34f, 0.36f, 0.37f);
             var skylight = new Color(0.16f, 0.24f, 0.27f);
             var plant = new Color(0.39f, 0.41f, 0.41f);
+            var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
 
             foreach (var detail in AdelaideTerminalArchitecture.AirsideGlazing())
             {
@@ -123,9 +125,18 @@ namespace Airside.Presentation
                     new Color(0.16f, 0.11f, 0.045f), AirsideMaterialLibrary.SurfaceKind.UnlitSky,
                     null, Vector2.one, useTextures: false);
             }
-            foreach (var detail in AdelaideTerminalArchitecture.RoofBrow())
+            // Dark structural framing between the panes — without this the 28 bays read as
+            // one continuous sheet of glass rather than a curtain wall.
+            foreach (var detail in AdelaideTerminalArchitecture.GlazingMullions())
                 CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth), mullion);
+            foreach (var detail in AdelaideTerminalArchitecture.RoofBrow())
+            {
+                var canopy = CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
                     new Vector3(detail.Width, detail.Height, detail.Depth), brow);
+                canopy.GetComponent<Renderer>().sharedMaterial =
+                    CreateSharedSurfaceMaterial(brow, metalAlbedo, new Vector2(3f, 1f));
+            }
             foreach (var detail in AdelaideTerminalArchitecture.RoofDetails())
                 CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
                     new Vector3(detail.Width, detail.Height, detail.Depth),

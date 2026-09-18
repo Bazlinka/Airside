@@ -20,6 +20,31 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void GlazingMullions_SitInEveryGapBetweenAdjacentBaysWithoutOverlappingEitherPane()
+        {
+            var bays = AdelaideTerminalArchitecture.AirsideGlazing();
+            var mullions = AdelaideTerminalArchitecture.GlazingMullions();
+
+            // One mullion per gap between adjacent bays, none before the first or after the last.
+            Assert.That(mullions.Length, Is.EqualTo(bays.Length - 1));
+            for (var i = 0; i < mullions.Length; i++)
+            {
+                var left = bays[i];
+                var right = bays[i + 1];
+                var mullion = mullions[i];
+                var leftEdge = left.X + left.Width * 0.5f;
+                var rightEdge = right.X - right.Width * 0.5f;
+                Assert.That(mullion.X - mullion.Width * 0.5f, Is.GreaterThan(leftEdge),
+                    $"mullion {i} overlaps bay {i}'s glass");
+                Assert.That(mullion.X + mullion.Width * 0.5f, Is.LessThan(rightEdge),
+                    $"mullion {i} overlaps bay {i + 1}'s glass");
+                // Proud of the glass plane (larger Z than the panes) so it reads as framing
+                // in front of the glass rather than flush or recessed behind it.
+                Assert.That(mullion.Z, Is.GreaterThanOrEqualTo(left.Z));
+            }
+        }
+
+        [Test]
         public void RoofDetails_StayAboveTheShellAndInsideItsMainAirsideBar()
         {
             var details = AdelaideTerminalArchitecture.RoofDetails();

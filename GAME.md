@@ -1,5 +1,48 @@
 ## Where to resume — session handoff
 
+- **2026-09-17 Claude — terminal facade architectural detail (branch
+  `feature/terminal-facade-detail`), continuing the autonomous visual-quality pass.**
+  - **What was plain:** the 28 airside glazing bays (real coordinates, `AdelaideTerminal
+    Architecture.AirsideGlazing()`) butted against each other with nothing marking the
+    3 m gaps between them — read as one continuous sheet of glass rather than a curtain
+    wall. The roof brow/canopy was a 0.7 m-tall, 3 m-deep, untextured flat-colour slab.
+  - **Fix:** new `GlazingMullions()` — one dark structural mullion (1.2 m wide, proud of
+    the glass plane) centred in each of the 27 gaps between adjacent bays. Thickened the
+    roof brow into a real canopy volume (0.7 m -> 1.1 m tall, 3 m -> 5.5 m deep,
+    extending further out over the apron-side walkway) and gave it a genuine
+    `tx_corrugated_metal` material (already a fully-profiled `SurfaceKind.Metal` in
+    `AirsideMaterialLibrary` — this is architecturally plausible roofing/canopy cladding
+    for a real airport terminal, and the texture set already existed on disk, unused).
+  - **Deliberately not textured — checked first, not guessed:** considered texturing the
+    main shell prism's walls too, but read `SurfaceMesh.Add`'s UV generation
+    (`AirsidePrototype.YpadPavement.cs`) before touching it: UVs are a flat
+    `(worldX/9, worldZ/9)` planar projection, correct for the ground-plane surfaces
+    it's shared with (taxiways, aprons, holdbars) but wrong for a vertical wall face —
+    height (Y) never enters the V coordinate, so a tiled texture on a wall would barely
+    vary going up the building and would look smeared, not tiled. Left the shell prism as
+    its existing flat colour rather than ship something visibly broken; fixing the UV
+    generation for walls specifically would touch a shared helper used by several
+    ground-plane systems, more risk than this pass's canopy/mullion scope justified.
+  - **A real bug caught by the test, not just inspection:** the first version of
+    `GlazingMullions()`' placement formula used a bay's *edge* instead of the *gap
+    midpoint* — `986 + (i+1)*22` instead of `986 + 19 + 1.5 + i*22` — which would have
+    placed every mullion overlapping the next bay's glass by ~0.6 m. The new
+    `AdelaideTerminalArchitectureTests.GlazingMullions_SitInEveryGapBetweenAdjacentBays
+    WithoutOverlappingEitherPane` test caught this immediately (failed with the exact
+    overlap distance) before it ever reached a commit — fixed, then confirmed green.
+  - **Evidence:** `AdelaideTerminalArchitecture`/`AirsideAdelaidePavement.cs` are
+    UnityEngine-free and compile into the headless harness (confirmed — this data was
+    previously assumed Presentation-only/untestable, it isn't) — `scripts/test-domain.sh`
+    **320/320** (1 new test, genuinely mutation-tested by the bug it caught and the fix
+    that followed, not a synthetic mutation exercise). The actual Unity rendering
+    (mullion proportions, canopy texture tiling at `(3,1)`, whether 27 mullions reads as
+    "framed" rather than "busy" from overview) is still unverified — no Unity editor this
+    session.
+  - **NEXT:** `scripts/test-unity.sh` and a Play-mode look at the terminal facade from
+    both overview and a close follow-camera pass, day and dusk (the mullions' dark
+    colour and the canopy's night-time apron-flood lighting interact — worth checking
+    together, not just separately).
+
 - **2026-09-17 Claude — world rendering quality pass (branch
   `feature/world-rendering-quality`), first of several autonomous visual-quality
   improvements Bailey asked for directly ("improve aircraft visuals dramatically and

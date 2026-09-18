@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **The Route Map prices a destination from the rules that charge you (ADR 0057).**
+  Available and locked come from the selected aircraft's real range and route
+  band, and the detail pane reads dispatch cost and estimated return straight
+  from FlightEconomics. A locked destination says whether it is out of range or
+  above the type's band. Plan flight is offered only when the simulation would
+  accept the booking. Zoom, pan, aircraft tracking and planning are unchanged.
+
 - **Operations is a real movement board (ADR 0057).** Departures and arrivals each
   sort by the TIME column they print instead of by a hidden next-event key, and
   carry flight number, registration, route, stand, status, type and operator.

@@ -1,5 +1,32 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Claude — documentation-only: `scripts/build-mac.sh` batchmode is
+  broken on Bailey's Mac, no code fix found (investigated live with Bailey after a
+  `git pull` + "build the game" request; no branch, no code changed — `build-mac.sh`
+  is back to its committed state).**
+  - **What's broken:** `-batchmode -nographics` compiles with real, reproducible
+    `CS1069` errors (`GUIStyle`/`AudioClip`/`AudioSource` "could not be found in
+    namespace UnityEngine... enable built-in package X") in old Presentation code
+    (`AirsidePrototype.cs`, `.Airline.cs`, `.Intro.cs`) — deterministic on both a
+    stale and a completely fresh `Library/`. Ruled out: manifest/asmdef changes
+    (unchanged across the pull that surfaced this), missing packages
+    (`packages-lock.json` resolves `com.unity.modules.audio`/`imgui` correctly as
+    `builtin`), stray `.rsp` files, per-user/global Editor prefs, disk space.
+  - **Tried removing `-nographics`:** reintroduces a different, also-reproducible
+    failure — Unity's batchmode license client gets stuck in an infinite reconnect
+    loop (`Channel LicenseClient-bailey.fleming doesn't exist`, `'com.unity.editor.
+    headless' was not found`) before ever reaching script compilation, both from an
+    automated shell and from Bailey's own interactive Terminal. So this flag swap is
+    unproven for the original bug and independently blocks the build — reverted.
+  - **What does work:** opening the project in the real Unity Editor GUI (via Unity
+    Hub, not the raw binary — that crashes silently on launch) and building through
+    File → Build Profiles → Build. Compiled with 0 errors, built successfully in
+    264s, output launches fine.
+  - **NEXT:** until the batchmode licensing issue on this machine is diagnosed
+    separately, use the Editor GUI for local Mac builds instead of
+    `scripts/build-mac.sh`. Worth checking Unity Hub sign-in state / license
+    activation type if this comes up again.
+
 - **2026-09-18 Claude — fixed a real Cathay-season timing bug (branch
   `feature/fix-cathay-season-stale-time-check`), from a targeted bug-hunting pass over
   career/settlement/scheduling logic — part of the same autonomous visual-quality

@@ -127,7 +127,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void HoldingForLanding_IsDrawnOnTheVisualCircuit()
+        public void HoldingForLanding_IsDrawnOnShortFinal()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
@@ -153,8 +153,8 @@ namespace Airside.Tests
             var plane = ops.Fleet[0];
             Assert.That(plane.State, Is.EqualTo(FleetState.HoldingForLanding));
             var visual = FleetVisual.For(plane, clock.Now);
-            Assert.That(visual.Visible, Is.True, "circuit traffic must be drawn, not hidden off the field");
-            Assert.That(visual.Phase, Is.EqualTo(AircraftPhase.Circuit));
+            Assert.That(visual.Visible, Is.True, "final traffic must be drawn, not hidden off the field");
+            Assert.That(visual.Phase, Is.EqualTo(AircraftPhase.Approach));
             Assert.That(visual.Leg, Is.EqualTo(FleetGroundLeg.None));
         }
 

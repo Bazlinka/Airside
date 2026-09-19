@@ -38,14 +38,19 @@ namespace Airside.Simulation
     /// <summary>A departure the owner has asked for but that has not started yet.</summary>
     public readonly struct ScheduledDeparture
     {
-        public ScheduledDeparture(Destination destination, SimulationTime departAt)
+        public ScheduledDeparture(Destination destination, SimulationTime departAt,
+            int delayMinutes = 0, bool cancelled = false)
         {
             Destination = destination;
             DepartAt = departAt;
+            DelayMinutes = cancelled ? 0 : delayMinutes < 0 ? 0 : delayMinutes;
+            Cancelled = cancelled;
         }
 
         public Destination Destination { get; }
         public SimulationTime DepartAt { get; }
+        public int DelayMinutes { get; }
+        public bool Cancelled { get; }
     }
 
     /// <summary>

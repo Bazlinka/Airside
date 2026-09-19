@@ -968,7 +968,8 @@ namespace Airside.Presentation
                 FleetState.Outbound => $"En route to {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"On the ground at {dest} · departs {ends}",
                 FleetState.Inbound => $"Returning from {dest}{EnrouteAltitudeText(aircraft)} · back {ends}",
-                FleetState.HoldingForLanding => $"In the circuit for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
+                FleetState.HoldingForLanding =>
+                    $"On final {ApproachSide(aircraft.AssignedRunway)} for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
                 FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
                 FleetState.Landing => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
                 FleetState.AwaitingStand => $"Landed · parking{wait}",
@@ -976,6 +977,9 @@ namespace Airside.Presentation
                 _ => aircraft.State.ToString()
             };
         }
+
+        private static string ApproachSide(RunwayDirection runway) =>
+            runway == RunwayDirection.Runway23 ? "from the north-east" : "over the gulf";
 
         private string StandDepartureStatus(FleetAircraft aircraft)
         {
@@ -1119,8 +1123,8 @@ namespace Airside.Presentation
                 else
                     // Distance flown, not time elapsed: slower in the climb and descent.
                     flight.Progress = flight.Profile.DistanceFractionAt(flight.ElapsedSeconds);
-                RouteMap.GreatCirclePoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
-                    flight.Progress, out flight.Latitude, out flight.Longitude);
+                RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                    flight.Progress, flight.Aircraft.Registration, out flight.Latitude, out flight.Longitude);
                 _mapFlights.Add(flight);
             }
         }
@@ -1171,8 +1175,9 @@ namespace Airside.Presentation
                 flight.Point = Project(mapRect, flight.Longitude, flight.Latitude);
                 // Heading from a point a little further along (or behind, at the very end).
                 var step = flight.Progress < 0.995 ? 0.004 : -0.004;
-                RouteMap.GreatCirclePoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
-                    Math.Max(0.0, Math.Min(1.0, flight.Progress + step)), out var aheadLat, out var aheadLon);
+                RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                    Math.Max(0.0, Math.Min(1.0, flight.Progress + step)), flight.Aircraft.Registration,
+                    out var aheadLat, out var aheadLon);
                 var ahead = Project(mapRect, aheadLon, aheadLat);
                 var delta = step > 0 ? ahead - flight.Point : flight.Point - ahead;
                 if (flight.Aircraft.State == FleetState.AtDestination)
@@ -1225,8 +1230,10 @@ namespace Airside.Presentation
             foreach (var flight in _mapFlights)
             {
                 var colour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
-                DrawGreatCircle(mapRect, flight.From, flight.To, 0.0, flight.Progress, new Color(colour.r, colour.g, colour.b, 0.8f), 2f);
-                DrawGreatCircle(mapRect, flight.From, flight.To, flight.Progress, 1.0, new Color(colour.r, colour.g, colour.b, 0.3f), 1.5f);
+                DrawGreatCircle(mapRect, flight.From, flight.To, 0.0, flight.Progress,
+                    new Color(colour.r, colour.g, colour.b, 0.8f), 2f, flight.Aircraft.Registration);
+                DrawGreatCircle(mapRect, flight.From, flight.To, flight.Progress, 1.0,
+                    new Color(colour.r, colour.g, colour.b, 0.3f), 1.5f, flight.Aircraft.Registration);
             }
 
             // The hovered dot gets a ring and a faint route; the network painter has already
@@ -1280,8 +1287,8 @@ namespace Airside.Presentation
                 var point = Project(mapRect, sky.Longitude, sky.Latitude);
                 if (!mapRect.Contains(point))
                     continue;
-                RouteMap.GreatCirclePoint(sky.From.Latitude, sky.From.Longitude, sky.To.Latitude, sky.To.Longitude,
-                    Math.Min(1.0, sky.Progress + 0.004), out var aheadLat, out var aheadLon);
+                RouteMap.FlightPoint(sky.From.Latitude, sky.From.Longitude, sky.To.Latitude, sky.To.Longitude,
+                    Math.Min(1.0, sky.Progress + 0.004), sky.Callsign, out var aheadLat, out var aheadLon);
                 var ahead = Project(mapRect, aheadLon, aheadLat);
                 var delta = ahead - point;
                 var heading = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
@@ -1416,22 +1423,32 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
-        private void DrawGreatCircle(Rect clip, Destination from, Destination to, double t0, double t1, Color colour, float thickness)
+        private void DrawGreatCircle(Rect clip, Destination from, Destination to, double t0, double t1, Color colour,
+            float thickness, string routeKey = null)
         {
             if (t1 <= t0)
                 return;
             const int segments = 32;
             var steps = Math.Max(1, (int)Math.Ceiling(segments * (t1 - t0)));
-            RouteMap.GreatCirclePoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude, t0, out var lat, out var lon);
+            PointOnRoute(from, to, t0, routeKey, out var lat, out var lon);
             var previous = Project(clip, lon, lat);
             for (var i = 1; i <= steps; i++)
             {
                 var t = t0 + (t1 - t0) * i / steps;
-                RouteMap.GreatCirclePoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude, t, out lat, out lon);
+                PointOnRoute(from, to, t, routeKey, out lat, out lon);
                 var next = Project(clip, lon, lat);
                 DrawClippedLine(clip, previous, next, colour, thickness);
                 previous = next;
             }
+        }
+
+        private static void PointOnRoute(Destination from, Destination to, double t, string routeKey,
+            out double lat, out double lon)
+        {
+            if (string.IsNullOrEmpty(routeKey))
+                RouteMap.GreatCirclePoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude, t, out lat, out lon);
+            else
+                RouteMap.FlightPoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude, t, routeKey, out lat, out lon);
         }
 
         /// <summary>A line trimmed to the map, so zoomed-in coastlines and routes never spill over the HUD.</summary>
@@ -1670,7 +1687,7 @@ namespace Airside.Presentation
             FleetState.Outbound => $"airborne for {Where(e)}",
             FleetState.AtDestination => $"landed at {Where(e)}",
             FleetState.Inbound => $"left {Where(e)} for Adelaide",
-            FleetState.HoldingForLanding => "joined the Adelaide circuit",
+            FleetState.HoldingForLanding => "on final at Adelaide",
             FleetState.GoAround => "went around at Adelaide",
             FleetState.Landing => "landed at Adelaide",
             FleetState.AwaitingStand => "vacated the runway, needs a stand",
@@ -2115,7 +2132,7 @@ namespace Airside.Presentation
                         ShowToast($"{reg} departed for {dest}.");
                         break;
                     case FleetState.HoldingForLanding:
-                        ShowToast($"{reg} is back in the Adelaide circuit.");
+                        ShowToast($"{reg} is on final at Adelaide.");
                         break;
                     case FleetState.AwaitingStand:
                         ShowToast($"{reg} has landed — choose a stand.");

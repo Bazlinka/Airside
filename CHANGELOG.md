@@ -1,5 +1,25 @@
 ## Unreleased
 
+- **The board now shows delays and cancellations.** A slice of the
+  published Adelaide day is late or cancelled (more in the banks), and
+  AI rotations pick up the same. Cancelled live aircraft sit the slot
+  and rebook; delayed ones push back later.
+
+- **Arrivals fly the assigned final, not the land-side circuit.**
+  Holding traffic sits on short final — over the gulf for 05, from the
+  north-east for 23 — so the status line and the approach path match.
+  A normal landing continues from there instead of teleporting 4 km
+  out and crawling the last seconds (the fleet centreline drift is no
+  longer treated as a number-two hold).
+
+- **Each flight has its own track.** Two services to the same city no
+  longer share one great circle; the flown line is offset per callsign
+  and meets again at the airports.
+
+- **The square line around the airport map is gone.** The mini-map no
+  longer draws a bevelled panel box, and the rectangular perimeter
+  fence stays off unless `-airsidePerimeterFence` is set.
+
 - **Runways are named 05/23 and 12/30, and jets stay on the long strip.**
   Status lines say the assigned end (holding short 05, landing 23). Jets
   take 05/23 and will take the destination-aligned end when the wind is

@@ -1,4 +1,5 @@
 using System;
+using Airside.Simulation;
 
 namespace Airside.Presentation
 {
@@ -23,6 +24,11 @@ namespace Airside.Presentation
             var done = (nowSeconds - startedAtSeconds) / total;
             return done < 0 ? 0 : done > 1 ? 1 : done;
         }
+
+        /// <summary>Point a fraction <paramref name="t"/> along one flight's displaced track.</summary>
+        public static void FlightPoint(double lat1, double lon1, double lat2, double lon2, double t,
+            string key, out double lat, out double lon) =>
+            FlightRoute.Point(lat1, lon1, lat2, lon2, t, key, out lat, out lon);
 
         /// <summary>Point a fraction <paramref name="t"/> along the great circle between two lat/lon points (degrees).</summary>
         public static void GreatCirclePoint(double lat1, double lon1, double lat2, double lon2, double t,

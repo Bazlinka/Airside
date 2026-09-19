@@ -705,22 +705,30 @@ namespace Airside.Simulation
                     Consider(aircraft.StateEndsAt.Value);
                 if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
                 {
-                    var readyAt = aircraft.Scheduled.Value.DepartAt;
-                    if (aircraft.Airline.IsPlayer)
+                    if (aircraft.Scheduled.Value.Cancelled)
                     {
-                        var prepEnd = (aircraft.PrepStartedAt ?? now)
-                            .Advance(DeparturePrep.TotalSeconds(aircraft.Type));
-                        if (prepEnd.CompareTo(readyAt) > 0)
-                            readyAt = prepEnd;
+                        if (!aircraft.Airline.IsPlayer)
+                            Consider(aircraft.Scheduled.Value.DepartAt.Advance(3 * 3600));
                     }
-
-                    Consider(readyAt);
-                    if (readyAt.CompareTo(now) <= 0)
+                    else
                     {
-                        if (AdelaideGround.IsTerminalGate(aircraft.Stand))
-                            taxiReleaseWantedGate = true;
-                        else
-                            taxiReleaseWantedBay = true;
+                        var readyAt = aircraft.Scheduled.Value.DepartAt;
+                        if (aircraft.Airline.IsPlayer)
+                        {
+                            var prepEnd = (aircraft.PrepStartedAt ?? now)
+                                .Advance(DeparturePrep.TotalSeconds(aircraft.Type));
+                            if (prepEnd.CompareTo(readyAt) > 0)
+                                readyAt = prepEnd;
+                        }
+
+                        Consider(readyAt);
+                        if (readyAt.CompareTo(now) <= 0)
+                        {
+                            if (AdelaideGround.IsTerminalGate(aircraft.Stand))
+                                taxiReleaseWantedGate = true;
+                            else
+                                taxiReleaseWantedBay = true;
+                        }
                     }
                 }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
@@ -968,6 +976,19 @@ namespace Airside.Simulation
             switch (aircraft.State)
             {
                 case FleetState.AtStand:
+                    if (aircraft.Scheduled is { Cancelled: true } cancelled)
+                    {
+                        if (!aircraft.Airline.IsPlayer
+                            && now.ElapsedSeconds >= cancelled.DepartAt.ElapsedSeconds + 3 * 3600)
+                        {
+                            aircraft.Scheduled = null;
+                            ScheduleAiDeparture(aircraft, now);
+                            return aircraft.Scheduled.HasValue;
+                        }
+
+                        return false;
+                    }
+
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
                         return false;
                     if (aircraft.Airline.IsPlayer && !aircraft.PrepStartedAt.HasValue)
@@ -1009,7 +1030,18 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.AtDestination:
-                    Transition(aircraft, FleetState.Inbound, now, LegAirborne(aircraft));
+                    var inboundSeconds = LegAirborne(aircraft);
+                    if (!aircraft.Airline.IsPlayer)
+                    {
+                        var inbound = FlightDisruption.For(
+                            $"{aircraft.Registration}:in:{aircraft.CompletedTrips}", now, Clock);
+                        if (inbound.Cancelled)
+                            inboundSeconds += 3 * 3600;
+                        else
+                            inboundSeconds += inbound.DelayMinutes * 60L;
+                    }
+
+                    Transition(aircraft, FleetState.Inbound, now, inboundSeconds);
                     return true;
 
                 case FleetState.Inbound:
@@ -1436,8 +1468,7 @@ namespace Airside.Simulation
                 // Rotation, not a random draw, so the mainline timetable is stable.
                 var code = VirginRotation[aircraft.CompletedTrips % VirginRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next,
-                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
+                    BookAiDeparture(aircraft, next, now);
                 return;
             }
 
@@ -1446,16 +1477,14 @@ namespace Airside.Simulation
                 // Rotation, not a random draw, so international traffic is stable too.
                 var code = AirNewZealandRotation[aircraft.CompletedTrips % AirNewZealandRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next,
-                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
+                    BookAiDeparture(aircraft, next, now);
                 return;
             }
             if (aircraft.Airline.Id.Value is "SIA" or "CPA")
             {
                 var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next,
-                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
+                    BookAiDeparture(aircraft, next, now);
                 return;
             }
 
@@ -1485,8 +1514,24 @@ namespace Airside.Simulation
                 roll -= weight;
             }
 
-            aircraft.Scheduled = new ScheduledDeparture(pick,
-                AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
+            BookAiDeparture(aircraft, pick, now);
+        }
+
+        private void BookAiDeparture(FleetAircraft aircraft, Destination destination, SimulationTime now)
+        {
+            var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type);
+            var disruption = FlightDisruption.For(
+                $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}",
+                departAt, Clock);
+            if (disruption.Cancelled)
+            {
+                aircraft.Scheduled = new ScheduledDeparture(destination, departAt, 0, cancelled: true);
+                return;
+            }
+
+            if (disruption.Delayed)
+                departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft.Type);
+            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, disruption.DelayMinutes);
         }
 
         /// <summary>

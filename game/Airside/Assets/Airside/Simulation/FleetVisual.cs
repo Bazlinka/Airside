@@ -84,11 +84,30 @@ namespace Airside.Simulation
                 {
                     var approach = performance.ApproachSeconds;
                     var landing = performance.LandingSeconds;
-                    if (elapsed < approach)
-                        return Air(AircraftPhase.Approach, start);
-                    if (elapsed < approach + landing)
-                        return Air(AircraftPhase.Landing, start.Advance(approach));
-                    var vacateAt = start.Advance(approach + landing);
+                    // A missed approach publishes a full final from way out. A normal
+                    // landing has already been sitting on short final, so restarting
+                    // the 4 km inbound was a teleport and then a crawl.
+                    if (aircraft.WentAroundThisTrip)
+                    {
+                        if (elapsed < approach)
+                            return Air(AircraftPhase.Approach, start);
+                        if (elapsed < approach + landing)
+                            return Air(AircraftPhase.Landing, start.Advance(approach));
+                        var goVacateAt = start.Advance(approach + landing);
+                        return Ground(AircraftPhase.TaxiIn, goVacateAt, FleetGroundLeg.Vacate, goVacateAt,
+                            AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds);
+                    }
+
+                    var remaining = ApproachHold.RemainingFinalSeconds(approach, aircraft.Registration);
+                    var backdate = approach - remaining;
+                    var approachStarted = start.ElapsedSeconds >= backdate
+                        ? start.Advance(-backdate)
+                        : new SimulationTime(0);
+                    if (elapsed < remaining)
+                        return Air(AircraftPhase.Approach, approachStarted);
+                    if (elapsed < remaining + landing)
+                        return Air(AircraftPhase.Landing, start.Advance(remaining));
+                    var vacateAt = start.Advance(remaining + landing);
                     return Ground(AircraftPhase.TaxiIn, vacateAt, FleetGroundLeg.Vacate, vacateAt,
                         AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds);
                 }
@@ -97,7 +116,9 @@ namespace Airside.Simulation
                     return Air(AircraftPhase.GoAround, start);
 
                 case FleetState.HoldingForLanding:
-                    return Air(AircraftPhase.Circuit, start);
+                    // Short final on the assigned runway (gulf for 05, land for 23).
+                    // Progress is pinned by ApproachHold, not this start time.
+                    return Air(AircraftPhase.Approach, start);
 
                 case FleetState.AwaitingStand:
                     return Ground(AircraftPhase.TaxiIn, start, FleetGroundLeg.AwaitingStand, start, 0);

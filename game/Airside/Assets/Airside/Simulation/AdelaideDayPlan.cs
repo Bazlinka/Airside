@@ -12,7 +12,8 @@ namespace Airside.Simulation
     {
         public PlannedMovement(string flightNumber, string airlineId, string airlineName, string liveryHex,
             string registration, AircraftType type, string origin, string destination,
-            SimulationTime scheduledAt, bool arrival, string standLabel)
+            SimulationTime scheduledAt, bool arrival, string standLabel,
+            FlightDisruption disruption = default)
         {
             FlightNumber = flightNumber ?? string.Empty;
             AirlineId = airlineId ?? string.Empty;
@@ -25,6 +26,7 @@ namespace Airside.Simulation
             ScheduledAt = scheduledAt;
             Arrival = arrival;
             StandLabel = standLabel ?? "—";
+            Disruption = disruption.Cancelled || disruption.Delayed ? disruption : FlightDisruption.None;
         }
 
         public string FlightNumber { get; }
@@ -38,6 +40,10 @@ namespace Airside.Simulation
         public SimulationTime ScheduledAt { get; }
         public bool Arrival { get; }
         public string StandLabel { get; }
+        public FlightDisruption Disruption { get; }
+
+        public SimulationTime EstimatedAt =>
+            Disruption.Delayed ? ScheduledAt.Advance(Disruption.DelayMinutes * 60L) : ScheduledAt;
 
         public string RouteText => $"{Origin} → {Destination}";
     }
@@ -93,14 +99,20 @@ namespace Airside.Simulation
                             AirlineOperations.AiLastDepartureHour * 60 - 5);
                         var number = 210 + slot;
                         var stand = StandFor(type, slot);
+                        var arriveAt = clock.AtLocal(day.AddMinutes(arriveMinutes));
+                        var departAt = clock.AtLocal(day.AddMinutes(departMinutes));
+                        var arriveNumber = $"{airline.Id.Value}{number}";
+                        var departNumber = $"{airline.Id.Value}{number + 1}";
                         list.Add(new PlannedMovement(
-                            $"{airline.Id.Value}{number}", airline.Id.Value, airline.Name, airline.LiveryHex,
+                            arriveNumber, airline.Id.Value, airline.Name, airline.LiveryHex,
                             string.Empty, type, code, "ADL",
-                            clock.AtLocal(day.AddMinutes(arriveMinutes)), arrival: true, stand));
+                            arriveAt, arrival: true, stand,
+                            FlightDisruption.For(arriveNumber, arriveAt, clock)));
                         list.Add(new PlannedMovement(
-                            $"{airline.Id.Value}{number + 1}", airline.Id.Value, airline.Name, airline.LiveryHex,
+                            departNumber, airline.Id.Value, airline.Name, airline.LiveryHex,
                             string.Empty, type, "ADL", code,
-                            clock.AtLocal(day.AddMinutes(departMinutes)), arrival: false, stand));
+                            departAt, arrival: false, stand,
+                            FlightDisruption.For(departNumber, departAt, clock)));
                         slot++;
                     }
                 }
@@ -137,7 +149,7 @@ namespace Airside.Simulation
                     break;
                 }
 
-                if (covered)
+                if (covered || planned.Disruption.Cancelled)
                     continue;
 
                 var from = planned.Arrival ? away : home;
@@ -191,8 +203,8 @@ namespace Airside.Simulation
         {
             var duration = LegTiming.AirborneSeconds(from.DistanceKmTo(to), planned.Type);
             return planned.Arrival
-                ? planned.ScheduledAt.ElapsedSeconds - duration
-                : planned.ScheduledAt.ElapsedSeconds;
+                ? planned.EstimatedAt.ElapsedSeconds - duration
+                : planned.EstimatedAt.ElapsedSeconds;
         }
 
         private static string StandFor(AircraftType type, int slot)

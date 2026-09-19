@@ -87,5 +87,25 @@ namespace Airside.Tests
 
             Assert.That(peak, Is.GreaterThan(quiet * 2), "the board is busy at the banks, not flat all day");
         }
+
+        [Test]
+        public void Plan_MarksSomeSlotsDelayedOrCancelled()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var plan = AdelaideDayPlan.ForLocalDay(ops, clock.Now);
+            var disrupted = 0;
+            foreach (var movement in plan)
+            {
+                var again = FlightDisruption.For(movement.FlightNumber, movement.ScheduledAt, ops.Clock);
+                Assert.That(movement.Disruption.Cancelled, Is.EqualTo(again.Cancelled));
+                Assert.That(movement.Disruption.DelayMinutes, Is.EqualTo(again.DelayMinutes));
+                if (movement.Disruption.Cancelled || movement.Disruption.Delayed)
+                    disrupted++;
+            }
+
+            Assert.That(disrupted, Is.GreaterThan(0), "a published day includes delays and cancellations");
+        }
     }
 }

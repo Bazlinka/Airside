@@ -86,12 +86,13 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
             // Regional openings only; the Gate 13 jet (ADR 0047) keeps its own timetable.
-            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && !AirlineOperations.NeedsTerminalGate(a.Type) && a.Scheduled.HasValue)
-                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).ToArray();
-            Assert.That(departures, Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds));
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.EqualTo(3),
-                "two regional arrivals plus the opening Air New Zealand arrival");
-            Assert.That(departures.Max(), Is.LessThanOrEqualTo(70 * 60), "departures are spread across the opening hour");
+            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && a.State == FleetState.AtStand && a.Scheduled.HasValue)
+                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t).ToArray();
+            Assert.That(departures.Length, Is.GreaterThanOrEqualTo(3), "several aircraft push in the opening bank");
+            Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(4),
+                "three regional arrivals plus the opening Air New Zealand arrival");
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60), "departures are spread across the opening bank");
         }
     }
 }

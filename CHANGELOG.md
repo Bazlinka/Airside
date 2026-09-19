@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **12/30 taxi follows the taxiways.** Regional taxi-out and vacate
+  walk the OSM centreline graph (T4–K–A–G1 to 12, A6–D1 across 05/23
+  to D2 for 30) instead of a five-point chord across the grass.
+
+- **Operations reads like a movement board.** Status is Taxiing,
+  Holding, Departing, Departed, Inbound or Landed — not "returning"
+  or "taking off". Planned arrivals say Expected. The aircraft column
+  is gone; the operator sits under the flight number.
+
+- **The field opens on a bank.** Four aircraft are already inbound,
+  the rest of the AI push inside half an hour, and turnarounds are
+  18–40 minutes so the apron does not sit idle.
+
 - **Departures turn toward the destination.** After rotate the nose
   yaws onto the booked track instead of climbing forever along the
   runway heading. Climb-out banks with that turn.

@@ -56,10 +56,10 @@ namespace Airside.Simulation
 
         public static readonly SkyRoute[] Routes =
         {
-            new("QF", 400, 12 * 60, "MEL", "SYD", AircraftType.Boeing7378),
-            new("QF", 401, 12 * 60, "SYD", "MEL", AircraftType.Boeing7378),
-            new("VA", 210, 16 * 60, "BNE", "MEL", AircraftType.Boeing7378),
-            new("VA", 211, 16 * 60, "MEL", "BNE", AircraftType.Boeing7378),
+            new("QF", 400, 8 * 60, "MEL", "SYD", AircraftType.Boeing7378),
+            new("QF", 401, 8 * 60, "SYD", "MEL", AircraftType.Boeing7378),
+            new("VA", 210, 12 * 60, "BNE", "MEL", AircraftType.Boeing7378),
+            new("VA", 211, 12 * 60, "MEL", "BNE", AircraftType.Boeing7378),
             new("QF", 9, 24 * 60, "PER", "MEL", AircraftType.Boeing78710),
             new("QF", 10, 24 * 60, "MEL", "PER", AircraftType.Boeing78710),
             new("QF", 7, 26 * 60, "PER", "SYD", AircraftType.Boeing78710),

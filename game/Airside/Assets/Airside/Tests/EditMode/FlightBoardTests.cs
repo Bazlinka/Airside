@@ -82,20 +82,20 @@ namespace Airside.Tests
             RunTo(clock, ops, outboundAt);
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("ADL → BHQ"));
-            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("En route"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Departed"));
             Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("ARRIVES"));
 
             var inboundAt = outboundAt - 1 + airborne + AirlineOperations.DestinationTurnaroundSeconds + 1;
             RunTo(clock, ops, inboundAt);
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
-            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
-            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("IN BOUND"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Inbound"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("ETA"));
         }
 
         [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
         [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
-        [TestCase(FleetState.Landing, "CLEAR RWY")]
+        [TestCase(FleetState.Landing, "LANDED")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
         public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
         {

@@ -192,15 +192,15 @@ namespace Airside.Presentation
                 FleetState.AtStand => "Available",
                 FleetState.TaxiOut => "Taxiing",
                 FleetState.HoldingShort => "Holding",
-                FleetState.TakingOff => "Takeoff",
-                FleetState.Outbound => "En route",
-                FleetState.AtDestination => "Turnaround",
-                FleetState.Inbound => "Returning",
-                FleetState.HoldingForLanding => "Final",
+                FleetState.TakingOff => "Departing",
+                FleetState.Outbound => "Departed",
+                FleetState.AtDestination => "Away",
+                FleetState.Inbound => "Inbound",
+                FleetState.HoldingForLanding => "On final",
                 FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
-                FleetState.AwaitingStand => "Needs stand",
-                FleetState.TaxiIn => "Taxiing in",
+                FleetState.AwaitingStand => "Landed",
+                FleetState.TaxiIn => "Landed",
                 _ => aircraft.State.ToString()
             };
         }

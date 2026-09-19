@@ -207,8 +207,8 @@ namespace Airside.Simulation
             CareerState = new AirlineCareerState();
         }
 
-        /// <summary>Staggered opening departures; an arrival is already inbound as play begins.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 7 * 60, 18 * 60, 31 * 60 };
+        /// <summary>Staggered opening departures so the first half-hour is a bank, not a trickle.</summary>
+        public static readonly long[] AiOpeningDepartureSeconds = { 5 * 60, 10 * 60, 16 * 60, 22 * 60, 28 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
@@ -225,35 +225,44 @@ namespace Airside.Simulation
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
-            // One QantasLink service is already returning from Port Lincoln. This puts
-            // an arrival on screen in the opening minutes instead of only after a
-            // complete out-and-back cycle, while leaving room for the player's return.
-            var inbound = aiFleet.FindLast(a => a.Airline.Id.Value == "QLK");
-            if (inbound != null && DestinationCatalogue.TryFind("PLO", out var portLincoln))
-            {
-                operations.SeedOpeningInbound(inbound, portLincoln, 4 * 60);
-                var secondInbound = aiFleet.FindLast(a => a.Airline.Id.Value == "REX");
-                if (secondInbound != null && DestinationCatalogue.TryFind("MGB", out var mountGambier))
-                    operations.SeedOpeningInbound(secondInbound, mountGambier, 11 * 60);
-            }
+            // Several services are already inbound so the field is a bank, not a
+            // quiet apron waiting for the first out-and-back.
+            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 3 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 8 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 14 * 60);
 
-            var departureIndex = 0;
-            for (var i = 0; i < aiFleet.Count && departureIndex < AiOpeningDepartureSeconds.Length; i++)
-            {
-                if (aiFleet[i].State == FleetState.AtStand && aiFleet[i].Scheduled is { } first)
-                    aiFleet[i].Scheduled = new ScheduledDeparture(first.Destination,
-                        operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
-            }
-
-            // The terminal jet joins after the regional openings are fixed, so they are unchanged.
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
-            var internationalInbound = terminalFleet.Find(a => a.Airline.Id.Value == "ANZ");
-            if (internationalInbound != null && DestinationCatalogue.TryFind("AKL", out var auckland))
-                operations.SeedOpeningInbound(internationalInbound, auckland, 17 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 19 * 60);
+
+            var departureIndex = 0;
+            foreach (var aircraft in operations.Fleet)
+            {
+                if (departureIndex >= AiOpeningDepartureSeconds.Length)
+                    break;
+                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand || aircraft.Scheduled is not { } first)
+                    continue;
+                aircraft.Scheduled = new ScheduledDeparture(first.Destination,
+                    operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
+            }
 
             operations.Clock = airlineClock ?? AirlineClock.Default;
             return operations;
+        }
+
+        private void TrySeedOpeningInbound(List<FleetAircraft> fleet, string airlineId, string destinationCode,
+            long secondsToCircuit)
+        {
+            if (fleet == null || !DestinationCatalogue.TryFind(destinationCode, out var destination))
+                return;
+            for (var i = fleet.Count - 1; i >= 0; i--)
+            {
+                var aircraft = fleet[i];
+                if (aircraft.Airline.Id.Value != airlineId || aircraft.State != FleetState.AtStand)
+                    continue;
+                SeedOpeningInbound(aircraft, destination, secondsToCircuit);
+                return;
+            }
         }
 
         private void SeedOpeningInbound(FleetAircraft aircraft, Destination destination, long secondsToCircuit)
@@ -1535,7 +1544,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Repeatable 30–64 minute turnarounds. The variation is tied to registration
+        /// Repeatable 18–40 minute turnarounds. The variation is tied to registration
         /// and trip number, so traffic feels human without changing every load.
         /// </summary>
         private static long AiTurnaroundSeconds(FleetAircraft aircraft)
@@ -1546,7 +1555,7 @@ namespace Airside.Simulation
                 foreach (var ch in aircraft.Registration)
                     hash = hash * 31 + ch;
                 hash = hash * 31 + aircraft.CompletedTrips;
-                var minutes = 30 + Math.Abs(hash % 35);
+                var minutes = 18 + Math.Abs(hash % 23);
                 return minutes * 60L;
             }
         }

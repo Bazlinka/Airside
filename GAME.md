@@ -1,5 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — 12/30 taxi follows the taxiways
+  (branch `feature/operations-busy-board`).** Bailey: taxiing was
+  broken; the plan did not use taxiways.
+  - **Cause:** 12/30 taxi-out and vacate were a five-point chord
+    with a 22 m fillet, so aircraft cut across grass instead of
+    T4–K–A–G1 / D1–D2.
+  - **Fix:** `AdelaideTaxiRouter` walks the OSM taxiway graph
+    (same join/snap as the layout generator). Runways are expensive
+    crossings so the 30 hold is reached via D1–05/23–D2, not grass.
+  - **Evidence:** Unity 6.3 EditMode **655/655**.
+  - **NEXT:** rebuild from main when asked.
+
+- **2026-09-20 Cursor — Operations wording and a busier field
+  (branch `feature/operations-busy-board`).** Bailey: the Operations
+  page needed tidier, more accurate words (landed, departed); the
+  airport felt too quiet.
+  - **Board:** FIDS words — Taxiing, Holding, Departing, Departed,
+    Inbound, Landed. Planned arrivals read Expected. Six columns
+    became five (operator sits under the flight number).
+  - **Traffic:** four aircraft already inbound at a new game; remaining
+    AI push in a 28-minute opening bank; AI turnarounds 18–40 min;
+    closer overflight intervals.
+  - **Evidence:** Unity 6.3 EditMode **655/655**, shipped with the
+    taxiway-router work on this branch.
+
 - **2026-09-20 Cursor — departure turn, titles, live stats
   (branch `feature/taxi-runways-night`).** Bailey: takeoff was not
   turning toward the destination; fuselage titles looked wrong;

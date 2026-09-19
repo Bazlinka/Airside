@@ -188,9 +188,9 @@ namespace Airside.Presentation
             {
                 FleetState.AtStand => "Available",
                 FleetState.Outbound when aircraft.CurrentDestination.HasValue =>
-                    $"En route to {aircraft.CurrentDestination.Value.Name}",
+                    $"Departed for {aircraft.CurrentDestination.Value.Name}",
                 FleetState.Inbound when aircraft.CurrentDestination.HasValue =>
-                    $"Returning from {aircraft.CurrentDestination.Value.Name}",
+                    $"Inbound from {aircraft.CurrentDestination.Value.Name}",
                 FleetState.AtDestination when aircraft.CurrentDestination.HasValue =>
                     $"On the ground at {aircraft.CurrentDestination.Value.Name}",
                 _ => OperationsSummary.CompactState(aircraft, now)

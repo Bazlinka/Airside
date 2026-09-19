@@ -175,8 +175,8 @@ namespace Airside.Presentation
                 return;
 
             var clock = operations.Clock ?? AirlineClock.Default;
-            Subtitle = $"Adelaide movement  ·  Runway {RunwayWeather.Label(operations.ActiveRunway)}"
-                       + $"  ·  Wind {operations.Wind.Text}";
+            Subtitle = $"Adelaide  ·  {RunwayWeather.Label(operations.ActiveRunway)}"
+                       + $"  ·  {operations.Wind.Text}";
 
             FillBoard(operations, now, tab, clock);
             FillAttention(operations, now, clock);
@@ -243,7 +243,7 @@ namespace Airside.Presentation
                     ? "Cancelled"
                     : planned.Disruption.Delayed
                         ? planned.Disruption.BoardLabel
-                        : planned.ScheduledAt.CompareTo(now) > 0 ? "Planned" : "Scheduled";
+                        : arrivals ? "Expected" : "Scheduled";
                 var plannedSeverity = planned.Disruption.Cancelled
                     ? StatusSeverity.Warning
                     : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
@@ -414,10 +414,10 @@ namespace Airside.Presentation
         public const float TabHeight = 30f;
         public const float TabWidth = 124f;
         public const float ColumnHeaderHeight = 22f;
-        public const float FlightRowHeight = 38f;
-        public const float DetailWidth = 268f;
-        public const float DetailGap = 20f;
-        public const float MinBoardWidth = 340f;
+        public const float FlightRowHeight = 34f;
+        public const float DetailWidth = 248f;
+        public const float DetailGap = 16f;
+        public const float MinBoardWidth = 360f;
 
         private OperationsWorkspaceLayout(HudBox surface, HudBox header, HudBox attention, HudBox tabs,
             HudBox board, HudBox detail, HudBox footer, float[] columns)
@@ -485,7 +485,7 @@ namespace Airside.Presentation
         public float ColumnWidth(int index) =>
             index + 1 < _columns.Length ? _columns[index + 1] - _columns[index] - 8f : Board.Right - _columns[index];
 
-        public static readonly string[] ColumnLabels = { "TIME", "FLIGHT", "ROUTE", "STAND", "STATUS", "AIRCRAFT" };
+        public static readonly string[] ColumnLabels = { "TIME", "FLIGHT", "ROUTE", "STAND", "STATUS" };
 
         public static OperationsWorkspaceLayout Create(HudBox surface, int attentionRows)
         {
@@ -503,7 +503,7 @@ namespace Airside.Presentation
             }
 
             var tabs = new HudBox(body.X, y, body.Width, TabHeight);
-            y = tabs.Bottom + 16f;
+            y = tabs.Bottom + 10f;
 
             var detailWidth = body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
             var boardWidth = detailWidth > 0f ? body.Width - detailWidth - DetailGap : body.Width;
@@ -515,15 +515,14 @@ namespace Airside.Presentation
                 : HudBox.Empty;
 
             // Widths are proportional so the board stays readable from a narrow laptop
-            // window to a wide desktop one; STATUS and AIRCRAFT absorb the slack.
+            // window to a wide desktop one; STATUS absorbs the slack.
             var columns = new float[ColumnLabels.Length];
             var w = board.Width;
             columns[0] = board.X;
-            columns[1] = board.X + Fit(w, 0.10f, 56f, 84f);
-            columns[2] = columns[1] + Fit(w, 0.13f, 70f, 110f);
-            columns[3] = columns[2] + Fit(w, 0.20f, 108f, 170f);
-            columns[4] = columns[3] + Fit(w, 0.09f, 52f, 76f);
-            columns[5] = columns[4] + Fit(w, 0.21f, 110f, 180f);
+            columns[1] = board.X + Fit(w, 0.11f, 56f, 80f);
+            columns[2] = columns[1] + Fit(w, 0.16f, 78f, 120f);
+            columns[3] = columns[2] + Fit(w, 0.22f, 108f, 168f);
+            columns[4] = columns[3] + Fit(w, 0.10f, 52f, 72f);
 
             return new OperationsWorkspaceLayout(surface, header, attention, tabs, board, detail, footer, columns);
         }
@@ -651,16 +650,15 @@ namespace Airside.Presentation
                         alpha: alpha);
 
                 into.Text(Cell(layout, 1, textY), row.FlightNumber, 13f, HudTone.Default, alpha: alpha);
-                if (row.FlightNumber != row.Registration)
-                    into.Text(Cell(layout, 1, box.Y + 20f), row.Registration, 10f, HudTone.Muted, alpha: alpha);
+                var flightSub = row.OperatorName.Length > 0 ? row.OperatorName : row.Registration;
+                if (flightSub.Length > 0 && flightSub != row.FlightNumber)
+                    into.Text(Cell(layout, 1, box.Y + 18f), flightSub, 10f, HudTone.Muted, alpha: alpha);
 
                 into.Text(Cell(layout, 2, textY), row.Route, 13f, HudTone.Default, alpha: alpha);
                 into.Text(Cell(layout, 3, textY), row.Stand, 13f, HudTone.Default, alpha: alpha);
                 into.Text(Cell(layout, 4, textY), row.Status, 13f, row.StatusTone,
                     row.Severity == StatusSeverity.Normal ? HudTextStyle.Regular : HudTextStyle.Bold,
                     alpha: alpha);
-                into.Text(Cell(layout, 5, textY), row.TypeName, 12f, HudTone.Default, alpha: alpha);
-                into.Text(Cell(layout, 5, box.Y + 20f), row.OperatorName, 10f, HudTone.Muted, alpha: alpha);
 
                 if (row.HasProgress)
                     into.Bar(new HudBox(layout.ColumnX(0), box.Bottom - 3f, layout.Board.Right - layout.ColumnX(0), 2f),
@@ -698,7 +696,10 @@ namespace Airside.Presentation
             into.Fill(new HudBox(pane.X, pane.Y + 4f, 3f, 28f), HudTone.Accent, 1f);
             into.Text(new HudBox(pane.X + 12f, pane.Y + 4f, pane.Width - 12f, 26f), model.SelectedRegistration,
                 20f, HudTone.Default, HudTextStyle.Bold);
-            into.Text(new HudBox(pane.X + 12f, pane.Y + 30f, pane.Width - 12f, 18f), model.SelectedRouteLine,
+            var typeLine = string.IsNullOrEmpty(model.SelectedTypeName)
+                ? model.SelectedRouteLine
+                : $"{model.SelectedTypeName}  ·  {model.SelectedRouteLine}";
+            into.Text(new HudBox(pane.X + 12f, pane.Y + 30f, pane.Width - 12f, 18f), typeLine,
                 12f, HudTone.Muted);
 
             var y = pane.Y + 60f;

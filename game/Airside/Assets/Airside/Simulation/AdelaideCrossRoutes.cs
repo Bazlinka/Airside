@@ -5,7 +5,8 @@ namespace Airside.Simulation
     /// <summary>
     /// Taxi, lineup and vacate polylines for the 12/30 strip. Jets stay on
     /// 05/23; regionals use these so they actually reach the short runway
-    /// instead of the 05/23 holds.
+    /// instead of the 05/23 holds. Taxi-out and vacate walk the OSM taxiway
+    /// graph — they do not cut a five-point chord across the grass.
     /// </summary>
     public static class AdelaideCrossRoutes
     {
@@ -23,8 +24,8 @@ namespace Airside.Simulation
 
         public static float[] TaxiOutFrom(float startX, float startZ, RunwayDirection runway) =>
             runway == RunwayDirection.Runway30
-                ? Route(startX, startZ, To30)
-                : Route(startX, startZ, To12);
+                ? AdelaideTaxiRouter.Route(startX, startZ, Hold30[0], Hold30[1])
+                : AdelaideTaxiRouter.Route(startX, startZ, Hold12[0], Hold12[1]);
 
         public static void LocalToWorld(float localX, float localZ, out float x, out float z)
         {
@@ -36,25 +37,6 @@ namespace Airside.Simulation
         }
 
         public static float HalfLength => AdelaideLayout.CrossRunwayLengthMetres * 0.5f;
-
-        private static readonly float[] To12 =
-        {
-            920f, 526f,
-            507f, 554f,
-            488f, 703f,
-            331f, 1001f,
-            205f, 1174f,
-            102.1f, 1194.9f
-        };
-
-        private static readonly float[] To30 =
-        {
-            995f, 294f,
-            640f, 196f,
-            636f, -3f,
-            654f, -94f,
-            563.2f, -348.6f
-        };
 
         private static float[] Lineup12()
         {
@@ -83,23 +65,13 @@ namespace Airside.Simulation
         private static float[] Vacate12()
         {
             Threshold(RunwayDirection.Runway12, 520f, out var rx, out var rz);
-            return GroundPathSmoothing.FilletAndDensify(new[]
-            {
-                rx, rz,
-                rx + 40f, rz - 70f,
-                237f, 199f
-            }, 20f, 8f);
+            return AdelaideTaxiRouter.Route(rx, rz, AdelaideLayout.E2Hold[0], AdelaideLayout.E2Hold[1]);
         }
 
         private static float[] Vacate30()
         {
             Threshold(RunwayDirection.Runway30, 520f, out var rx, out var rz);
-            return GroundPathSmoothing.FilletAndDensify(new[]
-            {
-                rx, rz,
-                rx - 50f, rz + 80f,
-                237f, 199f
-            }, 20f, 8f);
+            return AdelaideTaxiRouter.Route(rx, rz, AdelaideLayout.E2Hold[0], AdelaideLayout.E2Hold[1]);
         }
 
         private static void Threshold(RunwayDirection runway, float ontoMetres, out float x, out float z)
@@ -108,15 +80,6 @@ namespace Airside.Simulation
                 ? HalfLength - ontoMetres
                 : -HalfLength + ontoMetres;
             LocalToWorld(along, 0f, out x, out z);
-        }
-
-        private static float[] Route(float startX, float startZ, float[] via)
-        {
-            var path = new float[2 + via.Length];
-            path[0] = startX;
-            path[1] = startZ;
-            Array.Copy(via, 0, path, 2, via.Length);
-            return GroundPathSmoothing.FilletAndDensify(path);
         }
     }
 }

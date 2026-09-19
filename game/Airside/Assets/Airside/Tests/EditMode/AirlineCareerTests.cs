@@ -46,13 +46,15 @@ namespace Airside.Tests
             RunTo(clock, ops, departAtSeconds);
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
 
-            var takeoffAt = departAtSeconds
-                + AirlineOperations.TaxiOutSecondsFrom(plane.DepartureStand, plane.Type, plane.AssignedRunway);
-            RunTo(clock, ops, takeoffAt);
-            Assert.That(plane.State, Is.EqualTo(FleetState.TakingOff), "empty runway: no hold");
+            while (plane.State is FleetState.TaxiOut or FleetState.HoldingShort)
+            {
+                var next = plane.StateEndsAt ?? clock.Now.Advance(1);
+                RunTo(clock, ops, next.ElapsedSeconds);
+            }
 
-            var outboundAt = takeoffAt + AirlineOperations.TakeoffRunwaySecondsFor(plane.Type);
-            RunTo(clock, ops, outboundAt + 1);
+            Assert.That(plane.State, Is.EqualTo(FleetState.TakingOff), "empty runway: no hold");
+            Assert.That(plane.StateEndsAt, Is.Not.Null);
+            RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds + 1);
             Assert.That(plane.State, Is.EqualTo(FleetState.Outbound));
 
             while (plane.State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound)

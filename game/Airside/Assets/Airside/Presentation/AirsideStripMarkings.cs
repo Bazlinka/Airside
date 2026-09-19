@@ -115,6 +115,27 @@ namespace Airside.Presentation
             return list.ToArray();
         }
 
+        /// <summary>How far past the threshold bars the designation numerals begin.</summary>
+        public const float DesignationFromThreshold = 42f;
+        public const float DesignationDigitHeight = 16f;
+        public const float DesignationDigitWidth = 8f;
+        public const float DesignationDigitGap = 2.4f;
+        public const float DesignationStroke = 1.7f;
+
+        /// <summary>
+        /// ICAO-style runway designation numbers in local strip coordinates.
+        /// West/south-west labels sit after the −X threshold and read upright
+        /// to an aircraft arriving from −X; the far-end labels are rotated 180°.
+        /// </summary>
+        public static Mark[] DesignationNumerals(float stripLength, string nearLabel, string farLabel)
+        {
+            var half = stripLength * 0.5f;
+            var list = new List<Mark>(32);
+            AddDesignation(list, -half + DesignationFromThreshold, 1f, nearLabel);
+            AddDesignation(list, half - DesignationFromThreshold, -1f, farLabel);
+            return list.ToArray();
+        }
+
         /// <summary>Full paint set for the main 05/23 strip (local = world for that strip).</summary>
         public static Mark[] MainRunwayAll()
         {
@@ -124,6 +145,7 @@ namespace Airside.Presentation
                 Edges(length, width),
                 CentrelineDashes(length),
                 ThresholdStripes(length),
+                DesignationNumerals(length, "05", "23"),
                 AimingPoints(length, LongStripAimingFromThreshold),
                 TouchdownZones(length, LongStripTouchdownDistances));
         }
@@ -137,6 +159,7 @@ namespace Airside.Presentation
                 Edges(length, width),
                 CentrelineDashes(length),
                 ThresholdStripes(length),
+                DesignationNumerals(length, "12", "30"),
                 AimingPoints(length, ShortStripAimingFromThreshold),
                 TouchdownZones(length, ShortStripTouchdownDistances));
         }
@@ -261,6 +284,59 @@ namespace Airside.Presentation
             for (var i = 0; i < count; i++)
                 list.Add(new Mark(start + i * step, centerZ, dashLength, barWidth));
         }
+
+        private static void AddDesignation(List<Mark> list, float baselineX, float along, string label)
+        {
+            if (string.IsNullOrEmpty(label))
+                return;
+            var count = label.Length;
+            var span = count * DesignationDigitWidth + Math.Max(0, count - 1) * DesignationDigitGap;
+            var left = -span * 0.5f;
+            for (var i = 0; i < count; i++)
+            {
+                var cx = left + DesignationDigitWidth * 0.5f + i * (DesignationDigitWidth + DesignationDigitGap);
+                AddDigit(list, baselineX, cx, along, label[i]);
+            }
+        }
+
+        private static void AddDigit(List<Mark> list, float baselineX, float centerZ, float along, char digit)
+        {
+            var h = DesignationDigitHeight;
+            var w = DesignationDigitWidth;
+            var s = DesignationStroke;
+            var midX = baselineX + along * h * 0.5f;
+            var topX = midX + along * (h * 0.5f - s * 0.5f);
+            var botX = midX - along * (h * 0.5f - s * 0.5f);
+            var leftZ = centerZ - (w * 0.5f - s * 0.5f);
+            var rightZ = centerZ + (w * 0.5f - s * 0.5f);
+            var barH = h * 0.5f - s;
+            // 7-segment: A top, B right-top, C right-bot, D bottom, E left-bot, F left-top, G mid.
+            var mask = DigitMask(digit);
+            if ((mask & 1) != 0)
+                list.Add(new Mark(topX, centerZ, s, w));
+            if ((mask & 2) != 0)
+                list.Add(new Mark(midX + along * barH * 0.5f, rightZ, barH, s));
+            if ((mask & 4) != 0)
+                list.Add(new Mark(midX - along * barH * 0.5f, rightZ, barH, s));
+            if ((mask & 8) != 0)
+                list.Add(new Mark(botX, centerZ, s, w));
+            if ((mask & 16) != 0)
+                list.Add(new Mark(midX - along * barH * 0.5f, leftZ, barH, s));
+            if ((mask & 32) != 0)
+                list.Add(new Mark(midX + along * barH * 0.5f, leftZ, barH, s));
+            if ((mask & 64) != 0)
+                list.Add(new Mark(midX, centerZ, s, w));
+        }
+
+        private static int DigitMask(char digit) => digit switch
+        {
+            '0' => 1 | 2 | 4 | 8 | 16 | 32,
+            '1' => 2 | 4,
+            '2' => 1 | 2 | 8 | 16 | 64,
+            '3' => 1 | 2 | 4 | 8 | 64,
+            '5' => 1 | 4 | 8 | 32 | 64,
+            _ => 0
+        };
 
         private static void AddThresholdEnd(List<Mark> list, float centerX, int perSide)
         {

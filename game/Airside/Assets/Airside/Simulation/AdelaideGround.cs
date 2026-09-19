@@ -31,6 +31,8 @@ namespace Airside.Simulation
         private static readonly Dictionary<string, GroundLeg> VacateLegs = new(StringComparer.Ordinal);
         private static GroundLeg _lineupLeg;
         private static GroundLeg _lineup23Leg;
+        private static GroundLeg _lineup12Leg;
+        private static GroundLeg _lineup30Leg;
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
 
@@ -99,10 +101,18 @@ namespace Airside.Simulation
         public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
             new GroundLegPart(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup), tailFirst: false));
 
-        public static GroundLeg LineupFor(RunwayDirection runway) => runway == RunwayDirection.Runway23
-            ? _lineup23Leg ??= new GroundLeg(new GroundLegPart(
-                new GroundPath(AdelaideLayout.Lineup23, GroundSpeedLimits.Lineup), tailFirst: false))
-            : Lineup;
+        public static GroundLeg LineupFor(RunwayDirection runway) => runway switch
+        {
+            RunwayDirection.Runway23 => _lineup23Leg ??= new GroundLeg(new GroundLegPart(
+                new GroundPath(AdelaideLayout.Lineup23, GroundSpeedLimits.Lineup), tailFirst: false)),
+            RunwayDirection.Runway12 => _lineup12Leg ??= new GroundLeg(new GroundLegPart(
+                new GroundPath(AdelaideCrossRoutes.Lineup(RunwayDirection.Runway12), GroundSpeedLimits.Lineup),
+                tailFirst: false)),
+            RunwayDirection.Runway30 => _lineup30Leg ??= new GroundLeg(new GroundLegPart(
+                new GroundPath(AdelaideCrossRoutes.Lineup(RunwayDirection.Runway30), GroundSpeedLimits.Lineup),
+                tailFirst: false)),
+            _ => Lineup
+        };
 
         /// <summary>Where an aircraft parked on <paramref name="stand"/> stands: its stop and nose heading.</summary>
         public static GroundPose StandPose(StableId stand)
@@ -148,7 +158,7 @@ namespace Airside.Simulation
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
-                    new GroundLegPart(new GroundPath(CleanTaxiOut(runway == RunwayDirection.Runway23 ? bay.TaxiOut23 : bay.TaxiOut), limits, 0f, 0f,
+                    new GroundLegPart(new GroundPath(CleanTaxiOut(TaxiOutPath(bay, runway)), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[key] = leg;
             }
@@ -222,7 +232,7 @@ namespace Airside.Simulation
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: wheelbase),
-                    new GroundLegPart(new GroundPath(CleanTaxiOut(runway == RunwayDirection.Runway23 ? gate.TaxiOut23 : gate.TaxiOut),
+                    new GroundLegPart(new GroundPath(CleanTaxiOut(TaxiOutPath(gate, runway)),
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
@@ -255,6 +265,36 @@ namespace Airside.Simulation
 
         private static float[] CleanTaxiOut(float[] xz) => TaxiPathCleanup.WithoutInitialHook(xz);
 
+        private static float[] TaxiOutPath(AdelaideBay bay, RunwayDirection runway) =>
+            runway switch
+            {
+                RunwayDirection.Runway23 => bay.TaxiOut23,
+                RunwayDirection.Runway12 => AdelaideCrossRoutes.TaxiOutFrom(bay.TaxiOut[0], bay.TaxiOut[1],
+                    RunwayDirection.Runway12),
+                RunwayDirection.Runway30 => AdelaideCrossRoutes.TaxiOutFrom(bay.TaxiOut[0], bay.TaxiOut[1],
+                    RunwayDirection.Runway30),
+                _ => bay.TaxiOut
+            };
+
+        private static float[] TaxiOutPath(AdelaideTerminalGate gate, RunwayDirection runway) =>
+            runway switch
+            {
+                RunwayDirection.Runway23 => gate.TaxiOut23,
+                RunwayDirection.Runway12 => AdelaideCrossRoutes.TaxiOutFrom(gate.TaxiOut[0], gate.TaxiOut[1],
+                    RunwayDirection.Runway12),
+                RunwayDirection.Runway30 => AdelaideCrossRoutes.TaxiOutFrom(gate.TaxiOut[0], gate.TaxiOut[1],
+                    RunwayDirection.Runway30),
+                _ => gate.TaxiOut
+            };
+
+        private static float[] VacatePolyline(RunwayDirection runway) => runway switch
+        {
+            RunwayDirection.Runway23 => AdelaideLayout.Vacate23,
+            RunwayDirection.Runway12 => AdelaideCrossRoutes.Vacate(RunwayDirection.Runway12),
+            RunwayDirection.Runway30 => AdelaideCrossRoutes.Vacate(RunwayDirection.Runway30),
+            _ => AdelaideLayout.Vacate
+        };
+
         /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
         private static GroundPath VacatePath => VacatePathFor(AircraftType.Atr42, RunwayDirection.Runway05);
 
@@ -267,7 +307,7 @@ namespace Airside.Simulation
             if (!VacatePaths.TryGetValue(key, out var path))
             {
                 var performance = AircraftPerformance.For(type);
-                path = new GroundPath(runway == RunwayDirection.Runway23 ? AdelaideLayout.Vacate23 : AdelaideLayout.Vacate,
+                path = new GroundPath(VacatePolyline(runway),
                     GroundSpeedLimits.TaxiFor(type),
                     entrySpeed: CircuitProfile.Knots(performance.RunwayExitKnots));
                 VacatePaths[key] = path;

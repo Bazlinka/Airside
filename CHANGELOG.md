@@ -1,5 +1,38 @@
 ## Unreleased
 
+- **Departures turn toward the destination.** After rotate the nose
+  yaws onto the booked track instead of climbing forever along the
+  runway heading. Climb-out banks with that turn.
+
+- **Fuselage titles are short wordmarks.** REX, VIRGIN, AIR NZ and
+  SOUTHERN CROSS replace the full legal name; pale accents drop to
+  dark ink so the paint reads on white metal. The cheatline tint is
+  stronger.
+
+- **Speed and live stats stay on screen.** Airline mode shows kt,
+  altitude and heading on the bottom readout and on the selected /
+  followed aircraft card.
+
+- **Pushback no longer faces the stand and then snaps 180°.** The tug
+  keeps the parked heading and turns the nose onto the taxi heading
+  through the last part of the push, so disconnect is a turnout.
+
+- **Taxi looks like a human is steering.** Ground heading looks 16 m
+  ahead, visual corners use an 18 m fillet, yaw damps slower on the
+  ground, and the weave is large enough to read.
+
+- **Runway names are painted on the pavement.** 05 and 23 sit after the
+  main-strip thresholds; 12 and 30 sit on the cross strip, the same way
+  they do at a real field.
+
+- **Jets use 05/23; everyone else uses 12/30.** Regionals taxi to the
+  cross-strip holds, line up, take off, land and vacate there. Jets stay
+  on the 3 100 m strip.
+
+- **The default field has night lighting.** Apron floods, stand markers,
+  denser runway-edge and taxi lamps, and 12/30 threshold/approach lights
+  come up at dusk. Landside streetlights stay off.
+
 - **The board now shows delays and cancellations.** A slice of the
   published Adelaide day is late or cancelled (more in the banks), and
   AI rotations pick up the same. Cancelled live aircraft sit the slot

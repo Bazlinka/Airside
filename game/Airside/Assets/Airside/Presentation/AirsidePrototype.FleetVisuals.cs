@@ -147,23 +147,24 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Small, smooth tracking corrections keep taxiing from looking rail-guided.
-        /// They are deterministic per registration, stay well inside the pavement and
-        /// disappear when stopped; there is no frame-to-frame random wobble.
+        /// Tracking corrections keep taxiing from looking rail-guided: a larger
+        /// weave, a couple of degrees of heading bias, and they stay on during
+        /// the slow push. Deterministic per registration; no frame-to-frame wobble.
         /// </summary>
         private GroundPose HumanGroundPose(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose pose)
         {
-            if (pose.Speed < 0.5f || leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
+            if (pose.Speed < 0.15f || leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
                 return pose;
 
             var seed = StableRegistrationHash(aircraft.Registration);
             var phase = (seed % 997) * 0.013f;
-            var wave = Mathf.Sin((float)_preciseTime * 0.12f + phase)
-                       + 0.35f * Mathf.Sin((float)_preciseTime * 0.037f + phase * 1.7f);
-            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.08f : 0.22f);
+            var wave = Mathf.Sin((float)_preciseTime * 0.09f + phase)
+                       + 0.45f * Mathf.Sin((float)_preciseTime * 0.031f + phase * 1.7f)
+                       + 0.18f * Mathf.Sin((float)_preciseTime * 0.19f + phase * 0.4f);
+            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.16f : 0.55f);
             var normalX = -pose.NoseZ;
             var normalZ = pose.NoseX;
-            var headingBias = Mathf.Sin((float)_preciseTime * 0.09f + phase * 0.7f) * 0.7f * Mathf.Deg2Rad;
+            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 2.2f * Mathf.Deg2Rad;
             var cos = Mathf.Cos(headingBias);
             var sin = Mathf.Sin(headingBias);
             var noseX = pose.NoseX * cos + pose.NoseZ * sin;
@@ -294,10 +295,10 @@ namespace Airside.Presentation
                     for (var i = 0; i < pixels.Length; i++)
                     {
                         var p = pixels[i];
-                        if (p.a < 8 || p.b - p.r < 30)
+                        if (p.a < 8 || p.b - p.r < 18)
                             continue;
-                        var lightness = Mathf.InverseLerp(100f, 180f, (p.r + p.g + p.b) / 3f);
-                        var colour = Color.Lerp(accent, Color.white, lightness * 0.45f);
+                        var lightness = Mathf.InverseLerp(90f, 190f, (p.r + p.g + p.b) / 3f);
+                        var colour = Color.Lerp(accent, Color.white, lightness * 0.28f);
                         pixels[i] = new Color32(
                             (byte)(colour.r * 255f), (byte)(colour.g * 255f), (byte)(colour.b * 255f), p.a);
                     }
@@ -332,10 +333,14 @@ namespace Airside.Presentation
                 return;
 
             var layout = AircraftIdentityMarkings.For(aircraft.Type);
-            var operatorText = aircraft.Airline.Name.ToUpperInvariant();
+            var operatorText = aircraft.Airline.FuselageTitle;
             // A long airline name is painted smaller rather than off the end of the fuselage.
             var operatorSize = AircraftTitlePaint.OperatorCharacterSize(
                 aircraft.Type, operatorText, layout.OperatorCharacterSize);
+            var (r, g, b) = aircraft.Airline.LiveryRgb();
+            var titleColour = AircraftTitlePaint.AccentReadsOnWhiteMetal(r, g, b)
+                ? operatorColour
+                : RegistrationInk;
             // One tracker drives all four labels' side visibility per aircraft (was one
             // MonoBehaviour per label, each independently resolving Camera.main and
             // re-deriving the same aircraft-relative camera side every LateUpdate).
@@ -350,7 +355,7 @@ namespace Airside.Presentation
                     new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
                     side,
                     operatorSize,
-                    operatorColour,
+                    titleColour,
                     FontStyle.Bold,
                     sideVisibility);
                 AddAircraftIdentityText(
@@ -397,10 +402,13 @@ namespace Airside.Presentation
             text.text = value;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+                ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
             text.fontSize = AircraftTitlePaint.FontPixelSize;
             text.characterSize = characterSize;
             text.fontStyle = style;
             text.color = colour;
+            text.richText = false;
 
             var renderer = label.GetComponent<MeshRenderer>();
             renderer.sortingOrder = 2;

@@ -1,5 +1,6 @@
 using Airside.Domain;
 using Airside.Presentation;
+using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
@@ -80,6 +81,36 @@ namespace Airside.Tests
                 Assert.That(AircraftTitlePaint.LineHeightMetres(fitted), Is.GreaterThan(0.2f),
                     $"{spec.Name}: titles must stay legible at overview distance");
             }
+        }
+
+        [Test]
+        public void FuselageTitles_AreShortWordmarksNotLegalNames()
+        {
+            Assert.That(Airline.Rex().FuselageTitle, Is.EqualTo("REX"));
+            Assert.That(Airline.VirginAustralia().FuselageTitle, Is.EqualTo("VIRGIN"));
+            Assert.That(Airline.AirNewZealand().FuselageTitle, Is.EqualTo("AIR NZ"));
+            Assert.That(Airline.QantasLink().FuselageTitle, Is.EqualTo("QANTASLINK"));
+            Assert.That(Airline.Player("Southern Cross Regional", "#39708A").FuselageTitle,
+                Is.EqualTo("SOUTHERN CROSS"));
+        }
+
+        [Test]
+        public void TitleInk_KeepsReadableAccentsAndDropsPaleOnes()
+        {
+            var rex = Airline.Rex().LiveryRgb();
+            var anz = Airline.AirNewZealand().LiveryRgb();
+            Assert.That(AircraftTitlePaint.AccentReadsOnWhiteMetal(rex.r, rex.g, rex.b), Is.True);
+            Assert.That(AircraftTitlePaint.AccentReadsOnWhiteMetal(anz.r, anz.g, anz.b), Is.False,
+                "near-black Air NZ stays a dark wordmark, not white-on-white");
+            Assert.That(AircraftTitlePaint.AccentReadsOnWhiteMetal(250, 230, 80), Is.False,
+                "yellow on white metal would vanish");
+        }
+
+        [Test]
+        public void UnityYaw90_IsRunway05TrueHeading()
+        {
+            Assert.That(RunwayWeather.TrueFromUnityYaw(90f), Is.EqualTo(50f).Within(0.01f));
+            Assert.That(RunwayWeather.TrueFromUnityYaw(0f), Is.EqualTo(320f).Within(0.01f));
         }
     }
 }

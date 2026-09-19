@@ -28,6 +28,23 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Regional_UsesTheCrossStrip_JetStaysOnTheLongStrip()
+        {
+            var wind12 = new SurfaceWind(123, 10);
+            var wind30 = new SurfaceWind(303, 10);
+            Assert.That(RunwayWeather.Select(wind12, AircraftType.Atr42, null, null),
+                Is.EqualTo(RunwayDirection.Runway12));
+            Assert.That(RunwayWeather.Select(wind30, AircraftType.Dash8Q400, null, null),
+                Is.EqualTo(RunwayDirection.Runway30));
+            Assert.That(RunwayWeather.Select(wind12, AircraftType.Boeing7378, null, null),
+                Is.EqualTo(RunwayDirection.Runway05));
+            Assert.That(RunwayWeather.Select(wind30, AircraftType.AirbusA321Neo, null, null),
+                Is.EqualTo(RunwayDirection.Runway23));
+            Assert.That(RunwayWeather.IsMainRunway(RunwayDirection.Runway05), Is.True);
+            Assert.That(RunwayWeather.IsMainRunway(RunwayDirection.Runway12), Is.False);
+        }
+
+        [Test]
         public void HeavyAircraftReceiveLongerWakeSpacing()
         {
             Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.AirbusA350900), Is.EqualTo(180));

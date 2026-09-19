@@ -27,9 +27,9 @@ namespace Airside.Presentation
         public const float MenuWidth = 340f;
         public const float MenuHeight = 232f;
 
-        /// <summary>Airspeed readout, centred just above the control bar.</summary>
-        public const float ReadoutWidth = 230f;
-        public const float ReadoutHeight = 34f;
+        /// <summary>Live speed / altitude / heading, centred just above the control bar.</summary>
+        public const float ReadoutWidth = 420f;
+        public const float ReadoutHeight = 38f;
         public const float ReadoutGap = 8f;
 
         private HudLayout(Vector2 viewport, Rect controlBar, Rect pauseMenu, Rect speedReadout)

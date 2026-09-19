@@ -74,6 +74,17 @@ namespace Airside.Presentation
         /// </summary>
         public static float OperatorCharacterSize(AircraftType type, string operatorTitle, float authored) =>
             FitCharacterSize(operatorTitle, authored, TitleLengthBudgetMetres(type));
+
+        /// <summary>
+        /// Titles sit on white metal. Pale accents (yellow, ice-blue) vanish on
+        /// that skin; near-black still reads as a dark wordmark. Mid-range
+        /// operator colours stay as painted.
+        /// </summary>
+        public static bool AccentReadsOnWhiteMetal(byte r, byte g, byte b)
+        {
+            var luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
+            return luminance >= 0.14 && luminance <= 0.72;
+        }
     }
 
     /// <summary>

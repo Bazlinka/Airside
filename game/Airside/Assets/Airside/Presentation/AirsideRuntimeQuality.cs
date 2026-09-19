@@ -53,7 +53,7 @@ namespace Airside.Presentation
             : (hasKit ? MediumRainDrops : MediumRainFallback);
 
         public static int ApronFloodCount(int highCount) =>
-            Current == Ladder.High ? highCount : Mathf.Min(4, highCount);
+            Current == Ladder.High ? highCount : Mathf.Min(8, highCount);
 
         public static int LandsideLightCount(int highCount) =>
             Current == Ladder.High ? highCount : Mathf.Max(1, highCount / 2);

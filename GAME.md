@@ -1,5 +1,41 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — departure turn, titles, live stats
+  (branch `feature/taxi-runways-night`).** Bailey: takeoff was not
+  turning toward the destination; fuselage titles looked wrong;
+  speed and live stats were missing in airline mode.
+  - **Turn:** after rotate the nose yaws onto the destination track
+    (`YawDegrees` is applied as heading, not only a few metres of
+    lateral). Climb-out banks with the turn.
+  - **Titles:** short fuselage wordmarks (REX, VIRGIN, AIR NZ,
+    SOUTHERN CROSS) with ink that reads on white metal. Livery
+    cheatline tint is stronger.
+  - **Stats:** the speed readout stays up in FleetMode (kt, ft,
+    heading) and the selected / followed card shows the same live
+    line.
+  - **Evidence:** Unity 6.3 EditMode **651/651**. Ready to merge, then
+    rebuild from main.
+
+- **2026-09-20 Cursor — taxi, runway names, 12/30, night lights
+  (branch `feature/taxi-runways-night`).** Bailey: pushback faced the
+  wrong way then snapped 180°; taxi looked robotic; runway names were
+  not painted on the strips; jets should use the long runway and others
+  the cross strip; there was no night lighting on the default field.
+  - **Pushback:** the tug keeps the stand heading, then turns the nose
+    onto the taxi heading through the last part of the push. The 120°
+    visual snap is gone.
+  - **Taxi:** 16 m look-ahead heading, 18 m visual fillets, slower yaw
+    damp, and a larger weave so ground movement reads human.
+  - **Paint:** 05/23 and 12/30 designation numerals sit after each
+    threshold, readable to the arriving aircraft.
+  - **Assignment:** jets stay on 05/23; regionals taxi, line up, take
+    off, land and vacate on 12/30.
+  - **Night:** the default field now lights apron floods, stand markers,
+    denser edge/taxi lamps and 12/30 threshold/ALS. Landside streetlights
+    stay off.
+  - **Evidence:** Unity 6.3 EditMode **651/651**, shipped with the
+    departure-turn / title / live-stats commit on this branch.
+
 - **2026-09-19 Cursor — delays, routes, landing crawl, approach side
   (branch `feature/runways-minimap-terminal`).** Bailey: there should be
   delays and cancellations; arrivals said they were coming over the ocean

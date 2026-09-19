@@ -124,7 +124,10 @@ namespace Airside.Presentation
             new AdelaideTerminalFlood(1290f, 434f, 1290f, 388f),
             new AdelaideTerminalFlood(1385f, 434f, 1385f, 388f),
             new AdelaideTerminalFlood(1480f, 434f, 1480f, 388f),
-            new AdelaideTerminalFlood(1575f, 434f, 1575f, 388f)
+            new AdelaideTerminalFlood(1575f, 434f, 1575f, 388f),
+            new AdelaideTerminalFlood(920f, 530f, 920f, 490f),
+            new AdelaideTerminalFlood(1005f, 530f, 1005f, 490f),
+            new AdelaideTerminalFlood(1090f, 530f, 1090f, 490f)
         };
     }
 

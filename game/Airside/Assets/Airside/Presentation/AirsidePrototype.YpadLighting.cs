@@ -59,7 +59,7 @@ namespace Airside.Presentation
                 var edgeColour = Mathf.Abs(x) >= AirsideBareField.RunwayHalfLength - 600f ? caution : white;
                 PlaceYpadLens($"Runway edge 05/23 N {i:00}", new Vector3(x, 0.22f, AirsideBareField.RunwayHalfWidth + 0.65f), edgeColour, 0.24f);
                 PlaceYpadLens($"Runway edge 05/23 S {i:00}", new Vector3(x, 0.22f, -AirsideBareField.RunwayHalfWidth - 0.65f), edgeColour, 0.24f);
-                if (i % 4 == 0 || i == mainCount - 1)
+                if (i % 2 == 0 || i == mainCount - 1)
                 {
                     lights.Add(CreateYpadPointLight($"Runway edge point 05/23 N {i:00}",
                         new Vector3(x, 0.35f, AirsideBareField.RunwayHalfWidth + 0.65f), edgeColour, 18f));
@@ -79,7 +79,7 @@ namespace Airside.Presentation
                     var world = CrossRunwayWorld(along, side * (AirsideAdelaidePavement.CrossHalfWidth + 0.65f));
                     PlaceYpadLens($"Runway edge 12/30 {(side < 0 ? "L" : "R")} {i:00}",
                         world + Vector3.up * 0.22f, white, 0.24f);
-                    if (i % 4 == 0 || i == crossCount - 1)
+                    if (i % 2 == 0 || i == crossCount - 1)
                         lights.Add(CreateYpadPointLight(
                             $"Runway edge point 12/30 {(side < 0 ? "L" : "R")} {i:00}",
                             world + Vector3.up * 0.35f, white, 18f));
@@ -123,7 +123,7 @@ namespace Airside.Presentation
                         {
                             var position = new Vector3(point.x, 0.19f, point.y);
                             PlaceYpadLens($"Taxi CL green {fixture:000}", position, green, 0.25f);
-                            if (fixture % 18 == 0)
+                            if (fixture % 8 == 0)
                                 lights.Add(CreateYpadPointLight($"Taxi CL point {fixture:000}",
                                     position + Vector3.up * 0.12f, green, 10f));
                             fixture++;
@@ -265,6 +265,34 @@ namespace Airside.Presentation
             // 12/30 PAPI at both ends in the cross-runway's local coordinates.
             AddCrossPapiBar(lights, "PAPI 12", -AirsideAdelaidePavement.CrossHalfLength + 300f, 29f);
             AddCrossPapiBar(lights, "PAPI 30", AirsideAdelaidePavement.CrossHalfLength - 300f, -29f);
+
+            for (var end = -1; end <= 1; end += 2)
+            {
+                var localX = end * AirsideAdelaidePavement.CrossHalfLength;
+                for (var i = -3; i <= 3; i++)
+                {
+                    var localZ = i * 6f;
+                    var threshold = CrossRunwayWorld(localX - end * 1.2f, localZ);
+                    var stop = CrossRunwayWorld(localX + end * 1.2f, localZ);
+                    PlaceYpadLens($"Threshold light 12/30 {end} {i + 3}",
+                        threshold + Vector3.up * 0.24f, green, 0.42f);
+                    PlaceYpadLens($"Runway end light 12/30 {end} {i + 3}",
+                        stop + Vector3.up * 0.24f, red, 0.42f);
+                    if (i is -3 or 0 or 3)
+                        lights.Add(CreateYpadPointLight($"Threshold point 12/30 {end} {i + 3}",
+                            threshold + Vector3.up * 0.38f, green, 16f));
+                }
+
+                for (var s = 1; s <= 10; s++)
+                {
+                    var along = localX + end * s * 30f;
+                    var world = CrossRunwayWorld(along, 0f);
+                    PlaceYpadLens($"ALS 12/30 {end} {s:00}", world + Vector3.up * 0.25f, white, 0.36f);
+                    if (s % 3 == 0)
+                        lights.Add(CreateYpadPointLight($"ALS 12/30 point {end} {s:00}",
+                            world + Vector3.up * 0.42f, white, 16f));
+                }
+            }
 
             // Runway 23 HIAL-CAT I: approach lies beyond the east threshold. Keep the
             // full published 801 m length and a 30 m visual station rhythm.

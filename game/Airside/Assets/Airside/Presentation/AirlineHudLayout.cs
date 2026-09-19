@@ -31,7 +31,7 @@ namespace Airside.Presentation
         public const float ToastHeight = 40f;
         public const float SetupWidth = 420f;
         public const float SelectedCardWidth = 440f;
-        public const float SelectedCardHeight = 148f;
+        public const float SelectedCardHeight = 172f;
         public const float MiniMapWidth = 220f;
         public const float MiniMapHeight = 132f;
 

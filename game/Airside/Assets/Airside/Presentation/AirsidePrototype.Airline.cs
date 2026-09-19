@@ -229,7 +229,7 @@ namespace Airside.Presentation
             }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
-                DrawSelectionHudCard(placement, panel, label, small, smallButton);
+                DrawSelectionHudCard(layout, placement, panel, label, small, smallButton);
             if (_controlsHelpOpen)
                 DrawControlsHelp(layout, panel, title, label, small, smallButton);
             DrawToast(placement.Toast, label);
@@ -323,10 +323,8 @@ namespace Airside.Presentation
             _hudPanels.Clear();
             _hudOverlays.Clear();
             if (!FleetMode)
-            {
                 _hudPanels.Add(layout.ControlBar);
-                _hudPanels.Add(layout.SpeedReadout);
-            }
+            _hudPanels.Add(layout.SpeedReadout);
             // The menu is modal: the whole screen is HUD while it is up, so dragging or scrolling
             // beside it no longer orbits, pans or zooms the camera behind it.
             if (_menuOpen)
@@ -354,7 +352,7 @@ namespace Airside.Presentation
                 if (miniMap.width > 0f)
                     _hudPanels.Add(miniMap);
             }
-            if (overview && TrySelectionHudCardRect(placement, out var selectionCard))
+            if (overview && TrySelectionHudCardRect(layout, placement, out var selectionCard))
                 _hudPanels.Add(selectionCard);
             if (_controlsHelpOpen)
                 _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
@@ -725,10 +723,10 @@ namespace Airside.Presentation
         /// Contextual selected-aircraft card: one dominant action, prep state for booked
         /// departures, and Cancel as a smaller red secondary.
         /// </summary>
-        private void DrawSelectionHudCard(AirlineHudLayout placement, GUIStyle panel, GUIStyle label, GUIStyle small,
+        private void DrawSelectionHudCard(HudLayout hud, AirlineHudLayout placement, GUIStyle panel, GUIStyle label, GUIStyle small,
             GUIStyle smallButton)
         {
-            if (!TrySelectionHudCardRect(placement, out var rect, out var aircraft))
+            if (!TrySelectionHudCardRect(hud, placement, out var rect, out var aircraft))
                 return;
 
             AirsideTheme.DrawOpaquePanel(rect);
@@ -743,10 +741,14 @@ namespace Airside.Presentation
             GUI.Label(new Rect(x, rect.y + 10f, inner, 22f),
                 $"{aircraft.Registration}  ·  {aircraft.Type.Name}", bold);
             GUI.Label(new Rect(x, rect.y + 32f, inner, 18f), SelectionRouteLine(aircraft), mute);
+            GUI.Label(new Rect(x, rect.y + 50f, inner, 18f), SelectionLiveStats(aircraft), mute);
 
-            var y = rect.y + 54f;
+            var y = rect.y + 72f;
             if (ShowsDeparturePrep(aircraft))
                 DrawDeparturePrepChecks(aircraft, x, y, inner, small);
+
+            if (!aircraft.Airline.IsPlayer)
+                return;
 
             var action = OperationsSummary.PrimaryAction(aircraft);
             var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
@@ -834,9 +836,18 @@ namespace Airside.Presentation
         {
             if (_operations == null)
                 return null;
+            if (_cameraController != null && _cameraController.IsFollowing)
+            {
+                var target = _cameraController.FollowTarget;
+                foreach (var pair in _fleetViewById)
+                {
+                    if (pair.Value == target && _fleetAircraftById.TryGetValue(pair.Key, out var followed))
+                        return followed;
+                }
+            }
+
             if (!string.IsNullOrEmpty(_selectedAircraftId)
-                && _fleetAircraftById.TryGetValue(_selectedAircraftId, out var selected)
-                && selected.Airline.IsPlayer)
+                && _fleetAircraftById.TryGetValue(_selectedAircraftId, out var selected))
                 return selected;
 
             var fleet = PlayerFleet();
@@ -846,12 +857,12 @@ namespace Airside.Presentation
             return null;
         }
 
-        private bool TrySelectionHudCardRect(AirlineHudLayout placement, out Rect rect)
+        private bool TrySelectionHudCardRect(HudLayout hud, AirlineHudLayout placement, out Rect rect)
         {
-            return TrySelectionHudCardRect(placement, out rect, out _);
+            return TrySelectionHudCardRect(hud, placement, out rect, out _);
         }
 
-        private bool TrySelectionHudCardRect(AirlineHudLayout placement, out Rect rect, out FleetAircraft aircraft)
+        private bool TrySelectionHudCardRect(HudLayout hud, AirlineHudLayout placement, out Rect rect, out FleetAircraft aircraft)
         {
             rect = default;
             aircraft = SelectionCardAircraft();
@@ -859,11 +870,41 @@ namespace Airside.Presentation
                 return false;
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
-            var height = ShowsDeparturePrep(aircraft) ? 148f : 112f;
+            var height = ShowsDeparturePrep(aircraft) ? 168f
+                : aircraft.Airline.IsPlayer ? 134f
+                : 88f;
             height = Mathf.Min(height, placement.SelectedCard.height);
-            rect = new Rect(placement.SelectedCard.x, placement.SelectedCard.yMax - height,
+            var bottom = placement.SelectedCard.yMax;
+            if (FleetMode)
+                bottom = Mathf.Min(bottom, hud.SpeedReadout.y - HudLayout.ReadoutGap);
+            rect = new Rect(placement.SelectedCard.x, bottom - height,
                 placement.SelectedCard.width, height);
             return true;
+        }
+
+        private string SelectionLiveStats(FleetAircraft aircraft)
+        {
+            if (!_fleetViewById.TryGetValue(aircraft.Registration, out var view)
+                || view == null || !view.gameObject.activeSelf)
+                return StatusText(aircraft);
+
+            CommercialFlight flight = null;
+            for (var i = 0; i < VisualFlights.Count; i++)
+            {
+                if (VisualFlights[i].AircraftId == aircraft.Registration)
+                {
+                    flight = VisualFlights[i];
+                    break;
+                }
+            }
+
+            var type = aircraft.Type;
+            var knots = flight != null && FleetGroundSpeed(flight) is { } groundSpeed
+                ? CircuitProfile.ToKnots(groundSpeed)
+                : flight != null
+                    ? AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type)
+                    : 0f;
+            return ReadoutText(knots, view);
         }
 
         private void SelectAircraft(FleetAircraft aircraft)
@@ -978,8 +1019,13 @@ namespace Airside.Presentation
             };
         }
 
-        private static string ApproachSide(RunwayDirection runway) =>
-            runway == RunwayDirection.Runway23 ? "from the north-east" : "over the gulf";
+        private static string ApproachSide(RunwayDirection runway) => runway switch
+        {
+            RunwayDirection.Runway23 => "from the north-east",
+            RunwayDirection.Runway12 => "from the north-east",
+            RunwayDirection.Runway30 => "from the south-west",
+            _ => "over the gulf"
+        };
 
         private string StandDepartureStatus(FleetAircraft aircraft)
         {

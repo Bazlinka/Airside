@@ -1940,11 +1940,15 @@ namespace Airside.Presentation
 
             var operation = flight.Operation;
             var phase = operation.Phase;
+            if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding)
+                && holding.State == FleetState.HoldingForLanding && phase == AircraftPhase.Approach)
+                return (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+
             if (phase == AircraftPhase.Circuit)
             {
                 var slot = 0;
-                if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding))
-                    slot = FleetVisual.QueueSlot(_operations.Fleet, holding);
+                if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var circuit))
+                    slot = FleetVisual.QueueSlot(_operations.Fleet, circuit);
                 return (float)CircuitTraffic.HoldingProgress(_preciseTime + lookAheadSeconds, slot);
             }
 
@@ -4622,7 +4626,8 @@ namespace Airside.Presentation
             AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
 
             BuildBareAdelaidePavement();
-            BuildBareAdelaidePerimeterFence();
+            if (AirsideBareField.HasLaunchFlag("-airsidePerimeterFence"))
+                BuildBareAdelaidePerimeterFence();
         }
 
         /// <summary>
@@ -12620,8 +12625,7 @@ namespace Airside.Presentation
             // Number-two holds off the flare gate, but compressing progress rather than
             // clamping it means it keeps creeping down the approach instead of stopping
             // dead in mid-air the instant it reaches the hold point.
-            if (phase == AircraftPhase.Approach && laneOffset != 0f && t > 0.82f)
-                t = 0.82f + (t - 0.82f) * 0.08f;
+            t = ApproachHold.ApproachVisualProgress(t, laneOffset);
             return phase switch
             {
                 AircraftPhase.Approach => AirsideFlightPath.Approach(t, laneOffset, type),

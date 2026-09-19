@@ -55,12 +55,19 @@ namespace Airside.Tests
             RunTo(clock, ops, outboundAt + 1);
             Assert.That(plane.State, Is.EqualTo(FleetState.Outbound));
 
-            var airborne = ops.AirborneSeconds(plane, destination);
-            var landingAt = outboundAt + airborne + AirlineOperations.DestinationTurnaroundSeconds + airborne;
-            RunTo(clock, ops, landingAt);
-            Assert.That(plane.State, Is.EqualTo(FleetState.Landing));
+            while (plane.State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound)
+            {
+                Assert.That(plane.StateEndsAt, Is.Not.Null, plane.State.ToString());
+                RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds);
+            }
 
-            RunTo(clock, ops, landingAt + AirlineOperations.LandingRunwaySecondsFor(plane.Type) + 3600);
+            var parkedBy = clock.Now.ElapsedSeconds + AirlineOperations.LandingRunwaySecondsFor(plane.Type) + 3600;
+            while (plane.State != FleetState.AtStand && clock.Now.ElapsedSeconds < parkedBy)
+            {
+                var next = ops.NextEventAt() ?? clock.Now.Advance(60);
+                RunTo(clock, ops, next.ElapsedSeconds);
+            }
+
             Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
         }
 

@@ -99,11 +99,11 @@ namespace Airside.Simulation
             var progress = (elapsedSeconds - startSeconds) / duration;
             if (progress < 0 || progress > 1)
                 return false;
-            GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
-                out var lat, out var lon);
-            GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
-                Math.Min(1.0, progress + 0.004), out var latAhead, out var lonAhead);
-            var heading = HeadingDegrees(lat, lon, latAhead, lonAhead);
+            FlightRoute.Point(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
+                callsign, out var lat, out var lon);
+            FlightRoute.Point(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
+                Math.Min(1.0, progress + 0.004), callsign, out var latAhead, out var lonAhead);
+            var heading = FlightRoute.HeadingDegrees(lat, lon, latAhead, lonAhead);
             var profile = new EnrouteProfile(from.DistanceKmTo(to), duration, type);
             var altitude = profile.AltitudeFeetAt(elapsedSeconds - startSeconds);
             flight = new SkyFlight(callsign, type, from, to, progress, lat, lon, altitude, heading);
@@ -292,17 +292,6 @@ namespace Airside.Simulation
 
             lat = Math.Atan2(z, Math.Sqrt(x * x + y * y)) * 180.0 / Math.PI;
             lon = Math.Atan2(y, x) * 180.0 / Math.PI;
-        }
-
-        private static double HeadingDegrees(double lat1, double lon1, double lat2, double lon2)
-        {
-            var phi1 = lat1 * Math.PI / 180.0;
-            var phi2 = lat2 * Math.PI / 180.0;
-            var dLon = (lon2 - lon1) * Math.PI / 180.0;
-            var y = Math.Sin(dLon) * Math.Cos(phi2);
-            var x = Math.Cos(phi1) * Math.Sin(phi2) - Math.Sin(phi1) * Math.Cos(phi2) * Math.Cos(dLon);
-            var deg = Math.Atan2(y, x) * 180.0 / Math.PI;
-            return deg < 0 ? deg + 360 : deg;
         }
     }
 

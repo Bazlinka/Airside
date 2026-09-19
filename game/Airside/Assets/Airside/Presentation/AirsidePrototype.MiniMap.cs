@@ -51,6 +51,7 @@ namespace Airside.Presentation
 
         private void DrawMiniMap(Rect panelRect, GUIStyle panel, GUIStyle small)
         {
+            _ = panel;
             if (!MiniMapShows || panelRect.width <= 0f || panelRect.height <= 0f)
             {
                 // A press held while the map hid (N, a dialog) would otherwise come back
@@ -59,7 +60,6 @@ namespace Airside.Presentation
                 return;
             }
 
-            GUI.Box(panelRect, GUIContent.none, panel);
             GUI.Label(new Rect(panelRect.x + 10f, panelRect.y + 2f, panelRect.width - 20f, FieldMiniMap.HeaderHeight),
                 "ADELAIDE AIRFIELD", small);
             var area = new Rect(panelRect.x + 6f, panelRect.y + FieldMiniMap.HeaderHeight, panelRect.width - 12f,

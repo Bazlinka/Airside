@@ -239,18 +239,27 @@ namespace Airside.Presentation
 
                 if (covered)
                     continue;
+                var plannedStatus = planned.Disruption.Cancelled
+                    ? "Cancelled"
+                    : planned.Disruption.Delayed
+                        ? planned.Disruption.BoardLabel
+                        : planned.ScheduledAt.CompareTo(now) > 0 ? "Planned" : "Scheduled";
+                var plannedSeverity = planned.Disruption.Cancelled
+                    ? StatusSeverity.Warning
+                    : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
                 _rows.Add(new OperationsFlightRow(
                     planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
                     clock.TimeText(planned.ScheduledAt),
-                    "—",
+                    planned.Disruption.Cancelled ? "—"
+                        : planned.Disruption.Delayed ? clock.TimeText(planned.EstimatedAt) : "—",
                     planned.FlightNumber,
                     planned.RouteText,
                     planned.StandLabel.Replace("Gate ", ""),
-                    planned.ScheduledAt.CompareTo(now) > 0 ? "Planned" : "Scheduled",
+                    plannedStatus,
                     planned.Type?.Name ?? string.Empty,
                     planned.AirlineName,
                     planned.LiveryHex,
-                    StatusSeverity.Normal,
+                    plannedSeverity,
                     isPlayer: false,
                     hasProgress: false,
                     progress01: 0f));

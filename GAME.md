@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-19 Cursor — delays, routes, landing crawl, approach side
+  (branch `feature/runways-minimap-terminal`).** Bailey: there should be
+  delays and cancellations; arrivals said they were coming over the ocean
+  but flew in over land; each destination had one flight route; landing
+  stuttered slowly for a few seconds; a square line boxed the airport map.
+  - **Delays / cancels:** `FlightDisruption` marks a slice of the published
+    day Delayed or Cancelled (more at the banks). AI bookings pick up the
+    same; cancelled AI sit the slot then rebook. The Operations board
+    shows the chip.
+  - **Approach:** holders sit on short final for the assigned runway
+    (gulf for 05, north-east for 23) instead of the land-side racetrack.
+    Status says "on final over the gulf / from the north-east".
+  - **Landing crawl:** fleet ~0.14 m centreline drift no longer triggers
+    the number-two 0.82 compress. A normal landing continues from short
+    final instead of restarting 4 km out.
+  - **Routes:** `FlightRoute` offsets each callsign off the city-pair
+    great circle so two Melbourne services are not one line.
+  - **Square line:** mini-map no longer draws the bevelled panel box;
+    the 3.4 × 2.3 km perimeter fence is opt-in (`-airsidePerimeterFence`).
+  - **Evidence:** Unity 6.3 EditMode **641/641, 0 failed**.
+  - **NEXT:** push onto #323. Do not run
+    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
 - **2026-09-19 Cursor — runways, mini-map gulf, altitudes, terminal
   (branch `feature/runways-minimap-terminal`).** Bailey: name the real
   runways and assign them by aircraft; 23 takeoffs over the ocean drew on

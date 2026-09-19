@@ -46,6 +46,11 @@ namespace Airside.Presentation
             if (aircraft == null)
                 return StatusSeverity.Normal;
 
+            if (aircraft.Scheduled is { Cancelled: true })
+                return StatusSeverity.Warning;
+            if (aircraft.Scheduled is { DelayMinutes: > 0 } && aircraft.State == FleetState.AtStand)
+                return StatusSeverity.Attention;
+
             var departureDelay = FlightBoard.DepartureDelayMinutes(aircraft, now) * 60;
             if (departureDelay >= HoldWarningSeconds)
                 return StatusSeverity.Warning;
@@ -96,7 +101,7 @@ namespace Airside.Presentation
                 FleetState.TaxiOut => "taxiing",
                 FleetState.HoldingShort => "holding",
                 FleetState.TakingOff => "takeoff",
-                FleetState.HoldingForLanding => "circuit",
+                FleetState.HoldingForLanding => "final",
                 FleetState.Landing => "landing",
                 FleetState.AwaitingStand => "needs stand",
                 FleetState.TaxiIn => "taxiing in",

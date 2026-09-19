@@ -191,10 +191,52 @@ namespace Airside.Simulation
             }
 
             var scale = DrawRadiusMetres / (VisibleRadiusKm * 1000.0);
-            x = east * scale;
-            z = north * scale;
-            y = Math.Max(400.0, flight.AltitudeFeet / EnrouteProfile.FeetPerMetre * DisplayAltitudeScale);
+            ToRunwayFrame(east, north, out var along, out var across);
+            x = along * scale;
+            z = across * scale;
+            y = DisplayAltitudeMetres(flight);
             return true;
+        }
+
+        /// <summary>
+        /// World +X is runway 05, not east. Convert true east/north so overflights
+        /// sit over the gulf and the hills the same way the field is drawn.
+        /// </summary>
+        public static void ToRunwayFrame(double eastMetres, double northMetres, out double along, out double across)
+        {
+            var heading = RunwayWeather.Heading05 * Math.PI / 180.0;
+            var sin = Math.Sin(heading);
+            var cos = Math.Cos(heading);
+            along = eastMetres * sin + northMetres * cos;
+            across = eastMetres * cos - northMetres * sin;
+        }
+
+        /// <summary>
+        /// Compressed display height that still separates turboprops, narrowbodies
+        /// and widebodies instead of stacking everyone on a 400 m floor.
+        /// </summary>
+        public static double DisplayAltitudeMetres(SkyFlight flight)
+        {
+            var cruise = flight.AltitudeFeet / EnrouteProfile.FeetPerMetre * DisplayAltitudeScale;
+            var band = flight.Type?.Id switch
+            {
+                "A359" or "B78X" => 220.0,
+                "B38M" or "A21N" => 120.0,
+                _ => 0.0
+            };
+            var jitter = 0.0;
+            if (!string.IsNullOrEmpty(flight.Callsign))
+            {
+                unchecked
+                {
+                    var hash = 17;
+                    foreach (var ch in flight.Callsign)
+                        hash = hash * 31 + ch;
+                    jitter = Math.Abs(hash % 7) * 18.0;
+                }
+            }
+
+            return 260.0 + band + jitter + cruise;
         }
 
         public static void ToLocalMetres(double latitude, double longitude, out double eastMetres, out double northMetres)

@@ -6692,7 +6692,7 @@ namespace Airside.Presentation
                 "Models/Props/mdl_airfield_lighting_kit_authored_v01.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v02.gltf",
                 "Models/Props/mdl_airfield_lighting_kit_v01.gltf");
-            // Simple ALS centreline + bar pairs west of runway 09 threshold (~x=-36).
+            // Simple ALS centreline + bar pairs west of runway 05 threshold (~x=-36).
             // Reuse edge/taxi/obst lighting kit parts so stations read authored, not toy cubes.
             // Kit path: fewer stations + silhouette fixtures so approach reads lit, not mesh soup.
             var hasLightingKit = !string.IsNullOrEmpty(lightingKit) && ArtGltfLoader.HasKit(lightingKit);
@@ -12819,7 +12819,7 @@ namespace Airside.Presentation
             AircraftPhase.TaxiIn => "Taxi via Alpha",
             AircraftPhase.AtStand => "Turnaround at stand",
             AircraftPhase.Pushback => "Pushback approved",
-            AircraftPhase.TaxiOut => "Taxi — hold short 09",
+            AircraftPhase.TaxiOut => "Taxi — hold short 05",
             AircraftPhase.Takeoff => "Cleared for takeoff",
             AircraftPhase.Departed => "Departed",
             AircraftPhase.Circuit => "In the circuit",

@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **Runways are named 05/23 and 12/30, and jets stay on the long strip.**
+  Status lines say the assigned end (holding short 05, landing 23). Jets
+  take 05/23 and will take the destination-aligned end when the wind is
+  close — a Perth 787 does not climb out inland. Turboprops follow the
+  wind more tightly. The mini-map labels both strips.
+
+- **The mini-map paints the gulf.** A 23 climb-out over the ocean no
+  longer sits on grass just past the 05 threshold. Bounds extend west and
+  the OSM sea polygon is filled as water.
+
+- **Sky traffic is no longer one shelf.** Overflights are converted into
+  the runway frame (so they sit over the gulf and the hills correctly)
+  and display height separates turboprops, narrowbodies and widebodies.
+
+- **The passenger terminal is back on the default field.** It sits on the
+  landform height instead of runway Y, so it does not float over the
+  dropped plateau.
+
 - **Pushbacks no longer drive into the next stand, and they wait their turn.**
   Generated taxi-out polylines that hooked the wrong way along T4 (BAY-3 into
   50A, and the same kink on 50E/50F) are trimmed so the tug hands off toward

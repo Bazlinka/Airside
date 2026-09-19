@@ -25,8 +25,14 @@ namespace Airside.Presentation
         /// <summary>Marshallers, ground crew, passengers, landside walkers.</summary>
         public static bool ShowPeople => !AircraftOnly && !BareWorld;
 
-        /// <summary>Terminal, hangar, ops shed, ARFF, fuel farm.</summary>
+        /// <summary>Legacy extra buildings (hangar, ops shed, ARFF, fuel farm).</summary>
         public static bool ShowBuildings => !BareWorld;
+
+        /// <summary>
+        /// The passenger terminal. Shown on the default field too — it sits on the
+        /// landform height, not runway Y, so it no longer floats over the plateau.
+        /// </summary>
+        public static bool ShowTerminal => true;
 
         /// <summary>Coast, hills, trees, fence, roads, car park, clouds, birds.</summary>
         public static bool ShowEnvironment => !BareWorld;

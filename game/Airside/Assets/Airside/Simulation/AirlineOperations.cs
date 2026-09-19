@@ -365,6 +365,11 @@ namespace Airside.Simulation
         public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
         public RunwayDirection ActiveRunway => RunwayWeather.Select(Wind);
 
+        /// <summary>The runway this aircraft should use right now, given wind, type and destination.</summary>
+        public RunwayDirection RunwayFor(FleetAircraft aircraft) =>
+            RunwayWeather.Select(Wind, aircraft?.Type,
+                aircraft?.CurrentDestination ?? aircraft?.Scheduled?.Destination, Home);
+
         /// <summary>Generator state for saving; 0 when the source is not a <see cref="SeededRandomSource"/>.</summary>
         public uint RandomState => _random is SeededRandomSource seeded ? seeded.State : 0;
         public IReadOnlyList<Airline> Airlines => _airlines;
@@ -985,7 +990,7 @@ namespace Airside.Simulation
                     aircraft.PrepStartedAt = null;
                     aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
-                    aircraft.AssignedRunway = ActiveRunway;
+                    aircraft.AssignedRunway = RunwayFor(aircraft);
                     aircraft.WentAroundThisTrip = false;
                     Transition(aircraft, FleetState.TaxiOut, now,
                         TaxiOutSecondsFrom(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway));
@@ -1008,7 +1013,7 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Inbound:
-                    aircraft.AssignedRunway = ActiveRunway;
+                    aircraft.AssignedRunway = RunwayFor(aircraft);
                     Transition(aircraft, FleetState.HoldingForLanding, now, null);
                     return true;
 

@@ -101,6 +101,27 @@ namespace Airside.Simulation
         public float EndX => _x[_x.Length - 1];
         public float EndZ => _z[_z.Length - 1];
 
+        /// <summary>Seconds needed to travel <paramref name="metres"/> along the path.</summary>
+        public double SecondsAtDistance(float metres)
+        {
+            if (metres <= 0f)
+                return 0.0;
+            if (metres >= Length)
+                return Seconds;
+            var lo = 0.0;
+            var hi = Seconds;
+            for (var n = 0; n < 24; n++)
+            {
+                var mid = (lo + hi) * 0.5;
+                if (DistanceAt(mid) < metres)
+                    lo = mid;
+                else
+                    hi = mid;
+            }
+
+            return hi;
+        }
+
         /// <summary>Metres travelled along the path after <paramref name="seconds"/>.</summary>
         public float DistanceAt(double seconds)
         {

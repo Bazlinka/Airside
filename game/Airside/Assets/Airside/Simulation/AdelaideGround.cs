@@ -148,7 +148,7 @@ namespace Airside.Simulation
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
-                    new GroundLegPart(new GroundPath(runway == RunwayDirection.Runway23 ? bay.TaxiOut23 : bay.TaxiOut, limits, 0f, 0f,
+                    new GroundLegPart(new GroundPath(CleanTaxiOut(runway == RunwayDirection.Runway23 ? bay.TaxiOut23 : bay.TaxiOut), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[key] = leg;
             }
@@ -222,7 +222,7 @@ namespace Airside.Simulation
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: wheelbase),
-                    new GroundLegPart(new GroundPath(runway == RunwayDirection.Runway23 ? gate.TaxiOut23 : gate.TaxiOut,
+                    new GroundLegPart(new GroundPath(CleanTaxiOut(runway == RunwayDirection.Runway23 ? gate.TaxiOut23 : gate.TaxiOut),
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
@@ -252,6 +252,8 @@ namespace Airside.Simulation
         /// <summary>5 kt for the last stretch onto the stand line.</summary>
         private static GroundSpeedZone StandLeadInZone =>
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
+
+        private static float[] CleanTaxiOut(float[] xz) => TaxiPathCleanup.WithoutInitialHook(xz);
 
         /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
         private static GroundPath VacatePath => VacatePathFor(AircraftType.Atr42, RunwayDirection.Runway05);

@@ -422,7 +422,7 @@ namespace Airside.Presentation
             var airline = _operations.PlayerAirline;
             var career = _operations.CareerState;
 
-            _topBarValues[0] = $"ADELAIDE  {ClockText(_clock.Now)}";
+            _topBarValues[0] = $"ADELAIDE  {StampText(_clock.Now)}";
             _topBarValues[1] = $"${career.Funds:N0}";
             _topBarValues[2] = $"RELIABILITY {career.Reliability}%";
             _topBarValues[3] = career.Tier.ToString().ToUpperInvariant();
@@ -1275,7 +1275,7 @@ namespace Airside.Presentation
                 GUI.color = labelColour;
             }
 
-            foreach (var sky in SkyTraffic.At(_preciseTime))
+            foreach (var sky in SkyTraffic.At(_preciseTime, _operations?.Clock))
             {
                 var point = Project(mapRect, sky.Longitude, sky.Latitude);
                 if (!mapRect.Contains(point))
@@ -2261,6 +2261,8 @@ namespace Airside.Presentation
         }
 
         private string ClockText(SimulationTime time) => (_operations?.Clock ?? AirlineClock.Default).TimeText(time);
+
+        private string StampText(SimulationTime time) => (_operations?.Clock ?? AirlineClock.Default).StampText(time);
 
         private static string DurationText(long seconds) => AirlineClock.DurationText(seconds);
     }

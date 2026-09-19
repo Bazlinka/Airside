@@ -1,5 +1,26 @@
 ## Where to resume — session handoff
 
+- **2026-09-19 Cursor — pushback collisions, live date, banks, departure
+  turn (branch `feature/pushback-clock-departure`).** Bailey: aircraft were
+  pushing back into each other and the wrong way onto taxi; date/time should
+  apply live in-game; traffic should follow busy hours; takeoff should angle
+  toward the destination.
+  - **Wrong-way taxi-out:** OSM hooks on BAY-3/5/6 ran along T4 into the
+    neighbour before turning for the hold. `TaxiPathCleanup.WithoutInitialHook`
+    strips that out-and-back; AdelaideGround taxi-out uses the cleaned
+    polyline. Heading snaps when tug disconnect flips the nose 180°.
+  - **Pushback spacing:** `NextTaxiReleaseAt` waits
+    `TaxiClearSecondsFrom` (push + disconnect + ~180 m of taxi), not 60 s, so
+    the second aircraft stays on the stand until the first has left the apron.
+  - **Clock:** top bar stamp is `AirlineClock.StampText` (weekday, date,
+    HH:mm) from the live Adelaide wall clock.
+  - **Banks:** `AdelaideHourProfile` weights the published day and thins
+    overflights; AI ready-times skip the afternoon hole.
+  - **Climb-out:** `DepartureTurn` yaws/drifts off the centreline after
+    rotate toward the booked destination.
+  - **NEXT:** Unity EditMode, then PR. Do not run
+    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
 - **2026-09-19 Cursor — day traffic, clean field, and land the timer fix
   (branch `feature/day-traffic-clean-field`, stacked on
   `feature/fix-stage-timers`).** Bailey asked to finish the merge of the

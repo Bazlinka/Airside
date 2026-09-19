@@ -154,7 +154,7 @@ namespace Airside.Tests
             var (clock, ops, first) = PlayerOnly(aircraft: 2);
             var second = ops.Fleet[1];
             var firstHoldingAt = 1000 + AirlineOperations.TaxiOutSecondsFrom(first.Stand);
-            var secondHoldingAt = 1000 + AirlineOperations.TaxiReleaseSeparationSeconds
+            var secondHoldingAt = 1000 + AirlineOperations.TaxiClearSecondsFrom(first.Stand, first.Type)
                                   + AirlineOperations.TaxiOutSecondsFrom(second.Stand);
             ops.ScheduleDeparture(first, Code("KGC"), new SimulationTime(1000));
             ops.ScheduleDeparture(second, Code("PLO"), new SimulationTime(1000));
@@ -183,11 +183,12 @@ namespace Airside.Tests
             Assert.That(first.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(second.Scheduled.Value.Destination, Is.EqualTo(secondDestination));
-            Assert.That(ops.NextEventAt(), Is.EqualTo(new SimulationTime(600 + AirlineOperations.TaxiReleaseSeparationSeconds)));
+            var releaseAt = 600 + AirlineOperations.TaxiClearSecondsFrom(first.Stand, first.Type);
+            Assert.That(ops.NextEventAt(), Is.EqualTo(new SimulationTime(releaseAt)));
 
-            RunTo(clock, ops, 600 + AirlineOperations.TaxiReleaseSeparationSeconds - 1);
+            RunTo(clock, ops, releaseAt - 1);
             Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
-            RunTo(clock, ops, 600 + AirlineOperations.TaxiReleaseSeparationSeconds);
+            RunTo(clock, ops, releaseAt);
             Assert.That(second.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(second.CurrentDestination, Is.EqualTo(secondDestination));
             Assert.That(second.Scheduled, Is.Null);

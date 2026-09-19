@@ -67,6 +67,16 @@ namespace Airside.Simulation
                 if (type == null)
                     continue;
 
+                var tripCount = 0;
+                foreach (var (code, weight) in AirlineOperations.AiNetworkFor(airline))
+                {
+                    if (!DestinationCatalogue.TryFind(code, out _))
+                        continue;
+                    tripCount += Math.Max(2, weight + 1);
+                }
+
+                var banks = AdelaideHourProfile.BankMinutes(tripCount,
+                    AirlineOperations.AiFirstDepartureHour, AirlineOperations.AiLastDepartureHour);
                 var slot = 0;
                 foreach (var (code, weight) in AirlineOperations.AiNetworkFor(airline))
                 {
@@ -75,9 +85,10 @@ namespace Airside.Simulation
                     var trips = Math.Max(2, weight + 1);
                     for (var trip = 0; trip < trips; trip++)
                     {
-                        var arriveMinutes = AirlineOperations.AiFirstDepartureHour * 60 + slot * 16;
-                        if (arriveMinutes >= AirlineOperations.AiLastDepartureHour * 60)
+                        if (slot >= banks.Length)
                             break;
+                        var arriveMinutes = Math.Min(banks[slot],
+                            AirlineOperations.AiLastDepartureHour * 60 - 55);
                         var departMinutes = Math.Min(arriveMinutes + 50,
                             AirlineOperations.AiLastDepartureHour * 60 - 5);
                         var number = 210 + slot;

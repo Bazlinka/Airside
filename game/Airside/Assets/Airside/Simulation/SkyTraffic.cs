@@ -110,9 +110,11 @@ namespace Airside.Simulation
             return true;
         }
 
-        public static IReadOnlyList<SkyFlight> At(SimulationTime now) => At(now.ElapsedSeconds);
+        public static IReadOnlyList<SkyFlight> At(SimulationTime now) => At(now.ElapsedSeconds, null);
 
-        public static IReadOnlyList<SkyFlight> At(double elapsedSeconds)
+        public static IReadOnlyList<SkyFlight> At(double elapsedSeconds) => At(elapsedSeconds, null);
+
+        public static IReadOnlyList<SkyFlight> At(double elapsedSeconds, AirlineClock clock)
         {
             var flights = new List<SkyFlight>();
             foreach (var route in Routes)
@@ -131,6 +133,8 @@ namespace Airside.Simulation
                 {
                     if (start + duration <= elapsedSeconds || start > elapsedSeconds)
                         continue;
+                    if (clock != null && QuietHourSkip(route, start, clock))
+                        continue;
                     var number = route.FlightNumber + Math.Abs(start / route.IntervalSeconds) % 40;
                     if (TryEnroute($"{route.Airline}{number}", route.Type, from, to, elapsedSeconds, start,
                             out var flight))
@@ -139,6 +143,21 @@ namespace Airside.Simulation
             }
 
             return flights;
+        }
+
+        /// <summary>
+        /// Drop a deterministic slice of overflights in quiet Adelaide hours so the
+        /// sky matches the banks. Peak hours keep every authored interval.
+        /// </summary>
+        private static bool QuietHourSkip(SkyRoute route, long startSeconds, AirlineClock clock)
+        {
+            var hour = clock.LocalAt(new SimulationTime(Math.Max(0, startSeconds))).Hour;
+            var density = AdelaideHourProfile.Density(hour);
+            if (density >= 0.99f)
+                return false;
+            var keep = Math.Max(0.18f, density);
+            var hash = Math.Abs((startSeconds / Math.Max(1, route.IntervalSeconds) + route.FlightNumber) % 100);
+            return hash >= keep * 100;
         }
 
         /// <summary>Closest true-kilometre approach of a great-circle corridor to Adelaide.</summary>

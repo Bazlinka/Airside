@@ -23,10 +23,14 @@ namespace Airside.Presentation
         public const int TextureScale = 2;
 
         public static readonly Color32 Grass = new(46, 64, 54, 235);
+        public static readonly Color32 Water = new(28, 78, 102, 235);
         public static readonly Color32 Apron = new(112, 118, 118, 255);
         public static readonly Color32 Taxiway = new(140, 146, 145, 255);
         public static readonly Color32 Runway = new(214, 218, 212, 255);
         public static readonly Color32 Building = new(200, 178, 134, 255);
+
+        /// <summary>How far west of the 05 threshold the map keeps so a 23 climb-out stays over the gulf.</summary>
+        public const float WestDepartureMetres = 1200f;
 
         private static float _minX, _maxX, _minZ, _maxZ;
         private static bool _boundsReady;
@@ -50,6 +54,11 @@ namespace Airside.Presentation
                 _maxX += PaddingMetres;
                 _minZ -= PaddingMetres;
                 _maxZ += PaddingMetres;
+                // 23 departs toward the gulf. Without this the climb-out sits on
+                // painted grass just past the 05 threshold.
+                var west = -AdelaideLayout.MainRunwayLengthMetres * 0.5f - WestDepartureMetres;
+                if (_minX > west)
+                    _minX = west;
                 _boundsReady = true;
             }
 
@@ -181,6 +190,8 @@ namespace Airside.Presentation
             WorldBounds(out var minX, out var maxX, out _, out _);
             var pixelsPerMetre = width / (maxX - minX);
 
+            FillPolygon(pixels, width, height, ToPixels(map, AdelaideCoast.SeaPolygon), Water);
+
             foreach (var apron in AdelaideLayout.Aprons)
                 FillPolygon(pixels, width, height, ToPixels(map, apron.Xz), Apron);
             foreach (var taxiway in AdelaideLayout.Taxiways)
@@ -192,6 +203,21 @@ namespace Airside.Presentation
             foreach (var terminal in AdelaideLayout.Terminals)
                 FillPolygon(pixels, width, height, ToPixels(map, terminal.Xz), Building);
             return pixels;
+        }
+
+        /// <summary>Threshold labels in world x,z: 05, 23, 12, 30.</summary>
+        public static IEnumerable<(string Label, float X, float Z)> RunwayLabels()
+        {
+            var half = AdelaideLayout.MainRunwayLengthMetres * 0.5f;
+            yield return ("05", -half + 80f, 0f);
+            yield return ("23", half - 80f, 0f);
+
+            var yaw = AdelaideLayout.CrossRunwayYawDegrees * Mathf.Deg2Rad;
+            var crossHalf = AdelaideLayout.CrossRunwayLengthMetres * 0.5f - 80f;
+            var dx = Mathf.Cos(yaw) * crossHalf;
+            var dz = -Mathf.Sin(yaw) * crossHalf;
+            yield return ("12", AdelaideLayout.CrossRunwayCenterX - dx, AdelaideLayout.CrossRunwayCenterZ - dz);
+            yield return ("30", AdelaideLayout.CrossRunwayCenterX + dx, AdelaideLayout.CrossRunwayCenterZ + dz);
         }
 
         /// <summary>05/23 and 12/30 as two-point centrelines in world x,z.</summary>

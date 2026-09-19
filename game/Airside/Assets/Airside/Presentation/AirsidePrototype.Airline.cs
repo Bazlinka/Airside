@@ -962,15 +962,15 @@ namespace Airside.Presentation
                 FleetState.AtStand => aircraft.Scheduled.HasValue
                     ? StandDepartureStatus(aircraft)
                     : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
-                FleetState.TaxiOut => $"Taxiing to the runway · {dest}",
-                FleetState.HoldingShort => $"Holding short for the runway · {dest}{wait}",
-                FleetState.TakingOff => $"Taking off for {dest}",
+                FleetState.TaxiOut => $"Taxiing to runway {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}",
+                FleetState.HoldingShort => $"Holding short {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}{wait}",
+                FleetState.TakingOff => $"Taking off {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
                 FleetState.Outbound => $"En route to {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"On the ground at {dest} · departs {ends}",
                 FleetState.Inbound => $"Returning from {dest}{EnrouteAltitudeText(aircraft)} · back {ends}",
-                FleetState.HoldingForLanding => $"In the Adelaide circuit, waiting to land{wait}",
-                FleetState.GoAround => "Going around at Adelaide",
-                FleetState.Landing => "Landing at Adelaide",
+                FleetState.HoldingForLanding => $"In the circuit for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
+                FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                FleetState.Landing => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
                 FleetState.AwaitingStand => $"Landed · parking{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()

@@ -77,5 +77,22 @@ namespace Airside.Tests
             if (later.HasValue)
                 Assert.That(later.Value.Progress, Is.GreaterThan(first.Value.Progress));
         }
+
+        [Test]
+        public void DisplayAltitude_SeparatesTurbopropsJetsAndWidebodies()
+        {
+            Assert.That(DestinationCatalogue.TryFind("ADL", out var adl), Is.True);
+            Assert.That(DestinationCatalogue.TryFind("MEL", out var mel), Is.True);
+            Assert.That(DestinationCatalogue.TryFind("SIN", out var sin), Is.True);
+            var now = 1800.0;
+            Assert.That(SkyTraffic.TryEnroute("REX1", AircraftType.Saab340, adl, mel, now, 0, out var rex), Is.True);
+            Assert.That(SkyTraffic.TryEnroute("VA1", AircraftType.Boeing7378, adl, mel, now, 0, out var jet), Is.True);
+            Assert.That(SkyTraffic.TryEnroute("SQ1", AircraftType.Boeing78710, adl, sin, now, 0, out var heavy), Is.True);
+            var rexY = SkyTraffic.DisplayAltitudeMetres(rex);
+            var jetY = SkyTraffic.DisplayAltitudeMetres(jet);
+            var heavyY = SkyTraffic.DisplayAltitudeMetres(heavy);
+            Assert.That(jetY, Is.GreaterThan(rexY + 40));
+            Assert.That(heavyY, Is.GreaterThan(jetY + 40));
+        }
     }
 }

@@ -75,7 +75,7 @@ namespace Airside.Presentation
 
             view.gameObject.SetActive(true);
             view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
-            view.rotation = Quaternion.Euler(0f, (float)flight.HeadingDegrees, 0f)
+            view.rotation = Quaternion.Euler(0f, (float)flight.HeadingDegrees - RunwayWeather.Heading05 + 90f, 0f)
                             * Quaternion.Euler(AirsideFlightPath.ClimbPitchDegrees * 0.35f, 0f, 0f);
 
             var parts = PartsFor(view);

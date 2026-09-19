@@ -1,3 +1,4 @@
+using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -11,6 +12,19 @@ namespace Airside.Tests
         public void RunwayUsesTheBestHeadwindAndAStableCalmDefault(int direction, int knots, RunwayDirection expected)
         {
             Assert.That(RunwayWeather.Select(new SurfaceWind(direction, knots)), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void JetToPerth_Takes23WhenTheWindIsClose()
+        {
+            Assert.That(DestinationCatalogue.TryFind("PER", out var perth), Is.True);
+            var wind = new SurfaceWind(140, 8);
+            Assert.That(RunwayWeather.Select(wind, AircraftType.Boeing78710, perth, DestinationCatalogue.Adelaide),
+                Is.EqualTo(RunwayDirection.Runway23));
+            Assert.That(RunwayWeather.AllowsCrossRunway(AircraftType.Boeing78710), Is.False);
+            Assert.That(RunwayWeather.AllowsCrossRunway(AircraftType.Atr42), Is.True);
+            Assert.That(RunwayWeather.Label(RunwayDirection.Runway12), Is.EqualTo("12"));
+            Assert.That(RunwayWeather.Label(RunwayDirection.Runway30), Is.EqualTo("30"));
         }
 
         [Test]

@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-19 Cursor — runways, mini-map gulf, altitudes, terminal
+  (branch `feature/runways-minimap-terminal`).** Bailey: name the real
+  runways and assign them by aircraft; 23 takeoffs over the ocean drew on
+  land on the mini-map; flying traffic was one altitude; the terminal had
+  vanished with the floating-prism cull.
+  - **Names / assignment:** HUD uses 05/23; mini-map labels 05, 23, 12, 30.
+    Jets stay on 05/23 and take the dest-aligned end through an 8 kt wind
+    tie. Regionals follow the wind. 12/30 is named but taxi still only
+    reaches the 05/23 holds.
+  - **Mini-map:** OSM sea fill + west bounds so a 23 climb-out is over water.
+  - **Sky:** east/north converted to the runway frame; display height is
+    banded by type.
+  - **Terminal:** `ShowTerminal` on the default field, seated on
+    `AirsideAdelaideGround.WorldHeight`.
+  - **NEXT:** Unity EditMode, then PR. Do not run
+    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
 - **2026-09-19 Cursor — pushback collisions, live date, banks, departure
   turn (branch `feature/pushback-clock-departure`).** Bailey: aircraft were
   pushing back into each other and the wrong way onto taxi; date/time should

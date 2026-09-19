@@ -146,7 +146,29 @@ namespace Airside.Tests
             Assert.That(counts.ContainsKey(FieldMiniMap.Apron), Is.True);
             Assert.That(counts.ContainsKey(FieldMiniMap.Taxiway), Is.True);
             Assert.That(counts.ContainsKey(FieldMiniMap.Building), Is.True);
-            Assert.That(counts[FieldMiniMap.Grass], Is.GreaterThan(w * h / 3));
+            Assert.That(counts[FieldMiniMap.Grass], Is.GreaterThan(w * h / 4));
+            Assert.That(counts.ContainsKey(FieldMiniMap.Water), Is.True, "the gulf is painted, not grass");
+        }
+
+        [Test]
+        public void Bake_WestOfThe05ThresholdIsWaterNotGrass()
+        {
+            const int w = 600, h = 280;
+            var pixels = FieldMiniMap.Bake(w, h);
+            var map = new Rect(0f, 0f, w, h);
+            var west = FieldMiniMap.WorldToMap(map, -AdelaideLayout.MainRunwayLengthMetres * 0.5f - 1180f, 0f);
+            var x = Mathf.Clamp((int)west.x, 0, w - 1);
+            var y = Mathf.Clamp((int)(h - west.y), 0, h - 1);
+            Assert.That(pixels[y * w + x], Is.EqualTo(FieldMiniMap.Water));
+        }
+
+        [Test]
+        public void RunwayLabels_NameBothStrips()
+        {
+            var labels = new System.Collections.Generic.List<string>();
+            foreach (var (label, _, _) in FieldMiniMap.RunwayLabels())
+                labels.Add(label);
+            Assert.That(labels, Is.EquivalentTo(new[] { "05", "23", "12", "30" }));
         }
     }
 }

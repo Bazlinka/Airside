@@ -87,20 +87,23 @@ namespace Airside.Presentation
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
             BuildYpadStandMarkings(root, paintY, taxiYellow);
 
-            // The default bare field seats pavement on the landform. Extruded OSM
-            // terminals and the curtain-wall extras sat on runway Y and floated
-            // over the dropped plateau. Keep them for the explicit full-airport QA path.
-            if (AirsideFocusMode.ShowBuildings)
+            // Sit the terminal on the landform, not runway Y — that was why the
+            // OSM prisms floated over the dropped plateau on the default field.
+            if (AirsideFocusMode.ShowTerminal)
             {
                 var buildings = new SurfaceMesh();
+                var groundY = runwayTop;
                 foreach (var terminal in AdelaideLayout.Terminals)
                 {
                     var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0 ? 8f : 14f;
-                    AddPrism(buildings, terminal.Xz, runwayTop, height);
+                    var sit = TerminalGroundY(terminal.Xz, runwayTop);
+                    if (sit < groundY)
+                        groundY = sit;
+                    AddPrism(buildings, terminal.Xz, sit, height);
                 }
 
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
-                BuildAdelaideTerminalArchitecture(runwayTop);
+                BuildAdelaideTerminalArchitecture(groundY);
             }
         }
 
@@ -323,6 +326,25 @@ namespace Airside.Presentation
                 indices[i] = mesh.Add(new Vector3(xz[i * 2], y, xz[i * 2 + 1]));
             foreach (var (a, b, c) in EarClip(xz))
                 mesh.Triangle(indices[a], indices[b], indices[c], Vector3.up);
+        }
+
+        private static float TerminalGroundY(float[] xz, float fallback)
+        {
+            if (xz == null || xz.Length < 2)
+                return fallback;
+            var sumX = 0f;
+            var sumZ = 0f;
+            var n = 0;
+            for (var i = 0; i + 1 < xz.Length; i += 2)
+            {
+                sumX += xz[i];
+                sumZ += xz[i + 1];
+                n++;
+            }
+
+            if (n == 0)
+                return fallback;
+            return AirsideAdelaideGround.WorldHeight(sumX / n, sumZ / n);
         }
 
         private static void AddPrism(SurfaceMesh mesh, float[] xz, float baseY, float height)

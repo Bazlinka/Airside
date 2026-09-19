@@ -66,10 +66,24 @@ namespace Airside.Presentation
                 panelRect.height - FieldMiniMap.HeaderHeight - 6f);
             var map = FieldMiniMap.FitMap(area);
             GUI.DrawTexture(map, MiniMapTexture(), ScaleMode.StretchToFill, true);
+            DrawMiniMapRunwayNames(map, small);
 
             DrawMiniMapView(map);
             DrawMiniMapAircraft(map);
             HandleMiniMapPointer(map);
+        }
+
+        private static void DrawMiniMapRunwayNames(Rect map, GUIStyle small)
+        {
+            var colour = GUI.color;
+            GUI.color = new Color(0.12f, 0.13f, 0.14f, 0.9f);
+            foreach (var (label, x, z) in FieldMiniMap.RunwayLabels())
+            {
+                var point = FieldMiniMap.WorldToMap(map, x, z);
+                GUI.Label(new Rect(point.x - 10f, point.y - 8f, 20f, 16f), label, small);
+            }
+
+            GUI.color = colour;
         }
 
         private void DrawMiniMapView(Rect map)

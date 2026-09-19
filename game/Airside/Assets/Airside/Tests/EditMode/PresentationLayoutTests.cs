@@ -647,6 +647,7 @@ namespace Airside.Tests
             Assert.That(AirsideFocusMode.ShowStandEquipment, Is.False);
             Assert.That(AirsideFocusMode.ShowPeople, Is.False);
             Assert.That(AirsideFocusMode.ShowBuildings, Is.False);
+            Assert.That(AirsideFocusMode.ShowTerminal, Is.True, "the passenger terminal stays on the default field");
             Assert.That(AirsideFocusMode.ShowEnvironment, Is.False);
             Assert.That(AirsideFocusMode.ShowWorldProps, Is.False);
             Assert.That(AirsideFocusMode.ShowDecorativeLights, Is.False);

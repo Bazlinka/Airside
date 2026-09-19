@@ -856,9 +856,11 @@ namespace Airside.Presentation
         {
             var following = _cameraController != null && _cameraController.IsFollowing;
 
-            if (GUI.Button(layout.ButtonAt(0), following ? "Follow on" : "Follow", button))
+            if (GUI.Button(layout.ButtonAt(0),
+                    new GUIContent(following ? "Follow on" : "Follow", AirsideTheme.SystemIcon("follow")), button))
                 ToggleFollow();
-            if (GUI.Button(layout.ButtonAt(1), "Overview", button))
+            if (GUI.Button(layout.ButtonAt(1),
+                    new GUIContent("Overview", AirsideTheme.SystemIcon("overview")), button))
                 ResetView();
         }
 
@@ -870,7 +872,7 @@ namespace Airside.Presentation
             GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Menu", title);
 
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
-            if (GUI.Button(row, "Resume", button))
+            if (GUI.Button(row, new GUIContent("Resume", AirsideTheme.SystemIcon("play")), button))
                 ToggleMenu();
 
             row.y += 52f;

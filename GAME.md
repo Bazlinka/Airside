@@ -13,6 +13,13 @@
     remaining falls, then catering, then boarding, then pushback at the booked
     clock time.
 
+- **2026-09-19 Cursor — tidy after pull/rebuild (now on `main`, #319).** Pulled
+  `main` to `ec216ce` (#318) and rebuilt the Mac player. First pass failed:
+  `ContractsWorkspace.cs` used `Math.Min` without `using System;`. Fixed.
+  Committed the Unity `.meta` files for the new HUD/career scripts and the URP
+  SSAO prefilter re-serialisation. IMGUI nine-slice + Follow/Overview/Resume
+  icons landed here too.
+
 - **2026-09-18 Cursor (Cloud Linux) — HUD workspaces on a shared draw list
   (branch `cursor/hud-workspaces-redesign-c5a4`, PR #318, ADR 0057).** Bailey
   supplied five concept references (overview / operations / map / fleet /

@@ -192,12 +192,21 @@ namespace Airside.Presentation
             GUI.color = previous;
         }
 
+        /// <summary>
+        /// Dark panel bevel in source-texture pixels, measured off
+        /// <c>ui_panel_9slice_dark_v01.png</c> (128×128, 8px on every edge).
+        /// Without this, Unity stretches the whole 128×128 — bevel included —
+        /// across the panel and the authored edge smears into a soft gradient.
+        /// </summary>
+        private static readonly RectOffset PanelBorder = new(8, 8, 8, 8);
+
         /// <summary>A box/panel style on the given basis, themed with the Runway Ink panel and Cloud text.</summary>
         public static GUIStyle PanelStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
             style.normal.background = PanelBackground;
             style.normal.textColor = Cloud;
+            style.border = PanelBorder;
             return style;
         }
 

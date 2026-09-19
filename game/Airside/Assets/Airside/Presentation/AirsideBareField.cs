@@ -11,11 +11,12 @@ namespace Airside.Presentation
     public static class AirsideBareField
     {
         /// <summary>
-        /// When true the player sees ground, YPAD pavement silhouette, one aircraft
-        /// and sun lighting. Buildings, cars, signs, apron clutter, coast, trees and
-        /// decorative lights are not spawned. The normal release default remains this
-        /// focused circuit; <c>-airsideFullAirport</c> is an explicit visual/performance
-        /// QA mode that exercises the dormant complete-airport path in a packaged player.
+        /// When true the player sees ground, YPAD pavement silhouette, the live
+        /// airline fleets and sun lighting. Buildings, cars, signs, apron clutter,
+        /// trees and decorative / floating lights are not spawned. The normal
+        /// release default remains this focused circuit; <c>-airsideFullAirport</c>
+        /// is an explicit visual/performance QA mode that exercises the dormant
+        /// complete-airport path in a packaged player.
         /// </summary>
         public static readonly bool Enabled = !HasLaunchFlag("-airsideFullAirport");
 

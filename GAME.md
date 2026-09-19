@@ -1,17 +1,44 @@
 ## Where to resume — session handoff
 
-- **2026-09-19 Cursor — tidy after pull/rebuild (branch
-  `feature/tidy-compile-and-metas`).** Pulled `main` to `ec216ce` (#318) and
-  rebuilt the Mac player. First pass failed: `ContractsWorkspace.cs` used
-  `Math.Min` without `using System;`. Fixed. Committed the Unity `.meta` files
-  for the new HUD/career scripts (never tracked after #315/#318) and the URP
-  SSAO prefilter re-serialisation. Stashed timer work is on
-  `feature/fix-stage-timers`. PR #299 (nine-slice + HUD icons) and #312
-  (batchmode licensing note) were leftover and conflicting.
-  - **Evidence:** `scripts/build-mac.sh` produced `work/builds/Airside.app` and
-    opened it.
-  - **NEXT:** merge this tidy PR, then the timer-fix branch. Do not run
+- **2026-09-19 Cursor — day traffic, clean field, and land the timer fix
+  (branch `feature/day-traffic-clean-field`, stacked on
+  `feature/fix-stage-timers`).** Bailey asked to finish the merge of the
+  remaining work onto the final git build, strip floating buildings / lights,
+  and show a full day's incoming and outgoing traffic.
+  - **#319** is on `origin/main`. **#320** (prep timers) is merged into this
+    branch against that main; the stacked squash conflict on GAME.md /
+    CHANGELOG is resolved.
+  - **Floating scenery:** the default bare field no longer extrudes OSM
+    terminal prisms or curtain-wall extras (they sat on runway Y and floated
+    over the landform) and no longer places apron-flood / stand-marker lights
+    with no poles. Runway edge, PAPI and HIAL stay.
+  - **Traffic:** Operations arrivals / departures now list the rest of the
+    local day from each official AI network, not only the live fleet. Planned
+    flights that are currently airborne are drawn inbound/outbound over the
+    field. Sky overflights run more often and on more corridors.
+  - **Evidence:** Unity 6.3 EditMode **618/618, 0 failed**.
+  - **NEXT:** merge #320, then this branch, then a Mac Play of Operations
+    (Arrivals / Departures should show a full day) and the overview (no
+    floating terminal blocks or flood spots). Do not run
     `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
+- **2026-09-18 Cursor — fix prep timers that counted up and never finished
+  (branch `feature/fix-stage-timers`).** Bailey: fuelling said 5 min, then the
+  timer kept rising and the stage never completed. Cause: planner remaining was
+  `now + lead` every frame (lead ≈ 5 min) and "update plan" reset
+  `PrepStartedAt`; a missing prep-start also made elapsed `now - now`. Booked
+  remaining now counts down; prep is not restarted on a plan update; missing
+  start is inferred from the booked slot. Same remaining countdown on fuel /
+  catering / boarding. Destination turnaround already had an end time — retested.
+  - **Evidence:** Unity 6.3 EditMode **572/572, 0 failed**.
+  - **NEXT:** landed into `feature/day-traffic-clean-field` against #319.
+
+- **2026-09-19 Cursor — tidy after pull/rebuild (now on `main`, #319).** Pulled
+  `main` to `ec216ce` (#318) and rebuilt the Mac player. First pass failed:
+  `ContractsWorkspace.cs` used `Math.Min` without `using System;`. Fixed.
+  Committed the Unity `.meta` files for the new HUD/career scripts and the URP
+  SSAO prefilter re-serialisation. IMGUI nine-slice + Follow/Overview/Resume
+  icons landed here too.
 
 - **2026-09-18 Cursor (Cloud Linux) — HUD workspaces on a shared draw list
   (branch `cursor/hud-workspaces-redesign-c5a4`, PR #318, ADR 0057).** Bailey

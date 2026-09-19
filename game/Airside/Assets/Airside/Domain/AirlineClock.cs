@@ -78,7 +78,10 @@ namespace Airside.Domain
 
         public static string DurationText(long seconds)
         {
-            var minutes = (long)Math.Round(Math.Max(0, seconds) / 60.0);
+            seconds = Math.Max(0, seconds);
+            if (seconds < 60)
+                return $"{seconds} s";
+            var minutes = (long)Math.Round(seconds / 60.0);
             if (minutes >= 24 * 60)
                 return $"{minutes / (24 * 60)} d {minutes / 60 % 24} h";
             return minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} min" : $"{minutes} min";

@@ -56,22 +56,59 @@ namespace Airside.Simulation
 
         public static readonly SkyRoute[] Routes =
         {
-            new("QF", 400, 22 * 60, "MEL", "SYD", AircraftType.Boeing7378),
-            new("QF", 401, 22 * 60, "SYD", "MEL", AircraftType.Boeing7378),
-            new("VA", 210, 28 * 60, "BNE", "MEL", AircraftType.Boeing7378),
-            new("VA", 211, 28 * 60, "MEL", "BNE", AircraftType.Boeing7378),
-            new("QF", 9, 48 * 60, "PER", "MEL", AircraftType.Boeing78710),
-            new("QF", 10, 48 * 60, "MEL", "PER", AircraftType.Boeing78710),
-            new("QF", 7, 52 * 60, "PER", "SYD", AircraftType.Boeing78710),
-            new("QF", 8, 52 * 60, "SYD", "PER", AircraftType.Boeing78710),
-            new("JQ", 960, 44 * 60, "DRW", "MEL", AircraftType.Boeing7378),
-            new("JQ", 961, 44 * 60, "MEL", "DRW", AircraftType.Boeing7378),
-            new("NZ", 176, 40 * 60, "AKL", "MEL", AircraftType.AirbusA321Neo),
-            new("NZ", 175, 40 * 60, "MEL", "AKL", AircraftType.AirbusA321Neo),
-            new("VA", 860, 30 * 60, "BNE", "SYD", AircraftType.Boeing7378),
-            new("JQ", 704, 26 * 60, "HBA", "MEL", AircraftType.Boeing7378),
-            new("QF", 754, 26 * 60, "MEL", "HBA", AircraftType.Boeing7378),
+            new("QF", 400, 12 * 60, "MEL", "SYD", AircraftType.Boeing7378),
+            new("QF", 401, 12 * 60, "SYD", "MEL", AircraftType.Boeing7378),
+            new("VA", 210, 16 * 60, "BNE", "MEL", AircraftType.Boeing7378),
+            new("VA", 211, 16 * 60, "MEL", "BNE", AircraftType.Boeing7378),
+            new("QF", 9, 24 * 60, "PER", "MEL", AircraftType.Boeing78710),
+            new("QF", 10, 24 * 60, "MEL", "PER", AircraftType.Boeing78710),
+            new("QF", 7, 26 * 60, "PER", "SYD", AircraftType.Boeing78710),
+            new("QF", 8, 26 * 60, "SYD", "PER", AircraftType.Boeing78710),
+            new("JQ", 960, 22 * 60, "DRW", "MEL", AircraftType.Boeing7378),
+            new("JQ", 961, 22 * 60, "MEL", "DRW", AircraftType.Boeing7378),
+            new("NZ", 176, 20 * 60, "AKL", "MEL", AircraftType.AirbusA321Neo),
+            new("NZ", 175, 20 * 60, "MEL", "AKL", AircraftType.AirbusA321Neo),
+            new("VA", 860, 14 * 60, "BNE", "SYD", AircraftType.Boeing7378),
+            new("JQ", 704, 14 * 60, "HBA", "MEL", AircraftType.Boeing7378),
+            new("QF", 754, 14 * 60, "MEL", "HBA", AircraftType.Boeing7378),
+            new("VA", 140, 16 * 60, "PER", "BNE", AircraftType.Boeing7378),
+            new("VA", 141, 16 * 60, "BNE", "PER", AircraftType.Boeing7378),
+            new("QF", 20, 22 * 60, "DRW", "SYD", AircraftType.Boeing78710),
+            new("QF", 21, 22 * 60, "SYD", "DRW", AircraftType.Boeing78710),
+            new("NZ", 104, 18 * 60, "AKL", "SYD", AircraftType.AirbusA321Neo),
+            new("NZ", 103, 18 * 60, "SYD", "AKL", AircraftType.AirbusA321Neo),
+            new("QF", 612, 14 * 60, "MEL", "CBR", AircraftType.Boeing7378),
+            new("QF", 613, 14 * 60, "CBR", "MEL", AircraftType.Boeing7378),
+            new("JQ", 770, 18 * 60, "OOL", "MEL", AircraftType.Boeing7378),
+            new("JQ", 771, 18 * 60, "MEL", "OOL", AircraftType.Boeing7378),
         };
+
+        /// <summary>
+        /// One flight along an authored corridor at a known start time. Used for the
+        /// published Adelaide day as well as the overflight snapshot.
+        /// </summary>
+        public static bool TryEnroute(string callsign, AircraftType type, Destination from, Destination to,
+            double elapsedSeconds, double startSeconds, out SkyFlight flight)
+        {
+            flight = default;
+            if (type == null || from.Code == null || to.Code == null)
+                return false;
+            var duration = LegTiming.AirborneSeconds(from.DistanceKmTo(to), type);
+            if (duration <= 0)
+                return false;
+            var progress = (elapsedSeconds - startSeconds) / duration;
+            if (progress < 0 || progress > 1)
+                return false;
+            GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
+                out var lat, out var lon);
+            GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
+                Math.Min(1.0, progress + 0.004), out var latAhead, out var lonAhead);
+            var heading = HeadingDegrees(lat, lon, latAhead, lonAhead);
+            var profile = new EnrouteProfile(from.DistanceKmTo(to), duration, type);
+            var altitude = profile.AltitudeFeetAt(elapsedSeconds - startSeconds);
+            flight = new SkyFlight(callsign, type, from, to, progress, lat, lon, altitude, heading);
+            return true;
+        }
 
         public static IReadOnlyList<SkyFlight> At(SimulationTime now) => At(now.ElapsedSeconds);
 
@@ -94,19 +131,10 @@ namespace Airside.Simulation
                 {
                     if (start + duration <= elapsedSeconds || start > elapsedSeconds)
                         continue;
-                    var progress = (elapsedSeconds - start) / duration;
-                    if (progress < 0 || progress > 1)
-                        continue;
-                    GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
-                        out var lat, out var lon);
-                    GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
-                        Math.Min(1.0, progress + 0.004), out var latAhead, out var lonAhead);
-                    var heading = HeadingDegrees(lat, lon, latAhead, lonAhead);
-                    var profile = new EnrouteProfile(from.DistanceKmTo(to), duration, route.Type);
-                    var altitude = profile.AltitudeFeetAt(elapsedSeconds - start);
                     var number = route.FlightNumber + Math.Abs(start / route.IntervalSeconds) % 40;
-                    flights.Add(new SkyFlight($"{route.Airline}{number}", route.Type, from, to,
-                        progress, lat, lon, altitude, heading));
+                    if (TryEnroute($"{route.Airline}{number}", route.Type, from, to, elapsedSeconds, start,
+                            out var flight))
+                        flights.Add(flight);
                 }
             }
 

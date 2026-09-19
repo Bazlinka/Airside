@@ -94,7 +94,7 @@ namespace Airside.Simulation
                 return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready",
                     1, 1, 1, 0);
 
-            var start = aircraft.PrepStartedAt?.ElapsedSeconds ?? now.ElapsedSeconds;
+            var start = StartSeconds(aircraft, now);
             var elapsed = now.ElapsedSeconds - start;
             if (elapsed < 0)
                 elapsed = 0;
@@ -126,6 +126,19 @@ namespace Airside.Simulation
 
             return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready for pushback",
                 1, 1, 1, 0);
+        }
+
+        /// <summary>
+        /// When prep-start was not saved, infer it from the booked pushback so fuelling
+        /// cannot sit at 0% forever (elapsed would otherwise be <c>now - now</c> every call).
+        /// </summary>
+        private static long StartSeconds(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft.PrepStartedAt.HasValue)
+                return aircraft.PrepStartedAt.Value.ElapsedSeconds;
+            var total = TotalSeconds(aircraft.Type);
+            var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - total;
+            return inferred < 0 ? 0 : inferred;
         }
 
         private static string StageLabel(string name, double progress) =>

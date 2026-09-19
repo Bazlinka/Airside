@@ -90,11 +90,11 @@ namespace Airside.Tests
             Assert.That(aircraft.State, Is.EqualTo(FleetState.Inbound));
             Assert.That(FlightBoard.RouteText(aircraft), Is.EqualTo("BHQ → ADL"));
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("Returning"));
-            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("IN CIRCUIT"));
+            Assert.That(FlightBoard.TimeMeaning(aircraft), Is.EqualTo("IN BOUND"));
         }
 
         [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
-        [TestCase(FleetState.HoldingForLanding, "HOLD SINCE")]
+        [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
         [TestCase(FleetState.Landing, "CLEAR RWY")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
         public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
@@ -123,6 +123,17 @@ namespace Airside.Tests
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));
             Assert.That(FlightBoard.TimeMeaning(aircraft, new SimulationTime(720)), Is.EqualTo("LATE +2 MIN"));
+        }
+
+        [Test]
+        public void DelayedAndCancelledBookings_ShowOnTheChip()
+        {
+            var (_, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("KGC"), new SimulationTime(600));
+            aircraft.Scheduled = new ScheduledDeparture(Code("KGC"), new SimulationTime(900), 15);
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(100)), Is.EqualTo("Delayed +15"));
+            aircraft.Scheduled = new ScheduledDeparture(Code("KGC"), new SimulationTime(900), 0, cancelled: true);
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(100)), Is.EqualTo("Cancelled"));
         }
     }
 }

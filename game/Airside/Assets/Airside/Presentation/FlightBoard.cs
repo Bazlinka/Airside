@@ -71,7 +71,7 @@ namespace Airside.Presentation
                 FleetState.Outbound => "En route",
                 FleetState.AtDestination => "Turnaround",
                 FleetState.Inbound => "Returning",
-                FleetState.HoldingForLanding => "In circuit",
+                FleetState.HoldingForLanding => "On final",
                 FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
                 FleetState.AwaitingStand => "Needs stand",
@@ -83,6 +83,11 @@ namespace Airside.Presentation
         /// <summary>Clock-aware status: prep percent while turning around, else a gate-hold or phase chip.</summary>
         public static string PhaseLabel(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft?.Scheduled is { Cancelled: true })
+                return "Cancelled";
+            if (aircraft?.Scheduled is { DelayMinutes: > 0 } delayed
+                && aircraft.State == FleetState.AtStand)
+                return $"Delayed +{delayed.DelayMinutes}";
             if (DepartureDelayMinutes(aircraft, now) > 0)
                 return "Gate hold";
             if (aircraft != null && aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
@@ -138,8 +143,8 @@ namespace Airside.Presentation
                 FleetState.TakingOff => "AIRBORNE",
                 FleetState.Outbound => "ARRIVES",
                 FleetState.AtDestination => "RETURNS",
-                FleetState.Inbound => "IN CIRCUIT",
-                FleetState.HoldingForLanding => "HOLD SINCE",
+                FleetState.Inbound => "IN BOUND",
+                FleetState.HoldingForLanding => "ON FINAL",
                 FleetState.GoAround => "RE-SEQUENCE",
                 FleetState.Landing => "CLEAR RWY",
                 FleetState.AwaitingStand => "WAIT SINCE",

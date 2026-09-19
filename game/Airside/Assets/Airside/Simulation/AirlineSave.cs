@@ -92,6 +92,8 @@ namespace Airside.Simulation
         public bool HasScheduled;
         public string ScheduledDestination;
         public long ScheduledDepartAt;
+        public int ScheduledDelayMinutes;
+        public bool ScheduledCancelled;
         public int CompletedTrips;
         public string AssignedRunway;
         public bool WentAroundThisTrip;
@@ -167,6 +169,8 @@ namespace Airside.Simulation
                     HasScheduled = a.Scheduled.HasValue,
                     ScheduledDestination = a.Scheduled?.Destination.Code ?? string.Empty,
                     ScheduledDepartAt = a.Scheduled?.DepartAt.ElapsedSeconds ?? 0,
+                    ScheduledDelayMinutes = a.Scheduled?.DelayMinutes ?? 0,
+                    ScheduledCancelled = a.Scheduled?.Cancelled ?? false,
                     CompletedTrips = a.CompletedTrips,
                     AssignedRunway = a.AssignedRunway.ToString(),
                     WentAroundThisTrip = a.WentAroundThisTrip,
@@ -261,7 +265,8 @@ namespace Airside.Simulation
                     OptionalDestination(record.Destination, record.Registration),
                     record.HasScheduled
                         ? new ScheduledDeparture(RequiredDestination(record.ScheduledDestination, record.Registration),
-                            new SimulationTime(record.ScheduledDepartAt))
+                            new SimulationTime(record.ScheduledDepartAt),
+                            record.ScheduledDelayMinutes, record.ScheduledCancelled)
                         : null,
                     record.CompletedTrips);
                 if (data.Version >= 5)

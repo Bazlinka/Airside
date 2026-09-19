@@ -196,7 +196,7 @@ namespace Airside.Presentation
                 FleetState.Outbound => "En route",
                 FleetState.AtDestination => "Turnaround",
                 FleetState.Inbound => "Returning",
-                FleetState.HoldingForLanding => "Circuit",
+                FleetState.HoldingForLanding => "Final",
                 FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
                 FleetState.AwaitingStand => "Needs stand",

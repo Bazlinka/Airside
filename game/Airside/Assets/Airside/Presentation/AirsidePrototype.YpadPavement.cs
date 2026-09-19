@@ -87,15 +87,21 @@ namespace Airside.Presentation
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
             BuildYpadStandMarkings(root, paintY, taxiYellow);
 
-            var buildings = new SurfaceMesh();
-            foreach (var terminal in AdelaideLayout.Terminals)
+            // The default bare field seats pavement on the landform. Extruded OSM
+            // terminals and the curtain-wall extras sat on runway Y and floated
+            // over the dropped plateau. Keep them for the explicit full-airport QA path.
+            if (AirsideFocusMode.ShowBuildings)
             {
-                var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0 ? 8f : 14f;
-                AddPrism(buildings, terminal.Xz, runwayTop, height);
-            }
+                var buildings = new SurfaceMesh();
+                foreach (var terminal in AdelaideLayout.Terminals)
+                {
+                    var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0 ? 8f : 14f;
+                    AddPrism(buildings, terminal.Xz, runwayTop, height);
+                }
 
-            SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
-            BuildAdelaideTerminalArchitecture(runwayTop);
+                SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
+                BuildAdelaideTerminalArchitecture(runwayTop);
+            }
         }
 
         private static void BuildAdelaideTerminalArchitecture(float groundY)

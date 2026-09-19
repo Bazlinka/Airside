@@ -290,7 +290,7 @@ namespace Airside.Presentation
                 // Operational YPAD lighting is not decoration. The focused release keeps
                 // real-metre runway edges, thresholds, PAPI and the runway 23 HIAL while
                 // omitting only landside/decorative lighting.
-                _apronLights = AirsideBareField.Enabled ? BuildApronLights() : Array.Empty<Light>();
+                _apronLights = Array.Empty<Light>();
                 _landsideLights = Array.Empty<Light>();
                 _thresholdLights = AirsideBareField.Enabled
                     ? BuildYpadThresholdPapiAndApproachLights()
@@ -299,9 +299,7 @@ namespace Airside.Presentation
                 _runwayEdgeLights = AirsideBareField.Enabled
                     ? BuildYpadRunwayEdgeLights()
                     : Array.Empty<Light>();
-                _standLights = AirsideBareField.Enabled
-                    ? BuildStandLighting()
-                    : Array.Empty<Light>();
+                _standLights = Array.Empty<Light>();
                 // Decision 0025 item 5's realtime apron/terminal reflection probes only ever
                 // existed on the legacy 1:20 miniature circuit (built in the branch above) —
                 // the real Adelaide bare-field world never got its own, so wet asphalt and

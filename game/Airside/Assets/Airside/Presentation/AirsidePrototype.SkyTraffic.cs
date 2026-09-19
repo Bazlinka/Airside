@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
 
@@ -25,32 +26,9 @@ namespace Airside.Presentation
 
             var live = new HashSet<string>();
             foreach (var flight in SkyTraffic.At(_preciseTime))
-            {
-                if (!SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z))
-                    continue;
-
-                live.Add(flight.Callsign);
-                if (!_skyViews.TryGetValue(flight.Callsign, out var view) || view == null)
-                {
-                    view = BuildAircraftForType($"Sky {flight.Callsign}", flight.Type,
-                        new Color(0.82f, 0.84f, 0.88f), null);
-                    view.SetParent(_skyTrafficRoot, false);
-                    _skyViews[flight.Callsign] = view;
-                }
-
-                view.gameObject.SetActive(true);
-                var position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
-                view.position = position;
-                var yaw = Quaternion.Euler(0f, (float)flight.HeadingDegrees, 0f);
-                var pitch = Quaternion.Euler(AirsideFlightPath.ClimbPitchDegrees * 0.35f, 0f, 0f);
-                view.rotation = yaw * pitch;
-
-                var parts = PartsFor(view);
-                UpdateAircraftLightsAndGear(parts.LightsAndGear, AircraftPhase.Circuit, PresentationDaylight, 0.5f,
-                    PresentationDeltaTime, PresentationClock, null);
-                SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
-                SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
-            }
+                ShowSkyFlight(flight, new Color(0.82f, 0.84f, 0.88f), live);
+            foreach (var flight in AdelaideDayPlan.AirborneAt(_operations, new SimulationTime((long)_preciseTime)))
+                ShowSkyFlight(flight, ColorForSkyAirline(flight.Callsign), live);
 
             var stale = new List<string>();
             foreach (var pair in _skyViews)
@@ -64,7 +42,7 @@ namespace Airside.Presentation
 
             // Drop views that have been off-screen a while by destroying when the dictionary
             // grows past a quiet cap — keep a handful of hidden ones for reuse is overkill here.
-            if (_skyViews.Count > 16)
+            if (_skyViews.Count > 64)
             {
                 foreach (var id in stale)
                 {
@@ -80,6 +58,48 @@ namespace Airside.Presentation
                     _skyViews.Remove(id);
                 }
             }
+        }
+
+        private void ShowSkyFlight(SkyFlight flight, Color livery, HashSet<string> live)
+        {
+            if (!SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z))
+                return;
+
+            live.Add(flight.Callsign);
+            if (!_skyViews.TryGetValue(flight.Callsign, out var view) || view == null)
+            {
+                view = BuildAircraftForType($"Sky {flight.Callsign}", flight.Type, livery, null);
+                view.SetParent(_skyTrafficRoot, false);
+                _skyViews[flight.Callsign] = view;
+            }
+
+            view.gameObject.SetActive(true);
+            view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
+            view.rotation = Quaternion.Euler(0f, (float)flight.HeadingDegrees, 0f)
+                            * Quaternion.Euler(AirsideFlightPath.ClimbPitchDegrees * 0.35f, 0f, 0f);
+
+            var parts = PartsFor(view);
+            UpdateAircraftLightsAndGear(parts.LightsAndGear, AircraftPhase.Circuit, PresentationDaylight, 0.5f,
+                PresentationDeltaTime, PresentationClock, null);
+            SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
+            SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
+        }
+
+        private static Color ColorForSkyAirline(string callsign)
+        {
+            if (callsign != null && callsign.StartsWith("REX"))
+                return new Color(0.82f, 0.29f, 0.12f);
+            if (callsign != null && callsign.StartsWith("QLK"))
+                return new Color(0.85f, 0.08f, 0.12f);
+            if (callsign != null && callsign.StartsWith("VOZ"))
+                return new Color(0.84f, 0.10f, 0.39f);
+            if (callsign != null && callsign.StartsWith("ANZ"))
+                return new Color(0.12f, 0.12f, 0.12f);
+            if (callsign != null && callsign.StartsWith("SIA"))
+                return new Color(0.11f, 0.25f, 0.55f);
+            if (callsign != null && callsign.StartsWith("CPA"))
+                return new Color(0.00f, 0.40f, 0.39f);
+            return new Color(0.82f, 0.84f, 0.88f);
         }
 
         private void HideSkyTraffic()

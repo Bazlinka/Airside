@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
@@ -222,6 +223,56 @@ namespace Airside.Presentation
                     hasProgress,
                     progress));
             }
+
+            foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
+            {
+                if (planned.Arrival != arrivals)
+                    continue;
+                var covered = false;
+                foreach (var aircraft in _scratch)
+                {
+                    if (!AdelaideDayPlan.CoveredBy(planned, aircraft))
+                        continue;
+                    covered = true;
+                    break;
+                }
+
+                if (covered)
+                    continue;
+                _rows.Add(new OperationsFlightRow(
+                    planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
+                    clock.TimeText(planned.ScheduledAt),
+                    "—",
+                    planned.FlightNumber,
+                    planned.RouteText,
+                    planned.StandLabel.Replace("Gate ", ""),
+                    planned.ScheduledAt.CompareTo(now) > 0 ? "Planned" : "Scheduled",
+                    planned.Type?.Name ?? string.Empty,
+                    planned.AirlineName,
+                    planned.LiveryHex,
+                    StatusSeverity.Normal,
+                    isPlayer: false,
+                    hasProgress: false,
+                    progress01: 0f));
+            }
+
+            _rows.Sort((a, b) =>
+            {
+                var byTime = BoardClockMinutes(a.ScheduledTime).CompareTo(BoardClockMinutes(b.ScheduledTime));
+                return byTime != 0 ? byTime : string.CompareOrdinal(a.FlightNumber, b.FlightNumber);
+            });
+        }
+
+        private static int BoardClockMinutes(string time)
+        {
+            if (string.IsNullOrEmpty(time) || time == "—")
+                return int.MaxValue;
+            if (time.Length < 5 || time[2] != ':')
+                return int.MaxValue;
+            if (!int.TryParse(time.Substring(0, 2), out var hours)
+                || !int.TryParse(time.Substring(3, 2), out var minutes))
+                return int.MaxValue;
+            return hours * 60 + minutes;
         }
 
         /// <summary>

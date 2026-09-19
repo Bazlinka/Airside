@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **The Operations board now shows the whole Adelaide day, and the sky is
+  busier.** Arrivals and Departures list every planned movement from the
+  official AI networks between 06:00 and 21:00, with live aircraft overlaying
+  their own slots. Planned flights that are in the air right now are drawn
+  inbound or outbound over the field (without taking a stand). Overflight
+  corridors run more often so the overview is not an empty bowl.
+
+- **Floating terminal blocks and apron floods are gone from the default
+  field.** OSM terminal prisms and curtain-wall extras sat on runway Y above
+  the dropped landform; apron-flood spots had no poles. They stay on the
+  explicit `-airsideFullAirport` path. Runway edge, PAPI and HIAL stay.
+
 - **Fix fuelling (and the other prep stages) never finishing.** The planner
   showed "in 5 min" from *now* every frame and clamped that delay to the prep
   lead, so the pushback clock walked forward and updating the plan restarted

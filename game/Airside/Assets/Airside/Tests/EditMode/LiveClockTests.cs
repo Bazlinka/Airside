@@ -16,6 +16,7 @@ namespace Airside.Tests
             var winter = new AirlineClock(new DateTime(2026, 9, 13, 22, 30, 0, DateTimeKind.Utc).Ticks);
             Assert.That(winter.TimeText(new SimulationTime(0)), Is.EqualTo("08:00"));
             Assert.That(winter.DateText(new SimulationTime(0)), Is.EqualTo("Mon 14 Sep"));
+            Assert.That(winter.StampText(new SimulationTime(0)), Is.EqualTo("Mon 14 Sep  08:00"));
             Assert.That(winter.TimeText(new SimulationTime(90 * 60)), Is.EqualTo("09:30"));
 
             // 22:30 UTC on 14 Dec is 09:00 ACDT (+10:30) on 15 Dec.

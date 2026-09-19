@@ -54,8 +54,9 @@ namespace Airside.Simulation
         public const long RunwaySeparationSeconds = 90;
         public const long GoAroundCircuitSeconds = 4 * 60;
         /// <summary>
-        /// Minimum interval between pushback clearances. This keeps two aircraft from being
-        /// released onto the shared apron/taxi route together while still allowing a useful queue.
+        /// Floor between pushback clearances on one apron. The live gate waits until
+        /// the aircraft already rolling has cleared the stands — see
+        /// <see cref="TaxiClearSecondsFrom(StableId, AircraftType, RunwayDirection)"/>.
         /// </summary>
         public const long TaxiReleaseSeparationSeconds = 60;
         public const int MaxRecentEvents = 30;
@@ -68,6 +69,31 @@ namespace Airside.Simulation
         public static long TaxiOutSecondsFrom(StableId stand, AircraftType type) => AdelaideGround.TaxiOut(stand, type).WholeSeconds;
         public static long TaxiOutSecondsFrom(StableId stand, AircraftType type, RunwayDirection runway) =>
             AdelaideGround.TaxiOut(stand, type, runway).WholeSeconds;
+
+        /// <summary>
+        /// How long the next same-apron pushback must wait: the first aircraft's
+        /// pushback, tug disconnect, and enough taxi to leave the stands. Sixty
+        /// seconds used to release the neighbour while the first was still on T4.
+        /// </summary>
+        public static long TaxiClearSecondsFrom(StableId stand) =>
+            TaxiClearSecondsFrom(stand, AdelaideGround.IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42);
+
+        public static long TaxiClearSecondsFrom(StableId stand, AircraftType type) =>
+            TaxiClearSecondsFrom(stand, type, RunwayDirection.Runway05);
+
+        public static long TaxiClearSecondsFrom(StableId stand, AircraftType type, RunwayDirection runway)
+        {
+            var leg = AdelaideGround.TaxiOut(stand, type, runway);
+            if (leg.Parts.Count < 2)
+                return Math.Max(TaxiReleaseSeparationSeconds, (long)Math.Ceiling(leg.Seconds * 0.4));
+
+            var push = leg.Parts[0];
+            var taxi = leg.Parts[1];
+            var clearMetres = Math.Min(180f, taxi.Path.Length * 0.35f);
+            var alongTaxi = taxi.Path.SecondsAtDistance(clearMetres);
+            var wait = push.Seconds + taxi.PauseBeforeSeconds + Math.Max(90.0, alongTaxi);
+            return Math.Max(TaxiReleaseSeparationSeconds, (long)Math.Ceiling(wait));
+        }
 
         /// <summary>Taxi from the E2 holding point into <paramref name="stand"/>.</summary>
         public static long TaxiInSecondsTo(StableId stand) => AdelaideGround.TaxiIn(stand).WholeSeconds;
@@ -641,7 +667,8 @@ namespace Airside.Simulation
                     continue;
                 if (AdelaideGround.IsTerminalGate(aircraft.DepartureStand) != terminalGate)
                     continue;
-                var candidate = aircraft.StateStartedAt.Advance(TaxiReleaseSeparationSeconds);
+                var candidate = aircraft.StateStartedAt.Advance(
+                    TaxiClearSecondsFrom(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway));
                 if (candidate.CompareTo(now) > 0 && (release == null || candidate.CompareTo(release.Value) > 0))
                     release = candidate;
             }
@@ -1404,7 +1431,8 @@ namespace Airside.Simulation
                 // Rotation, not a random draw, so the mainline timetable is stable.
                 var code = VirginRotation[aircraft.CompletedTrips % VirginRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+                    aircraft.Scheduled = new ScheduledDeparture(next,
+                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
                 return;
             }
 
@@ -1413,7 +1441,8 @@ namespace Airside.Simulation
                 // Rotation, not a random draw, so international traffic is stable too.
                 var code = AirNewZealandRotation[aircraft.CompletedTrips % AirNewZealandRotation.Count];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
-                    aircraft.Scheduled = new ScheduledDeparture(next, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+                    aircraft.Scheduled = new ScheduledDeparture(next,
+                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
                 return;
             }
             if (aircraft.Airline.Id.Value is "SIA" or "CPA")
@@ -1421,7 +1450,7 @@ namespace Airside.Simulation
                 var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     aircraft.Scheduled = new ScheduledDeparture(next,
-                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+                        AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
                 return;
             }
 
@@ -1451,7 +1480,8 @@ namespace Airside.Simulation
                 roll -= weight;
             }
 
-            aircraft.Scheduled = new ScheduledDeparture(pick, AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft))));
+            aircraft.Scheduled = new ScheduledDeparture(pick,
+                AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type));
         }
 
         /// <summary>
@@ -1471,16 +1501,30 @@ namespace Airside.Simulation
             }
         }
 
-        /// <summary>The ready time if it falls in the operating day, otherwise the next 06:00 in Adelaide.</summary>
-        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt)
+        /// <summary>
+        /// Regional ready-times jump the afternoon hole onto the next bank.
+        /// Jets keep the 06:00–21:00 window only — a 787 ready at 14:20 still goes.
+        /// </summary>
+        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)
         {
             var local = Clock.LocalAt(readyAt);
-            var first = local.Date.AddHours(AiFirstDepartureHour);
-            var last = local.Date.AddHours(AiLastDepartureHour);
-            if (local >= first && local <= last)
-                return readyAt;
-            var next = local < first ? first : first.AddDays(1);
-            var at = Clock.AtLocal(next);
+            DateTime useful;
+            if (type != null && NeedsTerminalGate(type))
+            {
+                var first = local.Date.AddHours(AiFirstDepartureHour);
+                var last = local.Date.AddHours(AiLastDepartureHour);
+                if (local >= first && local <= last)
+                    return readyAt;
+                useful = local < first ? first : first.AddDays(1);
+            }
+            else
+            {
+                useful = AdelaideHourProfile.NextUsefulLocal(local, AiFirstDepartureHour, AiLastDepartureHour);
+                if (useful == local)
+                    return readyAt;
+            }
+
+            var at = Clock.AtLocal(useful);
             return at.CompareTo(readyAt) > 0 ? at : readyAt;
         }
 

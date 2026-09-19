@@ -905,15 +905,18 @@ namespace Airside.Presentation
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
                 var position = FleetGroundPosition(flight, 0f) ?? RunwayPosition(flight,
-                    PositionFor(phase, progress, route, lane, aircraftType));
+                    ApplyDepartureTurn(flight, phase, progress,
+                        PositionFor(phase, progress, route, lane, aircraftType)));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
                     : phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback ? 0.03f
                     : 0.15f;
+                var lookAheadProgress = VisualPhaseProgress(flight, lookAhead);
                 var next = FleetGroundPosition(flight, lookAhead)
                            ?? RunwayPosition(flight,
-                               PositionFor(phase, VisualPhaseProgress(flight, lookAhead), route, lane, aircraftType));
+                               ApplyDepartureTurn(flight, phase, lookAheadProgress,
+                                   PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -928,10 +931,15 @@ namespace Airside.Presentation
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
                 var turnRate = phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress * 0.4f ? 8f : 5f;
-                view.rotation = Quaternion.Slerp(
-                    view.rotation,
-                    targetRotation,
-                    AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
+                // Tug disconnect flips the nose 180°. Slerp would spin the airframe the
+                // long way and read as taxiing the wrong direction down the taxilane.
+                if (Quaternion.Angle(view.rotation, targetRotation) > 120f)
+                    view.rotation = targetRotation;
+                else
+                    view.rotation = Quaternion.Slerp(
+                        view.rotation,
+                        targetRotation,
+                        AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
                 // A fleet aircraft away on a leg is hidden for hours. Its pose above stays
                 // current so it reappears on the right heading, but the prop, gear, light,
@@ -12635,6 +12643,26 @@ namespace Airside.Presentation
                 && aircraft.AssignedRunway == RunwayDirection.Runway23)
                 return new Vector3(-position.x, position.y, -position.z);
             return position;
+        }
+
+        /// <summary>
+        /// After rotate, displace the climb-out toward the booked destination so the
+        /// aircraft yaws onto its departure track instead of climbing forever along +X.
+        /// </summary>
+        private Vector3 ApplyDepartureTurn(CommercialFlight flight, AircraftPhase phase, float progress,
+            Vector3 position)
+        {
+            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+                return position;
+            if (!FleetMode || _operations == null
+                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return position;
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!dest.HasValue)
+                return position;
+            var lateral = DepartureTurn.LateralMetres(aircraft.AssignedRunway, _operations.Home, dest.Value,
+                phase, progress);
+            return new Vector3(position.x, position.y, position.z + lateral);
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)

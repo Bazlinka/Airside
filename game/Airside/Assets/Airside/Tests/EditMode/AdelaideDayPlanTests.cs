@@ -67,5 +67,25 @@ namespace Airside.Tests
             Assert.That(a.Select(p => $"{p.FlightNumber}:{p.ScheduledAt.ElapsedSeconds}"),
                 Is.EqualTo(b.Select(p => $"{p.FlightNumber}:{p.ScheduledAt.ElapsedSeconds}")));
         }
+
+        [Test]
+        public void Plan_BunchesMovementsOnTheBusyBanks()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var peak = 0;
+            var quiet = 0;
+            foreach (var movement in AdelaideDayPlan.ForLocalDay(ops, clock.Now))
+            {
+                var hour = ops.Clock.LocalAt(movement.ScheduledAt).Hour;
+                if (hour is >= 6 and <= 8 or >= 16 and <= 18)
+                    peak++;
+                if (hour is >= 13 and <= 15)
+                    quiet++;
+            }
+
+            Assert.That(peak, Is.GreaterThan(quiet * 2), "the board is busy at the banks, not flat all day");
+        }
     }
 }

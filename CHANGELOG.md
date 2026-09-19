@@ -1,5 +1,26 @@
 ## Unreleased
 
+- **Pushbacks no longer drive into the next stand, and they wait their turn.**
+  Generated taxi-out polylines that hooked the wrong way along T4 (BAY-3 into
+  50A, and the same kink on 50E/50F) are trimmed so the tug hands off toward
+  the hold. Same-apron pushbacks now wait until the first aircraft has
+  finished the push, disconnected, and cleared the stands — not a flat 60 s —
+  so two airframes are not on the shared taxilane together. A 180° heading
+  snap at tug disconnect stops the visual spin that looked like taxiing the
+  wrong way.
+
+- **The HUD stamp is live Adelaide date and time.** The top bar reads
+  weekday, date and 24-hour clock from the same wall-clock alignment the
+  simulation already uses, so a Monday morning session shows Monday.
+
+- **Traffic follows the banks.** The published day and AI ready-times bunch
+  on the 06–08 and 16–18 peaks (and a smaller midday bank). Overflights thin
+  out overnight and in the afternoon hole.
+
+- **Departures turn toward the destination.** After rotate, the climb-out
+  yaws and drifts off the centreline toward the booked city instead of
+  climbing forever along the runway axis.
+
 - **The Operations board now shows the whole Adelaide day, and the sky is
   busier.** Arrivals and Departures list every planned movement from the
   official AI networks between 06:00 and 21:00, with live aircraft overlaying

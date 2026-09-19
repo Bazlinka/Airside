@@ -25,7 +25,7 @@ namespace Airside.Presentation
             }
 
             var live = new HashSet<string>();
-            foreach (var flight in SkyTraffic.At(_preciseTime))
+            foreach (var flight in SkyTraffic.At(_preciseTime, _operations.Clock))
                 ShowSkyFlight(flight, new Color(0.82f, 0.84f, 0.88f), live);
             foreach (var flight in AdelaideDayPlan.AirborneAt(_operations, new SimulationTime((long)_preciseTime)))
                 ShowSkyFlight(flight, ColorForSkyAirline(flight.Callsign), live);

@@ -76,6 +76,10 @@ namespace Airside.Domain
 
         public string DateText(SimulationTime time) => LocalAt(time).ToString("ddd d MMM", CultureInfo.InvariantCulture);
 
+        /// <summary>Live Adelaide stamp drawn on the HUD: weekday, date and 24-hour time.</summary>
+        public string StampText(SimulationTime time) =>
+            LocalAt(time).ToString("ddd d MMM  HH:mm", CultureInfo.InvariantCulture);
+
         public static string DurationText(long seconds)
         {
             seconds = Math.Max(0, seconds);

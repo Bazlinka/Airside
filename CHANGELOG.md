@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Mac player compiles again after #318.** `ContractsWorkspace` used `Math.Min`
+  without `using System;`, so `scripts/build-mac.sh` died with CS0103. Also
+  committed the Unity `.meta` sidecars for the new HUD/career files (they were
+  generated on first Editor/batch import and never tracked) and the URP SSAO
+  prefilter re-serialisation from that build. IMGUI panels now nine-slice their
+  8px bevel (`PanelStyle.border`) instead of stretching the whole 128×128; Follow,
+  Overview and Resume draw the approved Batch F4 system icons (leftover from #299).
+
 - **Fuselage titles read as paint again.** The dark plate behind each airline name
   was sized in TextMesh character-size units instead of metres, so it came out
   6.4x too small — a small dark rectangle sitting across the middle of the name

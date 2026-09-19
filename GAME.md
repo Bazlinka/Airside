@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-19 Cursor — tidy after pull/rebuild (branch
+  `feature/tidy-compile-and-metas`).** Pulled `main` to `ec216ce` (#318) and
+  rebuilt the Mac player. First pass failed: `ContractsWorkspace.cs` used
+  `Math.Min` without `using System;`. Fixed. Committed the Unity `.meta` files
+  for the new HUD/career scripts (never tracked after #315/#318) and the URP
+  SSAO prefilter re-serialisation. Stashed timer work is on
+  `feature/fix-stage-timers`. PR #299 (nine-slice + HUD icons) and #312
+  (batchmode licensing note) were leftover and conflicting.
+  - **Evidence:** `scripts/build-mac.sh` produced `work/builds/Airside.app` and
+    opened it.
+  - **NEXT:** merge this tidy PR, then the timer-fix branch. Do not run
+    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
 - **2026-09-18 Cursor (Cloud Linux) — HUD workspaces on a shared draw list
   (branch `cursor/hud-workspaces-redesign-c5a4`, PR #318, ADR 0057).** Bailey
   supplied five concept references (overview / operations / map / fleet /

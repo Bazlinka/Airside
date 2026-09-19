@@ -116,7 +116,7 @@ namespace Airside.Simulation
                     return Air(AircraftPhase.GoAround, start);
 
                 case FleetState.HoldingForLanding:
-                    // Short final on the assigned runway (gulf for 05, land for 23).
+                    // Short final on the assigned runway (gulf for 05, NE for 23/12, SW for 30).
                     // Progress is pinned by ApproachHold, not this start time.
                     return Air(AircraftPhase.Approach, start);
 

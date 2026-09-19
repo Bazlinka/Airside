@@ -86,8 +86,13 @@ namespace Airside.Tests
             ops.ScheduleDeparture(second, kingscote, new SimulationTime(600));
 
             // Ground releases the neighbour once the first has cleared the stands.
-            var secondAtHold = 600 + AirlineOperations.TaxiClearSecondsFrom(first.Stand, first.Type)
-                               + AirlineOperations.TaxiOutSecondsFrom(second.Stand);
+            clock.Set(new SimulationTime(600));
+            ops.Update();
+            var secondStart = 600 + AirlineOperations.TaxiClearSecondsFrom(
+                first.DepartureStand, first.Type, first.AssignedRunway);
+            clock.Set(new SimulationTime(secondStart));
+            ops.Update();
+            var secondAtHold = second.StateEndsAt.Value.ElapsedSeconds;
             clock.Set(new SimulationTime(secondAtHold + 5));
             ops.Update();
 

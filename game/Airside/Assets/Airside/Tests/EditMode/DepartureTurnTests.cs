@@ -12,6 +12,8 @@ namespace Airside.Tests
             Assert.That(DestinationCatalogue.TryFind("MEL", out var melbourne), Is.True);
             var home = DestinationCatalogue.Adelaide;
             Assert.That(DepartureTurn.Blend(AircraftPhase.Takeoff, 0.2f), Is.EqualTo(0f));
+            Assert.That(DepartureTurn.Blend(AircraftPhase.Takeoff, CircuitProfile.RotateProgress),
+                Is.EqualTo(0f), "still on the roll at rotate");
             Assert.That(DepartureTurn.LateralMetres(RunwayDirection.Runway05, home, melbourne,
                 AircraftPhase.Takeoff, 0.2f), Is.EqualTo(0f));
 
@@ -21,6 +23,9 @@ namespace Airside.Tests
                 AircraftPhase.Departed, 1f);
             Assert.That(yaw, Is.GreaterThan(20f), "Melbourne sits well right of 05");
             Assert.That(lateral, Is.LessThan(-80f), "right of 05 is −Z in the runway frame");
+            Assert.That(DepartureTurn.Blend(AircraftPhase.Takeoff,
+                (CircuitProfile.RotateProgress + 1f) * 0.5f), Is.GreaterThan(0.1f),
+                "the turn starts after rotate, still on the takeoff");
         }
 
         [Test]

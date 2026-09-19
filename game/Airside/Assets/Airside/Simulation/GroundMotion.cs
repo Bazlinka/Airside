@@ -227,9 +227,29 @@ namespace Airside.Simulation
             var dx = _x[next] - _x[segment];
             var dz = _z[next] - _z[segment];
             var len = Hypot(dx, dz);
+            var x = _x[segment] + dx * fraction;
+            var z = _z[segment] + dz * fraction;
+            var along = _distance[segment] + (len > 1e-6f ? fraction * len : 0f);
+            // Point the nose a little ahead of the current tangent so a vertex
+            // does not snap the heading. Sixteen metres is about one cockpit
+            // glance down a real taxiway.
+            var look = Math.Min(Length, along + 16f);
+            if (look > along + 0.4f)
+            {
+                var ahead = PointAtDistance(look);
+                var lx = ahead.x - x;
+                var lz = ahead.z - z;
+                var lookLen = Hypot(lx, lz);
+                if (lookLen > 0.4f)
+                {
+                    dx = lx;
+                    dz = lz;
+                    len = lookLen;
+                }
+            }
+
             return new GroundSample(
-                _x[segment] + dx * fraction,
-                _z[segment] + dz * fraction,
+                x, z,
                 len > 1e-6f ? dx / len : 1f,
                 len > 1e-6f ? dz / len : 0f,
                 speed);
@@ -409,15 +429,104 @@ namespace Airside.Simulation
                 var part = _parts[i];
                 var isLast = i == _parts.Count - 1;
                 if (t < part.PauseBeforeSeconds)
-                    return Pose(part, 0, stopped: true);
+                    return TugTurnPose(part, 0, stopped: true, i, t, part.PauseBeforeSeconds);
                 t -= part.PauseBeforeSeconds;
                 if (t <= part.Path.Seconds || isLast)
-                    return Pose(part, t, stopped: false);
+                    return TugTurnPose(part, t, stopped: false, i, -1, 0);
                 t -= part.Path.Seconds;
             }
 
             var final = _parts[_parts.Count - 1];
-            return Pose(final, final.Path.Seconds, stopped: true);
+            return TugTurnPose(final, final.Path.Seconds, stopped: true, _parts.Count - 1, -1, 0);
+        }
+
+        /// <summary>
+        /// A tail-first push that hands off to a nose-first taxi used to invert
+        /// the heading at tug disconnect — the airframe faced the stand, then
+        /// snapped 180° onto the taxilane. The tug now turns the nose onto the
+        /// taxi heading through the last part of the push (and finishes during
+        /// the disconnect pause), so the hand-off is a human turn, not a flip.
+        /// </summary>
+        private GroundPose TugTurnPose(GroundLegPart part, double pathSeconds, bool stopped,
+            int index, double pauseElapsed, double pauseTotal)
+        {
+            var pose = Pose(part, pathSeconds, stopped);
+            if (!TryTugTurn(index, out var fromX, out var fromZ, out var toX, out var toZ))
+                return pose;
+
+            var blend = 0.0;
+            if (part.TailFirst)
+                blend = PushTurnBlend(part, pathSeconds);
+            else if (stopped && pauseTotal > 1e-6)
+                blend = 1.0;
+            else
+                return pose;
+            if (blend <= 0.0)
+                return pose;
+            SlerpHeading(fromX, fromZ, toX, toZ, (float)blend, out var noseX, out var noseZ);
+            return new GroundPose(pose.X, pose.Z, noseX, noseZ, pose.Speed, part.TailFirst);
+        }
+
+        private bool TryTugTurn(int index, out float fromX, out float fromZ, out float toX, out float toZ)
+        {
+            fromX = fromZ = toX = toZ = 0f;
+            if (index < 0 || index >= _parts.Count)
+                return false;
+            var part = _parts[index];
+            GroundLegPart push;
+            GroundLegPart taxi;
+            if (part.TailFirst && index + 1 < _parts.Count && !_parts[index + 1].TailFirst)
+            {
+                push = part;
+                taxi = _parts[index + 1];
+            }
+            else if (!part.TailFirst && index > 0 && _parts[index - 1].TailFirst)
+            {
+                push = _parts[index - 1];
+                taxi = part;
+            }
+            else
+                return false;
+
+            var start = Pose(push, 0, true);
+            var end = Pose(taxi, 0, true);
+            fromX = start.NoseX;
+            fromZ = start.NoseZ;
+            toX = end.NoseX;
+            toZ = end.NoseZ;
+            return true;
+        }
+
+        /// <summary>Tug starts the turnout a quarter of the way through the push and finishes before it stops.</summary>
+        private static double PushTurnBlend(GroundLegPart push, double pathSeconds)
+        {
+            var span = push.Path.Seconds;
+            var u = span > 1e-6 ? pathSeconds / span : 1.0;
+            return Smooth01((u - 0.25) / 0.67);
+        }
+
+        private static double Smooth01(double t)
+        {
+            if (t <= 0)
+                return 0;
+            if (t >= 1)
+                return 1;
+            return t * t * (3.0 - 2.0 * t);
+        }
+
+        private static void SlerpHeading(float fromX, float fromZ, float toX, float toZ, float t,
+            out float x, out float z)
+        {
+            var a0 = Math.Atan2(fromX, fromZ);
+            var a1 = Math.Atan2(toX, toZ);
+            var delta = a1 - a0;
+            while (delta > Math.PI)
+                delta -= 2.0 * Math.PI;
+            while (delta < -Math.PI)
+                delta += 2.0 * Math.PI;
+            var a = a0 + delta * Math.Max(0f, Math.Min(1f, t));
+            x = (float)Math.Sin(a);
+            z = (float)Math.Cos(a);
         }
 
         /// <summary>Parts in order, for tests and tools that need the individual paths.</summary>

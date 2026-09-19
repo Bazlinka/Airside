@@ -150,19 +150,35 @@ namespace Airside.Presentation
             return list.ToArray();
         }
 
+        public static RunwayMark[] DesignationNumerals()
+        {
+            var local = AirsideStripMarkings.DesignationNumerals(
+                AirsideBareField.RunwayLengthMetres, "05", "23");
+            var marks = new RunwayMark[local.Length];
+            for (var i = 0; i < local.Length; i++)
+            {
+                var m = local[i];
+                marks[i] = new RunwayMark(m.CenterX, m.CenterZ, m.LengthX, m.WidthZ);
+            }
+
+            return marks;
+        }
+
         public static RunwayMark[] All()
         {
             var edges = Edges();
             var dashes = CentrelineDashes();
             var threshold = ThresholdStripes();
+            var numbers = DesignationNumerals();
             var aiming = AimingPoints();
             var tdz = TouchdownZones();
             var all = new RunwayMark[edges.Length + dashes.Length + threshold.Length
-                                     + aiming.Length + tdz.Length];
+                                     + numbers.Length + aiming.Length + tdz.Length];
             var n = 0;
             Copy(edges, all, ref n);
             Copy(dashes, all, ref n);
             Copy(threshold, all, ref n);
+            Copy(numbers, all, ref n);
             Copy(aiming, all, ref n);
             Copy(tdz, all, ref n);
             return all;

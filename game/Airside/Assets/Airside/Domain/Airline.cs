@@ -27,6 +27,27 @@ namespace Airside.Domain
         public StableId Id { get; }
         public string Name { get; }
 
+        /// <summary>
+        /// Paint-friendly fuselage wordmark. Real titles are short ("REX",
+        /// "VIRGIN") — the legal name is too long for the side of an ATR.
+        /// </summary>
+        public string FuselageTitle
+        {
+            get
+            {
+                switch (Id.Value)
+                {
+                    case "REX": return "REX";
+                    case "QLK": return "QANTASLINK";
+                    case "VOZ": return "VIRGIN";
+                    case "ANZ": return "AIR NZ";
+                    case "SIA": return "SINGAPORE";
+                    case "CPA": return "CATHAY";
+                    default: return Wordmark(Name);
+                }
+            }
+        }
+
         /// <summary>Primary livery colour as #RRGGBB, kept UnityEngine-free.</summary>
         public string LiveryHex { get; }
 
@@ -49,6 +70,24 @@ namespace Airside.Domain
         public static Airline CathayPacific() => new("CPA", "Cathay Pacific", "#006564", isPlayer: false);
 
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
+
+        internal static string Wordmark(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return string.Empty;
+            var trimmed = name.Trim();
+            if (trimmed.Length <= 16)
+                return trimmed.ToUpperInvariant();
+            var parts = trimmed.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+            {
+                var two = parts[0] + " " + parts[1];
+                if (two.Length <= 18)
+                    return two.ToUpperInvariant();
+            }
+
+            return parts[0].ToUpperInvariant();
+        }
 
         public (byte r, byte g, byte b) LiveryRgb()
         {

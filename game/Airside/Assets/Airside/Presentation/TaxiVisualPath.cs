@@ -17,7 +17,7 @@ namespace Airside.Presentation
     public static class TaxiVisualPath
     {
         /// <summary>Largest turn radius used to round a route corner, in metres.</summary>
-        public const float MaxCornerFillet = 3f;
+        public const float MaxCornerFillet = 18f;
 
         public static Vector3 PositionAt(TaxiRoute route, float phaseProgress, bool reverse, float height = 0.7f)
         {

@@ -60,9 +60,14 @@ namespace Airside.Tests
         {
             var floods = AdelaideTerminalArchitecture.ApronFloods();
 
-            Assert.That(floods.Length, Is.EqualTo(7));
-            Assert.That(floods.All(f => f.X > 975f && f.X < 1616f), Is.True);
-            Assert.That(floods.All(f => f.Z < 436f && f.TargetZ < f.Z - 40f), Is.True);
+            Assert.That(floods.Length, Is.EqualTo(10));
+            var terminal = floods.Where(f => f.Z < 450f).ToArray();
+            var regional = floods.Where(f => f.Z >= 450f).ToArray();
+            Assert.That(terminal.Length, Is.EqualTo(7));
+            Assert.That(terminal.All(f => f.X > 975f && f.X < 1616f), Is.True);
+            Assert.That(terminal.All(f => f.Z < 436f && f.TargetZ < f.Z - 40f), Is.True);
+            Assert.That(regional.Length, Is.EqualTo(3));
+            Assert.That(regional.All(f => f.TargetZ < f.Z), Is.True);
             Assert.That(AdelaideTerminalArchitecture.FloodHeightMetres, Is.GreaterThan(AdelaideTerminalArchitecture.ShellHeightMetres));
             Assert.That(AdelaideTerminalArchitecture.FloodRangeMetres, Is.GreaterThan(100f));
         }

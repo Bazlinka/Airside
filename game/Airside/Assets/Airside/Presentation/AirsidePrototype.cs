@@ -288,9 +288,11 @@ namespace Airside.Presentation
             else
             {
                 // Operational YPAD lighting is not decoration. The focused release keeps
-                // real-metre runway edges, thresholds, PAPI and the runway 23 HIAL while
-                // omitting only landside/decorative lighting.
-                _apronLights = Array.Empty<Light>();
+                // real-metre runway edges, thresholds, PAPI, HIAL, apron floods and
+                // stand markers, and omits only landside streetlights.
+                _apronLights = AirsideBareField.Enabled
+                    ? BuildApronLights()
+                    : Array.Empty<Light>();
                 _landsideLights = Array.Empty<Light>();
                 _thresholdLights = AirsideBareField.Enabled
                     ? BuildYpadThresholdPapiAndApproachLights()
@@ -299,7 +301,9 @@ namespace Airside.Presentation
                 _runwayEdgeLights = AirsideBareField.Enabled
                     ? BuildYpadRunwayEdgeLights()
                     : Array.Empty<Light>();
-                _standLights = Array.Empty<Light>();
+                _standLights = AirsideBareField.Enabled
+                    ? BuildStandLighting()
+                    : Array.Empty<Light>();
                 // Decision 0025 item 5's realtime apron/terminal reflection probes only ever
                 // existed on the legacy 1:20 miniature circuit (built in the branch above) —
                 // the real Adelaide bare-field world never got its own, so wet asphalt and
@@ -696,11 +700,13 @@ namespace Airside.Presentation
                 AirsideTheme.Cloud);
 
             // Follow / Overview live on the circuit HUD only. The airline overview
-            // uses the selected-aircraft card and Esc/R instead (ADR 0053).
-            if (!AirlineModalOpen && !_menuOpen && !FleetMode)
+            // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
+            // live speed / altitude / heading strip stays up in both modes.
+            if (!AirlineModalOpen && !_menuOpen)
             {
                 DrawSpeedReadout(layout, panel);
-                DrawControlBar(layout, button);
+                if (!FleetMode)
+                    DrawControlBar(layout, button);
             }
             DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
@@ -800,11 +806,14 @@ namespace Airside.Presentation
             _readoutLastHeight = heightMetres;
             _readoutLastTime = now;
 
+            var heading = Mathf.RoundToInt(RunwayWeather.TrueFromUnityYaw(view.eulerAngles.y));
+            if (heading >= 360)
+                heading -= 360;
             var feet = heightMetres * 3.28084f;
             if (feet < 10f)
-                return speed;
+                return $"{speed}  ·  HDG {heading:000}";
             var arrow = _readoutVerticalFpm > 150f ? " ▲" : _readoutVerticalFpm < -150f ? " ▼" : string.Empty;
-            return $"{speed}  ·  {Mathf.RoundToInt(feet / 10f) * 10:#,0} ft{arrow}";
+            return $"{speed}  ·  {Mathf.RoundToInt(feet / 10f) * 10:#,0} ft{arrow}  ·  HDG {heading:000}";
         }
 
         /// <summary>
@@ -925,21 +934,21 @@ namespace Airside.Presentation
                 var heading = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction.normalized)
                     : view.rotation;
+                heading = DepartureLookRotation(flight, phase, progress, heading);
                 var pitch = PhasePitchDegrees(phase, progress);
                 var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase);
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
-                var turnRate = phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress * 0.4f ? 8f : 5f;
-                // Tug disconnect flips the nose 180°. Slerp would spin the airframe the
-                // long way and read as taxiing the wrong direction down the taxilane.
-                if (Quaternion.Angle(view.rotation, targetRotation) > 120f)
-                    view.rotation = targetRotation;
-                else
-                    view.rotation = Quaternion.Slerp(
-                        view.rotation,
-                        targetRotation,
-                        AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
+                var turningOff = DepartureTurn.Blend(phase, progress) > 0.02f;
+                var turnRate = phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback
+                    ? 2.3f
+                    : turningOff ? 2.8f
+                    : phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress * 0.4f ? 8f : 5f;
+                view.rotation = Quaternion.Slerp(
+                    view.rotation,
+                    targetRotation,
+                    AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
                 // A fleet aircraft away on a leg is hidden for hours. Its pose above stays
                 // current so it reappears on the right heading, but the prop, gear, light,
@@ -977,9 +986,6 @@ namespace Airside.Presentation
 
         private static float TurnBankDegrees(Transform view, Quaternion targetRotation, AircraftPhase phase)
         {
-            if (phase is AircraftPhase.AtStand or AircraftPhase.Departed)
-                return 0f;
-
             // Ground phases stay wings-level so wingtips do not dig into the apron.
             if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
                 or AircraftPhase.Landing or AircraftPhase.AtStand)
@@ -3626,7 +3632,7 @@ namespace Airside.Presentation
                 // Warm night pools so REF-002 apron reads; day floods stay off.
                 // The Adelaide roof floods throw roughly 50 m onto the stands; inverse-square
                 // attenuation needs materially more intensity than the 16 m legacy diorama.
-                var flood = Mathf.Lerp(AirsideBareField.Enabled ? 40f : 3.6f, 0.04f,
+                var flood = Mathf.Lerp(AirsideBareField.Enabled ? 52f : 3.6f, 0.04f,
                     Mathf.SmoothStep(0f, 1f, daylight));
                 for (var i = 0; i < _apronLights.Length; i++)
                 {
@@ -3726,7 +3732,7 @@ namespace Airside.Presentation
             // Sparse runway-edge point lights so the strip reads as a lit ribbon at night.
             if (_runwayEdgeLights != null)
             {
-                var edge = Mathf.Lerp(0.95f, 0.02f, daylight);
+                var edge = Mathf.Lerp(1.55f, 0.02f, daylight);
                 var reilPulse = daylight < 0.42f
                     ? (Mathf.Repeat(Time.unscaledTime * 1.8f, 1f) < 0.22f ? 2.6f : 0.15f)
                     : 0f;
@@ -4696,6 +4702,8 @@ namespace Airside.Presentation
                 AirsideRunwayMarkings.CentrelineDashes(), paint);
             CreateCombinedStripPaint(markings, "Runway 05/23 threshold",
                 AirsideRunwayMarkings.ThresholdStripes(), paint);
+            CreateCombinedStripPaint(markings, "Runway 05/23 numbers",
+                AirsideRunwayMarkings.DesignationNumerals(), paint);
             CreateCombinedStripPaint(markings, "Aiming point 05/23",
                 AirsideRunwayMarkings.AimingPoints(), paint);
             CreateCombinedStripPaint(markings, "TDZ marks 05/23",
@@ -4771,6 +4779,11 @@ namespace Airside.Presentation
             SpawnLocalStripPaint(markings, "Runway 12/30 threshold",
                 AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
                     AirsideStripMarkings.ThresholdStripes(AirsideAdelaidePavement.CrossLengthMetres)),
+                paint, y);
+            SpawnLocalStripPaint(markings, "Runway 12/30 numbers",
+                AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
+                    AirsideStripMarkings.DesignationNumerals(
+                        AirsideAdelaidePavement.CrossLengthMetres, "12", "30")),
                 paint, y);
             SpawnLocalStripPaint(markings, "Runway 12/30 aiming",
                 AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(AirsideStripMarkings.AimingPoints(
@@ -12644,8 +12657,12 @@ namespace Airside.Presentation
         private Vector3 RunwayPosition(CommercialFlight flight, Vector3 position)
         {
             if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
-                && aircraft.AssignedRunway == RunwayDirection.Runway23)
-                return new Vector3(-position.x, position.y, -position.z);
+                && aircraft.AssignedRunway != RunwayDirection.Runway05)
+            {
+                RunwayFrame.ToWorld(aircraft.AssignedRunway, position.x, position.y, position.z,
+                    out var x, out var y, out var z);
+                return new Vector3(x, y, z);
+            }
             return position;
         }
 
@@ -12667,6 +12684,33 @@ namespace Airside.Presentation
             var lateral = DepartureTurn.LateralMetres(aircraft.AssignedRunway, _operations.Home, dest.Value,
                 phase, progress);
             return new Vector3(position.x, position.y, position.z + lateral);
+        }
+
+        /// <summary>
+        /// After rotate, point the nose at the departure track. Position look-ahead
+        /// only yaws a couple of degrees (along-track motion dwarfs the lateral),
+        /// so the published destination yaw is applied as heading.
+        /// </summary>
+        private Quaternion DepartureLookRotation(CommercialFlight flight, AircraftPhase phase, float progress,
+            Quaternion fallback)
+        {
+            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+                return fallback;
+            if (!FleetMode || _operations == null
+                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return fallback;
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!dest.HasValue)
+                return fallback;
+            var yaw = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
+                phase, progress);
+            if (Mathf.Abs(yaw) < 0.05f)
+                return fallback;
+            RunwayFrame.Forward(aircraft.AssignedRunway, out var fx, out var fz);
+            var along = new Vector3(fx, 0f, fz);
+            if (along.sqrMagnitude < 0.001f)
+                return fallback;
+            return Quaternion.LookRotation(along) * Quaternion.Euler(0f, yaw, 0f);
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)

@@ -50,33 +50,57 @@ namespace Airside.Simulation
         public const int Heading12 = 123;
         public const int Heading30 = 303;
 
+        /// <summary>
+        /// World +X is 05 (50° true); Unity yaw 0 faces +Z, which is 320° true.
+        /// </summary>
+        public static float TrueFromUnityYaw(float unityYawDegrees)
+        {
+            var heading = Heading05 + 270f + unityYawDegrees;
+            heading %= 360f;
+            if (heading < 0f)
+                heading += 360f;
+            return heading;
+        }
+
         /// <summary>Use the runway end with the larger headwind component; calm defaults to 05.</summary>
         public static RunwayDirection Select(SurfaceWind wind) =>
             Select(wind, null, null, null);
 
         /// <summary>
-        /// Tower runway on 05/23. Jets take the dest-aligned end through a wider
-        /// wind tie; regionals follow the wind more tightly. 12/30 is named on the
-        /// field; taxi-out still only reaches the 05/23 holds.
+        /// Tower runway. Jets stay on the 3 100 m 05/23 strip and take the
+        /// dest-aligned end through a wider wind tie. Regionals use 12/30 —
+        /// the 1 650 m cross strip — and follow the wind more tightly.
         /// </summary>
         public static RunwayDirection Select(SurfaceWind wind, AircraftType type,
             Destination? destination, Destination? home)
         {
+            if (AllowsCrossRunway(type))
+                return SelectCross(wind, destination, home);
+
             var h05 = Headwind(wind, Heading05);
             var h23 = Headwind(wind, Heading23);
-            // Jets stay on 05/23 (the 3 100 m strip). They will take the dest-aligned
-            // end through a wider wind tie so a Perth 787 does not climb out inland.
-            // Regionals follow the wind more tightly. 12/30 is named on the field
-            // but taxi-out still only reaches the 05/23 holds.
-            var tieKnots = AllowsCrossRunway(type) ? 3.0 : 8.0;
-
+            // Jets stay on 05/23. They will take the dest-aligned end through
+            // an 8 kt wind tie so a Perth 787 does not climb out inland.
             if (wind.Knots < 3)
-                return PreferDestination(destination, home, RunwayDirection.Runway05);
-            if (Math.Abs(h23 - h05) < tieKnots)
-                return PreferDestination(destination, home, h23 > h05
-                    ? RunwayDirection.Runway23
-                    : RunwayDirection.Runway05);
+                return PreferPair(destination, home, RunwayDirection.Runway05, RunwayDirection.Runway23,
+                    Heading05, Heading23, RunwayDirection.Runway05);
+            if (Math.Abs(h23 - h05) < 8.0)
+                return PreferPair(destination, home, RunwayDirection.Runway05, RunwayDirection.Runway23,
+                    Heading05, Heading23, h23 > h05 ? RunwayDirection.Runway23 : RunwayDirection.Runway05);
             return h23 > h05 ? RunwayDirection.Runway23 : RunwayDirection.Runway05;
+        }
+
+        private static RunwayDirection SelectCross(SurfaceWind wind, Destination? destination, Destination? home)
+        {
+            var h12 = Headwind(wind, Heading12);
+            var h30 = Headwind(wind, Heading30);
+            if (wind.Knots < 3)
+                return PreferPair(destination, home, RunwayDirection.Runway12, RunwayDirection.Runway30,
+                    Heading12, Heading30, RunwayDirection.Runway12);
+            if (Math.Abs(h30 - h12) < 3.0)
+                return PreferPair(destination, home, RunwayDirection.Runway12, RunwayDirection.Runway30,
+                    Heading12, Heading30, h30 > h12 ? RunwayDirection.Runway30 : RunwayDirection.Runway12);
+            return h30 > h12 ? RunwayDirection.Runway30 : RunwayDirection.Runway12;
         }
 
         /// <summary>Jets need the 3 100 m 05/23. Turboprops may use 12/30.</summary>
@@ -94,15 +118,16 @@ namespace Airside.Simulation
             _ => Heading05
         };
 
-        private static RunwayDirection PreferDestination(Destination? destination, Destination? home,
+        private static RunwayDirection PreferPair(Destination? destination, Destination? home,
+            RunwayDirection first, RunwayDirection second, int firstHeading, int secondHeading,
             RunwayDirection fallback)
         {
             if (!destination.HasValue || !home.HasValue)
                 return fallback;
             var heading = HeadingTo(home.Value, destination.Value);
-            var to05 = Math.Abs(Wrap180(heading - Heading05));
-            var to23 = Math.Abs(Wrap180(heading - Heading23));
-            return to23 < to05 ? RunwayDirection.Runway23 : RunwayDirection.Runway05;
+            var toFirst = Math.Abs(Wrap180(heading - firstHeading));
+            var toSecond = Math.Abs(Wrap180(heading - secondHeading));
+            return toSecond < toFirst ? second : first;
         }
 
         private static double HeadingTo(Destination from, Destination to)

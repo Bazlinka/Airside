@@ -983,7 +983,7 @@ namespace Airside.Presentation
             var when = ClockText(aircraft.Scheduled.Value.DepartAt);
             var prep = DeparturePrep.For(aircraft, _clock.Now);
             if (!prep.Ready)
-                return $"On {StandNames.Display(aircraft.Stand)} · {prep.Label} · departs {when} for {dest}";
+                return $"On {StandNames.Display(aircraft.Stand)} · {prep.Label} · {AirlineClock.DurationText(prep.RemainingSeconds)} left · departs {when} for {dest}";
             return $"On {StandNames.Display(aircraft.Stand)} · ready · departs {when} for {dest}";
         }
 

@@ -116,6 +116,76 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PrepRemaining_CountsDownOnEveryStageAndThenTheFlightLeaves()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+
+            var fuelStart = DeparturePrep.For(plane, new SimulationTime(0)).RemainingSeconds;
+            var fuelLater = DeparturePrep.For(plane, new SimulationTime(20)).RemainingSeconds;
+            Assert.That(fuelLater, Is.LessThan(fuelStart));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(20)).Stage, Is.EqualTo(DeparturePrepStage.Fuel));
+
+            var cateringAt = DeparturePrep.FuelSeconds;
+            var cateringStart = DeparturePrep.For(plane, new SimulationTime(cateringAt)).RemainingSeconds;
+            var cateringLater = DeparturePrep.For(plane, new SimulationTime(cateringAt + 20)).RemainingSeconds;
+            Assert.That(cateringLater, Is.LessThan(cateringStart));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(cateringAt + 20)).Stage,
+                Is.EqualTo(DeparturePrepStage.Catering));
+
+            var boardingAt = DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds;
+            var boardingStart = DeparturePrep.For(plane, new SimulationTime(boardingAt)).RemainingSeconds;
+            var boardingLater = DeparturePrep.For(plane, new SimulationTime(boardingAt + 20)).RemainingSeconds;
+            Assert.That(boardingLater, Is.LessThan(boardingStart));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(boardingAt + 20)).Stage,
+                Is.EqualTo(DeparturePrepStage.Boarding));
+
+            clock.Set(new SimulationTime(600));
+            ops.Update();
+            Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
+        }
+
+        [Test]
+        public void MissingPrepStart_StillFinishesInTimeForTheBookedPushback()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            plane.PrepStartedAt = null;
+
+            Assert.That(DeparturePrep.IsReady(plane, new SimulationTime(600)), Is.True,
+                "infer start from the booked slot so fuelling cannot sit at 0% forever");
+            clock.Set(new SimulationTime(600));
+            ops.Update();
+            Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
+        }
+
+        [Test]
+        public void UpdatingAPlan_DoesNotRestartFuelAlreadyPumped()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            var started = plane.PrepStartedAt;
+            clock.Set(new SimulationTime(DeparturePrep.FuelSeconds + 10));
+            ops.Update();
+            Assert.That(DeparturePrep.For(plane, clock.Now).Stage, Is.EqualTo(DeparturePrepStage.Catering));
+
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(1_200)).Accepted, Is.True);
+            Assert.That(plane.PrepStartedAt, Is.EqualTo(started));
+            Assert.That(DeparturePrep.For(plane, clock.Now).Stage, Is.EqualTo(DeparturePrepStage.Catering));
+        }
+
+        [Test]
+        public void DestinationTurnaround_EndsAndTheAircraftComesHome()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            clock.Set(new SimulationTime(20_000));
+            ops.Update();
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(plane.CompletedTrips, Is.EqualTo(1));
+        }
+
+        [Test]
         public void PlayerLanding_AutoParksWhenAStandIsFree()
         {
             var (clock, ops, plane) = PlayerOnly();

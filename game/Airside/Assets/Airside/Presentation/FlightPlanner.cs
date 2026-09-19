@@ -62,6 +62,13 @@ namespace Airside.Presentation
             ("1 h", 3600), ("2 h", 7200), ("4 h", 4 * 3600)
         };
 
+        /// <summary>Seconds until a booked pushback, never negative. Does not raise to prep lead.</summary>
+        public static long RemainingUntil(SimulationTime deadline, SimulationTime now)
+        {
+            var left = deadline.ElapsedSeconds - now.ElapsedSeconds;
+            return left > 0 ? left : 0;
+        }
+
         /// <summary>Clamp a departure delay to what the planner offers, including prep lead for a type.</summary>
         public static long ClampDelay(long seconds) => ClampDelay(seconds, null);
 

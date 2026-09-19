@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-18 Cursor — fix prep timers that counted up and never finished
+  (branch `feature/fix-stage-timers`).** Bailey: fuelling said 5 min, then the
+  timer kept rising and the stage never completed. Cause: planner remaining was
+  `now + lead` every frame (lead ≈ 5 min) and "update plan" reset
+  `PrepStartedAt`; a missing prep-start also made elapsed `now - now`. Booked
+  remaining now counts down; prep is not restarted on a plan update; missing
+  start is inferred from the booked slot. Same remaining countdown on fuel /
+  catering / boarding. Destination turnaround already had an end time — retested.
+  - **Evidence:** Unity 6.3 EditMode **572/572, 0 failed**.
+  - **NEXT:** `scripts/test-unity.sh` and a Mac Play of a 5 min booking: fuel
+    remaining falls, then catering, then boarding, then pushback at the booked
+    clock time.
+
 - **2026-09-18 Cursor (Cloud Linux) — HUD workspaces on a shared draw list
   (branch `cursor/hud-workspaces-redesign-c5a4`, PR #318, ADR 0057).** Bailey
   supplied five concept references (overview / operations / map / fleet /

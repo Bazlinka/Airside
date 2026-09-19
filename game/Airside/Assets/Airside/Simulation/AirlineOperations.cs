@@ -739,7 +739,10 @@ namespace Airside.Simulation
                 if (alreadyPaid > 0)
                     CareerState.RefundDispatch(alreadyPaid);
                 CareerState.TryChargeDispatch(cost);
-                aircraft.PrepStartedAt = _processedTo;
+                // Keep an in-progress fuel/catering/boarding clock. Resetting it on every
+                // "update plan" made fuelling restart and the departure slide forward forever.
+                if (!aircraft.PrepStartedAt.HasValue)
+                    aircraft.PrepStartedAt = _processedTo;
             }
 
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt);
@@ -935,6 +938,12 @@ namespace Airside.Simulation
                 case FleetState.AtStand:
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
                         return false;
+                    if (aircraft.Airline.IsPlayer && !aircraft.PrepStartedAt.HasValue)
+                    {
+                        var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds
+                            - DeparturePrep.TotalSeconds(aircraft.Type);
+                        aircraft.PrepStartedAt = new SimulationTime(inferred < 0 ? 0 : inferred);
+                    }
                     if (!DeparturePrep.IsReady(aircraft, now))
                         return false;
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);

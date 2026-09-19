@@ -77,6 +77,18 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void RemainingUntil_CountsDownAndDoesNotJumpBackToTheFiveMinuteLead()
+        {
+            var now = new SimulationTime(200);
+            var depart = new SimulationTime(320);
+            Assert.That(FlightPlanner.RemainingUntil(depart, now), Is.EqualTo(120));
+            Assert.That(FlightPlanner.ClampDelay(120, AircraftType.Atr42),
+                Is.GreaterThan(120), "the lead floor would have stuck the label at ~5 min");
+            Assert.That(FlightPlanner.RemainingUntil(depart, new SimulationTime(320)), Is.EqualTo(0));
+            Assert.That(FlightPlanner.RemainingUntil(depart, new SimulationTime(400)), Is.EqualTo(0));
+        }
+
+        [Test]
         public void Estimate_OrdersTheTripTimeline()
         {
             var (_, _, fleet) = PlayerFleet(1);

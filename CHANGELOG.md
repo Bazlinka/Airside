@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Fix fuelling (and the other prep stages) never finishing.** The planner
+  showed "in 5 min" from *now* every frame and clamped that delay to the prep
+  lead, so the pushback clock walked forward and updating the plan restarted
+  fuel. Booked remaining now counts down; an in-progress prep clock is kept;
+  a missing prep-start is inferred from the booked slot. Stage remaining is
+  shown counting down.
+
 - **Fuselage titles read as paint again.** The dark plate behind each airline name
   was sized in TextMesh character-size units instead of metres, so it came out
   6.4x too small — a small dark rectangle sitting across the middle of the name

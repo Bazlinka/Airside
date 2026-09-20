@@ -31,7 +31,10 @@ namespace Airside.Simulation
             foreach (var node in hops)
                 Append(points, graph.X[node], graph.Z[node]);
             Append(points, endX, endZ);
-            return GroundPathSmoothing.FilletAndDensify(points.ToArray(), 24f, 8f);
+            // Snapping both ends to their nearest graph node leaves out-and-back spurs, and the graph
+            // makes tight Z-turns where two taxiways cross a runway at different points. Relax them.
+            return GroundPathSmoothing.RelaxTightTurns(
+                GroundPathSmoothing.FilletAndDensify(points.ToArray(), 24f, 8f));
         }
 
         /// <summary>Metres from a point to the nearest taxiway centreline (not pavement edge).</summary>

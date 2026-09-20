@@ -48,6 +48,11 @@ Airside/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
     test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation
                              tests, for machines without Unity — supplementary, not a replacement
+    aircraft_skin.py         Shared skin-conforming doors/windows/panels and gear pods for the aircraft
+                             generators (curved shells that hug the fuselage, a few mm proud)
+    audit-aircraft-geometry.py
+                             Floating-part / door-flush audit and multi-view z-buffered renders of the
+                             runtime aircraft glTFs; test-aircraft-connectivity.py runs it as a check
     sync-art-streaming-assets.sh
                              Copy runtime glTF/PNG art into StreamingAssets for packaged builds
     dotnet-harness/          Hand-authored csproj backing test-domain.sh

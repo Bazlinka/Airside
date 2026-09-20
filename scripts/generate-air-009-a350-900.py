@@ -28,6 +28,13 @@ base = importlib.util.module_from_spec(_BASE_SPEC)
 assert _BASE_SPEC.loader is not None
 _BASE_SPEC.loader.exec_module(base)
 
+_SKIN_SPEC = importlib.util.spec_from_file_location(
+    "airside_aircraft_skin", SCRIPTS / "aircraft_skin.py"
+)
+skin = importlib.util.module_from_spec(_SKIN_SPEC)
+assert _SKIN_SPEC.loader is not None
+_SKIN_SPEC.loader.exec_module(skin)
+
 box = base.box
 cylinder = base.cylinder
 lofted_aerofoil = base.lofted_aerofoil
@@ -97,18 +104,30 @@ def _surface_patch(corners, offset=0.018):
     return verts, np.asarray(indices, np.uint16)
 
 
+# Passenger windows: tall rounded panes at the real 0.51 m frame pitch, centred ~0.9 m above the
+# cabin axis (they used to sit ~1.4 m up, level with the crown). Two panes share a node so the
+# part count stays where it was. Doors are 1.07 m x 1.9 m and follow the skin curve.
+WINDOW_PITCH = 0.508
+WINDOW_ANGLE_DEG = 17.0
+
+
 def _window(z: float, side: float):
-    centre = 153.0 if side < 0 else 27.0
-    return _surface_patch(
-        [(z - 0.19, centre - 4.2), (z + 0.19, centre - 4.2),
-         (z + 0.19, centre + 4.2), (z - 0.19, centre + 4.2)], 0.025)
+    angle = 180.0 - WINDOW_ANGLE_DEG if side < 0 else WINDOW_ANGLE_DEG
+    return skin.window(_surface, z, angle, width=0.25, height=0.36)
+
+
+def _window_pair(z: float, side: float, skip):
+    panes = [_window(z - k * WINDOW_PITCH, side) for k in range(2) if not skip(z - k * WINDOW_PITCH)]
+    return skin.merge_meshes(panes) if panes else None
 
 
 def _door(z: float, side: float):
-    centre = 180.0 if side < 0 else 0.0
-    return _surface_patch(
-        [(z - 0.58, centre - 11.0), (z + 0.58, centre - 11.0),
-         (z + 0.58, centre + 11.0), (z - 0.58, centre + 11.0)], 0.032)
+    return skin.skin_patch(_surface, z, 180.0 if side < 0 else 0.0, 0.53, 0.95,
+                           front=0.006, radius=0.14, rings=3, max_edge=0.16)
+
+
+def _pane(z: float, angle: float, half_len: float, half_arc: float, front: float):
+    return skin.skin_patch(_surface, z, angle, half_len, half_arc, front=front, radius=0.08, rings=2, max_edge=0.14)
 
 
 WING_STATIONS = (
@@ -192,25 +211,28 @@ def a350_900_meshes():
     meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     meshes["fuselage"] = oval_lathe_fuselage(FUSELAGE_STATIONS, segments=72)
 
-    # A350 flight deck: dark wraparound mask with six inset panes.
-    meshes["cockpit_mask_left"] = _surface_patch(
-        [(28.65, 105), (30.85, 116), (31.45, 142), (29.30, 151)], 0.045)
-    meshes["cockpit_mask_right"] = _surface_patch(
-        [(28.65, 75), (29.30, 29), (31.45, 38), (30.85, 64)], 0.045)
+    # A350 flight deck: dark wraparound mask with six inset panes, all skin-conforming.
+    meshes["cockpit_mask_left"] = skin.skin_patch(
+        _surface, 30.05, 128.0, 1.45, 0.85, front=0.012, radius=0.45, rings=3, max_edge=0.2)
+    meshes["cockpit_mask_right"] = skin.skin_patch(
+        _surface, 30.05, 52.0, 1.45, 0.85, front=0.012, radius=0.45, rings=3, max_edge=0.2)
     for side, angles in (("l", (116, 132, 146)), ("r", (64, 48, 34))):
         for index, angle in enumerate(angles, 1):
-            meshes[f"windscreen_{side}{index}"] = _surface_patch(
-                [(29.55, angle - 6), (30.80, angle - 5),
-                 (30.98, angle + 5), (29.55, angle + 6)], 0.062)
+            meshes[f"windscreen_{side}{index}"] = _pane(30.25, float(angle), 0.72, 0.24, 0.024)
 
     door_z = (27.1, 10.8, -10.5, -26.2)
+
+    def in_door_zone(z: float) -> bool:
+        return min(abs(z - door) for door in door_z) < 0.53 + 0.32
+
     for side, suffix in ((-1.0, ""), (1.0, "r")):
         index = 0
-        for z in np.arange(24.9, -25.1, -0.86):
-            if min(abs(float(z) - door) for door in door_z) < 1.05:
+        for z in np.arange(24.9, -25.1, -2.0 * WINDOW_PITCH):
+            pair = _window_pair(float(z), side, in_door_zone)
+            if pair is None:
                 continue
             index += 1
-            meshes[f"cabin_window_{suffix}{index}"] = _window(float(z), side)
+            meshes[f"cabin_window_{suffix}{index}"] = pair
         for door_index, z in enumerate(door_z, 1):
             meshes[f"door_{'left' if side < 0 else 'right'}_{door_index}"] = _door(z, side)
 
@@ -228,8 +250,9 @@ def a350_900_meshes():
             [(side * 30.0, 8.95, -1.45, 2.3, 0.13),
              (side * 31.4, 9.65, -2.55, 1.45, 0.09),
              (side * HALF_SPAN, 10.45, -3.50, 0.72, 0.055)], chord_points=14)
-        meshes[f"nav_light_{suffix}"] = box(side * 32.28, 10.45, -3.15, 0.10, 0.10, 0.12)
-        meshes[f"static_wick_{suffix}"] = box(side * 32.0, 10.40, -4.0, 0.03, 0.02, 0.20)
+        # Tip station: x=32.375, y=10.45, chord -3.50..-4.22. Light on the tip, wick off its trailing edge.
+        meshes[f"nav_light_{suffix}"] = box(side * 32.30, 10.45, -3.80, 0.10, 0.10, 0.12)
+        meshes[f"static_wick_{suffix}"] = box(side * 32.30, 10.44, -4.28, 0.03, 0.02, 0.20)
 
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
         x = side * 10.75
@@ -256,12 +279,26 @@ def a350_900_meshes():
     meshes["elevator_left"] = box(-6.4, 7.95, -31.0, 11.6, 0.08, 1.15)
     meshes["elevator_right"] = box(6.4, 7.95, -31.0, 11.6, 0.08, 1.15)
 
+    # Published A350-900 wheelbase is 28.66 m (nose gear at 25.2 -> mains at -3.46); the mains
+    # used to sit at -5.8, 4.6 m behind the wing's trailing edge with nothing above them. A
+    # gear-bay pod now grows out of the fuselage belly over each leg, and every wheel truck
+    # has an axle so no tyre floats beside its strut.
     nose_z = 25.2
-    main_z = -5.8
+    main_z = -3.46
     main_x = 4.35
-    meshes["gear_nose"] = box(0.0, 2.15, nose_z, 0.24, 3.25, 0.45)
-    meshes["gear_left"] = box(-main_x, 2.45, main_z, 0.28, 3.55, 0.52)
-    meshes["gear_right"] = box(main_x, 2.45, main_z, 0.28, 3.55, 0.52)
+    meshes["gear_nose"] = skin.merge_meshes([
+        box(0.0, 2.15, nose_z, 0.24, 3.25, 0.45),
+        box(0.0, 0.58, nose_z, 0.96, 0.12, 0.12),
+    ])
+    for side, prefix in ((-1.0, "left"), (1.0, "right")):
+        meshes[f"gear_{prefix}"] = skin.merge_meshes([
+            box(side * main_x, 2.45, main_z, 0.28, 3.55, 0.52),
+            box(side * main_x, 0.72, main_z, 0.20, 0.16, 1.70),                 # bogie beam
+            box(side * main_x, 0.72, main_z + 0.78, 1.16, 0.14, 0.14),          # forward axle
+            box(side * main_x, 0.72, main_z - 0.78, 1.16, 0.14, 0.14),          # aft axle
+        ])
+        meshes[f"gear_fairing_{prefix}"] = skin.x_tube(
+            side * 1.8, side * (main_x + 0.55), 4.15, main_z, 0.48, 1.7)
     _wheel(meshes, "nose_left", -0.34, nose_z, 0.58, 0.25)
     _wheel(meshes, "nose_right", 0.34, nose_z, 0.58, 0.25)
     for side, prefix in ((-1.0, "left"), (1.0, "right")):
@@ -271,8 +308,9 @@ def a350_900_meshes():
 
     meshes["beacon_top"] = box(0.0, 9.31, 2.0, 0.12, 0.12, 0.12)
     meshes["beacon_bottom"] = box(0.0, 3.22, 1.0, 0.12, 0.12, 0.12)
-    meshes["landing_light_l"] = box(-7.8, 5.7, 7.0, 0.28, 0.16, 0.12)
-    meshes["landing_light_r"] = box(7.8, 5.7, 7.0, 0.28, 0.16, 0.12)
+    # Landing lights on the wing-root leading-edge underside (they hung 0.5 m below the wing).
+    meshes["landing_light_l"] = box(-7.8, 6.40, 9.36, 0.28, 0.16, 0.12)
+    meshes["landing_light_r"] = box(7.8, 6.40, 9.36, 0.28, 0.16, 0.12)
     meshes["taxi_light"] = box(0.0, 1.75, nose_z + 0.25, 0.18, 0.14, 0.14)
 
     shift = np.asarray((0.0, 0.0, -HALF_LENGTH), np.float32)

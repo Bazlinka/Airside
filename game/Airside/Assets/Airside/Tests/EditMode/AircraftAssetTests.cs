@@ -154,7 +154,9 @@ namespace Airside.Tests
                     Is.True, "the AIR-010 glTF kit should load");
 
                 var filters = root.GetComponentsInChildren<MeshFilter>(true);
-                Assert.That(filters.Length, Is.GreaterThan(220));
+                // A rich purpose-built kit, not a placeholder. Two cabin windows now share each node
+                // (real 0.51 m pitch), so the count is a little lower than when there was one per node.
+                Assert.That(filters.Length, Is.GreaterThan(200));
                 var bounds = filters[0].sharedMesh.bounds;
                 for (var i = 1; i < filters.Length; i++)
                     bounds.Encapsulate(filters[i].sharedMesh.bounds);

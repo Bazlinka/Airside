@@ -41,8 +41,10 @@ FUSE_SCALE = np.asarray(
     (FUSE_WIDTH_M / (a350.FUSE_RX * 2.0), SCALE[1], SCALE[2]), np.float32)
 
 
-def _scaled_surface_patch(corners, offset=0.018):
-    vertices, indices = a350._surface_patch(corners, offset)
+def _scaled_pane(z, angle, half_len, half_arc, front):
+    """A skin-conforming windscreen pane in AIR-010's nose-stop frame."""
+    vertices, indices = a350.skin.skin_patch(
+        a350._surface, z, angle, half_len, half_arc, front=front, radius=0.09, rings=2, max_edge=0.14)
     # AIR-009 patches are returned in centred coordinates. Shift to its nose-stop
     # datum before scaling into AIR-010's nose-stop frame.
     vertices = vertices + np.asarray((0.0, 0.0, -a350.HALF_LENGTH), np.float32)
@@ -81,14 +83,10 @@ def boeing_787_10_meshes():
 
     # Four fitted panes with a skin-coloured centre pillar; the 787 has no A350
     # black raccoon mask. These stay curvature-fitted to the shared nose loft.
-    meshes["windscreen_left_outer"] = _scaled_surface_patch(
-        [(29.25, 116), (30.70, 122), (31.05, 136), (29.55, 142)], 0.052)
-    meshes["windscreen_left_inner"] = _scaled_surface_patch(
-        [(29.45, 139), (30.98, 143), (31.10, 155), (29.55, 157)], 0.052)
-    meshes["windscreen_right_inner"] = _scaled_surface_patch(
-        [(29.45, 41), (29.55, 23), (31.10, 25), (30.98, 37)], 0.052)
-    meshes["windscreen_right_outer"] = _scaled_surface_patch(
-        [(29.25, 64), (29.55, 38), (31.05, 44), (30.70, 58)], 0.052)
+    meshes["windscreen_left_outer"] = _scaled_pane(30.10, 129.0, 0.75, 0.40, 0.046)
+    meshes["windscreen_left_inner"] = _scaled_pane(30.30, 150.0, 0.75, 0.28, 0.046)
+    meshes["windscreen_right_inner"] = _scaled_pane(30.30, 30.0, 0.75, 0.28, 0.046)
+    meshes["windscreen_right_outer"] = _scaled_pane(30.10, 51.0, 0.75, 0.40, 0.046)
 
     # The 787's serrated nacelle trailing edge is a defining silhouette cue.
     for side, suffix in ((-1.0, "left"), (1.0, "right")):

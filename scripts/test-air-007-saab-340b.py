@@ -28,14 +28,22 @@ assert abs(float(vertices[:, 1].min())) < 0.001, "tyres must sit at local y=0"
 # Four small panels follow the rounded nose rather than projecting as a boxy mask.
 for pane in ("windscreen_l", "windscreen_r", "cockpit_side_l", "cockpit_side_r"):
     pane_vertices, _ = meshes[pane]
-    assert len(pane_vertices) == 8, f"{pane} must remain a thin fitted panel"
+    # A curved shell that follows the skin (not one flat quad), but still a thin panel.
+    assert len(pane_vertices) < 400, f"{pane} must remain a thin fitted panel"
     assert np.ptp(pane_vertices, axis=0)[2] < 1.2, f"{pane} is too long for the flight deck"
 
-# Cabin panes remain readable above the skin at follow-camera distance.
+# Cabin panes are curved shells sitting a few millimetres proud of the skin: proud enough to
+# survive the follow camera without z-fighting, close enough to read as flush (not the old
+# flat boxes that hovered ~5 cm off it).
+stations = module.FUSE_STATIONS
 for pane in ("cabin_window_1", "cabin_window_7", "cabin_window_r1", "cabin_window_r7"):
     pane_vertices, _ = meshes[pane]
-    assert np.max(np.abs(pane_vertices[:, 0])) > 1.17, f"{pane} is buried in the skin"
-    assert np.ptp(pane_vertices, axis=0)[1] >= 0.375, f"{pane} is too small to read"
+    z = pane_vertices[:, 2] + module.HALF_LENGTH * 0.0   # meshes are already in centred space
+    radius = np.interp(z, stations[::1, 0], stations[:, 1])
+    centre_y = np.interp(z, stations[:, 0], stations[:, 3])
+    proud = np.hypot(pane_vertices[:, 0], pane_vertices[:, 1] - centre_y) - radius
+    assert 0.004 < proud.max() < 0.03, f"{pane} is not flush with the skin ({proud.max():.3f} m proud)"
+    assert np.ptp(pane_vertices, axis=0)[1] >= 0.30, f"{pane} is too small to read"
 
 # Main-gear fairings are a curved nacelle continuation, not a six-faced block.
 for fairing in ("gear_fairing_left", "gear_fairing_right"):

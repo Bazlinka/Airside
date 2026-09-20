@@ -39,6 +39,13 @@ assert _SPEC.loader is not None
 _SPEC.loader.exec_module(_v06)
 _v05 = _v06._v05
 
+_SKIN_SPEC = importlib.util.spec_from_file_location(
+    "airside_aircraft_skin", SCRIPTS / "aircraft_skin.py"
+)
+skin = importlib.util.module_from_spec(_SKIN_SPEC)
+assert _SKIN_SPEC.loader is not None
+_SKIN_SPEC.loader.exec_module(skin)
+
 box = _v05.box
 cylinder = _v05.cylinder
 oval_lathe_fuselage = _v05.oval_lathe_fuselage
@@ -291,47 +298,58 @@ def saab_meshes():
     # empennage — not mid-fin cruciform and not a T-tail).
     meshes["tailplane"] = lofted_aerofoil(
         [
-            (-4.55, 3.22, -8.35, 0.95, 0.08),
-            (-0.20, 3.18, -7.65, 1.65, 0.14),
-            (0.20, 3.18, -7.65, 1.65, 0.14),
-            (4.55, 3.22, -8.35, 0.95, 0.08),
+            (-4.55, 2.66, -8.35, 0.95, 0.08),
+            (-0.20, 2.62, -7.65, 1.65, 0.14),
+            (0.20, 2.62, -7.65, 1.65, 0.14),
+            (4.55, 2.66, -8.35, 0.95, 0.08),
         ],
         chord_points=12,
     )
-    meshes["elevator_left"] = box(-2.30, 3.18, -8.95, 4.20, 0.06, 0.38)
-    meshes["elevator_right"] = box(2.30, 3.18, -8.95, 4.20, 0.06, 0.38)
-    meshes["tail_root_fairing"] = box(0.0, 2.85, -6.40, 0.55, 1.15, 1.60)
+    meshes["elevator_left"] = box(-2.30, 2.62, -8.95, 4.20, 0.06, 0.38)
+    meshes["elevator_right"] = box(2.30, 2.62, -8.95, 4.20, 0.06, 0.38)
+    meshes["tail_root_fairing"] = box(0.0, 2.75, -6.40, 0.55, 0.85, 1.60)
 
-    # Even cabin window pitch on the curved sides (~14 panes each side). Keep
-    # the glazing slightly proud of the skin so the small panes survive the
-    # follow camera's oblique angle instead of z-fighting into the fuselage.
-    for index, z in enumerate(np.linspace(6.40, -5.20, 14), start=1):
-        meshes[f"cabin_window_{index}"] = box(-1.16, 2.35, float(z), 0.035, 0.38, 0.44)
-        meshes[f"cabin_window_r{index}"] = box(1.16, 2.35, float(z), 0.035, 0.38, 0.44)
+    # Passenger windows: tall rounded panes at the 0.51 m frame pitch, ~0.3 m above the cabin
+    # axis, two per node, sampled from the skin (the old flat boxes hovered ~5 cm off it).
+    def window_pair(z, side):
+        angle = 180.0 - 15.0 if side < 0 else 15.0
+        panes = []
+        for k in range(2):
+            zk = z - k * 0.508
+            if side < 0 and zk > 6.55 - 0.325 - 0.35:      # forward passenger door (left)
+                continue
+            if side > 0 and zk < -5.60 + 0.46 + 0.35:      # aft cargo door (right)
+                continue
+            panes.append(skin.window(fuselage_surface, zk, angle, width=0.24, height=0.34))
+        return skin.merge_meshes(panes) if panes else None
 
-    # Four compact panes follow the rounded nose; gaps are the pillars.  The
-    # former box panes and glare slab projected past the nose as a dark mask.
-    meshes["windscreen_l"] = fitted_panel(
-        [(7.78, 99), (7.78, 125), (8.46, 119), (8.62, 97)]
-    )
-    meshes["windscreen_r"] = fitted_panel(
-        [(7.78, 81), (7.78, 55), (8.62, 83), (8.46, 61)]
-    )
-    meshes["cockpit_side_l"] = fitted_panel(
-        [(7.18, 126), (7.18, 150), (7.98, 143), (8.28, 117)]
-    )
-    meshes["cockpit_side_r"] = fitted_panel(
-        [(7.18, 54), (7.18, 30), (8.28, 63), (7.98, 37)]
-    )
+    counts = {-1: 0, 1: 0}
+    for z in np.arange(6.00, -5.30, -1.016):
+        for side, suffix in ((-1, ""), (1, "r")):
+            pair = window_pair(float(z), side)
+            if pair is None:
+                continue
+            counts[side] += 1
+            meshes[f"cabin_window_{suffix}{counts[side]}"] = pair
+
+    # Four compact panes follow the rounded nose; gaps are the pillars.
+    def pane(z, angle, half_len, half_arc, front):
+        return skin.skin_patch(fuselage_surface, z, angle, half_len, half_arc,
+                               front=front, radius=0.06, rings=2, max_edge=0.12)
+
+    meshes["windscreen_l"] = pane(8.20, 108.0, 0.40, 0.14, 0.012)
+    meshes["windscreen_r"] = pane(8.20, 72.0, 0.40, 0.14, 0.012)
+    meshes["cockpit_side_l"] = pane(7.70, 136.0, 0.50, 0.24, 0.010)
+    meshes["cockpit_side_r"] = pane(7.70, 44.0, 0.50, 0.24, 0.010)
 
     meshes["livery_stripe"] = box(-1.135, 1.78, 0.40, 0.03, 0.12, 13.5)
     meshes["livery_stripe_lower"] = box(1.135, 1.78, 0.40, 0.03, 0.12, 13.5)
 
-    # Forward left passenger door and aft right cargo door.
-    meshes["door_outline_fwd"] = box(-1.145, 1.95, 6.55, 0.03, 1.45, 0.78)
-    meshes["door_fwd"] = box(-1.16, 1.95, 6.55, 0.03, 1.30, 0.65)
-    meshes["cargo_door_outline"] = box(1.145, 1.90, -5.60, 0.03, 1.25, 1.05)
-    meshes["cargo_door"] = box(1.16, 1.90, -5.60, 0.03, 1.12, 0.92)
+    # Forward left passenger door and aft right cargo door, curved with the skin.
+    meshes["door_outline_fwd"], meshes["door_fwd"], _handle = skin.door_set(
+        fuselage_surface, 6.55, 180.0, 0.325, 0.65)
+    meshes["cargo_door_outline"], meshes["cargo_door"], _latch = skin.door_set(
+        fuselage_surface, -5.60, 0.0, 0.46, 0.56)
 
     meshes["belly_fairing"] = oval_lathe_fuselage(
         [
@@ -383,7 +401,7 @@ def saab_meshes():
     meshes["beacon_top"] = box(0.0, 3.15, -0.40, 0.10, 0.10, 0.10)
     meshes["landing_light_l"] = box(-3.55, 1.45, 2.70, 0.16, 0.12, 0.08)
     meshes["landing_light_r"] = box(3.55, 1.45, 2.70, 0.16, 0.12, 0.08)
-    meshes["taxi_light"] = box(0.0, 0.68, 7.35, 0.14, 0.10, 0.10)
+    meshes["taxi_light"] = box(0.0, 0.68, 7.29, 0.14, 0.10, 0.10)
 
     return {name: outward_winding(mesh) for name, mesh in meshes.items()}
 

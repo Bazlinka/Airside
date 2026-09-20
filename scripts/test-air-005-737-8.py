@@ -31,7 +31,9 @@ assert "cockpit" not in meshes, "the obsolete all-dark cockpit visor must not re
 assert {"windscreen_c", "windscreen_l", "windscreen_r"} <= set(meshes)
 for pane in ("windscreen_c", "windscreen_l", "windscreen_r"):
     pane_vertices, _ = meshes[pane]
-    assert np.ptp(pane_vertices, axis=0)[2] < 0.30, f"{pane} must stay a compact fitted pane"
+    # Panes are curved shells that follow the sloping nose skin, so they span a little more z
+    # than the old flat boxes did; 0.7 m still rules out the old visor slab.
+    assert np.ptp(pane_vertices, axis=0)[2] < 0.70, f"{pane} must stay a compact fitted pane"
 
 # The wing-body fairing is tapered and short enough not to form a long flat slab.
 fairing_vertices, _ = meshes["belly_fairing"]

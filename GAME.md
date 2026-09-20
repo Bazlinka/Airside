@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — third play-fix wave on day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** 12/30 landing→vacate
+  and lineup→takeoff continuity; arrivals wind-only runway; native 12/30
+  go-around circuit; mid-vacate save reconcile uses clear-of-runway;
+  delayed board rows use EstimatedAt for past.
+  - **Evidence:** `scripts/test-domain.sh` **458/458**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
 - **2026-09-20 Cursor — more play fixes on the day-progress branch
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
   the day strip + ten bugs. Second wave: strip clear-of-runway, FIDS

@@ -10,6 +10,7 @@ namespace Airside.Presentation
         Operations,
         Map,
         Fleet,
-        Contracts
+        Contracts,
+        Stats
     }
 }

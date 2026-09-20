@@ -40,6 +40,25 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Scales a rotation's base flight pay by how reliably the airline has been operating —
+        /// ties "work harder for things" to the flat per-flight rate, not just the tier gate at
+        /// <see cref="AircraftOffer.RequiredReliability"/>. Neutral (1.0) at and above
+        /// <see cref="ContractMarket.DomesticReliabilityFloor"/> (70) — the same
+        /// threshold the contract market already uses to gate Domestic-and-up destinations —
+        /// so a career in good standing (100 to start) is completely unaffected; only a
+        /// reliability that has actually slipped costs something on every flight, not just at
+        /// the next purchase. Contract-specific pay (<see cref="RouteContractDefinition.PaymentPerRotation"/>,
+        /// <see cref="RouteContractDefinition.CompletionReward"/>) is applied separately and
+        /// never scaled — a contract's advertised numbers always pay exactly what it advertised.
+        /// </summary>
+        public static double ReliabilityMultiplier(int reliability)
+        {
+            if (reliability >= 70) return 1.0;
+            if (reliability >= 50) return 0.92;
+            return 0.8;
+        }
+
+        /// <summary>
         /// Regional turboprops (bay types) are the starter airline's tool; jets cost more to
         /// dispatch. ATR/Saab/Dash 8 cruise above 500 km/h, so a cruise-speed cutoff would
         /// price the starter ATR as a 787.

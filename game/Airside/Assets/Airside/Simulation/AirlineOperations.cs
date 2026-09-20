@@ -771,7 +771,8 @@ namespace Airside.Simulation
             long funds, int reliability, string tier, string activeContractId,
             long contractAcceptedAtSeconds, int contractCompletedRotations, IEnumerable<string> processedSettlementKeys,
             IEnumerable<string> completedContractIds = null, int completedPlayerRotations = 0,
-            RouteContractDefinition activeSnapshot = null)
+            RouteContractDefinition activeSnapshot = null, long lifetimeRevenue = 0,
+            IEnumerable<CompletedContractRecord> contractHistory = null)
         {
             if (string.IsNullOrWhiteSpace(tier)
                 || !Enum.TryParse(tier, out OperatingTier parsedTier)
@@ -796,7 +797,7 @@ namespace Airside.Simulation
             }
 
             CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys,
-                completedContractIds, completedPlayerRotations, issued);
+                completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory);
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -1193,6 +1194,71 @@ namespace Airside.Simulation
             return CommandResult.Ok;
         }
 
+        /// <summary>Renames the player's own airline. AI operators use real airline names and cannot be renamed.</summary>
+        public CommandResult RenameAirline(string name)
+        {
+            if (PlayerAirline == null)
+                return CommandResult.Refused("No player airline.");
+            try
+            {
+                PlayerAirline.Rename(name);
+            }
+            catch (ArgumentException e)
+            {
+                return CommandResult.Refused(e.Message);
+            }
+
+            return CommandResult.Ok;
+        }
+
+        /// <summary>Repaints the player's own airline's livery. AI liveries are authored and fixed.</summary>
+        public CommandResult SetLivery(string liveryHex)
+        {
+            if (PlayerAirline == null)
+                return CommandResult.Refused("No player airline.");
+            try
+            {
+                PlayerAirline.Repaint(liveryHex);
+            }
+            catch (ArgumentException e)
+            {
+                return CommandResult.Refused(e.Message);
+            }
+
+            return CommandResult.Ok;
+        }
+
+        /// <summary>
+        /// Sells a player aircraft back for a fraction of its purchase price — the market side
+        /// of a fleet the player over-committed to, or wants to specialise out of a type.
+        /// Refuses a mid-rotation aircraft: only one <see cref="FleetState.AtStand"/> is safe to
+        /// remove from the simulation without leaving a schedule, a taxi route or a runway
+        /// booking pointing at a registration that no longer exists.
+        /// </summary>
+        public CommandResult SellAircraft(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return CommandResult.Refused("No such aircraft.");
+            if (!aircraft.Airline.IsPlayer)
+                return CommandResult.Refused("Only your own aircraft can be sold.");
+            if (aircraft.State != FleetState.AtStand)
+                return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand to sell.");
+            if (!AircraftAcquisition.TryFor(aircraft.Type, out var offer))
+                return CommandResult.Refused($"{aircraft.Type.Name} has no resale listing.");
+
+            var refund = (long)Math.Round(offer.Price * ResaleFraction);
+            CareerState.RefundDispatch(refund);
+            _fleet.Remove(aircraft);
+            return CommandResult.Ok;
+        }
+
+        /// <summary>
+        /// Resale value as a fraction of the original purchase price — well under 1 so buying
+        /// an aircraft only to immediately resell it is always a loss, the same way it would be
+        /// for a real operator paying for delivery, registration and crew training up front.
+        /// </summary>
+        public const double ResaleFraction = 0.55;
+
         /// <summary>
         /// Settles a player aircraft's just-completed rotation: every flight pays its
         /// operating revenue, and a matching active contract adds its bonus. Idempotent
@@ -1215,7 +1281,7 @@ namespace Airside.Simulation
             var pay = FlightEconomics.FlightPay(aircraft.Type, DistanceKm(justFlown.Value),
                 RouteAccess.BandOf(justFlown.Value));
             var settlement = CareerState.RecordCompletedRotation(
-                settlementId, pay, matching, PlayerOwnedTypes());
+                settlementId, pay, matching, PlayerOwnedTypes(), now);
             if (settlement == null)
                 return;
 

@@ -54,7 +54,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsSummary.cs" />
     <!--
-      The HUD shell and the four workspace models are deliberately UnityEngine-free
+      The HUD shell and the five workspace models are deliberately UnityEngine-free
       (ADR 0057) so their layout arithmetic and their live-state projections are covered
       here, and so scripts/render-hud-mockups.py can render exactly what the game draws.
     -->
@@ -67,6 +67,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FleetWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/StatsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StableHash.cs" />
     <!-- Fuselage title sizing is pure float maths; checked here, not by eye. -->

@@ -49,7 +49,7 @@ namespace Airside.Presentation
 
     /// <summary>
     /// The persistent shell every page shares (ADR 0057): the slim top bar with the
-    /// airline mark, live career values and the four workspace tabs, plus the standard
+    /// airline mark, live career values and the five workspace tabs, plus the standard
     /// title/body/footer split every workspace surface uses.
     ///
     /// Pure layout and text placement — no UnityEngine, no simulation decisions — so the
@@ -94,14 +94,15 @@ namespace Airside.Presentation
             (HudWorkspace.Operations, "OPERATIONS"),
             (HudWorkspace.Map, "MAP"),
             (HudWorkspace.Fleet, "FLEET"),
-            (HudWorkspace.Contracts, "CONTRACTS")
+            (HudWorkspace.Contracts, "CONTRACTS"),
+            (HudWorkspace.Stats, "STATS")
         };
 
         /// <summary>The persistent full-width status and navigation strip.</summary>
         public static HudBox TopBar(float viewportWidth, float viewportHeight) =>
             new(0f, 0f, viewportWidth, Min(TopBarHeight, Max(1f, viewportHeight)));
 
-        /// <summary>The four workspace tabs, right-aligned inside <see cref="TopBar"/>.</summary>
+        /// <summary>The five workspace tabs, right-aligned inside <see cref="TopBar"/>.</summary>
         public static HudBox NavStrip(float viewportWidth, float viewportHeight)
         {
             var bar = TopBar(viewportWidth, viewportHeight);
@@ -114,7 +115,7 @@ namespace Airside.Presentation
         /// <summary>
         /// The current-objective card, top-left under the bar. It is part of the persistent
         /// shell: the same card is in the same place on the overview and on every workspace,
-        /// which is what makes the four pages read as one screen rather than four.
+        /// which is what makes the five pages read as one screen rather than five separate ones.
         /// </summary>
         public static HudBox Objective(float viewportWidth, float viewportHeight, bool showGuide)
         {
@@ -191,7 +192,7 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>The four workspace tabs, right-aligned in <paramref name="navStrip"/>.</summary>
+        /// <summary>The five workspace tabs, right-aligned in <paramref name="navStrip"/>.</summary>
         public static void FillTabs(HudBox navStrip, HudWorkspace active, List<HudNavTab> into)
         {
             into.Clear();

@@ -372,5 +372,123 @@ namespace Airside.Tests
             Assert.That(ops.BuyAircraft(AircraftType.AirbusA350900).Accepted, Is.True,
                 "widebodies become buyable once International is open");
         }
+
+        [Test]
+        public void LifetimeRevenue_AccumulatesAndNeverDropsWhenFundsAreSpent()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            var kingscote = Code("KGC");
+            FlyRoundTrip(clock, ops, plane, kingscote, 600, AirlineOperations.AdelaideRegionalBays[1]);
+
+            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+            var expectedRevenue = pay + definition.PaymentPerRotation;
+            Assert.That(ops.CareerState.LifetimeRevenue, Is.EqualTo(expectedRevenue));
+
+            var fundsBefore = ops.CareerState.Funds;
+            Assert.That(ops.CareerState.TryChargeDispatch(fundsBefore), Is.True, "spend everything on hand");
+            Assert.That(ops.CareerState.Funds, Is.Zero);
+            Assert.That(ops.CareerState.LifetimeRevenue, Is.EqualTo(expectedRevenue),
+                "spending funds does not undo lifetime revenue already earned");
+        }
+
+        [Test]
+        public void ContractHistory_RecordsAFulfilledContractOnce()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            Assert.That(ops.CareerState.ContractHistory, Is.Empty, "nothing fulfilled yet");
+            var kingscote = Code("KGC");
+
+            var departAt = 600L;
+            for (var rotation = 1; rotation <= definition.RequiredRotations; rotation++)
+            {
+                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+            }
+
+            Assert.That(ops.CareerState.ContractHistory.Count, Is.EqualTo(1));
+            var record = ops.CareerState.ContractHistory[0];
+            Assert.That(record.DefinitionId, Is.EqualTo(definition.Id));
+            Assert.That(record.OriginCode, Is.EqualTo(definition.OriginCode));
+            Assert.That(record.DestinationCode, Is.EqualTo(definition.DestinationCode));
+            var expectedTotalPaid = (long)definition.RequiredRotations * definition.PaymentPerRotation
+                                     + definition.CompletionReward;
+            Assert.That(record.TotalPaid, Is.EqualTo(expectedTotalPaid));
+        }
+
+        [Test]
+        public void ContractHistory_CapsAtMaxAndKeepsTheMostRecentFirst()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var kingscote = Code("KGC");
+            var departAt = 600L;
+            var completed = AirlineCareerState.MaxContractHistory + 2;
+            string lastId = null;
+            for (var i = 0; i < completed; i++)
+            {
+                var definition = new RouteContractDefinition(
+                    $"HIST-TEST-{i}", "ADL", "KGC", AircraftType.Atr42, 1, 50, 25, 0, OperatingTier.Provisional);
+                Assert.That(ops.AcceptContract(definition).Accepted, Is.True, $"accept #{i}");
+                var stand = AirlineOperations.AdelaideRegionalBays[i % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+                lastId = definition.Id;
+            }
+
+            Assert.That(ops.CareerState.ContractHistory.Count, Is.EqualTo(AirlineCareerState.MaxContractHistory),
+                "capped, oldest dropped");
+            Assert.That(ops.CareerState.ContractHistory[0].DefinitionId, Is.EqualTo(lastId),
+                "most recently fulfilled contract is first");
+        }
+
+        [Test]
+        public void Save_RoundTripsLifetimeRevenueAndContractHistory()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            var kingscote = Code("KGC");
+            var departAt = 600L;
+            for (var rotation = 1; rotation <= definition.RequiredRotations; rotation++)
+            {
+                var stand = AirlineOperations.AdelaideRegionalBays[rotation % AirlineOperations.AdelaideRegionalBays.Count];
+                FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);
+                departAt = clock.Now.ElapsedSeconds + 300;
+            }
+
+            var data = AirlineSave.Capture(ops);
+            Assert.That(data.CareerLifetimeRevenue, Is.EqualTo(ops.CareerState.LifetimeRevenue));
+            Assert.That(data.ContractHistory.Count, Is.EqualTo(1));
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(new SimulationTime(data.ClockSeconds)));
+            Assert.That(restored.CareerState.LifetimeRevenue, Is.EqualTo(ops.CareerState.LifetimeRevenue));
+            Assert.That(restored.CareerState.ContractHistory.Count, Is.EqualTo(1));
+            Assert.That(restored.CareerState.ContractHistory[0].DefinitionId, Is.EqualTo(definition.Id));
+            Assert.That(restored.CareerState.ContractHistory[0].TotalPaid,
+                Is.EqualTo(ops.CareerState.ContractHistory[0].TotalPaid));
+        }
+
+        [Test]
+        public void LowReliability_PaysLessOnTheFlatRateButNeverTouchesContractPay()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            ops.RestoreCareerState(AirlineCareerState.StartingFunds, 40, nameof(OperatingTier.Provisional),
+                null, 0, 0, Array.Empty<string>());
+            Assert.That(FlightEconomics.ReliabilityMultiplier(40), Is.EqualTo(0.8));
+
+            var kingscote = Code("KGC");
+            FlyRoundTrip(clock, ops, plane, kingscote, 600, AirlineOperations.AdelaideRegionalBays[1]);
+
+            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+            var scaledPay = (long)Math.Round(pay * 0.8);
+            Assert.That(ops.CareerState.Funds,
+                Is.EqualTo(AirlineCareerState.StartingFunds - cost + scaledPay),
+                "flat-rate pay scaled down for a poor reliability record");
+        }
     }
 }

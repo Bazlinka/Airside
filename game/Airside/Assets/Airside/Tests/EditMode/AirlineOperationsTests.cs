@@ -450,6 +450,87 @@ namespace Airside.Tests
             Assert.That(ops.Fleet.Any(a => a.Airline.Id.Value == "CPA"), Is.True);
         }
 
+        [Test]
+        public void RenameAirline_ChangesTheNameEveryFleetReferenceAlreadyHolds()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            Assert.That(ops.RenameAirline("Kangaroo Island Air").Accepted, Is.True);
+            Assert.That(ops.PlayerAirline.Name, Is.EqualTo("Kangaroo Island Air"));
+            // Same Airline instance everywhere — no separate re-sync needed.
+            Assert.That(plane.Airline.Name, Is.EqualTo("Kangaroo Island Air"));
+
+            Assert.That(ops.RenameAirline("  ").Accepted, Is.False, "blank name refused");
+            Assert.That(ops.RenameAirline(new string('X', 25)).Accepted, Is.False, "over the 24-character budget");
+            Assert.That(ops.PlayerAirline.Name, Is.EqualTo("Kangaroo Island Air"), "refused renames leave the name alone");
+        }
+
+        [Test]
+        public void SetLivery_ChangesTheColourAndRefusesAnInvalidHex()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            Assert.That(ops.SetLivery("#00AEEF").Accepted, Is.True);
+            Assert.That(ops.PlayerAirline.LiveryHex, Is.EqualTo("#00AEEF"));
+            Assert.That(plane.Airline.LiveryHex, Is.EqualTo("#00AEEF"));
+
+            Assert.That(ops.SetLivery("blue").Accepted, Is.False);
+            Assert.That(ops.PlayerAirline.LiveryHex, Is.EqualTo("#00AEEF"), "refused repaint leaves the livery alone");
+        }
+
+        [Test]
+        public void SellAircraft_RefundsAFractionAndRemovesItFromTheFleet()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 40);
+            Assert.That(ops.BuyAircraft(AircraftType.Saab340).Accepted, Is.True);
+            var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Saab340.Id);
+            var fundsBefore = ops.CareerState.Funds;
+
+            var result = ops.SellAircraft(bought);
+
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(ops.Fleet.Contains(bought), Is.False);
+            var expectedRefund = (long)Math.Round(AircraftAcquisition.Saab340.Price * AirlineOperations.ResaleFraction);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(fundsBefore + expectedRefund));
+            Assert.That(expectedRefund, Is.LessThan(AircraftAcquisition.Saab340.Price),
+                "reselling is always a net loss versus buying");
+        }
+
+        [Test]
+        public void SellAircraft_RefusesTheStarterAircraftWithNoPurchasePrice()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            // The starter ATR was never bought (AircraftAcquisition's own doc comment), so it
+            // has no listed price to base a resale fraction on — refused rather than inventing one.
+            Assert.That(AircraftAcquisition.TryFor(plane.Type, out _), Is.False);
+            Assert.That(ops.SellAircraft(plane).Accepted, Is.False);
+            Assert.That(ops.Fleet.Contains(plane), Is.True);
+        }
+
+        [Test]
+        public void SellAircraft_RefusesAnAircraftThatIsNotParkedAtItsStand()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            RunTo(clock, ops, 600);
+            Assert.That(plane.State, Is.Not.EqualTo(FleetState.AtStand));
+
+            Assert.That(ops.SellAircraft(plane).Accepted, Is.False);
+            Assert.That(ops.Fleet.Contains(plane), Is.True, "refused sale leaves the fleet untouched");
+        }
+
+        [Test]
+        public void SellAircraft_RefusesAnotherAirlinesAircraft()
+        {
+            var (_, ops, _) = PlayerOnly();
+            var rival = Airline.Rex();
+            ops.AddAirline(rival);
+            var rivalPlane = ops.AddAircraft(rival, "VH-ZRC", AircraftType.Saab340,
+                AirlineOperations.AdelaideRegionalBays[1]);
+
+            Assert.That(ops.SellAircraft(rivalPlane).Accepted, Is.False);
+        }
+
         private static string Snapshot(AirlineOperations ops)
         {
             var text = new StringBuilder();

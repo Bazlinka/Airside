@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Airside.Domain;
@@ -91,6 +92,25 @@ namespace Airside.Tests
             Assert.That(model.AssignmentLine, Is.EqualTo("Adelaide → Kingscote"));
             Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false }));
             Assert.That(model.SelectedPrep[1].Active, Is.True);
+        }
+
+        [Test]
+        public void Fleet_SelectionShowsResaleValueForABoughtAircraftButNotTheStarter()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.Regional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 12);
+            Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
+            var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Dash8Q400.Id);
+
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, plane.Registration);
+            Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Resale value")), Is.False,
+                "the starter ATR was never bought, so it has no resale line");
+
+            model.Rebuild(ops, clock.Now, bought.Registration);
+            var expected = (long)Math.Round(AircraftAcquisition.Dash8Q400.Price * AirlineOperations.ResaleFraction);
+            Assert.That(model.SelectedCapability, Does.Contain($"Resale value ${expected:N0}"));
         }
 
         [Test]

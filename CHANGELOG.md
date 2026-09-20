@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **Career Stats workspace, and nine supporting features (ADR 0066).** A fifth HUD tab
+  ("STATS") gives a real, accurate view of career progress: funds, lifetime revenue (never
+  reduced by spending, unlike the balance), reliability, tier, fleet size, exactly what the
+  next tier still needs (rotations/reliability/a specific aircraft type — a direct answer to
+  "what is Regional?"), 11 career milestones, and recent fulfilled contracts. Built and
+  rendered the same way as the other four workspaces (ADR 0057) and actually re-rendered via
+  `scripts/hud-mockup` to confirm it lays out cleanly, not just reasoned about. Supporting
+  features: airline rename and livery recolour (`AirlineOperations.RenameAirline`/`SetLivery`,
+  validated, player-only); aircraft resale (`SellAircraft`, refunds 55% of purchase price,
+  parked aircraft only, surfaced as a "Resale value" line on the Fleet detail panel — also
+  re-rendered to confirm); and a reliability-linked pay multiplier (neutral at and above 70%
+  reliability — so a fresh career is completely unaffected — a real penalty below it, contract
+  pay itself untouched). Save format bumped to v9 for the new lifetime-revenue/contract-history
+  fields; a pre-9 save loads with both empty, same tolerance as every earlier version bump.
+  `scripts/test-domain.sh` 526/526 (26 new tests; full suite re-run to confirm the reliability
+  multiplier doesn't disturb any existing exact-funds assertion, since 100% starting reliability
+  keeps it neutral everywhere else).
+
 - **Departure-turn jump, unrealistic departure spacing, stand-queue overflow, apron light
   starvation (ADR 0065).** Four bugs from one play session. (1) Departing aircraft jumped
   sideways mid-climb then snapped back — `ApplyDepartureTurn` compared Takeoff's own progress

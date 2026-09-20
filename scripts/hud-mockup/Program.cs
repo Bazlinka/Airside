@@ -29,7 +29,8 @@ public static class Program
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
             Fleet(scenario, width, height),
-            Contracts(scenario, width, height)
+            Contracts(scenario, width, height),
+            Stats(scenario, width, height)
         };
 
         var document = new Document(new[] { width, height }, pages);
@@ -186,6 +187,21 @@ public static class Program
         var page = new HudDrawList();
         ContractsWorkspacePainter.Paint(page, model, layout, highlighted);
         return new Page("contracts", Serialise(list, page));
+    }
+
+    private static Page Stats(Scenario scenario, float width, float height)
+    {
+        var list = new HudDrawList();
+        PaintShell(list, scenario, HudWorkspace.Stats, width, height);
+        PaintObjective(list, scenario, width, height);
+
+        var model = new StatsWorkspaceModel();
+        model.Rebuild(scenario.Operations, scenario.Now);
+        var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+
+        var page = new HudDrawList();
+        StatsWorkspacePainter.Paint(page, model, layout);
+        return new Page("stats", Serialise(list, page));
     }
 
     // ---- Shared shell --------------------------------------------------------------

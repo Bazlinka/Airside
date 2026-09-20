@@ -1,5 +1,51 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — Career Stats workspace and nine supporting features, autonomous
+  overnight pass (branch `claude/weather-system-improvement-1bgfc3`, merged, ADR 0066).**
+  Bailey: "Add 10 new features to the game overnight. Implement and merge... Goodnight" —
+  direct follow-up to the previous turn's brainstorm on stats/profile visibility, airline
+  customisation and pricing.
+  - **The Stats workspace (the main ask).** Fifth HUD tab, built the same UnityEngine-free
+    Model/Layout/Painter way as the other four (ADR 0057) so it's covered by the headless
+    harness AND the mockup renderer. Shows funds, lifetime revenue (new — accumulates, never
+    reduced by spending, unlike the balance), reliability, tier, fleet size, exactly what the
+    next tier needs (`CareerProgress.NextTier`, reading the same named thresholds
+    `EvaluateTier` checks so they can't drift apart — answers "what is Regional?" for real this
+    time), 11 milestones, and recent fulfilled contracts. **Actually re-rendered** via
+    `scripts/hud-mockup` + `render-hud-mockups.py` — `hud-stats.png` confirmed clean, no
+    clipping/overlap at 2015×1260 (bottom half is empty, same "sparse workspace" character ADR
+    0062 found on Contracts — not fixed here, flagged as a follow-up since every value shown is
+    already accurate).
+  - **Profile:** `Airline.Rename`/`Repaint` (validated, in-place mutation — every existing
+    fleet/HUD/save reference already holds the same instance) + `AirlineOperations.
+    RenameAirline`/`SetLivery` (player-only). No HUD control wired to trigger these yet
+    (text input / colour picker is separate, riskier interaction work) — deliberately left for
+    a dedicated pass rather than rushed in alongside five other changes.
+  - **Pricing / "work harder for things":** `AirlineOperations.SellAircraft` (resale at 55% of
+    purchase price, parked aircraft only — the starter ATR was never bought, so it has no
+    listed price and can't be resold) + `FlightEconomics.ReliabilityMultiplier` (neutral at and
+    above 70% reliability — the same floor the contract market already uses — a real penalty
+    below it; contract-specific pay is never touched, so a contract always pays exactly what it
+    advertised). Checked against every existing exact-funds test in the suite: a fresh 100%-
+    reliability career is completely unaffected.
+  - **Also:** the Fleet workspace's selected-aircraft panel now shows "Resale value $X" — the
+    resale command needed a way to actually be discovered; re-rendered `hud-fleet.png` to
+    confirm it reads cleanly.
+  - **Save format → v9** for lifetime revenue + a capped (10) contract-history list. Pre-9
+    saves load with both empty — same tolerance as every earlier bump.
+  - **Evidence:** `scripts/test-domain.sh` **526/526** (26 new tests across 7 test files; full
+    suite re-run specifically to confirm the reliability multiplier doesn't disturb any
+    existing exact-funds assertion). Stats workspace and Fleet's resale line are visually
+    verified by rendering, not inspection-only like most Presentation work this session.
+  - **Branch was restarted before this round**: the previous PR (#338, ADR 0062-0064) had
+    already merged to `main` by the time this session resumed; `git fetch origin main &&
+    checkout -B` + cherry-pick carried ADR 0065 forward cleanly (`git diff` against the merge
+    commit was empty before the cherry-pick, confirming no drift).
+  - **NEXT:** wire rename/livery into an actual HUD control; consider filling the Stats page's
+    empty lower half; a real Unity look remains owed across this and every other
+    "reasoned, not confirmed" Presentation item this session (night lighting, departure turn,
+    apron lights).
+
 - **2026-09-20 Claude — departure-turn jump, unrealistic departure spacing, stand-queue
   overflow, apron light starvation (branch `claude/weather-system-improvement-1bgfc3`, ADR
   0065).** Bailey, from actual play: aircraft "take off and then jump over a bit and then like

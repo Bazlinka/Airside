@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 
 namespace Airside.Simulation
@@ -19,6 +20,19 @@ namespace Airside.Simulation
         public SimulationTime AcceptedAt { get; }
         public int CompletedRotations { get; private set; }
 
-        internal void RecordRotation() => CompletedRotations++;
+        /// <summary>
+        /// Every per-rotation payment this contract has paid so far, including this one — not
+        /// restored across a save taken mid-contract (a save has no record of rotations paid
+        /// before it), so a contract history entry for one completed after a reload undercounts
+        /// by whatever it paid before that save. Acceptable: the same "no retroactive credit"
+        /// tolerance this career state already applies to pre-career trips.
+        /// </summary>
+        public long TotalPaid { get; private set; }
+
+        internal void RecordRotation(long paid)
+        {
+            CompletedRotations++;
+            TotalPaid += Math.Max(0, paid);
+        }
     }
 }

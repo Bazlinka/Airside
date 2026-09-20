@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — fifteen more play fixes on day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Doors through boarding;
+  cancelled cold; windsock = sim wind; approach pick per runway; shared E2
+  await queue; longer cross clear; lead-in through hold/takeoff; runway
+  refresh on clearance; AtDestination off Arrivals; TaxiIn ETA STAND;
+  holding look-ahead; strict saved runway; required DepartureStand;
+  empty-stand hold uses runway hold not bay 50D.
+  - **Evidence:** `scripts/test-domain.sh` **460/460**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
 - **2026-09-20 Cursor — third play-fix wave on day-progress branch
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** 12/30 landing→vacate
   and lineup→takeoff continuity; arrivals wind-only runway; native 12/30

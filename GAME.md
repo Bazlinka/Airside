@@ -1,5 +1,90 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — storm lightning/thunder, cloud-obscured sun, and an infrastructure-
+  accuracy audit (branch `claude/weather-system-improvement-1bgfc3`, ADR 0059).** Bailey asked
+  for lightning/thunder visuals, whether the other weather (cloud/overcast/fog/rain/sunny)
+  looks realistic, and separately to audit airport buildings against real live Adelaide
+  infrastructure.
+  - **Lightning/thunder:** new `Simulation/Lightning.cs`, pure-hash-of-time like `Weather.At`
+    (no RNG) — a storm fires a flash+thunder every 5-13s, distance-drawn per strike so thunder
+    lags the flash realistically. Presentation overlays a ~0.5s double-pulse on sun/ambient/
+    fog/sky and plays a procedural crack-and-rumble (no real sample yet — see asset register
+    AUD-006; a Mac-editor session that can actually listen to a candidate CC0 clip should
+    finish that, not guess at one blind). `LightningTests` (+6). `scripts/test-domain.sh`
+    494/494.
+  - **Realism check on the rest of the weather:** read `UpdateCloudDrift`/`BuildCloudBands`
+    before touching anything — cloud alpha/tint/ground-umbra strength and rain speed/thickness
+    already scale with `WeatherLook.CloudCover`/`Precipitation`, so that system did not need
+    work. The one real gap: `UpdateSunAndMoonDiscs` showed a full-brightness sun/moon disc
+    regardless of forecast. Fixed — both now fade out under Cloudy/Overcast/Rain/Storm.
+  - **Buildings-vs-live-infrastructure audit (research only, nothing changed):** the Overpass
+    extract behind `docs/data/osm/ypad-aeroways-2026-09-14.json` only ever queried
+    `aeroway=runway/taxiway/apron/terminal/parking/holding` — never `building=*` or
+    `aeroway=control_tower`/hangar generally — so only two real buildings ever came back
+    (Terminal, RFDS), both already modelled at their real OSM footprints in
+    `AdelaideTerminalArchitecture`. Everything else that looks like a building (a legacy
+    "Hangar"/"Ops shed"/"ARFF rescue shed"/fuel-farm, `BLD-001/002/003` in
+    `ART_DIRECTION_AND_ASSET_SPEC.md`) sits at invented Kingscote-prototype coordinates with
+    no connection to real Adelaide Airport at all — not modelled off live infrastructure by
+    the user's own bar, though they are already off by default (`AirsideFocusMode.ShowBuildings`
+    is false under bare-field; only the two real OSM prisms, gated by `ShowTerminal`, are
+    unconditionally on). No control tower, GA hangars, ARFF in real coordinates, fuel farm,
+    cargo sheds or a real car park exist anywhere. **Could not fetch fresh OSM data this
+    session:** `overpass-api.de` and the `kumi.systems` mirror both refused/reset the TLS
+    connection through this sandbox's proxy (confirmed repeatedly, including via the WebFetch
+    tool — a 504 there, `ws_closed_mid_exchange`/connection-reset via curl); general web
+    (openstreetmap.org itself) was reachable, so this looks like a block on the Overpass API
+    hosts specifically, not a general outage. Re-running the same generator-script pipeline
+    (`scripts/generate-ypad-layout.py`-style: Overpass extract → `docs/data/osm/*.json` with
+    a hash + attribution row → a `Simulation/Adelaide*.cs` reader → a Presentation extruder,
+    same as the terminal/taxiways/roads/coastline already are) against a broader query
+    (`building=*` plus `aeroway=control_tower` in the existing bbox) is the concrete next
+    step, from a session that can reach Overpass, before adding any more buildings — inventing
+    coordinates for a control tower or hangar would repeat exactly the problem just found in
+    the legacy placeholders.
+  - **NOT verified:** `scripts/test-unity.sh` on a Mac, and no in-engine look at the flash
+    timing, thunder delay/pitch or the sun/moon fading through Cloudy/Overcast/Storm.
+  - **NEXT:** Mac Unity EditMode before merging. Get an Overpass-reachable session to pull
+    `building=*`/`aeroway=control_tower` etc. for YPAD's existing bbox, register the snapshot
+    in `docs/data/ASSET_AND_DATA_REGISTER.md` the way the three existing OSM extracts are, and
+    only then model whatever real structures come back. Source and register a real CC0 thunder
+    clip (AUD-006) the way AUD-002/004 were, on a machine that can audition it first.
+
+- **2026-09-20 Claude — storms hold the runway (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0058).** Bailey: "I want to do a better
+  weather system." Weather (ADR 0013) was cosmetic plus a flat daily surcharge; this closes
+  the gap ADR 0013 explicitly left open ("storm closes the runway... future work").
+  - **Change:** `AirlineOperations.RunTowerOnStrip` withholds a *new* landing/takeoff
+    clearance on either strip while `Weather.At(now)` is `Storm`; a movement already
+    underway is never interrupted. Arrivals fall back on the existing indefinite
+    `HoldingForLanding` state, departures on `HoldingShort` — no new state, no save field.
+    `AirlineOperations.CurrentWeather`/`IsGroundStopped` expose it; the Operations subtitle
+    names the current weather and shows "GROUND STOP" while it is active.
+  - **The one real risk, handled:** `Weather.At` is a pure function of time (no RNG), so this
+    had to answer identically at a given instant no matter the step size. `NextEventAt`'s
+    skip-to-next-event catch-up only considered the tracked runway-free times, which can sit
+    at-or-before `now` while the strip is still storm-held (checked against `now` directly,
+    not a tracked reopen time) — a big skip could have landed past the moment a storm cleared.
+    Fixed by also considering the next weather-block boundary while a runway is wanted and
+    storm-held. Verified, not just reasoned about: two new `RunwayWeatherTests` drive a
+    restored `HoldingForLanding` aircraft through the timeline's block 34 (a `Storm` block,
+    found by computing the game's own hash function, bracketed by `Clear`/`Fog`) and assert
+    identical results stepping second-by-second vs. skipping to next event. The pre-existing
+    36-hour `Timeline_IsIdenticalForAnyStepSizeOrSkipping` test independently crosses that
+    same block and stayed green unmodified.
+  - **Evidence:** `scripts/test-domain.sh` **484/484** (481 baseline + 3 new: 2
+    `RunwayWeatherTests`, 1 `OperationsWorkspaceTests`). This environment had no dotnet SDK
+    at session start; installed via Microsoft's `dotnet-install.sh` (not apt — the distro
+    packages 404'd) specifically so this Simulation-layer change could be run, not merely
+    inspected.
+  - **NOT verified:** `scripts/test-unity.sh` on a Mac (no Unity editor here), and no
+    in-engine look at the new "GROUND STOP" subtitle text or at traffic actually backing up
+    during a live storm.
+  - **NEXT:** Mac Unity EditMode before merging, per `AGENTS.md`. Left for later, not
+    started: lightning/thunder presentation for storms (still noted as future work); whether
+    a ground stop should also pause departure prep (fuel/catering/boarding) — left running
+    since none of that needs the runway.
+
 - **2026-09-20 Claude — aircraft fit/finish + taxi/pushback smoothness (branch
   `feature/aircraft-detail-and-taxi-smoothing`).** Bailey: "look at the aircraft", fix the
   Hangar slab and floating specs, no gaps, doors level with the fuselage, windows need work,

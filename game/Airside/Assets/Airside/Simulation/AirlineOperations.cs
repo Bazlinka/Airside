@@ -527,6 +527,16 @@ namespace Airside.Simulation
         public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
         public RunwayDirection ActiveRunway => RunwayWeather.Select(Wind);
 
+        /// <summary>Current forecast, for HUD and tower gating alike.</summary>
+        public WeatherKind CurrentWeather => Weather.At(_processedTo);
+
+        /// <summary>
+        /// True while a storm holds every new landing/takeoff clearance (ADR 0058).
+        /// Movements already underway continue; this only stops the tower handing out
+        /// the next one.
+        /// </summary>
+        public bool IsGroundStopped => CurrentWeather == WeatherKind.Storm;
+
         /// <summary>Wind-selected end of the cross strip (12/30), for HUD and planners.</summary>
         public RunwayDirection ActiveCrossRunway =>
             RunwayWeather.Select(Wind, AircraftType.Atr42, null, Home);
@@ -1026,6 +1036,17 @@ namespace Airside.Simulation
             {
                 Consider(_mainRunwayFreeAt);
                 Consider(_crossRunwayFreeAt);
+                // ADR 0058: a strip can sit free-at-or-before now yet still be withheld by
+                // a storm, which RunTowerOnStrip checks against `now` itself rather than
+                // any tracked "reopens at" time. Without this, a big skip-to-next-event
+                // step could land past the moment the storm actually cleared and grant a
+                // clearance later than a series of small steps would have — the same
+                // storm, checked at a different `now`, must not answer differently. The
+                // next weather block boundary is always a candidate stop while a runway is
+                // wanted and it is currently storm-closed, so catch-up revisits the check
+                // at the same granularity live play would.
+                if (Weather.At(now) == WeatherKind.Storm)
+                    Consider(new SimulationTime((now.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds));
             }
             // Bay and gate pushback releases are tracked separately (NextTaxiReleaseAt):
             // the two aprons never share pavement, so one waiting on the other's release
@@ -1585,6 +1606,10 @@ namespace Airside.Simulation
         {
             var freeAt = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
             if (freeAt.CompareTo(now) > 0)
+                return false;
+            // ADR 0058: a storm holds every new clearance. An aircraft already landing
+            // or taking off keeps going — this only stops the tower starting the next one.
+            if (Weather.At(now) == WeatherKind.Storm)
                 return false;
 
             var arrival = LongestWaiting(FleetState.HoldingForLanding, mainStrip);

@@ -137,6 +137,10 @@ namespace Airside.Presentation
 
         public string Title { get; private set; } = "OPERATIONS";
         public string Subtitle { get; private set; } = string.Empty;
+
+        /// <summary>True while a storm holds every new landing/takeoff clearance (ADR 0058).</summary>
+        public bool GroundStopped { get; private set; }
+
         public OperationsBoardTab Tab { get; private set; }
 
         /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
@@ -205,6 +209,7 @@ namespace Airside.Presentation
             PrimaryAction = AircraftHudAction.None;
             PrimaryActionLabel = string.Empty;
             CanCancel = false;
+            GroundStopped = false;
             DayProgress01 = 0f;
             DayCaption = string.Empty;
             DayDoneCount = 0;
@@ -214,9 +219,12 @@ namespace Airside.Presentation
                 return;
 
             var clock = operations.Clock ?? AirlineClock.Default;
+            GroundStopped = operations.IsGroundStopped;
             Subtitle = $"Adelaide  ·  {RunwayWeather.Label(operations.ActiveRunway)}"
                        + $"/{RunwayWeather.Label(operations.ActiveCrossRunway)}"
-                       + $"  ·  {operations.Wind.Text}";
+                       + $"  ·  {operations.Wind.Text}"
+                       + $"  ·  {Weather.Describe(operations.CurrentWeather)}"
+                       + (GroundStopped ? "  ·  GROUND STOP" : string.Empty);
 
             FillDayProgress(operations, now, clock);
             FillBoard(operations, now, tab, clock);

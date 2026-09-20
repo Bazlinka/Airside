@@ -1,5 +1,47 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — departures actually turn after the SID (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0060).** Bailey, after the graphics bug hunt
+  below: "when the plane takes off - it is more realistic and actually follows a correct
+  flight path and doesn't crab along like it's drifting." Also asked for ground/road realism,
+  runway appearance, and more natural apron labels — see the follow-up entries for those.
+  - **Root cause:** `DepartureTurn.Blend`/`LateralMetres`/`YawDegrees` all freeze at their
+    established value once the SID turn locks in (correct — the turn itself is done), but
+    `AirsideFlightPath.Departed` (the aircraft's actual position) keeps growing along the
+    *original* runway heading forever, x only, no matter how much further the climb-out runs.
+    The frozen sideways kick was the aircraft's only turn; for the rest of the departure —
+    most of it, since the turn establishes well before the flight leaves visual range — the
+    nose held the new heading while the aircraft kept flying dead straight down the extended
+    runway line. That is the crab: nose one way, ground track another, as a steady state, not
+    a momentary glitch.
+  - **Fix:** new `DepartureTurn.EstablishedTrackMetres` (pure, in Simulation) decomposes
+    further along-track distance onto the established heading via cos/sin instead of a
+    tan-based shortcut (which would blow up approaching a 90° turn — a real risk for a
+    regional taking whichever of 12/30 the wind favours rather than the end that favours its
+    destination). `ApplyDepartureTurn` (`AirsidePrototype.cs`) now calls it for distance past
+    `TurnEstablishedProgress`.
+  - **Two latent sign bugs found and fixed alongside it:** `YawDegrees`/`Forward`'s comments
+    claimed a right turn off 05 is +Z; it's actually −Z (matching `LateralMetres`, which was
+    already correct) once Unity's rotation handedness is worked through properly — derived
+    from this codebase's own `RunwayWeather.TrueFromUnityYaw` fact (world +X ↔ true 050°), not
+    general Unity lore. `Forward()` (dead code, nothing called it) had the wrong sign baked
+    into its actual return value, not just its comment; corrected.
+  - **Given a sign error here would be highly visible and this session has no Unity editor to
+    watch a departure turn:** pulled the fix out into a pure, unit-tested function rather than
+    trusting hand derivation alone. New tests assert the *specific direction* (Melbourne right
+    of 05 keeps going −Z; Perth left of 05 keeps going +Z) so a sign flip fails a named
+    assertion, plus boundedness for a near-reversal turn and that the cos/sin decomposition
+    never changes the actual step distance. `DepartureTurnTests` (+5).
+  - **Evidence:** `scripts/test-domain.sh` **499/499**. Presentation half (`AirsidePrototype.cs`)
+    is Unity-only and unverified beyond inspection.
+  - **Known remaining imperfection, not hidden:** a small smoothness kink in the *rate* of
+    turning right at the moment the SID establishes (position is continuous there — verified,
+    zero extra distance gives zero extra offset — but the growth curve changes shape from
+    smoothstep-squared to linear cos/sin at that instant). Modelling the whole climb-out as a
+    proper arc would remove it; out of scope for this pass.
+  - **NEXT:** `scripts/test-unity.sh`, then watch an actual departure with a large turn (Perth
+    off 23, or any regional off 12/30) before trusting this the way the new tests are trusted.
+
 - **2026-09-20 Claude — graphics bug hunt: maps, planes, taxiing, interface (branch
   `claude/weather-system-improvement-1bgfc3`).** Bailey: "bug fixes for graphics - maps,
   planes, taxiing, and interface visuals and improving them." Ran four parallel read-only

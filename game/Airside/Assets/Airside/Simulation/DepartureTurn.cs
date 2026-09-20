@@ -39,7 +39,11 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Extra yaw, degrees, from the runway heading toward <paramref name="destination"/>.
-        /// Positive is a right turn in the runway frame (+Z when departing 05).
+        /// Positive is a right turn in the runway frame — which, given Unity's rotation
+        /// handedness applied on top of a departing-05 forward of world +X (see
+        /// <see cref="RunwayFrame.Forward"/>), works out to −Z, the same sign
+        /// <see cref="LateralMetres"/> already uses; it is not +Z as an earlier version of
+        /// this comment claimed.
         /// </summary>
         public static float YawDegrees(RunwayDirection runway, Destination home, Destination destination,
             AircraftPhase phase, float progress)
@@ -70,10 +74,36 @@ namespace Airside.Simulation
         {
             var yaw = YawDegrees(runway, home, destination, phase, progress) * (float)(Math.PI / 180.0);
             var along = (float)Math.Cos(yaw);
-            var across = (float)Math.Sin(yaw);
+            // Matches LateralMetres's sign (see YawDegrees), not a naive +sin(yaw): a
+            // positive yaw is a −Z turn in the runway-05 frame.
+            var across = (float)-Math.Sin(yaw);
             if (runway == RunwayDirection.Runway23 || runway == RunwayDirection.Runway30)
                 return (-along, -across);
             return (along, across);
+        }
+
+        /// <summary>
+        /// Once the SID turn is established (<see cref="Blend"/> reaches 1), any further
+        /// along-track distance is flown on the established heading rather than straight down
+        /// the original runway line — without this, a departure that had turned onto its
+        /// destination track would keep translating parallel to the runway forever afterward,
+        /// the nose pointed one way and the ground track going another (the classic
+        /// crabbing/drifting look, rather than an aircraft that has actually turned).
+        ///
+        /// Returns the (forward, sideways) decomposition of <paramref name="extraAlongMetres"/>
+        /// of further travel on that established heading, in the same runway-local frame as
+        /// <see cref="LateralMetres"/> (sideways carries its sign, not a raw +sin(yaw)).
+        /// cos/sin keeps this bounded and correctly signed for any turn angle — including the
+        /// rare near-reversal a regional taking whichever of 12/30 the wind favours, rather
+        /// than the end that favours its destination, can produce — where projecting forward
+        /// distance through tan(yaw) instead would blow up approaching a 90° turn.
+        /// </summary>
+        public static (float forward, float sideways) EstablishedTrackMetres(
+            RunwayDirection runway, Destination home, Destination destination, float extraAlongMetres)
+        {
+            var yawRadians = YawDegrees(runway, home, destination, AircraftPhase.Departed, 1f)
+                              * (float)(Math.PI / 180.0);
+            return (extraAlongMetres * (float)Math.Cos(yawRadians), -extraAlongMetres * (float)Math.Sin(yawRadians));
         }
 
         internal static double RelativeRadians(RunwayDirection runway, Destination home, Destination destination)

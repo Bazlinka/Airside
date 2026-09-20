@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **Departures actually turn after the SID establishes (ADR 0060).** Once the destination-track
+  turn locked in, the aircraft used to keep translating along the *original* runway heading
+  forever — the nose held the new heading while the ground track kept going straight down the
+  extended runway line, a steady crab/drift for most of the visible climb-out rather than a
+  momentary artifact. New `DepartureTurn.EstablishedTrackMetres` (pure, unit-tested) decomposes
+  any further along-track distance onto the established heading instead. Also fixed two latent
+  sign bugs found while working this out: `YawDegrees`/`Forward`'s doc comments (and `Forward`'s
+  actual return value, dead code though it was) claimed a right turn is +Z in the runway-05
+  frame; it's −Z, matching `LateralMetres`. `DepartureTurnTests` (+5); `scripts/test-domain.sh`
+  499/499. Presentation-only change unverified in Unity — flagged explicitly given the risk of
+  a sign error here being highly visible.
+
 - **Two graphics/UX bugs fixed after a targeted audit of maps, aircraft, taxiing and the HUD.**
   A parked, gate-side aircraft's nose taxi spotlight used to switch on at night for up to two
   minutes before every departure and 35s after every arrival — engines spool up while still

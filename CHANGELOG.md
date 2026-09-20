@@ -1,5 +1,19 @@
 ## Unreleased
 
+- **Arrivals queue on final.** Holding traffic stacks in wait order
+  along the approach — number-one on short final, later aircraft
+  further out — instead of sitting on a registration hash.
+
+- **T1 traffic side is a road, not a lawn.** OSM arterials now draw
+  through the terminal-north notch the operational core used to skip,
+  plus an authored drop-off, return loop, short-stay pad, cars and
+  lamp posts on the real Sir Richard Williams side.
+
+- **Weather look is one profile.** Cloudy / overcast / rain / fog /
+  storm share CloudCover, Precipitation, Gloom, Visibility and
+  Wetness. Adelaide now gets kilometre-scale clouds and rain. Flight
+  timing is still unchanged (ADR 0013).
+
 - **More of Adelaide's real airlines, on a 05:00–23:00 day.**
   Malaysia, Emirates, Qatar and Fiji join the terminal. Jetstar
   flies Bali; Qantas flies Auckland. The field has no curfew —

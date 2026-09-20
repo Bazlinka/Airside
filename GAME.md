@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — queues, T1 landside, weather look
+  (branch `feature/busier-field-and-camera`).** Bailey: shouldn't they
+  be queuing; add roads/realism on the traffic side from aerial; start
+  getting ready for cloudy/overcast/stormy/rainy weather.
+  - **Queues:** `HoldingForLanding` pins final progress by
+    `FleetVisual.QueueSlot`, not registration hash. Hold-short and
+    stand-wait already queued.
+  - **Landside:** OSM roads draw through the T1 north notch; authored
+    drop-off / loop / pad / cars / lamps at real metres (not Kingscote
+    26, 38). `AirsideAdelaideRoads.TryBuild` is finally called.
+  - **Weather:** `WeatherLook` (cloud, rain, gloom, vis, wet). Adelaide
+    clouds are kilometre-scale; rain builds on the default field.
+    Timing unchanged (ADR 0013). No lightning yet.
+  - **NEXT:** Mac rebuild from this branch. Do not merge until asked.
+
 - **2026-09-20 Cursor — more Adelaide airlines and 05:00–23:00 hours
   (branch `feature/busier-field-and-camera`).** Bailey: more airline
   variety, and more realism including open hours.

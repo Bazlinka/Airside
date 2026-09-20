@@ -25,32 +25,39 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Short final on the assigned runway, not the land-side racetrack.
-        /// Slot 0–2 stacks a short queue without leaving the gulf (05) or
-        /// the north-east (23).
+        /// Number-one on short final. Later slots stack back along the
+        /// approach so arrivals queue in wait order, not by registration hash.
         /// </summary>
-        public static double HoldingFinalProgress(string registration)
-        {
-            var slot = 0;
-            if (!string.IsNullOrEmpty(registration))
-            {
-                unchecked
-                {
-                    var hash = 17;
-                    foreach (var ch in registration)
-                        hash = hash * 31 + ch;
-                    slot = Math.Abs(hash) % 3;
-                }
-            }
+        public const float FirstHoldProgress = 0.80f;
+        public const float HoldSlotStep = 0.10f;
+        public const float LastHoldProgress = 0.36f;
 
-            return 0.62 + slot * 0.06;
+        /// <summary>
+        /// Short final on the assigned runway, not the land-side racetrack.
+        /// Slot 0 is next to land; later slots sit further out.
+        /// </summary>
+        public static double HoldingFinalProgress(int queueSlot)
+        {
+            var slot = queueSlot < 0 ? 0 : queueSlot;
+            var t = FirstHoldProgress - slot * HoldSlotStep;
+            return t < LastHoldProgress ? LastHoldProgress : t;
         }
 
-        public static long RemainingFinalSeconds(long approachSeconds, string registration)
+        /// <summary>
+        /// Cleared aircraft fly the last piece of final (slot 0). Prefer
+        /// <see cref="HoldingFinalProgress(int)"/> while they are still holding.
+        /// </summary>
+        public static double HoldingFinalProgress(string registration) =>
+            HoldingFinalProgress(0);
+
+        public static long RemainingFinalSeconds(long approachSeconds, int queueSlot)
         {
-            var left = 1.0 - HoldingFinalProgress(registration);
+            var left = 1.0 - HoldingFinalProgress(queueSlot);
             var seconds = (long)Math.Round(Math.Max(0, approachSeconds) * left);
             return seconds < 8 ? 8 : seconds;
         }
+
+        public static long RemainingFinalSeconds(long approachSeconds, string registration) =>
+            RemainingFinalSeconds(approachSeconds, 0);
     }
 }

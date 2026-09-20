@@ -181,6 +181,7 @@ namespace Airside.Presentation
         /// pause anything: the airport keeps running behind it.
         /// </summary>
         private bool _menuOpen;
+        private bool _optionsOpen;
         private const float EngineVolumeRunning = 0.11f;
         private const float EngineVolumeIdle = 0.02f;
         private const float AmbientWindVolume = 0.045f;
@@ -260,6 +261,7 @@ namespace Airside.Presentation
             }
 
             _active = this;
+            ApplyLoadedSettings();
             _clock = new ManualSimulationClock(new SimulationTime(0));
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
@@ -577,6 +579,12 @@ namespace Airside.Presentation
                 // behind the menu while leaving the menu itself open.
                 if (_menuOpen)
                 {
+                    if (_optionsOpen)
+                    {
+                        _optionsOpen = false;
+                        PlayUiClick();
+                        return;
+                    }
                     ToggleMenu();
                     return;
                 }
@@ -611,6 +619,7 @@ namespace Airside.Presentation
                 // Muting used to be silent in both senses: nothing on screen said the
                 // sound was off, so a stray M looked like broken audio.
                 _audioMuted = !_audioMuted;
+                ApplySettingsAndSave();
                 ShowToast(_audioMuted ? "Sound off (M)." : "Sound on (M).");
                 PlayUiClick();
             }
@@ -619,7 +628,26 @@ namespace Airside.Presentation
         private void ToggleMenu()
         {
             _menuOpen = !_menuOpen;
+            if (!_menuOpen)
+                _optionsOpen = false;
             PlayUiClick();
+        }
+
+        private void ApplyLoadedSettings()
+        {
+            var settings = AirsideSettings.Load();
+            _audioMuted = !settings.SoundOn;
+            _fieldTagsVisible = settings.FieldTags;
+            _miniMapVisible = settings.MiniMap;
+        }
+
+        private void ApplySettingsAndSave()
+        {
+            var settings = AirsideSettings.Current;
+            settings.SoundOn = !_audioMuted;
+            settings.FieldTags = _fieldTagsVisible;
+            settings.MiniMap = _miniMapVisible;
+            settings.Save();
         }
 
         private void ToggleFollow()
@@ -710,7 +738,9 @@ namespace Airside.Presentation
             }
             DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
-            if (_menuOpen)
+            if (_menuOpen && _optionsOpen)
+                DrawOptionsMenu(layout, panel, title, button);
+            else if (_menuOpen)
                 DrawPauseMenu(layout, panel, title, button);
 
             GUI.matrix = previousMatrix;
@@ -880,11 +910,18 @@ namespace Airside.Presentation
             var rect = layout.PauseMenu;
             GUI.Box(rect, GUIContent.none, panel);
             // Live Adelaide time never pauses (ADR 0045), so the panel must not claim to.
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Menu", title);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Adelaide Airport", title);
 
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 42f);
             if (GUI.Button(row, new GUIContent("Resume", AirsideTheme.SystemIcon("play")), button))
                 ToggleMenu();
+
+            row.y += 52f;
+            if (GUI.Button(row, "Options", button))
+            {
+                _optionsOpen = true;
+                PlayUiClick();
+            }
 
             row.y += 52f;
             // Once an airline runs the field draws the fleets, not the demo circuit, so a
@@ -898,6 +935,68 @@ namespace Airside.Presentation
 
             if (GUI.Button(row, "Quit", button))
                 QuitGame();
+        }
+
+        private void DrawOptionsMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
+        {
+            var rect = layout.OptionsMenu;
+            GUI.Box(rect, GUIContent.none, panel);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Options", title);
+
+            var settings = AirsideSettings.Current;
+            var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 38f);
+            if (GUI.Button(row, settings.SoundOn ? "Sound  ·  On" : "Sound  ·  Off", button))
+            {
+                _audioMuted = settings.SoundOn;
+                ApplySettingsAndSave();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.FieldTags ? "Aircraft tags  ·  On" : "Aircraft tags  ·  Off", button))
+            {
+                _fieldTagsVisible = !settings.FieldTags;
+                ApplySettingsAndSave();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.MiniMap ? "Airfield map  ·  On" : "Airfield map  ·  Off", button))
+            {
+                _miniMapVisible = !settings.MiniMap;
+                ApplySettingsAndSave();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.FollowOnSelect ? "Follow on select  ·  On" : "Follow on select  ·  Off", button))
+            {
+                settings.FollowOnSelect = !settings.FollowOnSelect;
+                settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.InvertOrbit ? "Invert orbit  ·  On" : "Invert orbit  ·  Off", button))
+            {
+                settings.InvertOrbit = !settings.InvertOrbit;
+                settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, $"Camera speed  ·  {AirsideSettings.CameraSpeedLabels[settings.CameraSpeedIndex]}", button))
+            {
+                settings.CycleCameraSpeed().Save();
+                PlayUiClick();
+            }
+
+            row.y += 56f;
+            if (GUI.Button(row, "Back", button))
+            {
+                _optionsOpen = false;
+                PlayUiClick();
+            }
         }
 
         private void UpdateAircraftVisual()
@@ -940,7 +1039,8 @@ namespace Airside.Presentation
                     : view.rotation;
                 heading = DepartureLookRotation(flight, phase, progress, heading);
                 var pitch = PhasePitchDegrees(phase, progress);
-                var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase);
+                var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase,
+                    DepartureBankDegrees(flight, phase, progress));
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
@@ -996,8 +1096,29 @@ namespace Airside.Presentation
                 return 0f;
 
             var yawDelta = Mathf.DeltaAngle(view.eulerAngles.y, targetRotation.eulerAngles.y);
-            var limit = 16f;
-            return Mathf.Clamp(-yawDelta * 2.2f, -limit, limit);
+            var limit = phase is AircraftPhase.Takeoff or AircraftPhase.Departed ? 24f : 16f;
+            return Mathf.Clamp(-yawDelta * 2.8f, -limit, limit);
+        }
+
+        /// <summary>
+        /// Coordinated bank from the SID heading change, so the wings roll with the
+        /// turn instead of waiting on the damped pose to catch up.
+        /// </summary>
+        private float DepartureBankDegrees(CommercialFlight flight, AircraftPhase phase, float progress)
+        {
+            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+                return 0f;
+            if (!FleetMode || _operations == null
+                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return 0f;
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!dest.HasValue)
+                return 0f;
+            var now = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
+                phase, progress);
+            var ahead = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
+                phase, Mathf.Min(1f, progress + 0.1f));
+            return Mathf.Clamp(-(ahead - now) * 1.15f, -24f, 24f);
         }
 
         /// <summary>
@@ -1005,9 +1126,11 @@ namespace Airside.Presentation
         /// The raw value jitters frame to frame because it is a difference of two poses
         /// that are themselves being damped, which made the wings twitch on every turn.
         /// </summary>
-        private float SmoothedBankDegrees(string aircraftId, Transform view, Quaternion heading, AircraftPhase phase)
+        private float SmoothedBankDegrees(string aircraftId, Transform view, Quaternion heading, AircraftPhase phase,
+            float commandedBank = 0f)
         {
-            var target = TurnBankDegrees(view, heading, phase);
+            var visual = TurnBankDegrees(view, heading, phase);
+            var target = Mathf.Abs(commandedBank) > 0.4f ? commandedBank : visual;
             if (!_bankDegrees.TryGetValue(aircraftId, out var current))
                 current = target;
 

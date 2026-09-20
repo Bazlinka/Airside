@@ -511,7 +511,7 @@ namespace Airside.Presentation
                 if (keyboard.eKey.isPressed) keyYaw += 1f;
                 if (keyYaw != 0f)
                 {
-                    _yaw += keyYaw * KeyboardOrbitDegreesPerSecond * dt;
+                    _yaw += keyYaw * KeyboardOrbitDegreesPerSecond * AirsideSettings.Current.CameraSpeed * dt;
                     SuppressFollowOrbit();
                 }
 
@@ -522,7 +522,8 @@ namespace Airside.Presentation
                 if (keyboard.zKey.isPressed) keyLift -= 1f;
                 if (keyLift != 0f)
                 {
-                    _center += Vector3.up * (keyLift * KeyboardPanMetresPerSecond(_distance) * 0.5f * dt);
+                    _center += Vector3.up * (keyLift * KeyboardPanMetresPerSecond(_distance)
+                        * 0.5f * AirsideSettings.Current.CameraSpeed * dt);
                     _center.y = ClampCentreHeight(_center.y);
                     _easingOverview = false;
                 }
@@ -541,7 +542,7 @@ namespace Airside.Presentation
                     var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                     var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
                     _center += (planarForward * move.y + planarRight * move.x)
-                        * (KeyboardPanMetresPerSecond(_distance) * dt);
+                        * (KeyboardPanMetresPerSecond(_distance) * AirsideSettings.Current.CameraSpeed * dt);
                     ClampPanCentre();
                     _easingOverview = false;
                 }
@@ -560,8 +561,12 @@ namespace Airside.Presentation
             if (mouse.rightButton.isPressed && _rightPressOnField)
             {
                 var delta = mouse.delta.ReadValue();
-                _yaw += delta.x * AirsideCameraFeel.OrbitYawDegreesPerPixel;
-                _pitch = Mathf.Clamp(_pitch - delta.y * AirsideCameraFeel.OrbitPitchDegreesPerPixel, MinPitchDegrees, MaxPitchDegrees);
+                var invert = AirsideSettings.Current.InvertOrbit ? -1f : 1f;
+                var speed = AirsideSettings.Current.CameraSpeed;
+                _yaw += delta.x * AirsideCameraFeel.OrbitYawDegreesPerPixel * invert * speed;
+                _pitch = Mathf.Clamp(
+                    _pitch - delta.y * AirsideCameraFeel.OrbitPitchDegreesPerPixel * invert * speed,
+                    MinPitchDegrees, MaxPitchDegrees);
                 SuppressFollowOrbit();
                 _easingOverview = false;
             }

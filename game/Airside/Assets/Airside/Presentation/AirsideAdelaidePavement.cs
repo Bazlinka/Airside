@@ -50,6 +50,8 @@ namespace Airside.Presentation
     public static class AdelaideTerminalArchitecture
     {
         public const float ShellHeightMetres = 14f;
+        /// <summary>RFDS hangar prism — one storey plus roof, not the terminal shell.</summary>
+        public const float RfdsHangarHeightMetres = 8f;
         public const float FloodHeightMetres = 18f;
         public const float FloodRangeMetres = 115f;
 

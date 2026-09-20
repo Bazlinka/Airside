@@ -95,7 +95,9 @@ namespace Airside.Presentation
                 var groundY = runwayTop;
                 foreach (var terminal in AdelaideLayout.Terminals)
                 {
-                    var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0 ? 8f : 14f;
+                    var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0
+                        ? AdelaideTerminalArchitecture.RfdsHangarHeightMetres
+                        : AdelaideTerminalArchitecture.ShellHeightMetres;
                     var sit = TerminalGroundY(terminal.Xz, runwayTop);
                     if (sit < groundY)
                         groundY = sit;

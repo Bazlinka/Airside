@@ -80,6 +80,9 @@ namespace Airside.Tests
             Assert.That(layout.PauseMenu.xMin, Is.GreaterThanOrEqualTo(0f));
             Assert.That(layout.PauseMenu.xMax, Is.LessThanOrEqualTo(width));
             Assert.That(layout.PauseMenu.yMax, Is.LessThanOrEqualTo(height));
+            Assert.That(layout.OptionsMenu.xMin, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(layout.OptionsMenu.xMax, Is.LessThanOrEqualTo(width));
+            Assert.That(layout.OptionsMenu.yMax, Is.LessThanOrEqualTo(height));
 
             Assert.That(layout.SpeedReadout.xMin, Is.GreaterThanOrEqualTo(-0.01f));
             Assert.That(layout.SpeedReadout.xMax, Is.LessThanOrEqualTo(width + 0.01f));

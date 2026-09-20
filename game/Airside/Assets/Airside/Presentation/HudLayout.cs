@@ -25,18 +25,21 @@ namespace Airside.Presentation
         public const int ButtonCount = 2;
 
         public const float MenuWidth = 340f;
-        public const float MenuHeight = 232f;
+        public const float MenuHeight = 284f;
+        public const float OptionsWidth = 420f;
+        public const float OptionsHeight = 460f;
 
         /// <summary>Live speed / altitude / heading, centred just above the control bar.</summary>
         public const float ReadoutWidth = 420f;
         public const float ReadoutHeight = 38f;
         public const float ReadoutGap = 8f;
 
-        private HudLayout(Vector2 viewport, Rect controlBar, Rect pauseMenu, Rect speedReadout)
+        private HudLayout(Vector2 viewport, Rect controlBar, Rect pauseMenu, Rect optionsMenu, Rect speedReadout)
         {
             Viewport = viewport;
             ControlBar = controlBar;
             PauseMenu = pauseMenu;
+            OptionsMenu = optionsMenu;
             SpeedReadout = speedReadout;
         }
 
@@ -48,6 +51,9 @@ namespace Airside.Presentation
 
         /// <summary>Centred pause-menu panel.</summary>
         public Rect PauseMenu { get; }
+
+        /// <summary>Centred options panel, opened from the pause menu.</summary>
+        public Rect OptionsMenu { get; }
 
         /// <summary>Live airspeed, directly above the control bar.</summary>
         public Rect SpeedReadout { get; }
@@ -80,6 +86,14 @@ namespace Airside.Presentation
                 menuWidth,
                 menuHeight);
 
+            var optionsWidth = Mathf.Min(OptionsWidth, Mathf.Max(1f, viewportWidth - Margin * 2f));
+            var optionsHeight = Mathf.Min(OptionsHeight, Mathf.Max(1f, viewportHeight - Margin * 2f));
+            var options = new Rect(
+                (viewportWidth - optionsWidth) * 0.5f,
+                (viewportHeight - optionsHeight) * 0.5f,
+                optionsWidth,
+                optionsHeight);
+
             var readoutWidth = Mathf.Min(ReadoutWidth, Mathf.Max(1f, viewportWidth - Margin * 2f));
             var readout = new Rect(
                 (viewportWidth - readoutWidth) * 0.5f,
@@ -88,7 +102,7 @@ namespace Airside.Presentation
                 readoutWidth,
                 Mathf.Min(ReadoutHeight, bar.y));
 
-            return new HudLayout(new Vector2(viewportWidth, viewportHeight), bar, menu, readout);
+            return new HudLayout(new Vector2(viewportWidth, viewportHeight), bar, menu, options, readout);
         }
 
         /// <summary>

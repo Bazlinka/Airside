@@ -91,7 +91,7 @@ namespace Airside.Presentation
             var subtitle = _introSubtitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                 { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter }, AirsideTheme.OpenSky);
             GUI.color = new Color(1f, 1f, 1f, alpha);
-            GUI.Label(new Rect(0f, centreY, width, 28f), "REGIONAL AIRPORT OPERATIONS", subtitle);
+            GUI.Label(new Rect(0f, centreY, width, 28f), "ADELAIDE AIRPORT", subtitle);
             centreY += 25f;
             GUI.Label(new Rect(0f, centreY, width, 28f), $"ADELAIDE  ·  {local:HH:mm}  ·  LIVE", subtitle);
 

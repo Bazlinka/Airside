@@ -18,6 +18,7 @@ namespace Airside.Presentation
         private void ToggleFieldTags()
         {
             _fieldTagsVisible = !_fieldTagsVisible;
+            ApplySettingsAndSave();
             ShowToast(_fieldTagsVisible ? "Aircraft tags on (L)." : "Aircraft tags off (L).");
             PlayUiClick();
         }

@@ -283,7 +283,7 @@ namespace Airside.Tests
             Assert.That(ops.AcceptContract(offer).Accepted, Is.True);
 
             var data = AirlineSave.Capture(ops);
-            Assert.That(data.Version, Is.EqualTo(8));
+            Assert.That(data.Version, Is.EqualTo(9));
             Assert.That(data.HasContractSnapshot, Is.True);
             Assert.That(data.ContractDefinitionId, Is.EqualTo(offer.Id));
 

@@ -229,8 +229,16 @@ namespace Airside.Simulation
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var path = vacate.Parts[vacate.Parts.Count - 1].Path;
-            var sample = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(sample.X, sample.Z, sample.DirectionX, sample.DirectionZ, 0f, false);
+            // A busy day can queue more arrivals for a stand than this taxiway is long.
+            // SampleAtDistance clamps to the path's start, so every arrival past that point
+            // used to collapse onto the exact same spot instead of getting its own place to
+            // wait — visually stuck stacked aircraft rather than a real queue. PointAtDistance
+            // keeps extending the line in a straight line past the start instead (direction
+            // only needs the same clamp — it stays constant along that extrapolated stretch).
+            var distance = path.Length - AwaitingSpacingMetres * slot;
+            var (px, pz) = path.PointAtDistance(distance);
+            var direction = path.SampleAtDistance(Math.Max(0f, distance));
+            return new GroundPose(px, pz, direction.DirectionX, direction.DirectionZ, 0f, false);
         }
 
         /// <summary>
@@ -285,8 +293,12 @@ namespace Airside.Simulation
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var taxi = leg.Parts[leg.Parts.Count - 1].Path;
-            var backAlong = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(backAlong.X, backAlong.Z, backAlong.DirectionX, backAlong.DirectionZ, 0f, false);
+            // Same overflow fix as AwaitingPose above: a deep departure queue used to collapse
+            // onto the taxiway's start once it ran out of taxiway to queue back along.
+            var distance = taxi.Length - AwaitingSpacingMetres * slot;
+            var (bx, bz) = taxi.PointAtDistance(distance);
+            var direction = taxi.SampleAtDistance(Math.Max(0f, distance));
+            return new GroundPose(bx, bz, direction.DirectionX, direction.DirectionZ, 0f, false);
         }
 
         private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate, AircraftType type, RunwayDirection runway)

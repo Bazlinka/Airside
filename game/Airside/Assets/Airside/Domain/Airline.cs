@@ -25,7 +25,7 @@ namespace Airside.Domain
         }
 
         public StableId Id { get; }
-        public string Name { get; }
+        public string Name { get; private set; }
 
         /// <summary>
         /// Paint-friendly fuselage wordmark. Real titles are short ("REX",
@@ -55,9 +55,35 @@ namespace Airside.Domain
         }
 
         /// <summary>Primary livery colour as #RRGGBB, kept UnityEngine-free.</summary>
-        public string LiveryHex { get; }
+        public string LiveryHex { get; private set; }
 
         public bool IsPlayer { get; }
+
+        /// <summary>
+        /// Renames the airline in place — every existing reference (fleet aircraft, save
+        /// records) already holds this same instance, so nothing needs re-wiring. Player-only
+        /// by convention (<see cref="AirlineOperations.RenameAirline"/> enforces it); AI
+        /// operators use real airline names that should not change mid-game.
+        /// </summary>
+        /// <exception cref="ArgumentException">The name is empty or longer than 24 characters —
+        /// the same fuselage-title/HUD-width budget as the authored AI names.</exception>
+        public void Rename(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("An airline name is required.", nameof(name));
+            var trimmed = name.Trim();
+            if (trimmed.Length > 24)
+                throw new ArgumentException("An airline name must be 24 characters or fewer.", nameof(name));
+            Name = trimmed;
+        }
+
+        /// <summary>Repaints the livery in place — see <see cref="Rename"/> for why in place.</summary>
+        public void Repaint(string liveryHex)
+        {
+            if (!IsValidHex(liveryHex))
+                throw new ArgumentException("Livery colour must be #RRGGBB.", nameof(liveryHex));
+            LiveryHex = liveryHex.ToUpperInvariant();
+        }
 
         /// <summary>Regional Express — Adelaide's main regional operator (Saab 340s).</summary>
         public static Airline Rex() => new("REX", "Rex", "#D2491E", isPlayer: false);

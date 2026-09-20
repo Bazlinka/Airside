@@ -1,5 +1,41 @@
 ## Unreleased
 
+- **Career Stats workspace, and nine supporting features (ADR 0066).** A fifth HUD tab
+  ("STATS") gives a real, accurate view of career progress: funds, lifetime revenue (never
+  reduced by spending, unlike the balance), reliability, tier, fleet size, exactly what the
+  next tier still needs (rotations/reliability/a specific aircraft type — a direct answer to
+  "what is Regional?"), 11 career milestones, and recent fulfilled contracts. Built and
+  rendered the same way as the other four workspaces (ADR 0057) and actually re-rendered via
+  `scripts/hud-mockup` to confirm it lays out cleanly, not just reasoned about. Supporting
+  features: airline rename and livery recolour (`AirlineOperations.RenameAirline`/`SetLivery`,
+  validated, player-only); aircraft resale (`SellAircraft`, refunds 55% of purchase price,
+  parked aircraft only, surfaced as a "Resale value" line on the Fleet detail panel — also
+  re-rendered to confirm); and a reliability-linked pay multiplier (neutral at and above 70%
+  reliability — so a fresh career is completely unaffected — a real penalty below it, contract
+  pay itself untouched). Save format bumped to v9 for the new lifetime-revenue/contract-history
+  fields; a pre-9 save loads with both empty, same tolerance as every earlier version bump.
+  `scripts/test-domain.sh` 526/526 (26 new tests; full suite re-run to confirm the reliability
+  multiplier doesn't disturb any existing exact-funds assertion, since 100% starting reliability
+  keeps it neutral everywhere else).
+
+- **Departure-turn jump, unrealistic departure spacing, stand-queue overflow, apron light
+  starvation (ADR 0065).** Four bugs from one play session. (1) Departing aircraft jumped
+  sideways mid-climb then snapped back — `ApplyDepartureTurn` compared Takeoff's own progress
+  against a threshold (0.88) that only means anything on Departed's progress scale; fixed to
+  only ever apply past that point during Departed itself. (2) The next queued departure waited
+  through the whole previous departure's climb-out (not just its ground roll) plus wake
+  separation before it could even start rolling — the runway-occupancy calc was counting
+  already-airborne climb time; now uses ground-roll-to-rotation only, matching the pattern the
+  arrival side already used correctly. (3) A landing aircraft whose gate was full queued at a
+  taxiway holding point that ran out of room past a certain queue depth, at which every further
+  aircraft collapsed onto the same spot instead of a real place to wait — now extrapolates past
+  the taxiway's end in a straight line (an existing helper built for exactly this, just not used
+  here). (4) Apron floodlights were correctly placed and lit but starved out by URP's
+  per-object light cap (12, 4 on Medium) — with hundreds of runway/threshold/ALS lights and
+  stand markers competing for the same budget on nearby ground meshes, the 10 apron floods could
+  easily lose the competition; raised to 24/12. `scripts/test-domain.sh` 500/500 for the two
+  Simulation-layer fixes; the other two are Presentation-only, reviewed by inspection.
+
 - **Night moonlight for form shading, and a backwards vignette fixed (ADR 0064).** Direct
   follow-up to ADR 0063, same "can't see anything at night" report. Raising the ambient floor
   made the field brighter but ambient light is flat — nothing to differentiate an aircraft from

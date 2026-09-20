@@ -66,5 +66,20 @@ namespace Airside.Tests
             Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, longKm),
                 Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42, shortKm)));
         }
+
+        [Test]
+        public void ReliabilityMultiplier_IsNeutralAtAndAboveTheDomesticFloorOnlyPenalisesBelowIt()
+        {
+            Assert.That(FlightEconomics.ReliabilityMultiplier(100), Is.EqualTo(1.0),
+                "a fresh career (100) must be completely unaffected");
+            Assert.That(FlightEconomics.ReliabilityMultiplier(ContractMarket.DomesticReliabilityFloor),
+                Is.EqualTo(1.0), "neutral right down to the same floor the contract market already uses");
+            Assert.That(FlightEconomics.ReliabilityMultiplier(ContractMarket.DomesticReliabilityFloor - 1),
+                Is.LessThan(1.0), "one point under the floor already costs something");
+            Assert.That(FlightEconomics.ReliabilityMultiplier(49), Is.LessThan(FlightEconomics.ReliabilityMultiplier(50)),
+                "the penalty deepens the worse reliability gets");
+            Assert.That(FlightEconomics.ReliabilityMultiplier(0), Is.GreaterThan(0),
+                "even a ruined reputation still pays something for the flight");
+        }
     }
 }

@@ -29,12 +29,12 @@ namespace Airside.Tests
                 foreach (var workspace in new[]
                          {
                              HudWorkspace.None, HudWorkspace.Operations, HudWorkspace.Map,
-                             HudWorkspace.Fleet, HudWorkspace.Contracts
+                             HudWorkspace.Fleet, HudWorkspace.Contracts, HudWorkspace.Stats
                          })
                 {
                     var tabs = new List<HudNavTab>();
                     HudShell.FillTabs(nav, workspace, tabs);
-                    Assert.That(tabs, Has.Count.EqualTo(4), $"{workspace} {width}x{height}");
+                    Assert.That(tabs, Has.Count.EqualTo(HudShell.Tabs.Length), $"{workspace} {width}x{height}");
                     Assert.That(tabs.Count(t => t.Selected), Is.EqualTo(1),
                         $"exactly one tab reads as the open page ({workspace})");
                     for (var i = 1; i < tabs.Count; i++)

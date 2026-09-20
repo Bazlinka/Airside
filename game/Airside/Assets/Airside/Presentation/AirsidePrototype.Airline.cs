@@ -65,6 +65,7 @@ namespace Airside.Presentation
         private readonly RouteMapWorkspaceModel _routeMapWorkspace = new();
         private readonly FleetWorkspaceModel _fleetWorkspace = new();
         private readonly ContractsWorkspaceModel _contractsWorkspace = new();
+        private readonly StatsWorkspaceModel _statsWorkspace = new();
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
@@ -213,7 +214,7 @@ namespace Airside.Presentation
             DrawFieldTags(small);
             DrawTopBar(placement);
             // The objective card is part of the persistent shell: it stays in the same place
-            // whichever workspace is open, so the four pages read as one screen. It only gives
+            // whichever workspace is open, so the five pages read as one screen. It only gives
             // way on a window too narrow to hold a usable workspace beside it.
             if (showGuide)
                 DrawGuide(placement.Objective, panel, label, small);
@@ -236,6 +237,9 @@ namespace Airside.Presentation
                     break;
                 case HudWorkspace.Contracts:
                     DrawContractsWorkspace(placement.Workspace);
+                    break;
+                case HudWorkspace.Stats:
+                    DrawStatsWorkspace(placement.Workspace);
                     break;
             }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
@@ -422,7 +426,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Slim persistent strip: airline, Adelaide time, funds, reliability, tier and the
-        /// four workspaces. Operations stays visually selected on the default overview.
+        /// five workspaces. Operations stays visually selected on the default overview.
         /// </summary>
         private void DrawTopBar(AirlineHudLayout placement)
         {
@@ -1809,6 +1813,15 @@ namespace Airside.Presentation
             var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
                 _highlightedContractId);
+            DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
+        }
+
+        /// <summary>The Stats workspace (ADR 0066): career overview, next-tier progress, milestones, contract history.</summary>
+        private void DrawStatsWorkspace(Rect rect)
+        {
+            _statsWorkspace.Rebuild(_operations, _clock.Now);
+            var layout = StatsWorkspaceLayout.Create(Box(rect));
+            StatsWorkspacePainter.Paint(_workspaceDrawList, _statsWorkspace, layout);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 

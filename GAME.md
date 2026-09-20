@@ -1,5 +1,101 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — Career Stats workspace and nine supporting features, autonomous
+  overnight pass (branch `claude/weather-system-improvement-1bgfc3`, merged, ADR 0066).**
+  Bailey: "Add 10 new features to the game overnight. Implement and merge... Goodnight" —
+  direct follow-up to the previous turn's brainstorm on stats/profile visibility, airline
+  customisation and pricing.
+  - **The Stats workspace (the main ask).** Fifth HUD tab, built the same UnityEngine-free
+    Model/Layout/Painter way as the other four (ADR 0057) so it's covered by the headless
+    harness AND the mockup renderer. Shows funds, lifetime revenue (new — accumulates, never
+    reduced by spending, unlike the balance), reliability, tier, fleet size, exactly what the
+    next tier needs (`CareerProgress.NextTier`, reading the same named thresholds
+    `EvaluateTier` checks so they can't drift apart — answers "what is Regional?" for real this
+    time), 11 milestones, and recent fulfilled contracts. **Actually re-rendered** via
+    `scripts/hud-mockup` + `render-hud-mockups.py` — `hud-stats.png` confirmed clean, no
+    clipping/overlap at 2015×1260 (bottom half is empty, same "sparse workspace" character ADR
+    0062 found on Contracts — not fixed here, flagged as a follow-up since every value shown is
+    already accurate).
+  - **Profile:** `Airline.Rename`/`Repaint` (validated, in-place mutation — every existing
+    fleet/HUD/save reference already holds the same instance) + `AirlineOperations.
+    RenameAirline`/`SetLivery` (player-only). No HUD control wired to trigger these yet
+    (text input / colour picker is separate, riskier interaction work) — deliberately left for
+    a dedicated pass rather than rushed in alongside five other changes.
+  - **Pricing / "work harder for things":** `AirlineOperations.SellAircraft` (resale at 55% of
+    purchase price, parked aircraft only — the starter ATR was never bought, so it has no
+    listed price and can't be resold) + `FlightEconomics.ReliabilityMultiplier` (neutral at and
+    above 70% reliability — the same floor the contract market already uses — a real penalty
+    below it; contract-specific pay is never touched, so a contract always pays exactly what it
+    advertised). Checked against every existing exact-funds test in the suite: a fresh 100%-
+    reliability career is completely unaffected.
+  - **Also:** the Fleet workspace's selected-aircraft panel now shows "Resale value $X" — the
+    resale command needed a way to actually be discovered; re-rendered `hud-fleet.png` to
+    confirm it reads cleanly.
+  - **Save format → v9** for lifetime revenue + a capped (10) contract-history list. Pre-9
+    saves load with both empty — same tolerance as every earlier bump.
+  - **Evidence:** `scripts/test-domain.sh` **526/526** (26 new tests across 7 test files; full
+    suite re-run specifically to confirm the reliability multiplier doesn't disturb any
+    existing exact-funds assertion). Stats workspace and Fleet's resale line are visually
+    verified by rendering, not inspection-only like most Presentation work this session.
+  - **Branch was restarted before this round**: the previous PR (#338, ADR 0062-0064) had
+    already merged to `main` by the time this session resumed; `git fetch origin main &&
+    checkout -B` + cherry-pick carried ADR 0065 forward cleanly (`git diff` against the merge
+    commit was empty before the cherry-pick, confirming no drift).
+  - **NEXT:** wire rename/livery into an actual HUD control; consider filling the Stats page's
+    empty lower half; a real Unity look remains owed across this and every other
+    "reasoned, not confirmed" Presentation item this session (night lighting, departure turn,
+    apron lights).
+
+- **2026-09-20 Claude — departure-turn jump, unrealistic departure spacing, stand-queue
+  overflow, apron light starvation (branch `claude/weather-system-improvement-1bgfc3`, ADR
+  0065).** Bailey, from actual play: aircraft "take off and then jump over a bit and then like
+  back up again in the air"; holding "takes a bit unrealistic in how long they take before they
+  proceed to take off after a plane has left"; a landed aircraft whose gate is full "needs to
+  have a place to go instead of being stuck"; apron lighting "looks good in theory but needs
+  work coz it doesn't light up the apron." Also asked to brainstorm a stats/profile view and
+  whether pricing needs work — see NEXT below, not built this round.
+  - **Fixed, all four traced to a concrete cause before touching anything:**
+    1. `AirsidePrototype.ApplyDepartureTurn` compared Takeoff's own phase progress against
+       `DepartureTurn.TurnEstablishedProgress` (0.88) — a threshold that only means anything on
+       Departed's own progress scale. Takeoff legitimately crosses 0.88 well before it ends (a
+       different phase duration entirely), which used to trigger the "established track"
+       branch using Departed's reference point mid-climb — the jump. Phase became Departed a
+       moment later, progress genuinely reset to 0 — the "back up". Now gated to
+       `phase == AircraftPhase.Departed` only.
+    2. `AirlineOperations.RunTowerOnStrip` freed the runway for the next departure/arrival only
+       after the *whole* `TakingOff` state duration (ground roll **and** the initial climb,
+       already well clear of the tarmac) plus wake separation — double-counting airborne time
+       as runway occupancy. Now frees after ground-roll-to-rotation + wake separation only,
+       matching the distinction the arrival side (`ClearOfRunwaySeconds`) already drew
+       correctly.
+    3. `AdelaideGround.AwaitingPose`/`HoldingShortPose` queued waiting aircraft back along a
+       taxiway, clamped to the taxiway's own length — so a queue deeper than the taxiway is
+       long collapsed every further aircraft onto the same point (stacked, "stuck"-looking)
+       instead of a real place to wait. Now uses `GroundPath.PointAtDistance`, which already
+       existed for exactly this ("continues in a straight line" past either end) — one nearby
+       branch in the same file (missing-departure-stand) already did this correctly, the other
+       two didn't.
+    4. Apron floodlights are correctly placed and lit (confirmed by reading the code, ADR
+       0063's earlier pass) but starved by URP's per-object additional-lights cap — 12 (4 on
+       Medium), shared scene-wide with hundreds of runway/threshold/ALS lights and stand
+       markers competing for the same budget on nearby ground meshes. Raised to 24/12 in both
+       `AirsideRuntimeQuality.cs` and the checked-in `PC_RPAsset.asset`/`Mobile_RPAsset.asset`
+       (the Editor uses those files directly, not the runtime-only code path).
+  - **Evidence:** `scripts/test-domain.sh` **500/500** — (2) and (3) are Simulation-layer and
+    fully proven by the headless suite (checked `DualRunwayTowerTests.cs` specifically: no test
+    asserts an exact freed-at time or queue position that these changes would have broken). (1)
+    and (4) are Presentation/Unity-only, reviewed by inspection — reasoned and traced through
+    concrete numbers, not confirmed by eye.
+  - **NEXT:** a real Unity look remains owed across (1), (4), and the whole ADR 0063/0064 night
+    lighting stack. Separately, Bailey asked to brainstorm: (a) a proper stats/career view — the
+    game currently has no dedicated place to see funds/reliability/tier/rotations accurately,
+    only a scattered one-line fallback in `OperationsSummary.Objective`; (b) a way to modify
+    airline profile (name/livery are constructor-only today, no rename/re-livery path exists
+    anywhere); (c) whether pricing (`AircraftAcquisition`, contract payouts) needs rebalancing.
+    Deliberately not built blind this round — a new HUD workspace and a profile-mutation API
+    are real feature work, not bug fixes, and deserve their own pass with the mockup renderer
+    for verification rather than being squeezed in alongside four unrelated bug fixes.
+
 - **2026-09-20 Claude — night moonlight for form shading, backwards vignette fixed (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0064).** Direct continuation of ADR 0063,
   same "I can't see anything at night" report — Bailey asked to keep going on lighting

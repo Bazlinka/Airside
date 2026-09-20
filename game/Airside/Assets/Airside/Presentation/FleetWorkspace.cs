@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
@@ -268,6 +269,11 @@ namespace Airside.Presentation
             _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km planning range");
             if (!aircraft.Airline.IsPlayer)
                 _capability.Add($"Operated by {aircraft.Airline.Name}");
+            // The starter aircraft was never bought (AircraftAcquisition's own doc comment),
+            // so it has no purchase price to base a resale figure on — line omitted for it
+            // rather than showing a made-up number.
+            else if (AircraftAcquisition.TryFor(aircraft.Type, out var ownedOffer))
+                _capability.Add($"Resale value ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
 
             if (aircraft.Scheduled.HasValue)
             {

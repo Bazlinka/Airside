@@ -24,9 +24,12 @@ namespace Airside.Simulation
         /// fulfilled-contract ids (so a completed contract cannot be farmed) and the
         /// opening funds / per-flight pay / dispatch-cost loop from ADR 0055. 8 adds
         /// departure-prep start time, a snapshot of a generated market contract, and
-        /// completed player-rotation count (ADR 0056).
+        /// completed player-rotation count (ADR 0056). 9 adds lifetime revenue (never reduced
+        /// by spending, unlike <see cref="CareerFunds"/>) and a capped history of fulfilled
+        /// contracts, for a real career-stats view. A pre-9 save loads with 0 lifetime revenue
+        /// and no history — same "no retroactive credit" tolerance as every earlier version.
         /// </summary>
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
 
         public int Version = CurrentVersion;
 
@@ -71,6 +74,21 @@ namespace Airside.Simulation
         public string ContractRequiredTier;
         public int ContractReliabilityLoss;
         public string ContractUnlocksTier;
+
+        // ---- Career stats (v9) -----------------------------------------------------
+        public long CareerLifetimeRevenue;
+        public List<CompletedContractSaveRecord> ContractHistory = new();
+    }
+
+    /// <summary>One fulfilled contract, JsonUtility-friendly mirror of <see cref="CompletedContractRecord"/>.</summary>
+    [Serializable]
+    public sealed class CompletedContractSaveRecord
+    {
+        public string DefinitionId;
+        public string OriginCode;
+        public string DestinationCode;
+        public long TotalPaid;
+        public long CompletedAtSeconds;
     }
 
     [Serializable]
@@ -130,10 +148,22 @@ namespace Airside.Simulation
                 ContractDefinitionId = operations.CareerState.ActiveContract?.DefinitionId ?? string.Empty,
                 ContractAcceptedAtSeconds = operations.CareerState.ActiveContract?.AcceptedAt.ElapsedSeconds ?? 0,
                 ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0,
-                CompletedPlayerRotations = operations.CareerState.CompletedPlayerRotations
+                CompletedPlayerRotations = operations.CareerState.CompletedPlayerRotations,
+                CareerLifetimeRevenue = operations.CareerState.LifetimeRevenue
             };
             data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
             data.CompletedContractIds.AddRange(operations.CareerState.CompletedContractIds);
+            foreach (var record in operations.CareerState.ContractHistory)
+            {
+                data.ContractHistory.Add(new CompletedContractSaveRecord
+                {
+                    DefinitionId = record.DefinitionId,
+                    OriginCode = record.OriginCode,
+                    DestinationCode = record.DestinationCode,
+                    TotalPaid = record.TotalPaid,
+                    CompletedAtSeconds = record.CompletedAt.ElapsedSeconds
+                });
+            }
             if (operations.CareerState.ActiveContract != null
                 && operations.CareerState.TryFindDefinition(operations.CareerState.ActiveContract.DefinitionId,
                     out var definition))
@@ -331,6 +361,18 @@ namespace Airside.Simulation
                 ? data.CompletedPlayerRotations
                 : processedKeys.Count;
 
+            var contractHistory = new List<CompletedContractRecord>();
+            if (data.Version >= 9 && data.ContractHistory != null)
+            {
+                foreach (var record in data.ContractHistory)
+                {
+                    if (record == null)
+                        continue;
+                    contractHistory.Add(new CompletedContractRecord(record.DefinitionId, record.OriginCode,
+                        record.DestinationCode, record.TotalPaid, new SimulationTime(record.CompletedAtSeconds)));
+                }
+            }
+
             operations.RestoreCareerState(
                 data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
@@ -342,7 +384,9 @@ namespace Airside.Simulation
                 processedKeys,
                 data.Version >= 7 ? data.CompletedContractIds ?? new List<string>() : new List<string>(),
                 rotationCount,
-                snapshot);
+                snapshot,
+                data.Version >= 9 ? data.CareerLifetimeRevenue : 0,
+                contractHistory);
 
             return operations;
         }

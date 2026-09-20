@@ -344,11 +344,9 @@ namespace Airside.Tests
                 ops.Update();
 
                 var mainOnRunway = ops.Fleet.Count(a =>
-                    a.State is FleetState.TakingOff or FleetState.Landing
-                    && RunwayWeather.IsMainRunway(a.AssignedRunway));
+                    ops.IsOccupyingRunway(a) && RunwayWeather.IsMainRunway(a.AssignedRunway));
                 var crossOnRunway = ops.Fleet.Count(a =>
-                    a.State is FleetState.TakingOff or FleetState.Landing
-                    && !RunwayWeather.IsMainRunway(a.AssignedRunway));
+                    ops.IsOccupyingRunway(a) && !RunwayWeather.IsMainRunway(a.AssignedRunway));
                 Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1));
                 Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1));
                 var held = ops.Fleet.Where(a => a.State is FleetState.AtStand or FleetState.TaxiIn).Select(a => a.Stand).ToList();

@@ -5,8 +5,11 @@ namespace Airside.Simulation
     /// <summary>
     /// Maps the 05-authored circuit (x along the strip, z across) onto the
     /// assigned runway. 23 is a 180° flip; 12/30 is a rotate-and-shift onto
-    /// the cross strip, with stations remapped so a 3 100 m takeoff roll
-    /// still starts at the threshold of the 1 650 m pavement.
+    /// the cross strip. Stations stay 1:1 metres so stated knots match the
+    /// distance travelled — the 05 arrival threshold lines up with the 12
+    /// threshold, then every extra metre of final, roll or climb-out is
+    /// kept. Compressing the 3 100 m strip onto 1 650 m of pavement made
+    /// 12/30 takeoff and landing crawl at about half speed.
     /// </summary>
     public static class RunwayFrame
     {
@@ -80,17 +83,12 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Metres along 12/30 for a 05-frame station. Past either threshold the
-        /// extra distance is kept so a 4 km final stays a 4 km final.
+        /// Metres along 12/30 for a 05-frame station. One metre of 05 is one
+        /// metre of 12/30, so 50 kt covers the same ground it would on 05.
+        /// The 05 west threshold maps to the 12 threshold; a 4 km final stays
+        /// a 4 km final.
         /// </summary>
-        public static float RemapAlong(float mainX)
-        {
-            var half = AdelaideCrossRoutes.HalfLength;
-            if (mainX < -MainHalfLength)
-                return -half + (mainX + MainHalfLength);
-            if (mainX > MainHalfLength)
-                return half + (mainX - MainHalfLength);
-            return mainX / MainHalfLength * half;
-        }
+        public static float RemapAlong(float mainX) =>
+            mainX + MainHalfLength - AdelaideCrossRoutes.HalfLength;
     }
 }

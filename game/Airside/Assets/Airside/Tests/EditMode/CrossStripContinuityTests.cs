@@ -1,4 +1,5 @@
 using System;
+using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -55,6 +56,63 @@ namespace Airside.Tests
                     + (lineup[lineup.Length - 1] - takeZ) * (lineup[lineup.Length - 1] - takeZ));
                 Assert.That(gap, Is.LessThan(2.5),
                     $"{runway} lineup must end where takeoff roll starts");
+            }
+        }
+
+        [Test]
+        public void RemapAlong_KeepsOneMetreSoFiftyKnotsLooksLikeFiftyKnots()
+        {
+            Assert.That(RunwayFrame.RemapAlong(CircuitProfile.WestThresholdX),
+                Is.EqualTo(-AdelaideCrossRoutes.HalfLength).Within(0.01f),
+                "05 arrival threshold lines up with the 12 threshold");
+
+            var from = RunwayFrame.RemapAlong(CircuitProfile.TouchdownX);
+            var to = RunwayFrame.RemapAlong(CircuitProfile.TouchdownX + 200f);
+            Assert.That(to - from, Is.EqualTo(200f).Within(0.01f),
+                "200 m of 05 rollout must stay 200 m on 12/30");
+
+            var roll = RunwayFrame.RemapAlong(CircuitProfile.TakeoffStartX + 900f)
+                       - RunwayFrame.RemapAlong(CircuitProfile.TakeoffStartX);
+            Assert.That(roll, Is.EqualTo(900f).Within(0.01f),
+                "the ATR takeoff roll must not be squeezed onto the short strip");
+        }
+
+        [Test]
+        public void ClearOfRunway_LeavesTheTwelveThirtyPavement()
+        {
+            var vacate = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12);
+            var clear = AdelaideGround.ClearOfRunwaySeconds(AircraftType.Atr42, RunwayDirection.Runway12);
+            var pose = vacate.PoseAt(clear);
+            WorldToCrossLocal(pose.X, pose.Z, out var along, out var across);
+            var offPavement = Math.Abs(across) > 28f
+                              || Math.Abs(along) > AdelaideCrossRoutes.HalfLength + 20f;
+            Assert.That(offPavement, Is.True,
+                $"clear-of-runway still on 12/30 at along={along:0} across={across:0}");
+        }
+
+        private static void WorldToCrossLocal(float x, float z, out float along, out float across)
+        {
+            var yaw = AdelaideLayout.CrossRunwayYawDegrees * Math.PI / 180.0;
+            var cos = Math.Cos(yaw);
+            var sin = Math.Sin(yaw);
+            var dx = x - AdelaideLayout.CrossRunwayCenterX;
+            var dz = z - AdelaideLayout.CrossRunwayCenterZ;
+            along = (float)(cos * dx - sin * dz);
+            across = (float)(sin * dx + cos * dz);
+        }
+
+        [Test]
+        public void ToWorld_TwelveThirtyPreservesTakeoffRollMetres()
+        {
+            foreach (var runway in new[] { RunwayDirection.Runway12, RunwayDirection.Runway30 })
+            {
+                RunwayFrame.ToWorld(runway, CircuitProfile.TakeoffStartX, 0f, 0f,
+                    out var x0, out _, out var z0);
+                RunwayFrame.ToWorld(runway, CircuitProfile.TakeoffStartX + 200f, 0f, 0f,
+                    out var x1, out _, out var z1);
+                var travelled = Math.Sqrt((x1 - x0) * (x1 - x0) + (z1 - z0) * (z1 - z0));
+                Assert.That(travelled, Is.EqualTo(200.0).Within(0.5),
+                    $"{runway} must move 200 m when the 05 frame does");
             }
         }
     }

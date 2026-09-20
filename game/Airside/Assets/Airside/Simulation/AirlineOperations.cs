@@ -696,6 +696,22 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// True while this aircraft still occupies its assigned strip. Landing
+        /// keeps the long taxi to E2 in its state duration so the drawing does
+        /// not teleport; the strip itself is free once the aircraft is clear
+        /// of the pavement.
+        /// </summary>
+        public bool IsOccupyingRunway(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return false;
+            if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing))
+                return false;
+            var until = StripBusyUntil(aircraft);
+            return until.HasValue && until.Value.CompareTo(_clock.Now) > 0;
+        }
+
+        /// <summary>
         /// When the strip may accept the next movement. Landing frees at clear-of-runway,
         /// not after the long taxi to E2 that still belongs to the Landing state.
         /// </summary>

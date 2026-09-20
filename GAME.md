@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — 12/30 speed matches stated knots
+  (branch `feature/busier-field-and-camera`).** Bailey: HUD knots were
+  right, but aircraft looked too slow — 50 kt did not cover 50 kt of
+  ground.
+  - **Cause:** `RunwayFrame.RemapAlong` squeezed the 3 100 m 05
+    stations onto 1 650 m of 12/30 pavement (~0.53×). Regionals
+    (most of the opening bank) crawled on takeoff and landing.
+  - **Fix:** 1:1 shift. The 05 west threshold lines up with the 12
+    threshold; every extra metre of final, roll or climb-out stays
+    a metre. Vacate/lineup still meet the remapped stations.
+  - **NEXT:** Mac rebuild from this branch. Say if you want it
+    merged.
+
 - **2026-09-20 Cursor — busier field, stand boxes, slower camera
   (branch `feature/busier-field-and-camera`).** Bailey: more than one
   aircraft can leave and arrive at once; the T1 apron looked empty; click-
@@ -14,8 +27,7 @@
   - **Camera:** slower orbit, clamped pan, slower Normal/Fast.
   - **Also:** Unity compile fixes from the last pull (`Math`, public
     `IsMissedApproachLanding`, `AirlineClock` windsock, test usings).
-  - **NEXT:** `scripts/test-domain.sh`, then Mac rebuild from this
-    branch.
+  - **NEXT:** done — speed fix is the entry above.
 
 - **2026-09-20 Cursor — all day-progress + career PRs on main.**
   #329 (day strip + play fixes) and #330 (International unlock +
@@ -24,7 +36,7 @@
   - **Evidence:** `scripts/test-domain.sh` **462/462** on the merged
     career commit; Unity EditMode still needed on a Mac.
   - **NEXT:** Mac `scripts/test-unity.sh`. Still open play items:
-    dual-strip intersection mutex; 12/30 RemapAlong crawl; regional
+    dual-strip intersection mutex; regional
     pushback apron mutex; Q400 50D/50E hard rule (Bailey);
     disruption→sim.
 

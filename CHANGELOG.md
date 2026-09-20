@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **12/30 takeoff and landing match the stated knots.** Stations shift
+  so the 05 threshold lines up with the 12 threshold; one metre of 05
+  stays one metre of 12/30. The old squeeze made regionals crawl at
+  about half speed while the HUD still read 05 knots.
+
 - **The field is a bank, not a single-file queue.** Qantas and Jetstar
   join Virgin, ANZ, Singapore and the regionals. Several arrivals are
   already inbound at a new game, two aircraft may taxi on the same

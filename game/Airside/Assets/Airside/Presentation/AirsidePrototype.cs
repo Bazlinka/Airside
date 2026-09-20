@@ -1346,16 +1346,18 @@ namespace Airside.Presentation
 
             // ADR 0059: the strike already fixed its own moment and delay (Update()); this
             // only fires the one-shot once real time actually reaches it, so pausing or a
-            // slow frame delays thunder along with everything else instead of it arriving early.
+            // slow frame delays thunder along with everything else instead of it arriving
+            // early. The clip itself is pre-warmed in EnsureAmbientClips — synthesising it
+            // here, on the first storm's first strike, cost a synchronous ~53k-sample
+            // generation loop at exactly the moment the clap needed to play on time.
             if (_thunderAudio != null && Time.unscaledTime >= _thunderPlayAt)
             {
                 _thunderPlayAt = float.PositiveInfinity;
-                if (!_audioMuted)
+                if (!_audioMuted && _thunderClip != null)
                 {
-                    var clip = _thunderClip ??= Resources.Load<AudioClip>("Airside/Audio/thunder_crack_01") ?? CreateThunderClip();
                     var volume = Mathf.Lerp(0.55f, 0.16f, _lightningDistance01);
                     _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - _lightningDistance01);
-                    _thunderAudio.PlayOneShot(clip, volume);
+                    _thunderAudio.PlayOneShot(_thunderClip, volume);
                 }
             }
         }
@@ -1385,6 +1387,11 @@ namespace Airside.Presentation
                 if (clip != null && !_ambientCoastAudio.isPlaying)
                     _ambientCoastAudio.Play();
             }
+
+            // ADR 0059: a one-shot, so no clip/Play() call here — just pre-generate it now,
+            // the same first few frames the other ambient beds warm up, instead of paying the
+            // synthesis cost mid-storm on whichever frame the first strike actually lands.
+            _thunderClip ??= Resources.Load<AudioClip>("Airside/Audio/thunder_crack_01") ?? CreateThunderClip();
         }
 
         private static void UpdateAircraftLightsAndGear(
@@ -1403,10 +1410,15 @@ namespace Airside.Presentation
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
-            // Only with engines running: a cold, parked fleet aircraft used to light its taxi
-            // lamp (a spot light) all night, one per aircraft on the apron.
+            // Ground-movement phases only. This used to also gate on `night ||`, which made
+            // the phase check meaningless after dark: EngineStartSequence spools engines up to
+            // 120s before an at-stand departure and ramps them down over up to 35s after an
+            // at-stand arrival, so `enginesOn` was already true while `phase == AtStand` for
+            // those windows — every night departure/arrival beamed the nose taxi spotlight
+            // from a motionless, gate-parked aircraft. A cold, parked aircraft never lit it;
+            // this was the same bug in a narrower, still-visible form.
             var taxiLights = !airborne && enginesOn
-                && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
+                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback;
 
             for (var i = 0; i < parts.Length; i++)
             {

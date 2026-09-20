@@ -1,5 +1,26 @@
 ## Unreleased
 
+- **Two graphics/UX bugs fixed after a targeted audit of maps, aircraft, taxiing and the HUD.**
+  A parked, gate-side aircraft's nose taxi spotlight used to switch on at night for up to two
+  minutes before every departure and 35s after every arrival — engines spool up while still
+  `AtStand`, and the taxi-light condition's `night ||` made the ground-movement-phase check
+  meaningless after dark. Now requires an actual taxi/pushback phase regardless of day or night.
+  Separately, a contract offer's "first click arms, second click commits" safeguard could stay
+  armed after leaving the Contracts workspace — a forgotten arm plus one exploratory click on
+  the card (not just its Accept button) later would silently sign a real commitment; now clears
+  centrally whenever the Contracts workspace isn't the active one. Maps and taxi/ground-motion
+  audits came back clean — see `GAME.md` for what was checked. Both fixes are
+  Presentation/Unity-only and reviewed by inspection; `scripts/test-domain.sh` unaffected
+  (494/494, unchanged).
+
+- **Two performance bugs fixed in the storm lightning work (ADR 0059 update).** A requested
+  performance review found: `Lightning.StrikesAt` re-walked its whole storm-block ladder from
+  scratch on every call (quadratic over the block, though never expensive in absolute terms) —
+  now memoises the last two adjacent strike times, so most seconds answer with zero hashing.
+  The procedural thunder clip was built synchronously the first time it was needed (mid-storm,
+  on the audio hot path) instead of pre-warmed like the wind/rain/coast beds — now generated
+  eagerly alongside them. Same behaviour, `scripts/test-domain.sh` still 494/494.
+
 - **Storm lightning/thunder, and a sun/moon that hides behind cloud (ADR 0059).** New
   deterministic `Lightning.StrikesAt` (same pure-hash-of-time style as `Weather.At`) fires a
   flash-plus-thunder every 5-13s during a storm: a ~0.5s double-pulse brightens the sun/

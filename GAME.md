@@ -1,5 +1,92 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — graphics bug hunt: maps, planes, taxiing, interface (branch
+  `claude/weather-system-improvement-1bgfc3`).** Bailey: "bug fixes for graphics - maps,
+  planes, taxiing, and interface visuals and improving them." Ran four parallel read-only
+  audits (one per area), each told to find real, concrete, verifiable bugs and to check
+  existing test coverage / recent work first rather than re-flag settled ground. Two real
+  bugs found and fixed; two areas came back clean.
+  - **Aircraft (done, one real bug found and fixed):** `UpdateAircraftLightsAndGear`'s
+    `taxiLights` condition (`AirsidePrototype.cs`) used to be
+    `!airborne && enginesOn && (night || phase is TaxiIn/TaxiOut/Pushback)` — the `night ||`
+    made the phase check meaningless after dark, since `EngineStartSequence` spools engines up
+    to 120s before an at-stand departure and down over up to 35s after an at-stand arrival, so
+    `enginesOn` was already true while `phase == AtStand`. Every night departure/arrival beamed
+    the nose taxi spotlight from a motionless, gate-parked aircraft — the same defect an
+    existing comment says was already fixed for a fully cold aircraft, just not for the
+    spooling-but-still-parked case. Fixed: taxi light now requires an actual ground-movement
+    phase regardless of day/night, matching what the surrounding comment already describes as
+    intended. Not covered by any test (Presentation/Unity-only); reviewed by inspection.
+  - **Aircraft (reconfirmed, not re-fixed):** the 737-8 wheelbase mismatch from the last
+    aircraft-detail session is still real and unresolved — `AircraftPerformance.Boeing7378`
+    says 17.68 m (feeds `AdelaideGround`'s gate-turn taxi curvature); the actual generated kit
+    (`generate-air-005-narrowbody-737-8.py`) is 15.3 m (feeds the drawn nose-gear steering
+    angle directly off the model's real gear pivots). The two now measurably disagree with
+    *each other*, not just a real-world spec — the nose gear steers as if 15.3 m while the
+    ground path it follows is shaped for 17.68 m. Left for Bailey's call per the standing note
+    on that entry; not touched here.
+  - **Taxi/ground motion (done, no confirmed bug):** re-checked nose-swing/hairpin math,
+    the pushback→taxi heading handoff, and 12/30 vs 05/23 test coverage against the very
+    recent smoothness pass. All held up — the apparent 12/30 coverage gap in
+    `GroundMotionSmoothnessTests` turned out to correctly mirror a real rule (jets never use
+    12/30 at all, so there's nothing to test there). Two speculative coverage gaps noted for a
+    future sweep (corner-relaxation-vs-pavement bounds beyond one sampled point per route;
+    `TaxiPathCleanup`'s single backtrack heuristic has no per-bay regression test) — neither
+    has a demonstrated real-world instance, so left alone.
+  - **Maps (done, no confirmed bug):** close end-to-end read of the mini-map,
+    `AustraliaMapLens`, `RouteMap`/`RouteMapWorkspace` and the OSM coastline data. Two things
+    that looked wrong on first glance both checked out on tracing: the mini-map's west-bound
+    `WestDepartureMetres` extension is correct once cross-checked against the real 05 threshold
+    and a 23 departure's actual climb-out direction (over the gulf, matches GAME.md's prior
+    fix); `AustraliaMapLens.SetZoom`'s missing pan-reclamp is invisible to the player because
+    `DrawDestinationsMap` unconditionally re-clamps via `CenterOn` on the very next frame.
+    `RouteMapWorkspacePainter`'s actual pixel-drawing code has no direct test (only its
+    `RouteMapWorkspaceModel` data does) — a coverage gap, not a known-bad path.
+  - **HUD/interface — real bug found and fixed:** `AcceptContractFromHud`'s "first click arms,
+    second click commits" guard (`_highlightedContractId`, `AirsidePrototype.Airline.cs`) was
+    only ever cleared on a *successful* accept — never on leaving the Contracts workspace
+    (switching pages, Esc, opening dev tools, following a flight onto the map). Since the whole
+    contract card is the click target, not just the Accept button, coming back to Contracts
+    later and making one exploratory click on a card armed and forgotten would silently sign a
+    real service commitment. Fixed centrally: cleared every frame whenever
+    `_activeWorkspace != Contracts`, rather than patched at each of the several places that
+    field changes, so no future navigation path can reopen the same gap. Not covered by any
+    test (Presentation/Unity-only, `ContractsWorkspaceTests` never exercises a non-null
+    highlight); reviewed by inspection.
+  - **HUD/interface — noted, not fixed (no demonstrated instance):** at the 1024×640 supported
+    viewport, `RouteMapWorkspace`'s filter-pill strip and the map/detail divider meet with
+    exactly 0 px of margin (worked through `HudShell`'s layout arithmetic) — not clipped today,
+    but nothing derives that margin from the layout constants, so a longer label or a third
+    filter pill could silently overlap the detail pane with no test catching it. Left alone
+    rather than guessed at without being able to see it rendered.
+  - **NEXT:** `scripts/test-unity.sh` before merging — none of this session's graphics fixes
+    (taxi light, contract arm-reset) have been run in Unity, only reviewed by inspection.
+    Consider a `RouteMapWorkspace` layout test across `HudTestAirline.Viewports` (matching
+    Operations/Fleet/Contracts) to close the margin coverage gap above.
+
+- **2026-09-20 Claude — performance bug check on the merged storm/lightning PR (branch
+  restarted from `main` after #335 merged; ADR 0059 updated).** Bailey: "run a performance bug
+  check." Ran `/code-review` (high effort) scoped to the diff just merged in #335, focused on
+  performance. Two real findings, both fixed and verified before this reached `main` again:
+  - **`Lightning.StrikesAt`** re-walked its whole storm-block ladder from the block's first
+    second on every call — O(seconds into the block) per call, quadratic over an hour-long
+    storm (never actually expensive: a few hundred cheap hashes, once a second, only during
+    the ~3% of hours that storm). Fixed with a two-point memo (`_cachedFloor`/`_cachedCeiling`,
+    always adjacent ladder points) so the realistic non-decreasing call pattern answers most
+    seconds with zero hashing; an out-of-order or cross-block query still falls back to a full
+    rebuild and is exactly as correct as before. `scripts/test-domain.sh` 494/494 unchanged —
+    same behaviour confirmed by the full existing `LightningTests` suite, not just new tests.
+  - **The procedural thunder clip synthesised itself lazily** on the audio hot path, at the
+    exact frame the first storm's first strike needed it — a ~53k-sample generation loop
+    running synchronously right when ADR 0059's flash/thunder timing most needed to be on
+    time. Fixed: it now pre-warms in `EnsureAmbientClips` alongside the wind/rain/coast beds
+    instead of on first use.
+  - **Evidence:** `scripts/test-domain.sh` 494/494 (no count change — the fix is behaviourally
+    invisible, only cheaper). The thunder-clip fix is Presentation/Unity-only and still
+    unverified beyond inspection, same caveat as the rest of ADR 0059.
+  - **NEXT:** unchanged from the ADR 0059 entry below — Mac Unity EditMode still needed before
+    trusting the Presentation half of this at the level the Simulation half is tested at.
+
 - **2026-09-20 Claude — storm lightning/thunder, cloud-obscured sun, and an infrastructure-
   accuracy audit (branch `claude/weather-system-improvement-1bgfc3`, ADR 0059).** Bailey asked
   for lightning/thunder visuals, whether the other weather (cloud/overcast/fog/rain/sunny)

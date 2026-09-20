@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **More of Adelaide's real airlines, on a 05:00–23:00 day.**
+  Malaysia, Emirates, Qatar and Fiji join the terminal. Jetstar
+  flies Bali; Qantas flies Auckland. The field has no curfew —
+  domestics from 05:00, late internationals after 21:00. Widebodies
+  turn 50–89 minutes. The day-plan now lists Qantas and Jetstar.
+
 - **The opening bank has more arrivals, at peak spacing.** A third
   Virgin 737, a third Qantas 737 and a second Jetstar join. Twelve
   aircraft are already inbound, spaced 2–37 min (about one every three

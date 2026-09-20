@@ -192,7 +192,9 @@ namespace Airside.Tests
             Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(11),
                 "a peak bank of arrivals is already inbound");
             Assert.That(ops.Airlines.Select(a => a.Name),
-                Does.Contain("Qantas").And.Contain("Jetstar").And.Contain("Virgin Australia"));
+                Does.Contain("Qantas").And.Contain("Jetstar").And.Contain("Virgin Australia")
+                    .And.Contain("Malaysia Airlines").And.Contain("Emirates")
+                    .And.Contain("Qatar Airways").And.Contain("Fiji Airways"));
 
             RunTo(clock, ops, 12 * 60);
             var live = ops.Fleet.Count(a => a.State is
@@ -202,6 +204,28 @@ namespace Airside.Tests
             var kinds = ops.Fleet.Select(a => a.State).Distinct().Count();
             Assert.That(live, Is.GreaterThanOrEqualTo(6), "several aircraft are moving at once");
             Assert.That(kinds, Is.GreaterThanOrEqualTo(3), "they are not all in the same phase");
+        }
+
+        [Test]
+        public void NewGame_InternationalOperatorsReachTheirAdelaideCities()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
+            foreach (var (id, city) in new[]
+                     {
+                         ("MAS", "KUL"), ("UAE", "DXB"), ("QTR", "DOH"), ("FJI", "NAN"),
+                         ("SIA", "SIN"), ("ANZ", "AKL")
+                     })
+            {
+                var aircraft = ops.Fleet.Single(a => a.Airline.Id.Value == id);
+                Assert.That(DestinationCatalogue.TryFind(city, out var destination), Is.True, city);
+                Assert.That(ops.CanReach(aircraft, destination), Is.True, $"{id} must reach {city}");
+                if (aircraft.State == FleetState.Inbound)
+                    Assert.That(aircraft.CurrentDestination?.Code, Is.EqualTo(city));
+            }
+
+            Assert.That(AirlineOperations.AiFirstDepartureHour, Is.EqualTo(5));
+            Assert.That(AirlineOperations.AiLastDepartureHour, Is.EqualTo(23));
         }
 
         [Test]

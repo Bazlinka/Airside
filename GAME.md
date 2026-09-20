@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — more Adelaide airlines and 05:00–23:00 hours
+  (branch `feature/busier-field-and-camera`).** Bailey: more airline
+  variety, and more realism including open hours.
+  - **Operators:** Malaysia (KUL), Emirates (DXB), Qatar (DOH),
+    Fiji (NAN). Jetstar now flies Bali; Qantas also flies Auckland.
+    Day-plan TypeFor includes Qantas/Jetstar (they were missing).
+  - **Hours:** AI day is 05:00–23:00. No curfew. First domestics
+    from 05:00; late internationals after 21:00. Rex still skips
+    the afternoon and late-night holes. Widebodies turn 50–89 min.
+  - **NEXT:** rebuild from this branch. Do not merge until asked.
+
 - **2026-09-20 Cursor — more arrivals, peak-bank timing
   (branch `feature/busier-field-and-camera`).** Bailey: should there
   be more arrivals, and is the timing a normal Adelaide day?

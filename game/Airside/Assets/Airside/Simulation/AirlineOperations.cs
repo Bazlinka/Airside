@@ -207,7 +207,11 @@ namespace Airside.Simulation
             }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
-            (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) })
+            (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) }),
+            (Airline.MalaysiaAirlines, new[] { ("9M-MAB", AircraftType.AirbusA350900, new StableId("GATE-25")) }),
+            (Airline.Emirates, new[] { ("A6-EVA", AircraftType.Boeing78710, new StableId("GATE-22L")) }),
+            (Airline.QatarAirways, new[] { ("A7-ANC", AircraftType.AirbusA350900, new StableId("GATE-26L")) }),
+            (Airline.FijiAirways, new[] { ("DQ-FAE", AircraftType.AirbusA321Neo, new StableId("GATE-12L")) })
         };
 
         /// <summary>
@@ -220,11 +224,11 @@ namespace Airside.Simulation
         /// <summary>Representative Air New Zealand trans-Tasman rotation from Adelaide.</summary>
         public static readonly IReadOnlyList<string> AirNewZealandRotation = new[] { "AKL", "AKL", "CHC", "AKL" };
 
-        /// <summary>Qantas domestic rotation from Adelaide — Sydney and Melbourne heaviest.</summary>
-        public static readonly IReadOnlyList<string> QantasRotation = new[] { "SYD", "MEL", "BNE", "PER", "MEL", "SYD", "CBR", "BNE" };
+        /// <summary>Qantas mainline rotation from Adelaide — east-coast heaviest, plus Auckland.</summary>
+        public static readonly IReadOnlyList<string> QantasRotation = new[] { "SYD", "MEL", "BNE", "AKL", "PER", "MEL", "SYD", "CBR", "BNE" };
 
-        /// <summary>Jetstar domestic rotation from Adelaide.</summary>
-        public static readonly IReadOnlyList<string> JetstarRotation = new[] { "MEL", "SYD", "BNE", "OOL", "MEL", "PER" };
+        /// <summary>Jetstar domestic rotation from Adelaide, plus the busy Bali leisure run.</summary>
+        public static readonly IReadOnlyList<string> JetstarRotation = new[] { "MEL", "SYD", "BNE", "DPS", "OOL", "MEL", "PER" };
 
         /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
         public static bool NeedsTerminalGate(AircraftType type) =>
@@ -331,6 +335,10 @@ namespace Airside.Simulation
             operations.TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", 28 * 60);
             operations.TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", 32 * 60);
             operations.TrySeedOpeningInbound(terminalFleet, "JST", "SYD", 37 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "MAS", "KUL", 41 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "FJI", "NAN", 45 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "UAE", "DXB", 49 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QTR", "DOH", 54 * 60);
 
             var departureIndex = 0;
             foreach (var aircraft in operations.Fleet)
@@ -1744,11 +1752,17 @@ namespace Airside.Simulation
             return duration <= AircraftPerformance.For(aircraft.Type).ApproachSeconds;
         }
 
-        /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
-        public const int AiFirstDepartureHour = 6;
+        /// <summary>
+        /// First Adelaide push hour. The airfield is 24 h; the first domestics
+        /// go around 05:00, not 06:00.
+        /// </summary>
+        public const int AiFirstDepartureHour = 5;
 
-        /// <summary>…and no later than this one, like a regional operator's day.</summary>
-        public const int AiLastDepartureHour = 21;
+        /// <summary>
+        /// Last Adelaide push hour. No SYD-style curfew — late internationals
+        /// still leave after 21:00. Regionals skip the late hole via the hour profile.
+        /// </summary>
+        public const int AiLastDepartureHour = 23;
 
         /// <summary>
         /// Fallback regional network for a future AI operator.
@@ -1791,12 +1805,16 @@ namespace Airside.Simulation
         public static readonly IReadOnlyList<(string Code, int Weight)> CathayNetwork = new[] { ("HKG", 1) };
         public static readonly IReadOnlyList<(string Code, int Weight)> QantasNetwork = new[]
         {
-            ("SYD", 3), ("MEL", 3), ("BNE", 2), ("PER", 1), ("CBR", 1)
+            ("SYD", 3), ("MEL", 3), ("BNE", 2), ("AKL", 1), ("PER", 1), ("CBR", 1)
         };
         public static readonly IReadOnlyList<(string Code, int Weight)> JetstarNetwork = new[]
         {
-            ("MEL", 3), ("SYD", 2), ("BNE", 2), ("OOL", 1), ("PER", 1)
+            ("MEL", 3), ("SYD", 2), ("BNE", 2), ("DPS", 2), ("OOL", 1), ("PER", 1)
         };
+        public static readonly IReadOnlyList<(string Code, int Weight)> MalaysiaNetwork = new[] { ("KUL", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> EmiratesNetwork = new[] { ("DXB", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> QatarNetwork = new[] { ("DOH", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> FijiNetwork = new[] { ("NAN", 1) };
 
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
@@ -1808,7 +1826,23 @@ namespace Airside.Simulation
             "ANZ" => AirNewZealandNetwork,
             "SIA" => SingaporeNetwork,
             "CPA" => CathayNetwork,
+            "MAS" => MalaysiaNetwork,
+            "UAE" => EmiratesNetwork,
+            "QTR" => QatarNetwork,
+            "FJI" => FijiNetwork,
             _ => AiNetwork
+        };
+
+        /// <summary>Single-city international home for operators that only fly one Adelaide route.</summary>
+        public static string LongHaulHomeOf(string airlineId) => airlineId switch
+        {
+            "SIA" => "SIN",
+            "CPA" => "HKG",
+            "MAS" => "KUL",
+            "UAE" => "DXB",
+            "QTR" => "DOH",
+            "FJI" => "NAN",
+            _ => null
         };
 
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
@@ -1846,12 +1880,12 @@ namespace Airside.Simulation
                     BookAiDeparture(aircraft, next, now);
                 return;
             }
-            if (aircraft.Airline.Id.Value is "SIA" or "CPA")
+            var longHaulHome = LongHaulHomeOf(aircraft.Airline.Id.Value);
+            if (longHaulHome != null)
             {
                 if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
                     return;
-                var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
-                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                if (DestinationCatalogue.TryFind(longHaulHome, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
             }
@@ -1903,8 +1937,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Repeatable 10–24 minute turnarounds. The variation is tied to registration
-        /// and trip number, so traffic feels human without changing every load.
+        /// Repeatable turnarounds. Domestics stay a short 10–24 minutes so the
+        /// field keeps moving; widebodies sit 50–89 minutes like a real
+        /// international turn at T1.
         /// </summary>
         private static long AiTurnaroundSeconds(FleetAircraft aircraft)
         {
@@ -1914,14 +1949,16 @@ namespace Airside.Simulation
                 foreach (var ch in aircraft.Registration)
                     hash = hash * 31 + ch;
                 hash = hash * 31 + aircraft.CompletedTrips;
-                var minutes = 10 + Math.Abs(hash % 15);
+                var wide = ReferenceEquals(aircraft.Type, AircraftType.AirbusA350900)
+                           || ReferenceEquals(aircraft.Type, AircraftType.Boeing78710);
+                var minutes = wide ? 50 + Math.Abs(hash % 40) : 10 + Math.Abs(hash % 15);
                 return minutes * 60L;
             }
         }
 
         /// <summary>
         /// Regional ready-times jump the afternoon hole onto the next bank.
-        /// Jets keep the 06:00–21:00 window only — a 787 ready at 14:20 still goes.
+        /// Jets keep the 05:00–23:00 window — a 787 ready at 21:40 still goes.
         /// </summary>
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)
         {

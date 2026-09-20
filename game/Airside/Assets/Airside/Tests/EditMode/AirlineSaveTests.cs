@@ -149,7 +149,9 @@ namespace Airside.Tests
             Assert.That(restored.PlayerAirline.Name, Is.EqualTo("Keep My Name"));
             Assert.That(restored.Airlines.Select(a => a.Name),
                 Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Virgin Australia")
-                    .And.Contain("Qantas").And.Contain("Jetstar"));
+                    .And.Contain("Qantas").And.Contain("Jetstar")
+                    .And.Contain("Malaysia Airlines").And.Contain("Emirates")
+                    .And.Contain("Qatar Airways").And.Contain("Fiji Airways"));
             Assert.That(restored.Airlines.Any(a => a.Id.Value is "EMU" or "WTB"), Is.False);
             Assert.That(restored.Fleet.Any(a => a.Registration is "VH-EMA" or "VH-WTJ"), Is.False);
             Assert.That(restored.Fleet.Any(a => a.Registration == "VH-8IA"), Is.True);

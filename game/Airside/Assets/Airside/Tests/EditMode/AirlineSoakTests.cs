@@ -72,7 +72,7 @@ namespace Airside.Tests
                     if (aircraft.StateEndsAt.HasValue)
                         continue;
                     // Parked overnight with the first flight of the day booked is a schedule,
-                    // not a stall — AI operators only depart 06:00–21:00 — as long as it is booked.
+                    // not a stall — AI operators only depart 05:00–23:00 — as long as it is booked.
                     if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
                     {
                         Assert.That(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - clock.Now.ElapsedSeconds,
@@ -85,9 +85,15 @@ namespace Airside.Tests
             }
 
             foreach (var aircraft in ops.Fleet)
-                Assert.That(aircraft.CompletedTrips,
-                    Is.GreaterThanOrEqualTo(aircraft.Type.Id is "A359" or "B78X" or "A21N" ? Days : Days * 2),
+            {
+                var home = AirlineOperations.LongHaulHomeOf(aircraft.Airline.Id.Value);
+                var ultraLong = home is "DXB" or "DOH";
+                var minimum = ultraLong ? Days / 2
+                    : aircraft.Type.Id is "A359" or "B78X" or "A21N" ? Days
+                    : Days * 2;
+                Assert.That(aircraft.CompletedTrips, Is.GreaterThanOrEqualTo(minimum),
                     $"{aircraft.Registration} flew too few trips");
+            }
 
             Assert.That(events, Is.LessThan(200_000), "event count stays bounded");
         }

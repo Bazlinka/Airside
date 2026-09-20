@@ -100,7 +100,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
 
             Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
-                "15:00 should sit in the second half of a 06–21 operating day");
+                "15:00 should sit in the second half of a 05–23 operating day");
             Assert.That(model.DayCaption, Does.Contain("done"));
             Assert.That(model.DayCaption, Does.Contain("to go"));
             Assert.That(model.DayDoneCount + model.DayActiveCount + model.DayUpcomingCount,

@@ -20,7 +20,10 @@ namespace Airside.Tests
             var plan = AdelaideDayPlan.ForLocalDay(ops, clock.Now);
             Assert.That(plan.Count(p => p.Arrival), Is.GreaterThan(20), "a day's arrivals, not one per aircraft");
             Assert.That(plan.Count(p => !p.Arrival), Is.GreaterThan(20), "a day's departures");
-            Assert.That(plan.Select(p => p.AirlineId).Distinct().Count(), Is.GreaterThan(3));
+            Assert.That(plan.Select(p => p.AirlineId).Distinct().Count(), Is.GreaterThan(6));
+            Assert.That(plan.Select(p => p.AirlineId),
+                Does.Contain("QFA").And.Contain("JST").And.Contain("MAS").And.Contain("UAE")
+                    .And.Contain("QTR").And.Contain("FJI"));
             foreach (var movement in plan)
             {
                 var local = ops.Clock.LocalAt(movement.ScheduledAt);

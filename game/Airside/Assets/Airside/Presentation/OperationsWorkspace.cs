@@ -139,7 +139,7 @@ namespace Airside.Presentation
         public string Subtitle { get; private set; } = string.Empty;
         public OperationsBoardTab Tab { get; private set; }
 
-        /// <summary>0..1 through the operating day (06:00–21:00 Adelaide).</summary>
+        /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
         /// <summary>"14:32 · evening bank · 12 done · 31 to go"</summary>
@@ -151,7 +151,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// First board row that is not a muted past movement — used to open the list
-        /// near "now" instead of at 06:00 Landed/Departed.
+        /// near "now" instead of at 05:00 Landed/Departed.
         /// </summary>
         public int FirstActiveRowIndex
         {

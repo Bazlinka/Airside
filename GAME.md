@@ -1,15 +1,23 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — all day-progress + career PRs on main.**
+  #329 (day strip + play fixes) and #330 (International unlock +
+  freeze runway at clearance) are merged. `origin/main` tip:
+  `2797bf6`. No open PRs.
+  - **Evidence:** `scripts/test-domain.sh` **462/462** on the merged
+    career commit; Unity EditMode still needed on a Mac.
+  - **NEXT:** Mac `scripts/test-unity.sh`. Still open play items:
+    dual-strip intersection mutex; 12/30 RemapAlong crawl; regional
+    pushback apron mutex; Q400 50D/50E hard rule (Bailey);
+    disruption→sim.
+
 - **2026-09-20 Cursor — career unlock + freeze runway
-  (branch `cursor/career-and-runway-freeze-4d7a`).** International was a
-  deadlock (needed a widebody you could not buy). A321 is Domestic;
-  International unlocks on jet + rotations. Tower no longer flips
-  05↔23 / 12↔30 at clearance. Empty-stand hold supports 23. Cross
+  (merged via #330).** International was a deadlock (needed a
+  widebody you could not buy). A321 is Domestic; International
+  unlocks on jet + rotations. Tower no longer flips 05↔23 /
+  12↔30 at clearance. Empty-stand hold supports 23. Cross
   go-around starts on a native short final.
   - **Evidence:** `scripts/test-domain.sh` **462/462**.
-  - **NEXT:** Mac Unity EditMode, then merge. Still open: dual-strip
-    intersection mutex; 12/30 RemapAlong crawl; regional pushback
-    apron mutex; Q400 50D/50E hard rule (Bailey); disruption→sim.
 
 - **2026-09-20 Cursor — fifteen more play fixes on day-progress branch
   (merged via #329).** Doors through boarding; cancelled cold; windsock;

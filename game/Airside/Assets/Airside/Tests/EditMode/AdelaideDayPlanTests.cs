@@ -117,6 +117,36 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void CoveredBy_KeepsCoveringALateStandWait()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var rex = ops.Airlines.First(a => a.Id.Value == "REX");
+            DestinationCatalogue.TryFind("PLO", out var portLincoln);
+
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            // Entered AwaitingStand half an hour after the published slot — StateStartedAt
+            // alone would fall outside the 25-minute CoveredBy window and resurrect a ghost.
+            var slotAt = new SimulationTime(3 * 3600);
+            var waitingFrom = slotAt.Advance(30 * 60);
+            restore.Invoke(ops, new object[]
+            {
+                "VH-HOLD", rex, AircraftType.Saab340, FleetState.AwaitingStand, waitingFrom,
+                null, default(StableId), default(StableId), portLincoln, null, 0
+            });
+            var waiter = ops.Fleet.Single(a => a.Registration == "VH-HOLD");
+            ops.RestoreMovementData("VH-HOLD", RunwayDirection.Runway12, wentAroundThisTrip: false);
+
+            var planned = new PlannedMovement(
+                "RXA123", "REX", rex.Name, rex.LiveryHex, "VH-HOLD", AircraftType.Saab340,
+                "PLO", "ADL", slotAt, arrival: true, "50A");
+            Assert.That(AdelaideDayPlan.CoveredBy(planned, waiter), Is.True,
+                "a late stand wait must still cover its planned arrival row");
+        }
+
+        [Test]
         public void Plan_MarksSomeSlotsDelayedOrCancelled()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

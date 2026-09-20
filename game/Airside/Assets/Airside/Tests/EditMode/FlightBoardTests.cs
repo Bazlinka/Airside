@@ -96,7 +96,7 @@ namespace Airside.Tests
 
         [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
         [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
-        [TestCase(FleetState.Landing, "LANDED")]
+        [TestCase(FleetState.Landing, "ON RUNWAY")]
         [TestCase(FleetState.TakingOff, "DEPARTING")]
         [TestCase(FleetState.TaxiIn, "AT STAND")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
@@ -116,7 +116,9 @@ namespace Airside.Tests
             var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
             enter.Invoke(aircraft, new object[] { state, new SimulationTime(0), (long?)60 });
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo(expected));
-            Assert.That(OperationsSummary.CompactState(aircraft, new SimulationTime(0)), Is.EqualTo(expected));
+            // TakingOff at t=0 is still lining up — the live chip says so.
+            var compact = state == FleetState.TakingOff ? "Lining up" : expected;
+            Assert.That(OperationsSummary.CompactState(aircraft, new SimulationTime(0)), Is.EqualTo(compact));
         }
 
         [Test]

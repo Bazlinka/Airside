@@ -160,10 +160,10 @@ namespace Airside.Presentation
                 }
                 else if (aircraft.State == FleetState.AwaitingStand)
                 {
-                    foreach (var stand in _operations.FreeStands())
+                    foreach (var stand in _operations.FreeStandsFor(aircraft.Type))
                     {
-                        _operations.AssignStand(aircraft, stand);
-                        break;
+                        if (_operations.AssignStand(aircraft, stand).Accepted)
+                            break;
                     }
                 }
             }

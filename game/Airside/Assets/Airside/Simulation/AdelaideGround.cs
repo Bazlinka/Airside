@@ -97,6 +97,28 @@ namespace Airside.Simulation
             return leg;
         }
 
+        /// <summary>
+        /// Seconds until the aircraft is clear of the strip during vacate — when the
+        /// tower may clear the next movement. For 05/23 that is the full E2 vacate.
+        /// For 12/30 the long taxi toward E2 continues after the strip is free.
+        /// </summary>
+        public static long ClearOfRunwaySeconds(AircraftType type, RunwayDirection runway)
+        {
+            var vacate = VacateFor(type, runway);
+            if (RunwayWeather.IsMainRunway(runway))
+                return vacate.WholeSeconds;
+
+            // Cross strip: off the pavement after ~280 m of the vacate, not after the
+            // kilometre taxi to E2 that used to lock 12/30 for the whole exit.
+            const float clearMetres = 280f;
+            if (vacate.Parts.Count == 0)
+                return Math.Max(20, vacate.WholeSeconds / 4);
+            var path = vacate.Parts[0].Path;
+            var metres = Math.Min(clearMetres, path.Length * 0.4f);
+            var seconds = path.SecondsAtDistance(metres);
+            return Math.Max(20L, (long)Math.Ceiling(seconds));
+        }
+
         /// <summary>F6 holding point → centreline at the 05 takeoff start, stopped and ready to roll.</summary>
         public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
             new GroundLegPart(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup), tailFirst: false));
@@ -196,14 +218,18 @@ namespace Airside.Simulation
 
         public static GroundPose AwaitingPose(int slot, AircraftType type, RunwayDirection runway)
         {
+            // Wait where vacate ends so Landing → AwaitingStand does not teleport. Cross
+            // vacates still finish at E2 for taxi-in continuity; ClearOfRunwaySeconds frees
+            // the strip earlier. QueueSlot is per AssignedRunway so 05 and 12 do not share
+            // a queue even when both exit toward E2.
             var vacate = VacateFor(type, runway);
             var end = vacate.PoseAt(vacate.Seconds);
             if (slot <= 0)
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var path = vacate.Parts[vacate.Parts.Count - 1].Path;
-            var back = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+            var sample = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
+            return new GroundPose(sample.X, sample.Z, sample.DirectionX, sample.DirectionZ, 0f, false);
         }
 
         /// <summary>

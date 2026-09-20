@@ -1,8 +1,25 @@
 ## Unreleased
 
+- **12/30 frees when clear of the strip.** Vacate still taxis toward E2,
+  but the tower clears the next 12/30 movement after ~280 m off the
+  pavement — not after the full kilometre exit.
+
+- **FIDS names the movement on the field.** Landing reads On final /
+  Landing / Vacating; takeoff reads Lining up / Departing; a missed
+  approach reads Go-around before the circuit starts.
+
+- **Go-around aborts off short final.** Missed approaches no longer
+  teleport 4 km out for a full long final. Rejoin reassigns the live
+  runway end. Both strips reconcile free-at on every save load.
+
+- **Day-plan cover survives a late stand wait.** CoveredBy pins late
+  AwaitingStand / go-around rows to the planned ETA so ghost sky
+  arrivals do not reappear. Soak assigns fitting stands only.
+
 - **Cathay leaves when the season ends.** Parked CPA frees GATE-18 after
   ~27 Mar; airborne jets finish the trip first. Prep no longer starts at
-  book time — fuelling begins TotalSeconds before pushback.
+  book time — fuelling begins TotalSeconds before pushback. Rebook
+  recomputes PrepStartedAt; a taken GATE-18 falls back to another gate.
 
 - **Operations opens near now.** Arrivals/Departures snap the scroll to
   the first live or upcoming row instead of a wall of morning Departed

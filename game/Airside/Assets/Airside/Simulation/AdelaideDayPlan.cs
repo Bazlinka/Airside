@@ -189,9 +189,34 @@ namespace Airside.Simulation
                 return false;
 
             var liveSeconds = planned.Arrival
-                ? aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds
+                ? ArrivalMatchSeconds(planned, aircraft)
                 : aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
             return Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds) < 25 * 60;
+        }
+
+        /// <summary>
+        /// Holders, go-arounds and stand waits have no useful StateEndsAt for ETA matching.
+        /// Prefer the inbound ETA when present; otherwise keep covering via the planned slot
+        /// so a long final does not resurrect a ghost day-plan row in the sky.
+        /// </summary>
+        private static long ArrivalMatchSeconds(PlannedMovement planned, FleetAircraft aircraft)
+        {
+            if (aircraft.StateEndsAt.HasValue
+                && aircraft.State is FleetState.Inbound or FleetState.Landing)
+                return aircraft.StateEndsAt.Value.ElapsedSeconds;
+
+            if (aircraft.State == FleetState.HoldingForLanding)
+            {
+                var remaining = ApproachHold.RemainingFinalSeconds(
+                    AircraftPerformance.For(aircraft.Type).ApproachSeconds, aircraft.Registration);
+                return aircraft.StateStartedAt.ElapsedSeconds + remaining;
+            }
+
+            if (aircraft.State is FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn
+                or FleetState.Landing)
+                return planned.EstimatedAt.ElapsedSeconds;
+
+            return aircraft.StateStartedAt.ElapsedSeconds;
         }
 
         private static bool MatchesHalf(PlannedMovement planned, FleetAircraft aircraft)

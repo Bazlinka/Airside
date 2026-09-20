@@ -2,6 +2,17 @@
 
 - **2026-09-20 Cursor — more play fixes on the day-progress branch
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
+  the day strip + ten bugs. Second wave: strip clear-of-runway, FIDS
+  Vacating/Lining up/go-around, Cathay alt gate, prep rebook, GA short
+  final (no 4 km teleport), go-around runway reassign, both-strip save
+  reconcile, CoveredBy late stand wait, soak FreeStandsFor.
+  - **Evidence:** `scripts/test-domain.sh` **453/453**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+    Optional follow-ups: 12/30 go-around geometry (still remaps the 05
+    racetrack), one-live-covers-many CoveredBy matching.
+
+- **2026-09-20 Cursor — Cathay exit, prep timing, scroll-to-now
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
   the day strip + ten bugs: Cathay season exit, prep timing, board
   auto-scroll to now, day-plan StandFits, A321 not widebody, typed
   hold-short poses, cross-runway save reconcile.

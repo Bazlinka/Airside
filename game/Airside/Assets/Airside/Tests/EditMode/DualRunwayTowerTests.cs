@@ -94,5 +94,56 @@ namespace Airside.Tests
             });
             ops.RestoreMovementData(registration, runway, wentAroundThisTrip: false);
         }
+
+        [Test]
+        public void CrossStrip_ClearsFasterThanTheFullTaxiToE2()
+        {
+            var clear = AdelaideGround.ClearOfRunwaySeconds(AircraftType.Atr42, RunwayDirection.Runway12);
+            var vacate = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12).WholeSeconds;
+            Assert.That(clear, Is.LessThan(vacate / 2),
+                "12/30 must free for the next movement before the long taxi to E2 finishes");
+            Assert.That(AdelaideGround.ClearOfRunwaySeconds(AircraftType.Boeing7378, RunwayDirection.Runway05),
+                Is.EqualTo(AdelaideGround.VacateFor(AircraftType.Boeing7378, RunwayDirection.Runway05).WholeSeconds),
+                "05/23 still frees at E2");
+        }
+
+        [Test]
+        public void ReconcileRunwayFreeAt_HoldsBothStripsThroughAnInProgressMovement()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(100));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Reconcile Air", "#123456");
+            ops.AddAirline(player);
+            DestinationCatalogue.TryFind("MEL", out var melbourne);
+            DestinationCatalogue.TryFind("KGC", out var kingscote);
+
+            RestoreHolding(ops, player, "VH-JET", AircraftType.Boeing7378, FleetState.Landing,
+                RunwayDirection.Runway05, melbourne, startedAt: new SimulationTime(0));
+            RestoreHolding(ops, player, "VH-REG", AircraftType.Atr42, FleetState.Landing,
+                RunwayDirection.Runway12, kingscote, startedAt: new SimulationTime(0));
+
+            var jet = ops.Fleet.Single(a => a.Registration == "VH-JET");
+            var reg = ops.Fleet.Single(a => a.Registration == "VH-REG");
+            // Force short remaining landings so StateEndsAt is in the future.
+            var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
+            enter.Invoke(jet, new object[] { FleetState.Landing, new SimulationTime(0), (long?)180 });
+            enter.Invoke(reg, new object[] { FleetState.Landing, new SimulationTime(0), (long?)200 });
+
+            var restoreTower = typeof(AirlineOperations).GetMethod("RestoreTower",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            restoreTower.Invoke(ops, new object[]
+            {
+                new SimulationTime(50), new SimulationTime(40), 0L
+            });
+            var reconcile = typeof(AirlineOperations).GetMethod("ReconcileRunwayFreeAt",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            reconcile.Invoke(ops, null);
+
+            Assert.That(ops.RunwayFreeAt.ElapsedSeconds, Is.GreaterThanOrEqualTo(180),
+                "main strip stays busy through the jet landing plus wake");
+            Assert.That(ops.CrossRunwayFreeAt.ElapsedSeconds, Is.GreaterThanOrEqualTo(200),
+                "cross strip stays busy through the regional landing plus wake");
+        }
     }
 }

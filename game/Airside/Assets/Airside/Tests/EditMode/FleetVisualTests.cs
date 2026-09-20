@@ -136,9 +136,12 @@ namespace Airside.Tests
             var q12 = AdelaideGround.AwaitingPose(1, AircraftType.Atr42, RunwayDirection.Runway12);
             var q05 = AdelaideGround.AwaitingPose(1, AircraftType.Atr42, RunwayDirection.Runway05);
             Assert.That(System.Math.Abs(wait12.X - end12.X) + System.Math.Abs(wait12.Z - end12.Z), Is.LessThan(1f),
-                "12/30 arrivals wait at the end of their own vacate");
+                "12/30 arrivals wait at the end of their own vacate (no snap back to the hold)");
             Assert.That(System.Math.Abs(q12.X - q05.X) + System.Math.Abs(q12.Z - q05.Z),
-                Is.GreaterThan(20f), "the second 12 arrival queues on G1, not the 05 exit");
+                Is.GreaterThan(20f), "the second 12 arrival queues on its exit, not the 05 exit");
+            Assert.That(AdelaideGround.ClearOfRunwaySeconds(AircraftType.Atr42, RunwayDirection.Runway12),
+                Is.LessThan(AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12).WholeSeconds / 2),
+                "the strip frees well before that long vacate finishes");
         }
 
         [Test]
@@ -218,7 +221,8 @@ namespace Airside.Tests
             Assert.That(onFinal.Visible, Is.True);
             Assert.That(onFinal.Phase, Is.EqualTo(AircraftPhase.Approach));
 
-            var abort = goAroundAt + AircraftPerformance.For(first.Type).ApproachSeconds;
+            var abort = goAroundAt + ApproachHold.RemainingFinalSeconds(
+                AircraftPerformance.For(first.Type).ApproachSeconds, first.Registration);
             clock.Set(new SimulationTime(abort));
             ops.Update();
             Assert.That(first.State, Is.EqualTo(FleetState.GoAround));
@@ -228,6 +232,20 @@ namespace Airside.Tests
             Assert.That(missed.Leg, Is.EqualTo(FleetGroundLeg.None));
 
             var deadline = abort + AirlineOperations.GoAroundCircuitSeconds + 30 * 60;
+            while (first.State == FleetState.GoAround && clock.Now.ElapsedSeconds < deadline)
+            {
+                var next = ops.NextEventAt() ?? clock.Now.Advance(1);
+                if (next.ElapsedSeconds > deadline)
+                    break;
+                clock.Set(next);
+                ops.Update();
+            }
+
+            Assert.That(first.State, Is.AnyOf(FleetState.HoldingForLanding, FleetState.Landing),
+                "rejoin final after the circuit (tower may clear in the same tick)");
+            Assert.That(first.AssignedRunway, Is.EqualTo(ops.RunwayFor(first)),
+                "rejoin picks the live runway end, not a stale assignment from before the circuit");
+
             while (first.State != FleetState.AtStand && clock.Now.ElapsedSeconds < deadline)
             {
                 var next = ops.NextEventAt() ?? clock.Now.Advance(1);

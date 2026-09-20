@@ -102,9 +102,15 @@ namespace Airside.Presentation
                 FleetState.HoldingShort => "holding",
                 FleetState.TakingOff => "takeoff",
                 FleetState.HoldingForLanding => "final",
-                FleetState.Landing => "landing",
+                FleetState.GoAround => "go-around",
+                FleetState.Landing => aircraft.WentAroundThisTrip
+                    && AirlineOperations.IsMissedApproachLanding(aircraft)
+                    ? "go-around"
+                    : "landing",
                 FleetState.AwaitingStand => "needs stand",
                 FleetState.TaxiIn => "taxiing in",
+                FleetState.Inbound => "inbound",
+                FleetState.Outbound => "outbound",
                 _ => "away"
             };
         }

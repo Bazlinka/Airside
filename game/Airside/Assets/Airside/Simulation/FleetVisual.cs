@@ -84,19 +84,16 @@ namespace Airside.Simulation
                 {
                     var approach = performance.ApproachSeconds;
                     var landing = performance.LandingSeconds;
-                    // Only the short missed-approach Landing state draws a full final from
-                    // way out. A real landing after a go-around keeps WentAroundThisTrip so
-                    // the tower will not miss again, but it must resume from short final —
-                    // restarting the 4 km inbound was a teleport and then a crawl.
+                    // Missed approach: keep the aircraft on the short final it was already
+                    // holding, then hand off to GoAround — do not restart a 4 km inbound.
                     if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
                     {
-                        if (elapsed < approach)
-                            return Air(AircraftPhase.Approach, start);
-                        if (elapsed < approach + landing)
-                            return Air(AircraftPhase.Landing, start.Advance(approach));
-                        var goVacateAt = start.Advance(approach + landing);
-                        return Ground(AircraftPhase.TaxiIn, goVacateAt, FleetGroundLeg.Vacate, goVacateAt,
-                            AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds);
+                        var missedRemaining = ApproachHold.RemainingFinalSeconds(approach, aircraft.Registration);
+                        var missedBackdate = approach - missedRemaining;
+                        var missedStarted = start.ElapsedSeconds >= missedBackdate
+                            ? start.Advance(-missedBackdate)
+                            : new SimulationTime(0);
+                        return Air(AircraftPhase.Approach, missedStarted);
                     }
 
                     var remaining = ApproachHold.RemainingFinalSeconds(approach, aircraft.Registration);

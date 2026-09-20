@@ -1022,14 +1022,22 @@ namespace Airside.Presentation
                     : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to runway {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}",
                 FleetState.HoldingShort => $"Holding {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}{wait}",
-                FleetState.TakingOff => $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
+                FleetState.TakingOff => FlightBoard.PhaseLabel(aircraft, _clock.Now) == "Lining up"
+                    ? $"Lining up {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}"
+                    : $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
                 FleetState.Outbound => $"Departed for {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"Away at {dest} · departs {ends}",
                 FleetState.Inbound => $"Inbound from {dest}{EnrouteAltitudeText(aircraft)} · {ends}",
                 FleetState.HoldingForLanding =>
                     $"On final {ApproachSide(aircraft.AssignedRunway)} for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
                 FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
-                FleetState.Landing => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                FleetState.Landing => FlightBoard.PhaseLabel(aircraft, _clock.Now) switch
+                {
+                    "Go-around" => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    "Vacating" => $"Vacating runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    "On final" => $"On final for runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    _ => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}"
+                },
                 FleetState.AwaitingStand => $"Landed · parking{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()

@@ -9,9 +9,13 @@ namespace Airside.Tests
         [Test]
         public void Density_PeaksInTheMorningAndEveningBanks()
         {
+            Assert.That(AdelaideHourProfile.Density(5), Is.GreaterThanOrEqualTo(0.45f),
+                "first domestics go from 05:00");
             Assert.That(AdelaideHourProfile.Density(7), Is.EqualTo(1f));
             Assert.That(AdelaideHourProfile.Density(17), Is.EqualTo(1f));
             Assert.That(AdelaideHourProfile.Density(14), Is.LessThan(0.5f));
+            Assert.That(AdelaideHourProfile.Density(22), Is.LessThan(0.45f),
+                "regionals skip the late-international hole");
             Assert.That(AdelaideHourProfile.Density(3), Is.LessThan(0.1f));
         }
 

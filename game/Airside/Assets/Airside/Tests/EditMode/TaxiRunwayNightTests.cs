@@ -84,12 +84,17 @@ namespace Airside.Tests
             Assert.That(x23, Is.EqualTo(-100f));
             Assert.That(z23, Is.EqualTo(-8f));
 
-            RunwayFrame.ToWorld(RunwayDirection.Runway12, 0f, 0f, 0f, out var x12, out _, out var z12);
-            Assert.That(x12, Is.EqualTo(AdelaideLayout.CrossRunwayCenterX).Within(0.2f));
-            Assert.That(z12, Is.EqualTo(AdelaideLayout.CrossRunwayCenterZ).Within(0.2f));
+            AdelaideCrossRoutes.LocalToWorld(-AdelaideCrossRoutes.HalfLength, 0f,
+                out var threshold12X, out var threshold12Z);
+            RunwayFrame.ToWorld(RunwayDirection.Runway12, CircuitProfile.WestThresholdX, 0f, 0f,
+                out var x12, out _, out var z12);
+            Assert.That(Distance(x12, z12, threshold12X, threshold12Z), Is.LessThan(0.5f),
+                "05 west threshold maps to the 12 threshold, not a squeezed mid-strip");
 
-            RunwayFrame.ToWorld(RunwayDirection.Runway12, -1550f, 0f, 0f, out var t12x, out _, out var t12z);
-            RunwayFrame.ToWorld(RunwayDirection.Runway30, -1550f, 0f, 0f, out var t30x, out _, out var t30z);
+            RunwayFrame.ToWorld(RunwayDirection.Runway12, CircuitProfile.WestThresholdX, 0f, 0f,
+                out var t12x, out _, out var t12z);
+            RunwayFrame.ToWorld(RunwayDirection.Runway30, CircuitProfile.WestThresholdX, 0f, 0f,
+                out var t30x, out _, out var t30z);
             Assert.That(Distance(t12x, t12z, t30x, t30z), Is.GreaterThan(1400f),
                 "12 and 30 thresholds sit at opposite ends");
 

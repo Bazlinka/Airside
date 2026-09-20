@@ -59,6 +59,12 @@ namespace Airside.Simulation
         /// <see cref="TaxiClearSecondsFrom(StableId, AircraftType, RunwayDirection)"/>.
         /// </summary>
         public const long TaxiReleaseSeparationSeconds = 60;
+        /// <summary>
+        /// Two aircraft may taxi on the same apron at once. A third waits until the
+        /// earliest of those two has cleared the stands. One-at-a-time made every
+        /// push wait in a single-file queue even when the taxilane was empty.
+        /// </summary>
+        public const int MaxSimultaneousTaxiOutsPerApron = 2;
         public const int MaxRecentEvents = 30;
 
         // Ground times are measured off the real Adelaide routes with ATR speed limits
@@ -182,10 +188,30 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type, StableId Gate)[] Fleet)> TerminalOperators = new (Func<Airline>, (string, AircraftType, StableId)[])[]
         {
-            (Airline.VirginAustralia, new[] { ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")) }),
+            (Airline.VirginAustralia, new[]
+            {
+                ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")),
+                ("VH-8IB", AircraftType.Boeing7378, new StableId("GATE-14L")),
+                ("VH-8IC", AircraftType.Boeing7378, new StableId("GATE-19"))
+            }),
+            (Airline.Qantas, new[]
+            {
+                ("VH-VZX", AircraftType.Boeing7378, new StableId("GATE-21")),
+                ("VH-VZY", AircraftType.Boeing7378, new StableId("GATE-24")),
+                ("VH-VZZ", AircraftType.Boeing7378, new StableId("GATE-23"))
+            }),
+            (Airline.Jetstar, new[]
+            {
+                ("VH-VFH", AircraftType.AirbusA321Neo, new StableId("GATE-17")),
+                ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L"))
+            }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
-            (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) })
+            (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) }),
+            (Airline.MalaysiaAirlines, new[] { ("9M-MAB", AircraftType.AirbusA350900, new StableId("GATE-25")) }),
+            (Airline.Emirates, new[] { ("A6-EVA", AircraftType.Boeing78710, new StableId("GATE-22L")) }),
+            (Airline.QatarAirways, new[] { ("A7-ANC", AircraftType.AirbusA350900, new StableId("GATE-26L")) }),
+            (Airline.FijiAirways, new[] { ("DQ-FAE", AircraftType.AirbusA321Neo, new StableId("GATE-12L")) })
         };
 
         /// <summary>
@@ -197,6 +223,12 @@ namespace Airside.Simulation
 
         /// <summary>Representative Air New Zealand trans-Tasman rotation from Adelaide.</summary>
         public static readonly IReadOnlyList<string> AirNewZealandRotation = new[] { "AKL", "AKL", "CHC", "AKL" };
+
+        /// <summary>Qantas mainline rotation from Adelaide — east-coast heaviest, plus Auckland.</summary>
+        public static readonly IReadOnlyList<string> QantasRotation = new[] { "SYD", "MEL", "BNE", "AKL", "PER", "MEL", "SYD", "CBR", "BNE" };
+
+        /// <summary>Jetstar domestic rotation from Adelaide, plus the busy Bali leisure run.</summary>
+        public static readonly IReadOnlyList<string> JetstarRotation = new[] { "MEL", "SYD", "BNE", "DPS", "OOL", "MEL", "PER" };
 
         /// <summary>Jets use terminal gates; turboprops use the regional bays. Never the other way.</summary>
         public static bool NeedsTerminalGate(AircraftType type) =>
@@ -226,9 +258,9 @@ namespace Airside.Simulation
         /// <summary>
         /// Real regional carriers that share Adelaide's regional apron with the player and
         /// the player's airline. New games start with them; older saves gain them on load
-        /// (<see cref="AddMissingRegionalCarriers"/>). Six aircraft in all on six bays, so
-        /// everyone always has a stand. Extra 50G and the 10-series walk-outs
-        /// sit empty until someone needs them.
+        /// (<see cref="AddMissingRegionalCarriers"/>). Three Rex Saabs and three
+        /// QantasLink Q400s share the 50-series and walk-outs with the player.
+        /// Extra 50G and the 10-series sit empty until someone needs them.
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
@@ -262,8 +294,12 @@ namespace Airside.Simulation
             CareerState = new AirlineCareerState();
         }
 
-        /// <summary>Staggered opening departures so the first twenty minutes is a bank, not a trickle.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60 };
+        /// <summary>
+        /// Staggered opening departures — about one every five minutes, a normal
+        /// Adelaide peak rather than a three-minute pile-up.
+        /// </summary>
+        public static readonly long[] AiOpeningDepartureSeconds =
+            { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60, 27 * 60, 33 * 60, 39 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
@@ -280,16 +316,29 @@ namespace Airside.Simulation
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
-            // Several services are already inbound so the field is a bank, not a
-            // quiet apron waiting for the first out-and-back.
-            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 3 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 6 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 11 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 16 * 60);
+            // Opening peak: regionals on 12/30, jets on 05/23, about one arrival
+            // every three minutes across the field — a busy Adelaide morning, not
+            // a dump and then a hole. One QantasLink and the player stay parked
+            // so the 50-series apron is not empty.
+            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 2 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 5 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 9 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 21 * 60);
 
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
-            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 19 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 7 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", 11 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", 15 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "JST", "MEL", 18 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "SYD", 24 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", 28 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", 32 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "JST", "SYD", 37 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "MAS", "KUL", 41 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "FJI", "NAN", 45 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "UAE", "DXB", 49 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QTR", "DOH", 54 * 60);
 
             var departureIndex = 0;
             foreach (var aircraft in operations.Fleet)
@@ -669,6 +718,22 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// True while this aircraft still occupies its assigned strip. Landing
+        /// keeps the long taxi to E2 in its state duration so the drawing does
+        /// not teleport; the strip itself is free once the aircraft is clear
+        /// of the pavement.
+        /// </summary>
+        public bool IsOccupyingRunway(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return false;
+            if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing))
+                return false;
+            var until = StripBusyUntil(aircraft);
+            return until.HasValue && until.Value.CompareTo(_clock.Now) > 0;
+        }
+
+        /// <summary>
         /// When the strip may accept the next movement. Landing frees at clear-of-runway,
         /// not after the long taxi to E2 that still belongs to the Landing state.
         /// </summary>
@@ -885,20 +950,22 @@ namespace Airside.Simulation
         /// </summary>
         private SimulationTime? NextTaxiReleaseAt(SimulationTime now, bool terminalGate)
         {
-            SimulationTime? release = null;
+            SimulationTime? earliest = null;
+            var rolling = 0;
             foreach (var aircraft in _fleet)
             {
                 if (aircraft.State != FleetState.TaxiOut)
                     continue;
                 if (AdelaideGround.IsTerminalGate(aircraft.DepartureStand) != terminalGate)
                     continue;
+                rolling++;
                 var candidate = aircraft.StateStartedAt.Advance(
                     TaxiClearSecondsFrom(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway));
-                if (candidate.CompareTo(now) > 0 && (release == null || candidate.CompareTo(release.Value) > 0))
-                    release = candidate;
+                if (candidate.CompareTo(now) > 0 && (earliest == null || candidate.CompareTo(earliest.Value) < 0))
+                    earliest = candidate;
             }
 
-            return release;
+            return rolling >= MaxSimultaneousTaxiOutsPerApron ? earliest : null;
         }
 
         /// <summary>
@@ -1677,7 +1744,7 @@ namespace Airside.Simulation
         /// the approach. A subsequent real landing is longer, so <see cref="FleetAircraft.WentAroundThisTrip"/>
         /// can stay set (no second go-around) without trapping the aircraft in the circuit.
         /// </summary>
-        internal static bool IsMissedApproachLanding(FleetAircraft aircraft)
+        public static bool IsMissedApproachLanding(FleetAircraft aircraft)
         {
             if (aircraft == null || !aircraft.StateEndsAt.HasValue)
                 return false;
@@ -1685,11 +1752,17 @@ namespace Airside.Simulation
             return duration <= AircraftPerformance.For(aircraft.Type).ApproachSeconds;
         }
 
-        /// <summary>AI aircraft push back no earlier than this Adelaide hour…</summary>
-        public const int AiFirstDepartureHour = 6;
+        /// <summary>
+        /// First Adelaide push hour. The airfield is 24 h; the first domestics
+        /// go around 05:00, not 06:00.
+        /// </summary>
+        public const int AiFirstDepartureHour = 5;
 
-        /// <summary>…and no later than this one, like a regional operator's day.</summary>
-        public const int AiLastDepartureHour = 21;
+        /// <summary>
+        /// Last Adelaide push hour. No SYD-style curfew — late internationals
+        /// still leave after 21:00. Regionals skip the late hole via the hour profile.
+        /// </summary>
+        public const int AiLastDepartureHour = 23;
 
         /// <summary>
         /// Fallback regional network for a future AI operator.
@@ -1730,16 +1803,46 @@ namespace Airside.Simulation
 
         public static readonly IReadOnlyList<(string Code, int Weight)> SingaporeNetwork = new[] { ("SIN", 1) };
         public static readonly IReadOnlyList<(string Code, int Weight)> CathayNetwork = new[] { ("HKG", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> QantasNetwork = new[]
+        {
+            ("SYD", 3), ("MEL", 3), ("BNE", 2), ("AKL", 1), ("PER", 1), ("CBR", 1)
+        };
+        public static readonly IReadOnlyList<(string Code, int Weight)> JetstarNetwork = new[]
+        {
+            ("MEL", 3), ("SYD", 2), ("BNE", 2), ("DPS", 2), ("OOL", 1), ("PER", 1)
+        };
+        public static readonly IReadOnlyList<(string Code, int Weight)> MalaysiaNetwork = new[] { ("KUL", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> EmiratesNetwork = new[] { ("DXB", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> QatarNetwork = new[] { ("DOH", 1) };
+        public static readonly IReadOnlyList<(string Code, int Weight)> FijiNetwork = new[] { ("NAN", 1) };
 
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
             "REX" => RexNetwork,
             "QLK" => QantasLinkNetwork,
             "VOZ" => VirginNetwork,
+            "QFA" => QantasNetwork,
+            "JST" => JetstarNetwork,
             "ANZ" => AirNewZealandNetwork,
             "SIA" => SingaporeNetwork,
             "CPA" => CathayNetwork,
+            "MAS" => MalaysiaNetwork,
+            "UAE" => EmiratesNetwork,
+            "QTR" => QatarNetwork,
+            "FJI" => FijiNetwork,
             _ => AiNetwork
+        };
+
+        /// <summary>Single-city international home for operators that only fly one Adelaide route.</summary>
+        public static string LongHaulHomeOf(string airlineId) => airlineId switch
+        {
+            "SIA" => "SIN",
+            "CPA" => "HKG",
+            "MAS" => "KUL",
+            "UAE" => "DXB",
+            "QTR" => "DOH",
+            "FJI" => "NAN",
+            _ => null
         };
 
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
@@ -1753,6 +1856,22 @@ namespace Airside.Simulation
                 return;
             }
 
+            if (aircraft.Airline.Id.Value == "QFA")
+            {
+                var code = QantasRotation[aircraft.CompletedTrips % QantasRotation.Count];
+                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                    BookAiDeparture(aircraft, next, now);
+                return;
+            }
+
+            if (aircraft.Airline.Id.Value == "JST")
+            {
+                var code = JetstarRotation[aircraft.CompletedTrips % JetstarRotation.Count];
+                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                    BookAiDeparture(aircraft, next, now);
+                return;
+            }
+
             if (aircraft.Airline.Id.Value == "ANZ")
             {
                 // Rotation, not a random draw, so international traffic is stable too.
@@ -1761,12 +1880,12 @@ namespace Airside.Simulation
                     BookAiDeparture(aircraft, next, now);
                 return;
             }
-            if (aircraft.Airline.Id.Value is "SIA" or "CPA")
+            var longHaulHome = LongHaulHomeOf(aircraft.Airline.Id.Value);
+            if (longHaulHome != null)
             {
                 if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
                     return;
-                var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
-                if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
+                if (DestinationCatalogue.TryFind(longHaulHome, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
             }
@@ -1818,8 +1937,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Repeatable 10–24 minute turnarounds. The variation is tied to registration
-        /// and trip number, so traffic feels human without changing every load.
+        /// Repeatable turnarounds. Domestics stay a short 10–24 minutes so the
+        /// field keeps moving; widebodies sit 50–89 minutes like a real
+        /// international turn at T1.
         /// </summary>
         private static long AiTurnaroundSeconds(FleetAircraft aircraft)
         {
@@ -1829,14 +1949,16 @@ namespace Airside.Simulation
                 foreach (var ch in aircraft.Registration)
                     hash = hash * 31 + ch;
                 hash = hash * 31 + aircraft.CompletedTrips;
-                var minutes = 10 + Math.Abs(hash % 15);
+                var wide = ReferenceEquals(aircraft.Type, AircraftType.AirbusA350900)
+                           || ReferenceEquals(aircraft.Type, AircraftType.Boeing78710);
+                var minutes = wide ? 50 + Math.Abs(hash % 40) : 10 + Math.Abs(hash % 15);
                 return minutes * 60L;
             }
         }
 
         /// <summary>
         /// Regional ready-times jump the afternoon hole onto the next bank.
-        /// Jets keep the 06:00–21:00 window only — a 787 ready at 14:20 still goes.
+        /// Jets keep the 05:00–23:00 window — a 787 ready at 21:40 still goes.
         /// </summary>
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)
         {

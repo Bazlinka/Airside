@@ -264,9 +264,15 @@ namespace Airside.Simulation
             "REX" => AircraftType.Saab340,
             "QLK" => AircraftType.Dash8Q400,
             "VOZ" => AircraftType.Boeing7378,
+            "QFA" => AircraftType.Boeing7378,
+            "JST" => AircraftType.AirbusA321Neo,
             "ANZ" => AircraftType.AirbusA321Neo,
+            "FJI" => AircraftType.AirbusA321Neo,
             "SIA" => AircraftType.Boeing78710,
+            "UAE" => AircraftType.Boeing78710,
             "CPA" => AircraftType.AirbusA350900,
+            "MAS" => AircraftType.AirbusA350900,
+            "QTR" => AircraftType.AirbusA350900,
             _ => null
         };
 

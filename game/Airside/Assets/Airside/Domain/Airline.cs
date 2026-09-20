@@ -40,9 +40,15 @@ namespace Airside.Domain
                     case "REX": return "REX";
                     case "QLK": return "QANTASLINK";
                     case "VOZ": return "VIRGIN";
+                    case "QFA": return "QANTAS";
+                    case "JST": return "JETSTAR";
                     case "ANZ": return "AIR NZ";
                     case "SIA": return "SINGAPORE";
                     case "CPA": return "CATHAY";
+                    case "MAS": return "MALAYSIA";
+                    case "UAE": return "EMIRATES";
+                    case "QTR": return "QATAR";
+                    case "FJI": return "FIJI";
                     default: return Wordmark(Name);
                 }
             }
@@ -62,12 +68,30 @@ namespace Airside.Domain
         /// <summary>Virgin Australia domestic services from Adelaide (737-8).</summary>
         public static Airline VirginAustralia() => new("VOZ", "Virgin Australia", "#D71964", isPlayer: false);
 
+        /// <summary>Qantas mainline domestic services from Adelaide (737-8).</summary>
+        public static Airline Qantas() => new("QFA", "Qantas", "#E4002B", isPlayer: false);
+
+        /// <summary>Jetstar domestic services from Adelaide (A321neo).</summary>
+        public static Airline Jetstar() => new("JST", "Jetstar", "#F26623", isPlayer: false);
+
         /// <summary>Air New Zealand trans-Tasman services from Adelaide (A321neo).</summary>
         public static Airline AirNewZealand() => new("ANZ", "Air New Zealand", "#111111", isPlayer: false);
 
         public static Airline SingaporeAirlines() => new("SIA", "Singapore Airlines", "#1B3F8B", isPlayer: false);
 
         public static Airline CathayPacific() => new("CPA", "Cathay Pacific", "#006564", isPlayer: false);
+
+        /// <summary>Malaysia Airlines daily Kuala Lumpur service (A350 stand-in for the A330neo).</summary>
+        public static Airline MalaysiaAirlines() => new("MAS", "Malaysia Airlines", "#ED1B2F", isPlayer: false);
+
+        /// <summary>Emirates Dubai service from Adelaide.</summary>
+        public static Airline Emirates() => new("UAE", "Emirates", "#D71921", isPlayer: false);
+
+        /// <summary>Qatar Airways Doha service — back on the 2026 Adelaide field.</summary>
+        public static Airline QatarAirways() => new("QTR", "Qatar Airways", "#5C0632", isPlayer: false);
+
+        /// <summary>Fiji Airways Nadi service.</summary>
+        public static Airline FijiAirways() => new("FJI", "Fiji Airways", "#1B4F9C", isPlayer: false);
 
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 

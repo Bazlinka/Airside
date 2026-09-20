@@ -23,11 +23,22 @@ namespace Airside.Tests
         [Test]
         public void HoldingFinal_StaysOnShortFinalNotTheCircuit()
         {
-            var a = ApproachHold.HoldingFinalProgress("VH-HLD");
-            var b = ApproachHold.HoldingFinalProgress("VH-HLE");
-            Assert.That(a, Is.InRange(0.62, 0.74));
-            Assert.That(b, Is.InRange(0.62, 0.74));
+            Assert.That(ApproachHold.HoldingFinalProgress(0), Is.EqualTo(ApproachHold.FirstHoldProgress).Within(1e-5));
+            Assert.That(ApproachHold.HoldingFinalProgress("VH-HLD"), Is.EqualTo(ApproachHold.FirstHoldProgress).Within(1e-5));
             Assert.That(ApproachHold.RemainingFinalSeconds(100, "VH-HLD"), Is.InRange(8, 40));
+        }
+
+        [Test]
+        public void HoldingFinal_QueuesLaterArrivalsFurtherOut()
+        {
+            var first = ApproachHold.HoldingFinalProgress(0);
+            var second = ApproachHold.HoldingFinalProgress(1);
+            var third = ApproachHold.HoldingFinalProgress(2);
+            Assert.That(first, Is.GreaterThan(second));
+            Assert.That(second, Is.GreaterThan(third));
+            Assert.That(third, Is.GreaterThanOrEqualTo(ApproachHold.LastHoldProgress));
+            Assert.That(ApproachHold.RemainingFinalSeconds(100, 2),
+                Is.GreaterThan(ApproachHold.RemainingFinalSeconds(100, 0)));
         }
     }
 }

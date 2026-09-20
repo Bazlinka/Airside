@@ -1,5 +1,49 @@
 ## Unreleased
 
+- **Arrivals queue on final.** Holding traffic stacks in wait order
+  along the approach — number-one on short final, later aircraft
+  further out — instead of sitting on a registration hash.
+
+- **T1 traffic side is a road, not a lawn.** OSM arterials now draw
+  through the terminal-north notch the operational core used to skip,
+  plus an authored drop-off, return loop, short-stay pad, cars and
+  lamp posts on the real Sir Richard Williams side.
+
+- **Weather look is one profile.** Cloudy / overcast / rain / fog /
+  storm share CloudCover, Precipitation, Gloom, Visibility and
+  Wetness. Adelaide now gets kilometre-scale clouds and rain. Flight
+  timing is still unchanged (ADR 0013).
+
+- **More of Adelaide's real airlines, on a 05:00–23:00 day.**
+  Malaysia, Emirates, Qatar and Fiji join the terminal. Jetstar
+  flies Bali; Qantas flies Auckland. The field has no curfew —
+  domestics from 05:00, late internationals after 21:00. Widebodies
+  turn 50–89 minutes. The day-plan now lists Qantas and Jetstar.
+
+- **The opening bank has more arrivals, at peak spacing.** A third
+  Virgin 737, a third Qantas 737 and a second Jetstar join. Twelve
+  aircraft are already inbound, spaced 2–37 min (about one every three
+  minutes across both strips). Opening departures go every ~5 min
+  instead of every three.
+
+- **12/30 takeoff and landing match the stated knots.** Stations shift
+  so the 05 threshold lines up with the 12 threshold; one metre of 05
+  stays one metre of 12/30. The old squeeze made regionals crawl at
+  about half speed while the HUD still read 05 knots.
+
+- **The field is a bank, not a single-file queue.** Qantas and Jetstar
+  join Virgin, ANZ, Singapore and the regionals. Several arrivals are
+  already inbound at a new game, two aircraft may taxi on the same
+  apron, and 05/23 can move while 12/30 does.
+
+- **Stands look like stands.** Each gate and bay gets a lead-in that
+  follows the taxi-in, a stop bar, an envelope box and a readable
+  painted number.
+
+- **Trackpad drag is slower.** Orbit and pan no longer leap when a
+  finger moves a few points, and a grazing horizon grab cannot teleport
+  the camera.
+
 - **International career is reachable.** A321neo buys at Domestic. The
   International tier unlocks on jet ownership + rotations/reliability —
   not on already owning a widebody (that was a deadlock). A350/787 stay

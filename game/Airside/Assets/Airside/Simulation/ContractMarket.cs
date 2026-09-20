@@ -20,7 +20,7 @@ namespace Airside.Simulation
         private static readonly string[] Domestic = { "MEL", "CBR", "SYD", "HBA" };
         private static readonly string[] National = { "BNE", "OOL", "ASP", "PER" };
         private static readonly string[] Tasman = { "AKL", "CHC" };
-        private static readonly string[] LongHaul = { "CNS", "DRW", "DPS", "SIN", "HKG" };
+        private static readonly string[] LongHaul = { "CNS", "DRW", "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
 
         public static IReadOnlyList<RouteContractDefinition> At(
             SimulationTime now, IReadOnlyList<AircraftType> ownedTypes, int reliability, OperatingTier tier)

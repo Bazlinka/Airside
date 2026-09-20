@@ -243,7 +243,7 @@ namespace Airside.Tests
                 ops.Update();
             }
 
-            Assert.That(first.State, Is.AnyOf(FleetState.HoldingForLanding, FleetState.Landing),
+            Assert.That(first.State, Is.EqualTo(FleetState.HoldingForLanding).Or.EqualTo(FleetState.Landing),
                 "rejoin final after the circuit (tower may clear in the same tick)");
             Assert.That(first.AssignedRunway, Is.EqualTo(ops.RunwayFor(first)),
                 "rejoin picks the live runway end, not a stale assignment from before the circuit");

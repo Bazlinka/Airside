@@ -15,9 +15,10 @@ namespace Airside.Presentation
         public const string ObjectName = "Adelaide Roads";
         public const string ShaderName = "Airside/Surroundings";
 
-        private const int MaxRoads = 480;
+        private const int MaxRoads = 720;
         private const float MinWidthMetres = 9f;
-        private const float YOffsetMetres = 0.35f;
+        private const float LandsideMinWidthMetres = 6f;
+        private const float YOffsetMetres = 0.08f;
 
         private static readonly Color Asphalt = new(0.28f, 0.30f, 0.31f);
 
@@ -63,7 +64,7 @@ namespace Airside.Presentation
             var vertices = new List<Vector3>(4096);
             var colors = new List<Color>(4096);
             var triangles = new List<int>(8192);
-            var y = pavementWorldY - 1.45f + YOffsetMetres; // sit just above the plain
+            var y = pavementWorldY + YOffsetMetres;
             var asphalt = Asphalt.linear;
             asphalt.a = 0f;
 
@@ -80,7 +81,9 @@ namespace Airside.Presentation
                 if (count < 2 || i + count * 2 > roads.Length)
                     break;
 
-                if (width >= MinWidthMetres && drawn < MaxRoads)
+                var landside = RoadTouchesLandside(roads, i, count);
+                var minWidth = landside ? LandsideMinWidthMetres : MinWidthMetres;
+                if (width >= minWidth && drawn < MaxRoads)
                 {
                     var half = width * 0.5f;
                     var start = vertices.Count;
@@ -90,8 +93,10 @@ namespace Airside.Presentation
                     {
                         var x = roads[i + p * 2];
                         var z = roads[i + p * 2 + 1];
-                        // Skip the operational core — pavement owns that.
-                        if (AdelaideLandCover.InOperationalCore(x, z))
+                        // Skip the operational core — pavement owns the strips and
+                        // aprons — but keep the T1 traffic-side notch (drop-off /
+                        // Sir Richard Williams) so aerial landside is not a blank lawn.
+                        if (AdelaideLandCover.InOperationalCore(x, z) && !AdelaideLandside.Contains(x, z))
                         {
                             prevLeft = prevRight = null;
                             continue;
@@ -170,6 +175,17 @@ namespace Airside.Presentation
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        private static bool RoadTouchesLandside(float[] roads, int pointStart, int count)
+        {
+            for (var p = 0; p < count; p++)
+            {
+                if (AdelaideLandside.Contains(roads[pointStart + p * 2], roads[pointStart + p * 2 + 1]))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

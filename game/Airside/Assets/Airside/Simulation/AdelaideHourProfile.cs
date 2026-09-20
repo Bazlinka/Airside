@@ -11,6 +11,7 @@ namespace Airside.Simulation
     {
         public static float Density(int hour) => hour switch
         {
+            5 => 0.55f,
             6 or 7 or 8 => 1.00f,
             9 => 0.70f,
             10 => 0.40f,
@@ -20,7 +21,9 @@ namespace Airside.Simulation
             16 or 17 or 18 => 1.00f,
             19 => 0.60f,
             20 => 0.30f,
-            21 => 0.15f,
+            21 => 0.40f,
+            22 => 0.28f,
+            23 => 0.16f,
             _ => 0.06f
         };
 

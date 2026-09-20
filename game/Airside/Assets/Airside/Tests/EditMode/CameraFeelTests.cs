@@ -76,6 +76,31 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void OrbitRates_StayTrackpadFriendly()
+        {
+            Assert.That(AirsideCameraFeel.OrbitYawDegreesPerPixel, Is.LessThanOrEqualTo(0.14f));
+            Assert.That(AirsideCameraFeel.OrbitPitchDegreesPerPixel, Is.LessThanOrEqualTo(0.12f));
+        }
+
+        [Test]
+        public void GrazingHit_FallsBackBeforeTheHorizonTeleportsTheView()
+        {
+            Assert.That(AirsideCameraFeel.HitIsGrazing(100f, 80f), Is.False);
+            Assert.That(AirsideCameraFeel.HitIsGrazing(200f, 80f), Is.True);
+        }
+
+        [Test]
+        public void ClampPanStep_CapsATrackpadFlick()
+        {
+            AirsideCameraFeel.ClampPanStep(400f, 0f, 40f, out var dx, out var dz);
+            Assert.That(dx, Is.EqualTo(40f).Within(0.001f));
+            Assert.That(dz, Is.EqualTo(0f).Within(0.001f));
+            AirsideCameraFeel.ClampPanStep(3f, 4f, 40f, out dx, out dz);
+            Assert.That(dx, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(dz, Is.EqualTo(4f).Within(0.001f));
+        }
+
+        [Test]
         public void DragPan_ScalesWithDistance()
         {
             Assert.That(AirsideCameraFeel.PanMetresPerPixel(AirsideBareField.OverviewDistance),

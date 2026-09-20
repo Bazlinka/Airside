@@ -1,5 +1,72 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — queues, T1 landside, weather look
+  (branch `feature/busier-field-and-camera`).** Bailey: shouldn't they
+  be queuing; add roads/realism on the traffic side from aerial; start
+  getting ready for cloudy/overcast/stormy/rainy weather.
+  - **Queues:** `HoldingForLanding` pins final progress by
+    `FleetVisual.QueueSlot`, not registration hash. Hold-short and
+    stand-wait already queued.
+  - **Landside:** OSM roads draw through the T1 north notch; authored
+    drop-off / loop / pad / cars / lamps at real metres (not Kingscote
+    26, 38). `AirsideAdelaideRoads.TryBuild` is finally called.
+  - **Weather:** `WeatherLook` (cloud, rain, gloom, vis, wet). Adelaide
+    clouds are kilometre-scale; rain builds on the default field.
+    Timing unchanged (ADR 0013). No lightning yet.
+  - **NEXT:** Mac rebuild from this branch. Do not merge until asked.
+
+- **2026-09-20 Cursor — more Adelaide airlines and 05:00–23:00 hours
+  (branch `feature/busier-field-and-camera`).** Bailey: more airline
+  variety, and more realism including open hours.
+  - **Operators:** Malaysia (KUL), Emirates (DXB), Qatar (DOH),
+    Fiji (NAN). Jetstar now flies Bali; Qantas also flies Auckland.
+    Day-plan TypeFor includes Qantas/Jetstar (they were missing).
+  - **Hours:** AI day is 05:00–23:00. No curfew. First domestics
+    from 05:00; late internationals after 21:00. Rex still skips
+    the afternoon and late-night holes. Widebodies turn 50–89 min.
+  - **NEXT:** rebuild from this branch. Do not merge until asked.
+
+- **2026-09-20 Cursor — more arrivals, peak-bank timing
+  (branch `feature/busier-field-and-camera`).** Bailey: should there
+  be more arrivals, and is the timing a normal Adelaide day?
+  - **Arrivals:** a third Virgin 737, a third Qantas 737 and a
+    second Jetstar A321. Opening inbound is twelve aircraft (was
+    nine), stretched 2–37 min so the bank lasts a peak, not a dump.
+  - **Spacing:** about one arrival every three minutes across both
+    strips (one every ~6 min per runway). Departures every ~5 min.
+    One movement per strip stays.
+  - **Not added:** extra Rex — 50-series bays already starve Q400s.
+  - **NEXT:** rebuild from this branch. Do not merge until asked.
+
+- **2026-09-20 Cursor — 12/30 speed matches stated knots
+  (branch `feature/busier-field-and-camera`).** Bailey: HUD knots were
+  right, but aircraft looked too slow — 50 kt did not cover 50 kt of
+  ground.
+  - **Cause:** `RunwayFrame.RemapAlong` squeezed the 3 100 m 05
+    stations onto 1 650 m of 12/30 pavement (~0.53×). Regionals
+    (most of the opening bank) crawled on takeoff and landing.
+  - **Fix:** 1:1 shift. The 05 west threshold lines up with the 12
+    threshold; every extra metre of final, roll or climb-out stays
+    a metre. Vacate/lineup still meet the remapped stations.
+  - **NEXT:** Mac rebuild from this branch. Say if you want it
+    merged.
+
+- **2026-09-20 Cursor — busier field, stand boxes, slower camera
+  (branch `feature/busier-field-and-camera`).** Bailey: more than one
+  aircraft can leave and arrive at once; the T1 apron looked empty; click-
+  drag on a trackpad was too fast.
+  - **Traffic:** Qantas and Jetstar join the terminal, plus a second
+    Virgin 737. Opening bank seeds eight-plus inbounds on both strips.
+    Two aircraft may taxi on the same apron; a third waits. One
+    movement per strip stays (real tower).
+  - **Stands:** lead-ins follow the taxi-in, plus envelope boxes,
+    shoulder ticks and larger painted numbers — not a lone T on empty
+    concrete.
+  - **Camera:** slower orbit, clamped pan, slower Normal/Fast.
+  - **Also:** Unity compile fixes from the last pull (`Math`, public
+    `IsMissedApproachLanding`, `AirlineClock` windsock, test usings).
+  - **NEXT:** done — speed fix is the entry above.
+
 - **2026-09-20 Cursor — all day-progress + career PRs on main.**
   #329 (day strip + play fixes) and #330 (International unlock +
   freeze runway at clearance) are merged. `origin/main` tip:
@@ -7,7 +74,7 @@
   - **Evidence:** `scripts/test-domain.sh` **462/462** on the merged
     career commit; Unity EditMode still needed on a Mac.
   - **NEXT:** Mac `scripts/test-unity.sh`. Still open play items:
-    dual-strip intersection mutex; 12/30 RemapAlong crawl; regional
+    dual-strip intersection mutex; regional
     pushback apron mutex; Q400 50D/50E hard rule (Bailey);
     disruption→sim.
 

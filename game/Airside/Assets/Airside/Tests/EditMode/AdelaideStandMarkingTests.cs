@@ -38,9 +38,13 @@ namespace Airside.Tests
                     Is.EqualTo(bay.StopX).Within(0.001f));
                 Assert.That((marking.StopBar[1] + marking.StopBar[3]) * 0.5f,
                     Is.EqualTo(bay.StopZ).Within(0.001f));
+                Assert.That(marking.Envelope.Length, Is.EqualTo(8));
+                Assert.That(AdelaideStandMarkings.PolylineLength(marking.LeadIn),
+                    Is.GreaterThan(AdelaideStandMarkings.LeadInLengthMetres * 0.8f));
                 Assert.That(float.IsFinite(marking.LabelX), Is.True);
                 Assert.That(float.IsFinite(marking.LabelZ), Is.True);
                 Assert.That(float.IsFinite(marking.LabelYawDegrees), Is.True);
+                Assert.That(marking.LabelCharacterSize, Is.EqualTo(AdelaideStandMarkings.RegionalLabelSize));
             }
         }
 
@@ -52,14 +56,14 @@ namespace Airside.Tests
 
             Assert.That(marking.LeadIn[^2], Is.EqualTo(gate.NoseX).Within(0.001f));
             Assert.That(marking.LeadIn[^1], Is.EqualTo(gate.NoseZ).Within(0.001f));
-            var leadLength = Math.Sqrt(
-                Math.Pow(marking.LeadIn[2] - marking.LeadIn[0], 2)
-                + Math.Pow(marking.LeadIn[3] - marking.LeadIn[1], 2));
+            var leadLength = AdelaideStandMarkings.PolylineLength(marking.LeadIn);
             var barLength = Math.Sqrt(
                 Math.Pow(marking.StopBar[2] - marking.StopBar[0], 2)
                 + Math.Pow(marking.StopBar[3] - marking.StopBar[1], 2));
-            Assert.That(leadLength, Is.EqualTo(AdelaideStandMarkings.TerminalLeadInLengthMetres).Within(0.1));
+            Assert.That(leadLength, Is.EqualTo(AdelaideStandMarkings.TerminalLeadInLengthMetres).Within(1.0));
             Assert.That(barLength, Is.EqualTo(AdelaideStandMarkings.TerminalStopBarWidthMetres).Within(0.1));
+            Assert.That(marking.Envelope.Length, Is.EqualTo(8));
+            Assert.That(marking.LabelCharacterSize, Is.EqualTo(AdelaideStandMarkings.TerminalLabelSize));
             Assert.That(float.IsFinite(marking.LabelX) && float.IsFinite(marking.LabelZ), Is.True);
         }
 

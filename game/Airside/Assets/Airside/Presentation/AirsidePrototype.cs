@@ -314,7 +314,9 @@ namespace Airside.Presentation
                 // under 50 m deep along Z, so a single box-projected probe reaches both).
                 _apronProbe = AirsideBareField.Enabled ? BuildBareApronReflectionProbe() : null;
             }
-            _rainRoot = AirsideFocusMode.ShowEnvironment ? BuildRainRoot() : null;
+            _rainRoot = AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled
+                ? BuildRainRoot()
+                : null;
             // Touchdown smoke is circuit presentation, independent of disabled world props.
             _touchdownSmoke = BuildTouchdownSmoke();
             BuildWheelSmoke();
@@ -391,9 +393,10 @@ namespace Airside.Presentation
                 _hangarBayLight = hangarBayLightGo.GetComponent<Light>();
             }
 
-            if (AirsideFocusMode.ShowEnvironment)
+            if (AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled)
             {
-                CollectCoastalMotionTargets();
+                if (AirsideFocusMode.ShowEnvironment)
+                    CollectCoastalMotionTargets();
                 _horizonDome = AirsideSceneIndex.Find("Horizon dome");
                 _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
                 _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");
@@ -2079,7 +2082,8 @@ namespace Airside.Presentation
             if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding)
                 && holding.State == FleetState.HoldingForLanding && phase == AircraftPhase.Approach)
             {
-                var pinned = (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+                var pinned = (float)ApproachHold.HoldingFinalProgress(
+                    FleetVisual.QueueSlot(_operations.Fleet, holding));
                 // A tiny look-ahead along final so facing is not frozen on the last rotation.
                 if (lookAheadSeconds > 0f)
                     return Mathf.Min(0.98f, pinned + 0.008f);
@@ -2136,7 +2140,9 @@ namespace Airside.Presentation
                 return;
 
             // Aim the sock with the sim surface wind; keep a light sway so it does not look frozen.
-            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(_clock, _clock.Now);
+            var wind = _operations != null
+                ? _operations.Wind
+                : RunwayWeather.At(AirlineClock.Default, _clock.Now);
             var heading = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees);
             var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 6f;
             var limp = Mathf.Lerp(18f, 4f, Mathf.Clamp01(wind.Knots / 18f));
@@ -2477,8 +2483,9 @@ namespace Airside.Presentation
         private void UpdateWeatherPresentation()
         {
             var weather = CurrentWeather;
-            var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
-            var wet = Weather.IsAdverse(weather);
+            var look = WeatherLook.For(weather);
+            var raining = look.IsRaining;
+            var wet = Weather.IsAdverse(weather) || look.Wetness > 0.05f;
             var storm = weather == WeatherKind.Storm;
 
             if (_rainRoot != null)
@@ -2510,9 +2517,9 @@ namespace Airside.Presentation
                 }
             }
 
-            if (wet)
+            if (wet || look.Gloom > 0.12f)
             {
-                // Cooler, denser atmosphere in adverse weather — stacks on base day fog.
+                // Cooler, denser atmosphere from WeatherLook — stacks on base day fog.
                 var fogDay = new Color(0.55f, 0.6f, 0.66f);
                 var fogNight = new Color(0.18f, 0.22f, 0.3f);
                 var daylight = PresentationDaylight;
@@ -2522,31 +2529,17 @@ namespace Airside.Presentation
                 var baseDensity = AirsideBareField.Enabled
                     ? Mathf.Lerp(0.00032f, 0.0002f, daylight)
                     : Mathf.Lerp(0.0065f, 0.0032f, daylight);
-                // Adverse fog kept readable — thick enough to read FG/TSRA, not opaque.
+                var visLoss = 1f - look.Visibility;
                 RenderSettings.fogDensity = AirsideBareField.Enabled
-                    ? (weather == WeatherKind.Storm
-                        ? Mathf.Max(baseDensity, 0.00045f)
-                        : weather == WeatherKind.Fog
-                            ? Mathf.Max(baseDensity, 0.00038f)
-                            : raining
-                                ? Mathf.Max(baseDensity, 0.00028f)
-                                : baseDensity)
-                    : (weather == WeatherKind.Storm
-                        ? Mathf.Max(baseDensity, 0.014f)
-                        : weather == WeatherKind.Fog
-                            ? Mathf.Max(baseDensity, 0.011f)
-                            : raining
-                                ? Mathf.Max(baseDensity, 0.0075f)
-                                : baseDensity);
+                    ? baseDensity + visLoss * 0.00038f
+                    : baseDensity + visLoss * 0.012f;
             }
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
 
             // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
             // Fog alone thickens atmosphere — it does not soak the apron.
             // Clear weather keeps a soft residual damp on paved slabs (REF day apron).
-            var rainWetness = raining
-                ? (weather == WeatherKind.Storm ? 0.72f : 0.52f)
-                : 0f;
+            var rainWetness = look.Wetness;
             // Wetness only changes when the weather changes (four discrete values), and
             // ApplyWetness toggles shader keywords — which invalidates the SRP Batcher
             // batch for that material. Re-applying every frame tore the batcher down
@@ -2560,7 +2553,7 @@ namespace Airside.Presentation
                     if (material == null)
                         continue;
                     // Clear residual damp reads on overview like the turnaround dusk board.
-                    var apply = raining ? rainWetness : (paved ? 0.14f : 0f);
+                    var apply = rainWetness > 0.05f ? rainWetness : (paved ? 0.14f : 0f);
                     AirsideMaterialLibrary.ApplyWetness(
                         material, apply, dry, drySmooth, dryMetallic, dryBump,
                         preferWetConcreteAlbedo: paved && AirsideMaterialLibrary.AcceptsWetConcreteAlbedo(dryAlbedo),
@@ -3619,15 +3612,8 @@ namespace Airside.Presentation
         private float _weatherGloom;
         private bool _weatherGloomReady;
 
-        public static float WeatherGloomTarget(WeatherKind weather) => weather switch
-        {
-            WeatherKind.Storm => 0.55f,
-            WeatherKind.Fog => 0.42f,
-            WeatherKind.Rain => 0.28f,
-            WeatherKind.Overcast => 0.22f,
-            WeatherKind.Cloudy => 0.16f,
-            _ => 0f
-        };
+        public static float WeatherGloomTarget(WeatherKind weather) =>
+            WeatherLook.For(weather).Gloom;
 
         /// <summary>
         /// Weather is a discrete forecast, so a change of kind snapped sun intensity, trilight
@@ -3745,7 +3731,8 @@ namespace Airside.Presentation
             // apron and buildings stay obvious from the default overview.
             if (!Weather.IsAdverse(CurrentWeather))
             {
-                var cloudy = CurrentWeather == WeatherKind.Cloudy;
+                var look = WeatherLook.For(CurrentWeather);
+                var cloudy = look.CloudCover > 0.3f;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 var clearFog = Color.Lerp(
@@ -3753,13 +3740,18 @@ namespace Airside.Presentation
                     Color.Lerp(skyDay * 0.95f, new Color(0.7f, 0.55f, 0.48f), warm * 0.45f),
                     Mathf.Clamp01(daylight + warm * 0.15f));
                 if (cloudy)
-                    clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f);
+                    clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f + look.Gloom * 0.35f);
                 RenderSettings.fogColor = clearFog;
                 var density = AirsideBareField.Enabled
                     ? Mathf.Lerp(AirsideBareField.NightFogDensity, AirsideBareField.DayFogDensity, daylight)
                     : Mathf.Lerp(0.0036f, 0.0016f, daylight);
-                if (cloudy && !AirsideBareField.Enabled)
-                    density = Mathf.Max(density, Mathf.Lerp(0.005f, 0.0028f, daylight));
+                if (cloudy)
+                {
+                    var extra = AirsideBareField.Enabled
+                        ? look.Gloom * 0.00014f
+                        : Mathf.Lerp(0.005f, 0.0028f, daylight);
+                    density = Mathf.Max(density, density + extra);
+                }
                 // Tiny dusk haze only — do not orange-wash the whole scene.
                 density += AirsideBareField.Enabled ? warm * 0.00002f : warm * 0.00035f;
                 RenderSettings.fogDensity = density;
@@ -4771,6 +4763,11 @@ namespace Airside.Presentation
             AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
 
             BuildBareAdelaidePavement();
+            var pavementY = AirsideAdelaideGround.PavementWorldY;
+            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY);
+            AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
+            BuildYpadLandsideLife();
+            BuildCloudBands();
             if (AirsideBareField.HasLaunchFlag("-airsidePerimeterFence"))
                 BuildBareAdelaidePerimeterFence();
         }
@@ -6237,6 +6234,56 @@ namespace Airside.Presentation
 
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        /// <summary>
+        /// Real-metre T1 traffic side: parked cars, drop-off, and lamp posts on
+        /// <see cref="AdelaideLandside"/>. The Kingscote greybox sat at (26, 38).
+        /// </summary>
+        private static void BuildYpadLandsideLife()
+        {
+            var carColors = new[]
+            {
+                new Color(0.75f, 0.22f, 0.18f),
+                new Color(0.92f, 0.92f, 0.9f),
+                new Color(0.15f, 0.18f, 0.22f),
+                new Color(0.2f, 0.35f, 0.55f),
+                new Color(0.85f, 0.7f, 0.25f),
+                new Color(0.35f, 0.4f, 0.38f),
+                new Color(0.55f, 0.55f, 0.58f),
+                new Color(0.12f, 0.45f, 0.35f)
+            };
+
+            var slots = AdelaideLandside.CarParkSlots();
+            for (var i = 0; i < slots.Length; i++)
+            {
+                var slot = slots[i];
+                PlaceParkedCar($"T1 car {i}", new Vector3(slot.X, 0f, slot.Z), slot.YawDegrees,
+                    carColors[i % carColors.Length]);
+            }
+
+            var steel = new Color(0.35f, 0.36f, 0.38f);
+            var head = new Color(0.25f, 0.26f, 0.28f);
+            var lamp = new Color(1f, 0.92f, 0.7f);
+            var lamps = AdelaideLandside.Streetlights();
+            for (var i = 0; i < lamps.Length; i++)
+            {
+                var p = new Vector3(lamps[i].X, 0f, lamps[i].Z);
+                CreateBlock($"T1 streetlight pole {i}", p + new Vector3(0f, 4.4f, 0f), new Vector3(0.22f, 8.8f, 0.22f), steel);
+                CreateBlock($"T1 streetlight head {i}", p + new Vector3(0.55f, 8.7f, 0f), new Vector3(1.1f, 0.28f, 0.45f), head);
+                CreateBlock($"T1 streetlight lamp {i}", p + new Vector3(0.85f, 8.45f, 0f), new Vector3(0.4f, 0.22f, 0.4f), lamp);
+            }
+
+            var bayPaint = new Color(0.92f, 0.92f, 0.88f);
+            CreateBlock("T1 drop-off zebra W", new Vector3(1020f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
+            CreateBlock("T1 drop-off zebra C", new Vector3(1275f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
+            CreateBlock("T1 drop-off zebra E", new Vector3(1520f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
+            CreateBlock("T1 drop-off dash", new Vector3(1275f, 0.11f, 508f), new Vector3(720f, 0.03f, 0.28f),
+                new Color(0.95f, 0.9f, 0.35f));
+            CreateBlock("T1 bay line W", new Vector3(AdelaideLandside.CarParkCentreX - 160f, 0.11f, AdelaideLandside.CarParkCentreZ),
+                new Vector3(0.12f, 0.03f, 70f), bayPaint);
+            CreateBlock("T1 bay line E", new Vector3(AdelaideLandside.CarParkCentreX + 160f, 0.11f, AdelaideLandside.CarParkCentreZ),
+                new Vector3(0.12f, 0.03f, 70f), bayPaint);
         }
 
         /// <summary>
@@ -7940,23 +7987,29 @@ namespace Airside.Presentation
         private static void BuildCloudBands()
         {
             // Soft translucent cloud clusters so the sky reads layered — presentation only.
-            // Keep the count calm for a miniature sky; UpdateCloudDrift thickens tint for weather.
+            // The default Adelaide field is kilometres across; the old ±110 m sheet sat
+            // over the 05 threshold and never reached T1.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var rng = new System.Random(90210);
-            const int clusterCount = 9;
+            var adelaide = AirsideBareField.Enabled;
+            var clusterCount = adelaide ? 16 : 9;
+            var spreadX = adelaide ? 4200f : 110f;
+            var spreadZ = adelaide ? 2800f : 100f;
+            var yBase = adelaide ? 240f : 24f;
+            var ySpan = adelaide ? 160f : 26f;
             for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
-                var x = (float)(rng.NextDouble() * 220f - 110f);
-                var z = (float)(rng.NextDouble() * 200f - 100f);
-                var y = 24f + (float)rng.NextDouble() * 26f;
+                var x = (float)(rng.NextDouble() * spreadX * 2f - spreadX);
+                var z = (float)(rng.NextDouble() * spreadZ * 2f - spreadZ);
+                var y = yBase + (float)rng.NextDouble() * ySpan;
                 cluster.position = new Vector3(x, y, z);
 
-                var sx = 16f + (float)rng.NextDouble() * 30f;
-                var sy = 3.4f + (float)rng.NextDouble() * 4.5f;
-                var sz = 9f + (float)rng.NextDouble() * 18f;
+                var sx = (adelaide ? 280f : 16f) + (float)rng.NextDouble() * (adelaide ? 220f : 30f);
+                var sy = (adelaide ? 28f : 3.4f) + (float)rng.NextDouble() * (adelaide ? 22f : 4.5f);
+                var sz = (adelaide ? 180f : 9f) + (float)rng.NextDouble() * (adelaide ? 160f : 18f);
                 var alpha = 0.14f + (float)rng.NextDouble() * 0.14f;
                 var blobs = 1 + (i % 2);
                 var blobLocals = new Matrix4x4[blobs];
@@ -8274,16 +8327,13 @@ namespace Airside.Presentation
 
             // Slow eastward drift + day tint so clouds feel alive without sim coupling.
             var daylight = PresentationDaylight;
-            var drift = Time.unscaledDeltaTime * 0.35f;
+            var look = WeatherLook.For(CurrentWeather);
+            var drift = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? 4.5f : 0.35f);
             var weather = CurrentWeather;
-            var overcast = weather is WeatherKind.Overcast or WeatherKind.Rain or WeatherKind.Storm or WeatherKind.Fog;
-            var cloudy = weather == WeatherKind.Cloudy;
+            var overcast = look.CloudCover >= 0.7f;
+            var cloudy = look.CloudCover > 0.3f && !overcast;
             var thickSky = overcast || cloudy;
-            var umbraAlpha = overcast
-                ? Mathf.Lerp(0.06f, 0.18f, daylight)
-                : cloudy
-                    ? Mathf.Lerp(0.05f, 0.22f, daylight)
-                    : Mathf.Lerp(0.04f, 0.26f, daylight);
+            var umbraAlpha = Mathf.Lerp(0.04f, 0.10f + look.CloudCover * 0.18f, daylight);
             var tintKey = ((int)weather << 4) ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f);
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
@@ -8305,8 +8355,9 @@ namespace Airside.Presentation
                 var cloud = _cloudRoot.GetChild(i);
                 var p = cloud.position;
                 p.x += drift;
-                if (p.x > 100f)
-                    p.x = -100f;
+                var wrap = AirsideBareField.Enabled ? 4500f : 100f;
+                if (p.x > wrap)
+                    p.x = -wrap;
                 cloud.position = p;
 
                 if (_cloudUmbraRoot != null && i < _cloudUmbraRoot.childCount)
@@ -8323,8 +8374,8 @@ namespace Airside.Presentation
                 var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
                 if (thickSky)
-                    tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), overcast ? 0.55f : 0.32f);
-                var baseAlpha = overcast ? 0.42f : cloudy ? 0.32f : 0.22f;
+                    tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.22f + look.CloudCover * 0.4f);
+                var baseAlpha = 0.16f + look.CloudCover * 0.32f;
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
                 // Combined cluster mesh — one renderer, MPB tint only when the band changes.

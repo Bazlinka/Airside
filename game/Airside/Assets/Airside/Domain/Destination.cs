@@ -82,9 +82,13 @@ namespace Airside.Domain
         {
             new Destination("AKL", "Auckland", "New Zealand", -37.008, 174.792),
             new Destination("CHC", "Christchurch", "New Zealand", -43.489, 172.532),
+            new Destination("NAN", "Nadi", "Fiji", -17.755, 177.443),
             new Destination("DPS", "Denpasar (Bali)", "Indonesia", -8.748, 115.167),
             new Destination("SIN", "Singapore", "Singapore", 1.364, 103.991),
+            new Destination("KUL", "Kuala Lumpur", "Malaysia", 2.745, 101.710),
             new Destination("HKG", "Hong Kong", "Hong Kong", 22.308, 113.918),
+            new Destination("DOH", "Doha", "Qatar", 25.273, 51.608),
+            new Destination("DXB", "Dubai", "United Arab Emirates", 25.253, 55.364),
         };
 
         public static IEnumerable<Destination> All

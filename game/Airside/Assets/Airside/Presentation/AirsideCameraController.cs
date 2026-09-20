@@ -722,16 +722,27 @@ namespace Airside.Presentation
                 ReleaseFollow();
 
             if (TryGroundUnderPointer(from, out var beforeX, out var beforeZ)
-                && TryGroundUnderPointer(to, out var afterX, out var afterZ))
+                && TryGroundUnderPointer(to, out var afterX, out var afterZ)
+                && !AirsideCameraFeel.HitIsGrazing(
+                    Vector3.Distance(transform.position, new Vector3(beforeX, _center.y, beforeZ)),
+                    _distance))
             {
-                _center.x += beforeX - afterX;
-                _center.z += beforeZ - afterZ;
+                AirsideCameraFeel.ClampPanStep(
+                    beforeX - afterX, beforeZ - afterZ,
+                    AirsideCameraFeel.MaxPanStepMetres(_distance),
+                    out var stepX, out var stepZ);
+                _center.x += stepX;
+                _center.z += stepZ;
             }
             else
             {
                 var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                 var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-                _center -= (planarRight * delta.x + planarForward * delta.y) * PanMetresPerPixel(_distance);
+                var raw = (planarRight * delta.x + planarForward * delta.y) * PanMetresPerPixel(_distance);
+                AirsideCameraFeel.ClampPanStep(
+                    raw.x, raw.z, AirsideCameraFeel.MaxPanStepMetres(_distance),
+                    out var stepX, out var stepZ);
+                _center -= new Vector3(stepX, 0f, stepZ);
             }
 
             ClampPanCentre();

@@ -2574,7 +2574,22 @@ namespace Airside.Presentation
                 var daylight = PresentationDaylight;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
-                RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
+                var baseFogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
+                // This used to be the base colour alone, unconditionally — Cloudy, Overcast,
+                // Rain, Fog and Storm all reached this branch (Gloom > 0.12 for every one of
+                // them) and so all rendered the exact same fog colour, differing only in how
+                // dense it was. Storm/Rain/Overcast now darken toward a slate grey with Gloom.
+                // Fog is the deliberate exception: real fog scatters light into a pale, near-
+                // white haze even though the same Gloom value dims the sun, so it blends
+                // toward white by how much visibility it costs *beyond* what its own Gloom
+                // would already explain — the only WeatherLook whose Visibility loss clearly
+                // outruns its Gloom, which is what a paler-but-still-dim fog actually is.
+                var stormGrey = new Color(0.42f, 0.45f, 0.48f);
+                var fogHaze = new Color(0.82f, 0.83f, 0.82f);
+                var weatherFogColor = Color.Lerp(baseFogColor, stormGrey, look.Gloom);
+                var hazeWeight = Mathf.Clamp01(((1f - look.Visibility) - look.Gloom) * 1.6f);
+                weatherFogColor = Color.Lerp(weatherFogColor, fogHaze, hazeWeight);
+                RenderSettings.fogColor = weatherFogColor;
                 var baseDensity = AirsideBareField.Enabled
                     ? Mathf.Lerp(0.00032f, 0.0002f, daylight)
                     : Mathf.Lerp(0.0065f, 0.0032f, daylight);
@@ -3717,7 +3732,13 @@ namespace Airside.Presentation
                 : Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
-            _sun.intensity = Mathf.Lerp(0.18f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
+            // Night floor raised 0.18 -> 0.30 alongside ADR 0063's ambient/exposure floor: the
+            // ambient trilight is flat (no shading), so even with that floor raised the field
+            // read as a uniform grey wash with no sense of form. A moonlight-strength key still
+            // well under the floods' own intensity (52 apron / 1.55-2.1 runway, ADR 0063) adds
+            // real directional shading — aircraft, hangars and terrain read as shapes, not silhouettes
+            // dissolved into flat ambient.
+            _sun.intensity = Mathf.Lerp(0.30f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -3742,23 +3763,35 @@ namespace Airside.Presentation
 
             // Trilight: day = bright cool sky / warm ground separation; night = deep blue-grey
             // that still lets hangar/terminal silhouettes read outside flood pools.
+            //
+            // The night floor here used to be materially darker (ambientNight (0.20,0.23,0.32),
+            // ambientIntensity 0.88): fine directly under a flood or runway light (9-115 m
+            // range), but the default Fleet/career overview camera sits ~2400 m out over a
+            // ~3900x2800 m field (AirsideBareField.OverviewDistance) — from there almost the
+            // entire frame is outside every light's range and lit by this ambient alone, which
+            // a real player reported as "can't see anything" at night. Lifted the night floor
+            // enough that the ambient-only majority of the field reads as a dim, navigable dark
+            // blue-grey instead of crushing toward black once ACES tonemapping and the night
+            // exposure dip (AirsideDayVolume) are applied on top — floods/runway lights are
+            // still 3-150x brighter in absolute terms, so they keep reading as the brightest
+            // pools rather than the only visible things.
             var ambientDay = new Color(0.58f, 0.64f, 0.72f);
             var ambientDusk = new Color(0.52f, 0.36f, 0.3f);
-            var ambientNight = new Color(0.20f, 0.23f, 0.32f);
+            var ambientNight = new Color(0.28f, 0.32f, 0.42f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.55f);
             var ambientEquator = Color.Lerp(
-                new Color(0.22f, 0.24f, 0.32f),
+                new Color(0.30f, 0.32f, 0.40f),
                 Color.Lerp(new Color(0.46f, 0.5f, 0.52f), new Color(0.5f, 0.38f, 0.32f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
-                new Color(0.13f, 0.14f, 0.17f),
+                new Color(0.19f, 0.20f, 0.24f),
                 Color.Lerp(new Color(0.26f, 0.28f, 0.22f), new Color(0.3f, 0.2f, 0.15f), warm),
                 daylight);
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(0.88f, 1.12f, daylight) + warm * 0.06f;
+            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f;
             if (weatherGloom > 0f)
             {
                 // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.

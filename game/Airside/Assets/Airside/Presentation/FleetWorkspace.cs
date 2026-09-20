@@ -211,11 +211,16 @@ namespace Airside.Presentation
                                && career.CompletedPlayerRotations >= offer.RequiredRotations;
                 var affordable = career.CanAfford(offer.Price);
 
+                // "Requires Regional tier" (a career milestone, OperatingTier) and "flies
+                // Regional routes" (a RouteBand) share the word "Regional" for two unrelated
+                // systems — the tier line is spelled out as "career tier" and the route line
+                // names real destinations instead of leaving the band as a bare label, so
+                // buying a plane answers "where can it fly" concretely, not abstractly.
                 string requirement;
                 if (fleetFull)
                     requirement = $"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft)";
                 else if (career.Tier < offer.RequiredTier)
-                    requirement = $"Requires {offer.RequiredTier} tier";
+                    requirement = $"Requires {offer.RequiredTier} career tier";
                 else if (career.Reliability < offer.RequiredReliability)
                     requirement = $"Requires {offer.RequiredReliability}% reliability"
                                   + $" — you are at {career.Reliability}%";
@@ -225,7 +230,12 @@ namespace Airside.Presentation
                 else if (!affordable)
                     requirement = $"Costs ${offer.Price:N0} — you have ${career.Funds:N0}";
                 else
-                    requirement = $"Cleared to buy · flies {RouteMapWorkspaceModel.BandLabel(offer.Operates)} routes";
+                {
+                    var reach = RouteAccess.ExampleDestinations(offer.Operates);
+                    var suffix = offer.Operates == RouteBand.Regional ? "" : ", +closer";
+                    requirement = $"Cleared to buy · flies {RouteMapWorkspaceModel.BandLabel(offer.Operates)} "
+                                  + $"routes ({reach}{suffix})";
+                }
 
                 var needsGate = AirlineOperations.NeedsTerminalGate(offer.Type);
                 string standLine;
@@ -250,7 +260,10 @@ namespace Airside.Presentation
             SelectedTypeName = aircraft.Type.Name;
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
 
-            _capability.Add($"{RouteMapWorkspaceModel.BandLabel(RouteAccess.Ceiling(aircraft.Type))} capability");
+            var ceiling = RouteAccess.Ceiling(aircraft.Type);
+            var ceilingSuffix = ceiling == RouteBand.Regional ? "" : ", +closer";
+            _capability.Add($"{RouteMapWorkspaceModel.BandLabel(ceiling)} capability "
+                             + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
             _capability.Add(Plural(aircraft.CompletedTrips, "completed rotation"));
             _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km planning range");
             if (!aircraft.Airline.IsPlayer)

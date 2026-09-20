@@ -101,7 +101,12 @@ namespace Airside.Presentation
             new AdelaideTerminalDetail("Terminal airside brow C", 1260f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
             new AdelaideTerminalDetail("Terminal airside brow EC", 1370f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
             new AdelaideTerminalDetail("Terminal airside brow E", 1480f, 11.55f, 433.4f, 106f, 1.1f, 5.5f),
-            new AdelaideTerminalDetail("Terminal airside brow far E", 1584f, 11.55f, 433.4f, 98f, 1.1f, 5.5f)
+            // Was centred at 1584 with width 98 (spanning to X=1633) — the terminal's own real
+            // OSM footprint ends at X=1615.8 (AdelaideLayout.Terminals), so the old span
+            // cantilevered 17.2 m past the building's own south-east corner into open air.
+            // Narrowed to end with a small margin inside that corner, keeping the same ~4 m
+            // gap pattern from the previous segment as the rest of the brow.
+            new AdelaideTerminalDetail("Terminal airside brow far E", 1575f, 11.55f, 433.4f, 76f, 1.1f, 5.5f)
         };
 
         public static AdelaideTerminalDetail[] RoofDetails() => new[]

@@ -1,5 +1,50 @@
 ## Unreleased
 
+- **Night moonlight for form shading, and a backwards vignette fixed (ADR 0064).** Direct
+  follow-up to ADR 0063, same "can't see anything at night" report. Raising the ambient floor
+  made the field brighter but ambient light is flat — nothing to differentiate an aircraft from
+  a hangar from open grass, just a lighter grey wash. Raised the night key ("Sun") light's floor
+  intensity 0.18 → 0.30 (still far under every flood/runway light, and under daytime's 2.05) so
+  surfaces get an actual lit/shaded side. Also found the vignette was backwards: stronger at
+  night (0.1) than day (0.05), darkening the corners hardest on exactly the frame already
+  reported as too dark — flipped to `Lerp(0.04, 0.07, daylight)`. Both Presentation-only,
+  reviewed by inspection; `scripts/test-domain.sh` 500/500 (unchanged, no Domain-layer change
+  this round). Still not confirmed by an actual look at the game — highest-priority open item.
+
+- **Night visibility floor raised; Fleet copy names real destinations (ADR 0063).** A real
+  play session reported "I can't see anything" at night. Every light source's own intensity
+  was confirmed correct — the actual cause: the default Fleet/career overview camera sits
+  2400m out over a ~3900x2800m field while every flood/runway light only reaches 9-115m, so
+  from the player's actual starting view almost the whole frame was ambient-only, which a
+  -0.12 EV night exposure and ACES tonemapping plausibly crushed toward black. Raised the
+  night ambient floor and exposure (light sources themselves untouched, so floods/runway
+  lights should still read as the brightest features) — a reasoned, conservative correction,
+  not a confirmed-by-eye fix; still needs a real look. Separately: buying an aircraft's "flies
+  Domestic routes" / "Requires Regional tier" copy used the word "Regional" for two unrelated
+  systems (a route-destination band and an unrelated career-progression tier) with nothing to
+  tell them apart. New `RouteAccess.ExampleDestinations` names real places
+  ("Domestic capability (Melbourne, Sydney, +closer)"), and the tier line now says "career
+  tier" to disambiguate. Verified via `scripts/hud-mockup` re-rendering — the first version
+  clipped against its own text box, caught immediately and fixed. `scripts/test-domain.sh`
+  500/500.
+
+- **Contracts card fill, terminal roof fixes, weather fog tint (ADR 0062).** First real use of
+  the offline HUD mockup renderer this session to *see* a change instead of reasoning about it
+  blind: found the Contracts market's offer cards pinned to a fixed 86px height regardless of
+  the column's actual height, leaving most of a tall window empty below just three cards (the
+  market only ever runs three at a time). Cards now grow to fill the space (capped at 172px),
+  content centred rather than stretched. Terminal: the roof brow's last segment cantilevered
+  17.2m past the building's own real footprint into open air — narrowed to fit; roof
+  plant/equipment screens now share the brow's corrugated-metal texture instead of rendering
+  flat colour beside it. Weather: Cloudy/Overcast/Rain/Fog/Storm all rendered the *identical*
+  fog colour (only density differed) — now Storm/Rain/Overcast darken toward slate grey with
+  Gloom, Fog blends toward a pale near-white haze instead (the one weather kind whose
+  visibility loss genuinely outruns its own gloom). Also found and thoroughly documented, not
+  fixed: a go-around's re-entry to the landing queue teleports position/altitude/gear
+  instantaneously (400-1100m and ~230m in one tick) — a real bug needing two different
+  flight-path systems blended correctly, judged too risky to attempt without being able to
+  watch the result. `scripts/test-domain.sh` 499/499 (unchanged, no new Simulation behaviour).
+
 - **Road lane markings, bolder apron labels (ADR 0061).** Landside roads had no lane markings
   at all — a flat asphalt ribbon blended 92% toward the real satellite photo underneath it, so
   it read as a grey band cut out of the aerial image rather than a marked road. Added a dashed

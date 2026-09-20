@@ -42,6 +42,27 @@ namespace Airside.Tests
             Assert.That(RouteAccess.Allows(AircraftType.Dash8Q400, Code("PER")), Is.False);
         }
 
+        /// <summary>
+        /// "Requires Regional tier" (an OperatingTier career milestone) and "flies Regional
+        /// routes" (a RouteBand) share the word "Regional" for two different systems — a real
+        /// source of player confusion the Fleet market/detail copy fixes by naming actual
+        /// destinations instead of leaving the band as an abstract label. Every band needs one,
+        /// and no two bands should silently end up with the same string (a copy-paste bug that
+        /// would make two different capability levels read as identical).
+        /// </summary>
+        [Test]
+        public void ExampleDestinations_NamesRealPlacesForEveryBand()
+        {
+            var seen = new System.Collections.Generic.HashSet<string>();
+            foreach (RouteBand band in Enum.GetValues(typeof(RouteBand)))
+            {
+                var examples = RouteAccess.ExampleDestinations(band);
+                Assert.That(examples, Is.Not.Null.And.Not.Empty, band.ToString());
+                Assert.That(seen.Add(examples), Is.True,
+                    $"{band} repeats another band's example text: \"{examples}\"");
+            }
+        }
+
         [Test]
         public void DeparturePrep_RunsFuelThenCateringThenBoardingBeforePushback()
         {

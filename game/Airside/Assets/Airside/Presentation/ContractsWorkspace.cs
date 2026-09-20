@@ -199,6 +199,11 @@ namespace Airside.Presentation
         public const float ColumnGap = 28f;
         public const float CaptionHeight = 20f;
         public const float OfferHeight = 86f;
+        // The market only ever runs three offers at a time (ADR 0056), so the common case is
+        // always fewer than a tall column could actually fit at OfferHeight — cards used to
+        // stay pinned to that minimum height regardless, leaving most of the column empty
+        // below them. MaxOfferHeight caps how far a card grows to fill the gap instead.
+        public const float MaxOfferHeight = 172f;
         public const float OfferGap = 10f;
         public const float MinColumnWidth = 300f;
 
@@ -241,10 +246,30 @@ namespace Airside.Presentation
             ActiveColumn.Width, ActiveColumn.Height - CaptionHeight - 8f);
 
 
-        public HudBox OfferCard(int index) =>
-            new(OffersColumn.X, OffersColumn.Y + CaptionHeight + 8f + index * (OfferHeight + OfferGap),
-                OffersColumn.Width, OfferHeight);
+        /// <summary>
+        /// Per-card height when laying out <paramref name="shown"/> offers: fills whatever
+        /// room OfferHeight would otherwise have left empty, up to MaxOfferHeight, instead of
+        /// always sitting at the size that fits the most possible offers regardless of how
+        /// many the market actually has open right now.
+        /// </summary>
+        public float OfferCardHeight(int shown)
+        {
+            if (shown <= 0)
+                return OfferHeight;
+            var available = OffersColumn.Height - CaptionHeight - 8f;
+            var natural = (available - (shown - 1) * OfferGap) / shown;
+            return natural < OfferHeight ? OfferHeight : natural > MaxOfferHeight ? MaxOfferHeight : natural;
+        }
 
+        public HudBox OfferCard(int index, int shown)
+        {
+            var height = OfferCardHeight(shown);
+            return new HudBox(OffersColumn.X, OffersColumn.Y + CaptionHeight + 8f + index * (height + OfferGap),
+                OffersColumn.Width, height);
+        }
+
+        /// <summary>How many offers fit at the compact OfferHeight — the cap on how many this
+        /// column can ever show, independent of how tall each one grows to fill space.</summary>
         public int VisibleOffers
         {
             get
@@ -383,26 +408,33 @@ namespace Airside.Presentation
             }
 
             var shown = Math.Min(model.Offers.Count, layout.VisibleOffers);
+            // The offer market only ever runs three at a time (ADR 0056), so this column is
+            // almost always taller than three compact cards need. OfferCardHeight grows each
+            // card to use the room instead of leaving it blank below them; the text/button
+            // block itself stays its natural size and centres in whatever extra height that
+            // card ends up with, so a bigger card reads as "more breathing room", not
+            // "content stretched thin".
+            const float contentHeight = 78f;
             for (var i = 0; i < shown; i++)
             {
                 var offer = model.Offers[i];
-                var card = layout.OfferCard(i);
+                var card = layout.OfferCard(i, shown);
                 var highlighted = offer.CanAccept && offer.Definition.Id == highlightedContractId;
                 into.Fill(card, highlighted ? HudTone.Accent : HudTone.Default, highlighted ? 0.22f : 0.04f);
-                if (highlighted)
-                    into.Outline(card, HudTone.Accent, 0.9f);
+                into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.25f);
 
+                var contentY = card.Y + (card.Height - contentHeight) * 0.5f;
                 var buttonWidth = 168f;
                 var textWidth = card.Width - buttonWidth - 40f;
-                into.Text(new HudBox(card.X + 16f, card.Y + 14f, textWidth, 22f), offer.Title, 15f,
+                into.Text(new HudBox(card.X + 16f, contentY, textWidth, 22f), offer.Title, 15f,
                     HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(card.X + 16f, card.Y + 38f, textWidth, 18f), offer.Terms, 12f,
+                into.Text(new HudBox(card.X + 16f, contentY + 24f, textWidth, 18f), offer.Terms, 12f,
                     HudTone.Muted);
                 if (offer.LockReason.Length > 0)
-                    into.Text(new HudBox(card.X + 16f, card.Y + 58f, textWidth, 18f), offer.LockReason, 11f,
+                    into.Text(new HudBox(card.X + 16f, contentY + 44f, textWidth, 18f), offer.LockReason, 11f,
                         HudTone.Caution);
 
-                into.Button(new HudBox(card.Right - buttonWidth - 16f, card.Y + 26f, buttonWidth, 32f),
+                into.Button(new HudBox(card.Right - buttonWidth - 16f, contentY + 12f, buttonWidth, 32f),
                     "ACCEPT CONTRACT", HudAction.Accept(offer.Definition.Id),
                     highlighted ? HudButtonStyle.Primary : HudButtonStyle.Secondary, offer.CanAccept);
                 into.Hotspot(card, HudAction.Accept(offer.Definition.Id));

@@ -1,5 +1,131 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — night moonlight for form shading, backwards vignette fixed (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0064).** Direct continuation of ADR 0063,
+  same "I can't see anything at night" report — Bailey asked to keep going on lighting
+  specifically.
+  - **Why 0063 wasn't the whole story:** raising the ambient floor made the field brighter, but
+    ambient light is flat/non-directional — an aircraft, a hangar roof, and open grass all
+    shade identically under ambient alone, so a brighter floor is still just a lighter version
+    of the same undifferentiated wash. There's a difference between "less dark" and "you can
+    tell what you're looking at", and only a directional light source gives the latter.
+  - **Fixed:** the directional "Sun" light's night-floor intensity 0.18 → 0.30 in
+    `AirsidePrototype.ApplyDayCycle` — a moonlight-strength key, still far under every flood
+    (52) and runway light (1.55-2.1) and under daytime's own 2.05, that gives surfaces a real
+    lit side and shaded side.
+  - **Also found while re-reading the code for this pass, unrelated to the moonlight question:**
+    `AirsideDayVolume.Apply`'s vignette was backwards — `Lerp(0.1, 0.05, daylight)` made it
+    *stronger* at night than day, darkening the corners hardest on exactly the frame already
+    too dark to see. Flipped to `Lerp(0.04, 0.07, daylight)`.
+  - **Evidence:** both changes are Presentation/Unity-only, outside the headless harness,
+    reviewed by inspection only. `scripts/test-domain.sh` 500/500 (unchanged — no Domain-layer
+    change this round). Like ADR 0063, this is a reasoned correction, not confirmed by eye.
+  - **NEXT, highest priority (unchanged from 0063, now more urgent):** an actual look at the
+    default Fleet-mode overview at night. Ambient, exposure, key light and vignette have all
+    moved together now on the same unverified assumption — if the combined effect overshoots
+    into washed-out, or still isn't enough, the fix is tuning this same handful of numbers, not
+    a redesign, but it needs eyes on it before any further blind tuning is worth doing.
+
+- **2026-09-20 Claude — night visibility floor raised from a real play report, Fleet route
+  clarity (branch `claude/weather-system-improvement-1bgfc3`, ADR 0063).** Bailey, from an
+  actual play session (not a hypothetical): "I need you like crazy to fix lighting at night! I
+  can't see anything! There should be lights right?" Also, after buying an aircraft: unclear
+  what it gives you, what it costs, where it can fly, what unlocks what, "what is Regional?"
+  - **Night lighting — real diagnosis, conservative fix, NOT confirmed by eye.** A dedicated
+    research pass checked every night light source's actual computed intensity (apron floods
+    52, runway edge 1.55, threshold/approach 1.85, ALS 2.1, stand markers 1.1) — all correct,
+    none reversed or zeroed, `AirsideBareField.Enabled` confirmed true by default so the real
+    Adelaide field's lighting does build. The actual mechanism: the default Fleet/career
+    overview camera sits at `AirsideBareField.OverviewDistance` = 2400m over a ~3900x2800m
+    field, while every one of those lights only reaches 9-115m. From the player's actual
+    starting view, almost the whole frame is ambient-only — and a -0.12 EV night exposure
+    (`AirsideDayVolume`) plus ACES tonemapping's toe curve plausibly crushes that toward black.
+    A comment in `AirsideDayVolume.cs` already worried about exactly this ("do not crush
+    midtones into a purple soup") but GAME.md's own 2026-09-17 entry admits "The grading and
+    camera feel are unverified in a build" — this was never actually checked on screen.
+    **Fixed:** raised the night ambient floor (`ambientNight`/ground tone/`ambientIntensity`
+    in `ApplyDayCycle`) and night `postExposure` (`AirsideDayVolume`, -0.12 → 0.06). Every
+    light source's own intensity and range is untouched, so floods/runway lights should still
+    read as the brightest features relative to the raised floor. **This is a reasoned,
+    conservative correction based on real code tracing, not a confirmed fix** — no Unity
+    editor to watch the result. If it's still too dark, or now too bright, both directions are
+    a small tweak to the same few numbers, not a redesign — but it needs a real look first.
+  - **Fleet/route clarity — fixed and verified.** `OperatingTier.Regional` (career milestone)
+    and `RouteBand.Regional` (destination category) are unrelated systems sharing the word
+    "Regional" right next to each other on screen ("Dash 8-400 · Domestic" /
+    "Requires Regional tier") — a completely reasonable source of "what is Regional?". New
+    `RouteAccess.ExampleDestinations` (Domain, tested) names two real places per band; Fleet
+    market/detail copy now reads e.g. "Domestic capability (Melbourne, Sydney, +closer)"
+    instead of the bare label, and the tier line says "career tier" to disambiguate. First
+    version clipped against its own text box at the widest band (4 cities + a long suffix ran
+    past a ~735px pane) — caught immediately by re-rendering via `scripts/hud-mockup`, fixed
+    by trimming to 2 names and a shorter "+closer" suffix.
+  - **Evidence:** `scripts/test-domain.sh` **500/500** (499 baseline + 1 new
+    `ExampleDestinations` test; one existing `FleetWorkspaceTests` assertion updated for the
+    new, more informative capability text). Fleet copy re-verified visually, not just by
+    reading layout math. Night-lighting change is Unity-only, reviewed by inspection only.
+  - **NEXT, highest priority:** get an actual look at the default Fleet-mode overview at night
+    — this is a real, urgent player complaint and the fix is reasoned but unconfirmed. Then
+    continue down the standing list (go-around teleport, HUD pass on the remaining workspaces,
+    terminal glazing-off-wall, wind-driven weather).
+
+- **2026-09-20 Claude — Contracts card fill (first real HUD-rework step), terminal roof fixes,
+  weather fog tint, and a real go-around bug documented not fixed (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0062).** Bailey: aircraft behaviour bugs,
+  terminal realism, better rain/cloud types, and "the HUD needs a massive rework." Bailey can't
+  test right now and chose to keep going rather than pause for a Unity check-in.
+  - **New capability this entry is built on:** got `scripts/hud-mockup` +
+    `scripts/render-hud-mockups.py` actually working in this sandbox (installed Pillow) — this
+    renders the real HUD draw list to PNGs headlessly. First time this session could *see* a
+    Presentation change instead of reasoning about it blind. Screenshotted all five pages
+    (Overview/Operations/Map/Fleet/Contracts) at 2015x1260 before touching anything.
+  - **What the renders showed, concretely:** all four workspaces are clean but very sparse —
+    Contracts and Fleet in particular leave most of the panel empty below a small amount of
+    content. That's the real evidence behind "massive rework," not a guess.
+  - **Fixed, verified by re-rendering:** `ContractsWorkspaceLayout.OfferCard` pinned every
+    offer card to a fixed 86px height regardless of the column's real height — with the market
+    only ever running three offers (ADR 0056), a tall window showed three small cards and a
+    large blank void. New `OfferCardHeight(shown)` grows cards to fill the space (capped
+    172px), content centred rather than stretched, plus a subtle outline on every card now
+    (not only the highlighted one). This is a first step, not the "massive rework" — Fleet,
+    Operations and the Map still have the same sparse-panel character and are not touched yet.
+  - **Terminal (from a dedicated research pass, both real and provable):** the roof brow's last
+    segment cantilevered 17.2m past the terminal's own real OSM footprint into open air —
+    narrowed to fit with the same gap pattern the rest of the brow uses. Roof plant/equipment
+    screens now share the brow's corrugated-metal texture instead of flat colour right next to
+    a textured brow. **Not fixed, documented:** the 28 glazing bays float 0.28-2.14m off the
+    real curved wall (constant Z vs. the wall's actual curving polyline) — needs correct
+    per-bay interpolation off a 64-point polygon, easy to get subtly wrong blind.
+  - **Weather (from a dedicated research pass):** Cloudy/Overcast/Rain/Fog/Storm all rendered
+    the *identical* fog colour — `UpdateWeatherPresentation`'s colour came from daylight alone,
+    only density varied by kind. Now Storm/Rain/Overcast darken toward slate grey by Gloom;
+    Fog blends toward a pale near-white haze instead, driven by how far its Visibility loss
+    outruns its own Gloom (the one weather kind where that gap is real — fog scatters light
+    bright even as it dims the sun). **Not fixed, documented:** no wind-driven rain/cloud
+    direction anywhere (windsock is the only wind-reactive visual); `BuildCloudBands`'s cluster
+    count/layout is fixed regardless of `CloudCover`, only tint/alpha respond.
+  - **Aircraft — real bug found, NOT fixed (highest-value remaining item):** a go-around flies
+    a full racetrack ending near short final at ~305m circuit height
+    (`CircuitTraffic.GoAround`), then transitions straight to `HoldingForLanding`, drawn pinned
+    to a queue slot on the ordinary final-approach path
+    (`ApproachHold.HoldingFinalProgress`) — a completely different position/altitude with no
+    relation to where the circuit actually left it. Verified with real numbers: a
+    400-1,100m horizontal jump and ~210-250m altitude drop in one tick, gear included (GoAround
+    forces gear up; the landed-on approach progress is usually well past where gear deploys).
+    Judged too risky to fix blind — it means blending two structurally different flight-path
+    systems (a fixed racetrack vs. a queue-pinned glideslope), and a wrong blend could look
+    worse than the current hard cut with no way here to see the result.
+  - **Evidence:** `scripts/test-domain.sh` **499/499**, unchanged (no new Simulation
+    behaviour). Contracts fill verified by actually re-rendering the mockup and looking at the
+    image, not just reading the layout math — genuinely different from every other
+    Presentation change this session.
+  - **NEXT, in priority order:** (1) the go-around teleport — needs Unity available to try a
+    blend and actually watch it; (2) continue the HUD pass on Fleet/Operations/Map using the
+    same mockup-render-and-look loop now that it's working; (3) the terminal glazing-off-wall
+    fix, with correct wall-edge extraction; (4) wind-driven rain/cloud direction. All of this
+    session's Presentation work (this entry and everything above it) still needs
+    `scripts/test-unity.sh` and a real Play-mode look before merging is fully trusted.
+
 - **2026-09-20 Claude — road lane markings, bolder apron labels, runway left as-is (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0061).** Bailey: "improve visual and ground
   appearance...including roads," "improve runway appearance," "improve apron labels and make

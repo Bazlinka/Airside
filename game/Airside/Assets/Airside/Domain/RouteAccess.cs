@@ -80,5 +80,22 @@ namespace Airside.Domain
             RouteBand.LongHaul => 1.80,
             _ => 1.0
         };
+
+        /// <summary>
+        /// A couple of named destinations in this band, for HUD copy that used to say only
+        /// "flies Regional routes" or "Domestic capability" — a real answer to "where can it
+        /// fly", not just the abstract band name. Not exhaustive (<see cref="BandOf"/> is the
+        /// source of truth); picked to be recognisable, real places from that switch. Kept to
+        /// two names — a HUD line drawing this used to clip against its own box at the widest
+        /// band (four names plus a suffix ran past a ~735px detail pane).
+        /// </summary>
+        public static string ExampleDestinations(RouteBand band) => band switch
+        {
+            RouteBand.Domestic => "Melbourne, Sydney",
+            RouteBand.National => "Perth, Brisbane",
+            RouteBand.Tasman => "Auckland, Christchurch",
+            RouteBand.LongHaul => "further afield",
+            _ => "Kingscote, Port Lincoln"
+        };
     }
 }

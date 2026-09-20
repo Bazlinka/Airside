@@ -11,6 +11,25 @@ namespace Airside.Tests
     public sealed class CrossStripContinuityTests
     {
         [Test]
+        public void HoldingShortPose_EmptyStandUsesTheAssignedEndNotBay50D()
+        {
+            var hold05 = AdelaideGround.HoldingShortPose(default, 0, RunwayDirection.Runway05);
+            Assert.That(System.Math.Abs(hold05.X - AdelaideLayout.Runway05Hold[0])
+                        + System.Math.Abs(hold05.Z - AdelaideLayout.Runway05Hold[1]), Is.LessThan(1f));
+
+            var hold23 = AdelaideGround.HoldingShortPose(default, 0, RunwayDirection.Runway23);
+            Assert.That(System.Math.Abs(hold23.X - AdelaideLayout.Lineup23[0])
+                        + System.Math.Abs(hold23.Z - AdelaideLayout.Lineup23[1]), Is.LessThan(1f),
+                "23 must not fall back to the 05 hold");
+            Assert.That(System.Math.Abs(hold23.X - hold05.X) + System.Math.Abs(hold23.Z - hold05.Z),
+                Is.GreaterThan(100f));
+
+            var hold12 = AdelaideGround.HoldingShortPose(default, 0, RunwayDirection.Runway12);
+            Assert.That(System.Math.Abs(hold12.X - AdelaideCrossRoutes.Hold12[0])
+                        + System.Math.Abs(hold12.Z - AdelaideCrossRoutes.Hold12[1]), Is.LessThan(1f));
+        }
+
+        [Test]
         public void VacateStartsWhereLandingRolloutEnds()
         {
             foreach (var runway in new[] { RunwayDirection.Runway12, RunwayDirection.Runway30 })

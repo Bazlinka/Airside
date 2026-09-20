@@ -244,17 +244,38 @@ namespace Airside.Simulation
             // A missing departure stand must not teleport the aircraft onto bay 50D's hold.
             if (string.IsNullOrEmpty(departureStand.Value))
             {
-                float[] hold = runway switch
+                float hx, hz, fx, fz;
+                if (runway == RunwayDirection.Runway12)
                 {
-                    RunwayDirection.Runway12 => AdelaideCrossRoutes.Hold12,
-                    RunwayDirection.Runway30 => AdelaideCrossRoutes.Hold30,
-                    _ => AdelaideLayout.Runway05Hold
-                };
-                RunwayFrame.Forward(runway, out var fx, out var fz);
+                    hx = AdelaideCrossRoutes.Hold12[0];
+                    hz = AdelaideCrossRoutes.Hold12[1];
+                    RunwayFrame.Forward(runway, out fx, out fz);
+                }
+                else if (runway == RunwayDirection.Runway30)
+                {
+                    hx = AdelaideCrossRoutes.Hold30[0];
+                    hz = AdelaideCrossRoutes.Hold30[1];
+                    RunwayFrame.Forward(runway, out fx, out fz);
+                }
+                else if (runway == RunwayDirection.Runway23)
+                {
+                    // Start of the 23 lineup path — the F6-side hold mirrored for 23.
+                    var lineup = AdelaideLayout.Lineup23;
+                    hx = lineup[0];
+                    hz = lineup[1];
+                    RunwayFrame.Forward(runway, out fx, out fz);
+                }
+                else
+                {
+                    hx = AdelaideLayout.Runway05Hold[0];
+                    hz = AdelaideLayout.Runway05Hold[1];
+                    RunwayFrame.Forward(runway, out fx, out fz);
+                }
+
                 if (slot <= 0)
-                    return new GroundPose(hold[0], hold[1], fx, fz, 0f, false);
+                    return new GroundPose(hx, hz, fx, fz, 0f, false);
                 var back = AwaitingSpacingMetres * slot;
-                return new GroundPose(hold[0] - fx * back, hold[1] - fz * back, fx, fz, 0f, false);
+                return new GroundPose(hx - fx * back, hz - fz * back, fx, fz, 0f, false);
             }
 
             type ??= IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42;

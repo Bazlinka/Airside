@@ -155,8 +155,6 @@ namespace Airside.Simulation
                           || Owns(ownedTypes, AircraftType.AirbusA321Neo)
                           || Owns(ownedTypes, AircraftType.AirbusA350900)
                           || Owns(ownedTypes, AircraftType.Boeing78710);
-            var ownsWide = Owns(ownedTypes, AircraftType.AirbusA350900)
-                           || Owns(ownedTypes, AircraftType.Boeing78710);
 
             if (Tier < OperatingTier.Regional
                 && CompletedPlayerRotations >= 8 && Reliability >= 70)
@@ -164,8 +162,10 @@ namespace Airside.Simulation
             if (Tier < OperatingTier.Domestic
                 && CompletedPlayerRotations >= 18 && Reliability >= 80 && (ownsDash || ownsJet))
                 Tier = OperatingTier.Domestic;
+            // International unlocks on jet ops — not on already owning a widebody (A350/787
+            // still require International to buy, so requiring ownsWide was a deadlock).
             if (Tier < OperatingTier.International
-                && CompletedPlayerRotations >= 28 && Reliability >= 88 && ownsWide)
+                && CompletedPlayerRotations >= 28 && Reliability >= 88 && ownsJet)
                 Tier = OperatingTier.International;
         }
 

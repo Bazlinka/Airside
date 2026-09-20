@@ -39,7 +39,7 @@ namespace Airside.Domain
             AircraftType.Boeing7378, 32_000, OperatingTier.Domestic, 82, 20);
 
         public static readonly AircraftOffer AirbusA321Neo = new(
-            AircraftType.AirbusA321Neo, 48_000, OperatingTier.International, 88, 30);
+            AircraftType.AirbusA321Neo, 48_000, OperatingTier.Domestic, 88, 28);
 
         public static readonly AircraftOffer AirbusA350900 = new(
             AircraftType.AirbusA350900, 90_000, OperatingTier.International, 92, 40);

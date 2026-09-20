@@ -109,15 +109,15 @@ namespace Airside.Simulation
             var t = GoAroundProgress(elapsedSeconds);
             var half = AdelaideCrossRoutes.HalfLength;
             var radius = Math.Min(TurnRadiusMetres, half * 0.45);
-            var west = -half + 80.0;
+            // Upwind starts outside the arrival threshold so the missed approach
+            // continues the short final just flown (native metres, not RemapAlong).
+            var west = -half - 220.0;
             var east = half - 80.0;
             var straight = Math.Max(200.0, east - west);
             var arc = Math.PI * radius;
             var lap = 2.0 * straight + 2.0 * arc;
 
-            // Start near remapped short final — just outside the arrival threshold.
-            var startAlong = RunwayFrame.RemapAlong(CircuitProfile.ShortFinalX);
-            var startDistance = Math.Max(0.0, startAlong - west);
+            var startDistance = 0.0;
             var distance = startDistance + t * lap;
             if (distance >= lap)
                 distance -= lap;

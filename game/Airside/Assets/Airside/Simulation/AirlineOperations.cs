@@ -1530,12 +1530,9 @@ namespace Airside.Simulation
             if (next == null)
                 return false;
 
-            // Prefer the live end on this strip (05↔23 or 12↔30). Do not bounce a
-            // regional onto the other strip in the middle of a clearance.
-            var refreshed = RunwayFor(next);
-            if (RunwayWeather.IsMainRunway(refreshed) == mainStrip)
-                next.AssignedRunway = refreshed;
-
+            // Keep the end they taxied to / held final on. Refreshing 05↔23 (or 12↔30)
+            // here teleported lined-up and short-final traffic across the strip when the
+            // wind was near a tie. Go-around rejoin still reassigns via AdvanceAircraft.
             var landing = next.State == FleetState.HoldingForLanding;
             var profile = AircraftPerformance.For(next.Type);
             if (landing && ShouldGoAround(next, now, mainStrip))

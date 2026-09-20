@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Airside.Domain;
@@ -43,9 +44,21 @@ namespace Airside.Presentation
         private readonly List<MilestoneRow> _milestones = new();
         private readonly List<ContractHistoryRow> _history = new();
 
+        /// <summary>
+        /// The livery choices offered at airline creation (ADR 0045), reused here so a player
+        /// who wants to repaint later picks from the same authored set rather than a free
+        /// colour picker — one shared source of truth with <c>AirsidePrototype.LiveryChoices</c>.
+        /// </summary>
+        public static readonly (string Label, string Hex)[] LiveryPalette =
+        {
+            ("Crimson", "#C8102E"), ("Navy", "#1F3A93"), ("Forest", "#2E7D32"),
+            ("Sunset", "#E8772E"), ("Violet", "#6A3FA0"), ("Gold", "#D4A017")
+        };
+
         public string Title => "CAREER";
 
         public string AirlineName { get; private set; } = string.Empty;
+        public string CurrentLiveryHex { get; private set; } = string.Empty;
         public string FundsLine { get; private set; } = string.Empty;
         public string LifetimeRevenueLine { get; private set; } = string.Empty;
         public string ReliabilityLine { get; private set; } = string.Empty;
@@ -69,6 +82,7 @@ namespace Airside.Presentation
             _milestones.Clear();
             _history.Clear();
             AirlineName = string.Empty;
+            CurrentLiveryHex = string.Empty;
             FundsLine = string.Empty;
             LifetimeRevenueLine = string.Empty;
             ReliabilityLine = string.Empty;
@@ -89,6 +103,7 @@ namespace Airside.Presentation
             var fleetSize = ownedTypes.Count;
 
             AirlineName = operations.PlayerAirline.Name;
+            CurrentLiveryHex = operations.PlayerAirline.LiveryHex;
             FundsLine = $"${career.Funds:N0} on hand";
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} lifetime revenue";
             ReliabilityLine = $"{career.Reliability}% reliability";
@@ -190,6 +205,18 @@ namespace Airside.Presentation
         public HudBox NextTierRequirementBox =>
             new(LeftColumn.X, NextTierY + CaptionHeight + 48f, LeftColumn.Width, 36f);
 
+        public const float SwatchSize = 28f;
+        public const float SwatchGap = 8f;
+
+        /// <summary>Where the livery-repaint swatches start, below the next-tier requirement text.</summary>
+        public float ProfileY => NextTierY + CaptionHeight + 48f + 36f + 16f;
+
+        public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
+
+        public HudBox LiverySwatch(int index) =>
+            new(LeftColumn.X + index * (SwatchSize + SwatchGap), ProfileY + CaptionHeight + 8f,
+                SwatchSize, SwatchSize);
+
         public HudBox MilestonesCaption => RightColumn.WithHeight(CaptionHeight);
 
         public HudBox MilestoneRow(int index) =>
@@ -289,6 +316,29 @@ namespace Airside.Presentation
 
             into.Text(layout.NextTierRequirementBox, model.NextTierRequirementLine, 12f, HudTone.Muted,
                 HudTextStyle.Wrap);
+
+            PaintProfile(into, model, layout);
+        }
+
+        /// <summary>
+        /// Livery repaint (ADR 0067): the same authored swatches offered at airline creation,
+        /// clickable here too — a real HUD entry point for AirlineOperations.SetLivery, which
+        /// otherwise had no way to be reached once past the setup screen. Rename has no control
+        /// here yet: it needs a text field, a genuinely different (and riskier) piece of IMGUI
+        /// than a row of buttons, and is deliberately left for its own pass.
+        /// </summary>
+        private static void PaintProfile(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
+        {
+            into.Caption(layout.ProfileCaption, "LIVERY");
+            for (var i = 0; i < StatsWorkspaceModel.LiveryPalette.Length; i++)
+            {
+                var (_, hex) = StatsWorkspaceModel.LiveryPalette[i];
+                var swatch = layout.LiverySwatch(i);
+                var current = string.Equals(hex, model.CurrentLiveryHex, StringComparison.OrdinalIgnoreCase);
+                into.Fill(swatch, HudTone.Default, 1f, hex);
+                into.Outline(swatch, current ? HudTone.Default : HudTone.Muted, current ? 1f : 0.4f);
+                into.Hotspot(swatch, HudAction.Livery(hex));
+            }
         }
 
         private static void PaintMilestonesAndHistory(HudDrawList into, StatsWorkspaceModel model,

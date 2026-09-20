@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — livery repaint wired into the Stats HUD (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0067).** Bailey asked "any more?" after the
+  overnight round below merged. Of that round's two profile features (rename, livery), only
+  resale got a discoverable HUD path; this closes livery. A LIVERY row of six clickable
+  swatches on the Stats page's Overview column (same palette as airline creation, now one
+  shared source of truth) — click one, `AirlineOperations.SetLivery` repaints immediately, the
+  current one stays outlined. Rename is NOT done — it needs a text field, genuinely riskier
+  IMGUI than a button row, deliberately left for its own pass rather than rushed. **Verified by
+  rendering**, the same as the Stats page itself: re-ran `scripts/hud-mockup` +
+  `render-hud-mockups.py` at 2015×1260 and a narrow 1120×840 — six correctly-coloured swatches,
+  current one outlined, no clipping against the Next Tier block above or the footer below at
+  either size. `scripts/test-domain.sh` **527/527** (1 new test, 2 extended).
+  - **NEXT:** rename's text-input control; the Stats page's still-empty lower-right area;
+    everything else already queued (go-around teleport, terminal glazing, wind-driven weather,
+    a real Unity look owed across this whole session's Presentation work).
+
 - **2026-09-21 Claude — Career Stats workspace and nine supporting features, autonomous
   overnight pass (branch `claude/weather-system-improvement-1bgfc3`, merged, ADR 0066).**
   Bailey: "Add 10 new features to the game overnight. Implement and merge... Goodnight" —

@@ -178,6 +178,7 @@ namespace Airside.Presentation
         public const string BuyPrefix = "buy:";
         public const string AcceptPrefix = "accept:";
         public const string DestinationPrefix = "destination:";
+        public const string LiveryPrefix = "livery:";
 
         public const string Close = "close";
         public const string TabDepartures = "tab:departures";
@@ -201,6 +202,7 @@ namespace Airside.Presentation
         public static string Buy(string typeId) => BuyPrefix + typeId;
         public static string Accept(string contractId) => AcceptPrefix + contractId;
         public static string Destination(string code) => DestinationPrefix + code;
+        public static string Livery(string hex) => LiveryPrefix + hex;
 
         /// <summary>The payload of a prefixed action id, or empty when the prefix does not match.</summary>
         public static string Payload(string actionId, string prefix) =>

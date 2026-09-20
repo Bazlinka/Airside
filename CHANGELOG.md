@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Livery repaint wired into the Stats HUD (ADR 0067).** `AirlineOperations.SetLivery` (ADR
+  0066) had no way to actually be reached in-game. The Stats workspace's Overview column now
+  has a LIVERY row of six clickable swatches — the same palette offered at airline creation,
+  now a single shared source of truth instead of two copies — with the current livery
+  outlined. Rename still has no HUD control (needs a text field, a riskier piece of IMGUI than
+  a row of buttons; left for its own pass). Verified by re-rendering the Stats page via
+  `scripts/hud-mockup` at two viewport sizes, not just reasoned about. `scripts/test-domain.sh`
+  527/527.
+
 - **Career Stats workspace, and nine supporting features (ADR 0066).** A fifth HUD tab
   ("STATS") gives a real, accurate view of career progress: funds, lifetime revenue (never
   reduced by spending, unlike the balance), reliability, tier, fleet size, exactly what the

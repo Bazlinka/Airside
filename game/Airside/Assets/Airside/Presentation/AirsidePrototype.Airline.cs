@@ -18,11 +18,8 @@ namespace Airside.Presentation
     public sealed partial class AirsidePrototype
     {
 
-        private static readonly (string label, string hex)[] LiveryChoices =
-        {
-            ("Crimson", "#C8102E"), ("Navy", "#1F3A93"), ("Forest", "#2E7D32"),
-            ("Sunset", "#E8772E"), ("Violet", "#6A3FA0"), ("Gold", "#D4A017")
-        };
+        /// <summary>Shared with the Stats workspace's post-game-start livery swatches (ADR 0067).</summary>
+        private static readonly (string label, string hex)[] LiveryChoices = StatsWorkspaceModel.LiveryPalette;
 
         private AirlineOperations _operations;
         private string _airlineNameDraft = "Southern Cross Regional";
@@ -1947,7 +1944,14 @@ namespace Airside.Presentation
 
             var code = HudAction.Payload(action, HudAction.DestinationPrefix);
             if (code.Length > 0 && DestinationCatalogue.TryFind(code, out var destination))
+            {
                 PickDestination(destination);
+                return;
+            }
+
+            var liveryHex = HudAction.Payload(action, HudAction.LiveryPrefix);
+            if (liveryHex.Length > 0 && _operations.SetLivery(liveryHex).Accepted)
+                PlayUiClick();
         }
 
         private bool TryFindFleetAircraft(string registration, out FleetAircraft aircraft)

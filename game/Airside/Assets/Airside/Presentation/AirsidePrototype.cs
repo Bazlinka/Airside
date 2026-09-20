@@ -13016,9 +13016,29 @@ namespace Airside.Presentation
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             if (!dest.HasValue)
                 return position;
-            var lateral = DepartureTurn.LateralMetres(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, progress);
-            return new Vector3(position.x, position.y, position.z + lateral);
+            var runway = aircraft.AssignedRunway;
+            var home = _operations.Home;
+            var lateral = DepartureTurn.LateralMetres(runway, home, dest.Value, phase, progress);
+            if (progress <= DepartureTurn.TurnEstablishedProgress)
+                return new Vector3(position.x, position.y, position.z + lateral);
+
+            // DepartureTurn.Blend (and so LateralMetres/YawDegrees) locks at its established
+            // value past this progress — by design, the SID turn itself is done. But `position`
+            // (from AirsideFlightPath.Departed) keeps growing along the ORIGINAL runway
+            // heading forever, x only, no matter how much further the climb-out runs. Left
+            // alone, that meant the frozen sideways kick above was the aircraft's ONLY turn:
+            // for the rest of the departure — most of it, since the turn establishes well
+            // before the flight leaves visual range — the nose held the new heading while the
+            // aircraft actually kept flying dead straight down the extended runway line, the
+            // classic crabbing/drifting look instead of a real turn. DepartureTurn.
+            // EstablishedTrackMetres (Simulation, pure and unit-tested) supplies the fix:
+            // however much further along-track distance is covered past establishment gets
+            // decomposed onto the established heading instead of staying pure +X.
+            var xAtEstablished = AirsideFlightPath.Departed(
+                DepartureTurn.TurnEstablishedProgress, TakeoffOffsetX, aircraft.Type).x;
+            var extraAlong = position.x - xAtEstablished;
+            var (forward, sideways) = DepartureTurn.EstablishedTrackMetres(runway, home, dest.Value, extraAlong);
+            return new Vector3(xAtEstablished + forward, position.y, position.z + lateral + sideways);
         }
 
         /// <summary>

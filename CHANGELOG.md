@@ -1,5 +1,30 @@
 ## Unreleased
 
+- **Road lane markings, bolder apron labels (ADR 0061).** Landside roads had no lane markings
+  at all — a flat asphalt ribbon blended 92% toward the real satellite photo underneath it, so
+  it read as a grey band cut out of the aerial image rather than a marked road. Added a dashed
+  white centreline (own mesh/material, so the paint isn't diluted by the road's satellite
+  blend) on every road wide enough to already draw a ribbon. Also bolded the painted apron
+  stand/gate identifier labels, which used Unity's default `TextMesh` weight next to the
+  runway's own purpose-built stroke-drawn designation numerals. Runway appearance was checked
+  and left alone — paint, texture, rubber wear and lighting were already comprehensive; no
+  building a stroke-based letter alphabet for stand references attempted here (a much larger,
+  Unity-verification-dependent job, flagged as a real follow-up instead of guessed at).
+  Presentation/Unity-only, outside the headless harness; `scripts/test-domain.sh` unaffected
+  (499/499).
+
+- **Departures actually turn after the SID establishes (ADR 0060).** Once the destination-track
+  turn locked in, the aircraft used to keep translating along the *original* runway heading
+  forever — the nose held the new heading while the ground track kept going straight down the
+  extended runway line, a steady crab/drift for most of the visible climb-out rather than a
+  momentary artifact. New `DepartureTurn.EstablishedTrackMetres` (pure, unit-tested) decomposes
+  any further along-track distance onto the established heading instead. Also fixed two latent
+  sign bugs found while working this out: `YawDegrees`/`Forward`'s doc comments (and `Forward`'s
+  actual return value, dead code though it was) claimed a right turn is +Z in the runway-05
+  frame; it's −Z, matching `LateralMetres`. `DepartureTurnTests` (+5); `scripts/test-domain.sh`
+  499/499. Presentation-only change unverified in Unity — flagged explicitly given the risk of
+  a sign error here being highly visible.
+
 - **Two graphics/UX bugs fixed after a targeted audit of maps, aircraft, taxiing and the HUD.**
   A parked, gate-side aircraft's nose taxi spotlight used to switch on at night for up to two
   minutes before every departure and 35s after every arrival — engines spool up while still

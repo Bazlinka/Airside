@@ -16,7 +16,7 @@ Shader "Airside/Surroundings"
         _AirfieldTint ("Airfield edge tint", Color) = (0.59, 0.61, 0.55, 1)
         _AirfieldHalfX ("Airfield half width X", Float) = 1950
         _AirfieldHalfZ ("Airfield half width Z", Float) = 1400
-        _EdgeTextureBlend ("Edge texture blend metres", Float) = 520
+        _EdgeTextureBlend ("Edge texture blend metres", Float) = 1050
         _DryTile ("Dry tile metres", Float) = 47
         _MacroScale ("Macro variation metres", Float) = 240
         _MacroStrength ("Macro brightness", Float) = 0.08
@@ -136,7 +136,9 @@ Shader "Airside/Surroundings"
                 float edgeBlend = 1.0 - smoothstep(0.0, max(_EdgeTextureBlend, 1.0), outside);
 
                 // Carry the airfield's dry-grass detail beyond the rectangular mesh edge,
-                // then dissolve it into the OSM land-cover palette over several hundred metres.
+                // then dissolve it into the OSM land-cover palette. AdelaideGround at the
+                // same rectangle is already satelliteStrength satellite, so the grass
+                // weight here starts at (1 - strength) or the join is a bright hairline.
                 float2 uv = xz / max(_DryTile, 1.0);
                 float3 edgeAlbedo = SAMPLE_TEXTURE2D(_AirfieldAlbedo, sampler_AirfieldAlbedo, uv).rgb;
                 float2 farUv = mul(float2x2(0.8, -0.6, 0.6, 0.8), xz) / max(_DryTile * 4.3, 1.0);
@@ -158,7 +160,8 @@ Shader "Airside/Surroundings"
                 // for land and the real beach only. This also avoids offshore source-tile gaps.
                 float satelliteBlend = _SatelliteStrength * (1.0 - saturate(input.color.a));
                 float3 broadAlbedo = lerp(input.color.rgb, satellite, satelliteBlend);
-                float3 albedo = lerp(broadAlbedo, edgeAlbedo, edgeBlend);
+                float grassAtJoin = 1.0 - _SatelliteStrength;
+                float3 albedo = lerp(broadAlbedo, edgeAlbedo, edgeBlend * grassAtJoin);
                 float3 color = albedo * (mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS));
 
                 // Water sheen: a broad sun glint, strongest looking into the light.

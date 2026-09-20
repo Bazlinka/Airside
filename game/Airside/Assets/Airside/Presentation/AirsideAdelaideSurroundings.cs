@@ -29,7 +29,15 @@ namespace Airside.Presentation
         private const float InlandWaterBelowPavement = 4.8f;
         private const float TuckUnderMetres = 4f;
         private const float EdgeBlendMetres = 700f;
-        public const float EdgeTextureBlendMetres = 2f;
+        /// <summary>
+        /// How far the satellite/grass mix eases across the airfield rectangle.
+        /// Must match the ground shader's <c>_SatelliteEdgeBlend</c> so both
+        /// meshes paint the same colour on the join — 2 m left a grass ring
+        /// against the field's satellite edge and read as a bright hairline.
+        /// </summary>
+        public const float EdgeTextureBlendMetres = 1050f;
+
+        public const float SatelliteStrength = 0.92f;
         private const float BeachWidthMetres = 55f;
         public const float SatelliteExtentMetres = 12000f;
         public const string SatelliteTexturePath =
@@ -96,7 +104,7 @@ namespace Airside.Presentation
             if (satellite != null)
                 material.SetTexture("_SatelliteAlbedo", satellite);
             material.SetFloat("_SatelliteExtent", SatelliteExtentMetres);
-            material.SetFloat("_SatelliteStrength", satellite != null ? 0.92f : 0f);
+            material.SetFloat("_SatelliteStrength", satellite != null ? SatelliteStrength : 0f);
             material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
             material.SetColor("_AirfieldTint", new Color(0.59f, 0.61f, 0.55f, 1f));
             material.SetFloat("_AirfieldHalfX", AirsideAdelaideGround.SizeX * 0.5f);
@@ -227,8 +235,78 @@ namespace Airside.Presentation
             mesh.colors = colors;
             mesh.SetTriangles(triangles, 0);
             mesh.RecalculateNormals();
+            RepairJoinNormals(grid, vertices, mesh);
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        /// <summary>
+        /// The 4 m tuck-under cliff shares vertices with the hole edge.
+        /// <see cref="Mesh.RecalculateNormals"/> pulls those verts down the cliff
+        /// and lights a bright rectangle around the field. Rebuild the join from
+        /// the outward land only.
+        /// </summary>
+        public static void RepairJoinNormals(CoastGrid grid, Vector3[] vertices, Mesh mesh)
+        {
+            if (grid == null || vertices == null || mesh == null)
+                return;
+            var nx = grid.CountX;
+            var nz = grid.CountZ;
+            if (vertices.Length != nx * nz)
+                return;
+
+            var normals = mesh.normals;
+            if (normals == null || normals.Length != vertices.Length)
+                return;
+
+            for (var zi = 0; zi < nz; zi++)
+            for (var xi = 0; xi < nx; xi++)
+            {
+                if (!IsHoleEdge(grid, xi, zi))
+                    continue;
+
+                var ox = xi;
+                var oz = zi;
+                if (Mathf.Abs(Mathf.Abs(grid.X(xi)) - grid.HoleHalfX) < 0.05f)
+                    ox = grid.X(xi) >= 0f ? Mathf.Min(xi + 1, nx - 1) : Mathf.Max(xi - 1, 0);
+                if (Mathf.Abs(Mathf.Abs(grid.Z(zi)) - grid.HoleHalfZ) < 0.05f)
+                    oz = grid.Z(zi) >= 0f ? Mathf.Min(zi + 1, nz - 1) : Mathf.Max(zi - 1, 0);
+
+                var edge = vertices[zi * nx + xi];
+                var outward = vertices[oz * nx + ox] - edge;
+                Vector3 along;
+                if (ox != xi)
+                {
+                    var z1 = Mathf.Min(zi + 1, nz - 1);
+                    var z0 = Mathf.Max(zi - 1, 0);
+                    along = vertices[z1 * nx + xi] - vertices[z0 * nx + xi];
+                }
+                else
+                {
+                    var x1 = Mathf.Min(xi + 1, nx - 1);
+                    var x0 = Mathf.Max(xi - 1, 0);
+                    along = vertices[zi * nx + x1] - vertices[zi * nx + x0];
+                }
+
+                var n = Vector3.Cross(along, outward);
+                if (n.y < 0f)
+                    n = -n;
+                if (n.sqrMagnitude > 1e-6f)
+                    normals[zi * nx + xi] = n.normalized;
+            }
+
+            mesh.normals = normals;
+        }
+
+        public static bool IsHoleEdge(CoastGrid grid, int xi, int zi)
+        {
+            if (grid == null)
+                return false;
+            var onX = Mathf.Abs(Mathf.Abs(grid.X(xi)) - grid.HoleHalfX) < 0.05f
+                      && Mathf.Abs(grid.Z(zi)) <= grid.HoleHalfZ + 0.05f;
+            var onZ = Mathf.Abs(Mathf.Abs(grid.Z(zi)) - grid.HoleHalfZ) < 0.05f
+                      && Mathf.Abs(grid.X(xi)) <= grid.HoleHalfX + 0.05f;
+            return onX || onZ;
         }
 
         /// <summary>

@@ -52,7 +52,7 @@ namespace Airside.Simulation
         /// <summary>
         /// Missed approach from short final: climb along the upwind, then fly the same
         /// racetrack the holders use. Starts on the glideslope, arrives at circuit height
-        /// before the east turn.
+        /// before the east turn. Coordinates are in the 05 circuit frame.
         /// </summary>
         public static void GoAround(double elapsedSeconds, out double x, out double y, out double z)
         {
@@ -66,6 +66,99 @@ namespace Airside.Simulation
             var startHeight = CircuitProfile.ShortFinalHeight;
             var height = startHeight + (CircuitHeightMetres - startHeight) * Smooth(climb);
             OnLap(distance, height, out x, out y, out z);
+        }
+
+        /// <summary>
+        /// Missed approach in world XZ for the assigned runway. 05/23 reuse the
+        /// authored racetrack (23 flipped). 12/30 fly a compact right-hand circuit
+        /// in cross-strip local metres — remapping the 05 south racetrack put
+        /// regionals through the terminal.
+        /// </summary>
+        public static void GoAroundOnRunway(double elapsedSeconds, RunwayDirection runway,
+            out double x, out double y, out double z)
+        {
+            if (runway == RunwayDirection.Runway23)
+            {
+                GoAround(elapsedSeconds, out x, out y, out z);
+                x = -x;
+                z = -z;
+                return;
+            }
+
+            if (runway is RunwayDirection.Runway12 or RunwayDirection.Runway30)
+            {
+                GoAroundCrossLocal(elapsedSeconds, out var localX, out y, out var localZ);
+                if (runway == RunwayDirection.Runway30)
+                {
+                    localX = -localX;
+                    localZ = -localZ;
+                }
+
+                AdelaideCrossRoutes.LocalToWorld((float)localX, (float)localZ, out var wx, out var wz);
+                x = wx;
+                z = wz;
+                return;
+            }
+
+            GoAround(elapsedSeconds, out x, out y, out z);
+        }
+
+        /// <summary>Compact right-hand circuit in 12-local metres (along +, lateral − away from apron).</summary>
+        private static void GoAroundCrossLocal(double elapsedSeconds, out double along, out double y, out double lateral)
+        {
+            var t = GoAroundProgress(elapsedSeconds);
+            var half = AdelaideCrossRoutes.HalfLength;
+            var radius = Math.Min(TurnRadiusMetres, half * 0.45);
+            var west = -half + 80.0;
+            var east = half - 80.0;
+            var straight = Math.Max(200.0, east - west);
+            var arc = Math.PI * radius;
+            var lap = 2.0 * straight + 2.0 * arc;
+
+            // Start near remapped short final — just outside the arrival threshold.
+            var startAlong = RunwayFrame.RemapAlong(CircuitProfile.ShortFinalX);
+            var startDistance = Math.Max(0.0, startAlong - west);
+            var distance = startDistance + t * lap;
+            if (distance >= lap)
+                distance -= lap;
+
+            var climb = Clamp01(t / 0.28);
+            var startHeight = CircuitProfile.ShortFinalHeight;
+            y = startHeight + (CircuitHeightMetres - startHeight) * Smooth(climb);
+
+            var upwind = straight;
+            var eastArc = upwind + arc;
+            var downwind = eastArc + straight;
+
+            if (distance <= upwind)
+            {
+                var u = upwind <= 0 ? 0 : distance / upwind;
+                along = west + u * straight;
+                lateral = 0;
+                return;
+            }
+
+            if (distance <= eastArc)
+            {
+                var u = (distance - upwind) / arc;
+                var theta = u * Math.PI;
+                along = east + radius * Math.Sin(theta);
+                lateral = -radius + radius * Math.Cos(theta);
+                return;
+            }
+
+            if (distance <= downwind)
+            {
+                var u = (distance - eastArc) / straight;
+                along = east - u * straight;
+                lateral = -2.0 * radius;
+                return;
+            }
+
+            var westArc = (distance - downwind) / arc;
+            var phi = Math.PI + westArc * Math.PI;
+            along = west + radius * Math.Sin(phi);
+            lateral = -radius + radius * Math.Cos(phi);
         }
 
         public static void OnLap(double distanceMetres, double heightMetres, out double x, out double y, out double z)

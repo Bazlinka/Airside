@@ -45,6 +45,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ArrivalRunway_FollowsTheWindNotTheAwayCity()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Wind Air", "#123456");
+            ops.AddAirline(player);
+            Assert.That(DestinationCatalogue.TryFind("PLO", out var portLincoln), Is.True);
+
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            restore.Invoke(ops, new object[]
+            {
+                "VH-ARR", player, AircraftType.Atr42, FleetState.Inbound, new SimulationTime(0),
+                new SimulationTime(60), default(StableId), default(StableId), portLincoln, null, 0
+            });
+            var inbound = ops.Fleet[0];
+            var windOnly = RunwayWeather.Select(ops.Wind, AircraftType.Atr42, null, ops.Home);
+            Assert.That(ops.RunwayFor(inbound), Is.EqualTo(windOnly),
+                "arrivals must not take the departure-favoured end in light wind");
+        }
+
+        [Test]
         public void HeavyAircraftReceiveLongerWakeSpacing()
         {
             Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.AirbusA350900), Is.EqualTo(180));

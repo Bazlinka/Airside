@@ -38,10 +38,25 @@ namespace Airside.Simulation
 
         public static float HalfLength => AdelaideLayout.CrossRunwayLengthMetres * 0.5f;
 
+        /// <summary>
+        /// Metres past the arrival threshold where rollout ends — matches
+        /// <see cref="RunwayFrame.RemapAlong"/> of <see cref="CircuitProfile.RolloutEndX"/>
+        /// so Landing → Vacate does not teleport.
+        /// </summary>
+        public static float VacateOntoMetres =>
+            RunwayFrame.RemapAlong(CircuitProfile.RolloutEndX) + HalfLength;
+
+        /// <summary>
+        /// Metres past the departure threshold where the takeoff roll starts —
+        /// matches remapped <see cref="CircuitProfile.TakeoffStartX"/>.
+        /// </summary>
+        public static float LineupOntoMetres =>
+            RunwayFrame.RemapAlong(CircuitProfile.TakeoffStartX) + HalfLength;
+
         private static float[] Lineup12()
         {
             Threshold(RunwayDirection.Runway12, 0f, out var tx, out var tz);
-            Threshold(RunwayDirection.Runway12, 55f, out var sx, out var sz);
+            Threshold(RunwayDirection.Runway12, LineupOntoMetres, out var sx, out var sz);
             return GroundPathSmoothing.FilletAndDensify(new[]
             {
                 Hold12[0], Hold12[1],
@@ -53,7 +68,7 @@ namespace Airside.Simulation
         private static float[] Lineup30()
         {
             Threshold(RunwayDirection.Runway30, 0f, out var tx, out var tz);
-            Threshold(RunwayDirection.Runway30, 55f, out var sx, out var sz);
+            Threshold(RunwayDirection.Runway30, LineupOntoMetres, out var sx, out var sz);
             return GroundPathSmoothing.FilletAndDensify(new[]
             {
                 Hold30[0], Hold30[1],
@@ -64,13 +79,13 @@ namespace Airside.Simulation
 
         private static float[] Vacate12()
         {
-            Threshold(RunwayDirection.Runway12, 520f, out var rx, out var rz);
+            Threshold(RunwayDirection.Runway12, VacateOntoMetres, out var rx, out var rz);
             return AdelaideTaxiRouter.Route(rx, rz, AdelaideLayout.E2Hold[0], AdelaideLayout.E2Hold[1]);
         }
 
         private static float[] Vacate30()
         {
-            Threshold(RunwayDirection.Runway30, 520f, out var rx, out var rz);
+            Threshold(RunwayDirection.Runway30, VacateOntoMetres, out var rx, out var rz);
             return AdelaideTaxiRouter.Route(rx, rz, AdelaideLayout.E2Hold[0], AdelaideLayout.E2Hold[1]);
         }
 

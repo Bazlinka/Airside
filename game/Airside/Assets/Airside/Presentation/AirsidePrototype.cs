@@ -1016,7 +1016,9 @@ namespace Airside.Presentation
                     ? fleetAircraft.Type : AircraftType.Atr42;
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = FleetGroundPosition(flight, 0f) ?? RunwayPosition(flight,
+                var position = FleetGroundPosition(flight, 0f)
+                    ?? FleetGoAroundWorldPosition(flight, 0f)
+                    ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
                         PositionFor(phase, progress, route, lane, aircraftType)));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
@@ -1026,6 +1028,7 @@ namespace Airside.Presentation
                     : 0.15f;
                 var lookAheadProgress = VisualPhaseProgress(flight, lookAhead);
                 var next = FleetGroundPosition(flight, lookAhead)
+                           ?? FleetGoAroundWorldPosition(flight, lookAhead)
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
                                    PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
@@ -12791,6 +12794,22 @@ namespace Airside.Presentation
                 return new Vector3(x, y, z);
             }
             return position;
+        }
+
+        /// <summary>
+        /// Go-around poses in world space for the assigned runway. 12/30 use a
+        /// cross-strip circuit; remapping the 05 racetrack put regionals through
+        /// the terminal.
+        /// </summary>
+        private Vector3? FleetGoAroundWorldPosition(CommercialFlight flight, float lookAheadSeconds)
+        {
+            if (flight.Operation.Phase != AircraftPhase.GoAround)
+                return null;
+            if (!FleetMode || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return null;
+            var elapsed = _preciseTime - flight.Operation.PhaseStartedAt.ElapsedSeconds + lookAheadSeconds;
+            CircuitTraffic.GoAroundOnRunway(elapsed, aircraft.AssignedRunway, out var x, out var y, out var z);
+            return new Vector3((float)x, (float)y, (float)z);
         }
 
         /// <summary>

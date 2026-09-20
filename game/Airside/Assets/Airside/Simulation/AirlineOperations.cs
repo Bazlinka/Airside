@@ -484,8 +484,24 @@ namespace Airside.Simulation
 
         /// <summary>The runway this aircraft should use right now, given wind, type and destination.</summary>
         public RunwayDirection RunwayFor(FleetAircraft aircraft) =>
-            RunwayWeather.Select(Wind, aircraft?.Type,
-                aircraft?.CurrentDestination ?? aircraft?.Scheduled?.Destination, Home);
+            RunwayWeather.Select(Wind, aircraft?.Type, DestinationForRunwayChoice(aircraft), Home);
+
+        /// <summary>
+        /// Dest-aligned runway preference is for departures (Perth jets take 23 in a
+        /// light easterly). Arrivals and go-around rejoins follow the wind only —
+        /// otherwise light wind lands them on the end they would take off toward.
+        /// </summary>
+        private static Destination? DestinationForRunwayChoice(FleetAircraft aircraft)
+        {
+            if (aircraft == null)
+                return null;
+            if (aircraft.State is FleetState.Inbound or FleetState.GoAround
+                or FleetState.HoldingForLanding or FleetState.Landing
+                or FleetState.AwaitingStand or FleetState.TaxiIn
+                or FleetState.AtDestination)
+                return null;
+            return aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+        }
 
         /// <summary>Generator state for saving; 0 when the source is not a <see cref="SeededRandomSource"/>.</summary>
         public uint RandomState => _random is SeededRandomSource seeded ? seeded.State : 0;
@@ -631,7 +647,7 @@ namespace Airside.Simulation
                     continue;
                 if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway) != mainStrip)
                     continue;
-                var until = aircraft.StateEndsAt ?? _processedTo;
+                var until = StripBusyUntil(aircraft) ?? _processedTo;
                 until = until.Advance(WakeSeparationSeconds(aircraft.Type));
                 if (!holdUntil.HasValue || until.CompareTo(holdUntil.Value) > 0)
                     holdUntil = until;
@@ -648,6 +664,28 @@ namespace Airside.Simulation
             {
                 _crossRunwayFreeAt = holdUntil.Value;
             }
+        }
+
+        /// <summary>
+        /// When the strip may accept the next movement. Landing frees at clear-of-runway,
+        /// not after the long taxi to E2 that still belongs to the Landing state.
+        /// </summary>
+        private static SimulationTime? StripBusyUntil(FleetAircraft aircraft)
+        {
+            if (aircraft.State != FleetState.Landing || !aircraft.StateEndsAt.HasValue)
+                return aircraft.StateEndsAt;
+
+            if (IsMissedApproachLanding(aircraft))
+                return aircraft.StateEndsAt;
+
+            var vacate = AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds;
+            var clear = AdelaideGround.ClearOfRunwaySeconds(aircraft.Type, aircraft.AssignedRunway);
+            var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+            if (duration <= vacate)
+                return aircraft.StateEndsAt;
+
+            // duration = final + roll + vacate; free when clear, which is earlier than vacate end.
+            return aircraft.StateStartedAt.Advance(duration - vacate + clear);
         }
 
         /// <summary>Rebuilds career state (ADR 0053 / 0056) from a v6+ save, or a fresh

@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **12/30 landing and lineup no longer teleport.** Vacate starts at the
+  remapped rollout end; lineup ends at the remapped takeoff start.
+
+- **Arrivals follow the wind, not the away city.** Dest-aligned runway
+  preference stays for departures only. 12/30 go-arounds fly a native
+  cross-strip circuit instead of remapping the 05 racetrack through the
+  terminal.
+
+- **Save mid-vacate frees 12/30 at clear-of-runway.** Delayed day-plan
+  rows mute from EstimatedAt, not ScheduledAt.
+
 - **12/30 frees when clear of the strip.** Vacate still taxis toward E2,
   but the tower clears the next 12/30 movement after ~280 m off the
   pavement — not after the full kilometre exit.

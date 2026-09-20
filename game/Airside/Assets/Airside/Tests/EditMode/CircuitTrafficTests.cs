@@ -82,5 +82,30 @@ namespace Airside.Tests
             Assert.That(close, Is.LessThan(80), "a finished go-around hands back to the same circuit");
             Assert.That(yEnd, Is.EqualTo(CircuitTraffic.CircuitHeightMetres).Within(0.5));
         }
+
+        [Test]
+        public void GoAroundOnCrossStrip_StaysInWorldNearTheCrossRunway()
+        {
+            CircuitTraffic.GoAroundOnRunway(0, RunwayDirection.Runway12, out var x0, out var y0, out var z0);
+            Assert.That(y0, Is.EqualTo(CircuitProfile.ShortFinalHeight).Within(2.0));
+
+            // Remapping the 05 south racetrack put the circuit kilometres from the
+            // cross strip. A native 12 circuit must stay within a few km of centre.
+            var cx = AdelaideLayout.CrossRunwayCenterX;
+            var cz = AdelaideLayout.CrossRunwayCenterZ;
+            var startGap = Math.Sqrt((x0 - cx) * (x0 - cx) + (z0 - cz) * (z0 - cz));
+            Assert.That(startGap, Is.LessThan(2500), "12 go-around starts near the cross strip");
+
+            for (var t = 0.0; t <= CircuitTraffic.LoopSeconds; t += 15)
+            {
+                CircuitTraffic.GoAroundOnRunway(t, RunwayDirection.Runway12, out var x, out _, out var z);
+                var gap = Math.Sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+                Assert.That(gap, Is.LessThan(3500), $"12 go-around stays near the field at t={t}");
+            }
+
+            CircuitTraffic.GoAroundOnRunway(0, RunwayDirection.Runway30, out var x30, out _, out var z30);
+            var gap30 = Math.Sqrt((x30 - cx) * (x30 - cx) + (z30 - cz) * (z30 - cz));
+            Assert.That(gap30, Is.LessThan(2500), "30 go-around starts near the cross strip");
+        }
     }
 }

@@ -351,15 +351,16 @@ namespace Airside.Presentation
                     ? StatusSeverity.Warning
                     : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
                 var scheduled = clock.TimeText(planned.ScheduledAt);
+                var etaText = clock.TimeText(planned.EstimatedAt);
                 var past = !planned.Disruption.Cancelled
-                           && BoardClockMinutes(scheduled) + 2 < nowMin;
-                if (past && !planned.Disruption.Delayed)
+                           && BoardClockMinutes(etaText) + 2 < nowMin;
+                if (past)
                     plannedStatus = arrivals ? "Landed" : "Departed";
                 _rows.Add(new OperationsFlightRow(
                     planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
                     scheduled,
                     planned.Disruption.Cancelled ? "—"
-                        : planned.Disruption.Delayed ? clock.TimeText(planned.EstimatedAt) : "—",
+                        : planned.Disruption.Delayed ? etaText : "—",
                     planned.FlightNumber,
                     planned.RouteText,
                     planned.StandLabel.Replace("Gate ", ""),

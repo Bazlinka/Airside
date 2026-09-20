@@ -289,6 +289,8 @@ namespace Airside.Simulation
                 new SimulationTime(data.RunwayFreeAtSeconds),
                 new SimulationTime(data.CrossRunwayFreeAtSeconds),
                 data.TotalEvents);
+            if (data.CrossRunwayFreeAtSeconds == 0)
+                operations.ReconcileCrossRunwayFreeAt();
             operations.Clock = ClockFor(data);
             if (data.Version <= 4)
             {

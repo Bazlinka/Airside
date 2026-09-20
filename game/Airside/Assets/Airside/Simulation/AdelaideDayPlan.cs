@@ -225,12 +225,21 @@ namespace Airside.Simulation
         {
             if (AirlineOperations.NeedsTerminalGate(type))
             {
-                var gates = AirlineOperations.AdelaideTerminalGates;
+                var gates = FittingStands(AirlineOperations.AdelaideTerminalGates, type);
                 return AdelaideGround.StandLabel(gates[slot % gates.Count]);
             }
 
-            var bays = AirlineOperations.AdelaideRegionalBays;
+            var bays = FittingStands(AirlineOperations.AdelaideRegionalBays, type);
             return AdelaideGround.StandLabel(bays[slot % bays.Count]);
+        }
+
+        private static IReadOnlyList<StableId> FittingStands(IReadOnlyList<StableId> stands, AircraftType type)
+        {
+            var fitted = new List<StableId>();
+            foreach (var stand in stands)
+                if (AirlineOperations.StandFits(type, stand))
+                    fitted.Add(stand);
+            return fitted.Count > 0 ? fitted : stands;
         }
     }
 }

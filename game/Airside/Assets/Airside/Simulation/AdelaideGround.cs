@@ -212,10 +212,10 @@ namespace Airside.Simulation
         /// queued back along their own taxi route.
         /// </summary>
         public static GroundPose HoldingShortPose(StableId departureStand, int slot,
-            RunwayDirection runway = RunwayDirection.Runway05)
+            RunwayDirection runway = RunwayDirection.Runway05, AircraftType type = null)
         {
-            var leg = TaxiOut(departureStand,
-                IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42, runway);
+            type ??= IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42;
+            var leg = TaxiOut(departureStand, type, runway);
             var end = leg.PoseAt(leg.Seconds);
             if (slot <= 0)
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);

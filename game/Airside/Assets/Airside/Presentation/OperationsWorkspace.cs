@@ -149,6 +149,21 @@ namespace Airside.Presentation
         public int DayActiveCount { get; private set; }
         public int DayUpcomingCount { get; private set; }
 
+        /// <summary>
+        /// First board row that is not a muted past movement — used to open the list
+        /// near "now" instead of at 06:00 Landed/Departed.
+        /// </summary>
+        public int FirstActiveRowIndex
+        {
+            get
+            {
+                for (var i = 0; i < _rows.Count; i++)
+                    if (!_rows[i].IsPast)
+                        return i;
+                return 0;
+            }
+        }
+
         /// <summary>Local-hour density samples across the strip (one per operating hour).</summary>
         public IReadOnlyList<float> DayDensity => _dayDensity;
 

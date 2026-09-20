@@ -46,8 +46,10 @@ namespace Airside.Tests
         public void DeparturePrep_RunsFuelThenCateringThenBoardingBeforePushback()
         {
             var (clock, ops, plane) = PlayerOnly();
-            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
-            Assert.That(plane.PrepStartedAt, Is.EqualTo(new SimulationTime(0)));
+            var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type));
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
+            Assert.That(plane.PrepStartedAt, Is.EqualTo(new SimulationTime(0)),
+                "booking exactly one prep-window ahead starts fuelling now");
 
             var start = DeparturePrep.For(plane, new SimulationTime(0));
             Assert.That(start.Stage, Is.EqualTo(DeparturePrepStage.Fuel));
@@ -109,17 +111,33 @@ namespace Airside.Tests
             ops.Update();
             Assert.That(plane.State, Is.EqualTo(FleetState.AtStand), "prep not finished — no pushback");
 
-            clock.Set(new SimulationTime(600));
+            clock.Set(departAt);
             ops.Update();
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(plane.PrepStartedAt, Is.Null);
         }
 
         [Test]
+        public void FarAheadBooking_DoesNotStartPrepUntilTheLeadWindow()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            var departAt = new SimulationTime(4 * 3600);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
+            var expectedStart = departAt.ElapsedSeconds - DeparturePrep.TotalSeconds(plane.Type);
+            Assert.That(plane.PrepStartedAt!.Value.ElapsedSeconds, Is.EqualTo(expectedStart));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(0)).Stage, Is.EqualTo(DeparturePrepStage.Fuel));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(0)).FuelProgress, Is.EqualTo(0),
+                "fuelling has not started four hours before pushback");
+            Assert.That(DeparturePrep.IsReady(plane, new SimulationTime(expectedStart - 1)), Is.False);
+            Assert.That(DeparturePrep.IsReady(plane, departAt), Is.True);
+        }
+
+        [Test]
         public void PrepRemaining_CountsDownOnEveryStageAndThenTheFlightLeaves()
         {
             var (clock, ops, plane) = PlayerOnly();
-            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type));
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
 
             var fuelStart = DeparturePrep.For(plane, new SimulationTime(0)).RemainingSeconds;
             var fuelLater = DeparturePrep.For(plane, new SimulationTime(20)).RemainingSeconds;
@@ -140,7 +158,7 @@ namespace Airside.Tests
             Assert.That(DeparturePrep.For(plane, new SimulationTime(boardingAt + 20)).Stage,
                 Is.EqualTo(DeparturePrepStage.Boarding));
 
-            clock.Set(new SimulationTime(600));
+            clock.Set(departAt);
             ops.Update();
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
         }
@@ -163,9 +181,10 @@ namespace Airside.Tests
         public void UpdatingAPlan_DoesNotRestartFuelAlreadyPumped()
         {
             var (clock, ops, plane) = PlayerOnly();
-            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.True);
+            var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type) + 60);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
             var started = plane.PrepStartedAt;
-            clock.Set(new SimulationTime(DeparturePrep.FuelSeconds + 10));
+            clock.Set(new SimulationTime(started!.Value.ElapsedSeconds + DeparturePrep.FuelSeconds + 10));
             ops.Update();
             Assert.That(DeparturePrep.For(plane, clock.Now).Stage, Is.EqualTo(DeparturePrepStage.Catering));
 

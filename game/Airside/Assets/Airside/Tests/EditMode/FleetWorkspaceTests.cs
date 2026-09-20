@@ -75,7 +75,7 @@ namespace Airside.Tests
         {
             var (clock, ops, plane) = HudTestAirline.Create();
             Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), new SimulationTime(3600)).Accepted, Is.True);
-            clock.Set(new SimulationTime(DeparturePrep.FuelSeconds + 10));
+            clock.Set(new SimulationTime(plane.PrepStartedAt!.Value.ElapsedSeconds + DeparturePrep.FuelSeconds + 10));
             ops.Update();
 
             var model = new FleetWorkspaceModel();

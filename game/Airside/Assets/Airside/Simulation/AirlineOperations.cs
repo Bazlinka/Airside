@@ -407,6 +407,41 @@ namespace Airside.Simulation
             return count;
         }
 
+        /// <summary>
+        /// Cathay's summer service leaves when the season ends. Aircraft still flying
+        /// finish their trip; once they are back on the stand they are removed so
+        /// GATE-18 is not held through winter.
+        /// </summary>
+        public int RetireOutOfSeasonOperators(SimulationTime? at = null)
+        {
+            var asOf = at ?? _processedTo;
+            if (IsCathaySeason(asOf))
+                return 0;
+
+            var removed = 0;
+            for (var i = _fleet.Count - 1; i >= 0; i--)
+            {
+                var aircraft = _fleet[i];
+                if (aircraft.Airline.Id.Value != "CPA")
+                    continue;
+                if (aircraft.State != FleetState.AtStand)
+                    continue;
+                aircraft.Scheduled = null;
+                aircraft.PrepStartedAt = null;
+                _fleet.RemoveAt(i);
+                removed++;
+            }
+
+            if (removed > 0 && !_fleet.Exists(a => a.Airline.Id.Value == "CPA"))
+            {
+                for (var i = _airlines.Count - 1; i >= 0; i--)
+                    if (_airlines[i].Id.Value == "CPA")
+                        _airlines.RemoveAt(i);
+            }
+
+            return removed;
+        }
+
         /// <summary>Cathay's Adelaide service operates through the southern summer season.</summary>
         public bool IsCathaySeason(SimulationTime at)
         {
@@ -560,6 +595,30 @@ namespace Airside.Simulation
             _mainRunwayFreeAt = mainRunwayFreeAt;
             _crossRunwayFreeAt = crossRunwayFreeAt;
             TotalEvents = Math.Max(0, totalEvents);
+        }
+
+        /// <summary>
+        /// Pre-dual-strip saves leave <see cref="CrossRunwayFreeAt"/> at 0. If a regional
+        /// is mid takeoff/landing on 12/30, hold that strip until the movement ends so a
+        /// second clearance cannot overlap on load.
+        /// </summary>
+        internal void ReconcileCrossRunwayFreeAt()
+        {
+            SimulationTime? holdUntil = null;
+            foreach (var aircraft in _fleet)
+            {
+                if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing))
+                    continue;
+                if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway))
+                    continue;
+                var until = aircraft.StateEndsAt ?? _processedTo;
+                until = until.Advance(WakeSeparationSeconds(aircraft.Type));
+                if (!holdUntil.HasValue || until.CompareTo(holdUntil.Value) > 0)
+                    holdUntil = until;
+            }
+
+            if (holdUntil.HasValue && _crossRunwayFreeAt.CompareTo(holdUntil.Value) < 0)
+                _crossRunwayFreeAt = holdUntil.Value;
         }
 
         /// <summary>Rebuilds career state (ADR 0053 / 0056) from a v6+ save, or a fresh
@@ -872,10 +931,19 @@ namespace Airside.Simulation
                 if (alreadyPaid > 0)
                     CareerState.RefundDispatch(alreadyPaid);
                 CareerState.TryChargeDispatch(cost);
-                // Keep an in-progress fuel/catering/boarding clock. Resetting it on every
-                // "update plan" made fuelling restart and the departure slide forward forever.
+                // Align prep with the booked pushback: start TotalSeconds before depart
+                // (or now if that is already later). Starting at book-time made a +4 h
+                // booking show Ready for hours before pushback.
                 if (!aircraft.PrepStartedAt.HasValue)
-                    aircraft.PrepStartedAt = _processedTo;
+                {
+                    var total = DeparturePrep.TotalSeconds(aircraft.Type);
+                    var start = departAt.ElapsedSeconds - total;
+                    if (start < _processedTo.ElapsedSeconds)
+                        start = _processedTo.ElapsedSeconds;
+                    if (start < 0)
+                        start = 0;
+                    aircraft.PrepStartedAt = new SimulationTime(start);
+                }
             }
 
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt);
@@ -1034,6 +1102,8 @@ namespace Airside.Simulation
             // boundary was crossed, catching up only on the next Update() call.
             if (IsCathaySeason(target))
                 AddMissingTerminalOperators(at: target);
+            else
+                RetireOutOfSeasonOperators(at: target);
 
             while (true)
             {
@@ -1601,6 +1671,8 @@ namespace Airside.Simulation
             }
             if (aircraft.Airline.Id.Value is "SIA" or "CPA")
             {
+                if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
+                    return;
                 var code = aircraft.Airline.Id.Value == "SIA" ? "SIN" : "HKG";
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);

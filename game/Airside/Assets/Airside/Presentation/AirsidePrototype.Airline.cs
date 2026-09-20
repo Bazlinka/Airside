@@ -68,6 +68,7 @@ namespace Airside.Presentation
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
+        private bool _boardScrollSnapToDay = true;
         private int _rosterScrollRow;
         /// <summary>The player aircraft the flight planner is planning.</summary>
         private FleetAircraft _mapAircraft;
@@ -1131,6 +1132,8 @@ namespace Airside.Presentation
         private void SetWorkspace(HudWorkspace target)
         {
             _activeWorkspace = _activeWorkspace == target ? HudWorkspace.None : target;
+            if (_activeWorkspace == HudWorkspace.Operations)
+                _boardScrollSnapToDay = true;
             if (_activeWorkspace != HudWorkspace.None)
                 _devToolsOpen = false;
             PlayUiClick();
@@ -1718,6 +1721,12 @@ namespace Airside.Presentation
                 _selectedAircraftId, _eventHistory);
 
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
+            if (_boardScrollSnapToDay)
+            {
+                _boardScrollRow = _operationsWorkspace.FirstActiveRowIndex;
+                _boardScrollSnapToDay = false;
+            }
+
             _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
                 _operationsWorkspace.Rows.Count - layout.VisibleRows);
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
@@ -1823,12 +1832,12 @@ namespace Airside.Presentation
                     return;
                 case HudAction.TabDepartures:
                     _flightsShowArrivals = false;
-                    _boardScrollRow = 0;
+                    _boardScrollSnapToDay = true;
                     PlayUiClick();
                     return;
                 case HudAction.TabArrivals:
                     _flightsShowArrivals = true;
-                    _boardScrollRow = 0;
+                    _boardScrollSnapToDay = true;
                     PlayUiClick();
                     return;
                 case HudAction.FilterAvailable:

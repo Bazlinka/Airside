@@ -129,8 +129,10 @@ namespace Airside.Tests
         public void Operations_SelectionCarriesTheRealPrepAndTheOneActionThatFits()
         {
             var (clock, ops, plane) = HudTestAirline.Create();
-            Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), new SimulationTime(3600)).Accepted, Is.True);
-            clock.Set(new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 60));
+            var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type) + 60);
+            Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), departAt).Accepted, Is.True);
+            clock.Set(new SimulationTime(plane.PrepStartedAt!.Value.ElapsedSeconds
+                + DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 60));
             ops.Update();
 
             var model = new OperationsWorkspaceModel();
@@ -142,6 +144,26 @@ namespace Airside.Tests
             Assert.That(model.SelectedPrep[2].Label, Does.StartWith("Boarding "));
             Assert.That(model.PrimaryAction, Is.EqualTo(AircraftHudAction.ViewPlan));
             Assert.That(model.CanCancel, Is.True);
+        }
+
+        [Test]
+        public void Operations_FirstActiveRowSkipsMutedPastMovements()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddMissingRegionalCarriers();
+            ops.AddMissingTerminalOperators();
+            var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            clock.Set(afternoon);
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.FirstActiveRowIndex, Is.GreaterThan(0),
+                "afternoon opens past the morning Departed rows");
+            Assert.That(model.Rows[model.FirstActiveRowIndex].IsPast, Is.False);
+            if (model.FirstActiveRowIndex > 0)
+                Assert.That(model.Rows[model.FirstActiveRowIndex - 1].IsPast, Is.True);
         }
 
         [Test]

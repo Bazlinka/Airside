@@ -127,7 +127,8 @@ namespace Airside.Presentation
                 // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
-                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway);
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway,
+                        aircraft.Type);
                 case FleetGroundLeg.AwaitingStand:
                     return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft),
                         aircraft.Type, aircraft.AssignedRunway);

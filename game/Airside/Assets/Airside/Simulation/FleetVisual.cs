@@ -84,10 +84,11 @@ namespace Airside.Simulation
                 {
                     var approach = performance.ApproachSeconds;
                     var landing = performance.LandingSeconds;
-                    // A missed approach publishes a full final from way out. A normal
-                    // landing has already been sitting on short final, so restarting
-                    // the 4 km inbound was a teleport and then a crawl.
-                    if (aircraft.WentAroundThisTrip)
+                    // Only the short missed-approach Landing state draws a full final from
+                    // way out. A real landing after a go-around keeps WentAroundThisTrip so
+                    // the tower will not miss again, but it must resume from short final —
+                    // restarting the 4 km inbound was a teleport and then a crawl.
+                    if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
                     {
                         if (elapsed < approach)
                             return Air(AircraftPhase.Approach, start);
@@ -134,8 +135,9 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Place in the queue for aircraft sharing <paramref name="aircraft"/>'s waiting state
-        /// (holding short, or waiting for a stand): 0 for whoever got there first. Ties break on
-        /// registration so every frame and every load draws the same order.
+        /// and assigned runway (holding short, or waiting for a stand): 0 for whoever got
+        /// there first. Ties break on registration so every frame and every load draws the
+        /// same order. Different strips do not share a queue.
         /// </summary>
         public static int QueueSlot(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft)
         {
@@ -146,6 +148,8 @@ namespace Airside.Simulation
             {
                 var other = fleet[i];
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
+                    continue;
+                if (other.AssignedRunway != aircraft.AssignedRunway)
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
                 if (order < 0 || order == 0

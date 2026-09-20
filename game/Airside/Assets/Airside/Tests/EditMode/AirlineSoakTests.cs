@@ -57,8 +57,14 @@ namespace Airside.Tests
                 ops.Update();
                 events++;
 
-                var onRunway = ops.Fleet.Count(a => a.State is FleetState.TakingOff or FleetState.Landing);
-                Assert.That(onRunway, Is.LessThanOrEqualTo(1), $"two runway movements at {clock.Now}");
+                var mainOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && RunwayWeather.IsMainRunway(a.AssignedRunway));
+                var crossOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && !RunwayWeather.IsMainRunway(a.AssignedRunway));
+                Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1), $"two 05/23 movements at {clock.Now}");
+                Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1), $"two 12/30 movements at {clock.Now}");
 
                 var held = ops.Fleet.Where(a => a.State is FleetState.AtStand or FleetState.TaxiIn).Select(a => a.Stand).ToList();
                 Assert.That(held.Distinct().Count(), Is.EqualTo(held.Count), $"stand double-booked at {clock.Now}");

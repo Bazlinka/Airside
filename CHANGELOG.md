@@ -1,5 +1,29 @@
 ## Unreleased
 
+- **Operations shows where you are in the day.** A day strip under the
+  header tracks the 06:00–21:00 operating window with a now caret, bank
+  density, and done / live / to-go counts. Past planned rows mute and
+  read Landed or Departed instead of Expected forever.
+
+- **05/23 and 12/30 move in parallel.** The tower keeps a free time per
+  strip, so a regional on 12 no longer waits for a jet wake on 05.
+  Go-arounds only count holders on the same strip.
+
+- **Regional bays stay held through taxi-out.** A landing cannot take
+  the same bay while the departure is still on the apron.
+
+- **Post go-around landings resume from short final.** Only the missed-
+  approach state draws the long inbound; the real landing after that
+  no longer teleports 4 km out.
+
+- **Day-plan rows no longer vanish under the wrong half.** An outbound
+  to Port Lincoln does not suppress the planned arrival from Port
+  Lincoln. Idle parked aircraft stay off the Departures board.
+
+- **Hold queues, planner ETAs and walk-outs match the field.** Queue
+  slots are per runway; trip previews use 12/30 for regionals; AIP
+  walk-outs are SF340-only. The board subtitle names both active ends.
+
 - **Adelaide now has the current Terminal 1 stand map.** Aerobridges
   12L–29 (L and R of the same pier cannot both be occupied), regional
   50A–G, and walk-out 10A–D / 2A all have taxi routes and markings.

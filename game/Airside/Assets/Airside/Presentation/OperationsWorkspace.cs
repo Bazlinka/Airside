@@ -18,7 +18,7 @@ namespace Airside.Presentation
         public OperationsFlightRow(string registration, string scheduledTime, string estimatedTime,
             string flightNumber, string route, string stand, string status, string typeName,
             string operatorName, string liveryHex, StatusSeverity severity, bool isPlayer,
-            bool hasProgress, float progress01)
+            bool hasProgress, float progress01, bool isPast = false)
         {
             Registration = registration ?? string.Empty;
             ScheduledTime = scheduledTime ?? string.Empty;
@@ -34,6 +34,7 @@ namespace Airside.Presentation
             IsPlayer = isPlayer;
             HasProgress = hasProgress;
             Progress01 = progress01;
+            IsPast = isPast;
         }
 
         public string Registration { get; }
@@ -53,6 +54,9 @@ namespace Airside.Presentation
 
         public bool HasProgress { get; }
         public float Progress01 { get; }
+
+        /// <summary>Scheduled time is earlier than now and the movement is not live — mute on the board.</summary>
+        public bool IsPast { get; }
 
         /// <summary>The estimate is only worth printing when it differs from the scheduled time.</summary>
         public bool ShowsEstimate =>
@@ -129,10 +133,24 @@ namespace Airside.Presentation
         private readonly List<OperationsPrepCheck> _prep = new();
         private readonly List<OperationsEventLine> _events = new();
         private readonly List<FleetAircraft> _scratch = new();
+        private readonly List<float> _dayDensity = new();
 
         public string Title { get; private set; } = "OPERATIONS";
         public string Subtitle { get; private set; } = string.Empty;
         public OperationsBoardTab Tab { get; private set; }
+
+        /// <summary>0..1 through the operating day (06:00–21:00 Adelaide).</summary>
+        public float DayProgress01 { get; private set; }
+
+        /// <summary>"14:32 · evening bank · 12 done · 31 to go"</summary>
+        public string DayCaption { get; private set; } = string.Empty;
+
+        public int DayDoneCount { get; private set; }
+        public int DayActiveCount { get; private set; }
+        public int DayUpcomingCount { get; private set; }
+
+        /// <summary>Local-hour density samples across the strip (one per operating hour).</summary>
+        public IReadOnlyList<float> DayDensity => _dayDensity;
 
         public IReadOnlyList<OperationsFlightRow> Rows => _rows;
         public IReadOnlyList<OperationsAttentionRow> Attention => _attention;
@@ -162,6 +180,7 @@ namespace Airside.Presentation
             _attention.Clear();
             _prep.Clear();
             _events.Clear();
+            _dayDensity.Clear();
             Tab = tab;
             SelectedRegistration = string.Empty;
             SelectedTypeName = string.Empty;
@@ -171,13 +190,20 @@ namespace Airside.Presentation
             PrimaryAction = AircraftHudAction.None;
             PrimaryActionLabel = string.Empty;
             CanCancel = false;
+            DayProgress01 = 0f;
+            DayCaption = string.Empty;
+            DayDoneCount = 0;
+            DayActiveCount = 0;
+            DayUpcomingCount = 0;
             if (operations == null)
                 return;
 
             var clock = operations.Clock ?? AirlineClock.Default;
             Subtitle = $"Adelaide  ·  {RunwayWeather.Label(operations.ActiveRunway)}"
+                       + $"/{RunwayWeather.Label(operations.ActiveCrossRunway)}"
                        + $"  ·  {operations.Wind.Text}";
 
+            FillDayProgress(operations, now, clock);
             FillBoard(operations, now, tab, clock);
             FillAttention(operations, now, clock);
 
@@ -190,11 +216,88 @@ namespace Airside.Presentation
                 FillSelection(selected, now, clock);
         }
 
+        private void FillDayProgress(AirlineOperations operations, SimulationTime now, AirlineClock clock)
+        {
+            var local = clock.LocalAt(now);
+            var first = AirlineOperations.AiFirstDepartureHour;
+            var last = AirlineOperations.AiLastDepartureHour;
+            var startMin = first * 60;
+            var endMin = last * 60;
+            var span = Math.Max(1, endMin - startMin);
+            var nowMin = local.Hour * 60 + local.Minute;
+            DayProgress01 = Clamp01((nowMin - startMin) / (float)span);
+
+            for (var hour = first; hour <= last; hour++)
+                _dayDensity.Add(AdelaideHourProfile.Density(hour));
+
+            var done = 0;
+            var active = 0;
+            var upcoming = 0;
+            foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
+            {
+                if (planned.Disruption.Cancelled)
+                {
+                    done++;
+                    continue;
+                }
+
+                var covered = false;
+                FleetAircraft live = null;
+                foreach (var aircraft in operations.Fleet)
+                {
+                    if (!AdelaideDayPlan.CoveredBy(planned, aircraft))
+                        continue;
+                    covered = true;
+                    live = aircraft;
+                    break;
+                }
+
+                if (covered && live != null && IsLiveMovement(live))
+                {
+                    active++;
+                    continue;
+                }
+
+                var slotLocal = clock.LocalAt(planned.EstimatedAt);
+                var slotMin = slotLocal.Hour * 60 + slotLocal.Minute;
+                if (slotMin + 2 < nowMin)
+                    done++;
+                else
+                    upcoming++;
+            }
+
+            DayDoneCount = done;
+            DayActiveCount = active;
+            DayUpcomingCount = upcoming;
+            var bank = BankLabel(local.Hour);
+            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {done} done  ·  {active} live  ·  {upcoming} to go";
+        }
+
+        private static bool IsLiveMovement(FleetAircraft aircraft) => aircraft.State is
+            FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Outbound
+            or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn
+            or FleetState.AtDestination;
+
+        private static string BankLabel(int hour) => hour switch
+        {
+            >= 6 and <= 8 => "morning bank",
+            >= 11 and <= 12 => "midday bank",
+            >= 16 and <= 18 => "evening bank",
+            >= 19 and <= 21 => "evening wind-down",
+            >= 9 and <= 15 => "afternoon",
+            _ => "overnight"
+        };
+
+        private static float Clamp01(float value) =>
+            value < 0f ? 0f : value > 1f ? 1f : value;
+
         private void FillBoard(AirlineOperations operations, SimulationTime now, OperationsBoardTab tab,
             AirlineClock clock)
         {
             _scratch.Clear();
             var arrivals = tab == OperationsBoardTab.Arrivals;
+            var nowMin = BoardClockMinutes(clock.TimeText(now));
             foreach (var aircraft in operations.Fleet)
                 if (arrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
                     _scratch.Add(aircraft);
@@ -207,9 +310,10 @@ namespace Airside.Presentation
                 var progress = aircraft.StateEndsAt.HasValue
                     ? (float)aircraft.StateProgress(now)
                     : AircraftStatus.WaitProgress(aircraft, now);
+                var time = FlightBoard.BoardTime(aircraft, arrivals, clock.TimeText);
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
-                    FlightBoard.BoardTime(aircraft, arrivals, clock.TimeText),
+                    time,
                     FlightBoard.EstimatedTime(aircraft, clock.TimeText),
                     FlightNumber.OrRegistration(aircraft),
                     FlightBoard.RouteText(aircraft),
@@ -221,7 +325,8 @@ namespace Airside.Presentation
                     severity,
                     aircraft.Airline.IsPlayer,
                     hasProgress,
-                    progress));
+                    progress,
+                    isPast: false));
             }
 
             foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
@@ -247,9 +352,14 @@ namespace Airside.Presentation
                 var plannedSeverity = planned.Disruption.Cancelled
                     ? StatusSeverity.Warning
                     : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
+                var scheduled = clock.TimeText(planned.ScheduledAt);
+                var past = !planned.Disruption.Cancelled
+                           && BoardClockMinutes(scheduled) + 2 < nowMin;
+                if (past && !planned.Disruption.Delayed)
+                    plannedStatus = arrivals ? "Landed" : "Departed";
                 _rows.Add(new OperationsFlightRow(
                     planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
-                    clock.TimeText(planned.ScheduledAt),
+                    scheduled,
                     planned.Disruption.Cancelled ? "—"
                         : planned.Disruption.Delayed ? clock.TimeText(planned.EstimatedAt) : "—",
                     planned.FlightNumber,
@@ -262,7 +372,8 @@ namespace Airside.Presentation
                     plannedSeverity,
                     isPlayer: false,
                     hasProgress: false,
-                    progress01: 0f));
+                    progress01: 0f,
+                    isPast: past));
             }
 
             _rows.Sort((a, b) =>
@@ -409,6 +520,7 @@ namespace Airside.Presentation
     /// </summary>
     public readonly struct OperationsWorkspaceLayout
     {
+        public const float DayStripHeight = 48f;
         public const float AttentionRowHeight = 26f;
         public const float AttentionCaptionHeight = 18f;
         public const float TabHeight = 30f;
@@ -419,11 +531,12 @@ namespace Airside.Presentation
         public const float DetailGap = 16f;
         public const float MinBoardWidth = 360f;
 
-        private OperationsWorkspaceLayout(HudBox surface, HudBox header, HudBox attention, HudBox tabs,
-            HudBox board, HudBox detail, HudBox footer, float[] columns)
+        private OperationsWorkspaceLayout(HudBox surface, HudBox header, HudBox dayStrip, HudBox attention,
+            HudBox tabs, HudBox board, HudBox detail, HudBox footer, float[] columns)
         {
             Surface = surface;
             Header = header;
+            DayStrip = dayStrip;
             Attention = attention;
             Tabs = tabs;
             Board = board;
@@ -436,6 +549,9 @@ namespace Airside.Presentation
 
         public HudBox Surface { get; }
         public HudBox Header { get; }
+
+        /// <summary>Operating-day progress under the header: where we are in Adelaide's day.</summary>
+        public HudBox DayStrip { get; }
 
         /// <summary>The pinned player-exception band. Empty when there is nothing to pin.</summary>
         public HudBox Attention { get; }
@@ -455,6 +571,10 @@ namespace Airside.Presentation
 
         public HudBox SubtitleBox => new(Header.X + HudShell.SurfacePadding, Header.Y + 40f,
             Header.Width - HudShell.SurfacePadding * 2f, 18f);
+
+        public HudBox DayCaptionBox => DayStrip.Inset(10f, 6f, 10f, 0f).WithHeight(16f);
+
+        public HudBox DayTrackBox => new(DayStrip.X + 10f, DayStrip.Y + 26f, DayStrip.Width - 20f, 10f);
 
         public HudBox AttentionCaption => Attention.IsEmpty
             ? HudBox.Empty
@@ -493,8 +613,11 @@ namespace Airside.Presentation
             var footer = HudShell.Footer(surface);
             var body = HudShell.Body(surface, hasFooter: true);
 
-            var attention = HudBox.Empty;
             var y = body.Y;
+            var dayStrip = new HudBox(body.X, y, body.Width, DayStripHeight);
+            y = dayStrip.Bottom + 12f;
+
+            var attention = HudBox.Empty;
             if (attentionRows > 0)
             {
                 var height = AttentionCaptionHeight + 10f + attentionRows * AttentionRowHeight;
@@ -524,7 +647,8 @@ namespace Airside.Presentation
             columns[3] = columns[2] + Fit(w, 0.22f, 108f, 168f);
             columns[4] = columns[3] + Fit(w, 0.10f, 52f, 72f);
 
-            return new OperationsWorkspaceLayout(surface, header, attention, tabs, board, detail, footer, columns);
+            return new OperationsWorkspaceLayout(surface, header, dayStrip, attention, tabs, board, detail,
+                footer, columns);
         }
 
         private static float Fit(float total, float fraction, float min, float max)
@@ -552,6 +676,7 @@ namespace Airside.Presentation
             into.Clear();
             into.Surface(layout.Surface);
             PaintHeader(into, model, layout);
+            PaintDayStrip(into, model, layout);
             PaintAttention(into, model, layout);
             PaintTabs(into, model, layout);
             PaintBoard(into, model, layout, selectedRegistration, scrollRow);
@@ -566,6 +691,39 @@ namespace Airside.Presentation
             into.Text(layout.SubtitleBox, model.Subtitle, 12f, HudTone.Muted);
             into.Button(CloseBox(layout.Surface), "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
             into.Hairline(HudShell.HeaderRule(layout.Surface));
+        }
+
+        private static void PaintDayStrip(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout)
+        {
+            var strip = layout.DayStrip;
+            into.Fill(strip, HudTone.Default, 0.04f);
+            into.Outline(strip, HudTone.Muted, 0.45f);
+            into.Caption(layout.DayCaptionBox, "TODAY", HudTone.Muted);
+            into.Text(new HudBox(strip.X + 64f, strip.Y + 5f, strip.Width - 74f, 16f),
+                model.DayCaption, 12f, HudTone.Default);
+
+            var track = layout.DayTrackBox;
+            into.Fill(track, HudTone.Muted, 0.22f);
+
+            // Density underlay so morning / midday / evening banks read as thicker stretches.
+            if (model.DayDensity.Count > 0)
+            {
+                var hourWidth = track.Width / model.DayDensity.Count;
+                for (var i = 0; i < model.DayDensity.Count; i++)
+                {
+                    var density = model.DayDensity[i];
+                    if (density < 0.45f)
+                        continue;
+                    var h = track.Height * (0.35f + 0.65f * density);
+                    into.Fill(new HudBox(track.X + i * hourWidth, track.Bottom - h, hourWidth - 1f, h),
+                        HudTone.Accent, 0.18f + 0.22f * density);
+                }
+            }
+
+            into.Bar(track, model.DayProgress01, HudTone.Accent);
+            var caretX = track.X + track.Width * model.DayProgress01;
+            into.Fill(new HudBox(caretX - 1f, track.Y - 3f, 2f, track.Height + 6f), HudTone.Default, 0.95f);
         }
 
         internal static HudBox CloseBox(HudBox surface) =>
@@ -634,6 +792,8 @@ namespace Airside.Presentation
                 var box = layout.FlightRow(i - first);
                 var selected = row.Registration == selectedRegistration;
                 var alpha = row.IsPlayer ? 1f : SubordinateAlpha;
+                if (row.IsPast)
+                    alpha *= 0.55f;
 
                 if (selected)
                     into.Fill(box, HudTone.Accent, 0.26f);
@@ -643,7 +803,8 @@ namespace Airside.Presentation
                     into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, 1f, row.LiveryHex);
 
                 var textY = box.Y + 5f;
-                into.Text(Cell(layout, 0, textY), row.ScheduledTime, 13f, HudTone.Default,
+                into.Text(Cell(layout, 0, textY), row.ScheduledTime, 13f,
+                    row.IsPast ? HudTone.Muted : HudTone.Default,
                     HudTextStyle.Bold, alpha: alpha);
                 if (row.ShowsEstimate)
                     into.Text(Cell(layout, 0, box.Y + 20f), "est " + row.EstimatedTime, 10f, HudTone.Muted,

@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — day progress + ten high-impact fixes
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Bailey: the
+  full-day Operations board was lists with no sense of "where we are
+  in the day"; also fix the biggest bugs before continuing.
+  - **Day strip:** Operations header gains a 06:00–21:00 progress
+    track with now caret, bank density, and done / live / to-go. Past
+    planned rows mute to Landed/Departed.
+  - **Bugs:** dual-strip tower + go-around; bay hold on taxi-out;
+    post-GA short final; CoveredBy half-match; per-runway queue
+    slots; dual-end subtitle; planner runway ETAs; walk-out SF340;
+    idle off Departures; harness excludes Unity settings tests.
+  - **Evidence:** `scripts/test-domain.sh` **446/446**. Unity EditMode
+    still needed before merge (`scripts/test-unity.sh` on a Mac).
+  - **NEXT:** Mac Unity verify, then merge and rebuild from main.
+
 - **2026-09-20 Cursor — full Adelaide stand map.** Bailey: get the
   current Adelaide stand map; make the airport as realistic as possible.
   Live stands now match the 09 JUL 2026 AIP apron chart that OSM has:

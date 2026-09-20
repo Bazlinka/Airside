@@ -165,6 +165,9 @@ namespace Airside.Simulation
         /// <summary>
         /// True when a live aircraft is already the movement this planned slot describes,
         /// so the board shows the live row instead of a duplicate planned one.
+        /// Arrival slots only match inbound/landing states; departure slots only match
+        /// outbound/scheduled ones — otherwise an outbound Rex to MEL would suppress the
+        /// planned arrival from MEL.
         /// </summary>
         public static bool CoveredBy(PlannedMovement planned, FleetAircraft aircraft)
         {
@@ -172,7 +175,10 @@ namespace Airside.Simulation
                 return false;
             if (planned.Registration.Length > 0
                 && string.Equals(aircraft.Registration, planned.Registration, StringComparison.OrdinalIgnoreCase))
-                return true;
+                return MatchesHalf(planned, aircraft);
+
+            if (!MatchesHalf(planned, aircraft))
+                return false;
 
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             if (!dest.HasValue)
@@ -186,6 +192,14 @@ namespace Airside.Simulation
                 ? aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds
                 : aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
             return Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds) < 25 * 60;
+        }
+
+        private static bool MatchesHalf(PlannedMovement planned, FleetAircraft aircraft)
+        {
+            var liveArrival = aircraft.State is FleetState.AtDestination or FleetState.Inbound
+                or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing
+                or FleetState.AwaitingStand or FleetState.TaxiIn;
+            return planned.Arrival == liveArrival;
         }
 
         public static AircraftType TypeFor(Airline airline) => airline?.Id.Value switch

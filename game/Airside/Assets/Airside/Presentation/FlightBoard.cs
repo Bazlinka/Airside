@@ -163,7 +163,14 @@ namespace Airside.Presentation
             FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
             or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
 
-        public static bool IsDeparture(FleetAircraft aircraft) => aircraft != null && !IsArrival(aircraft);
+        /// <summary>
+        /// Outbound board rows: moving outbound, or parked with a booked departure.
+        /// Idle aircraft with nothing scheduled stay off the FIDS.
+        /// </summary>
+        public static bool IsDeparture(FleetAircraft aircraft) => aircraft != null && (
+            aircraft.State is FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+                or FleetState.Outbound
+            || aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue);
 
         public static string GateText(FleetAircraft aircraft)
         {

@@ -91,6 +91,10 @@ namespace Airside.Tests
             clock.Set(clock.Now.Advance(DeparturePrep.LeadSeconds(parked.Type)));
             ops.Update();
             Assert.That(parked.State, Is.EqualTo(FleetState.TaxiOut));
+            // The bay stays held through taxi-out; the stand frees when the aircraft reaches the hold.
+            clock.Set(parked.StateEndsAt!.Value);
+            ops.Update();
+            Assert.That(parked.State, Is.EqualTo(FleetState.HoldingShort).Or.EqualTo(FleetState.TakingOff));
 
             Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1),
                 "a later load parks the first Q400 on the freed 50-series");

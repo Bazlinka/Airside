@@ -42,10 +42,10 @@ namespace Airside.Simulation
     /// two-hour flight costs a handful of steps and any mix of frame sizes, time
     /// rates or skip-to-next-event lands on exactly the same state.
     ///
-    /// The airport runs itself. The tower owns the single runway — arrivals before
-    /// departures, one movement at a time with wake separation. Owners only choose
-    /// where and when an aircraft goes, and which stand it parks on. AI airlines
-    /// make both choices automatically.
+    /// The airport runs itself. The tower owns each physical strip separately —
+    /// 05/23 and 12/30 can move in parallel — with arrivals before departures and
+    /// wake separation on that strip. Owners only choose where and when an aircraft
+    /// goes, and which stand it parks on. AI airlines make both choices automatically.
     /// </summary>
     public sealed class AirlineOperations
     {
@@ -119,10 +119,14 @@ namespace Airside.Simulation
         /// </summary>
         public static long LandingRunwaySeconds =>
             CircuitProfile.ApproachSeconds + CircuitProfile.LandingSeconds + VacateSeconds;
-        public static long LandingRunwaySecondsFor(AircraftType type)
+        public static long LandingRunwaySecondsFor(AircraftType type) =>
+            LandingRunwaySecondsFor(type, RunwayDirection.Runway05);
+
+        public static long LandingRunwaySecondsFor(AircraftType type, RunwayDirection runway)
         {
             var profile = AircraftPerformance.For(type);
-            return profile.ApproachSeconds + profile.LandingSeconds + VacateSecondsFor(type);
+            return profile.ApproachSeconds + profile.LandingSeconds
+                   + AdelaideGround.VacateFor(type, runway).WholeSeconds;
         }
 
         public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = StandIds(AdelaideLayout.Bays);
@@ -215,8 +219,8 @@ namespace Airside.Simulation
         {
             if (AdelaideGround.IsTerminalGate(stand) != NeedsTerminalGate(type))
                 return false;
-            return !IsWalkOutStand(stand) || ReferenceEquals(type, AircraftType.Saab340)
-                                         || ReferenceEquals(type, AircraftType.Atr42);
+            // AIP walk-outs are SF340 / marshaller only — not ATR or Dash 8.
+            return !IsWalkOutStand(stand) || ReferenceEquals(type, AircraftType.Saab340);
         }
 
         /// <summary>
@@ -240,7 +244,8 @@ namespace Airside.Simulation
         private readonly List<FleetEvent> _recentEvents = new();
         private readonly List<FlightSettlement> _recentSettlements = new();
         private SimulationTime _processedTo;
-        private SimulationTime _runwayFreeAt;
+        private SimulationTime _mainRunwayFreeAt;
+        private SimulationTime _crossRunwayFreeAt;
 
         public AirlineOperations(ISimulationClock clock, IRandomSource random, Destination home, IReadOnlyList<StableId> stands)
         {
@@ -252,7 +257,8 @@ namespace Airside.Simulation
             Home = home;
             _stands = new List<StableId>(stands);
             _processedTo = clock.Now;
-            _runwayFreeAt = clock.Now;
+            _mainRunwayFreeAt = clock.Now;
+            _crossRunwayFreeAt = clock.Now;
             CareerState = new AirlineCareerState();
         }
 
@@ -419,10 +425,18 @@ namespace Airside.Simulation
         /// <summary>Simulation time everything has been resolved up to.</summary>
         public SimulationTime ProcessedTo => _processedTo;
 
-        /// <summary>When the tower may next clear a runway movement.</summary>
-        public SimulationTime RunwayFreeAt => _runwayFreeAt;
+        /// <summary>When the tower may next clear a movement on the 05/23 strip.</summary>
+        public SimulationTime RunwayFreeAt => _mainRunwayFreeAt;
+
+        /// <summary>When the tower may next clear a movement on the 12/30 strip.</summary>
+        public SimulationTime CrossRunwayFreeAt => _crossRunwayFreeAt;
+
         public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
         public RunwayDirection ActiveRunway => RunwayWeather.Select(Wind);
+
+        /// <summary>Wind-selected end of the cross strip (12/30), for HUD and planners.</summary>
+        public RunwayDirection ActiveCrossRunway =>
+            RunwayWeather.Select(Wind, AircraftType.Atr42, null, Home);
 
         /// <summary>The runway this aircraft should use right now, given wind, type and destination.</summary>
         public RunwayDirection RunwayFor(FleetAircraft aircraft) =>
@@ -541,9 +555,10 @@ namespace Airside.Simulation
             aircraft.PrepStartedAt = prepStartedAt;
         }
 
-        internal void RestoreTower(SimulationTime runwayFreeAt, long totalEvents)
+        internal void RestoreTower(SimulationTime mainRunwayFreeAt, SimulationTime crossRunwayFreeAt, long totalEvents)
         {
-            _runwayFreeAt = runwayFreeAt;
+            _mainRunwayFreeAt = mainRunwayFreeAt;
+            _crossRunwayFreeAt = crossRunwayFreeAt;
             TotalEvents = Math.Max(0, totalEvents);
         }
 
@@ -687,8 +702,9 @@ namespace Airside.Simulation
             {
                 if (aircraft.State is FleetState.AtStand or FleetState.TaxiIn && aircraft.Stand.Value == resource)
                     return aircraft;
-                if (aircraft.State == FleetState.TaxiOut && AdelaideGround.IsTerminalGate(aircraft.DepartureStand)
-                    && aircraft.DepartureStand.Value == resource)
+                // Bays and gates both stay held through taxi-out so a landing cannot
+                // take the same stand while the departure is still on the apron.
+                if (aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Value == resource)
                     return aircraft;
                 if (UsesLeadIn(aircraft, out var gate) && AdelaideGround.LeadInResource(gate) == resource)
                     return aircraft;
@@ -698,15 +714,14 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Terminal gates stay held through the whole taxi out (the pushback happens on the gate and
-        /// its lead-in) and while taxiing in; regional bays keep their original rule.
+        /// Stands stay held through taxi-out (pushback and the first apron chord) and
+        /// while taxiing in, so a second aircraft cannot take the bay mid-push.
         /// </summary>
         private static bool StandHolder(FleetAircraft aircraft, StableId stand)
         {
             if (HoldsStand(aircraft) && aircraft.Stand.Equals(stand))
                 return true;
-            return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand)
-                   && AdelaideGround.IsTerminalGate(stand);
+            return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand);
         }
 
         /// <summary>A gate's lead-in is in use while an aircraft taxis in to it or out from it.</summary>
@@ -811,7 +826,10 @@ namespace Airside.Simulation
             }
 
             if (runwayWanted)
-                Consider(_runwayFreeAt);
+            {
+                Consider(_mainRunwayFreeAt);
+                Consider(_crossRunwayFreeAt);
+            }
             // Bay and gate pushback releases are tracked separately (NextTaxiReleaseAt):
             // the two aprons never share pavement, so one waiting on the other's release
             // would skip past its own.
@@ -1341,17 +1359,27 @@ namespace Airside.Simulation
         public const long DepartureMaxHoldSeconds = 6 * 60;
 
         /// <summary>
-        /// One runway movement at a time. Arrivals normally go first; a departure that has held
-        /// short past <see cref="DepartureMaxHoldSeconds"/>, and longer than the first arrival
-        /// has circled, goes instead. Derived from state times only, so saves need nothing new.
+        /// One movement per physical strip at a time. Arrivals normally go first on
+        /// that strip; a departure that has held short past <see cref="DepartureMaxHoldSeconds"/>,
+        /// and longer than the first arrival has circled, goes instead. Derived from
+        /// state times only, so saves need nothing new beyond the per-strip free times.
         /// </summary>
         private bool RunTower(SimulationTime now)
         {
-            if (_runwayFreeAt.CompareTo(now) > 0)
+            var changed = false;
+            changed |= RunTowerOnStrip(now, mainStrip: true);
+            changed |= RunTowerOnStrip(now, mainStrip: false);
+            return changed;
+        }
+
+        private bool RunTowerOnStrip(SimulationTime now, bool mainStrip)
+        {
+            var freeAt = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+            if (freeAt.CompareTo(now) > 0)
                 return false;
 
-            var arrival = LongestWaiting(FleetState.HoldingForLanding);
-            var departure = LongestWaiting(FleetState.HoldingShort);
+            var arrival = LongestWaiting(FleetState.HoldingForLanding, mainStrip);
+            var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
             var next = arrival ?? departure;
             if (arrival != null && departure != null
                 && now.ElapsedSeconds - departure.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
@@ -1362,14 +1390,14 @@ namespace Airside.Simulation
 
             var landing = next.State == FleetState.HoldingForLanding;
             var profile = AircraftPerformance.For(next.Type);
-            if (landing && ShouldGoAround(next, now))
+            if (landing && ShouldGoAround(next, now, mainStrip))
             {
                 // Fly the approach so the go-around is visible off short final, then abort
                 // before the landing roll. The runway frees at the abort, not after the
                 // four-minute circuit the missed approach continues into.
                 next.WentAroundThisTrip = true;
                 Transition(next, FleetState.Landing, now, profile.ApproachSeconds);
-                _runwayFreeAt = now.Advance(profile.ApproachSeconds + WakeSeparationSeconds(next.Type));
+                SetStripFreeAt(mainStrip, now.Advance(profile.ApproachSeconds + WakeSeparationSeconds(next.Type)));
                 return true;
             }
             var runwaySeconds = landing
@@ -1377,18 +1405,32 @@ namespace Airside.Simulation
                   + AdelaideGround.VacateFor(next.Type, next.AssignedRunway).WholeSeconds
                 : AdelaideGround.LineupFor(next.AssignedRunway).WholeSeconds + profile.TakeoffSeconds;
             Transition(next, landing ? FleetState.Landing : FleetState.TakingOff, now, runwaySeconds);
-            _runwayFreeAt = now.Advance(runwaySeconds + WakeSeparationSeconds(next.Type));
+            SetStripFreeAt(mainStrip, now.Advance(runwaySeconds + WakeSeparationSeconds(next.Type)));
             return true;
         }
 
-        private bool ShouldGoAround(FleetAircraft aircraft, SimulationTime now)
+        private void SetStripFreeAt(bool mainStrip, SimulationTime at)
+        {
+            if (mainStrip)
+                _mainRunwayFreeAt = at;
+            else
+                _crossRunwayFreeAt = at;
+        }
+
+        private bool ShouldGoAround(FleetAircraft aircraft, SimulationTime now, bool mainStrip)
         {
             if (aircraft.WentAroundThisTrip)
                 return false;
             var arrivals = 0;
             foreach (var candidate in _fleet)
-                if (candidate.State == FleetState.HoldingForLanding)
-                    arrivals++;
+            {
+                if (candidate.State != FleetState.HoldingForLanding)
+                    continue;
+                if (RunwayWeather.IsMainRunway(candidate.AssignedRunway) != mainStrip)
+                    continue;
+                arrivals++;
+            }
+
             var seed = GoAroundSeed(aircraft.CompletedTrips, aircraft.Registration, now.ElapsedSeconds);
             return arrivals >= 2 && Math.Abs(seed % 11) == 0;
         }
@@ -1437,12 +1479,14 @@ namespace Airside.Simulation
             return wingspan >= MediumWakeWingspanMetres ? 120 : RunwaySeparationSeconds;
         }
 
-        private FleetAircraft LongestWaiting(FleetState state)
+        private FleetAircraft LongestWaiting(FleetState state, bool mainStrip)
         {
             FleetAircraft best = null;
             foreach (var aircraft in _fleet)
             {
                 if (aircraft.State != state)
+                    continue;
+                if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway) != mainStrip)
                     continue;
                 if (best == null || aircraft.StateStartedAt.CompareTo(best.StateStartedAt) < 0)
                     best = aircraft;
@@ -1471,9 +1515,9 @@ namespace Airside.Simulation
         /// the approach. A subsequent real landing is longer, so <see cref="FleetAircraft.WentAroundThisTrip"/>
         /// can stay set (no second go-around) without trapping the aircraft in the circuit.
         /// </summary>
-        private static bool IsMissedApproachLanding(FleetAircraft aircraft)
+        internal static bool IsMissedApproachLanding(FleetAircraft aircraft)
         {
-            if (!aircraft.StateEndsAt.HasValue)
+            if (aircraft == null || !aircraft.StateEndsAt.HasValue)
                 return false;
             var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             return duration <= AircraftPerformance.For(aircraft.Type).ApproachSeconds;

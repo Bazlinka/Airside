@@ -69,6 +69,34 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void CoveredBy_DoesNotLetAnOutboundSuppressAPlannedArrival()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var rex = ops.Airlines.First(a => a.Id.Value == "REX");
+            DestinationCatalogue.TryFind("PLO", out var portLincoln);
+
+            // Force an outbound Rex toward Port Lincoln while a planned arrival from
+            // Port Lincoln exists on the same airline.
+            var bay = AirlineOperations.AdelaideRegionalBays.First(ops.IsStandFree);
+            var outbound = ops.AddAircraft(rex, "VH-OUT", AircraftType.Saab340, bay);
+            Assert.That(ops.ScheduleDeparture(outbound, portLincoln, new SimulationTime(600)).Accepted, Is.True);
+            clock.Set(new SimulationTime(600));
+            ops.Update();
+            Assert.That(outbound.State, Is.EqualTo(FleetState.TaxiOut).Or.EqualTo(FleetState.HoldingShort)
+                .Or.EqualTo(FleetState.TakingOff).Or.EqualTo(FleetState.Outbound));
+
+            var arrivals = AdelaideDayPlan.ForLocalDay(ops, clock.Now)
+                .Where(p => p.Arrival && p.AirlineId == "REX" && p.Origin == "PLO")
+                .ToList();
+            Assert.That(arrivals, Is.Not.Empty);
+            foreach (var planned in arrivals)
+                Assert.That(AdelaideDayPlan.CoveredBy(planned, outbound), Is.False,
+                    "an outbound to PLO must not hide the inbound from PLO");
+        }
+
+        [Test]
         public void Plan_BunchesMovementsOnTheBusyBanks()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

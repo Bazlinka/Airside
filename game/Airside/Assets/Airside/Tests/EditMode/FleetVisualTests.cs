@@ -160,8 +160,12 @@ namespace Airside.Tests
                 null, default(StableId), default(StableId), kingscote, null, 0
             });
             var tower = typeof(AirlineOperations).GetMethod("RestoreTower",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            tower.Invoke(ops, new object[] { new SimulationTime(600), 0L });
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                binder: null,
+                types: new[] { typeof(SimulationTime), typeof(SimulationTime), typeof(long) },
+                modifiers: null);
+            var busy = new SimulationTime(600);
+            tower.Invoke(ops, new object[] { busy, busy, 0L });
             clock.Set(new SimulationTime(10));
             ops.Update();
 
